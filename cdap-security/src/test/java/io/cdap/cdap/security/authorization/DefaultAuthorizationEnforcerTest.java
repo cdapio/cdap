@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -136,6 +136,50 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
   }
 
   @Test
+  public void testSingleIsVisible() throws Exception {
+    try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
+      Authorizer authorizer = authorizerInstantiator.get();
+      NamespaceId ns1 = new NamespaceId("ns1");
+      NamespaceId ns2 = new NamespaceId("ns2");
+      DatasetId ds11 = ns1.dataset("ds11");
+      DatasetId ds12 = ns1.dataset("ds12");
+      DatasetId ds21 = ns2.dataset("ds21");
+      DatasetId ds22 = ns2.dataset("ds22");
+      DatasetId ds23 = ns2.dataset("ds33");
+      Set<NamespaceId> namespaces = ImmutableSet.of(ns1, ns2);
+      // Alice has access on ns1, ns2, ds11, ds21, ds23, Bob has access on ds11, ds12, ds22
+      authorizer.grant(Authorizable.fromEntityId(ns1), ALICE, Collections.singleton(Action.WRITE));
+      authorizer.grant(Authorizable.fromEntityId(ns2), ALICE, Collections.singleton(Action.ADMIN));
+      authorizer.grant(Authorizable.fromEntityId(ds11), ALICE, Collections.singleton(Action.READ));
+      authorizer.grant(Authorizable.fromEntityId(ds11), BOB, Collections.singleton(Action.ADMIN));
+      authorizer.grant(Authorizable.fromEntityId(ds21), ALICE, Collections.singleton(Action.WRITE));
+      authorizer.grant(Authorizable.fromEntityId(ds12), BOB, Collections.singleton(Action.WRITE));
+      authorizer.grant(Authorizable.fromEntityId(ds12), BOB, EnumSet.allOf(Action.class));
+      authorizer.grant(Authorizable.fromEntityId(ds21), ALICE, Collections.singleton(Action.WRITE));
+      authorizer.grant(Authorizable.fromEntityId(ds23), ALICE, Collections.singleton(Action.ADMIN));
+      authorizer.grant(Authorizable.fromEntityId(ds22), BOB, Collections.singleton(Action.ADMIN));
+      DefaultAuthorizationEnforcer authEnforcementService =
+        new DefaultAuthorizationEnforcer(CCONF, authorizerInstantiator);
+      authEnforcementService.isVisible(ns1, ALICE);
+      authEnforcementService.isVisible(ns2, ALICE);
+      // bob should also be able to list two namespaces since he has privileges on the dataset in both namespaces
+      authEnforcementService.isVisible(ns1, BOB);
+      authEnforcementService.isVisible(ns2, BOB);
+      authEnforcementService.isVisible(ds11, ALICE);
+      authEnforcementService.isVisible(ds21, ALICE);
+      authEnforcementService.isVisible(ds23, ALICE);
+      // this will be empty since now isVisible will not check the hierarchy privilege for the parent of the entity
+      assertSingleVisibilityFailure(authEnforcementService, ds12, ALICE);
+      assertSingleVisibilityFailure(authEnforcementService, ds22, ALICE);
+      authEnforcementService.isVisible(ds11, BOB);
+      authEnforcementService.isVisible(ds12, BOB);
+      authEnforcementService.isVisible(ds22, BOB);
+      assertSingleVisibilityFailure(authEnforcementService, ds21, BOB);
+      assertSingleVisibilityFailure(authEnforcementService, ds23, BOB);
+    }
+  }
+
+  @Test
   public void testIsVisible() throws Exception {
     try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
       Authorizer authorizer = authorizerInstantiator.get();
@@ -187,6 +231,7 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
         new DefaultAuthorizationEnforcer(cConfCopy, authorizerInstantiator);
       NamespaceId ns1 = new NamespaceId("ns1");
       authorizationEnforcer.enforce(NamespaceId.SYSTEM, systemUser, EnumSet.allOf(Action.class));
+      authorizationEnforcer.isVisible(NamespaceId.SYSTEM, systemUser);
       Assert.assertEquals(ImmutableSet.of(NamespaceId.SYSTEM),
                           authorizationEnforcer.isVisible(ImmutableSet.of(ns1, NamespaceId.SYSTEM),
                                                           systemUser));
@@ -202,6 +247,8 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
       authorizerInstantiator.get().grant(Authorizable.fromEntityId(ds), BOB, ImmutableSet.of(Action.ADMIN));
       authEnforcementService.enforce(NS, ALICE, Action.ADMIN);
       authEnforcementService.enforce(ds, BOB, Action.ADMIN);
+      authEnforcementService.isVisible(NS, BOB);
+      authEnforcementService.isVisible(ds, BOB);
       Assert.assertEquals(2, authEnforcementService.isVisible(ImmutableSet.<EntityId>of(NS, ds), BOB).size());
     }
   }
@@ -224,6 +271,17 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
       authEnforcementService.enforce(entityId, principal, actions);
       Assert.fail(String.format("Expected %s to not have '%s' privileges on %s but it does.",
                                 principal, actions, entityId));
+    } catch (UnauthorizedException expected) {
+      // expected
+    }
+  }
+
+  private void assertSingleVisibilityFailure(AuthorizationEnforcer authEnforcementService,
+                                          EntityId entityId, Principal principal) throws Exception {
+    try {
+      authEnforcementService.isVisible(entityId, principal);
+      Assert.fail(String.format("Expected %s to not have visibility privilege on %s but it does.",
+                                principal, entityId));
     } catch (UnauthorizedException expected) {
       // expected
     }
