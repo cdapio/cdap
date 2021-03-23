@@ -84,9 +84,9 @@ public class UnauthorizedException extends RuntimeException implements HttpError
     // Construct the message.
     StringBuilder messageBuilder = new StringBuilder();
     if (includePrincipal) {
-      messageBuilder.append(String.format("Principal '%s' has insufficient permissions ", principal));
+      messageBuilder.append(String.format("Principal '%s' has insufficient privileges ", principal));
     } else {
-      messageBuilder.append("Insufficient permissions ");
+      messageBuilder.append("Insufficient privileges ");
     }
     messageBuilder.append("to ");
     if (missingPermissions.isEmpty()) {
