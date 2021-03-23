@@ -622,7 +622,7 @@ public class AuthorizationTest extends TestBase {
     Assert.assertEquals(500, response.getResponseCode());
     // This is a hack that works around the fact that we cannot properly catch exceptions in the service handler.
     // TODO: Figure out a way to stop checking error messages.
-    Assert.assertTrue(response.getResponseBodyAsString().contains("'" + BOB + "' has insufficient permissions"));
+    Assert.assertTrue(response.getResponseBodyAsString().contains("'" + BOB + "' has insufficient privileges"));
 
     serviceManager.stop();
     serviceManager.waitForStopped(10, TimeUnit.SECONDS);
