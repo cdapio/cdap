@@ -27,6 +27,7 @@ import LoadingSVG from 'components/LoadingSVG';
 import PayloadConfigModal from 'components/PipelineTriggers/PayloadConfigModal';
 import T from 'i18n-react';
 import NamespaceStore from 'services/NamespaceStore';
+import If from 'components/If';
 
 const TRIGGER_PREFIX = 'features.PipelineTriggers';
 const PREFIX = `${TRIGGER_PREFIX}.EnabledTriggers`;
@@ -104,6 +105,10 @@ export default class EnabledTriggerRow extends Component {
           </div>
         </div>
 
+        <If condition={this.props.disableError}>
+          <div className="text-danger error">{this.props.disableError}</div>
+        </If>
+
         <div className="action-buttons-container">
           <button
             className="btn btn-secondary"
@@ -169,4 +174,5 @@ EnabledTriggerRow.propTypes = {
   loading: PropTypes.bool,
   info: PropTypes.object,
   pipelineName: PropTypes.string,
+  disableError: PropTypes.string,
 };

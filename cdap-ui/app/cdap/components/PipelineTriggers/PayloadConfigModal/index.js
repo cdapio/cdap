@@ -21,6 +21,8 @@ import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 import ScheduleRuntimeArgs from 'components/PipelineTriggers/ScheduleRuntimeArgs';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
+import CardActionFeedback, { CARD_ACTION_TYPES } from 'components/CardActionFeedback';
+import If from 'components/If';
 
 require('./PayloadConfigModal.scss');
 
@@ -35,6 +37,8 @@ export default class PayloadConfigModal extends Component {
     onEnableSchedule: PropTypes.func,
     disabled: PropTypes.bool,
     scheduleInfo: PropTypes.object,
+    configureError: PropTypes.string,
+    onToggle: PropTypes.func,
   };
 
   state = {
@@ -42,9 +46,13 @@ export default class PayloadConfigModal extends Component {
   };
 
   toggle = () => {
+    const newState = !this.state.isOpen;
     this.setState({
-      isOpen: !this.state.isOpen,
+      isOpen: newState,
     });
+    if (typeof this.props.onToggle === 'function') {
+      this.props.onToggle(newState);
+    }
     if (!this.state.isOpen && this.props.onClose) {
       this.props.onClose();
     }
@@ -81,6 +89,13 @@ export default class PayloadConfigModal extends Component {
             scheduleInfo={this.props.scheduleInfo}
           />
         </ModalBody>
+        <If condition={this.props.configureError}>
+          <CardActionFeedback
+            type={CARD_ACTION_TYPES.DANGER}
+            message="Failed to configure and enable trigger"
+            extendedMessage={this.props.configureError}
+          />
+        </If>
       </Modal>
     );
   };
