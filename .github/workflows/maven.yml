@@ -25,7 +25,19 @@ on:
 jobs:
   build:
 
-    if: contains(github.event.pull_request.labels.*.name, 'build') || github.event_name == 'workflow_dispatch'
+    # We allow builds:
+    # 1) When triggered manually
+    # 2) When it's a merge into a branch
+    # 3) For PRs that are labeled as build and
+    #  - It's a code change
+    #  - A build label was just added
+    # A bit complex, but prevents builds when other labels are manipulated
+    if: >
+      github.event_name == 'workflow_dispatch'
+      || github.event_name == 'push'
+      || (contains(github.event.pull_request.labels.*.name, 'build')
+         && (github.event.action != 'labeled' || github.event.label.name == 'build')
+         )
     runs-on: k8s-runner-build
 
     steps:
