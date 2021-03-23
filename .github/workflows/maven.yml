@@ -11,21 +11,18 @@
 
 # This workflow will build a Java project with Maven
 # For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
-
+# Note: Any changes to this workflow would be used only after merging into develop
 name: Build with unit tests
 
 on:
-  push:
-    branches: [ develop, release/** ]
-  pull_request:
-    branches: [ develop, release/** ]
-    types: [opened, synchronize, reopened, labeled]
-  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - Trigger build
+      types:
+        - completed
 
 jobs:
   build:
-
-    if: contains(github.event.pull_request.labels.*.name, 'build') || github.event_name == 'workflow_dispatch'
     runs-on: k8s-runner-build
 
     steps:
@@ -47,3 +44,10 @@ jobs:
           path: |
             **/target/rat.txt
             **/target/surefire-reports/*
+      - name: Surefire Report
+        # Pinned 1.0.5 version
+        uses: ScaCap/action-surefire-report@ad808943e6bfbd2e6acba7c53fdb5c89534da533
+        if: always()
+        with:
+          # GITHUB_TOKEN
+          github_token: ${{ secrets.GITHUB_TOKEN }}
