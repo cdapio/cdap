@@ -15,11 +15,13 @@
 name: Build with unit tests
 
 on:
+  push:
+    branches: [ develop, release/** ]
   workflow_run:
     workflows:
       - Trigger build
-      types:
-        - completed
+    types:
+      - completed
 
 jobs:
   build:
