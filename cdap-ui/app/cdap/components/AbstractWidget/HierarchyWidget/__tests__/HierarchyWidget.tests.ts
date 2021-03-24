@@ -15,7 +15,7 @@
 
 import { typeHandler, flatToTree, addPathToFlatMap, toJsonHandler } from '../dataHandler';
 
-describe('Unit tests for Hierarchy Widget', () => {
+describe('Unit tests for data handler helper function in Hierarchy widget', () => {
   it('Should handle boolean type', () => {
     const field = {
       name: 'Id',
@@ -27,7 +27,7 @@ describe('Unit tests for Hierarchy Widget', () => {
       children: [],
     };
     const result = typeHandler(field);
-    expect(JSON.stringify(result)).toBe(JSON.stringify(output));
+    expect(result).toEqual(output);
   });
 
   it('Should handle bytes type', () => {
@@ -41,7 +41,7 @@ describe('Unit tests for Hierarchy Widget', () => {
       children: [],
     };
     const result = typeHandler(field);
-    expect(JSON.stringify(result)).toBe(JSON.stringify(output));
+    expect(result).toEqual(output);
   });
 
   it('Should handle double type', () => {
@@ -55,7 +55,7 @@ describe('Unit tests for Hierarchy Widget', () => {
       children: [],
     };
     const result = typeHandler(field);
-    expect(JSON.stringify(result)).toBe(JSON.stringify(output));
+    expect(result).toEqual(output);
   });
 
   it('Should handle float type', () => {
@@ -69,7 +69,7 @@ describe('Unit tests for Hierarchy Widget', () => {
       children: [],
     };
     const result = typeHandler(field);
-    expect(JSON.stringify(result)).toBe(JSON.stringify(output));
+    expect(result).toEqual(output);
   });
 
   it('Should handle int type', () => {
@@ -83,7 +83,7 @@ describe('Unit tests for Hierarchy Widget', () => {
       children: [],
     };
     const result = typeHandler(field);
-    expect(JSON.stringify(result)).toBe(JSON.stringify(output));
+    expect(result).toEqual(output);
   });
 
   it('Should handle long type', () => {
@@ -97,7 +97,7 @@ describe('Unit tests for Hierarchy Widget', () => {
       children: [],
     };
     const result = typeHandler(field);
-    expect(JSON.stringify(result)).toBe(JSON.stringify(output));
+    expect(result).toEqual(output);
   });
 
   it('Should handle string type', () => {
@@ -111,7 +111,7 @@ describe('Unit tests for Hierarchy Widget', () => {
       children: [],
     };
     const result = typeHandler(field);
-    expect(JSON.stringify(result)).toBe(JSON.stringify(output));
+    expect(result).toEqual(output);
   });
 
   it('Should handle array type', () => {
@@ -121,7 +121,7 @@ describe('Unit tests for Hierarchy Widget', () => {
         type: 'array',
         items: 'string',
       },
-      children: ['string'],
+      // children: ['string'],
     };
     const output = {
       name: 'Id',
@@ -129,7 +129,7 @@ describe('Unit tests for Hierarchy Widget', () => {
       children: ['string'],
     };
     const result = typeHandler(field);
-    expect(JSON.stringify(result)).toBe(JSON.stringify(output));
+    expect(result).toEqual(output);
   });
 
   it('Should handle enum type', () => {
@@ -146,7 +146,7 @@ describe('Unit tests for Hierarchy Widget', () => {
       children: ['Test'],
     };
     const result = typeHandler(field);
-    expect(JSON.stringify(result)).toBe(JSON.stringify(output));
+    expect(result).toEqual(output);
   });
 
   it('Should handle map type', () => {
@@ -167,7 +167,7 @@ describe('Unit tests for Hierarchy Widget', () => {
       ],
     };
     const result = typeHandler(field);
-    expect(JSON.stringify(result)).toBe(JSON.stringify(output));
+    expect(result).toEqual(output);
   });
 
   it('Should handle record type', () => {
@@ -190,21 +190,21 @@ describe('Unit tests for Hierarchy Widget', () => {
       children: [{ name: 'Name', type: 'string' }],
     };
     const result = typeHandler(field);
-    expect(JSON.stringify(result)).toBe(JSON.stringify(output));
+    expect(result).toEqual(output);
   });
 
   it('Should handle union type', () => {
     const field = {
       name: 'Id',
-      type: ['string'],
+      type: ['int', 'float', 'double'],
     };
     const output = {
       name: 'Id',
-      type: 'string',
+      type: 'int',
       children: [],
     };
     const result = typeHandler(field);
-    expect(JSON.stringify(result)).toBe(JSON.stringify(output));
+    expect(result).toEqual(output);
   });
 
   it('Should handle time type', () => {
@@ -221,7 +221,7 @@ describe('Unit tests for Hierarchy Widget', () => {
       children: [],
     };
     const result = typeHandler(field);
-    expect(JSON.stringify(result)).toBe(JSON.stringify(output));
+    expect(result).toEqual(output);
   });
 
   it('Should handle timestamp type', () => {
@@ -238,7 +238,7 @@ describe('Unit tests for Hierarchy Widget', () => {
       children: [],
     };
     const result = typeHandler(field);
-    expect(JSON.stringify(result)).toBe(JSON.stringify(output));
+    expect(result).toEqual(output);
   });
 
   it('Should handle decimal type', () => {
@@ -257,7 +257,7 @@ describe('Unit tests for Hierarchy Widget', () => {
       children: [],
     };
     const result = typeHandler(field);
-    expect(JSON.stringify(result)).toBe(JSON.stringify(output));
+    expect(result).toEqual(output);
   });
 
   it('Should handle date type', () => {
@@ -274,7 +274,7 @@ describe('Unit tests for Hierarchy Widget', () => {
       children: [],
     };
     const result = typeHandler(field);
-    expect(JSON.stringify(result)).toBe(JSON.stringify(output));
+    expect(result).toEqual(output);
   });
 
   it('Should handle datetime type', () => {
@@ -291,17 +291,30 @@ describe('Unit tests for Hierarchy Widget', () => {
       children: [],
     };
     const result = typeHandler(field);
-    expect(JSON.stringify(result)).toBe(JSON.stringify(output));
+    expect(result).toEqual(output);
   });
 
   it('Should convert flat schema to tree', () => {
     const flat = [
       { id: 1, parentId: null, name: 'Customer_orders', type: 'record' },
       { id: 2, parentId: 1, name: 'Customer', type: 'record', path: ['Customer'] },
-      { id: 3, parentId: 1, name: 'Name', type: 'string', path: ['Name'] },
-      { id: 4, parentId: 1, name: 'Phone', type: 'string', path: ['Phone'] },
+      { id: 3, parentId: 2, name: 'Id', type: 'int', path: ['Id'] },
+      { id: 4, parentId: 2, name: 'Name', type: 'string', path: ['Name'] },
+      { id: 5, parentId: 2, name: 'Phone', type: 'array', path: ['Phone'] },
       { id: 6, parentId: 1, name: 'Orders', type: 'record' },
-      { id: 7, parentId: 6, name: 'Product_Id', type: 'string', path: ['Product_Id'] },
+      { id: 7, parentId: 6, name: 'Order_Id', type: 'double', path: ['Order_Id'] },
+      { id: 8, parentId: 6, name: 'Order_Item', type: 'record' },
+      { id: 9, parentId: 8, name: 'Product_Qty', type: 'float', path: ['Product_Qty'] },
+      { id: 10, parentId: 8, name: 'Product_Price', type: 'decimal', path: ['Product_Price'] },
+      {
+        id: 11,
+        parentId: 8,
+        name: 'Product_Expire_Date',
+        type: 'date',
+        path: ['Product_Expire_Date'],
+      },
+      { id: 12, parentId: 6, name: 'Payment_Method', type: 'union', path: ['Payment_Method'] },
+      { id: 13, parentId: 6, name: 'Payment_Time', type: 'time', path: ['Payment_Time'] },
     ];
 
     const tree = [
@@ -317,23 +330,32 @@ describe('Unit tests for Hierarchy Widget', () => {
             name: 'Customer',
             type: 'record',
             path: ['Customer'],
-            children: [],
-          },
-          {
-            id: 3,
-            parentId: 1,
-            name: 'Name',
-            type: 'string',
-            path: ['Name'],
-            children: [],
-          },
-          {
-            id: 4,
-            parentId: 1,
-            name: 'Phone',
-            type: 'string',
-            path: ['Phone'],
-            children: [],
+            children: [
+              {
+                id: 3,
+                parentId: 2,
+                name: 'Id',
+                type: 'int',
+                path: ['Id'],
+                children: [],
+              },
+              {
+                id: 4,
+                parentId: 2,
+                name: 'Name',
+                type: 'string',
+                path: ['Name'],
+                children: [],
+              },
+              {
+                id: 5,
+                parentId: 2,
+                name: 'Phone',
+                type: 'array',
+                path: ['Phone'],
+                children: [],
+              },
+            ],
           },
           {
             id: 6,
@@ -344,9 +366,57 @@ describe('Unit tests for Hierarchy Widget', () => {
               {
                 id: 7,
                 parentId: 6,
-                name: 'Product_Id',
-                type: 'string',
-                path: ['Product_Id'],
+                name: 'Order_Id',
+                type: 'double',
+                path: ['Order_Id'],
+                children: [],
+              },
+              {
+                id: 8,
+                parentId: 6,
+                name: 'Order_Item',
+                type: 'record',
+                children: [
+                  {
+                    id: 9,
+                    parentId: 8,
+                    name: 'Product_Qty',
+                    type: 'float',
+                    path: ['Product_Qty'],
+                    children: [],
+                  },
+                  {
+                    id: 10,
+                    parentId: 8,
+                    name: 'Product_Price',
+                    type: 'decimal',
+                    path: ['Product_Price'],
+                    children: [],
+                  },
+                  {
+                    id: 11,
+                    parentId: 8,
+                    name: 'Product_Expire_Date',
+                    type: 'date',
+                    path: ['Product_Expire_Date'],
+                    children: [],
+                  },
+                ],
+              },
+              {
+                id: 12,
+                parentId: 6,
+                name: 'Payment_Method',
+                type: 'union',
+                path: ['Payment_Method'],
+                children: [],
+              },
+              {
+                id: 13,
+                parentId: 6,
+                name: 'Payment_Time',
+                type: 'time',
+                path: ['Payment_Time'],
                 children: [],
               },
             ],
@@ -355,7 +425,7 @@ describe('Unit tests for Hierarchy Widget', () => {
       },
     ];
     const result = flatToTree(flat);
-    expect(JSON.stringify(result)).toBe(JSON.stringify(tree));
+    expect(result).toEqual(tree);
   });
 
   it('Should add path to flat map', () => {
@@ -396,24 +466,53 @@ describe('Unit tests for Hierarchy Widget', () => {
     ];
 
     const result = addPathToFlatMap(flat);
-    expect(JSON.stringify(result)).toBe(JSON.stringify(output));
+    expect(result).toEqual(output);
   });
 
   it('Should convert the flat schema to JSON', () => {
     const flat = [
       { id: 1, parentId: null, type: 'record', children: [], name: 'Customer_orders' },
-      { id: 2, path: ['Customer'], parentId: 1, name: 'Customer', children: [] },
-      { id: 3, path: ['Orders'], parentId: 1, name: 'Orders', children: [] },
+      { id: 2, parentId: 1, type: 'record', name: 'Customer', children: [] },
+      { id: 3, path: ['Id'], parentId: 2, name: 'Id', children: [] },
+      { id: 4, path: ['Name'], parentId: 2, name: 'Name', children: [] },
+      { id: 5, path: ['Phone'], parentId: 2, name: 'Phone', children: [] },
+      { id: 6, parentId: 1, type: 'record', name: 'Orders', children: [] },
+      { id: 7, path: ['Order_Id'], parentId: 6, name: 'Order_Id', children: [] },
+      { id: 8, parentId: 6, type: 'record', name: 'Order_Item', children: [] },
+      { id: 9, path: ['Product_Qty'], parentId: 8, name: 'Product_Qty', children: [] },
+      { id: 10, path: ['Product_Price'], parentId: 8, name: 'Product_Price', children: [] },
+      {
+        id: 11,
+        path: ['Product_Expire_Date'],
+        parentId: 8,
+        name: 'Product_Expire_Date',
+        children: [],
+      },
+      { id: 12, path: ['Payment_Method'], parentId: 6, name: 'Payment_Method', children: [] },
+      { id: 13, path: ['Payment_Time'], parentId: 6, name: 'Payment_Time', children: [] },
     ];
 
     const json = {
       Customer_orders: {
-        Customer: ['Customer'],
-        Orders: ['Orders'],
+        Customer: {
+          Id: ['Id'],
+          Name: ['Name'],
+          Phone: ['Phone'],
+        },
+        Orders: {
+          Order_Id: ['Order_Id'],
+          Order_Item: {
+            Product_Qty: ['Product_Qty'],
+            Product_Price: ['Product_Price'],
+            Product_Expire_Date: ['Product_Expire_Date'],
+          },
+          Payment_Method: ['Payment_Method'],
+          Payment_Time: ['Payment_Time'],
+        },
       },
     };
 
     const result = toJsonHandler(flat);
-    expect(JSON.stringify(result)).toBe(JSON.stringify(json));
+    expect(result).toEqual(json);
   });
 });
