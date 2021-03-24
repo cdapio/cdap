@@ -53,7 +53,7 @@ Data Pipelines are represented by a series of stages arranged in a Directed Acyl
 
 Additionally, when stages encounter null values, logical errors, or other sources of errors, you may use an **Error Handler** plugin to catch errors. This plugin is attached to the output of any transform or analytics plugin, where it catches errors. These errors can then be written to a database to be inspected or analyzed.
 
-Finally, data must be written to a **Sink**. Sinks come in a wide variety of formats -- Avro, Parquet, or a RMBDS, for example -- and the connection is created from a simple UI. Data written to these sinks can then be queried from the CDAP UI or using a RESTful API. 
+Finally, data must be written to a **Sink**. Sinks come in a wide variety of formats -- Avro, Parquet, or a RDBMS, for example -- and the connection is created from a simple UI. Data written to these sinks can then be queried from the CDAP UI or using a RESTful API. 
 
 If a plugin you need does not exist, :ref:`you may want to build you own plugin <cdap-pipelines-developing-pipelines>` as described in the Developer Documentation.
 
