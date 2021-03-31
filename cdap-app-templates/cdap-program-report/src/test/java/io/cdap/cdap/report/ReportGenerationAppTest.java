@@ -306,7 +306,7 @@ public class ReportGenerationAppTest extends TestBase {
     // but spark-avro is not used directly in the application code, explicitly add a class DefaultSource
     // from spark-avro so that spark-avro and its dependencies will be included.
     bundler.createBundle(avroSparkBundle, DefaultSource.class);
-    File unJarDir = BundleJarUtil.unJar(avroSparkBundle, TEMP_FOLDER.newFolder());
+    File unJarDir = BundleJarUtil.prepareClassLoaderFolder(avroSparkBundle, TEMP_FOLDER.newFolder());
 
     ApplicationManager app = deployApplication(deployNamespace,
                                                ReportGenerationApp.class, new File(unJarDir, "lib").listFiles());

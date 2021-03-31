@@ -19,7 +19,6 @@ package io.cdap.cdap.internal.app.runtime.artifact;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.io.Files;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.artifact.ArtifactClasses;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
@@ -223,7 +222,7 @@ public class ArtifactInspectorTest {
     Location deploymentJar = AppJarHelper.createDeploymentJar(new LocalLocationFactory(TMP_FOLDER.newFolder()),
       cls, manifest);
     DirUtils.mkdirs(destFile.getParentFile());
-    Files.copy(Locations.newInputSupplier(deploymentJar), destFile);
+    Locations.linkOrCopyOverwrite(deploymentJar, destFile);
     return destFile;
   }
 }

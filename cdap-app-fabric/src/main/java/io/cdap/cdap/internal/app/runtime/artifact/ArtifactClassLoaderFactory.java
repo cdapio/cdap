@@ -121,7 +121,7 @@ final class ArtifactClassLoaderFactory {
       final File unpackDir = entityImpersonator.impersonate(new Callable<File>() {
         @Override
         public File call() throws IOException {
-          return BundleJarUtil.unJar(artifactLocation, DirUtils.createTempDir(tmpDir));
+          return BundleJarUtil.prepareClassLoaderFolder(artifactLocation, DirUtils.createTempDir(tmpDir));
         }
       });
 
@@ -169,7 +169,7 @@ final class ArtifactClassLoaderFactory {
       final File unpackDir = entityImpersonator.impersonate(new Callable<File>() {
         @Override
         public File call() throws IOException {
-          return BundleJarUtil.unJar(artifactLocation, DirUtils.createTempDir(tmpDir));
+          return BundleJarUtil.prepareClassLoaderFolder(artifactLocation, DirUtils.createTempDir(tmpDir));
         }
       });
 

@@ -19,8 +19,9 @@ package io.cdap.cdap.test;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
-import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.Config;
@@ -81,10 +82,13 @@ import java.net.InetSocketAddress;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.jar.Manifest;
@@ -136,6 +140,7 @@ public class UnitTestManager extends AbstractTestManager {
   private final ArtifactManagerFactory artifactManagerFactory;
   private final MetricsManager metricsManager;
   private final File tmpDir;
+  private final Cache<ArtifactKey, Location> deploymentJarCache;
 
   @Inject
   public UnitTestManager(AppFabricClient appFabricClient,
@@ -160,6 +165,7 @@ public class UnitTestManager extends AbstractTestManager {
     this.artifactManagerFactory = artifactManagerFactory;
     this.tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
       cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    this.deploymentJarCache = CacheBuilder.newBuilder().build();
   }
 
   @Override
@@ -230,8 +236,9 @@ public class UnitTestManager extends AbstractTestManager {
   @Override
   public ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass,
                                         Manifest manifest, File... bundleEmbeddedJars) throws Exception {
-    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, appClass,
-                                                       manifest, CLASS_ACCEPTOR, bundleEmbeddedJars);
+
+    Location appJar = deploymentJarCache.get(new AppArtifactKey(appClass, manifest, bundleEmbeddedJars), () ->
+      AppJarHelper.createDeploymentJar(locationFactory, appClass, manifest, CLASS_ACCEPTOR, bundleEmbeddedJars));
     addArtifact(artifactId, appJar);
     return artifactManagerFactory.create(artifactId);
   }
@@ -438,23 +445,94 @@ public class UnitTestManager extends AbstractTestManager {
   }
 
   private File createPluginJar(ArtifactId artifactId, Class<?> pluginClass,
-                               Class<?>... pluginClasses) throws IOException {
+                               Class<?>... pluginClasses) throws Exception {
     Manifest manifest = createManifest(pluginClass, pluginClasses);
-    Location appJar = PluginJarHelper.createPluginJar(locationFactory, manifest, pluginClass, pluginClasses);
+    Location appJar = deploymentJarCache.get(new PluginArtifactKey(pluginClass, pluginClasses), () ->
+      PluginJarHelper.createPluginJar(locationFactory, manifest, pluginClass, pluginClasses));
     File destination =
       new File(tmpDir, String.format("%s-%s.jar", artifactId.getArtifact(), artifactId.getVersion()));
-    Files.copy(Locations.newInputSupplier(appJar), destination);
-    appJar.delete();
+    Locations.linkOrCopyOverwrite(appJar, destination);
     return destination;
   }
 
   private void addArtifact(ArtifactId artifactId, Location jar) throws Exception {
     File destination =
       new File(tmpDir, String.format("%s-%s.jar", artifactId.getArtifact(), artifactId.getVersion()));
-    Files.copy(Locations.newInputSupplier(jar), destination);
-    jar.delete();
+    Locations.linkOrCopyOverwrite(jar, destination);
 
     artifactRepository.addArtifact(Id.Artifact.fromEntityId(artifactId), destination);
     Preconditions.checkState(destination.delete());
   }
+
+  /**
+   * Marker interface for {@link #deploymentJarCache} keys
+   */
+  private interface ArtifactKey {
+  }
+
+  /**
+   * {@link #deploymentJarCache} key for artifacts produced by {@link #addAppArtifact}
+   */
+  private static class AppArtifactKey implements ArtifactKey {
+    private final Class<?> appClass;
+    private final Manifest manifest;
+    private final List<File> bundleEmbeddedJars;
+
+    private AppArtifactKey(Class<?> appClass, Manifest manifest, File... bundleEmbeddedJars) {
+      this.appClass = appClass;
+      this.manifest = manifest;
+      this.bundleEmbeddedJars = Arrays.asList(bundleEmbeddedJars);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      AppArtifactKey that = (AppArtifactKey) o;
+      return Objects.equals(appClass, that.appClass) &&
+        Objects.equals(manifest, that.manifest) &&
+        Objects.equals(bundleEmbeddedJars, that.bundleEmbeddedJars);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(appClass, manifest, bundleEmbeddedJars);
+    }
+  }
+
+  /**
+   * {@link #deploymentJarCache} key for artifacts produced by {@link #createPluginJar}
+   */
+  private static class PluginArtifactKey implements ArtifactKey {
+    private final Class<?> pluginClass;
+    private final List<Class<?>> pluginClasses;
+
+    private PluginArtifactKey(Class<?> pluginClass, Class<?>... pluginClasses) {
+      this.pluginClass = pluginClass;
+      this.pluginClasses = Arrays.asList(pluginClasses);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      PluginArtifactKey that = (PluginArtifactKey) o;
+      return Objects.equals(pluginClass, that.pluginClass) &&
+        Objects.equals(pluginClasses, that.pluginClasses);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(pluginClass, pluginClasses);
+    }
+  }
+
 }

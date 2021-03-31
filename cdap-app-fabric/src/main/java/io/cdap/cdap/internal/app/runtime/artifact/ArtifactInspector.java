@@ -121,7 +121,7 @@ final class ArtifactInspector {
 
     Path stageDir = Files.createTempDirectory(tmpDir, artifactFile.getName());
     try {
-      File unpackedDir = BundleJarUtil.unJar(artifactLocation,
+      File unpackedDir = BundleJarUtil.prepareClassLoaderFolder(artifactLocation,
                                              Files.createTempDirectory(stageDir, "unpacked-").toFile());
       try (
         CloseableClassLoader artifactClassLoader = artifactClassLoaderFactory.createClassLoader(unpackedDir);

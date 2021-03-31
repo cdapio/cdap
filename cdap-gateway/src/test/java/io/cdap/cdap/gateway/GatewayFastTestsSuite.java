@@ -163,7 +163,7 @@ public class GatewayFastTestsSuite extends GatewayTestBase {
     LocationFactory locationFactory = new LocalLocationFactory(tmpFolder);
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, cls);
     File destination = new File(DirUtils.createTempDir(tmpFolder), name);
-    Files.copy(Locations.newInputSupplier(appJar), destination);
+    Locations.linkOrCopy(appJar, destination);
     return destination;
   }
 

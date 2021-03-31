@@ -226,7 +226,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       new File(systemArgs.getOption(ProgramOptionConstants.APP_SPEC_FILE)), ApplicationSpecification.class);
 
     // Expand the program jar for creating classloader
-    File programJarDir = BundleJarUtil.unJar(
+    File programJarDir = BundleJarUtil.prepareClassLoaderFolder(
       programJarLocation, new File("expanded." + System.currentTimeMillis() + programJarLocation.getName()));
 
     program = Programs.create(cConf, programRunner,

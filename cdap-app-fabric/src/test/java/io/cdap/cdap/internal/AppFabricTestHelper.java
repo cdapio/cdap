@@ -339,7 +339,7 @@ public class AppFabricTestHelper {
                                        Supplier<File> folderSupplier) throws Exception {
     CConfiguration cConf = getInjector().getInstance(CConfiguration.class);
     return Programs.create(cConf, programRunner, programDescriptor, artifactLocation,
-                           BundleJarUtil.unJar(artifactLocation, folderSupplier.get()));
+                           BundleJarUtil.prepareClassLoaderFolder(artifactLocation, folderSupplier.get()));
 
   }
 
