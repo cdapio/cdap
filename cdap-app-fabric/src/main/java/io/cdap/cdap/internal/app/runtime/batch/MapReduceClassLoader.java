@@ -290,7 +290,7 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
         File unpackDir = DirUtils.createTempDir(new File(System.getProperty("user.dir")));
         LOG.info("Create ProgramClassLoader from {}, expand to {}", programLocation, unpackDir);
 
-        BundleJarUtil.unJar(programLocation, unpackDir);
+        BundleJarUtil.prepareClassLoaderFolder(programLocation, unpackDir);
         return new ProgramClassLoader(contextConfig.getCConf(), unpackDir,
                                       FilterClassLoader.create(contextConfig.getHConf().getClassLoader()));
       } catch (IOException e) {

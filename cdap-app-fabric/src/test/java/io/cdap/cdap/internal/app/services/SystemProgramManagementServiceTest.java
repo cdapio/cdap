@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.services;
 
-import com.google.common.io.Files;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
@@ -117,7 +116,7 @@ public class SystemProgramManagementServiceTest extends AppFabricTestBase {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, APP_CLASS);
     File appJarFile = new File(tmpFolder.newFolder(),
                                String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
-    Files.copy(Locations.newInputSupplier(appJar), appJarFile);
+    Locations.linkOrCopyOverwrite(appJar, appJarFile);
     appJar.delete();
     artifactRepository.addArtifact(artifactId, appJarFile);
     ArtifactSummary summary = new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion(),

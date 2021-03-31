@@ -319,7 +319,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
       new File(options.getArguments().getOption(ProgramOptionConstants.PROGRAM_JAR)));
     Locations.linkOrCopy(programJarLocation, programJarFile);
     programJarLocation = Locations.toLocation(programJarFile);
-    BundleJarUtil.unJar(programJarLocation, programDir);
+    BundleJarUtil.prepareClassLoaderFolder(programJarLocation, programDir);
 
     return Programs.create(cConf, programRunner, programDescriptor, programJarLocation, programDir);
   }

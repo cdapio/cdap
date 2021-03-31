@@ -85,7 +85,7 @@ public abstract class AbstractArtifactManager implements ArtifactManager {
   public CloseableClassLoader createClassLoader(@Nullable String namespace, ArtifactInfo artifactInfo,
                                                 @Nullable ClassLoader parentClassLoader) throws IOException {
     File unpackedDir = DirUtils.createTempDir(tmpDir);
-    BundleJarUtil.unJar(getArtifactLocation(artifactInfo, namespace), unpackedDir);
+    BundleJarUtil.prepareClassLoaderFolder(getArtifactLocation(artifactInfo, namespace), unpackedDir);
     DirectoryClassLoader directoryClassLoader =
       new DirectoryClassLoader(unpackedDir,
                                parentClassLoader == null ? bootstrapClassLoader : parentClassLoader, "lib");

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.common.lang.jar;
 
+import io.cdap.cdap.common.io.Locations;
 import org.apache.twill.filesystem.Location;
 
 import java.io.BufferedInputStream;
@@ -169,6 +170,44 @@ public class BundleJarUtil {
   }
 
   /**
+   * Takes a jar and prepares a folder to be loaded by classloader. Unpacks a manifest and any nested jars
+   * and links original jar into the destination folder, so that it would be picked up by classloader to
+   * load any classes or resources.
+   *
+   * @param jarLocation Location containing the jar file
+   * @param destinationFolder Directory to expand into
+   * @return The {@code destinationFolder}
+   * @throws IOException If failed to expand the jar
+   */
+  public static File prepareClassLoaderFolder(Location jarLocation, File destinationFolder) throws IOException {
+    unJar(jarLocation, destinationFolder, name ->
+      name.equals(JarFile.MANIFEST_NAME) || name.endsWith(".jar"));
+    File artifactTempName = File.createTempFile("artifact", ".jar", destinationFolder);
+    artifactTempName.delete();
+    Locations.linkOrCopy(jarLocation, artifactTempName);
+    return destinationFolder;
+  }
+
+  /**
+   * Takes a jar and prepares a folder to be loaded by classloader. Unpacks a manifest and any nested jars
+   * and links original jar into the destination folder, so that it would be picked up by classloader to
+   * load any classes or resources.
+   *
+   * @param jarFile jar file to unpack
+   * @param destinationFolder Directory to expand into
+   * @return The {@code destinationFolder}
+   * @throws IOException If failed to expand the jar
+   */
+  public static File prepareClassLoaderFolder(File jarFile, File destinationFolder) throws IOException {
+    unJar(jarFile, destinationFolder, name ->
+      name.equals(JarFile.MANIFEST_NAME) || name.endsWith(".jar"));
+    File artifactTempName = File.createTempFile("artifact", ".jar", destinationFolder);
+    artifactTempName.delete();
+    Files.createLink(artifactTempName.toPath(), jarFile.toPath());
+    return destinationFolder;
+  }
+
+  /**
    * Unpack a jar file in the given location to a directory.
    *
    * @param jarLocation Location containing the jar file
@@ -206,8 +245,22 @@ public class BundleJarUtil {
    * @throws IOException If failed to expand the jar
    */
   public static File unJar(File jarFile, File destinationFolder) throws IOException {
+    return unJar(jarFile, destinationFolder, name -> true);
+  }
+
+  /**
+   * Unpack a jar file to a directory.
+   *
+   * @param jarFile the jar file to unpack
+   * @param destinationFolder Directory to expand into
+   * @param nameFilter Predicate to select files to unpack
+   * @return The {@code destinationFolder}
+   * @throws IOException If failed to expand the jar
+   */
+  public static File unJar(File jarFile, File destinationFolder, Predicate<String> nameFilter)
+    throws IOException {
     try (ZipInputStream zipIn = new ZipInputStream(new BufferedInputStream(new FileInputStream(jarFile)))) {
-      unJar(zipIn, destinationFolder);
+      unJar(zipIn, destinationFolder, nameFilter);
     }
     return destinationFolder;
   }

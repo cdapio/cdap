@@ -126,7 +126,7 @@ public class DatasetTypeManager {
         try {
           // NOTE: if jarLocation is null, we assume that this is a system module, ie. always present in classpath
           if (jarLocation != null) {
-            BundleJarUtil.unJar(jarLocation, unpackedLocation);
+            BundleJarUtil.prepareClassLoaderFolder(jarLocation, unpackedLocation);
             cl = new DirectoryClassLoader(unpackedLocation, cConf.get(Constants.AppFabric.PROGRAM_EXTRA_CLASSPATH),
                                           FilterClassLoader.create(getClass().getClassLoader()), "lib");
           }

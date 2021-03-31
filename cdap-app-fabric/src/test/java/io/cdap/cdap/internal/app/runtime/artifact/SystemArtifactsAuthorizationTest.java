@@ -193,7 +193,7 @@ public class SystemArtifactsAuthorizationTest {
     Location deploymentJar = AppJarHelper.createDeploymentJar(new LocalLocationFactory(TMP_FOLDER.newFolder()),
                                                               cls, manifest);
     DirUtils.mkdirs(destFile.getParentFile());
-    Files.copy(Locations.newInputSupplier(deploymentJar), destFile);
+    Locations.linkOrCopyOverwrite(deploymentJar, destFile);
     return destFile;
   }
 }

@@ -201,7 +201,7 @@ public class AuthorizerInstantiator implements Closeable, Supplier<Authorizer> {
     throws IOException, InvalidAuthorizerException {
     LOG.info("Creating authorization extension using jar {}.", authorizerExtensionJar);
     try {
-      BundleJarUtil.unJar(Locations.toLocation(authorizerExtensionJar), tmpDir);
+      BundleJarUtil.prepareClassLoaderFolder(Locations.toLocation(authorizerExtensionJar), tmpDir);
       return new AuthorizerClassLoader(tmpDir, authorizerExtraClasspath);
     } catch (ZipException e) {
       throw new InvalidAuthorizerException(

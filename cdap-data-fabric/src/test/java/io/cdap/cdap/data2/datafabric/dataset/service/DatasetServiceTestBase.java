@@ -19,7 +19,6 @@ package io.cdap.cdap.data2.datafabric.dataset.service;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.io.Files;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -309,7 +308,7 @@ public abstract class DatasetServiceTestBase {
     File[] embeddedJars = new File[bundleEmbeddedJars.length];
     for (int i = 0; i < bundleEmbeddedJars.length; i++) {
       File file = TMP_FOLDER.newFile();
-      Files.copy(Locations.newInputSupplier(bundleEmbeddedJars[i]), file);
+      Locations.linkOrCopyOverwrite(bundleEmbeddedJars[i], file);
       embeddedJars[i] = file;
     }
 

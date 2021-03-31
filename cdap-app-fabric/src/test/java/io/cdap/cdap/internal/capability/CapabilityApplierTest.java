@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.capability;
 
-import com.google.common.io.Files;
 import io.cdap.cdap.CapabilityAppWithWorkflow;
 import io.cdap.cdap.WorkflowAppWithFork;
 import io.cdap.cdap.api.annotation.Requirements;
@@ -181,7 +180,7 @@ import java.util.UUID;
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, applicationClass);
     File appJarFile = new File(tmpFolder.newFolder(),
                                String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
-    Files.copy(Locations.newInputSupplier(appJar), appJarFile);
+    Locations.linkOrCopyOverwrite(appJar, appJarFile);
     appJar.delete();
     artifactRepository.addArtifact(artifactId, appJarFile);
     //deploy app

@@ -602,7 +602,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     Id.Artifact pluginArtifactId = Id.Artifact.from(Id.Namespace.from(namespace), pluginName, version);
     File pluginJarFile = new File(tmpFolder.newFolder(),
                                   String.format("%s-%s.jar", pluginArtifactId.getName(), version));
-    Files.copy(Locations.newInputSupplier(pluginJar), pluginJarFile);
+    Locations.linkOrCopyOverwrite(pluginJar, pluginJarFile);
     pluginJar.delete();
     artifactRepository.addArtifact(pluginArtifactId, pluginJarFile);
 
@@ -783,7 +783,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, appClass);
     File appJarFile = new File(tmpFolder.newFolder(),
                                String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
-    Files.copy(Locations.newInputSupplier(appJar), appJarFile);
+    Locations.linkOrCopyOverwrite(appJar, appJarFile);
     appJar.delete();
     artifactRepository.addArtifact(artifactId, appJarFile);
   }
@@ -793,7 +793,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, applicationClass);
     File appJarFile = new File(tmpFolder.newFolder(),
                                String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
-    Files.copy(Locations.newInputSupplier(appJar), appJarFile);
+    Locations.linkOrCopyOverwrite(appJar, appJarFile);
     appJar.delete();
     artifactRepository.addArtifact(artifactId, appJarFile);
     //deploy app

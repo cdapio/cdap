@@ -214,7 +214,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     try {
       File programJar = Locations.linkOrCopy(programJarLocation, new File(tempDir, "program.jar"));
       // Unpack the JAR file
-      BundleJarUtil.unJar(programJar, unpackedDir);
+      BundleJarUtil.prepareClassLoaderFolder(programJar, unpackedDir);
     } catch (IOException ioe) {
       throw ioe;
     } catch (Exception e) {
