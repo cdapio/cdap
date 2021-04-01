@@ -136,11 +136,11 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   private final PreviewRunStopper previewRunStopper;
   private final MessagingService messagingService;
   private final PreviewDataCleanupService previewDataCleanupService;
+  private final MetricsCollectionService metricsCollectionService;
   private Injector previewInjector;
   private PreviewDataSubscriberService dataSubscriberService;
   private PreviewTMSLogSubscriber logSubscriberService;
   private LogAppender logAppender;
-  private MetricsCollectionService metricsCollectionService;
 
   @Inject
   DefaultPreviewManager(DiscoveryService discoveryService,

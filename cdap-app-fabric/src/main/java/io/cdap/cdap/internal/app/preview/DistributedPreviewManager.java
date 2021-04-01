@@ -107,8 +107,7 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
       Future<?> future = scheduler.submit(() -> {
         try {
           if (controller != null) {
-            controller.terminate();
-            controller.awaitTerminated(10, TimeUnit.SECONDS);
+            controller.terminate().get(10, TimeUnit.SECONDS);
           }
         } catch (Exception e) {
           LOG.warn("Failed to terminate preview runner", e);
