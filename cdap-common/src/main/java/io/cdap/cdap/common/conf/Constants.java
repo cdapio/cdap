@@ -128,6 +128,7 @@ public final class Constants {
     public static final String MESSAGING_SERVICE = "messaging.service";
     public static final String RUNTIME = "runtime";
     public static final String AUTHENTICATION = "authentication";
+    public static final String TASK_DISPATCHER = "task.dispatcher";
 
     public static final String SERVICE_INSTANCE_TABLE_NAME = "cdap.services.instances";
     /** Scheduler queue name to submit the master service app. */
@@ -363,6 +364,22 @@ public final class Constants {
     public static final String CONTAINER_MEMORY_MULTIPLIER = "preview.runner.container.memory.multiplier";
     public static final String CONTAINER_HEAP_RESERVED_RATIO = "preview.runner.container.java.heap.memory.ratio";
     public static final String CONTAINER_PRIORITY_CLASS_NAME = "preview.runner.container.priority.class.name";
+  }
+
+  /**
+   * Task dispatcher
+   */
+  public static final class TaskDispatcher {
+    public static final String ENABLED = "enable.task.dispatcher";
+
+    public static final String ADDRESS = "task.dispatcher.bind.address";
+    public static final String PORT = "task.dispatcher.bind.port";
+
+    public static final String EXEC_THREADS = "task.dispatcher.exec.threads";
+    public static final String BOSS_THREADS = "task.dispatcher.boss.threads";
+    public static final String WORKER_THREADS = "task.dispatcher.worker.threads";
+
+    public static final String HANDLER_NAME = "task.dispatcher.handler.name";
   }
 
   /**

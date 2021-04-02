@@ -4196,4 +4196,42 @@
       Number of threads to be used for auto installing resources when a capability is enabled
     </description>
   </property>
+  <property>
+      <name>task.dispatcher.bind.address</name>
+      <value>0.0.0.0</value>
+      <description>
+        The bind address for the task dispatcher service.
+      </description>
+    </property>
+
+    <property>
+      <name>task.dispatcher.bind.port</name>
+      <value>0</value>
+      <description>
+        The port to bind the task dispatcher service to.
+      </description>
+    </property>
+      <property>
+      <name>task.dispatcher.exec.threads</name>
+      <value>10</value>
+      <description>
+        The number of executor threads for the task dispatcher service.
+      </description>
+    </property>
+
+    <property>
+      <name>task.dispatcher.boss.threads</name>
+      <value>1</value>
+      <description>
+        The number of boss threads for the task dispatcher service.
+      </description>
+    </property>
+
+    <property>
+      <name>task.dispatcher.worker.threads</name>
+      <value>10</value>
+      <description>
+        The number of worker threads in the dispatcher service.
+      </description>
+    </property>
 </configuration>
