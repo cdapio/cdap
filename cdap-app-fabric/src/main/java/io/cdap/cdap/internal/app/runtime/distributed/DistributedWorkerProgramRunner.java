@@ -28,11 +28,10 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.proto.ProgramType;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
-import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
 
@@ -51,8 +50,8 @@ public class DistributedWorkerProgramRunner extends DistributedProgramRunner
   }
 
   @Override
-  public ProgramController createProgramController(TwillController twillController, ProgramId programId, RunId runId) {
-    return new WorkerTwillProgramController(programId, twillController, runId).startListen();
+  public ProgramController createProgramController(ProgramRunId programRunId, TwillController twillController) {
+    return new WorkerTwillProgramController(programRunId, twillController).startListen();
   }
 
   @Override
