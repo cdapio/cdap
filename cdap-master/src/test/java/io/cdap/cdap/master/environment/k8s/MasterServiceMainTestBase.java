@@ -23,8 +23,10 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.security.KeyStores;
 import io.cdap.cdap.common.security.KeyStoresTest;
 import io.cdap.cdap.gateway.router.NettyRouter;
+import io.cdap.cdap.internal.app.dispatcher.TaskDispatcherServer;
 import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
 import io.cdap.cdap.logging.gateway.handlers.RemoteProgramRunRecordFetcher;
+import io.cdap.cdap.messaging.server.MessagingHttpService;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.server.ExternalAuthenticationServer;
 import org.apache.twill.common.Cancellable;
@@ -111,6 +113,7 @@ public class MasterServiceMainTestBase {
     List<Class<? extends AbstractServiceMain<EnvironmentOptions>>> serviceMainClasses = new ArrayList<>(
       Arrays.asList(RouterServiceMain.class,
                     MessagingServiceMain.class,
+                    TaskDispatcherServiceMain.class,
                     MetricsServiceMain.class,
                     LogsServiceMain.class,
                     MetadataServiceMain.class,
@@ -172,6 +175,17 @@ public class MasterServiceMainTestBase {
     ExternalAuthenticationServer externalAuthenticationServer = getServiceMainInstance(AuthenticationServiceMain.class)
         .getInjector().getInstance(ExternalAuthenticationServer.class);
     InetSocketAddress addr = externalAuthenticationServer.getSocketAddress();
+    return URI.create(String.format("https://%s:%d/", addr.getHostName(), addr.getPort()));
+  }
+
+  /**
+   * Returns the base URI for the task dispatcher
+   */
+  static URI getTaskDispatcherBaseURI() {
+    TaskDispatcherServer taskDispatcherServer = getServiceMainInstance(TaskDispatcherServiceMain.class)
+      .getInjector().getInstance(TaskDispatcherServer.class);
+    InetSocketAddress addr = taskDispatcherServer.getBindAddress();
+    System.out.println("wyzhang: getTaskDispatcherBaseURI " + addr.toString());
     return URI.create(String.format("https://%s:%d/", addr.getHostName(), addr.getPort()));
   }
 
