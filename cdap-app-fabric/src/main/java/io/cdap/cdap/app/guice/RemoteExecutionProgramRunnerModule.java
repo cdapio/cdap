@@ -26,6 +26,7 @@ import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
+import com.google.inject.name.Names;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
@@ -84,6 +85,9 @@ final class RemoteExecutionProgramRunnerModule extends AbstractModule {
 
         // This set of program runners are for isolated mode
         bind(ClusterMode.class).toInstance(ClusterMode.ISOLATED);
+        // No need to publish program state for remote execution runs since they will publish states and get
+        // collected back via the runtime monitoring
+        bindConstant().annotatedWith(Names.named(DefaultProgramRunnerFactory.PUBLISH_PROGRAM_STATE)).to(false);
         // TwillRunner used by the ProgramRunner is the remote execution one
         bind(TwillRunner.class).annotatedWith(Constants.AppFabric.ProgramRunner.class).to(TWILL_RUNNER_SERVICE_KEY);
         // ProgramRunnerFactory used by ProgramRunner is the remote execution one.

@@ -26,7 +26,6 @@ import io.cdap.cdap.api.annotation.TransactionControl;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.program.Program;
-import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramControllerCreator;
@@ -65,7 +64,6 @@ import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.tephra.TxConstants;
 import org.apache.twill.api.Configs;
 import org.apache.twill.api.EventHandler;
-import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunner;
@@ -146,20 +144,6 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
     SystemArguments.validateTransactionTimeout(options.getUserArguments().asMap(), cConf);
   }
 
-
-  /**
-   * Creates a {@link ProgramController} for the given program that was launched as a Twill application.
-   *
-   * @param twillController the {@link TwillController} to interact with the twill application
-   * @param programDescriptor information for the Program being launched
-   * @param runId the run id of the particular execution
-   * @return a new instance of {@link ProgramController}.
-   */
-  protected ProgramController createProgramController(TwillController twillController,
-                                                      ProgramDescriptor programDescriptor, RunId runId) {
-    return createProgramController(twillController, programDescriptor.getProgramId(), runId);
-  }
-
   /**
    * Provides the configuration for launching an program container.
    *
@@ -173,17 +157,6 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
    */
   protected abstract void setupLaunchConfig(ProgramLaunchConfig launchConfig, Program program, ProgramOptions options,
                                             CConfiguration cConf, Configuration hConf, File tempDir) throws IOException;
-
-  /**
-   * The extra hook to be called right before the program is launch. This method will be called with
-   * user impersonation.
-   *
-   * @param program the program to launch
-   * @param options the program options
-   */
-  protected void beforeLaunch(Program program, ProgramOptions options) {
-    // no-op
-  }
 
   @Override
   public final ProgramController run(final Program program, ProgramOptions oldOptions) {
@@ -240,6 +213,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
 
       ProgramOptions options = updateProgramOptions(oldOptions, localizeResources,
                                                     DirUtils.createTempDir(tempDir), extraSystemArgs);
+      ProgramRunId programRunId = program.getId().run(ProgramRunners.getRunId(options));
 
       // Localize the serialized program options
       localizeResources.put(PROGRAM_OPTIONS_FILE_NAME,
@@ -248,7 +222,6 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
                               File.createTempFile("program.options", ".json", tempDir))));
 
       Callable<ProgramController> callable = () -> {
-        ProgramRunId programRunId = program.getId().run(ProgramRunners.getRunId(options));
         ProgramTwillApplication twillApplication = new ProgramTwillApplication(
           programRunId, options, launchConfig.getRunnables(), launchConfig.getLaunchOrder(),
           localizeResources, createEventHandler(cConf, programRunId, options));
@@ -334,9 +307,6 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
           // Use the MainClassLoader for class rewriting
           .setClassLoader(MainClassLoader.class.getName());
 
-        // Invoke the before launch hook
-        beforeLaunch(program, options);
-
         TwillController twillController;
         // Change the context classloader to the combine classloader of this ProgramRunner and
         // all the classloaders of the dependencies classes so that Twill can trace classes.
@@ -355,12 +325,10 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
         } finally {
           ClassLoaders.setContextClassLoader(oldClassLoader);
         }
-        return createProgramController(addCleanupListener(twillController, program, tempDir),
-                                       new ProgramDescriptor(program.getId(), program.getApplicationSpecification()),
-                                       ProgramRunners.getRunId(options));
+
+        return createProgramController(programRunId, addCleanupListener(twillController, program, tempDir));
       };
 
-      ProgramRunId programRunId = program.getId().run(ProgramRunners.getRunId(options));
       return impersonator.doAs(programRunId, callable);
 
     } catch (Exception e) {
