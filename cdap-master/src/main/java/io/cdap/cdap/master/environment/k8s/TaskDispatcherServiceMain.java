@@ -17,17 +17,21 @@
 package io.cdap.cdap.master.environment.k8s;
 
 import com.google.common.util.concurrent.Service;
+import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
+import io.cdap.cdap.app.guice.UnsupportedExploreClient;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.DFSLocationModule;
+import io.cdap.cdap.common.guice.SupplierProviderBridge;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
+import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.gateway.handlers.CommonHandlers;
 import io.cdap.cdap.internal.app.dispatcher.TaskDispatcherHttpHandlerInternal;
 import io.cdap.cdap.internal.app.dispatcher.TaskDispatcherServer;
@@ -36,6 +40,8 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.http.HttpHandler;
+import org.apache.twill.api.TwillRunner;
+import org.apache.twill.api.TwillRunnerService;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,6 +68,15 @@ public class TaskDispatcherServiceMain extends AbstractServiceMain<EnvironmentOp
     List<Module> modules = new ArrayList<>(Arrays.asList(
       new DFSLocationModule(),
       new MessagingClientModule(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(TwillRunnerService.class).toProvider(
+            new SupplierProviderBridge<>(masterEnv.getTwillRunnerSupplier())).in(Scopes.SINGLETON);
+          bind(TwillRunner.class).to(TwillRunnerService.class);
+          bind(ExploreClient.class).to(UnsupportedExploreClient.class);
+        }
+      },
       new PrivateModule() {
         @Override
         protected void configure() {

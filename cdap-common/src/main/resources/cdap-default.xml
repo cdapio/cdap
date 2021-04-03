@@ -4234,4 +4234,28 @@
         The number of worker threads in the dispatcher service.
       </description>
     </property>
+
+  <property>
+    <name>task.dispatcher.worker.container.count</name>
+    <value>1</value>
+    <description>
+      Number of task worker containers for task execution.
+    </description>
+  </property>
+
+  <property>
+    <name>task.dispatcher.worker.container.memory.mb</name>
+    <value>756</value>
+    <description>
+      Memory in megabytes for each task worker.
+    </description>
+  </property>
+
+  <property>
+    <name>task.dispatcher.worker.container.num.cores</name>
+    <value>1</value>
+    <description>
+      Number of virtual cores for the task worker.
+    </description>
+  </property>
 </configuration>

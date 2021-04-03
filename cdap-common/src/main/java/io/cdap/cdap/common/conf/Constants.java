@@ -375,6 +375,18 @@ public final class Constants {
     public static final String WORKER_THREADS = "task.dispatcher.worker.threads";
 
     public static final String HANDLER_NAME = "task.dispatcher.handler.name";
+
+    /**
+     * Worker pool configurations
+     */
+    public static final String CONTAINER_COUNT = "task.dispatcher.worker.container.count";
+    public static final String CONTAINER_DISK_SIZE_GB = "task.dispatcher.worker.container.disk.size.gb";
+    public static final String CONTAINER_MEMORY_MB = "task.dispatcher.worker.container.memory.mb";
+    public static final String CONTAINER_CORES = "task.dispatcher.worker.container.num.cores";
+    public static final String CONTAINER_CPU_MULTIPLIER = "task.dispatcher.worker.container.cpu.multiplier";
+    public static final String CONTAINER_MEMORY_MULTIPLIER = "task.dispatcher.worker.container.memory.multiplier";
+    public static final String CONTAINER_HEAP_RESERVED_RATIO = "task.dispatcher.worker.container.java.heap.memory.ratio";
+    public static final String CONTAINER_PRIORITY_CLASS_NAME = "task.dispatcher.worker.container.priority.class.name";
   }
 
   /**
