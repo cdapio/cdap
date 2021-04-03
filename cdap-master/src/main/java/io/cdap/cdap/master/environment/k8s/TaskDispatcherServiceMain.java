@@ -99,6 +99,7 @@ public class TaskDispatcherServiceMain extends AbstractServiceMain<EnvironmentOp
                              MasterEnvironment masterEnv,
                              MasterEnvironmentContext masterEnvContext,
                              EnvironmentOptions options) {
+    services.add(new TwillRunnerServiceWrapper(injector.getInstance(TwillRunnerService.class)));
     services.add(injector.getInstance(TaskDispatcherServer.class));
   }
 
