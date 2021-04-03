@@ -235,7 +235,9 @@
 
   <property>
     <name>twill.jvm.gc.opts</name>
-    <value>-XX:+UseG1GC -verbose:gc -Xloggc:&lt;LOG_DIR&gt;/gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M</value>
+    <value>-XX:+UseG1GC -verbose:gc -Xloggc:&lt;LOG_DIR&gt;/gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps
+      -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M
+    </value>
     <description>
       Java garbage collection options for all Apache Twill containers;
       "&lt;LOG_DIR&gt;" is the location of the log directory in the
@@ -2204,7 +2206,9 @@
 
   <property>
     <name>messaging.system.topics</name>
-    <value>${audit.topic},${metadata.messaging.topic},${data.event.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${metrics.admin.topic},${time.event.topic},${program.status.event.topic},${program.status.record.event.topic},${log.tms.topic.prefix}:${log.publish.num.partitions},${preview.messaging.topic},previewlog0</value>
+    <value>
+      ${audit.topic},${metadata.messaging.topic},${data.event.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${metrics.admin.topic},${time.event.topic},${program.status.event.topic},${program.status.record.event.topic},${log.tms.topic.prefix}:${log.publish.num.partitions},${preview.messaging.topic},previewlog0
+    </value>
     <description>
       A comma-separated list of topics that are always available in the
       system namespace. Multiple topics sharing the same prefix and
@@ -2737,7 +2741,9 @@
 
   <property>
     <name>app.program.runtime.monitor.topics.configs</name>
-    <value>audit.topic,data.event.topic,metadata.messaging.topic,metrics.topic.prefix:${metrics.messaging.topic.num},program.status.event.topic,log.tms.topic.prefix:${log.publish.num.partitions}</value>
+    <value>
+      audit.topic,data.event.topic,metadata.messaging.topic,metrics.topic.prefix:${metrics.messaging.topic.num},program.status.event.topic,log.tms.topic.prefix:${log.publish.num.partitions}
+    </value>
     <description>
       A comma-separated list of topic config to be monitored by runtime monitor
     </description>
@@ -4197,44 +4203,33 @@
     </description>
   </property>
   <property>
-      <name>task.dispatcher.bind.address</name>
-      <value>0.0.0.0</value>
-      <description>
-        The bind address for the task dispatcher service.
-      </description>
-    </property>
-
-    <property>
-      <name>task.dispatcher.bind.port</name>
-      <value>0</value>
-      <description>
-        The port to bind the task dispatcher service to.
-      </description>
-    </property>
-      <property>
-      <name>task.dispatcher.exec.threads</name>
-      <value>10</value>
-      <description>
-        The number of executor threads for the task dispatcher service.
-      </description>
-    </property>
-
-    <property>
-      <name>task.dispatcher.boss.threads</name>
-      <value>1</value>
-      <description>
-        The number of boss threads for the task dispatcher service.
-      </description>
-    </property>
-
-    <property>
-      <name>task.dispatcher.worker.threads</name>
-      <value>10</value>
-      <description>
-        The number of worker threads in the dispatcher service.
-      </description>
-    </property>
-
+    <name>task.dispatcher.bind.address</name>
+    <value>0.0.0.0</value>
+    <description>
+      The bind address for the task dispatcher service.
+    </description>
+  </property>
+  <property>
+    <name>task.dispatcher.bind.port</name>
+    <value>0</value>
+    <description>
+      The port to bind the task dispatcher service to.
+    </description>
+  </property>
+  <property>
+    <name>task.dispatcher.exec.threads</name>
+    <value>10</value>
+    <description>
+      The number of executor threads for the task dispatcher service.
+    </description>
+  </property>
+  <property>
+    <name>task.dispatcher.boss.threads</name>
+    <value>1</value>
+    <description>
+      The number of boss threads for the task dispatcher service.
+    </description>
+  </property>
   <property>
     <name>task.dispatcher.worker.container.count</name>
     <value>1</value>
@@ -4256,6 +4251,44 @@
     <value>1</value>
     <description>
       Number of virtual cores for the task worker.
+    </description>
+  </property>
+
+
+  <property>
+    <name>task.worker.bind.address</name>
+    <value>0.0.0.0</value>
+    <description>
+      The bind address for the task dispatcher service.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.bind.port</name>
+    <value>0</value>
+    <description>
+      The port to bind the task dispatcher service to.
+    </description>
+  </property>
+  <property>
+    <name>task.worker.worker.threads</name>
+    <value>10</value>
+    <description>
+      The number of worker threads in the task worker.
+    </description>
+  </property>
+  <property>
+    <name>task.worker.exec.threads</name>
+    <value>10</value>
+    <description>
+      The number of executor threads for the task worker.
+    </description>
+  </property>
+  <property>
+    <name>task.worker.boss.threads</name>
+    <value>1</value>
+    <description>
+      The number of boss threads for the task worker.
     </description>
   </property>
 </configuration>
