@@ -18,6 +18,8 @@ package io.cdap.cdap.internal.app.dispatcher;
 
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
+import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.junit.Test;
 
 import java.util.concurrent.ExecutionException;
@@ -31,13 +33,23 @@ public class TaskWorkerServiceTest {
   private CConfiguration createCConf() {
     CConfiguration cConf = CConfiguration.create();
     cConf.setLong(Constants.Preview.REQUEST_POLL_DELAY_MILLIS, 200);
+    cConf.setBoolean(Constants.Security.SSL.INTERNAL_ENABLED, true);
     return cConf;
+  }
+
+  private SConfiguration createSConf() {
+    SConfiguration sConf = SConfiguration.create();
+    return sConf;
   }
 
   @Test
   public void testStartAndStop() throws InterruptedException, ExecutionException, TimeoutException {
-    TaskWorkerService taskWorkerService = new TaskWorkerService(createCConf());
+    CConfiguration cConf = CConfiguration.create();
+    SConfiguration sConf = SConfiguration.create();
+    InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
+    TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, sConf, discoveryService);
     taskWorkerService.startAndWait();
+
     taskWorkerService.stopAndWait();
   }
 }

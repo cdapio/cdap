@@ -129,6 +129,7 @@ public final class Constants {
     public static final String RUNTIME = "runtime";
     public static final String AUTHENTICATION = "authentication";
     public static final String TASK_DISPATCHER = "task.dispatcher";
+    public static final String TASK_WORKER = "task.worker";
 
     public static final String SERVICE_INSTANCE_TABLE_NAME = "cdap.services.instances";
     /** Scheduler queue name to submit the master service app. */
@@ -392,6 +393,18 @@ public final class Constants {
     public static final String CONTAINER_MEMORY_MULTIPLIER = "task.dispatcher.worker.container.memory.multiplier";
     public static final String CONTAINER_HEAP_RESERVED_RATIO = "task.dispatcher.worker.container.java.heap.memory.ratio";
     public static final String CONTAINER_PRIORITY_CLASS_NAME = "task.dispatcher.worker.container.priority.class.name";
+  }
+
+  /**
+   * Task worker
+   */
+  public static final class TaskWorker {
+    public static final String ADDRESS = "task.worker.bind.address";
+    public static final String PORT = "task.worker.bind.port";
+
+    public static final String EXEC_THREADS = "task.worker.exec.threads";
+    public static final String BOSS_THREADS = "task.worker.boss.threads";
+    public static final String WORKER_THREADS = "task.worker.worker.threads";
   }
 
   /**
