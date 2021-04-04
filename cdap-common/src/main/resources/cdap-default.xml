@@ -4224,6 +4224,13 @@
     </description>
   </property>
   <property>
+    <name>task.dispatcher.worker.threads</name>
+    <value>10</value>
+    <description>
+      The number of executor threads for the task dispatcher worker.
+    </description>
+  </property>
+  <property>
     <name>task.dispatcher.boss.threads</name>
     <value>1</value>
     <description>
@@ -4253,8 +4260,6 @@
       Number of virtual cores for the task worker.
     </description>
   </property>
-
-
   <property>
     <name>task.worker.bind.address</name>
     <value>0.0.0.0</value>
