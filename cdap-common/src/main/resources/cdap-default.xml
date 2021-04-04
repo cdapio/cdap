@@ -4239,7 +4239,7 @@
   </property>
   <property>
     <name>task.dispatcher.worker.container.count</name>
-    <value>1</value>
+    <value>2</value>
     <description>
       Number of task worker containers for task execution.
     </description>
@@ -4270,7 +4270,7 @@
 
   <property>
     <name>task.worker.bind.port</name>
-    <value>0</value>
+    <value>80</value>
     <description>
       The port to bind the task dispatcher service to.
     </description>
