@@ -16,15 +16,15 @@
 
 package io.cdap.cdap.k8s.runtime;
 
-import com.squareup.okhttp.Call;
 import io.cdap.cdap.k8s.common.AbstractWatcherThread;
 import io.cdap.cdap.k8s.common.ResourceChangeListener;
-import io.kubernetes.client.ApiClient;
-import io.kubernetes.client.ApiException;
-import io.kubernetes.client.apis.AppsV1Api;
-import io.kubernetes.client.models.V1Deployment;
-import io.kubernetes.client.models.V1StatefulSet;
+import io.kubernetes.client.openapi.ApiClient;
+import io.kubernetes.client.openapi.ApiException;
+import io.kubernetes.client.openapi.apis.AppsV1Api;
+import io.kubernetes.client.openapi.models.V1Deployment;
+import io.kubernetes.client.openapi.models.V1StatefulSet;
 import io.kubernetes.client.util.Config;
+import okhttp3.Call;
 import org.apache.twill.common.Cancellable;
 
 import java.io.IOException;
@@ -47,8 +47,8 @@ abstract class AppResourceWatcherThread<T> extends AbstractWatcherThread<T> {
     return new AppResourceWatcherThread<V1Deployment>("kube-deployment-watch", namespace, selector) {
       @Override
       protected Call createCall(String namespace, @Nullable String labelSelector) throws IOException, ApiException {
-        return getAppsApi().listNamespacedDeploymentCall(namespace, null, null, null, labelSelector,
-                                                         null, null, null, true, null, null);
+        return getAppsApi().listNamespacedDeploymentCall(namespace, null, null, null, null, labelSelector,
+                                                         null, null, null, true, null);
       }
     };
   }
@@ -60,8 +60,8 @@ abstract class AppResourceWatcherThread<T> extends AbstractWatcherThread<T> {
     return new AppResourceWatcherThread<V1StatefulSet>("kube-statefulset-watch", namespace, selector) {
       @Override
       protected Call createCall(String namespace, @Nullable String labelSelector) throws IOException, ApiException {
-        return getAppsApi().listNamespacedStatefulSetCall(namespace, null, null, null, labelSelector,
-                                                          null, null, null, true, null, null);
+        return getAppsApi().listNamespacedStatefulSetCall(namespace, null, null, null, null, labelSelector,
+                                                          null, null, null, true, null);
       }
     };
   }
@@ -128,10 +128,8 @@ abstract class AppResourceWatcherThread<T> extends AbstractWatcherThread<T> {
         return api;
       }
 
-      ApiClient client = Config.defaultClient();
-
-      // Set a reasonable timeout for the watch.
-      client.getHttpClient().setReadTimeout(5, TimeUnit.MINUTES);
+      ApiClient client = Config.defaultClient()
+        .setReadTimeout((int) TimeUnit.MILLISECONDS.convert(5L, TimeUnit.MINUTES));
 
       appsApi = api = new AppsV1Api(client);
       return api;

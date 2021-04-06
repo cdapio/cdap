@@ -22,13 +22,12 @@ import io.cdap.cdap.k8s.common.AbstractWatcherThread;
 import io.cdap.cdap.k8s.common.ResourceChangeListener;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
-import io.kubernetes.client.ApiClient;
-import io.kubernetes.client.models.V1Deployment;
-import io.kubernetes.client.models.V1ObjectMeta;
-import io.kubernetes.client.models.V1StatefulSet;
+import io.kubernetes.client.common.KubernetesObject;
+import io.kubernetes.client.openapi.ApiClient;
+import io.kubernetes.client.openapi.models.V1Deployment;
+import io.kubernetes.client.openapi.models.V1ObjectMeta;
+import io.kubernetes.client.openapi.models.V1StatefulSet;
 import io.kubernetes.client.util.Config;
-import io.kubernetes.client.util.Reflect;
-import io.kubernetes.client.util.exception.ObjectMetaReflectException;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.SecureStoreUpdater;
@@ -343,12 +342,11 @@ public class KubeTwillRunnerService implements TwillRunnerService {
    */
   @Nullable
   private V1ObjectMeta getMetadata(Object resource) {
-    try {
-      return Reflect.objectMetadata(resource);
-    } catch (ObjectMetaReflectException e) {
-      LOG.warn("Failed to extract object metadata from resource {}", resource, e);
+    if (!(resource instanceof KubernetesObject)) {
+      LOG.warn("Failed to extract object metadata because resource {} is not a  KubernetesObject", resource);
       return null;
     }
+    return ((KubernetesObject) resource).getMetadata();
   }
 
   /**

@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.master.environment.k8s;
 
-import io.kubernetes.client.models.V1EnvVar;
-import io.kubernetes.client.models.V1OwnerReference;
-import io.kubernetes.client.models.V1Volume;
-import io.kubernetes.client.models.V1VolumeMount;
+import io.kubernetes.client.openapi.models.V1EnvVar;
+import io.kubernetes.client.openapi.models.V1OwnerReference;
+import io.kubernetes.client.openapi.models.V1Volume;
+import io.kubernetes.client.openapi.models.V1VolumeMount;
 
 import java.util.ArrayList;
 import java.util.Collections;

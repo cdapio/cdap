@@ -19,10 +19,10 @@ package io.cdap.cdap.k8s.common;
 import com.google.common.collect.Range;
 import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
-import com.squareup.okhttp.Call;
-import io.kubernetes.client.ApiClient;
-import io.kubernetes.client.ApiException;
+import io.kubernetes.client.openapi.ApiClient;
+import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.util.Watch;
+import okhttp3.Call;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

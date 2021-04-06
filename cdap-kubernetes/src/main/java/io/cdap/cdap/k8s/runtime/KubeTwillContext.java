@@ -17,16 +17,16 @@
 package io.cdap.cdap.k8s.runtime;
 
 import com.google.common.collect.ImmutableSet;
-import com.squareup.okhttp.Call;
 import io.cdap.cdap.k8s.common.AbstractWatcherThread;
 import io.cdap.cdap.master.environment.k8s.KubeMasterEnvironment;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.spi.twill.ExtendedTwillContext;
-import io.kubernetes.client.ApiClient;
-import io.kubernetes.client.ApiException;
-import io.kubernetes.client.apis.CustomObjectsApi;
-import io.kubernetes.client.models.V1OwnerReference;
+import io.kubernetes.client.openapi.ApiClient;
+import io.kubernetes.client.openapi.ApiException;
+import io.kubernetes.client.openapi.apis.CustomObjectsApi;
+import io.kubernetes.client.openapi.models.V1OwnerReference;
 import io.kubernetes.client.util.Config;
+import okhttp3.Call;
 import org.apache.twill.api.ElectionHandler;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.RuntimeSpecification;
@@ -236,9 +236,7 @@ public class KubeTwillContext implements ExtendedTwillContext, Closeable {
       return () -> { };
     }
 
-    ApiClient client = Config.defaultClient();
-    // Set a reasonable timeout for the watch.
-    client.getHttpClient().setReadTimeout(5, TimeUnit.MINUTES);
+    ApiClient client = Config.defaultClient().setReadTimeout((int) TimeUnit.MILLISECONDS.convert(5L, TimeUnit.MINUTES));
 
     CustomObjectsApi api = new CustomObjectsApi(client);
 
@@ -255,8 +253,8 @@ public class KubeTwillContext implements ExtendedTwillContext, Closeable {
                                                                                     podInfo.getNamespace()) {
       @Override
       protected Call createCall(String namespace, @Nullable String labelSelector) throws ApiException {
-        return api.listNamespacedCustomObjectCall(group, version, namespace, plurals, null, fieldSelector,
-                                                  labelSelector, null, null, true, null, null);
+        return api.listNamespacedCustomObjectCall(group, version, namespace, plurals, null, null, fieldSelector,
+                                                  labelSelector, null, null, null, true, null);
       }
 
       @Override

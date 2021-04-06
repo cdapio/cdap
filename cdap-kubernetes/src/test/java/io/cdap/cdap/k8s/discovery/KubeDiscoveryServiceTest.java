@@ -18,8 +18,8 @@ package io.cdap.cdap.k8s.discovery;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.MoreExecutors;
-import io.kubernetes.client.apis.CoreV1Api;
-import io.kubernetes.client.models.V1DeleteOptions;
+import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.openapi.models.V1DeleteOptions;
 import io.kubernetes.client.util.Config;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.ServiceDiscovered;
@@ -98,7 +98,7 @@ public class KubeDiscoveryServiceTest {
       // Cleanup the created service
       CoreV1Api api = new CoreV1Api(Config.defaultClient());
       V1DeleteOptions deleteOptions = new V1DeleteOptions();
-      api.deleteNamespacedService("cdap-test-test-service", "default", null, deleteOptions, null, null, null, null);
+      api.deleteNamespacedService("cdap-test-test-service", "default", null, null, null, null, null, deleteOptions);
     }
   }
 }

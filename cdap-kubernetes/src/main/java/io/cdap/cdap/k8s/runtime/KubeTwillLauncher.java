@@ -24,10 +24,10 @@ import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
-import io.kubernetes.client.ApiClient;
-import io.kubernetes.client.apis.CoreV1Api;
-import io.kubernetes.client.models.V1DeleteOptions;
-import io.kubernetes.client.models.V1Preconditions;
+import io.kubernetes.client.openapi.ApiClient;
+import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.openapi.models.V1DeleteOptions;
+import io.kubernetes.client.openapi.models.V1Preconditions;
 import io.kubernetes.client.util.Config;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.RuntimeSpecification;
@@ -145,8 +145,8 @@ public class KubeTwillLauncher implements MasterEnvironmentRunnable {
       ApiClient apiClient = Config.defaultClient();
       CoreV1Api api = new CoreV1Api(apiClient);
       V1DeleteOptions delOptions = new V1DeleteOptions().preconditions(new V1Preconditions().uid(podInfo.getUid()));
-      api.deleteNamespacedPodAsync(podInfo.getName(), podInfo.getNamespace(), null, delOptions,
-                                   null, null, null, null, new ApiCallbackAdapter<>());
+      api.deleteNamespacedPodAsync(podInfo.getName(), podInfo.getNamespace(), null, null,
+                                   null, null, null, delOptions, new ApiCallbackAdapter<>());
     } catch (Exception e) {
       LOG.warn("Failed to delete pod {} with uid {}", podInfo.getName(), podInfo.getUid(), e);
     }

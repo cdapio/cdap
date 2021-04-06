@@ -18,8 +18,8 @@ package io.cdap.cdap.master.environment.k8s;
 
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentTask;
-import io.kubernetes.client.ApiException;
-import io.kubernetes.client.apis.CoreV1Api;
+import io.kubernetes.client.openapi.ApiException;
+import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.util.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +49,8 @@ final class PodKillerTask implements MasterEnvironmentTask {
     try {
       CoreV1Api api = getCoreApi();
       LOG.debug("Terminating pods using selector {}", podSelector);
-      api.deleteCollectionNamespacedPod(namespace, null, null, null, podSelector, null, null, null, null);
+      api.deleteCollectionNamespacedPod(namespace, null, null, null, null, null, podSelector, null, null, null,
+                                        null, null, null);
       LOG.debug("Pods termination completed");
     } catch (IOException e) {
       LOG.warn("IO Exception raised when connecting to Kubernetes API server", e);
