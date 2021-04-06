@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.dispatcher;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.logging.gateway.handlers.AbstractLogHttpHandler;
@@ -29,6 +30,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -48,14 +50,14 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
   }
 
   @POST
-  @Path("/run")
-  public void poll(FullHttpRequest request, HttpResponder responder) {
-    responder.sendStatus(HttpResponseStatus.OK);
+  @Path("/echo")
+  public void run(FullHttpRequest request, HttpResponder responder) {
+    responder.sendString(HttpResponseStatus.OK, request.content().toString(StandardCharsets.UTF_8));
   }
 
   @GET
   @Path("/get")
   public void get(FullHttpRequest request, HttpResponder responder) throws Exception {
-    responder.sendStatus(HttpResponseStatus.OK);
+    responder.sendString(HttpResponseStatus.OK, "Get succeeded");
   }
 }
