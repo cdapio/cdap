@@ -22,6 +22,9 @@ import io.cdap.cdap.common.FeatureDisabledException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.Privilege;
+import io.cdap.cdap.proto.security.Role;
 import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
 import io.cdap.cdap.security.spi.authorization.Authorizer;
 import io.cdap.cdap.security.spi.authorization.NoOpAuthorizer;
@@ -35,6 +38,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Properties;
+import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -172,7 +176,7 @@ public class AuthorizerInstantiatorTest extends AuthorizationTestBase {
   }
 
   @Test
-  public void testAuthorizerExtension() throws IOException, ClassNotFoundException {
+  public void testAuthorizerExtension() throws Exception {
     Location externalAuthJar = createValidAuthExtensionJar();
     CConfiguration cConfCopy = CConfiguration.copy(CCONF);
     cConfCopy.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
@@ -185,6 +189,8 @@ public class AuthorizerInstantiatorTest extends AuthorizationTestBase {
     try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
       // should be able to load the ExternalAuthorizer class via the AuthorizerInstantiatorService
       Authorizer externalAuthorizer1 = instantiator.get();
+      externalAuthorizer1.listAllRoles();
+      externalAuthorizer1.listPrivileges(new Principal("test", Principal.PrincipalType.USER));
 
       ClassLoader authorizerClassLoader = externalAuthorizer1.getClass().getClassLoader();
 
@@ -276,7 +282,16 @@ public class AuthorizerInstantiatorTest extends AuthorizationTestBase {
     }
   }
 
-  public static final class ValidExternalAuthorizer extends NoOpAuthorizer {
+  public static class ValidExternalAuthorizerBase extends NoOpAuthorizer {
+
+    @Override
+    public Set<Role> listAllRoles() {
+      Assert.assertEquals(getClass().getClassLoader(), Thread.currentThread().getContextClassLoader());
+      return super.listAllRoles();
+    }
+  }
+
+  public static final class ValidExternalAuthorizer extends ValidExternalAuthorizerBase {
     private Properties properties;
     @Override
     public void initialize(AuthorizationContext context) throws Exception {
@@ -285,6 +300,12 @@ public class AuthorizerInstantiatorTest extends AuthorizationTestBase {
 
     public Properties getProperties() {
       return properties;
+    }
+
+    @Override
+    public Set<Privilege> listPrivileges(Principal principal) {
+      Assert.assertEquals(getClass().getClassLoader(), Thread.currentThread().getContextClassLoader());
+      return super.listPrivileges(principal);
     }
   }
 

@@ -20,14 +20,13 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.common.io.Closeables;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.lang.InstantiatorFactory;
-import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
 import io.cdap.cdap.security.spi.authorization.Authorizer;
@@ -37,15 +36,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Map;
 import java.util.Properties;
 import java.util.jar.Attributes;
-import java.util.jar.JarFile;
-import java.util.jar.Manifest;
-import java.util.zip.ZipException;
 import javax.annotation.Nullable;
 
 /**
@@ -77,23 +71,20 @@ import javax.annotation.Nullable;
 public class AuthorizerInstantiator implements Closeable, Supplier<Authorizer> {
 
   private static final Logger LOG = LoggerFactory.getLogger(AuthorizerInstantiator.class);
+  private static final Authorizer NOOP_AUTHORIZER = new NoOpAuthorizer();
 
   private final CConfiguration cConf;
-  private final boolean authenticationEnabled;
-  private final boolean authorizationEnabled;
   private final InstantiatorFactory instantiatorFactory;
   private final AuthorizationContextFactory authorizationContextFactory;
 
-  private File tmpDir;
+  private volatile Authorizer authorizer;
   private AuthorizerClassLoader authorizerClassLoader;
-  private Authorizer authorizer;
+  private boolean closed;
 
   @Inject
   @VisibleForTesting
   public AuthorizerInstantiator(CConfiguration cConf, AuthorizationContextFactory authorizationContextFactory) {
     this.cConf = cConf;
-    this.authenticationEnabled = cConf.getBoolean(Constants.Security.ENABLED);
-    this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
     this.instantiatorFactory = new InstantiatorFactory(false);
     this.authorizationContextFactory = authorizationContextFactory;
   }
@@ -103,61 +94,68 @@ public class AuthorizerInstantiator implements Closeable, Supplier<Authorizer> {
    * authorization is disabled.
    */
   @Override
-  public synchronized Authorizer get() {
+  public Authorizer get() {
+    if (!cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
+      LOG.debug("Authorization is disabled. Authorization can be enabled  by setting " +
+                  Constants.Security.Authorization.ENABLED + " to true.");
+      return NOOP_AUTHORIZER;
+    }
+    if (!cConf.getBoolean(Constants.Security.ENABLED)) {
+      LOG.warn("Authorization is enabled. However, authentication is disabled. Authorization policies will not be " +
+                 "enforced. To enforce authorization policies please enable both authorization, by setting " +
+                 Constants.Security.Authorization.ENABLED + " to true and authentication, by setting " +
+                 Constants.Security.ENABLED + "to true.");
+      return NOOP_AUTHORIZER;
+    }
+
+    // Authorization is enabled
+    Authorizer authorizer = this.authorizer;
     if (authorizer != null) {
       return authorizer;
     }
 
-    if (!authorizationEnabled) {
-      LOG.debug("Authorization is disabled. Authorization can be enabled  by setting " +
-                  Constants.Security.Authorization.ENABLED + " to true.");
-      authorizer = new NoOpAuthorizer();
-      return authorizer;
+    synchronized (this) {
+      authorizer = this.authorizer;
+      if (authorizer != null) {
+        return authorizer;
+      }
+
+      if (closed) {
+        throw new RuntimeException("Cannot create Authorizer due to resources were closed");
+      }
+
+      String authorizerExtensionJarPath = cConf.get(Constants.Security.Authorization.EXTENSION_JAR_PATH);
+      String authorizerExtraClasspath = cConf.get(Constants.Security.Authorization.EXTENSION_EXTRA_CLASSPATH);
+      if (Strings.isNullOrEmpty(authorizerExtensionJarPath)) {
+        throw new IllegalArgumentException(
+          String.format("Authorizer extension jar path not found in configuration. Please set %s in cdap-site.xml to " +
+                          "the fully qualified path of the jar file to use as the authorization backend.",
+                        Constants.Security.Authorization.EXTENSION_JAR_PATH));
+      }
+      try {
+        File authorizerExtensionJar = new File(authorizerExtensionJarPath);
+        ensureValidAuthExtensionJar(authorizerExtensionJar);
+        authorizerClassLoader = createAuthorizerClassLoader(authorizerExtensionJar, authorizerExtraClasspath);
+        this.authorizer = authorizer = createAuthorizer(authorizerClassLoader);
+        return authorizer;
+      } catch (Exception e) {
+        throw Throwables.propagate(e);
+      }
     }
-    if (!authenticationEnabled) {
-      LOG.info("Authorization is enabled. However, authentication is disabled. Authorization policies will not be " +
-                 "enforced. To enforce authorization policies please enable both authorization, by setting " +
-                 Constants.Security.Authorization.ENABLED + " to true and authentication, by setting " +
-                 Constants.Security.ENABLED + "to true.");
-      authorizer = new NoOpAuthorizer();
-      return authorizer;
-    }
-    // Authorization is enabled, so continue with startup now
-    String authorizerExtensionJarPath = cConf.get(Constants.Security.Authorization.EXTENSION_JAR_PATH);
-    String authorizerExtraClasspath = cConf.get(Constants.Security.Authorization.EXTENSION_EXTRA_CLASSPATH);
-    if (Strings.isNullOrEmpty(authorizerExtensionJarPath)) {
-      throw new IllegalArgumentException(
-        String.format("Authorizer extension jar path not found in configuration. Please set %s in cdap-site.xml to " +
-                        "the fully qualified path of the jar file to use as the authorization backend.",
-                      Constants.Security.Authorization.EXTENSION_JAR_PATH));
-    }
-    try {
-      File authorizerExtensionJar = new File(authorizerExtensionJarPath);
-      ensureValidAuthExtensionJar(authorizerExtensionJar);
-      File absoluteTmpFile = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                                      cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
-      tmpDir = DirUtils.createTempDir(absoluteTmpFile);
-      authorizerClassLoader = createAuthorizerClassLoader(authorizerExtensionJar, authorizerExtraClasspath);
-      authorizer = createAndInitializeAuthorizerInstance(authorizerExtensionJar);
-    } catch (Exception e) {
-      Throwables.propagate(e);
-    }
-    return authorizer;
   }
 
   /**
    * Creates a new instance of the configured {@link Authorizer} extension, based on the provided extension jar
-   * file.
+   * file and initialize it.
    *
    * @return a new instance of the configured {@link Authorizer} extension
    */
-  private Authorizer createAndInitializeAuthorizerInstance(File authorizerExtensionJar)
-    throws IOException, InvalidAuthorizerException {
-    Class<? extends Authorizer> authorizerClass = loadAuthorizerClass(authorizerExtensionJar);
+  private Authorizer createAuthorizer(AuthorizerClassLoader classLoader) throws InvalidAuthorizerException {
+    Class<? extends Authorizer> authorizerClass = loadAuthorizerClass(classLoader);
     // Set the context class loader to the AuthorizerClassLoader before creating a new instance of the extension,
     // so all classes required in this process are created from the AuthorizerClassLoader.
-    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(authorizerClassLoader);
-    LOG.debug("Setting context classloader to {}. Old classloader was {}.", authorizerClassLoader, oldClassLoader);
+    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(classLoader);
+    LOG.trace("Setting context classloader to {}. Old classloader was {}.", classLoader, oldClassLoader);
     try {
       Authorizer authorizer;
       try {
@@ -179,7 +177,7 @@ public class AuthorizerInstantiator implements Closeable, Supplier<Authorizer> {
       // After the process of creation of a new instance has completed (success or failure), reset the context
       // classloader back to the original class loader.
       ClassLoaders.setContextClassLoader(oldClassLoader);
-      LOG.debug("Resetting context classloader to {} from {}.", oldClassLoader, authorizerClassLoader);
+      LOG.trace("Resetting context classloader to {} from {}.", oldClassLoader, classLoader);
     }
   }
 
@@ -196,72 +194,46 @@ public class AuthorizerInstantiator implements Closeable, Supplier<Authorizer> {
     return extensionProperties;
   }
 
-  private AuthorizerClassLoader createAuthorizerClassLoader(File authorizerExtensionJar,
-                                                            @Nullable String authorizerExtraClasspath)
-    throws IOException, InvalidAuthorizerException {
-    LOG.info("Creating authorization extension using jar {}.", authorizerExtensionJar);
+  private AuthorizerClassLoader createAuthorizerClassLoader(File extensionJar,
+                                                            @Nullable String extraClasspath)
+    throws InvalidAuthorizerException {
+    LOG.info("Creating authorization extension using jar {}.", extensionJar);
+
+    File tmpDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                                                  cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
     try {
-      BundleJarUtil.prepareClassLoaderFolder(Locations.toLocation(authorizerExtensionJar), tmpDir);
-      return new AuthorizerClassLoader(tmpDir, authorizerExtraClasspath);
-    } catch (ZipException e) {
-      throw new InvalidAuthorizerException(
-        String.format("Authorization extension jar %s specified as %s must be a jar file.", authorizerExtensionJar,
-                      Constants.Security.Authorization.EXTENSION_JAR_PATH), e
-      );
+      return new AuthorizerClassLoader(tmpDir, extensionJar, extraClasspath);
+    } catch (IOException e) {
+      try {
+        DirUtils.deleteDirectoryContents(tmpDir);
+      } catch (IOException ex) {
+        e.addSuppressed(ex);
+      }
+      throw new InvalidAuthorizerException("Failed to load authorization extension from " + extensionJar + ".", e);
     }
   }
 
   @SuppressWarnings("unchecked")
-  private Class<? extends Authorizer> loadAuthorizerClass(File authorizerExtensionJar)
-    throws IOException, InvalidAuthorizerException {
-    String authorizerClassName = getAuthorizerClassName(authorizerExtensionJar);
+  private Class<? extends Authorizer> loadAuthorizerClass(AuthorizerClassLoader classLoader)
+    throws InvalidAuthorizerException {
+
+    String authorizerClassName = classLoader.getAuthorizerClassName();
     Class<?> authorizerClass;
     try {
-      authorizerClass = authorizerClassLoader.loadClass(authorizerClassName);
+      authorizerClass = classLoader.loadClass(authorizerClassName);
     } catch (ClassNotFoundException e) {
       throw new InvalidAuthorizerException(
         String.format("Authorizer extension class %s not found. Please make sure that the right class is specified " +
                         "in the extension jar's manifest located at %s.",
-                      authorizerClassName, authorizerExtensionJar), e);
+                      authorizerClassName, classLoader.getExtensionJar()), e);
     }
     if (!Authorizer.class.isAssignableFrom(authorizerClass)) {
       throw new InvalidAuthorizerException(
         String.format("Class %s defined as %s in the authorization extension's manifest at %s must implement %s",
-                      authorizerClass.getName(), Attributes.Name.MAIN_CLASS, authorizerExtensionJar,
+                      authorizerClass.getName(), Attributes.Name.MAIN_CLASS, classLoader.getExtensionJar(),
                       Authorizer.class.getName()));
     }
     return (Class<? extends Authorizer>) authorizerClass;
-  }
-
-  /**
-   * Inspect the given auth extension jar to find the {@link Authorizer} class contained in it.
-   *
-   * @param authorizerExtensionJar the bundled jar file for the authorizer extension
-   * @return name of the class defined as the {@link Attributes.Name#MAIN_CLASS} in the authorizer extension jar
-   * @throws IOException if there was an exception opening the jar file
-   */
-  private String getAuthorizerClassName(File authorizerExtensionJar) throws IOException, InvalidAuthorizerException {
-    File manifestFile = new File(tmpDir, JarFile.MANIFEST_NAME);
-    if (!manifestFile.isFile() && !manifestFile.exists()) {
-      throw new InvalidAuthorizerException(
-        String.format("No Manifest found in authorizer extension jar '%s'.", authorizerExtensionJar));
-    }
-    try (InputStream is = new FileInputStream(manifestFile)) {
-      Manifest manifest = new Manifest(is);
-      Attributes manifestAttributes = manifest.getMainAttributes();
-      if (manifestAttributes == null) {
-        throw new InvalidAuthorizerException(
-          String.format("No attributes found in authorizer extension jar '%s'.", authorizerExtensionJar));
-      }
-      if (!manifestAttributes.containsKey(Attributes.Name.MAIN_CLASS)) {
-        throw new InvalidAuthorizerException(
-          String.format("Authorizer class not set in the manifest of the authorizer extension jar located at %s. " +
-                          "Please set the attribute %s to the fully qualified class name of the class that " +
-                          "implements %s in the extension jar's manifest.",
-                        authorizerExtensionJar, Attributes.Name.MAIN_CLASS, Authorizer.class.getName()));
-      }
-      return manifestAttributes.getValue(Attributes.Name.MAIN_CLASS);
-    }
   }
 
   private void ensureValidAuthExtensionJar(File authorizerExtensionJar) throws InvalidAuthorizerException {
@@ -281,34 +253,19 @@ public class AuthorizerInstantiator implements Closeable, Supplier<Authorizer> {
 
   @Override
   public void close() throws IOException {
-    if (authorizer != null) {
-      try {
-        authorizer.destroy();
-      } catch (Throwable t) {
-        LOG.warn("Failed to destroy authorizer.", t);
-      }
-    }
+    try {
+      synchronized (this) {
+        closed = true;
+        Authorizer authorizer = this.authorizer;
 
-    if (!authorizationEnabled || !authenticationEnabled) {
-      // nothing to close, since we would not have created a class loader
-      return;
-    }
-
-    if (authorizerClassLoader != null) {
-      try {
-        authorizerClassLoader.close();
-      } catch (Throwable t) {
-        LOG.warn("Failed to close authorizer class loader", t);
+        if (authorizer != null) {
+          authorizer.destroy();
+        }
       }
-    }
-
-    if (tmpDir != null) {
-      try {
-        DirUtils.deleteDirectoryContents(tmpDir);
-      } catch (Throwable t) {
-        // It's a cleanup step. Nothing much can be done if cleanup fails.
-        LOG.warn("Failed to delete directory {}", tmpDir, t);
-      }
+    } catch (Throwable t) {
+      LOG.warn("Failed to destroy authorizer.", t);
+    } finally {
+      Closeables.closeQuietly(authorizerClassLoader);
     }
   }
 }
