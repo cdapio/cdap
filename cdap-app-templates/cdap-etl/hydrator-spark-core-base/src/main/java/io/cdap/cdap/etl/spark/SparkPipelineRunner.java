@@ -485,7 +485,7 @@ public abstract class SparkPipelineRunner {
     }
   }
 
-  private SparkCollection<Object> handleAutoJoin(String stageName, JoinDefinition joinDefinition,
+  protected SparkCollection<Object> handleAutoJoin(String stageName, JoinDefinition joinDefinition,
                                                  Map<String, SparkCollection<Object>> inputDataCollections,
                                                  @Nullable Integer numPartitions) {
     JoinCondition.Op conditionType = joinDefinition.getCondition().getOp();

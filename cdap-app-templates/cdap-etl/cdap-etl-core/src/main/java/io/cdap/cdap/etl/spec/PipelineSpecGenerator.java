@@ -168,9 +168,9 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       DefaultPipelineConfigurer pluginConfigurer = pluginConfigurers.get(stageName);
 
       ConfiguredStage configuredStage = configureStage(stage, validatedPipeline, pluginConfigurer);
-      schemaPropagator.propagateSchema(configuredStage.stageSpec);
+      schemaPropagator.propagateSchema(configuredStage.getStageSpec());
 
-      specBuilder.addStage(configuredStage.stageSpec);
+      specBuilder.addStage(configuredStage.getStageSpec());
       for (Map.Entry<String, String> propertyEntry : configuredStage.pipelineProperties.entrySet()) {
         propertiesFromStages.put(propertyEntry.getKey(), propertyEntry.getValue(), stageName);
       }
@@ -214,8 +214,8 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
    * @return the spec for the stage
    * @throws ValidationException if the plugin threw an exception during configuration
    */
-  private ConfiguredStage configureStage(ETLStage stage, ValidatedPipeline validatedPipeline,
-                                         DefaultPipelineConfigurer pluginConfigurer) throws ValidationException {
+  protected ConfiguredStage configureStage(ETLStage stage, ValidatedPipeline validatedPipeline,
+                                           DefaultPipelineConfigurer pluginConfigurer) throws ValidationException {
     String stageName = stage.getName();
     ETLPlugin stagePlugin = stage.getPlugin();
 
@@ -485,7 +485,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
    * @return the order to configure the stages in
    * @throws IllegalArgumentException if the pipeline is invalid
    */
-  private ValidatedPipeline validateConfig(ETLConfig config) {
+  protected ValidatedPipeline validateConfig(ETLConfig config) {
     config.validate();
     if (config.getStages().isEmpty()) {
       throw new IllegalArgumentException("A pipeline must contain at least one stage.");
@@ -647,13 +647,17 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
   /**
    * Just a container for StageSpec and pipeline properties set by the stage
    */
-  private static class ConfiguredStage {
+  protected static class ConfiguredStage {
     private final StageSpec stageSpec;
     private final Map<String, String> pipelineProperties;
 
     private ConfiguredStage(StageSpec stageSpec, Map<String, String> pipelineProperties) {
       this.stageSpec = stageSpec;
       this.pipelineProperties = pipelineProperties;
+    }
+
+    public StageSpec getStageSpec() {
+      return stageSpec;
     }
   }
 

@@ -22,7 +22,11 @@ import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.api.data.batch.InputFormatProvider;
+import io.cdap.cdap.api.data.batch.OutputFormatProvider;
+import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.api.ErrorTransform;
 import io.cdap.cdap.etl.api.MultiOutputPipelineConfigurable;
@@ -33,10 +37,17 @@ import io.cdap.cdap.etl.api.SplitterTransform;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.action.Action;
 import io.cdap.cdap.etl.api.batch.BatchAutoJoiner;
+import io.cdap.cdap.etl.api.batch.BatchContext;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.condition.Condition;
+import io.cdap.cdap.etl.api.engine.sql.SQLEngine;
+import io.cdap.cdap.etl.api.engine.sql.SQLEngineException;
+import io.cdap.cdap.etl.api.engine.sql.SQLOperationResult;
+import io.cdap.cdap.etl.api.engine.sql.request.SQLJoinRequest;
+import io.cdap.cdap.etl.api.engine.sql.request.SQLPullRequest;
+import io.cdap.cdap.etl.api.engine.sql.request.SQLPushRequest;
 import io.cdap.cdap.etl.api.join.AutoJoinerContext;
 import io.cdap.cdap.etl.api.join.JoinCondition;
 import io.cdap.cdap.etl.api.join.JoinDefinition;
@@ -51,6 +62,7 @@ import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
 import io.cdap.cdap.etl.proto.v2.ETLConfig;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
+import io.cdap.cdap.etl.proto.v2.ETLTransformationPushdown;
 import io.cdap.cdap.etl.proto.v2.spec.PipelineSpec;
 import io.cdap.cdap.etl.proto.v2.spec.PluginSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
@@ -88,6 +100,7 @@ public class PipelineSpecGeneratorTest {
   private static final ETLPlugin MOCK_ACTION = new ETLPlugin("mockaction", Action.PLUGIN_TYPE, EMPTY_MAP);
   private static final ETLPlugin MOCK_CONDITION = new ETLPlugin("mockcondition", Condition.PLUGIN_TYPE, EMPTY_MAP);
   private static final ETLPlugin MOCK_SPLITTER = new ETLPlugin("mocksplit", SplitterTransform.PLUGIN_TYPE, EMPTY_MAP);
+  private static final ETLPlugin MOCK_SQL_ENGINE = new ETLPlugin("mocksqlengine", SQLEngine.PLUGIN_TYPE, EMPTY_MAP);
   private static final ArtifactId ARTIFACT_ID =
     new ArtifactId("plugins", new ArtifactVersion("1.0.0"), ArtifactScope.USER);
   private static JoinDefinition joinDefinition;
@@ -118,6 +131,7 @@ public class PipelineSpecGeneratorTest {
                                    new MockSplitter(ImmutableMap.of("portA", SCHEMA_A, "portB", SCHEMA_B)),
                                    artifactIds);
     pluginConfigurer.addMockPlugin(BatchJoiner.PLUGIN_TYPE, "mockautojoiner", new MockAutoJoin(), artifactIds);
+    pluginConfigurer.addMockPlugin(SQLEngine.PLUGIN_TYPE, "mocksqlengine", new MockSQLEngine(), artifactIds);
 
     specGenerator = new BatchPipelineSpecGenerator(pluginConfigurer,
                                                    ImmutableSet.of(BatchSource.PLUGIN_TYPE),
@@ -855,6 +869,31 @@ public class PipelineSpecGeneratorTest {
     Assert.assertEquals(expected, actual);
   }
 
+  @Test
+  public void testSQLEngine() throws ValidationException {
+    ETLBatchConfig config = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
+      .addStage(new ETLStage("action", MOCK_ACTION))
+      .setTransformationPushdown(new ETLTransformationPushdown(MOCK_SQL_ENGINE))
+      .build();
+    PipelineSpec actual = specGenerator.generateSpec(config);
+
+    Map<String, String> emptyMap = ImmutableMap.of();
+    PipelineSpec expected = BatchPipelineSpec.builder()
+      .addStage(
+        StageSpec.builder("action", new PluginSpec(Action.PLUGIN_TYPE, "mockaction", emptyMap, ARTIFACT_ID)).build())
+      .setResources(config.getResources())
+      .setDriverResources(config.getDriverResources())
+      .setClientResources(config.getClientResources())
+      .setStageLoggingEnabled(config.isStageLoggingEnabled())
+      .setSqlEngineStageSpec(
+        StageSpec.builder("sqlengine_mocksqlengine",
+                          new PluginSpec(SQLEngine.PLUGIN_TYPE, "mocksqlengine", emptyMap, ARTIFACT_ID)).build())
+      .build();
+
+    Assert.assertEquals(expected, actual);
+  }
+
   @Test(expected = IllegalArgumentException.class)
   public void testSimpleConditionConnectionWithNoBranchInfo() throws ValidationException {
     ETLBatchConfig etlConfig = ETLBatchConfig.builder()
@@ -1100,6 +1139,63 @@ public class PipelineSpecGeneratorTest {
     @Override
     public JoinDefinition define(AutoJoinerContext context) {
       return joinDefinition;
+    }
+  }
+
+  private static class MockSQLEngine implements SQLEngine<Object, Object, Object, Object> {
+    @Override
+    public OutputFormatProvider getPushProvider(SQLPushRequest pushRequest) throws SQLEngineException {
+      return null;
+    }
+
+    @Override
+    public InputFormatProvider getPullProvider(SQLPullRequest pullRequest) throws SQLEngineException {
+      return null;
+    }
+
+    @Override
+    public boolean exists(String datasetName) throws SQLEngineException {
+      return false;
+    }
+
+    @Override
+    public boolean canJoin(SQLJoinRequest joinRequest) {
+      return false;
+    }
+
+    @Override
+    public SQLOperationResult join(SQLJoinRequest joinRequest) throws SQLEngineException {
+      return null;
+    }
+
+    @Override
+    public void cleanup(String datasetName) throws SQLEngineException {
+
+    }
+
+    @Override
+    public Transform<StructuredRecord, KeyValue<Object, Object>> toKeyValue() {
+      return null;
+    }
+
+    @Override
+    public Transform<KeyValue<Object, Object>, StructuredRecord> fromKeyValue() {
+      return null;
+    }
+
+    @Override
+    public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+
+    }
+
+    @Override
+    public void prepareRun(BatchContext context) throws Exception {
+
+    }
+
+    @Override
+    public void onRunFinish(boolean succeeded, BatchContext context) {
+
     }
   }
 

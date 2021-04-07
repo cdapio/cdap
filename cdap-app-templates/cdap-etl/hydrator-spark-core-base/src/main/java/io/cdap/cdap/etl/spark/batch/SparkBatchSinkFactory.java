@@ -136,7 +136,7 @@ public final class SparkBatchSinkFactory {
     }
     MultiOutputFormat.addOutputs(hConf, outputs, groupSinkOutputs);
     hConf.set(MRJobConfig.OUTPUT_FORMAT_CLASS_ATTR, MultiOutputFormat.class.getName());
-    saveHadoopDataset(combinedRDD, hConf);
+    RDDUtils.saveHadoopDataset(combinedRDD, hConf);
     return lineageNames;
   }
 
@@ -172,7 +172,7 @@ public final class SparkBatchSinkFactory {
     }
 
     if (outputFormats.size() == 1) {
-      saveUsingOutputFormat(outputFormats.values().iterator().next(), rdd);
+      RDDUtils.saveUsingOutputFormat(outputFormats.values().iterator().next(), rdd);
       return lineageNames;
     }
 
@@ -184,33 +184,13 @@ public final class SparkBatchSinkFactory {
     // send to the delegate output format.
     JavaPairRDD<String, KeyValue<K, V>> multiRDD =
       rdd.mapToPair(kv -> new Tuple2<>(sinkName, new KeyValue<>(kv._1(), kv._2())));
-    saveHadoopDataset(multiRDD, hConf);
+    RDDUtils.saveHadoopDataset(multiRDD, hConf);
     return lineageNames;
-  }
-
-  private void saveUsingOutputFormat(OutputFormatProvider outputFormatProvider, JavaPairRDD<?, ?> rdd) {
-    Configuration hConf = new Configuration();
-    for (Map.Entry<String, String> entry : outputFormatProvider.getOutputFormatConfiguration().entrySet()) {
-      hConf.set(entry.getKey(), entry.getValue());
-    }
-    hConf.set(MRJobConfig.OUTPUT_FORMAT_CLASS_ATTR, outputFormatProvider.getOutputFormatClassName());
-    saveHadoopDataset(rdd, hConf);
   }
 
   private void addStageOutput(String stageName, String outputName) {
     Set<String> outputs = sinkOutputs.computeIfAbsent(stageName, k -> new HashSet<>());
     outputs.add(outputName);
-  }
-
-  private <K, V> void saveHadoopDataset(JavaPairRDD<K, V> rdd, Configuration hConf) {
-    // Spark expects the conf to be the job configuration, and to contain the credentials
-    JobConf jobConf = new JobConf(hConf);
-    try {
-      jobConf.setCredentials(UserGroupInformation.getCurrentUser().getCredentials());
-    } catch (IOException e) {
-      LOG.warn("Failed to get the current UGI. Continue to execute without user credentials.", e);
-    }
-    rdd.saveAsNewAPIHadoopDataset(jobConf);
   }
 
   static final class NamedOutputFormatProvider implements OutputFormatProvider {
