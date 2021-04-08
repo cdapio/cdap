@@ -52,7 +52,9 @@ import java.nio.file.Path;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-
+/**
+ * Launches task worker service
+ */
 public class TaskWorkerServiceLauncher extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerServiceLauncher.class);
 

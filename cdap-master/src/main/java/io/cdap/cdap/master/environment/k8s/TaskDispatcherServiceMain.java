@@ -48,7 +48,9 @@ import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
 
-
+/**
+ * Main service for Task dispatcher.
+ */
 public class TaskDispatcherServiceMain extends AbstractServiceMain<EnvironmentOptions> {
   /**
    * Main entry point
