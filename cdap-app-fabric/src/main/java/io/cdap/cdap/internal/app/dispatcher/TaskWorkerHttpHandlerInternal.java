@@ -44,6 +44,8 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerHttpHandlerInternal.class);
   private static final Gson GSON = new Gson();
 
+  private static final RunnableTaskLauncher runnableTaskLauncher = new RunnableTaskLauncher();
+
   @Inject
   TaskWorkerHttpHandlerInternal(CConfiguration cConf) {
     super(cConf);
@@ -56,7 +58,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
       GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), RunnableTaskRequest.class);
     String response;
     try {
-      response = launchRunnableTask(runnableTaskRequest);
+      response = runnableTaskLauncher.launchRunnableTask(runnableTaskRequest);
     } catch (Exception ex) {
       response = ex.getMessage();
     }
@@ -69,17 +71,4 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
     responder.sendString(HttpResponseStatus.OK, "Get succeeded");
   }
 
-  private String launchRunnableTask(RunnableTaskRequest request) throws Exception {
-    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-    Class<?> cClass = classLoader.loadClass(request.className);
-    Object obj = cClass.getDeclaredConstructor().newInstance();
-    if (!(obj instanceof RunnableTask)) {
-      throw new ClassCastException(String.format("%s is not a RunnableTask", request.className));
-    }
-    RunnableTask runnableTask = (RunnableTask) obj;
-    if (runnableTask.start().get() != State.RUNNING) {
-      throw new Exception(String.format("service %s failed to start", request.className));
-    }
-    return runnableTask.runTask(request.param);
-  }
 }
