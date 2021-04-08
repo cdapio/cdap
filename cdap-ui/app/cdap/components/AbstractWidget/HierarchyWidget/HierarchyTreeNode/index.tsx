@@ -28,6 +28,7 @@ import { IHierarchyProps } from 'components/AbstractWidget/HierarchyWidget';
 import HierarchyTreeLeaf from 'components/AbstractWidget/HierarchyWidget/HierarchyTreeNode/HierarchyTreeLeaf';
 import HierarchyPopoverButton from 'components/AbstractWidget/HierarchyWidget/HierarchyTreeNode/PopoverButton';
 import InputFieldWrapper from 'components/AbstractWidget/HierarchyWidget/HierarchyTreeNode/InputFieldWrapper';
+import ListboxComponent from 'components/AbstractWidget/HierarchyWidget/HierarchyTreeNode/ListBoxComponent';
 import HierarchyTree from 'components/AbstractWidget/HierarchyWidget/HierarchyTree';
 import If from 'components/If';
 import uuidV4 from 'uuid/v4';
@@ -75,6 +76,9 @@ interface IHierarchyTreeNodeStyleProps {
 
 const useStyles = makeStyles<Theme, IHierarchyTreeNodeStyleProps>(() => {
   return {
+    listbox: {
+      maxHeight: 'min-content',
+    },
     hierarchyIcon: {
       width: '10px',
       height: (props) => `${props.height}px`,
@@ -156,6 +160,7 @@ const HierarchyTreeNode = ({
   }
 
   const classes = useStyles({ marginLeft: mrgL, height: heightVal });
+  const autoCompleteClass = useStyles({ marginLeft: mrgL, height: 34 });
 
   const fillMultiSelectOptions = (e) => {
     setMultiSelectOptions(e);
@@ -296,11 +301,12 @@ const HierarchyTreeNode = ({
       <If condition={showMultiSelect}>
         <div className={classes.multiSelectCustomMargin}>
           <div className={classes.relative}>
-            <div className={classes.hierarchyIcon} />
+            <div className={autoCompleteClass.hierarchyIcon} />
             <div className={classes.innerMostSiblingConnector} />
           </div>
           <AutocompleteContainer>
             <Autocomplete
+              classes={{ listbox: classes.listbox }}
               multiple
               disableCloseOnSelect
               options={dropdownOptions}
@@ -308,6 +314,7 @@ const HierarchyTreeNode = ({
               onChange={(_, value: string[]) => fillMultiSelectOptions(value)}
               getOptionSelected={(a, b) => a.id === b.id}
               onClose={handleMultiSelectClose}
+              ListboxComponent={(listboxProps) => <ListboxComponent {...listboxProps} />}
               getOptionLabel={(option) => option.name}
               renderOption={(option, { selected }) => {
                 return (
