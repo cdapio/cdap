@@ -52,7 +52,8 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
   @POST
   @Path("/run")
   public void run(FullHttpRequest request, HttpResponder responder) {
-    RunnableTaskRequest runnableTaskRequest = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), RunnableTaskRequest.class);
+    RunnableTaskRequest runnableTaskRequest =
+      GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), RunnableTaskRequest.class);
     String response;
     try {
       response = launchRunnableTask(runnableTaskRequest);
