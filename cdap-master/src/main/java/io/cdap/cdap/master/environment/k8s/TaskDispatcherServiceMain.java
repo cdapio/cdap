@@ -34,7 +34,7 @@ import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.gateway.handlers.CommonHandlers;
 import io.cdap.cdap.internal.app.dispatcher.TaskDispatcherHttpHandlerInternal;
-import io.cdap.cdap.internal.app.dispatcher.TaskDispatcherServer;
+import io.cdap.cdap.internal.app.dispatcher.TaskWorkerServiceLauncher;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
@@ -85,8 +85,8 @@ public class TaskDispatcherServiceMain extends AbstractServiceMain<EnvironmentOp
           handlerBinder.addBinding().to(TaskDispatcherHttpHandlerInternal.class);
           CommonHandlers.add(handlerBinder);
 
-          bind(TaskDispatcherServer.class).in(Scopes.SINGLETON);
-          expose(TaskDispatcherServer.class);
+          bind(TaskWorkerServiceLauncher.class).in(Scopes.SINGLETON);
+          expose(TaskWorkerServiceLauncher.class);
         }
       }
     ));
@@ -100,7 +100,7 @@ public class TaskDispatcherServiceMain extends AbstractServiceMain<EnvironmentOp
                              MasterEnvironmentContext masterEnvContext,
                              EnvironmentOptions options) {
     services.add(new TwillRunnerServiceWrapper(injector.getInstance(TwillRunnerService.class)));
-    services.add(injector.getInstance(TaskDispatcherServer.class));
+    services.add(injector.getInstance(TaskWorkerServiceLauncher.class));
   }
 
   @Nullable
