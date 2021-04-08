@@ -67,11 +67,13 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -158,8 +160,8 @@ class CapabilityApplier {
     }
     //add all unfinished operations to retry
     List<CapabilityOperationRecord> currentOperations = currentCapabilityRecords.values().stream()
-      .filter(capabilityRecord -> capabilityRecord.getCapabilityOperationRecord() != null)
       .map(CapabilityRecord::getCapabilityOperationRecord)
+      .filter(Objects::nonNull)
       .collect(Collectors.toList());
     for (CapabilityOperationRecord operationRecord : currentOperations) {
       switch (operationRecord.getActionType()) {
@@ -319,13 +321,8 @@ class CapabilityApplier {
   }
 
   @VisibleForTesting
-  void autoInstallResources(String capability, List<URL> hubs) {
-    if (hubs == null || hubs.isEmpty()) {
-      LOG.debug("Capability {} do not have auto install resources associated with it", capability);
-      return;
-    }
-
-    for (URL hub : hubs) {
+  void autoInstallResources(String capability, @Nullable List<URL> hubs) {
+    for (URL hub : Optional.ofNullable(hubs).orElse(Collections.emptyList())) {
       HubPackage[] hubPackages;
       try {
         URL url = new URL(hub, "/v2/packages.json");
@@ -334,7 +331,7 @@ class CapabilityApplier {
         // See https://cdap.atlassian.net/wiki/spaces/DOCS/pages/554401840/Hub+API?src=search#Get-Hub-Catalog
         hubPackages = GSON.fromJson(packagesJson, HubPackage[].class);
       } catch (Exception e) {
-        LOG.warn("Failed to get packages.json from {}. Ignoring error.", hub, e);
+        LOG.warn("Failed to get packages.json from {} for capability {}. Ignoring error.", hub, capability, e);
         continue;
       }
 
@@ -351,9 +348,11 @@ class CapabilityApplier {
         .map(p ->
                executorService.submit(() -> {
                  try {
+                   LOG.debug("Installing plugins {} for capability {} from hub {}", p.getName(), capability, hub);
                    p.installPlugin(hub, artifactRepository, tmpDir);
                  } catch (Exception e) {
-                   LOG.warn("Failed to install plugin {}. Ignoring error", p.getName(), e);
+                   LOG.warn("Failed to install plugin {} for capability {} from hub {}. Ignoring error",
+                            p.getName(), capability, hub, e);
                  }
                })
         )
@@ -378,7 +377,7 @@ class CapabilityApplier {
   // 2. If application is deployed before then the app artifact of the deployed application is not the latest one
   //    available.
   private boolean shouldDeployApp(ApplicationId applicationId, SystemApplication application) throws Exception {
-    ApplicationDetail currAppDetail = null;
+    ApplicationDetail currAppDetail;
     try {
       currAppDetail = applicationLifecycleService.getAppDetail(applicationId);
     } catch (ApplicationNotFoundException exception) {
