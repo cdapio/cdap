@@ -53,8 +53,8 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 
-public class TaskDispatcherServer extends AbstractIdleService {
-  private static final Logger LOG = LoggerFactory.getLogger(TaskDispatcherServer.class);
+public class TaskWorkerServiceLauncher extends AbstractIdleService {
+  private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerServiceLauncher.class);
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -68,10 +68,10 @@ public class TaskDispatcherServer extends AbstractIdleService {
   private TwillController controller;
 
   @Inject
-  public TaskDispatcherServer(CConfiguration cConf, SConfiguration sConf, Configuration hConf,
-                              DiscoveryService discoveryService,
-                              @Named(Constants.TaskDispatcher.HANDLER_NAME) Set<HttpHandler> handlers,
-                              TwillRunner twillRunner) {
+  public TaskWorkerServiceLauncher(CConfiguration cConf, SConfiguration sConf, Configuration hConf,
+                                   DiscoveryService discoveryService,
+                                   @Named(Constants.TaskDispatcher.HANDLER_NAME) Set<HttpHandler> handlers,
+                                   TwillRunner twillRunner) {
     this.discoveryService = discoveryService;
     this.cConf = cConf;
     this.hConf = hConf;
@@ -96,7 +96,6 @@ public class TaskDispatcherServer extends AbstractIdleService {
   protected void startUp() throws Exception {
     LOG.info("Starting TaskDispatcher server");
 
-    launchHttpServer();
     launchTaskWorkerPool();
 
     LOG.info("Starting TaskDispatcher server has completed");
