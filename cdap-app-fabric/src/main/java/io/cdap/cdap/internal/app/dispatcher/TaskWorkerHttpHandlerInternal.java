@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.internal.app.dispatcher;
 
+import com.google.common.util.concurrent.Service.State;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.logging.gateway.handlers.AbstractLogHttpHandler;
@@ -50,14 +50,35 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
   }
 
   @POST
-  @Path("/echo")
+  @Path("/run")
   public void run(FullHttpRequest request, HttpResponder responder) {
-    responder.sendString(HttpResponseStatus.OK, request.content().toString(StandardCharsets.UTF_8));
+    RunnableTaskRequest runnableTaskRequest = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), RunnableTaskRequest.class);
+    String response;
+    try {
+      response = launchRunnableTask(runnableTaskRequest);
+    } catch (Exception ex) {
+      response = ex.getMessage();
+    }
+    responder.sendString(HttpResponseStatus.OK, response);
   }
 
   @GET
   @Path("/get")
   public void get(FullHttpRequest request, HttpResponder responder) throws Exception {
     responder.sendString(HttpResponseStatus.OK, "Get succeeded");
+  }
+
+  private String launchRunnableTask(RunnableTaskRequest request) throws Exception {
+    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+    Class<?> cClass = classLoader.loadClass(request.className);
+    Object obj = cClass.getDeclaredConstructor().newInstance();
+    if (!(obj instanceof RunnableTask)) {
+      throw new ClassCastException(String.format("%s is not a RunnableTask", request.className));
+    }
+    RunnableTask runnableTask = (RunnableTask) obj;
+    if (runnableTask.start().get() != State.RUNNING) {
+      throw new Exception(String.format("service %s failed to start", request.className));
+    }
+    return runnableTask.runTask(request.param);
   }
 }

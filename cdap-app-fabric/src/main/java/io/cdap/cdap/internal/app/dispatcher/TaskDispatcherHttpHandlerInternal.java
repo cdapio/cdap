@@ -63,10 +63,10 @@ public class TaskDispatcherHttpHandlerInternal extends AbstractLogHttpHandler {
   }
 
   @POST
-  @Path("/echo")
+  @Path("/run")
   public void run(FullHttpRequest request, HttpResponder responder) throws IOException {
     HttpRequest.Builder requestBuilder = remoteClientInternal.requestBuilder(
-      HttpMethod.POST, String.format("/worker/echo")).withBody(request.content().toString(StandardCharsets.UTF_8));
+      HttpMethod.POST, String.format("/worker/run")).withBody(request.content().toString(StandardCharsets.UTF_8));
     HttpResponse response = remoteClientInternal.execute(requestBuilder.build());
     responder.sendString(HttpResponseStatus.OK, response.getResponseBodyAsString());
   }
