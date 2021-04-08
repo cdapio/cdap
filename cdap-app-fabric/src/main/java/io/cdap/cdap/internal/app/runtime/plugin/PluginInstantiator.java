@@ -340,6 +340,9 @@ public class PluginInstantiator implements Closeable {
           macroParser.parse(macroValue);
           if (trackingMacroEvaluator.hasMacro()) {
             macroFields.add(pluginEntry.getKey());
+            if (!pluginField.getChildren().isEmpty()) {
+              macroFields.addAll(pluginField.getChildren());
+            }
             trackingMacroEvaluator.reset();
           }
         }
@@ -544,13 +547,34 @@ public class PluginInstantiator implements Closeable {
       String name = nameAnnotation == null ? field.getName() : nameAnnotation.value();
       PluginPropertyField pluginPropertyField = pluginClass.getProperties().get(name);
       // if the property is required and it's not a macro and the property doesn't exist
-      if (pluginPropertyField.isRequired()
-          && !macroFields.contains(name)
-          && properties.getProperties().get(name) == null) {
-        missingProperties.add(name);
-        return;
+      if (pluginPropertyField.isRequired() && !macroFields.contains(name)
+        && properties.getProperties().get(name) == null && pluginPropertyField.getChildren().isEmpty()) {
+          missingProperties.add(name);
+          return;
       }
+
       String value = properties.getProperties().get(name);
+      if (value == null && !pluginPropertyField.getChildren().isEmpty()) {
+        Map<String, String> childProperties = new HashMap<>();
+        boolean missing = false;
+        for (String child : pluginPropertyField.getChildren()) {
+          PluginPropertyField childProperty = pluginClass.getProperties().get(child);
+          if (childProperty.isRequired() && !macroFields.contains(childProperty.getName()) &&
+            properties.getProperties().get(childProperty.getName()) == null) {
+            missingProperties.add(name);
+            missing = true;
+            continue;
+          }
+          childProperties.put(childProperty.getName(), properties.getProperties().get(childProperty.getName()));
+        }
+
+        if (missing) {
+          return;
+        }
+        value = new Gson().toJson(childProperties);
+      }
+
+
       if (pluginPropertyField.isRequired() || value != null) {
         try {
           field.set(instance, convertValue(name, declareType,

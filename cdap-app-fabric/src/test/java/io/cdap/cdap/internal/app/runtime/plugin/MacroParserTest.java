@@ -532,6 +532,11 @@ public class MacroParserTest {
     Assert.assertEquals("abc${123}", parser.parse("abc${123}"));
   }
 
+  @Test
+  public void test() {
+
+  }
+
   // Testing util methods
 
   private static void assertContainsMacroParsing(String macro, boolean expected) {

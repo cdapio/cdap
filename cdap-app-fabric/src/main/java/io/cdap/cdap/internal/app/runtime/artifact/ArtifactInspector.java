@@ -67,8 +67,12 @@ import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -410,8 +414,9 @@ final class ArtifactInspector {
    * @param result map for storing the result
    * @throws UnsupportedTypeException if a field type in the config class is not supported
    */
-  private void inspectConfigField(TypeToken<?> configType,
-                                  Map<String, PluginPropertyField> result) throws UnsupportedTypeException {
+  private List<String> inspectConfigField(TypeToken<?> configType,
+                                          Map<String, PluginPropertyField> result) throws UnsupportedTypeException {
+    List<String> directChildren = new ArrayList<>();
     for (TypeToken<?> type : configType.getTypes().classes()) {
       if (PluginConfig.class.equals(type.getRawType())) {
         break;
@@ -423,21 +428,26 @@ final class ArtifactInspector {
           continue;
         }
 
-        PluginPropertyField property = createPluginProperty(field, type);
-        if (result.containsKey(property.getName())) {
-          throw new IllegalArgumentException("Plugin config with name " + property.getName()
-                                               + " already defined in " + configType.getRawType());
+        directChildren.add(field.getAnnotation(Name.class) == null ? field.getName() :
+                             field.getAnnotation(Name.class).value());
+        List<PluginPropertyField> properties = createPluginProperty(field, type);
+        for (PluginPropertyField property : properties) {
+          if (result.containsKey(property.getName())) {
+            throw new IllegalArgumentException("Plugin config with name " + property.getName()
+                                                 + " already defined in " + configType.getRawType());
+          }
+          result.put(property.getName(), property);
         }
-        result.put(property.getName(), property);
       }
     }
+    return directChildren;
   }
 
   /**
    * Creates a {@link PluginPropertyField} based on the given field.
    */
-  private PluginPropertyField createPluginProperty(Field field,
-                                                   TypeToken<?> resolvingType) throws UnsupportedTypeException {
+  private List<PluginPropertyField> createPluginProperty(Field field,
+                                                         TypeToken<?> resolvingType) throws UnsupportedTypeException {
     TypeToken<?> fieldType = resolvingType.resolveType(field.getGenericType());
     Class<?> rawType = fieldType.getRawType();
 
@@ -449,7 +459,8 @@ final class ArtifactInspector {
     Macro macroAnnotation = field.getAnnotation(Macro.class);
     boolean macroSupported = macroAnnotation != null;
     if (rawType.isPrimitive()) {
-      return new PluginPropertyField(name, description, rawType.getName(), true, macroSupported);
+      return Collections.singletonList(new PluginPropertyField(name, description, rawType.getName(), true,
+                                                               macroSupported));
     }
 
     rawType = Primitives.unwrap(rawType);
@@ -462,7 +473,15 @@ final class ArtifactInspector {
       }
     }
 
-    return new PluginPropertyField(name, description, rawType.getSimpleName().toLowerCase(), required, macroSupported);
+    Map<String, PluginPropertyField> properties = new HashMap<>();
+    List<String> children = new ArrayList<>();
+    if (!rawType.isPrimitive() && !rawType.equals(String.class)) {
+      children = inspectConfigField(fieldType, properties);
+    }
+
+    properties.put(name, new PluginPropertyField(name, description, rawType.getSimpleName().toLowerCase(),
+                                                 required, macroSupported, false, children));
+    return new ArrayList<>(properties.values());
   }
 
   /**

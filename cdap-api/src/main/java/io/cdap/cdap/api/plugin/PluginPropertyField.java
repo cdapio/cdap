@@ -18,6 +18,9 @@ package io.cdap.cdap.api.plugin;
 
 import io.cdap.cdap.api.annotation.Beta;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -32,9 +35,10 @@ public class PluginPropertyField {
   private final boolean required;
   private final boolean macroSupported;
   private final boolean macroEscapingEnabled;
+  private final List<String> children;
 
   public PluginPropertyField(String name, String description, String type, boolean required, boolean macroSupported,
-                             boolean macroEscapingEnabled) {
+                             boolean macroEscapingEnabled, List<String> children) {
     if (name == null) {
       throw new IllegalArgumentException("Plugin property name cannot be null");
     }
@@ -51,6 +55,16 @@ public class PluginPropertyField {
     this.required = required;
     this.macroSupported = macroSupported;
     this.macroEscapingEnabled = macroEscapingEnabled;
+    this.children = children;
+  }
+
+  public List<String> getChildren() {
+    return children == null ? Collections.emptyList() : children;
+  }
+
+  public PluginPropertyField(String name, String description, String type, boolean required, boolean macroSupported,
+                             boolean macroEscapingEnabled) {
+    this(name, description, type, required, macroSupported, macroEscapingEnabled, new ArrayList<>());
   }
 
   public PluginPropertyField(String name, String description, String type, boolean required, boolean macroSupported) {
