@@ -368,7 +368,7 @@ public final class Constants {
   }
 
   /**
-   * Task dispatcher
+   * Task dispatcher.
    */
   public static final class TaskDispatcher {
     public static final String ENABLED = "enable.task.dispatcher";
@@ -383,7 +383,7 @@ public final class Constants {
     public static final String HANDLER_NAME = "task.dispatcher.handler.name";
 
     /**
-     * Worker pool configurations
+     * Worker pool configurations.
      */
     public static final String CONTAINER_COUNT = "task.dispatcher.worker.container.count";
     public static final String CONTAINER_DISK_SIZE_GB = "task.dispatcher.worker.container.disk.size.gb";
@@ -391,12 +391,13 @@ public final class Constants {
     public static final String CONTAINER_CORES = "task.dispatcher.worker.container.num.cores";
     public static final String CONTAINER_CPU_MULTIPLIER = "task.dispatcher.worker.container.cpu.multiplier";
     public static final String CONTAINER_MEMORY_MULTIPLIER = "task.dispatcher.worker.container.memory.multiplier";
-    public static final String CONTAINER_HEAP_RESERVED_RATIO = "task.dispatcher.worker.container.java.heap.memory.ratio";
+    public static final String CONTAINER_HEAP_RESERVED_RATIO =
+      "task.dispatcher.worker.container.java.heap.memory.ratio";
     public static final String CONTAINER_PRIORITY_CLASS_NAME = "task.dispatcher.worker.container.priority.class.name";
   }
 
   /**
-   * Task worker
+   * Task worker.
    */
   public static final class TaskWorker {
     public static final String ADDRESS = "task.worker.bind.address";
