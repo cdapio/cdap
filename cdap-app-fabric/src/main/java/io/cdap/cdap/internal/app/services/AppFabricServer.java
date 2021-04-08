@@ -83,7 +83,6 @@ public class AppFabricServer extends AbstractIdleService {
   private final SConfiguration sConf;
   private final boolean sslEnabled;
   private final TransactionRunner transactionRunner;
-  private final TaskWorkerServiceLauncher taskWorkerServiceLauncher;
 
   private Cancellable cancelHttpService;
   private Set<HttpHandler> handlers;
@@ -108,8 +107,7 @@ public class AppFabricServer extends AbstractIdleService {
                          ProvisioningService provisioningService,
                          BootstrapService bootstrapService,
                          SystemAppManagementService systemAppManagementService,
-                         TransactionRunner transactionRunner,
-                         TaskWorkerServiceLauncher taskWorkerServiceLauncher) {
+                         TransactionRunner transactionRunner) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.handlers = handlers;
@@ -128,7 +126,6 @@ public class AppFabricServer extends AbstractIdleService {
     this.bootstrapService = bootstrapService;
     this.systemAppManagementService = systemAppManagementService;
     this.transactionRunner = transactionRunner;
-    this.taskWorkerServiceLauncher= taskWorkerServiceLauncher;
   }
 
   /**
@@ -147,8 +144,7 @@ public class AppFabricServer extends AbstractIdleService {
         programRuntimeService.start(),
         programNotificationSubscriberService.start(),
         runRecordCorrectorService.start(),
-        coreSchedulerService.start(),
-        taskWorkerServiceLauncher.start()
+        coreSchedulerService.start()
       )
     ).get();
 
@@ -199,7 +195,6 @@ public class AppFabricServer extends AbstractIdleService {
     programNotificationSubscriberService.stopAndWait();
     runRecordCorrectorService.stopAndWait();
     provisioningService.stopAndWait();
-    taskWorkerServiceLauncher.stopAndWait();
   }
 
   private Cancellable startHttpService(NettyHttpService httpService) throws Exception {
