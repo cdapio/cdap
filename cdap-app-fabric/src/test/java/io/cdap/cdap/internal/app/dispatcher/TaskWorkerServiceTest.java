@@ -32,8 +32,6 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 
 /**
@@ -66,23 +64,37 @@ public class TaskWorkerServiceTest {
     // start the service
     taskWorkerService.startAndWait();
 
-    InetSocketAddress addr =  taskWorkerService.getBindAddress();
+    InetSocketAddress addr = taskWorkerService.getBindAddress();
     URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
 
     HttpResponse response;
 
     // Get request
     response = HttpRequests.execute(HttpRequest.get(uri.resolve("/v3Internal/worker/get").toURL()).build(),
-                                                 new DefaultHttpRequestConfig(false));
+                                    new DefaultHttpRequestConfig(false));
     Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 
-    // Post request
-    RunnableTaskRequest req = new RunnableTaskRequest(EchoRunnableTask.class.getName(), "");
+    // Post valid request
+    String want = "test-input";
+    RunnableTaskRequest req = new RunnableTaskRequest(EchoRunnableTask.class.getName(), want);
     String reqBody = GSON.toJson(req);
-    response = HttpRequests.execute(HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL()).withBody(reqBody).build(),
-                                                 new DefaultHttpRequestConfig(false));
+    response = HttpRequests.execute(
+      HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
+        .withBody(reqBody).build(),
+      new DefaultHttpRequestConfig(false));
     Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+    Assert.assertEquals(want, response.getResponseBodyAsString());
+
+    // Post bad request
+    RunnableTaskRequest noClassReq = new RunnableTaskRequest("NoClass", "");
+    reqBody = GSON.toJson(noClassReq);
+    response = HttpRequests.execute(
+      HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
+        .withBody(reqBody).build(),
+      new DefaultHttpRequestConfig(false));
+    Assert.assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
+    Assert.assertTrue(response.getResponseBodyAsString().contains("java.lang.ClassNotFoundException"));
 
     // stop the service
     taskWorkerService.stopAndWait();
