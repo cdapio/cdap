@@ -112,7 +112,6 @@ public class MasterServiceMainTestBase {
     List<Class<? extends AbstractServiceMain<EnvironmentOptions>>> serviceMainClasses = new ArrayList<>(
       Arrays.asList(RouterServiceMain.class,
                     MessagingServiceMain.class,
-                    TaskDispatcherServiceMain.class,
                     MetricsServiceMain.class,
                     LogsServiceMain.class,
                     MetadataServiceMain.class,
@@ -174,17 +173,6 @@ public class MasterServiceMainTestBase {
     ExternalAuthenticationServer externalAuthenticationServer = getServiceMainInstance(AuthenticationServiceMain.class)
         .getInjector().getInstance(ExternalAuthenticationServer.class);
     InetSocketAddress addr = externalAuthenticationServer.getSocketAddress();
-    return URI.create(String.format("https://%s:%d/", addr.getHostName(), addr.getPort()));
-  }
-
-  /**
-   * Returns the base URI for the task dispatcher
-   */
-  static URI getTaskDispatcherBaseURI() {
-    TaskWorkerServiceLauncher taskDispatcherServer = getServiceMainInstance(TaskDispatcherServiceMain.class)
-      .getInjector().getInstance(TaskWorkerServiceLauncher.class);
-    InetSocketAddress addr = taskDispatcherServer.getBindAddress();
-    System.out.println("wyzhang: getTaskDispatcherBaseURI " + addr.toString());
     return URI.create(String.format("https://%s:%d/", addr.getHostName(), addr.getPort()));
   }
 

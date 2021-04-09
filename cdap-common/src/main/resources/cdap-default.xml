@@ -4202,43 +4202,11 @@
       Number of threads to be used for auto installing resources when a capability is enabled
     </description>
   </property>
+
+  <!-- Task Worker Configuration  -->
+
   <property>
-    <name>task.dispatcher.bind.address</name>
-    <value>0.0.0.0</value>
-    <description>
-      The bind address for the task dispatcher service.
-    </description>
-  </property>
-  <property>
-    <name>task.dispatcher.bind.port</name>
-    <value>0</value>
-    <description>
-      The port to bind the task dispatcher service to.
-    </description>
-  </property>
-  <property>
-    <name>task.dispatcher.exec.threads</name>
-    <value>10</value>
-    <description>
-      The number of executor threads for the task dispatcher service.
-    </description>
-  </property>
-  <property>
-    <name>task.dispatcher.worker.threads</name>
-    <value>10</value>
-    <description>
-      The number of executor threads for the task dispatcher worker.
-    </description>
-  </property>
-  <property>
-    <name>task.dispatcher.boss.threads</name>
-    <value>1</value>
-    <description>
-      The number of boss threads for the task dispatcher service.
-    </description>
-  </property>
-  <property>
-    <name>task.dispatcher.worker.container.count</name>
+    <name>task.worker.container.count</name>
     <value>2</value>
     <description>
       Number of task worker containers for task execution.
@@ -4246,7 +4214,15 @@
   </property>
 
   <property>
-    <name>task.dispatcher.worker.container.memory.mb</name>
+    <name>task.worker.container.num.cores</name>
+    <value>1</value>
+    <description>
+      Number of virtual cores for the task worker.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.container.memory.mb</name>
     <value>756</value>
     <description>
       Memory in megabytes for each task worker.
@@ -4254,12 +4230,13 @@
   </property>
 
   <property>
-    <name>task.dispatcher.worker.container.num.cores</name>
-    <value>1</value>
+    <name>task.worker.container.disk.size.gb</name>
+    <value>10</value>
     <description>
-      Number of virtual cores for the task worker.
+      Size of the stateful disk for the task worker.
     </description>
   </property>
+
   <property>
     <name>task.worker.bind.address</name>
     <value>0.0.0.0</value>
@@ -4275,6 +4252,7 @@
       The port to bind the task dispatcher service to.
     </description>
   </property>
+
   <property>
     <name>task.worker.worker.threads</name>
     <value>10</value>
@@ -4282,6 +4260,7 @@
       The number of worker threads in the task worker.
     </description>
   </property>
+
   <property>
     <name>task.worker.exec.threads</name>
     <value>10</value>
@@ -4289,6 +4268,7 @@
       The number of executor threads for the task worker.
     </description>
   </property>
+
   <property>
     <name>task.worker.boss.threads</name>
     <value>1</value>
