@@ -4247,7 +4247,7 @@
 
   <property>
     <name>task.worker.bind.port</name>
-    <value>80</value>
+    <value>11020</value>
     <description>
       The port to bind the task dispatcher service to.
     </description>
