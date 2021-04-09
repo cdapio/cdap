@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.dispatcher;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -96,5 +97,10 @@ public class TaskWorkerService extends AbstractIdleService {
   private void shutdownHttpServer() throws Exception {
     cancelDiscovery.cancel();
     httpService.stop();
+  }
+
+  @VisibleForTesting
+  public InetSocketAddress getBindAddress() {
+    return bindAddress;
   }
 }
