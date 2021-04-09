@@ -19,6 +19,8 @@ package io.cdap.cdap.gateway.handlers;
 import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -38,6 +40,7 @@ import io.cdap.cdap.api.artifact.ArtifactVersionRange;
 import io.cdap.cdap.api.artifact.InvalidArtifactRangeException;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.plugin.PluginPropertyField;
 import io.cdap.cdap.app.program.ManifestFields;
 import io.cdap.cdap.common.ArtifactAlreadyExistsException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
@@ -462,6 +465,9 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
           pluginTypes.add(pluginClass.getType());
         }
       }
+      if (artifactName.equals("cdap-data-pipeline") || artifactName.equals("cdap-data-streams")) {
+        pluginTypes.add("connector");
+      }
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(pluginTypes));
     } catch (IOException e) {
       LOG.error("Exception looking up plugins for artifact {}", artifactId, e);
@@ -479,6 +485,40 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                                  @PathParam("plugin-type") String pluginType,
                                  @QueryParam("scope") @DefaultValue("user") String scope)
     throws NamespaceNotFoundException, BadRequestException, ArtifactNotFoundException {
+
+    if (pluginType.toLowerCase().contains("connector")) {
+      List<PluginSummary> plugins = ImmutableList.of(
+        new PluginSummary("GCS", "connector", "Google Cloud Storage",
+                          "Google Cloud Platform", "io.cdap.plugin.gcp.gcs.connector.GCSConnector",
+                          new ArtifactSummary("google-cloud", "0.18.0-SNAPSHOT", ArtifactScope.SYSTEM)),
+        new PluginSummary("BigQuery", "connecotr", "Google Cloud Big Query",
+                          "Google Cloud Platform", "io.cdap.plugin.gcp.gcs.connector.BigQueryConnector",
+                          new ArtifactSummary("google-cloud", "0.18.0-SNAPSHOT", ArtifactScope.SYSTEM)),
+        new PluginSummary("Spanner", "connector", "Google Cloud Spanner",
+                          "Google Cloud Platform", "io.cdap.plugin.gcp.gcs.connector.SpannerConnector",
+                          new ArtifactSummary("google-cloud", "0.18.0-SNAPSHOT", ArtifactScope.SYSTEM)),
+        new PluginSummary("File", "connector", "File Connector",
+                          "Flat File", "io.cdap.plugin.connector.FileConnector",
+                          new ArtifactSummary("core-plugins", "2.7.0-SNAPSHOT", ArtifactScope.SYSTEM)),
+        new PluginSummary("Database", "connector", "Generic Database",
+                          "Database", "io.cdap.plugin.connector.DBConnector",
+                          new ArtifactSummary("database-plugins", "2.7.0-SNAPSHOT", ArtifactScope.SYSTEM)),
+        new PluginSummary("Kafka", "connector", "Kafka Connector",
+                          "Messaging System", "io.cdap.plugin.connector.KafkaConnector",
+                          new ArtifactSummary("kafka-plugins", "2.6.0-SNAPSHOT", ArtifactScope.SYSTEM)),
+        new PluginSummary("S3", "connector", "S3 Connector",
+                          "AWS", "io.cdap.plugin.connector.S3Connector",
+                          new ArtifactSummary("s3-plugins", "1.15.0-SNAPSHOT", ArtifactScope.SYSTEM)),
+        new PluginSummary("Kafka", "connector", "Kafka Connector",
+                          "Messaging System", "io.cdap.plugin.connector.KafkaConnector",
+                          new ArtifactSummary("kafka-plugins", "2.6.0-SNAPSHOT", ArtifactScope.SYSTEM)),
+        new PluginSummary("ADLS", "connector", "ADLS Connector",
+                          "Azure", "io.cdap.plugin.connector.ADLSConnector",
+                          new ArtifactSummary("adls-plugins", "2.6.0-SNAPSHOT", ArtifactScope.SYSTEM))
+      );
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(plugins));
+      return;
+    }
 
     NamespaceId namespace = Ids.namespace(namespaceId);
     NamespaceId artifactNamespace = validateAndGetScopedNamespace(namespace, scope);
@@ -529,6 +569,31 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                                 @QueryParam("limit") @DefaultValue("2147483647") String limit,
                                 @QueryParam("order") @DefaultValue("UNORDERED") String order)
     throws NamespaceNotFoundException, BadRequestException, ArtifactNotFoundException, InvalidArtifactRangeException {
+
+    if (pluginType.toLowerCase().contains("connector")) {
+      List<PluginInfo> pluginInfos = Lists.newArrayList();
+      pluginInfos.add(
+        new PluginInfo("BigQuery", "connector", "Google Cloud Big Query",
+                       "Google Cloud Platform", "io.cdap.plugin.gcp.gcs.connector.BigQueryConnector", "config",
+                       new ArtifactSummary("google-cloud", "0.18.0-SNAPSHOT", ArtifactScope.SYSTEM),
+                       ImmutableMap.of("project",
+                                       new PluginPropertyField("project", "description", "string",
+                                                               true, true, false),
+                                       "datasetProject",
+                                       new PluginPropertyField("datasetProject", "", "string",
+                                                               true, true, false),
+                                       "serviceAccountType",
+                                       new PluginPropertyField("serviceAccountType", "", "string",
+                                                               true, true, false),
+                                       "serviceFilePath",
+                                       new PluginPropertyField("serviceFilePath", "", "string",
+                                                               true, true, false),
+                                       "serviceAccountJSON",
+                                       new PluginPropertyField("serviceAccountJSON", "", "string",
+                                                               true, true, false))));
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(pluginInfos));
+      return;
+    }
 
     NamespaceId namespace = Ids.namespace(namespaceId);
     NamespaceId artifactNamespace = validateAndGetScopedNamespace(namespace, scope);
