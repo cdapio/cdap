@@ -16,24 +16,37 @@
 
 package io.cdap.cdap.internal.app.dispatcher;
 
+import com.google.gson.Gson;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.common.http.HttpRequest;
+import io.cdap.common.http.HttpRequests;
+import io.cdap.common.http.HttpResponse;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
+import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
+import java.net.URI;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+
 
 /**
  * Unit test for {@link TaskWorkerService}.
  */
 public class TaskWorkerServiceTest {
+  private static final Gson GSON = new Gson();
 
   private CConfiguration createCConf() {
     CConfiguration cConf = CConfiguration.create();
+    cConf.setStrings(Constants.TaskWorker.ADDRESS, "localhost");
     cConf.setLong(Constants.Preview.REQUEST_POLL_DELAY_MILLIS, 200);
-    cConf.setBoolean(Constants.Security.SSL.INTERNAL_ENABLED, true);
+    cConf.setBoolean(Constants.Security.SSL.INTERNAL_ENABLED, false);
     return cConf;
   }
 
@@ -43,13 +56,35 @@ public class TaskWorkerServiceTest {
   }
 
   @Test
-  public void testStartAndStop() throws InterruptedException, ExecutionException, TimeoutException {
-    CConfiguration cConf = CConfiguration.create();
-    SConfiguration sConf = SConfiguration.create();
+  public void testStartAndStop() throws IOException {
+    CConfiguration cConf = createCConf();
+    SConfiguration sConf = createSConf();
+
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, sConf, discoveryService);
+
+    // start the service
     taskWorkerService.startAndWait();
 
+    InetSocketAddress addr =  taskWorkerService.getBindAddress();
+    URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
+
+    HttpResponse response;
+
+    // Get request
+    response = HttpRequests.execute(HttpRequest.get(uri.resolve("/v3Internal/worker/get").toURL()).build(),
+                                                 new DefaultHttpRequestConfig(false));
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+
+    // Post request
+    RunnableTaskRequest req = new RunnableTaskRequest(EchoRunnableTask.class.getName(), "");
+    String reqBody = GSON.toJson(req);
+    response = HttpRequests.execute(HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL()).withBody(reqBody).build(),
+                                                 new DefaultHttpRequestConfig(false));
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+    // stop the service
     taskWorkerService.stopAndWait();
   }
 }

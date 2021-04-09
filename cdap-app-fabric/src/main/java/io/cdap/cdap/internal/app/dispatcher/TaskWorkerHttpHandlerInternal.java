@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.dispatcher;
 
-import com.google.common.util.concurrent.Service.State;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
