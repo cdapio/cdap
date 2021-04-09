@@ -22,7 +22,7 @@ import org.junit.Test;
 /**
  * Unit test for {@link RunnableTaskLauncher}.
  */
-public class TestRunnableTaskLauncher {
+public class RunnableTaskLauncherTest {
 
 
   @Test
@@ -33,6 +33,5 @@ public class TestRunnableTaskLauncher {
     RunnableTaskLauncher launcher = new RunnableTaskLauncher();
     String got = launcher.launchRunnableTask(request);
     Assert.assertEquals(want, got);
-
   }
 }

@@ -53,15 +53,18 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
   @POST
   @Path("/run")
   public void run(FullHttpRequest request, HttpResponder responder) {
-    RunnableTaskRequest runnableTaskRequest =
-      GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), RunnableTaskRequest.class);
     String response;
+    HttpResponseStatus status;
     try {
+      RunnableTaskRequest runnableTaskRequest =
+        GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), RunnableTaskRequest.class);
       response = runnableTaskLauncher.launchRunnableTask(runnableTaskRequest);
+      status = HttpResponseStatus.OK;
     } catch (Exception ex) {
-      response = ex.getMessage();
+      response = ex.toString();
+      status = HttpResponseStatus.BAD_REQUEST;
     }
-    responder.sendString(HttpResponseStatus.OK, response);
+    responder.sendString(status, response);
   }
 
   @GET
