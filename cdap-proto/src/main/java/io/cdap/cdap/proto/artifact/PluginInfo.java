@@ -47,6 +47,14 @@ public class PluginInfo extends PluginSummary {
     this.properties = properties;
   }
 
+  public PluginInfo(String name, String type, String description, String category, String className,
+                    @Nullable String configFieldName,
+                    ArtifactSummary artifact, Map<String, PluginPropertyField> properties) {
+    super(name, type, description, category, className, artifact);
+    this.configFieldName = configFieldName;
+    this.properties = properties;
+  }
+
   @Nullable
   public String getConfigFieldName() {
     return configFieldName;

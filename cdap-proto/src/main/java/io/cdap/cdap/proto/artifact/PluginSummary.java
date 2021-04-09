@@ -30,15 +30,28 @@ public class PluginSummary {
   protected final String name;
   protected final String type;
   protected final String description;
+  protected final String category;
   protected final String className;
   protected final ArtifactSummary artifact;
 
-  public PluginSummary(String name, String type, String description, String className, ArtifactSummary artifact) {
+
+
+  public PluginSummary(String name, String type, String description, String category, String className,
+                       ArtifactSummary artifact) {
     this.name = name;
     this.type = type;
     this.description = description;
+    this.category = category;
     this.className = className;
     this.artifact = artifact;
+  }
+
+  public PluginSummary(String name, String type, String description, String className, ArtifactSummary artifact) {
+    this(name, type, description, null, className, artifact);
+  }
+
+  public String getCategory() {
+    return category;
   }
 
   public String getName() {
