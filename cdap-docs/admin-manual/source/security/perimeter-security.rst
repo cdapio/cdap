@@ -364,6 +364,21 @@ Property                                                   Default Value     Val
                                                                                        LDAP server
 ========================================================== ================= ========= ======================================
 
+To apply case conversion for authorization, configure
+these optional properties in ``cdap-security.xml``:
+
+========================================================== =========================== ======================================
+Property                                                   Value                       Description
+========================================================== =========================== ======================================
+``security.auth.server.usernameCaseConversion``            <usernameCaseConversion>    Set ``lower`` for lower case conversion
+                                                                                       Set ``upper`` for upper case conversion
+                                                                                       Set ``title`` for title case conversion
+                                                                                       Set ``server`` for case configured in
+                                                                                       LDAP server
+                                                                                       Set ``none`` for no conversion (default)
+``security.auth.server.usernameTitleCaseDelim``            <usernameTitleCaseDelim>    Delimiters for Title Case (default ``.``)
+========================================================== ================= ========= ======================================
+
 LDAP with Active Directory
 --------------------------
 

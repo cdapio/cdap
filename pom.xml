@@ -122,6 +122,7 @@
     <bouncycastle.version>1.60</bouncycastle.version>
     <cdap.common.version>0.13.0</cdap.common.version>
     <cdap.client.version>1.4.0</cdap.client.version>
+    <commons.text.version>1.8</commons.text.version>
     <commons.cli.version>1.2</commons.cli.version>
     <commons.compress.version>1.18</commons.compress.version>
     <fastutil.version>6.5.6</fastutil.version>
@@ -1557,6 +1558,11 @@
             <artifactId>commons-logging</artifactId>
           </exclusion>
         </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-text</artifactId>
+        <version>${commons.text.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
