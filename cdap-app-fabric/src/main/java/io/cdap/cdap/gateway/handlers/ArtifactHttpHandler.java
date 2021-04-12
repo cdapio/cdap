@@ -466,8 +466,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
         }
       }
       if (artifactName.equals("cdap-data-pipeline") || artifactName.equals("cdap-data-streams")) {
-        pluginTypes.add("directconnector");
-        pluginTypes.add("batchconnector");
+        pluginTypes.add("connector");
       }
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(pluginTypes));
     } catch (IOException e) {
@@ -489,31 +488,31 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
 
     if (pluginType.toLowerCase().contains("connector")) {
       List<PluginSummary> plugins = ImmutableList.of(
-        new PluginSummary("GCS", "batchconnector", "Google Cloud Storage",
+        new PluginSummary("GCS", "connector", "Google Cloud Storage",
                           "Google Cloud Platform", "io.cdap.plugin.gcp.gcs.connector.GCSConnector",
                           new ArtifactSummary("google-cloud", "0.18.0-SNAPSHOT", ArtifactScope.SYSTEM)),
-        new PluginSummary("BigQuery", "directconnector", "Google Cloud Big Query",
+        new PluginSummary("BigQuery", "connector", "Google Cloud Big Query",
                           "Google Cloud Platform", "io.cdap.plugin.gcp.gcs.connector.BigQueryConnector",
                           new ArtifactSummary("google-cloud", "0.18.0-SNAPSHOT", ArtifactScope.SYSTEM)),
-        new PluginSummary("Spanner", "batchconnector", "Google Cloud Spanner",
+        new PluginSummary("Spanner", "connector", "Google Cloud Spanner",
                           "Google Cloud Platform", "io.cdap.plugin.gcp.gcs.connector.SpannerConnector",
                           new ArtifactSummary("google-cloud", "0.18.0-SNAPSHOT", ArtifactScope.SYSTEM)),
-        new PluginSummary("File", "batchconnector", "File Connector",
+        new PluginSummary("File", "connector", "File Connector",
                           "Flat File", "io.cdap.plugin.connector.FileConnector",
                           new ArtifactSummary("core-plugins", "2.7.0-SNAPSHOT", ArtifactScope.SYSTEM)),
-        new PluginSummary("Database", "batchconnector", "Generic Database",
+        new PluginSummary("Database", "connector", "Generic Database",
                           "Database", "io.cdap.plugin.connector.DBConnector",
                           new ArtifactSummary("database-plugins", "2.7.0-SNAPSHOT", ArtifactScope.SYSTEM)),
-        new PluginSummary("Kafka", "directconnector", "Kafka Connector",
+        new PluginSummary("Kafka", "connector", "Kafka Connector",
                           "Messaging System", "io.cdap.plugin.connector.KafkaConnector",
                           new ArtifactSummary("kafka-plugins", "2.6.0-SNAPSHOT", ArtifactScope.SYSTEM)),
-        new PluginSummary("S3", "batchconnector", "S3 Connector",
+        new PluginSummary("S3", "connector", "S3 Connector",
                           "AWS", "io.cdap.plugin.connector.S3Connector",
                           new ArtifactSummary("s3-plugins", "1.15.0-SNAPSHOT", ArtifactScope.SYSTEM)),
-        new PluginSummary("Kafka", "directconnector", "Kafka Connector",
+        new PluginSummary("Kafka", "connector", "Kafka Connector",
                           "Messaging System", "io.cdap.plugin.connector.KafkaConnector",
                           new ArtifactSummary("kafka-plugins", "2.6.0-SNAPSHOT", ArtifactScope.SYSTEM)),
-        new PluginSummary("ADLS", "batchconnector", "ADLS Connector",
+        new PluginSummary("ADLS", "connector", "ADLS Connector",
                           "Azure", "io.cdap.plugin.connector.ADLSConnector",
                           new ArtifactSummary("adls-plugins", "2.6.0-SNAPSHOT", ArtifactScope.SYSTEM))
       );
@@ -574,7 +573,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     if (pluginType.toLowerCase().contains("connector")) {
       List<PluginInfo> pluginInfos = Lists.newArrayList();
       pluginInfos.add(
-        new PluginInfo("BigQuery", "directconnector", "Google Cloud Big Query",
+        new PluginInfo("BigQuery", "connector", "Google Cloud Big Query",
                        "Google Cloud Platform", "io.cdap.plugin.gcp.gcs.connector.BigQueryConnector", "config",
                        new ArtifactSummary("google-cloud", "0.18.0-SNAPSHOT", ArtifactScope.SYSTEM),
                        ImmutableMap.of("project",
