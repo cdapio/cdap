@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -306,43 +306,10 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
       classLoaderUrls = getSparkClassloaderURLs(getClass().getClassLoader());
     }
 
-    SparkRunnerClassLoader runnerClassLoader = new SparkRunnerClassLoader(classLoaderUrls,
-                                                                          runnerParentClassLoader,
-                                                                          rewriteYarnClient,
-                                                                          rewriteCheckpointTempName);
-
-    if (providerSparkCompat != SparkCompat.SPARK1_2_10) {
-      return runnerClassLoader;
-    }
-
-    // CDAP-8087: Due to Scala 2.10 bug in not able to support runtime reflection from multiple threads,
-    // we create the runtime mirror from this synchronized method
-    // (there is only one instance of SparkProgramRuntimeProvider), and the mirror will be cached by Scala in a
-    // WeakHashMap. Any future call to "scala.reflect.runtime.universe.runtimeMirror(classLoader)" will simply returns
-    // the cached runtimeMirror from the WeakHashMap. This is a workaround the Scala 2.10 bug SI-6240 to avoid
-    // concurrent creation of scala runtimeMirror when the runtimeMirror is needed in Spark yarn/Client.scala and
-    // triggered from Workflow fork.
-
-    try {
-      // Use reflection to call scala.reflect.runtime.package$.MODULE$.universe.runtimeMirror(classLoader)
-      // The scala.reflect.runtime.package$ is the class, which has a public MODULE$ field, which is scala way of
-      // doing singleton object.
-      // We use reflection to avoid code dependency  on the scala version.
-      Object scalaReflect = runnerClassLoader.loadClass("scala.reflect.runtime.package$").getField("MODULE$").get(null);
-      Object javaMirrors = scalaReflect.getClass().getMethod("universe").invoke(scalaReflect);
-      javaMirrors.getClass().getMethod("runtimeMirror", ClassLoader.class).invoke(javaMirrors, runnerClassLoader);
-    } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException e) {
-      // The SI-6240 is fixed in Scala 2.11 anyway and older Scala version should have the classes and methods
-      // that we try to invoke above.
-      LOG.trace("Not able to create scala runtime mirror for SparkRunnerClassLoader. " +
-                  "This can happen if there is incompatible Scala API changes with Scala version newer than 2.10. " +
-                  "However, the SI-6240 bug is fixed since 2.11, hence the workaround for the the bug is not needed ");
-    } catch (Exception e) {
-      LOG.warn("Failed to create scala runtime mirror for SparkRunnerClassLoader. " +
-                 "Running multiple Spark from the same JVM process might fail due to Scala reflection bug SI-6240.", e);
-    }
-
-    return runnerClassLoader;
+    return new SparkRunnerClassLoader(classLoaderUrls,
+                                      runnerParentClassLoader,
+                                      rewriteYarnClient,
+                                      rewriteCheckpointTempName);
   }
 
   /**

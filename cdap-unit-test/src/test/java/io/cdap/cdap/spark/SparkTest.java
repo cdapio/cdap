@@ -66,6 +66,7 @@ import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
@@ -121,7 +122,8 @@ public class SparkTest extends TestFrameworkTestBase {
     return deployWithArtifact(appClass, ARTIFACTS.get(appClass));
   }
 
-  @Test
+  @Test @Ignore("For this to work in spark 2 and later DefaultSource should implement" +
+    "org.apache.spark.sql.execution.datasources.FileFormat")
   public void testDatasetSQL() throws Exception {
     ApplicationManager appManager = deploy(TestSparkApp.class);
 

@@ -18,14 +18,11 @@ package io.cdap.cdap.security.impersonation;
 
 
 import com.google.common.base.Preconditions;
-import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
-import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
@@ -124,6 +121,7 @@ public class UGIProviderTest {
     Configuration hConf = new Configuration();
     hConf.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     hConf.setBoolean("ipc.client.fallback-to-simple-auth-allowed", true);
+    hConf.setBoolean("ignore.secure.ports.for.testing", true);
 
     miniDFSCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
     miniDFSCluster.waitClusterUp();

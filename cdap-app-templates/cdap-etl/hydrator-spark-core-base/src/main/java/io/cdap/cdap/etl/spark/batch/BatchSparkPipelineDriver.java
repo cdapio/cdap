@@ -38,7 +38,6 @@ import io.cdap.cdap.etl.common.SetMultimapCodec;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import io.cdap.cdap.etl.common.plugin.PipelinePluginContext;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
-import io.cdap.cdap.etl.spark.Compat;
 import io.cdap.cdap.etl.spark.SparkCollection;
 import io.cdap.cdap.etl.spark.SparkPairCollection;
 import io.cdap.cdap.etl.spark.SparkPipelineRunner;
@@ -87,7 +86,7 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
                                                           StageStatisticsCollector collector) {
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
     FlatMapFunction<Tuple2<Object, Object>, RecordInfo<Object>> sourceFunction =
-      Compat.convert(new BatchSourceFunction(pluginFunctionContext, functionCacheFactory.newCache()));
+      new BatchSourceFunction(pluginFunctionContext, functionCacheFactory.newCache());
     return new RDDCollection<>(sec, functionCacheFactory, jsc,
                                new SQLContext(jsc), datasetContext, sinkFactory, sourceFactory
       .createRDD(sec, jsc, stageSpec.getName(), Object.class, Object.class)
@@ -103,7 +102,7 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
                                                            StageStatisticsCollector collector) throws Exception {
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
     return inputCollection.flatMapToPair(
-      Compat.convert(new JoinOnFunction<>(pluginFunctionContext, functionCacheFactory.newCache(), inputStageName)));
+      new JoinOnFunction<>(pluginFunctionContext, functionCacheFactory.newCache(), inputStageName));
   }
 
   @Override
@@ -113,8 +112,8 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
     SparkPairCollection<Object, List<JoinElement<Object>>> joinedInputs,
     StageStatisticsCollector collector) throws Exception {
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
-    return joinedInputs.flatMap(Compat.convert(new JoinMergeFunction<>(
-      pluginFunctionContext, functionCacheFactory.newCache())));
+    return joinedInputs.flatMap(new JoinMergeFunction<>(
+      pluginFunctionContext, functionCacheFactory.newCache()));
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 Cask Data, Inc.
+ * Copyright © 2016-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.Gson;
 import io.cdap.cdap.api.spark.SparkExecutionContext;
+import io.cdap.cdap.app.runtime.spark.classloader.SparkClassRewriter;
 import io.cdap.cdap.app.runtime.spark.classloader.SparkRunnerClassLoader;
 import io.cdap.cdap.app.runtime.spark.distributed.SparkDriverService;
 import io.cdap.cdap.common.conf.Constants;
@@ -386,5 +387,17 @@ public final class SparkRuntimeUtils {
     Retries.runWithRetries(() -> runtimeClient.uploadSparkEventLogs(programRunId, eventFile),
                            RetryStrategies.fromConfiguration(runtimeContext.getCConfiguration(), "spark."));
     LOG.debug("Uploaded event logs file {} for program run {}", eventFile, programRunId);
+  }
+
+  /**
+   * Appends value of cdap.spark.pyFiles to the original paths list.
+   * This function is used to simplify code generation in
+   * {@link SparkClassRewriter#rewritePythonWorkerFactory(java.io.InputStream)}.
+   * @param paths original path list
+   * @return new path list with cdap.spark.pyFiles added (if any)
+   */
+  public static String appendPyFiles(String paths) {
+    String pyFiles = SparkRuntimeEnv.getProperty("cdap.spark.pyFiles");
+    return pyFiles == null ? paths : paths + File.pathSeparator + pyFiles;
   }
 }

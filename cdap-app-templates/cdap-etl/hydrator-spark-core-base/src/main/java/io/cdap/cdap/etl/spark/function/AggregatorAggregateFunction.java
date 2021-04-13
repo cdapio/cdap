@@ -25,7 +25,10 @@ import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.TrackedTransform;
 import io.cdap.cdap.etl.common.plugin.AggregatorBridge;
 import io.cdap.cdap.etl.spark.CombinedEmitter;
+import org.apache.spark.api.java.function.FlatMapFunction;
 import scala.Tuple2;
+
+import java.util.Iterator;
 
 /**
  * Function that uses a BatchAggregator or a AggregatorBridge depending on the type of the aggregator
@@ -37,7 +40,7 @@ import scala.Tuple2;
  * @param <OUT> type of aggregate output
  */
 public class AggregatorAggregateFunction<GROUP_KEY, GROUP_VAL, OUT>
-  implements FlatMapFunc<Tuple2<GROUP_KEY, Iterable<GROUP_VAL>>, RecordInfo<Object>> {
+  implements FlatMapFunction<Tuple2<GROUP_KEY, Iterable<GROUP_VAL>>, RecordInfo<Object>> {
   private final PluginFunctionContext pluginFunctionContext;
   private final FunctionCache functionCache;
   private transient TrackedTransform<Tuple2<GROUP_KEY, Iterable<GROUP_VAL>>, OUT> aggregateTransform;
@@ -49,7 +52,7 @@ public class AggregatorAggregateFunction<GROUP_KEY, GROUP_VAL, OUT>
   }
 
   @Override
-  public Iterable<RecordInfo<Object>> call(Tuple2<GROUP_KEY, Iterable<GROUP_VAL>> input) throws Exception {
+  public Iterator<RecordInfo<Object>> call(Tuple2<GROUP_KEY, Iterable<GROUP_VAL>> input) throws Exception {
     if (aggregateTransform == null) {
       Object plugin = pluginFunctionContext.createAndInitializePlugin(functionCache);
       BatchAggregator<GROUP_KEY, GROUP_VAL, OUT> aggregator;
@@ -69,7 +72,7 @@ public class AggregatorAggregateFunction<GROUP_KEY, GROUP_VAL, OUT>
     }
     emitter.reset();
     aggregateTransform.transform(input, emitter);
-    return emitter.getEmitted();
+    return emitter.getEmitted().iterator();
   }
 
   private static class AggregateTransform<GROUP_KEY, GROUP_VAL, OUT_VAL>

@@ -35,7 +35,7 @@ import io.cdap.cdap.etl.spark.plugin.SparkPipelinePluginContext;
 import io.cdap.cdap.etl.spark.streaming.SparkStreamingExecutionContext;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.Function2;
+import org.apache.spark.api.java.function.VoidFunction2;
 import org.apache.spark.streaming.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +45,7 @@ import org.slf4j.LoggerFactory;
  *
  * @param <T> type of object in the rdd
  */
-public class StreamingSparkSinkFunction<T> implements Function2<JavaRDD<T>, Time, Void> {
+public class StreamingSparkSinkFunction<T> implements VoidFunction2<JavaRDD<T>, Time> {
   private static final Logger LOG = LoggerFactory.getLogger(StreamingSparkSinkFunction.class);
   private final JavaSparkExecutionContext sec;
   private final StageSpec stageSpec;
@@ -56,9 +56,9 @@ public class StreamingSparkSinkFunction<T> implements Function2<JavaRDD<T>, Time
   }
 
   @Override
-  public Void call(JavaRDD<T> data, Time batchTime) throws Exception {
+  public void call(JavaRDD<T> data, Time batchTime) throws Exception {
     if (data.isEmpty()) {
-      return null;
+      return;
     }
 
     final long logicalStartTime = batchTime.milliseconds();
@@ -123,6 +123,5 @@ public class StreamingSparkSinkFunction<T> implements Function2<JavaRDD<T>, Time
         });
       }
     }
-    return null;
   }
 }

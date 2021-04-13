@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 Cask Data, Inc.
+ * Copyright © 2016-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -42,8 +42,6 @@ import io.cdap.cdap.api.workflow.WorkflowToken
 import io.cdap.cdap.app.runtime.spark.SparkTransactional.TransactionType
 import io.cdap.cdap.app.runtime.spark.data.DatasetRDD
 import io.cdap.cdap.app.runtime.spark.dynamic.AbstractSparkCompiler
-import io.cdap.cdap.app.runtime.spark.dynamic.SparkClassFileHandler
-import io.cdap.cdap.app.runtime.spark.dynamic.SparkCompilerCleanupManager
 import io.cdap.cdap.app.runtime.spark.dynamic.URLAdder
 import io.cdap.cdap.app.runtime.spark.preview.SparkDataTracer
 import io.cdap.cdap.app.runtime.spark.service.DefaultSparkHttpServiceContext
@@ -52,6 +50,7 @@ import io.cdap.cdap.common.conf.ConfigurationUtil
 import io.cdap.cdap.data.LineageDatasetContext
 import io.cdap.cdap.data2.metadata.lineage.AccessType
 import io.cdap.cdap.internal.app.runtime.DefaultTaskLocalizationContext
+import io.cdap.cdap.common.lang.jar.BundleJarUtil
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.MRJobConfig
 import org.apache.spark.SparkContext
@@ -99,14 +98,12 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
   private val transactional = new SparkTransactional(runtimeContext)
   private val workflowInfo = Option(runtimeContext.getWorkflowInfo)
   private val sparkTxHandler = new SparkTransactionHandler(runtimeContext.getTransactionSystemClient)
-  private val sparkClassFileHandler = new SparkClassFileHandler
   private val sparkDriveHttpService = new SparkDriverHttpService(runtimeContext.getProgramName,
                                                                  runtimeContext.getHostname,
-                                                                 sparkTxHandler, sparkClassFileHandler)
+                                                                 sparkTxHandler)
   private val applicationEndLatch = new CountDownLatch(1)
   private val authorizationEnforcer = runtimeContext.getAuthorizationEnforcer
   private val authenticationContext = runtimeContext.getAuthenticationContext
-  private val compilerCleanupManager = new SparkCompilerCleanupManager
   private val interpreterCount = new AtomicInteger(0)
 
   // Optionally add the event logger based on the cConf in the runtime context
@@ -188,7 +185,6 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
       try {
         sparkDriveHttpService.stopAndWait()
       } finally {
-        compilerCleanupManager.close()
         eventLoggerCloseable.close()
       }
     }
@@ -241,32 +237,17 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
     // Setup classpath and classloader
     val settings = AbstractSparkCompiler.setClassPath(new Settings())
 
-    val urlAdded = new mutable.HashSet[URL]
     val urlAdder = new URLAdder {
       override def addURLs(urls: URL*) = {
-        sparkClassFileHandler.addURLs(urls: _*)
-        urlAdded ++= urls
+        urls.foreach(u => BundleJarUtil.unJarOverwrite(new File(u.toURI), classDir))
       }
     }
-    urlAdder.addURLs(classDir.toURI.toURL)
 
     // Creates the interpreter. The cleanup is just to remove it from the cleanup manager
     var interpreterRef: Option[SparkInterpreter] = None
-    val interpreter = createInterpreter(settings, classDir, urlAdder, () => {
-      interpreterRef.foreach(compilerCleanupManager.removeCompiler)
-    })
+    val interpreter = createInterpreter(settings, classDir, urlAdder)
     interpreterRef = Some(interpreter)
 
-    // The closeable for removing the class file directory from the file handler as well as deleting it
-    val closeable = new Closeable {
-      val closed = new AtomicBoolean()
-      override def close(): Unit = {
-        if (closed.compareAndSet(false, true)) {
-          sparkClassFileHandler.removeURLs(urlAdded)
-        }
-      }
-    }
-    compilerCleanupManager.addCompiler(interpreter, closeable)
     interpreter
   }
 
@@ -536,11 +517,9 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
     * @param classDir the directory to write the compiled class files
     * @param urlAdder a [[io.cdap.cdap.app.runtime.spark.dynamic.URLAdder]] for adding URL to have classes
     *                 visible for the Spark executor.
-    * @param onClose function to call on closing the [[io.cdap.cdap.api.spark.dynamic.SparkInterpreter]]
     * @return a new instance of [[io.cdap.cdap.api.spark.dynamic.SparkInterpreter]]
     */
-  protected def createInterpreter(settings: Settings, classDir: File,
-                                  urlAdder: URLAdder, onClose: () => Unit): SparkInterpreter
+  protected def createInterpreter(settings: Settings, classDir: File, urlAdder: URLAdder): SparkInterpreter
 
   /**
     * Returns a local directory for the interpreter to use for storing dynamic class files.

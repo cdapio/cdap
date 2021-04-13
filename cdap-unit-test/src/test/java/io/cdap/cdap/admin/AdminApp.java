@@ -366,11 +366,8 @@ public class AdminApp extends AbstractApplication {
       public void run(JavaSparkExecutionContext sec) throws Exception {
         JavaSparkContext jsc = new JavaSparkContext();
         JavaPairRDD<byte[], byte[]> input = sec.fromDataset("lines");
-        JavaRDD<String> words = input.values().flatMap(new FlatMapFunction<byte[], String>() {
-          public Iterable<String> call(byte[] line) {
-            return Arrays.asList(Bytes.toString(line).split(" "));
-          }
-        });
+        JavaRDD<String> words = input.values().flatMap((FlatMapFunction<byte[], String>) line ->
+          Arrays.asList(Bytes.toString(line).split(" ")).iterator());
         JavaPairRDD<String, Integer> pairs = words.mapToPair(new PairFunction<String, String, Integer>() {
           public Tuple2<String, Integer> call(String s) {
             return new Tuple2<>(s, 1);

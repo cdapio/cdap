@@ -18,6 +18,7 @@ package io.cdap.cdap.etl.spark.streaming.function;
 
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
@@ -34,7 +35,6 @@ import io.cdap.cdap.etl.common.PipelineRuntime;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
-import io.cdap.cdap.etl.spark.Compat;
 import io.cdap.cdap.etl.spark.SparkPipelineRuntime;
 import io.cdap.cdap.etl.spark.SparkSubmitterContext;
 import io.cdap.cdap.etl.spark.batch.SparkBatchSinkContext;
@@ -43,6 +43,7 @@ import io.cdap.cdap.etl.spark.function.MultiSinkFunction;
 import io.cdap.cdap.etl.spark.plugin.SparkPipelinePluginContext;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function2;
+import org.apache.spark.api.java.function.VoidFunction2;
 import org.apache.spark.streaming.Time;
 import org.apache.tephra.TransactionFailureException;
 import org.slf4j.Logger;
@@ -58,7 +59,7 @@ import java.util.Set;
  * Function used to write a batch of data to a batch sink for use with a JavaDStream.
  * note: not using foreachRDD(VoidFunction2) method, because spark 1.3 doesn't have VoidFunction2.
  */
-public class StreamingMultiSinkFunction implements Function2<JavaRDD<RecordInfo<Object>>, Time, Void> {
+public class StreamingMultiSinkFunction implements VoidFunction2<JavaRDD<RecordInfo<Object>>, Time> {
   private static final Logger LOG = LoggerFactory.getLogger(StreamingMultiSinkFunction.class);
   private final JavaSparkExecutionContext sec;
   private final PhaseSpec phaseSpec;
@@ -77,7 +78,7 @@ public class StreamingMultiSinkFunction implements Function2<JavaRDD<RecordInfo<
   }
 
   @Override
-  public Void call(JavaRDD<RecordInfo<Object>> data, Time batchTime) throws Exception {
+  public void call(JavaRDD<RecordInfo<Object>> data, Time batchTime) throws Exception {
     long logicalStartTime = batchTime.milliseconds();
     MacroEvaluator evaluator = new DefaultMacroEvaluator(new BasicArguments(sec),
                                                          logicalStartTime,
@@ -109,7 +110,7 @@ public class StreamingMultiSinkFunction implements Function2<JavaRDD<RecordInfo<
         prepareRun(pipelineRuntime, sinkFactory, stageSpec, plugin);
       } catch (Exception e) {
         LOG.error("Error preparing sink {} for the batch for time {}.", stageName, logicalStartTime, e);
-        return null;
+        return;
       }
     }
 
@@ -117,7 +118,7 @@ public class StreamingMultiSinkFunction implements Function2<JavaRDD<RecordInfo<
     boolean ranSuccessfully = true;
     try {
       MultiSinkFunction multiSinkFunction = new MultiSinkFunction(sec, phaseSpec, group, collectors);
-      Set<String> outputNames = sinkFactory.writeCombinedRDD(data.flatMapToPair(Compat.convert(multiSinkFunction)),
+      Set<String> outputNames = sinkFactory.writeCombinedRDD(data.flatMapToPair(multiSinkFunction),
                                                              sec, sinkNames);
       sec.execute(new TxRunnable() {
         @Override
@@ -143,7 +144,6 @@ public class StreamingMultiSinkFunction implements Function2<JavaRDD<RecordInfo<
         LOG.warn("Unable to execute onRunFinish for sink {}", stageName, e);
       }
     }
-    return null;
   }
 
   private Map<String, SubmitterLifecycle<?>> createStages(MacroEvaluator evaluator) throws InstantiationException {

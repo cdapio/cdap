@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2015-2018 Cask Data, Inc.
+  Copyright © 2015-2021 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -169,7 +169,7 @@
       </dependency>
       <dependency>
         <groupId>io.cdap.cdap</groupId>
-        <artifactId>cdap-api-spark</artifactId>
+        <artifactId>cdap-api-spark2_2.11</artifactId>
         <version>${cdap.version}</version>
         <scope>provided</scope>
       </dependency>

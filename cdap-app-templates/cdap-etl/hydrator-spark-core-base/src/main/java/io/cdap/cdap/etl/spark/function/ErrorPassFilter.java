@@ -16,23 +16,26 @@
 
 package io.cdap.cdap.etl.spark.function;
 
+import com.google.common.collect.Iterators;
 import io.cdap.cdap.etl.api.ErrorRecord;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.RecordType;
+import org.apache.spark.api.java.function.FlatMapFunction;
 
 import java.util.Collections;
+import java.util.Iterator;
 
 /**
  * Filters a SparkCollection containing both output and errors to one that just contains errors.
  *
  * @param <T> type of error record
  */
-public class ErrorPassFilter<T> implements FlatMapFunc<RecordInfo<Object>, ErrorRecord<T>> {
+public class ErrorPassFilter<T> implements FlatMapFunction<RecordInfo<Object>, ErrorRecord<T>> {
 
   @Override
-  public Iterable<ErrorRecord<T>> call(RecordInfo<Object> input) throws Exception {
+  public Iterator<ErrorRecord<T>> call(RecordInfo<Object> input) throws Exception {
     //noinspection unchecked
     return input.getType() == RecordType.ERROR ?
-      Collections.singletonList((ErrorRecord<T>) input.getValue()) : Collections.<ErrorRecord<T>>emptyList();
+      Iterators.singletonIterator((ErrorRecord<T>) input.getValue()) : Iterators.emptyIterator();
   }
 }

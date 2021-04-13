@@ -21,8 +21,8 @@ package io.cdap.cdap.runtime.spi;
  * Spark compat versions.
  */
 public enum SparkCompat {
-  SPARK1_2_10("spark1_2.10"),
-  SPARK2_2_11("spark2_2.11");
+  SPARK2_2_11("spark2_2.11"),
+  SPARK3_2_12("spark3_2.12");
 
   private final String compat;
 

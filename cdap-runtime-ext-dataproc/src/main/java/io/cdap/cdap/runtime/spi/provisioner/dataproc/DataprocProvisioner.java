@@ -119,8 +119,8 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       String imageVersion = conf.getImageVersion();
       if (imageVersion == null) {
         switch (context.getSparkCompat()) {
-          case SPARK1_2_10:
-            imageVersion = "1.0";
+          case SPARK3_2_12:
+            imageVersion = "2.0";
             break;
           case SPARK2_2_11:
           default:

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2014-2019 Cask Data, Inc.
+  Copyright © 2014-2021 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -185,6 +185,10 @@
       <groupId>org.slf4j</groupId>
       <artifactId>jul-to-slf4j</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka_2.11</artifactId>
+    </dependency>
 
     <!-- for tools -->
     <dependency>
@@ -224,6 +228,13 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
+    <!-- scala for kafka -->
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-library</artifactId>
+      <version>${scala2.11.version}</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <profiles>
@@ -258,25 +269,25 @@
       <dependencies>
         <dependency>
           <groupId>io.cdap.cdap</groupId>
-          <artifactId>cdap-api-spark</artifactId>
-          <version>${project.version}</version>
-          <scope>provided</scope>
-        </dependency>
-        <dependency>
-          <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-api-spark2_2.11</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
         <dependency>
           <groupId>io.cdap.cdap</groupId>
-          <artifactId>cdap-spark-core</artifactId>
+          <artifactId>cdap-api-spark3_2.12</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
         <dependency>
           <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-spark-core2_2.11</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>io.cdap.cdap</groupId>
+          <artifactId>cdap-spark-core3_2.12</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
@@ -331,34 +342,6 @@
             <version>2.6</version>
             <executions>
               <execution>
-                <id>copy-pipelines-spark1_2.10</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration combine.self="override">
-                  <outputDirectory>${stage.artifacts.dir}/${spark1.artifacts.dir}</outputDirectory>
-                  <resources>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-data-pipeline/target
-                      </directory>
-                      <includes>
-                        <include>cdap-data-pipeline-${project.version}.jar</include>
-                      </includes>
-                    </resource>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-data-streams/target
-                      </directory>
-                      <includes>
-                        <include>cdap-data-streams-${project.version}.jar</include>
-                      </includes>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
-              <execution>
                 <id>copy-pipelines-spark2_2.11</id>
                 <phase>process-resources</phase>
                 <goals>
@@ -381,6 +364,34 @@
                       </directory>
                       <includes>
                         <include>cdap-data-streams2_2.11-${project.version}.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+              <execution>
+                <id>copy-pipelines-spark3_2.12</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.artifacts.dir}/${spark3.artifacts.dir}</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-data-pipeline3_2.12/target
+                      </directory>
+                      <includes>
+                        <include>cdap-data-pipeline3_2.12-${project.version}.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-data-streams3_2.12/target
+                      </directory>
+                      <includes>
+                        <include>cdap-data-streams3_2.12-${project.version}.jar</include>
                       </includes>
                     </resource>
                   </resources>
@@ -446,6 +457,26 @@
                   </resources>
                 </configuration>
               </execution>
+              <execution>
+                <id>copy-program-report-app-spark3</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.artifacts.dir}/${spark3.artifacts.dir}</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-program-report/target
+                      </directory>
+                      <includes>
+                        <include>cdap-program-report-${project.version}.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
 
               <!-- Copy cdap-kms. -->
               <execution>
@@ -471,28 +502,6 @@
 
               <!-- Copy runtime extensions. Currently only has Spark -->
               <execution>
-                <id>copy-spark1-extensions</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration combine.self="override">
-                  <outputDirectory>${stage.runtime.ext.dir}/${spark1.artifacts.dir}</outputDirectory>
-                  <resources>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-spark-core/target/libexec
-                      </directory>
-                      <!-- Only package with the cdap extensions, not the spark assembly jar -->
-                      <includes>
-                        <include>io.cdap.cdap.cdap-api-spark*.jar</include>
-                        <include>io.cdap.cdap.cdap-spark-*.jar</include>
-                      </includes>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
-              <execution>
                 <id>copy-spark2-extensions</id>
                 <phase>process-resources</phase>
                 <goals>
@@ -504,6 +513,28 @@
                     <resource>
                       <directory>
                         ${project.parent.basedir}/cdap-spark-core2_2.11/target/libexec
+                      </directory>
+                      <!-- Only package with the cdap extensions, not the spark assembly jar -->
+                      <includes>
+                        <include>io.cdap.cdap.cdap-api-spark*.jar</include>
+                        <include>io.cdap.cdap.cdap-spark-*.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+              <execution>
+                <id>copy-spark3-extensions</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.runtime.ext.dir}/${spark3.artifacts.dir}</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-spark-core3_2.12/target/libexec
                       </directory>
                       <!-- Only package with the cdap extensions, not the spark assembly jar -->
                       <includes>
@@ -734,6 +765,19 @@
                   <target>
                     <move file="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-data-pipeline2_2.11-${project.version}.jar" tofile="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-data-pipeline-${project.version}.jar" />
                     <move file="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-data-streams2_2.11-${project.version}.jar" tofile="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-data-streams-${project.version}.jar" />
+                  </target>
+                </configuration>
+              </execution>
+              <execution>
+                <id>rename-pipeline-jars-spark3</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <move file="${stage.artifacts.dir}/${spark3.artifacts.dir}/cdap-data-pipeline3_2.12-${project.version}.jar" tofile="${stage.artifacts.dir}/${spark3.artifacts.dir}/cdap-data-pipeline-${project.version}.jar" />
+                    <move file="${stage.artifacts.dir}/${spark3.artifacts.dir}/cdap-data-streams3_2.12-${project.version}.jar" tofile="${stage.artifacts.dir}/${spark3.artifacts.dir}/cdap-data-streams-${project.version}.jar" />
                   </target>
                 </configuration>
               </execution>

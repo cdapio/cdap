@@ -262,8 +262,8 @@ public abstract class SparkPipelineRunner {
 
       } else if (BatchSink.PLUGIN_TYPE.equals(pluginType) || isConnectorSink) {
 
-        sinkRunnables.add(stageData.createStoreTask(stageSpec, Compat.convert(new BatchSinkFunction(
-          pluginFunctionContext, functionCacheFactory.newCache()))));
+        sinkRunnables.add(stageData.createStoreTask(stageSpec, new BatchSinkFunction(
+          pluginFunctionContext, functionCacheFactory.newCache())));
 
       } else if (Transform.PLUGIN_TYPE.equals(pluginType)) {
 
@@ -294,8 +294,9 @@ public abstract class SparkPipelineRunner {
         }
 
         if (inputErrors != null) {
-          SparkCollection<RecordInfo<Object>> combinedData = inputErrors.flatMap(stageSpec, Compat.convert(
-            new ErrorTransformFunction<>(pluginFunctionContext, functionCacheFactory.newCache())));
+          SparkCollection<RecordInfo<Object>> combinedData = inputErrors.flatMap(
+            stageSpec,
+            new ErrorTransformFunction<Object, Object>(pluginFunctionContext, functionCacheFactory.newCache()));
           emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
                                       combinedData, groupedDag, branchers, shufflers, hasErrorOutput, hasAlertOutput);
         }
@@ -909,11 +910,11 @@ public abstract class SparkPipelineRunner {
 
     if (hasErrors) {
       SparkCollection<ErrorRecord<Object>> errors =
-        stageData.flatMap(stageSpec, Compat.convert(new ErrorPassFilter<>()));
+        stageData.flatMap(stageSpec, new ErrorPassFilter<Object>());
       builder.setErrors(errors);
     }
     if (hasAlerts) {
-      SparkCollection<Alert> alerts = stageData.flatMap(stageSpec, Compat.convert(new AlertPassFilter()));
+      SparkCollection<Alert> alerts = stageData.flatMap(stageSpec, new AlertPassFilter());
       builder.setAlerts(alerts);
     }
 
@@ -921,11 +922,11 @@ public abstract class SparkPipelineRunner {
       // set collections for each port, implemented as a filter on the port.
       for (StageSpec.Port portSpec : stageSpec.getOutputPorts().values()) {
         String port = portSpec.getPort();
-        SparkCollection<Object> portData = stageData.flatMap(stageSpec, Compat.convert(new OutputPassFilter<>(port)));
+        SparkCollection<Object> portData = stageData.flatMap(stageSpec, new OutputPassFilter<Object>(port));
         builder.addPort(port, portData);
       }
     } else {
-      SparkCollection<Object> outputs = stageData.flatMap(stageSpec, Compat.convert(new OutputPassFilter<>()));
+      SparkCollection<Object> outputs = stageData.flatMap(stageSpec, new OutputPassFilter<Object>());
       builder.setOutput(outputs);
     }
 

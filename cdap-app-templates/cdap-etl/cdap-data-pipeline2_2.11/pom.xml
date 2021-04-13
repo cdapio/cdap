@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2017 Cask Data, Inc.
+  Copyright © 2017-2021 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -97,14 +97,6 @@
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-core_2.11</artifactId>
       <scope>provided</scope>
-      <exclusions>
-        <exclusion>
-          <!-- CDAP-12742: avoid packaging commons-lang3, which is a dependency of cdap-formats (from grok),
-                           but clashes with the one from Spark -->
-          <groupId>org.apache.commons</groupId>
-          <artifactId>commons-lang3</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
@@ -126,16 +118,6 @@
       <artifactId>cdap-unit-test</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>io.cdap.cdap</groupId>
-          <artifactId>cdap-spark-core</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>io.cdap.cdap</groupId>
-          <artifactId>cdap-api-spark</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
@@ -146,6 +128,14 @@
   </dependencies>
 
   <build>
+    <testResources>
+      <testResource>
+        <directory>${project.basedir}/src/test/resources</directory>
+      </testResource>
+      <testResource>
+        <directory>${project.build.directory}/generated-test-sources/cdap-data-pipeline-base/src/test/resources</directory>
+      </testResource>
+    </testResources>
     <pluginManagement>
       <plugins>
         <plugin>
@@ -184,7 +174,7 @@
         <version>3.3.1</version>
       </plugin>
 
-      <!-- copy the source from cdap-data-pipeline in order to compile everything as scala 2.11 -->
+      <!-- copy the source from cdap-data-pipeline-base in order to compile everything as scala 2.11 -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-resources-plugin</artifactId>
@@ -197,10 +187,10 @@
               <goal>copy-resources</goal>
             </goals>
             <configuration>
-              <outputDirectory>${project.build.directory}/generated-sources/cdap-data-pipeline/src/main</outputDirectory>
+              <outputDirectory>${project.build.directory}/generated-sources/cdap-data-pipeline-base/src/main</outputDirectory>
               <resources>
                 <resource>
-                  <directory>${project.parent.basedir}/cdap-data-pipeline/src/main</directory>
+                  <directory>${project.parent.basedir}/cdap-data-pipeline-base/src/main</directory>
                 </resource>
               </resources>
             </configuration>
@@ -212,10 +202,10 @@
               <goal>copy-resources</goal>
             </goals>
             <configuration>
-              <outputDirectory>${project.build.directory}/generated-test-sources/cdap-data-pipeline/src/test</outputDirectory>
+              <outputDirectory>${project.build.directory}/generated-test-sources/cdap-data-pipeline-base/src/test</outputDirectory>
               <resources>
                 <resource>
-                  <directory>${project.parent.basedir}/cdap-data-pipeline/src/test</directory>
+                  <directory>${project.parent.basedir}/cdap-data-pipeline-base/src/test</directory>
                 </resource>
               </resources>
             </configuration>
@@ -235,8 +225,8 @@
             </goals>
             <configuration>
               <sources>
-                <source>${project.build.directory}/generated-sources/cdap-data-pipeline/src/main/java</source>
-                <source>${project.build.directory}/generated-sources/cdap-data-pipeline/src/main/scala</source>
+                <source>${project.build.directory}/generated-sources/cdap-data-pipeline-base/src/main/java</source>
+                <source>${project.build.directory}/generated-sources/cdap-data-pipeline-base/src/main/scala</source>
               </sources>
             </configuration>
           </execution>
@@ -248,8 +238,8 @@
             </goals>
             <configuration>
               <sources>
-                <source>${project.build.directory}/generated-test-sources/cdap-data-pipeline/src/test/java</source>
-                <source>${project.build.directory}/generated-test-sources/cdap-data-pipeline/src/test/scala</source>
+                <source>${project.build.directory}/generated-test-sources/cdap-data-pipeline-base/src/test/java</source>
+                <source>${project.build.directory}/generated-test-sources/cdap-data-pipeline-base/src/test/scala</source>
               </sources>
             </configuration>
           </execution>
@@ -266,6 +256,7 @@
         <configuration>
           <!-- CDAP-16902 avoid running multiple resource intensive tests at the same time -->
           <forkCount>1</forkCount>
+          <forkCount>1</forkCount>
         </configuration>
       </plugin>
     </plugins>
@@ -274,13 +265,13 @@
   <profiles>
     <profile>
       <!-- This profile is just for Spark development in IDE, don't use it in normal Maven build -->
-      <id>spark2-dev</id>
+      <id>spark-dev</id>
       <properties>
-        <cdap.data.pipeline.base.dir>${project.basedir}/../cdap-data-pipeline</cdap.data.pipeline.base.dir>
+        <cdap.data.pipeline.base.dir>${project.basedir}/../cdap-data-pipeline-base</cdap.data.pipeline.base.dir>
       </properties>
       <build>
         <plugins>
-          <!-- Disable the copying of files from cdap-data-pipeline -->
+          <!-- Disable the copying of files from cdap-data-pipeline-base -->
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-resources-plugin</artifactId>
@@ -315,8 +306,8 @@
                 <configuration combine.self="override">
                   <skip>false</skip>
                   <target>
-                    <mkdir dir="${project.build.directory}/generated-sources/cdap-data-pipeline/src"/>
-                    <symlink link="${project.build.directory}/generated-sources/cdap-data-pipeline/src/main" resource="${cdap.data.pipeline.base.dir}/src/main" overwrite="true" />
+                    <mkdir dir="${project.build.directory}/generated-sources/cdap-data-pipeline-base/src"/>
+                    <symlink link="${project.build.directory}/generated-sources/cdap-data-pipeline-base/src/main" resource="${cdap.data.pipeline.base.dir}/src/main" overwrite="true" />
                   </target>
                 </configuration>
               </execution>
@@ -329,8 +320,8 @@
                 <configuration combine.self="override">
                   <skip>false</skip>
                   <target>
-                    <mkdir dir="${project.build.directory}/generated-test-sources/cdap-data-pipeline/src"/>
-                    <symlink link="${project.build.directory}/generated-test-sources/cdap-data-pipeline/src/test" resource="${cdap.data.pipeline.base.dir}/src/test" overwrite="true" />
+                    <mkdir dir="${project.build.directory}/generated-test-sources/cdap-data-pipeline-base/src"/>
+                    <symlink link="${project.build.directory}/generated-test-sources/cdap-data-pipeline-base/src/test" resource="${cdap.data.pipeline.base.dir}/src/test" overwrite="true" />
                   </target>
                 </configuration>
               </execution>

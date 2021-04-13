@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -503,6 +503,9 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     // of the next port if 4040 is already occupied. However, during the process, it unnecessarily logs big stacktrace
     // as WARN, which pollute the logs a lot if there are concurrent Spark job running (e.g. a fork in Workflow).
     configs.put("spark.ui.port", "0");
+
+    // Force python 2. Spark 3 runs with python 3 by default, but we don't support it yet
+    configs.put("spark.pyspark.python", "python");
 
     // Setup app.id and executor.id for Metric System
     configs.put("spark.app.id", context.getApplicationSpecification().getName());
