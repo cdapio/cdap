@@ -31,6 +31,7 @@ import javax.annotation.Nullable;
 public class ETLPlugin {
   private final String name;
   private final String type;
+  private final String category;
   private final Map<String, String> properties;
   private final ArtifactSelectorConfig artifact;
 
@@ -53,8 +54,18 @@ public class ETLPlugin {
                    Map<String, String> properties,
                    @Nullable ArtifactSelectorConfig artifact,
                    String label) {
+    this(name, type, null, properties, artifact, label);
+  }
+
+  public ETLPlugin(String name,
+                   String type,
+                   String category,
+                   Map<String, String> properties,
+                   @Nullable ArtifactSelectorConfig artifact,
+                   String label) {
     this.name = name;
     this.type = type;
+    this.category = category;
     this.properties = Collections.unmodifiableMap(properties);
     this.artifact = artifact;
     this.label = label;
@@ -66,6 +77,10 @@ public class ETLPlugin {
 
   public String getType() {
     return type;
+  }
+
+  public String getCategory() {
+    return category;
   }
 
   public String getLabel() {
@@ -127,11 +142,11 @@ public class ETLPlugin {
     return Objects.equals(name, that.name) &&
       Objects.equals(type, that.type) &&
       Objects.equals(properties, that.properties) &&
-      Objects.equals(artifact, that.artifact);
+      Objects.equals(artifact, that.artifact) && Objects.equals(category, that.category);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, type, properties, artifact);
+    return Objects.hash(name, type, properties, artifact, category);
   }
 }
