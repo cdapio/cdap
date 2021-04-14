@@ -80,23 +80,12 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>io.cdap.cdap</groupId>
-      <artifactId>hydrator-test</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>io.cdap.common</groupId>
       <artifactId>common-http</artifactId>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.spark</groupId>
-      <artifactId>spark-core_2.11</artifactId>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
@@ -122,6 +111,12 @@
     <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-spark-core2_2.11</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>hydrator-test</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>

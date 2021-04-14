@@ -80,12 +80,6 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>io.cdap.cdap</groupId>
-      <artifactId>hydrator-test</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>io.cdap.common</groupId>
       <artifactId>common-http</artifactId>
     </dependency>
@@ -137,6 +131,12 @@
     <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-spark-core3_2.12</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>hydrator-test</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
