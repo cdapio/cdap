@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,24 +16,28 @@
 
 package io.cdap.cdap.internal.app.dispatcher;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
 import io.cdap.cdap.common.conf.CConfiguration;
-import org.junit.Assert;
-import org.junit.Test;
-
-import java.nio.charset.StandardCharsets;
 
 /**
- * Unit test for {@link RunnableTaskLauncher}.
+ * RunnableTask Module.
+ * Guice binding modules for all RunnableTasks should be installed here.
  */
-public class RunnableTaskLauncherTest {
+public class RunnableTaskModule extends AbstractModule {
 
-  @Test
-  public void testLaunchRunnableTask() throws Exception {
-    String want = "test-want";
-    RunnableTaskRequest request = new RunnableTaskRequest(EchoRunnableTask.class.getName(), want);
+  CConfiguration cConfig;
 
-    RunnableTaskLauncher launcher = new RunnableTaskLauncher(CConfiguration.create());
-    byte[] got = launcher.launchRunnableTask(request);
-    Assert.assertEquals(want, new String(got, StandardCharsets.UTF_8));
+  public RunnableTaskModule(CConfiguration cConfig) {
+    this.cConfig = cConfig;
+  }
+
+  @Override
+  protected void configure() {
+  }
+
+  @Provides
+  public EchoRunnableTask getEchoRunnableTask() {
+    return new EchoRunnableTask();
   }
 }

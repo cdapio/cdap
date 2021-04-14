@@ -25,9 +25,9 @@ public abstract class RunnableTask extends AbstractIdleService {
   public RunnableTask() {
   }
 
-  protected abstract String run(String param);
+  protected abstract byte[] run(String param) throws Exception;
 
-  public String runTask(String param) {
+  public byte[] runTask(String param) throws Exception {
     return run(param);
   }
 }

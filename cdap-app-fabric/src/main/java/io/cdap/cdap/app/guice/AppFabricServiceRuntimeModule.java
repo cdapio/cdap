@@ -288,6 +288,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(PipelineFactory.class).to(SynchronousPipelineFactory.class);
 
       bind(PluginFinder.class).to(LocalPluginFinder.class);
+
       install(
         new FactoryModuleBuilder()
           .implement(new TypeLiteral<Manager<AppDeploymentInfo, ApplicationWithPrograms>>() {
@@ -445,7 +446,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
   /**
    * A Guice provider for the {@link UGIProvider} class based on the CDAP configuration.
-   *
+   * <p>
    * When Kerberos is enabled, it provides {@link DefaultUGIProvider} instance. Otherwise, an
    * {@link UnsupportedUGIProvider} will be used.
    */

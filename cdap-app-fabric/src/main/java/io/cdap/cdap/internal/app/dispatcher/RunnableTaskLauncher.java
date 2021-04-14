@@ -17,16 +17,28 @@
 package io.cdap.cdap.internal.app.dispatcher;
 
 import com.google.common.util.concurrent.Service;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import io.cdap.cdap.common.conf.CConfiguration;
 
 /**
  * RunnableTaskLauncher launches a runnable task.
  */
 public class RunnableTaskLauncher {
+  private final CConfiguration cConfig;
 
-  public String launchRunnableTask(RunnableTaskRequest request) throws Exception {
+  public RunnableTaskLauncher(CConfiguration cConfig) {
+    this.cConfig = cConfig;
+  }
+
+  public byte[] launchRunnableTask(RunnableTaskRequest request) throws Exception {
+
     ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-    Class<?> cClass = classLoader.loadClass(request.className);
-    Object obj = cClass.getDeclaredConstructor().newInstance();
+    Class<?> clazz = classLoader.loadClass(request.className);
+
+    Injector injector = Guice.createInjector(new RunnableTaskModule(cConfig));
+    Object obj = injector.getInstance(clazz);
+
     if (!(obj instanceof RunnableTask)) {
       throw new ClassCastException(String.format("%s is not a RunnableTask", request.className));
     }
