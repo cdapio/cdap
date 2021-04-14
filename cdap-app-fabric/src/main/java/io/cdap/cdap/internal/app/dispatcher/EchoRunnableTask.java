@@ -22,8 +22,8 @@ package io.cdap.cdap.internal.app.dispatcher;
 public class EchoRunnableTask extends RunnableTask {
 
   @Override
-  public String run(String param) {
-    return param;
+  public byte[] run(String param) throws Exception {
+    return param.getBytes();
   }
 
   @Override

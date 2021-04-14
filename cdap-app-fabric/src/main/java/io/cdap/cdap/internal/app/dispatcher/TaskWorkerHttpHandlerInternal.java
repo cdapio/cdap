@@ -24,6 +24,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.logging.gateway.handlers.AbstractLogHttpHandler;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
+import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -43,17 +44,18 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerHttpHandlerInternal.class);
   private static final Gson GSON = new Gson();
 
-  private static final RunnableTaskLauncher runnableTaskLauncher = new RunnableTaskLauncher();
+  private final RunnableTaskLauncher runnableTaskLauncher;
 
   @Inject
-  TaskWorkerHttpHandlerInternal(CConfiguration cConf) {
+  public TaskWorkerHttpHandlerInternal(CConfiguration cConf) {
     super(cConf);
+    runnableTaskLauncher = new RunnableTaskLauncher(cConf);
   }
 
   @POST
   @Path("/run")
   public void run(FullHttpRequest request, HttpResponder responder) {
-    String response;
+    byte[] response;
     HttpResponseStatus status;
     try {
       RunnableTaskRequest runnableTaskRequest =
@@ -61,10 +63,12 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
       response = runnableTaskLauncher.launchRunnableTask(runnableTaskRequest);
       status = HttpResponseStatus.OK;
     } catch (Exception ex) {
-      response = ex.toString();
+      LOG.error(String.format("failed to launch a task with request %s",
+                              request.content().toString(StandardCharsets.UTF_8), ex));
+      response = ex.toString().getBytes();
       status = HttpResponseStatus.BAD_REQUEST;
     }
-    responder.sendString(status, response);
+    responder.sendByteArray(status, response, EmptyHttpHeaders.INSTANCE);
   }
 
   @GET
