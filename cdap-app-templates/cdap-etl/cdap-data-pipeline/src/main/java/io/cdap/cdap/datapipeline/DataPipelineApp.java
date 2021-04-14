@@ -23,6 +23,7 @@ import io.cdap.cdap.api.app.ApplicationUpdateContext;
 import io.cdap.cdap.api.app.ApplicationUpdateResult;
 import io.cdap.cdap.api.app.ProgramType;
 import io.cdap.cdap.api.schedule.ScheduleBuilder;
+import io.cdap.cdap.datapipeline.service.ConnectionService;
 import io.cdap.cdap.datapipeline.service.StudioService;
 import io.cdap.cdap.etl.api.AlertPublisher;
 import io.cdap.cdap.etl.api.ErrorTransform;
@@ -60,6 +61,7 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
     // if this is for the system services and not an actual pipeline
     if (config.isService()) {
       addService(new StudioService());
+      addService(new ConnectionService());
       setDescription("Data Pipeline System Services.");
       return;
     }
