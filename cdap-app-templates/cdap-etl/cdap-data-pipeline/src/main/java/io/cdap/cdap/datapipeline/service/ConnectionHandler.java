@@ -41,7 +41,7 @@ public class ConnectionHandler extends AbstractSystemHttpServiceHandler {
   private static final String API_VERSION = "v1";
   private static final Gson GSON = new Gson();
 
-  private final Map<ConnectionId, Connection> connections = new ConcurrentHashMap<>();
+  private static final Map<ConnectionId, Connection> connections = new ConcurrentHashMap<>();
 
 
   /**
