@@ -472,8 +472,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
             updateDetail = new ApplicationUpdateDetail(appId, e);
           } catch (Exception e) {
             updateDetail =
-                new ApplicationUpdateDetail(appId, new ServiceException("Upgrade failed due to internal error.", null,
+                new ApplicationUpdateDetail(appId, new ServiceException("Upgrade failed due to internal error.", e,
                                             HttpResponseStatus.INTERNAL_SERVER_ERROR));
+            LOG.error("Application upgrade failed with exception", e);
           }
           GSON.toJson(updateDetail, ApplicationUpdateDetail.class, jsonWriter);
           jsonWriter.flush();
