@@ -17,6 +17,7 @@ package io.cdap.cdap.common.utils;
 
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
+import io.cdap.cdap.runtime.spi.VersionInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,7 +67,7 @@ public final class ProjectInfo {
   /**
    * This class encapsulates information about project version.
    */
-  public static final class Version implements Comparable<Version> {
+  public static final class Version implements VersionInfo {
     private final int major;
     private final int minor;
     private final int fix;
@@ -115,6 +116,11 @@ public final class ProjectInfo {
                 suffix = suffix.substring("SNAPSHOT".length() + 1);
               }
               buildTime = Long.parseLong(suffix);
+            } else {
+              //Release version style = Major.Min.Fix
+              //Build time set to max to ensure it's after any other
+              fix = Integer.parseInt(version.substring(idx));
+              buildTime = Long.MAX_VALUE;
             }
           }
         }
@@ -150,12 +156,20 @@ public final class ProjectInfo {
     public String toString() {
       if (isSnapshot()) {
         return String.format("%d.%d.%d-SNAPSHOT-%d", major, minor, fix, buildTime);
+      } else if (buildTime == Long.MAX_VALUE) {
+        return String.format("%d.%d.%d", major, minor, fix);
       }
       return String.format("%d.%d.%d-%d", major, minor, fix, buildTime);
     }
 
     @Override
-    public int compareTo(Version o) {
+    public int compareTo(Object other) {
+      Version o;
+      if (other instanceof Version) {
+        o = (Version) other;
+      } else {
+        o = new Version(other.toString());
+      }
       // Version comparison by major.minor.fix
       int cmp = Ints.compare(major, o.major);
       if (cmp != 0) {

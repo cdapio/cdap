@@ -19,6 +19,7 @@ package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.SparkCompat;
+import io.cdap.cdap.runtime.spi.VersionInfo;
 import io.cdap.cdap.runtime.spi.provisioner.ProgramRun;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerMetrics;
@@ -86,8 +87,13 @@ public class MockProvisionerContext implements ProvisionerContext {
     return null;
   }
 
+  @Override
+  public VersionInfo getCDAPVersionInfo() {
+    return null;
+  }
+
   @Override @Nullable
-  public String getAppCDAPVersion() {
+  public VersionInfo getAppCDAPVersionInfo() {
     return null;
   }
 

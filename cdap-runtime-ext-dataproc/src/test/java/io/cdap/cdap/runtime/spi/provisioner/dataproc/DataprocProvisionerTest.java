@@ -16,13 +16,20 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
+import com.google.common.collect.ImmutableMap;
+import io.cdap.cdap.runtime.spi.MockVersionInfo;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
+import io.cdap.cdap.runtime.spi.SparkCompat;
+import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+
+import static org.mockito.Mockito.when;
 
 /**
  * Tests for Dataproc provisioner
@@ -163,6 +170,44 @@ public class DataprocProvisionerTest {
 
     DataprocConf conf = DataprocConf.create(props);
     Assert.assertEquals(customURI, conf.getCustomImageUri());
+  }
+
+  @Test
+  public void testGetImageVersion() {
+    DataprocConf defaultConf = DataprocConf.create(ImmutableMap.of(
+      "accountKey", "key",
+      "projectId", "my project",
+      "zone", "region1-a"
+    ));
+    DataprocConf explicitVersionConf = DataprocConf.create(ImmutableMap.of(
+      "accountKey", "key",
+      "projectId", "my project",
+      "zone", "region1-a",
+      DataprocConf.IMAGE_VERSION, "explicit"
+    ));
+    ProvisionerContext context = Mockito.mock(ProvisionerContext.class);
+    DataprocProvisioner provisioner = new DataprocProvisioner();
+
+    when(context.getSparkCompat()).thenReturn(SparkCompat.SPARK3_2_12);
+    Assert.assertEquals("2.0", provisioner.getImageVersion(context, defaultConf));
+    Assert.assertEquals("explicit", provisioner.getImageVersion(context, explicitVersionConf));
+
+    when(context.getSparkCompat()).thenReturn(SparkCompat.SPARK2_2_11);
+    Assert.assertEquals("1.3", provisioner.getImageVersion(context, defaultConf));
+    Assert.assertEquals("explicit", provisioner.getImageVersion(context, explicitVersionConf));
+
+    when(context.getAppCDAPVersionInfo()).thenReturn(new MockVersionInfo("6.5"));
+    Assert.assertEquals("2.0", provisioner.getImageVersion(context, defaultConf));
+    Assert.assertEquals("explicit", provisioner.getImageVersion(context, explicitVersionConf));
+
+    when(context.getAppCDAPVersionInfo()).thenReturn(new MockVersionInfo("6.4"));
+    Assert.assertEquals("1.3", provisioner.getImageVersion(context, defaultConf));
+    Assert.assertEquals("explicit", provisioner.getImageVersion(context, explicitVersionConf));
+
+    //Doublecheck we still get 2.0 for Spark 3 even with CDAP 6.4
+    when(context.getSparkCompat()).thenReturn(SparkCompat.SPARK3_2_12);
+    Assert.assertEquals("2.0", provisioner.getImageVersion(context, defaultConf));
+
   }
 
 }

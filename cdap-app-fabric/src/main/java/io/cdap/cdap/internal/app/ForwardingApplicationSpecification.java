@@ -53,6 +53,7 @@ public abstract class ForwardingApplicationSpecification implements ApplicationS
     return delegate.getAppVersion();
   }
 
+  @Nullable
   @Override
   public String getAppCDAPVersion() {
     return delegate.getAppCDAPVersion();

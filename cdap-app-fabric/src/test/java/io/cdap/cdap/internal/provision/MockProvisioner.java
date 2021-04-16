@@ -30,6 +30,7 @@ import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
+import org.junit.Assert;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -54,6 +55,7 @@ public class MockProvisioner implements Provisioner {
   public static final String FIRST_CLUSTER_STATUS = "first.cluster.status";
   public static final String WAIT_CREATE_MS = "wait.create";
   public static final String WAIT_DELETE_MS = "wait.delete";
+  public static final String EXPECTED_APP_CDAP_VERSION = "expected.app.cdap.version";
   private static final ProvisionerSpecification SPEC = new ProvisionerSpecification(
     NAME, "Native", "Runs programs on the CDAP master cluster. Does not provision any resources.");
   private final AtomicInteger callCount;
@@ -76,6 +78,7 @@ public class MockProvisioner implements Provisioner {
 
   @Override
   public Cluster createCluster(ProvisionerContext context) throws RetryableProvisionException, InterruptedException {
+    validateContext(context);
     failIfConfigured(context, FAIL_CREATE);
     failRetryablyEveryN(context);
     waitIfConfigured(context, WAIT_CREATE_MS);
@@ -85,12 +88,14 @@ public class MockProvisioner implements Provisioner {
 
   @Override
   public void initializeCluster(ProvisionerContext context, Cluster cluster) {
+    validateContext(context);
     failIfConfigured(context, FAIL_INIT);
   }
 
   @Override
   public ClusterStatus getClusterStatus(ProvisionerContext context,
                                         Cluster cluster) throws RetryableProvisionException {
+    validateContext(context);
     failIfConfigured(context, FAIL_GET);
     failRetryablyEveryN(context);
     ClusterStatus status = cluster.getStatus();
@@ -116,12 +121,14 @@ public class MockProvisioner implements Provisioner {
 
   @Override
   public Cluster getClusterDetail(ProvisionerContext context, Cluster cluster) throws RetryableProvisionException {
+    validateContext(context);
     return new Cluster(cluster, getClusterStatus(context, cluster));
   }
 
   @Override
   public void deleteCluster(ProvisionerContext context, Cluster cluster)
     throws RetryableProvisionException, InterruptedException {
+    validateContext(context);
     failIfConfigured(context, FAIL_DELETE);
     failRetryablyEveryN(context);
     waitIfConfigured(context, WAIT_DELETE_MS);
@@ -162,6 +169,13 @@ public class MockProvisioner implements Provisioner {
     TimeUnit.MILLISECONDS.sleep(dur);
   }
 
+  private void validateContext(ProvisionerContext context) {
+    String expectedAppCDAPVersion = context.getProperties().get(EXPECTED_APP_CDAP_VERSION);
+    if (expectedAppCDAPVersion != null) {
+      Assert.assertEquals(expectedAppCDAPVersion, context.getAppCDAPVersionInfo().toString());
+    }
+  }
+
   /**
    * Builds properties supported by the MockProvisioner.
    */
@@ -174,6 +188,7 @@ public class MockProvisioner implements Provisioner {
     private long waitCreateMillis = -1L;
     private long waitDeleteMillis = -1L;
     private ClusterStatus firstClusterStatus;
+    private String expectedAppCDAPVersion;
 
     /**
      * Configures the provisioner to fail in a retryable fashion every Nth method call.
@@ -240,6 +255,14 @@ public class MockProvisioner implements Provisioner {
       return this;
     }
 
+    /**
+     * Asks provisioner to validate appCDAPVersion in the context
+     */
+    public PropertyBuilder setExpectedAppCDAPVersion(String expectedAppCDAPVersion) {
+      this.expectedAppCDAPVersion = expectedAppCDAPVersion;
+      return this;
+    }
+
     public ProvisionerInfo build() {
       List<ProvisionerPropertyValue> properties = new ArrayList<>();
       properties.add(new ProvisionerPropertyValue(FAIL_CREATE, Boolean.toString(failCreate), true));
@@ -254,6 +277,9 @@ public class MockProvisioner implements Provisioner {
       }
       if (firstClusterStatus != null) {
         properties.add(new ProvisionerPropertyValue(FIRST_CLUSTER_STATUS, firstClusterStatus.name(), true));
+      }
+      if (expectedAppCDAPVersion != null) {
+        properties.add(new ProvisionerPropertyValue(EXPECTED_APP_CDAP_VERSION, expectedAppCDAPVersion, true));
       }
       return new ProvisionerInfo(NAME, properties);
     }

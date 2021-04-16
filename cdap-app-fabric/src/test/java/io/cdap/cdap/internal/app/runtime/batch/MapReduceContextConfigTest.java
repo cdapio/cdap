@@ -51,7 +51,7 @@ public class MapReduceContextConfigTest {
       hConf.setInt(String.valueOf(i), i);
     }
     ApplicationSpecification appSpec = new DefaultApplicationSpecification(
-      "name", "desc", appCfg.toString(),
+      "name", ProjectInfo.getVersion().toString(), "desc", appCfg.toString(),
       new ArtifactId("artifact", new ArtifactVersion("1.0.0"), ArtifactScope.USER),
       Collections.emptyMap(),
       Collections.emptyMap(),
@@ -61,8 +61,8 @@ public class MapReduceContextConfigTest {
       Collections.emptyMap(),
       Collections.emptyMap(),
       Collections.emptyMap(),
-      Collections.emptyMap(),
-      ProjectInfo.getVersion().toString());
+      Collections.emptyMap()
+    );
     cfg.setApplicationSpecification(appSpec);
     Assert.assertEquals(appSpec.getConfiguration(), cfg.getApplicationSpecification().getConfiguration());
   }

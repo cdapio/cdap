@@ -42,6 +42,7 @@ import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.utils.Networks;
+import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.plugin.MacroParser;
@@ -55,6 +56,7 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.provisioner.ProvisionerDetail;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.SparkCompat;
+import io.cdap.cdap.runtime.spi.VersionInfo;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
@@ -238,8 +240,9 @@ public class ProvisioningService extends AbstractIdleService {
   }
 
   @Nullable
-  private String getAppCDAPVersion(ProgramOptions programOptions) {
-    return programOptions.getArguments().getOption(Constants.APP_CDAP_VERSION);
+  private VersionInfo getAppCDAPVersion(ProgramOptions programOptions) {
+    String version = programOptions.getArguments().getOption(Constants.APP_CDAP_VERSION);
+    return version == null ? null : new ProjectInfo.Version(version);
   }
 
   /**
@@ -762,7 +765,7 @@ public class ProvisioningService extends AbstractIdleService {
 
   private ProvisionerContext createContext(ProgramRunId programRunId, String userId, Map<String, String> properties,
                                            @Nullable SSHContext sshContext, RuntimeMonitorType runtimeMonitorType,
-                                           String provisionerName, @Nullable String appCDAPVersion) {
+                                           String provisionerName, @Nullable VersionInfo appCDAPVersion) {
     Map<String, String> evaluated = evaluateMacros(secureStore, userId, programRunId.getNamespace(), properties);
     return new DefaultProvisionerContext(programRunId, provisionerName, evaluated, sparkCompat, sshContext,
                                          appCDAPVersion, locationFactory, runtimeMonitorType,

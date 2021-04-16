@@ -61,6 +61,7 @@ public class ApplicationSpecificationAdapterTest {
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create();
     ApplicationSpecification appSpec = Specifications.from(new AllProgramsApp());
     ApplicationSpecification clone = adapter.fromJson(adapter.toJson(appSpec));
+    Assert.assertNotNull(clone.getAppCDAPVersion());
     Assert.assertEquals(appSpec.getAppCDAPVersion(), clone.getAppCDAPVersion());
   }
 }

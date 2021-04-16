@@ -42,6 +42,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
 
   private final String name;
   private final String appVersion;
+  @Nullable
   private final String appCDAPVersion;
   private final String description;
   private final String configuration;
@@ -56,7 +57,9 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   private final Map<String, WorkerSpecification> workers;
   private final Map<String, Plugin> plugins;
 
-  public DefaultApplicationSpecification(String name, String description, String configuration,
+  public DefaultApplicationSpecification(String name,
+                                         @Nullable String appCDAPVersion, String description,
+                                         String configuration,
                                          ArtifactId artifactId,
                                          Map<String, String> datasetModules,
                                          Map<String, DatasetCreationSpec> datasetInstances,
@@ -66,13 +69,14 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
                                          Map<String, ServiceSpecification> services,
                                          Map<String, ScheduleCreationSpec> programSchedules,
                                          Map<String, WorkerSpecification> workers,
-                                         Map<String, Plugin> plugins, String appCDAPVersion) {
+                                         Map<String, Plugin> plugins) {
     this(name, ApplicationId.DEFAULT_VERSION, appCDAPVersion, description, configuration, artifactId, datasetModules,
          datasetInstances, mapReduces, sparks, workflows, services, programSchedules, workers,
          plugins);
   }
 
-  public DefaultApplicationSpecification(String name, String appVersion, String appCDAPVersion, String description,
+  public DefaultApplicationSpecification(String name, String appVersion,
+                                         @Nullable String appCDAPVersion, String description,
                                          String configuration,
                                          ArtifactId artifactId,
                                          Map<String, String> datasetModules,
@@ -111,6 +115,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
     return appVersion;
   }
 
+  @Nullable
   @Override
   public String getAppCDAPVersion() {
     return appCDAPVersion;

@@ -53,6 +53,7 @@ public interface ApplicationSpecification {
   /**
    * @return CDAP version that was used to create or update pipeline for the Application
    */
+  @Nullable
   String getAppCDAPVersion();
 
   /**

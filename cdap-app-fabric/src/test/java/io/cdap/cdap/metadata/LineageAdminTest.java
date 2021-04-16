@@ -479,15 +479,15 @@ public class LineageAdminTest extends AppFabricTestBase {
                                 nodes,
                                 Collections.emptyMap(), Collections.emptyMap());
     ApplicationSpecification appSpec =
-      new DefaultApplicationSpecification("testApp", "dummy app", null,
+      new DefaultApplicationSpecification("testApp", ProjectInfo.getVersion().toString(), "dummy app", null,
                                           NamespaceId.DEFAULT.artifact("testArtifact",
                                                                        "1.0").toApiArtifactId(),
                                           Collections.emptyMap(), Collections.emptyMap(),
                                           Collections.emptyMap(), Collections.emptyMap(),
                                           ImmutableMap.of(workflowId.getProgram(), wfSpec),
                                           Collections.emptyMap(), Collections.emptyMap(),
-                                          Collections.emptyMap(), Collections.emptyMap(),
-                                          ProjectInfo.getVersion().toString());
+                                          Collections.emptyMap(), Collections.emptyMap()
+      );
 
     Store store = getInjector().getInstance(Store.class);
     store.addApplication(testApp, appSpec);
@@ -652,15 +652,15 @@ public class LineageAdminTest extends AppFabricTestBase {
                                 nodes,
                                 Collections.emptyMap(), Collections.emptyMap());
     ApplicationSpecification appSpec =
-      new DefaultApplicationSpecification("testLocalDatasets", "dummy app", null,
+      new DefaultApplicationSpecification("testLocalDatasets", ProjectInfo.getVersion().toString(), "dummy app", null,
                                           NamespaceId.DEFAULT.artifact("testArtifact",
                                                                        "1.0").toApiArtifactId(),
                                           Collections.emptyMap(), Collections.emptyMap(),
                                           Collections.emptyMap(), Collections.emptyMap(),
                                           ImmutableMap.of(workflowId.getProgram(), wfSpec),
                                           Collections.emptyMap(), Collections.emptyMap(),
-                                          Collections.emptyMap(), Collections.emptyMap(),
-                                          ProjectInfo.getVersion().toString());
+                                          Collections.emptyMap(), Collections.emptyMap()
+      );
 
     Store store = getInjector().getInstance(Store.class);
     store.addApplication(testApp, appSpec);
