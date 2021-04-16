@@ -38,12 +38,14 @@ import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.DefaultId;
+import io.cdap.cdap.internal.app.spark.SparkCompatReader;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.runtime.spi.SparkCompat;
 import io.cdap.cdap.spark.app.CharCountProgram;
 import io.cdap.cdap.spark.app.PythonSpark2;
 import io.cdap.cdap.spark.app.ScalaCharCountProgram;
@@ -57,7 +59,9 @@ import io.cdap.cdap.test.DataSetManager;
 import io.cdap.cdap.test.SparkManager;
 import io.cdap.cdap.test.TestBase;
 import io.cdap.cdap.test.TestConfiguration;
+import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.apache.hadoop.util.ComparableVersion;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
@@ -87,6 +91,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assume.assumeThat;
+import static org.junit.Assume.assumeTrue;
 
 /**
  *
@@ -264,6 +271,12 @@ public class Spark2Test extends TestBase {
 
   @Test
   public void testPySpark() throws Exception {
+    if (SparkCompatReader.getCurrentSparkCompat() == SparkCompat.SPARK3_2_12) {
+      //For spark 3 we need python 2.7 or higher
+      ComparableVersion pythonVersion = getPythonVersion();
+      assumeTrue("Wrong python2 version " + pythonVersion + ", need 2.7 or up",
+                 pythonVersion.compareTo(new ComparableVersion("2.7")) >= 0);
+    }
     ApplicationManager appManager = deploy(NamespaceId.DEFAULT, Spark2TestApp.class);
 
     // Write some data to a local file
@@ -311,6 +324,17 @@ public class Spark2Test extends TestBase {
 
     Tasks.waitFor(100L, () ->  getMetricsManager().getTotalMetric(tags, "user.body"),
                   5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+  }
+
+  private ComparableVersion getPythonVersion() throws IOException, InterruptedException {
+    Process python = new ProcessBuilder("python", "-V")
+      .start();
+    String versionStr = IOUtils.toString(python.getErrorStream(), "UTF-8").trim();
+    if (versionStr.isEmpty()) {
+      versionStr = IOUtils.toString(python.getInputStream(), "UTF-8").trim();
+    }
+    Assert.assertEquals(0, python.waitFor());
+    return new ComparableVersion(versionStr.replaceAll("^[Pp]ython ?", ""));
   }
 
   private void prepareInputData(DataSetManager<ObjectStore<String>> manager) {
