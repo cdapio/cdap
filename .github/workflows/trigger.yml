@@ -1,0 +1,47 @@
+# Copyright © 2021 Cask Data, Inc.
+#  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+#  use this file except in compliance with the License. You may obtain a copy of
+#  the License at
+#  http://www.apache.org/licenses/LICENSE-2.0
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#  License for the specific language governing permissions and limitations under
+#  the License.
+
+# This workflow will trigger build.yml only when needed.
+# This way we don't flood main workflow run list
+# Note that build.yml from develop will be used even for PR builds
+# Also it will have access to the proper GITHUB_SECRET
+
+name: Trigger build
+
+on:
+  push:
+    branches: [ develop, release/** ]
+  pull_request:
+    branches: [ develop, release/** ]
+    types: [opened, synchronize, reopened, labeled]
+  workflow_dispatch:
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+
+    # We allow builds:
+    # 1) When triggered manually
+    # 2) When it's a merge into a branch
+    # 3) For PRs that are labeled as build and
+    #  - It's a code change
+    #  - A build label was just added
+    # A bit complex, but prevents builds when other labels are manipulated
+    if: >
+      github.event_name == 'workflow_dispatch'
+      || github.event_name == 'push'
+      || (contains(github.event.pull_request.labels.*.name, 'build')
+         && (github.event.action != 'labeled' || github.event.label.name == 'build')
+         )
+
+    steps:
+      - name: Trigger build
+        run: echo Maven build will be triggered now
