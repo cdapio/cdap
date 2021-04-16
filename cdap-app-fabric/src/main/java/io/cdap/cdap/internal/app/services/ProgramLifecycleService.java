@@ -572,6 +572,7 @@ public class ProgramLifecycleService {
     if (programSpecification == null) {
       throw new NotFoundException(programId);
     }
+    addAppCDAPVersion(programId, systemArgs);
     // put all the plugin requirements if any involved in the run
     systemArgs.put(ProgramOptionConstants.PLUGIN_REQUIREMENTS,
                    GSON.toJson(getPluginRequirements(programSpecification)));
@@ -598,6 +599,7 @@ public class ProgramLifecycleService {
     checkConcurrentExecution(programId);
 
     Map<String, String> sysArgs = propertiesResolver.getSystemProperties(programId);
+    addAppCDAPVersion(programId, sysArgs);
     sysArgs.put(ProgramOptionConstants.SKIP_PROVISIONING, "true");
     sysArgs.put(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName());
     Map<String, String> userArgs = propertiesResolver.getUserProperties(programId);
@@ -1190,6 +1192,21 @@ public class ProgramLifecycleService {
       return null;
     }
     return getExistingAppProgramSpecification(appSpec, programId);
+  }
+
+  /**
+   * Adds {@link Constants#APP_CDAP_VERSION} system argument to the argument map if known.
+   * @param programId program that corresponds to application with version information
+   * @param systemArgs map to add version information to
+   */
+  public void addAppCDAPVersion(ProgramId programId, Map<String, String> systemArgs) {
+    ApplicationSpecification appSpec = store.getApplication(programId.getParent());
+    if (appSpec != null) {
+      String appCDAPVersion = appSpec.getAppCDAPVersion();
+      if (appCDAPVersion != null) {
+        systemArgs.put(Constants.APP_CDAP_VERSION, appCDAPVersion);
+      }
+    }
   }
 
   private Set<PluginRequirement> getPluginRequirements(ProgramSpecification programSpecification) {

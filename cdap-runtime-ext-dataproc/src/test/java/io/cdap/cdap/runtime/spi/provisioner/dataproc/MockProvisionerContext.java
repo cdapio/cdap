@@ -86,6 +86,11 @@ public class MockProvisionerContext implements ProvisionerContext {
     return null;
   }
 
+  @Override @Nullable
+  public String getAppCDAPVersion() {
+    return null;
+  }
+
   @Override
   public LocationFactory getLocationFactory() {
     return null;

@@ -73,6 +73,15 @@ public interface ProvisionerContext {
   String getCDAPVersion();
 
   /**
+   *
+   * @return version of CDAP pipeline was created or update with. Can be used to adjust default values for
+   * backwards compatibility. If pipeline was created before this field was introduced,
+   * null is returned.
+   */
+  @Nullable
+  String getAppCDAPVersion();
+
+  /**
    * Returns the {@link LocationFactory} used by the CDAP system.
    */
   LocationFactory getLocationFactory();

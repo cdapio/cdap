@@ -50,6 +50,8 @@ public class DefaultProvisionerContext implements ProvisionerContext {
   private final SSHContext sshContext;
   private final SparkCompat sparkCompat;
   private final String cdapVersion;
+  @Nullable
+  private final String appCDAPVersion;
   private final LocationFactory locationFactory;
   private final RuntimeMonitorType runtimeMonitorType;
   private final MetricsCollectionService metricsCollectionService;
@@ -57,7 +59,8 @@ public class DefaultProvisionerContext implements ProvisionerContext {
   private final Executor executor;
 
   DefaultProvisionerContext(ProgramRunId programRunId, String provisionerName, Map<String, String> properties,
-                            SparkCompat sparkCompat, @Nullable SSHContext sshContext, LocationFactory locationFactory,
+                            SparkCompat sparkCompat, @Nullable SSHContext sshContext,
+                            @Nullable String appCDAPVersion, LocationFactory locationFactory,
                             RuntimeMonitorType runtimeMonitorType, MetricsCollectionService metricsCollectionService,
                             Executor executor) {
     this.programRun = new ProgramRun(programRunId.getNamespace(), programRunId.getApplication(),
@@ -73,6 +76,7 @@ public class DefaultProvisionerContext implements ProvisionerContext {
     this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
     this.sshContext = sshContext;
     this.sparkCompat = sparkCompat;
+    this.appCDAPVersion = appCDAPVersion;
     this.locationFactory = locationFactory;
     this.cdapVersion = ProjectInfo.getVersion().toString();
     this.runtimeMonitorType = runtimeMonitorType;
@@ -110,6 +114,11 @@ public class DefaultProvisionerContext implements ProvisionerContext {
   @Override
   public String getCDAPVersion() {
     return cdapVersion;
+  }
+
+  @Override @Nullable
+  public String getAppCDAPVersion() {
+    return appCDAPVersion;
   }
 
   @Override

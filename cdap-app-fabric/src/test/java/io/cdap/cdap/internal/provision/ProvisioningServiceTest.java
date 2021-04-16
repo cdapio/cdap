@@ -341,7 +341,7 @@ public class ProvisioningServiceTest {
                                                              new BasicArguments(userArgs));
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
     ApplicationSpecification appSpec = new DefaultApplicationSpecification(
-      "name", "1.0.0", "desc", null, artifactId,
+      "name", "1.0.0", "6.4.4", "desc", null, artifactId,
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
       Collections.emptyMap());

@@ -88,6 +88,7 @@ public final class ScheduleTaskRunner {
 
     TriggeringScheduleInfo triggeringScheduleInfo = getTriggeringScheduleInfo(job);
     systemArgs.put(ProgramOptionConstants.TRIGGERING_SCHEDULE_INFO, GSON.toJson(triggeringScheduleInfo));
+    lifecycleService.addAppCDAPVersion(programId, systemArgs);
 
     try {
       execute(programId, systemArgs, userArgs);

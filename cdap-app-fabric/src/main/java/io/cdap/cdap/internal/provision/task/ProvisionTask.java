@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -108,6 +109,10 @@ public class ProvisionTask extends ProvisioningTask {
 
   private ProvisioningSubtask createClusterCreateSubtask() {
     return new ClusterCreateSubtask(provisioner, provisionerContext, cluster -> {
+      if (!Objects.equals(provisionerContext.getCDAPVersion(), provisionerContext.getAppCDAPVersion())) {
+        LOG.info("Starting a pipeline created with a previous CDAP version. " +
+                   "Please consider upgrading a pipeline to employ all the enhancements");
+      }
       if (cluster == null) {
         // this is in violation of the provisioner contract, but in case somebody writes a provisioner that
         // returns a null cluster.

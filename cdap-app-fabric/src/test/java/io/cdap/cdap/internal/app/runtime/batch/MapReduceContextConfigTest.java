@@ -24,6 +24,7 @@ import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.internal.app.DefaultApplicationSpecification;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
@@ -60,8 +61,8 @@ public class MapReduceContextConfigTest {
       Collections.emptyMap(),
       Collections.emptyMap(),
       Collections.emptyMap(),
-      Collections.emptyMap()
-    );
+      Collections.emptyMap(),
+      ProjectInfo.getVersion().toString());
     cfg.setApplicationSpecification(appSpec);
     Assert.assertEquals(appSpec.getConfiguration(), cfg.getApplicationSpecification().getConfiguration());
   }
