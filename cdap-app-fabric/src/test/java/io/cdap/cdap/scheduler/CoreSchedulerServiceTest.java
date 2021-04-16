@@ -48,6 +48,7 @@ import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.app.DefaultApplicationSpecification;
 import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
@@ -376,7 +377,8 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
 
     ArtifactId artifactId = ANOTHER_WORKFLOW.getNamespaceId().artifact("test", "1.0").toApiArtifactId();
     ApplicationSpecification appSpec = new DefaultApplicationSpecification(
-      AppWithMultipleSchedules.NAME, ApplicationId.DEFAULT_VERSION, "desc", null, artifactId,
+      AppWithMultipleSchedules.NAME, ApplicationId.DEFAULT_VERSION, ProjectInfo.getVersion().toString(),
+      "desc", null, artifactId,
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
       Collections.emptyMap());

@@ -17,6 +17,7 @@
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
 import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
@@ -56,6 +57,9 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
   private static final String PRIVATE_INSTANCE = "privateInstance";
 
   private static final Pattern NETWORK_TAGS_PATTERN = Pattern.compile(("^[a-z][a-z0-9-]{0,62}$"));
+
+  //First version spark 3 is default one
+  private static final String SPARK3_CDAP_DEFAULT = "6.5";
 
   @SuppressWarnings("WeakerAccess")
   public DataprocProvisioner() {
@@ -116,18 +120,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
         return existing.get();
       }
 
-      String imageVersion = conf.getImageVersion();
-      if (imageVersion == null) {
-        switch (context.getSparkCompat()) {
-          case SPARK3_2_12:
-            imageVersion = "2.0";
-            break;
-          case SPARK2_2_11:
-          default:
-            imageVersion = "1.3";
-            break;
-        }
-      }
+      String imageVersion = getImageVersion(context, conf);
 
       // Reload system context properties and get system labels
       Map<String, String> systemLabels = getSystemLabels();
@@ -152,6 +145,28 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
                                "provisioner.createCluster.response.count", e);
       throw e;
     }
+  }
+
+  @VisibleForTesting
+  String getImageVersion(ProvisionerContext context, DataprocConf conf) {
+    String imageVersion = conf.getImageVersion();
+    if (imageVersion == null) {
+      switch (context.getSparkCompat()) {
+        case SPARK3_2_12:
+          imageVersion = "2.0";
+          break;
+        case SPARK2_2_11:
+        default:
+          if (context.getAppCDAPVersionInfo() == null ||
+            context.getAppCDAPVersionInfo().compareTo(SPARK3_CDAP_DEFAULT) < 0) {
+            imageVersion = "1.3";
+          } else {
+            imageVersion = "2.0";
+          }
+          break;
+      }
+    }
+    return imageVersion;
   }
 
   @Override

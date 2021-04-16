@@ -18,6 +18,8 @@
 package io.cdap.cdap.internal.provision.task;
 
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.internal.provision.ProvisionerNotifier;
 import io.cdap.cdap.internal.provision.ProvisioningOp;
 import io.cdap.cdap.internal.provision.ProvisioningTaskInfo;
@@ -30,6 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -64,6 +67,8 @@ import java.util.concurrent.TimeoutException;
  */
 public class ProvisionTask extends ProvisioningTask {
   private static final Logger LOG = LoggerFactory.getLogger(ProvisionTask.class);
+  private static final Logger USERLOG = Loggers.mdcWrapper(LOG, Constants.Logging.EVENT_TYPE_TAG,
+                                                           Constants.Logging.USER_LOG_TAG_VALUE);
   private final ProvisionerNotifier provisionerNotifier;
   private final ProgramStateWriter programStateWriter;
 
@@ -108,6 +113,12 @@ public class ProvisionTask extends ProvisioningTask {
 
   private ProvisioningSubtask createClusterCreateSubtask() {
     return new ClusterCreateSubtask(provisioner, provisionerContext, cluster -> {
+      if (!Objects.equals(provisionerContext.getCDAPVersionInfo(), provisionerContext.getAppCDAPVersionInfo())) {
+        USERLOG.info("Starting a pipeline created with a previous CDAP version. " +
+                   "Please consider upgrading the pipeline to employ all the enhancements");
+        LOG.debug("Starting a pipeline created with a previous CDAP version. Pipeline version {}, CDAP version {}",
+                  provisionerContext.getAppCDAPVersionInfo(), provisionerContext.getCDAPVersionInfo());
+      }
       if (cluster == null) {
         // this is in violation of the provisioner contract, but in case somebody writes a provisioner that
         // returns a null cluster.

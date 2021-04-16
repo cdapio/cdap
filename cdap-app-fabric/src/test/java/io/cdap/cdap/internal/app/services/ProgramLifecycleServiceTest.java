@@ -24,6 +24,8 @@ import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
@@ -159,6 +161,18 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
     // end states are stopped
     status = ProgramLifecycleService.getProgramStatus(Arrays.asList(killed, failed, completed));
     Assert.assertEquals(ProgramStatus.STOPPED, status);
+  }
+
+  @Test
+  public void testCreateProgramOptions() throws Exception {
+    deploy(AllProgramsApp.class, 200);
+    ProgramId programId = NamespaceId.DEFAULT
+      .app(AllProgramsApp.NAME)
+      .program(ProgramType.SPARK, AllProgramsApp.NoOpSpark.NAME);
+    ProgramOptions options = programLifecycleService.createProgramOptions(programId, Collections.emptyMap(),
+                                                                          Collections.emptyMap(), false);
+    Assert.assertEquals(ProjectInfo.getVersion().toString(),
+                        options.getArguments().getOption(Constants.APP_CDAP_VERSION));
   }
 
   @Test

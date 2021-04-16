@@ -34,6 +34,7 @@ import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.internal.app.DefaultApplicationSpecification;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.schedule.DefaultTriggeringScheduleInfo;
@@ -287,13 +288,15 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
                                 Collections.emptyMap(), Collections.emptyList(), Collections.emptyMap(),
                                 Collections.emptyMap());
     ApplicationSpecification dummyAppSpec1 =
-      new DefaultApplicationSpecification(APP1_ID.getApplication(), "dummy app", null,
+      new DefaultApplicationSpecification(APP1_ID.getApplication(), ProjectInfo.getVersion().toString(),
+                                          "dummy app", null,
                                           ARTIFACT_ID1.toApiArtifactId(),
                                           Collections.emptyMap(), Collections.emptyMap(),
                                           Collections.emptyMap(), Collections.emptyMap(),
                                           ImmutableMap.of(SCHEDULED_PROG1_ID.getProgram(), scheduledWorfklow1),
                                           Collections.emptyMap(), Collections.emptyMap(),
-                                          Collections.emptyMap(), Collections.emptyMap());
+                                          Collections.emptyMap(), Collections.emptyMap()
+      );
 
     store.addApplication(APP1_ID, dummyAppSpec1);
     WorkflowSpecification scheduledWorfklow2 =
@@ -301,13 +304,15 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
                                 Collections.emptyMap(), Collections.emptyList(), Collections.emptyMap(),
                                 Collections.emptyMap());
     ApplicationSpecification dummyAppSpec2 =
-      new DefaultApplicationSpecification(APP2_ID.getApplication(), "dummy app", null,
+      new DefaultApplicationSpecification(APP2_ID.getApplication(), ProjectInfo.getVersion().toString(),
+                                          "dummy app", null,
                                           ARTIFACT_ID2.toApiArtifactId(),
                                           Collections.emptyMap(), Collections.emptyMap(),
                                           Collections.emptyMap(), Collections.emptyMap(),
                                           ImmutableMap.of(SCHEDULED_PROG2_ID.getProgram(), scheduledWorfklow2),
                                           Collections.emptyMap(), Collections.emptyMap(),
-                                          Collections.emptyMap(), Collections.emptyMap());
+                                          Collections.emptyMap(), Collections.emptyMap()
+      );
     store.addApplication(APP2_ID, dummyAppSpec2);
   }
 

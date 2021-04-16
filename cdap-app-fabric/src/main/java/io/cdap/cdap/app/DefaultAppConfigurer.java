@@ -40,11 +40,11 @@ import io.cdap.cdap.api.workflow.Workflow;
 import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.internal.api.DefaultDatasetConfigurer;
 import io.cdap.cdap.internal.app.AbstractConfigurer;
 import io.cdap.cdap.internal.app.DefaultApplicationSpecification;
 import io.cdap.cdap.internal.app.mapreduce.DefaultMapReduceConfigurer;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.schedule.DefaultScheduleBuilder;
@@ -276,7 +276,7 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
       }
     }
 
-    return new DefaultApplicationSpecification(appName, appVersion, description,
+    return new DefaultApplicationSpecification(appName, appVersion, ProjectInfo.getVersion().toString(), description,
                                                configuration, artifactId,
                                                getDatasetModules(), getDatasetSpecs(),
                                                mapReduces, sparks, workflows, services,

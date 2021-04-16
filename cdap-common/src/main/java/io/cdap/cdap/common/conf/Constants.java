@@ -83,6 +83,11 @@ public final class Constants {
   public static final String NETWORK_PROXY_ADDRESS = "network.proxy.address";
 
   /**
+   * Option to pass CDAP version when application was created / upgraded
+   */
+  public static final String APP_CDAP_VERSION = "app.cdap.version";
+
+  /**
    * Configuration for Master startup.
    */
   public static final class Startup {

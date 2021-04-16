@@ -19,6 +19,7 @@ package io.cdap.cdap.runtime.spi.provisioner;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.SparkCompat;
+import io.cdap.cdap.runtime.spi.VersionInfo;
 import io.cdap.cdap.runtime.spi.ssh.SSHContext;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -70,7 +71,24 @@ public interface ProvisionerContext {
   /**
    * @return the CDAP version
    */
-  String getCDAPVersion();
+  @Deprecated
+  default String getCDAPVersion() {
+    return getCDAPVersionInfo().toString();
+  }
+
+  /**
+   * @return the CDAP version information
+   */
+  VersionInfo getCDAPVersionInfo();
+
+  /**
+   *
+   * @return version of CDAP pipeline was created or update with. Can be used to adjust default values for
+   * backwards compatibility. If pipeline was created before this field was introduced,
+   * null is returned.
+   */
+  @Nullable
+  VersionInfo getAppCDAPVersionInfo();
 
   /**
    * Returns the {@link LocationFactory} used by the CDAP system.
