@@ -221,6 +221,14 @@
         <artifactId>maven-bundle-plugin</artifactId>
         <version>3.3.0</version>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <!-- Bamboo runners get out of threads, reduce until after we migrate from bamboo -->
+          <forkCount>1</forkCount>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 
