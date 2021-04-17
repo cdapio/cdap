@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.dispatcher;
 
 import com.google.common.util.concurrent.Service;
+import io.cdap.cdap.api.task.RunnableTaskRequest;
 
 /**
  * RunnableTaskLauncher launches a runnable task.
@@ -25,15 +26,15 @@ public class RunnableTaskLauncher {
 
   public String launchRunnableTask(RunnableTaskRequest request) throws Exception {
     ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-    Class<?> cClass = classLoader.loadClass(request.className);
+    Class<?> cClass = classLoader.loadClass(request.getClassName());
     Object obj = cClass.getDeclaredConstructor().newInstance();
     if (!(obj instanceof RunnableTask)) {
-      throw new ClassCastException(String.format("%s is not a RunnableTask", request.className));
+      throw new ClassCastException(String.format("%s is not a RunnableTask", request.getClassName()));
     }
     RunnableTask runnableTask = (RunnableTask) obj;
     if (runnableTask.start().get() != Service.State.RUNNING) {
-      throw new Exception(String.format("service %s failed to start", request.className));
+      throw new Exception(String.format("service %s failed to start", request.getClassName()));
     }
-    return runnableTask.runTask(request.param);
+    return runnableTask.runTask(request.getParam());
   }
 }

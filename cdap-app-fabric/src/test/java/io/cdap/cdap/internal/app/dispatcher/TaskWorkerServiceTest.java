@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.dispatcher;
 
 import com.google.gson.Gson;
+import io.cdap.cdap.api.task.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;

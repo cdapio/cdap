@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,22 +17,15 @@
 package io.cdap.cdap.internal.app.dispatcher;
 
 import io.cdap.cdap.api.task.RunnableTaskRequest;
-import org.junit.Assert;
-import org.junit.Test;
+import io.cdap.cdap.api.task.RunnableTaskResponse;
+import io.cdap.cdap.api.task.TaskWorkerHandler;
 
 /**
- * Unit test for {@link RunnableTaskLauncher}.
+ * NoOpTaskWorkerHandler
  */
-public class RunnableTaskLauncherTest {
-
-
-  @Test
-  public void testLaunchRunnableTask() throws Exception {
-    String want = "test-want";
-    RunnableTaskRequest request = new RunnableTaskRequest(EchoRunnableTask.class.getName(), want);
-
-    RunnableTaskLauncher launcher = new RunnableTaskLauncher();
-    String got = launcher.launchRunnableTask(request);
-    Assert.assertEquals(want, got);
+public class NoOpTaskWorkerHandler implements TaskWorkerHandler {
+  @Override
+  public RunnableTaskResponse<?> runTask(RunnableTaskRequest runnableTaskRequest) {
+    return new RunnableTaskResponse<String>("");
   }
 }

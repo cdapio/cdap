@@ -33,6 +33,8 @@ import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.service.http.AbstractSystemHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
+import io.cdap.cdap.api.task.RunnableTaskRequest;
+import io.cdap.cdap.api.task.RunnableTaskResponse;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.validation.ValidationException;
@@ -83,6 +85,21 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
   @Path("v1/health")
   public void healthCheck(HttpServiceRequest request, HttpServiceResponder responder) {
     responder.sendStatus(HttpURLConnection.HTTP_OK);
+  }
+
+  @GET
+  @Path("v1/task")
+  public void task(HttpServiceRequest request, HttpServiceResponder responder) {
+    RunnableTaskRequest runnableTaskRequest = new RunnableTaskRequest(
+      "io.cdap.cdap.internal.app.dispatcher.EchoRunnableTask", "testparam");
+    try {
+      Object response = getContext().getTaskWorkerHandler().runTask(runnableTaskRequest);
+      RunnableTaskResponse runnableTaskResponse = (RunnableTaskResponse) response;
+      responder.sendStatus(HttpURLConnection.HTTP_OK);
+      responder.sendString(runnableTaskResponse.getResponse().toString());
+    } catch (Exception e) {
+      responder.sendError(HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage() + "\n" + e.getCause().getMessage());
+    }
   }
 
   @POST
