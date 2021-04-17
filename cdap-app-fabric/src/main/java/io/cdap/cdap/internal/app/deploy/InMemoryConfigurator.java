@@ -40,7 +40,6 @@ import io.cdap.cdap.common.lang.CombineClassLoader;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -53,8 +52,7 @@ import java.lang.reflect.Type;
 import javax.annotation.Nullable;
 
 /**
- * In Memory Configurator doesn't spawn a external process, but
- * does this in memory.
+ * In Memory Configurator doesn't spawn a external process, but does this in memory.
  *
  * @see SandboxConfigurator
  */
@@ -110,7 +108,7 @@ public final class InMemoryConfigurator implements Configurator {
       Object appMain = artifactClassLoader.loadClass(appClassName).newInstance();
       if (!(appMain instanceof Application)) {
         throw new IllegalStateException(String.format("Application main class is of invalid type: %s",
-          appMain.getClass().getName()));
+                                                      appMain.getClass().getName()));
       }
 
       Application app = (Application) appMain;
@@ -181,14 +179,12 @@ public final class InMemoryConfigurator implements Configurator {
               "Missing Spark related class " + missingClass +
                 ". Configured to use Spark located at " + System.getenv(Constants.SPARK_HOME) +
                 ", which may be incompatible with the one required by the application", t);
-
           }
           // If Spark is available or the missing class is not a spark related class,
           // then the missing class is most likely due to some missing library in the artifact jar
           throw new InvalidArtifactException(
             "Missing class " + missingClass +
               ". It may be caused by missing dependency jar(s) in the artifact jar.", t);
-
         }
         throw t;
       }

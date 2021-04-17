@@ -63,7 +63,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
       response = runnableTaskLauncher.launchRunnableTask(runnableTaskRequest);
       status = HttpResponseStatus.OK;
     } catch (Exception ex) {
-      LOG.error(String.format("failed to launch a task with request %s",
+      LOG.error(String.format("failed to launch a task with request %s due to %s",
                               request.content().toString(StandardCharsets.UTF_8), ex));
       response = ex.toString().getBytes();
       status = HttpResponseStatus.BAD_REQUEST;

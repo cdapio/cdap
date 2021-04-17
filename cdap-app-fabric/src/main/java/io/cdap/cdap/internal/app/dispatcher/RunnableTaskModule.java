@@ -21,8 +21,7 @@ import com.google.inject.Provides;
 import io.cdap.cdap.common.conf.CConfiguration;
 
 /**
- * RunnableTask Module.
- * Guice binding modules for all RunnableTasks should be installed here.
+ * RunnableTask Module. Guice binding modules for all RunnableTasks should be installed here.
  */
 public class RunnableTaskModule extends AbstractModule {
 
@@ -34,6 +33,8 @@ public class RunnableTaskModule extends AbstractModule {
 
   @Override
   protected void configure() {
+    bind(CConfiguration.class).toInstance(this.cConfig);
+    install(new ConfiguratorTaskModule());
   }
 
   @Provides

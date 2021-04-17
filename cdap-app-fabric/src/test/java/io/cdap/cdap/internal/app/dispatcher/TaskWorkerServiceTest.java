@@ -17,14 +17,18 @@
 package io.cdap.cdap.internal.app.dispatcher;
 
 import com.google.gson.Gson;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.internal.app.deploy.pipeline.ConfiguratorConfig;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -51,6 +55,20 @@ public class TaskWorkerServiceTest {
   private SConfiguration createSConf() {
     SConfiguration sConf = SConfiguration.create();
     return sConf;
+  }
+
+  @Test
+  public void testGSON(){
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set("test", "test");
+    ConfiguratorConfig configuratorConfig = new ConfiguratorConfig(
+      cConf, Id.Namespace.from("TEST"),
+      new Id.Artifact(Id.Namespace.from("art"), "TTT", new ArtifactVersion("1.0.0")),
+      "test",
+      "appNane", "1.0.0",
+      "long config", new LocalLocationFactory().getHomeLocation().toURI());
+    GSON.toJson(configuratorConfig);
+    Assert.assertEquals(configuratorConfig.getcConf().get("test"), "test");
   }
 
   @Test
