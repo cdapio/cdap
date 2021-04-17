@@ -26,6 +26,7 @@ import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
 import io.cdap.cdap.api.service.http.HttpServiceHandlerSpecification;
 import io.cdap.cdap.api.service.http.SystemHttpServiceContext;
+import io.cdap.cdap.api.task.TaskWorkerHandler;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.NotFoundException;
@@ -63,6 +64,7 @@ public class BasicSystemHttpServiceContext extends BasicHttpServiceContext imple
   private final NamespaceId namespaceId;
   private final TransactionRunner transactionRunner;
   private final PreferencesFetcher preferencesFetcher;
+  private final TaskWorkerHandler taskWorkerHandler;
 
   /**
    * Creates a BasicSystemHttpServiceContext.
@@ -79,7 +81,7 @@ public class BasicSystemHttpServiceContext extends BasicHttpServiceContext imple
                                        MetadataReader metadataReader, MetadataPublisher metadataPublisher,
                                        NamespaceQueryAdmin namespaceQueryAdmin, PluginFinder pluginFinder,
                                        FieldLineageWriter fieldLineageWriter, TransactionRunner transactionRunner,
-                                       PreferencesFetcher preferencesFetcher) {
+                                       PreferencesFetcher preferencesFetcher, TaskWorkerHandler taskWorkerHandler) {
     super(program, programOptions, cConf, spec, instanceId, instanceCount, metricsCollectionService, dsFramework,
           discoveryServiceClient, txClient, pluginInstantiator, secureStore, secureStoreManager, messagingService,
           artifactManager, metadataReader, metadataPublisher, namespaceQueryAdmin, pluginFinder, fieldLineageWriter);
@@ -87,6 +89,7 @@ public class BasicSystemHttpServiceContext extends BasicHttpServiceContext imple
     this.namespaceId = program.getId().getNamespaceId();
     this.transactionRunner = transactionRunner;
     this.preferencesFetcher = preferencesFetcher;
+    this.taskWorkerHandler = taskWorkerHandler;
   }
 
   @Override
@@ -136,5 +139,10 @@ public class BasicSystemHttpServiceContext extends BasicHttpServiceContext imple
     } catch (NotFoundException nfe) {
       throw new IllegalArgumentException(String.format("Namespace '%s' does not exist", namespace), nfe);
     }
+  }
+
+  @Override
+  public TaskWorkerHandler getTaskWorkerHandler() {
+    return taskWorkerHandler;
   }
 }

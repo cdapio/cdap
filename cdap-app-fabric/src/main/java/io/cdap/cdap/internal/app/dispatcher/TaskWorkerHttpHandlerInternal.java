@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.dispatcher;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.cdap.cdap.api.task.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.logging.gateway.handlers.AbstractLogHttpHandler;

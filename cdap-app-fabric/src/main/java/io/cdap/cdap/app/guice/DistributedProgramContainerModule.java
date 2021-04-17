@@ -20,6 +20,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
+import io.cdap.cdap.api.task.TaskWorkerHandler;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
@@ -46,6 +47,7 @@ import io.cdap.cdap.data2.registry.MessagingUsageWriter;
 import io.cdap.cdap.data2.registry.UsageWriter;
 import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.explore.client.ProgramDiscoveryExploreClient;
+import io.cdap.cdap.internal.app.dispatcher.RemoteTaskWorkerHandler;
 import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
@@ -176,8 +178,10 @@ public class DistributedProgramContainerModule extends AbstractModule {
         }
 
         bind(PreferencesFetcher.class).to(RemotePreferencesFetcherInternal.class).in(Scopes.SINGLETON);
+        bind(TaskWorkerHandler.class).to(RemoteTaskWorkerHandler.class).in(Scopes.SINGLETON);
       }
     });
+
 
     addDataFabricModules(modules);
 

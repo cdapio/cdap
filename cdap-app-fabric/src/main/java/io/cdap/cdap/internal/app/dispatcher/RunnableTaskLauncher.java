@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.api.task.RunnableTaskRequest;
 
 /**
  * RunnableTaskLauncher launches a runnable task.
@@ -34,18 +35,17 @@ public class RunnableTaskLauncher {
   public byte[] launchRunnableTask(RunnableTaskRequest request) throws Exception {
 
     ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-    Class<?> clazz = classLoader.loadClass(request.className);
+    Class<?> clazz = classLoader.loadClass(request.getClassName());
 
     Injector injector = Guice.createInjector(new RunnableTaskModule(cConfig));
     Object obj = injector.getInstance(clazz);
-
     if (!(obj instanceof RunnableTask)) {
-      throw new ClassCastException(String.format("%s is not a RunnableTask", request.className));
+      throw new ClassCastException(String.format("%s is not a RunnableTask", request.getClassName()));
     }
     RunnableTask runnableTask = (RunnableTask) obj;
     if (runnableTask.start().get() != Service.State.RUNNING) {
-      throw new Exception(String.format("service %s failed to start", request.className));
+      throw new Exception(String.format("service %s failed to start", request.getClassName()));
     }
-    return runnableTask.runTask(request.param);
+    return runnableTask.runTask(request.getParam());
   }
 }

@@ -26,6 +26,7 @@ import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
 import io.cdap.cdap.api.service.ServiceSpecification;
+import io.cdap.cdap.api.task.TaskWorkerHandler;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramOptions;
@@ -82,6 +83,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final FieldLineageWriter fieldLineageWriter;
   private final TransactionRunner transactionRunner;
   private final PreferencesFetcher preferencesFetcher;
+  private final TaskWorkerHandler taskWorkerHandler;
 
   @Inject
   public ServiceProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
@@ -93,7 +95,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
                               MetadataReader metadataReader, MetadataPublisher metadataPublisher,
                               NamespaceQueryAdmin namespaceQueryAdmin, PluginFinder pluginFinder,
                               FieldLineageWriter fieldLineageWriter, TransactionRunner transactionRunner,
-                              PreferencesFetcher preferencesFetcher) {
+                              PreferencesFetcher preferencesFetcher, TaskWorkerHandler taskWorkerHandler) {
     super(cConf);
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
@@ -111,6 +113,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.fieldLineageWriter = fieldLineageWriter;
     this.transactionRunner = transactionRunner;
     this.preferencesFetcher = preferencesFetcher;
+    this.taskWorkerHandler = taskWorkerHandler;
   }
 
   @Override
@@ -153,7 +156,8 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                           pluginInstantiator, secureStore, secureStoreManager,
                                                           messagingService, artifactManager, metadataReader,
                                                           metadataPublisher, namespaceQueryAdmin, pluginFinder,
-                                                          fieldLineageWriter, transactionRunner, preferencesFetcher);
+                                                          fieldLineageWriter, transactionRunner, preferencesFetcher,
+                                                          taskWorkerHandler);
 
       // Add a service listener to make sure the plugin instantiator is closed when the http server is finished.
       component.addListener(createRuntimeServiceListener(Collections.singleton(pluginInstantiator)),

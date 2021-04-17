@@ -32,6 +32,7 @@ import io.cdap.cdap.api.service.http.AbstractSystemHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceContext;
 import io.cdap.cdap.api.service.http.HttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceHandlerSpecification;
+import io.cdap.cdap.api.task.TaskWorkerHandler;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -91,7 +92,8 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                            ArtifactManager artifactManager, MetadataReader metadataReader,
                            MetadataPublisher metadataPublisher, NamespaceQueryAdmin namespaceQueryAdmin,
                            PluginFinder pluginFinder, FieldLineageWriter fieldLineageWriter,
-                           TransactionRunner transactionRunner, PreferencesFetcher preferencesFetcher) {
+                           TransactionRunner transactionRunner, PreferencesFetcher preferencesFetcher,
+                           TaskWorkerHandler taskWorkerHandler) {
     super(host, program, programOptions, instanceId, serviceAnnouncer, TransactionControl.IMPLICIT);
 
     this.cConf = cConf;
@@ -102,7 +104,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                                                txClient, pluginInstantiator, secureStore, secureStoreManager,
                                                messagingService, artifactManager, metadataReader, metadataPublisher,
                                                pluginFinder, fieldLineageWriter, transactionRunner,
-                                               preferencesFetcher);
+                                               preferencesFetcher, taskWorkerHandler);
     this.context = contextFactory.create(null, null);
     this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
@@ -153,7 +155,8 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                                                               PluginFinder pluginFinder,
                                                               FieldLineageWriter fieldLineageWriter,
                                                               TransactionRunner transactionRunner,
-                                                              PreferencesFetcher preferencesFetcher) {
+                                                              PreferencesFetcher preferencesFetcher,
+                                                              TaskWorkerHandler taskWorkerHandler) {
     return (spec, handlerClass) -> {
       if (handlerClass != null && AbstractSystemHttpServiceHandler.class.isAssignableFrom(handlerClass)) {
         return new BasicSystemHttpServiceContext(program, programOptions, cConf, spec, instanceId, instanceCount,
@@ -161,7 +164,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                                                  txClient, pluginInstantiator, secureStore, secureStoreManager,
                                                  messagingService, artifactManager, metadataReader, metadataPublisher,
                                                  namespaceQueryAdmin, pluginFinder, fieldLineageWriter,
-                                                 transactionRunner, preferencesFetcher);
+                                                 transactionRunner, preferencesFetcher, taskWorkerHandler);
       }
       return new BasicHttpServiceContext(program, programOptions, cConf, spec, instanceId, instanceCount,
                                          metricsCollectionService, datasetFramework, discoveryServiceClient,

@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.dispatcher;
 
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.api.task.RunnableTaskRequest;
 import org.junit.Assert;
 import org.junit.Test;
 

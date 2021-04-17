@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,25 +14,21 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.dispatcher;
+package io.cdap.cdap.api.task;
 
 /**
- * Request for launching a runnable task.
+ * RunnableTaskResponse
+ * @param <T>
  */
-public class RunnableTaskRequest {
-  public RunnableTaskRequest(String className, String param) {
-    this.className = className;
-    this.param = param;
+public class RunnableTaskResponse<T> {
+
+  private T response;
+
+  public RunnableTaskResponse(T response) {
+    this.response = response;
   }
 
-  String className;
-  String param;
-
-  public String getClassName() {
-    return className;
-  }
-
-  public String getParam() {
-    return param;
+  public T getResponse() {
+    return response;
   }
 }
