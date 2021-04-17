@@ -28,6 +28,7 @@ import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.internal.worker.RunnableTask;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.http.NettyHttpService;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
@@ -45,6 +46,7 @@ public class TaskWorkerService extends AbstractIdleService {
 
   private final CConfiguration cConf;
   private final SConfiguration sConf;
+  private final Configuration hConf;
   private final DiscoveryService discoveryService;
   private final NettyHttpService httpService;
   private Cancellable cancelDiscovery;
@@ -53,9 +55,11 @@ public class TaskWorkerService extends AbstractIdleService {
   @Inject
   TaskWorkerService(CConfiguration cConf,
                     SConfiguration sConf,
+                    Configuration hConf,
                     DiscoveryService discoveryService) {
     this.cConf = cConf;
     this.sConf = sConf;
+    this.hConf = hConf;
     this.discoveryService = discoveryService;
 
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TASK_WORKER)
@@ -64,7 +68,7 @@ public class TaskWorkerService extends AbstractIdleService {
       .setExecThreadPoolSize(cConf.getInt(Constants.TaskWorker.EXEC_THREADS))
       .setBossThreadPoolSize(cConf.getInt(Constants.TaskWorker.BOSS_THREADS))
       .setWorkerThreadPoolSize(cConf.getInt(Constants.TaskWorker.WORKER_THREADS))
-      .setHttpHandlers(new TaskWorkerHttpHandlerInternal(this.cConf, this::stopService));
+      .setHttpHandlers(new TaskWorkerHttpHandlerInternal(this.cConf, hConf, this::stopService));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);

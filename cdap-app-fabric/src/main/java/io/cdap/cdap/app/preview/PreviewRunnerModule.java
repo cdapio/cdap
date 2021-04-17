@@ -33,6 +33,7 @@ import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.data.security.DefaultSecretStore;
 import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.explore.client.MockExploreClient;
+import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.namespace.DefaultNamespaceAdmin;
@@ -149,7 +150,8 @@ public class PreviewRunnerModule extends PrivateModule {
     bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
 
     bind(PipelineFactory.class).to(SynchronousPipelineFactory.class);
-
+    bind(ConfiguratorFactory.class).annotatedWith(Names.named("local")).toInstance(new ConfiguratorFactory(false));
+    
     install(
       new FactoryModuleBuilder()
         .implement(new TypeLiteral<Manager<AppDeploymentInfo, ApplicationWithPrograms>>() { },

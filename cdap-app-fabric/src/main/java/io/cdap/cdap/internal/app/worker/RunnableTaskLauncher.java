@@ -19,15 +19,18 @@ package io.cdap.cdap.internal.app.worker;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.internal.worker.RunnableTask;
 import io.cdap.cdap.common.internal.worker.RunnableTaskContext;
+import org.apache.hadoop.conf.Configuration;
 
 /**
  * RunnableTaskLauncher launches a {@link RunnableTask} by loading its class and calling its run method.
  */
 public class RunnableTaskLauncher {
   private final CConfiguration cConf;
+  private final Configuration hConf;
 
-  public RunnableTaskLauncher(CConfiguration cConf) {
+  public RunnableTaskLauncher(CConfiguration cConf, Configuration hConf) {
     this.cConf = cConf;
+    this.hConf = hConf;
   }
 
   public byte[] launchRunnableTask(RunnableTaskRequest request) throws Exception {

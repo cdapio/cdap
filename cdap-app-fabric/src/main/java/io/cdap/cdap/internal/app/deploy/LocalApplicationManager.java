@@ -61,8 +61,8 @@ import io.cdap.cdap.spi.data.StructuredTableAdmin;
 public class LocalApplicationManager<I, O> implements Manager<I, O> {
 
   /**
-   * The key used in the {@link Stage} {@link Context} property for storing the artifact classloader
-   * of the artifact used during deployment.
+   * The key used in the {@link Stage} {@link Context} property for storing the artifact classloader of the artifact
+   * used during deployment.
    */
   public static final String ARTIFACT_CLASSLOADER_KEY = "artifact.classLoader";
 
@@ -84,6 +84,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   private final StructuredTableAdmin structuredTableAdmin;
   private final PluginFinder pluginFinder;
   private final CapabilityReader capabilityReader;
+  private final ConfiguratorFactory configuratorFactory;
 
   @Inject
   LocalApplicationManager(CConfiguration configuration, PipelineFactory pipelineFactory,
@@ -97,7 +98,8 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
                           Scheduler programScheduler,
                           AuthorizationEnforcer authorizationEnforcer,
                           StructuredTableAdmin structuredTableAdmin,
-                          PluginFinder pluginFinder, CapabilityReader capabilityReader) {
+                          PluginFinder pluginFinder, CapabilityReader capabilityReader,
+                          ConfiguratorFactory configuratorFactory) {
     this.configuration = configuration;
     this.pipelineFactory = pipelineFactory;
     this.store = store;
@@ -116,6 +118,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     this.structuredTableAdmin = structuredTableAdmin;
     this.pluginFinder = pluginFinder;
     this.capabilityReader = capabilityReader;
+    this.configuratorFactory = configuratorFactory;
   }
 
   @Override
@@ -123,7 +126,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
     pipeline.addLast(new LocalArtifactLoaderStage(configuration, store, artifactRepository, impersonator,
                                                   authorizationEnforcer, authenticationContext, pluginFinder,
-                                                  capabilityReader));
+                                                  capabilityReader, configuratorFactory));
     pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework, ownerAdmin, authenticationContext));
     pipeline.addLast(new CreateSystemTablesStage(structuredTableAdmin));
     pipeline.addLast(new DeployDatasetModulesStage(configuration, datasetFramework, inMemoryDatasetFramework,

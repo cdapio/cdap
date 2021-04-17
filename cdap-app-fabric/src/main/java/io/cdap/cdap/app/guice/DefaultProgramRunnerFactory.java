@@ -63,7 +63,7 @@ public final class DefaultProgramRunnerFactory implements ProgramRunnerFactory {
   DefaultProgramRunnerFactory(Injector injector, ProgramRuntimeProvider.Mode mode,
                               ProgramRuntimeProviderLoader runtimeProviderLoader,
                               Map<ProgramType, Provider<ProgramRunner>> defaultRunnerProviders,
-                              ProgramStateWriter programStateWriter) {
+                              @Nullable ProgramStateWriter programStateWriter) {
     this.injector = injector;
     this.defaultRunnerProviders = defaultRunnerProviders;
     this.mode = mode;

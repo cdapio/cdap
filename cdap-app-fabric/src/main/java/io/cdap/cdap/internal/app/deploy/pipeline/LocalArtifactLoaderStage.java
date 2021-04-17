@@ -25,11 +25,12 @@ import io.cdap.cdap.api.metadata.Metadata;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.app.deploy.ConfigResponse;
+import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
-import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
+import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
 import io.cdap.cdap.internal.app.deploy.LocalApplicationManager;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
@@ -48,6 +49,8 @@ import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import org.apache.twill.filesystem.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
@@ -55,16 +58,16 @@ import java.util.concurrent.TimeUnit;
 /**
  * LocalArtifactLoaderStage gets a {@link Location} and emits a {@link ApplicationDeployable}.
  * <p>
- * This stage is responsible for reading the JAR and generating an ApplicationSpecification
- * that is forwarded to the next stage of processing.
+ * This stage is responsible for reading the JAR and generating an ApplicationSpecification that is forwarded to the
+ * next stage of processing.
  * </p>
  * An active {@link ClassLoader} for the artifact used during deployment will be set to the {@link Context} property
- * with the key {@link LocalApplicationManager#ARTIFACT_CLASSLOADER_KEY}.
- * It is expected a {@link Pipeline#setFinally(Stage)} stage to clean it up after the pipeline execution finished.
+ * with the key {@link LocalApplicationManager#ARTIFACT_CLASSLOADER_KEY}. It is expected a {@link
+ * Pipeline#setFinally(Stage)} stage to clean it up after the pipeline execution finished.
  */
 public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
-  private static final Gson GSON =
-    ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
+  private static final Logger LOG = LoggerFactory.getLogger(LocalArtifactLoaderStage.class);
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
   private final CConfiguration cConf;
   private final Store store;
   private final ArtifactRepository artifactRepository;
@@ -74,6 +77,7 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
   private final PluginFinder pluginFinder;
   private final CapabilityReader capabilityReader;
   private final MetadataValidator metadataValidator;
+  private final ConfiguratorFactory configuratorFactory;
 
   /**
    * Constructor with hit for handling type.
@@ -81,7 +85,8 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
   public LocalArtifactLoaderStage(CConfiguration cConf, Store store, ArtifactRepository artifactRepository,
                                   Impersonator impersonator, AuthorizationEnforcer authorizationEnforcer,
                                   AuthenticationContext authenticationContext, PluginFinder pluginFinder,
-                                  CapabilityReader capabilityReader) {
+                                  CapabilityReader capabilityReader,
+                                  ConfiguratorFactory configuratorFactory) {
     super(TypeToken.of(AppDeploymentInfo.class));
     this.cConf = cConf;
     this.store = store;
@@ -92,13 +97,14 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
     this.pluginFinder = pluginFinder;
     this.capabilityReader = capabilityReader;
     this.metadataValidator = new MetadataValidator(cConf);
+    this.configuratorFactory = configuratorFactory;
   }
 
   /**
    * Instantiates the Application class and calls configure() on it to generate the {@link ApplicationSpecification}.
    *
-   * @param deploymentInfo information needed to deploy the application, such as the artifact to create it from
-   *                       and the application config to use.
+   * @param deploymentInfo information needed to deploy the application, such as the artifact to create it from and
+   *                       the application config to use.
    */
   @Override
   public void process(AppDeploymentInfo deploymentInfo) throws Exception {
@@ -115,15 +121,14 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
                                                                                    classLoaderImpersonator);
     getContext().setProperty(LocalApplicationManager.ARTIFACT_CLASSLOADER_KEY, artifactClassLoader);
 
-    InMemoryConfigurator inMemoryConfigurator = new InMemoryConfigurator(
-      cConf, Id.Namespace.fromEntityId(deploymentInfo.getNamespaceId()),
-      Id.Artifact.fromEntityId(artifactId), appClassName,
-      pluginFinder, artifactClassLoader,
-      deploymentInfo.getApplicationName(),
-      deploymentInfo.getApplicationVersion(),
-      configString);
+    Configurator configurator = this.configuratorFactory
+      .build(cConf, Id.Namespace.fromEntityId(deploymentInfo.getNamespaceId()),
+             Id.Artifact.fromEntityId(artifactId), appClassName, pluginFinder, artifactClassLoader,
+             deploymentInfo.getApplicationName(),
+             deploymentInfo.getApplicationVersion(),
+             configString, artifactLocation);
 
-    ListenableFuture<ConfigResponse> result = inMemoryConfigurator.config();
+    ListenableFuture<ConfigResponse> result = configurator.config();
     ConfigResponse response = result.get(120, TimeUnit.SECONDS);
     if (response.getExitCode() != 0) {
       throw new IllegalArgumentException("Failed to configure application: " + deploymentInfo);

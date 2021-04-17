@@ -30,6 +30,7 @@ import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.internal.ServiceListenerAdapter;
@@ -71,11 +72,17 @@ public class TaskWorkerServiceTest {
     return sConf;
   }
 
+  private Configuration createHConf() {
+    Configuration hConf = new Configuration();
+    return hConf;
+  }
+
   private TaskWorkerService setupTaskWorkerService(int port) {
     CConfiguration cConf = createCConf(port);
     SConfiguration sConf = createSConf();
+    Configuration hConf = createHConf();
 
-    TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, sConf, new InMemoryDiscoveryService());
+    TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, sConf, hConf, new InMemoryDiscoveryService());
     // start the service
     taskWorkerService.startAndWait();
 
