@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
@@ -33,6 +34,7 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
+import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.deploy.ManagerFactory;
 import io.cdap.cdap.app.mapreduce.DistributedMRJobInfoFetcher;
@@ -71,7 +73,11 @@ import io.cdap.cdap.gateway.handlers.VersionHandler;
 import io.cdap.cdap.gateway.handlers.WorkflowHttpHandler;
 import io.cdap.cdap.gateway.handlers.WorkflowStatsSLAHttpHandler;
 import io.cdap.cdap.gateway.handlers.meta.RemotePrivilegesHandler;
+import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
+import io.cdap.cdap.internal.app.deploy.ConfiguratorFactoryProvider;
+import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
 import io.cdap.cdap.internal.app.deploy.LocalApplicationManager;
+import io.cdap.cdap.internal.app.deploy.RemoteConfigurator;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.namespace.DistributedStorageProviderNamespaceAdmin;
@@ -298,6 +304,19 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
           })
       );
 
+      install(
+        new FactoryModuleBuilder()
+          .implement(Configurator.class, InMemoryConfigurator.class)
+          .build(Key.get(ConfiguratorFactory.class, Names.named("local")))
+      );
+      install(
+        new FactoryModuleBuilder()
+          .implement(Configurator.class, RemoteConfigurator.class)
+          .build(Key.get(ConfiguratorFactory.class, Names.named("remote")))
+      );
+
+      bind(ConfiguratorFactory.class).toProvider(ConfiguratorFactoryProvider.class);
+
       bind(Store.class).to(DefaultStore.class);
       bind(SecretStore.class).to(DefaultSecretStore.class).in(Scopes.SINGLETON);
 
@@ -401,8 +420,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
     }
 
     /**
-     * Create a quartz scheduler. Quartz factory method is not used, because inflexible in allowing custom jobstore
-     * and turning off check for new versions.
+     * Create a quartz scheduler. Quartz factory method is not used, because inflexible in allowing custom jobstore and
+     * turning off check for new versions.
      *
      * @param store JobStore.
      * @param cConf CConfiguration.
@@ -445,9 +464,9 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
   /**
    * A Guice provider for the {@link UGIProvider} class based on the CDAP configuration.
-   *
-   * When Kerberos is enabled, it provides {@link DefaultUGIProvider} instance. Otherwise, an
-   * {@link UnsupportedUGIProvider} will be used.
+   * <p>
+   * When Kerberos is enabled, it provides {@link DefaultUGIProvider} instance. Otherwise, an {@link
+   * UnsupportedUGIProvider} will be used.
    */
   private static final class UGIProviderProvider implements Provider<UGIProvider> {
 

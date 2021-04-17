@@ -23,6 +23,7 @@ import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
+import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.deploy.ManagerFactory;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
@@ -33,6 +34,8 @@ import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.data.security.DefaultSecretStore;
 import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.explore.client.MockExploreClient;
+import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
+import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.namespace.DefaultNamespaceAdmin;
@@ -150,6 +153,12 @@ public class PreviewRunnerModule extends PrivateModule {
 
     bind(PipelineFactory.class).to(SynchronousPipelineFactory.class);
 
+    install(
+      new FactoryModuleBuilder()
+        .implement(Configurator.class, InMemoryConfigurator.class)
+        .build(ConfiguratorFactory.class)
+    );
+    
     install(
       new FactoryModuleBuilder()
         .implement(new TypeLiteral<Manager<AppDeploymentInfo, ApplicationWithPrograms>>() { },

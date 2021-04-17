@@ -115,7 +115,7 @@ final class ArtifactClassLoaderFactory {
    * @throws IOException if there was an error copying or unpacking the artifact
    * @see #createClassLoader(File)
    */
-  private CloseableClassLoader createClassLoader(final Location artifactLocation,
+  CloseableClassLoader createClassLoader(final Location artifactLocation,
                                                  EntityImpersonator entityImpersonator) throws IOException {
     try {
       final File unpackDir = entityImpersonator.impersonate(new Callable<File>() {

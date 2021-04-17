@@ -42,6 +42,7 @@ import io.cdap.cdap.common.ArtifactAlreadyExistsException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.ArtifactRangeNotFoundException;
 import io.cdap.cdap.common.InvalidArtifactException;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.ArtifactConfig;
 import io.cdap.cdap.common.conf.ArtifactConfigReader;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -69,6 +70,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -176,6 +178,11 @@ public class DefaultArtifactRepository implements ArtifactRepository {
   @Override
   public ArtifactDetail getArtifact(Id.Artifact artifactId) throws Exception {
     return artifactRepositoryReader.getArtifact(artifactId);
+  }
+
+  @Override
+  public InputStream newInputStream(Id.Artifact artifactId) throws IOException, NotFoundException {
+    return artifactRepositoryReader.newInputStream(artifactId);
   }
 
   @Override
