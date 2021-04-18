@@ -18,14 +18,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
-import io.cdap.cdap.api.NamespaceSummary;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.metrics.Metrics;
-import io.cdap.cdap.api.service.http.AbstractSystemHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import io.cdap.cdap.api.service.http.SystemHttpServiceContext;
-import io.cdap.cdap.datapipeline.draft.CodedException;
 import io.cdap.cdap.datapipeline.draft.DraftId;
 import io.cdap.cdap.datapipeline.draft.DraftService;
 import io.cdap.cdap.datapipeline.draft.DraftStoreRequest;
@@ -35,7 +32,6 @@ import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
 import io.cdap.cdap.etl.proto.v2.ETLConfig;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 
-import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import javax.annotation.Nullable;
@@ -51,7 +47,7 @@ import javax.ws.rs.QueryParam;
  * Handler of drafts
  */
 //@Path("v1/contexts/{context}")
-public class DraftHandler extends AbstractSystemHttpServiceHandler {
+public class DraftHandler extends AbstractDataPipelineHandler {
   private static final String API_VERSION = "v1";
   private static final Gson GSON = new GsonBuilder()
     .setPrettyPrinting()
@@ -179,44 +175,5 @@ public class DraftHandler extends AbstractSystemHttpServiceHandler {
     } catch (JsonSyntaxException e) {
       throw new IllegalArgumentException("Unable to decode request body: " + e.getMessage(), e);
     }
-  }
-
-  /**
-   * Utility method that checks that the namespace exists and fetches current user before responding.
-   */
-  private void respond(String namespaceName, HttpServiceResponder responder, NamespacedEndpoint endpoint) {
-    SystemHttpServiceContext context = getContext();
-    NamespaceSummary namespaceSummary;
-    try {
-      namespaceSummary = context.getAdmin().getNamespaceSummary(namespaceName);
-      if (namespaceSummary == null) {
-        responder.sendError(HttpURLConnection.HTTP_NOT_FOUND, String.format("Namespace '%s' not found", namespaceName));
-      }
-    } catch (IOException e) {
-      responder.sendError(HttpURLConnection.HTTP_INTERNAL_ERROR,
-                          String.format("Unable to check if namespace '%s' exists.", namespaceName));
-      return;
-    }
-
-    try {
-      endpoint.respond(namespaceSummary);
-    } catch (CodedException e) {
-      responder.sendError(e.getCode(), e.getMessage());
-    } catch (IllegalArgumentException e) {
-      responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
-    } catch (Exception e) {
-      responder.sendError(HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
-    }
-  }
-
-  /**
-   * Encapsulates the core logic that needs to happen in an endpoint.
-   */
-  private interface NamespacedEndpoint {
-
-    /**
-     * Create the response that should be returned by the endpoint.
-     */
-    void respond(NamespaceSummary namespace) throws Exception;
   }
 }

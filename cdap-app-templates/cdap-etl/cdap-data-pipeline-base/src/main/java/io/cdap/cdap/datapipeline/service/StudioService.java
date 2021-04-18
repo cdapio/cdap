@@ -18,6 +18,7 @@
 package io.cdap.cdap.datapipeline.service;
 
 import io.cdap.cdap.api.service.AbstractSystemService;
+import io.cdap.cdap.datapipeline.connection.ConnectionStore;
 import io.cdap.cdap.datapipeline.draft.DraftStore;
 import io.cdap.cdap.datapipeline.oauth.OAuthStore;
 import io.cdap.cdap.etl.common.Constants;
@@ -31,11 +32,13 @@ public class StudioService extends AbstractSystemService {
   protected void configure() {
 
     setName(Constants.STUDIO_SERVICE_NAME);
-    setDescription("Handles pipeline studio operations, like validation and schema propagation.");
+    setDescription("Handles pipeline studio operations, like validation, connections and schema propagation.");
     addHandler(new ValidationHandler());
     addHandler(new DraftHandler());
+    addHandler(new ConnectionHandler());
     addHandler(new OAuthHandler());
     createTable(DraftStore.TABLE_SPEC);
     createTable(OAuthStore.TABLE_SPEC);
+    createTable(ConnectionStore.CONNECTION_TABLE_SPEC);
   }
 }
