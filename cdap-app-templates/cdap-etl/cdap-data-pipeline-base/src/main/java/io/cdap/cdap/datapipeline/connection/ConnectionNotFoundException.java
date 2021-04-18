@@ -1,9 +1,12 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2021 Cask Data, Inc.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -12,19 +15,20 @@
  *
  */
 
-package io.cdap.cdap.datapipeline.draft;
+package io.cdap.cdap.datapipeline.connection;
 
 import io.cdap.cdap.etl.proto.CodedException;
 
 import java.net.HttpURLConnection;
 
 /**
- * Thrown when a draft is not found when it is expected to be found.
+ * Thrown when a connection is not found when it is expected to be found.
  */
-public class DraftNotFoundException extends CodedException {
+public class ConnectionNotFoundException extends CodedException {
 
-  public DraftNotFoundException(DraftId draftId) {
+  public ConnectionNotFoundException(ConnectionId connection) {
     super(HttpURLConnection.HTTP_NOT_FOUND,
-          String.format("Draft '%s' in namespace '%s' not found.", draftId.getId(), draftId.getNamespace().getName()));
+          String.format("Connection '%s' in namespace '%s' not found.", connection.getConnection(),
+                        connection.getNamespace().getName()));
   }
 }

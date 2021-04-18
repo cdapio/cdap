@@ -24,6 +24,13 @@
       "name": "studio",
       "namespace": "system",
       "version": "-SNAPSHOT"
+    },
+    {
+      "type": "SERVICE",
+      "application": "pipeline",
+      "name": "connection",
+      "namespace": "system",
+      "version": "-SNAPSHOT"
     }
   ]
 }
