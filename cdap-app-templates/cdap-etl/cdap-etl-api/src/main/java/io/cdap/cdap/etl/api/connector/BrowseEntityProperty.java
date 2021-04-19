@@ -38,7 +38,7 @@ public class BrowseEntityProperty {
   private final String value;
   private final PropertyType type;
 
-  private BrowseEntityProperty(String key, String value, PropertyType type) {
+  public BrowseEntityProperty(String key, String value, PropertyType type) {
     this.key = key;
     this.value = value;
     this.type = type;

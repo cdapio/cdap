@@ -34,7 +34,7 @@ public class BrowseDetail {
   private final Collection<BrowseEntityTypeInfo> sampleProperties;
   private final List<BrowseEntity> entities;
 
-  private BrowseDetail(int totalCount, Collection<BrowseEntityTypeInfo> sampleProperties,
+  public BrowseDetail(int totalCount, Collection<BrowseEntityTypeInfo> sampleProperties,
                        List<BrowseEntity> entities) {
     this.totalCount = totalCount;
     this.sampleProperties = sampleProperties;

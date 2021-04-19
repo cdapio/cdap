@@ -488,33 +488,38 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
 
     if (pluginType.toLowerCase().contains("connector")) {
       List<PluginSummary> plugins = ImmutableList.of(
-        new PluginSummary("GCS", "connector", "Google Cloud Storage",
-                          "Google Cloud Platform", "io.cdap.plugin.gcp.gcs.connector.GCSConnector",
-                          new ArtifactSummary("google-cloud", "0.18.0-SNAPSHOT", ArtifactScope.SYSTEM)),
-        new PluginSummary("BigQuery", "connecotr", "Google Cloud Big Query",
+        new PluginSummary("GCS", "connector", "Google Cloud Platform",
+                          "io.cdap.plugin.gcp.gcs.connector.GCSConnector",
+                          new ArtifactSummary("google-cloud", "0.18.0-SNAPSHOT", ArtifactScope.SYSTEM),
+                          "Google Cloud Storage"),
+        new PluginSummary("BigQuery", "connecotr",
                           "Google Cloud Platform", "io.cdap.plugin.gcp.gcs.connector.BigQueryConnector",
-                          new ArtifactSummary("google-cloud", "0.18.0-SNAPSHOT", ArtifactScope.SYSTEM)),
-        new PluginSummary("Spanner", "connector", "Google Cloud Spanner",
+                          new ArtifactSummary("google-cloud", "0.18.0-SNAPSHOT", ArtifactScope.SYSTEM),
+                          "Google Cloud Big Query"),
+        new PluginSummary("Spanner", "connector",
                           "Google Cloud Platform", "io.cdap.plugin.gcp.gcs.connector.SpannerConnector",
-                          new ArtifactSummary("google-cloud", "0.18.0-SNAPSHOT", ArtifactScope.SYSTEM)),
-        new PluginSummary("File", "connector", "File Connector",
+                          new ArtifactSummary("google-cloud", "0.18.0-SNAPSHOT", ArtifactScope.SYSTEM),
+                          "Google Cloud Spanner"),
+        new PluginSummary("File", "connector",
                           "Flat File", "io.cdap.plugin.connector.FileConnector",
-                          new ArtifactSummary("core-plugins", "2.7.0-SNAPSHOT", ArtifactScope.SYSTEM)),
-        new PluginSummary("Database", "connector", "Generic Database",
+                          new ArtifactSummary("core-plugins", "2.7.0-SNAPSHOT", ArtifactScope.SYSTEM),
+                          "File Connector"),
+        new PluginSummary("Database", "connector",
                           "Database", "io.cdap.plugin.connector.DBConnector",
-                          new ArtifactSummary("database-plugins", "2.7.0-SNAPSHOT", ArtifactScope.SYSTEM)),
-        new PluginSummary("Kafka", "connector", "Kafka Connector",
+                          new ArtifactSummary("database-plugins", "2.7.0-SNAPSHOT", ArtifactScope.SYSTEM),
+                          "Generic Database"),
+        new PluginSummary("Kafka", "connector",
                           "Messaging System", "io.cdap.plugin.connector.KafkaConnector",
-                          new ArtifactSummary("kafka-plugins", "2.6.0-SNAPSHOT", ArtifactScope.SYSTEM)),
-        new PluginSummary("S3", "connector", "S3 Connector",
+                          new ArtifactSummary("kafka-plugins", "2.6.0-SNAPSHOT", ArtifactScope.SYSTEM),
+                          "Kafka Connector"),
+        new PluginSummary("S3", "connector",
                           "AWS", "io.cdap.plugin.connector.S3Connector",
-                          new ArtifactSummary("s3-plugins", "1.15.0-SNAPSHOT", ArtifactScope.SYSTEM)),
-        new PluginSummary("Kafka", "connector", "Kafka Connector",
-                          "Messaging System", "io.cdap.plugin.connector.KafkaConnector",
-                          new ArtifactSummary("kafka-plugins", "2.6.0-SNAPSHOT", ArtifactScope.SYSTEM)),
-        new PluginSummary("ADLS", "connector", "ADLS Connector",
+                          new ArtifactSummary("s3-plugins", "1.15.0-SNAPSHOT", ArtifactScope.SYSTEM),
+                          "S3 Connector"),
+        new PluginSummary("ADLS", "connector",
                           "Azure", "io.cdap.plugin.connector.ADLSConnector",
-                          new ArtifactSummary("adls-plugins", "2.6.0-SNAPSHOT", ArtifactScope.SYSTEM))
+                          new ArtifactSummary("adls-plugins", "2.6.0-SNAPSHOT", ArtifactScope.SYSTEM),
+                          "ADLS Connector")
       );
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(plugins));
       return;
@@ -571,16 +576,38 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     throws NamespaceNotFoundException, BadRequestException, ArtifactNotFoundException, InvalidArtifactRangeException {
 
     if (pluginType.toLowerCase().contains("connector")) {
+      if (pluginName.toLowerCase().contains("bigquery")) {
+        List<PluginInfo> pluginInfos = Lists.newArrayList();
+        pluginInfos.add(
+          new PluginInfo("BigQuery", "connector",
+                         "Google Cloud Platform", "io.cdap.plugin.gcp.gcs.connector.BigQueryConnector", "config",
+                         new ArtifactSummary("google-cloud", "0.18.0-SNAPSHOT", ArtifactScope.SYSTEM),
+                         ImmutableMap.of("project",
+                                         new PluginPropertyField("project", "description", "string",
+                                                                 true, true, false),
+                                         "datasetProject",
+                                         new PluginPropertyField("datasetProject", "", "string",
+                                                                 true, true, false),
+                                         "serviceAccountType",
+                                         new PluginPropertyField("serviceAccountType", "", "string",
+                                                                 true, true, false),
+                                         "serviceFilePath",
+                                         new PluginPropertyField("serviceFilePath", "", "string",
+                                                                 true, true, false),
+                                         "serviceAccountJSON",
+                                         new PluginPropertyField("serviceAccountJSON", "", "string",
+                                                                 true, true, false)), "Google Cloud Big Query"));
+        responder.sendJson(HttpResponseStatus.OK, GSON.toJson(pluginInfos));
+        return;
+      }
+
       List<PluginInfo> pluginInfos = Lists.newArrayList();
       pluginInfos.add(
-        new PluginInfo("BigQuery", "connector", "Google Cloud Big Query",
-                       "Google Cloud Platform", "io.cdap.plugin.gcp.gcs.connector.BigQueryConnector", "config",
+        new PluginInfo("GCS", "connector",
+                       "Google Cloud Platform", "io.cdap.plugin.gcp.gcs.connector.GCSConnector", "config",
                        new ArtifactSummary("google-cloud", "0.18.0-SNAPSHOT", ArtifactScope.SYSTEM),
                        ImmutableMap.of("project",
                                        new PluginPropertyField("project", "description", "string",
-                                                               true, true, false),
-                                       "datasetProject",
-                                       new PluginPropertyField("datasetProject", "", "string",
                                                                true, true, false),
                                        "serviceAccountType",
                                        new PluginPropertyField("serviceAccountType", "", "string",
@@ -590,7 +617,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                                                                true, true, false),
                                        "serviceAccountJSON",
                                        new PluginPropertyField("serviceAccountJSON", "", "string",
-                                                               true, true, false))));
+                                                               true, true, false)), "Google Cloud Big Query"));
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(pluginInfos));
       return;
     }

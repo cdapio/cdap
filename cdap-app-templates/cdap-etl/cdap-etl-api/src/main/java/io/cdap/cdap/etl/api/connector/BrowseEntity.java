@@ -34,7 +34,7 @@ public class BrowseEntity {
   private final boolean canBrowse;
   private final Collection<BrowseEntityProperty> properties;
 
-  private BrowseEntity(String name, String path, String type, boolean canSample, boolean canBrowse,
+  public BrowseEntity(String name, String path, String type, boolean canSample, boolean canBrowse,
                       Collection<BrowseEntityProperty> properties) {
     this.name = name;
     this.path = path;
