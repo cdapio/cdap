@@ -44,4 +44,9 @@ public interface Connector extends Closeable {
    * Explore the resource on the given request
    */
   ExploreDetail explore(String path) throws Exception;
+
+  @Override
+  default void close() {
+    // no-op
+  }
 }
