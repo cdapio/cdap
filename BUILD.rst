@@ -119,9 +119,9 @@ CDAP Sandbox and Distributed CDAP
 
   Then, run CDAP Sandbox from IDE.
 
-- If your IDE build has Spark errors, try generating the sources for the Spark1 and Spark2 modules::
+- If your IDE build has Spark errors, try generating the sources for the Spark modules::
 
-    mvn clean generate-test-sources -P templates,spark1-dev,spark2-dev
+    mvn clean generate-test-sources -P templates,spark-dev
 
   After this, the IDE build should pass.
 
