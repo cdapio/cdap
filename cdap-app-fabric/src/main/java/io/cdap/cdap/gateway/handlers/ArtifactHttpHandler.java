@@ -571,16 +571,38 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     throws NamespaceNotFoundException, BadRequestException, ArtifactNotFoundException, InvalidArtifactRangeException {
 
     if (pluginType.toLowerCase().contains("connector")) {
+      if (pluginName.toLowerCase().contains("bigquery")) {
+        List<PluginInfo> pluginInfos = Lists.newArrayList();
+        pluginInfos.add(
+          new PluginInfo("BigQuery", "connector", "Google Cloud Big Query",
+                         "Google Cloud Platform", "io.cdap.plugin.gcp.gcs.connector.BigQueryConnector", "config",
+                         new ArtifactSummary("google-cloud", "0.18.0-SNAPSHOT", ArtifactScope.SYSTEM),
+                         ImmutableMap.of("project",
+                                         new PluginPropertyField("project", "description", "string",
+                                                                 true, true, false),
+                                         "datasetProject",
+                                         new PluginPropertyField("datasetProject", "", "string",
+                                                                 true, true, false),
+                                         "serviceAccountType",
+                                         new PluginPropertyField("serviceAccountType", "", "string",
+                                                                 true, true, false),
+                                         "serviceFilePath",
+                                         new PluginPropertyField("serviceFilePath", "", "string",
+                                                                 true, true, false),
+                                         "serviceAccountJSON",
+                                         new PluginPropertyField("serviceAccountJSON", "", "string",
+                                                                 true, true, false))));
+        responder.sendJson(HttpResponseStatus.OK, GSON.toJson(pluginInfos));
+        return;
+      }
+
       List<PluginInfo> pluginInfos = Lists.newArrayList();
       pluginInfos.add(
-        new PluginInfo("BigQuery", "connector", "Google Cloud Big Query",
-                       "Google Cloud Platform", "io.cdap.plugin.gcp.gcs.connector.BigQueryConnector", "config",
+        new PluginInfo("GCS", "connector", "Google Cloud Big Query",
+                       "Google Cloud Platform", "io.cdap.plugin.gcp.gcs.connector.GCSConnector", "config",
                        new ArtifactSummary("google-cloud", "0.18.0-SNAPSHOT", ArtifactScope.SYSTEM),
                        ImmutableMap.of("project",
                                        new PluginPropertyField("project", "description", "string",
-                                                               true, true, false),
-                                       "datasetProject",
-                                       new PluginPropertyField("datasetProject", "", "string",
                                                                true, true, false),
                                        "serviceAccountType",
                                        new PluginPropertyField("serviceAccountType", "", "string",

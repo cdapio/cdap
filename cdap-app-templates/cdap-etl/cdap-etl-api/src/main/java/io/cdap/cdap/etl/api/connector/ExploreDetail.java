@@ -17,8 +17,12 @@
 
 package io.cdap.cdap.etl.api.connector;
 
+import io.cdap.cdap.api.plugin.PluginPropertyField;
+
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * The explore result for the given request
@@ -27,15 +31,23 @@ public class ExploreDetail {
   // this count represents the total count of entities, when pagination is added in the future,
   // this count might not be equal to entities.size()
   private final int count;
+  // explore entity type -> sample property
+  private final Map<String, Set<PluginPropertyField>> sampleProperties;
   private final List<ExploreEntity> entities;
 
-  public ExploreDetail(int count, List<ExploreEntity> entities) {
+  public ExploreDetail(int count, Map<String, Set<PluginPropertyField>> sampleProperties,
+                       List<ExploreEntity> entities) {
     this.count = count;
+    this.sampleProperties = sampleProperties;
     this.entities = entities;
   }
 
   public int getCount() {
     return count;
+  }
+
+  public Map<String, Set<PluginPropertyField>> getSampleProperties() {
+    return sampleProperties;
   }
 
   public List<ExploreEntity> getEntities() {
@@ -54,11 +66,12 @@ public class ExploreDetail {
 
     ExploreDetail that = (ExploreDetail) o;
     return count == that.count &&
+      Objects.equals(sampleProperties, that.sampleProperties) &&
       Objects.equals(entities, that.entities);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(count, entities);
+    return Objects.hash(count, sampleProperties, entities);
   }
 }

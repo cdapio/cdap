@@ -18,16 +18,17 @@
 package io.cdap.cdap.etl.api.connector;
 
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * Object that represents an explore entity property.
  */
 public class ExploreEntityProperty {
   private final String key;
-  private final String value;
+  private final Object value;
   private final String type;
 
-  public ExploreEntityProperty(String key, String value, String type) {
+  public ExploreEntityProperty(String key, @Nullable Object value, String type) {
     this.key = key;
     this.value = value;
     this.type = type;
@@ -37,7 +38,8 @@ public class ExploreEntityProperty {
     return key;
   }
 
-  public String getValue() {
+  @Nullable
+  public Object getValue() {
     return value;
   }
 
