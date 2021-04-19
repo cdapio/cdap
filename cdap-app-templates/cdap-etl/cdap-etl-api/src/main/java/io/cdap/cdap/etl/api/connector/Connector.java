@@ -1,0 +1,63 @@
+/*
+ * Copyright © 2021 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ *
+ */
+
+package io.cdap.cdap.etl.api.connector;
+
+import io.cdap.cdap.api.plugin.PluginConfigurer;
+
+import java.io.Closeable;
+import java.util.Map;
+
+/**
+ * A connector is a plugin which is able to explore and sample an external resource
+ */
+public interface Connector extends Closeable {
+  String PLUGIN_TYPE = "connector";
+
+  /**
+   * Configure this connector, for example, the database connector will need to load the jdbc driver.
+   * This method is guaranteed to be called before any other method in this class.
+   */
+  default void configure(PluginConfigurer configurer) {
+    // no-op
+  }
+
+  /**
+   * Test if the connector is able to connect to the resource
+   */
+  void test() throws Exception;
+
+  /**
+   * Explore the resource on the given request. The explore expects a path to represent the hierarchy of the
+   * resource. The path is expected to be separated by '/'.
+   * For example, for a file based connector, the path will just be the file/directory path
+   * for a database connector, the path can be {database}/{table}
+   */
+  ExploreDetail explore(ConnectRequest request) throws Exception;
+
+  /**
+   * Generate the properties based on the connector config, the path and and sampling properties
+   * @param samplingProperties the sampling properties of the entity in the path
+   * @return the map which contains all the properties which can be used by a source or a sink
+   */
+  Map<String, String> generateSpec(String path, Map<String, String> samplingProperties);
+
+  @Override
+  default void close() {
+    // no-op
+  }
+}
