@@ -130,7 +130,8 @@ public class MockRuntimeDatasetSource extends BatchSource<byte[], Row, Structure
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("tableName", new PluginPropertyField("tableName", "", "string", true, false));
     properties.put("runtimeDatasetName", new PluginPropertyField("runtimeDatasetName", "", "string", true, true));
-    return new PluginClass(BatchSource.PLUGIN_TYPE, "MockRuntime", "", MockRuntimeDatasetSource.class.getName(),
-                           "config", properties);
+    return PluginClass.builder().setName("MockRuntime").setType(BatchSource.PLUGIN_TYPE)
+             .setDescription("").setClassName(MockRuntimeDatasetSource.class.getName()).setProperties(properties)
+             .setConfigFieldName("config").build();
   }
 }

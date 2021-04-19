@@ -67,6 +67,8 @@ public class Window extends Windower {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("width", new PluginPropertyField("width", "", "long", true, false));
     properties.put("slideInterval", new PluginPropertyField("slideInterval", "", "long", true, false));
-    return new PluginClass(Windower.PLUGIN_TYPE, "Window", "", Window.class.getName(), "conf", properties);
+    return PluginClass.builder().setName("Window").setType(Windower.PLUGIN_TYPE)
+             .setDescription("").setClassName(Window.class.getName()).setProperties(properties)
+             .setConfigFieldName("conf").build();
   }
 }

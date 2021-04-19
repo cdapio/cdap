@@ -168,6 +168,8 @@ public class MockSink extends BatchSink<StructuredRecord, byte[], Put> {
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("tableName", new PluginPropertyField("tableName", "", "string", true, true));
-    return new PluginClass(BatchSink.PLUGIN_TYPE, "Mock", "", MockSink.class.getName(), "config", properties);
+    return PluginClass.builder().setName("Mock").setType(BatchSink.PLUGIN_TYPE)
+             .setDescription("").setClassName(MockSink.class.getName()).setProperties(properties)
+             .setConfigFieldName("config").build();
   }
 }

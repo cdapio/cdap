@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.common.Bytes;
@@ -241,7 +240,9 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
     properties.put("schema", new PluginPropertyField("schema", "", "string", false, false));
     properties.put("metadataOperations", new PluginPropertyField("metadataOperations", "", "string", false, false));
     properties.put("sleepInMillis", new PluginPropertyField("sleepInMillis", "", "long", false, false));
-    return new PluginClass(BatchSource.PLUGIN_TYPE, "Mock", "", MockSource.class.getName(), "config", properties);
+    return PluginClass.builder().setName("Mock").setType(BatchSource.PLUGIN_TYPE)
+             .setDescription("").setClassName(MockSource.class.getName()).setProperties(properties)
+             .setConfigFieldName("config").build();
   }
 
   /**

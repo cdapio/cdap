@@ -95,7 +95,9 @@ public class MockCondition extends Condition {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("name", new PluginPropertyField("name", "", "string", true, false));
     properties.put("tableName", new PluginPropertyField("tableName", "", "string", false, false));
-    return new PluginClass(Condition.PLUGIN_TYPE, "Mock", "", MockCondition.class.getName(), "config", properties);
+    return PluginClass.builder().setName("Mock").setType(Condition.PLUGIN_TYPE)
+             .setDescription("").setClassName(MockCondition.class.getName()).setProperties(properties)
+             .setConfigFieldName("config").build();
   }
 
   public static ETLPlugin getPlugin(String name) {

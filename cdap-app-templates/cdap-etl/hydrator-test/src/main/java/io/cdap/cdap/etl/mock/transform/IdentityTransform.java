@@ -83,7 +83,8 @@ public class IdentityTransform extends Transform<StructuredRecord, StructuredRec
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
-    return new PluginClass(Transform.PLUGIN_TYPE, "Identity", "", IdentityTransform.class.getName(),
-                           null, properties);
+    return PluginClass.builder().setName("Identity").setType(Transform.PLUGIN_TYPE)
+             .setDescription("").setClassName(IdentityTransform.class.getName()).setProperties(properties)
+             .build();
   }
 }

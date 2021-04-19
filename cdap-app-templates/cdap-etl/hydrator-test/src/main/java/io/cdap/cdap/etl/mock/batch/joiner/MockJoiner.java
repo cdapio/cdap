@@ -261,7 +261,8 @@ public class MockJoiner extends BatchJoiner<StructuredRecord, StructuredRecord, 
     properties.put("joinKeys", new PluginPropertyField("joinKeys", "", "string", true, false));
     properties.put("requiredInputs", new PluginPropertyField("requiredInputs", "", "string", true, false));
     properties.put("selectedFields", new PluginPropertyField("selectedFields", "", "string", true, false));
-    return new PluginClass(BatchJoiner.PLUGIN_TYPE, "MockJoiner", "", MockJoiner.class.getName(),
-                           "config", properties);
+    return PluginClass.builder().setName("MockJoiner").setType(BatchJoiner.PLUGIN_TYPE)
+             .setDescription("").setClassName(MockJoiner.class.getName()).setProperties(properties)
+             .setConfigFieldName("config").build();
   }
 }

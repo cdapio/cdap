@@ -501,8 +501,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
             continue;
           }
           pluginSummaries.add(new PluginSummary(
-            pluginClass.getName(), pluginClass.getType(), pluginClass.getDescription(),
-            pluginClass.getClassName(), pluginArtifactSummary));
+            pluginClass.getName(), pluginClass.getType(), pluginClass.getCategory(), pluginClass.getClassName(),
+            pluginArtifactSummary, pluginClass.getDescription()));
         }
       }
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(pluginSummaries));

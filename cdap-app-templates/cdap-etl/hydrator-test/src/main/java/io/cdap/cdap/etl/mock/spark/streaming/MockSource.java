@@ -190,6 +190,8 @@ public class MockSource extends StreamingSource<StructuredRecord> {
     properties.put("records", new PluginPropertyField("records", "", "string", true, false));
     properties.put("intervalMillis", new PluginPropertyField("intervalMillis", "", "long", false, false));
     properties.put("referenceName", new PluginPropertyField("referenceName", "", "string", false, false));
-    return new PluginClass(StreamingSource.PLUGIN_TYPE, "Mock", "", MockSource.class.getName(), "conf", properties);
+    return PluginClass.builder().setName("Mock").setType(StreamingSource.PLUGIN_TYPE)
+             .setDescription("").setClassName(MockSource.class.getName()).setProperties(properties)
+             .setConfigFieldName("conf").build();
   }
 }

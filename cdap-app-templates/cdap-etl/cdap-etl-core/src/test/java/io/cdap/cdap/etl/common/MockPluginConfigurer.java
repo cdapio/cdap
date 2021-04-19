@@ -25,7 +25,6 @@ import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.plugin.PluginProperties;
-import io.cdap.cdap.api.plugin.PluginPropertyField;
 import io.cdap.cdap.api.plugin.PluginSelector;
 
 import java.util.HashMap;
@@ -51,8 +50,9 @@ public class MockPluginConfigurer implements PluginConfigurer, DatasetConfigurer
       this.plugin = plugin;
       this.artifacts = new TreeMap<>();
       for (ArtifactId artifactId : artifacts) {
-        this.artifacts.put(artifactId, new PluginClass("type", "name", "desc", "clsname", "cfgfield",
-                                                       ImmutableMap.<String, PluginPropertyField>of()));
+        this.artifacts.put(artifactId, PluginClass.builder().setName("name").setType("type").setDescription("desc")
+                                         .setClassName("clsname").setConfigFieldName("cfgfield")
+                                         .setProperties(ImmutableMap.of()).build());
       }
     }
   }

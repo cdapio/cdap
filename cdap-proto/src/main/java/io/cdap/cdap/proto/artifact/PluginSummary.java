@@ -20,6 +20,7 @@ import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * Represents an plugin info returned by
@@ -29,13 +30,16 @@ import java.util.Objects;
 public class PluginSummary {
   protected final String name;
   protected final String type;
+  protected final String category;
   protected final String description;
   protected final String className;
   protected final ArtifactSummary artifact;
 
-  public PluginSummary(String name, String type, String description, String className, ArtifactSummary artifact) {
+  public PluginSummary(String name, String type, @Nullable String category, String className,
+                       ArtifactSummary artifact, String description) {
     this.name = name;
     this.type = type;
+    this.category = category;
     this.description = description;
     this.className = className;
     this.artifact = artifact;
@@ -47,6 +51,11 @@ public class PluginSummary {
 
   public String getType() {
     return type;
+  }
+
+  @Nullable
+  public String getCategory() {
+    return category;
   }
 
   public String getDescription() {
@@ -74,6 +83,7 @@ public class PluginSummary {
 
     return Objects.equals(name, that.name) &&
       Objects.equals(type, that.type) &&
+      Objects.equals(category, that.category) &&
       Objects.equals(description, that.description) &&
       Objects.equals(className, that.className) &&
       Objects.equals(artifact, that.artifact);
@@ -81,7 +91,7 @@ public class PluginSummary {
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, type, description, className, artifact);
+    return Objects.hash(name, type, category, description, className, artifact);
   }
 
   @Override
@@ -89,6 +99,7 @@ public class PluginSummary {
     return "PluginSummary{" +
       "name='" + name + '\'' +
       ", type='" + type + '\'' +
+      ", category='" + category + '\'' +
       ", description='" + description + '\'' +
       ", className='" + className + '\'' +
       ", artifact=" + artifact +

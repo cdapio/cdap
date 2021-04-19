@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.runtime.artifact.app.inspection;
 
 import io.cdap.cdap.api.Config;
+import io.cdap.cdap.api.annotation.Category;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
@@ -35,6 +36,7 @@ public class InspectionApp extends AbstractApplication<InspectionApp.AConfig> {
   public static final String PLUGIN_DESCRIPTION = "some plugin";
   public static final String PLUGIN_NAME = "pluginA";
   public static final String PLUGIN_TYPE = "A";
+  public static final String PLUGIN_CATEGORY = "Plugin category";
   public static final String MULTIPLE_REQUIREMENTS_PLUGIN = "MultipleRequirementsPlugin";
 
   public static class AConfig extends Config {
@@ -78,6 +80,7 @@ public class InspectionApp extends AbstractApplication<InspectionApp.AConfig> {
 
   @Plugin(type = PLUGIN_TYPE)
   @Name(MULTIPLE_REQUIREMENTS_PLUGIN)
+  @Category(PLUGIN_CATEGORY)
   @Description(PLUGIN_DESCRIPTION)
   @Requirements(datasetTypes = {Table.TYPE, KeyValueTable.TYPE})
   public static class MultipleRequirementsPlugin {

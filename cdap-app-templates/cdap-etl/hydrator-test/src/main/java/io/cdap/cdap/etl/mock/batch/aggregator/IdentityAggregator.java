@@ -65,7 +65,7 @@ public class IdentityAggregator extends BatchAggregator<StructuredRecord, Struct
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
-    return new PluginClass(BatchAggregator.PLUGIN_TYPE, "Identity", "", IdentityAggregator.class.getName(),
-                           null, properties);
+    return PluginClass.builder().setName("Identity").setType(BatchAggregator.PLUGIN_TYPE)
+             .setDescription("").setClassName(IdentityAggregator.class.getName()).setProperties(properties).build();
   }
 }

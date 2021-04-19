@@ -109,7 +109,8 @@ public class FilterTransform extends Transform<StructuredRecord, StructuredRecor
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("name", new PluginPropertyField("name", "", "string", true, false));
-    return new PluginClass(Transform.PLUGIN_TYPE, "FilterTransform", "", FilterTransform.class.getName(),
-                           "config", properties);
+    return PluginClass.builder().setName("FilterTransform").setType(Transform.PLUGIN_TYPE)
+             .setDescription("").setClassName(FilterTransform.class.getName()).setProperties(properties)
+             .setConfigFieldName("config").build();
   }
 }

@@ -85,8 +85,9 @@ public class MapReduceContextConfigTest {
     }
     Set<ArtifactId> parents = new LinkedHashSet<>();
     Plugin filePlugin1 = new Plugin(parents, artifactId,
-                                    new PluginClass("type", "name", "desc", "clsname", "cfgfield",
-                                                    Collections.emptyMap()),
+                                    PluginClass.builder().setName("name").setType("type").setDescription("desc")
+                                      .setClassName("clsname").setConfigFieldName("cfgfield")
+                                      .setProperties(Collections.emptyMap()).build(),
                                     PluginProperties.builder().addAll(properties).build());
     mockPlugins.put("File1", filePlugin1);
     hConf.set(MapReduceContextConfig.HCONF_ATTR_PLUGINS, GSON.toJson(mockPlugins));

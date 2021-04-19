@@ -285,6 +285,9 @@ public class MockAutoJoiner extends BatchAutoJoiner {
                                                                    false));
     properties.put(Conf.DISTRIBUTION_NAME, new PluginPropertyField(Conf.DISTRIBUTION_NAME, "", "string", false, false));
     properties.put(Conf.CONDITION_EXPR, new PluginPropertyField(Conf.CONDITION_EXPR, "", "string", false, false));
-    return new PluginClass(BatchJoiner.PLUGIN_TYPE, NAME, "", MockAutoJoiner.class.getName(), "conf", properties);
+
+    return PluginClass.builder().setName(NAME).setType(BatchJoiner.PLUGIN_TYPE)
+             .setDescription("").setClassName(MockAutoJoiner.class.getName()).setProperties(properties)
+             .setConfigFieldName("conf").build();
   }
 }

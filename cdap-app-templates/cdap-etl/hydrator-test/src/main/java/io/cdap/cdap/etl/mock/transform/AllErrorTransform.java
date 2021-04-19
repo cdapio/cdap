@@ -51,11 +51,12 @@ public class AllErrorTransform extends Transform<StructuredRecord, StructuredRec
   }
 
   public static ETLPlugin getPlugin() {
-    return new ETLPlugin("AllError", Transform.PLUGIN_TYPE, new HashMap<String, String>(), null);
+    return new ETLPlugin("AllError", Transform.PLUGIN_TYPE, new HashMap<>(), null);
   }
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
-    return new PluginClass(Transform.PLUGIN_TYPE, "AllError", "", AllErrorTransform.class.getName(), null, properties);
+    return PluginClass.builder().setName("AllError").setType(Transform.PLUGIN_TYPE)
+             .setDescription("").setClassName(AllErrorTransform.class.getName()).setProperties(properties).build();
   }
 }

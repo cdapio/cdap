@@ -117,7 +117,8 @@ public class MockExternalSource extends BatchSource<LongWritable, Text, Structur
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("name", new PluginPropertyField("name", "", "string", true, false));
     properties.put("dirName", new PluginPropertyField("dirName", "", "string", true, false));
-    return new PluginClass(BatchSource.PLUGIN_TYPE, PLUGIN_NAME, "", MockExternalSource.class.getName(),
-                           "config", properties);
+    return PluginClass.builder().setName(PLUGIN_NAME).setType(BatchSource.PLUGIN_TYPE)
+             .setDescription("").setClassName(MockExternalSource.class.getName()).setProperties(properties)
+             .setConfigFieldName("config").build();
   }
 }

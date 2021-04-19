@@ -70,7 +70,8 @@ public class FilterErrorTransform extends ErrorTransform<StructuredRecord, Struc
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("code", new PluginPropertyField("code", "", "int", true, false));
-    return new PluginClass(ErrorTransform.PLUGIN_TYPE, "Filter", "", FilterErrorTransform.class.getName(),
-                           "config", properties);
+    return PluginClass.builder().setName("Filter").setType(ErrorTransform.PLUGIN_TYPE)
+             .setDescription("").setClassName(FilterErrorTransform.class.getName()).setProperties(properties)
+             .setConfigFieldName("config").build();
   }
 }

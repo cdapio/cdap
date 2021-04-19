@@ -160,8 +160,8 @@ public class DistinctReducibleAggregator
     properties.put("fields", new PluginPropertyField(
       "fields", "Comma-separated list of fields to perform the distinct on.", "string", true, false));
     properties.put("partitions", new PluginPropertyField("partitions", "", "int", false, false));
-    return new PluginClass(BatchReducibleAggregator.PLUGIN_TYPE, NAME, DESCRIPTION,
-                           DistinctReducibleAggregator.class.getName(),
-                           "config", properties);
+    return PluginClass.builder().setName(NAME).setType(BatchReducibleAggregator.PLUGIN_TYPE)
+             .setDescription(DESCRIPTION).setClassName(DistinctReducibleAggregator.class.getName())
+             .setConfigFieldName("config").setProperties(properties).build();
   }
 }

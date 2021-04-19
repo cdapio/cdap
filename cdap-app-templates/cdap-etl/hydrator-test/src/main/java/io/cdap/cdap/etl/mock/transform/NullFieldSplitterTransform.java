@@ -28,7 +28,6 @@ import io.cdap.cdap.etl.api.MultiOutputEmitter;
 import io.cdap.cdap.etl.api.MultiOutputPipelineConfigurer;
 import io.cdap.cdap.etl.api.MultiOutputStageConfigurer;
 import io.cdap.cdap.etl.api.SplitterTransform;
-import io.cdap.cdap.etl.api.StageSubmitterContext;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 
 import java.util.HashMap;
@@ -87,7 +86,8 @@ public class NullFieldSplitterTransform extends SplitterTransform<StructuredReco
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("field", new PluginPropertyField("field", "", "string", true, true));
-    return new PluginClass(SplitterTransform.PLUGIN_TYPE, "NullFieldSplitter", "",
-                           NullFieldSplitterTransform.class.getName(), "config", properties);
+    return PluginClass.builder().setName("NullFieldSplitter").setType(SplitterTransform.PLUGIN_TYPE)
+             .setDescription("").setClassName(NullFieldSplitterTransform.class.getName()).setProperties(properties)
+             .setConfigFieldName("config").build();
   }
 }

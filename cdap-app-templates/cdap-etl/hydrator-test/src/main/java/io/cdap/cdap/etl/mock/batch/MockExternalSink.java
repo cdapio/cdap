@@ -186,7 +186,8 @@ public class MockExternalSink extends BatchSink<StructuredRecord, NullWritable, 
     properties.put("name2", new PluginPropertyField("name2", "", "string", false, false));
     properties.put("alias2", new PluginPropertyField("alias2", "", "string", false, false));
     properties.put("dirName2", new PluginPropertyField("dirName2", "", "string", false, false));
-    return new PluginClass(BatchSink.PLUGIN_TYPE, PLUGIN_NAME, "",
-                           MockExternalSink.class.getName(), "config", properties);
+    return PluginClass.builder().setName(PLUGIN_NAME).setType(BatchSink.PLUGIN_TYPE)
+             .setDescription("").setClassName(MockExternalSink.class.getName()).setProperties(properties)
+             .setConfigFieldName("config").build();
   }
 }
