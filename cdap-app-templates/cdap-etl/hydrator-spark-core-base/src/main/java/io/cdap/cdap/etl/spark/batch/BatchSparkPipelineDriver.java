@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.spark.batch;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -29,6 +30,8 @@ import io.cdap.cdap.api.spark.JavaSparkMain;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.etl.api.JoinElement;
 import io.cdap.cdap.etl.api.batch.BatchSource;
+import io.cdap.cdap.etl.api.engine.sql.SQLEngine;
+import io.cdap.cdap.etl.api.join.JoinDefinition;
 import io.cdap.cdap.etl.batch.BatchPhaseSpec;
 import io.cdap.cdap.etl.batch.PipelinePluginInstantiator;
 import io.cdap.cdap.etl.batch.connector.SingleConnectorFactory;
@@ -61,6 +64,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Batch Spark pipeline driver.
@@ -79,6 +83,7 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
   private transient SparkBatchSinkFactory sinkFactory;
   private transient DatasetContext datasetContext;
   private transient Map<String, Integer> stagePartitions;
+  private transient BatchSQLEngineAdapter sqlEngineAdapter = null;
 
   @Override
   protected SparkCollection<RecordInfo<Object>> getSource(StageSpec stageSpec,
@@ -160,6 +165,18 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
         sec.getRuntimeArguments().getOrDefault(Constants.CONSOLIDATE_STAGES, Boolean.TRUE.toString()));
       boolean shouldCacheFunctions = Boolean.parseBoolean(
         sec.getRuntimeArguments().getOrDefault(Constants.CACHE_FUNCTIONS, Boolean.TRUE.toString()));
+
+      // Initialize SQL engine instance if needed.
+      if (phaseSpec.getSQLEngineStageSpec() != null) {
+        String sqlEngineStage =
+          "sqlengine_" + Strings.nullToEmpty(phaseSpec.getSQLEngineStageSpec().getPlugin().getName()).toLowerCase();
+        Object sqlEngineInstance = pluginInstantiator.newPluginInstance(sqlEngineStage);
+        if (sqlEngineInstance instanceof SQLEngine) {
+          sqlEngineAdapter = new BatchSQLEngineAdapter((SQLEngine<?, ?, ?, ?>) sqlEngineInstance);
+        }
+        //TODO: Add validations and error handling in case this instance cannot be instantiated
+      }
+
       runPipeline(phaseSpec, BatchSource.PLUGIN_TYPE, sec, stagePartitions, pluginInstantiator, collectors,
                   sinkFactory.getUncombinableSinks(), shouldConsolidateStages, shouldCacheFunctions);
     } finally {
@@ -181,5 +198,14 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
       String errorRecordKey = keyPrefix + Constants.StageStatistics.ERROR_RECORDS;
       token.put(errorRecordKey, String.valueOf(collector.getErrorRecordCount()));
     }
+  }
+
+  @Override
+  protected SparkCollection<Object> handleAutoJoin(String stageName, JoinDefinition joinDefinition,
+                                                 Map<String, SparkCollection<Object>> inputDataCollections,
+                                                 @Nullable Integer numPartitions) {
+    //TODO: Add logic to execute join operation on SQL Engine.
+
+    return super.handleAutoJoin(stageName, joinDefinition, inputDataCollections, numPartitions);
   }
 }

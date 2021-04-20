@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.batch;
 
+import com.google.common.base.Strings;
 import io.cdap.cdap.api.DatasetConfigurer;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.etl.api.Engine;
@@ -55,6 +56,32 @@ public class BatchPipelineSpecGenerator extends PipelineSpecGenerator<ETLBatchCo
     }
 
     configureStages(config, specBuilder);
+
+    // Configure SQL Engine
+    StageSpec sqlEngineStageSpec = configureSqlEngine(config);
+    if (sqlEngineStageSpec != null) {
+      specBuilder.setSqlEngineStageSpec(sqlEngineStageSpec);
+    }
+
     return specBuilder.build();
+  }
+
+  private StageSpec configureSqlEngine(ETLBatchConfig config) throws ValidationException {
+    if (config.getTransformationPushdown() == null || config.getTransformationPushdown().getEngine() == null) {
+      return null;
+    }
+
+    //Fixed name for SQL Engine config.
+    String stageName =
+      "sqlengine_" + Strings.nullToEmpty(config.getTransformationPushdown().getEngine().getName()).toLowerCase();
+
+    ETLStage sqlEngineStage =
+      new ETLStage(stageName, config.getTransformationPushdown().getEngine());
+    DefaultPipelineConfigurer pipelineConfigurer =
+      new DefaultPipelineConfigurer(pluginConfigurer, datasetConfigurer, stageName, engine,
+                                    new DefaultStageConfigurer(stageName));
+
+    ConfiguredStage configuredStage = configureStage(sqlEngineStage, validateConfig(config), pipelineConfigurer);
+    return configuredStage.getStageSpec();
   }
 }

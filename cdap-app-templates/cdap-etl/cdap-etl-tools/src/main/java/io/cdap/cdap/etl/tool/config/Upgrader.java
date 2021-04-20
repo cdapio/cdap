@@ -158,7 +158,8 @@ public class Upgrader {
         .addConnections(batchConfig.getConnections())
         .setResources(batchConfig.getResources())
         .setDriverResources(batchConfig.getDriverResources())
-        .setEngine(batchConfig.getEngine());
+        .setEngine(batchConfig.getEngine())
+        .setTransformationPushdown(batchConfig.getTransformationPushdown());
       // upgrade any of the plugin artifact versions if needed
       for (ETLStage postAction : batchConfig.getPostActions()) {
         builder.addPostAction(postAction.upgradeStage(upgradeContext));
