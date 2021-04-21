@@ -33,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A scheduled service that periodically poll for new preview request and execute it.
@@ -79,7 +80,7 @@ public class TaskWorkerService extends AbstractIdleService {
       .setExecThreadPoolSize(cConf.getInt(Constants.TaskWorker.EXEC_THREADS))
       .setBossThreadPoolSize(cConf.getInt(Constants.TaskWorker.BOSS_THREADS))
       .setWorkerThreadPoolSize(cConf.getInt(Constants.TaskWorker.WORKER_THREADS))
-      .setHttpHandlers(new TaskWorkerHttpHandlerInternal(this.cConf));
+      .setHttpHandlers(new TaskWorkerHttpHandlerInternal(this.cConf, this::stopService));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
@@ -94,9 +95,17 @@ public class TaskWorkerService extends AbstractIdleService {
     LOG.info("Starting TaskWorker http server has completed on {}", bindAddress);
   }
 
+  private void stopService(String className) {
+    /** TODO: we may want to expand this logic such that
+     * based on number of requests per particular class,
+     * we kill the pod.
+     */
+    new Thread(() -> this.stopAndWait()).start();
+  }
+
   private void shutdownHttpServer() throws Exception {
     cancelDiscovery.cancel();
-    httpService.stop();
+    httpService.stop(5, 5, TimeUnit.SECONDS);
   }
 
   @VisibleForTesting
