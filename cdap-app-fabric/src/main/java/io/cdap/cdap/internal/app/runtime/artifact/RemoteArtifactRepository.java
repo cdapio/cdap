@@ -47,6 +47,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -222,6 +223,11 @@ public class RemoteArtifactRepository implements ArtifactRepository {
   @Override
   public ArtifactDetail getArtifact(Id.Artifact artifactId) throws Exception {
     return null;
+  }
+
+  @Override
+  public InputStream getArtifactBytes(Id.Artifact artifactId) throws Exception {
+    return artifactRepositoryReader.getArtifactBytes(artifactId);
   }
 
   @Override

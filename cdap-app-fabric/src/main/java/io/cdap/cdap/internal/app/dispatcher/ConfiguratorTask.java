@@ -14,6 +14,7 @@
 
 package io.cdap.cdap.internal.app.dispatcher;
 
+import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -34,7 +35,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.util.concurrent.TimeUnit;
 
 public class ConfiguratorTask extends RunnableTask {
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
@@ -61,7 +65,14 @@ public class ConfiguratorTask extends RunnableTask {
     EntityImpersonator classLoaderImpersonator =
       new EntityImpersonator(config.getArtifactId().toEntityId(), impersonator);
     LOG.error("Created Impersoantor: ");
-    Location artifactLocation = Locations.getLocationFromAbsolutePath(locationFactory, config.getArtifactLocationURI().getPath());
+    Location artifactLocation = Locations.getLocationFromAbsolutePath(locationFactory,  config.getArtifactLocationURI().getPath());
+    OutputStream outputStream = artifactLocation.getOutputStream();
+    LOG.error(String.format("Artifact name, version: %s, %s", config.getArtifactId().getName(), config.getArtifactId().getVersion()));
+    LOG.error(String.format("Application name, version, classname: %s, %s, %s", config.getApplicationName(), config.getApplicationVersion(), config.getAppClassName()));
+    InputStream artifactBytes = artifactRepository.getArtifactBytes(config.getArtifactId());
+    ByteStreams.copy(artifactBytes, outputStream);
+    outputStream.close();
+    artifactBytes.close();
     ClassLoader artifactClassLoader = artifactRepository.createArtifactClassLoader(artifactLocation,
                                                                                    classLoaderImpersonator);
     LOG.error("Created class loader: ");
@@ -80,7 +91,7 @@ public class ConfiguratorTask extends RunnableTask {
     LOG.error("Got future: " + future.toString());
 
 
-    return toBytes(future);
+    return toBytes(future.get(120, TimeUnit.SECONDS));
   }
 
   private byte[] toBytes(Object obj) throws IOException {

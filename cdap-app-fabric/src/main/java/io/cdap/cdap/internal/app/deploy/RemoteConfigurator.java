@@ -15,6 +15,7 @@
 package io.cdap.cdap.internal.app.deploy;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
 import io.cdap.cdap.app.deploy.ConfigResponse;
 import io.cdap.cdap.app.deploy.Configurator;
@@ -99,7 +100,9 @@ public class RemoteConfigurator implements Configurator {
 
       in = new ObjectInputStream(bis);
       Object o = in.readObject();
-      return (ListenableFuture<ConfigResponse>) o;
+      SettableFuture<ConfigResponse> result = SettableFuture.create();
+result.set((ConfigResponse) o);
+      return result;
     } catch (IOException | ClassNotFoundException ex) {
       return null;
     }

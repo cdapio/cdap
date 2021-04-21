@@ -27,6 +27,7 @@ import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,6 +66,9 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
     } catch (Exception ex) {
       LOG.error(String.format("failed to launch a task with request %s due to %s",
                               request.content().toString(StandardCharsets.UTF_8), ex));
+      LOG.error("%s", ex.getCause());
+      LOG.error(ExceptionUtils.getStackTrace(ex));
+
       response = ex.toString().getBytes();
       status = HttpResponseStatus.BAD_REQUEST;
     }

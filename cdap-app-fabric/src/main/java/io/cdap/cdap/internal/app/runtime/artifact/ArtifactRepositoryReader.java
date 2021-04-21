@@ -22,6 +22,7 @@ import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 /**
@@ -38,6 +39,8 @@ public interface ArtifactRepositoryReader {
    * @throws ArtifactNotFoundException if the given artifact does not exist
    */
   ArtifactDetail getArtifact(Id.Artifact artifactId) throws Exception;
+
+  InputStream getArtifactBytes(Id.Artifact artifactId) throws Exception;
 
   /**
    * Get all artifact details that match artifacts in the given ranges.
