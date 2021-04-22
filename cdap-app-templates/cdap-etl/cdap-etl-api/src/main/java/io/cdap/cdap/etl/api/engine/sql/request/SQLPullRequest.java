@@ -18,24 +18,34 @@ package io.cdap.cdap.etl.api.engine.sql.request;
 
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDataset;
+
+import java.io.Serializable;
 
 /**
  * Class representing a Request to pull a dataset from a SQL engine.
  */
 @Beta
-public class SQLPullRequest {
+public class SQLPullRequest implements Serializable {
+  private static final long serialVersionUID = 2740000608695387711L;
   private final String datasetName;
   private final Schema datasetSchema;
 
-  public SQLPullRequest(String datasetName, Schema datasetSchema) {
-    this.datasetName = datasetName;
-    this.datasetSchema = datasetSchema;
+  public SQLPullRequest(SQLDataset dataset) {
+    this.datasetName = dataset.getDatasetName();
+    this.datasetSchema = dataset.getSchema();
   }
 
+  /**
+   * Get the name of the dataset that is getting pulled from the engine.
+   */
   public String getDatasetName() {
     return datasetName;
   }
 
+  /**
+   * Get the schema for the records that are getting pulled from the engine.
+   */
   public Schema getDatasetSchema() {
     return datasetSchema;
   }

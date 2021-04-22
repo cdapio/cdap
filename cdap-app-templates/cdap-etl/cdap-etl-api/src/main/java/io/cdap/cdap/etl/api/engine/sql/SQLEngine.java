@@ -25,6 +25,9 @@ import io.cdap.cdap.etl.api.PipelineConfigurable;
 import io.cdap.cdap.etl.api.SubmitterLifecycle;
 import io.cdap.cdap.etl.api.ToKeyValueTransform;
 import io.cdap.cdap.etl.api.batch.BatchContext;
+import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDataset;
+import io.cdap.cdap.etl.api.engine.sql.dataset.SQLPullDataset;
+import io.cdap.cdap.etl.api.engine.sql.dataset.SQLPushDataset;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLJoinRequest;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPullRequest;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPushRequest;
@@ -46,10 +49,8 @@ import io.cdap.cdap.etl.api.engine.sql.request.SQLPushRequest;
  * @param <VALUE_IN>  The type for the Input Value when building a StructuredRecord
  */
 @Beta
-public interface SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT> extends PipelineConfigurable,
-  SubmitterLifecycle<BatchContext>, FromKeyValueTransform<StructuredRecord, KEY_IN, VALUE_IN>,
-  ToKeyValueTransform<StructuredRecord, KEY_OUT, VALUE_OUT> {
-  String PLUGIN_TYPE = "sqlengine";
+public interface SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT>
+  extends PipelineConfigurable, SubmitterLifecycle<BatchContext> {
 
   /**
    * Creates an Output Format Provided that can be used to push records into a SQL Engine.
@@ -57,19 +58,19 @@ public interface SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT> extends Pipelin
    * After created, this dataset will be considered "locked" until the output has been committed.
    *
    * @param pushRequest the request containing information about the dataset name and schema.t
-   * @return an {@link OutputFormatProvider} instance that can be used to write records to the SQL Engine into the
-   * specified dataset.
+   * @return {@link SQLPushDataset} instance that can be used to write records to the SQL Engine.
    */
-  OutputFormatProvider getPushProvider(SQLPushRequest pushRequest) throws SQLEngineException;
+  SQLPushDataset<StructuredRecord, KEY_OUT, VALUE_OUT> getPushProvider(SQLPushRequest pushRequest)
+    throws SQLEngineException;
 
   /**
    * Creates an InputFormatProvider that can be used to pull records from the specified dataset.
    *
    * @param pullRequest the request containing information about the dataset name and schema.
-   * @return AN {@link InputFormatProvider} instance that can be used to read records form the specified dataset in the
-   * SQL Engine.
+   * @return {@link SQLPullDataset} instance that can be used to read records from the SQL engine.
    */
-  InputFormatProvider getPullProvider(SQLPullRequest pullRequest) throws SQLEngineException;
+  SQLPullDataset<StructuredRecord, KEY_IN, VALUE_IN> getPullProvider(SQLPullRequest pullRequest)
+    throws SQLEngineException;
 
   /**
    * Check if this dataset exists in the SQL Engine.
@@ -93,12 +94,15 @@ public interface SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT> extends Pipelin
   /**
    * Executes the join operation defined by the supplied join request.
    * <p>
-   * The returned {@link SQLOperationResult} can be used to determine the status of this task.
+   * All datasets involved in this joinRequest must be pushed to the SQL engine by calling the
+   * {@link SQLEngine#getPushProvider(SQLPushRequest)} method, or as a result of another operation.
+   * <p>
+   * The returned {@link SQLDataset} represents the resulting record form this operation
    *
    * @param joinRequest the join request to execute.
-   * @return the {@link SQLOperationResult} instance with information about the execution of this task.
+   * @return the {@link SQLDataset} instance representing the output of this operation.
    */
-  SQLOperationResult join(SQLJoinRequest joinRequest) throws SQLEngineException;
+  SQLDataset join(SQLJoinRequest joinRequest) throws SQLEngineException;
 
   /**
    * Deletes all temporary datasets and cleans up all temporary data from the SQL engine.
