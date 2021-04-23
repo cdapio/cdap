@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.dispatcher;
 
 import io.cdap.cdap.common.conf.CConfiguration;
+import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -32,7 +33,7 @@ public class RunnableTaskLauncherTest {
     String want = "test-want";
     RunnableTaskRequest request = new RunnableTaskRequest(EchoRunnableTask.class.getName(), want);
 
-    RunnableTaskLauncher launcher = new RunnableTaskLauncher(CConfiguration.create());
+    RunnableTaskLauncher launcher = new RunnableTaskLauncher(CConfiguration.create(), new Configuration());
     byte[] got = launcher.launchRunnableTask(request);
     Assert.assertEquals(want, new String(got, StandardCharsets.UTF_8));
   }

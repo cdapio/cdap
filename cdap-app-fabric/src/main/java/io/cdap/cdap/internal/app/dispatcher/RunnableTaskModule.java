@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.dispatcher;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import io.cdap.cdap.common.conf.CConfiguration;
+import org.apache.hadoop.conf.Configuration;
 
 /**
  * RunnableTask Module. Guice binding modules for all RunnableTasks should be installed here.
@@ -26,14 +27,17 @@ import io.cdap.cdap.common.conf.CConfiguration;
 public class RunnableTaskModule extends AbstractModule {
 
   CConfiguration cConfig;
+  Configuration hConfig;
 
-  public RunnableTaskModule(CConfiguration cConfig) {
+  public RunnableTaskModule(CConfiguration cConfig, Configuration hConfig) {
     this.cConfig = cConfig;
+    this.hConfig = hConfig;
   }
 
   @Override
   protected void configure() {
     bind(CConfiguration.class).toInstance(this.cConfig);
+    bind(Configuration.class).toInstance(this.hConfig);
     install(new ConfiguratorTaskModule());
   }
 

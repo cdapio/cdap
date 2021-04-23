@@ -27,6 +27,7 @@ import io.cdap.cdap.internal.app.deploy.pipeline.ConfiguratorConfig;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.Assert;
@@ -57,6 +58,11 @@ public class TaskWorkerServiceTest {
     return sConf;
   }
 
+  private Configuration createHConf() {
+    Configuration hConf = new Configuration();
+    return hConf;
+  }
+
   @Test
   public void testGSON() {
     CConfiguration cConf = CConfiguration.create();
@@ -75,9 +81,10 @@ public class TaskWorkerServiceTest {
   public void testStartAndStop() throws IOException {
     CConfiguration cConf = createCConf();
     SConfiguration sConf = createSConf();
+    Configuration hConf = createHConf();
 
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
-    TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, sConf, discoveryService);
+    TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, sConf, hConf, discoveryService);
 
     // start the service
     taskWorkerService.startAndWait();

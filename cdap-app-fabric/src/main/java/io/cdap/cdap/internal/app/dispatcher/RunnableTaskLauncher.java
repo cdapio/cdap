@@ -20,15 +20,18 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
+import org.apache.hadoop.conf.Configuration;
 
 /**
  * RunnableTaskLauncher launches a runnable task.
  */
 public class RunnableTaskLauncher {
   private final CConfiguration cConfig;
+  private final Configuration hConfig;
 
-  public RunnableTaskLauncher(CConfiguration cConfig) {
+  public RunnableTaskLauncher(CConfiguration cConfig, Configuration hConfig) {
     this.cConfig = cConfig;
+    this.hConfig = hConfig;
   }
 
   public byte[] launchRunnableTask(RunnableTaskRequest request) throws Exception {
@@ -36,7 +39,7 @@ public class RunnableTaskLauncher {
     ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
     Class<?> clazz = classLoader.loadClass(request.className);
 
-    Injector injector = Guice.createInjector(new RunnableTaskModule(cConfig));
+    Injector injector = Guice.createInjector(new RunnableTaskModule(cConfig, hConfig));
     Object obj = injector.getInstance(clazz);
 
     if (!(obj instanceof RunnableTask)) {

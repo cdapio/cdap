@@ -36,11 +36,6 @@ import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
-
 /**
  * RemoteConfigurator sends a request to another {@link Configurator} running remotely.
  */
@@ -81,6 +76,7 @@ public class RemoteConfigurator implements Configurator {
 
   @Override
   public ListenableFuture<ConfigResponse> config() {
+    SettableFuture<ConfigResponse> result = SettableFuture.create();
     try {
       String param = GSON.toJson(config);
       LOG.error("Sending param: " + param);
@@ -98,16 +94,12 @@ public class RemoteConfigurator implements Configurator {
 //        HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
 //          .withBody(reqBody).build(),
 //        new DefaultHttpRequestConfig(false));
-      ByteArrayInputStream bis = new ByteArrayInputStream(response.getResponseBody());
-      ObjectInput in = null;
-
-      in = new ObjectInputStream(bis);
-      Object o = in.readObject();
-      SettableFuture<ConfigResponse> result = SettableFuture.create();
-      result.set((ConfigResponse) o);
-      return result;
-    } catch (IOException | ClassNotFoundException ex) {
-      return null;
+      String jsonResponse = (String) response.getResponseBodyAsString();
+      ConfigResponse configResponse = GSON.fromJson(jsonResponse, ConfigResponse.class);
+      result.set(configResponse);
+    } catch (Exception ex) {
+      LOG.error("Exception caught during config", ex);
     }
+    return result;
   }
 }

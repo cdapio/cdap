@@ -28,6 +28,7 @@ import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,9 +49,9 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
   private final RunnableTaskLauncher runnableTaskLauncher;
 
   @Inject
-  public TaskWorkerHttpHandlerInternal(CConfiguration cConf) {
+  public TaskWorkerHttpHandlerInternal(CConfiguration cConf, Configuration hConf) {
     super(cConf);
-    runnableTaskLauncher = new RunnableTaskLauncher(cConf);
+    runnableTaskLauncher = new RunnableTaskLauncher(cConf, hConf);
   }
 
   @POST

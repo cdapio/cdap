@@ -33,10 +33,8 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.util.concurrent.TimeUnit;
 
@@ -105,12 +103,9 @@ public class ConfiguratorTask extends RunnableTask {
     return toBytes(future.get(120, TimeUnit.SECONDS));
   }
 
-  private byte[] toBytes(Object obj) throws IOException {
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    ObjectOutputStream oos = new ObjectOutputStream(bos);
-    oos.writeObject(obj);
-    oos.flush();
-    return bos.toByteArray();
+  private byte[] toBytes(ConfigResponse obj) {
+    String json = GSON.toJson(obj);
+    return json.getBytes();
   }
 
   @Override
