@@ -129,10 +129,8 @@ public class AutoInstallTest {
     Mockito.doReturn("6.4.0").when(ca).getCurrentVersion();
 
     // Test plugin auto install
-    ca.doStartup();
     ca.autoInstallResources("mycapability",
                             Collections.singletonList(new URL("https://my.hub.io")));
-    ca.doShutdown();
 
     // Verify that the correct version of the plugin was installed
     Set<ArtifactRange> ranges = ImmutableSet.of(
