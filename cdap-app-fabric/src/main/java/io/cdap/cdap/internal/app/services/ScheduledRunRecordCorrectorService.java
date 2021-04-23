@@ -25,6 +25,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,7 +79,7 @@ public class ScheduledRunRecordCorrectorService extends RunRecordCorrectorServic
   protected void startUp() throws Exception {
     super.startUp();
 
-    scheduledExecutorService = Executors.newScheduledThreadPool(1);
+    scheduledExecutorService = Executors.newScheduledThreadPool(1, Threads.createDaemonThreadFactory("run-corrector"));
     // Schedule the run record corrector with the configured initial delay and interval between runs
     scheduledExecutorService.scheduleWithFixedDelay(new RunRecordsCorrectorRunnable(),
        initialDelay, interval, TimeUnit.SECONDS);
