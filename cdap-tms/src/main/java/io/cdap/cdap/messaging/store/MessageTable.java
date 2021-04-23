@@ -20,7 +20,6 @@ import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.messaging.RollbackDetail;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.data.MessageId;
-import io.cdap.cdap.proto.id.TopicId;
 import org.apache.tephra.Transaction;
 
 import java.io.Closeable;
@@ -38,17 +37,12 @@ public interface MessageTable extends Closeable {
   /**
    * Represents an entry (row) in the message table.
    */
-  interface Entry {
+  interface Entry extends TableEntry {
 
-    /**
-     * Returns the topic id that the entry belongs to.
-     */
-    TopicId getTopicId();
-
-    /**
-     * Returns the generation id of the topic.
-     */
-    int getGeneration();
+    @Override
+    default long getTimestamp() {
+      return getPublishTimestamp();
+    }
 
     /**
      * Returns {@code true} if the entry is a reference to messages stored in payload table.

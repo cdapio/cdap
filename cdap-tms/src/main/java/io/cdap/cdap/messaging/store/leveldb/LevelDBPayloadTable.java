@@ -16,17 +16,11 @@
 
 package io.cdap.cdap.messaging.store.leveldb;
 
-import com.google.common.base.Preconditions;
-import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
-import io.cdap.cdap.messaging.MessagingUtils;
-import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.store.AbstractPayloadTable;
-import io.cdap.cdap.messaging.store.ImmutablePayloadTableEntry;
 import io.cdap.cdap.messaging.store.PayloadTable;
 import io.cdap.cdap.messaging.store.RawPayloadTableEntry;
-import io.cdap.cdap.proto.id.TopicId;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBException;
 import org.iq80.leveldb.WriteBatch;
@@ -36,7 +30,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * LevelDB implementation of {@link PayloadTable}.
@@ -44,19 +37,9 @@ import java.util.concurrent.TimeUnit;
 public class LevelDBPayloadTable extends AbstractPayloadTable {
   private static final WriteOptions WRITE_OPTIONS = new WriteOptions().sync(true);
   private final DB levelDB;
-  private final TopicMetadata topicMetadata;
 
-  LevelDBPayloadTable(DB levelDB, TopicMetadata topicMetadata) {
+  LevelDBPayloadTable(DB levelDB) {
     this.levelDB = levelDB;
-    this.topicMetadata = topicMetadata;
-  }
-
-  private void checkTopic(TopicId topicId, int generation) {
-    Preconditions.checkArgument(this.topicMetadata.getTopicId().equals(topicId), "Not allowed to use table with a " +
-      "different topic id. Table's topic Id: {}. Specified topic id: {}", this.topicMetadata.getTopicId(), topicId);
-    Preconditions.checkArgument(this.topicMetadata.getGeneration() == generation, "Not allowed to use table with " +
-                                  "a different generation id. Table's generation: {}. Specified generation: {}",
-                                this.topicMetadata.getGeneration(), generation);
   }
 
   @Override
@@ -101,50 +84,6 @@ public class LevelDBPayloadTable extends AbstractPayloadTable {
         // LevelDB doesn't make copies, and since we reuse RawPayloadTableEntry object, we need to create copies.
         writeBatch.put(Arrays.copyOf(key, key.length), Arrays.copyOf(value, value.length));
       }
-      levelDB.write(writeBatch, WRITE_OPTIONS);
-    } catch (DBException ex) {
-      throw new IOException(ex);
-    }
-  }
-
-  /**
-   * Delete messages of a {@link TopicId} that has exceeded the TTL or if it belongs to an older generation
-   *
-   * @param currentTime current timestamp
-   * @throws IOException error occurred while trying to delete a row in LevelDB
-   */
-  void pruneMessages(long currentTime) throws IOException {
-    WriteBatch writeBatch = levelDB.createWriteBatch();
-    long ttlInMs = TimeUnit.SECONDS.toMillis(topicMetadata.getTTL());
-    byte[] startRow = MessagingUtils.toDataKeyPrefix(topicMetadata.getTopicId(),
-                                                     Integer.parseInt(MessagingUtils.Constants.DEFAULT_GENERATION));
-    byte[] stopRow = Bytes.stopKeyForPrefix(startRow);
-
-    try (CloseableIterator<Map.Entry<byte[], byte[]>> rowIterator = new DBScanIterator(levelDB, startRow, stopRow)) {
-      while (rowIterator.hasNext()) {
-        Map.Entry<byte[], byte[]> entry = rowIterator.next();
-        PayloadTable.Entry payloadTableEntry = new ImmutablePayloadTableEntry(entry.getKey(), entry.getValue());
-
-        int dataGeneration = payloadTableEntry.getGeneration();
-        int currGeneration = topicMetadata.getGeneration();
-        checkTopic(topicMetadata.getTopicId(), topicMetadata.getGeneration());
-        if (MessagingUtils.isOlderGeneration(dataGeneration, currGeneration)) {
-          writeBatch.delete(entry.getKey());
-          continue;
-        }
-
-        if ((dataGeneration == Math.abs(currGeneration)) &&
-          ((currentTime - payloadTableEntry.getPayloadWriteTimestamp()) > ttlInMs)) {
-          writeBatch.delete(entry.getKey());
-        } else {
-          // terminate scanning table once an entry with write time after TTL is found, to avoid scanning whole table,
-          // since the entries are sorted by time.
-          break;
-        }
-      }
-    }
-
-    try {
       levelDB.write(writeBatch, WRITE_OPTIONS);
     } catch (DBException ex) {
       throw new IOException(ex);

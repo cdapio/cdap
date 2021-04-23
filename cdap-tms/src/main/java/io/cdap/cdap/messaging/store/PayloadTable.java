@@ -19,7 +19,6 @@ package io.cdap.cdap.messaging.store;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.data.MessageId;
-import io.cdap.cdap.proto.id.TopicId;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -35,22 +34,12 @@ public interface PayloadTable extends Closeable {
   /**
    * Represents an entry (row) in the payload table.
    */
-  interface Entry {
+  interface Entry extends TableEntry {
 
-    /**
-     * Returns the topic id that the entry belongs to.
-     */
-    TopicId getTopicId();
-
-    /**
-     * Returns the generation id of the topic.
-     */
-    int getGeneration();
-
-    /**
-     * Returns the message payload.
-     */
-    byte[] getPayload();
+    @Override
+    default long getTimestamp() {
+      return getPayloadWriteTimestamp();
+    }
 
     /**
      * Returns the transaction write pointer for storing the payload.

@@ -19,20 +19,28 @@ package io.cdap.cdap.messaging.store.leveldb;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.Closeables;
 import com.google.inject.Inject;
+import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.messaging.MessagingUtils;
 import io.cdap.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.messaging.store.ImmutableMessageTableEntry;
+import io.cdap.cdap.messaging.store.ImmutablePayloadTableEntry;
 import io.cdap.cdap.messaging.store.MessageTable;
 import io.cdap.cdap.messaging.store.MetadataTable;
 import io.cdap.cdap.messaging.store.PayloadTable;
+import io.cdap.cdap.messaging.store.TableEntry;
 import io.cdap.cdap.messaging.store.TableFactory;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
 import org.apache.twill.common.Threads;
 import org.iq80.leveldb.DB;
+import org.iq80.leveldb.DBException;
 import org.iq80.leveldb.Options;
+import org.iq80.leveldb.WriteBatch;
+import org.iq80.leveldb.WriteOptions;
 import org.iq80.leveldb.impl.Iq80DBFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,11 +51,13 @@ import java.util.Collection;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 /**
  * A {@link TableFactory} for creating tables used by the messaging system using the LevelDB implementation.
@@ -75,16 +85,19 @@ public final class LevelDBTableFactory implements TableFactory {
       .cacheSize(cConf.getLong(Constants.CFG_DATA_LEVELDB_CACHESIZE, Constants.DEFAULT_DATA_LEVELDB_CACHESIZE))
       .errorIfExists(false)
       .createIfMissing(true);
-    ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(
-      Threads.createDaemonThreadFactory("leveldb-tms-data-cleanup"));
-    executor.scheduleAtFixedRate(new DataCleanup(), 0L,
-                                 Long.parseLong(cConf.get(Constants.MessagingSystem.LOCAL_DATA_CLEANUP_FREQUENCY)),
-                                 TimeUnit.SECONDS);
 
     this.metadataTableName = cConf.get(Constants.MessagingSystem.METADATA_TABLE_NAME);
     this.messageTableName = cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME);
     this.payloadTableName = cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME);
     this.levelDBs = new ConcurrentHashMap<>();
+
+    long cleanupFrequency = Long.parseLong(cConf.get(Constants.MessagingSystem.LOCAL_DATA_CLEANUP_FREQUENCY));
+    // For testing, disable automatic cleanup by having frequency set to <= 0.
+    if (cleanupFrequency > 0) {
+      ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(
+        Threads.createDaemonThreadFactory("leveldb-tms-data-cleanup"));
+      executor.scheduleAtFixedRate(this::cleanup, 0L, cleanupFrequency, TimeUnit.SECONDS);
+    }
   }
 
   @Override
@@ -101,12 +114,12 @@ public final class LevelDBTableFactory implements TableFactory {
 
   @Override
   public MessageTable createMessageTable(TopicMetadata topicMetadata) throws IOException {
-    return new LevelDBMessageTable(getLevelDB(topicMetadata, messageTableName), topicMetadata);
+    return new LevelDBMessageTable(getLevelDB(topicMetadata, messageTableName));
   }
 
   @Override
   public PayloadTable createPayloadTable(TopicMetadata topicMetadata) throws IOException {
-    return new LevelDBPayloadTable(getLevelDB(topicMetadata, payloadTableName), topicMetadata);
+    return new LevelDBPayloadTable(getLevelDB(topicMetadata, payloadTableName));
   }
 
   @Override
@@ -122,6 +135,140 @@ public final class LevelDBTableFactory implements TableFactory {
     Collection<DB> dbs = levelDBs.values();
     dbs.forEach(Closeables::closeQuietly);
     dbs.clear();
+  }
+
+  private void cleanup() {
+    performCleanup(System.currentTimeMillis());
+  }
+
+  /**
+   * Performs data cleanup of LevelDB tables and table entries. It removes old topics and old topic generations,
+   * followed by removing old table entries that exceeded TTL.
+   */
+  @VisibleForTesting
+  void performCleanup(long currentTime) {
+    if (metadataTable == null) {
+      return;
+    }
+
+    // First delete all older generation files
+    try (CloseableIterator<TopicMetadata> metadataIterator = metadataTable.scanTopics()) {
+      while (metadataIterator.hasNext()) {
+        TopicMetadata metadata = metadataIterator.next();
+        int currGeneration = metadata.getGeneration();
+
+        // We can safely remove all generations that are less than `cleanOlderThan`.
+        int cleanOlderThan = currGeneration < 0 ? currGeneration * -1 + 1 : currGeneration;
+
+        // Find the generations older than `cleanOlderThan`, that have data on disk, and remove them in reverse order.
+        // We do it in reverse order, so that in case there is a failure in deleting one of them, we can repeat
+        // the same process next iteration and not lose track of generations that need to be deleted.
+        Deque<File> filesToDelete = new LinkedList<>();
+        for (int olderGeneration = cleanOlderThan - 1; olderGeneration > 0; olderGeneration--) {
+          // Message table
+          File dataDBPath = getDataDBPath(messageTableName, metadata.getTopicId(), olderGeneration);
+          if (!dataDBPath.exists()) {
+            break;
+          }
+          // We can safely remove and close the levelDB as no one should be accessing them anymore
+          Closeables.closeQuietly(levelDBs.remove(dataDBPath));
+          filesToDelete.add(dataDBPath);
+
+          // Payload table
+          dataDBPath = getDataDBPath(payloadTableName, metadata.getTopicId(), olderGeneration);
+          if (!dataDBPath.exists()) {
+            break;
+          }
+          // We can safely remove and close the levelDB as no one should be accessing them anymore
+          Closeables.closeQuietly(levelDBs.remove(dataDBPath));
+          filesToDelete.add(dataDBPath);
+        }
+
+        Iterator<File> descendingIterator = filesToDelete.descendingIterator();
+        while (descendingIterator.hasNext()) {
+          File dataDBPath = descendingIterator.next();
+          LOG.info("Deleting file: {}", dataDBPath);
+          DirUtils.deleteDirectoryContents(dataDBPath);
+        }
+
+        // Prune the current generation
+        // Message table
+        File dataDBPath = getDataDBPath(messageTableName, metadata.getTopicId(), metadata.getGeneration());
+        DB levelDB = levelDBs.get(dataDBPath);
+        if (levelDB != null && dataDBPath.exists()) {
+          // The payload is not needed for pruning, hence passing in null.
+          pruneMessages(currentTime, levelDB, metadata, e -> new ImmutableMessageTableEntry(e.getKey(), null, null));
+        }
+
+        // Payload table
+        dataDBPath = getDataDBPath(payloadTableName, metadata.getTopicId(), metadata.getGeneration());
+        levelDB = levelDBs.get(dataDBPath);
+        if (levelDB != null && dataDBPath.exists()) {
+          // The payload is not needed for pruning, hence passing in null.
+          pruneMessages(currentTime, levelDB, metadata, e -> new ImmutablePayloadTableEntry(e.getKey(),
+                                                                                            Bytes.EMPTY_BYTE_ARRAY));
+        }
+      }
+    } catch (IOException ex) {
+      LOG.debug("Unable to perform data cleanup in TMS LevelDB tables", ex);
+    }
+  }
+
+  /**
+   * Delete messages of a {@link TopicId} that has exceeded the TTL or if it belongs to an older generation
+   *
+   * @param currentTime current timestamp
+   * @throws IOException error occurred while trying to delete a row in LevelDB
+   */
+  private void pruneMessages(long currentTime, DB levelDB, TopicMetadata topicMetadata,
+                             Function<Map.Entry<byte[], byte[]>, TableEntry> tableEntryFunc) throws IOException {
+    TopicId topicId = topicMetadata.getTopicId();
+    int topicGeneration = topicMetadata.getGeneration();
+
+    WriteBatch writeBatch = levelDB.createWriteBatch();
+    long ttlInMs = TimeUnit.SECONDS.toMillis(topicMetadata.getTTL());
+    byte[] startRow = MessagingUtils.toDataKeyPrefix(topicId,
+                                                     Integer.parseInt(MessagingUtils.Constants.DEFAULT_GENERATION));
+    byte[] stopRow = Bytes.stopKeyForPrefix(startRow);
+
+    try (CloseableIterator<Map.Entry<byte[], byte[]>> rowIterator = new DBScanIterator(levelDB, startRow, stopRow)) {
+      while (rowIterator.hasNext()) {
+        Map.Entry<byte[], byte[]> entry = rowIterator.next();
+        TableEntry tableEntry = tableEntryFunc.apply(entry);
+
+        int dataGeneration = tableEntry.getGeneration();
+        if (!topicId.equals(tableEntry.getTopicId())) {
+          LOG.warn("Ignore table entry with topic '{}' that doesn't match with the topic '{}'",
+                   tableEntry.getTopicId(), topicId);
+          continue;
+        }
+        if (topicGeneration != dataGeneration) {
+          LOG.warn("Ignore table entry with topic generation '{}' that doesn't match with the topic generation '{}'",
+                   tableEntry.getGeneration(), dataGeneration);
+          continue;
+        }
+
+        if (MessagingUtils.isOlderGeneration(dataGeneration, topicGeneration)) {
+          writeBatch.delete(entry.getKey());
+          continue;
+        }
+
+        if ((dataGeneration == Math.abs(topicGeneration)) &&
+          ((currentTime - tableEntry.getTimestamp()) > ttlInMs)) {
+          writeBatch.delete(entry.getKey());
+        } else {
+          // terminate scanning table once an entry with write time after TTL is found, to avoid scanning whole table,
+          // since the entries are sorted by time.
+          break;
+        }
+      }
+    }
+
+    try {
+      levelDB.write(writeBatch, new WriteOptions().sync(true));
+    } catch (DBException ex) {
+      throw new IOException(ex);
+    }
   }
 
   /**
@@ -165,76 +312,5 @@ public final class LevelDBTableFactory implements TableFactory {
       throw new IOException("Failed to create local directory " + dir + " for the messaging system.");
     }
     return dir;
-  }
-
-  private class DataCleanup implements Runnable {
-
-    @Override
-    public void run() {
-      if (metadataTable == null) {
-        return;
-      }
-
-      long now = System.currentTimeMillis();
-
-      // First delete all older generation files
-      try (CloseableIterator<TopicMetadata> metadataIterator = metadataTable.scanTopics()) {
-        while (metadataIterator.hasNext()) {
-          TopicMetadata metadata = metadataIterator.next();
-          int currGeneration = metadata.getGeneration();
-
-          // We can safely remove all generations that are less than `cleanOlderThan`.
-          int cleanOlderThan = currGeneration < 0 ? currGeneration * -1 + 1 : currGeneration;
-
-          // Find the generations older than `cleanOlderThan`, that have data on disk, and remove them in reverse order.
-          // We do it in reverse order, so that in case there is a failure in deleting one of them, we can repeat
-          // the same process next iteration and not lose track of generations that need to be deleted.
-          Deque<File> filesToDelete = new LinkedList<>();
-          for (int olderGeneration = cleanOlderThan - 1; olderGeneration > 0; olderGeneration--) {
-            // Message table
-            File dataDBPath = getDataDBPath(messageTableName, metadata.getTopicId(), olderGeneration);
-            if (!dataDBPath.exists()) {
-              break;
-            }
-            // We can safely remove and close the levelDB as no one should be accessing them anymore
-            Closeables.closeQuietly(levelDBs.remove(dataDBPath));
-            filesToDelete.add(dataDBPath);
-
-            // Payload table
-            dataDBPath = getDataDBPath(payloadTableName, metadata.getTopicId(), olderGeneration);
-            if (!dataDBPath.exists()) {
-              break;
-            }
-            // We can safely remove and close the levelDB as no one should be accessing them anymore
-            Closeables.closeQuietly(levelDBs.remove(dataDBPath));
-            filesToDelete.add(dataDBPath);
-          }
-
-          Iterator<File> descendingIterator = filesToDelete.descendingIterator();
-          while (descendingIterator.hasNext()) {
-            File dataDBPath = descendingIterator.next();
-            LOG.info("Deleting file: {}", dataDBPath);
-            DirUtils.deleteDirectoryContents(dataDBPath);
-          }
-
-          // Prune the current generation
-          // Message table
-          File dataDBPath = getDataDBPath(messageTableName, metadata.getTopicId(), metadata.getGeneration());
-          DB levelDB = levelDBs.get(dataDBPath);
-          if (levelDB != null && dataDBPath.exists()) {
-            new LevelDBMessageTable(levelDB, metadata).pruneMessages(now);
-          }
-
-          // Payload table
-          dataDBPath = getDataDBPath(payloadTableName, metadata.getTopicId(), metadata.getGeneration());
-          levelDB = levelDBs.get(dataDBPath);
-          if (levelDB != null && dataDBPath.exists()) {
-            new LevelDBPayloadTable(levelDB, metadata).pruneMessages(now);
-          }
-        }
-      } catch (IOException ex) {
-        LOG.debug("Unable to perform data cleanup in TMS LevelDB tables", ex);
-      }
-    }
   }
 }
