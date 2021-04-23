@@ -41,12 +41,15 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 
+/**
+ * RemoteConfigurator sends a request to another {@link Configurator} running remotely.
+ */
 public class RemoteConfigurator implements Configurator {
-  private static final Gson GSON = new Gson();
   private static final Logger LOG = LoggerFactory.getLogger(RemoteConfigurator.class);
+  private static final Gson GSON = new Gson();
   private final ConfiguratorConfig config;
 
-  final private RemoteClient remoteClientInternal;
+  private final RemoteClient remoteClientInternal;
 
   public RemoteConfigurator(ConfiguratorConfig config,
                             DiscoveryServiceClient discoveryServiceClient) {
@@ -101,7 +104,7 @@ public class RemoteConfigurator implements Configurator {
       in = new ObjectInputStream(bis);
       Object o = in.readObject();
       SettableFuture<ConfigResponse> result = SettableFuture.create();
-result.set((ConfigResponse) o);
+      result.set((ConfigResponse) o);
       return result;
     } catch (IOException | ClassNotFoundException ex) {
       return null;

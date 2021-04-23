@@ -58,7 +58,7 @@ public class TaskWorkerServiceTest {
   }
 
   @Test
-  public void testGSON(){
+  public void testGSON() {
     CConfiguration cConf = CConfiguration.create();
     cConf.set("test", "test");
     ConfiguratorConfig configuratorConfig = new ConfiguratorConfig(

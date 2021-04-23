@@ -55,6 +55,9 @@ import java.util.Set;
 import java.util.SortedMap;
 import javax.annotation.Nullable;
 
+/**
+ * RemoteArtifactRepository provides a remote implementation of ArtifactRepository
+ */
 public class RemoteArtifactRepository implements ArtifactRepository {
   private static final Logger LOG = LoggerFactory.getLogger(RemoteArtifactRepository.class);
   private final ArtifactRepositoryReader artifactRepositoryReader;
@@ -68,9 +71,9 @@ public class RemoteArtifactRepository implements ArtifactRepository {
   @VisibleForTesting
   @Inject
   public RemoteArtifactRepository(CConfiguration cConf, ArtifactRepositoryReader artifactRepositoryReader,
-                                   MetadataServiceClient metadataServiceClient,
-                                   ProgramRunnerFactory programRunnerFactory,
-                                   Impersonator impersonator) {
+                                  MetadataServiceClient metadataServiceClient,
+                                  ProgramRunnerFactory programRunnerFactory,
+                                  Impersonator impersonator) {
     this.artifactRepositoryReader = artifactRepositoryReader;
     this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, programRunnerFactory);
     this.artifactInspector = new ArtifactInspector(cConf, artifactClassLoaderFactory);
@@ -101,8 +104,8 @@ public class RemoteArtifactRepository implements ArtifactRepository {
   @Override
   public CloseableClassLoader createArtifactClassLoader(Location artifactLocation,
                                                         EntityImpersonator entityImpersonator) throws IOException {
-      return artifactClassLoaderFactory.createClassLoader(ImmutableList.of(artifactLocation).iterator(),
-                                                          entityImpersonator);
+    return artifactClassLoaderFactory.createClassLoader(ImmutableList.of(artifactLocation).iterator(),
+                                                        entityImpersonator);
   }
 
   @Override
@@ -139,29 +142,33 @@ public class RemoteArtifactRepository implements ArtifactRepository {
   }
 
   @Override
-  public SortedMap<ArtifactDescriptor, Set<PluginClass>> getPlugins(NamespaceId namespace,
-                                                                    Id.Artifact artifactId) throws IOException, ArtifactNotFoundException {
+  public SortedMap<ArtifactDescriptor, Set<PluginClass>>
+  getPlugins(NamespaceId namespace,
+             Id.Artifact artifactId) throws IOException, ArtifactNotFoundException {
     return null;
   }
 
   @Override
-  public SortedMap<ArtifactDescriptor, Set<PluginClass>> getPlugins(NamespaceId namespace, Id.Artifact artifactId,
-                                                                    String pluginType) throws IOException, ArtifactNotFoundException {
+  public SortedMap<ArtifactDescriptor, Set<PluginClass>>
+  getPlugins(NamespaceId namespace, Id.Artifact artifactId,
+             String pluginType) throws IOException, ArtifactNotFoundException {
     return null;
   }
 
   @Override
-  public SortedMap<ArtifactDescriptor, PluginClass> getPlugins(NamespaceId namespace, Id.Artifact artifactId,
-                                                               String pluginType, String pluginName,
-                                                               Predicate<ArtifactId> pluginPredicate, int limit,
-                                                               ArtifactSortOrder order) throws IOException, PluginNotExistsException, ArtifactNotFoundException {
+  public SortedMap<ArtifactDescriptor, PluginClass>
+  getPlugins(NamespaceId namespace, Id.Artifact artifactId,
+             String pluginType, String pluginName,
+             Predicate<ArtifactId> pluginPredicate, int limit,
+             ArtifactSortOrder order) throws IOException, PluginNotExistsException, ArtifactNotFoundException {
     return null;
   }
 
   @Override
-  public Map.Entry<ArtifactDescriptor, PluginClass> findPlugin(NamespaceId namespace, ArtifactRange artifactRange,
-                                                               String pluginType, String pluginName,
-                                                               PluginSelector selector) throws IOException, PluginNotExistsException, ArtifactNotFoundException {
+  public Map.Entry<ArtifactDescriptor, PluginClass>
+  findPlugin(NamespaceId namespace, ArtifactRange artifactRange,
+             String pluginType, String pluginName,
+             PluginSelector selector) throws IOException, PluginNotExistsException, ArtifactNotFoundException {
     return null;
   }
 

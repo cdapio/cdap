@@ -47,6 +47,9 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 
+/**
+ * ConfiguratorTaskModule specifies the binding for a {@link ConfiguratorTask}
+ */
 public class ConfiguratorTaskModule extends AbstractModule {
 
   @Override

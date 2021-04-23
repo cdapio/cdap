@@ -22,11 +22,14 @@ import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 
+/**
+ * ConfiguratorFactory which returns either a RemoteConfigurator or InMemoryConfigurator
+ */
 public class ConfiguratorFactory {
 
+  private final boolean isRemote;
   @Inject
   private DiscoveryServiceClient discoveryServiceClient;
-  private final boolean isRemote;
 
   @Inject
   public ConfiguratorFactory(boolean isRemote) {
@@ -37,14 +40,14 @@ public class ConfiguratorFactory {
                             String appClassName, PluginFinder pluginFinder,
                             ClassLoader artifactClassLoader,
                             String applicationName, String applicationVersion,
-                            String configString, Location artifactLocation){
-    if (isRemote){
+                            String configString, Location artifactLocation) {
+    if (isRemote) {
       return new RemoteConfigurator(cConf, appNamespace, artifactId,
                                     appClassName, pluginFinder,
                                     artifactClassLoader,
                                     applicationName, applicationVersion,
                                     configString, this.discoveryServiceClient, artifactLocation);
-    }else{
+    } else {
       return new InMemoryConfigurator(cConf, appNamespace, artifactId,
                                       appClassName, pluginFinder,
                                       artifactClassLoader,

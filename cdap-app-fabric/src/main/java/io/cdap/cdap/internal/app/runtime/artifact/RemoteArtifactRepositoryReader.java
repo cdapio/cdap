@@ -56,8 +56,10 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
-  private static final Type ARTIFACT_DETAIL_TYPE = new TypeToken<ArtifactDetail>() { }.getType();
-  private static final Type ARTIFACT_DETAIL_LIST_TYPE = new TypeToken<List<ArtifactDetail>>() { }.getType();
+  private static final Type ARTIFACT_DETAIL_TYPE = new TypeToken<ArtifactDetail>() {
+  }.getType();
+  private static final Type ARTIFACT_DETAIL_LIST_TYPE = new TypeToken<List<ArtifactDetail>>() {
+  }.getType();
 
   private final RemoteClient remoteClient;
   private final LocationFactory locationFactory;
@@ -73,7 +75,7 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
 
   /**
    * Fetches {@link ArtifactDetail} from {@link AppLifecycleHttpHandler}
-   *
+   * <p>
    * Note that {@link Location} in {@link ArtifactDescriptor} doesn't get transported over, we need to instantiate
    * it based on the location URI in the received {@link ArtifactDetail} to construct a complete {@link ArtifactDetail}.
    */
@@ -102,9 +104,9 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
     ArtifactScope scope = ArtifactScope.USER;
     // Cant use 'system' as the namespace in the request because that generates an error, the namespace doesnt matter
     // as long as it exists. Using default because it will always be there
-    if(ArtifactScope.SYSTEM.toString().equalsIgnoreCase(namespaceId)){
+    if (ArtifactScope.SYSTEM.toString().equalsIgnoreCase(namespaceId)) {
       namespaceId = "default";
-      scope=ArtifactScope.SYSTEM;
+      scope = ArtifactScope.SYSTEM;
     }
     String url = String.format("namespaces/%s/artifacts/download/%s/versions/%s?scope=%s",
                                namespaceId,
@@ -116,7 +118,6 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
 
     return new ByteArrayInputStream(httpResponse.getResponseBody());
   }
-
 
 
   @Override

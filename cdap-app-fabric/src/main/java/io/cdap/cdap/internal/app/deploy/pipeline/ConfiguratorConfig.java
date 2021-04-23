@@ -23,6 +23,10 @@ import java.io.IOException;
 import java.net.URI;
 import javax.annotation.Nullable;
 
+/**
+ * ConfiguratorConfig encapsulates the config that {@link io.cdap.cdap.internal.app.deploy.RemoteConfigurator}
+ * sends over to a {@link io.cdap.cdap.app.deploy.Configurator} running remotely.
+ */
 public class ConfiguratorConfig {
   private final String applicationName;
   private final String applicationVersion;
@@ -50,7 +54,7 @@ public class ConfiguratorConfig {
       e.printStackTrace();
 
     }
-    this.cConf=new String(output.toByteArray());
+    this.cConf = new String(output.toByteArray());
     this.appNamespace = appNamespace;
     this.artifactId = artifactId;
     this.appClassName = appClassName;

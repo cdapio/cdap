@@ -40,6 +40,9 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * ConfiguratorTask is a {@link RunnableTask} for performing the config task in worker pod.
+ */
 public class ConfiguratorTask extends RunnableTask {
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
   private static final Logger LOG = LoggerFactory.getLogger(ConfiguratorTask.class);
@@ -49,7 +52,8 @@ public class ConfiguratorTask extends RunnableTask {
   private final LocationFactory locationFactory;
 
   @Inject
-  public ConfiguratorTask(Impersonator impersonator, PluginFinder pluginFinder, ArtifactRepository artifactRepository, LocationFactory locationFactory) {
+  public ConfiguratorTask(Impersonator impersonator, PluginFinder pluginFinder,
+                          ArtifactRepository artifactRepository, LocationFactory locationFactory) {
     this.impersonator = impersonator;
     this.pluginFinder = pluginFinder;
     this.artifactRepository = artifactRepository;
@@ -58,17 +62,23 @@ public class ConfiguratorTask extends RunnableTask {
 
   @Override
   protected byte[] run(String param) throws Exception {
-    LOG.error("Got Injections: "+pluginFinder.toString() + " "+artifactRepository.toString());
+    LOG.error("Got Injections: " + pluginFinder.toString() + " " + artifactRepository.toString());
     LOG.error("Recieved params: ");
     ConfiguratorConfig config = GSON.fromJson(param, ConfiguratorConfig.class);
     LOG.error("Successfully parsed the GSON: ");
     EntityImpersonator classLoaderImpersonator =
       new EntityImpersonator(config.getArtifactId().toEntityId(), impersonator);
     LOG.error("Created Impersoantor: ");
-    Location artifactLocation = Locations.getLocationFromAbsolutePath(locationFactory,  config.getArtifactLocationURI().getPath());
+    Location artifactLocation = Locations.getLocationFromAbsolutePath(
+      locationFactory, config.getArtifactLocationURI().getPath());
     OutputStream outputStream = artifactLocation.getOutputStream();
-    LOG.error(String.format("Artifact name, version: %s, %s", config.getArtifactId().getName(), config.getArtifactId().getVersion()));
-    LOG.error(String.format("Application name, version, classname: %s, %s, %s", config.getApplicationName(), config.getApplicationVersion(), config.getAppClassName()));
+    LOG.error(String.format(
+      "Artifact name, version: %s, %s", config.getArtifactId().getName(), config.getArtifactId().getVersion()));
+    LOG.error(String.format(
+      "Application name, version, classname: %s, %s, %s",
+      config.getApplicationName(),
+      config.getApplicationVersion(),
+      config.getAppClassName()));
     InputStream artifactBytes = artifactRepository.getArtifactBytes(config.getArtifactId());
     ByteStreams.copy(artifactBytes, outputStream);
     outputStream.close();
@@ -76,11 +86,12 @@ public class ConfiguratorTask extends RunnableTask {
     ClassLoader artifactClassLoader = artifactRepository.createArtifactClassLoader(artifactLocation,
                                                                                    classLoaderImpersonator);
     LOG.error("Created class loader: ");
-    InMemoryConfigurator configurator = new InMemoryConfigurator(config.getcConf(), config.getAppNamespace(), config.getArtifactId(),
-                         config.getAppClassName(), pluginFinder,
-                         artifactClassLoader,
-                         config.getApplicationName(), config.getApplicationVersion(),
-                         config.getConfigString());
+    InMemoryConfigurator configurator = new InMemoryConfigurator(
+      config.getcConf(), config.getAppNamespace(), config.getArtifactId(),
+      config.getAppClassName(), pluginFinder,
+      artifactClassLoader,
+      config.getApplicationName(), config.getApplicationVersion(),
+      config.getConfigString());
     LOG.error("Created confiugrator ");
 //
 
