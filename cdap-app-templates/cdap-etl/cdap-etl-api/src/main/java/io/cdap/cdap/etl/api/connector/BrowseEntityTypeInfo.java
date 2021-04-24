@@ -17,34 +17,27 @@
 
 package io.cdap.cdap.etl.api.connector;
 
+import java.util.Collection;
 import java.util.Objects;
-import javax.annotation.Nullable;
 
 /**
- * Object that represents an explore entity property.
+ * The browse entity type information, containing the sampling properties expected from the type
  */
-public class ExploreEntityProperty {
-  private final String key;
-  private final Object value;
+public class BrowseEntityTypeInfo {
   private final String type;
+  private final Collection<SamplePropertyField> properties;
 
-  public ExploreEntityProperty(String key, @Nullable Object value, String type) {
-    this.key = key;
-    this.value = value;
+  public BrowseEntityTypeInfo(String type, Collection<SamplePropertyField> properties) {
     this.type = type;
-  }
-
-  public String getKey() {
-    return key;
-  }
-
-  @Nullable
-  public Object getValue() {
-    return value;
+    this.properties = properties;
   }
 
   public String getType() {
     return type;
+  }
+
+  public Collection<SamplePropertyField> getProperties() {
+    return properties;
   }
 
   @Override
@@ -57,14 +50,13 @@ public class ExploreEntityProperty {
       return false;
     }
 
-    ExploreEntityProperty that = (ExploreEntityProperty) o;
-    return Objects.equals(key, that.key) &&
-      Objects.equals(value, that.value) &&
-      Objects.equals(type, that.type);
+    BrowseEntityTypeInfo that = (BrowseEntityTypeInfo) o;
+    return Objects.equals(type, that.type) &&
+             Objects.equals(properties, that.properties);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(key, value, type);
+    return Objects.hash(type, properties);
   }
 }

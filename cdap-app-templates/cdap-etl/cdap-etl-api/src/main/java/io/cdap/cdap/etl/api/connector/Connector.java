@@ -18,8 +18,11 @@
 package io.cdap.cdap.etl.api.connector;
 
 import io.cdap.cdap.api.plugin.PluginConfigurer;
+import io.cdap.cdap.etl.api.FailureCollector;
+import io.cdap.cdap.etl.api.validation.ValidationException;
 
 import java.io.Closeable;
+import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -38,26 +41,33 @@ public interface Connector extends Closeable {
 
   /**
    * Test if the connector is able to connect to the resource
+   *
+   * @param collector a collector used to collect the failures
+   * @throws ValidationException if the connector is not able to connect to the source
    */
-  void test() throws Exception;
+  void test(FailureCollector collector) throws ValidationException;
 
   /**
    * Explore the resource on the given request. The explore expects a path to represent the hierarchy of the
    * resource. The path is expected to be separated by '/'.
    * For example, for a file based connector, the path will just be the file/directory path
    * for a database connector, the path can be {database}/{table}
+   *
+   * @param request the browse request
    */
-  ExploreDetail explore(ConnectRequest request) throws Exception;
+  BrowseDetail browse(BrowseRequest request) throws IOException;
 
   /**
-   * Generate the properties based on the connector config, the path and and sampling properties
-   * @param samplingProperties the sampling properties of the entity in the path
-   * @return the map which contains all the properties which can be used by a source or a sink
+   * Parse the given path, generates the properties associated with the path.
+   * For example, for bigquery, this can be a map containing "datasets": {dataset}, "table": {table}
+   *
+   * @param path the path of the entitiy
+   * @return the map which contains all the properties associated with the path
    */
-  Map<String, String> generateSpec(String path, Map<String, String> samplingProperties);
+  Map<String, String> parsePath(String path);
 
   @Override
-  default void close() {
+  default void close() throws IOException {
     // no-op
   }
 }

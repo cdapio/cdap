@@ -17,40 +17,26 @@
 
 package io.cdap.cdap.etl.api.connector;
 
-import java.util.Map;
 import java.util.Objects;
-import javax.annotation.Nullable;
 
 /**
- * Connect request for a connector
+ * The property field to represent additional config required for sampling
  */
-public class ConnectRequest {
+public class SamplePropertyField {
+  private final String name;
+  private final String description;
 
-  /**
-   * The option that is possible for the request
-   */
-  public enum ConnectorOption {
-    ALL,
-    LIMIT,
-    PROPERTIES
+  public SamplePropertyField(String name, String description) {
+    this.name = name;
+    this.description = description;
   }
 
-  protected final String path;
-  protected final Map<ConnectorOption, ?> options;
-
-  public ConnectRequest(String path, Map<ConnectorOption, ?> options) {
-    this.path = path;
-    this.options = options;
+  public String getName() {
+    return name;
   }
 
-  public String getPath() {
-    return path;
-  }
-
-  @Nullable
-  @SuppressWarnings("unchecked")
-  public <T> T getOption(ConnectorOption option) {
-    return (T) options.get(option);
+  public String getDescription() {
+    return description;
   }
 
   @Override
@@ -63,13 +49,13 @@ public class ConnectRequest {
       return false;
     }
 
-    ConnectRequest that = (ConnectRequest) o;
-    return Objects.equals(options, that.options) &&
-      Objects.equals(path, that.path);
+    SamplePropertyField that = (SamplePropertyField) o;
+    return Objects.equals(name, that.name) &&
+             Objects.equals(description, that.description);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(path, options);
+    return Objects.hash(name, description);
   }
 }

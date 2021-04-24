@@ -19,6 +19,7 @@ package io.cdap.cdap.etl.api.connector;
 
 import io.cdap.cdap.api.data.format.StructuredRecord;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -29,5 +30,5 @@ public interface DirectConnector extends Connector {
   /**
    * Directly get the sample results from the given request
    */
-  List<StructuredRecord> sample(ConnectRequest request);
+  List<StructuredRecord> sample(SampleRequest request) throws IOException;
 }
