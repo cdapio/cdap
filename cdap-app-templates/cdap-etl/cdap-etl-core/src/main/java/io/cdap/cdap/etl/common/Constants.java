@@ -23,6 +23,7 @@ public final class Constants {
   public static final String ID_SEPARATOR = ":";
   public static final String PIPELINEID = "pipeline";
   public static final String STUDIO_SERVICE_NAME = "studio";
+  public static final String CONNECTION_SERVICE_NAME = "connection";
   public static final String PIPELINE_SPEC_KEY = "pipeline.spec";
   public static final String STAGE_LOGGING_ENABLED = "stage.logging.enabled";
   public static final String EVENT_TYPE_TAG = "MDC:eventType";

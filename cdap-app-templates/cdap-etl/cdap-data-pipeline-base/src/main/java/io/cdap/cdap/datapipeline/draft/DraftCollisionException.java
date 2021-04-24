@@ -14,6 +14,8 @@
 
 package io.cdap.cdap.datapipeline.draft;
 
+import io.cdap.cdap.etl.proto.CodedException;
+
 import java.net.HttpURLConnection;
 
 /**
