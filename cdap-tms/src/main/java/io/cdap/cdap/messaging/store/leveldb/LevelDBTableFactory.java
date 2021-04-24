@@ -73,6 +73,7 @@ public final class LevelDBTableFactory implements TableFactory {
   private final String messageTableName;
   private final String payloadTableName;
   private final ConcurrentMap<File, DB> levelDBs;
+  private final int cleanupBatchSize;
 
   private LevelDBMetadataTable metadataTable;
 
@@ -89,6 +90,7 @@ public final class LevelDBTableFactory implements TableFactory {
     this.metadataTableName = cConf.get(Constants.MessagingSystem.METADATA_TABLE_NAME);
     this.messageTableName = cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME);
     this.payloadTableName = cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME);
+    this.cleanupBatchSize = cConf.getInt(Constants.MessagingSystem.LOCAL_DATA_CLEANUP_BATCH_SIZE);
     this.levelDBs = new ConcurrentHashMap<>();
 
     long cleanupFrequency = Long.parseLong(cConf.get(Constants.MessagingSystem.LOCAL_DATA_CLEANUP_FREQUENCY));
@@ -217,57 +219,65 @@ public final class LevelDBTableFactory implements TableFactory {
   /**
    * Delete messages of a {@link TopicId} that has exceeded the TTL or if it belongs to an older generation
    *
-   * @param currentTime current timestamp
+   * @param now current timestamp
    * @throws IOException error occurred while trying to delete a row in LevelDB
    */
-  private void pruneMessages(long currentTime, DB levelDB, TopicMetadata topicMetadata,
+  private void pruneMessages(long now, DB levelDB, TopicMetadata topicMetadata,
                              Function<Map.Entry<byte[], byte[]>, TableEntry> tableEntryFunc) throws IOException {
     TopicId topicId = topicMetadata.getTopicId();
     int topicGeneration = topicMetadata.getGeneration();
 
     WriteBatch writeBatch = levelDB.createWriteBatch();
-    long ttlInMs = TimeUnit.SECONDS.toMillis(topicMetadata.getTTL());
+    long ttlMillis = TimeUnit.SECONDS.toMillis(topicMetadata.getTTL());
     byte[] startRow = MessagingUtils.toDataKeyPrefix(topicId,
                                                      Integer.parseInt(MessagingUtils.Constants.DEFAULT_GENERATION));
     byte[] stopRow = Bytes.stopKeyForPrefix(startRow);
+    boolean done = false;
+    int batchSize = 0;
 
-    try (CloseableIterator<Map.Entry<byte[], byte[]>> rowIterator = new DBScanIterator(levelDB, startRow, stopRow)) {
-      while (rowIterator.hasNext()) {
-        Map.Entry<byte[], byte[]> entry = rowIterator.next();
-        TableEntry tableEntry = tableEntryFunc.apply(entry);
+    while (!done) {
+      done = true;
+      try (CloseableIterator<Map.Entry<byte[], byte[]>> rowIterator = new DBScanIterator(levelDB, startRow, stopRow)) {
+        while (rowIterator.hasNext()) {
+          done = false;
+          Map.Entry<byte[], byte[]> entry = rowIterator.next();
+          TableEntry tableEntry = tableEntryFunc.apply(entry);
 
-        int dataGeneration = tableEntry.getGeneration();
-        if (!topicId.equals(tableEntry.getTopicId())) {
-          LOG.warn("Ignore table entry with topic '{}' that doesn't match with the topic '{}'",
-                   tableEntry.getTopicId(), topicId);
-          continue;
-        }
-        if (topicGeneration != dataGeneration) {
-          LOG.warn("Ignore table entry with topic generation '{}' that doesn't match with the topic generation '{}'",
-                   tableEntry.getGeneration(), dataGeneration);
-          continue;
-        }
+          int dataGeneration = tableEntry.getGeneration();
+          if (!topicId.equals(tableEntry.getTopicId())) {
+            LOG.warn("Ignore table entry with topic '{}' that doesn't match with the topic '{}'",
+                     tableEntry.getTopicId(), topicId);
+            continue;
+          }
+          if (topicGeneration != dataGeneration) {
+            LOG.warn("Ignore table entry with topic generation '{}' that doesn't match with the topic generation '{}'",
+                     tableEntry.getGeneration(), dataGeneration);
+            continue;
+          }
 
-        if (MessagingUtils.isOlderGeneration(dataGeneration, topicGeneration)) {
-          writeBatch.delete(entry.getKey());
-          continue;
-        }
-
-        if ((dataGeneration == Math.abs(topicGeneration)) &&
-          ((currentTime - tableEntry.getTimestamp()) > ttlInMs)) {
-          writeBatch.delete(entry.getKey());
-        } else {
-          // terminate scanning table once an entry with write time after TTL is found, to avoid scanning whole table,
-          // since the entries are sorted by time.
-          break;
+          if (MessagingUtils.isOlderGeneration(dataGeneration, topicGeneration)) {
+            writeBatch.delete(entry.getKey());
+          } else if ((dataGeneration == Math.abs(topicGeneration)) && ((now - tableEntry.getTimestamp()) > ttlMillis)) {
+            writeBatch.delete(entry.getKey());
+          } else {
+            // terminate scanning table once an entry with write time after TTL is found to avoid scanning whole table,
+            // since the entries are sorted by time.
+            done = true;
+            break;
+          }
+          batchSize++;
+          if (batchSize >= cleanupBatchSize) {
+            break;
+          }
         }
       }
-    }
 
-    try {
-      levelDB.write(writeBatch, new WriteOptions().sync(true));
-    } catch (DBException ex) {
-      throw new IOException(ex);
+      try {
+        levelDB.write(writeBatch, new WriteOptions().sync(true));
+        batchSize = 0;
+      } catch (DBException ex) {
+        throw new IOException(ex);
+      }
     }
   }
 

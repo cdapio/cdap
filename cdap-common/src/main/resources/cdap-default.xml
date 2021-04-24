@@ -2142,6 +2142,14 @@
   </property>
 
   <property>
+    <name>messaging.local.data.cleanup.batch.size</name>
+    <value>1048576</value>
+    <description>
+      The maximum number of message entry deletion to batch up during the time-to-live cleanup
+    </description>
+  </property>
+
+  <property>
     <name>messaging.local.data.dir</name>
     <value>${local.data.dir}/messaging</value>
     <description>

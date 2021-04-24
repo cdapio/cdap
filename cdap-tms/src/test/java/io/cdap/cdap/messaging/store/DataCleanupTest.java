@@ -55,32 +55,34 @@ public abstract class DataCleanupTest {
 
       byte[] messageId = new byte[MessageId.RAW_ID_SIZE];
       MessageId.putRawId(0L, (short) 0, 0L, (short) 0, messageId, 0);
-      CloseableIterator<PayloadTable.Entry> iterator = payloadTable.fetch(topic, 101L, new MessageId(messageId), true,
-                                                                          Integer.MAX_VALUE);
-      Assert.assertTrue(iterator.hasNext());
-      PayloadTable.Entry entry = iterator.next();
-      Assert.assertFalse(iterator.hasNext());
-      Assert.assertEquals("payloaddata", Bytes.toString(entry.getPayload()));
-      Assert.assertEquals(101L, entry.getTransactionWritePointer());
-      iterator.close();
+      try (CloseableIterator<PayloadTable.Entry> iterator = payloadTable.fetch(topic, 101L, new MessageId(messageId),
+                                                                               true, Integer.MAX_VALUE)) {
+        Assert.assertTrue(iterator.hasNext());
+        PayloadTable.Entry entry = iterator.next();
+        Assert.assertFalse(iterator.hasNext());
+        Assert.assertEquals("payloaddata", Bytes.toString(entry.getPayload()));
+        Assert.assertEquals(101L, entry.getTransactionWritePointer());
+      }
 
       forceFlushAndCompact(Table.PAYLOAD);
 
       //Entry should still be there since ttl has not expired
-      iterator = payloadTable.fetch(topic, 101L, new MessageId(messageId), true, Integer.MAX_VALUE);
-      Assert.assertTrue(iterator.hasNext());
-      entry = iterator.next();
-      Assert.assertFalse(iterator.hasNext());
-      Assert.assertEquals("payloaddata", Bytes.toString(entry.getPayload()));
-      Assert.assertEquals(101L, entry.getTransactionWritePointer());
-      iterator.close();
+      try (CloseableIterator<PayloadTable.Entry> iterator = payloadTable.fetch(topic, 101L, new MessageId(messageId),
+                                                                               true, Integer.MAX_VALUE)) {
+        Assert.assertTrue(iterator.hasNext());
+        PayloadTable.Entry entry = iterator.next();
+        Assert.assertFalse(iterator.hasNext());
+        Assert.assertEquals("payloaddata", Bytes.toString(entry.getPayload()));
+        Assert.assertEquals(101L, entry.getTransactionWritePointer());
+      }
 
       TimeUnit.SECONDS.sleep(3 * METADATA_CACHE_EXPIRY);
       forceFlushAndCompact(Table.PAYLOAD);
 
-      iterator = payloadTable.fetch(topic, 101L, new MessageId(messageId), true, Integer.MAX_VALUE);
-      Assert.assertFalse(iterator.hasNext());
-      iterator.close();
+      try (CloseableIterator<PayloadTable.Entry> iterator = payloadTable.fetch(topic, 101L, new MessageId(messageId),
+                                                                               true, Integer.MAX_VALUE)) {
+        Assert.assertFalse(iterator.hasNext());
+      }
       metadataTable.deleteTopic(topicId);
     }
   }
@@ -100,30 +102,30 @@ public abstract class DataCleanupTest {
       messageTable.store(entries.iterator());
 
       // Fetch the entries and make sure we are able to read it
-      CloseableIterator<MessageTable.Entry> iterator = messageTable.fetch(topic, 0, Integer.MAX_VALUE, null);
-      Assert.assertTrue(iterator.hasNext());
-      MessageTable.Entry entry = iterator.next();
-      Assert.assertFalse(iterator.hasNext());
-      Assert.assertEquals(100, entry.getTransactionWritePointer());
-      Assert.assertEquals("data", Bytes.toString(entry.getPayload()));
-      iterator.close();
+      try (CloseableIterator<MessageTable.Entry> iterator = messageTable.fetch(topic, 0, Integer.MAX_VALUE, null)) {
+        Assert.assertTrue(iterator.hasNext());
+        MessageTable.Entry entry = iterator.next();
+        Assert.assertFalse(iterator.hasNext());
+        Assert.assertEquals(100, entry.getTransactionWritePointer());
+        Assert.assertEquals("data", Bytes.toString(entry.getPayload()));
+      }
 
       forceFlushAndCompact(Table.MESSAGE);
 
       // Entry should still be there since the ttl has not expired
-      iterator = messageTable.fetch(topic, 0, Integer.MAX_VALUE, null);
-      entry = iterator.next();
-      Assert.assertFalse(iterator.hasNext());
-      Assert.assertEquals(100, entry.getTransactionWritePointer());
-      Assert.assertEquals("data", Bytes.toString(entry.getPayload()));
-      iterator.close();
+      try (CloseableIterator<MessageTable.Entry> iterator = messageTable.fetch(topic, 0, Integer.MAX_VALUE, null)) {
+        MessageTable.Entry entry = iterator.next();
+        Assert.assertFalse(iterator.hasNext());
+        Assert.assertEquals(100, entry.getTransactionWritePointer());
+        Assert.assertEquals("data", Bytes.toString(entry.getPayload()));
+      }
 
       TimeUnit.SECONDS.sleep(3 * METADATA_CACHE_EXPIRY);
       forceFlushAndCompact(Table.MESSAGE);
 
-      iterator = messageTable.fetch(topic, 0, Integer.MAX_VALUE, null);
-      Assert.assertFalse(iterator.hasNext());
-      iterator.close();
+      try (CloseableIterator<MessageTable.Entry> iterator = messageTable.fetch(topic, 0, Integer.MAX_VALUE, null)) {
+        Assert.assertFalse(iterator.hasNext());
+      }
     }
   }
 
@@ -209,7 +211,6 @@ public abstract class DataCleanupTest {
     Assert.assertFalse(iterator.hasNext());
     Assert.assertEquals(txWritePtr, entry.getTransactionWritePointer());
     Assert.assertEquals("data", Bytes.toString(entry.getPayload()));
-    iterator.close();
   }
 
   private void checkPayloadEntry(CloseableIterator<PayloadTable.Entry> iterator, long txWritePtr) {
@@ -217,7 +218,6 @@ public abstract class DataCleanupTest {
     Assert.assertFalse(iterator.hasNext());
     Assert.assertEquals(txWritePtr, entry.getTransactionWritePointer());
     Assert.assertEquals("data", Bytes.toString(entry.getPayload()));
-    iterator.close();
   }
 
   protected enum Table {
@@ -290,9 +290,14 @@ public abstract class DataCleanupTest {
     private final short seqId;
 
     public TestMessageEntry(TopicId topicId, int generation, String payload, long txWritePtr, short seqId) {
+      this(topicId, generation, System.currentTimeMillis(), payload, txWritePtr, seqId);
+    }
+
+    public TestMessageEntry(TopicId topicId, int generation, long timestamp,
+                            String payload, long txWritePtr, short seqId) {
       this.topicId = topicId;
       this.generation = generation;
-      this.timestamp = System.currentTimeMillis();
+      this.timestamp = timestamp;
       this.payload = payload;
       this.txWritePtr = txWritePtr;
       this.seqId = seqId;

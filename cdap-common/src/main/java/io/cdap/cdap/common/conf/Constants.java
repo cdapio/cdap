@@ -1381,6 +1381,7 @@ public final class Constants {
 
     public static final String LOCAL_DATA_DIR = "messaging.local.data.dir";
     public static final String LOCAL_DATA_CLEANUP_FREQUENCY = "messaging.local.data.cleanup.frequency.secs";
+    public static final String LOCAL_DATA_CLEANUP_BATCH_SIZE = "messaging.local.data.cleanup.batch.size";
 
     public static final String CACHE_SIZE_MB = "messaging.cache.size.mb";
 
