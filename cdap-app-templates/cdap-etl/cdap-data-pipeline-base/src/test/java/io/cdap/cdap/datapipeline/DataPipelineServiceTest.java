@@ -44,6 +44,8 @@ import io.cdap.cdap.etl.mock.test.HydratorTestBase;
 import io.cdap.cdap.etl.mock.transform.SleepTransform;
 import io.cdap.cdap.etl.mock.transform.StringValueFilterTransform;
 import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
+import io.cdap.cdap.etl.proto.connection.ConnectionCreationRequest;
+import io.cdap.cdap.etl.proto.connection.PluginInfo;
 import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
@@ -107,21 +109,10 @@ public class DataPipelineServiceTest extends HydratorTestBase {
     enableCapability("pipeline");
     ApplicationId pipeline = NamespaceId.SYSTEM.app("pipeline");
     appManager = getApplicationManager(pipeline);
-    waitForAppToDeploy(pipeline);
+    waitForAppToDeploy(appManager, pipeline);
     serviceManager = appManager.getServiceManager(io.cdap.cdap.etl.common.Constants.STUDIO_SERVICE_NAME);
     serviceManager.startAndWaitForRun(ProgramRunStatus.RUNNING, 2, TimeUnit.MINUTES);
     serviceURI = serviceManager.getServiceURL(1, TimeUnit.MINUTES).toURI();
-  }
-
-  private static void waitForAppToDeploy(ApplicationId pipeline) throws Exception {
-    Retries.callWithRetries(() -> {
-      try {
-        appManager.getInfo();
-        return null;
-      } catch (ApplicationNotFoundException exception) {
-        throw new RetryableException(String.format("App %s not yet deployed", pipeline));
-      }
-    }, RetryStrategies.limit(10, RetryStrategies.fixDelay(15, TimeUnit.SECONDS)));
   }
 
   @AfterClass
@@ -176,6 +167,29 @@ public class DataPipelineServiceTest extends HydratorTestBase {
     Assert.assertEquals(1, failure.getCauses().size());
     Assert.assertEquals("field", failure.getCauses().get(0).getAttribute(CauseAttributes.STAGE_CONFIG));
     Assert.assertEquals(stageName, failure.getCauses().get(0).getAttribute(STAGE));
+  }
+
+  @Test
+  public void testConnectionMacroSubstitution() throws Exception {
+    String stageName = "tx";
+    // test using no connection macro, it should behave as a normal plugin
+    Map<String, String> properties = Collections.singletonMap("tableName", "test");
+    ETLStage stage = new ETLStage(stageName, new ETLPlugin(MockSource.NAME, BatchSource.PLUGIN_TYPE, properties));
+
+    StageValidationRequest requestBody = new StageValidationRequest(stage, Collections.emptyList(), false);
+    StageValidationResponse actual = sendRequest(requestBody);
+    Assert.assertTrue(actual.getFailures().isEmpty());
+
+    // use a connection macro, the validation should also pass
+    properties = Collections.singletonMap("connectionConfig", "${conn(testconn)}");
+    addConnection(
+      "testconn", new ConnectionCreationRequest("", new PluginInfo("test", "dummy", null,
+                                                                   Collections.singletonMap("tableName", "newtest"),
+                                                                   new ArtifactSelectorConfig())));
+    stage = new ETLStage(stageName + "conn", new ETLPlugin(MockSource.NAME, BatchSource.PLUGIN_TYPE, properties));
+    requestBody = new StageValidationRequest(stage, Collections.emptyList(), false);
+    actual = sendRequest(requestBody);
+    Assert.assertTrue(actual.getFailures().isEmpty());
   }
 
   @Test
@@ -469,6 +483,17 @@ public class DataPipelineServiceTest extends HydratorTestBase {
     ValidationFailure failure = actual.getFailures().iterator().next();
     Assert.assertEquals(stageName, failure.getCauses().get(0).getAttribute(STAGE));
     Assert.assertNotNull(failure.getCauses().get(0).getAttribute(CauseAttributes.STACKTRACE));
+  }
+
+  private void addConnection(String connection, ConnectionCreationRequest creationRequest) throws IOException {
+    URL validatePipelineURL =
+      serviceURI.resolve(String.format("v1/contexts/%s/connections/%s", NamespaceId.DEFAULT.getNamespace(),
+                                       connection)).toURL();
+    HttpRequest request = HttpRequest.builder(HttpMethod.PUT, validatePipelineURL)
+                            .withBody(GSON.toJson(creationRequest))
+                            .build();
+    HttpResponse response = HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
+    Assert.assertEquals(200, response.getResponseCode());
   }
 
   private StageValidationResponse sendRequest(StageValidationRequest requestBody) throws IOException {

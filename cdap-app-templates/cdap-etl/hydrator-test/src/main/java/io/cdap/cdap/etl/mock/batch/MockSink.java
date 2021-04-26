@@ -32,6 +32,7 @@ import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.api.lineage.field.EndPoint;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginConfig;
+import io.cdap.cdap.api.plugin.PluginGroupConfig;
 import io.cdap.cdap.api.plugin.PluginPropertyField;
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
@@ -75,6 +76,14 @@ public class MockSink extends BatchSink<StructuredRecord, byte[], Put> {
    */
   public static class Config extends PluginConfig {
     @Macro
+    private ConnectionConfig connectionConfig;
+  }
+
+  /**
+   * Connection config for mock sink
+   */
+  public static class ConnectionConfig extends PluginGroupConfig {
+    @Macro
     private String tableName;
   }
 
@@ -82,22 +91,22 @@ public class MockSink extends BatchSink<StructuredRecord, byte[], Put> {
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     super.configurePipeline(pipelineConfigurer);
     if (!config.containsMacro("tableName")) {
-      pipelineConfigurer.createDataset(config.tableName, Table.class);
+      pipelineConfigurer.createDataset(config.connectionConfig.tableName, Table.class);
     }
   }
 
   @Override
   public void prepareRun(BatchSinkContext context) throws Exception {
-    if (!context.datasetExists(config.tableName)) {
-      context.createDataset(config.tableName, "table", DatasetProperties.EMPTY);
+    if (!context.datasetExists(config.connectionConfig.tableName)) {
+      context.createDataset(config.connectionConfig.tableName, "table", DatasetProperties.EMPTY);
     }
-    context.addOutput(Output.ofDataset(config.tableName));
+    context.addOutput(Output.ofDataset(config.connectionConfig.tableName));
     Schema schema = context.getInputSchema();
     if (schema != null && schema.getFields() != null) {
       schema.getFields().stream().map(Schema.Field::getName).collect(Collectors.toList())
         .forEach(field -> context.record(Collections.singletonList(
           new FieldWriteOperation("Mock sink " + field, "Write to mock sink",
-                                  EndPoint.of(context.getNamespace(), config.tableName), field))));
+                                  EndPoint.of(context.getNamespace(), config.connectionConfig.tableName), field))));
     }
   }
 
@@ -123,6 +132,18 @@ public class MockSink extends BatchSink<StructuredRecord, byte[], Put> {
   public static ETLPlugin getPlugin(String tableName) {
     Map<String, String> properties = new HashMap<>();
     properties.put("tableName", tableName);
+    return new ETLPlugin("Mock", BatchSink.PLUGIN_TYPE, properties, null);
+  }
+
+  /**
+   * Get the plugin config to be used in a pipeline config based on the connection name
+   *
+   * @param connectionName the connection name backing the mock source
+   * @return the plugin config to be used in a pipeline config
+   */
+  public static ETLPlugin getPluginUsingConnection(String connectionName) {
+    Map<String, String> properties = new HashMap<>();
+    properties.put("connectionConfig", String.format("${conn(%s)}", connectionName));
     return new ETLPlugin("Mock", BatchSink.PLUGIN_TYPE, properties, null);
   }
 
@@ -168,6 +189,8 @@ public class MockSink extends BatchSink<StructuredRecord, byte[], Put> {
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("tableName", new PluginPropertyField("tableName", "", "string", true, true));
+    properties.put("connectionConfig", new PluginPropertyField("connectionConfig", "", "connectionconfig", true, true,
+                                                               false, Collections.singleton("tableName")));
     return PluginClass.builder().setName("Mock").setType(BatchSink.PLUGIN_TYPE)
              .setDescription("").setClassName(MockSink.class.getName()).setProperties(properties)
              .setConfigFieldName("config").build();

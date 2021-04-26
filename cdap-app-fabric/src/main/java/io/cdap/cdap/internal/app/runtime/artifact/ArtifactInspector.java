@@ -36,6 +36,7 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginConfig;
+import io.cdap.cdap.api.plugin.PluginGroupConfig;
 import io.cdap.cdap.api.plugin.PluginPropertyField;
 import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.app.program.ManifestFields;
@@ -70,6 +71,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -408,7 +412,7 @@ final class ArtifactInspector {
         TypeToken<?> fieldType = TypeToken.of(field.getGenericType());
         if (PluginConfig.class.isAssignableFrom(fieldType.getRawType())) {
           // Pick up all config properties
-          inspectConfigField(fieldType, result);
+          inspectConfigField(fieldType, result, PluginConfig.class, true);
           return field.getName();
         }
       }
@@ -421,12 +425,15 @@ final class ArtifactInspector {
    *
    * @param configType type of the config class
    * @param result map for storing the result
+   * @param stopClass the class to stop inspection from
+   * @param inspectNested boolean flag to inspect the config which is a {@link PluginGroupConfig}
    * @throws UnsupportedTypeException if a field type in the config class is not supported
    */
   private void inspectConfigField(TypeToken<?> configType,
-                                  Map<String, PluginPropertyField> result) throws UnsupportedTypeException {
+                                  Map<String, PluginPropertyField> result,
+                                  Class<?> stopClass, boolean inspectNested) throws UnsupportedTypeException {
     for (TypeToken<?> type : configType.getTypes().classes()) {
-      if (PluginConfig.class.equals(type.getRawType())) {
+      if (stopClass.equals(type.getRawType())) {
         break;
       }
 
@@ -436,21 +443,23 @@ final class ArtifactInspector {
           continue;
         }
 
-        PluginPropertyField property = createPluginProperty(field, type);
-        if (result.containsKey(property.getName())) {
-          throw new IllegalArgumentException("Plugin config with name " + property.getName()
-                                               + " already defined in " + configType.getRawType());
-        }
-        result.put(property.getName(), property);
+        Collection<PluginPropertyField> properties = createPluginProperties(field, type, inspectNested);
+        properties.forEach(pluginPropertyField -> {
+          if (result.containsKey(pluginPropertyField.getName())) {
+            throw new IllegalArgumentException("Plugin config with name " + pluginPropertyField.getName()
+                                                 + " already defined in " + configType.getRawType());
+          }
+          result.put(pluginPropertyField.getName(), pluginPropertyField);
+        });
       }
     }
   }
 
   /**
-   * Creates a {@link PluginPropertyField} based on the given field.
+   * Creates a collection of {@link PluginPropertyField} based on the given field.
    */
-  private PluginPropertyField createPluginProperty(Field field,
-                                                   TypeToken<?> resolvingType) throws UnsupportedTypeException {
+  private Collection<PluginPropertyField> createPluginProperties(
+    Field field, TypeToken<?> resolvingType, boolean inspectNested) throws UnsupportedTypeException {
     TypeToken<?> fieldType = resolvingType.resolveType(field.getGenericType());
     Class<?> rawType = fieldType.getRawType();
 
@@ -462,7 +471,8 @@ final class ArtifactInspector {
     Macro macroAnnotation = field.getAnnotation(Macro.class);
     boolean macroSupported = macroAnnotation != null;
     if (rawType.isPrimitive()) {
-      return new PluginPropertyField(name, description, rawType.getName(), true, macroSupported);
+      return Collections.singleton(new PluginPropertyField(name, description,
+                                                           rawType.getName(), true, macroSupported));
     }
 
     rawType = Primitives.unwrap(rawType);
@@ -475,7 +485,21 @@ final class ArtifactInspector {
       }
     }
 
-    return new PluginPropertyField(name, description, rawType.getSimpleName().toLowerCase(), required, macroSupported);
+    Map<String, PluginPropertyField> properties = new HashMap<>();
+    if (PluginGroupConfig.class.isAssignableFrom(rawType)) {
+      if (!inspectNested) {
+        throw new IllegalArgumentException("Plugin config with name " + name +
+                                             " is a subclass of PluginGroupConfig and can " +
+                                             "only be defined within PluginConfig.");
+      }
+      // don't inspect if the field is not in PluginConfig
+      inspectConfigField(fieldType, properties, PluginGroupConfig.class, false);
+    }
+    PluginPropertyField curField = new PluginPropertyField(name, description, rawType.getSimpleName().toLowerCase(),
+                                                           required, macroSupported, false,
+                                                           new HashSet<>(properties.keySet()));
+    properties.put(name, curField);
+    return properties.values();
   }
 
   /**

@@ -38,6 +38,7 @@ import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.runtime.artifact.app.InvalidConfigApp;
 import io.cdap.cdap.internal.app.runtime.artifact.app.inspection.InspectionApp;
+import io.cdap.cdap.internal.app.runtime.artifact.plugin.nested.NestedConfigPlugin;
 import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
 import io.cdap.cdap.security.impersonation.DefaultImpersonator;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
@@ -53,6 +54,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 import java.util.jar.Manifest;
 
@@ -171,6 +173,39 @@ public class ArtifactInspectorTest {
         .setDescription(InspectionApp.PLUGIN_DESCRIPTION)
         .build();
       Assert.assertTrue(classes.getPlugins().containsAll(ImmutableSet.of(expectedPlugin, multipleRequirementPlugin)));
+    }
+  }
+
+  @Test
+  public void testInspectNestedConfigPlugin() throws Exception {
+    Manifest manifest = new Manifest();
+    manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, NestedConfigPlugin.class.getPackage().getName());
+    File artifactFile = createJar(NestedConfigPlugin.class, new File(TMP_FOLDER.newFolder(), "NestedPlugin-1.0.0.jar"),
+                                  manifest);
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "NestedPlugin", "1.0.0");
+    Location artifactLocation = Locations.toLocation(artifactFile);
+    try (CloseableClassLoader artifactClassLoader =
+           classLoaderFactory.createClassLoader(
+             ImmutableList.of(artifactLocation).iterator(),
+             new EntityImpersonator(artifactId.toEntityId(), new DefaultImpersonator(CConfiguration.create(), null)))) {
+      ArtifactClasses classes = artifactInspector.inspectArtifact(artifactId, artifactFile, artifactClassLoader,
+                                                                  Collections.emptySet());
+      Set<PluginClass> plugins = classes.getPlugins();
+
+      Map<String, PluginPropertyField> expectedFields = ImmutableMap.of(
+        "X", new PluginPropertyField("X", "", "int", true, false),
+        "Nested", new PluginPropertyField("Nested", "", "nestedconfig", true, true, false,
+                                          ImmutableSet.of("Nested1", "Nested2")),
+        "Nested1", new PluginPropertyField("Nested1", "", "string", true, false),
+        "Nested2", new PluginPropertyField("Nested2", "", "string", true, false)
+      );
+
+      PluginClass expected = PluginClass.builder()
+                               .setName("nested").setType("dummy").setDescription("Nested config")
+                               .setClassName(NestedConfigPlugin.class.getName()).setConfigFieldName("config")
+                               .setProperties(expectedFields).build();
+
+      Assert.assertEquals(Collections.singleton(expected), plugins);
     }
   }
 

@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.common.Bytes;
@@ -35,6 +36,7 @@ import io.cdap.cdap.api.metadata.MetadataException;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginConfig;
+import io.cdap.cdap.api.plugin.PluginGroupConfig;
 import io.cdap.cdap.api.plugin.PluginPropertyField;
 import io.cdap.cdap.data2.metadata.writer.MetadataOperation;
 import io.cdap.cdap.data2.metadata.writer.MetadataOperationTypeAdapter;
@@ -51,6 +53,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -84,7 +87,8 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
    * Config for the source.
    */
   public static class Config extends PluginConfig {
-    private String tableName;
+    @Macro
+    private ConnectionConfig connectionConfig;
 
     @Nullable
     private String schema;
@@ -96,10 +100,19 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
     private Long sleepInMillis;
   }
 
+  /**
+   * Connection Config for mock source
+   */
+  public static class ConnectionConfig extends PluginGroupConfig {
+    private String tableName;
+  }
+
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     super.configurePipeline(pipelineConfigurer);
-    pipelineConfigurer.createDataset(config.tableName, Table.class);
+    if (!config.containsMacro("tableName")) {
+      pipelineConfigurer.createDataset(config.connectionConfig.tableName, Table.class);
+    }
     if (config.schema != null) {
       try {
         pipelineConfigurer.getStageConfigurer().setOutputSchema(Schema.parseJson(config.schema));
@@ -130,7 +143,7 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
 
   @Override
   public void prepareRun(BatchSourceContext context) throws Exception {
-    context.setInput(Input.ofDataset(config.tableName));
+    context.setInput(Input.ofDataset(config.connectionConfig.tableName));
     if (config.metadataOperations != null) {
       // if there are metadata operations to be performed then apply them
       processsMetadata(context);
@@ -147,6 +160,18 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
   public static ETLPlugin getPlugin(String tableName) {
     Map<String, String> properties = new HashMap<>();
     properties.put("tableName", tableName);
+    return new ETLPlugin("Mock", BatchSource.PLUGIN_TYPE, properties, null);
+  }
+
+  /**
+   * Get the plugin config to be used in a pipeline config based on the connection name
+   *
+   * @param connectionName the connection name backing the mock source
+   * @return the plugin config to be used in a pipeline config
+   */
+  public static ETLPlugin getPluginUsingConnection(String connectionName) {
+    Map<String, String> properties = new HashMap<>();
+    properties.put("connectionConfig", String.format("${conn(%s)}", connectionName));
     return new ETLPlugin("Mock", BatchSource.PLUGIN_TYPE, properties, null);
   }
 
@@ -236,6 +261,8 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
+    properties.put("connectionConfig", new PluginPropertyField("connectionConfig", "", "connectionconfig", true, true,
+                                                               false, Collections.singleton("tableName")));
     properties.put("tableName", new PluginPropertyField("tableName", "", "string", true, false));
     properties.put("schema", new PluginPropertyField("schema", "", "string", false, false));
     properties.put("metadataOperations", new PluginPropertyField("metadataOperations", "", "string", false, false));
@@ -249,7 +276,7 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
    * Processes metadata operations
    */
   private void processsMetadata(BatchSourceContext context) throws MetadataException {
-    MetadataEntity metadataEntity = MetadataEntity.ofDataset(context.getNamespace(), config.tableName);
+    MetadataEntity metadataEntity = MetadataEntity.ofDataset(context.getNamespace(), config.connectionConfig.tableName);
     Map<MetadataScope, Metadata> currentMetadata = context.getMetadata(metadataEntity);
     Set<MetadataOperation> operations = GSON.fromJson(config.metadataOperations, SET_METADATA_OPERATION_TYPE);
     // must be to fetch metadata and there should be system metadata
