@@ -90,19 +90,18 @@ public class ConfiguratorTask extends RunnableTask {
       config.getApplicationName(), config.getApplicationVersion(),
       config.getConfigString());
     LOG.error("Created confiugrator ");
-//
+    //
 
-//
-//    InMemoryConfigurator memoryConfigurator = new InMemoryConfigurator(config);
+    //
+    //    InMemoryConfigurator memoryConfigurator = new InMemoryConfigurator(config);
     LOG.error("Running config");
     ListenableFuture<ConfigResponse> future = configurator.config();
     LOG.error("Got future: " + future.toString());
-
-   ConfigResponseResult result;
-    try{
-     result = new ConfigResponseResult(future.get(120, TimeUnit.SECONDS),null);
-    }catch (Exception ex){
-      result = new ConfigResponseResult(null,ex);
+    ConfigResponseResult result;
+    try {
+      result = new ConfigResponseResult(future.get(120, TimeUnit.SECONDS), null);
+    } catch (Exception ex) {
+      result = new ConfigResponseResult(null, ex);
     }
     return toBytes(result);
   }
