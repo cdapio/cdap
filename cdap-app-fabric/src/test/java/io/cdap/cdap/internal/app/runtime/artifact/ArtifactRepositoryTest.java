@@ -62,6 +62,7 @@ import io.cdap.cdap.internal.app.runtime.artifact.app.plugin.PluginTestRunnable;
 import io.cdap.cdap.internal.app.runtime.artifact.plugin.EmptyClass;
 import io.cdap.cdap.internal.app.runtime.artifact.plugin.Plugin1;
 import io.cdap.cdap.internal.app.runtime.artifact.plugin.Plugin2;
+import io.cdap.cdap.internal.app.runtime.artifact.plugin.nested.NestedConfigPlugin;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import io.cdap.cdap.internal.app.runtime.plugin.TestMacroEvaluator;
@@ -340,6 +341,81 @@ public class ArtifactRepositoryTest {
           Callable<String> plugin = instantiator.newInstance(pluginInfo);
           Assert.assertEquals("example.com,false,0,\u0000,0.0,0.0,0,0,0,null", plugin.call());
         }
+      }
+    }
+  }
+
+  @Test
+  public void testInstantiateNestedConfigPlugins() throws Exception {
+    File pluginDir = TMP_FOLDER.newFolder();
+    // Create the plugin jar.
+    Manifest manifest = createManifest(ManifestFields.EXPORT_PACKAGE, NestedConfigPlugin.class.getPackage().getName());
+    File jarFile = createPluginJar(NestedConfigPlugin.class, new File(tmpDir, "nested-1.0.jar"), manifest);
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "nested", "1.0");
+    artifactRepository.addArtifact(
+      artifactId, jarFile,
+      Collections.singleton(new ArtifactRange(APP_ARTIFACT_ID.getNamespace().getId(), APP_ARTIFACT_ID.getName(),
+                                              new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"))), null);
+    SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins =
+      artifactRepository.getPlugins(NamespaceId.DEFAULT, APP_ARTIFACT_ID);
+    Assert.assertEquals(1, plugins.keySet().size());
+    Assert.assertEquals(1, plugins.values().size());
+    Assert.assertEquals(1, plugins.values().iterator().next().size());
+    copyArtifacts(pluginDir, plugins);
+
+    Gson gson = new Gson();
+    ArtifactId artifact = plugins.firstKey().getArtifactId();
+    // only 1 plugin
+    PluginClass pluginClass = plugins.values().iterator().next().iterator().next();
+    NestedConfigPlugin.Config expected =
+      new NestedConfigPlugin.Config(1, new NestedConfigPlugin.NestedConfig("nested val1", "nested val2"));
+
+    // test flat structure, all pre 6.5 plugins look like this
+    instantiateAndValidate(pluginDir, new Plugin(Collections.emptyList(), artifact, pluginClass,
+                                                 PluginProperties.builder()
+                                                   .add("X", "1")
+                                                   .add("Nested1", "nested val1")
+                                                   .add("Nested2", "nested val2").build()), expected, false);
+
+    // test nested
+    instantiateAndValidate(pluginDir, new Plugin(Collections.emptyList(), artifact, pluginClass,
+                                                 PluginProperties.builder()
+                                                   .add("X", "1")
+                                                   .add("Nested",
+                                                        gson.toJson(ImmutableMap.of("Nested1", "nested val1",
+                                                                                    "Nested2", "nested val2")))
+                                                   .build()), expected, false);
+
+    // test macro gets correct default value, and macro fields get set correctly
+    expected = new NestedConfigPlugin.Config(1, new NestedConfigPlugin.NestedConfig(null, null));
+    instantiateAndValidate(pluginDir, new Plugin(Collections.emptyList(), artifact, pluginClass,
+                                                 PluginProperties.builder()
+                                                   .add("X", "1")
+                                                   .add("Nested1", "${macro1}")
+                                                   .add("Nested2", "${macro2}").build()), expected, true);
+    instantiateAndValidate(pluginDir, new Plugin(Collections.emptyList(), artifact, pluginClass,
+                                                 PluginProperties.builder()
+                                                   .add("X", "1")
+                                                   .add("Nested", "${I am macro}")
+                                                   .build()), expected, true);
+  }
+
+  private void instantiateAndValidate(File pluginDir, Plugin pluginInfo,
+                                      NestedConfigPlugin.Config expected, boolean containMacro) throws Exception {
+    Gson gson = new Gson();
+    try (PluginInstantiator instantiator = new PluginInstantiator(cConf, appClassLoader, pluginDir)) {
+
+      // here cannot use directly cast to NestedConfigPlugin since the classloaders are different, will get
+      // ClassCastException
+      Callable<String> plugin = instantiator.newInstance(pluginInfo);
+      NestedConfigPlugin.Config actual = gson.fromJson(plugin.call(), NestedConfigPlugin.Config.class);
+      Assert.assertEquals(expected, actual);
+      if (containMacro) {
+        Assert.assertTrue(actual.nested.containsMacro("Nested1"));
+        Assert.assertTrue(actual.nested.containsMacro("Nested2"));
+      } else {
+        Assert.assertFalse(actual.nested.containsMacro("Nested1"));
+        Assert.assertFalse(actual.nested.containsMacro("Nested2"));
       }
     }
   }

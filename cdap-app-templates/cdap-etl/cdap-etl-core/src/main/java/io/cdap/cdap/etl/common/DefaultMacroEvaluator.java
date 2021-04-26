@@ -39,7 +39,8 @@ public class DefaultMacroEvaluator implements MacroEvaluator {
     this(arguments, ImmutableMap.of(
       LogicalStartTimeMacroEvaluator.FUNCTION_NAME, new LogicalStartTimeMacroEvaluator(logicalStartTime),
       SecureStoreMacroEvaluator.FUNCTION_NAME, new SecureStoreMacroEvaluator(namespace, secureStore),
-      OAuthMacroEvaluator.FUNCTION_NAME, new OAuthMacroEvaluator(serviceDiscoverer)
+      OAuthMacroEvaluator.FUNCTION_NAME, new OAuthMacroEvaluator(serviceDiscoverer),
+      ConnectionMacroEvaluator.FUNCTION_NAME, new ConnectionMacroEvaluator(namespace, serviceDiscoverer)
     ));
   }
 
