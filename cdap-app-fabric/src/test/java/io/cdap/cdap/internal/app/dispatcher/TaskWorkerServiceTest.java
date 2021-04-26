@@ -75,6 +75,9 @@ public class TaskWorkerServiceTest {
       "long config", new LocalLocationFactory().getHomeLocation().toURI());
     GSON.toJson(configuratorConfig);
     Assert.assertEquals(configuratorConfig.getcConf().get("test"), "test");
+
+    ConfigResponseResult configResponseResult = new ConfigResponseResult(null, new RuntimeException());
+    GSON.toJson(configResponseResult);
   }
 
   @Test

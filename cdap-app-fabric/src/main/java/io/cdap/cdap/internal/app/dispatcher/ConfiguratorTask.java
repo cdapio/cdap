@@ -33,7 +33,6 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.concurrent.TimeUnit;
@@ -99,11 +98,16 @@ public class ConfiguratorTask extends RunnableTask {
     ListenableFuture<ConfigResponse> future = configurator.config();
     LOG.error("Got future: " + future.toString());
 
-
-    return toBytes(future.get(120, TimeUnit.SECONDS));
+   ConfigResponseResult result;
+    try{
+     result = new ConfigResponseResult(future.get(120, TimeUnit.SECONDS),null);
+    }catch (Exception ex){
+      result = new ConfigResponseResult(null,ex);
+    }
+    return toBytes(result);
   }
 
-  private byte[] toBytes(ConfigResponse obj) {
+  private byte[] toBytes(ConfigResponseResult obj) {
     String json = GSON.toJson(obj);
     return json.getBytes();
   }

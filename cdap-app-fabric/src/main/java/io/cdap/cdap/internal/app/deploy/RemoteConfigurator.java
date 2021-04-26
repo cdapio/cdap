@@ -14,6 +14,7 @@
 
 package io.cdap.cdap.internal.app.deploy;
 
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
@@ -25,6 +26,7 @@ import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.internal.app.deploy.pipeline.ConfiguratorConfig;
+import io.cdap.cdap.internal.app.dispatcher.ConfigResponseResult;
 import io.cdap.cdap.internal.app.dispatcher.ConfiguratorTask;
 import io.cdap.cdap.internal.app.dispatcher.RunnableTaskRequest;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
@@ -71,35 +73,40 @@ public class RemoteConfigurator implements Configurator {
     this.remoteClientInternal = new RemoteClient(discoveryServiceClient, Constants.Service.TASK_WORKER,
                                                  new DefaultHttpRequestConfig(false),
                                                  String.format("%s", Constants.Gateway.INTERNAL_API_VERSION_3));
-
   }
 
   @Override
   public ListenableFuture<ConfigResponse> config() {
     SettableFuture<ConfigResponse> result = SettableFuture.create();
+    String jsonResponse = "";
     try {
       String param = GSON.toJson(config);
       LOG.error("Sending param: " + param);
       RunnableTaskRequest req = new RunnableTaskRequest(ConfiguratorTask.class.getName(), param);
       String reqBody = GSON.toJson(req);
 
-
       HttpRequest.Builder requestBuilder = remoteClientInternal.requestBuilder(
         HttpMethod.POST, String.format("/worker/run")).withBody(reqBody);
       HttpResponse response = remoteClientInternal.execute(requestBuilder.build());
 
-//      URI uri = URI.create("http://cdap-meseifan-rbac-task-worker:11020");
-//      LOG.error("Sending request");
-//      HttpResponse httpResponse = HttpRequests.execute(
-//        HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
-//          .withBody(reqBody).build(),
-//        new DefaultHttpRequestConfig(false));
-      String jsonResponse = (String) response.getResponseBodyAsString();
-      ConfigResponse configResponse = GSON.fromJson(jsonResponse, DefaultConfigResponse.class);
-      result.set(configResponse);
+      //      URI uri = URI.create("http://cdap-meseifan-rbac-task-worker:11020");
+      //      LOG.error("Sending request");
+      //      HttpResponse httpResponse = HttpRequests.execute(
+      //        HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
+      //          .withBody(reqBody).build(),
+      //        new DefaultHttpRequestConfig(false));
+      jsonResponse = (String) response.getResponseBodyAsString();
     } catch (Exception ex) {
       LOG.error("Exception caught during config", ex);
+      LOG.error(jsonResponse);
     }
+    ConfigResponseResult configResponse = GSON.fromJson(jsonResponse, ConfigResponseResult.class);
+    if (configResponse.getException() == null) {
+      result.set(configResponse.getConfigResponse());
+    } else {
+      return Futures.immediateFailedFuture(configResponse.getException());
+    }
+
     return result;
   }
 }
