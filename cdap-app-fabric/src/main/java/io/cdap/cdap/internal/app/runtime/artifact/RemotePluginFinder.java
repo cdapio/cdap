@@ -107,9 +107,10 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
           ArtifactSummary artifactSummary = info.getArtifact();
           io.cdap.cdap.api.artifact.ArtifactId pluginArtifactId = new io.cdap.cdap.api.artifact.ArtifactId(
             artifactSummary.getName(), new ArtifactVersion(artifactSummary.getVersion()), artifactSummary.getScope());
-          PluginClass pluginClass = new PluginClass(info.getType(), info.getName(), info.getDescription(),
-                                                    info.getClassName(), info.getConfigFieldName(),
-                                                    info.getProperties());
+          PluginClass pluginClass =
+            PluginClass.builder().setName(info.getName()).setType(info.getType())
+              .setDescription(info.getDescription()).setClassName(info.getClassName())
+              .setProperties(info.getProperties()).setConfigFieldName(info.getConfigFieldName()).build();
           plugins.put(pluginArtifactId, pluginClass);
         }
 

@@ -53,11 +53,10 @@ public class ArtifactConfigReaderTest {
                           new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"))
       ),
       ImmutableSet.of(
-        new PluginClass("type", "name", "desc", "classname", null, ImmutableMap.of(
+        PluginClass.builder().setName("name").setType("type").setDescription("desc")
+          .setClassName("classname").setProperties(ImmutableMap.of(
           "x", new PluginPropertyField("x", "some field", "int", true, false),
-          "y", new PluginPropertyField("y", "some other field", "string", false, false)
-        ))
-      ),
+          "y", new PluginPropertyField("y", "some other field", "string", false, false))).build()),
       ImmutableMap.of(
         "k1", "v1",
         "k2", "v2"

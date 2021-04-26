@@ -125,7 +125,8 @@ public class LookupTransform<T> extends Transform<StructuredRecord, StructuredRe
     properties.put("lookupKey", new PluginPropertyField("fields", "", "string", true, false));
     properties.put("destinationField", new PluginPropertyField("destinationField", "", "string", true, false));
     properties.put("lookupName", new PluginPropertyField("lookupName", "", "string", true, false));
-    return new PluginClass(Transform.PLUGIN_TYPE, "Lookup", "", LookupTransform.class.getName(),
-                           "config", properties);
+    return PluginClass.builder().setName("Lookup").setType(Transform.PLUGIN_TYPE)
+             .setDescription("").setClassName(LookupTransform.class.getName()).setProperties(properties)
+             .setConfigFieldName("config").build();
   }
 }

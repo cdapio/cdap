@@ -95,7 +95,8 @@ public class SleepTransform extends Transform<StructuredRecord, StructuredRecord
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("millis", new PluginPropertyField("millis", "", "long", false, false));
-    return new PluginClass(Transform.PLUGIN_TYPE, "Sleep", "", SleepTransform.class.getName(),
-                           "config", properties);
+    return PluginClass.builder().setName("Sleep").setType(Transform.PLUGIN_TYPE)
+             .setDescription("").setClassName(SleepTransform.class.getName()).setProperties(properties)
+             .setConfigFieldName("config").build();
   }
 }

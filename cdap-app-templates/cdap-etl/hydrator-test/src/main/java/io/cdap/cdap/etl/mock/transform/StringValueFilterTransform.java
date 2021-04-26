@@ -123,7 +123,8 @@ public class StringValueFilterTransform extends Transform<StructuredRecord, Stru
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("field", new PluginPropertyField("field", "", "string", true, true));
     properties.put("value", new PluginPropertyField("value", "", "string", true, true));
-    return new PluginClass(Transform.PLUGIN_TYPE, "StringValueFilter", "", StringValueFilterTransform.class.getName(),
-                           "config", properties);
+    return PluginClass.builder().setName("StringValueFilter").setType(Transform.PLUGIN_TYPE)
+             .setDescription("").setClassName(StringValueFilterTransform.class.getName()).setProperties(properties)
+             .setConfigFieldName("config").build();
   }
 }

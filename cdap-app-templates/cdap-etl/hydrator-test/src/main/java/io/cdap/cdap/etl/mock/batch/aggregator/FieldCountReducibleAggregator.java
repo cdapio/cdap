@@ -166,7 +166,8 @@ public class FieldCountReducibleAggregator
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("fieldName", new PluginPropertyField("fieldName", "", "string", true, true));
     properties.put("fieldType", new PluginPropertyField("fieldType", "", "string", true, true));
-    return new PluginClass(BatchReducibleAggregator.PLUGIN_TYPE, NAME, "",
-                           FieldCountReducibleAggregator.class.getName(), "config", properties);
+    return PluginClass.builder().setName(NAME).setType(BatchReducibleAggregator.PLUGIN_TYPE)
+             .setDescription("").setClassName(FieldCountReducibleAggregator.class.getName()).setProperties(properties)
+             .setConfigFieldName("config").build();
   }
 }

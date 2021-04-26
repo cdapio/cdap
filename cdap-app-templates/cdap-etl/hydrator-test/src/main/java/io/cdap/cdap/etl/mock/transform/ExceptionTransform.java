@@ -16,12 +16,10 @@
 
 package io.cdap.cdap.etl.mock.transform;
 
-import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.plugin.PluginClass;
-import io.cdap.cdap.api.plugin.PluginPropertyField;
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.StageConfigurer;
@@ -29,6 +27,7 @@ import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.TransformContext;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -75,7 +74,8 @@ public class ExceptionTransform extends Transform<StructuredRecord, StructuredRe
   }
 
   private static PluginClass getPluginClass() {
-    return new PluginClass(Transform.PLUGIN_TYPE, NAME, "", IdentityTransform.class.getName(), null,
-                           ImmutableMap.<String, PluginPropertyField>of());
+    return PluginClass.builder().setName(NAME).setType(Transform.PLUGIN_TYPE)
+             .setDescription("").setClassName(IdentityTransform.class.getName()).setProperties(Collections.emptyMap())
+             .build();
   }
 }

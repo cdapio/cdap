@@ -77,7 +77,8 @@ public class NullAlertTransform extends Transform<StructuredRecord, StructuredRe
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("field", new PluginPropertyField("field", "", "string", true, false));
-    return new PluginClass(Transform.PLUGIN_TYPE, NAME, "", NullAlertTransform.class.getName(),
-                           "conf", properties);
+    return PluginClass.builder().setName(NAME).setType(Transform.PLUGIN_TYPE)
+             .setDescription("").setClassName(NullAlertTransform.class.getName()).setProperties(properties)
+             .setConfigFieldName("conf").build();
   }
 }

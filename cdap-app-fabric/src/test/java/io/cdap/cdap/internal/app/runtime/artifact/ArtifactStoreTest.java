@@ -178,11 +178,14 @@ public abstract class ArtifactStoreTest {
   public void testAddGetSingleArtifact() throws Exception {
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "myplugins", "1.0.0");
     PluginClass plugin1 =
-      new PluginClass("atype", "plugin1", "", "c.c.c.plugin1", "cfg", ImmutableMap.<String, PluginPropertyField>of());
+      PluginClass.builder().setName("plugin1").setType("atype").setDescription("")
+        .setClassName("c.c.c.plugin1").setConfigFieldName("cfg").setProperties(ImmutableMap.of()).build();
     PluginClass plugin2 =
-      new PluginClass("atype", "plugin2", "", "c.c.c.plugin2", "cfg", ImmutableMap.<String, PluginPropertyField>of());
+      PluginClass.builder().setName("plugin2").setType("atype").setDescription("")
+        .setClassName("c.c.c.plugin2").setConfigFieldName("cfg").setProperties(ImmutableMap.of()).build();
     PluginClass plugin3 =
-      new PluginClass("btype", "plugin3", "", "c.c.c.plugin3", "cfg", ImmutableMap.<String, PluginPropertyField>of());
+      PluginClass.builder().setName("plugin3").setType("btype").setDescription("")
+        .setClassName("c.c.c.plugin3").setConfigFieldName("cfg").setProperties(ImmutableMap.of()).build();
 
     Set<PluginClass> plugins = ImmutableSet.of(plugin1, plugin2, plugin3);
     ApplicationClass appClass = new ApplicationClass(
@@ -239,9 +242,10 @@ public abstract class ArtifactStoreTest {
     Id.Artifact childId = Id.Artifact.from(Id.Namespace.DEFAULT, "myplugins", "1.0.0");
     Id.Artifact anotherId = Id.Artifact.from(Id.Namespace.SYSTEM, "myplugins", "1.0.0");
     List<PluginClass> plugins = ImmutableList.of(
-      new PluginClass("atype", "plugin1", "", "c.c.c.plugin1", "cfg", ImmutableMap.<String, PluginPropertyField>of()),
-      new PluginClass("atype", "plugin2", "", "c.c.c.plugin2", "cfg", ImmutableMap.<String, PluginPropertyField>of())
-    );
+      PluginClass.builder().setName("plugin1").setType("atype").setDescription("")
+        .setClassName("c.c.c.plugin1").setConfigFieldName("cfg").setProperties(ImmutableMap.of()).build(),
+      PluginClass.builder().setName("plugin2").setType("atype").setDescription("")
+        .setClassName("c.c.c.plugin2").setConfigFieldName("cfg").setProperties(ImmutableMap.of()).build());
     Set<ArtifactRange> parents = ImmutableSet.of(new ArtifactRange(
       parentId.getNamespace().getId(), parentId.getName(),
       new ArtifactVersion("0.1.0"), new ArtifactVersion("2.0.0")));
@@ -321,10 +325,12 @@ public abstract class ArtifactStoreTest {
     ArtifactRange parentArtifacts = new ArtifactRange(
       NamespaceId.DEFAULT.getNamespace(), "parent", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"));
     // write the snapshot once
-    PluginClass plugin1 = new PluginClass("atype", "plugin1", "", "c.c.c.plugin1", "cfg",
-      ImmutableMap.<String, PluginPropertyField>of());
-    PluginClass plugin2 = new PluginClass("atype", "plugin2", "", "c.c.c.plugin2", "cfg",
-      ImmutableMap.<String, PluginPropertyField>of());
+    PluginClass plugin1 =
+      PluginClass.builder().setName("plugin1").setType("atype").setDescription("")
+        .setClassName("c.c.c.plugin1").setConfigFieldName("cfg").setProperties(ImmutableMap.of()).build();
+    PluginClass plugin2 =
+      PluginClass.builder().setName("plugin2").setType("atype").setDescription("")
+        .setClassName("c.c.c.plugin2").setConfigFieldName("cfg").setProperties(ImmutableMap.of()).build();
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "myplugins", "1.0.0-SNAPSHOT");
     ArtifactMeta artifactMeta = new ArtifactMeta(
       ArtifactClasses.builder().addPlugins(plugin1, plugin2).build(), ImmutableSet.of(parentArtifacts));
@@ -361,9 +367,11 @@ public abstract class ArtifactStoreTest {
     String contents1 = "first contents";
     String contents2 = "second contents";
     PluginClass plugin1 =
-      new PluginClass("atype", "plugin1", "", "c.c.c.plugin1", "cfg", ImmutableMap.<String, PluginPropertyField>of());
+      PluginClass.builder().setName("plugin1").setType("atype").setDescription("")
+        .setClassName("c.c.c.plugin1").setConfigFieldName("cfg").setProperties(ImmutableMap.of()).build();
     PluginClass plugin2 =
-      new PluginClass("atype", "plugin2", "", "c.c.c.plugin2", "cfg", ImmutableMap.<String, PluginPropertyField>of());
+      PluginClass.builder().setName("plugin2").setType("atype").setDescription("")
+        .setClassName("c.c.c.plugin2").setConfigFieldName("cfg").setProperties(ImmutableMap.of()).build();
     ArtifactMeta meta1 = new ArtifactMeta(ArtifactClasses.builder().addPlugin(plugin1).build());
     ArtifactMeta meta2 = new ArtifactMeta(ArtifactClasses.builder().addPlugin(plugin2).build());
 
@@ -401,7 +409,8 @@ public abstract class ArtifactStoreTest {
                         systemAppArtifact.getVersion(), true, systemAppArtifact.getVersion(), true));
 
     PluginClass plugin =
-      new PluginClass("atype", "plugin1", "", "c.c.c.plugin1", "cfg", ImmutableMap.<String, PluginPropertyField>of());
+      PluginClass.builder().setName("plugin1").setType("atype").setDescription("")
+        .setClassName("c.c.c.plugin1").setConfigFieldName("cfg").setProperties(ImmutableMap.of()).build();
     // write a plugins artifact in namespace1
     NamespaceId namespace1 = Ids.namespace("ns1");
     Id.Artifact artifact1 = Id.Artifact.from((Id.Namespace.fromEntityId(namespace1)), "plugins1", "1.0.0");
@@ -444,7 +453,8 @@ public abstract class ArtifactStoreTest {
     Id.Artifact artifact1V1 = Id.Artifact.from(Id.Namespace.DEFAULT, "artifact1", "1.0.0");
     String contents1V1 = "first contents v1";
     PluginClass plugin1V1 =
-      new PluginClass("atype", "plugin1", "", "c.c.c.plugin1", "cfg", ImmutableMap.<String, PluginPropertyField>of());
+      PluginClass.builder().setName("plugin1").setType("atype").setDescription("")
+        .setClassName("c.c.c.plugin1").setConfigFieldName("cfg").setProperties(ImmutableMap.of()).build();
     ArtifactMeta meta1V1 = new ArtifactMeta(ArtifactClasses.builder().addPlugin(plugin1V1).build());
     writeArtifact(artifact1V1, meta1V1, contents1V1);
 
@@ -456,11 +466,14 @@ public abstract class ArtifactStoreTest {
     String contents2V2 = "second contents v2";
     String contents2V3 = "second contents v3";
     PluginClass plugin2V1 =
-      new PluginClass("atype", "plugin2", "", "c.c.c.plugin2", "cfg", ImmutableMap.<String, PluginPropertyField>of());
+      PluginClass.builder().setName("plugin2").setType("atype").setDescription("")
+        .setClassName("c.c.c.plugin2").setConfigFieldName("cfg").setProperties(ImmutableMap.of()).build();
     PluginClass plugin2V2 =
-      new PluginClass("atype", "plugin2", "", "c.c.c.plugin2", "cfg", ImmutableMap.<String, PluginPropertyField>of());
+      PluginClass.builder().setName("plugin2").setType("atype").setDescription("")
+        .setClassName("c.c.c.plugin2").setConfigFieldName("cfg").setProperties(ImmutableMap.of()).build();
     PluginClass plugin2V3 =
-      new PluginClass("atype", "plugin2", "", "c.c.c.plugin2", "cfg", ImmutableMap.<String, PluginPropertyField>of());
+      PluginClass.builder().setName("plugin2").setType("atype").setDescription("")
+        .setClassName("c.c.c.plugin2").setConfigFieldName("cfg").setProperties(ImmutableMap.of()).build();
     ArtifactMeta meta2V1 = new ArtifactMeta(ArtifactClasses.builder().addPlugin(plugin2V1).build());
     ArtifactMeta meta2V2 = new ArtifactMeta(ArtifactClasses.builder().addPlugin(plugin2V2).build());
     ArtifactMeta meta2V3 = new ArtifactMeta(ArtifactClasses.builder().addPlugin(plugin2V3).build());
@@ -632,72 +645,83 @@ public abstract class ArtifactStoreTest {
                                                       new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"));
 
     // does not have any requirement
-    PluginClass includedPlugin1 = new PluginClass(
-      "A", "includedPlugin1", "desc", "c.p2", "conf",
-      ImmutableMap.of(
-        "stream", new PluginPropertyField("stream", "description", "string", true, false)
-      )
-    );
+    PluginClass includedPlugin1 =
+      PluginClass.builder()
+        .setName("includedPlugin1").setType("A").setDescription("desc")
+        .setClassName("c.p2").setConfigFieldName("conf")
+        .setProperties(ImmutableMap.of(
+          "stream", new PluginPropertyField("stream", "description", "string", true, false)))
+        .build();
 
-    PluginClass excludedPlugin1 = new PluginClass(
-      "A", "excludedPlugin1", "desc", "c.p1", "cfg",
-      ImmutableMap.of(
-        "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
-        "retry", new PluginPropertyField("retries", "description", "int", false, false)
-      ), new Requirements(ImmutableSet.of(Table.TYPE))
-    );
+    PluginClass excludedPlugin1 =
+      PluginClass.builder()
+        .setName("excludedPlugin1").setType("A").setDescription("desc")
+        .setClassName("c.p1").setConfigFieldName("cfg")
+        .setProperties(ImmutableMap.of(
+          "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
+          "retry", new PluginPropertyField("retries", "description", "int", false, false)))
+        .setRequirements(new Requirements(ImmutableSet.of(Table.TYPE)))
+        .build();
 
-    PluginClass excludedPlugin2 = new PluginClass(
-      "A", "excludedPlugin2", "desc", "c.p1", "cfg",
-      ImmutableMap.of(
-        "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
-        "retry", new PluginPropertyField("retries", "description", "int", false, false)
-      ), new Requirements(ImmutableSet.of(KeyValueTable.TYPE))
-    );
+    PluginClass excludedPlugin2 =
+      PluginClass.builder()
+        .setName("excludedPlugin2").setType("A").setDescription("desc")
+        .setClassName("c.p1").setConfigFieldName("cfg")
+        .setProperties(ImmutableMap.of(
+          "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
+          "retry", new PluginPropertyField("retries", "description", "int", false, false)))
+        .setRequirements(new Requirements(ImmutableSet.of(KeyValueTable.TYPE)))
+        .build();
 
-    PluginClass excludedPlugin3 = new PluginClass(
-      "A", "excludedPlugin3", "desc", "c.p1", "cfg",
-      ImmutableMap.of(
-        "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
-        "retry", new PluginPropertyField("retries", "description", "int", false, false)
-      ), new Requirements(ImmutableSet.of(Table.TYPE, KeyValueTable.TYPE))
-    );
+    PluginClass excludedPlugin3 =
+      PluginClass.builder()
+        .setName("excludedPlugin3").setType("A").setDescription("desc")
+        .setClassName("c.p1").setConfigFieldName("cfg")
+        .setProperties(ImmutableMap.of(
+          "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
+          "retry", new PluginPropertyField("retries", "description", "int", false, false)))
+        .setRequirements(new Requirements(ImmutableSet.of(Table.TYPE, KeyValueTable.TYPE)))
+        .build();
 
+    PluginClass excludedPlugin4 =
+      PluginClass.builder()
+        .setName("excludedPlugin4").setType("A").setDescription("desc")
+        .setClassName("c.p1").setConfigFieldName("cfg")
+        .setProperties(ImmutableMap.of(
+          "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
+          "retry", new PluginPropertyField("retries", "description", "int", false, false)))
+        .setRequirements(new Requirements(ImmutableSet.of(Table.TYPE, KeyValueTable.TYPE, Cube.TYPE)))
+        .build();
 
-    PluginClass excludedPlugin4 = new PluginClass(
-      "A", "excludedPlugin4", "desc", "c.p1", "cfg",
-      ImmutableMap.of(
-        "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
-        "retry", new PluginPropertyField("retries", "description", "int", false, false)
-      ), new Requirements(ImmutableSet.of(Table.TYPE, KeyValueTable.TYPE, Cube.TYPE))
-    );
+    PluginClass excludedPlugin5 =
+      PluginClass.builder()
+        .setName("excludedPlugin5").setType("A").setDescription("desc")
+        .setClassName("c.p1").setConfigFieldName("cfg")
+        .setProperties(ImmutableMap.of(
+          "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
+          "retry", new PluginPropertyField("retries", "description", "int", false, false)))
+        .setRequirements(new Requirements(ImmutableSet.of(Table.TYPE, Cube.TYPE)))
+        .build();
 
+    PluginClass includedPlugin2 =
+      PluginClass.builder()
+        .setName("includedPlugin2").setType("A").setDescription("desc")
+        .setClassName("c.p1").setConfigFieldName("cfg")
+        .setProperties(ImmutableMap.of(
+          "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
+          "retry", new PluginPropertyField("retries", "description", "int", false, false)))
+        .setRequirements(new Requirements(ImmutableSet.of("noTransactionNeeded")))
+        .build();
 
-    PluginClass excludedPlugin5 = new PluginClass(
-      "A", "excludedPlugin5", "desc", "c.p1", "cfg",
-      ImmutableMap.of(
-        "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
-        "retry", new PluginPropertyField("retries", "description", "int", false, false)
-      ), new Requirements(ImmutableSet.of(Table.TYPE, Cube.TYPE))
-    );
-
-
-    PluginClass includedPlugin2 = new PluginClass(
-      "A", "includedPlugin2", "desc", "c.p1", "cfg",
-      ImmutableMap.of(
-        "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
-        "retry", new PluginPropertyField("retries", "description", "int", false, false)
-      ), new Requirements(ImmutableSet.of("noTransactionNeeded"))
-    );
-
-
-    PluginClass includedPlugin3 = new PluginClass(
-      "A", "includedPlugin3", "desc", "c.p1", "cfg",
-      ImmutableMap.of(
-        "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
-        "retry", new PluginPropertyField("retries", "description", "int", false, false)
-      ), new Requirements(ImmutableSet.of("noTransactionNeeded", "tpfs"))
-    );
+    PluginClass includedPlugin3 =
+      PluginClass.builder()
+        .setName("includedPlugin3").setType("A").setDescription("desc")
+        .setClassName("c.p1").setConfigFieldName("cfg")
+        .setProperties(ImmutableMap.of(
+          "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
+          "retry", new PluginPropertyField("retries", "description", "int", false, false)))
+        .setRequirements(new Requirements(ImmutableSet.of("noTransactionNeeded", "tpfs")))
+        .build();
 
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "ArtifactWithTransactionalPlugins", "1.0.0");
     ArtifactMeta artifactMeta = new ArtifactMeta(
@@ -728,32 +752,31 @@ public abstract class ArtifactStoreTest {
     ArtifactRange parentArtifacts = new ArtifactRange(
       NamespaceId.DEFAULT.getNamespace(), "parent", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"));
     // we have 2 plugins of type A and 2 plugins of type B
-    PluginClass pluginA1 = new PluginClass(
-      "A", "p1", "desc", "c.p1", "cfg",
-      ImmutableMap.of(
-        "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
-        "retry", new PluginPropertyField("retries", "description", "int", false, false)
-      )
-    );
-    PluginClass pluginA2 = new PluginClass(
-      "A", "p2", "desc", "c.p2", "conf",
-      ImmutableMap.of(
-        "stream", new PluginPropertyField("stream", "description", "string", true, false)
-      )
-    );
-    PluginClass pluginB1 = new PluginClass(
-      "B", "p1", "desc", "c.p1", "cfg",
-      ImmutableMap.of(
-        "createIfNotExist", new PluginPropertyField("createIfNotExist", "desc", "boolean", false, false)
-      )
-    );
-    PluginClass pluginB2 = new PluginClass(
-      "B", "p2", "desc", "c.p2", "stuff",
-      ImmutableMap.of(
-        "numer", new PluginPropertyField("numerator", "description", "double", true, false),
-        "denom", new PluginPropertyField("denominator", "description", "double", true, false)
-      )
-    );
+    PluginClass pluginA1 =
+      PluginClass.builder().setName("p1").setType("A").setDescription("desc")
+        .setClassName("c.p1").setConfigFieldName("cfg")
+        .setProperties(ImmutableMap.of(
+          "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
+          "retry", new PluginPropertyField("retries", "description", "int", false, false))).build();
+
+    PluginClass pluginA2 =
+      PluginClass.builder().setName("p2").setType("A").setDescription("desc")
+        .setClassName("c.p2").setConfigFieldName("conf")
+        .setProperties(ImmutableMap.of(
+          "stream", new PluginPropertyField("stream", "description", "string", true, false))).build();
+
+    PluginClass pluginB1 =
+      PluginClass.builder().setName("p1").setType("B").setDescription("desc")
+        .setClassName("c.p1").setConfigFieldName("cfg")
+        .setProperties(ImmutableMap.of(
+          "createIfNotExist", new PluginPropertyField("createIfNotExist", "desc", "boolean", false, false))).build();
+
+    PluginClass pluginB2 =
+      PluginClass.builder().setName("p2").setType("B").setDescription("desc")
+        .setClassName("c.p2").setConfigFieldName("stuff")
+        .setProperties(ImmutableMap.of(
+          "numer", new PluginPropertyField("numerator", "description", "double", true, false),
+          "denom", new PluginPropertyField("denominator", "description", "double", true, false))).build();
 
     // add artifacts
 
@@ -925,19 +948,18 @@ public abstract class ArtifactStoreTest {
       NamespaceId.DEFAULT.getNamespace(), "parent1", new ArtifactVersion("1.0.0"), new ArtifactVersion("5.0.0"));
 
     // we have 2 plugins of type A and 2 plugins of type B
-    PluginClass pluginA1 = new PluginClass(
-      "A", "p1", "desc", "c.p1", "cfg",
-      ImmutableMap.of(
-        "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
-        "retry", new PluginPropertyField("retries", "description", "int", false, false)
-      )
-    );
-    PluginClass pluginA2 = new PluginClass(
-      "A", "p2", "desc", "c.p2", "conf",
-      ImmutableMap.of(
-        "stream", new PluginPropertyField("stream", "description", "string", true, false)
-      )
-    );
+    PluginClass pluginA1 =
+      PluginClass.builder().setName("p1").setType("A").setDescription("desc")
+        .setClassName("c.p1").setConfigFieldName("cfg")
+        .setProperties(ImmutableMap.of(
+          "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
+          "retry", new PluginPropertyField("retries", "description", "int", false, false))).build();
+
+    PluginClass pluginA2 =
+      PluginClass.builder().setName("p2").setType("A").setDescription("desc")
+        .setClassName("c.p2").setConfigFieldName("conf")
+        .setProperties(ImmutableMap.of(
+          "stream", new PluginPropertyField("stream", "description", "string", true, false))).build();
 
     // add artifacts
 
@@ -1049,9 +1071,12 @@ public abstract class ArtifactStoreTest {
     // add one artifact with a couple plugins
     Id.Artifact artifact1 = Id.Artifact.from(Id.Namespace.DEFAULT, "plugins1", "1.0.0");
     Set<PluginClass> plugins = ImmutableSet.of(
-      new PluginClass("atype", "plugin1", "", "c.c.c.plugin1", "cfg", ImmutableMap.<String, PluginPropertyField>of()),
-      new PluginClass("atype", "plugin2", "", "c.c.c.plugin2", "cfg", ImmutableMap.<String, PluginPropertyField>of())
-    );
+      PluginClass.builder().setName("plugin1").setType("atype").setDescription("")
+        .setClassName("c.c.c.plugin1").setConfigFieldName("cfg")
+        .setProperties(ImmutableMap.of()).build(),
+      PluginClass.builder().setName("plugin2").setType("atype").setDescription("")
+        .setClassName("c.c.c.plugin2").setConfigFieldName("cfg")
+        .setProperties(ImmutableMap.of()).build());
     ArtifactMeta meta1 = new ArtifactMeta(
       ArtifactClasses.builder().addPlugins(plugins).build(), ImmutableSet.of(parentArtifacts));
     writeArtifact(artifact1, meta1, "something");
@@ -1083,8 +1108,9 @@ public abstract class ArtifactStoreTest {
       NamespaceId.DEFAULT.getNamespace(), "parent", new ArtifactVersion("1.0.0"),
       true, new ArtifactVersion("1.0.0"), true));
     List<PluginClass> plugins = ImmutableList.of(
-      new PluginClass("typeA", "plugin1", "", "c.c.c.plugin1", "cfg", ImmutableMap.<String, PluginPropertyField>of())
-    );
+      PluginClass.builder().setName("plugin1").setType("typeA").setDescription("")
+        .setClassName("c.c.c.plugin1").setConfigFieldName("cfg")
+        .setProperties(ImmutableMap.of()).build());
     ArtifactMeta meta = new ArtifactMeta(ArtifactClasses.builder().addPlugins(plugins).build(), parentArtifacts);
     writeArtifact(id1, meta, "some contents");
 
@@ -1094,8 +1120,9 @@ public abstract class ArtifactStoreTest {
       NamespaceId.DEFAULT.getNamespace(), "parent", new ArtifactVersion("2.0.0"), true,
       new ArtifactVersion("2.0.1"), false));
     plugins = ImmutableList.of(
-      new PluginClass("typeA", "plugin2", "", "c.c.c.plugin2", "cfg", ImmutableMap.<String, PluginPropertyField>of())
-    );
+      PluginClass.builder().setName("plugin2").setType("typeA").setDescription("")
+        .setClassName("c.c.c.plugin2").setConfigFieldName("cfg")
+        .setProperties(ImmutableMap.of()).build());
     meta = new ArtifactMeta(ArtifactClasses.builder().addPlugins(plugins).build(), parentArtifacts);
     writeArtifact(id2, meta, "some contents");
 
@@ -1105,8 +1132,9 @@ public abstract class ArtifactStoreTest {
       NamespaceId.DEFAULT.getNamespace(), "parent", new ArtifactVersion("3.0.0"), false,
       new ArtifactVersion("3.0.1"), true));
     plugins = ImmutableList.of(
-      new PluginClass("typeA", "plugin3", "", "c.c.c.plugin3", "cfg", ImmutableMap.<String, PluginPropertyField>of())
-    );
+      PluginClass.builder().setName("plugin3").setType("typeA").setDescription("")
+        .setClassName("c.c.c.plugin3").setConfigFieldName("cfg")
+        .setProperties(ImmutableMap.of()).build());
     meta = new ArtifactMeta(ArtifactClasses.builder().addPlugins(plugins).build(), parentArtifacts);
     writeArtifact(id3, meta, "some contents");
 
@@ -1116,8 +1144,9 @@ public abstract class ArtifactStoreTest {
       NamespaceId.DEFAULT.getNamespace(), "parent", new ArtifactVersion("4.0.0"), false,
       new ArtifactVersion("4.0.2"), false));
     plugins = ImmutableList.of(
-      new PluginClass("typeA", "plugin4", "", "c.c.c.plugin4", "cfg", ImmutableMap.<String, PluginPropertyField>of())
-    );
+      PluginClass.builder().setName("plugin4").setType("typeA").setDescription("")
+        .setClassName("c.c.c.plugin4").setConfigFieldName("cfg")
+        .setProperties(ImmutableMap.of()).build());
     meta = new ArtifactMeta(ArtifactClasses.builder().addPlugins(plugins).build(), parentArtifacts);
     writeArtifact(id4, meta, "some contents");
 
@@ -1184,8 +1213,9 @@ public abstract class ArtifactStoreTest {
     Set<ArtifactRange> parentArtifacts = ImmutableSet.of(new ArtifactRange(
       NamespaceId.DEFAULT.getNamespace(), "parent", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     Set<PluginClass> plugins = ImmutableSet.of(
-      new PluginClass("atype", "plugin1", "", "c.c.c.plugin1", "cfg", ImmutableMap.<String, PluginPropertyField>of())
-    );
+      PluginClass.builder().setName("plugin1").setType("atype").setDescription("")
+        .setClassName("c.c.c.plugin1").setConfigFieldName("cfg")
+        .setProperties(ImmutableMap.of()).build());
     ArtifactMeta meta = new ArtifactMeta(ArtifactClasses.builder().addPlugins(plugins).build(), parentArtifacts);
     writeArtifact(artifactId, meta, "some contents");
     ArtifactDescriptor artifactInfo = artifactStore.getArtifact(artifactId).getDescriptor();
@@ -1261,8 +1291,10 @@ public abstract class ArtifactStoreTest {
           barrier.await();
           ArtifactMeta meta = new ArtifactMeta(
             ArtifactClasses.builder()
-              .addPlugin(new PluginClass("plugin-type", "plugin" + writer, "", "classname", "cfg",
-                ImmutableMap.of()))
+              .addPlugin(
+                PluginClass.builder().setName("plugin" + writer).setType("plugin-type").setDescription("")
+                  .setClassName("classname").setConfigFieldName("cfg")
+                  .setProperties(ImmutableMap.of()).build())
               .build()
           );
           writeArtifact(artifactId, meta, writer);
@@ -1298,8 +1330,9 @@ public abstract class ArtifactStoreTest {
     ArtifactDetail info = artifactStore.getArtifact(artifactId);
     ArtifactMeta expectedMeta = new ArtifactMeta(
       ArtifactClasses.builder()
-        .addPlugin(new PluginClass("plugin-type", "plugin" + successfulWriter, "", "classname", "cfg",
-          ImmutableMap.<String, PluginPropertyField>of()))
+        .addPlugin(PluginClass.builder().setName("plugin" + successfulWriter).setType("plugin-type").setDescription("")
+                     .setClassName("classname").setConfigFieldName("cfg")
+                     .setProperties(ImmutableMap.of()).build())
         .build()
     );
     assertEqual(artifactId, expectedMeta, successfulWriter, info);
@@ -1351,8 +1384,9 @@ public abstract class ArtifactStoreTest {
             barrier.await();
             ArtifactMeta meta = new ArtifactMeta(
               ArtifactClasses.builder()
-                .addPlugin(new PluginClass("plugin-type", "plugin" + writer, "", "classname", "cfg",
-                  ImmutableMap.<String, PluginPropertyField>of()))
+                .addPlugin(PluginClass.builder().setName("plugin" + writer).setType("plugin-type").setDescription("")
+                             .setClassName("classname").setConfigFieldName("cfg")
+                             .setProperties(ImmutableMap.of()).build())
                 .build(),
               ImmutableSet.of(parentArtifacts)
             );
@@ -1381,8 +1415,9 @@ public abstract class ArtifactStoreTest {
 
     ArtifactMeta expectedMeta = new ArtifactMeta(
       ArtifactClasses.builder()
-        .addPlugin(new PluginClass("plugin-type", "plugin" + winnerWriter, "", "classname", "cfg",
-            ImmutableMap.<String, PluginPropertyField>of()))
+        .addPlugin(PluginClass.builder().setName("plugin" + winnerWriter).setType("plugin-type").setDescription("")
+                     .setClassName("classname").setConfigFieldName("cfg")
+                     .setProperties(ImmutableMap.of()).build())
         .build(),
       ImmutableSet.of(parentArtifacts)
     );
@@ -1393,8 +1428,9 @@ public abstract class ArtifactStoreTest {
       artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId, "plugin-type");
     Map<ArtifactDescriptor, Set<PluginClass>> expected = Maps.newHashMap();
     expected.put(detail.getDescriptor(), ImmutableSet.<PluginClass>of(
-      new PluginClass("plugin-type", "plugin" + winnerWriter, "", "classname", "cfg",
-      ImmutableMap.<String, PluginPropertyField>of())));
+      PluginClass.builder().setName("plugin" + winnerWriter).setType("plugin-type").setDescription("")
+        .setClassName("classname").setConfigFieldName("cfg")
+        .setProperties(ImmutableMap.of()).build()));
     Assert.assertEquals(expected, pluginMap);
   }
 
@@ -1405,7 +1441,9 @@ public abstract class ArtifactStoreTest {
     writeArtifact(Id.Artifact.fromEntityId(artifactId), new ArtifactMeta(ArtifactClasses.builder().build()), "test");
 
     // Deploy an artifact that has a plugin in the DEFAULT scope, but without any parent artifact
-    PluginClass pluginClass1 = new PluginClass("type1", "plugin1", "plugin1", "plugin1", null, Collections.emptyMap());
+    PluginClass pluginClass1 = PluginClass.builder().setName("plugin1").setType("type1").setDescription("plugin1")
+                                 .setClassName("plugin1")
+                                 .setProperties(ImmutableMap.of()).build();
     ArtifactId pluginArtifactId1 = NamespaceId.DEFAULT.artifact("plugin-artifact1", "0.0.1");
     writeArtifact(Id.Artifact.fromEntityId(pluginArtifactId1),
                   new ArtifactMeta(ArtifactClasses.builder().addPlugin(pluginClass1).build()), "test");
@@ -1426,7 +1464,9 @@ public abstract class ArtifactStoreTest {
     Assert.assertEquals(pluginClass1, pluginsClasses.get(0));
 
     // Deploy an artifact that has a plugin in the DEFAULT scope with a parent artifact
-    PluginClass pluginClass2 = new PluginClass("type2", "plugin2", "plugin2", "plugin2", null, Collections.emptyMap());
+    PluginClass pluginClass2 = PluginClass.builder().setName("plugin2").setType("type2").setDescription("plugin2")
+                                 .setClassName("plugin2")
+                                 .setProperties(ImmutableMap.of()).build();
     ArtifactId pluginArtifactId2 = NamespaceId.DEFAULT.artifact("plugin-artifact2", "0.0.1");
     ArtifactRange parentArtifactRange = new ArtifactRange(artifactId.getNamespace(),
                                                           artifactId.getArtifact(),

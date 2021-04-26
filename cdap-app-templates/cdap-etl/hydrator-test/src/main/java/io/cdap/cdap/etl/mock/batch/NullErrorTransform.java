@@ -80,7 +80,8 @@ public class NullErrorTransform extends Transform<StructuredRecord, StructuredRe
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("name", new PluginPropertyField("name", "", "string", true, false));
-    return new PluginClass(Transform.PLUGIN_TYPE, "NullErrorTransform", "", NullErrorTransform.class.getName(),
-                           "config", properties);
+    return PluginClass.builder().setName("NullErrorTransform").setType(Transform.PLUGIN_TYPE)
+             .setDescription("").setClassName(NullErrorTransform.class.getName()).setProperties(properties)
+             .setConfigFieldName("config").build();
   }
 }

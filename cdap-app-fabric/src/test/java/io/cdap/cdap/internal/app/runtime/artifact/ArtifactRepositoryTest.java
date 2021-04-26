@@ -194,8 +194,10 @@ public class ArtifactRepositoryTest {
   @Test(expected = InvalidArtifactException.class)
   public void testMultiplePluginClasses() throws InvalidArtifactException {
     DefaultArtifactRepository.validatePluginSet(ImmutableSet.of(
-      new PluginClass("t1", "n1", "", "io.cdap.test1", "cfg", ImmutableMap.of()),
-      new PluginClass("t1", "n1", "", "io.cdap.test2", "cfg", ImmutableMap.of())));
+      PluginClass.builder().setName("n1").setType("t1").setDescription("").setClassName("io.cdap.test1")
+        .setConfigFieldName("cfg").setProperties(ImmutableMap.of()).build(),
+      PluginClass.builder().setName("n1").setType("t1").setDescription("").setClassName("io.cdap.test2")
+        .setConfigFieldName("cfg").setProperties(ImmutableMap.of()).build()));
   }
 
   @Test
@@ -214,8 +216,10 @@ public class ArtifactRepositoryTest {
     // write plugins config file
     Map<String, PluginPropertyField> emptyMap = Collections.emptyMap();
     Set<PluginClass> manuallyAddedPlugins1 = ImmutableSet.of(
-      new PluginClass("typeA", "manual1", "desc", TestPlugin.class.getName(), null, emptyMap),
-      new PluginClass("typeB", "manual2", "desc", TestPlugin.class.getName(), null, emptyMap)
+      PluginClass.builder().setName("manual1").setType("typeA").setDescription("desc")
+        .setClassName(TestPlugin.class.getName()).setProperties(emptyMap).build(),
+      PluginClass.builder().setName("manual2").setType("typeB").setDescription("desc")
+        .setClassName(TestPlugin.class.getName()).setProperties(emptyMap).build()
     );
     File pluginConfigFile = new File(systemArtifactsDir1, "APlugin-1.0.0.json");
     ArtifactConfig pluginConfig1 = new ArtifactConfig(
@@ -237,8 +241,10 @@ public class ArtifactRepositoryTest {
 
     // write plugins config file
     Set<PluginClass> manuallyAddedPlugins2 = ImmutableSet.of(
-      new PluginClass("typeA", "manual1", "desc", TestPlugin.class.getName(), null, emptyMap),
-      new PluginClass("typeB", "manual2", "desc", TestPlugin.class.getName(), null, emptyMap)
+      PluginClass.builder().setName("manual1").setType("typeA").setDescription("desc")
+        .setClassName(TestPlugin.class.getName()).setProperties(emptyMap).build(),
+      PluginClass.builder().setName("manual2").setType("typeB").setDescription("desc")
+        .setClassName(TestPlugin.class.getName()).setProperties(emptyMap).build()
     );
     pluginConfigFile = new File(systemArtifactsDir2, "BPlugin-1.0.0.json");
     ArtifactConfig pluginConfig2 = new ArtifactConfig(

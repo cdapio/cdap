@@ -103,7 +103,8 @@ public class GroupFilterAggregator extends BatchAggregator<String, StructuredRec
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("field", new PluginPropertyField("field", "", "string", true, false));
     properties.put("value", new PluginPropertyField("value", "", "string", true, false));
-    return new PluginClass(BatchAggregator.PLUGIN_TYPE, "GroupFilter", "", GroupFilterAggregator.class.getName(),
-                           "config", properties);
+    return PluginClass.builder().setName("GroupFilter").setType(BatchAggregator.PLUGIN_TYPE)
+             .setDescription("").setClassName(GroupFilterAggregator.class.getName()).setProperties(properties)
+             .setConfigFieldName("config").build();
   }
 }

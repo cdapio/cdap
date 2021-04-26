@@ -29,8 +29,10 @@ import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.StageConfigurer;
+import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.batch.BatchAggregator;
 import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
+import io.cdap.cdap.etl.mock.transform.AllErrorTransform;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 
 import java.util.ArrayList;
@@ -124,7 +126,8 @@ public class DistinctAggregator extends BatchAggregator<StructuredRecord, Struct
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("field", new PluginPropertyField("field", "", "string", true, false));
-    return new PluginClass(BatchAggregator.PLUGIN_TYPE, "DistinctAggregator", "", DistinctAggregator.class.getName(),
-                           "config", properties);
+    return PluginClass.builder().setName("DistinctAggregator").setType(BatchAggregator.PLUGIN_TYPE)
+             .setDescription("").setClassName(DistinctAggregator.class.getName())
+             .setConfigFieldName("config").setProperties(properties).build();
   }
 }

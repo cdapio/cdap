@@ -90,7 +90,8 @@ public class FlattenErrorTransform extends ErrorTransform<StructuredRecord, Stru
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
-    return new PluginClass(ErrorTransform.PLUGIN_TYPE, "Flatten", "", FlattenErrorTransform.class.getName(),
-                           null, properties);
+    return PluginClass.builder().setName("Flatten").setType(ErrorTransform.PLUGIN_TYPE)
+             .setDescription("").setClassName(FlattenErrorTransform.class.getName()).setProperties(properties)
+             .build();
   }
 }

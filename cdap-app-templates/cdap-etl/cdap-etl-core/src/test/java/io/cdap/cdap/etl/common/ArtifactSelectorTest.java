@@ -37,8 +37,9 @@ public class ArtifactSelectorTest {
   public void testSelection() {
     SortedMap<ArtifactId, PluginClass> plugins = new TreeMap<>();
     // doesn't matter what this is, since we only select on artifact id.
-    PluginClass pluginClass = new PluginClass("type", "name", "desc", "com.company.class", "field",
-                                              ImmutableMap.of());
+    PluginClass pluginClass =
+      PluginClass.builder().setName("name").setType("type").setDescription("desc")
+        .setClassName("com.company.class").setConfigFieldName("field").setProperties(ImmutableMap.of()).build();
 
     // put every combination of abc or def as name, 1.0.0 or 2.0.0 as version, and system or user as scope
     plugins.put(new ArtifactId("abc", new ArtifactVersion("1.0.0"), ArtifactScope.SYSTEM), pluginClass);

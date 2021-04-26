@@ -151,19 +151,25 @@ public class ArtifactInspectorTest {
       Assert.assertEquals(expectedApps, classes.getApps());
 
       // check plugin classes
-      PluginClass expectedPlugin = new PluginClass(
-        InspectionApp.PLUGIN_TYPE, InspectionApp.PLUGIN_NAME, InspectionApp.PLUGIN_DESCRIPTION,
-        InspectionApp.AppPlugin.class.getName(), "pluginConf",
-        ImmutableMap.of(
+      PluginClass expectedPlugin =
+        PluginClass.builder().setName(InspectionApp.PLUGIN_NAME).setType(InspectionApp.PLUGIN_TYPE)
+          .setDescription(InspectionApp.PLUGIN_DESCRIPTION).setClassName(InspectionApp.AppPlugin.class.getName())
+          .setConfigFieldName("pluginConf").setProperties(ImmutableMap.of(
           "y", new PluginPropertyField("y", "", "double", true, true),
-          "isSomething", new PluginPropertyField("isSomething", "", "boolean", true, false)));
-      PluginClass multipleRequirementPlugin = new PluginClass(
-        InspectionApp.PLUGIN_TYPE, InspectionApp.MULTIPLE_REQUIREMENTS_PLUGIN, InspectionApp.PLUGIN_DESCRIPTION,
-        InspectionApp.MultipleRequirementsPlugin.class.getName(), "pluginConf",
-        ImmutableMap.of(
+          "isSomething", new PluginPropertyField("isSomething", "", "boolean", true, false))).build();
+
+      PluginClass multipleRequirementPlugin = PluginClass.builder()
+        .setName(InspectionApp.MULTIPLE_REQUIREMENTS_PLUGIN)
+        .setType(InspectionApp.PLUGIN_TYPE)
+        .setCategory(InspectionApp.PLUGIN_CATEGORY)
+        .setClassName(InspectionApp.MultipleRequirementsPlugin.class.getName())
+        .setConfigFieldName("pluginConf")
+        .setProperties(ImmutableMap.of(
           "y", new PluginPropertyField("y", "", "double", true, true),
-          "isSomething", new PluginPropertyField("isSomething", "", "boolean", true, false)),
-        new Requirements(ImmutableSet.of(Table.TYPE, KeyValueTable.TYPE)));
+          "isSomething", new PluginPropertyField("isSomething", "", "boolean", true, false)))
+        .setRequirements(new Requirements(ImmutableSet.of(Table.TYPE, KeyValueTable.TYPE)))
+        .setDescription(InspectionApp.PLUGIN_DESCRIPTION)
+        .build();
       Assert.assertTrue(classes.getPlugins().containsAll(ImmutableSet.of(expectedPlugin, multipleRequirementPlugin)));
     }
   }
@@ -180,8 +186,10 @@ public class ArtifactInspectorTest {
              new EntityImpersonator(artifactId.toEntityId(), new DefaultImpersonator(CConfiguration.create(), null)))) {
 
       // PluginClass contains a non existing classname that is not present in the artifact jar being used
-      PluginClass pluginClass = new PluginClass("plugin_type", "plugin_name", "", "non-existing-class",
-                                                "pluginConf", ImmutableMap.of());
+      PluginClass pluginClass =
+        PluginClass.builder().setName("plugin_name").setType("plugin_type")
+          .setDescription("").setClassName("non-existing-class")
+          .setConfigFieldName("pluginConf").setProperties(ImmutableMap.of()).build();
       // Inspects the jar and ensures that additional plugin classes can be loaded from the artifact jar
       artifactInspector.inspectArtifact(artifactId, artifactFile, artifactClassLoader, ImmutableSet.of(pluginClass));
     }

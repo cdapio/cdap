@@ -146,7 +146,8 @@ public class FieldCountAggregator extends BatchAggregator<Object, StructuredReco
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("fieldName", new PluginPropertyField("fieldName", "", "string", true, true));
     properties.put("fieldType", new PluginPropertyField("fieldType", "", "string", true, true));
-    return new PluginClass(BatchAggregator.PLUGIN_TYPE, "FieldCount", "", FieldCountAggregator.class.getName(),
-                           "config", properties);
+    return PluginClass.builder().setName("FieldCount").setType(BatchAggregator.PLUGIN_TYPE)
+             .setDescription("").setClassName(FieldCountAggregator.class.getName()).setProperties(properties)
+             .setConfigFieldName("config").build();
   }
 }
