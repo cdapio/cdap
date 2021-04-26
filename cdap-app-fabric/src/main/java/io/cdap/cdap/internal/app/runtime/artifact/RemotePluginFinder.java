@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.runtime.artifact;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
+import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -47,8 +48,12 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
@@ -60,7 +65,7 @@ import java.util.concurrent.TimeUnit;
  * Implementation of {@link PluginFinder} that use the artifact HTTP endpoints for finding plugins.
  */
 public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
-
+  private static final Logger LOG = LoggerFactory.getLogger(RemotePluginFinder.class);
   private static final Gson GSON = new Gson();
   private static final Type PLUGIN_INFO_LIST_TYPE = new TypeToken<List<PluginInfo>>() { }.getType();
 
@@ -157,7 +162,7 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
                         ? ArtifactScope.SYSTEM : ArtifactScope.USER,
                       NamespaceId.SYSTEM.equals(namespaceId.getNamespaceId())
                         ? ArtifactScope.SYSTEM : ArtifactScope.USER
-                      ));
+        ));
     // add header if auth is enabled
     if (authorizationEnabled) {
       requestBuilder.addHeader(Constants.Security.Headers.USER_ID, authenticationContext.getPrincipal().getName());
@@ -178,7 +183,6 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
 
     return GSON.fromJson(response.getResponseBodyAsString(), PLUGIN_INFO_LIST_TYPE);
   }
-
 
   /**
    * Retrieves the {@link Location} of a given artifact.
@@ -208,10 +212,38 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
     Location location = Locations.getLocationFromAbsolutePath(locationFactory, path);
 
     // NOTE: Commenting out this check for testing. This should be restored before merging
-//    if (!location.exists()) {
-//      throw new IOException(String.format("Artifact Location does not exist %s for artifact %s version %s",
-//                                          path, artifactId.getArtifact(), artifactId.getVersion()));
-//    }
+    if (!location.exists()) {
+      LOG.error("Artifact location doesnt exist!! Trying to fetch it");
+      getAndStoreArtifact(artifactId, location);
+      //      throw new IOException(String.format("Artifact Location does not exist %s for artifact %s version %s",
+      //                                          path, artifactId.getArtifact(), artifactId.getVersion()));
+    }
     return location;
+  }
+
+  private void getAndStoreArtifact(ArtifactId artifactId, Location location) throws IOException {
+    HttpResponse httpResponse;
+    String namespaceId = artifactId.getNamespace();
+    ArtifactScope scope = ArtifactScope.USER;
+    // Cant use 'system' as the namespace in the request because that generates an error, the namespace doesnt matter
+    // as long as it exists. Using default because it will always be there
+    if (ArtifactScope.SYSTEM.toString().equalsIgnoreCase(namespaceId)) {
+      namespaceId = "default";
+      scope = ArtifactScope.SYSTEM;
+    }
+    String url = String.format("namespaces/%s/artifacts/download/%s/versions/%s?scope=%s",
+                               namespaceId,
+                               artifactId.getArtifact(),
+                               artifactId.getVersion(),
+                               scope);
+
+    LOG.error("Fetching artifact from " + url);
+    HttpRequest.Builder requestBuilder = remoteClientInternal.requestBuilder(HttpMethod.GET, url);
+    httpResponse = remoteClientInternal.execute(requestBuilder.build());
+    LOG.error(String.format("GOT RESPONSE CODE %d", httpResponse.getResponseCode()));
+    OutputStream outputStream = location.getOutputStream();
+    ByteStreams.copy(new ByteArrayInputStream(httpResponse.getResponseBody()), outputStream);
+    outputStream.close();
+    LOG.error("Copied artifact into " + location.toURI().toString());
   }
 }
