@@ -18,6 +18,10 @@ package io.cdap.cdap.etl.mock.test;
 
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.retry.RetryableException;
+import io.cdap.cdap.common.ApplicationNotFoundException;
+import io.cdap.cdap.common.service.Retries;
+import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.etl.api.PipelineConfigurable;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.action.Action;
@@ -71,10 +75,13 @@ import io.cdap.cdap.etl.mock.transform.IdentityTransform;
 import io.cdap.cdap.etl.mock.transform.IntValueFilterTransform;
 import io.cdap.cdap.etl.mock.transform.NullFieldSplitterTransform;
 import io.cdap.cdap.etl.mock.transform.StringValueFilterTransform;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.TestBase;
 
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Performs common setup logic
@@ -177,6 +184,17 @@ public class HydratorTestBase extends TestBase {
                       IntValueFilterTransform.class, StringValueFilterTransform.class,
                       StringValueFilterCompute.class, Window.class,
                       NullFieldSplitterTransform.class, NullAlertTransform.class);
+  }
+
+  protected static void waitForAppToDeploy(ApplicationManager appManager, ApplicationId pipeline) throws Exception {
+    Retries.callWithRetries(() -> {
+      try {
+        appManager.getInfo();
+        return null;
+      } catch (ApplicationNotFoundException exception) {
+        throw new RetryableException(String.format("App %s not yet deployed", pipeline));
+      }
+    }, RetryStrategies.limit(10, RetryStrategies.fixDelay(15, TimeUnit.SECONDS)));
   }
 
 }

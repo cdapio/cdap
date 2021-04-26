@@ -86,6 +86,8 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
     JsonToken token = reader.peek();
     switch (token) {
       case NULL:
+        // advance the value otherwise gson won't be able to get over the null value
+        reader.nextNull();
         return null;
       case STRING: {
         // Simple type or know record type
