@@ -184,7 +184,8 @@ public class BundleJarUtil {
   public static File prepareClassLoaderFolder(Location jarLocation, File destinationFolder) throws IOException {
     unJar(jarLocation, destinationFolder, name ->
       name.equals(JarFile.MANIFEST_NAME) || name.endsWith(".jar"));
-    File artifactTempName = File.createTempFile("artifact", ".jar", destinationFolder);
+    //Note: We start with space to ensure this file goes first in case resources order is important
+    File artifactTempName = File.createTempFile(" artifact", ".jar", destinationFolder);
     artifactTempName.delete();
     Locations.linkOrCopy(jarLocation, artifactTempName);
     return destinationFolder;

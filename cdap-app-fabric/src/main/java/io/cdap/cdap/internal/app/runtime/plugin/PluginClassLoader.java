@@ -79,7 +79,7 @@ public class PluginClassLoader extends DirectoryClassLoader {
   }
 
   PluginClassLoader(ArtifactId artifactId, File directory, String topLevelJar, ClassLoader parent) {
-    super(directory, topLevelJar, parent, "lib");
+    super(directory, parent, "lib");
     this.artifactId = artifactId;
     this.topLevelJar = topLevelJar;
     this.exportPackages = ManifestFields.getExportPackages(getManifest());
