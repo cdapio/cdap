@@ -95,7 +95,7 @@ public class RemoteConfigurator implements Configurator {
 //          .withBody(reqBody).build(),
 //        new DefaultHttpRequestConfig(false));
       String jsonResponse = (String) response.getResponseBodyAsString();
-      ConfigResponse configResponse = GSON.fromJson(jsonResponse, ConfigResponse.class);
+      ConfigResponse configResponse = GSON.fromJson(jsonResponse, DefaultConfigResponse.class);
       result.set(configResponse);
     } catch (Exception ex) {
       LOG.error("Exception caught during config", ex);
