@@ -15,6 +15,7 @@
 package io.cdap.cdap.internal.app.dispatcher;
 
 import io.cdap.cdap.app.deploy.ConfigResponse;
+import io.cdap.cdap.internal.app.deploy.DefaultConfigResponse;
 
 import javax.annotation.Nullable;
 
@@ -23,21 +24,21 @@ import javax.annotation.Nullable;
  * task.
  */
 public final class ConfigResponseResult {
-  private final ConfigResponse configResponse;
-  private final Throwable exception;
+  private final DefaultConfigResponse configResponse;
+  private final Exception exception;
 
-  public ConfigResponseResult(@Nullable ConfigResponse configResponse, @Nullable Throwable exception) {
-    this.configResponse = configResponse;
+  public ConfigResponseResult(@Nullable ConfigResponse configResponse, @Nullable Exception exception) {
+    this.configResponse = (DefaultConfigResponse) configResponse;
     this.exception = exception;
   }
 
   @Nullable
-  public Throwable getException() {
+  public Exception getException() {
     return exception;
   }
 
   @Nullable
-  public ConfigResponse getConfigResponse() {
+  public DefaultConfigResponse getConfigResponse() {
     return configResponse;
   }
 }
