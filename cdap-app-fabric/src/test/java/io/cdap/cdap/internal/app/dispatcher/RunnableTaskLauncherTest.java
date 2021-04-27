@@ -20,7 +20,9 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.FilePermission;
 import java.nio.charset.StandardCharsets;
+import java.security.AccessControlException;
 
 /**
  * Unit test for {@link RunnableTaskLauncher}.
@@ -29,11 +31,75 @@ public class RunnableTaskLauncherTest {
 
   @Test
   public void testLaunchRunnableTask() throws Exception {
-    String want = "test-want";
-    RunnableTaskRequest request = new RunnableTaskRequest(EchoRunnableTask.class.getName(), want);
+    String want = "test";
+    RunnableTaskRequest request = new RunnableTaskRequest(TestEchoRunnableTask.class.getName(), want);
 
     RunnableTaskLauncher launcher = new RunnableTaskLauncher(CConfiguration.create());
     byte[] got = launcher.launchRunnableTask(request);
     Assert.assertEquals(want, new String(got, StandardCharsets.UTF_8));
   }
+
+  @Test
+  public void testRunnableTaskWithValidPermission() throws Exception {
+    String want = "/tmp/test.txt";
+    RunnableTaskRequest request = new RunnableTaskRequest(TestFilePermissionRunnableTask.class.getName(), want);
+
+    RunnableTaskLauncher launcher = new RunnableTaskLauncher(CConfiguration.create());
+    byte[] got = launcher.launchRunnableTask(request);
+    Assert.assertEquals(want, new String(got, StandardCharsets.UTF_8));
+
+    want = System.getProperty("user.home") + "/test.txt";
+    request = new RunnableTaskRequest(TestFilePermissionRunnableTask.class.getName(), want);
+
+    launcher = new RunnableTaskLauncher(CConfiguration.create());
+    got = launcher.launchRunnableTask(request);
+    Assert.assertEquals(want, new String(got, StandardCharsets.UTF_8));
+  }
+
+  @Test(expected = AccessControlException.class)
+  public void testRunnableTaskWithInvalidPermission() throws Exception {
+    String want = "/usr/test.txt";
+    RunnableTaskRequest request = new RunnableTaskRequest(TestFilePermissionRunnableTask.class.getName(), want);
+
+    RunnableTaskLauncher launcher = new RunnableTaskLauncher(CConfiguration.create());
+    byte[] got = launcher.launchRunnableTask(request);
+    Assert.fail();
+  }
+
+  public static class TestEchoRunnableTask extends RunnableTask {
+    @Override
+    protected byte[] run(String param) throws Exception {
+      return param.getBytes();
+    }
+
+    @Override
+    protected void startUp() throws Exception {
+
+    }
+
+    @Override
+    protected void shutDown() throws Exception {
+
+    }
+  }
+
+  public static class TestFilePermissionRunnableTask extends RunnableTask {
+    @Override
+    protected byte[] run(String param) throws Exception {
+      FilePermission fp = new FilePermission(param, "read");
+      System.getSecurityManager().checkPermission(fp);
+      return param.getBytes();
+    }
+
+    @Override
+    protected void startUp() throws Exception {
+
+    }
+
+    @Override
+    protected void shutDown() throws Exception {
+
+    }
+  }
+
 }

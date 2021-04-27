@@ -20,6 +20,9 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.internal.app.dispatcher.security.RunnableTaskPolicy;
+
+import java.security.Policy;
 
 /**
  * RunnableTaskLauncher launches a runnable task.
@@ -32,7 +35,7 @@ public class RunnableTaskLauncher {
   }
 
   public byte[] launchRunnableTask(RunnableTaskRequest request) throws Exception {
-
+    setSecurityManager();
     ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
     Class<?> clazz = classLoader.loadClass(request.className);
 
@@ -47,5 +50,14 @@ public class RunnableTaskLauncher {
       throw new Exception(String.format("service %s failed to start", request.className));
     }
     return runnableTask.runTask(request.param);
+  }
+
+  private void setSecurityManager() {
+    SecurityManager sm = new SecurityManager();
+    if (System.getSecurityManager() != null) {
+      return;
+    }
+    Policy.setPolicy(new RunnableTaskPolicy());
+    System.setSecurityManager(sm);
   }
 }
