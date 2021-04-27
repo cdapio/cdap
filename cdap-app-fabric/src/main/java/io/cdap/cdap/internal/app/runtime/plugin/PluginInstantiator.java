@@ -76,7 +76,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.jar.JarFile;
 import javax.annotation.Nullable;
 
 /**
@@ -445,8 +444,7 @@ public class PluginInstantiator implements Closeable {
     public PluginClassLoader load(ClassLoaderKey key) throws Exception {
       File unpackedDir = DirUtils.createTempDir(tmpDir);
       File artifact = new File(pluginDir, Artifacts.getFileName(key.artifact));
-      BundleJarUtil.unJar(Locations.toLocation(artifact), unpackedDir, name ->
-        name.equals(JarFile.MANIFEST_NAME) || name.endsWith(".jar"));
+      BundleJarUtil.prepareClassLoaderFolder(Locations.toLocation(artifact), unpackedDir);
 
       Iterator<ArtifactId> parentIter = key.parents.iterator();
       if (!parentIter.hasNext()) {
