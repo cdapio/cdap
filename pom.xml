@@ -182,6 +182,10 @@
     <cask.packages.snapshot.repo>http://cask.invalid.snapshot.repo.co</cask.packages.snapshot.repo>
     <cask.packages.release.repo>http://cask.invalid.release.repo.co</cask.packages.release.repo>
     <release.iteration>1</release.iteration>
+
+    <sonar.projectKey>cdapio_cdap</sonar.projectKey>
+    <sonar.organization>cdap</sonar.organization>
+    <sonar.host.url>https://sonarcloud.io</sonar.host.url>
   </properties>
 
   <dependencyManagement>

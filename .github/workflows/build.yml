@@ -40,8 +40,16 @@ jobs:
           key: ${{ runner.os }}-maven-${{ github.workflow }}-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-${{ github.workflow }}
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v1
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
       - name: Build with Maven
-        run: mvn clean test -fae -T 2 -B -V -P templates,skip-hbase-compat-tests -Dmaven.wagon.http.retryHandler.count=3 -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: mvn clean test org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -fae -T 2 -B -V -P templates,skip-hbase-compat-tests -Dmaven.wagon.http.retryHandler.count=3 -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
       - name: Archive build artifacts
         uses: actions/upload-artifact@v2.2.2
         if: always()
