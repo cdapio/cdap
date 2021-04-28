@@ -84,6 +84,7 @@ public class ProvisioningServiceTest {
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+  public static final String APP_CDAP_VERSION = "6.4.4";
 
   private static ProvisioningService provisioningService;
   private static TransactionManager txManager;
@@ -138,6 +139,7 @@ public class ProvisioningServiceTest {
     TaskFields taskFields = createTaskInfo(new MockProvisioner.PropertyBuilder()
                                              .setFirstClusterStatus(ClusterStatus.RUNNING)
                                              .failRetryablyEveryN(2)
+                                             .setExpectedAppCDAPVersion(APP_CDAP_VERSION)
                                              .build());
 
     Cluster cluster = new Cluster("test", ClusterStatus.NOT_EXISTS, Collections.emptyList(), Collections.emptyMap());
@@ -151,6 +153,7 @@ public class ProvisioningServiceTest {
     TaskFields taskFields = createTaskInfo(new MockProvisioner.PropertyBuilder()
                                              .setFirstClusterStatus(ClusterStatus.RUNNING)
                                              .failGet()
+                                             .setExpectedAppCDAPVersion(APP_CDAP_VERSION)
                                              .build());
 
     Cluster cluster = new Cluster("test", ClusterStatus.NOT_EXISTS, Collections.emptyList(), Collections.emptyMap());
@@ -173,7 +176,9 @@ public class ProvisioningServiceTest {
 
   @Test
   public void testNoErrors() throws Exception {
-    ProvisionerInfo provisionerInfo = new MockProvisioner.PropertyBuilder().build();
+    ProvisionerInfo provisionerInfo = new MockProvisioner.PropertyBuilder()
+      .setExpectedAppCDAPVersion(APP_CDAP_VERSION)
+      .build();
     TaskFields taskFields = testProvision(ProvisioningOp.Status.CREATED, provisionerInfo);
     testDeprovision(taskFields.programRunId, ProvisioningOp.Status.DELETED);
   }
@@ -336,12 +341,13 @@ public class ProvisioningServiceTest {
 
     Profile profile = new Profile(ProfileId.NATIVE.getProfile(), "label", "desc", provisionerInfo);
     SystemArguments.addProfileArgs(systemArgs, profile);
+    systemArgs.put(Constants.APP_CDAP_VERSION, APP_CDAP_VERSION);
     ProgramOptions programOptions = new SimpleProgramOptions(programRunId.getParent(),
                                                              new BasicArguments(systemArgs),
                                                              new BasicArguments(userArgs));
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
     ApplicationSpecification appSpec = new DefaultApplicationSpecification(
-      "name", "1.0.0", "desc", null, artifactId,
+      "name", "1.0.0", APP_CDAP_VERSION, "desc", null, artifactId,
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
       Collections.emptyMap());

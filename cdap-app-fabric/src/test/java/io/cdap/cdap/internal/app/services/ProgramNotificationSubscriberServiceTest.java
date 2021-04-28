@@ -34,6 +34,7 @@ import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.DefaultApplicationSpecification;
@@ -225,7 +226,7 @@ public class ProgramNotificationSubscriberServiceTest {
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
 
     ApplicationSpecification appSpec = new DefaultApplicationSpecification(
-      "name", "1.0.0", "desc", null, artifactId,
+      "name", "1.0.0", ProjectInfo.getVersion().toString(), "desc", null, artifactId,
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
       Collections.emptyMap());
@@ -302,7 +303,7 @@ public class ProgramNotificationSubscriberServiceTest {
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
 
     ApplicationSpecification appSpec = new DefaultApplicationSpecification(
-      "name", "1.0.0", "desc", null, artifactId,
+      "name", "1.0.0", ProjectInfo.getVersion().toString(), "desc", null, artifactId,
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
       Collections.emptyMap());

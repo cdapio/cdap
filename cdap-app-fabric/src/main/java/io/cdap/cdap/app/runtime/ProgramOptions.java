@@ -33,7 +33,6 @@ import java.util.Map;
  * Represents options for a program execution.
  */
 public interface ProgramOptions {
-
   /**
    * Returns the unique identifier for a program.
    */

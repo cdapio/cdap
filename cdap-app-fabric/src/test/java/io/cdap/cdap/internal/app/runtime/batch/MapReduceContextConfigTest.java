@@ -24,6 +24,7 @@ import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.internal.app.DefaultApplicationSpecification;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
@@ -50,7 +51,7 @@ public class MapReduceContextConfigTest {
       hConf.setInt(String.valueOf(i), i);
     }
     ApplicationSpecification appSpec = new DefaultApplicationSpecification(
-      "name", "desc", appCfg.toString(),
+      "name", ProjectInfo.getVersion().toString(), "desc", appCfg.toString(),
       new ArtifactId("artifact", new ArtifactVersion("1.0.0"), ArtifactScope.USER),
       Collections.emptyMap(),
       Collections.emptyMap(),
