@@ -159,7 +159,7 @@
     <quartz.version>2.2.0</quartz.version>
     <resteasy.version>3.0.8.Final</resteasy.version>
     <rs-api.version>2.0</rs-api.version>
-    <scala2.11.version>2.11.8</scala2.11.version>
+    <scala2.11.version>2.11.12</scala2.11.version>
     <!-- Please keep consistent with the one in Spark 3 -->
     <scala2.12.version>2.12.10</scala2.12.version>
     <servlet.api.version>3.0.1</servlet.api.version>
@@ -859,6 +859,10 @@
         <version>${hbase10.version}</version>
         <exclusions>
           <exclusion>
+            <groupId>jdk.tools</groupId>
+            <artifactId>jdk.tools</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
           </exclusion>
@@ -869,6 +873,10 @@
         <artifactId>hbase-client</artifactId>
         <version>${hbase10.version}</version>
         <exclusions>
+          <exclusion>
+            <groupId>jdk.tools</groupId>
+            <artifactId>jdk.tools</artifactId>
+          </exclusion>
           <exclusion>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
@@ -1338,6 +1346,10 @@
         <scope>test</scope>
         <exclusions>
           <exclusion>
+            <groupId>jdk.tools</groupId>
+            <artifactId>jdk.tools</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
@@ -1780,7 +1792,8 @@
           <version>3.3.1</version>
           <configuration>
             <args>
-              <arg>-target:jvm-1.7</arg>
+              <arg>-target:jvm-1.8</arg>
+              <arg>-nobootcp</arg>
             </args>
           </configuration>
           <executions>
