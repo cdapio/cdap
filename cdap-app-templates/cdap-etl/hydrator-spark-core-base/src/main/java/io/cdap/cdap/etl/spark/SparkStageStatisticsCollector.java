@@ -52,6 +52,21 @@ public class SparkStageStatisticsCollector implements StageStatisticsCollector, 
     errorRecordCounter.add(1);
   }
 
+  @Override
+  public void incrementInputRecordCount(long n) {
+    inputRecordCounter.add(n);
+  }
+
+  @Override
+  public void incrementOutputRecordCount(long n) {
+    outputRecordCounter.add(n);
+  }
+
+  @Override
+  public void incrementErrorRecordCount(long n) {
+    errorRecordCounter.add(n);
+  }
+
   public long getInputRecordCount() {
     return inputRecordCounter.value();
   }

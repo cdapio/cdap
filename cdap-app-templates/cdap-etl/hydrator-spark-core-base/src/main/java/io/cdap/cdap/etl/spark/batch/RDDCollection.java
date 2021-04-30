@@ -95,7 +95,6 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
       sec.getRuntimeArguments().getOrDefault(Constants.DATASET_AGGREGATE_ENABLED, Boolean.TRUE.toString()));
     this.ignorePartitionsDuringDatasetAggregation = Boolean.parseBoolean(
       sec.getRuntimeArguments().getOrDefault(Constants.DATASET_AGGREGATE_IGNORE_PARTITIONS, Boolean.TRUE.toString()));
-
   }
 
   @SuppressWarnings("unchecked")
@@ -133,9 +132,10 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
     boolean seenRequired = joinRequest.isLeftRequired();
     Dataset<Row> joined = left;
     for (JoinCollection toJoin : joinRequest.getToJoin()) {
-      RDDCollection<StructuredRecord> data = (RDDCollection<StructuredRecord>) toJoin.getData();
+      SparkCollection<StructuredRecord> data = (SparkCollection<StructuredRecord>) toJoin.getData();
       StructType sparkSchema = DataFrames.toDataType(toJoin.getSchema());
-      Dataset<Row> right = toDataset(data.rdd.map(recordsInCounter), sparkSchema);
+      Dataset<Row> right = toDataset(((JavaRDD<StructuredRecord>) data.getUnderlying()).map(recordsInCounter),
+                                     sparkSchema);
       collections.put(toJoin.getStage(), right);
 
       List<Column> rightJoinColumns = toJoin.getKey().stream()

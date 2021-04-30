@@ -31,7 +31,9 @@ import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.etl.api.JoinElement;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngine;
+import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDataset;
 import io.cdap.cdap.etl.api.join.JoinDefinition;
+import io.cdap.cdap.etl.api.join.JoinStage;
 import io.cdap.cdap.etl.batch.BatchPhaseSpec;
 import io.cdap.cdap.etl.batch.PipelinePluginInstantiator;
 import io.cdap.cdap.etl.batch.connector.SingleConnectorFactory;
@@ -40,6 +42,7 @@ import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.SetMultimapCodec;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import io.cdap.cdap.etl.common.plugin.PipelinePluginContext;
+import io.cdap.cdap.etl.engine.SQLEngineJob;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.SparkCollection;
 import io.cdap.cdap.etl.spark.SparkPairCollection;
@@ -54,6 +57,8 @@ import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.SQLContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scala.Tuple2;
 
 import java.io.BufferedReader;
@@ -70,6 +75,7 @@ import javax.annotation.Nullable;
  * Batch Spark pipeline driver.
  */
 public class BatchSparkPipelineDriver extends SparkPipelineRunner implements JavaSparkMain, TxRunnable {
+  private static final Logger LOG = LoggerFactory.getLogger(BatchSparkPipelineDriver.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>())
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
@@ -83,6 +89,7 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
   private transient SparkBatchSinkFactory sinkFactory;
   private transient DatasetContext datasetContext;
   private transient Map<String, Integer> stagePartitions;
+  private transient FunctionCache.Factory functionCacheFactory;
   private transient BatchSQLEngineAdapter sqlEngineAdapter = null;
 
   @Override
@@ -92,6 +99,7 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
     FlatMapFunction<Tuple2<Object, Object>, RecordInfo<Object>> sourceFunction =
       new BatchSourceFunction(pluginFunctionContext, functionCacheFactory.newCache());
+    this.functionCacheFactory = functionCacheFactory;
     return new RDDCollection<>(sec, functionCacheFactory, jsc,
                                new SQLContext(jsc), datasetContext, sinkFactory, sourceFactory
       .createRDD(sec, jsc, stageSpec.getName(), Object.class, Object.class)
@@ -170,17 +178,30 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
       if (phaseSpec.getSQLEngineStageSpec() != null) {
         String sqlEngineStage =
           "sqlengine_" + Strings.nullToEmpty(phaseSpec.getSQLEngineStageSpec().getPlugin().getName()).toLowerCase();
-        Object sqlEngineInstance = pluginInstantiator.newPluginInstance(sqlEngineStage);
-        if (sqlEngineInstance instanceof SQLEngine) {
-          sqlEngineAdapter = new BatchSQLEngineAdapter((SQLEngine<?, ?, ?, ?>) sqlEngineInstance);
+
+        try {
+          Object instance = pluginInstantiator.newPluginInstance(sqlEngineStage);
+          sqlEngineAdapter = new BatchSQLEngineAdapter<Object>((SQLEngine<?, ?, ?, ?>) instance,
+                                                               sec.getMetrics(),
+                                                               collectors);
+        } catch (InstantiationException ie) {
+          LOG.error("Could not create plugin instance for SQLEngine class", ie);
+        } finally {
+          if (sqlEngineAdapter == null) {
+            LOG.warn("Could not instantiate SQLEngine instance for Transformation Pushdown");
+          }
         }
-        //TODO: Add validations and error handling in case this instance cannot be instantiated
       }
 
       runPipeline(phaseSpec, BatchSource.PLUGIN_TYPE, sec, stagePartitions, pluginInstantiator, collectors,
                   sinkFactory.getUncombinableSinks(), shouldConsolidateStages, shouldCacheFunctions);
     } finally {
       updateWorkflowToken(sec.getWorkflowToken(), collectors);
+
+      // Close SQL Engine Adapter if neeeded,
+      if (sqlEngineAdapter != null) {
+        sqlEngineAdapter.close();
+      }
     }
   }
 
@@ -201,11 +222,66 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   protected SparkCollection<Object> handleAutoJoin(String stageName, JoinDefinition joinDefinition,
-                                                 Map<String, SparkCollection<Object>> inputDataCollections,
-                                                 @Nullable Integer numPartitions) {
-    //TODO: Add logic to execute join operation on SQL Engine.
+                                                   Map<String, SparkCollection<Object>> inputDataCollections,
+                                                   @Nullable Integer numPartitions) {
+
+    if (sqlEngineAdapter != null && canJoinOnSQLEngine(joinDefinition, inputDataCollections)) {
+      // If we can execute this join operation using the SQL engine, we need to replace all Input collections with
+      // collections representing data that has been pushed to the SQL engine.
+      for (JoinStage joinStage : joinDefinition.getStages()) {
+        String joinStageName = joinStage.getStageName();
+
+        // If the input collection is already a SQL Engine collection, there's no need to push.
+        if (inputDataCollections.get(joinStageName) instanceof SQLEngineCollection) {
+          continue;
+        }
+
+        SparkCollection<Object> collection = inputDataCollections.get(joinStage.getStageName());
+
+        SQLEngineJob<SQLDataset> pushJob = sqlEngineAdapter.push(joinStageName,
+                                                                 joinStage.getSchema(),
+                                                                 collection);
+        inputDataCollections.put(joinStageName,
+                                 new SQLEngineCollection<>(sec, functionCacheFactory, jsc, new SQLContext(jsc),
+                                                           datasetContext, sinkFactory, collection,
+                                                           joinStageName, sqlEngineAdapter, pushJob));
+      }
+    }
 
     return super.handleAutoJoin(stageName, joinDefinition, inputDataCollections, numPartitions);
+  }
+
+  /**
+   * Decide if we should pushdown this join operation into the SQL Engine.
+   *
+   * We will use pushdown if a SQL engine is available, unless:
+   *
+   * 1. One of the sides of the join is a broadcast, unle
+   *
+   * @param joinDefinition the Join Definition
+   * @param inputDataCollections the input data collections
+   * @return boolean used to decide wether to pushdown this collection or not.
+   */
+  public static boolean canJoinOnSQLEngine(JoinDefinition joinDefinition,
+                                           Map<String, SparkCollection<Object>> inputDataCollections) {
+
+    boolean containsBroadcastStage = false;
+
+    for (JoinStage stage : joinDefinition.getStages()) {
+      if (stage.isBroadcast()) {
+        // If there is a broadcast stage in this join, this is a potential reason to not execute the join in the SQL
+        // engine.
+        containsBroadcastStage = true;
+      } else if (inputDataCollections.get(stage.getStageName()) instanceof SQLEngineCollection) {
+        // If any of the existing non-broadcast input collections already exists on the SQL engine, we should
+        // execute this operation in the SQL engine.
+        return true;
+      }
+    }
+
+    // Execute in the SQL engine if there are no broadcast stages for this join.
+    return !containsBroadcastStage;
   }
 }

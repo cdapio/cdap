@@ -19,11 +19,14 @@ package io.cdap.cdap.etl.api.engine.sql.request;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.data.schema.Schema;
 
+import java.io.Serializable;
+
 /**
  * Class representing a Request to push a dataset to a SQL engine.
  */
 @Beta
-public class SQLPushRequest {
+public class SQLPushRequest implements Serializable {
+  private static final long serialVersionUID = -6749961305721580710L;
   private final String datasetName;
   private final Schema datasetSchema;
 
@@ -32,10 +35,16 @@ public class SQLPushRequest {
     this.datasetSchema = datasetSchema;
   }
 
+  /**
+   * Get the name of the dataset that is getting pushed to the engine.
+   */
   public String getDatasetName() {
     return datasetName;
   }
 
+  /**
+   * Get the name of the records that are getting pushed to the engine.
+   */
   public Schema getDatasetSchema() {
     return datasetSchema;
   }

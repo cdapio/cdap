@@ -112,7 +112,7 @@ public class PipelinePluginInstantiator implements PluginContext {
       return (T) connectorFactory.createSink(datasetName, phaseSpec.getPhaseName());
     }
     StageSpec stageSpec = phaseSpec.getPhase().getStage(stageName);
-    if (stageSpec.getPluginType().equals(AlertPublisher.PLUGIN_TYPE)) {
+    if (stageSpec != null && stageSpec.getPluginType().equals(AlertPublisher.PLUGIN_TYPE)) {
       String datasetName = phaseSpec.getConnectorDatasets().get(stageName);
       return (T) new AlertPublisherSink(datasetName, phaseSpec.getPhaseName());
     }

@@ -486,8 +486,8 @@ public abstract class SparkPipelineRunner {
   }
 
   protected SparkCollection<Object> handleAutoJoin(String stageName, JoinDefinition joinDefinition,
-                                                 Map<String, SparkCollection<Object>> inputDataCollections,
-                                                 @Nullable Integer numPartitions) {
+                                                   Map<String, SparkCollection<Object>> inputDataCollections,
+                                                   @Nullable Integer numPartitions) {
     JoinCondition.Op conditionType = joinDefinition.getCondition().getOp();
     if (conditionType == JoinCondition.Op.KEY_EQUALITY) {
       return handleAutoJoinOnKeys(stageName, joinDefinition, inputDataCollections, numPartitions);
@@ -598,7 +598,7 @@ public abstract class SparkPipelineRunner {
                                               left.isRequired(), onKeys.isNullSafe(),
                                               joinDefinition.getSelectedFields(),
                                               joinDefinition.getOutputSchema(), toJoin, numPartitions,
-                                              joinDefinition.getDistribution());
+                                              joinDefinition.getDistribution(), joinDefinition);
     return leftCollection.join(joinRequest);
   }
 
@@ -630,7 +630,7 @@ public abstract class SparkPipelineRunner {
                                                         rightStage.isRequired(), rightStage.isBroadcast());
     JoinExpressionRequest joinRequest = new JoinExpressionRequest(stageName, joinDefinition.getSelectedFields(),
                                                                   leftCollection, rightCollection, condition,
-                                                                  joinDefinition.getOutputSchema());
+                                                                  joinDefinition.getOutputSchema(), joinDefinition);
 
     return leftData.join(joinRequest);
   }

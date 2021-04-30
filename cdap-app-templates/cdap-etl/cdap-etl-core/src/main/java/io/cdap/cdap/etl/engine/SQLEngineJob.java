@@ -17,7 +17,9 @@
 package io.cdap.cdap.etl.engine;
 
 import java.util.Objects;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -26,29 +28,15 @@ import java.util.concurrent.Future;
  * @param <T> The output type for this SQL Engine Job.
  */
 public class SQLEngineJob<T> {
-  private final String tableName;
-  private final SQLEngineJobType type;
-  private SQLEngineJobStatus status;
+  private final SQLEngineJobKey key;
   private final CompletableFuture<T> task;
 
-  public SQLEngineJob(String tableName, SQLEngineJobType type, CompletableFuture<T> task) {
-    this.tableName = tableName;
-    this.type = type;
-    this.status = SQLEngineJobStatus.CREATED;
+  public SQLEngineJob(SQLEngineJobKey key, CompletableFuture<T> task) {
+    this.key = key;
     this.task = task;
   }
 
-  public SQLEngineJobStatus updateStatus() {
-    if (!task.isDone()) {
-      status = SQLEngineJobStatus.RUNNING;
-    } else if (task.isCompletedExceptionally()) {
-      status = SQLEngineJobStatus.FAILED;
-    } else if (task.isDone()) {
-      status = SQLEngineJobStatus.COMPLETED;
-    }
 
-    return status;
-  }
 
   public boolean isDone() {
     return task.isDone();
@@ -58,36 +46,44 @@ public class SQLEngineJob<T> {
     return task.isCancelled();
   }
 
+  public boolean isCompletedExceptionally() {
+    return task.isCompletedExceptionally();
+  }
+
   public T result() throws ExecutionException, InterruptedException {
     return task.get();
   }
 
-  public void waitFor() throws InterruptedException {
-    task.wait();
+  public T waitFor() throws CompletionException, CancellationException {
+    return task.join();
   }
 
   public void waitFor(long timeout) throws InterruptedException {
     task.wait(timeout);
   }
 
-  public String getTableName() {
-    return tableName;
+  public T get() throws ExecutionException, InterruptedException {
+    return task.get();
+  }
+
+  public SQLEngineJobKey getKey() {
+    return key;
+  }
+
+  public String getDatasetName() {
+    return key.getDatasetName();
   }
 
   public SQLEngineJobType getType() {
-    return type;
+    return key.getJobType();
   }
 
-  public SQLEngineJobStatus getStatus() {
-    return status;
-  }
-
-  public Future<?> getTask() {
+  public CompletableFuture<?> getTask() {
     return task;
   }
 
   public void cancel() {
-    if (!task.isDone() || task.isCompletedExceptionally() || task.isCancelled()) {
+    if (!task.isDone()) {
       task.cancel(true);
     }
   }
@@ -101,13 +97,11 @@ public class SQLEngineJob<T> {
       return false;
     }
     SQLEngineJob that = (SQLEngineJob) o;
-    return tableName.equals(that.tableName) &&
-      type == that.type &&
-      status == that.status;
+    return this.key.equals(that.key);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(tableName, type, status);
+    return Objects.hash(key);
   }
 }
