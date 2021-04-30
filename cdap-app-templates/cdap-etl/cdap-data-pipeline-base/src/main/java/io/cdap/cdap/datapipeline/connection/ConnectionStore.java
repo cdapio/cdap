@@ -48,7 +48,7 @@ import javax.annotation.Nullable;
  *  [namespace][connection-id]                                  connection_data -> Connection{@link Connection}
  */
 public class ConnectionStore {
-  public static final StructuredTableId TABLE_ID = new StructuredTableId("connections");
+  public static final StructuredTableId TABLE_ID = new StructuredTableId("connections_store");
   private static final String NAMESPACE_FIELD = "namespace";
   private static final String CONNECTION_ID_FIELD = "connection_id";
   // this field is to ensure the connection information is correctly fetched if a namespace is recreated
