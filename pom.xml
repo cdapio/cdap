@@ -586,6 +586,12 @@
         <groupId>org.apache.twill</groupId>
         <artifactId>twill-zookeeper</artifactId>
         <version>${twill.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>jdk.toools</groupId>
+            <artifactId>jdk.tools</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.thrift</groupId>
@@ -1582,6 +1588,12 @@
         <artifactId>tez-api</artifactId>
         <version>${tez.version}</version>
         <scope>provided</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>jdk.tools</groupId>
+            <artifactId>jdk.tools</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.mockftpserver</groupId>
