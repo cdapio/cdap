@@ -80,6 +80,13 @@
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-watchdog</artifactId>
       <version>${project.version}</version>
+      <!-- paranamer corresponding to spark version should be used and provided by the runtime -->
+      <exclusions>
+        <exclusion>
+          <groupId>com.thoughtworks.paranamer</groupId>
+          <artifactId>paranamer</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
