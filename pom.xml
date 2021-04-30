@@ -671,6 +671,10 @@
             <artifactId>slf4j-api</artifactId>
             <groupId>org.slf4j</groupId>
           </exclusion>
+          <exclusion>
+            <artifactId>jdk.tools</artifactId>
+            <groupId>jdk.tools</groupId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -1582,6 +1586,12 @@
         <artifactId>tez-api</artifactId>
         <version>${tez.version}</version>
         <scope>provided</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>jdk.tools</groupId>
+            <artifactId>jdk.tools</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.mockftpserver</groupId>
