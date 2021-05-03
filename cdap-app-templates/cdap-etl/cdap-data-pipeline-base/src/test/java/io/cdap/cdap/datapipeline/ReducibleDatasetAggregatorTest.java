@@ -32,13 +32,24 @@ public class ReducibleDatasetAggregatorTest extends ReducibleAggregatorTestBase 
     Constants.DATASET_AGGREGATE_IGNORE_PARTITIONS, "false"
   );
 
+  /**
+   * Settings to test with dataset aggregation.
+   */
+  private static final Map<String, String> DATASET_AGGREGATE_JAVA_SERIALIZATION = ImmutableMap.of(
+    Constants.DATASET_AGGREGATE_ENABLED, "true",
+    Constants.DATASET_AGGREGATE_IGNORE_PARTITIONS, "false",
+    Constants.DATASET_KRYO_ENABLED, "false"
+  );
+
   @Test
   public void testSimpleAggregator() throws Exception {
     testSimpleAggregator(Engine.SPARK, DATASET_AGGREGATE);
+    testSimpleAggregator(Engine.SPARK, DATASET_AGGREGATE_JAVA_SERIALIZATION);
   }
 
   @Test
   public void testFieldCountAgg() throws Exception {
     testFieldCountAgg(Engine.SPARK, DATASET_AGGREGATE);
+    testFieldCountAgg(Engine.SPARK, DATASET_AGGREGATE_JAVA_SERIALIZATION);
   }
 }
