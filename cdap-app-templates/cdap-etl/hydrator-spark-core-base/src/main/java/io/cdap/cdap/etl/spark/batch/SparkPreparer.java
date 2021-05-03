@@ -21,7 +21,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
-import io.cdap.cdap.api.data.batch.OutputFormatProvider;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.metrics.Metrics;
@@ -29,7 +28,10 @@ import io.cdap.cdap.api.spark.SparkClientContext;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.etl.api.batch.BatchConfigurable;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
+import io.cdap.cdap.etl.api.engine.sql.BatchSQLEngine;
 import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
+import io.cdap.cdap.etl.batch.BatchPhaseSpec;
+import io.cdap.cdap.etl.batch.PipelinePluginInstantiator;
 import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.FieldOperationTypeAdapter;
 import io.cdap.cdap.etl.common.PhaseSpec;
@@ -38,6 +40,7 @@ import io.cdap.cdap.etl.common.SetMultimapCodec;
 import io.cdap.cdap.etl.common.submit.ContextProvider;
 import io.cdap.cdap.etl.common.submit.Finisher;
 import io.cdap.cdap.etl.common.submit.SubmitterPlugin;
+import io.cdap.cdap.etl.engine.SQLEngineUtils;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.AbstractSparkPreparer;
 import io.cdap.cdap.etl.spark.SparkSubmitterContext;
@@ -54,6 +57,7 @@ import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Prepares Spark batch jobs.
@@ -94,6 +98,15 @@ public class SparkPreparer extends AbstractSparkPreparer {
         }
       }
     });
+
+    // Add handler for SQL Engine
+    if (phaseSpec instanceof BatchPhaseSpec) {
+      Finisher sqlEngineFinisher = prepareSQLEngine((BatchPhaseSpec) phaseSpec);
+
+      if (sqlEngineFinisher != null) {
+        finishers.add(sqlEngineFinisher);
+      }
+    }
 
     try (Writer writer = Files.newBufferedWriter(configFile.toPath(), StandardCharsets.UTF_8)) {
       SparkBatchSourceSinkFactoryInfo sourceSinkInfo = new SparkBatchSourceSinkFactoryInfo(sourceFactory,
@@ -136,5 +149,38 @@ public class SparkPreparer extends AbstractSparkPreparer {
   @Override
   protected SparkSubmitterContext getSparkSubmitterContext(DatasetContext dsContext, StageSpec stageSpec) {
     return new SparkSubmitterContext(context, pipelineRuntime, dsContext, stageSpec);
+  }
+
+  protected SubmitterPlugin createSQLEngine(BatchSQLEngine<?, ?, ?, ?> batchSQLEngine, StageSpec stageSpec) {
+    String stageName = SQLEngineUtils.buildStageName(stageSpec.getPlugin().getName());
+    ContextProvider<SparkSubmitterContext> contextProvider =
+      dsContext -> getSparkSubmitterContext(dsContext, stageSpec);
+    return new SubmitterPlugin<>(stageName, context, batchSQLEngine, contextProvider,
+                                 ctx -> stageOperations.put(stageName, ctx.getFieldOperations()));
+  }
+
+  /**
+   * Prepares and sets up finisher for the SQL Engine instance.
+   * @param batchPhaseSpec the spec for this pipeline
+   * @return {@link Finisher} that can be used in the SQL engine, or null if no SQL engine is defined.
+   * @throws InstantiationException if this plugin could not be instantiated
+   * @throws TransactionFailureException if it was not possible to create the submitter plugin.
+   */
+  @Nullable
+  protected Finisher prepareSQLEngine(BatchPhaseSpec batchPhaseSpec)
+    throws InstantiationException, TransactionFailureException {
+
+    if (batchPhaseSpec.getSQLEngineStageSpec() == null) {
+      return null;
+    }
+
+    PipelinePluginInstantiator pluginInstantiator = getPluginInstantiator(batchPhaseSpec);
+
+    String sqlEngineStage = SQLEngineUtils.buildStageName(batchPhaseSpec.getSQLEngineStageSpec().getPlugin().getName());
+    BatchSQLEngine<?, ?, ?, ?> engine = pluginInstantiator.newPluginInstance(sqlEngineStage);
+    SubmitterPlugin submitterPlugin = createSQLEngine(engine, batchPhaseSpec.getSQLEngineStageSpec());
+    submitterPlugin.prepareRun();
+
+    return submitterPlugin;
   }
 }

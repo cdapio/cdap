@@ -22,19 +22,19 @@ import java.util.Objects;
  * Class used to represent the configuration properties that are needed to configure Transformation Pushdown.
  */
 public class ETLTransformationPushdown {
-  private final ETLPlugin engine;
+  private final ETLPlugin plugin;
 
   /**
    * Creates new instance.
    *
-   * @param engine the SQL Engine configuration
+   * @param plugin the SQL Engine configuration
    */
-  public ETLTransformationPushdown(ETLPlugin engine) {
-    this.engine = engine;
+  public ETLTransformationPushdown(ETLPlugin plugin) {
+    this.plugin = plugin;
   }
 
-  public ETLPlugin getEngine() {
-    return engine;
+  public ETLPlugin getPlugin() {
+    return plugin;
   }
 
   @Override
@@ -46,18 +46,18 @@ public class ETLTransformationPushdown {
       return false;
     }
     ETLTransformationPushdown that = (ETLTransformationPushdown) o;
-    return Objects.equals(engine, that.engine);
+    return Objects.equals(plugin, that.plugin);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(engine);
+    return Objects.hash(plugin);
   }
 
   @Override
   public String toString() {
     return "ETLTransformationPushdown{" +
-      "engine=" + engine +
+      "plugin=" + plugin +
       '}';
   }
 }

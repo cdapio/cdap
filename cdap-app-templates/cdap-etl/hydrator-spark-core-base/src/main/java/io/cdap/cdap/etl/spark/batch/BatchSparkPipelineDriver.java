@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.etl.spark.batch;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -43,6 +42,7 @@ import io.cdap.cdap.etl.common.SetMultimapCodec;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import io.cdap.cdap.etl.common.plugin.PipelinePluginContext;
 import io.cdap.cdap.etl.engine.SQLEngineJob;
+import io.cdap.cdap.etl.engine.SQLEngineUtils;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.SparkCollection;
 import io.cdap.cdap.etl.spark.SparkPairCollection;
@@ -176,8 +176,7 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
 
       // Initialize SQL engine instance if needed.
       if (phaseSpec.getSQLEngineStageSpec() != null) {
-        String sqlEngineStage =
-          "sqlengine_" + Strings.nullToEmpty(phaseSpec.getSQLEngineStageSpec().getPlugin().getName()).toLowerCase();
+        String sqlEngineStage = SQLEngineUtils.buildStageName(phaseSpec.getSQLEngineStageSpec().getPlugin().getName());
 
         try {
           Object instance = pluginInstantiator.newPluginInstance(sqlEngineStage);

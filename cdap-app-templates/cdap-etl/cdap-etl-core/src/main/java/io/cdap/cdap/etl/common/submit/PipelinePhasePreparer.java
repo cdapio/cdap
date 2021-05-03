@@ -65,8 +65,8 @@ import javax.annotation.Nullable;
  */
 public abstract class PipelinePhasePreparer {
 
-  private final PluginContext pluginContext;
-  private final Metrics metrics;
+  protected final PluginContext pluginContext;
+  protected final Metrics metrics;
   protected final MacroEvaluator macroEvaluator;
   protected final PipelineRuntime pipelineRuntime;
   protected Map<String, List<FieldOperation>> stageOperations;
@@ -87,8 +87,7 @@ public abstract class PipelinePhasePreparer {
    */
   public List<Finisher> prepare(PhaseSpec phaseSpec)
     throws TransactionFailureException, InstantiationException, IOException {
-    PipelinePluginInstantiator pluginInstantiator =
-      new PipelinePluginInstantiator(pluginContext, metrics, phaseSpec, new MultiConnectorFactory());
+    PipelinePluginInstantiator pluginInstantiator = getPluginInstantiator(phaseSpec);
     PipelinePhase phase = phaseSpec.getPhase();
 
     List<Finisher> finishers = new ArrayList<>();
@@ -152,6 +151,15 @@ public abstract class PipelinePhasePreparer {
     }
 
     return finishers;
+  }
+
+  /**
+   * Gets plugin instantiator instance.
+   * @param phaseSpec Phase Spec definition
+   * @return {@link PipelinePluginInstantiator} instance
+   */
+  protected PipelinePluginInstantiator getPluginInstantiator(PhaseSpec phaseSpec) {
+    return new PipelinePluginInstantiator(pluginContext, metrics, phaseSpec, new MultiConnectorFactory());
   }
 
   private void validateAutoJoiner(AutoJoiner autoJoiner, StageSpec stageSpec) {
