@@ -59,48 +59,42 @@ public class ConfiguratorTask extends RunnableTask {
 
   @Override
   protected byte[] run(String param) throws Exception {
-    LOG.error("Got Injections: " + pluginFinder.toString() + " " + artifactRepository.toString());
-    LOG.error("Recieved params: ");
+
     ConfiguratorConfig config = GSON.fromJson(param, ConfiguratorConfig.class);
-    LOG.error("Successfully parsed the GSON: ");
-    EntityImpersonator classLoaderImpersonator =
-      new EntityImpersonator(config.getArtifactId().toEntityId(), impersonator);
-    LOG.error("Created Impersoantor: ");
+
+    // Getting the pipeline app from appfabric
+    LOG.info(String.format("Fetching artifact '%s' from app-fabric to create artifact class loader.",
+                           config.getArtifactId().getName()));
     Location artifactLocation = Locations.getLocationFromAbsolutePath(
       locationFactory, config.getArtifactLocationURI().getPath());
     OutputStream outputStream = artifactLocation.getOutputStream();
-    LOG.error(String.format(
-      "Artifact name, version: %s, %s", config.getArtifactId().getName(), config.getArtifactId().getVersion()));
-    LOG.error(String.format(
-      "Application name, version, classname: %s, %s, %s",
-      config.getApplicationName(),
-      config.getApplicationVersion(),
-      config.getAppClassName()));
     InputStream artifactBytes = artifactRepository.getArtifactBytes(config.getArtifactId());
     ByteStreams.copy(artifactBytes, outputStream);
     outputStream.close();
     artifactBytes.close();
+    LOG.info(String.format("Successfully fetched artifact '%s'.", config.getArtifactId().getName()));
+
+
+    EntityImpersonator classLoaderImpersonator =
+      new EntityImpersonator(config.getArtifactId().toEntityId(), impersonator);
     ClassLoader artifactClassLoader = artifactRepository.createArtifactClassLoader(artifactLocation,
                                                                                    classLoaderImpersonator);
-    LOG.error("Created class loader: ");
+
     InMemoryConfigurator configurator = new InMemoryConfigurator(
       config.getcConf(), config.getAppNamespace(), config.getArtifactId(),
       config.getAppClassName(), pluginFinder,
       artifactClassLoader,
       config.getApplicationName(), config.getApplicationVersion(),
       config.getConfigString());
-    LOG.error("Created confiugrator ");
-    //
 
-    //
-    //    InMemoryConfigurator memoryConfigurator = new InMemoryConfigurator(config);
-    LOG.error("Running config");
     ListenableFuture<ConfigResponse> future = configurator.config();
-    LOG.error("Got future: " + future.toString());
     ConfigResponseResult result;
+
     try {
       result = new ConfigResponseResult(future.get(120, TimeUnit.SECONDS), null);
+      LOG.info("Successfully validated pipeline configuration.");
     } catch (Exception ex) {
+      LOG.warn("Encountered error while validating pipeline: ", ex);
       result = new ConfigResponseResult(null, ex);
     }
     return toBytes(result);

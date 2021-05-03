@@ -108,7 +108,7 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
       namespaceId = "default";
       scope = ArtifactScope.SYSTEM;
     }
-    String url = String.format("namespaces/%s/artifacts/download/%s/versions/%s?scope=%s",
+    String url = String.format("namespaces/%s/artifacts/%s/versions/%s/download?scope=%s",
                                namespaceId,
                                artifactId.getName(),
                                artifactId.getVersion(),

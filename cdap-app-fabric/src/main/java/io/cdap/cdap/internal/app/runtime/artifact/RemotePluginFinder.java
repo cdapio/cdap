@@ -55,6 +55,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Type;
+import java.net.HttpURLConnection;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
@@ -211,12 +212,11 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
     String path = response.getResponseBodyAsString();
     Location location = Locations.getLocationFromAbsolutePath(locationFactory, path);
 
-    // NOTE: Commenting out this check for testing. This should be restored before merging
+    // If the artifact doesnt exist locally then fetch it from app fabric and save it locally
     if (!location.exists()) {
-      LOG.error("Artifact location doesnt exist!! Trying to fetch it");
+      LOG.debug(String.format("Artifact '%s' is not present locally at %s, attempting to fetch it from app-fabric.",
+                              artifactId.getArtifact(), path));
       getAndStoreArtifact(artifactId, location);
-      //      throw new IOException(String.format("Artifact Location does not exist %s for artifact %s version %s",
-      //                                          path, artifactId.getArtifact(), artifactId.getVersion()));
     }
     return location;
   }
@@ -231,19 +231,22 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
       namespaceId = "default";
       scope = ArtifactScope.SYSTEM;
     }
-    String url = String.format("namespaces/%s/artifacts/download/%s/versions/%s?scope=%s",
+    String url = String.format("namespaces/%s/artifacts/%s/versions/%s/download?scope=%s",
                                namespaceId,
                                artifactId.getArtifact(),
                                artifactId.getVersion(),
                                scope);
 
-    LOG.error("Fetching artifact from " + url);
+    LOG.debug("Fetching artifact from " + url);
     HttpRequest.Builder requestBuilder = remoteClientInternal.requestBuilder(HttpMethod.GET, url);
     httpResponse = remoteClientInternal.execute(requestBuilder.build());
-    LOG.error(String.format("GOT RESPONSE CODE %d", httpResponse.getResponseCode()));
+    if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
+      throw new IOException(String.format("Failed to fetch artifact %s version %s from app-fabric",
+                                          artifactId.getArtifact(), artifactId.getVersion()));
+    }
     OutputStream outputStream = location.getOutputStream();
     ByteStreams.copy(new ByteArrayInputStream(httpResponse.getResponseBody()), outputStream);
     outputStream.close();
-    LOG.error("Copied artifact into " + location.toURI().toString());
+    LOG.debug("Stored artifact into " + location.toURI().toString());
   }
 }

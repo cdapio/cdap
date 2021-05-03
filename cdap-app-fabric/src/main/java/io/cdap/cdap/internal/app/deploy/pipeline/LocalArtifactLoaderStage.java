@@ -112,8 +112,6 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
     ClassLoader artifactClassLoader = artifactRepository.createArtifactClassLoader(artifactLocation,
                                                                                    classLoaderImpersonator);
     getContext().setProperty(LocalApplicationManager.ARTIFACT_CLASSLOADER_KEY, artifactClassLoader);
-    LOG.error("In the artifact loader stage, about to create config");
-
 
     Configurator configurator = this.configuratorFactory
       .build(cConf, Id.Namespace.fromEntityId(deploymentInfo.getNamespaceId()),
@@ -121,9 +119,8 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
              deploymentInfo.getApplicationName(),
              deploymentInfo.getApplicationVersion(),
              configString, artifactLocation);
-    LOG.error("Created remote configurator");
-    ListenableFuture<ConfigResponse> result = configurator.config();
 
+    ListenableFuture<ConfigResponse> result = configurator.config();
     ConfigResponse response = result.get(120, TimeUnit.SECONDS);
     if (response.getExitCode() != 0) {
       throw new IllegalArgumentException("Failed to configure application: " + deploymentInfo);

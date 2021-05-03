@@ -79,9 +79,9 @@ public class RemoteConfigurator implements Configurator {
   public ListenableFuture<ConfigResponse> config() {
     SettableFuture<ConfigResponse> result = SettableFuture.create();
     String jsonResponse = "";
+
     try {
       String param = GSON.toJson(config);
-      LOG.error("Sending param: " + param);
       RunnableTaskRequest req = new RunnableTaskRequest(ConfiguratorTask.class.getName(), param);
       String reqBody = GSON.toJson(req);
 
@@ -89,17 +89,12 @@ public class RemoteConfigurator implements Configurator {
         HttpMethod.POST, String.format("/worker/run")).withBody(reqBody);
       HttpResponse response = remoteClientInternal.execute(requestBuilder.build());
 
-      //      URI uri = URI.create("http://cdap-meseifan-rbac-task-worker:11020");
-      //      LOG.error("Sending request");
-      //      HttpResponse httpResponse = HttpRequests.execute(
-      //        HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
-      //          .withBody(reqBody).build(),
-      //        new DefaultHttpRequestConfig(false));
-      jsonResponse = (String) response.getResponseBodyAsString();
+      jsonResponse = response.getResponseBodyAsString();
     } catch (Exception ex) {
-      LOG.error("Exception caught during config", ex);
-      LOG.error(jsonResponse);
+      LOG.warn(String.format("Exception caught during RemoteConfigurator.config, got json response: %s", jsonResponse),
+               ex);
     }
+
     ConfigResponseResult configResponse = GSON.fromJson(jsonResponse, ConfigResponseResult.class);
     if (configResponse.getException() == null) {
       result.set(configResponse.getConfigResponse());

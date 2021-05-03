@@ -102,7 +102,7 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/namespaces/{namespace-id}/artifacts/download/{artifact-name}/versions/{artifact-version}")
+  @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}/download")
   public void getArtifactBytes(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("artifact-name") String artifactName,
@@ -110,12 +110,9 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
                                @QueryParam("scope") @DefaultValue("user") String scope) throws Exception {
 
     NamespaceId namespace = validateAndGetScopedNamespace(Ids.namespace(namespaceId), scope);
-    LOG.error(String.format("GOT REQUEST for %s %s %s", namespace, artifactName, artifactVersion));
-
     ArtifactId artifactId = new ArtifactId(namespace.getNamespace(), artifactName, artifactVersion);
-    LOG.error(String.format("GOT artifact ID  %s", artifactId.getEntityName()));
     InputStream artifactBytes = artifactRepository.getArtifactBytes(Id.Artifact.fromEntityId(artifactId));
-    LOG.error(String.format("GOT input stream %d", artifactBytes.available()));
+
     try {
       responder.sendContent(HttpResponseStatus.OK, new BodyProducer() {
 
@@ -201,6 +198,7 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
                            "Error reading artifact metadata from the store.");
     }
   }
+
   private ArtifactScope validateScope(String scope) throws BadRequestException {
     try {
       return ArtifactScope.valueOf(scope.toUpperCase());

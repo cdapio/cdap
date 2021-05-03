@@ -17,6 +17,7 @@ package io.cdap.cdap.internal.app.dispatcher;
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.MapBinder;
+import com.google.inject.util.Providers;
 import io.cdap.cdap.app.guice.DefaultProgramRunnerFactory;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
@@ -63,32 +64,21 @@ public class ConfiguratorTaskModule extends AbstractModule {
     // Bind ProgramRunner
     MapBinder<ProgramType, ProgramRunner> runnerFactoryBinder =
       MapBinder.newMapBinder(binder(), ProgramType.class, ProgramRunner.class);
-    // Programs with multiple instances have an InMemoryProgramRunner that starts threads to manage all of their
-    // instances.
-//    runnerFactoryBinder.addBinding(ProgramType.MAPREDUCE).to(MapReduceProgramRunner.class);
-//    runnerFactoryBinder.addBinding(ProgramType.WORKFLOW).to(WorkflowProgramRunner.class);
-//    runnerFactoryBinder.addBinding(ProgramType.WORKER).to(InMemoryWorkerRunner.class);
-//    runnerFactoryBinder.addBinding(ProgramType.SERVICE).to(InMemoryServiceProgramRunner.class);
-    bind(ProgramStateWriter.class).to(TempNoOpProgramStateWriter.class);
+    bind(ProgramStateWriter.class).toProvider(Providers.of(null));
     bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.LOCAL);
     bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
-
 
     bind(PluginFinder.class).to(RemotePluginFinder.class);
     bind(AuthenticationContext.class).to(MasterAuthenticationContext.class);
     bind(LocationFactory.class).to(LocalLocationFactory.class);
-//    install(new DFSLocationModule());
     bind(Impersonator.class).to(DefaultImpersonator.class);
     bind(UGIProvider.class).to(CurrentUGIProvider.class);
 
     bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class).in(Scopes.SINGLETON);
     bind(NamespaceQueryAdmin.class).to(RemoteNamespaceQueryClient.class);
     bind(MetadataServiceClient.class).to(DefaultMetadataServiceClient.class);
-//    bind(TransactionRunner.class).toProvider(StorageModule.TransactionRunnerProvider.class).in(Scopes.SINGLETON);
 
-    //TODO: Change to auth repo?
     bind(ArtifactRepository.class).to(RemoteArtifactRepository.class);
-
   }
 }
 
