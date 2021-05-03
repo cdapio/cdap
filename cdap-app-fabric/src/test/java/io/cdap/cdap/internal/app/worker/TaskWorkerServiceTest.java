@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.dispatcher;
+package io.cdap.cdap.internal.app.worker;
 
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -23,6 +23,8 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.common.internal.worker.RunnableTask;
+import io.cdap.cdap.common.internal.worker.RunnableTaskContext;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
@@ -59,7 +61,6 @@ public class TaskWorkerServiceTest {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.TaskWorker.ADDRESS, "localhost");
     cConf.setInt(Constants.TaskWorker.PORT, port);
-    cConf.setLong(Constants.Preview.REQUEST_POLL_DELAY_MILLIS, 200);
     cConf.setBoolean(Constants.Security.SSL.INTERNAL_ENABLED, false);
     return cConf;
   }
@@ -107,17 +108,11 @@ public class TaskWorkerServiceTest {
     InetSocketAddress addr = taskWorkerService.getBindAddress();
     URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
 
-    // Get request
-    HttpResponse response = HttpRequests.execute(HttpRequest.get(uri.resolve("/v3Internal/worker/get").toURL()).build(),
-                                                 new DefaultHttpRequestConfig(false));
-    Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-
     // Post valid request
     String want = "100";
     RunnableTaskRequest req = new RunnableTaskRequest(TestRunnableClass.class.getName(), want);
     String reqBody = GSON.toJson(req);
-    response = HttpRequests.execute(
+    HttpResponse response = HttpRequests.execute(
       HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
         .withBody(reqBody).build(),
       new DefaultHttpRequestConfig(false));
@@ -140,10 +135,8 @@ public class TaskWorkerServiceTest {
       HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
         .withBody(reqBody).build(),
       new DefaultHttpRequestConfig(false));
-    waitForTaskWorkerToFinish(taskWorkerService);
     Assert.assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
     Assert.assertTrue(response.getResponseBodyAsString().contains("java.lang.ClassNotFoundException"));
-    Assert.assertTrue(taskWorkerService.state() == Service.State.TERMINATED);
   }
 
   @Test
@@ -186,23 +179,13 @@ public class TaskWorkerServiceTest {
     Assert.assertTrue(taskWorkerService.state() == Service.State.TERMINATED);
   }
 
-  public static class TestRunnableClass extends RunnableTask {
+  public static class TestRunnableClass implements RunnableTask {
     @Override
-    protected byte[] run(String param) throws Exception {
-      if (!param.equals("")) {
-        Thread.sleep(Integer.valueOf(param));
+    public void run(RunnableTaskContext context) throws Exception {
+      if (!context.getParam().equals("")) {
+        Thread.sleep(Integer.valueOf(context.getParam()));
       }
-      return param.getBytes();
-    }
-
-    @Override
-    protected void startUp() throws Exception {
-
-    }
-
-    @Override
-    protected void shutDown() throws Exception {
-
+      context.writeResult(context.getParam().getBytes());
     }
   }
 }

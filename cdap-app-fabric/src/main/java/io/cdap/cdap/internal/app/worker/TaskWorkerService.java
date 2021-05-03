@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.dispatcher;
+package io.cdap.cdap.internal.app.worker;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -25,6 +25,7 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
+import io.cdap.cdap.common.internal.worker.RunnableTask;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Cancellable;
@@ -36,7 +37,7 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A scheduled service that periodically poll for new preview request and execute it.
+ * Launches an HTTP server for receiving and handling {@link RunnableTask}
  */
 public class TaskWorkerService extends AbstractIdleService {
 
@@ -45,7 +46,7 @@ public class TaskWorkerService extends AbstractIdleService {
   private final CConfiguration cConf;
   private final SConfiguration sConf;
   private final DiscoveryService discoveryService;
-  private NettyHttpService httpService;
+  private final NettyHttpService httpService;
   private Cancellable cancelDiscovery;
   private InetSocketAddress bindAddress;
 
@@ -56,24 +57,7 @@ public class TaskWorkerService extends AbstractIdleService {
     this.cConf = cConf;
     this.sConf = sConf;
     this.discoveryService = discoveryService;
-  }
 
-  @Override
-  protected void startUp() throws Exception {
-    LOG.debug("Starting TaskWorker service");
-    launchHttpServer();
-    LOG.debug("Starting TaskWorker service has completed");
-  }
-
-  @Override
-  protected void shutDown() throws Exception {
-    LOG.debug("Shutting down TaskWorker service");
-    shutdownHttpServer();
-    LOG.debug("Shutting down TaskWorker service has completed");
-  }
-
-  private void launchHttpServer() throws Exception {
-    LOG.info("Starting TaskWorker http server");
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TASK_WORKER)
       .setHost(cConf.get(Constants.TaskWorker.ADDRESS))
       .setPort(cConf.getInt(Constants.TaskWorker.PORT))
@@ -86,26 +70,34 @@ public class TaskWorkerService extends AbstractIdleService {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
     }
     httpService = builder.build();
+  }
 
+  @Override
+  protected void startUp() throws Exception {
+    LOG.debug("Starting TaskWorker service");
+    LOG.info("Starting TaskWorker http server");
     httpService.start();
     bindAddress = httpService.getBindAddress();
     cancelDiscovery = discoveryService.register(
       ResolvingDiscoverable.of(URIScheme.createDiscoverable(Constants.Service.TASK_WORKER, httpService)));
-
     LOG.info("Starting TaskWorker http server has completed on {}", bindAddress);
+    LOG.debug("Starting TaskWorker service has completed");
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    LOG.debug("Shutting down TaskWorker service");
+    cancelDiscovery.cancel();
+    httpService.stop(5, 5, TimeUnit.SECONDS);
+    LOG.debug("Shutting down TaskWorker service has completed");
   }
 
   private void stopService(String className) {
-    /** TODO: we may want to expand this logic such that
+    /** TODO: Expand this logic such that
      * based on number of requests per particular class,
-     * we kill the pod.
+     * the service gets stopped.
      */
     new Thread(() -> this.stopAndWait()).start();
-  }
-
-  private void shutdownHttpServer() throws Exception {
-    cancelDiscovery.cancel();
-    httpService.stop(5, 5, TimeUnit.SECONDS);
   }
 
   @VisibleForTesting

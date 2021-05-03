@@ -14,38 +14,38 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.dispatcher;
+package io.cdap.cdap.internal.app.worker;
 
-import com.google.common.util.concurrent.Service;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.internal.worker.RunnableTask;
+import io.cdap.cdap.common.internal.worker.RunnableTaskContext;
 
 /**
- * RunnableTaskLauncher launches a runnable task.
+ * RunnableTaskLauncher launches a {@link RunnableTask} by loading its class and calling its run method.
  */
 public class RunnableTaskLauncher {
-  private final CConfiguration cConfig;
+  private final CConfiguration cConf;
 
   public RunnableTaskLauncher(CConfiguration cConfig) {
-    this.cConfig = cConfig;
+    this.cConf = cConfig;
   }
 
   public byte[] launchRunnableTask(RunnableTaskRequest request) throws Exception {
 
     ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-    Class<?> clazz = classLoader.loadClass(request.className);
+    if (classLoader == null) {
+      classLoader = getClass().getClassLoader();
+    }
+    Class<?> clazz = classLoader.loadClass(request.getClassName());
 
-    Injector injector = Guice.createInjector(new RunnableTaskModule(cConfig));
-    Object obj = injector.getInstance(clazz);
+    Object obj = clazz.getDeclaredConstructor().newInstance();
 
     if (!(obj instanceof RunnableTask)) {
-      throw new ClassCastException(String.format("%s is not a RunnableTask", request.className));
+      throw new ClassCastException(String.format("%s is not a RunnableTask", request.getClassName()));
     }
     RunnableTask runnableTask = (RunnableTask) obj;
-    if (runnableTask.start().get() != Service.State.RUNNING) {
-      throw new Exception(String.format("service %s failed to start", request.className));
-    }
-    return runnableTask.runTask(request.param);
+    RunnableTaskContext runnableTaskContext = new RunnableTaskContext(request.getParam());
+    runnableTask.run(runnableTaskContext);
+    return runnableTaskContext.getResult();
   }
 }

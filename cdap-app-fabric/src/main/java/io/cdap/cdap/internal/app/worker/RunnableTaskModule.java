@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,25 +14,24 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.dispatcher;
+package io.cdap.cdap.internal.app.worker;
+
+import com.google.inject.AbstractModule;
+import io.cdap.cdap.common.conf.CConfiguration;
 
 /**
- * A sample runnable task which echoes back its param.
+ * RunnableTask Module.
+ * Guice binding modules for all RunnableTasks should be installed here.
  */
-public class EchoRunnableTask extends RunnableTask {
+public class RunnableTaskModule extends AbstractModule {
 
-  @Override
-  public byte[] run(String param) throws Exception {
-    return param.getBytes();
+  private final CConfiguration cConfig;
+
+  public RunnableTaskModule(CConfiguration cConfig) {
+    this.cConfig = cConfig;
   }
 
   @Override
-  protected void startUp() throws Exception {
-
-  }
-
-  @Override
-  protected void shutDown() throws Exception {
-
+  protected void configure() {
   }
 }

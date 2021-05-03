@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.dispatcher;
+package io.cdap.cdap.internal.app.worker;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
@@ -25,10 +25,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import io.cdap.cdap.app.preview.PreviewRunner;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
@@ -62,7 +60,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 /**
- * The {@link TwillRunnable} for running {@link PreviewRunner}.
+ * The {@link TwillRunnable} for running {@link TaskWorkerService}.
  */
 public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
 
@@ -73,6 +71,37 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
 
   public TaskWorkerTwillRunnable(String cConfFileName, String hConfFileName) {
     super(ImmutableMap.of("cConf", cConfFileName, "hConf", hConfFileName));
+  }
+
+  @VisibleForTesting
+  static Injector createInjector(CConfiguration cConf, Configuration hConf) {
+    List<Module> modules = new ArrayList<>();
+
+    modules.add(new ConfigModule(cConf, hConf));
+    modules.add(new IOModule());
+
+    // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
+    MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
+
+    if (masterEnv == null) {
+      modules.add(new ZKClientModule());
+      modules.add(new ZKDiscoveryModule());
+      modules.add(new KafkaClientModule());
+      modules.add(new KafkaLogAppenderModule());
+    } else {
+      modules.add(new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(DiscoveryService.class)
+            .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
+          bind(DiscoveryServiceClient.class)
+            .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
+        }
+      });
+      modules.add(new RemoteLogAppenderModule());
+    }
+
+    return Guice.createInjector(modules);
   }
 
   @Override
@@ -144,37 +173,5 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
                                                               TaskWorkerTwillApplication.NAME);
     LoggingContextAccessor.setLoggingContext(loggingContext);
     taskWorker = injector.getInstance(TaskWorkerService.class);
-  }
-
-  @VisibleForTesting
-  static Injector createInjector(CConfiguration cConf, Configuration hConf) {
-    List<Module> modules = new ArrayList<>();
-
-    SConfiguration sConf = SConfiguration.create();
-    modules.add(new ConfigModule(cConf, hConf, sConf));
-    modules.add(new IOModule());
-
-    // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
-    MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
-
-    if (masterEnv == null) {
-      modules.add(new ZKClientModule());
-      modules.add(new ZKDiscoveryModule());
-      modules.add(new KafkaClientModule());
-      modules.add(new KafkaLogAppenderModule());
-    } else {
-      modules.add(new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(DiscoveryService.class)
-            .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
-          bind(DiscoveryServiceClient.class)
-            .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
-        }
-      });
-      modules.add(new RemoteLogAppenderModule());
-    }
-
-    return Guice.createInjector(modules);
   }
 }

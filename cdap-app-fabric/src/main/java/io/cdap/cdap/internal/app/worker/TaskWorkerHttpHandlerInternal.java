@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.dispatcher;
+package io.cdap.cdap.internal.app.worker;
 
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -33,17 +33,16 @@ import org.slf4j.LoggerFactory;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
 /**
- * Internal {@link HttpHandler} for Preview system.
+ * Internal {@link HttpHandler} for Task worker.
  */
 @Singleton
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3 + "/worker")
 public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
-  private static final String UNKNOWN_REQUEST = "UNKNOWN_REQUEST";
+  public static final String UNKNOWN_CLASS_REQUEST = "UNKNOWN_REQUEST";
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerHttpHandlerInternal.class);
   private static final Gson GSON = new Gson();
   private final RunnableTaskLauncher runnableTaskLauncher;
@@ -60,34 +59,31 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
   @POST
   @Path("/run")
   public void run(FullHttpRequest request, HttpResponder responder) {
-    byte[] response;
-    HttpResponseStatus status;
-    String className = UNKNOWN_REQUEST;
+    if (inflightRequests.incrementAndGet() > 1) {
+      responder.sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS);
+      return;
+    }
+
+    String className = UNKNOWN_CLASS_REQUEST;
     try {
-      if (inflightRequests.incrementAndGet() > 1) {
-        responder.sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS);
-        return;
-      }
       RunnableTaskRequest runnableTaskRequest =
         GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), RunnableTaskRequest.class);
-      response = runnableTaskLauncher.launchRunnableTask(runnableTaskRequest);
-      status = HttpResponseStatus.OK;
-      className = runnableTaskRequest.className;
+      className = runnableTaskRequest.getClassName();
+      byte[] response = runnableTaskLauncher.launchRunnableTask(runnableTaskRequest);
+      responder.sendByteArray(HttpResponseStatus.OK, response, EmptyHttpHeaders.INSTANCE);
+    } catch (ClassNotFoundException | ClassCastException ex) {
+      className = UNKNOWN_CLASS_REQUEST;
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, ex.toString(), EmptyHttpHeaders.INSTANCE);
     } catch (Exception ex) {
       LOG.error(String.format("failed to handle request %s",
                               request.content().toString(StandardCharsets.UTF_8), ex));
-      response = ex.toString().getBytes();
-      status = HttpResponseStatus.BAD_REQUEST;
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, ex.toString(), EmptyHttpHeaders.INSTANCE);
+    } finally {
+      if (!className.equals(UNKNOWN_CLASS_REQUEST)) {
+        stopper.accept(className);
+      }
     }
-    responder.sendByteArray(status, response, EmptyHttpHeaders.INSTANCE);
 
-    stopper.accept(className);
-  }
-
-  @GET
-  @Path("/get")
-  public void get(FullHttpRequest request, HttpResponder responder) throws Exception {
-    responder.sendString(HttpResponseStatus.OK, "Get succeeded");
   }
 
 }

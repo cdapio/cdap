@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,30 +14,21 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.dispatcher;
+package io.cdap.cdap.internal.app.worker;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
+import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
+import org.apache.hadoop.conf.Configuration;
+import org.junit.Test;
 
 /**
- * RunnableTask Module.
- * Guice binding modules for all RunnableTasks should be installed here.
+ * Unit test for {@link TaskWorkerTwillRunnableTest}.
  */
-public class RunnableTaskModule extends AbstractModule {
+public class TaskWorkerTwillRunnableTest {
 
-  CConfiguration cConfig;
-
-  public RunnableTaskModule(CConfiguration cConfig) {
-    this.cConfig = cConfig;
-  }
-
-  @Override
-  protected void configure() {
-  }
-
-  @Provides
-  public EchoRunnableTask getEchoRunnableTask() {
-    return new EchoRunnableTask();
+  @Test
+  public void testInjector() {
+    Injector injector = TaskWorkerTwillRunnable.createInjector(CConfiguration.create(), new Configuration());
   }
 }
+

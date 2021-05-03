@@ -128,7 +128,6 @@ public final class Constants {
     public static final String MESSAGING_SERVICE = "messaging.service";
     public static final String RUNTIME = "runtime";
     public static final String AUTHENTICATION = "authentication";
-    public static final String TASK_DISPATCHER = "task.dispatcher";
     public static final String TASK_WORKER = "task.worker";
 
     public static final String SERVICE_INSTANCE_TABLE_NAME = "cdap.services.instances";

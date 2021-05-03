@@ -14,9 +14,11 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.dispatcher;
+package io.cdap.cdap.internal.app.worker;
 
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.internal.worker.RunnableTask;
+import io.cdap.cdap.common.internal.worker.RunnableTaskContext;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -30,10 +32,17 @@ public class RunnableTaskLauncherTest {
   @Test
   public void testLaunchRunnableTask() throws Exception {
     String want = "test-want";
-    RunnableTaskRequest request = new RunnableTaskRequest(EchoRunnableTask.class.getName(), want);
+    RunnableTaskRequest request = new RunnableTaskRequest(TestRunnableTask.class.getName(), want);
 
     RunnableTaskLauncher launcher = new RunnableTaskLauncher(CConfiguration.create());
     byte[] got = launcher.launchRunnableTask(request);
     Assert.assertEquals(want, new String(got, StandardCharsets.UTF_8));
+  }
+
+  public static class TestRunnableTask implements RunnableTask {
+    @Override
+    public void run(RunnableTaskContext context) throws Exception {
+      context.writeResult(context.getParam().getBytes());
+    }
   }
 }

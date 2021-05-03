@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.dispatcher;
+package io.cdap.cdap.internal.app.worker;
 
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -39,12 +39,15 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Launches a pool of task workers.
  */
-public class TaskWorkerServiceLauncher extends AbstractIdleService {
+public class TaskWorkerServiceLauncher extends AbstractIdleService implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerServiceLauncher.class);
 
   private final CConfiguration cConf;
@@ -53,6 +56,7 @@ public class TaskWorkerServiceLauncher extends AbstractIdleService {
 
   private final TwillRunner twillRunner;
   private TwillController twillController;
+  private ScheduledExecutorService scheduler;
 
   @Inject
   public TaskWorkerServiceLauncher(CConfiguration cConf, SConfiguration sConf, Configuration hConf,
@@ -66,19 +70,33 @@ public class TaskWorkerServiceLauncher extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting TaskWorkerServiceLauncher.");
-
-    launchTaskWorkerPool();
-
-    LOG.info("Starting TaskWorkerServiceLauncher has completed.");
+    scheduler = Executors.newSingleThreadScheduledExecutor(
+      Threads.createDaemonThreadFactory("task-worker-service-launcher"));
+    scheduler.scheduleWithFixedDelay(this, 2, 5, TimeUnit.SECONDS);
   }
 
   @Override
   protected void shutDown() throws Exception {
     LOG.info("Shutting down TaskWorkerServiceLauncher.");
+    if (scheduler != null) {
+      Future<?> future = scheduler.submit(() -> {
+        try {
+          if (twillController != null) {
+            twillController.terminate().get(10, TimeUnit.SECONDS);
+          }
+        } catch (Exception e) {
+          LOG.warn("Failed to terminate preview runner", e);
+        } finally {
+          scheduler.shutdown();
+        }
+      });
+      future.get();
+    }
     LOG.info("Shutting down TaskWorkerServiceLauncher has completed.");
   }
 
-  private void launchTaskWorkerPool() {
+  @Override
+  public void run() {
     LOG.info("Starting TaskWorkerService worker pool");
     TwillController activeController = null;
     for (TwillController controller : twillRunner.lookup(TaskWorkerTwillApplication.NAME)) {
@@ -89,7 +107,7 @@ public class TaskWorkerServiceLauncher extends AbstractIdleService {
         activeController = controller;
       }
     }
-    // If there is no preview runner running, create one
+    // If there is no task worker runner running, create one
     if (activeController == null) {
       try {
         Path tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
