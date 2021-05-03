@@ -24,6 +24,9 @@ import io.cdap.cdap.etl.api.action.Action;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.condition.Condition;
+import io.cdap.cdap.etl.api.engine.sql.SQLEngine;
+import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDataset;
+import io.cdap.cdap.etl.api.engine.sql.request.SQLPushRequest;
 import io.cdap.cdap.etl.api.join.AutoJoiner;
 import io.cdap.cdap.etl.api.join.error.JoinError;
 import io.cdap.cdap.etl.api.lineage.AccessType;
@@ -43,6 +46,7 @@ import io.cdap.cdap.etl.mock.batch.MockExternalSink;
 import io.cdap.cdap.etl.mock.batch.MockExternalSource;
 import io.cdap.cdap.etl.mock.batch.MockRuntimeDatasetSink;
 import io.cdap.cdap.etl.mock.batch.MockRuntimeDatasetSource;
+import io.cdap.cdap.etl.mock.batch.MockSQLEngine;
 import io.cdap.cdap.etl.mock.batch.MockSink;
 import io.cdap.cdap.etl.mock.batch.MockSource;
 import io.cdap.cdap.etl.mock.batch.NodeStatesAction;
@@ -84,7 +88,7 @@ public class HydratorTestBase extends TestBase {
   // To work around, we'll just explicitly specify each plugin.
   private static final Set<PluginClass> BATCH_MOCK_PLUGINS = ImmutableSet.of(
     FieldCountAggregator.PLUGIN_CLASS, IdentityAggregator.PLUGIN_CLASS, GroupFilterAggregator.PLUGIN_CLASS,
-    MockJoiner.PLUGIN_CLASS, MockAutoJoiner.PLUGIN_CLASS, DupeFlagger.PLUGIN_CLASS,
+    MockJoiner.PLUGIN_CLASS, MockAutoJoiner.PLUGIN_CLASS, MockSQLEngine.PLUGIN_CLASS, DupeFlagger.PLUGIN_CLASS,
     MockRuntimeDatasetSink.PLUGIN_CLASS, MockRuntimeDatasetSource.PLUGIN_CLASS,
     MockExternalSource.PLUGIN_CLASS, MockExternalSink.PLUGIN_CLASS,
     DoubleTransform.PLUGIN_CLASS, AllErrorTransform.PLUGIN_CLASS, IdentityTransform.PLUGIN_CLASS,
@@ -126,6 +130,9 @@ public class HydratorTestBase extends TestBase {
                    PipelineConfigurable.class.getPackage().getName(),
                    AccessType.class.getPackage().getName(),
                    InvalidStageException.class.getPackage().getName(),
+                   SQLEngine.class.getPackage().getName(),
+                   SQLDataset.class.getPackage().getName(),
+                   SQLPushRequest.class.getPackage().getName(),
                    "org.apache.avro.mapred", "org.apache.avro", "org.apache.avro.generic", "org.apache.avro.io");
 
     batchMocksArtifactId = new ArtifactId(artifactId.getNamespace(), artifactId.getArtifact() + "-mocks",
@@ -136,7 +143,7 @@ public class HydratorTestBase extends TestBase {
                       BATCH_MOCK_PLUGINS,
                       io.cdap.cdap.etl.mock.batch.MockSource.class,
                       io.cdap.cdap.etl.mock.batch.MockSink.class,
-                      MockExternalSource.class, MockExternalSink.class,
+                      MockExternalSource.class, MockExternalSink.class, MockSQLEngine.class,
                       DoubleTransform.class, AllErrorTransform.class, IdentityTransform.class,
                       IntValueFilterTransform.class, StringValueFilterTransform.class,
                       FieldCountAggregator.class, IdentityAggregator.class, FieldsPrefixTransform.class,

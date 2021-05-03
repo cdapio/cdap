@@ -375,6 +375,11 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
           </exclusion>
+          <!-- The one from spark should be used -->
+          <exclusion>
+            <groupId>com.thoughtworks.paranamer</groupId>
+            <artifactId>paranamer</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>

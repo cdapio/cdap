@@ -27,6 +27,8 @@ import io.cdap.cdap.etl.api.batch.BatchJoiner;
 import io.cdap.cdap.etl.api.join.JoinCondition;
 import io.cdap.cdap.etl.api.join.JoinDistribution;
 import io.cdap.cdap.etl.api.join.JoinField;
+import io.cdap.cdap.etl.mock.batch.MockExternalSource;
+import io.cdap.cdap.etl.mock.batch.MockSQLEngine;
 import io.cdap.cdap.etl.mock.batch.MockSink;
 import io.cdap.cdap.etl.mock.batch.MockSource;
 import io.cdap.cdap.etl.mock.batch.joiner.MockAutoJoiner;
@@ -34,6 +36,7 @@ import io.cdap.cdap.etl.mock.test.HydratorTestBase;
 import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
+import io.cdap.cdap.etl.proto.v2.ETLTransformationPushdown;
 import io.cdap.cdap.etl.spark.Compat;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.artifact.AppRequest;
@@ -51,6 +54,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -240,6 +244,31 @@ public class AutoJoinerTest extends HydratorTestBase {
   }
 
   @Test
+  public void testBroadcastJoinUsingSQLEngine() throws Exception {
+    Schema expectedSchema = Schema.recordOf("purchases.users",
+                                            Schema.Field.of("purchases_region", Schema.of(Schema.Type.STRING)),
+                                            Schema.Field.of("purchases_purchase_id", Schema.of(Schema.Type.INT)),
+                                            Schema.Field.of("purchases_user_id", Schema.of(Schema.Type.INT)),
+                                            Schema.Field.of("users_region", Schema.of(Schema.Type.STRING)),
+                                            Schema.Field.of("users_user_id", Schema.of(Schema.Type.INT)),
+                                            Schema.Field.of("users_name", Schema.of(Schema.Type.STRING)));
+    Set<StructuredRecord> expected = new HashSet<>();
+    expected.add(StructuredRecord.builder(expectedSchema)
+                   .set("purchases_region", "us")
+                   .set("purchases_purchase_id", 123)
+                   .set("purchases_user_id", 0)
+                   .set("users_region", "us")
+                   .set("users_user_id", 0)
+                   .set("users_name", "alice").build());
+
+    testSimpleAutoJoinUsingSQLEngine(Arrays.asList("users", "purchases"), Collections.singletonList("users"),
+                                     expected, expectedSchema, Engine.SPARK);
+    testSimpleAutoJoinUsingSQLEngine(Arrays.asList("users", "purchases"), Collections.singletonList("purchases"),
+                                     expected, expectedSchema, Engine.SPARK);
+  }
+
+
+  @Test
   public void testAutoInnerJoin() throws Exception {
     Schema expectedSchema = Schema.recordOf("purchases.users",
                                             Schema.Field.of("purchases_region", Schema.of(Schema.Type.STRING)),
@@ -259,6 +288,28 @@ public class AutoJoinerTest extends HydratorTestBase {
 
     testSimpleAutoJoin(Arrays.asList("users", "purchases"), expected, Engine.SPARK);
     testSimpleAutoJoin(Arrays.asList("users", "purchases"), expected, Engine.MAPREDUCE);
+  }
+
+  @Test
+  public void testAutoInnerJoinUsingSQLEngine() throws Exception {
+    Schema expectedSchema = Schema.recordOf("purchases.users",
+                                            Schema.Field.of("purchases_region", Schema.of(Schema.Type.STRING)),
+                                            Schema.Field.of("purchases_purchase_id", Schema.of(Schema.Type.INT)),
+                                            Schema.Field.of("purchases_user_id", Schema.of(Schema.Type.INT)),
+                                            Schema.Field.of("users_region", Schema.of(Schema.Type.STRING)),
+                                            Schema.Field.of("users_user_id", Schema.of(Schema.Type.INT)),
+                                            Schema.Field.of("users_name", Schema.of(Schema.Type.STRING)));
+    Set<StructuredRecord> expected = new HashSet<>();
+    expected.add(StructuredRecord.builder(expectedSchema)
+                   .set("purchases_region", "us")
+                   .set("purchases_purchase_id", 123)
+                   .set("purchases_user_id", 0)
+                   .set("users_region", "us")
+                   .set("users_user_id", 0)
+                   .set("users_name", "alice").build());
+
+    testSimpleAutoJoinUsingSQLEngine(Arrays.asList("users", "purchases"), Collections.emptyList(), expected,
+                                     expectedSchema, Engine.SPARK);
   }
 
   @Test
@@ -592,6 +643,92 @@ public class AutoJoinerTest extends HydratorTestBase {
     if (engine != Engine.SPARK) {
       //In SPARK number of partitions hint is ignored, so additional sinks are created
       validateMetric(1, appId, "sink." + MockSink.INITIALIZED_COUNT_METRIC);
+    }
+  }
+
+  private void testSimpleAutoJoinUsingSQLEngine(List<String> required, List<String> broadcast,
+                                                Set<StructuredRecord> expected, Schema expectedSchema,
+                                                Engine engine) throws Exception {
+
+    File joinInputDir = TMP_FOLDER.newFolder();
+    File joinOutputDir = TMP_FOLDER.newFolder();
+
+    // Write input to simulate the join operation results
+    // If any of the sides of the operation is a join, then we don't need to write as the SQL engine won't be used.
+    if (broadcast.isEmpty()) {
+      String joinFile = "join-file1.txt";
+      MockSQLEngine.writeInput(new File(joinInputDir, joinFile).getAbsolutePath(), expected);
+    }
+
+    /*
+         users ------|
+                     |--> join --> sink
+         purchases --|
+
+
+         joinOn: users.region = purchases.region and users.user_id = purchases.user_id
+     */
+    String userInput = UUID.randomUUID().toString();
+    String purchaseInput = UUID.randomUUID().toString();
+    String output = UUID.randomUUID().toString();
+    String sqlEnginePlugin = UUID.randomUUID().toString();
+    ETLBatchConfig config = ETLBatchConfig.builder()
+      .setTransformationPushdown(
+        new ETLTransformationPushdown(MockSQLEngine.getPlugin(sqlEnginePlugin,
+                                                              joinInputDir.getAbsolutePath(),
+                                                              joinOutputDir.getAbsolutePath(),
+                                                              expectedSchema)))
+      .addStage(new ETLStage("users", MockSource.getPlugin(userInput, USER_SCHEMA)))
+      .addStage(new ETLStage("purchases", MockSource.getPlugin(purchaseInput, PURCHASE_SCHEMA)))
+      .addStage(new ETLStage("join", MockAutoJoiner.getPlugin(Arrays.asList("purchases", "users"),
+                                                              Arrays.asList("region", "user_id"),
+                                                              required, broadcast, Collections.emptyList(), true)))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(output)))
+      .addConnection("users", "join")
+      .addConnection("purchases", "join")
+      .addConnection("join", "sink")
+      .setEngine(engine)
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
+    ApplicationId appId = NamespaceId.DEFAULT.app(UUID.randomUUID().toString());
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    // write input data
+    List<StructuredRecord> userData = Arrays.asList(USER_ALICE, USER_ALYCE, USER_BOB);
+    DataSetManager<Table> inputManager = getDataset(userInput);
+    MockSource.writeInput(inputManager, userData);
+
+    List<StructuredRecord> purchaseData = new ArrayList<>();
+    purchaseData.add(StructuredRecord.builder(PURCHASE_SCHEMA)
+                       .set("region", "us")
+                       .set("user_id", 0)
+                       .set("purchase_id", 123).build());
+    purchaseData.add(StructuredRecord.builder(PURCHASE_SCHEMA)
+                       .set("region", "us")
+                       .set("user_id", 2)
+                       .set("purchase_id", 456).build());
+    inputManager = getDataset(purchaseInput);
+    MockSource.writeInput(inputManager, purchaseData);
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    Map<String, String> args = Collections.singletonMap(MockAutoJoiner.PARTITIONS_ARGUMENT, "1");
+    workflowManager.startAndWaitForRun(args, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+
+    DataSetManager<Table> outputManager = getDataset(output);
+    List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);
+
+    Assert.assertEquals(expected, new HashSet<>(outputRecords));
+
+    validateMetric(5, appId, "join.records.in");
+    validateMetric(expected.size(), appId, "join.records.out");
+
+    if (broadcast.isEmpty()) {
+      // Ensure all records were written to the SQL engine
+      Assert.assertEquals(5, MockSQLEngine.countLinesInDirectory(joinOutputDir));
+    } else {
+      // Ensure no records are written to the SQL engine if the join contains a broadcast.
+      Assert.assertEquals(0, MockSQLEngine.countLinesInDirectory(joinOutputDir));
     }
   }
 
@@ -1017,11 +1154,11 @@ public class AutoJoinerTest extends HydratorTestBase {
   @Test
   public void testLeftOuterAutoJoinWithMacros() throws Exception {
     Schema expectedSchema = Schema.recordOf(
-        "Record0",
-        Schema.Field.of("region", Schema.of(Schema.Type.STRING)),
-        Schema.Field.of("purchase_id", Schema.of(Schema.Type.INT)),
-        Schema.Field.of("user_id", Schema.of(Schema.Type.INT)),
-        Schema.Field.of("name", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
+      "Record0",
+      Schema.Field.of("region", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("purchase_id", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("user_id", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("name", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
 
     Set<StructuredRecord> expected = new HashSet<>();
     expected.add(StructuredRecord.builder(expectedSchema)
@@ -1043,11 +1180,11 @@ public class AutoJoinerTest extends HydratorTestBase {
   @Test
   public void testInnerAutoJoinWithMacros() throws Exception {
     Schema expectedSchema = Schema.recordOf(
-        "Record0",
-        Schema.Field.of("region", Schema.of(Schema.Type.STRING)),
-        Schema.Field.of("purchase_id", Schema.of(Schema.Type.INT)),
-        Schema.Field.of("user_id", Schema.of(Schema.Type.INT)),
-        Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
+      "Record0",
+      Schema.Field.of("region", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("purchase_id", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("user_id", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
     Set<StructuredRecord> expected = new HashSet<>();
     expected.add(StructuredRecord.builder(expectedSchema)
                    .set("region", "us")

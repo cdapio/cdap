@@ -20,7 +20,9 @@ package io.cdap.cdap.etl.api.engine.sql;
  * Class used to represent exceptions thrown by a SQL Engine.
  */
 public class SQLEngineException extends RuntimeException {
+
   public SQLEngineException(Throwable cause) {
     super("Error when executing operation on SQL Engine", cause);
   }
+
 }

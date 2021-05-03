@@ -14,13 +14,16 @@
  * the License.
  */
 
-package io.cdap.cdap.etl.api.engine.sql;
+package io.cdap.cdap.etl.mock.batch;
+
+import io.cdap.cdap.etl.api.Transform;
+
+import java.io.Serializable;
 
 /**
- * Resulting status of a SQL Engine operation
+ * Used to mark a transform as serializable.
+ * @param <IN> Input class
+ * @param <OUT> Output class
  */
-public enum SQLOperationStatus {
-  SUCCESSFUL,
-  FAILED,
-  ABORTED
+public abstract class SerializableTransform<IN, OUT> extends Transform<IN, OUT> implements Serializable {
 }

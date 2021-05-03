@@ -41,4 +41,19 @@ public class NoopStageStatisticsCollector implements StageStatisticsCollector, S
   public void incrementErrorRecordCount() {
     // no-op
   }
+
+  @Override
+  public void incrementInputRecordCount(long n) {
+    // no-op
+  }
+
+  @Override
+  public void incrementOutputRecordCount(long n) {
+    // no-op
+  }
+
+  @Override
+  public void incrementErrorRecordCount(long n) {
+    // no-op
+  }
 }

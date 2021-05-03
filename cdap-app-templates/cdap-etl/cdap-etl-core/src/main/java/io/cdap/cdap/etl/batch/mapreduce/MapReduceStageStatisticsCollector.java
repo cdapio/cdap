@@ -50,4 +50,19 @@ public class MapReduceStageStatisticsCollector implements StageStatisticsCollect
   public void incrementErrorRecordCount() {
     context.getCounter(Constants.StageStatistics.PREFIX, errorRecordCountKey).increment(1);
   }
+
+  @Override
+  public void incrementInputRecordCount(long n) {
+    context.getCounter(Constants.StageStatistics.PREFIX, inputRecordCountKey).increment(n);
+  }
+
+  @Override
+  public void incrementOutputRecordCount(long n) {
+    context.getCounter(Constants.StageStatistics.PREFIX, outputRecordCountKey).increment(n);
+  }
+
+  @Override
+  public void incrementErrorRecordCount(long n) {
+    context.getCounter(Constants.StageStatistics.PREFIX, inputRecordCountKey).increment(n);
+  }
 }
