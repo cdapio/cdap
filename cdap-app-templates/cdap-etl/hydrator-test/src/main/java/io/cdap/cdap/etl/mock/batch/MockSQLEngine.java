@@ -16,32 +16,74 @@
 
 package io.cdap.cdap.etl.mock.batch;
 
-import io.cdap.cdap.api.data.batch.InputFormatProvider;
-import io.cdap.cdap.api.data.batch.OutputFormatProvider;
+import com.google.common.base.Charsets;
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.google.common.collect.Iterables;
+import com.google.common.io.Files;
+import com.google.gson.Gson;
+import io.cdap.cdap.api.annotation.Name;
+import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
-import io.cdap.cdap.api.dataset.lib.KeyValue;
-import io.cdap.cdap.etl.api.PipelineConfigurer;
-import io.cdap.cdap.etl.api.Transform;
-import io.cdap.cdap.etl.api.batch.BatchContext;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.plugin.PluginConfig;
+import io.cdap.cdap.api.plugin.PluginPropertyField;
+import io.cdap.cdap.etl.api.engine.sql.BatchSQLEngine;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngine;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngineException;
-import io.cdap.cdap.etl.api.engine.sql.SQLOperationResult;
+import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDataset;
+import io.cdap.cdap.etl.api.engine.sql.dataset.SQLPullDataset;
+import io.cdap.cdap.etl.api.engine.sql.dataset.SQLPushDataset;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLJoinRequest;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPullRequest;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPushRequest;
+import io.cdap.cdap.etl.proto.v2.ETLPlugin;
+import io.cdap.cdap.format.StructuredRecordStringConverter;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Mock SQL engine that can be used to test join pipelines.
  */
-public class MockSQLEngine implements SQLEngine<Object, Object, Object, Object> {
-  @Override
-  public OutputFormatProvider getPushProvider(SQLPushRequest pushRequest) throws SQLEngineException {
-    return null;
+@Plugin(type = BatchSQLEngine.PLUGIN_TYPE)
+@Name(MockSQLEngine.NAME)
+public class MockSQLEngine extends BatchSQLEngine<Object, Object, Object, Object>
+  implements SQLEngine<Object, Object, Object, Object>, Serializable {
+  public static final PluginClass PLUGIN_CLASS = getPluginClass();
+  public static final String NAME = "MockSQLEngine";
+  private static final Gson GSON = new Gson();
+  private final MockSQLEngine.Config config;
+
+  public MockSQLEngine(MockSQLEngine.Config config) {
+    this.config = config;
+  }
+
+  /**
+   * Config for the source.
+   */
+  public static class Config extends PluginConfig {
+    private String name;
+    private String inputDirName;
+    private String outputDirName;
+    private String outputSchema;
   }
 
   @Override
-  public InputFormatProvider getPullProvider(SQLPullRequest pullRequest) throws SQLEngineException {
-    return null;
+  public SQLPushDataset<StructuredRecord, Object, Object> getPushProvider(SQLPushRequest pushRequest)
+    throws SQLEngineException {
+    return new MockPushDataset(pushRequest, config.outputDirName);
+  }
+
+  @Override
+  public SQLPullDataset<StructuredRecord, Object, Object> getPullProvider(SQLPullRequest pullRequest)
+    throws SQLEngineException {
+    return new MockPullDataset(pullRequest, config.inputDirName);
   }
 
   @Override
@@ -51,41 +93,96 @@ public class MockSQLEngine implements SQLEngine<Object, Object, Object, Object> 
 
   @Override
   public boolean canJoin(SQLJoinRequest joinRequest) {
-    return false;
+    return true;
   }
 
   @Override
-  public SQLOperationResult join(SQLJoinRequest joinRequest) throws SQLEngineException {
-    return null;
+  public SQLDataset join(SQLJoinRequest joinRequest) throws SQLEngineException {
+    return new SQLDataset() {
+      @Override
+      public String getDatasetName() {
+        return "join";
+      }
+
+      @Override
+      public Schema getSchema() {
+        return GSON.fromJson(config.outputSchema, Schema.class);
+      }
+
+      @Override
+      public long getNumRows() {
+        return 1;
+      }
+    };
   }
 
   @Override
   public void cleanup(String datasetName) throws SQLEngineException {
-
+    // no-op
   }
 
-  @Override
-  public Transform<StructuredRecord, KeyValue<Object, Object>> toKeyValue() {
-    return null;
+  public static ETLPlugin getPlugin(String name, String inputDirName, String outputDirName, Schema outputSchema) {
+    Map<String, String> properties = new HashMap<>();
+    properties.put("name", name);
+    properties.put("inputDirName", inputDirName);
+    properties.put("outputDirName", outputDirName);
+    properties.put("outputSchema", GSON.toJson(outputSchema));
+    return new ETLPlugin(NAME, BatchSQLEngine.PLUGIN_TYPE, properties, null);
   }
 
-  @Override
-  public Transform<KeyValue<Object, Object>, StructuredRecord> fromKeyValue() {
-    return null;
+  private static PluginClass getPluginClass() {
+    Map<String, PluginPropertyField> properties = new HashMap<>();
+    properties.put("name", new PluginPropertyField("name", "", "string", true, false));
+    properties.put("inputDirName", new PluginPropertyField("inputDirName", "", "string", true, false));
+    properties.put("outputDirName", new PluginPropertyField("outputDirName", "", "string", true, false));
+    properties.put("outputSchema", new PluginPropertyField("outputSchema", "", "string", true, false));
+    return new PluginClass(BatchSQLEngine.PLUGIN_TYPE, NAME, "", MockSQLEngine.class.getName(),
+                           "config", properties);
   }
 
-  @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+  /**
+   * Used to write the input records for the pipeline run. Should be called after the pipeline has been created.
+   *
+   * @param fileName file to write the records into
+   * @param records records that should be the input for the pipeline
+   */
+  public static void writeInput(String fileName,
+                                Iterable<StructuredRecord> records) throws Exception {
+    Function<StructuredRecord, String> mapper = input -> {
+      try {
+        return StructuredRecordStringConverter.toJsonString(input);
+      } catch (IOException e) {
+        throw new RuntimeException("Unable to set up file for test.", e);
+      }
+    };
 
+    String output = Joiner.on("\n").join(Iterables.transform(records, mapper)
+    );
+    Files.write(output, new File(fileName), Charsets.UTF_8);
   }
 
-  @Override
-  public void prepareRun(BatchContext context) throws Exception {
+  /**
+   * Counts all lines in a directory used for Hadoop as output
+   * @param directory File specitying the directory
+   * @return
+   * @throws IOException
+   */
+  public static int countLinesInDirectory(File directory) throws IOException {
+    int lines = 0;
 
-  }
-
-  @Override
-  public void onRunFinish(boolean succeeded, BatchContext context) {
-
+    return (int) java.nio.file.Files.walk(directory.toPath())
+      .filter(java.nio.file.Files::isRegularFile)
+      .filter(path -> !path.toString().endsWith(".crc") && !path.toString().endsWith("_SUCCESS")) // Filters some
+      // hadoop files.
+      .map(path -> {
+        try {
+          return Files.readLines(path.toFile(), Charsets.UTF_8);
+        } catch (IOException e) {
+          throw new RuntimeException("Unable to read file in directory", e);
+        }
+      })
+      .flatMap(Collection::stream)
+      .filter(l -> !l.isEmpty()) // Only consider not empty output files and lines.
+      .count();
   }
 }
