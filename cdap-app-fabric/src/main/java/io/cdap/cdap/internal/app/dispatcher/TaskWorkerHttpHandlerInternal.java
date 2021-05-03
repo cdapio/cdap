@@ -37,7 +37,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
 /**
- * Internal {@link HttpHandler} for Preview system.
+ * Internal {@link HttpHandler} for Task worker.
  */
 @Singleton
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3 + "/worker")

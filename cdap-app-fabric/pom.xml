@@ -248,12 +248,6 @@
       <groupId>org.powermock</groupId>
       <artifactId>powermock-api-mockito</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.chuusai</groupId>
-      <artifactId>shapeless_2.11</artifactId>
-      <version>2.0.0</version>
-      <scope>compile</scope>
-    </dependency>
   </dependencies>
 
   <build>

@@ -74,7 +74,6 @@ public class TaskWorkerServiceLauncher extends AbstractIdleService {
 
   @Override
   protected void shutDown() throws Exception {
-    LOG.info("Shutting down TaskWorkerServiceLauncher.");
     LOG.info("Shutting down TaskWorkerServiceLauncher has completed.");
   }
 
@@ -89,7 +88,7 @@ public class TaskWorkerServiceLauncher extends AbstractIdleService {
         activeController = controller;
       }
     }
-    // If there is no preview runner running, create one
+    // If there is no task worker runner running, create one
     if (activeController == null) {
       try {
         Path tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),

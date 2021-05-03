@@ -59,7 +59,6 @@ public class TaskWorkerServiceTest {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.TaskWorker.ADDRESS, "localhost");
     cConf.setInt(Constants.TaskWorker.PORT, port);
-    cConf.setLong(Constants.Preview.REQUEST_POLL_DELAY_MILLIS, 200);
     cConf.setBoolean(Constants.Security.SSL.INTERNAL_ENABLED, false);
     return cConf;
   }
