@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,21 +14,20 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.dispatcher;
+package io.cdap.cdap.internal.app.worker;
 
-import com.google.inject.Injector;
-import io.cdap.cdap.common.conf.CConfiguration;
-import org.apache.hadoop.conf.Configuration;
-import org.junit.Test;
+import com.google.common.util.concurrent.AbstractIdleService;
 
 /**
- * Unit test for {@link TaskWorkerTwillRunnableTest}.
+ * RunnableTask represents a task that can be launched by a {@link TaskWorkerService}.
  */
-public class TaskWorkerTwillRunnableTest {
+public abstract class RunnableTask extends AbstractIdleService {
+  public RunnableTask() {
+  }
 
-  @Test
-  public void testInjector() {
-    Injector injector = TaskWorkerTwillRunnable.createInjector(CConfiguration.create(), new Configuration());
+  protected abstract byte[] run(String param) throws Exception;
+
+  public byte[] runTask(String param) throws Exception {
+    return run(param);
   }
 }
-

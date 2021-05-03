@@ -14,25 +14,21 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.dispatcher;
+package io.cdap.cdap.internal.app.worker;
+
+import com.google.inject.Injector;
+import io.cdap.cdap.common.conf.CConfiguration;
+import org.apache.hadoop.conf.Configuration;
+import org.junit.Test;
 
 /**
- * Request for launching a runnable task.
+ * Unit test for {@link TaskWorkerTwillRunnableTest}.
  */
-public class RunnableTaskRequest {
-  String className;
-  String param;
+public class TaskWorkerTwillRunnableTest {
 
-  public RunnableTaskRequest(String className, String param) {
-    this.className = className;
-    this.param = param;
-  }
-
-  public String getClassName() {
-    return className;
-  }
-
-  public String getParam() {
-    return param;
+  @Test
+  public void testInjector() {
+    Injector injector = TaskWorkerTwillRunnable.createInjector(CConfiguration.create(), new Configuration());
   }
 }
+

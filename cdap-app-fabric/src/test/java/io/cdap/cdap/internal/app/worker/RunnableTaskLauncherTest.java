@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.dispatcher;
+package io.cdap.cdap.internal.app.worker;
 
 import io.cdap.cdap.common.conf.CConfiguration;
 import org.junit.Assert;
