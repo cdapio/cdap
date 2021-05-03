@@ -35,9 +35,4 @@ public class RunnableTaskModule extends AbstractModule {
   @Override
   protected void configure() {
   }
-
-  @Provides
-  public EchoRunnableTask getEchoRunnableTask() {
-    return new EchoRunnableTask();
-  }
 }

@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
@@ -43,7 +42,7 @@ import javax.ws.rs.Path;
 @Singleton
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3 + "/worker")
 public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
-  private static final String UNKNOWN_REQUEST = "UNKNOWN_REQUEST";
+  public static final String UNKNOWN_CLASS_REQUEST = "UNKNOWN_REQUEST";
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerHttpHandlerInternal.class);
   private static final Gson GSON = new Gson();
   private final RunnableTaskLauncher runnableTaskLauncher;
@@ -62,7 +61,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
   public void run(FullHttpRequest request, HttpResponder responder) {
     byte[] response;
     HttpResponseStatus status;
-    String className = UNKNOWN_REQUEST;
+    String className = UNKNOWN_CLASS_REQUEST;
     try {
       if (inflightRequests.incrementAndGet() > 1) {
         responder.sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS);
@@ -82,12 +81,6 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
     responder.sendByteArray(status, response, EmptyHttpHeaders.INSTANCE);
 
     stopper.accept(className);
-  }
-
-  @GET
-  @Path("/get")
-  public void get(FullHttpRequest request, HttpResponder responder) throws Exception {
-    responder.sendString(HttpResponseStatus.OK, "Get succeeded");
   }
 
 }

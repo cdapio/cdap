@@ -20,13 +20,13 @@ package io.cdap.cdap.internal.app.dispatcher;
  * Request for launching a runnable task.
  */
 public class RunnableTaskRequest {
+  String className;
+  String param;
+
   public RunnableTaskRequest(String className, String param) {
     this.className = className;
     this.param = param;
   }
-
-  String className;
-  String param;
 
   public String getClassName() {
     return className;

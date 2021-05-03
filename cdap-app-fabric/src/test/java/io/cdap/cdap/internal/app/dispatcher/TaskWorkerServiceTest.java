@@ -107,17 +107,11 @@ public class TaskWorkerServiceTest {
     InetSocketAddress addr = taskWorkerService.getBindAddress();
     URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
 
-    // Get request
-    HttpResponse response = HttpRequests.execute(HttpRequest.get(uri.resolve("/v3Internal/worker/get").toURL()).build(),
-                                                 new DefaultHttpRequestConfig(false));
-    Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-
     // Post valid request
     String want = "100";
     RunnableTaskRequest req = new RunnableTaskRequest(TestRunnableClass.class.getName(), want);
     String reqBody = GSON.toJson(req);
-    response = HttpRequests.execute(
+    HttpResponse response = HttpRequests.execute(
       HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
         .withBody(reqBody).build(),
       new DefaultHttpRequestConfig(false));
@@ -140,10 +134,8 @@ public class TaskWorkerServiceTest {
       HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
         .withBody(reqBody).build(),
       new DefaultHttpRequestConfig(false));
-    waitForTaskWorkerToFinish(taskWorkerService);
     Assert.assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
     Assert.assertTrue(response.getResponseBodyAsString().contains("java.lang.ClassNotFoundException"));
-    Assert.assertTrue(taskWorkerService.state() == Service.State.TERMINATED);
   }
 
   @Test

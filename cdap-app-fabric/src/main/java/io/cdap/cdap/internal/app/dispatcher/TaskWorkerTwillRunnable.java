@@ -25,7 +25,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import io.cdap.cdap.app.preview.PreviewRunner;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
@@ -62,7 +61,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 /**
- * The {@link TwillRunnable} for running {@link PreviewRunner}.
+ * The {@link TwillRunnable} for running {@link TaskWorkerService}.
  */
 public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
 

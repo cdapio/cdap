@@ -24,7 +24,7 @@ import org.apache.twill.api.TwillSpecification;
 import java.net.URI;
 
 /**
- * The {@link TwillApplication} for launch task workers
+ * The {@link TwillApplication} for launching task workers
  */
 public class TaskWorkerTwillApplication implements TwillApplication {
 

@@ -36,7 +36,7 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A scheduled service that periodically poll for new preview request and execute it.
+ * TaskWorkerService that launches an HTTP server for receiving and handling {@link RunnableTask}
  */
 public class TaskWorkerService extends AbstractIdleService {
 
@@ -96,11 +96,13 @@ public class TaskWorkerService extends AbstractIdleService {
   }
 
   private void stopService(String className) {
-    /** TODO: we may want to expand this logic such that
+    /** TODO: Expand this logic such that
      * based on number of requests per particular class,
-     * we kill the pod.
+     * the service gets stopped.
      */
-    new Thread(() -> this.stopAndWait()).start();
+    if (!className.equals(TaskWorkerHttpHandlerInternal.UNKNOWN_CLASS_REQUEST)) {
+      new Thread(() -> this.stopAndWait()).start();
+    }
   }
 
   private void shutdownHttpServer() throws Exception {
