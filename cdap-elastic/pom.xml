@@ -129,7 +129,7 @@
           </execution>
         </executions>
         <configuration>
-          <argLine>-Delastic.http.port=${elasticHttpPort}</argLine>
+          <argLine>${argLine}  -Delastic.http.port=${elasticHttpPort}</argLine>
           <includes>
             <include>**/*Test.java</include>
           </includes>
