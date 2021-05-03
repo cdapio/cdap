@@ -144,7 +144,7 @@ public class ArtifactInspectorTest {
              new EntityImpersonator(artifactId.toEntityId(), new DefaultImpersonator(CConfiguration.create(), null)))) {
 
       ArtifactClasses classes = artifactInspector.inspectArtifact(artifactId, appFile, artifactClassLoader,
-                                                                  Collections.emptySet());
+                                                                  Collections.emptySet()).getArtifactClasses();
 
       // check app classes
       Set<ApplicationClass> expectedApps = ImmutableSet.of(new ApplicationClass(
@@ -189,7 +189,7 @@ public class ArtifactInspectorTest {
              ImmutableList.of(artifactLocation).iterator(),
              new EntityImpersonator(artifactId.toEntityId(), new DefaultImpersonator(CConfiguration.create(), null)))) {
       ArtifactClasses classes = artifactInspector.inspectArtifact(artifactId, artifactFile, artifactClassLoader,
-                                                                  Collections.emptySet());
+                                                                  Collections.emptySet()).getArtifactClasses();
       Set<PluginClass> plugins = classes.getPlugins();
 
       Map<String, PluginPropertyField> expectedFields = ImmutableMap.of(
