@@ -17,6 +17,9 @@ package io.cdap.cdap.internal.app.deploy.pipeline;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.id.Id;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.net.URI;
 import javax.annotation.Nullable;
 
@@ -34,7 +37,7 @@ public class ConfiguratorConfig {
 
   private final String appClassName;
   private final Id.Artifact artifactId;
-  private final CConfiguration cConf;
+  private final String cConf;
   private final URI artifactLocationURI;
 
   public ConfiguratorConfig(CConfiguration cConf, Id.Namespace appNamespace, Id.Artifact artifactId,
@@ -42,7 +45,16 @@ public class ConfiguratorConfig {
                             @Nullable String applicationName, @Nullable String applicationVersion,
                             @Nullable String configString, URI artifactLocation) {
     this.artifactLocationURI = artifactLocation;
-    this.cConf = cConf;
+    ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+    try {
+      cConf.writeXml(output);
+
+    } catch (IOException e) {
+      e.printStackTrace();
+
+    }
+    this.cConf = new String(output.toByteArray());
     this.appNamespace = appNamespace;
     this.artifactId = artifactId;
     this.appClassName = appClassName;
@@ -76,7 +88,7 @@ public class ConfiguratorConfig {
   }
 
   public CConfiguration getcConf() {
-    return cConf;
+    return CConfiguration.create(new ByteArrayInputStream(cConf.getBytes()));
   }
 
   public URI getArtifactLocationURI() {
