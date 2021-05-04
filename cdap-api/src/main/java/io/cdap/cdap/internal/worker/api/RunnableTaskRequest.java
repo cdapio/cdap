@@ -16,16 +16,33 @@
 
 package io.cdap.cdap.internal.worker.api;
 
+
+import io.cdap.cdap.api.NamespaceSummary;
+import io.cdap.cdap.api.artifact.ArtifactId;
+
+import javax.annotation.Nullable;
+
 /**
  * Request for launching a runnable task.
  */
 public class RunnableTaskRequest {
   private final String className;
   private final String param;
+  @Nullable
+  private ArtifactId artifactId;
+  @Nullable
+  private String namespace;
 
   public RunnableTaskRequest(String className, String param) {
+    this(className, param, null, null);
+  }
+
+  public RunnableTaskRequest(String className, String param,
+                             @Nullable ArtifactId artifactId, @Nullable String namespace) {
     this.className = className;
     this.param = param;
+    this.artifactId = artifactId;
+    this.namespace = namespace;
   }
 
   public String getClassName() {
@@ -36,9 +53,19 @@ public class RunnableTaskRequest {
     return param;
   }
 
+  @Nullable
+  public ArtifactId getArtifactId() {
+    return artifactId;
+  }
+
+  @Nullable
+  public String getNamespace() {
+    return namespace;
+  }
+
   @Override
   public String toString() {
-    String requestString = "RunnableTaskRequest{className=%s, param=%s}";
-    return String.format(requestString, className, param);
+    String requestString = "RunnableTaskRequest{className=%s, param=%s, artifactId=%s, namespace=%s}";
+    return String.format(requestString, className, param, artifactId, namespace);
   }
 }

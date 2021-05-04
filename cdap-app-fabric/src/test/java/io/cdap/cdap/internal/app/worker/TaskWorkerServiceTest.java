@@ -120,7 +120,7 @@ public class TaskWorkerServiceTest {
       new DefaultHttpRequestConfig(false));
     waitForTaskWorkerToFinish(taskWorkerService);
     Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-  Assert.assertEquals(want, response.getResponseBodyAsString());
+    Assert.assertEquals(want, response.getResponseBodyAsString());
     Assert.assertTrue(taskWorkerService.state() == Service.State.TERMINATED);
   }
 

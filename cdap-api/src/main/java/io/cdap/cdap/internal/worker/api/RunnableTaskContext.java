@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.worker.api;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import javax.annotation.Nullable;
 
 /**
  * Represents a context for a {@link RunnableTask}.
@@ -26,9 +27,16 @@ import java.io.IOException;
 public class RunnableTaskContext {
   private final ByteArrayOutputStream outputStream;
   private final String param;
+  @Nullable
+  private final ClassLoader parentClassLoader;
 
   public RunnableTaskContext(String param) {
+    this(param, null);
+  }
+
+  public RunnableTaskContext(String param, @Nullable ClassLoader parentClassLoader) {
     this.param = param;
+    this.parentClassLoader = parentClassLoader;
     this.outputStream = new ByteArrayOutputStream();
   }
 
@@ -42,5 +50,10 @@ public class RunnableTaskContext {
 
   public String getParam() {
     return param;
+  }
+
+  @Nullable
+  public ClassLoader getParentClassLoader() {
+    return parentClassLoader;
   }
 }
