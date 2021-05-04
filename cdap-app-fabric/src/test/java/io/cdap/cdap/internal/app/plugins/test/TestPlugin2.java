@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app.plugins.test;
 
+import io.cdap.cdap.api.annotation.Metadata;
+import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 
@@ -24,6 +26,9 @@ import io.cdap.cdap.api.annotation.Plugin;
  */
 @Plugin
 @Name("TestPlugin2")
+@Metadata(
+  tags = {"test-tag1", "test-tag2", "test-tag3"},
+  properties = {@MetadataProperty(key = "key1", value = "val1"), @MetadataProperty(key = "key2", value = "val2")})
 public class TestPlugin2 extends TestPlugin {
 
   private boolean constructed;

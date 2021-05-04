@@ -17,17 +17,13 @@
 package io.cdap.cdap.data2.metadata.system;
 
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
-import io.cdap.cdap.spi.metadata.MetadataDirective;
-import io.cdap.cdap.spi.metadata.MetadataKind;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
-import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -40,15 +36,6 @@ public abstract class AbstractSystemMetadataWriter implements SystemMetadataWrit
 
   private final MetadataServiceClient metadataServiceClient;
   private final MetadataEntity metadataEntity;
-
-  // directives for creation of system metadata:
-  // - keep description if new metadata does not contain it
-  // - preserve creation-time if it exists in current metadata
-  private static final Map<ScopedNameOfKind, MetadataDirective> CREATE_DIRECTIVES = ImmutableMap.of(
-    new ScopedNameOfKind(MetadataKind.PROPERTY, MetadataScope.SYSTEM, MetadataConstants.DESCRIPTION_KEY),
-    MetadataDirective.KEEP,
-    new ScopedNameOfKind(MetadataKind.PROPERTY, MetadataScope.SYSTEM, MetadataConstants.CREATION_TIME_KEY),
-    MetadataDirective.PRESERVE);
 
   AbstractSystemMetadataWriter(MetadataServiceClient metadataServiceClient, NamespacedEntityId entityId) {
     this.metadataServiceClient = metadataServiceClient;
@@ -72,6 +59,6 @@ public abstract class AbstractSystemMetadataWriter implements SystemMetadataWrit
       properties.put(MetadataConstants.SCHEMA_KEY, schema);
     }
     return new MetadataMutation.Create(metadataEntity, new Metadata(MetadataScope.SYSTEM, tags, properties),
-                                       CREATE_DIRECTIVES);
+                                       MetadataMutation.Create.CREATE_DIRECTIVES);
   }
 }

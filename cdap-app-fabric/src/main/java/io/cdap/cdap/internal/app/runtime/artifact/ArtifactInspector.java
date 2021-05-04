@@ -25,6 +25,8 @@ import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.annotation.Category;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
+import io.cdap.cdap.api.annotation.Metadata;
+import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.app.Application;
@@ -34,12 +36,15 @@ import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.cdap.api.plugin.PluginPropertyField;
 import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.app.program.ManifestFields;
 import io.cdap.cdap.common.InvalidArtifactException;
+import io.cdap.cdap.common.InvalidMetadataException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
@@ -49,6 +54,9 @@ import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginClassLoader;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
+import io.cdap.cdap.metadata.MetadataValidator;
+import io.cdap.cdap.proto.id.PluginId;
+import io.cdap.cdap.spi.metadata.MetadataMutation;
 import org.apache.twill.filesystem.Location;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
@@ -68,11 +76,13 @@ import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -95,11 +105,13 @@ final class ArtifactInspector {
   private final CConfiguration cConf;
   private final ArtifactClassLoaderFactory artifactClassLoaderFactory;
   private final ReflectionSchemaGenerator schemaGenerator;
+  private final MetadataValidator metadataValidator;
 
   ArtifactInspector(CConfiguration cConf, ArtifactClassLoaderFactory artifactClassLoaderFactory) {
     this.cConf = cConf;
     this.artifactClassLoaderFactory = artifactClassLoaderFactory;
     this.schemaGenerator = new ReflectionSchemaGenerator(false);
+    this.metadataValidator = new MetadataValidator(cConf);
   }
 
   /**
@@ -115,8 +127,9 @@ final class ArtifactInspector {
    * @throws InvalidArtifactException if the artifact is invalid. For example, if the application main class is not
    *                                  actually an Application.
    */
-  ArtifactClasses inspectArtifact(Id.Artifact artifactId, File artifactFile,
-                                  @Nullable ClassLoader parentClassLoader, Set<PluginClass> additionalPlugins)
+  ArtifactClassesWithMetadata inspectArtifact(Id.Artifact artifactId, File artifactFile,
+                                              @Nullable ClassLoader parentClassLoader,
+                                              Set<PluginClass> additionalPlugins)
     throws IOException, InvalidArtifactException {
     Path tmpDir = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                             cConf.get(Constants.AppFabric.TEMP_DIR)).toAbsolutePath();
@@ -136,8 +149,10 @@ final class ArtifactInspector {
         pluginInstantiator.addArtifact(artifactLocation, artifactId.toArtifactId());
         ArtifactClasses.Builder builder = inspectApplications(artifactId, ArtifactClasses.builder(),
                                                               artifactLocation, artifactClassLoader);
-        return inspectPlugins(builder, artifactFile, artifactId.toArtifactId(), pluginInstantiator,
-                              additionalPlugins).build();
+        List<MetadataMutation> mutations = new ArrayList<>();
+        inspectPlugins(builder, artifactFile, artifactId.toEntityId(), pluginInstantiator,
+                       additionalPlugins, mutations);
+        return new ArtifactClassesWithMetadata(builder.build(), mutations);
       }
     } catch (EOFException | ZipException e) {
       throw new InvalidArtifactException("Artifact " + artifactId + " is not a valid zip file.", e);
@@ -221,17 +236,18 @@ final class ArtifactInspector {
   /**
    * Inspects the plugin file and extracts plugin classes information.
    */
-  private ArtifactClasses.Builder inspectPlugins(ArtifactClasses.Builder builder, File artifactFile,
-                                                 ArtifactId artifactId, PluginInstantiator pluginInstantiator,
-                                                 Set<PluginClass> additionalPlugins)
+  private void inspectPlugins(ArtifactClasses.Builder builder, File artifactFile,
+                              io.cdap.cdap.proto.id.ArtifactId artifactId, PluginInstantiator pluginInstantiator,
+                              Set<PluginClass> additionalPlugins, List<MetadataMutation> mutations)
     throws IOException, InvalidArtifactException {
-    PluginClassLoader pluginClassLoader = pluginInstantiator.getArtifactClassLoader(artifactId);
-    inspectAdditionalPlugins(artifactId, additionalPlugins, pluginClassLoader);
+    ArtifactId artifact = artifactId.toApiArtifactId();
+    PluginClassLoader pluginClassLoader = pluginInstantiator.getArtifactClassLoader(artifact);
+    inspectAdditionalPlugins(artifact, additionalPlugins, pluginClassLoader);
 
     // See if there are export packages. Plugins should be in those packages
     Set<String> exportPackages = getExportPackages(artifactFile);
     if (exportPackages.isEmpty()) {
-      return builder;
+      return;
     }
 
     try {
@@ -243,8 +259,15 @@ final class ArtifactInspector {
         Map<String, PluginPropertyField> pluginProperties = Maps.newHashMap();
         try {
           String configField = getProperties(TypeToken.of(cls), pluginProperties);
+          String pluginName = getPluginName(cls);
+          PluginId pluginId = new PluginId(artifactId.getNamespace(), artifactId.getArtifact(),
+                                           artifactId.getVersion(), pluginName, pluginAnnotation.type());
+          MetadataMutation mutation = getMetadataMutation(pluginId, cls);
+          if (mutation != null) {
+            mutations.add(mutation);
+          }
           PluginClass pluginClass = PluginClass.builder()
-            .setName(getPluginName(cls))
+            .setName(pluginName)
             .setType(pluginAnnotation.type())
             .setCategory(getPluginCategory(cls))
             .setClassName(cls.getName())
@@ -264,8 +287,6 @@ final class ArtifactInspector {
           "Please check dependencies are available, and that the correct parent artifact was specified. " +
           "Error class: %s, message: %s.", t.getClass(), t.getMessage()), t);
     }
-
-    return builder;
   }
 
   private void inspectAdditionalPlugins(ArtifactId artifactId, Set<PluginClass> additionalPlugins,
@@ -352,6 +373,7 @@ final class ArtifactInspector {
     return annotation == null || annotation.value().isEmpty() ? cls.getName() : annotation.value();
   }
 
+  @Nullable
   private String getPluginCategory(Class<?> cls) {
     Category category = cls.getAnnotation(Category.class);
     return category == null || category.value().isEmpty() ? null : category.value();
@@ -388,6 +410,34 @@ final class ArtifactInspector {
   private String getPluginDescription(Class<?> cls) {
     Description annotation = cls.getAnnotation(Description.class);
     return annotation == null ? "" : annotation.value();
+  }
+
+  /**
+   * Returns the metadata mutation for this plugin, return {@code null} if no metadata annotation is there
+   */
+  @Nullable
+  private MetadataMutation getMetadataMutation(PluginId pluginId, Class<?> cls) throws InvalidMetadataException {
+    Metadata annotation = cls.getAnnotation(Metadata.class);
+    if (annotation == null) {
+      return null;
+    }
+
+    Set<String> tags = new HashSet<>(Arrays.asList(annotation.tags()));
+    MetadataProperty[] metadataProperties = annotation.properties();
+    Map<String, String> properties = new HashMap<>();
+    Arrays.asList(metadataProperties).forEach(property -> properties.put(property.key(), property.value()));
+
+    // if both tags and properties are empty, this means no actual metadata will need to be created
+    if (tags.isEmpty() && properties.isEmpty()) {
+      return null;
+    }
+    MetadataEntity metadataEntity = pluginId.toMetadataEntity();
+    // validate the tags and properties
+    metadataValidator.validateTags(metadataEntity, tags);
+    metadataValidator.validateProperties(metadataEntity, properties);
+    return new MetadataMutation.Create(metadataEntity,
+                                       new io.cdap.cdap.spi.metadata.Metadata(MetadataScope.SYSTEM, tags, properties),
+                                       MetadataMutation.Create.CREATE_DIRECTIVES);
   }
 
   /**

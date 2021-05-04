@@ -57,6 +57,7 @@ import io.cdap.cdap.proto.artifact.ApplicationClassInfo;
 import io.cdap.cdap.proto.artifact.ApplicationClassSummary;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.PluginId;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
@@ -80,6 +81,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
 /**
@@ -273,8 +275,10 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     }
     try {
       additionalPlugins = additionalPlugins == null ? Collections.emptySet() : additionalPlugins;
-      ArtifactClasses artifactClasses = inspectArtifact(artifactId, artifactFile, additionalPlugins, parentClassLoader);
-      ArtifactMeta meta = new ArtifactMeta(artifactClasses, parentArtifacts, properties);
+      ArtifactClassesWithMetadata artifactClassesWithMetadata = inspectArtifact(artifactId, artifactFile,
+                                                                                additionalPlugins, parentClassLoader);
+      ArtifactMeta meta = new ArtifactMeta(artifactClassesWithMetadata.getArtifactClasses(), parentArtifacts,
+                                           properties);
       ArtifactDetail artifactDetail = artifactStore.write(artifactId, meta, artifactFile, entityImpersonator);
       ArtifactDescriptor descriptor = artifactDetail.getDescriptor();
       // info hides some fields that are available in detail, such as the location of the artifact
@@ -282,6 +286,9 @@ public class DefaultArtifactRepository implements ArtifactRepository {
                                                    artifactDetail.getMeta().getProperties());
       // add system metadata for artifacts
       writeSystemMetadata(artifactId.toEntityId(), artifactInfo);
+
+      // add plugin metadata, these metadata can be in any scope depending on the artifact scope
+      metadataServiceClient.batch(artifactClassesWithMetadata.getMutations());
       return artifactDetail;
     } finally {
       Closeables.closeQuietly(parentClassLoader);
@@ -451,10 +458,25 @@ public class DefaultArtifactRepository implements ArtifactRepository {
 
   @Override
   public void deleteArtifact(Id.Artifact artifactId) throws Exception {
+    ArtifactDetail artifactDetail = artifactStore.getArtifact(artifactId);
+    io.cdap.cdap.proto.id.ArtifactId artifact = artifactId.toEntityId();
+
     // delete the artifact first and then privileges. Not the other way to avoid orphan artifact
     // which does not have any privilege if the artifact delete from store fails. see CDAP-6648
     artifactStore.delete(artifactId);
-    metadataServiceClient.drop(new MetadataMutation.Drop(artifactId.toEntityId().toMetadataEntity()));
+
+    List<MetadataMutation> mutations = new ArrayList<>();
+    // drop artifact metadata
+    mutations.add(new MetadataMutation.Drop(artifact.toMetadataEntity()));
+    Set<PluginClass> plugins = artifactDetail.getMeta().getClasses().getPlugins();
+
+    // drop plugin metadata
+    plugins.forEach(pluginClass -> {
+      PluginId pluginId = new PluginId(artifact.getNamespace(), artifact.getArtifact(), artifact.getVersion(),
+                                       pluginClass.getName(), pluginClass.getType());
+      mutations.add(new MetadataMutation.Drop(pluginId.toMetadataEntity()));
+    });
+    metadataServiceClient.batch(mutations);
   }
 
   @Override
@@ -507,20 +529,23 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     }
   }
 
-  private ArtifactClasses inspectArtifact(Id.Artifact artifactId, File artifactFile, Set<PluginClass> additionalPlugins,
-                                          @Nullable ClassLoader parentClassLoader)
+  private ArtifactClassesWithMetadata inspectArtifact(Id.Artifact artifactId, File artifactFile,
+                                                      Set<PluginClass> additionalPlugins,
+                                                      @Nullable ClassLoader parentClassLoader)
     throws IOException, InvalidArtifactException {
-    ArtifactClasses artifactClasses = artifactInspector.inspectArtifact(artifactId, artifactFile,
-                                                                        parentClassLoader, additionalPlugins);
-    validatePluginSet(artifactClasses.getPlugins());
+    ArtifactClassesWithMetadata artifact = artifactInspector.inspectArtifact(artifactId, artifactFile,
+                                                                             parentClassLoader,
+                                                                             additionalPlugins);
+    validatePluginSet(artifact.getArtifactClasses().getPlugins());
     if (additionalPlugins == null || additionalPlugins.isEmpty()) {
-      return artifactClasses;
+      return artifact;
     } else {
-      return ArtifactClasses.builder()
-        .addApps(artifactClasses.getApps())
-        .addPlugins(artifactClasses.getPlugins())
-        .addPlugins(additionalPlugins)
-        .build();
+      ArtifactClasses newArtifactClasses = ArtifactClasses.builder()
+                                             .addApps(artifact.getArtifactClasses().getApps())
+                                             .addPlugins(artifact.getArtifactClasses().getPlugins())
+                                             .addPlugins(additionalPlugins)
+                                             .build();
+      return new ArtifactClassesWithMetadata(newArtifactClasses, artifact.getMutations());
     }
   }
 

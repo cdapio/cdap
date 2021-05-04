@@ -66,8 +66,11 @@ import io.cdap.cdap.internal.app.runtime.artifact.plugin.nested.NestedConfigPlug
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import io.cdap.cdap.internal.app.runtime.plugin.TestMacroEvaluator;
+import io.cdap.cdap.metadata.MetadataAdmin;
 import io.cdap.cdap.proto.id.Ids;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.PluginId;
+import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.Read;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -115,6 +118,7 @@ public class ArtifactRepositoryTest {
   private static ProgramClassLoader appClassLoader;
   private static MetadataStorage metadataStorage;
   private static File appArtifactFile;
+  private static MetadataAdmin metadataAdmin;
 
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
@@ -137,6 +141,7 @@ public class ArtifactRepositoryTest {
     appArtifactFile = createAppJar(PluginTestApp.class, new File(tmpDir, "PluginTest-1.0.0.jar"),
                                    createManifest(ManifestFields.EXPORT_PACKAGE,
                                                   PluginTestRunnable.class.getPackage().getName()));
+    metadataAdmin = injector.getInstance(MetadataAdmin.class);
   }
 
   @AfterClass
@@ -734,6 +739,36 @@ public class ArtifactRepositoryTest {
     } catch (InvalidArtifactException e) {
       // expected
     }
+  }
+
+  @Test
+  public void testPluginMetadata() throws Exception {
+    // Create a plugin jar. It contains two plugins, TestPlugin and TestPlugin2 inside.
+    Id.Artifact artifact1Id = Id.Artifact.from(Id.Namespace.DEFAULT, "myPlugin", "1.0");
+    Manifest manifest = createManifest(ManifestFields.EXPORT_PACKAGE, TestPlugin.class.getPackage().getName());
+    File jarFile = createPluginJar(TestPlugin.class, new File(tmpDir, "myPlugin-1.0.jar"), manifest);
+
+    // Build up the plugin repository.
+    Set<ArtifactRange> parents = ImmutableSet.of(
+      new ArtifactRange(APP_ARTIFACT_ID.getNamespace().getId(), APP_ARTIFACT_ID.getName(),
+                        new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+    artifactRepository.addArtifact(artifact1Id, jarFile, parents, null);
+
+    PluginId testPlugin1 = new PluginId("default", "myPlugin", "1.0", "TestPlugin", "plugin");
+    Metadata expected = new Metadata(MetadataScope.SYSTEM, ImmutableSet.of("tag1", "tag2", "tag3"),
+                                     ImmutableMap.of("k1", "v1", "k2", "v2"));
+    Assert.assertEquals(expected, metadataAdmin.getMetadata(testPlugin1.toMetadataEntity()));
+
+    PluginId testPlugin2 = new PluginId("default", "myPlugin", "1.0", "TestPlugin2", "plugin");
+    expected = new Metadata(MetadataScope.SYSTEM, ImmutableSet.of("test-tag1", "test-tag2", "test-tag3"),
+                            ImmutableMap.of("key1", "val1", "key2", "val2"));
+    Assert.assertEquals(expected, metadataAdmin.getMetadata(testPlugin2.toMetadataEntity()));
+
+    // test metadata is cleaned up when the artifact gets deleted
+    artifactRepository.deleteArtifact(artifact1Id);
+
+    Assert.assertEquals(Metadata.EMPTY, metadataAdmin.getMetadata(testPlugin1.toMetadataEntity()));
+    Assert.assertEquals(Metadata.EMPTY, metadataAdmin.getMetadata(testPlugin2.toMetadataEntity()));
   }
 
   @Test
