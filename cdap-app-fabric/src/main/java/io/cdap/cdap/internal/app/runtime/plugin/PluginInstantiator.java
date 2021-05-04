@@ -29,6 +29,7 @@ import com.google.common.io.Closeables;
 import com.google.common.primitives.Primitives;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.artifact.ArtifactId;
@@ -76,6 +77,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -338,6 +340,9 @@ public class PluginInstantiator implements Closeable {
                                                       .build());
           macroParser.parse(macroValue);
           if (trackingMacroEvaluator.hasMacro()) {
+            if (!pluginField.getChildren().isEmpty()) {
+              macroFields.addAll(pluginField.getChildren());
+            }
             macroFields.add(pluginEntry.getKey());
             trackingMacroEvaluator.reset();
           }
@@ -511,7 +516,7 @@ public class PluginInstantiator implements Closeable {
       this.invalidProperties = new HashSet<>();
 
       // Don't use a static Gson object to avoid caching of classloader, which can cause classloader leakage.
-      this.gson = new Gson();
+      this.gson = new GsonBuilder().setFieldNamingStrategy(new PluginFieldNamingStrategy()).create();
     }
 
     @Override
@@ -541,22 +546,77 @@ public class PluginInstantiator implements Closeable {
       Name nameAnnotation = field.getAnnotation(Name.class);
       String name = nameAnnotation == null ? field.getName() : nameAnnotation.value();
       PluginPropertyField pluginPropertyField = pluginClass.getProperties().get(name);
-      // if the property is required and it's not a macro and the property doesn't exist
+      // if the property is required and it's not a macro and the property doesn't exist and it is not an config
+      // that is consisted of a collection of configs
+      Set<String> children = pluginPropertyField.getChildren();
       if (pluginPropertyField.isRequired()
-          && !macroFields.contains(name)
-          && properties.getProperties().get(name) == null) {
+            && !macroFields.contains(name)
+            && properties.getProperties().get(name) == null
+            && children.isEmpty()) {
         missingProperties.add(name);
         return;
       }
+
       String value = properties.getProperties().get(name);
+
+      // if the value is null but this field is consisted of children, look up all the child properties to build
+      // the config
+      if (value == null && !children.isEmpty()) {
+        Map<String, String> childProperties = new HashMap<>();
+        boolean missing = false;
+        for (String child : children) {
+          PluginPropertyField childProperty = pluginClass.getProperties().get(child);
+          // if child property is required and it is missing, add it to missing properties and continue
+          if (childProperty.isRequired() && !macroFields.contains(child) &&
+                !properties.getProperties().containsKey(child)) {
+            missingProperties.add(name);
+            missing = true;
+            continue;
+          }
+          childProperties.put(child, properties.getProperties().get(child));
+        }
+
+        // if missing any required field, return here
+        if (missing) {
+          return;
+        }
+        value = gson.toJson(childProperties);
+      }
+
       if (pluginPropertyField.isRequired() || value != null) {
         try {
-          field.set(instance, convertValue(name, declareType,
-                                           declareTypeToken.resolveType(field.getGenericType()), value));
+          Object convertedValue = convertValue(name, declareType,
+                                               declareTypeToken.resolveType(field.getGenericType()), value);
+
+          // set the remaining plugin properties field
+          if (!children.isEmpty() && convertedValue instanceof PluginConfig) {
+            PluginConfig config = (PluginConfig) convertedValue;
+            setChildPluginConfigField(config, "properties", PluginProperties.builder().addAll(
+              properties.getProperties().entrySet().stream()
+                .filter(entry -> children.contains(entry.getKey()))
+                // Collectors.toMap does not take null entry value, so use HashMap instead
+                .collect(HashMap::new, (map, entry)-> map.put(entry.getKey(),
+                                                              entry.getValue()), HashMap::putAll)).build());
+            setChildPluginConfigField(config, "rawProperties", PluginProperties.builder().addAll(
+              rawProperties.getProperties().entrySet().stream()
+                .filter(entry -> children.contains(entry.getKey()))
+                .collect(HashMap::new, (map, entry)-> map.put(entry.getKey(),
+                                                              entry.getValue()), HashMap::putAll)).build());
+            setChildPluginConfigField(config, "macroFields",
+                                      macroFields.stream().filter(children::contains).collect(Collectors.toSet()));
+          }
+          field.set(instance, convertedValue);
         } catch (Exception e) {
           invalidProperties.add(new InvalidPluginProperty(name, e));
         }
       }
+    }
+
+    private void setChildPluginConfigField(PluginConfig config, String fieldName,
+                                           Object fieldVal) throws NoSuchFieldException, IllegalAccessException {
+      Field childField = PluginConfig.class.getDeclaredField(fieldName);
+      childField.setAccessible(true);
+      childField.set(config, fieldVal);
     }
 
     /**

@@ -18,7 +18,9 @@ package io.cdap.cdap.api.plugin;
 
 import io.cdap.cdap.api.annotation.Beta;
 
+import java.util.Collections;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Contains information about a property used by a plugin.
@@ -32,9 +34,10 @@ public class PluginPropertyField {
   private final boolean required;
   private final boolean macroSupported;
   private final boolean macroEscapingEnabled;
+  private final Set<String> children;
 
   public PluginPropertyField(String name, String description, String type, boolean required, boolean macroSupported,
-                             boolean macroEscapingEnabled) {
+                             boolean macroEscapingEnabled, Set<String> children) {
     if (name == null) {
       throw new IllegalArgumentException("Plugin property name cannot be null");
     }
@@ -51,10 +54,16 @@ public class PluginPropertyField {
     this.required = required;
     this.macroSupported = macroSupported;
     this.macroEscapingEnabled = macroEscapingEnabled;
+    this.children = children;
   }
 
   public PluginPropertyField(String name, String description, String type, boolean required, boolean macroSupported) {
     this(name, description, type, required, macroSupported, false);
+  }
+
+  public PluginPropertyField(String name, String description, String type, boolean required, boolean macroSupported,
+                             boolean macroEscapingEnabled) {
+    this(name, description, type, required, macroSupported, macroEscapingEnabled, Collections.emptySet());
   }
 
   /**
@@ -93,6 +102,14 @@ public class PluginPropertyField {
   }
 
   /**
+   * Returns the list of configs inside this property, empty if it does not contain any.
+   */
+  public Set<String> getChildren() {
+    // need this check to ensure null is not returned for versions below 6.4
+    return children == null ? Collections.emptySet() : children;
+  }
+
+  /**
    * Returns the type of the property.
    */
   public String getType() {
@@ -115,11 +132,12 @@ public class PluginPropertyField {
       && description.equals(that.description)
       && type.equals(that.type)
       && macroSupported == that.macroSupported
-      && macroEscapingEnabled == that.macroEscapingEnabled;
+      && macroEscapingEnabled == that.macroEscapingEnabled
+      && Objects.equals(children, that.children);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, description, type, required, macroSupported, macroEscapingEnabled);
+    return Objects.hash(name, description, type, required, macroSupported, macroEscapingEnabled, children);
   }
 }
