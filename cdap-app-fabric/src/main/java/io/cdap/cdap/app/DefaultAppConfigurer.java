@@ -27,6 +27,9 @@ import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.mapreduce.MapReduce;
 import io.cdap.cdap.api.mapreduce.MapReduceSpecification;
+import io.cdap.cdap.api.metadata.Metadata;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.api.schedule.ScheduleBuilder;
 import io.cdap.cdap.api.schedule.TriggerFactory;
 import io.cdap.cdap.api.service.Service;
@@ -59,11 +62,14 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
+import io.cdap.cdap.spi.metadata.MetadataMutation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -85,6 +91,7 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   private final Map<String, ScheduleCreationSpec> scheduleSpecs = new HashMap<>();
   private final Map<String, WorkerSpecification> workers = new HashMap<>();
   private final Map<StructuredTableId, StructuredTableSpecification> systemTables = new HashMap<>();
+  private final List<MetadataMutation> metadatas = new ArrayList<>();
   private final TriggerFactory triggerFactory;
   private String name;
   private String description;
@@ -92,14 +99,14 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   // passed app to be used to resolve default name and description
   @VisibleForTesting
   public DefaultAppConfigurer(Id.Namespace namespace, Id.Artifact artifactId, Application app) {
-    this(namespace, artifactId, app, "", null, null);
+    this(namespace, artifactId, app, "", null, null, null);
   }
 
   public DefaultAppConfigurer(Id.Namespace namespace, Id.Artifact artifactId, Application app, String configuration,
                               @Nullable PluginFinder pluginFinder,
-                              @Nullable PluginInstantiator pluginInstantiator) {
+                              @Nullable PluginInstantiator pluginInstantiator, @Nullable String appName) {
     super(namespace, artifactId, pluginFinder, pluginInstantiator);
-    this.name = app.getClass().getSimpleName();
+    this.name = appName == null ? app.getClass().getSimpleName() : appName;
     this.description = "";
     this.configuration = configuration;
     this.artifactId = artifactId;
@@ -111,6 +118,11 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   @Override
   public void setName(String name) {
     this.name = name;
+  }
+
+  @Override
+  public String getName() {
+    return name;
   }
 
   @Override
@@ -227,6 +239,14 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   }
 
   @Override
+  public void emitMetadata(MetadataEntity metadataEntity, Metadata metadata) {
+    MetadataMutation mutation = new MetadataMutation.Update(
+      metadataEntity,
+      new io.cdap.cdap.spi.metadata.Metadata(MetadataScope.USER, metadata.getTags(), metadata.getProperties()));
+    metadatas.add(mutation);
+  }
+
+  @Override
   public TriggerFactory getTriggerFactory() {
     return triggerFactory;
   }
@@ -285,6 +305,10 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
 
   public Collection<StructuredTableSpecification> getSystemTables() {
     return systemTables.values();
+  }
+
+  public List<MetadataMutation> getMetadata() {
+    return metadatas;
   }
 
   /**

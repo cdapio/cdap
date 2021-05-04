@@ -18,6 +18,8 @@ package io.cdap.cdap.etl.batch;
 
 import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.metadata.Metadata;
+import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.etl.proto.Connection;
 import io.cdap.cdap.etl.proto.v2.spec.PipelineSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
@@ -46,9 +48,10 @@ public class BatchPipelineSpec extends PipelineSpec {
                             List<ActionSpec> endingActions,
                             int numOfRecordsPreview,
                             Map<String, String> properties,
+                            Map<MetadataEntity, Metadata> metadata,
                             @Nullable StageSpec sqlEngineStageSpec) {
     super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, processTimingEnabled,
-          numOfRecordsPreview, properties);
+          numOfRecordsPreview, properties, metadata);
     this.endingActions = ImmutableList.copyOf(endingActions);
     this.sqlEngineStageSpec = sqlEngineStageSpec;
   }
@@ -124,7 +127,7 @@ public class BatchPipelineSpec extends PipelineSpec {
     public BatchPipelineSpec build() {
       return new BatchPipelineSpec(stages, connections, resources, driverResources, clientResources,
                                    stageLoggingEnabled, processTimingEnabled, endingActions,
-                                   numOfRecordsPreview, properties, sqlEngineStageSpec);
+                                   numOfRecordsPreview, properties, metadata, sqlEngineStageSpec);
     }
   }
 }

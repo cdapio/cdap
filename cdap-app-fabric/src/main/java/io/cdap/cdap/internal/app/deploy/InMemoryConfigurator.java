@@ -40,10 +40,19 @@ import io.cdap.cdap.common.lang.CombineClassLoader;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import io.cdap.cdap.metadata.elastic.ScopedNameOfKindTypeAdapter;
+import io.cdap.cdap.metadata.elastic.ScopedNameTypeAdapter;
+import io.cdap.cdap.proto.codec.NamespacedEntityIdCodec;
+import io.cdap.cdap.proto.id.NamespacedEntityId;
+import io.cdap.cdap.spi.metadata.Metadata;
+import io.cdap.cdap.spi.metadata.MetadataCodec;
+import io.cdap.cdap.spi.metadata.MetadataMutation;
+import io.cdap.cdap.spi.metadata.MetadataMutationCodec;
+import io.cdap.cdap.spi.metadata.ScopedName;
+import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,7 +69,13 @@ import javax.annotation.Nullable;
  */
 public final class InMemoryConfigurator implements Configurator {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryConfigurator.class);
-  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
+  private static final Gson GSON =
+    ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
+      .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
+      .registerTypeAdapter(Metadata.class, new MetadataCodec())
+      .registerTypeAdapter(ScopedName.class, new ScopedNameTypeAdapter())
+      .registerTypeAdapter(ScopedNameOfKind.class, new ScopedNameOfKindTypeAdapter())
+      .registerTypeAdapter(MetadataMutation.class, new MetadataMutationCodec()).create();
 
   private final CConfiguration cConf;
   private final String applicationName;
@@ -135,7 +150,7 @@ public final class InMemoryConfigurator implements Configurator {
       PluginInstantiator pluginInstantiator = new PluginInstantiator(cConf, app.getClass().getClassLoader(), tempDir)
     ) {
       configurer = new DefaultAppConfigurer(appNamespace, artifactId, app,
-                                            configString, pluginFinder, pluginInstantiator);
+                                            configString, pluginFinder, pluginInstantiator, applicationName);
       T appConfig;
       Type configType = Artifacts.getConfigType(app.getClass());
       if (configString.isEmpty()) {
@@ -200,7 +215,7 @@ public final class InMemoryConfigurator implements Configurator {
       }
     }
     ApplicationSpecification specification = configurer.createSpecification(applicationName, applicationVersion);
-    AppSpecInfo appSpecInfo = new AppSpecInfo(specification, configurer.getSystemTables());
+    AppSpecInfo appSpecInfo = new AppSpecInfo(specification, configurer.getSystemTables(), configurer.getMetadata());
 
     // Convert the specification to JSON.
     // We write the Application specification to output file in JSON format.

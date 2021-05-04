@@ -27,6 +27,7 @@ import com.google.gson.stream.JsonWriter;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.plugin.PluginSelector;
@@ -156,6 +157,13 @@ public class DefaultSparkHttpServicePluginContext implements SparkHttpServicePlu
                                      String pluginId, PluginProperties properties, PluginSelector selector) {
     checkCanConfigure(pluginId);
     return pluginConfigurer.usePluginClass(pluginType, pluginName, pluginId, properties, selector);
+  }
+
+  @Override
+  public Map<String, String> evaluateMacros(String namespace, Map<String, String> properties,
+                                            MacroEvaluator evaluator,
+                                            MacroParserOptions options) throws InvalidMacroException {
+    return pluginConfigurer.evaluateMacros(namespace, properties, evaluator, options);
   }
 
   @Override

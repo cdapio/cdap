@@ -16,11 +16,17 @@
 
 package io.cdap.cdap.api.plugin;
 
+import io.cdap.cdap.api.macro.InvalidMacroException;
+import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.macro.MacroParserOptions;
+
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
  * This interface provides methods to register plugin usage in a CDAP Program. The registered plugins will be
- * available at the runtime of the Program.
+ * available at the runtime of the Program. Additionally, it provides methods to evaluate the plugin properties if
+ * it contains macro.
  */
 public interface PluginConfigurer {
   /**
@@ -95,4 +101,35 @@ public interface PluginConfigurer {
   @Nullable
   <T> Class<T> usePluginClass(String pluginType, String pluginName,
                               String pluginId, PluginProperties properties, PluginSelector selector);
+
+  /**
+   * Evaluates lookup macros and the 'secure' macro function using provided macro evaluator.
+   *
+   * @param namespace  namespace in which macros needs to be evaluated
+   * @param properties key-value map of properties to evaluate
+   * @param evaluator  macro evaluator to be used to evaluate macros
+   * @return map of evaluated macros
+   * @throws InvalidMacroException indicates that there is an invalid macro
+   */
+  default Map<String, String> evaluateMacros(String namespace, Map<String, String> properties,
+                                             MacroEvaluator evaluator) throws InvalidMacroException {
+    return evaluateMacros(namespace, properties, evaluator,
+                          MacroParserOptions.builder()
+                            .setFunctionWhitelist("secure")
+                            .setEscaping(false)
+                            .build());
+  }
+
+  /**
+   * Evaluates macros using provided macro evaluator with the provided parsing options.
+   *
+   * @param namespace  namespace in which macros needs to be evaluated
+   * @param properties key-value map of properties to evaluate
+   * @param evaluator  macro evaluator to be used to evaluate macros
+   * @param options    macro parsing options
+   * @return map of evaluated macros
+   * @throws InvalidMacroException indicates that there is an invalid macro
+   */
+  Map<String, String> evaluateMacros(String namespace, Map<String, String> properties,
+                                     MacroEvaluator evaluator, MacroParserOptions options) throws InvalidMacroException;
 }

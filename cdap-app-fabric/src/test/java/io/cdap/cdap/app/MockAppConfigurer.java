@@ -22,7 +22,12 @@ import io.cdap.cdap.api.app.ProgramType;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.api.macro.InvalidMacroException;
+import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.mapreduce.MapReduce;
+import io.cdap.cdap.api.metadata.Metadata;
+import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.plugin.PluginSelector;
 import io.cdap.cdap.api.schedule.ScheduleBuilder;
@@ -36,6 +41,7 @@ import io.cdap.cdap.internal.app.runtime.schedule.trigger.DefaultTriggerFactory;
 import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
 import io.cdap.cdap.proto.id.NamespaceId;
 
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -99,6 +105,11 @@ public final class MockAppConfigurer implements ApplicationConfigurer {
   }
 
   @Override
+  public void emitMetadata(MetadataEntity metadataEntity, Metadata metadata) {
+
+  }
+
+  @Override
   public TriggerFactory getTriggerFactory() {
     // the result of this won't actually be used, but the returned object will have its methods called
     return new DefaultTriggerFactory(NamespaceId.DEFAULT);
@@ -123,6 +134,13 @@ public final class MockAppConfigurer implements ApplicationConfigurer {
   public <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId, PluginProperties properties,
                                      PluginSelector selector) {
     throw new UnsupportedOperationException(ERROR_MSG);
+  }
+
+  @Override
+  public Map<String, String> evaluateMacros(String namespace, Map<String, String> properties,
+                                            MacroEvaluator evaluator,
+                                            MacroParserOptions options) throws InvalidMacroException {
+    return properties;
   }
 
   @Override

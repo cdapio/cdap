@@ -17,6 +17,8 @@
 package io.cdap.cdap.datastreams;
 
 import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.metadata.Metadata;
+import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.etl.proto.Connection;
 import io.cdap.cdap.etl.proto.v2.spec.PipelineSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
@@ -44,9 +46,9 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
                                   String extraJavaOpts, int numOfRecordsPreview,
                                   boolean stopGracefully, Map<String, String> properties,
                                   boolean checkpointsDisabled, boolean isUnitTest, String checkpointDirectory,
-                                  String pipelineId) {
+                                  String pipelineId, Map<MetadataEntity, Metadata> metadata) {
     super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, processTimingEnabled,
-          numOfRecordsPreview, properties);
+          numOfRecordsPreview, properties, metadata);
     this.batchIntervalMillis = batchIntervalMillis;
     this.extraJavaOpts = extraJavaOpts;
     this.stopGracefully = stopGracefully;
@@ -181,7 +183,7 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
       return new DataStreamsPipelineSpec(stages, connections, resources, driverResources, clientResources,
                                          stageLoggingEnabled, processTimingEnabled, batchIntervalMillis, extraJavaOpts,
                                          numOfRecordsPreview, stopGracefully, properties,
-                                         checkpointsDisabled, isUnitTest, checkpointDirectory, pipelineId);
+                                         checkpointsDisabled, isUnitTest, checkpointDirectory, pipelineId, metadata);
     }
   }
 }

@@ -20,6 +20,8 @@ package io.cdap.cdap.etl.proto.v2.spec;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.metadata.Metadata;
+import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.etl.proto.Connection;
 import io.cdap.cdap.etl.proto.v2.ETLConfig;
 
@@ -48,6 +50,9 @@ public class PipelineSpec {
   private final int numOfRecordsPreview;
   private final Map<String, String> properties;
 
+  // we don't need this config after deploy time so don't serialize it
+  private transient final Map<MetadataEntity, Metadata> metadata;
+
   protected PipelineSpec(Set<StageSpec> stages,
                          Set<Connection> connections,
                          Resources resources,
@@ -56,7 +61,8 @@ public class PipelineSpec {
                          boolean stageLoggingEnabled,
                          boolean processTimingEnabled,
                          int numOfRecordsPreview,
-                         Map<String, String> properties) {
+                         Map<String, String> properties,
+                         Map<MetadataEntity, Metadata> metadata) {
     this.stages = ImmutableSet.copyOf(stages);
     this.connections = ImmutableSet.copyOf(connections);
     this.resources = resources;
@@ -66,6 +72,7 @@ public class PipelineSpec {
     this.processTimingEnabled = processTimingEnabled;
     this.numOfRecordsPreview = numOfRecordsPreview;
     this.properties = ImmutableMap.copyOf(properties);
+    this.metadata = metadata;
   }
 
   public Set<StageSpec> getStages() {
@@ -98,6 +105,10 @@ public class PipelineSpec {
 
   public int getNumOfRecordsPreview() {
     return numOfRecordsPreview;
+  }
+
+  public Map<MetadataEntity, Metadata> getMetadata() {
+    return metadata;
   }
 
   public Map<String, String> getProperties() {
@@ -170,6 +181,7 @@ public class PipelineSpec {
     protected boolean processTimingEnabled;
     protected int numOfRecordsPreview;
     protected Map<String, String> properties;
+    protected Map<MetadataEntity, Metadata> metadata;
 
     protected Builder() {
       this.stages = new HashSet<>();
@@ -236,9 +248,20 @@ public class PipelineSpec {
       return (T) this;
     }
 
+    public T addMetadata(MetadataEntity metadataEntity, Metadata metadata) {
+      this.metadata.put(metadataEntity, metadata);
+      return (T) this;
+    }
+
+    public T addMetadata(Map<MetadataEntity, Metadata> metadata) {
+      this.metadata.putAll(metadata);
+      return (T) this;
+    }
+
     public PipelineSpec build() {
       return new PipelineSpec(stages, connections, resources, driverResources, clientResources,
-                              stageLoggingEnabled, processTimingEnabled, numOfRecordsPreview, properties);
+                              stageLoggingEnabled, processTimingEnabled, numOfRecordsPreview, properties,
+                              metadata);
     }
   }
 }

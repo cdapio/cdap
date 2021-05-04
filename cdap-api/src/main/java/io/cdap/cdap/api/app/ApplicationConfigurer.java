@@ -18,6 +18,8 @@ package io.cdap.cdap.api.app;
 
 import io.cdap.cdap.api.DatasetConfigurer;
 import io.cdap.cdap.api.mapreduce.MapReduce;
+import io.cdap.cdap.api.metadata.Metadata;
+import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.schedule.ScheduleBuilder;
 import io.cdap.cdap.api.schedule.TriggerFactory;
@@ -38,6 +40,15 @@ public interface ApplicationConfigurer extends PluginConfigurer, DatasetConfigur
    * @param name name
    */
   void setName(String name);
+
+  /**
+   * Get the application name, this will be the application name provided when deploying the application, or
+   * the name set in {@link #setName(String)}. If it is not provided in either way, it will be the simple class name
+   * of the app.
+   *
+   * @return the application name
+   */
+  String getName();
 
   /**
    * Sets the description of the Application.
@@ -99,6 +110,15 @@ public interface ApplicationConfigurer extends PluginConfigurer, DatasetConfigur
    * @param scheduleCreationSpec defines the schedule.
    */
   void schedule(ScheduleCreationSpec scheduleCreationSpec);
+
+  /**
+   * Emit the given {@link Metadata} for the given metadata entity. If the given metadata entity already exists,
+   * existing tags and properties will be updated.
+   *
+   * @param metadataEntity the entity to emit metadata
+   * @param metadata the metadata to emit
+   */
+  void emitMetadata(MetadataEntity metadataEntity, Metadata metadata);
 
   /**
    * Get a TriggerFactory to get triggers.

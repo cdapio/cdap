@@ -23,10 +23,12 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
+import io.cdap.cdap.spi.metadata.MetadataMutation;
 import org.apache.twill.filesystem.Location;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import javax.annotation.Nullable;
 
 /**
@@ -42,6 +44,7 @@ public class ApplicationDeployable {
   private final ApplicationSpecification existingAppSpec;
   private final ApplicationDeployScope applicationDeployScope;
   private final Collection<StructuredTableSpecification> systemTables;
+  private final List<MetadataMutation> mutations;
   @SerializedName("principal")
   private final KerberosPrincipalId ownerPrincipal;
   @SerializedName("update-schedules")
@@ -53,7 +56,7 @@ public class ApplicationDeployable {
                                ApplicationDeployScope applicationDeployScope,
                                ApplicationClass applicationClass) {
     this(artifactId, artifactLocation, applicationId, specification, existingAppSpec, applicationDeployScope,
-         applicationClass, null, true, Collections.emptyList());
+         applicationClass, null, true, Collections.emptyList(), Collections.emptyList());
   }
 
   public ApplicationDeployable(ArtifactId artifactId, Location artifactLocation,
@@ -63,7 +66,8 @@ public class ApplicationDeployable {
                                ApplicationClass applicationClass,
                                @Nullable KerberosPrincipalId ownerPrincipal,
                                boolean updateSchedules,
-                               Collection<StructuredTableSpecification> systemTables) {
+                               Collection<StructuredTableSpecification> systemTables,
+                               List<MetadataMutation> mutations) {
     this.artifactId = artifactId;
     this.artifactLocation = artifactLocation;
     this.applicationId = applicationId;
@@ -74,6 +78,7 @@ public class ApplicationDeployable {
     this.updateSchedules = updateSchedules;
     this.systemTables = systemTables;
     this.applicationClass = applicationClass;
+    this.mutations = mutations;
   }
 
   /**
@@ -145,5 +150,12 @@ public class ApplicationDeployable {
    */
   public boolean canUpdateSchedules() {
     return updateSchedules;
+  }
+
+  /**
+   * Returns the metadata to emit
+   */
+  public List<MetadataMutation> getMutations() {
+    return mutations;
   }
 }
