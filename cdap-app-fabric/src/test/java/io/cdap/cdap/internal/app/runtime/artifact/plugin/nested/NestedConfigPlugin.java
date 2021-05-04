@@ -23,7 +23,6 @@ import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.plugin.PluginConfig;
-import io.cdap.cdap.api.plugin.PluginGroupConfig;
 
 import java.util.Objects;
 import java.util.concurrent.Callable;
@@ -44,11 +43,11 @@ public class NestedConfigPlugin implements Callable<String> {
 
   public static class Config extends PluginConfig {
     @Name("X")
-    private int x;
+    public int x;
 
     @Name("Nested")
     @Macro
-    private NestedConfig nested;
+    public NestedConfig nested;
 
     public Config(int x, NestedConfig nested) {
       this.x = x;
@@ -76,12 +75,14 @@ public class NestedConfigPlugin implements Callable<String> {
     }
   }
 
-  public static class NestedConfig extends PluginGroupConfig {
+  public static class NestedConfig extends PluginConfig {
     @Name("Nested1")
-    private String nested1;
+    @Macro
+    public String nested1;
 
     @Name("Nested2")
-    private String nested2;
+    @Macro
+    public String nested2;
 
     public NestedConfig(String nested1, String nested2) {
       this.nested1 = nested1;

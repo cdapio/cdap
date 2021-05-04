@@ -196,8 +196,8 @@ public class ArtifactInspectorTest {
         "X", new PluginPropertyField("X", "", "int", true, false),
         "Nested", new PluginPropertyField("Nested", "", "nestedconfig", true, true, false,
                                           ImmutableSet.of("Nested1", "Nested2")),
-        "Nested1", new PluginPropertyField("Nested1", "", "string", true, false),
-        "Nested2", new PluginPropertyField("Nested2", "", "string", true, false)
+        "Nested1", new PluginPropertyField("Nested1", "", "string", true, true),
+        "Nested2", new PluginPropertyField("Nested2", "", "string", true, true)
       );
 
       PluginClass expected = PluginClass.builder()

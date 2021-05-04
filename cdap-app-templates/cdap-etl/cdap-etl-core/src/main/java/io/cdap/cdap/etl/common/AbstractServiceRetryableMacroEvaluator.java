@@ -64,7 +64,7 @@ abstract class AbstractServiceRetryableMacroEvaluator implements MacroEvaluator 
                                            + ". Expecting " + functionName);
     }
 
-    // Make call to get OAuth token with exponential delay on failure retry.
+    // Make call with exponential delay on failure retry.
     long delay = RETRY_BASE_DELAY_MILLIS;
     double minMultiplier = RETRY_DELAY_MULTIPLIER - RETRY_DELAY_MULTIPLIER * RETRY_RANDOMIZE_FACTOR;
     double maxMultiplier = RETRY_DELAY_MULTIPLIER + RETRY_DELAY_MULTIPLIER * RETRY_RANDOMIZE_FACTOR;

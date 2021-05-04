@@ -36,7 +36,6 @@ import io.cdap.cdap.api.metadata.MetadataException;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginConfig;
-import io.cdap.cdap.api.plugin.PluginGroupConfig;
 import io.cdap.cdap.api.plugin.PluginPropertyField;
 import io.cdap.cdap.data2.metadata.writer.MetadataOperation;
 import io.cdap.cdap.data2.metadata.writer.MetadataOperationTypeAdapter;
@@ -103,7 +102,7 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
   /**
    * Connection Config for mock source
    */
-  public static class ConnectionConfig extends PluginGroupConfig {
+  public static class ConnectionConfig extends PluginConfig {
     private String tableName;
   }
 

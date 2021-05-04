@@ -32,7 +32,6 @@ import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.api.lineage.field.EndPoint;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginConfig;
-import io.cdap.cdap.api.plugin.PluginGroupConfig;
 import io.cdap.cdap.api.plugin.PluginPropertyField;
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
@@ -82,7 +81,7 @@ public class MockSink extends BatchSink<StructuredRecord, byte[], Put> {
   /**
    * Connection config for mock sink
    */
-  public static class ConnectionConfig extends PluginGroupConfig {
+  public static class ConnectionConfig extends PluginConfig {
     @Macro
     private String tableName;
   }

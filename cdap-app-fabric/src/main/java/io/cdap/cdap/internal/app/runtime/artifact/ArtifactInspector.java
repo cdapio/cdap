@@ -36,7 +36,6 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginConfig;
-import io.cdap.cdap.api.plugin.PluginGroupConfig;
 import io.cdap.cdap.api.plugin.PluginPropertyField;
 import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.app.program.ManifestFields;
@@ -412,7 +411,7 @@ final class ArtifactInspector {
         TypeToken<?> fieldType = TypeToken.of(field.getGenericType());
         if (PluginConfig.class.isAssignableFrom(fieldType.getRawType())) {
           // Pick up all config properties
-          inspectConfigField(fieldType, result, PluginConfig.class, true);
+          inspectConfigField(fieldType, result, true);
           return field.getName();
         }
       }
@@ -425,15 +424,14 @@ final class ArtifactInspector {
    *
    * @param configType type of the config class
    * @param result map for storing the result
-   * @param stopClass the class to stop inspection from
-   * @param inspectNested boolean flag to inspect the config which is a {@link PluginGroupConfig}
+   * @param inspectNested boolean flag to inspect the config which is a {@link PluginConfig}
    * @throws UnsupportedTypeException if a field type in the config class is not supported
    */
   private void inspectConfigField(TypeToken<?> configType,
                                   Map<String, PluginPropertyField> result,
-                                  Class<?> stopClass, boolean inspectNested) throws UnsupportedTypeException {
+                                  boolean inspectNested) throws UnsupportedTypeException {
     for (TypeToken<?> type : configType.getTypes().classes()) {
-      if (stopClass.equals(type.getRawType())) {
+      if (PluginConfig.class.equals(type.getRawType())) {
         break;
       }
 
@@ -486,14 +484,14 @@ final class ArtifactInspector {
     }
 
     Map<String, PluginPropertyField> properties = new HashMap<>();
-    if (PluginGroupConfig.class.isAssignableFrom(rawType)) {
+    if (PluginConfig.class.isAssignableFrom(rawType)) {
       if (!inspectNested) {
         throw new IllegalArgumentException("Plugin config with name " + name +
                                              " is a subclass of PluginGroupConfig and can " +
                                              "only be defined within PluginConfig.");
       }
-      // don't inspect if the field is not in PluginConfig
-      inspectConfigField(fieldType, properties, PluginGroupConfig.class, false);
+      // don't inspect if the field is already nested
+      inspectConfigField(fieldType, properties, false);
     }
     PluginPropertyField curField = new PluginPropertyField(name, description, rawType.getSimpleName().toLowerCase(),
                                                            required, macroSupported, false,
