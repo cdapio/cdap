@@ -135,10 +135,11 @@ public class ReducibleAggregatorTestBase extends HydratorTestBase {
   }
 
   protected void testFieldCountAgg(Engine engine, Map<String, String> arguments) throws Exception {
-    String source1Name = "pAggInput1-" + engine.name();
-    String source2Name = "pAggInput2-" + engine.name();
-    String sink1Name = "pAggOutput1-" + engine.name();
-    String sink2Name = "pAggOutput2-" + engine.name();
+    String runSuffix = engine.name() + "-" + UUID.randomUUID();
+    String source1Name = "pAggInput1-" + runSuffix;
+    String source2Name = "pAggInput2-" + runSuffix;
+    String sink1Name = "pAggOutput1-" + runSuffix;
+    String sink2Name = "pAggOutput2-" + runSuffix;
     Schema inputSchema = Schema.recordOf(
       "testRecord",
       Schema.Field.of("user", Schema.of(Schema.Type.STRING)),
@@ -166,7 +167,7 @@ public class ReducibleAggregatorTestBase extends HydratorTestBase {
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    ApplicationId appId = NamespaceId.DEFAULT.app("ParallelAggApp-" + engine);
+    ApplicationId appId = NamespaceId.DEFAULT.app("ParallelAggApp-" + runSuffix);
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
     // write few records to each source

@@ -82,8 +82,12 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
   private static final Encoder KRYO_OBJECT_ENCODER = Encoders.kryo(Object.class);
   private static final Encoder KRYO_TUPLE_ENCODER = Encoders.tuple(
     KRYO_OBJECT_ENCODER, KRYO_OBJECT_ENCODER);
+  private static final Encoder JAVA_OBJECT_ENCODER = Encoders.javaSerialization(Object.class);
+  private static final Encoder JAVA_TUPLE_ENCODER = Encoders.tuple(
+    JAVA_OBJECT_ENCODER, JAVA_OBJECT_ENCODER);
 
   private final boolean useDatasetAggregation;
+  private final boolean useKryoForDatasets;
   private final boolean ignorePartitionsDuringDatasetAggregation;
 
   public RDDCollection(JavaSparkExecutionContext sec, FunctionCache.Factory functionCacheFactory,
@@ -93,6 +97,8 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
     super(sec, functionCacheFactory, jsc, sqlContext, datasetContext, sinkFactory, rdd);
     this.useDatasetAggregation = Boolean.parseBoolean(
       sec.getRuntimeArguments().getOrDefault(Constants.DATASET_AGGREGATE_ENABLED, Boolean.TRUE.toString()));
+    this.useKryoForDatasets = Boolean.parseBoolean(
+      sec.getRuntimeArguments().getOrDefault(Constants.DATASET_KRYO_ENABLED, Boolean.TRUE.toString()));
     this.ignorePartitionsDuringDatasetAggregation = Boolean.parseBoolean(
       sec.getRuntimeArguments().getOrDefault(Constants.DATASET_AGGREGATE_IGNORE_PARTITIONS, Boolean.TRUE.toString()));
   }
@@ -408,15 +414,15 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
   /**
    * helper function to provide a generified encoder for any serializable type
    */
-  private <V> Encoder<V> kryoEncoder() {
-    return KRYO_OBJECT_ENCODER;
+  private <V> Encoder<V> objectEncoder() {
+    return useKryoForDatasets ? KRYO_OBJECT_ENCODER : JAVA_OBJECT_ENCODER;
   }
 
   /**
    * helper function to provide a generified encoder for tuple of two serializable types
    */
-  private <V1, V2> Encoder<Tuple2<V1, V2>> kryoTupleEncoder() {
-    return KRYO_TUPLE_ENCODER;
+  private <V1, V2> Encoder<Tuple2<V1, V2>> tupleEncoder() {
+    return useKryoForDatasets ? KRYO_TUPLE_ENCODER : JAVA_TUPLE_ENCODER;
   }
 
   /**
@@ -436,14 +442,14 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
     MapFunction<Tuple2<GROUP_KEY, DatasetAggregationAccumulator<T, AGG_VALUE>>,
       DatasetAggregationAccumulator<T, AGG_VALUE>> valueFromTuple = Tuple2::_2;
 
-    Dataset<T> dataset = sqlContext.createDataset(rdd.rdd(), kryoEncoder());
+    Dataset<T> dataset = sqlContext.createDataset(rdd.rdd(), objectEncoder());
 
     Dataset<RecordInfo<Object>> groupedDataset = dataset
-      .flatMap(groupByFunction, kryoTupleEncoder())
-      .groupByKey(keyFromTuple, kryoEncoder())
-      .mapValues(valueFromTuple, kryoEncoder())
+      .flatMap(groupByFunction, tupleEncoder())
+      .groupByKey(keyFromTuple, objectEncoder())
+      .mapValues(valueFromTuple, objectEncoder())
       .reduceGroups(reduceFunction)
-      .flatMap(postFunction, kryoEncoder());
+      .flatMap(postFunction, objectEncoder());
 
     if (!ignorePartitionsDuringDatasetAggregation && partitions != null) {
       groupedDataset = groupedDataset.coalesce(partitions);
