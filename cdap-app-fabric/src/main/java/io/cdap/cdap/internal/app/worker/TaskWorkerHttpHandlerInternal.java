@@ -21,7 +21,10 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
 import io.cdap.cdap.logging.gateway.handlers.AbstractLogHttpHandler;
+import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
@@ -45,14 +48,24 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
   public static final String UNKNOWN_CLASS_REQUEST = "UNKNOWN_REQUEST";
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerHttpHandlerInternal.class);
   private static final Gson GSON = new Gson();
+  private final ArtifactRepositoryReader artifactRepositoryReader;
+  private final ArtifactRepository artifactRepository;
+  private final Impersonator impersonator;
   private final RunnableTaskLauncher runnableTaskLauncher;
   private final Consumer<String> stopper;
   private final AtomicInteger inflightRequests = new AtomicInteger(0);
 
   @Inject
-  public TaskWorkerHttpHandlerInternal(CConfiguration cConf, Consumer<String> stopper) {
+  public TaskWorkerHttpHandlerInternal(CConfiguration cConf,
+                                       ArtifactRepositoryReader artifactRepositoryReader,
+                                       ArtifactRepository artifactRepository,
+                                       Impersonator impersonator,
+                                       Consumer<String> stopper) {
     super(cConf);
-    runnableTaskLauncher = new RunnableTaskLauncher(cConf);
+    this.artifactRepositoryReader = artifactRepositoryReader;
+    this.artifactRepository = artifactRepository;
+    this.impersonator = impersonator;
+    runnableTaskLauncher = new RunnableTaskLauncher(cConf, artifactRepositoryReader, artifactRepository, impersonator);
     this.stopper = stopper;
   }
 

@@ -26,6 +26,9 @@ import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
+import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -45,17 +48,26 @@ public class TaskWorkerService extends AbstractIdleService {
   private final CConfiguration cConf;
   private final SConfiguration sConf;
   private final DiscoveryService discoveryService;
+  private final ArtifactRepositoryReader artifactRepositoryReader;
+  private final ArtifactRepository artifactRepository;
+  private final Impersonator impersonator;
   private NettyHttpService httpService;
   private Cancellable cancelDiscovery;
   private InetSocketAddress bindAddress;
 
   @Inject
-  TaskWorkerService(CConfiguration cConf,
-                    SConfiguration sConf,
-                    DiscoveryService discoveryService) {
+  public TaskWorkerService(CConfiguration cConf,
+                          SConfiguration sConf,
+                          DiscoveryService discoveryService,
+                          ArtifactRepositoryReader artifactRepositoryReader,
+                          ArtifactRepository artifactRepository,
+                          Impersonator impersonator) {
     this.cConf = cConf;
     this.sConf = sConf;
     this.discoveryService = discoveryService;
+    this.artifactRepositoryReader = artifactRepositoryReader;
+    this.artifactRepository = artifactRepository;
+    this.impersonator = impersonator;
   }
 
   @Override
@@ -80,7 +92,8 @@ public class TaskWorkerService extends AbstractIdleService {
       .setExecThreadPoolSize(cConf.getInt(Constants.TaskWorker.EXEC_THREADS))
       .setBossThreadPoolSize(cConf.getInt(Constants.TaskWorker.BOSS_THREADS))
       .setWorkerThreadPoolSize(cConf.getInt(Constants.TaskWorker.WORKER_THREADS))
-      .setHttpHandlers(new TaskWorkerHttpHandlerInternal(this.cConf, this::stopService));
+      .setHttpHandlers(new TaskWorkerHttpHandlerInternal(
+        this.cConf, this.artifactRepositoryReader, this.artifactRepository, this.impersonator, this::stopService));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);

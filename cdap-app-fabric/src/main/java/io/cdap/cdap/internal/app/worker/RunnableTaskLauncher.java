@@ -20,32 +20,76 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.security.impersonation.EntityImpersonator;
+import io.cdap.cdap.security.impersonation.Impersonator;
+
+import java.lang.reflect.Method;
 
 /**
  * RunnableTaskLauncher launches a runnable task.
  */
 public class RunnableTaskLauncher {
   private final CConfiguration cConfig;
+  private final ArtifactRepositoryReader artifactRepositoryReader;
+  private final ArtifactRepository artifactRepository;
+  private final Impersonator impersonator;
 
-  public RunnableTaskLauncher(CConfiguration cConfig) {
+  public RunnableTaskLauncher(CConfiguration cConfig,
+                              ArtifactRepositoryReader artifactRepositoryReader,
+                              ArtifactRepository artifactRepository,
+                              Impersonator impersonator) {
     this.cConfig = cConfig;
+    this.artifactRepositoryReader = artifactRepositoryReader;
+    this.artifactRepository = artifactRepository;
+    this.impersonator = impersonator;
   }
 
   public byte[] launchRunnableTask(RunnableTaskRequest request) throws Exception {
+    if (request.artifactId == null) {
+      ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+      Class<?> clazz = classLoader.loadClass(request.className);
 
-    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-    Class<?> clazz = classLoader.loadClass(request.className);
+      Injector injector = Guice.createInjector(new RunnableTaskModule(cConfig));
+      Object obj = injector.getInstance(clazz);
 
-    Injector injector = Guice.createInjector(new RunnableTaskModule(cConfig));
-    Object obj = injector.getInstance(clazz);
+      if (!(obj instanceof RunnableTask)) {
+        throw new ClassCastException(String.format("%s is not a RunnableTask", request.className));
+      }
+      RunnableTask runnableTask = (RunnableTask) obj;
+      if (runnableTask.start().get() != Service.State.RUNNING) {
+        throw new Exception(String.format("service %s failed to start", request.className));
+      }return runnableTask.runTask(request.param);
+    } else {
+      Id.Artifact artifactId = request.artifactId;
+      ArtifactDetail artifactDetail =
+        artifactRepositoryReader.getArtifact(artifactId);
+      EntityImpersonator classLoaderImpersonator = new EntityImpersonator(
+        new ArtifactId(artifactId.getNamespace().getId(), artifactId.getName(), artifactId.getVersion().getVersion()),
+        impersonator);
+      ClassLoader classLoader = artifactRepository.createArtifactClassLoader(
+        artifactDetail.getDescriptor().getLocation(),
+        classLoaderImpersonator);
 
-    if (!(obj instanceof RunnableTask)) {
-      throw new ClassCastException(String.format("%s is not a RunnableTask", request.className));
+      Class<?> clazz = classLoader.loadClass(request.className);
+
+      Injector injector = Guice.createInjector(new RunnableTaskModule(cConfig));
+      Object obj = injector.getInstance(clazz);
+
+      Class<RunnableTask> runnableTaskClass = (Class<RunnableTask>) classLoader.loadClass(RunnableTask.class.getName());
+
+      Method[] methods = runnableTaskClass.getDeclaredMethods();
+      for (int i = 0; i < methods.length; i++) {
+        System.out.println(methods[i].toString());
+      }
+
+      Method method = runnableTaskClass.getMethod("runTask", java.lang.String.class);
+
+      return (byte[]) method.invoke(obj, new Object[]{request.param});
     }
-    RunnableTask runnableTask = (RunnableTask) obj;
-    if (runnableTask.start().get() != Service.State.RUNNING) {
-      throw new Exception(String.format("service %s failed to start", request.className));
-    }
-    return runnableTask.runTask(request.param);
   }
 }

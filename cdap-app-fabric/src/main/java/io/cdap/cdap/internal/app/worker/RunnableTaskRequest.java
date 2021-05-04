@@ -16,16 +16,28 @@
 
 package io.cdap.cdap.internal.app.worker;
 
+import io.cdap.cdap.common.id.Id;
+
+import javax.annotation.Nullable;
+
 /**
  * Request for launching a runnable task.
  */
 public class RunnableTaskRequest {
+  @Nullable
+  Id.Artifact artifactId;
+
   String className;
   String param;
 
-  public RunnableTaskRequest(String className, String param) {
+  public RunnableTaskRequest(Id.Artifact artifactId, String className, String param) {
+    this.artifactId = artifactId;
     this.className = className;
     this.param = param;
+  }
+
+  public Id.Artifact getArtifactId() {
+    return artifactId;
   }
 
   public String getClassName() {

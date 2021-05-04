@@ -25,6 +25,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.PrivateModule;
+import com.google.inject.Scopes;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
@@ -37,12 +39,18 @@ import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
+import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReader;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.impersonation.DefaultImpersonator;
+import io.cdap.cdap.security.impersonation.Impersonator;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.TwillContext;
@@ -146,7 +154,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
   }
 
   @VisibleForTesting
-  static Injector createInjector(CConfiguration cConf, Configuration hConf) {
+  static public Injector createInjector(CConfiguration cConf, Configuration hConf) {
     List<Module> modules = new ArrayList<>();
 
     SConfiguration sConf = SConfiguration.create();
@@ -161,14 +169,28 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
       modules.add(new ZKDiscoveryModule());
       modules.add(new KafkaClientModule());
       modules.add(new KafkaLogAppenderModule());
+      modules.add(new PrivateModule() {
+        @Override
+        protected void configure() {
+          bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class).in(Scopes.SINGLETON);
+          bind(ArtifactRepository.class).to(DefaultArtifactRepository.class).in(Scopes.SINGLETON);
+          bind(Impersonator.class).to(DefaultImpersonator.class).in(Scopes.SINGLETON);
+          expose(TaskWorkerService.class);
+        }
+      });
     } else {
-      modules.add(new AbstractModule() {
+      modules.add(new PrivateModule() {
         @Override
         protected void configure() {
           bind(DiscoveryService.class)
             .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
           bind(DiscoveryServiceClient.class)
             .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
+          bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class).in(Scopes.SINGLETON);
+          bind(ArtifactRepository.class).to(DefaultArtifactRepository.class).in(Scopes.SINGLETON);
+          bind(Impersonator.class).to(DefaultImpersonator.class).in(Scopes.SINGLETON);
+
+          expose(TaskWorkerService.class);
         }
       });
       modules.add(new RemoteLogAppenderModule());

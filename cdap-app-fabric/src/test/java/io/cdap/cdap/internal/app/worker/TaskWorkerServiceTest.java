@@ -72,7 +72,7 @@ public class TaskWorkerServiceTest {
     CConfiguration cConf = createCConf(port);
     SConfiguration sConf = createSConf();
 
-    TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, sConf, new InMemoryDiscoveryService());
+    TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, sConf, new InMemoryDiscoveryService(), null, null, null);
     // start the service
     taskWorkerService.startAndWait();
 
@@ -108,7 +108,7 @@ public class TaskWorkerServiceTest {
 
     // Post valid request
     String want = "100";
-    RunnableTaskRequest req = new RunnableTaskRequest(TestRunnableClass.class.getName(), want);
+    RunnableTaskRequest req = new RunnableTaskRequest(null, TestRunnableClass.class.getName(), want);
     String reqBody = GSON.toJson(req);
     HttpResponse response = HttpRequests.execute(
       HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
@@ -127,7 +127,7 @@ public class TaskWorkerServiceTest {
     URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
 
     // Post invalid request
-    RunnableTaskRequest noClassReq = new RunnableTaskRequest("NoClass", "");
+    RunnableTaskRequest noClassReq = new RunnableTaskRequest(null, "NoClass", "");
     String reqBody = GSON.toJson(noClassReq);
     HttpResponse response = HttpRequests.execute(
       HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
@@ -143,7 +143,7 @@ public class TaskWorkerServiceTest {
     InetSocketAddress addr = taskWorkerService.getBindAddress();
     URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
 
-    RunnableTaskRequest request = new RunnableTaskRequest(TestRunnableClass.class.getName(), "1000");
+    RunnableTaskRequest request = new RunnableTaskRequest(null, TestRunnableClass.class.getName(), "1000");
 
     String reqBody = GSON.toJson(request);
     List<Callable<HttpResponse>> calls = new ArrayList<>();
