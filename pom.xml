@@ -186,6 +186,9 @@
     <sonar.organization>cdap</sonar.organization>
     <sonar.projectKey>cdapio_${project.artifactId}</sonar.projectKey>
     <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+
+    <!-- Need default value when coverage is not collected -->
+    <argLine/>
   </properties>
 
   <dependencyManagement>
