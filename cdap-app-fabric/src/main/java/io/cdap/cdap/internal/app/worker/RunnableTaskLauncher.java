@@ -63,7 +63,8 @@ public class RunnableTaskLauncher {
       RunnableTask runnableTask = (RunnableTask) obj;
       if (runnableTask.start().get() != Service.State.RUNNING) {
         throw new Exception(String.format("service %s failed to start", request.className));
-      }return runnableTask.runTask(request.param);
+      }
+      return runnableTask.runTask(request.param);
     } else {
       Id.Artifact artifactId = request.artifactId;
       ArtifactDetail artifactDetail =
@@ -82,12 +83,7 @@ public class RunnableTaskLauncher {
 
       Class<RunnableTask> runnableTaskClass = (Class<RunnableTask>) classLoader.loadClass(RunnableTask.class.getName());
 
-      Method[] methods = runnableTaskClass.getDeclaredMethods();
-      for (int i = 0; i < methods.length; i++) {
-        System.out.println(methods[i].toString());
-      }
-
-      Method method = runnableTaskClass.getMethod("runTask", java.lang.String.class);
+      Method method = runnableTaskClass.getMethod(RunnableTask.RUN_MEHOD_NAME, java.lang.String.class);
 
       return (byte[]) method.invoke(obj, new Object[]{request.param});
     }

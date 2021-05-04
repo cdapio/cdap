@@ -21,7 +21,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
@@ -80,6 +79,52 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
 
   public TaskWorkerTwillRunnable(String cConfFileName, String hConfFileName) {
     super(ImmutableMap.of("cConf", cConfFileName, "hConf", hConfFileName));
+  }
+
+  @VisibleForTesting
+  public static Injector createInjector(CConfiguration cConf, Configuration hConf) {
+    List<Module> modules = new ArrayList<>();
+
+    SConfiguration sConf = SConfiguration.create();
+    modules.add(new ConfigModule(cConf, hConf, sConf));
+    modules.add(new IOModule());
+
+    // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
+    MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
+
+    if (masterEnv == null) {
+      modules.add(new ZKClientModule());
+      modules.add(new ZKDiscoveryModule());
+      modules.add(new KafkaClientModule());
+      modules.add(new KafkaLogAppenderModule());
+      modules.add(new PrivateModule() {
+        @Override
+        protected void configure() {
+          bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class).in(Scopes.SINGLETON);
+          bind(ArtifactRepository.class).to(DefaultArtifactRepository.class).in(Scopes.SINGLETON);
+          bind(Impersonator.class).to(DefaultImpersonator.class).in(Scopes.SINGLETON);
+          expose(TaskWorkerService.class);
+        }
+      });
+    } else {
+      modules.add(new PrivateModule() {
+        @Override
+        protected void configure() {
+          bind(DiscoveryService.class)
+            .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
+          bind(DiscoveryServiceClient.class)
+            .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
+          bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class).in(Scopes.SINGLETON);
+          bind(ArtifactRepository.class).to(DefaultArtifactRepository.class).in(Scopes.SINGLETON);
+          bind(Impersonator.class).to(DefaultImpersonator.class).in(Scopes.SINGLETON);
+
+          expose(TaskWorkerService.class);
+        }
+      });
+      modules.add(new RemoteLogAppenderModule());
+    }
+
+    return Guice.createInjector(modules);
   }
 
   @Override
@@ -151,51 +196,5 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
                                                               TaskWorkerTwillApplication.NAME);
     LoggingContextAccessor.setLoggingContext(loggingContext);
     taskWorker = injector.getInstance(TaskWorkerService.class);
-  }
-
-  @VisibleForTesting
-  static public Injector createInjector(CConfiguration cConf, Configuration hConf) {
-    List<Module> modules = new ArrayList<>();
-
-    SConfiguration sConf = SConfiguration.create();
-    modules.add(new ConfigModule(cConf, hConf, sConf));
-    modules.add(new IOModule());
-
-    // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
-    MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
-
-    if (masterEnv == null) {
-      modules.add(new ZKClientModule());
-      modules.add(new ZKDiscoveryModule());
-      modules.add(new KafkaClientModule());
-      modules.add(new KafkaLogAppenderModule());
-      modules.add(new PrivateModule() {
-        @Override
-        protected void configure() {
-          bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class).in(Scopes.SINGLETON);
-          bind(ArtifactRepository.class).to(DefaultArtifactRepository.class).in(Scopes.SINGLETON);
-          bind(Impersonator.class).to(DefaultImpersonator.class).in(Scopes.SINGLETON);
-          expose(TaskWorkerService.class);
-        }
-      });
-    } else {
-      modules.add(new PrivateModule() {
-        @Override
-        protected void configure() {
-          bind(DiscoveryService.class)
-            .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
-          bind(DiscoveryServiceClient.class)
-            .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
-          bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class).in(Scopes.SINGLETON);
-          bind(ArtifactRepository.class).to(DefaultArtifactRepository.class).in(Scopes.SINGLETON);
-          bind(Impersonator.class).to(DefaultImpersonator.class).in(Scopes.SINGLETON);
-
-          expose(TaskWorkerService.class);
-        }
-      });
-      modules.add(new RemoteLogAppenderModule());
-    }
-
-    return Guice.createInjector(modules);
   }
 }

@@ -22,6 +22,8 @@ import com.google.common.util.concurrent.AbstractIdleService;
  * RunnableTask represents a task that can be launched by a {@link TaskWorkerService}.
  */
 public abstract class RunnableTask extends AbstractIdleService {
+  protected static final String RUN_MEHOD_NAME = "runTask";
+
   public RunnableTask() {
   }
 

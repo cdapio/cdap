@@ -72,7 +72,13 @@ public class TaskWorkerServiceTest {
     CConfiguration cConf = createCConf(port);
     SConfiguration sConf = createSConf();
 
-    TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, sConf, new InMemoryDiscoveryService(), null, null, null);
+    TaskWorkerService taskWorkerService = new TaskWorkerService(
+      cConf,
+      sConf,
+      new InMemoryDiscoveryService(),
+      null,
+      null,
+      null);
     // start the service
     taskWorkerService.startAndWait();
 
