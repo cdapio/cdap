@@ -121,12 +121,16 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       }
 
       String imageVersion = getImageVersion(context, conf);
+      String imageDescription = conf.getCustomImageUri();
+      if (imageDescription == null || imageDescription.isEmpty()) {
+        imageDescription = imageVersion;
+      }
 
       // Reload system context properties and get system labels
       Map<String, String> systemLabels = getSystemLabels();
       LOG.info("Creating Dataproc cluster {} in project {}, in region {}, with image {}, with system labels {}",
                clusterName, conf.getProjectId(),
-               conf.getRegion(), imageVersion, systemLabels);
+               conf.getRegion(), imageDescription, systemLabels);
 
       boolean privateInstance = Boolean.parseBoolean(getSystemContext().getProperties().get(PRIVATE_INSTANCE));
       ClusterOperationMetadata createOperationMeta = client.createCluster(clusterName, imageVersion,
