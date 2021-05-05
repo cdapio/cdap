@@ -119,7 +119,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
-        <version>2.15</version>
+        <version>2.17</version>
         <executions>
           <execution>
             <goals>
@@ -129,7 +129,7 @@
           </execution>
         </executions>
         <configuration>
-          <argLine>${argLine}  -Delastic.http.port=${elasticHttpPort}</argLine>
+          <argLine>@{argLine}  -Delastic.http.port=${elasticHttpPort}</argLine>
           <includes>
             <include>**/*Test.java</include>
           </includes>
