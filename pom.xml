@@ -472,10 +472,6 @@
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-compiler</artifactId>
           </exclusion>
-          <exclusion>
-            <groupId>org.scala-lang</groupId>
-            <artifactId>scala-library</artifactId>
-          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
