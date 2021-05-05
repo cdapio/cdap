@@ -136,7 +136,7 @@ public class MacroParser {
 
     // determine whether to use a macro function or a property lookup
     if (argsStartIndex >= 0) {
-      return getMacroFunctionMetadata(startIndex, endIndex, macroStr, argsStartIndex);
+      return getMacroFunctionMetadata(startIndex, endIndex, macroStr, argsStartIndex, str);
     } else {
       macroStr = replaceEscapedSyntax(macroStr);
       if (lookupsEnabled) {
@@ -156,9 +156,40 @@ public class MacroParser {
     }
   }
 
-  private MacroMetadata getMacroFunctionMetadata(int startIndex, int endIndex, String macroStr, int argsStartIndex) {
+  /**
+   * Use macro function to evaluate the macro string
+   *
+   * @param startIndex the start index of the macro string "$"
+   * @param endIndex the end index of the macro string
+   * @param macroStr the macro string to evaluate, without bracelet
+   * @param argsStartIndex the index of start parenthesis
+   * @param originalString the original string
+   */
+  private MacroMetadata getMacroFunctionMetadata(int startIndex, int endIndex, String macroStr, int argsStartIndex,
+                                                 String originalString) {
     // check for closing ")" and allow escaping "\)" and doubly-escaping "\\)"
     int closingParenIndex = getFirstUnescapedTokenIndex(')', macroStr, 0);
+
+    // this can only happen if we skip invalid or disable look up, the original string will contain unevaluated
+    // macro, i.e {secure(${secure-key})}, in this case, the macroStr here will be "secure(${secure-key" and this
+    // closing index will always be < 0.
+    if ((!lookupsEnabled || skipInvalid) && closingParenIndex < 0) {
+      // get ")" index using original string starting from end index
+      int originalParenIndex = getFirstUnescapedTokenIndex(')', originalString, endIndex);
+      // if found valid one, get the new macro string without "${" and set the correct closing ")" index
+      if (originalParenIndex > endIndex) {
+        // update end index to be next character after ")"
+        endIndex = originalParenIndex + 1;
+        // macro string should skip the first 2 characters "${"
+        macroStr = originalString.substring(startIndex + 2, endIndex);
+        closingParenIndex = getFirstUnescapedTokenIndex(')', macroStr, 0);
+        // if this macro string contains unevaluated macros, there is no point to continue calling the macro function
+        if (getStartIndex(macroStr, macroStr.length()) >= 0) {
+          return new MacroMetadata(String.format("${%s}", macroStr), startIndex, endIndex, false);
+        }
+      }
+    }
+
     if (closingParenIndex < 0 || !macroStr.endsWith(")")) {
       throw new InvalidMacroException(String.format("Could not find enclosing ')' for macro arguments in '%s'.",
                                                     macroStr));

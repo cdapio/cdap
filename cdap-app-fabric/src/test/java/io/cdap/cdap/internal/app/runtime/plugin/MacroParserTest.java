@@ -532,6 +532,17 @@ public class MacroParserTest {
     Assert.assertEquals("abc${123}", parser.parse("abc${123}"));
   }
 
+  @Test
+  public void testSkipInvalidMacrosInMacroFunctions() {
+    MacroEvaluator evaluator = new TestMacroEvaluator(Collections.emptyMap(), Collections.emptyMap(), true);
+    MacroParser parser = new MacroParser(evaluator, MacroParserOptions.builder().skipInvalidMacros().build());
+
+    // test macros in the macro function still get skipped correctly
+    Assert.assertEquals("${test(${k1})}", parser.parse("${test(${k1})}"));
+    Assert.assertEquals("${test(${k1${k2}})}", parser.parse("${test(${k1${k2}})}"));
+    Assert.assertEquals("${test(${k1})}${t(${t1})}", parser.parse("${test(${k1})}${t(${t1})}"));
+  }
+
   // Testing util methods
 
   private static void assertContainsMacroParsing(String macro, boolean expected) {
