@@ -235,13 +235,6 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
-    <!-- scala for kafka -->
-    <dependency>
-      <groupId>org.scala-lang</groupId>
-      <artifactId>scala-library</artifactId>
-      <version>${scala2.11.version}</version>
-      <scope>test</scope>
-    </dependency>
   </dependencies>
 
   <profiles>
