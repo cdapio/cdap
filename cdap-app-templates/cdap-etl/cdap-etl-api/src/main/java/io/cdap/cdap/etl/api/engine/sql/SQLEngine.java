@@ -17,13 +17,9 @@
 package io.cdap.cdap.etl.api.engine.sql;
 
 import io.cdap.cdap.api.annotation.Beta;
-import io.cdap.cdap.api.data.batch.InputFormatProvider;
-import io.cdap.cdap.api.data.batch.OutputFormatProvider;
 import io.cdap.cdap.api.data.format.StructuredRecord;
-import io.cdap.cdap.etl.api.FromKeyValueTransform;
 import io.cdap.cdap.etl.api.PipelineConfigurable;
 import io.cdap.cdap.etl.api.SubmitterLifecycle;
-import io.cdap.cdap.etl.api.ToKeyValueTransform;
 import io.cdap.cdap.etl.api.batch.BatchContext;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDataset;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLPullDataset;

@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.etl.batch;
 
-import com.google.common.base.Strings;
 import io.cdap.cdap.api.DatasetConfigurer;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.api.validation.ValidationException;
 import io.cdap.cdap.etl.common.DefaultPipelineConfigurer;
 import io.cdap.cdap.etl.common.DefaultStageConfigurer;
+import io.cdap.cdap.etl.engine.SQLEngineUtils;
 import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
@@ -67,16 +67,15 @@ public class BatchPipelineSpecGenerator extends PipelineSpecGenerator<ETLBatchCo
   }
 
   private StageSpec configureSqlEngine(ETLBatchConfig config) throws ValidationException {
-    if (config.getTransformationPushdown() == null || config.getTransformationPushdown().getEngine() == null) {
+    if (config.getTransformationPushdown() == null || config.getTransformationPushdown().getPlugin() == null) {
       return null;
     }
 
     //Fixed name for SQL Engine config.
-    String stageName =
-      "sqlengine_" + Strings.nullToEmpty(config.getTransformationPushdown().getEngine().getName()).toLowerCase();
+    String stageName = SQLEngineUtils.buildStageName(config.getTransformationPushdown().getPlugin().getName());
 
     ETLStage sqlEngineStage =
-      new ETLStage(stageName, config.getTransformationPushdown().getEngine());
+      new ETLStage(stageName, config.getTransformationPushdown().getPlugin());
     DefaultPipelineConfigurer pipelineConfigurer =
       new DefaultPipelineConfigurer(pluginConfigurer, datasetConfigurer, stageName, engine,
                                     new DefaultStageConfigurer(stageName));
