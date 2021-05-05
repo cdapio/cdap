@@ -20,6 +20,9 @@ import io.cdap.cdap.api.DatasetConfigurer;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.api.macro.InvalidMacroException;
+import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.plugin.PluginSelector;
@@ -124,7 +127,13 @@ public class DefaultPipelineConfigurer implements PipelineConfigurer, MultiInput
                                      PluginSelector selector) {
     return pluginConfigurer.usePluginClass(pluginType, pluginName, getPluginId(pluginId), properties, selector);
   }
-  
+
+  @Override
+  public Map<String, String> evaluateMacros(String namespace, Map<String, String> properties,
+                                            MacroEvaluator evaluator, MacroParserOptions options) throws InvalidMacroException {
+    return pluginConfigurer.evaluateMacros(namespace, properties, evaluator, options);
+  }
+
   private String getPluginId(String childPluginId) {
     return String.format("%s%s%s", stageName, Constants.ID_SEPARATOR, childPluginId);
   }

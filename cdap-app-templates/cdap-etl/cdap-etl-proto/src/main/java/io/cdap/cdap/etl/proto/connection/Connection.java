@@ -18,11 +18,15 @@
 package io.cdap.cdap.etl.proto.connection;
 
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * Connection information
  */
 public class Connection {
+  // prefix can make the metadata tags and properties hidden
+  private static final String IDENTIFIER_PREFIX = "_";
+
   private final String name;
   private final String connectionType;
   private final String description;
@@ -30,9 +34,19 @@ public class Connection {
   private final long createdTimeMillis;
   private final long updatedTimeMillis;
   private final PluginInfo plugin;
+  // this is the identifier in the format of "_" + uuid. It helps identify this connection in metadata because metadata
+  // has restriction on tag and property names so we cannot directly use connection name in it.
+  // Each connection is still unique based on namespace and connection name
+  private final String identifier;
 
   public Connection(String name, String connectionType, String description, boolean preConfigured,
                     long createdTimeMillis, long updatedTimeMillis, PluginInfo plugin) {
+    this(name, connectionType, description, preConfigured, createdTimeMillis, updatedTimeMillis, plugin,
+         IDENTIFIER_PREFIX + UUID.randomUUID().toString());
+  }
+
+  public Connection(String name, String connectionType, String description, boolean preConfigured,
+                    long createdTimeMillis, long updatedTimeMillis, PluginInfo plugin, String identifier) {
     this.name = name;
     this.connectionType = connectionType;
     this.description = description;
@@ -40,6 +54,7 @@ public class Connection {
     this.createdTimeMillis = createdTimeMillis;
     this.updatedTimeMillis = updatedTimeMillis;
     this.plugin = plugin;
+    this.identifier = identifier;
   }
 
   public String getName() {
@@ -68,6 +83,10 @@ public class Connection {
 
   public PluginInfo getPlugin() {
     return plugin;
+  }
+
+  public String getIdentifier() {
+    return identifier;
   }
 
   @Override

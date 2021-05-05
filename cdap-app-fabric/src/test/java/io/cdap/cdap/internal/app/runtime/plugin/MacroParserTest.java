@@ -530,6 +530,10 @@ public class MacroParserTest {
     Assert.assertEquals("${k1}", parser.parse("${k1}"));
     Assert.assertEquals("${test(key)}", parser.parse("${test(key)}"));
     Assert.assertEquals("abc${123}", parser.parse("abc${123}"));
+    // test macros in the macro function still get skipped correctly
+    Assert.assertEquals("${test(${k1})}", parser.parse("${test(${k1})}"));
+    Assert.assertEquals("${test(${k1${k2}})}", parser.parse("${test(${k1${k2}})}"));
+    Assert.assertEquals("${test(${k1})}${t(${t1})}", parser.parse("${test(${k1})}${t(${t1})}"));
   }
 
   // Testing util methods

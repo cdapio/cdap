@@ -60,7 +60,7 @@ import javax.annotation.Nullable;
 /**
  * An implementation of {@link TwillContext} for k8s environment.
  */
-public class KubeTwillContext implements ExtendedTwillContext, Closeable {
+public class  KubeTwillContext implements ExtendedTwillContext, Closeable {
 
   private static final Logger LOG = LoggerFactory.getLogger(KubeTwillContext.class);
 

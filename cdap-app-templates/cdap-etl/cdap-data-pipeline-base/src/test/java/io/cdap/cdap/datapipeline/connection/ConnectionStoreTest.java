@@ -66,7 +66,8 @@ public class ConnectionStoreTest extends SystemAppTestBase {
                      new ArtifactSelectorConfig("SYSTEM", "google-cloud", "1.0.0")));
     connectionStore.saveConnection(connectionId, expected);
     // assert the connections
-    Assert.assertEquals(expected, connectionStore.getConnection(connectionId));
+    Connection existing = connectionStore.getConnection(connectionId);
+    Assert.assertEquals(expected, existing);
 
     // update the connection, the connection should be updated
     Connection updated = new Connection(
@@ -82,6 +83,8 @@ public class ConnectionStoreTest extends SystemAppTestBase {
     Assert.assertEquals(0L, actual.getCreatedTimeMillis());
     // update time should get updated
     Assert.assertEquals(2000L, actual.getUpdatedTimeMillis());
+    // identifier should be same
+    Assert.assertEquals(existing.getIdentifier(), actual.getIdentifier());
 
     // add a new connection
     ConnectionId newConnectioId = new ConnectionId(namespace, "mynewconn");

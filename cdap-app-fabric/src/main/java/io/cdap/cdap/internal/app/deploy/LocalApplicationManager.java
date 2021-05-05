@@ -36,8 +36,8 @@ import io.cdap.cdap.internal.app.deploy.pipeline.DeletedProgramHandlerStage;
 import io.cdap.cdap.internal.app.deploy.pipeline.DeployDatasetModulesStage;
 import io.cdap.cdap.internal.app.deploy.pipeline.DeploymentCleanupStage;
 import io.cdap.cdap.internal.app.deploy.pipeline.LocalArtifactLoaderStage;
+import io.cdap.cdap.internal.app.deploy.pipeline.MetadataWriterStage;
 import io.cdap.cdap.internal.app.deploy.pipeline.ProgramGenerationStage;
-import io.cdap.cdap.internal.app.deploy.pipeline.SystemMetadataWriterStage;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.capability.CapabilityReader;
@@ -135,7 +135,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     pipeline.addLast(new ProgramGenerationStage());
     pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry, ownerAdmin));
     pipeline.addLast(new DeleteAndCreateSchedulesStage(programScheduler));
-    pipeline.addLast(new SystemMetadataWriterStage(metadataServiceClient));
+    pipeline.addLast(new MetadataWriterStage(metadataServiceClient));
     pipeline.setFinally(new DeploymentCleanupStage());
     return pipeline.execute(input);
   }

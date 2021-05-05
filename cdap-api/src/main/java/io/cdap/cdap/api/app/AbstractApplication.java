@@ -18,6 +18,8 @@ package io.cdap.cdap.api.app;
 
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.mapreduce.MapReduce;
+import io.cdap.cdap.api.metadata.Metadata;
+import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.schedule.ScheduleBuilder;
 import io.cdap.cdap.api.schedule.TriggerFactory;
 import io.cdap.cdap.api.service.BasicService;
@@ -65,6 +67,17 @@ public abstract class AbstractApplication<T extends Config> extends AbstractPlug
   @Override
   protected ApplicationConfigurer getConfigurer() {
     return configurer;
+  }
+
+  /**
+   * Get the application name, this will be the application name provided when deploying the application, or
+   * the name set in {@link #setName(String)}. If it is not provided in either way, it will be the simple class name
+   * of the app.
+   *
+   * @return the application name
+   */
+  protected String getName() {
+    return configurer.getName();
   }
 
   /**
@@ -163,6 +176,17 @@ public abstract class AbstractApplication<T extends Config> extends AbstractPlug
    */
   protected void schedule(ScheduleCreationSpec scheduleCreationSpec) {
     configurer.schedule(scheduleCreationSpec);
+  }
+
+  /**
+   * Emit the given {@link Metadata} for the given metadata entity. If the given metadata entity already exists,
+   * existing tags and properties will be updated.
+   *
+   * @param metadataEntity the entity to emit metadata
+   * @param metadata the metadata to emit
+   */
+  protected void emitMetadata(MetadataEntity metadataEntity, Metadata metadata) {
+    configurer.emitMetadata(metadataEntity, metadata);
   }
 
   /**

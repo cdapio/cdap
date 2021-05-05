@@ -31,17 +31,27 @@ import io.cdap.cdap.internal.app.deploy.LocalApplicationManager;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.capability.CapabilityReader;
+import io.cdap.cdap.metadata.elastic.ScopedNameOfKindTypeAdapter;
+import io.cdap.cdap.metadata.elastic.ScopedNameTypeAdapter;
 import io.cdap.cdap.pipeline.AbstractStage;
 import io.cdap.cdap.pipeline.Context;
 import io.cdap.cdap.pipeline.Pipeline;
 import io.cdap.cdap.pipeline.Stage;
+import io.cdap.cdap.proto.codec.NamespacedEntityIdCodec;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.spi.metadata.Metadata;
+import io.cdap.cdap.spi.metadata.MetadataCodec;
+import io.cdap.cdap.spi.metadata.MetadataMutation;
+import io.cdap.cdap.spi.metadata.MetadataMutationCodec;
+import io.cdap.cdap.spi.metadata.ScopedName;
+import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
 import org.apache.twill.filesystem.Location;
 
 import java.util.concurrent.TimeUnit;
@@ -57,7 +67,13 @@ import java.util.concurrent.TimeUnit;
  * It is expected a {@link Pipeline#setFinally(Stage)} stage to clean it up after the pipeline execution finished.
  */
 public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
-  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
+  private static final Gson GSON =
+    ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
+      .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
+      .registerTypeAdapter(Metadata.class, new MetadataCodec())
+      .registerTypeAdapter(ScopedName.class, new ScopedNameTypeAdapter())
+      .registerTypeAdapter(ScopedNameOfKind.class, new ScopedNameOfKindTypeAdapter())
+      .registerTypeAdapter(MetadataMutation.class, new MetadataMutationCodec()).create();
   private final CConfiguration cConf;
   private final Store store;
   private final ArtifactRepository artifactRepository;
@@ -133,6 +149,6 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
                                    applicationId, specification, store.getApplication(applicationId),
                                    ApplicationDeployScope.USER, deploymentInfo.getApplicationClass(),
                                    deploymentInfo.getOwnerPrincipal(), deploymentInfo.canUpdateSchedules(),
-                                   appSpecInfo.getSystemTables()));
+                                   appSpecInfo.getSystemTables(), appSpecInfo.getMutations()));
   }
 }

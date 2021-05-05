@@ -27,6 +27,8 @@ import io.cdap.cdap.proto.id.NamespaceId;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * A {@link MacroEvaluator} for resolving the {@code ${conn(connection-name)}} macro function. It uses
@@ -39,13 +41,14 @@ public class ConnectionMacroEvaluator extends AbstractServiceRetryableMacroEvalu
   private final String namespace;
   private final ServiceDiscoverer serviceDiscoverer;
   private final Gson gson;
-
+  private final Set<String> identifiers;
 
   public ConnectionMacroEvaluator(String namespace, ServiceDiscoverer serviceDiscoverer) {
     super(FUNCTION_NAME);
     this.namespace = namespace;
     this.serviceDiscoverer = serviceDiscoverer;
     this.gson = new Gson();
+    this.identifiers = new HashSet<>();
   }
 
   /**
@@ -67,6 +70,12 @@ public class ConnectionMacroEvaluator extends AbstractServiceRetryableMacroEvalu
                                                                  String.format("v1/contexts/%s/connections/%s",
                                                                                namespace, args[0]));
     Connection connection = gson.fromJson(validateAndRetrieveContent(SERVICE_NAME, urlConn), Connection.class);
+    // remember the connections used by the plugin
+    identifiers.add(connection.getIdentifier());
     return gson.toJson(connection.getPlugin().getProperties());
+  }
+
+  public Set<String> getIdentifiers() {
+    return identifiers;
   }
 }

@@ -19,6 +19,9 @@ package io.cdap.cdap.internal.app;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
+import io.cdap.cdap.api.macro.InvalidMacroException;
+import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.plugin.PluginProperties;
@@ -85,5 +88,12 @@ public abstract class AbstractConfigurer extends DefaultDatasetConfigurer implem
   public <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId, PluginProperties properties,
                                      PluginSelector selector) {
     return pluginConfigurer.usePluginClass(pluginType, pluginName, pluginId, properties, selector);
+  }
+
+  @Override
+  public Map<String, String> evaluateMacros(String namespace, Map<String, String> properties,
+                                            MacroEvaluator evaluator,
+                                            MacroParserOptions options) throws InvalidMacroException {
+    return pluginConfigurer.evaluateMacros(namespace, properties, evaluator, options);
   }
 }

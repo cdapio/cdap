@@ -48,6 +48,9 @@ public class PipelineSpec {
   private final int numOfRecordsPreview;
   private final Map<String, String> properties;
 
+  // we don't need this config after deploy time so don't serialize it
+  private transient final Set<String> connectionsUsed;
+
   protected PipelineSpec(Set<StageSpec> stages,
                          Set<Connection> connections,
                          Resources resources,
@@ -56,7 +59,8 @@ public class PipelineSpec {
                          boolean stageLoggingEnabled,
                          boolean processTimingEnabled,
                          int numOfRecordsPreview,
-                         Map<String, String> properties) {
+                         Map<String, String> properties,
+                         Set<String> connectionsUsed) {
     this.stages = ImmutableSet.copyOf(stages);
     this.connections = ImmutableSet.copyOf(connections);
     this.resources = resources;
@@ -66,6 +70,7 @@ public class PipelineSpec {
     this.processTimingEnabled = processTimingEnabled;
     this.numOfRecordsPreview = numOfRecordsPreview;
     this.properties = ImmutableMap.copyOf(properties);
+    this.connectionsUsed = connectionsUsed;
   }
 
   public Set<StageSpec> getStages() {
@@ -98,6 +103,10 @@ public class PipelineSpec {
 
   public int getNumOfRecordsPreview() {
     return numOfRecordsPreview;
+  }
+
+  public Set<String> getConnectionsUsed() {
+    return connectionsUsed;
   }
 
   public Map<String, String> getProperties() {
@@ -170,6 +179,7 @@ public class PipelineSpec {
     protected boolean processTimingEnabled;
     protected int numOfRecordsPreview;
     protected Map<String, String> properties;
+    protected Set<String> connectionsUsed;
 
     protected Builder() {
       this.stages = new HashSet<>();
@@ -178,6 +188,7 @@ public class PipelineSpec {
       this.stageLoggingEnabled = true;
       this.processTimingEnabled = true;
       this.properties = new HashMap<>();
+      this.connectionsUsed = new HashSet<>();
     }
 
     public T addStage(StageSpec stage) {
@@ -236,9 +247,20 @@ public class PipelineSpec {
       return (T) this;
     }
 
+    public T addConnectionUsed(String connection) {
+      this.connectionsUsed.add(connection);
+      return (T) this;
+    }
+
+    public T addConnectionsUsed(Set<String> connectionsUsed) {
+      this.connectionsUsed.addAll(connectionsUsed);
+      return (T) this;
+    }
+
     public PipelineSpec build() {
       return new PipelineSpec(stages, connections, resources, driverResources, clientResources,
-                              stageLoggingEnabled, processTimingEnabled, numOfRecordsPreview, properties);
+                              stageLoggingEnabled, processTimingEnabled, numOfRecordsPreview, properties,
+                              connectionsUsed);
     }
   }
 }

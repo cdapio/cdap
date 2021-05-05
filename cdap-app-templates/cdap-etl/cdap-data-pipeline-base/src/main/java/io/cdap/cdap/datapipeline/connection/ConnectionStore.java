@@ -21,6 +21,7 @@ import com.google.gson.Gson;
 import io.cdap.cdap.api.NamespaceSummary;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.etl.proto.connection.Connection;
+import io.cdap.cdap.etl.proto.connection.ConnectionCollisionException;
 import io.cdap.cdap.etl.proto.connection.ConnectionId;
 import io.cdap.cdap.etl.proto.connection.ConnectionNotFoundException;
 import io.cdap.cdap.spi.data.StructuredRow;
@@ -56,6 +57,7 @@ public class ConnectionStore {
   private static final String CONNECTION_DATA_FIELD = "connection_data";
   private static final String CREATED_COL = "createdtimemillis";
   private static final String UPDATED_COL = "updatedtimemillis";
+  private static final String IDENTIFIER = "identifier";
 
   public static final StructuredTableSpecification CONNECTION_TABLE_SPEC =
     new StructuredTableSpecification.Builder()
@@ -64,6 +66,7 @@ public class ConnectionStore {
                   Fields.longType(GENERATION_COL),
                   Fields.longType(CREATED_COL),
                   Fields.longType(UPDATED_COL),
+                  Fields.stringType(IDENTIFIER),
                   Fields.stringType(CONNECTION_ID_FIELD),
                   Fields.stringType(CONNECTION_DATA_FIELD))
       .withPrimaryKeys(NAMESPACE_FIELD, GENERATION_COL, CONNECTION_ID_FIELD)
@@ -120,16 +123,24 @@ public class ConnectionStore {
       StructuredTable table = context.getTable(TABLE_ID);
       Connection oldConnection  = getConnectionInternal(table, connectionId, false);
       Connection newConnection = connection;
+
       if (oldConnection != null) {
+        if (oldConnection.isPreConfigured()) {
+          throw new ConnectionCollisionException(String.format(
+            "Connection %s in namespace %s already exists and is pre-configured, " +
+              "it cannot be updated.", connectionId.getConnection(), connectionId.getNamespace()));
+        }
+
         newConnection = new Connection(connection.getName(), connection.getConnectionType(),
                                        connection.getDescription(), connection.isPreConfigured(),
                                        oldConnection.getCreatedTimeMillis(), connection.getUpdatedTimeMillis(),
-                                       connection.getPlugin());
+                                       connection.getPlugin(), oldConnection.getIdentifier());
       }
 
       Collection<Field<?>> fields = getConnectionKeys(connectionId);
       fields.add(Fields.longField(CREATED_COL, newConnection.getCreatedTimeMillis()));
       fields.add(Fields.longField(UPDATED_COL, newConnection.getUpdatedTimeMillis()));
+      fields.add(Fields.stringField(IDENTIFIER, newConnection.getIdentifier()));
       fields.add(Fields.stringField(CONNECTION_DATA_FIELD, GSON.toJson(newConnection)));
       table.upsert(fields);
     });

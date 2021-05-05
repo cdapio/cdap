@@ -92,7 +92,7 @@ abstract class AbstractServiceRetryableMacroEvaluator implements MacroEvaluator 
 
   protected String validateAndRetrieveContent(String serviceName, HttpURLConnection urlConn) throws IOException {
     if (urlConn == null) {
-      throw new RetryableException("OAuth service is not available");
+      throw new RetryableException(serviceName + " service is not available");
     }
 
     int responseCode = urlConn.getResponseCode();
