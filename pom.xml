@@ -159,7 +159,7 @@
     <quartz.version>2.2.0</quartz.version>
     <resteasy.version>3.0.8.Final</resteasy.version>
     <rs-api.version>2.0</rs-api.version>
-    <scala2.11.version>2.11.8</scala2.11.version>
+    <scala2.11.version>2.11.12</scala2.11.version>
     <!-- Please keep consistent with the one in Spark 3 -->
     <scala2.12.version>2.12.10</scala2.12.version>
     <servlet.api.version>3.0.1</servlet.api.version>
@@ -182,6 +182,13 @@
     <cask.packages.snapshot.repo>http://cask.invalid.snapshot.repo.co</cask.packages.snapshot.repo>
     <cask.packages.release.repo>http://cask.invalid.release.repo.co</cask.packages.release.repo>
     <release.iteration>1</release.iteration>
+
+    <sonar.organization>cdap</sonar.organization>
+    <sonar.projectKey>cdapio_${project.artifactId}</sonar.projectKey>
+    <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+
+    <!-- Need default value when coverage is not collected -->
+    <argLine/>
   </properties>
 
   <dependencyManagement>
@@ -587,6 +594,12 @@
         <groupId>org.apache.twill</groupId>
         <artifactId>twill-zookeeper</artifactId>
         <version>${twill.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>jdk.toools</groupId>
+            <artifactId>jdk.tools</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.thrift</groupId>
@@ -671,6 +684,10 @@
           <exclusion>
             <artifactId>slf4j-api</artifactId>
             <groupId>org.slf4j</groupId>
+          </exclusion>
+          <exclusion>
+            <artifactId>jdk.tools</artifactId>
+            <groupId>jdk.tools</groupId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -859,10 +876,25 @@
         </exclusions>
       </dependency>
       <dependency>
+        <groupId>org.apache.hadoop</groupId>
+        <artifactId>hadoop-annotations</artifactId>
+        <version>${hadoop.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>jdk.tools</groupId>
+            <artifactId>jdk.tools</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
         <groupId>org.apache.hbase</groupId>
         <artifactId>hbase-common</artifactId>
         <version>${hbase10.version}</version>
         <exclusions>
+          <exclusion>
+            <groupId>jdk.tools</groupId>
+            <artifactId>jdk.tools</artifactId>
+          </exclusion>
           <exclusion>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
@@ -874,6 +906,10 @@
         <artifactId>hbase-client</artifactId>
         <version>${hbase10.version}</version>
         <exclusions>
+          <exclusion>
+            <groupId>jdk.tools</groupId>
+            <artifactId>jdk.tools</artifactId>
+          </exclusion>
           <exclusion>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
@@ -1343,6 +1379,10 @@
         <scope>test</scope>
         <exclusions>
           <exclusion>
+            <groupId>jdk.tools</groupId>
+            <artifactId>jdk.tools</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
@@ -1571,6 +1611,12 @@
         <artifactId>tez-api</artifactId>
         <version>${tez.version}</version>
         <scope>provided</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>jdk.tools</groupId>
+            <artifactId>jdk.tools</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.mockftpserver</groupId>
@@ -1656,7 +1702,7 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <version>2.19.1</version>
           <configuration>
-            <argLine>-Xmx3500m -Djava.awt.headless=true -XX:+UseG1GC -XX:OnOutOfMemoryError="kill -9 %p" -XX:+HeapDumpOnOutOfMemoryError</argLine>
+            <argLine>${argLine}  -Xmx3500m -Djava.awt.headless=true -XX:+UseG1GC -XX:OnOutOfMemoryError="kill -9 %p" -XX:+HeapDumpOnOutOfMemoryError</argLine>
             <redirectTestOutputToFile>${surefire.redirectTestOutputToFile}</redirectTestOutputToFile>
             <reuseForks>false</reuseForks>
             <forkCount>3</forkCount>
@@ -1785,7 +1831,8 @@
           <version>3.3.1</version>
           <configuration>
             <args>
-              <arg>-target:jvm-1.7</arg>
+              <arg>-target:jvm-1.8</arg>
+              <arg>-nobootcp</arg>
             </args>
           </configuration>
           <executions>
@@ -2769,6 +2816,32 @@
             </plugin>
           </plugins>
         </pluginManagement>
+      </build>
+    </profile>
+    <profile>
+      <id>coverage</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.jacoco</groupId>
+            <artifactId>jacoco-maven-plugin</artifactId>
+            <version>0.8.6</version>
+            <executions>
+              <execution>
+                <id>prepare-agent</id>
+                <goals>
+                  <goal>prepare-agent</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>report</id>
+                <goals>
+                  <goal>report</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
       </build>
     </profile>
   </profiles>
