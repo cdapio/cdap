@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,23 +16,35 @@
 
 package io.cdap.cdap.messaging.store.leveldb;
 
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.messaging.data.MessageId;
 import io.cdap.cdap.messaging.store.MessageTable;
 import io.cdap.cdap.messaging.store.MessageTableTest;
 import io.cdap.cdap.messaging.store.MetadataTable;
 import io.cdap.cdap.messaging.store.TableFactory;
+import io.cdap.cdap.messaging.store.TestMessageEntry;
+import io.cdap.cdap.proto.id.TopicId;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Tests for {@link LevelDBMessageTable}.
  */
 public class LevelDBMessageTableTest extends MessageTableTest {
+  private static final int PARTITION_SECONDS = 10;
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -44,6 +56,7 @@ public class LevelDBMessageTableTest extends MessageTableTest {
   public static void init() throws IOException {
     cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
+    cConf.set(Constants.MessagingSystem.LOCAL_DATA_PARTITION_SECONDS, Integer.toString(PARTITION_SECONDS));
     tableFactory = new LevelDBTableFactory(cConf);
   }
 
@@ -55,5 +68,37 @@ public class LevelDBMessageTableTest extends MessageTableTest {
   @Override
   protected MetadataTable getMetadataTable() throws Exception {
     return tableFactory.createMetadataTable();
+  }
+
+  @Test
+  public void testMultiPartitionReadWrite() throws Exception {
+    TopicId topicId = new TopicId("default", "multipart");
+    int generation = 1;
+    TopicMetadata topicMetadata =
+      new TopicMetadata(topicId, Collections.singletonMap(TopicMetadata.GENERATION_KEY, String.valueOf(generation)));
+
+    try (MessageTable table = tableFactory.createMessageTable(topicMetadata)) {
+      List<MessageTable.Entry> writes = new ArrayList<>();
+      Map<Long, Byte> expected = new HashMap<>();
+      for (int i = 0; i < 10 * PARTITION_SECONDS; i++) {
+        long publishTime = i * 1000;
+        expected.put(publishTime, (byte) i);
+        writes.add(new TestMessageEntry(topicId, generation, publishTime, 0, null, new byte[]{(byte) i}));
+      }
+      table.store(writes.iterator());
+
+      Map<Long, Byte> actual = new HashMap<>();
+      byte[] messageId = new byte[MessageId.RAW_ID_SIZE];
+      MessageId.putRawId(0L, (short) 0, 0L, (short) 0, messageId, 0);
+      try (CloseableIterator<MessageTable.Entry> iter =
+             table.fetch(topicMetadata, new MessageId(messageId), true, 100, null)) {
+        while (iter.hasNext()) {
+          MessageTable.Entry entry = iter.next();
+          actual.put(entry.getPublishTimestamp(), entry.getPayload()[0]);
+        }
+      }
+
+      Assert.assertEquals(expected, actual);
+    }
   }
 }
