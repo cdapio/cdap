@@ -17,7 +17,6 @@ package io.cdap.cdap.app.runtime;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
-import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
@@ -433,12 +432,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
   @Override
   public Map<RunId, RuntimeInfo> list(final ProgramId program) {
-    return Maps.filterValues(list(program.getType()), new Predicate<RuntimeInfo>() {
-      @Override
-      public boolean apply(RuntimeInfo info) {
-        return info.getProgramId().equals(program);
-      }
-    });
+    return Maps.filterValues(list(program.getType()), info -> info.getProgramId().equals(program));
   }
 
   @Override
@@ -580,17 +574,16 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
    *
    * @param programId the program id for the program run
    * @param runId the run id for the program run
-   * @param controller the {@link TwillController} controlling the corresponding twill application
+   * @param twillController the {@link TwillController} controlling the corresponding twill application
    * @return a {@link RuntimeInfo} or {@code null} if not able to create the {@link RuntimeInfo} due to unexpected
    *         and unrecoverable error/bug.
    */
   @Nullable
-  protected RuntimeInfo createRuntimeInfo(ProgramId programId, RunId runId, TwillController controller) {
+  protected RuntimeInfo createRuntimeInfo(ProgramId programId, RunId runId, TwillController twillController) {
     try {
-      ProgramController programController = createController(programId, runId, controller);
-      SimpleRuntimeInfo runtimeInfo = programController == null ? null : new SimpleRuntimeInfo(programController,
-                                                                                               programId,
-                                                                                               controller.getRunId());
+      ProgramController controller = createController(programId, runId, twillController);
+      RuntimeInfo runtimeInfo = controller == null ? null : createRuntimeInfo(controller, programId, () -> { });
+
       if (runtimeInfo != null) {
         updateRuntimeInfo(programId.getType(), runId, runtimeInfo);
       }
@@ -610,9 +603,12 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
    */
   @Nullable
   private ProgramController createController(ProgramId programId, RunId runId, TwillController controller) {
+    ProgramRunnerFactory factory = runId.equals(controller.getRunId())
+      ? remoteProgramRunnerFactory : programRunnerFactory;
+
     ProgramRunner programRunner;
     try {
-      programRunner = programRunnerFactory.create(programId.getType());
+      programRunner = factory.create(programId.getType());
     } catch (IllegalArgumentException e) {
       // This shouldn't happen. If it happen, it means CDAP was incorrectly install such that some of the program
       // type is not support (maybe due to version mismatch in upgrade).
@@ -632,6 +628,6 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       return null;
     }
 
-    return ((ProgramControllerCreator) programRunner).createProgramController(controller, programId, runId);
+    return ((ProgramControllerCreator) programRunner).createProgramController(programId.run(runId), controller);
   }
 }

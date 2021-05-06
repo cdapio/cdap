@@ -33,7 +33,6 @@ import io.cdap.cdap.app.runtime.spark.SparkPackageUtils;
 import io.cdap.cdap.app.runtime.spark.SparkProgramRuntimeProvider;
 import io.cdap.cdap.app.runtime.spark.SparkResourceFilters;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeContextConfig;
-import io.cdap.cdap.app.runtime.spark.SparkRuntimeUtils;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.lang.FilterClassLoader;
@@ -43,7 +42,7 @@ import io.cdap.cdap.internal.app.runtime.distributed.DistributedProgramRunner;
 import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
 import io.cdap.cdap.internal.app.runtime.distributed.ProgramLaunchConfig;
 import io.cdap.cdap.proto.ProgramType;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.SparkCompat;
 import io.cdap.cdap.security.TokenSecureStoreRenewer;
 import io.cdap.cdap.security.impersonation.Impersonator;
@@ -51,7 +50,6 @@ import io.cdap.cdap.security.impersonation.SecurityUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.ClassAcceptor;
-import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.filesystem.LocationFactory;
@@ -93,8 +91,8 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
   }
 
   @Override
-  public ProgramController createProgramController(TwillController twillController, ProgramId programId, RunId runId) {
-    return new SparkTwillProgramController(programId, twillController, runId).startListen();
+  public ProgramController createProgramController(ProgramRunId programRunId, TwillController twillController) {
+    return new SparkTwillProgramController(programRunId, twillController).startListen();
   }
 
   @Override

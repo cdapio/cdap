@@ -19,7 +19,7 @@ import com.google.common.util.concurrent.Futures;
 import io.cdap.cdap.app.runtime.LogLevelUpdater;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.internal.app.runtime.AbstractProgramController;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceController;
 import org.apache.twill.api.TwillController;
@@ -43,8 +43,8 @@ public abstract class AbstractTwillProgramController extends AbstractProgramCont
   private final TwillController twillController;
   private volatile boolean stopRequested;
 
-  protected AbstractTwillProgramController(ProgramId programId, TwillController twillController, RunId runId) {
-    super(programId.run(runId));
+  protected AbstractTwillProgramController(ProgramRunId programRunId, TwillController twillController) {
+    super(programRunId);
     this.twillController = twillController;
   }
 
