@@ -28,10 +28,17 @@ public class TestMacroEvaluator implements MacroEvaluator {
 
   private final Map<String, String> propertySubstitutions;
   private final Map<String, String> macroFunctionSubstitutions;
+  private final boolean failIfEvaluated;
 
   public TestMacroEvaluator(Map<String, String> propertySubstitutions, Map<String, String> macroFunctionSubstitutions) {
+    this(propertySubstitutions, macroFunctionSubstitutions, false);
+  }
+
+  public TestMacroEvaluator(Map<String, String> propertySubstitutions, Map<String, String> macroFunctionSubstitutions,
+                            boolean failIfEvaluated) {
     this.propertySubstitutions = propertySubstitutions;
     this.macroFunctionSubstitutions = macroFunctionSubstitutions;
+    this.failIfEvaluated = failIfEvaluated;
   }
 
   @Override
@@ -48,6 +55,9 @@ public class TestMacroEvaluator implements MacroEvaluator {
 
   @Override
   public String evaluate(String macroFunction, String... arguments) {
+    if (failIfEvaluated) {
+      throw new RuntimeException("Macro function should not get evaluated");
+    }
     if (!macroFunction.equals("test") && !macroFunction.equals("t")) {
       throw new InvalidMacroException(String.format("Macro function '%s' not defined.", macroFunction));
     } else if (arguments.length > 1) {
