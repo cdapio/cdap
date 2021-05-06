@@ -202,12 +202,7 @@ public class BundleJarUtil {
    * @throws IOException If failed to expand the jar
    */
   public static File prepareClassLoaderFolder(File jarFile, File destinationFolder) throws IOException {
-    unJar(jarFile, destinationFolder, name ->
-      name.equals(JarFile.MANIFEST_NAME) || name.endsWith(".jar"));
-    File artifactTempName = File.createTempFile("artifact", ".jar", destinationFolder);
-    artifactTempName.delete();
-    Files.createLink(artifactTempName.toPath(), jarFile.toPath());
-    return destinationFolder;
+    return prepareClassLoaderFolder(Locations.toLocation(jarFile), destinationFolder);
   }
 
   /**
