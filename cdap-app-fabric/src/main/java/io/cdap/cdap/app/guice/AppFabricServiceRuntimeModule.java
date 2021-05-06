@@ -302,7 +302,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       );
 
       bind(ConfiguratorFactory.class).toInstance(new ConfiguratorFactory(isRemote));
-      bind(ConfiguratorFactory.class).annotatedWith(Names.named("local")).toInstance(new ConfiguratorFactory(false));
 
       bind(Store.class).to(DefaultStore.class);
       bind(SecretStore.class).to(DefaultSecretStore.class).in(Scopes.SINGLETON);
