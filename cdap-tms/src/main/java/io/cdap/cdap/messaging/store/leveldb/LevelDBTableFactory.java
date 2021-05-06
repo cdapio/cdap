@@ -63,6 +63,8 @@ public final class LevelDBTableFactory implements TableFactory {
   private final String messageTableName;
   private final String payloadTableName;
   private final ConcurrentMap<File, DB> levelDBs;
+  private final ConcurrentMap<File, LevelDBPartitionManager> partitionedLevelDBs;
+  private final long partitionSizeMillis;
 
   private LevelDBMetadataTable metadataTable;
 
@@ -85,6 +87,8 @@ public final class LevelDBTableFactory implements TableFactory {
     this.messageTableName = cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME);
     this.payloadTableName = cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME);
     this.levelDBs = new ConcurrentHashMap<>();
+    this.partitionedLevelDBs = new ConcurrentHashMap<>();
+    this.partitionSizeMillis = cConf.getLong(Constants.MessagingSystem.LOCAL_DATA_PARTITION_SECONDS) * 1000;
   }
 
   @Override
@@ -101,7 +105,7 @@ public final class LevelDBTableFactory implements TableFactory {
 
   @Override
   public MessageTable createMessageTable(TopicMetadata topicMetadata) throws IOException {
-    return new LevelDBMessageTable(getLevelDB(topicMetadata, messageTableName), topicMetadata);
+    return new LevelDBMessageTable(getPartitionedLevelDB(topicMetadata, messageTableName));
   }
 
   @Override
@@ -122,6 +126,31 @@ public final class LevelDBTableFactory implements TableFactory {
     Collection<DB> dbs = levelDBs.values();
     dbs.forEach(Closeables::closeQuietly);
     dbs.clear();
+    partitionedLevelDBs.values().forEach(Closeables::closeQuietly);
+    partitionedLevelDBs.clear();
+  }
+
+  private LevelDBPartitionManager getPartitionedLevelDB(TopicMetadata topicMetadata,
+                                                        String tableName) throws IOException {
+    TopicId topicId = topicMetadata.getTopicId();
+    File topicDir = new File(baseDir, String.format("%s.%s.%s.%d", topicId.getNamespace(), tableName,
+                                                    topicId.getTopic(), topicMetadata.getGeneration()));
+    LevelDBPartitionManager partitionManager = partitionedLevelDBs.get(topicDir);
+    if (partitionManager != null) {
+      return partitionManager;
+    }
+
+    synchronized (this) {
+      partitionManager = partitionedLevelDBs.get(topicDir);
+      if (partitionManager != null) {
+        return partitionManager;
+      }
+
+      partitionManager = new LevelDBPartitionManager(ensureDirExists(topicDir), dbOptions, partitionSizeMillis);
+      partitionedLevelDBs.put(topicDir, partitionManager);
+    }
+
+    return partitionManager;
   }
 
   /**
@@ -219,15 +248,14 @@ public final class LevelDBTableFactory implements TableFactory {
 
           // Prune the current generation
           // Message table
-          File dataDBPath = getDataDBPath(messageTableName, metadata.getTopicId(), metadata.getGeneration());
-          DB levelDB = levelDBs.get(dataDBPath);
-          if (levelDB != null && dataDBPath.exists()) {
-            new LevelDBMessageTable(levelDB, metadata).pruneMessages(now);
-          }
+          // Check partitions and drop them if the end time is older than the TTL
+          long thresholdTimestamp = now - TimeUnit.SECONDS.toMillis(metadata.getTTL());
+          LevelDBPartitionManager partitionManager = getPartitionedLevelDB(metadata, messageTableName);
+          partitionManager.prunePartitions(thresholdTimestamp);
 
           // Payload table
-          dataDBPath = getDataDBPath(payloadTableName, metadata.getTopicId(), metadata.getGeneration());
-          levelDB = levelDBs.get(dataDBPath);
+          File dataDBPath = getDataDBPath(payloadTableName, metadata.getTopicId(), metadata.getGeneration());
+          DB levelDB = levelDBs.get(dataDBPath);
           if (levelDB != null && dataDBPath.exists()) {
             new LevelDBPayloadTable(levelDB, metadata).pruneMessages(now);
           }
