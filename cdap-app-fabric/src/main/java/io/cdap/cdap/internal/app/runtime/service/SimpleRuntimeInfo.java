@@ -16,32 +16,34 @@
 
 package io.cdap.cdap.internal.app.runtime.service;
 
-import com.google.common.base.Objects;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
 import org.apache.twill.api.RunId;
 
+import java.io.Closeable;
 import javax.annotation.Nullable;
 
 /**
- *
+ * A straightforward implementation of the {@link ProgramRuntimeService.RuntimeInfo} interface that allows
+ * setting of the twill run id.
  */
-public final class SimpleRuntimeInfo implements ProgramRuntimeService.RuntimeInfo {
+public final class SimpleRuntimeInfo implements ProgramRuntimeService.RuntimeInfo, Closeable {
 
   private final ProgramController controller;
   private final ProgramId programId;
+  private final Runnable cleanupTask;
   private volatile RunId twillRunId;
 
   public SimpleRuntimeInfo(ProgramController controller, ProgramId programId) {
-    this(controller, programId, null);
+    this(controller, programId, () -> { });
   }
 
-  public SimpleRuntimeInfo(ProgramController controller, ProgramId programId, @Nullable RunId twillRunId) {
+  public SimpleRuntimeInfo(ProgramController controller, ProgramId programId, Runnable cleanupTask) {
     this.controller = controller;
     this.programId = programId;
-    this.twillRunId = twillRunId;
+    this.cleanupTask = cleanupTask;
   }
 
   public void setTwillRunId(RunId twillRunId) {
@@ -70,10 +72,7 @@ public final class SimpleRuntimeInfo implements ProgramRuntimeService.RuntimeInf
   }
 
   @Override
-  public String toString() {
-    return Objects.toStringHelper(ProgramRuntimeService.RuntimeInfo.class)
-      .add("programId", programId)
-      .add("twillRunId", twillRunId)
-      .toString();
+  public void close() {
+    cleanupTask.run();
   }
 }
