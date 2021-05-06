@@ -47,7 +47,13 @@ jobs:
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
       - name: Build with Maven
-        run: mvn clean verify -fae -T 2 -B -V -Dmaven.test.failure.ignore -Dmaven.repo.local=$HOME/.m2/repository11 -DcloudBuild -Pcoverage -Dmaven.wagon.http.retryHandler.count=3 -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
+        run: >-
+          mvn clean verify -fae -T 2 -B -V -Dmaven.test.failure.ignore
+          -Dmaven.repo.local=$HOME/.m2/repository11
+          -DcloudBuild
+          -Pcoverage
+          -Dmaven.wagon.http.retryHandler.count=3
+          -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
       - name: Archive build artifacts
         uses: actions/upload-artifact@v2.2.2
         if: always()
@@ -60,10 +66,16 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
-          sonar.pullrequest.key: ${{ github.event.workflow_run.pull_requests.number }}
-          sonar.pullrequest.branch: ${{ github.event.workflow_run.pull_requests.head.ref }}
-          sonar.pullrequest.base: ${{ github.event.workflow_run.pull_requests.base.ref }}
-        run: mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -fae -T 2 -B -V -Dmaven.repo.local=$HOME/.m2/repository11 -DcloudBuild -Pcoverage -Dmaven.wagon.http.retryHandler.count=3 -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
+        run: >-
+          mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -fae -T 2 -B -V
+          -Dmaven.repo.local=$HOME/.m2/repository11
+          -DcloudBuild
+          -Pcoverage
+          -Dmaven.wagon.http.retryHandler.count=3
+          -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
+          -Dsonar.pullrequest.key=${{ github.event.workflow_run.pull_requests[0].number }}
+          -Dsonar.pullrequest.branch=${{ github.event.workflow_run.pull_requests[0].head.ref }}
+          -Dsonar.pullrequest.base=${{ github.event.workflow_run.pull_requests[0].base.ref }}
       - name: Archive build artifacts
         uses: actions/upload-artifact@v2.2.2
         if: always()

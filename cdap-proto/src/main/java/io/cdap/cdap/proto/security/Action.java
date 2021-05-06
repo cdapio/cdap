@@ -26,7 +26,7 @@ import io.cdap.cdap.api.annotation.Beta;
 public enum Action {
   /** Read data, metrics, and logs from the entity */
   READ,
-  /** Write data to the entity */
+  /** Write data to the entitIterator<RawMessageTableEntry> entriesy */
   WRITE,
   /** Execute a program */
   EXECUTE,
