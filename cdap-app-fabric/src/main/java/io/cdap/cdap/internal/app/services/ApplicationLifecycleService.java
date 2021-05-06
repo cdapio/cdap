@@ -220,10 +220,30 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     for (ApplicationSpecification appSpec : store.getAllApplications(namespace)) {
       appSpecs.put(namespace.app(appSpec.getName(), appSpec.getAppVersion()), appSpec);
     }
+    StringBuilder e = new StringBuilder();
+    e.append("[");
+    for (ApplicationId a : appSpecs.keySet()) {
+      e.append(a.toString() + ", ");
+    }
+    e.append("]");
+    LOG.warn("Entities 1: {}", e.toString());
     Set<? extends EntityId> visible = authorizationEnforcer.isVisible(appSpecs.keySet(),
                                                                       authenticationContext.getPrincipal());
+    e = new StringBuilder();
+    e.append("[");
+    for (EntityId a : visible) {
+      e.append(a.toString() + ", ");
+    }
+    e.append("]");
+    LOG.warn("Authorized Entities 1: {}", e.toString());
     appSpecs.keySet().removeIf(id -> !visible.contains(id));
-
+    e = new StringBuilder();
+    e.append("[");
+    for (ApplicationId a : appSpecs.keySet()) {
+      e.append(a.toString() + ", ");
+    }
+    e.append("]");
+    LOG.warn("Entities 2: {}", e.toString());
     Map<ApplicationId, String> owners = ownerAdmin.getOwnerPrincipals(appSpecs.keySet());
     List<ApplicationDetail> result = new ArrayList<>();
     for (Map.Entry<ApplicationId, ApplicationSpecification> entry : appSpecs.entrySet()) {
@@ -231,13 +251,20 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       try {
         capabilityReader.checkAllEnabled(entry.getValue());
       } catch (CapabilityNotAvailableException ex) {
-        LOG.debug("Application {} is ignored due to exception.", applicationDetail.getName(), ex);
+        LOG.warn("Application {} is ignored due to exception.", applicationDetail.getName(), ex);
         continue;
       }
       if (predicate.test(applicationDetail)) {
         result.add(filterApplicationDetail(entry.getKey(), applicationDetail));
       }
     }
+    e = new StringBuilder();
+    e.append("[");
+    for (ApplicationDetail a : result) {
+      e.append(a.getName() + ", ");
+    }
+    e.append("]");
+    LOG.warn("Results 1: {}", e.toString());
     return result;
   }
 
