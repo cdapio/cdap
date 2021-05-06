@@ -87,6 +87,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -161,7 +162,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     AtomicReference<Runnable> cleanUpTaskRef = new AtomicReference<>(createCleanupTask(tempDir, runner));
     DelayedProgramController controller = new DelayedProgramController(programRunId);
     RuntimeInfo runtimeInfo = createRuntimeInfo(controller, programId, () -> cleanUpTaskRef.get().run());
-    monitorProgram(runtimeInfo, () -> cleanUpTaskRef.get().run());
+    updateRuntimeInfo(runtimeInfo);
 
     executor.execute(() -> {
       try {
@@ -224,7 +225,11 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   }
 
   private Runnable createCleanupTask(final Object... resources) {
+    AtomicBoolean executed = new AtomicBoolean();
     return () -> {
+      if (!executed.compareAndSet(false, true)) {
+        return;
+      }
       List<Object> resourceList = new ArrayList<>(Arrays.asList(resources));
       Collections.reverse(resourceList);
       for (Object resource : resourceList) {
@@ -364,7 +369,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   }
 
   protected RuntimeInfo createRuntimeInfo(ProgramController controller, ProgramId programId, Runnable cleanUpTask) {
-    return new SimpleRuntimeInfo(controller, programId);
+    return new SimpleRuntimeInfo(controller, programId, cleanUpTask);
   }
 
   protected List<RuntimeInfo> getRuntimeInfos() {
@@ -470,19 +475,6 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     }
   }
 
-  @VisibleForTesting
-  void updateRuntimeInfo(ProgramType type, RunId runId, RuntimeInfo runtimeInfo) {
-    Lock lock = runtimeInfosLock.readLock();
-    lock.lock();
-    try {
-      if (!runtimeInfos.contains(type, runId)) {
-        monitorProgram(runtimeInfo, createCleanupTask());
-      }
-    } finally {
-      lock.unlock();
-    }
-  }
-
   /**
    * Uses the given {@link TwillRunner} to lookup {@link RuntimeInfo} for the given program run.
    *
@@ -503,62 +495,69 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   }
 
   /**
-   * Starts monitoring a running program.
+   * Updates the runtime info cache by adding the given {@link RuntimeInfo} if it does not exist.
    *
-   * @param runtimeInfo information about the running program
-   * @param cleanUpTask task to run when program finished
+   * @param info information about the running program
    */
-  private void monitorProgram(final RuntimeInfo runtimeInfo, final Runnable cleanUpTask) {
-    final ProgramController controller = runtimeInfo.getController();
+  @VisibleForTesting
+  void updateRuntimeInfo(RuntimeInfo info) {
+    // Add the runtime info if it does not exist in the cache.
+    Lock lock = runtimeInfosLock.writeLock();
+    lock.lock();
+    try {
+      if (runtimeInfos.contains(info.getType(), info.getController().getRunId())) {
+
+        LOG.debug("RuntimeInfo already exists: {}", info.getController().getProgramRunId());
+        cleanupRuntimeInfo(info);
+        return;
+      }
+      runtimeInfos.put(info.getType(), info.getController().getRunId(), info);
+    } finally {
+      lock.unlock();
+    }
+
+    LOG.debug("Added RuntimeInfo: {}", info.getController().getProgramRunId());
+
+    ProgramController controller = info.getController();
     controller.addListener(new AbstractListener() {
 
       @Override
       public void init(ProgramController.State currentState, @Nullable Throwable cause) {
-        if (!COMPLETED_STATES.contains(currentState)) {
-          add(runtimeInfo);
-        } else {
-          cleanUpTask.run();
+        if (COMPLETED_STATES.contains(currentState)) {
+          remove(info);
         }
       }
 
       @Override
       public void completed() {
-        remove(runtimeInfo, cleanUpTask);
+        remove(info);
       }
 
       @Override
       public void killed() {
-        remove(runtimeInfo, cleanUpTask);
+        remove(info);
       }
 
       @Override
       public void error(Throwable cause) {
-        remove(runtimeInfo, cleanUpTask);
+        remove(info);
       }
     }, Threads.SAME_THREAD_EXECUTOR);
   }
 
-  private void add(RuntimeInfo runtimeInfo) {
+  private void remove(RuntimeInfo info) {
+    RuntimeInfo removedInfo = null;
     Lock lock = runtimeInfosLock.writeLock();
     lock.lock();
     try {
-      runtimeInfos.put(runtimeInfo.getType(), runtimeInfo.getController().getRunId(), runtimeInfo);
+      removedInfo = runtimeInfos.remove(info.getType(), info.getController().getRunId());
     } finally {
       lock.unlock();
+      cleanupRuntimeInfo(removedInfo);
     }
-  }
 
-  private void remove(RuntimeInfo info, Runnable cleanUpTask) {
-    Lock lock = runtimeInfosLock.writeLock();
-    lock.lock();
-    try {
-      LOG.debug("Removing RuntimeInfo: {} {} {}",
-                info.getType(), info.getProgramId().getProgram(), info.getController().getRunId());
-      RuntimeInfo removed = runtimeInfos.remove(info.getType(), info.getController().getRunId());
-      LOG.debug("RuntimeInfo removed: {}", removed);
-    } finally {
-      lock.unlock();
-      cleanUpTask.run();
+    if (removedInfo != null) {
+      LOG.debug("RuntimeInfo removed: {}", removedInfo.getController().getProgramRunId());
     }
   }
 
@@ -585,7 +584,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       RuntimeInfo runtimeInfo = controller == null ? null : createRuntimeInfo(controller, programId, () -> { });
 
       if (runtimeInfo != null) {
-        updateRuntimeInfo(programId.getType(), runId, runtimeInfo);
+        updateRuntimeInfo(runtimeInfo);
       }
       return runtimeInfo;
     } catch (Exception e) {
@@ -629,5 +628,14 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     }
 
     return ((ProgramControllerCreator) programRunner).createProgramController(programId.run(runId), controller);
+  }
+
+  /**
+   * Cleanup the given {@link RuntimeInfo} if it is {@link Closeable}.
+   */
+  private void cleanupRuntimeInfo(@Nullable RuntimeInfo info) {
+    if (info instanceof Closeable) {
+      Closeables.closeQuietly((Closeable) info);
+    }
   }
 }
