@@ -18,6 +18,7 @@ package io.cdap.cdap.api.app;
 
 import io.cdap.cdap.api.DatasetConfigurer;
 import io.cdap.cdap.api.mapreduce.MapReduce;
+import io.cdap.cdap.api.metadata.Metadata;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.schedule.ScheduleBuilder;
 import io.cdap.cdap.api.schedule.TriggerFactory;
@@ -99,6 +100,13 @@ public interface ApplicationConfigurer extends PluginConfigurer, DatasetConfigur
    * @param scheduleCreationSpec defines the schedule.
    */
   void schedule(ScheduleCreationSpec scheduleCreationSpec);
+
+  /**
+   * Emit the given {@link Metadata} for the application in user scope
+   *
+   * @param metadata the metadata to emit
+   */
+  void emitMetadata(Metadata metadata);
 
   /**
    * Get a TriggerFactory to get triggers.

@@ -26,6 +26,7 @@ import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.plugin.InvalidPluginConfigException;
 import io.cdap.cdap.api.plugin.InvalidPluginProperty;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
@@ -41,6 +42,7 @@ import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.action.Action;
 import io.cdap.cdap.etl.api.batch.BatchAggregator;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
+import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.condition.Condition;
 import io.cdap.cdap.etl.api.join.AutoJoiner;
@@ -52,6 +54,7 @@ import io.cdap.cdap.etl.api.validation.InvalidConfigPropertyException;
 import io.cdap.cdap.etl.api.validation.InvalidStageException;
 import io.cdap.cdap.etl.api.validation.ValidationException;
 import io.cdap.cdap.etl.common.ArtifactSelectorProvider;
+import io.cdap.cdap.etl.common.ConnectionRegistryMacroEvaluator;
 import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.DefaultAutoJoinerContext;
 import io.cdap.cdap.etl.common.DefaultPipelineConfigurer;
@@ -60,6 +63,7 @@ import io.cdap.cdap.etl.common.Schemas;
 import io.cdap.cdap.etl.planner.Dag;
 import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 import io.cdap.cdap.etl.proto.Connection;
+import io.cdap.cdap.etl.proto.connection.ConnectionBadRequestException;
 import io.cdap.cdap.etl.proto.v2.ETLConfig;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
@@ -94,6 +98,8 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
   protected final Engine engine;
   private final Set<String> sourcePluginTypes;
   private final Set<String> sinkPluginTypes;
+  private final ConnectionRegistryMacroEvaluator connectionEvaluator;
+  private final MacroParserOptions options;
 
   protected <T extends PluginConfigurer & DatasetConfigurer> PipelineSpecGenerator(T configurer,
                                                                                    Set<String> sourcePluginTypes,
@@ -104,6 +110,9 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
     this.sourcePluginTypes = sourcePluginTypes;
     this.sinkPluginTypes = sinkPluginTypes;
     this.engine = engine;
+    this.connectionEvaluator = new ConnectionRegistryMacroEvaluator();
+    this.options = MacroParserOptions.builder().skipInvalidMacros().setEscaping(false)
+                     .setFunctionWhitelist(ConnectionRegistryMacroEvaluator.FUNCTION_NAME).build();
   }
 
   /**
@@ -202,6 +211,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       .setStageLoggingEnabled(config.isStageLoggingEnabled())
       .setNumOfRecordsPreview(config.getNumOfRecordsPreview())
       .setProperties(pipelineProperties)
+      .addConnectionsUsed(connectionEvaluator.getConnectionIds())
       .build();
   }
 
@@ -304,6 +314,11 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       } else if (!type.equals(Constants.SPARK_PROGRAM_PLUGIN_TYPE)) {
         PipelineConfigurable singlePlugin = (PipelineConfigurable) plugin;
         singlePlugin.configurePipeline(pipelineConfigurer);
+        // we don't have StreamingSource dependency so use source plugin types to check type
+        // evaluate macros and find out if there is connection used
+        if (sourcePluginTypes.contains(type) || BatchSink.PLUGIN_TYPE.equals(type)) {
+          pluginConfigurer.evaluateMacros(etlPlugin.getProperties(), connectionEvaluator, options);
+        }
       }
     } catch (InvalidConfigPropertyException e) {
       collector.addFailure(e.getMessage(),
@@ -333,6 +348,8 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
         .withStacktrace(e.getStackTrace());
       // Log the NullPointerException for debugging:
       LOG.error(String.format("Null error occurred while configuring the stage %s.", stageName), e);
+    } catch (ConnectionBadRequestException e) {
+      collector.addFailure(e.getMessage(), "Provide a valid connection name.");
     } catch (Exception e) {
       collector.addFailure(String.format("Error encountered while configuring the stage: '%s'",
                                          e.getMessage()), null).withStacktrace(e.getStackTrace());

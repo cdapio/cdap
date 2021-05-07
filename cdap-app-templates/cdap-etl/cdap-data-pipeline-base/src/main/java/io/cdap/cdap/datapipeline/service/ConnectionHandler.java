@@ -104,12 +104,14 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
 
       ConnectionCreationRequest creationRequest =
         GSON.fromJson(StandardCharsets.UTF_8.decode(request.getContent()).toString(), ConnectionCreationRequest.class);
+      ConnectionId connectionId = new ConnectionId(namespaceSummary, connection);
 
       long now = System.currentTimeMillis();
-      Connection connectionInfo = new Connection(connection, creationRequest.getPlugin().getName(),
+      Connection connectionInfo = new Connection(connection, connectionId.getConnectionId(),
+                                                 creationRequest.getPlugin().getName(),
                                                  creationRequest.getDescription(), false,
                                                  now, now, creationRequest.getPlugin());
-      store.saveConnection(new ConnectionId(namespaceSummary, connection), connectionInfo);
+      store.saveConnection(connectionId, connectionInfo, creationRequest.overWrite());
       responder.sendStatus(HttpURLConnection.HTTP_OK);
     });
   }

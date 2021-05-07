@@ -32,14 +32,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Stage to write system metadata for an application.
+ * Stage to write metadata for an application.
  */
-public class SystemMetadataWriterStage extends AbstractStage<ApplicationWithPrograms> {
+public class MetadataWriterStage extends AbstractStage<ApplicationWithPrograms> {
 
   private final MetadataServiceClient metadataServiceClient;
   private String creationTime;
 
-  public SystemMetadataWriterStage(MetadataServiceClient metadataServiceClient) {
+  public MetadataWriterStage(MetadataServiceClient metadataServiceClient) {
     super(TypeToken.of(ApplicationWithPrograms.class));
     this.metadataServiceClient = metadataServiceClient;
   }
@@ -64,6 +64,11 @@ public class SystemMetadataWriterStage extends AbstractStage<ApplicationWithProg
     collectProgramSystemMetadata(appId, ProgramType.SPARK, appSpec.getSpark().values(), mutations);
     collectProgramSystemMetadata(appId, ProgramType.WORKER, appSpec.getWorkers().values(), mutations);
     collectProgramSystemMetadata(appId, ProgramType.WORKFLOW, appSpec.getWorkflows().values(), mutations);
+
+    // add the rest user defined metadata
+    if (input.getMetadata() != null) {
+      mutations.add(input.getMetadata());
+    }
 
     // write all metadata
     metadataServiceClient.batch(mutations);

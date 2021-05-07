@@ -44,9 +44,9 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
                                   String extraJavaOpts, int numOfRecordsPreview,
                                   boolean stopGracefully, Map<String, String> properties,
                                   boolean checkpointsDisabled, boolean isUnitTest, String checkpointDirectory,
-                                  String pipelineId) {
+                                  String pipelineId, Set<String> connectionsUsed) {
     super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, processTimingEnabled,
-          numOfRecordsPreview, properties);
+          numOfRecordsPreview, properties, connectionsUsed);
     this.batchIntervalMillis = batchIntervalMillis;
     this.extraJavaOpts = extraJavaOpts;
     this.stopGracefully = stopGracefully;
@@ -181,7 +181,8 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
       return new DataStreamsPipelineSpec(stages, connections, resources, driverResources, clientResources,
                                          stageLoggingEnabled, processTimingEnabled, batchIntervalMillis, extraJavaOpts,
                                          numOfRecordsPreview, stopGracefully, properties,
-                                         checkpointsDisabled, isUnitTest, checkpointDirectory, pipelineId);
+                                         checkpointsDisabled, isUnitTest, checkpointDirectory, pipelineId,
+                                         connectionsUsed);
     }
   }
 }

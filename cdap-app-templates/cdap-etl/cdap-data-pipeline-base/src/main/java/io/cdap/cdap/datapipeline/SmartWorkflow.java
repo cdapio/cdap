@@ -28,6 +28,7 @@ import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.dataset.lib.FileSet;
 import io.cdap.cdap.api.lineage.field.Operation;
 import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.metadata.Metadata;
 import io.cdap.cdap.api.metrics.Metrics;
 import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.api.schedule.ProgramStatusTriggerInfo;
@@ -100,6 +101,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -179,6 +181,8 @@ public class SmartWorkflow extends AbstractWorkflow {
                       e.getFailures().isEmpty() ? e.getMessage() :
                         e.getFailures().iterator().next().getFullMessage()), e);
     }
+
+    applicationConfigurer.emitMetadata(new Metadata(Collections.emptyMap(), spec.getConnectionsUsed()));
 
     stageSpecs = new HashMap<>();
     useSpark = config.getEngine() == Engine.SPARK;

@@ -24,6 +24,7 @@ import java.util.Objects;
  */
 public class Connection {
   private final String name;
+  private final String connectionId;
   private final String connectionType;
   private final String description;
   private final boolean preConfigured;
@@ -33,7 +34,14 @@ public class Connection {
 
   public Connection(String name, String connectionType, String description, boolean preConfigured,
                     long createdTimeMillis, long updatedTimeMillis, PluginInfo plugin) {
+    this(name, ConnectionId.getConnectionId(name), connectionType, description, preConfigured, createdTimeMillis,
+         updatedTimeMillis, plugin);
+  }
+
+  public Connection(String name, String connectionId, String connectionType, String description, boolean preConfigured,
+                    long createdTimeMillis, long updatedTimeMillis, PluginInfo plugin) {
     this.name = name;
+    this.connectionId = connectionId;
     this.connectionType = connectionType;
     this.description = description;
     this.preConfigured = preConfigured;
@@ -44,6 +52,10 @@ public class Connection {
 
   public String getName() {
     return name;
+  }
+
+  public String getConnectionId() {
+    return connectionId;
   }
 
   public String getConnectionType() {
@@ -83,6 +95,7 @@ public class Connection {
     Connection that = (Connection) o;
     return preConfigured == that.preConfigured &&
       Objects.equals(name, that.name) &&
+      Objects.equals(connectionId, that.connectionId) &&
       Objects.equals(connectionType, that.connectionType) &&
       Objects.equals(description, that.description) &&
       Objects.equals(plugin, that.plugin);
@@ -90,6 +103,6 @@ public class Connection {
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, connectionType, description, preConfigured, plugin);
+    return Objects.hash(name, connectionId, connectionType, description, preConfigured, plugin);
   }
 }
