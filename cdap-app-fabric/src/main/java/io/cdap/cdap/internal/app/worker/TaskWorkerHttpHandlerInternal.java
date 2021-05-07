@@ -17,16 +17,20 @@
 package io.cdap.cdap.internal.app.worker;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.logging.gateway.handlers.AbstractLogHttpHandler;
+import io.cdap.cdap.proto.BasicThrowable;
+import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.elasticsearch.cluster.ClusterStateTaskConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +48,8 @@ import javax.ws.rs.Path;
 public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
   public static final String UNKNOWN_CLASS_REQUEST = "UNKNOWN_REQUEST";
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerHttpHandlerInternal.class);
-  private static final Gson GSON = new Gson();
+    private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec()).create();
   private final RunnableTaskLauncher runnableTaskLauncher;
   private final Consumer<String> stopper;
   private final AtomicInteger inflightRequests = new AtomicInteger(0);
@@ -73,17 +78,24 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
       responder.sendByteArray(HttpResponseStatus.OK, response, EmptyHttpHeaders.INSTANCE);
     } catch (ClassNotFoundException | ClassCastException ex) {
       className = UNKNOWN_CLASS_REQUEST;
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, ex.toString(), EmptyHttpHeaders.INSTANCE);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);
     } catch (Exception ex) {
-      LOG.error(String.format("failed to handle request %s",
+      LOG.error(String.format("Failed to run task %s",
                               request.content().toString(StandardCharsets.UTF_8), ex));
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, ex.toString(), EmptyHttpHeaders.INSTANCE);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);
     } finally {
       if (!className.equals(UNKNOWN_CLASS_REQUEST)) {
         stopper.accept(className);
       }
     }
-
   }
 
+  /**
+   * Return json representation of an exception.
+   * Used to propagate exception across network for better surfacing errors and debuggability.
+   */
+  private String exceptionToJson(Exception ex) {
+      BasicThrowable basicThrowable = new BasicThrowable(ex);
+      return GSON.toJson(basicThrowable);
+  }
 }

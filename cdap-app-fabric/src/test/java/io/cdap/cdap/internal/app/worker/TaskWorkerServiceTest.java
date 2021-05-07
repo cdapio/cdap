@@ -25,6 +25,7 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.worker.RunnableTask;
 import io.cdap.cdap.common.internal.worker.RunnableTaskContext;
+import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
@@ -118,7 +119,7 @@ public class TaskWorkerServiceTest {
       new DefaultHttpRequestConfig(false));
     waitForTaskWorkerToFinish(taskWorkerService);
     Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-    Assert.assertEquals(want, response.getResponseBodyAsString());
+  Assert.assertEquals(want, response.getResponseBodyAsString());
     Assert.assertTrue(taskWorkerService.state() == Service.State.TERMINATED);
   }
 
@@ -136,7 +137,11 @@ public class TaskWorkerServiceTest {
         .withBody(reqBody).build(),
       new DefaultHttpRequestConfig(false));
     Assert.assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
-    Assert.assertTrue(response.getResponseBodyAsString().contains("java.lang.ClassNotFoundException"));
+    BasicThrowable basicThrowable;
+    basicThrowable = GSON.fromJson(response.getResponseBodyAsString(), BasicThrowable.class);
+    Assert.assertTrue(basicThrowable.getClassName().contains("java.lang.ClassNotFoundException"));
+    Assert.assertTrue(basicThrowable.getMessage().contains("NoClass"));
+    Assert.assertNotEquals(basicThrowable.getStackTraces().length, 0);
   }
 
   @Test

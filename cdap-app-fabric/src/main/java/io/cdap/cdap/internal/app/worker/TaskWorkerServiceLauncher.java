@@ -40,7 +40,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -56,7 +55,6 @@ public class TaskWorkerServiceLauncher extends AbstractIdleService implements Ru
 
   private final TwillRunner twillRunner;
   private TwillController twillController;
-  private ScheduledExecutorService scheduler;
 
   @Inject
   public TaskWorkerServiceLauncher(CConfiguration cConf, SConfiguration sConf, Configuration hConf,
@@ -70,30 +68,20 @@ public class TaskWorkerServiceLauncher extends AbstractIdleService implements Ru
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting TaskWorkerServiceLauncher.");
-    scheduler = Executors.newSingleThreadScheduledExecutor(
-      Threads.createDaemonThreadFactory("task-worker-service-launcher"));
-    scheduler.scheduleWithFixedDelay(this, 2, 5, TimeUnit.SECONDS);
   }
 
   @Override
   protected void shutDown() throws Exception {
     LOG.info("Shutting down TaskWorkerServiceLauncher.");
-    if (scheduler != null) {
-      Future<?> future = scheduler.submit(() -> {
-        try {
-          if (twillController != null) {
-            twillController.terminate().get(10, TimeUnit.SECONDS);
-          }
-        } catch (Exception e) {
-          LOG.warn("Failed to terminate preview runner", e);
-        } finally {
-          scheduler.shutdown();
-        }
-      });
-      future.get();
+    try {
+      if (twillController != null) {
+        twillController.terminate().get(10, TimeUnit.SECONDS);
+      }
+    } catch (Exception e) {
+      LOG.warn("Failed to terminate TaskWorkerServiceLauncher run", e);
     }
     LOG.info("Shutting down TaskWorkerServiceLauncher has completed.");
-  }
+}
 
   @Override
   public void run() {
