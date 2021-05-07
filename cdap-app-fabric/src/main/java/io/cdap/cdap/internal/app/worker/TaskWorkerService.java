@@ -74,22 +74,20 @@ public class TaskWorkerService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    LOG.debug("Starting TaskWorker service");
-    LOG.info("Starting TaskWorker http server");
+    LOG.info("Starting TaskWorkerService");
     httpService.start();
     bindAddress = httpService.getBindAddress();
     cancelDiscovery = discoveryService.register(
       ResolvingDiscoverable.of(URIScheme.createDiscoverable(Constants.Service.TASK_WORKER, httpService)));
-    LOG.info("Starting TaskWorker http server has completed on {}", bindAddress);
-    LOG.debug("Starting TaskWorker service has completed");
+    LOG.info("Starting TaskWorkerService has completed");
   }
 
   @Override
   protected void shutDown() throws Exception {
-    LOG.debug("Shutting down TaskWorker service");
+    LOG.info("Shutting down TaskWorkerService");
     cancelDiscovery.cancel();
     httpService.stop(5, 5, TimeUnit.SECONDS);
-    LOG.debug("Shutting down TaskWorker service has completed");
+    LOG.debug("Shutting down TaskWorkerService has completed");
   }
 
   private void stopService(String className) {
@@ -97,7 +95,7 @@ public class TaskWorkerService extends AbstractIdleService {
      * based on number of requests per particular class,
      * the service gets stopped.
      */
-    new Thread(() -> this.stopAndWait()).start();
+    stop();
   }
 
   @VisibleForTesting

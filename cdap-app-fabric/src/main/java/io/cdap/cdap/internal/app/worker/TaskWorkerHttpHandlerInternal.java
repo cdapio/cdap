@@ -30,7 +30,6 @@ import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.elasticsearch.cluster.ClusterStateTaskConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +47,7 @@ import javax.ws.rs.Path;
 public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
   public static final String UNKNOWN_CLASS_REQUEST = "UNKNOWN_REQUEST";
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerHttpHandlerInternal.class);
-    private static final Gson GSON = new GsonBuilder()
+  private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec()).create();
   private final RunnableTaskLauncher runnableTaskLauncher;
   private final Consumer<String> stopper;
@@ -95,7 +94,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
    * Used to propagate exception across network for better surfacing errors and debuggability.
    */
   private String exceptionToJson(Exception ex) {
-      BasicThrowable basicThrowable = new BasicThrowable(ex);
-      return GSON.toJson(basicThrowable);
+    BasicThrowable basicThrowable = new BasicThrowable(ex);
+    return GSON.toJson(basicThrowable);
   }
 }

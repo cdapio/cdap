@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.worker;
 
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -46,22 +47,23 @@ import java.util.concurrent.TimeUnit;
 /**
  * Launches a pool of task workers.
  */
-public class TaskWorkerServiceLauncher extends AbstractIdleService implements Runnable {
+public class TaskWorkerServiceLauncher extends AbstractScheduledService {
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerServiceLauncher.class);
+  private static final int ScheduleIntervalSeconds = 5;
 
   private final CConfiguration cConf;
   private final Configuration hConf;
-  private final SConfiguration sConf;
 
   private final TwillRunner twillRunner;
   private TwillController twillController;
 
+  private ScheduledExecutorService executor;
+
   @Inject
-  public TaskWorkerServiceLauncher(CConfiguration cConf, SConfiguration sConf, Configuration hConf,
+  public TaskWorkerServiceLauncher(CConfiguration cConf, Configuration hConf,
                                    TwillRunner twillRunner) {
     this.cConf = cConf;
     this.hConf = hConf;
-    this.sConf = sConf;
     this.twillRunner = twillRunner;
   }
 
@@ -80,12 +82,30 @@ public class TaskWorkerServiceLauncher extends AbstractIdleService implements Ru
     } catch (Exception e) {
       LOG.warn("Failed to terminate TaskWorkerServiceLauncher run", e);
     }
+   if (executor != null) {
+      executor.shutdownNow();
+    }
     LOG.info("Shutting down TaskWorkerServiceLauncher has completed.");
 }
 
   @Override
+  protected void runOneIteration() throws Exception {
+    run();
+  }
+
+  @Override
+  protected Scheduler scheduler() {
+    return Scheduler.newFixedRateSchedule(0, ScheduleIntervalSeconds, TimeUnit.SECONDS);
+  }
+
+  @Override
+  protected final ScheduledExecutorService executor() {
+    executor = Executors.newSingleThreadScheduledExecutor(
+      Threads.createDaemonThreadFactory("task-worker-service-launcher-scheduler"));
+    return executor;
+  }
+
   public void run() {
-    LOG.info("Starting TaskWorkerService worker pool");
     TwillController activeController = null;
     for (TwillController controller : twillRunner.lookup(TaskWorkerTwillApplication.NAME)) {
       // If detected more than one controller, terminate those extra controllers.
@@ -148,7 +168,6 @@ public class TaskWorkerServiceLauncher extends AbstractIdleService implements Ru
       }
     }
     this.twillController = activeController;
-    LOG.info("Starting TaskWorker pool has completed");
   }
 
   private void deleteDir(Path dir) {
