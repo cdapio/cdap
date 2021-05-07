@@ -304,9 +304,15 @@ public class AuthorizerInstantiatorTest extends AuthorizationTestBase {
 
     @Override
     public Set<Privilege> listPrivileges(Principal principal) {
-      Assert.assertEquals(getClass().getClassLoader(), Thread.currentThread().getContextClassLoader());
+      assertContextClassLoader();
       return super.listPrivileges(principal);
     }
+
+    private static void assertContextClassLoader() {
+      Assert.assertEquals(ValidExternalAuthorizer.class.getClassLoader(),
+                          Thread.currentThread().getContextClassLoader());
+    }
+
   }
 
   private static final class DoesNotImplementAuthorizer {

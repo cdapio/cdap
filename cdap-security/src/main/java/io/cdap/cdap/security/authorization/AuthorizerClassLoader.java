@@ -158,11 +158,16 @@ public class AuthorizerClassLoader extends DirectoryClassLoader {
       @Override
       public MethodVisitor visitMethod(int access, String name, String descriptor,
                                        String signature, String[] exceptions) {
-        Method method = new Method(name, descriptor);
-        authorizerMethods.removeIf(m -> method.equals(Method.getMethod(m)));
-
         MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
-        return rewriteMethod(access, name, descriptor, mv);
+
+        Method method = new Method(name, descriptor);
+
+        // Only rewrite methods defined in the Authorizer interface.
+        if (authorizerMethods.removeIf(m -> method.equals(Method.getMethod(m)))) {
+          return rewriteMethod(access, name, descriptor, mv);
+        }
+
+        return mv;
       }
 
       @Override
