@@ -40,7 +40,6 @@ import io.cdap.cdap.common.lang.CombineClassLoader;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -200,7 +199,7 @@ public final class InMemoryConfigurator implements Configurator {
       }
     }
     ApplicationSpecification specification = configurer.createSpecification(applicationName, applicationVersion);
-    AppSpecInfo appSpecInfo = new AppSpecInfo(specification, configurer.getSystemTables());
+    AppSpecInfo appSpecInfo = new AppSpecInfo(specification, configurer.getSystemTables(), configurer.getMetadata());
 
     // Convert the specification to JSON.
     // We write the Application specification to output file in JSON format.

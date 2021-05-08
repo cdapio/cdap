@@ -21,9 +21,11 @@ import com.google.common.io.Files;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.AppWithProgramsUsingGuava;
 import io.cdap.cdap.CapabilityAppWithWorkflow;
+import io.cdap.cdap.MetadataEmitApp;
 import io.cdap.cdap.MissingMapReduceWorkflowApp;
 import io.cdap.cdap.api.annotation.Requirements;
 import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.conf.Constants;
@@ -43,7 +45,6 @@ import io.cdap.cdap.internal.capability.CapabilityConfig;
 import io.cdap.cdap.internal.capability.CapabilityNotAvailableException;
 import io.cdap.cdap.internal.capability.CapabilityStatus;
 import io.cdap.cdap.internal.capability.CapabilityWriter;
-import io.cdap.cdap.metadata.MetadataSubscriberService;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramRecord;
@@ -53,6 +54,7 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.MetadataKind;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.Read;
@@ -89,7 +91,6 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
   private static LocationFactory locationFactory;
   private static ArtifactRepository artifactRepository;
   private static MetadataStorage metadataStorage;
-  private static MetadataSubscriberService metadataSubscriber;
   private static CapabilityWriter capabilityWriter;
 
   @BeforeClass
@@ -98,7 +99,6 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     locationFactory = getInjector().getInstance(LocationFactory.class);
     artifactRepository = getInjector().getInstance(ArtifactRepository.class);
     metadataStorage = getInjector().getInstance(MetadataStorage.class);
-    metadataSubscriber = getInjector().getInstance(MetadataSubscriberService.class);
     capabilityWriter = getInjector().getInstance(CapabilityWriter.class);
   }
 
@@ -191,20 +191,37 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
       .deployAppAndArtifact(NamespaceId.DEFAULT, appWithWorkflowClass.getSimpleName(), artifactId, appJarFile, null,
                             null, programId -> {
         }, true);
-    //Check for the capability metadata
+    // Check for the capability metadata
     ApplicationId appId = NamespaceId.DEFAULT.app(appWithWorkflowClass.getSimpleName());
-    Assert.assertEquals(false, metadataStorage.read(new Read(appId.toMetadataEntity(),
-                                                             MetadataScope.SYSTEM, MetadataKind.PROPERTY)).isEmpty());
-    Map<String, String> metadataProperties = metadataStorage
-      .read(new Read(appId.toMetadataEntity())).getProperties(MetadataScope.SYSTEM);
+    MetadataEntity appMetadataId = appId.toMetadataEntity();
+    Assert.assertFalse(metadataStorage.read(new Read(appMetadataId,
+                                                     MetadataScope.SYSTEM, MetadataKind.PROPERTY)).isEmpty());
+    Map<String, String> metadataProperties =
+      metadataStorage.read(new Read(appMetadataId)).getProperties(MetadataScope.SYSTEM);
     String capabilityMetaData = metadataProperties.get(AppSystemMetadataWriter.CAPABILITY_TAG);
     Set<String> actual = Arrays.stream(capabilityMetaData.split(AppSystemMetadataWriter.CAPABILITY_DELIMITER))
-      .collect(Collectors.toSet());
+                           .collect(Collectors.toSet());
     Assert.assertEquals(expected, actual);
-    //Remove the application and verify that all metadata is removed
+
+    // Remove the application and verify that all metadata is removed
     applicationLifecycleService.removeApplication(appId);
-    Assert.assertEquals(true, metadataStorage.read(new Read(appId.toMetadataEntity(),
-                                                            MetadataScope.SYSTEM, MetadataKind.PROPERTY)).isEmpty());
+    Assert.assertTrue(metadataStorage.read(new Read(appMetadataId)).isEmpty());
+  }
+
+  @Test
+  public void testMetadataEmitInConfigure() throws Exception {
+    deploy(MetadataEmitApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN,
+           NamespaceId.DEFAULT.getNamespace());
+
+    ApplicationId appId = NamespaceId.DEFAULT.app(MetadataEmitApp.NAME);
+
+    // check app user metadata gets emitted correctly
+    Metadata metadata = metadataStorage.read(new Read(appId.toMetadataEntity(), MetadataScope.USER));
+    Assert.assertEquals(MetadataEmitApp.METADATA.getProperties(), metadata.getProperties(MetadataScope.USER));
+    Assert.assertEquals(MetadataEmitApp.METADATA.getTags(), metadata.getTags(MetadataScope.USER));
+
+    applicationLifecycleService.removeApplication(appId);
+    Assert.assertTrue(metadataStorage.read(new Read(appId.toMetadataEntity())).isEmpty());
   }
 
   /**

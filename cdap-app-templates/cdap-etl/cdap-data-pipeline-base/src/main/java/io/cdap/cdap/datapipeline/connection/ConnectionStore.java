@@ -17,10 +17,13 @@
 
 package io.cdap.cdap.datapipeline.connection;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import io.cdap.cdap.api.NamespaceSummary;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.etl.proto.connection.Connection;
+import io.cdap.cdap.etl.proto.connection.ConnectionBadRequestException;
+import io.cdap.cdap.etl.proto.connection.ConnectionConflictException;
 import io.cdap.cdap.etl.proto.connection.ConnectionId;
 import io.cdap.cdap.etl.proto.connection.ConnectionNotFoundException;
 import io.cdap.cdap.spi.data.StructuredRow;
@@ -114,14 +117,31 @@ public class ConnectionStore {
    *
    * @param connectionId the connection id
    * @param connection the connection information
+   * @param overWrite flag indicating whether the store should overwrite an existing connection with same connection id
+   *                  but different connection name, i.e, a b and a.b both convert to id a_b
    */
-  public void saveConnection(ConnectionId connectionId, Connection connection) {
+  public void saveConnection(ConnectionId connectionId, Connection connection, boolean overWrite) {
     TransactionRunners.run(transactionRunner, context -> {
       StructuredTable table = context.getTable(TABLE_ID);
       Connection oldConnection  = getConnectionInternal(table, connectionId, false);
       Connection newConnection = connection;
+
       if (oldConnection != null) {
-        newConnection = new Connection(connection.getName(), connection.getConnectionType(),
+        if (oldConnection.isPreConfigured()) {
+          throw new ConnectionConflictException(String.format(
+            "Connection %s in namespace %s has same id %s and is pre-configured. " +
+              "Preconfigured connections cannot be updated or overwritten.",
+            oldConnection.getName(), connectionId.getNamespace(), connectionId.getConnectionId()));
+        }
+
+        if (!oldConnection.getName().equals(newConnection.getName()) && !overWrite) {
+          throw new ConnectionConflictException(String.format(
+            "Connection %s in namespace %s has same id %s. Please choose a different connection name.",
+            oldConnection.getName(), connectionId.getNamespace(), connectionId.getConnectionId()));
+        }
+
+        newConnection = new Connection(connection.getName(), oldConnection.getConnectionId(),
+                                       connection.getConnectionType(),
                                        connection.getDescription(), connection.isPreConfigured(),
                                        oldConnection.getCreatedTimeMillis(), connection.getUpdatedTimeMillis(),
                                        connection.getPlugin());
@@ -144,9 +164,23 @@ public class ConnectionStore {
   public void deleteConnection(ConnectionId connectionId) throws ConnectionNotFoundException {
     TransactionRunners.run(transactionRunner, context -> {
       StructuredTable table = context.getTable(TABLE_ID);
-      getConnectionInternal(table, connectionId, true);
+      Connection oldConnection = getConnectionInternal(table, connectionId, true);
+      if (oldConnection.isPreConfigured()) {
+        throw new ConnectionConflictException(
+          String.format("Connection %s in namespace %s is pre-configured and it cannot be deleted.",
+                        connectionId.getConnection(), connectionId.getNamespace()));
+      }
       table.delete(getConnectionKeys(connectionId));
     }, ConnectionNotFoundException.class);
+  }
+
+  // clean up all connections
+  @VisibleForTesting
+  void clear() {
+    TransactionRunners.run(transactionRunner, context -> {
+      StructuredTable table = context.getTable(TABLE_ID);
+      table.deleteAll(Range.all());
+    });
   }
 
   // internal get connection method so the save, delete and get operation can all happen in single transaction
@@ -167,7 +201,7 @@ public class ConnectionStore {
   private Collection<Field<?>> getConnectionKeys(ConnectionId connectionId) {
     List<Field<?>> keys = new ArrayList<>();
     keys.addAll(getNamespaceKeys(connectionId.getNamespace()));
-    keys.add(Fields.stringField(CONNECTION_ID_FIELD, connectionId.getConnection()));
+    keys.add(Fields.stringField(CONNECTION_ID_FIELD, connectionId.getConnectionId()));
     return keys;
   }
 

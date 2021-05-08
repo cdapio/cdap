@@ -46,9 +46,10 @@ public class BatchPipelineSpec extends PipelineSpec {
                             List<ActionSpec> endingActions,
                             int numOfRecordsPreview,
                             Map<String, String> properties,
+                            Set<String> connectionsUsed,
                             @Nullable StageSpec sqlEngineStageSpec) {
     super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, processTimingEnabled,
-          numOfRecordsPreview, properties);
+          numOfRecordsPreview, properties, connectionsUsed);
     this.endingActions = ImmutableList.copyOf(endingActions);
     this.sqlEngineStageSpec = sqlEngineStageSpec;
   }
@@ -124,7 +125,7 @@ public class BatchPipelineSpec extends PipelineSpec {
     public BatchPipelineSpec build() {
       return new BatchPipelineSpec(stages, connections, resources, driverResources, clientResources,
                                    stageLoggingEnabled, processTimingEnabled, endingActions,
-                                   numOfRecordsPreview, properties, sqlEngineStageSpec);
+                                   numOfRecordsPreview, properties, connectionsUsed, sqlEngineStageSpec);
     }
   }
 }

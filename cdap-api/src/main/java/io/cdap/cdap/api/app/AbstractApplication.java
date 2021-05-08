@@ -18,6 +18,7 @@ package io.cdap.cdap.api.app;
 
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.mapreduce.MapReduce;
+import io.cdap.cdap.api.metadata.Metadata;
 import io.cdap.cdap.api.schedule.ScheduleBuilder;
 import io.cdap.cdap.api.schedule.TriggerFactory;
 import io.cdap.cdap.api.service.BasicService;
@@ -163,6 +164,15 @@ public abstract class AbstractApplication<T extends Config> extends AbstractPlug
    */
   protected void schedule(ScheduleCreationSpec scheduleCreationSpec) {
     configurer.schedule(scheduleCreationSpec);
+  }
+
+  /**
+   * Emit the given {@link Metadata} for the application in user scope
+   *
+   * @param metadata the metadata to emit
+   */
+  protected void emitMetadata(Metadata metadata) {
+    configurer.emitMetadata(metadata);
   }
 
   /**

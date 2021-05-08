@@ -19,6 +19,9 @@ package io.cdap.cdap.internal.app;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.macro.InvalidMacroException;
+import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
@@ -27,6 +30,7 @@ import io.cdap.cdap.api.plugin.PluginSelector;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.FindPluginHelper;
+import io.cdap.cdap.internal.app.runtime.plugin.MacroParser;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginClassLoader;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
@@ -98,6 +102,15 @@ public class DefaultPluginConfigurer implements PluginConfigurer {
       // Shouldn't happen
       throw Throwables.propagate(e);
     }
+  }
+
+  @Override
+  public Map<String, String> evaluateMacros(Map<String, String> properties, MacroEvaluator evaluator,
+                                            MacroParserOptions options) throws InvalidMacroException {
+    MacroParser macroParser = new MacroParser(evaluator, options);
+    Map<String, String> evaluated = new HashMap<>();
+    properties.forEach((key, val) -> evaluated.put(key, macroParser.parse(val)));
+    return evaluated;
   }
 
   private Plugin addPlugin(String pluginType, String pluginName, String pluginId,

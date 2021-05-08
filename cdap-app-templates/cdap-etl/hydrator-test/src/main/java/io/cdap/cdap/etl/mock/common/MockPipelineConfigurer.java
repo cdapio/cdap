@@ -21,6 +21,9 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.api.macro.InvalidMacroException;
+import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.plugin.PluginSelector;
 import io.cdap.cdap.etl.api.Engine;
@@ -109,6 +112,12 @@ public class MockPipelineConfigurer implements PipelineConfigurer, DatasetConfig
   public <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId,
                                      PluginProperties pluginProperties, PluginSelector pluginSelector) {
     return (Class<T>) plugins.get(pluginId).getClass();
+  }
+
+  @Override
+  public Map<String, String> evaluateMacros(Map<String, String> properties, MacroEvaluator evaluator,
+                                            MacroParserOptions options) throws InvalidMacroException {
+    return properties;
   }
 
   @Override

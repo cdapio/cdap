@@ -27,6 +27,7 @@ import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.mapreduce.MapReduce;
 import io.cdap.cdap.api.mapreduce.MapReduceSpecification;
+import io.cdap.cdap.api.metadata.Metadata;
 import io.cdap.cdap.api.schedule.ScheduleBuilder;
 import io.cdap.cdap.api.schedule.TriggerFactory;
 import io.cdap.cdap.api.service.Service;
@@ -63,8 +64,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -87,6 +91,7 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   private final Map<StructuredTableId, StructuredTableSpecification> systemTables = new HashMap<>();
   private final TriggerFactory triggerFactory;
   private String name;
+  private Metadata appMetadata;
   private String description;
 
   // passed app to be used to resolve default name and description
@@ -105,6 +110,7 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
     this.artifactId = artifactId;
     this.pluginFinder = pluginFinder;
     this.pluginInstantiator = pluginInstantiator;
+    this.appMetadata = new Metadata(Collections.emptyMap(), Collections.emptySet());
     this.triggerFactory = new DefaultTriggerFactory(namespace.toEntityId());
   }
 
@@ -227,6 +233,15 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   }
 
   @Override
+  public void emitMetadata(Metadata metadata) {
+    Map<String, String> properties = new HashMap<>(appMetadata.getProperties());
+    properties.putAll(metadata.getProperties());
+    Set<String> tags = new HashSet<>(appMetadata.getTags());
+    tags.addAll(metadata.getTags());
+    appMetadata = new Metadata(properties, tags);
+  }
+
+  @Override
   public TriggerFactory getTriggerFactory() {
     return triggerFactory;
   }
@@ -285,6 +300,10 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
 
   public Collection<StructuredTableSpecification> getSystemTables() {
     return systemTables.values();
+  }
+
+  public Metadata getMetadata() {
+    return appMetadata;
   }
 
   /**

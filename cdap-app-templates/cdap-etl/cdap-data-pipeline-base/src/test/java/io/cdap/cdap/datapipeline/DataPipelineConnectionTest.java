@@ -25,12 +25,15 @@ import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.mock.batch.MockSink;
 import io.cdap.cdap.etl.mock.batch.MockSource;
 import io.cdap.cdap.etl.mock.test.HydratorTestBase;
+import io.cdap.cdap.etl.mock.transform.IdentityTransform;
 import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 import io.cdap.cdap.etl.proto.connection.ConnectionCreationRequest;
 import io.cdap.cdap.etl.proto.connection.PluginInfo;
@@ -42,6 +45,9 @@ import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.spi.metadata.Metadata;
+import io.cdap.cdap.spi.metadata.SearchRequest;
+import io.cdap.cdap.spi.metadata.SearchResponse;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
 import io.cdap.cdap.test.ServiceManager;
@@ -62,7 +68,9 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * Test for data pipeline using connections
@@ -99,6 +107,67 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     serviceManager = appManager.getServiceManager(io.cdap.cdap.etl.common.Constants.STUDIO_SERVICE_NAME);
     serviceManager.startAndWaitForRun(ProgramRunStatus.RUNNING, 2, TimeUnit.MINUTES);
     serviceURI = serviceManager.getServiceURL(1, TimeUnit.MINUTES).toURI();
+  }
+
+  @Test
+  public void testConnectionsRegistry() throws Exception {
+    // source -> sink
+    ETLBatchConfig conf1 = ETLBatchConfig.builder()
+                             .addStage(new ETLStage("source", MockSource.getPluginUsingConnection("conn 1")))
+                             .addStage(new ETLStage("sink", MockSink.getPluginUsingConnection("conn 3")))
+                             .addConnection("source", "sink")
+                             .build();
+
+    // 3 sources -> identity -> 2 sinks
+    ETLBatchConfig conf2 = ETLBatchConfig.builder()
+                             .addStage(new ETLStage("src1", MockSource.getPluginUsingConnection("conn 1")))
+                             .addStage(new ETLStage("src2", MockSource.getPluginUsingConnection("conn 2")))
+                             .addStage(new ETLStage("src3", MockSource.getPluginUsingConnection("conn 3")))
+                             .addStage(new ETLStage("sink1", MockSink.getPluginUsingConnection("conn 4")))
+                             .addStage(new ETLStage("sink2", MockSink.getPluginUsingConnection("conn 5")))
+                             .addStage(new ETLStage("identity", IdentityTransform.getPlugin()))
+                             .addConnection("src1", "identity")
+                             .addConnection("src2", "identity")
+                             .addConnection("src3", "identity")
+                             .addConnection("identity", "sink1")
+                             .addConnection("identity", "sink2")
+                             .build();
+
+    // deploy apps
+    AppRequest<ETLBatchConfig> appRequest1 = new AppRequest<>(APP_ARTIFACT, conf1);
+    ApplicationId appId1 = NamespaceId.DEFAULT.app("app1");
+    ApplicationManager appManager1 = deployApplication(appId1, appRequest1);
+
+    AppRequest<ETLBatchConfig> appRequest2 = new AppRequest<>(APP_ARTIFACT, conf2);
+    ApplicationId appId2 = NamespaceId.DEFAULT.app("app2");
+    ApplicationManager appManager2 = deployApplication(appId2, appRequest2);
+
+    // Assert metadata
+    Metadata app1Actual = getMetadataAdmin().getMetadata(appId1.toMetadataEntity(), MetadataScope.USER);
+    Metadata app1Expected = new Metadata(MetadataScope.USER, ImmutableSet.of("conn_1", "conn_3"),
+                                         Collections.emptyMap());
+    Assert.assertEquals(app1Expected, app1Actual);
+
+    Metadata app2Actual = getMetadataAdmin().getMetadata(appId2.toMetadataEntity(), MetadataScope.USER);
+    Metadata app2Expected = new Metadata(MetadataScope.USER,
+                                         ImmutableSet.of("conn_1", "conn_2", "conn_3", "conn_4", "conn_5"),
+                                         Collections.emptyMap());
+    Assert.assertEquals(app2Expected, app2Actual);
+
+    // using search query to find out the related apps
+    Set<MetadataEntity> appsRelated = ImmutableSet.of(appId1.toMetadataEntity(), appId2.toMetadataEntity());
+    assertMetadataSearch(appsRelated, "tags:conn_1");
+    assertMetadataSearch(Collections.singleton(appId2.toMetadataEntity()), "tags:conn_2");
+    assertMetadataSearch(appsRelated, "tags:conn_3");
+    assertMetadataSearch(Collections.singleton(appId2.toMetadataEntity()), "tags:conn_4");
+    assertMetadataSearch(Collections.singleton(appId2.toMetadataEntity()), "tags:conn_5");
+  }
+
+  private void assertMetadataSearch(Set<MetadataEntity> appsRelated, String query) throws Exception {
+    SearchResponse search = getMetadataAdmin().search(SearchRequest.of(query).build());
+    Set<MetadataEntity> actual =
+      search.getResults().stream().map(record -> record.getEntity()).collect(Collectors.toSet());
+    Assert.assertEquals(appsRelated, actual);
   }
 
   @Test

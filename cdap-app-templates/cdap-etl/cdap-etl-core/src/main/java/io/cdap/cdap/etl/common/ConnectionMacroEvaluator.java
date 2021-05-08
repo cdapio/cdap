@@ -40,7 +40,6 @@ public class ConnectionMacroEvaluator extends AbstractServiceRetryableMacroEvalu
   private final ServiceDiscoverer serviceDiscoverer;
   private final Gson gson;
 
-
   public ConnectionMacroEvaluator(String namespace, ServiceDiscoverer serviceDiscoverer) {
     super(FUNCTION_NAME);
     this.namespace = namespace;
