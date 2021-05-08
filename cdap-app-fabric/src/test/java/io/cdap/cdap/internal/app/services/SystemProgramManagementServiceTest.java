@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.services;
 
-import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.app.runtime.Arguments;
@@ -58,10 +57,10 @@ public class SystemProgramManagementServiceTest extends AppFabricTestBase {
   private static ArtifactRepository artifactRepository;
 
   private static final String VERSION = "1.0.0";
-  private static final String APP_NAME = AllProgramsApp.NAME;
+  private static final String APP_NAME = SystemProgramManagementTestApp.NAME;
   private static final String NAMESPACE = "system";
-  private static final String PROGRAM_NAME = AllProgramsApp.NoOpService.NAME;
-  private static final Class<AllProgramsApp> APP_CLASS = AllProgramsApp.class;
+  private static final String PROGRAM_NAME = SystemProgramManagementTestApp.IdleWorkflow.NAME;
+  private static final Class<?> APP_CLASS = SystemProgramManagementTestApp.class;
 
   @BeforeClass
   public static void setup() {
@@ -86,7 +85,7 @@ public class SystemProgramManagementServiceTest extends AppFabricTestBase {
     deployTestApp();
     //Set this app as an enabled service
     ApplicationId applicationId = new ApplicationId(NAMESPACE, APP_NAME, VERSION);
-    ProgramId programId = new ProgramId(applicationId, ProgramType.SERVICE, PROGRAM_NAME);
+    ProgramId programId = new ProgramId(applicationId, ProgramType.WORKFLOW, PROGRAM_NAME);
     Map<ProgramId, Arguments> enabledServices = new HashMap<>();
     enabledServices.put(programId, new BasicArguments(new HashMap<>()));
     progmMgmtSvc.setProgramsEnabled(enabledServices);

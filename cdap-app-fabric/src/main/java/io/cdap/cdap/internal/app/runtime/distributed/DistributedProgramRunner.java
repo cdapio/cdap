@@ -162,13 +162,14 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
   public final ProgramController run(final Program program, ProgramOptions oldOptions) {
     validateOptions(program, oldOptions);
 
-    final CConfiguration cConf = createContainerCConf(this.cConf);
-    final Configuration hConf = createContainerHConf(this.hConf);
+    CConfiguration cConf = CConfiguration.copy(this.cConf);
+    // Reload config for log extension jar update (CDAP-15091)
+    cConf.reloadConfiguration();
 
-    final File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                                                         cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
+    File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                                                   cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
     try {
-      final ProgramLaunchConfig launchConfig = new ProgramLaunchConfig();
+      ProgramLaunchConfig launchConfig = new ProgramLaunchConfig();
       if (clusterMode == ClusterMode.ISOLATED) {
         // For isolated mode, the hadoop classes comes from the hadoop classpath in the target cluster directly
         launchConfig.addExtraClasspath(Collections.singletonList("$HADOOP_CLASSPATH"));
@@ -184,7 +185,8 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
 
       prepareHBaseDDLExecutorResources(tempDir, cConf, localizeResources);
 
-      List<URI> configResources = localizeConfigs(cConf, hConf, tempDir, localizeResources);
+      List<URI> configResources = localizeConfigs(createContainerCConf(cConf),
+                                                  createContainerHConf(this.hConf), tempDir, localizeResources);
 
       // Localize the program jar
       Location programJarLocation = program.getJarLocation();
@@ -197,7 +199,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
                                                               ApplicationSpecification.class,
                                                               File.createTempFile("appSpec", ".json", tempDir))));
 
-      final URI logbackURI = getLogBackURI(program);
+      URI logbackURI = getLogBackURI(program);
       if (logbackURI != null) {
         // Localize the logback xml
         localizeResources.put(LOGBACK_FILE_NAME, new LocalizeResource(logbackURI, false));
@@ -377,8 +379,6 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
    */
   private CConfiguration createContainerCConf(CConfiguration cConf) {
     CConfiguration result = CConfiguration.copy(cConf);
-    // reload config
-    result.reloadConfiguration();
     // don't have tephra retry in order to give CDAP more control over when to retry and how.
     result.set(TxConstants.Service.CFG_DATA_TX_CLIENT_RETRY_STRATEGY, "n-times");
     result.setInt(TxConstants.Service.CFG_DATA_TX_CLIENT_ATTEMPTS, 0);
