@@ -49,6 +49,10 @@ import java.util.concurrent.TimeUnit;
  */
 public class TaskWorkerServiceLauncher extends AbstractScheduledService {
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerServiceLauncher.class);
+
+  /**
+   * Check once every few seconds to ensure task worker pool is up and running.
+   */
   private static final int ScheduleIntervalSeconds = 5;
 
   private final CConfiguration cConf;
@@ -164,7 +168,7 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
           throw e;
         }
       } catch (Exception e) {
-        LOG.warn("Failed to launch TaskWorker pool. It will NOT be retried", e);
+        LOG.warn(String.format("Failed to launch TaskWorker pool, retry in %d", ScheduleIntervalSeconds), e);
       }
     }
     this.twillController = activeController;
