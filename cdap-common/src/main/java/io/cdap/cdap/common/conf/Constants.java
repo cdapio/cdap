@@ -128,6 +128,7 @@ public final class Constants {
     public static final String MESSAGING_SERVICE = "messaging.service";
     public static final String RUNTIME = "runtime";
     public static final String AUTHENTICATION = "authentication";
+    public static final String TASK_WORKER = "task.worker";
 
     public static final String SERVICE_INSTANCE_TABLE_NAME = "cdap.services.instances";
     /** Scheduler queue name to submit the master service app. */
@@ -363,6 +364,39 @@ public final class Constants {
     public static final String CONTAINER_MEMORY_MULTIPLIER = "preview.runner.container.memory.multiplier";
     public static final String CONTAINER_HEAP_RESERVED_RATIO = "preview.runner.container.java.heap.memory.ratio";
     public static final String CONTAINER_PRIORITY_CLASS_NAME = "preview.runner.container.priority.class.name";
+  }
+
+  /**
+   * Task worker.
+   */
+  public static final class TaskWorker {
+    public static final String ENABLED = "task.worker.enabled";
+
+    /**
+     * Task worker pool configuration
+     */
+    public static final String CONTAINER_COUNT = "task.worker.container.count";
+    public static final String POOL_CHECK_INTERVAL = "task.worker.pool.check.interval";
+
+    /**
+     * Task worker container configurations
+     */
+    public static final String CONTAINER_DISK_SIZE_GB = "task.worker.container.disk.size.gb";
+    public static final String CONTAINER_MEMORY_MB = "task.worker.container.memory.mb";
+    public static final String CONTAINER_CORES = "task.worker.container.num.cores";
+    public static final String CONTAINER_CPU_MULTIPLIER = "task.worker.container.cpu.multiplier";
+    public static final String CONTAINER_MEMORY_MULTIPLIER = "task.worker.container.memory.multiplier";
+    public static final String CONTAINER_HEAP_RESERVED_RATIO = "task.worker.container.java.heap.memory.ratio";
+    public static final String CONTAINER_PRIORITY_CLASS_NAME = "task.worker.container.priority.class.name";
+
+    /**
+     * Task worker http handler configuration
+     */
+    public static final String ADDRESS = "task.worker.bind.address";
+    public static final String PORT = "task.worker.bind.port";
+    public static final String EXEC_THREADS = "task.worker.exec.threads";
+    public static final String BOSS_THREADS = "task.worker.boss.threads";
+    public static final String WORKER_THREADS = "task.worker.worker.threads";
   }
 
   /**
