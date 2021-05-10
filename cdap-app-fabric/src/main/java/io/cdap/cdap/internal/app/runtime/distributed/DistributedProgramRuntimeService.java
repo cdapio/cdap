@@ -99,7 +99,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   @Override
   protected RuntimeInfo createRuntimeInfo(final ProgramController controller, final ProgramId programId,
                                           final Runnable cleanUpTask) {
-    SimpleRuntimeInfo runtimeInfo = new SimpleRuntimeInfo(controller, programId, null);
+    SimpleRuntimeInfo runtimeInfo = new SimpleRuntimeInfo(controller, programId, cleanUpTask);
 
     // Add a listener that publishes KILLED status notification when the YARN application is killed in case that
     // the KILLED status notification is not published from the YARN application container, so we don't need to wait
@@ -127,9 +127,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
       @Override
       public void alive() {
-        if (actualController instanceof AbstractTwillProgramController) {
-          cleanUpTask.run();
-        }
+        cleanUpTask.run();
       }
 
       @Override
@@ -156,7 +154,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   }
 
   @Override
-  public synchronized RuntimeInfo lookup(ProgramId programId, final RunId runId) {
+  public RuntimeInfo lookup(ProgramId programId, final RunId runId) {
     RuntimeInfo runtimeInfo = super.lookup(programId, runId);
     if (runtimeInfo != null) {
       return runtimeInfo;
@@ -164,7 +162,10 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
     // Lookup the Twill RunId for the given run
     ProgramRunId programRunId = programId.run(runId.getId());
-    RunRecordDetail record = store.getRun(programRunId);
+    RunRecordDetail record;
+    synchronized (this) {
+      record = store.getRun(programRunId);
+    }
     if (record == null) {
       return null;
     }
@@ -178,7 +179,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   }
 
   @Override
-  public synchronized Map<RunId, RuntimeInfo> list(ProgramType type) {
+  public Map<RunId, RuntimeInfo> list(ProgramType type) {
     Map<RunId, RuntimeInfo> result = new HashMap<>(super.list(type));
 
     // Table holds the Twill RunId and TwillController associated with the program matching the input type
@@ -214,9 +215,12 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     }
 
     final Set<RunId> twillRunIds = twillProgramInfo.columnKeySet();
-    Collection<RunRecordDetail> activeRunRecords = store.getRuns(ProgramRunStatus.RUNNING, record ->
-      record.getTwillRunId() != null
-        && twillRunIds.contains(org.apache.twill.internal.RunIds.fromString(record.getTwillRunId()))).values();
+    Collection<RunRecordDetail> activeRunRecords;
+    synchronized (this) {
+      activeRunRecords = store.getRuns(ProgramRunStatus.RUNNING, record ->
+        record.getTwillRunId() != null
+          && twillRunIds.contains(org.apache.twill.internal.RunIds.fromString(record.getTwillRunId()))).values();
+    }
 
     for (RunRecordDetail record : activeRunRecords) {
       String twillRunId = record.getTwillRunId();
