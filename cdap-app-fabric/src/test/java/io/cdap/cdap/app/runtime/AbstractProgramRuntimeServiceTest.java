@@ -426,7 +426,7 @@ public class AbstractProgramRuntimeServiceTest {
       }
 
       if (extraInfo != null) {
-        updateRuntimeInfo(programId.getType(), runId, extraInfo);
+        updateRuntimeInfo(extraInfo);
         return extraInfo;
       }
       return null;

@@ -15,8 +15,7 @@
  */
 package io.cdap.cdap.internal.app.runtime.distributed;
 
-import io.cdap.cdap.proto.id.ProgramId;
-import org.apache.twill.api.RunId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.twill.api.TwillController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,8 +27,8 @@ public final class WorkflowTwillProgramController extends AbstractTwillProgramCo
 
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowTwillProgramController.class);
 
-  public WorkflowTwillProgramController(ProgramId programId, TwillController controller, RunId runId) {
-    super(programId, controller, runId);
+  public WorkflowTwillProgramController(ProgramRunId programRunId, TwillController controller) {
+    super(programRunId, controller);
   }
 
   @Override

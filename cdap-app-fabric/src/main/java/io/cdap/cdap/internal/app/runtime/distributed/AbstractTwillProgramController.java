@@ -19,7 +19,7 @@ import com.google.common.util.concurrent.Futures;
 import io.cdap.cdap.app.runtime.LogLevelUpdater;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.internal.app.runtime.AbstractProgramController;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceController;
 import org.apache.twill.api.TwillController;
@@ -43,8 +43,8 @@ public abstract class AbstractTwillProgramController extends AbstractProgramCont
   private final TwillController twillController;
   private volatile boolean stopRequested;
 
-  protected AbstractTwillProgramController(ProgramId programId, TwillController twillController, RunId runId) {
-    super(programId.run(runId));
+  protected AbstractTwillProgramController(ProgramRunId programRunId, TwillController twillController) {
+    super(programRunId);
     this.twillController = twillController;
   }
 
@@ -63,51 +63,45 @@ public abstract class AbstractTwillProgramController extends AbstractProgramCont
    * @return this instance.
    */
   public ProgramController startListen() {
-    twillController.onRunning(new Runnable() {
-      @Override
-      public void run() {
-        LOG.info("Twill program running: {}, twill runId: {}", getProgramRunId(), twillController.getRunId());
-        started();
-      }
+    twillController.onRunning(() -> {
+      LOG.info("Twill program running: {}, twill runId: {}", getProgramRunId(), twillController.getRunId());
+      started();
     }, Threads.SAME_THREAD_EXECUTOR);
 
-    twillController.onTerminated(new Runnable() {
-      @Override
-      public void run() {
-        LOG.info("Twill program terminated: {}, twill runId: {}", getProgramRunId(), twillController.getRunId());
-        if (stopRequested) {
-          // Service was killed
-          stop();
-          return;
+    twillController.onTerminated(() -> {
+      ServiceController.TerminationStatus terminationStatus = twillController.getTerminationStatus();
+      LOG.info("Twill program terminated: {}, twill runId: {}, status: {}",
+               getProgramRunId(), twillController.getRunId(), terminationStatus);
+      if (stopRequested) {
+        // Service was killed
+        stop();
+        return;
+      }
+      // The terminationStatus shouldn't be null when the twillController state is terminated
+      // In case it does (e.g. bug or twill changes), rely on the termination future to determine the state
+      if (terminationStatus == null) {
+        try {
+          Futures.getUnchecked(twillController.terminate());
+          complete();
+        } catch (Exception e) {
+          complete(State.ERROR);
         }
-        ServiceController.TerminationStatus terminationStatus = twillController.getTerminationStatus();
-        LOG.debug("Twill program termination status: {}", terminationStatus);
-        // The terminationStatus shouldn't be null when the twillController state is terminated
-        // In case it does (e.g. bug or twill changes), rely on the termination future to determine the state
-        if (terminationStatus == null) {
-          try {
-            Futures.getUnchecked(twillController.terminate());
-            complete();
-          } catch (Exception e) {
-            complete(State.ERROR);
-          }
-          return;
-        }
-        // Based on the terminationStatus to set the completion state of the program controller.
-        switch (terminationStatus) {
-          case SUCCEEDED:
-            complete();
-            break;
-          case FAILED:
-            complete(State.ERROR);
-            break;
-          case KILLED:
-            complete(State.KILLED);
-            break;
-          default:
-            // This is just to protect against if more status are added in Twill in future
-            complete();
-        }
+        return;
+      }
+      // Based on the terminationStatus to set the completion state of the program controller.
+      switch (terminationStatus) {
+        case SUCCEEDED:
+          complete();
+          break;
+        case FAILED:
+          complete(State.ERROR);
+          break;
+        case KILLED:
+          complete(State.KILLED);
+          break;
+        default:
+          // This is just to protect against if more status are added in Twill in future
+          complete();
       }
     }, Threads.SAME_THREAD_EXECUTOR);
     return this;

@@ -57,6 +57,7 @@ import io.cdap.cdap.proto.metadata.MetadataSearchResponse;
 import io.cdap.cdap.proto.metadata.MetadataSearchResultRecord;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.metadata.SearchRequest;
+import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,6 +68,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -104,7 +106,6 @@ class CapabilityApplier {
   private final MetadataSearchClient metadataSearchClient;
   private final ArtifactRepository artifactRepository;
   private final File tmpDir;
-  private ExecutorService executorService;
   private final int autoInstallThreads;
 
   @Inject
@@ -185,14 +186,6 @@ class CapabilityApplier {
     enableCapabilities(enableSet);
     disableCapabilities(disableSet);
     deleteCapabilities(deleteSet);
-  }
-
-  public void doShutdown() {
-    executorService.shutdown();
-  }
-
-  public void doStartup() {
-    executorService = Executors.newFixedThreadPool(autoInstallThreads);
   }
 
   private void enableCapabilities(Set<CapabilityConfig> enableSet) throws Exception {
@@ -319,52 +312,54 @@ class CapabilityApplier {
   }
 
   @VisibleForTesting
-  void autoInstallResources(String capability, List<URL> hubs) {
-    if (hubs == null || hubs.isEmpty()) {
-      LOG.debug("Capability {} do not have auto install resources associated with it", capability);
-      return;
-    }
+  void autoInstallResources(String capability, @Nullable List<URL> hubs) {
+    ExecutorService executor = Executors.newFixedThreadPool(
+      autoInstallThreads, Threads.createDaemonThreadFactory("installer-" + capability + "-%d"));
 
-    for (URL hub : hubs) {
-      HubPackage[] hubPackages;
-      try {
-        URL url = new URL(hub, "/v2/packages.json");
-        String packagesJson = HttpClients.doGetAsString(url);
-        // Deserialize packages.json from hub
-        // See https://cdap.atlassian.net/wiki/spaces/DOCS/pages/554401840/Hub+API?src=search#Get-Hub-Catalog
-        hubPackages = GSON.fromJson(packagesJson, HubPackage[].class);
-      } catch (Exception e) {
-        LOG.warn("Failed to get packages.json from {}. Ignoring error.", hub, e);
-        continue;
-      }
-
-      String currentVersion = getCurrentVersion();
-      // Get the latest compatible version of each plugin from hub and install it
-      List<Future<?>> futures = Arrays.stream(hubPackages)
-        .filter(p -> p.versionIsInRange(currentVersion))
-        .collect(Collectors.groupingBy(HubPackage::getName,
-                                       Collectors.maxBy(Comparator.comparing(HubPackage::getArtifactVersion))))
-        .values()
-        .stream()
-        .filter(Optional::isPresent)
-        .map(Optional::get)
-        .map(p ->
-               executorService.submit(() -> {
-                 try {
-                   p.installPlugin(hub, artifactRepository, tmpDir);
-                 } catch (Exception e) {
-                   LOG.warn("Failed to install plugin {}. Ignoring error", p.getName(), e);
-                 }
-               })
-        )
-        .collect(Collectors.toList());
-      for (Future<?> future : futures) {
+    try {
+      for (URL hub : Optional.ofNullable(hubs).orElse(Collections.emptyList())) {
+        HubPackage[] hubPackages;
         try {
-          future.get();
-        } catch (InterruptedException | ExecutionException e) {
-          LOG.warn("Ignoring error during plugin install", e);
+          URL url = new URL(hub, "/v2/packages.json");
+          String packagesJson = HttpClients.doGetAsString(url);
+          // Deserialize packages.json from hub
+          // See https://cdap.atlassian.net/wiki/spaces/DOCS/pages/554401840/Hub+API?src=search#Get-Hub-Catalog
+          hubPackages = GSON.fromJson(packagesJson, HubPackage[].class);
+        } catch (Exception e) {
+          LOG.warn("Failed to get packages.json from {} for capability {}. Ignoring error.", hub, capability, e);
+          continue;
+        }
+
+        String currentVersion = getCurrentVersion();
+        // Get the latest compatible version of each plugin from hub and install it
+        List<Future<?>> futures = Arrays.stream(hubPackages)
+          .filter(p -> p.versionIsInRange(currentVersion))
+          .collect(Collectors.groupingBy(HubPackage::getName,
+                                         Collectors.maxBy(Comparator.comparing(HubPackage::getArtifactVersion))))
+          .values()
+          .stream()
+          .filter(Optional::isPresent)
+          .map(Optional::get)
+          .map(p -> executor.submit(() -> {
+            try {
+              LOG.debug("Installing plugins {} for capability {} from hub {}", p.getName(), capability, hub);
+              p.installPlugin(hub, artifactRepository, tmpDir);
+            } catch (Exception e) {
+              LOG.warn("Failed to install plugin {} for capability {} from hub {}. Ignoring error",
+                       p.getName(), capability, hub, e);
+            }
+          }))
+          .collect(Collectors.toList());
+        for (Future<?> future : futures) {
+          try {
+            future.get();
+          } catch (InterruptedException | ExecutionException e) {
+            LOG.warn("Ignoring error during plugin install", e);
+          }
         }
       }
+    } finally {
+      executor.shutdownNow();
     }
   }
 
