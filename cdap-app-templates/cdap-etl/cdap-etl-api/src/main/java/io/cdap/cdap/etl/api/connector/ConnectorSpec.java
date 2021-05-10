@@ -31,6 +31,10 @@ public class ConnectorSpec {
     this.properties = properties;
   }
 
+  public Map<String, String> getProperties() {
+    return properties;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -74,6 +78,11 @@ public class ConnectorSpec {
 
     public Builder addProperty(String key, String value) {
       this.properties.put(key, value);
+      return this;
+    }
+
+    public Builder addProperties(Map<String, String> properties) {
+      this.properties.putAll(properties);
       return this;
     }
 

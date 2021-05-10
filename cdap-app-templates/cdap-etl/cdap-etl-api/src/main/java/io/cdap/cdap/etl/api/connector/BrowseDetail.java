@@ -22,19 +22,22 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 /**
- * The browse result for the given request
+ * The browse result for the given request.
+ * If the given path is browsable, this will contain entities in that path.
+ * If it is not browsable, this will contain information on the path itself.
  */
 public class BrowseDetail {
   // this count represents the total count of entities, when pagination is added in the future,
   // this count might not be equal to entities.size()
   private final int totalCount;
   // explore entity type -> sample property
-  private final Collection<BrowseEntityTypeInfo> sampleProperties;
+  private final Set<BrowseEntityTypeInfo> sampleProperties;
   private final List<BrowseEntity> entities;
 
-  private BrowseDetail(int totalCount, Collection<BrowseEntityTypeInfo> sampleProperties,
+  private BrowseDetail(int totalCount, Set<BrowseEntityTypeInfo> sampleProperties,
                        List<BrowseEntity> entities) {
     this.totalCount = totalCount;
     this.sampleProperties = sampleProperties;
@@ -86,7 +89,7 @@ public class BrowseDetail {
    */
   public static class Builder {
     private int totalCount;
-    private Collection<BrowseEntityTypeInfo> sampleProperties;
+    private Set<BrowseEntityTypeInfo> sampleProperties;
     private List<BrowseEntity> entities;
 
     public Builder() {
@@ -108,6 +111,11 @@ public class BrowseDetail {
     public Builder setEntities(List<BrowseEntity> entities) {
       this.entities.clear();
       this.entities.addAll(entities);
+      return this;
+    }
+
+    public Builder addEntity(BrowseEntity entity) {
+      this.entities.add(entity);
       return this;
     }
 

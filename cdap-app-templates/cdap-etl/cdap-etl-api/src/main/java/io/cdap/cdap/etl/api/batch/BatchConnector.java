@@ -23,20 +23,24 @@ import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.cdap.etl.api.connector.SampleRequest;
 
+import java.io.IOException;
+
 /**
  * Batch connector that relies on the {@link InputFormatProvider} to read from the resources
  *
- * @param <VAL_IN>
+ * @param <KEY_IN> the type of input key from the input format
+ * @param <VAL_IN> the type of input value from the input format
  */
-public interface BatchConnector<VAL_IN> extends Connector {
+public interface BatchConnector<KEY_IN, VAL_IN> extends Connector {
 
   /**
    * Return the input format this connector will use to do the sampling
+   * @throws IOException if unable to retrieve the input format provider
    */
-  InputFormatProvider getInputFormatProvider(SampleRequest request);
+  InputFormatProvider getInputFormatProvider(SampleRequest request) throws IOException;
 
   /**
-   * Transform the sampled record back to StructuredRecord
+   * Transform the sampled key and value back to StructuredRecord
    */
-  StructuredRecord transform(VAL_IN record);
+  StructuredRecord transform(KEY_IN key, VAL_IN val);
 }

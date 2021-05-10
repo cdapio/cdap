@@ -20,6 +20,7 @@ package io.cdap.cdap.datapipeline;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.data.format.StructuredRecord;
@@ -30,16 +31,26 @@ import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.etl.api.Engine;
+import io.cdap.cdap.etl.api.connector.BrowseDetail;
+import io.cdap.cdap.etl.api.connector.BrowseEntity;
+import io.cdap.cdap.etl.api.connector.BrowseRequest;
+import io.cdap.cdap.etl.api.connector.Connector;
+import io.cdap.cdap.etl.api.connector.ConnectorSpec;
+import io.cdap.cdap.etl.api.connector.SampleRequest;
 import io.cdap.cdap.etl.mock.batch.MockSink;
 import io.cdap.cdap.etl.mock.batch.MockSource;
+import io.cdap.cdap.etl.mock.connector.FileConnector;
 import io.cdap.cdap.etl.mock.test.HydratorTestBase;
 import io.cdap.cdap.etl.mock.transform.IdentityTransform;
 import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 import io.cdap.cdap.etl.proto.connection.ConnectionCreationRequest;
 import io.cdap.cdap.etl.proto.connection.PluginInfo;
+import io.cdap.cdap.etl.proto.connection.SampleResponse;
+import io.cdap.cdap.etl.proto.connection.SampleResponseCodec;
 import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
 import io.cdap.cdap.etl.spark.Compat;
+import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -61,10 +72,15 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
+import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -79,7 +95,9 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
   private static final ArtifactId APP_ARTIFACT_ID = NamespaceId.SYSTEM.artifact("cdap-data-pipeline", "6.0.0");
   private static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("cdap-data-pipeline", "6.0.0",
                                                                           ArtifactScope.SYSTEM);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON =
+    new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+      .registerTypeAdapter(SampleResponse.class, new SampleResponseCodec()).setPrettyPrinting().create();
 
   private static int startCount = 0;
 
@@ -88,6 +106,9 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
                                                                        Constants.Security.Store.PROVIDER, "file",
                                                                        Constants.AppFabric.SPARK_COMPAT,
                                                                        Compat.SPARK_COMPAT);
+
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   private static ServiceManager serviceManager;
   private static ApplicationManager appManager;
@@ -107,6 +128,87 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     serviceManager = appManager.getServiceManager(io.cdap.cdap.etl.common.Constants.STUDIO_SERVICE_NAME);
     serviceManager.startAndWaitForRun(ProgramRunStatus.RUNNING, 2, TimeUnit.MINUTES);
     serviceURI = serviceManager.getServiceURL(1, TimeUnit.MINUTES).toURI();
+  }
+
+  @Test
+  public void testBrowseSample() throws Exception {
+    List<BrowseEntity> entities = new ArrayList<>();
+    // add directory and files, odd to create file, even to create folder
+    File directory = TEMP_FOLDER.newFolder();
+    for (int i = 0; i < 10; i++) {
+      if (i % 2 == 0) {
+        File folder = new File(directory, "file" + i);
+        folder.mkdir();
+        entities.add(BrowseEntity.builder(folder.getName(), folder.getCanonicalPath(), "directory")
+                       .canSample(true).canBrowse(true).build());
+        continue;
+      }
+
+      // generate file with 100 lines
+      File file = new File(directory, "file" + i + ".txt");
+      try (BufferedWriter writer = Files.newBufferedWriter(file.toPath())) {
+        for (int j = 0; j < 100; j++) {
+          writer.write(i + "");
+          if (j != 99) {
+            writer.newLine();
+          }
+        }
+      }
+      entities.add(BrowseEntity.builder(file.getName(), file.getCanonicalPath(), "file").canSample(true).build());
+    }
+
+    String conn = "BrowseSample";
+    addConnection(
+      conn, new ConnectionCreationRequest(
+        "", new PluginInfo(
+        FileConnector.NAME, Connector.PLUGIN_TYPE, null, Collections.emptyMap(),
+        new ArtifactSelectorConfig("system", APP_ARTIFACT_ID.getArtifact(), APP_ARTIFACT_ID.getVersion()))));
+
+    // get all 10 results back
+    BrowseDetail browseDetail = browseConnection(conn, directory.getCanonicalPath(), 10);
+    BrowseDetail expected = BrowseDetail.builder().setTotalCount(10).setEntities(entities).build();
+    Assert.assertEquals(expected, browseDetail);
+
+    // only retrieve 5 back, count should still be 10
+    browseDetail = browseConnection(conn, directory.getCanonicalPath(), 5);
+    expected = BrowseDetail.builder().setTotalCount(10).setEntities(entities.subList(0, 5)).build();
+    Assert.assertEquals(expected, browseDetail);
+
+    // browse the created directory, should give empty result
+    browseDetail = browseConnection(conn, entities.get(0).getPath(), 10);
+    expected = BrowseDetail.builder().setTotalCount(0).build();
+    Assert.assertEquals(expected, browseDetail);
+
+    // browse the file, since it is not browsable, it should return itself
+    browseDetail = browseConnection(conn, entities.get(1).getPath(), 10);
+    expected = BrowseDetail.builder().setTotalCount(1).addEntity(entities.get(1)).build();
+    Assert.assertEquals(expected, browseDetail);
+
+    List<StructuredRecord> records = new ArrayList<>();
+    Schema schema = Schema.recordOf(
+      "schema",
+      Schema.Field.of("offset", Schema.of(Schema.Type.LONG)),
+      Schema.Field.of("body", Schema.of(Schema.Type.STRING)));
+    for (int i = 0; i < 100; i++) {
+      records.add(StructuredRecord.builder(schema).set("offset", i * 2L).set("body", "1").build());
+    }
+    ConnectorSpec spec = ConnectorSpec.builder().addProperty("path", entities.get(1).getPath()).build();
+    SampleResponse expectedSample = new SampleResponse(spec, schema, records);
+
+    // sample the file, the file has 100 lines, so 200 should retrieve all lines
+    SampleResponse sampleResponse = sampleConnection(conn, entities.get(1).getPath(), 200);
+    Assert.assertEquals(expectedSample, sampleResponse);
+
+    // sample 100, should get all
+    sampleResponse = sampleConnection(conn, entities.get(1).getPath(), 100);
+    Assert.assertEquals(expectedSample, sampleResponse);
+
+    // sample 50, should only get 50
+    sampleResponse = sampleConnection(conn, entities.get(1).getPath(), 50);
+    expectedSample = new SampleResponse(spec, schema, records.subList(0, 50));
+    Assert.assertEquals(expectedSample, sampleResponse);
+
+    deleteConnection(conn);
   }
 
   @Test
@@ -244,6 +346,9 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     sinkTable = getDataset(newSinkTableName);
     outputRecords = MockSink.readOutput(sinkTable);
     Assert.assertEquals(ImmutableSet.of(newRecord1, newRecord2), new HashSet<>(outputRecords));
+
+    deleteConnection(sourceConnName);
+    deleteConnection(sinkConnName);
   }
 
   private void addConnection(String connection, ConnectionCreationRequest creationRequest) throws IOException {
@@ -255,5 +360,38 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
                             .build();
     HttpResponse response = HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
     Assert.assertEquals(200, response.getResponseCode());
+  }
+
+  private void deleteConnection(String connection) throws IOException {
+    URL validatePipelineURL =
+      serviceURI.resolve(String.format("v1/contexts/%s/connections/%s", NamespaceId.DEFAULT.getNamespace(),
+                                       connection)).toURL();
+    HttpRequest request = HttpRequest.builder(HttpMethod.DELETE, validatePipelineURL).build();
+    HttpResponse response = HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
+    Assert.assertEquals(200, response.getResponseCode());
+  }
+
+  private BrowseDetail browseConnection(String connection, String path, int limit) throws IOException {
+    URL validatePipelineURL =
+      serviceURI.resolve(String.format("v1/contexts/%s/connections/%s/browse?path=%s&limit=%s",
+                                       NamespaceId.DEFAULT.getNamespace(), connection, path, limit)).toURL();
+    HttpRequest request = HttpRequest.builder(HttpMethod.POST, validatePipelineURL)
+                            .withBody(GSON.toJson(BrowseRequest.builder(path).setLimit(limit).build()))
+                            .build();
+    HttpResponse response = HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
+    Assert.assertEquals(200, response.getResponseCode());
+    return GSON.fromJson(response.getResponseBodyAsString(), BrowseDetail.class);
+  }
+
+  private SampleResponse sampleConnection(String connection, String path, int limit) throws IOException {
+    URL validatePipelineURL =
+      serviceURI.resolve(String.format("v1/contexts/%s/connections/%s/sample?path=%s&limit=%s",
+                                       NamespaceId.DEFAULT.getNamespace(), connection, path, limit)).toURL();
+    HttpRequest request = HttpRequest.builder(HttpMethod.POST, validatePipelineURL)
+                            .withBody(GSON.toJson(SampleRequest.builder(limit).setPath(path).build()))
+                            .build();
+    HttpResponse response = HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
+    Assert.assertEquals(200, response.getResponseCode());
+    return GSON.fromJson(response.getResponseBodyAsString(), SampleResponse.class);
   }
 }

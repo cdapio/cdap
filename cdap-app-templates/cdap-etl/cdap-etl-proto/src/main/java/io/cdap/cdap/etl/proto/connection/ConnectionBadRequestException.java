@@ -29,4 +29,8 @@ public class ConnectionBadRequestException extends CodedException {
   public ConnectionBadRequestException(String message) {
     super(HttpURLConnection.HTTP_BAD_REQUEST, message);
   }
+
+  public ConnectionBadRequestException(String message, Throwable cause) {
+    super(HttpURLConnection.HTTP_BAD_REQUEST, message, cause);
+  }
 }
