@@ -16,12 +16,10 @@
 
 package io.cdap.cdap.internal.app.worker;
 
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.master.spi.twill.StatefulDisk;
 import io.cdap.cdap.master.spi.twill.StatefulTwillPreparer;
@@ -49,11 +47,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class TaskWorkerServiceLauncher extends AbstractScheduledService {
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerServiceLauncher.class);
-
-  /**
-   * Check once every few seconds to ensure task worker pool is up and running.
-   */
-  private static final int ScheduleIntervalSeconds = 5;
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -86,11 +79,11 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
     } catch (Exception e) {
       LOG.warn("Failed to terminate TaskWorkerServiceLauncher run", e);
     }
-   if (executor != null) {
+    if (executor != null) {
       executor.shutdownNow();
     }
     LOG.info("Shutting down TaskWorkerServiceLauncher has completed.");
-}
+  }
 
   @Override
   protected void runOneIteration() throws Exception {
@@ -99,7 +92,8 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
 
   @Override
   protected Scheduler scheduler() {
-    return Scheduler.newFixedRateSchedule(0, ScheduleIntervalSeconds, TimeUnit.SECONDS);
+    return Scheduler.newFixedRateSchedule(0,
+                                          cConf.getInt(Constants.TaskWorker.POOL_CHECK_INTERVAL), TimeUnit.SECONDS);
   }
 
   @Override
@@ -168,7 +162,8 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
           throw e;
         }
       } catch (Exception e) {
-        LOG.warn(String.format("Failed to launch TaskWorker pool, retry in %d", ScheduleIntervalSeconds), e);
+        LOG.warn(String.format("Failed to launch TaskWorker pool, retry in %d",
+                               cConf.getInt(Constants.TaskWorker.POOL_CHECK_INTERVAL)), e);
       }
     }
     this.twillController = activeController;

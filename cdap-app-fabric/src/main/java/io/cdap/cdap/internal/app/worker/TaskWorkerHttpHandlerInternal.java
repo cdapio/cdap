@@ -45,7 +45,6 @@ import javax.ws.rs.Path;
 @Singleton
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3 + "/worker")
 public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
-  public static final String UNKNOWN_CLASS_REQUEST = "UNKNOWN_REQUEST";
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerHttpHandlerInternal.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec()).create();
@@ -68,7 +67,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
       return;
     }
 
-    String className = UNKNOWN_CLASS_REQUEST;
+    String className = null;
     try {
       RunnableTaskRequest runnableTaskRequest =
         GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), RunnableTaskRequest.class);
@@ -76,14 +75,13 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
       byte[] response = runnableTaskLauncher.launchRunnableTask(runnableTaskRequest);
       responder.sendByteArray(HttpResponseStatus.OK, response, EmptyHttpHeaders.INSTANCE);
     } catch (ClassNotFoundException | ClassCastException ex) {
-      className = UNKNOWN_CLASS_REQUEST;
       responder.sendString(HttpResponseStatus.BAD_REQUEST, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);
     } catch (Exception ex) {
       LOG.error(String.format("Failed to run task %s",
                               request.content().toString(StandardCharsets.UTF_8), ex));
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);
     } finally {
-      if (!className.equals(UNKNOWN_CLASS_REQUEST)) {
+      if (className != null) {
         stopper.accept(className);
       }
     }

@@ -4200,6 +4200,14 @@
   <!-- Task Worker Configuration  -->
 
   <property>
+    <name>task.worker.pool.check.interval</name>
+    <value>5</value>
+    <description>
+      Interval (in seconds) for ensuring task worker pool is up and running.
+    </description>
+  </property>
+
+  <property>
     <name>task.worker.container.count</name>
     <value>2</value>
     <description>

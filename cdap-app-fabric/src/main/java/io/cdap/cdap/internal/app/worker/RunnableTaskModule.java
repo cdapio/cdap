@@ -25,10 +25,10 @@ import io.cdap.cdap.common.conf.CConfiguration;
  */
 public class RunnableTaskModule extends AbstractModule {
 
-  private final CConfiguration cConfig;
+  private final CConfiguration cConf;
 
-  public RunnableTaskModule(CConfiguration cConfig) {
-    this.cConfig = cConfig;
+  public RunnableTaskModule(CConfiguration cConf) {
+    this.cConf = cConf;
   }
 
   @Override

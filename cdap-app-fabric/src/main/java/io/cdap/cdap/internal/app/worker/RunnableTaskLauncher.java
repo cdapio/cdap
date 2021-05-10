@@ -26,8 +26,8 @@ import io.cdap.cdap.common.internal.worker.RunnableTaskContext;
 public class RunnableTaskLauncher {
   private final CConfiguration cConf;
 
-  public RunnableTaskLauncher(CConfiguration cConfig) {
-    this.cConf = cConfig;
+  public RunnableTaskLauncher(CConfiguration cConf) {
+    this.cConf = cConf;
   }
 
   public byte[] launchRunnableTask(RunnableTaskRequest request) throws Exception {
