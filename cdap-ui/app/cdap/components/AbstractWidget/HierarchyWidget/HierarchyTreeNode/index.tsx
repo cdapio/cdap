@@ -328,6 +328,7 @@ const HierarchyTreeNode = ({
                   className={classes.paddingTextField}
                   {...params}
                   InputProps={{ ...params.InputProps, disableUnderline: true }}
+                  data-cy="autocomplete-input"
                 />
               )}
             />

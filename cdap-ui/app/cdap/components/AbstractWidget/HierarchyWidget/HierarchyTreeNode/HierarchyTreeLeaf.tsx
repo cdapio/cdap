@@ -62,7 +62,11 @@ const HierarchyTreeLeaf = ({ option, selected }: IHierarchyTreeLeafProps) => {
         {option.children &&
           option.children.length !== 0 &&
           option.children.map((child: IChildProps) => (
-            <HierarchyTreeLeaf option={child} selected={selected} />
+            <HierarchyTreeLeaf
+              option={child}
+              selected={selected}
+              data-cy={`option-${option.name}`}
+            />
           ))}
       </div>
       <span>{option.type}</span>
