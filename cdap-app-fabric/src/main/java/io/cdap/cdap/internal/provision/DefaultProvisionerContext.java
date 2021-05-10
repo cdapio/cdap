@@ -53,11 +53,11 @@ public class DefaultProvisionerContext implements ProvisionerContext {
   private final VersionInfo cdapVersion;
   @Nullable
   private final VersionInfo appCDAPVersion;
-  private final LocationFactory locationFactory;
+  private final transient LocationFactory locationFactory;
   private final RuntimeMonitorType runtimeMonitorType;
-  private final MetricsCollectionService metricsCollectionService;
+  private final transient MetricsCollectionService metricsCollectionService;
   private final String provisionerName;
-  private final Executor executor;
+  private final transient Executor executor;
 
   DefaultProvisionerContext(ProgramRunId programRunId, String provisionerName, Map<String, String> properties,
                             SparkCompat sparkCompat, @Nullable SSHContext sshContext,

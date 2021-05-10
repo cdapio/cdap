@@ -49,8 +49,8 @@ import io.cdap.cdap.internal.app.runtime.plugin.MacroParser;
 import io.cdap.cdap.internal.app.spark.SparkCompatReader;
 import io.cdap.cdap.internal.pipeline.PluginRequirement;
 import io.cdap.cdap.internal.provision.task.DeprovisionTask;
-import io.cdap.cdap.internal.provision.task.ProvisionTask;
 import io.cdap.cdap.internal.provision.task.ProvisioningTask;
+import io.cdap.cdap.internal.provision.task.RemoteProvisionTask;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.provisioner.ProvisionerDetail;
@@ -73,6 +73,7 @@ import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -128,6 +129,7 @@ public class ProvisioningService extends AbstractIdleService {
   private final MetricsCollectionService metricsCollectionService;
   private KeyedExecutor<ProvisioningTaskKey> taskExecutor;
   private ExecutorService contextExecutor;
+  private DiscoveryServiceClient discoveryServiceClient;
 
   @Inject
   ProvisioningService(CConfiguration cConf, ProvisionerProvider provisionerProvider,
@@ -135,11 +137,13 @@ public class ProvisioningService extends AbstractIdleService {
                       ProvisionerNotifier provisionerNotifier, LocationFactory locationFactory,
                       SecureStore secureStore, ProgramStateWriter programStateWriter,
                       ProvisionerStore provisionerStore, TransactionRunner transactionRunner,
-                      MetricsCollectionService metricsCollectionService) {
+                      MetricsCollectionService metricsCollectionService,
+                      DiscoveryServiceClient discoveryServiceClient) {
     this.cConf = cConf;
     this.provisionerProvider = provisionerProvider;
     this.provisionerConfigProvider = provisionerConfigProvider;
     this.provisionerNotifier = provisionerNotifier;
+    this.discoveryServiceClient = discoveryServiceClient;
     this.provisionerInfo = new AtomicReference<>(new ProvisionerInfo(new HashMap<>(), new HashMap<>()));
     this.locationFactory = locationFactory;
     this.sparkCompat = SparkCompatReader.get(cConf);
@@ -616,8 +620,10 @@ public class ProvisioningService extends AbstractIdleService {
     }
 
     // TODO: (CDAP-13246) pick up timeout from profile instead of hardcoding
-    ProvisioningTask task = new ProvisionTask(taskInfo, transactionRunner, provisioner, context,
-                                              provisionerNotifier, programStateWriter, 300);
+    // TODO: Add a factory here
+    ProvisioningTask task = new RemoteProvisionTask(taskInfo, transactionRunner, provisioner, context,
+                                                    provisionerNotifier, programStateWriter,
+                                                    300, discoveryServiceClient);
 
     ProvisioningTaskKey taskKey = new ProvisioningTaskKey(programRunId, ProvisioningOp.Type.PROVISION);
     return () -> taskExecutor.submit(taskKey, () -> callWithProgramLogging(programRunId, systemArgs, () -> {
