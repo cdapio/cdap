@@ -57,6 +57,11 @@ public class RemoteTaskWorkerHandler implements TaskWorkerHandler {
     HttpRequest httpRequest = requestBuilder.withBody(GSON.toJson(runnableTaskRequest)).build();
     //LOG.info("RemoteTaskWorkerHandler got request " + httpRequest);
     HttpResponse httpResponse = remoteClient.execute(httpRequest);
+    if (httpResponse.getResponseCode() != 200) {
+      return new RunnableTaskResponse<>(
+        "Got response code " + httpResponse.getResponseCode() + " . Error message is \n" + httpResponse
+          .getResponseBodyAsString());
+    }
     return new RunnableTaskResponse<>(httpResponse.getResponseBodyAsString());
   }
 }

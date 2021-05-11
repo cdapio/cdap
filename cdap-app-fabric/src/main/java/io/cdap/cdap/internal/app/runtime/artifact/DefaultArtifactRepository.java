@@ -68,6 +68,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -175,6 +176,11 @@ public class DefaultArtifactRepository implements ArtifactRepository {
   @Override
   public ArtifactDetail getArtifact(Id.Artifact artifactId) throws Exception {
     return artifactRepositoryReader.getArtifact(artifactId);
+  }
+
+  @Override
+  public InputStream getArtifactBytes(Id.Artifact artifactId) throws Exception {
+    return artifactRepositoryReader.getArtifactBytes(artifactId);
   }
 
   @Override

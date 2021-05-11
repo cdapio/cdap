@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,20 +14,14 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.dispatcher;
+package io.cdap.cdap.api.task;
 
-import com.google.common.util.concurrent.AbstractIdleService;
+import io.cdap.cdap.api.plugin.PluginConfigurer;
 
 /**
- * RunnableTask represents a task that can be launched by a {@link TaskWorkerService}.
+ * TaskPluginContext provides all the necesaary context for Plgin validation
  */
-public abstract class RunnableTask extends AbstractIdleService {
-  public RunnableTask() {
-  }
-
-  protected abstract byte[] run(String param) throws Exception;
-
-  public byte[] runTask(String param) throws Exception {
-    return run(param);
-  }
+public interface TaskPluginContext {
+  PluginConfigurer createPluginConfigurer(String namespace, String artifactName, String artifactVersion,
+                                          ClassLoader appClassLoader);
 }

@@ -22,6 +22,7 @@ import com.google.inject.Singleton;
 import io.cdap.cdap.api.task.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactFinder;
 import io.cdap.cdap.logging.gateway.handlers.AbstractLogHttpHandler;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
@@ -34,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -52,9 +54,10 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
   private final AtomicInteger inflightRequests = new AtomicInteger(0);
 
   @Inject
-  public TaskWorkerHttpHandlerInternal(CConfiguration cConf, Consumer<String> stopper) {
+  public TaskWorkerHttpHandlerInternal(CConfiguration cConf, Consumer<String> stopper,
+                                       @Nullable ArtifactFinder artifactFinder) {
     super(cConf);
-    runnableTaskLauncher = new RunnableTaskLauncher(cConf);
+    runnableTaskLauncher = new RunnableTaskLauncher(cConf, artifactFinder);
     this.stopper = stopper;
   }
 
@@ -73,16 +76,16 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
         GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), RunnableTaskRequest.class);
       response = runnableTaskLauncher.launchRunnableTask(runnableTaskRequest);
       status = HttpResponseStatus.OK;
-      className = runnableTaskRequest.className;
+      //className = runnableTaskRequest.getClassName();
     } catch (Exception ex) {
       LOG.error(String.format("failed to handle request %s",
-                              request.content().toString(StandardCharsets.UTF_8), ex));
+                              request.content().toString(StandardCharsets.UTF_8)), ex);
       response = ex.toString().getBytes();
       status = HttpResponseStatus.BAD_REQUEST;
     }
     responder.sendByteArray(status, response, EmptyHttpHeaders.INSTANCE);
 
-    stopper.accept(className);
+    //stopper.accept(className);
   }
 
   @GET

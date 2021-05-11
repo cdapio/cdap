@@ -49,6 +49,7 @@
               </goals>
               <configuration>
                 <excludes>
+                  <exclude>**/resources/**/*.iml</exclude>
                   <exclude>**/resources/**/*.txt</exclude>
                   <exclude>**/resources/**/*.md</exclude>
                   <exclude>**/resources/**/*.json</exclude>

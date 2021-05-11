@@ -26,6 +26,7 @@ import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactFinder;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -48,14 +49,17 @@ public class TaskWorkerService extends AbstractIdleService {
   private NettyHttpService httpService;
   private Cancellable cancelDiscovery;
   private InetSocketAddress bindAddress;
+  private ArtifactFinder artifactFinder;
 
   @Inject
   TaskWorkerService(CConfiguration cConf,
                     SConfiguration sConf,
-                    DiscoveryService discoveryService) {
+                    DiscoveryService discoveryService,
+                    ArtifactFinder artifactFinder) {
     this.cConf = cConf;
     this.sConf = sConf;
     this.discoveryService = discoveryService;
+    this.artifactFinder = artifactFinder;
   }
 
   @Override
@@ -80,7 +84,7 @@ public class TaskWorkerService extends AbstractIdleService {
       .setExecThreadPoolSize(cConf.getInt(Constants.TaskWorker.EXEC_THREADS))
       .setBossThreadPoolSize(cConf.getInt(Constants.TaskWorker.BOSS_THREADS))
       .setWorkerThreadPoolSize(cConf.getInt(Constants.TaskWorker.WORKER_THREADS))
-      .setHttpHandlers(new TaskWorkerHttpHandlerInternal(this.cConf, this::stopService));
+      .setHttpHandlers(new TaskWorkerHttpHandlerInternal(this.cConf, this::stopService, artifactFinder));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);

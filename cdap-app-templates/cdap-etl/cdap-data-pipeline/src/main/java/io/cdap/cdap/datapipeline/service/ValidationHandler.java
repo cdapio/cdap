@@ -37,7 +37,6 @@ import io.cdap.cdap.api.task.RunnableTaskRequest;
 import io.cdap.cdap.api.task.RunnableTaskResponse;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.api.batch.BatchSource;
-import io.cdap.cdap.etl.api.validation.ValidationException;
 import io.cdap.cdap.etl.batch.BatchPipelineSpec;
 import io.cdap.cdap.etl.batch.BatchPipelineSpecGenerator;
 import io.cdap.cdap.etl.common.BasicArguments;
@@ -46,6 +45,7 @@ import io.cdap.cdap.etl.common.DefaultPipelineConfigurer;
 import io.cdap.cdap.etl.common.DefaultStageConfigurer;
 import io.cdap.cdap.etl.common.OAuthMacroEvaluator;
 import io.cdap.cdap.etl.common.SecureStoreMacroEvaluator;
+import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
@@ -54,7 +54,6 @@ import io.cdap.cdap.etl.proto.v2.spec.PluginSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.proto.v2.validation.StageSchema;
 import io.cdap.cdap.etl.proto.v2.validation.StageValidationRequest;
-import io.cdap.cdap.etl.proto.v2.validation.StageValidationResponse;
 import io.cdap.cdap.etl.spec.PipelineSpecGenerator;
 import io.cdap.cdap.etl.validation.ValidatingConfigurer;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
@@ -91,7 +90,8 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
   @Path("v1/task")
   public void task(HttpServiceRequest request, HttpServiceResponder responder) {
     RunnableTaskRequest runnableTaskRequest = new RunnableTaskRequest(
-      "io.cdap.cdap.internal.app.dispatcher.EchoRunnableTask", "testparam");
+      "io.cdap.cdap.internal.app.dispatcher.EchoRunnableTask", "testparam",
+      null);
     try {
       Object response = getContext().getTaskWorkerHandler().runTask(runnableTaskRequest);
       RunnableTaskResponse runnableTaskResponse = (RunnableTaskResponse) response;
@@ -174,12 +174,36 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
     ETLPlugin evaluatedConfig = new ETLPlugin(originalConfig.getName(), originalConfig.getType(),
                                               evaluatedProperties, originalConfig.getArtifactConfig());
 
-    try {
+    String response = validatePipelineRemotely(evaluatedConfig, namespace, stageConfig.getName());
+    responder.sendString("Response from remote: " + response);
+    /*try {
       StageSpec spec = pipelineSpecGenerator.configureStage(stageConfig.getName(), evaluatedConfig,
-                                                            pipelineConfigurer).build();
+                                                            pipelineConfigurer, true).build();
       responder.sendString(GSON.toJson(new StageValidationResponse(spec)));
     } catch (ValidationException e) {
       responder.sendString(GSON.toJson(new StageValidationResponse(e.getFailures())));
+    }*/
+  }
+
+  private String validatePipelineRemotely(ETLPlugin etlPlugin, String namespace, String stageName) throws IOException {
+    ArtifactSelectorConfig artifactConfig = etlPlugin.getArtifactConfig();
+    TaskPluginConfig taskPluginConfig = new TaskPluginConfig(artifactConfig.getName(), artifactConfig.getScope(),
+                                                             artifactConfig.getVersion(), namespace,
+                                                             etlPlugin.getName(), etlPlugin.getType(),
+                                                             etlPlugin.getProperties(), stageName);
+    String taskConfig = GSON.toJson(taskPluginConfig);
+    RunnableTaskRequest runnableTaskRequest = new RunnableTaskRequest(
+      "io.cdap.cdap.datapipeline.service.PipelineValidatorTask", taskConfig,
+      getContext().getApplicationSpecification().getArtifactId());
+    try {
+      Object response = getContext().getTaskWorkerHandler().runTask(runnableTaskRequest);
+      RunnableTaskResponse runnableTaskResponse = (RunnableTaskResponse) response;
+      return runnableTaskResponse.getResponse().toString();
+      //responder.sendStatus(HttpURLConnection.HTTP_OK);
+      //responder.sendString(runnableTaskResponse.getResponse().toString());
+    } catch (Exception e) {
+      //responder.sendError(HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage() + "\n" + e.getCause().getMessage());
+      throw e;
     }
   }
 

@@ -34,6 +34,9 @@ public class RunnableTaskModule extends AbstractModule {
 
   @Override
   protected void configure() {
+    bind(CConfiguration.class).toInstance(this.cConfig);
+    //install(new ConfiguratorTaskModule());
+    install(new PluginTaskModule());
   }
 
   @Provides

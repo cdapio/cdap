@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.api.task;
 
+import io.cdap.cdap.api.artifact.ArtifactId;
+
+import javax.annotation.Nullable;
+
 /**
  * Request for launching a runnable task.
  */
@@ -23,10 +27,12 @@ public class RunnableTaskRequest {
 
   private String className;
   private String param;
-  
-  public RunnableTaskRequest(String className, String param) {
+  private ArtifactId serviceArtifactId;
+
+  public RunnableTaskRequest(String className, String param, @Nullable ArtifactId serviceArtifactId) {
     this.className = className;
     this.param = param;
+    this.serviceArtifactId = serviceArtifactId;
   }
 
   public String getClassName() {
@@ -35,5 +41,10 @@ public class RunnableTaskRequest {
 
   public String getParam() {
     return param;
+  }
+
+  @Nullable
+  public ArtifactId getServiceArtifactId() {
+    return serviceArtifactId;
   }
 }

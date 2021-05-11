@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.internal.app.dispatcher;
 
-import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.api.task.RunnableTaskRequest;
+import io.cdap.cdap.common.conf.CConfiguration;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -31,9 +31,9 @@ public class RunnableTaskLauncherTest {
   @Test
   public void testLaunchRunnableTask() throws Exception {
     String want = "test-want";
-    RunnableTaskRequest request = new RunnableTaskRequest(EchoRunnableTask.class.getName(), want);
+    RunnableTaskRequest request = new RunnableTaskRequest(EchoRunnableTask.class.getName(), want, null);
 
-    RunnableTaskLauncher launcher = new RunnableTaskLauncher(CConfiguration.create());
+    RunnableTaskLauncher launcher = new RunnableTaskLauncher(CConfiguration.create(), null);
     byte[] got = launcher.launchRunnableTask(request);
     Assert.assertEquals(want, new String(got, StandardCharsets.UTF_8));
   }

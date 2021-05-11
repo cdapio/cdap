@@ -33,6 +33,8 @@ import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import io.cdap.cdap.internal.lang.CallerClassSecurityManager;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -52,6 +54,7 @@ public class DefaultPluginConfigurer implements PluginConfigurer {
   private final PluginInstantiator pluginInstantiator;
   private final PluginFinder pluginFinder;
   private final Map<String, PluginWithLocation> plugins;
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultPluginConfigurer.class);
 
   public DefaultPluginConfigurer(ArtifactId artifactId, NamespaceId pluginNamespaceId,
                                  PluginInstantiator pluginInstantiator, PluginFinder pluginFinder) {
@@ -75,11 +78,14 @@ public class DefaultPluginConfigurer implements PluginConfigurer {
   public final <T> T usePlugin(String pluginType, String pluginName, String pluginId,
                                PluginProperties properties, PluginSelector selector) {
     try {
+      LOG.info("In  usePlugin with " + pluginType + ":" + pluginName + ":" + pluginId + ":");
       Plugin plugin = addPlugin(pluginType, pluginName, pluginId, properties, selector);
       return pluginInstantiator.newInstance(plugin);
     } catch (PluginNotExistsException | IOException e) {
+      LOG.error("error in usePlugin DefaultPluginConfigurer. ", e);
       return null;
     } catch (ClassNotFoundException e) {
+      LOG.error("error in usePlugin DefaultPluginConfigurer. ", e);
       // Shouldn't happen
       throw Throwables.propagate(e);
     }

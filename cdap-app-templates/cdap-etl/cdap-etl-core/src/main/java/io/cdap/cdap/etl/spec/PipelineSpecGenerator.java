@@ -29,6 +29,7 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.plugin.InvalidPluginConfigException;
 import io.cdap.cdap.api.plugin.InvalidPluginProperty;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
+import io.cdap.cdap.api.task.RunnableTaskRequest;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.api.ErrorTransform;
 import io.cdap.cdap.etl.api.FailureCollector;
@@ -267,6 +268,18 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
     return new ConfiguredStage(stageSpec, pluginConfigurer.getPipelineProperties());
   }
 
+  /**
+   * Configures a plugin and returns the spec for it.
+   * @param stageName
+   * @param etlPlugin
+   * @param pipelineConfigurer
+   * @return
+   * @throws ValidationException
+   */
+  public StageSpec.Builder configureStage(String stageName, ETLPlugin etlPlugin,
+                                          DefaultPipelineConfigurer pipelineConfigurer) throws ValidationException {
+    return configureStage(stageName, etlPlugin, pipelineConfigurer, false);
+  }
 
   /**
    * Configures a plugin and returns the spec for it.
@@ -279,13 +292,48 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
    * @throws ValidationException if the plugin threw an exception during configuration
    */
   public StageSpec.Builder configureStage(String stageName, ETLPlugin etlPlugin,
-                                          DefaultPipelineConfigurer pipelineConfigurer) throws ValidationException {
+                                          DefaultPipelineConfigurer pipelineConfigurer, boolean remoteValidation) throws
+    ValidationException {
     TrackedPluginSelector pluginSelector = new TrackedPluginSelector(
       new ArtifactSelectorProvider().getPluginSelector(etlPlugin.getArtifactConfig()));
     String type = etlPlugin.getType();
     String pluginName = etlPlugin.getName();
 
     DefaultStageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
+
+    if (remoteValidation) {
+      RunnableTaskRequest runnableTaskRequest = new RunnableTaskRequest(
+        "io.cdap.cdap.datapipeline.service.PipelineValidatorTask", "testparam", null);
+      try {
+        //Object response = getContext().getTaskWorkerHandler().runTask(runnableTaskRequest);
+        //RunnableTaskResponse runnableTaskResponse = (RunnableTaskResponse) response;
+        //responder.sendStatus(HttpURLConnection.HTTP_OK);
+        //responder.sendString(runnableTaskResponse.getResponse().toString());
+      } catch (Exception e) {
+        //responder.sendError(HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage() + "\n" + e.getCause().getMessage());
+        throw e;
+      }
+    } else {
+      validatePlugin(stageName, etlPlugin, pluginSelector, type, pluginName, stageConfigurer, pipelineConfigurer);
+    }
+
+    PluginSpec pluginSpec = new PluginSpec(type, pluginName, etlPlugin.getProperties(),
+                                           pluginSelector.getSelectedArtifact());
+    StageSpec.Builder specBuilder = StageSpec.builder(stageName, pluginSpec)
+      .addInputSchemas(pipelineConfigurer.getStageConfigurer().getInputSchemas())
+      .setErrorSchema(stageConfigurer.getErrorSchema());
+
+    if (type.equals(SplitterTransform.PLUGIN_TYPE)) {
+      specBuilder.setPortSchemas(stageConfigurer.getOutputPortSchemas());
+    } else {
+      specBuilder.setOutputSchema(stageConfigurer.getOutputSchema());
+    }
+    return specBuilder;
+  }
+
+  private void validatePlugin(String stageName, ETLPlugin etlPlugin, TrackedPluginSelector pluginSelector, String type,
+                              String pluginName, DefaultStageConfigurer stageConfigurer,
+                              DefaultPipelineConfigurer pipelineConfigurer) {
     FailureCollector collector = stageConfigurer.getFailureCollector();
     Object plugin = getPlugin(stageName, etlPlugin, pluginSelector, type, pluginName, collector);
     try {
@@ -340,19 +388,6 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
 
     // throw validation exception if there are any errors being carried by failure collector
     collector.getOrThrowException();
-
-    PluginSpec pluginSpec = new PluginSpec(type, pluginName, etlPlugin.getProperties(),
-                                           pluginSelector.getSelectedArtifact());
-    StageSpec.Builder specBuilder = StageSpec.builder(stageName, pluginSpec)
-      .addInputSchemas(pipelineConfigurer.getStageConfigurer().getInputSchemas())
-      .setErrorSchema(stageConfigurer.getErrorSchema());
-
-    if (type.equals(SplitterTransform.PLUGIN_TYPE)) {
-      specBuilder.setPortSchemas(stageConfigurer.getOutputPortSchemas());
-    } else {
-      specBuilder.setOutputSchema(stageConfigurer.getOutputSchema());
-    }
-    return specBuilder;
   }
 
   protected void validateJoinCondition(String stageName, JoinCondition condition, FailureCollector collector) {

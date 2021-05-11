@@ -181,10 +181,15 @@ public class PluginInstantiator implements Closeable {
   public PluginClassLoader getPluginClassLoader(ArtifactId artifactId,
                                                 List<ArtifactId> pluginParents) throws IOException {
     try {
+      LOG.info("ArtifactId " + artifactId + ": pluginParents :" + pluginParents);
       return classLoaders.get(new ClassLoaderKey(artifactId, pluginParents));
     } catch (ExecutionException e) {
+      LOG.error("ExecutionException ", e);
       Throwables.propagateIfInstanceOf(e.getCause(), IOException.class);
       throw Throwables.propagate(e.getCause());
+    } catch (Exception e) {
+      LOG.error("Exception ", e);
+      throw e;
     }
   }
 
@@ -212,6 +217,7 @@ public class PluginInstantiator implements Closeable {
    * @throws InvalidPluginConfigException if the PluginConfig could not be created from the plugin properties
    */
   public <T> T newInstance(Plugin plugin) throws IOException, ClassNotFoundException, InvalidMacroException {
+    LOG.info("newinstance with plugin object " + plugin.getPluginClass().getClassName());
     return newInstance(plugin, null);
   }
 
@@ -229,13 +235,16 @@ public class PluginInstantiator implements Closeable {
    */
   public <T> T newInstance(Plugin plugin, @Nullable MacroEvaluator macroEvaluator)
     throws IOException, ClassNotFoundException, InvalidMacroException {
+    LOG.info("newInstance ");
     ClassLoader classLoader = getPluginClassLoader(plugin);
+    LOG.info("Got class loader ", classLoader);
     PluginClass pluginClass = plugin.getPluginClass();
     @SuppressWarnings("unchecked")
     TypeToken<T> pluginType = TypeToken.of((Class<T>) classLoader.loadClass(pluginClass.getClassName()));
 
     try {
       String configFieldName = pluginClass.getConfigFieldName();
+      LOG.error("configFieldName " + configFieldName);
       // Plugin doesn't have config. Simply return a new instance.
       if (configFieldName == null) {
         return instantiatorFactory.get(pluginType).create();
@@ -450,6 +459,8 @@ public class PluginInstantiator implements Closeable {
 
       Iterator<ArtifactId> parentIter = key.parents.iterator();
       if (!parentIter.hasNext()) {
+        LOG.info(
+          "Creating pluginclass loader with parentclassLoader " + parentClassLoader + " and artifact " + artifact);
         return new PluginClassLoader(key.artifact, unpackedDir, artifact.getAbsolutePath(), parentClassLoader);
       }
 

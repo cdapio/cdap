@@ -21,6 +21,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
@@ -40,7 +41,9 @@ import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import sun.net.www.protocol.http.HttpURLConnection;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
@@ -113,6 +116,28 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
                            detail.getMeta()));
     }
     return detailList;
+  }
+
+  @Override
+  public InputStream getArtifactBytes(Id.Artifact artifactId) throws Exception {
+    HttpResponse httpResponse;
+    String namespaceId = artifactId.getNamespace().getId();
+    ArtifactScope scope = ArtifactScope.USER;
+    // Cant use 'system' as the namespace in the request because that generates an error, the namespace doesnt matter
+    // as long as it exists. Using default because it will always be there
+    if (ArtifactScope.SYSTEM.toString().equalsIgnoreCase(namespaceId)) {
+      namespaceId = "default";
+      scope = ArtifactScope.SYSTEM;
+    }
+    String url = String.format("namespaces/%s/artifacts/%s/versions/%s/download?scope=%s",
+                               namespaceId,
+                               artifactId.getName(),
+                               artifactId.getVersion(),
+                               scope);
+    HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
+    httpResponse = execute(requestBuilder.build());
+
+    return new ByteArrayInputStream(httpResponse.getResponseBody());
   }
 
   private HttpResponse execute(HttpRequest request) throws IOException, NotFoundException {
