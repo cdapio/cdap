@@ -17,6 +17,7 @@
 
 package io.cdap.cdap.etl.api.connector;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -50,7 +51,8 @@ public class SampleRequest {
   }
 
   public Map<String, String> getProperties() {
-    return properties;
+    // might be null because of gson
+    return properties == null ? Collections.emptyMap() : properties;
   }
 
   @Override

@@ -37,7 +37,8 @@ public class BrowseRequest {
   }
 
   /**
-   * Return the max number of results to retrieve, if null, the connector will fetch all the results
+   * Return the max number of results to retrieve, if null or less than or equal to 0,
+   * the connector will fetch all the results
    */
   @Nullable
   public Integer getLimit() {

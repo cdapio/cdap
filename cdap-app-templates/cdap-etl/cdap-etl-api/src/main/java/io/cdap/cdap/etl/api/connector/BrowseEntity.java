@@ -20,6 +20,7 @@ package io.cdap.cdap.etl.api.connector;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * An entity that is browsable or samplable, or both.
@@ -32,10 +33,10 @@ public class BrowseEntity {
   private final String type;
   private final boolean canSample;
   private final boolean canBrowse;
-  private final Collection<BrowseEntityProperty> properties;
+  private final Set<BrowseEntityProperty> properties;
 
   private BrowseEntity(String name, String path, String type, boolean canSample, boolean canBrowse,
-                      Collection<BrowseEntityProperty> properties) {
+                       Set<BrowseEntityProperty> properties) {
     this.name = name;
     this.path = path;
     this.type = type;
@@ -108,7 +109,7 @@ public class BrowseEntity {
     private String type;
     private boolean canSample;
     private boolean canBrowse;
-    private Collection<BrowseEntityProperty> properties;
+    private Set<BrowseEntityProperty> properties;
 
     public Builder(String name, String path, String type) {
       this.name = name;

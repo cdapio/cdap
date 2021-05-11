@@ -47,8 +47,9 @@ public interface Connector extends Closeable {
   void test(FailureCollector collector) throws ValidationException;
 
   /**
-   * Explore the resource on the given request. The explore expects a path to represent the hierarchy of the
+   * Browse the resources on the given request. The browse request expects a path to represent the hierarchy of the
    * resource. The path is expected to be separated by '/'.
+   * If the given path is not browsable, the result will contain the information on the current path.
    * For example, for a file based connector, the path will just be the file/directory path
    * for a database connector, the path can be {database}/{table}
    *
@@ -60,7 +61,7 @@ public interface Connector extends Closeable {
    * Generate spec based on the given path, the spec should contain all the properties associated with the path.
    * For example, for bigquery, this can be a map containing "datasets": {dataset}, "table": {table}
    *
-   * @param path the path of the entitiy
+   * @param path the path of the entity
    * @return the spec which contains all the properties associated with the path
    */
   ConnectorSpec generateSpec(String path);
