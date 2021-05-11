@@ -17,7 +17,6 @@
 package io.cdap.cdap.api.task;
 
 import io.cdap.cdap.api.artifact.ArtifactId;
-
 import javax.annotation.Nullable;
 
 /**
@@ -30,6 +29,7 @@ public class RunnableTaskRequest {
   private ArtifactId serviceArtifactId;
 
   public RunnableTaskRequest(String className, String param, @Nullable ArtifactId serviceArtifactId) {
+
     this.className = className;
     this.param = param;
     this.serviceArtifactId = serviceArtifactId;

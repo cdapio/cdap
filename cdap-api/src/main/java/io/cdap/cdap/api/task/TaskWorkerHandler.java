@@ -28,6 +28,6 @@ public interface TaskWorkerHandler {
    * @param runnableTaskRequest
    * @return
    */
-  byte[] runTask(RunnableTaskRequest runnableTaskRequest) throws IOException;
+  RunnableTaskResponse<?> runTask(RunnableTaskRequest runnableTaskRequest) throws IOException;
 
 }
