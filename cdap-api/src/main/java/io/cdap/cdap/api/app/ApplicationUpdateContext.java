@@ -18,9 +18,9 @@ package io.cdap.cdap.api.app;
 
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.artifact.ArtifactId;
-
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersionRange;
+
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Set;

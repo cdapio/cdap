@@ -99,7 +99,7 @@ public interface ApplicationManager {
    * Wait for a given programId to have no running run record
    * @param programId the program id to wait on
    */
-  void waitForStopped(final ProgramId programId) throws Exception;
+  void waitForStopped(ProgramId programId) throws Exception;
 
   /**
    * Starts a particular program.

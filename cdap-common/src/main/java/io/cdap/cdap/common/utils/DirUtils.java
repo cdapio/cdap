@@ -40,7 +40,7 @@ public final class DirUtils {
    * Utility classes should have a public constructor or a default constructor
    * hence made it private.
    */
-  private DirUtils(){}
+  private DirUtils() { }
 
   /**
    * Same as calling {@link #deleteDirectoryContents(File, boolean) deleteDirectoryContents(directory, false)}.

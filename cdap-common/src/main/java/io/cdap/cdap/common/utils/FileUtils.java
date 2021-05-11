@@ -33,7 +33,7 @@ public class FileUtils {
   public static final FileAttribute<Set<PosixFilePermission>> OWNER_ONLY_RW =
     PosixFilePermissions.asFileAttribute(EnumSet.of(PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_READ));
 
-  private FileUtils(){ }
+  private FileUtils() { }
 
   /**
    * Converts a permission, interpreted as a 3-digit octal, into a umask that yields this permission.

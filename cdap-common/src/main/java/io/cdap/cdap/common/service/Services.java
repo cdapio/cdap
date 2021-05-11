@@ -33,7 +33,7 @@ public class Services {
 
   private static final Logger LOG = LoggerFactory.getLogger(Services.class);
 
-  private Services(){}
+  private Services() { }
 
   /**
    * Attempts to start the passed in service
