@@ -49,11 +49,11 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec()).create();
   private final RunnableTaskLauncher runnableTaskLauncher;
-  private final Consumer<String> stopper;
+  private final Consumer<Void> stopper;
   private final AtomicInteger inflightRequests = new AtomicInteger(0);
 
   @Inject
-  public TaskWorkerHttpHandlerInternal(CConfiguration cConf, Consumer<String> stopper) {
+  public TaskWorkerHttpHandlerInternal(CConfiguration cConf, Consumer<Void> stopper) {
     super(cConf);
     runnableTaskLauncher = new RunnableTaskLauncher(cConf);
     this.stopper = stopper;
@@ -67,11 +67,10 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
       return;
     }
 
-    String className = null;
+    RunnableTaskRequest runnableTaskRequest = null;
     try {
-      RunnableTaskRequest runnableTaskRequest =
+      runnableTaskRequest =
         GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), RunnableTaskRequest.class);
-      className = runnableTaskRequest.getClassName();
       byte[] response = runnableTaskLauncher.launchRunnableTask(runnableTaskRequest);
       responder.sendByteArray(HttpResponseStatus.OK, response, EmptyHttpHeaders.INSTANCE);
     } catch (ClassNotFoundException | ClassCastException ex) {
@@ -81,8 +80,8 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
                               request.content().toString(StandardCharsets.UTF_8), ex));
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);
     } finally {
-      if (className != null) {
-        stopper.accept(className);
+      if (runnableTaskRequest != null && runnableTaskRequest.hasUserCode()) {
+        stopper.accept(null);
       }
     }
   }

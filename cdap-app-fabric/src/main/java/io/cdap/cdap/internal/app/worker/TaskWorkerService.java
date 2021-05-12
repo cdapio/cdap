@@ -90,11 +90,7 @@ public class TaskWorkerService extends AbstractIdleService {
     LOG.debug("Shutting down TaskWorkerService has completed");
   }
 
-  private void stopService(String className) {
-    /** TODO: Expand this logic such that
-     * based on number of requests per particular class,
-     * the service gets stopped.
-     */
+  private void stopService(Void unused) {
     stop();
   }
 

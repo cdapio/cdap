@@ -23,9 +23,21 @@ public class RunnableTaskRequest {
   private final String className;
   private final String param;
 
+  /**
+   * If true, and for security reasons, task worker pod will be killed once the request is performed by worker pod.
+   */
+  private final boolean hasUserCode;
+
   public RunnableTaskRequest(String className, String param) {
     this.className = className;
     this.param = param;
+    hasUserCode = true;
+  }
+
+  public RunnableTaskRequest(String className, String param, boolean hasUserCode) {
+    this.className = className;
+    this.param = param;
+    this.hasUserCode = hasUserCode;
   }
 
   public String getClassName() {
@@ -34,5 +46,9 @@ public class RunnableTaskRequest {
 
   public String getParam() {
     return param;
+  }
+
+  public boolean hasUserCode() {
+    return hasUserCode;
   }
 }

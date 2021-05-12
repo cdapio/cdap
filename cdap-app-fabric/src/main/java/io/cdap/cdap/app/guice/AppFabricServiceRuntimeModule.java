@@ -301,8 +301,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(Store.class).to(DefaultStore.class);
       bind(SecretStore.class).to(DefaultSecretStore.class).in(Scopes.SINGLETON);
 
-      bind(ConfiguratorFactory.class).toInstance(new ConfiguratorFactory(isRemote));
-      
       // In App-Fabric, we can write directly, hence bind to the basic implementation
       bind(WorkflowStateWriter.class).to(BasicWorkflowStateWriter.class);
 

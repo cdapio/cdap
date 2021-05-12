@@ -20,17 +20,14 @@ package io.cdap.cdap.internal.provision.task;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.internal.app.dispatcher.ProvisionerRunnableTask;
-import io.cdap.cdap.internal.app.dispatcher.RunnableTaskRequest;
 import io.cdap.cdap.internal.app.runtime.codec.CConfigurationCodec;
+import io.cdap.cdap.internal.app.worker.RunnableTaskClient;
+import io.cdap.cdap.internal.app.worker.RunnableTaskRequest;
 import io.cdap.cdap.internal.provision.ProvisioningOp;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
-import io.cdap.common.http.HttpMethod;
-import io.cdap.common.http.HttpRequest;
-import io.cdap.common.http.HttpResponse;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,22 +36,20 @@ import java.util.Optional;
 import java.util.function.Function;
 
 /**
- * Provisioning subtask that creates a cluster.
+ * Provisioning subtask that executes remotely by {@link io.cdap.cdap.internal.app.worker.TaskWorkerService}.
  */
-public class RemoteClusterCreateSubtask extends ProvisioningSubtask {
-  private static final Logger LOG = LoggerFactory.getLogger(RemoteClusterCreateSubtask.class);
+public class RemoteProvisioningSubtask extends ProvisioningSubtask {
+  private static final Logger LOG = LoggerFactory.getLogger(RemoteProvisioningSubtask.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(CConfiguration.class, new CConfigurationCodec()).create();
-  private final RemoteClient remoteClientInternal;
+  private final RunnableTaskClient runnableTaskClient;
 
-  public RemoteClusterCreateSubtask(Provisioner provisioner, ProvisionerContext provisionerContext,
-                                    Function<Cluster, Optional<ProvisioningOp.Status>> transition,
-                                    DiscoveryServiceClient discoveryServiceClient) {
+  public RemoteProvisioningSubtask(Provisioner provisioner, ProvisionerContext provisionerContext,
+                                   Function<Cluster, Optional<ProvisioningOp.Status>> transition,
+                                   DiscoveryServiceClient discoveryServiceClient) {
     super(provisioner, provisionerContext, transition);
-    LOG.error("In the remote cluster create subtask constructor");
-    this.remoteClientInternal = null; //new RemoteClient(discoveryServiceClient, Constants.Service.TASK_WORKER,
-    //                                                 new DefaultHttpRequestConfig(false),
-    //                                                 String.format("%s", Constants.Gateway.INTERNAL_API_VERSION_3));
+    runnableTaskClient = new RunnableTaskClient(discoveryServiceClient);
+
   }
 
   @Override
@@ -67,17 +62,8 @@ public class RemoteClusterCreateSubtask extends ProvisioningSubtask {
     try {
       String param = GSON.toJson(config);
       LOG.error("Got config: " + param);
-      RunnableTaskRequest req = new RunnableTaskRequest(ProvisionerRunnableTask.class.getName(), param);
-      String reqBody = GSON.toJson(req);
-
-      HttpRequest.Builder requestBuilder = remoteClientInternal.requestBuilder(
-        HttpMethod.POST, String.format("/worker/run")).withBody(reqBody);
-
-      HttpRequest request = requestBuilder.build();
-      LOG.error("sending request to URL: " + request.getURL().toString());
-      HttpResponse response = remoteClientInternal.execute(request);
-
-      jsonResponse = response.getResponseBodyAsString();
+      RunnableTaskRequest req = new RunnableTaskRequest(ProvisionerRunnableTask.class.getName(), param, false);
+      jsonResponse = runnableTaskClient.submitTask(req);
     } catch (Exception ex) {
       LOG.warn(String.format("Exception caught during RemoteClusterCreateSubtask.execute, got json response: %s",
                              jsonResponse),

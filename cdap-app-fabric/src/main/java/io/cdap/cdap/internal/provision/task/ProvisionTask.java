@@ -69,6 +69,7 @@ public class ProvisionTask extends ProvisioningTask {
   private static final Logger LOG = LoggerFactory.getLogger(ProvisionTask.class);
   private static final Logger USERLOG = Loggers.mdcWrapper(LOG, Constants.Logging.EVENT_TYPE_TAG,
                                                            Constants.Logging.USER_LOG_TAG_VALUE);
+
   private final ProvisionerNotifier provisionerNotifier;
   private final ProgramStateWriter programStateWriter;
 
@@ -206,8 +207,16 @@ public class ProvisionTask extends ProvisioningTask {
     });
   }
 
-  private void notifyFailed(Throwable cause) {
+  protected void notifyFailed(Throwable cause) {
     programStateWriter.error(programRunId, cause);
     provisionerNotifier.deprovisioning(programRunId);
+  }
+
+  public ProvisionerNotifier getProvisionerNotifier() {
+    return provisionerNotifier;
+  }
+
+  public ProgramStateWriter getProgramStateWriter() {
+    return programStateWriter;
   }
 }

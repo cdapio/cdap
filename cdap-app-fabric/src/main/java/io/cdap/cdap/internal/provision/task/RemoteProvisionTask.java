@@ -39,34 +39,32 @@ import java.util.concurrent.TimeoutException;
  * Performs steps to provision a cluster for a program run. Before any operation is performed, state is persisted
  * to the ProvisionerStore to record what we are doing. This is done in case we crash in the middle of the task
  * and the task is later restarted. The operation state transition looks like:
- *
- *         --------------------------------- (state == NOT_FOUND) -------------------------------------|
- *         |                                                                                           |
- *         v                            |-- (state == FAILED) --> RequestingDelete --> PollingDelete --|
+ * <p>
+ * --------------------------------- (state == NOT_FOUND) -------------------------------------|
+ * |                                                                                           |
+ * v                            |-- (state == FAILED) --> RequestingDelete --> PollingDelete --|
  * RequestingCreate --> PollingCreate --|
- *                                      |-- (state == RUNNING) --> Initializing --> Created
- *
- *
+ * |-- (state == RUNNING) --> Initializing --> Created
+ * <p>
+ * <p>
  * PollingCreate -- (state == NOT_EXISTS) --> RequestCreate
- *
+ * <p>
  * PollingCreate -- (state == DELETING) --> PollingDelete
- *
+ * <p>
  * PollingCreate -- (state == ORPHANED) --> Failed
- *
+ * <p>
  * RequestingDelete -- (state == RUNNING) --> RequestingDelete
- *
+ * <p>
  * PollingDelete -- (state == RUNNING) --> Initializing --> Created
- *
+ * <p>
  * PollingDelete -- (state == FAILED || state == ORPHANED) --> Orphaned
- *
+ * <p>
  * PollingDelete -- (state == CREATING) --> PollingCreate
- *
+ * <p>
  * PollingDelete -- (state == NOT_FOUND and timeout reached) --> Failed
  */
-public class RemoteProvisionTask extends ProvisioningTask {
+public class RemoteProvisionTask extends ProvisionTask {
   private static final Logger LOG = LoggerFactory.getLogger(ProvisionTask.class);
-  private final ProvisionerNotifier provisionerNotifier;
-  private final ProgramStateWriter programStateWriter;
   private DiscoveryServiceClient discoveryServiceClient;
 
   public RemoteProvisionTask(ProvisioningTaskInfo initialTaskInfo, TransactionRunner transactionRunner,
@@ -74,9 +72,8 @@ public class RemoteProvisionTask extends ProvisioningTask {
                              ProvisionerNotifier provisionerNotifier, ProgramStateWriter programStateWriter,
                              int retryTimeLimitSecs,
                              DiscoveryServiceClient discoveryServiceClient) {
-    super(provisioner, provisionerContext, initialTaskInfo, transactionRunner, retryTimeLimitSecs);
-    this.provisionerNotifier = provisionerNotifier;
-    this.programStateWriter = programStateWriter;
+    super(initialTaskInfo, transactionRunner, provisioner, provisionerContext, provisionerNotifier,
+          programStateWriter, retryTimeLimitSecs);
     this.discoveryServiceClient = discoveryServiceClient;
   }
 
@@ -111,7 +108,7 @@ public class RemoteProvisionTask extends ProvisioningTask {
   }
 
   private ProvisioningSubtask createClusterCreateSubtask() {
-    return new RemoteClusterCreateSubtask(provisioner, provisionerContext, cluster -> {
+    return new RemoteProvisioningSubtask(provisioner, provisionerContext, cluster -> {
       if (cluster == null) {
         // this is in violation of the provisioner contract, but in case somebody writes a provisioner that
         // returns a null cluster.
@@ -127,7 +124,7 @@ public class RemoteProvisionTask extends ProvisioningTask {
   }
 
   private ProvisioningSubtask createPollingCreateSubtask() {
-    return new RemoteClusterPollSubtask(provisioner, provisionerContext, cluster -> {
+    return new RemoteProvisioningSubtask(provisioner, provisionerContext, cluster -> {
       switch (cluster.getStatus()) {
         case CREATING:
           return Optional.of(ProvisioningOp.Status.POLLING_CREATE);
@@ -152,12 +149,12 @@ public class RemoteProvisionTask extends ProvisioningTask {
       // should never get here
       throw new IllegalStateException(String.format("Unexpected cluster state %s while polling for cluster state.",
                                                     cluster.getStatus()));
-    });
+    }, this.discoveryServiceClient);
   }
 
   private ProvisioningSubtask createPollingDeleteSubtask() {
     long taskStartTime = System.currentTimeMillis();
-    return new ClusterPollSubtask(provisioner, provisionerContext, cluster -> {
+    return new RemoteProvisioningSubtask(provisioner, provisionerContext, cluster -> {
       switch (cluster.getStatus()) {
         case CREATING:
           // this would be really weird, but provisioners can do whatever they want
@@ -187,20 +184,16 @@ public class RemoteProvisionTask extends ProvisioningTask {
       // should never get here
       throw new IllegalStateException(String.format("Unexpected cluster state %s while polling for cluster state.",
                                                     cluster.getStatus()));
-    });
+    }, this.discoveryServiceClient);
   }
 
   private ProvisioningSubtask createInitializeSubtask(ProvisioningTaskInfo initialTaskInfo) {
-    return new ClusterInitializeSubtask(provisioner, provisionerContext, cluster -> {
-      provisionerNotifier.provisioned(programRunId, initialTaskInfo.getProgramOptions(),
-                                      initialTaskInfo.getProgramDescriptor(), initialTaskInfo.getUser(),
-                                      cluster, initialTaskInfo.getSecureKeysDir());
+    return new RemoteProvisioningSubtask(provisioner, provisionerContext, cluster -> {
+      getProvisionerNotifier().provisioned(programRunId, initialTaskInfo.getProgramOptions(),
+                                           initialTaskInfo.getProgramDescriptor(), initialTaskInfo.getUser(),
+                                           cluster, initialTaskInfo.getSecureKeysDir());
       return Optional.of(ProvisioningOp.Status.CREATED);
-    });
+    }, this.discoveryServiceClient);
   }
 
-  private void notifyFailed(Throwable cause) {
-    programStateWriter.error(programRunId, cause);
-    provisionerNotifier.deprovisioning(programRunId);
-  }
 }

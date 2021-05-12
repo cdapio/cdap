@@ -18,6 +18,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.internal.worker.RunnableTask;
+import io.cdap.cdap.common.internal.worker.RunnableTaskContext;
 import io.cdap.cdap.internal.app.runtime.codec.CConfigurationCodec;
 import io.cdap.cdap.internal.provision.task.SubtaskConfig;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
@@ -33,23 +35,26 @@ import java.util.Map;
 /**
  * Task to run provisoner stuff
  */
-public class ProvisionerRunnableTask extends RunnableTask {
+public class ProvisionerRunnableTask implements RunnableTask {
   private static final Logger LOG = LoggerFactory.getLogger(ProvisionerRunnableTask.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(CConfiguration.class, new CConfigurationCodec()).create();
 
   @Override
-  protected byte[] run(String param) throws Exception {
-    LOG.error("Got to the provisioner task in the runner with params: " + param);
-    SubtaskConfig config = GSON.fromJson(param, SubtaskConfig.class);
+  public void run(RunnableTaskContext context) throws Exception {
+    LOG.error("Got to the provisioner task in the runner with params: " + context.getParam());
+    SubtaskConfig config = GSON.fromJson(context.getParam(), SubtaskConfig.class);
     Provisioner provisioner = config.getProvisioner();
     ProvisionerContext provisionerContext = config.getProvisionerContext();
     Cluster nextCluster = provisioner.createCluster(provisionerContext);
     SSHContext sshContext = provisionerContext.getSSHContext();
     // ssh context can be null if ssh is not being used to submit job
     if (sshContext == null) {
-      return toBytes(new Cluster(nextCluster.getName(), nextCluster.getStatus(), nextCluster.getNodes(),
-                                 nextCluster.getProperties()));
+      context.writeResult(
+        toBytes(new Cluster(nextCluster.getName(), nextCluster.getStatus(), nextCluster.getNodes(),
+                            nextCluster.getProperties()))
+      );
+      return;
     }
 
     Map<String, String> properties = new HashMap<>(nextCluster.getProperties());
@@ -57,21 +62,12 @@ public class ProvisionerRunnableTask extends RunnableTask {
     provisionerContext.getSSHContext().getSSHKeyPair().ifPresent(sshKeyPair -> {
       properties.put(Constants.RuntimeMonitor.SSH_USER, sshKeyPair.getPublicKey().getUser());
     });
-    return toBytes(new Cluster(nextCluster.getName(), nextCluster.getStatus(), nextCluster.getNodes(), properties));
+    context.writeResult(
+      toBytes(new Cluster(nextCluster.getName(), nextCluster.getStatus(), nextCluster.getNodes(), properties)));
   }
 
   private byte[] toBytes(Object obj) {
     String json = GSON.toJson(obj);
     return json.getBytes();
-  }
-
-  @Override
-  protected void startUp() throws Exception {
-
-  }
-
-  @Override
-  protected void shutDown() throws Exception {
-
   }
 }
