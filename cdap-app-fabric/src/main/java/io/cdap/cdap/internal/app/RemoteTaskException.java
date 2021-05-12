@@ -14,13 +14,21 @@
  * the License.
  */
 
-package io.cdap.cdap.common.internal.worker;
+package io.cdap.cdap.internal.app;
+
+import javax.annotation.Nullable;
 
 /**
- * RunnableTask represents a task that can be launched by a Task worker service.
+ * Captures the stacktrace of exceptions from remote task
  */
-public interface RunnableTask {
+public class RemoteTaskException extends Exception {
 
-  void run(RunnableTaskContext context) throws Exception;
-
+  /**
+   *
+   * @param message String message for the exception
+   * @param cause {@link Throwable} cause for the exception, is nullable.
+   */
+  RemoteTaskException(String message, @Nullable Throwable cause) {
+    super(message, cause);
+  }
 }

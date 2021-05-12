@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.service.http;
 
+import com.google.gson.Gson;
 import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
@@ -26,6 +27,7 @@ import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
 import io.cdap.cdap.api.service.http.HttpServiceHandlerSpecification;
 import io.cdap.cdap.api.service.http.SystemHttpServiceContext;
+import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.NotFoundException;
@@ -34,10 +36,12 @@ import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.internal.app.RemoteTaskExecutor;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.MacroParser;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.services.DefaultSystemTableConfigurer;
+import io.cdap.cdap.internal.app.worker.SystemAppTask;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -60,9 +64,12 @@ import javax.annotation.Nullable;
  */
 public class BasicSystemHttpServiceContext extends BasicHttpServiceContext implements SystemHttpServiceContext {
 
+  private static final Gson GSON = new Gson();
+
   private final NamespaceId namespaceId;
   private final TransactionRunner transactionRunner;
   private final PreferencesFetcher preferencesFetcher;
+  private final RemoteTaskExecutor remoteTaskExecutor;
 
   /**
    * Creates a BasicSystemHttpServiceContext.
@@ -87,6 +94,7 @@ public class BasicSystemHttpServiceContext extends BasicHttpServiceContext imple
     this.namespaceId = program.getId().getNamespaceId();
     this.transactionRunner = transactionRunner;
     this.preferencesFetcher = preferencesFetcher;
+    this.remoteTaskExecutor = new RemoteTaskExecutor(cConf, discoveryServiceClient);
   }
 
   @Override
@@ -123,7 +131,7 @@ public class BasicSystemHttpServiceContext extends BasicHttpServiceContext imple
    * Get preferences for the supplied namespace.
    *
    * @param namespace the name of the namespace to fetch preferences for.
-   * @param resolved true if resolved properties are desired.
+   * @param resolved  true if resolved properties are desired.
    * @return Map containing the preferences for this namespace
    * @throws IOException if the preferencesFetcher could not complete the request.
    * @throws IllegalArgumentException if the supplied namespace doesn't exist.
@@ -136,5 +144,15 @@ public class BasicSystemHttpServiceContext extends BasicHttpServiceContext imple
     } catch (NotFoundException nfe) {
       throw new IllegalArgumentException(String.format("Namespace '%s' does not exist", namespace), nfe);
     }
+  }
+
+  @Override
+  public byte[] runTask(RunnableTaskRequest runnableTaskRequest) throws Exception {
+    String systemAppClassName = SystemAppTask.class.getName();
+    String systemAppParam = GSON.toJson(runnableTaskRequest);
+    RunnableTaskRequest taskRequest = RunnableTaskRequest.getBuilder(systemAppClassName)
+      .withParam(systemAppParam)
+      .build();
+    return remoteTaskExecutor.runTask(taskRequest);
   }
 }

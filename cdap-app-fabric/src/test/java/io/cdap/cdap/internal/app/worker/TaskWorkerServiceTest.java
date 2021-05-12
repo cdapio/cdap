@@ -19,12 +19,13 @@ package io.cdap.cdap.internal.app.worker;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.Gson;
+import io.cdap.cdap.api.service.worker.RunnableTask;
+import io.cdap.cdap.api.service.worker.RunnableTaskContext;
+import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
-import io.cdap.cdap.common.internal.worker.RunnableTask;
-import io.cdap.cdap.common.internal.worker.RunnableTaskContext;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.common.ContentProvider;
 import io.cdap.common.http.HttpRequest;
@@ -122,7 +123,7 @@ public class TaskWorkerServiceTest {
 
     // Post valid request
     String want = "100";
-    RunnableTaskRequest req = new RunnableTaskRequest(TestRunnableClass.class.getName(), want);
+    RunnableTaskRequest req = RunnableTaskRequest.getBuilder(TestRunnableClass.class.getName()).withParam(want).build();
     String reqBody = GSON.toJson(req);
     HttpResponse response = HttpRequests.execute(
       HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
@@ -141,7 +142,7 @@ public class TaskWorkerServiceTest {
     URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
 
     // Post invalid request
-    RunnableTaskRequest noClassReq = new RunnableTaskRequest("NoClass", "");
+    RunnableTaskRequest noClassReq = RunnableTaskRequest.getBuilder("NoClass").build();
     String reqBody = GSON.toJson(noClassReq);
     HttpResponse response = HttpRequests.execute(
       HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
@@ -161,7 +162,8 @@ public class TaskWorkerServiceTest {
     InetSocketAddress addr = taskWorkerService.getBindAddress();
     URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
 
-    RunnableTaskRequest request = new RunnableTaskRequest(TestRunnableClass.class.getName(), "1000");
+    RunnableTaskRequest request = RunnableTaskRequest.getBuilder(TestRunnableClass.class.getName()).
+      withParam("1000").build();
 
     String reqBody = GSON.toJson(request);
     List<Callable<HttpResponse>> calls = new ArrayList<>();

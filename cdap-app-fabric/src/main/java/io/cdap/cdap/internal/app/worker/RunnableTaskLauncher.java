@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.internal.app.worker;
 
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.internal.worker.RunnableTask;
-import io.cdap.cdap.common.internal.worker.RunnableTaskContext;
+import io.cdap.cdap.api.service.worker.RunnableTask;
+import io.cdap.cdap.api.service.worker.RunnableTaskContext;
+import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 
 import java.net.URI;
 import javax.annotation.Nullable;
@@ -27,28 +27,22 @@ import javax.annotation.Nullable;
  * RunnableTaskLauncher launches a {@link RunnableTask} by loading its class and calling its run method.
  */
 public class RunnableTaskLauncher {
-  private final CConfiguration cConf;
-
-  public RunnableTaskLauncher(CConfiguration cConf) {
-    this.cConf = cConf;
-  }
 
   public byte[] launchRunnableTask(RunnableTaskRequest request, @Nullable URI fileURI) throws Exception {
-
-    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-    if (classLoader == null) {
-      classLoader = getClass().getClassLoader();
-    }
+    ClassLoader classLoader = getClassLoader();
     Class<?> clazz = classLoader.loadClass(request.getClassName());
-
-    Object obj = clazz.getDeclaredConstructor().newInstance();
-
-    if (!(obj instanceof RunnableTask)) {
+    if (!RunnableTask.class.isAssignableFrom(clazz)) {
       throw new ClassCastException(String.format("%s is not a RunnableTask", request.getClassName()));
     }
-    RunnableTask runnableTask = (RunnableTask) obj;
-    RunnableTaskContext runnableTaskContext = new RunnableTaskContext(request.getParam(), fileURI);
+    RunnableTask runnableTask = (RunnableTask) clazz.getDeclaredConstructor().newInstance();
+    RunnableTaskContext runnableTaskContext = RunnableTaskContext.getBuilder().
+      withParam(request.getParam()).withFileURI(fileURI).build();
     runnableTask.run(runnableTaskContext);
     return runnableTaskContext.getResult();
+  }
+
+  private ClassLoader getClassLoader() {
+    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+    return classLoader == null ? getClass().getClassLoader() : classLoader;
   }
 }

@@ -20,10 +20,10 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.AbstractBodyConsumer;
-import io.cdap.cdap.common.internal.worker.RunnableTaskContext;
 import io.cdap.cdap.logging.gateway.handlers.AbstractLogHttpHandler;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
@@ -76,9 +76,9 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
   private final AtomicInteger inflightRequests = new AtomicInteger(0);
 
   @Inject
-  public TaskWorkerHttpHandlerInternal(CConfiguration cConf, Consumer<String> stopper) {
+  TaskWorkerHttpHandlerInternal(CConfiguration cConf, Consumer<String> stopper) {
     super(cConf);
-    runnableTaskLauncher = new RunnableTaskLauncher(cConf);
+    runnableTaskLauncher = new RunnableTaskLauncher();
     this.stopper = stopper;
   }
 
@@ -140,7 +140,8 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
         @Override
         protected void onFinish(HttpResponder responder, File uploadedFile) {
           try {
-            RunnableTaskRequest runnableTaskRequest = new RunnableTaskRequest(className, param);
+            RunnableTaskRequest runnableTaskRequest = RunnableTaskRequest.getBuilder(className).withParam(param)
+              .build();
             byte[] response = runnableTaskLauncher.launchRunnableTask(runnableTaskRequest, tmpFile.toURI());
             responder.sendByteArray(HttpResponseStatus.OK,
                                     response,
