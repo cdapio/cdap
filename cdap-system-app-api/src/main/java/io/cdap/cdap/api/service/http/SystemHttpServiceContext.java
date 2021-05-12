@@ -20,6 +20,7 @@ import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
+import io.cdap.cdap.internal.worker.api.RunnableTaskRequest;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 
 import java.io.IOException;
@@ -81,4 +82,12 @@ public interface SystemHttpServiceContext extends HttpServiceContext, Transactio
     throws IOException, IllegalArgumentException {
     throw new UnsupportedOperationException("Not implemented");
   }
+
+  /**
+   * Runs the task from {@link io.cdap.cdap.internal.worker.api.RunnableTaskRequest} remotely on a task worker
+   * @param runnableTaskRequest Details of the task
+   * @return byte[] result
+   * @throws IOException if there is a problem in connecting to remote worker
+   */
+  byte[] runTask(RunnableTaskRequest runnableTaskRequest) throws IOException;
 }

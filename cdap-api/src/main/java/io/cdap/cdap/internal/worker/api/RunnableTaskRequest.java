@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.worker;
+package io.cdap.cdap.internal.worker.api;
 
 /**
  * Request for launching a runnable task.
@@ -34,5 +34,11 @@ public class RunnableTaskRequest {
 
   public String getParam() {
     return param;
+  }
+
+  @Override
+  public String toString() {
+    String requestString = "RunnableTaskRequest{className=%s, param=%s}";
+    return String.format(requestString, className, param);
   }
 }

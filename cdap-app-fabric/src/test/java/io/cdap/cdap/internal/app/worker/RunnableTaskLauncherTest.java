@@ -17,8 +17,9 @@
 package io.cdap.cdap.internal.app.worker;
 
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.internal.worker.RunnableTask;
-import io.cdap.cdap.common.internal.worker.RunnableTaskContext;
+import io.cdap.cdap.internal.worker.api.RunnableTask;
+import io.cdap.cdap.internal.worker.api.RunnableTaskContext;
+import io.cdap.cdap.internal.worker.api.RunnableTaskRequest;
 import org.junit.Assert;
 import org.junit.Test;
 

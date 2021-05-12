@@ -16,12 +16,14 @@
 
 package io.cdap.cdap.internal.app.runtime.service.http;
 
+import com.google.gson.Gson;
 import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.metadata.MetadataReader;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
 import io.cdap.cdap.api.service.http.HttpServiceHandlerSpecification;
@@ -30,7 +32,12 @@ import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.common.service.Retries;
+import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
@@ -38,6 +45,7 @@ import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.MacroParser;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.services.DefaultSystemTableConfigurer;
+import io.cdap.cdap.internal.worker.api.RunnableTaskRequest;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -46,12 +54,19 @@ import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.transaction.TransactionException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TxRunnable;
+import io.cdap.common.http.HttpMethod;
+import io.cdap.common.http.HttpRequest;
+import io.cdap.common.http.HttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 
@@ -63,6 +78,12 @@ public class BasicSystemHttpServiceContext extends BasicHttpServiceContext imple
   private final NamespaceId namespaceId;
   private final TransactionRunner transactionRunner;
   private final PreferencesFetcher preferencesFetcher;
+  private final RemoteClient remoteTaskClient;
+  private static final Gson GSON = new Gson();
+  private static final int RETRY_LIMIT = 10;
+  private static final int RETRY_DELAY = 500;
+  private static final String TASK_WORKER_URL = "/worker/run";
+  private static final Logger LOG = LoggerFactory.getLogger(BasicSystemHttpServiceContext.class);
 
   /**
    * Creates a BasicSystemHttpServiceContext.
@@ -87,6 +108,9 @@ public class BasicSystemHttpServiceContext extends BasicHttpServiceContext imple
     this.namespaceId = program.getId().getNamespaceId();
     this.transactionRunner = transactionRunner;
     this.preferencesFetcher = preferencesFetcher;
+    this.remoteTaskClient = new RemoteClient(discoveryServiceClient, Constants.Service.TASK_WORKER,
+                                             new DefaultHttpRequestConfig(false),
+                                             Constants.Gateway.INTERNAL_API_VERSION_3);
   }
 
   @Override
@@ -137,4 +161,22 @@ public class BasicSystemHttpServiceContext extends BasicHttpServiceContext imple
       throw new IllegalArgumentException(String.format("Namespace '%s' does not exist", namespace), nfe);
     }
   }
+
+  @Override
+  public byte[] runTask(RunnableTaskRequest runnableTaskRequest) throws IOException {
+    HttpRequest.Builder requestBuilder = remoteTaskClient.requestBuilder(HttpMethod.POST, TASK_WORKER_URL);
+    HttpRequest httpRequest = requestBuilder.withBody(GSON.toJson(runnableTaskRequest)).build();
+    return Retries.callWithRetries(() -> {
+      HttpResponse httpResponse = remoteTaskClient.execute(httpRequest);
+      if (httpResponse.getResponseCode() == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
+        throw new RetryableException(
+          String.format("Received response code %s for %s", httpResponse.getResponseCode(), runnableTaskRequest));
+      } else if (httpResponse.getResponseCode() != 200) {
+        LOG.debug("Received response code {} for {}", httpResponse.getResponseCode(), runnableTaskRequest);
+      }
+      // If this is not a 200 response, error message is expected to be in the body
+      return httpResponse.getResponseBody();
+    }, RetryStrategies.limit(RETRY_LIMIT, RetryStrategies.fixDelay(RETRY_DELAY, TimeUnit.MILLISECONDS)));
+  }
+
 }

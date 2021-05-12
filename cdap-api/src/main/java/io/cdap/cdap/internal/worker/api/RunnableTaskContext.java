@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.common.internal.worker;
+package io.cdap.cdap.internal.worker.api;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
