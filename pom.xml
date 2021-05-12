@@ -1793,7 +1793,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-checkstyle-plugin</artifactId>
-          <version>2.17</version>
+          <version>3.1.2</version>
           <executions>
             <execution>
               <id>validate</id>
@@ -1815,7 +1815,7 @@
             <dependency>
               <groupId>com.puppycrawl.tools</groupId>
               <artifactId>checkstyle</artifactId>
-              <version>6.19</version>
+              <version>8.42</version>
             </dependency>
           </dependencies>
         </plugin>
@@ -2009,7 +2009,7 @@
                 </bottom>
                 <doctitle>${project.name} ${project.version}</doctitle>
                 <links>
-                  <link>https://caskdata.github.io/docs-site/hosted-javadocs/jsr305-${findbugs.jsr305.version}-javadoc/</link>
+                  <link>https://cdapio.github.io/docs-site/hosted-javadocs/jsr305-${findbugs.jsr305.version}-javadoc/</link>
                   <link>http://avro.apache.org/docs/${avro.version}/api/java/</link>
                   <link>http://docs.oracle.com/javaee/${jee.version}/api/</link>
                   <link>http://hadoop.apache.org/docs/r${hadoop.version}/api/</link>
@@ -2859,7 +2859,7 @@
           </bottom>
           <doctitle>${project.name} ${project.version}</doctitle>
           <links>
-            <link>https://caskdata.github.io/docs-site/hosted-javadocs/jsr305-${findbugs.jsr305.version}-javadoc/</link>
+            <link>https://cdapio.github.io/docs-site/hosted-javadocs/jsr305-${findbugs.jsr305.version}-javadoc/</link>
             <link>http://avro.apache.org/docs/${avro.version}/api/java/</link>
             <link>http://docs.oracle.com/javaee/${jee.version}/api/</link>
             <link>http://hadoop.apache.org/docs/r${hadoop.version}/api/</link>

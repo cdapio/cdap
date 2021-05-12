@@ -25,12 +25,12 @@ import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.api.metrics.MetricsWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.conf.Constants.Metrics;
 import io.cdap.cdap.internal.io.DatumReaderFactory;
 import io.cdap.cdap.internal.io.SchemaGenerator;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metrics.process.loader.MetricsWriterProvider;
 import io.cdap.cdap.metrics.store.MetricDatasetFactory;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

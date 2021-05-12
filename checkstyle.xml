@@ -70,9 +70,6 @@ page at http://checkstyle.sourceforge.net/config.html -->
   <!-- All Java AST specific tests live under TreeWalker module. -->
   <module name="TreeWalker">
 
-    <!-- required for SupressionCommentFilter and SuppressWithNearbyCommentFilter -->
-    <module name="FileContentsHolder"/>
-
     <!--
 
     IMPORT CHECKS
@@ -97,6 +94,7 @@ page at http://checkstyle.sourceforge.net/config.html -->
       <!-- This ensures that static imports go to the end. -->
       <property name="option" value="bottom"/>
       <property name="tokens" value="STATIC_IMPORT, IMPORT"/>
+      <property name="separated" value="true"/>
     </module>
 
     <module name="IllegalImport">
@@ -125,14 +123,10 @@ page at http://checkstyle.sourceforge.net/config.html -->
     <!-- Checks for Javadoc comments.                     -->
     <!-- See http://checkstyle.sf.net/config_javadoc.html -->
     <module name="JavadocMethod">
-      <property name="scope" value="protected"/>
+      <property name="accessModifiers" value="public, protected, package"/>
       <property name="severity" value="error"/>
-      <property name="allowMissingJavadoc" value="true"/>
       <property name="allowMissingParamTags" value="true"/>
       <property name="allowMissingReturnTag" value="true"/>
-      <property name="allowMissingThrowsTags" value="true"/>
-      <property name="allowThrowsTagsForSubclasses" value="true"/>
-      <property name="allowUndeclaredRTE" value="true"/>
     </module>
 
     <module name="JavadocType">
@@ -234,25 +228,9 @@ page at http://checkstyle.sourceforge.net/config.html -->
 
     <!--
 
-    LENGTH and CODING CHECKS
+    CODING CHECKS
 
     -->
-
-    <module name="LineLength">
-      <!-- Checks if a line is too long. -->
-      <property name="max" value="120" default="120"/>
-      <property name="severity" value="error"/>
-
-      <!--
-        The default ignore pattern exempts the following elements:
-          - import statements
-          - long URLs inside comments
-      -->
-
-      <property name="ignorePattern"
-          value="${com.puppycrawl.tools.checkstyle.checks.sizes.LineLength.ignorePattern}"
-          default="^(package .*;\s*)|(import .*;\s*)|( *\* *https?://.*)$"/>
-    </module>
 
     <module name="LeftCurly">
       <!-- Checks for placement of the left curly brace ('{'). -->
@@ -384,6 +362,36 @@ page at http://checkstyle.sourceforge.net/config.html -->
       <property name="severity" value="error"/>
     </module>
 
+    <module name="SuppressionCommentFilter">
+      <property name="offCommentFormat" value="CHECKSTYLE OFF: (.+)" />
+      <property name="onCommentFormat" value="CHECKSTYLE ON" />
+      <property name="checkFormat" value="Javadoc.*"/>
+      <property name="messageFormat" value="$1"/>
+    </module>
+
+  </module>
+
+  <!--
+
+  LENGTH CHECKS
+
+  -->
+
+  <module name="LineLength">
+    <!-- Checks if a line is too long. -->
+    <property name="max" value="120" default="120"/>
+    <property name="severity" value="error"/>
+    <property name="fileExtensions" value="java, scala"/>
+
+    <!--
+      The default ignore pattern exempts the following elements:
+        - import statements
+        - long URLs inside comments
+    -->
+
+    <property name="ignorePattern"
+              value="${com.puppycrawl.tools.checkstyle.checks.sizes.LineLength.ignorePattern}"
+              default="^(package .*;\s*)|(import .*;\s*)|( *\* *https?://.*)$"/>
   </module>
 
   <!--
@@ -393,13 +401,6 @@ page at http://checkstyle.sourceforge.net/config.html -->
   <module name="SuppressionFilter">
     <property name="file" value="suppressions.xml"/>
     <property name="optional" value="true"/>
-  </module>
-
-  <module name="SuppressionCommentFilter">
-    <property name="offCommentFormat" value="CHECKSTYLE OFF: (.+)" />
-    <property name="onCommentFormat" value="CHECKSTYLE ON" />
-    <property name="checkFormat" value="Javadoc.*"/>
-    <property name="messageFormat" value="$1"/>
   </module>
 
 </module>

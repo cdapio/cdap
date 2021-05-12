@@ -32,7 +32,7 @@ public final class MasterUtils {
   /**
    * Explicitly disallow default constructor for utility class
    */
-  private MasterUtils(){}
+  private MasterUtils() { }
 
   /**
    * Creates a set of system service resource keys
