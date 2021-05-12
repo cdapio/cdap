@@ -377,6 +377,7 @@ public final class Constants {
      */
     public static final String CONTAINER_COUNT = "task.worker.container.count";
     public static final String POOL_CHECK_INTERVAL = "task.worker.pool.check.interval";
+    public static final String POOL_ENABLE = "task.worker.pool.enable";
 
     /**
      * Task worker container configurations

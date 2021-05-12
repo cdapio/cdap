@@ -4198,6 +4198,13 @@
   </property>
 
   <!-- Task Worker Configuration  -->
+  <property>
+    <name>task.worker.pool.enable</name>
+    <value>false</value>
+    <description>
+      If true, task worker pool will be created with twill application
+    </description>
+  </property>
 
   <property>
     <name>task.worker.pool.check.interval</name>
