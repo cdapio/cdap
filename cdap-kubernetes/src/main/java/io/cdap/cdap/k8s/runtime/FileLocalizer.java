@@ -22,7 +22,6 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
 import org.apache.twill.api.LocalFile;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.internal.Constants;
 import org.apache.twill.internal.TwillRuntimeSpecification;
 import org.apache.twill.internal.json.TwillRuntimeSpecificationAdapter;
 import org.slf4j.Logger;
@@ -49,10 +48,12 @@ public class FileLocalizer implements MasterEnvironmentRunnable {
   private static final Logger LOG = LoggerFactory.getLogger(FileLocalizer.class);
 
   private final MasterEnvironmentContext context;
+  private final MasterEnvironment masterEnv;
   private volatile boolean stopped;
 
-  public FileLocalizer(MasterEnvironmentContext context, @SuppressWarnings("unused") MasterEnvironment masterEnv) {
+  public FileLocalizer(MasterEnvironmentContext context, MasterEnvironment masterEnv) {
     this.context = context;
+    this.masterEnv = masterEnv;
   }
 
   @Override
@@ -64,17 +65,17 @@ public class FileLocalizer implements MasterEnvironmentRunnable {
 
     // Localize the runtime config jar
     URI uri = URI.create(args[0]);
-    Location runtimeConfigLocation;
-    if (context.getLocationFactory().getHomeLocation().toURI().getScheme().equals(uri.getScheme())) {
-      runtimeConfigLocation = context.getLocationFactory().create(uri);
-    } else {
-      runtimeConfigLocation = new LocalLocationFactory().create(new File(uri).toURI());
-    }
+    Location runtimeConfigLocation = new LocalLocationFactory().create(new File(uri.getPath()).toURI());
 
-    Path runtimeConfigDir = expand(runtimeConfigLocation, Paths.get(Constants.Files.RUNTIME_CONFIG_JAR));
+    FileFetcher fileFetcher = new FileFetcher(masterEnv.getDiscoveryServiceClientSupplier().get());
+    fileFetcher.download(uri, runtimeConfigLocation);
 
-    try (Reader reader = Files.newBufferedReader(runtimeConfigDir.resolve(Constants.Files.TWILL_SPEC),
-                                                 StandardCharsets.UTF_8)) {
+    Path runtimeConfigDir = expand(runtimeConfigLocation,
+                                   Paths.get(org.apache.twill.internal.Constants.Files.RUNTIME_CONFIG_JAR));
+
+    try (Reader reader = Files.newBufferedReader(
+      runtimeConfigDir.resolve(org.apache.twill.internal.Constants.Files.TWILL_SPEC),
+      StandardCharsets.UTF_8)) {
       TwillRuntimeSpecification twillRuntimeSpec = TwillRuntimeSpecificationAdapter.create().fromJson(reader);
 
       Path targetDir = Paths.get(System.getProperty("user.dir"));
@@ -86,13 +87,15 @@ public class FileLocalizer implements MasterEnvironmentRunnable {
           break;
         }
 
-        Location location = context.getLocationFactory().create(localFile.getURI());
+        Location localizedFile = new LocalLocationFactory().create(new File(localFile.getURI().getPath()).toURI());
+        fileFetcher.download(localFile.getURI(), localizedFile);
+
         Path targetPath = targetDir.resolve(localFile.getName());
 
         if (localFile.isArchive()) {
-          expand(location, targetPath);
+          expand(localizedFile, targetPath);
         } else {
-          copy(location, targetPath);
+          copy(localizedFile, targetPath);
         }
       }
     }
