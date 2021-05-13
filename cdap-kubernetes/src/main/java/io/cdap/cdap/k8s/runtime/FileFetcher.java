@@ -83,24 +83,21 @@ class FileFetcher {
 
         @Override
         public void onFinished() {
-          try {
-            outputStream.close();
-          } catch (Exception e) {
-            LOG.error("Failed to close the file downloaded from {} to {}", sourceURI, targetLocation.toURI());
-          }
+          // Close output stream later, so any exception can be surfaced.
         }
       }).build();
     HttpResponse httpResponse = HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
     httpResponse.consumeContent();
+    outputStream.close();
 
     if (httpResponse.getResponseCode() != HttpResponseStatus.OK.code()) {
       if (httpResponse.getResponseCode() == HttpResponseStatus.NOT_FOUND.code()) {
         throw new FileNotFoundException(httpResponse.getResponseBodyAsString());
-      } else if (httpResponse.getResponseCode() == HttpResponseStatus.BAD_REQUEST.code()) {
-        throw new BadRequestException(httpResponse.getResponseBodyAsString());
-      } else {
-        throw new IOException(httpResponse.getResponseBodyAsString());
       }
+      if (httpResponse.getResponseCode() == HttpResponseStatus.BAD_REQUEST.code()) {
+        throw new BadRequestException(httpResponse.getResponseBodyAsString());
+      }
+      throw new IOException(httpResponse.getResponseBodyAsString());
     }
   }
 }
