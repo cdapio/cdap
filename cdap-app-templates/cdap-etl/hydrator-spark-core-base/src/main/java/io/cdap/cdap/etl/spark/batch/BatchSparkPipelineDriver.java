@@ -26,10 +26,8 @@ import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.api.spark.JavaSparkMain;
-import io.cdap.cdap.api.spark.SparkClientContext;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.etl.api.JoinElement;
-import io.cdap.cdap.etl.api.batch.BatchContext;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngine;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDataset;
@@ -39,7 +37,6 @@ import io.cdap.cdap.etl.batch.BatchPhaseSpec;
 import io.cdap.cdap.etl.batch.PipelinePluginInstantiator;
 import io.cdap.cdap.etl.batch.connector.SingleConnectorFactory;
 import io.cdap.cdap.etl.common.Constants;
-import io.cdap.cdap.etl.common.PipelineRuntime;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.SetMultimapCodec;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
@@ -248,7 +245,7 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
         String joinStageName = joinStage.getStageName();
 
         // If the input collection is already a SQL Engine collection, there's no need to push.
-        if (inputDataCollections.get(joinStageName) instanceof SQLEngineCollection) {
+        if (inputDataCollections.get(joinStageName) instanceof SQLBackedCollection) {
           continue;
         }
 
@@ -288,7 +285,7 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
         // If there is a broadcast stage in this join, this is a potential reason to not execute the join in the SQL
         // engine.
         containsBroadcastStage = true;
-      } else if (inputDataCollections.get(stage.getStageName()) instanceof SQLEngineCollection) {
+      } else if (inputDataCollections.get(stage.getStageName()) instanceof SQLBackedCollection) {
         // If any of the existing non-broadcast input collections already exists on the SQL engine, we should
         // execute this operation in the SQL engine.
         return true;

@@ -63,6 +63,8 @@ import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import io.cdap.cdap.etl.planner.CombinerDag;
 import io.cdap.cdap.etl.planner.Dag;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.etl.spark.batch.SQLBackedCollection;
+import io.cdap.cdap.etl.spark.batch.WrappedSQLEngineCollection;
 import io.cdap.cdap.etl.spark.function.AlertPassFilter;
 import io.cdap.cdap.etl.spark.function.BatchSinkFunction;
 import io.cdap.cdap.etl.spark.function.ErrorPassFilter;
@@ -305,7 +307,7 @@ public abstract class SparkPipelineRunner {
 
         SparkCompute<Object, Object> sparkCompute = pluginContext.newPluginInstance(stageName, macroEvaluator);
         SparkCollection<Object> computed = stageData.compute(stageSpec, sparkCompute);
-        addEmitted(emittedBuilder, pipelinePhase, stageSpec, computed.map(new RecordInfoWrapper<>(stageName)),
+        addEmitted(emittedBuilder, pipelinePhase, stageSpec, mapToRecordInfoCollection(stageName, computed),
                    groupedDag, branchers, shufflers, false, false);
 
       } else if (SparkSink.PLUGIN_TYPE.equals(pluginType)) {
@@ -337,13 +339,13 @@ public abstract class SparkPipelineRunner {
                                                     stageSpec, functionCacheFactory, plugin,
                                                     numPartitions, collector, shufflers);
         addEmitted(emittedBuilder, pipelinePhase, stageSpec,
-                   joined.map(new RecordInfoWrapper<>(stageName)), groupedDag, branchers, shufflers, false, false);
+                   mapToRecordInfoCollection(stageName, joined), groupedDag, branchers, shufflers, false, false);
 
       } else if (Windower.PLUGIN_TYPE.equals(pluginType)) {
 
         Windower windower = pluginContext.newPluginInstance(stageName, macroEvaluator);
         SparkCollection<Object> windowed = stageData.window(stageSpec, windower);
-        addEmitted(emittedBuilder, pipelinePhase, stageSpec, windowed.map(new RecordInfoWrapper<>(stageName)),
+        addEmitted(emittedBuilder, pipelinePhase, stageSpec, mapToRecordInfoCollection(stageName, windowed),
                    groupedDag, branchers, shufflers, false, false);
 
       } else if (AlertPublisher.PLUGIN_TYPE.equals(pluginType)) {
@@ -898,6 +900,25 @@ public abstract class SparkPipelineRunner {
     return !Sets.intersection(dag.getSources(), parents).isEmpty();
   }
 
+  /**
+   * Wraps a Spark Collection with RecordInfo for the stage.
+   *
+   * @param stageName name of the stage to use.
+   * @param collection Collection to use.
+   * @return Instance of a spark collection with RecordInfo attached to output records.
+   */
+  private SparkCollection<RecordInfo<Object>> mapToRecordInfoCollection(String stageName,
+                                                                        SparkCollection<Object> collection) {
+    // For SQLEngineCollection or WrappedSparkCollection, we wrap the collection in order to not force a
+    // premature/unnecessary pull operation from the SQL engine.
+    if (collection instanceof SQLBackedCollection) {
+      return new WrappedSQLEngineCollection<>((SQLBackedCollection<Object>) collection,
+                                              (c) -> c.map(new RecordInfoWrapper<>(stageName)));
+    }
+
+    return collection.map(new RecordInfoWrapper<>(stageName));
+  }
+
   private EmittedRecords.Builder addEmitted(EmittedRecords.Builder builder, PipelinePhase pipelinePhase,
                                             StageSpec stageSpec, SparkCollection<RecordInfo<Object>> stageData,
                                             Dag dag, Set<String> branchers, Set<String> shufflers,
@@ -922,15 +943,34 @@ public abstract class SparkPipelineRunner {
       // set collections for each port, implemented as a filter on the port.
       for (StageSpec.Port portSpec : stageSpec.getOutputPorts().values()) {
         String port = portSpec.getPort();
-        SparkCollection<Object> portData = stageData.flatMap(stageSpec, new OutputPassFilter<Object>(port));
+        SparkCollection<Object> portData = filterPortRecords(stageSpec, stageData, port);
         builder.addPort(port, portData);
       }
     } else {
-      SparkCollection<Object> outputs = stageData.flatMap(stageSpec, new OutputPassFilter<Object>());
+      SparkCollection<Object> outputs = filterPortRecords(stageSpec, stageData, null);
       builder.setOutput(outputs);
     }
 
     return builder;
+  }
+
+  /**
+   * Filter output records for a given port using an {@link OutputPassFilter}.
+   *
+   * @param stageSpec Pipeline Stage specification.
+   * @param stageData Spark Collection.
+   * @param port port to use for filtering, can be null.
+   * @return {@link SparkCollection} after the filter has been applied.
+   */
+  private SparkCollection<Object> filterPortRecords(StageSpec stageSpec,
+                                                    SparkCollection<RecordInfo<Object>> stageData,
+                                                    @Nullable String port) {
+    if (stageData instanceof SQLBackedCollection) {
+      return new WrappedSQLEngineCollection<>((SQLBackedCollection<RecordInfo<Object>>) stageData,
+                                              (c) -> c.flatMap(stageSpec, new OutputPassFilter<>(port)));
+    }
+
+    return stageData.flatMap(stageSpec, new OutputPassFilter<>(port));
   }
 
   /**
