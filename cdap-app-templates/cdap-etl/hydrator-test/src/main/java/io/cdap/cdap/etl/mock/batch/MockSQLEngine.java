@@ -22,6 +22,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Iterables;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
+import io.cdap.cdap.api.RuntimeContext;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
@@ -29,6 +30,8 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.cdap.api.plugin.PluginPropertyField;
+import io.cdap.cdap.etl.api.PipelineConfigurer;
+import io.cdap.cdap.etl.api.batch.BatchContext;
 import io.cdap.cdap.etl.api.engine.sql.BatchSQLEngine;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngine;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngineException;
@@ -59,6 +62,8 @@ public class MockSQLEngine extends BatchSQLEngine<Object, Object, Object, Object
   public static final String NAME = "MockSQLEngine";
   private static final Gson GSON = new Gson();
   private final MockSQLEngine.Config config;
+  boolean calledPrepareRun = false;
+  boolean calledOnRunFinish = false;
 
   public MockSQLEngine(MockSQLEngine.Config config) {
     this.config = config;
@@ -75,14 +80,30 @@ public class MockSQLEngine extends BatchSQLEngine<Object, Object, Object, Object
   }
 
   @Override
+  public void prepareRun(RuntimeContext context) throws Exception {
+    calledPrepareRun = true;
+  }
+
+  @Override
+  public void onRunFinish(boolean succeeded, RuntimeContext context) {
+    calledOnRunFinish = true;
+  }
+
+  @Override
   public SQLPushDataset<StructuredRecord, Object, Object> getPushProvider(SQLPushRequest pushRequest)
     throws SQLEngineException {
+    if (!calledPrepareRun) {
+      throw new SQLEngineException("prepareRun not called");
+    }
     return new MockPushDataset(pushRequest, config.outputDirName);
   }
 
   @Override
   public SQLPullDataset<StructuredRecord, Object, Object> getPullProvider(SQLPullRequest pullRequest)
     throws SQLEngineException {
+    if (!calledPrepareRun) {
+      throw new SQLEngineException("prepareRun not called");
+    }
     return new MockPullDataset(pullRequest, config.inputDirName);
   }
 
@@ -98,6 +119,9 @@ public class MockSQLEngine extends BatchSQLEngine<Object, Object, Object, Object
 
   @Override
   public SQLDataset join(SQLJoinRequest joinRequest) throws SQLEngineException {
+    if (!calledPrepareRun) {
+      throw new SQLEngineException("prepareRun not called");
+    }
     return new SQLDataset() {
       @Override
       public String getDatasetName() {
@@ -118,7 +142,12 @@ public class MockSQLEngine extends BatchSQLEngine<Object, Object, Object, Object
 
   @Override
   public void cleanup(String datasetName) throws SQLEngineException {
-    // no-op
+    if (!calledPrepareRun) {
+      throw new SQLEngineException("prepareRun not called");
+    }
+    if (!calledOnRunFinish) {
+      throw new SQLEngineException("onRunFinish not called");
+    }
   }
 
   public static ETLPlugin getPlugin(String name, String inputDirName, String outputDirName, Schema outputSchema) {

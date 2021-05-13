@@ -16,7 +16,9 @@
 
 package io.cdap.cdap.etl.api.engine.sql;
 
+import io.cdap.cdap.api.RuntimeContext;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
+import io.cdap.cdap.etl.api.StageContext;
 import io.cdap.cdap.etl.api.batch.BatchContext;
 
 /**
@@ -36,12 +38,12 @@ public abstract class BatchSQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT>
   }
 
   @Override
-  public void prepareRun(BatchContext context) throws Exception {
+  public void prepareRun(RuntimeContext context) throws Exception {
     // no-op
   }
 
   @Override
-  public void onRunFinish(boolean succeeded, BatchContext context) {
+  public void onRunFinish(boolean succeeded, RuntimeContext context) {
     // no-op
   }
 }

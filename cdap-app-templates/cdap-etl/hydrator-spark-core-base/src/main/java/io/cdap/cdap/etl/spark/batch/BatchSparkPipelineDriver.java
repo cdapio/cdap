@@ -26,8 +26,10 @@ import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.api.spark.JavaSparkMain;
+import io.cdap.cdap.api.spark.SparkClientContext;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.etl.api.JoinElement;
+import io.cdap.cdap.etl.api.batch.BatchContext;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngine;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDataset;
@@ -37,6 +39,7 @@ import io.cdap.cdap.etl.batch.BatchPhaseSpec;
 import io.cdap.cdap.etl.batch.PipelinePluginInstantiator;
 import io.cdap.cdap.etl.batch.connector.SingleConnectorFactory;
 import io.cdap.cdap.etl.common.Constants;
+import io.cdap.cdap.etl.common.PipelineRuntime;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.SetMultimapCodec;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
@@ -166,6 +169,9 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
         collectors.put(spec.getName(), new SparkStageStatisticsCollector(jsc));
       }
     }
+
+    boolean isSuccessful = true;
+
     try {
       PipelinePluginInstantiator pluginInstantiator =
         new PipelinePluginInstantiator(pluginContext, sec.getMetrics(), phaseSpec, new SingleConnectorFactory());
@@ -178,11 +184,13 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
       if (phaseSpec.getSQLEngineStageSpec() != null) {
         String sqlEngineStage = SQLEngineUtils.buildStageName(phaseSpec.getSQLEngineStageSpec().getPlugin().getName());
 
+        // Instantiate SQL engine and prepare run.
         try {
           Object instance = pluginInstantiator.newPluginInstance(sqlEngineStage);
           sqlEngineAdapter = new BatchSQLEngineAdapter<Object>((SQLEngine<?, ?, ?, ?>) instance,
-                                                               sec.getMetrics(),
+                                                               sec,
                                                                collectors);
+          sqlEngineAdapter.prepareRun();
         } catch (InstantiationException ie) {
           LOG.error("Could not create plugin instance for SQLEngine class", ie);
         } finally {
@@ -194,11 +202,18 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
 
       runPipeline(phaseSpec, BatchSource.PLUGIN_TYPE, sec, stagePartitions, pluginInstantiator, collectors,
                   sinkFactory.getUncombinableSinks(), shouldConsolidateStages, shouldCacheFunctions);
+    } catch (Throwable t) {
+      // Mark this execution as not successful.
+      isSuccessful = false;
+
+      // Rethrow
+      throw t;
     } finally {
       updateWorkflowToken(sec.getWorkflowToken(), collectors);
 
       // Close SQL Engine Adapter if neeeded,
       if (sqlEngineAdapter != null) {
+        sqlEngineAdapter.onRunFinish(isSuccessful);
         sqlEngineAdapter.close();
       }
     }

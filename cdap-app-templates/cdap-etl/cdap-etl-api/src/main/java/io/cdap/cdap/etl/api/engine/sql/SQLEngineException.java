@@ -21,8 +21,15 @@ package io.cdap.cdap.etl.api.engine.sql;
  */
 public class SQLEngineException extends RuntimeException {
 
+  public SQLEngineException(String message) {
+    super(message);
+  }
+
   public SQLEngineException(Throwable cause) {
     super("Error when executing operation on SQL Engine", cause);
   }
 
+  public SQLEngineException(String message, Throwable cause) {
+    super(message, cause);
+  }
 }
