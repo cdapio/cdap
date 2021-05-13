@@ -24,12 +24,9 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.DFSLocationModule;
-import io.cdap.cdap.common.guice.SupplierProviderBridge;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.discovery.DiscoveryService;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import javax.annotation.Nullable;
 

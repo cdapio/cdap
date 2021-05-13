@@ -16,110 +16,147 @@
 
 package io.cdap.cdap.internal.app.services.http.handlers;
 
-import io.cdap.cdap.AllProgramsApp;
-import io.cdap.cdap.common.conf.Constants;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
-import io.cdap.cdap.common.internal.remote.RemoteClient;
-import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.gateway.handlers.FileFetcherHttpHandlerInternal;
-import io.cdap.cdap.internal.AppFabricTestHelper;
-import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.common.http.HttpContentConsumer;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
+import io.cdap.http.NettyHttpService;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
-import org.bouncycastle.util.Arrays;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.util.Base64;
+import java.util.Random;
 
 /**
  * Test for {@link FileFetcherHttpHandlerInternal}.
  */
-public class FileFetcherHttpHandlerInternalTest extends AppFabricTestBase {
+public class FileFetcherHttpHandlerInternalTest {
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
   private static final Logger LOG = LoggerFactory.getLogger(FileFetcherHttpHandlerInternalTest.class);
-
-  private static DiscoveryServiceClient discoveryServiceClient;
+  private static NettyHttpService httpService;
+  private static URL baseURL;
 
   @BeforeClass
-  public static void setup() {
-    discoveryServiceClient = getInjector().getInstance(DiscoveryServiceClient.class);
+  public static void setup() throws Exception {
+    Injector injector = Guice.createInjector(
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(LocationFactory.class).to(LocalLocationFactory.class);
+        }
+      });
+
+    FileFetcherHttpHandlerInternal handler = injector.getInstance(FileFetcherHttpHandlerInternal.class);
+
+    httpService = NettyHttpService.builder("FileFetcherHttpHandlerInternalTest")
+      .setHttpHandlers(handler)
+      .build();
+
+    httpService.start();
+
+    InetSocketAddress addr = httpService.getBindAddress();
+    baseURL = new URL(String.format("http://%s:%d", addr.getHostName(), addr.getPort()));
   }
 
   @AfterClass
-  public static void stop() {
-    AppFabricTestHelper.shutdown();
+  public static void stop() throws Exception {
+    httpService.stop();
   }
 
   @Test
-  public void testDownloadFile() throws IOException {
-    // Create a jar file
-    LocalLocationFactory locationFactory = new LocalLocationFactory(tmpFolder.newFolder());
-    Location location = AppJarHelper.createDeploymentJar(locationFactory, AllProgramsApp.class);
-    File orgFile = new File(location.toURI().getPath());
+  public void testSuccess() throws Exception {
+    // Create a file.
+    File srcFile = TEMP_FOLDER.newFile("src_file");
+    try (FileOutputStream out = new FileOutputStream(srcFile)) {
+      byte[] bytes = new byte[256 * 1024 + 7];
+      new Random().nextBytes(bytes);
+      out.write(bytes);
+    }
 
-    // Set the target file path to store downloaded file content.
-    File targetFile = new File(tmpFolder.newFolder(), "target.jar");
-    Location targetLocation = new LocalLocationFactory().create(targetFile.toURI());
-
-    // Download file from AppFabric
-    RemoteClient remoteClient = new RemoteClient(
-      discoveryServiceClient,
-      Constants.Service.APP_FABRIC_HTTP,
-      new DefaultHttpRequestConfig(false), Constants.Gateway.INTERNAL_API_VERSION_3);
-    OutputStream outputStream = targetLocation.getOutputStream();
-
-    HttpRequest request = remoteClient.requestBuilder(
-      HttpMethod.GET,
-      String.format("location/%s", Base64.getEncoder().encodeToString(location.toURI().toString().getBytes())))
-      .withContentConsumer(
-      new HttpContentConsumer() {
-      @Override
-      public boolean onReceived(ByteBuffer chunk) {
-        try {
-          byte[] bytes = new byte[chunk.remaining()];
-          chunk.get(bytes, 0, bytes.length);
-          outputStream.write(bytes);
-          outputStream.flush();
-        } catch (IOException e) {
-          LOG.error("Failed to write to orgFile {}", targetLocation.toURI());
-          return false;
-        }
-        return true;
-      }
-
-      @Override
-      public void onFinished() {
-        try {
-        outputStream.close();
-        } catch (Exception e) {
-          LOG.error("Failed to close to orgFile {}", targetLocation.toURI());
-        }
-      }
-    }).build();
-    HttpResponse httpResponse = HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
-    httpResponse.consumeContent();
+    // Download the file.
+    File targetFile = new File(TEMP_FOLDER.newFolder(), "dst_file");
+    Location dst = new LocalLocationFactory().create(targetFile.toURI());
+    HttpResponse httpResponse = download(srcFile, dst);
     Assert.assertEquals(httpResponse.getResponseCode(), HttpResponseStatus.OK.code());
 
     // Verify the source and destination files are identical.
-    byte[] orgFileContent = Files.readAllBytes(orgFile.toPath());
+    byte[] orgFileContent = Files.readAllBytes(srcFile.toPath());
     byte[] downloadedFileContent = Files.readAllBytes(targetFile.toPath());
-    Assert.assertEquals(orgFileContent.length, downloadedFileContent.length);
-    Assert.assertTrue(Arrays.areEqual(orgFileContent, downloadedFileContent));
+    Assert.assertArrayEquals(orgFileContent, downloadedFileContent);
   }
+
+  @Test
+  public void testFileNotFound() throws Exception {
+    // A non-existent file
+    File srcFile = new File(TEMP_FOLDER.getRoot(), "file_dont_exist");
+
+    // Download the file.
+    File targetFile = new File(TEMP_FOLDER.newFolder(), "dst_file");
+    Location dst = new LocalLocationFactory().create(targetFile.toURI());
+
+    HttpResponse httpResponse = download(srcFile, dst);
+    Assert.assertEquals(httpResponse.getResponseCode(), HttpResponseStatus.NOT_FOUND.code());
+  }
+
+  private HttpResponse download(File src, Location dst) throws IOException {
+    // Make a request to download the source file.
+    URL url = new URL(String.format("%s/v3Internal/location/%s", baseURL,
+                                    Base64.getEncoder().encodeToString(src.toURI().toString().getBytes())));
+    OutputStream outputStream = dst.getOutputStream();
+    HttpRequest request = HttpRequest.builder(
+      HttpMethod.GET, url).withContentConsumer(
+      new HttpContentConsumer() {
+        @Override
+        public boolean onReceived(ByteBuffer chunk) {
+          try {
+            byte[] bytes = new byte[chunk.remaining()];
+            chunk.get(bytes, 0, bytes.length);
+            outputStream.write(bytes);
+            outputStream.flush();
+          } catch (IOException e) {
+            LOG.error("Failed to write to orgFile {}", dst.toURI());
+            return false;
+          }
+          return true;
+        }
+
+        @Override
+        public void onFinished() {
+          try {
+            outputStream.close();
+          } catch (Exception e) {
+            LOG.error("Failed to close to orgFile {}", dst.toURI());
+          }
+        }
+      }).build();
+    HttpResponse httpResponse = HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
+    httpResponse.consumeContent();
+    return httpResponse;
+  }
+
 }
