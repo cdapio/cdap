@@ -24,11 +24,12 @@ import io.cdap.cdap.common.internal.remote.RemoteOpsClient;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
 import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
 import io.cdap.cdap.proto.id.EntityId;
-import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.Authorizable;
+import io.cdap.cdap.proto.security.GrantedPermission;
+import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.Privilege;
-import io.cdap.cdap.security.spi.authorization.PrivilegesManager;
+import io.cdap.cdap.security.spi.authorization.PermissionManager;
 import io.cdap.common.http.HttpResponse;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
@@ -42,43 +43,43 @@ import java.util.Set;
  * because some authorization backends (e.g. Apache Sentry) do not support proxy authentication. Hence system
  * containers like stream and explore service cannot interact with them directly.
  */
-public class RemotePrivilegesManager extends RemoteOpsClient implements PrivilegesManager {
-  private static final Logger LOG = LoggerFactory.getLogger(RemotePrivilegesManager.class);
+public class RemotePermissionManager extends RemoteOpsClient implements PermissionManager {
+  private static final Logger LOG = LoggerFactory.getLogger(RemotePermissionManager.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
     .create();
   private static final Type SET_PRIVILEGES_TYPE = new TypeToken<Set<Privilege>>() { }.getType();
 
   @Inject
-  RemotePrivilegesManager(DiscoveryServiceClient discoveryClient) {
+  RemotePermissionManager(DiscoveryServiceClient discoveryClient) {
     super(discoveryClient, Constants.Service.APP_FABRIC_HTTP);
   }
 
   @Override
-  public void grant(Authorizable authorizable, Principal principal, Set<Action> actions) throws Exception {
-    LOG.trace("Making request to grant {} on {} to {}", actions, authorizable, principal);
-    executeRequest("grant", authorizable, principal, actions);
-    LOG.debug("Granted {} on {} to {} successfully", actions, authorizable, principal);
+  public void grant(Authorizable authorizable, Principal principal, Set<? extends Permission> permissions) {
+    LOG.trace("Making request to grant {} on {} to {}", permissions, authorizable, principal);
+    executeRequest("grant", authorizable, principal, permissions);
+    LOG.debug("Granted {} on {} to {} successfully", permissions, authorizable, principal);
   }
 
   @Override
-  public void revoke(Authorizable authorizable, Principal principal, Set<Action> actions) throws Exception {
-    LOG.trace("Making request to revoke {} on {} to {}", actions, authorizable, principal);
-    executeRequest("revoke", authorizable, principal, actions);
-    LOG.debug("Revoked {} on {} to {} successfully", actions, authorizable, principal);
+  public void revoke(Authorizable authorizable, Principal principal, Set<? extends Permission> permissions) {
+    LOG.trace("Making request to revoke {} on {} to {}", permissions, authorizable, principal);
+    executeRequest("revoke", authorizable, principal, permissions);
+    LOG.debug("Revoked {} on {} to {} successfully", permissions, authorizable, principal);
   }
 
   @Override
-  public void revoke(Authorizable authorizable) throws Exception {
-    LOG.trace("Making request to revoke all actions on {}", authorizable);
+  public void revoke(Authorizable authorizable) {
+    LOG.trace("Making request to revoke all permissions on {}", authorizable);
     executeRequest("revokeAll", authorizable);
-    LOG.debug("Revoked all actions on {} successfully", authorizable);
+    LOG.debug("Revoked all permissions on {} successfully", authorizable);
   }
 
   @Override
-  public Set<Privilege> listPrivileges(Principal principal) throws Exception {
+  public Set<GrantedPermission> listGrants(Principal principal) {
     LOG.trace("Listing privileges for {}", principal);
-    HttpResponse httpResponse = executeRequest("listPrivileges", principal);
+    HttpResponse httpResponse = executeRequest("listGrants", principal);
     String responseBody = httpResponse.getResponseBodyAsString();
     LOG.debug("List privileges response for principal {}: {}", principal, responseBody);
     return GSON.fromJson(responseBody, SET_PRIVILEGES_TYPE);

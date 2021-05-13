@@ -26,6 +26,7 @@ import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.service.ServiceDiscoverable;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.test.AbstractProgramManager;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.SparkManager;
@@ -92,7 +93,8 @@ public class RemoteSparkManager extends AbstractProgramManager<SparkManager> imp
   /**
    * Checks if a user service is available by hitting the availability endpoint.
    */
-  private void checkAvailability() throws IOException, UnauthenticatedException, NotFoundException {
+  private void checkAvailability() throws IOException, UnauthenticatedException,
+    NotFoundException, UnauthorizedException {
     URL url = clientConfig.resolveNamespacedURLV3(programId.getNamespaceId(),
                                                   String.format("apps/%s/versions/%s/%s/%s/available",
                                                                 programId.getApplication(), programId.getVersion(),

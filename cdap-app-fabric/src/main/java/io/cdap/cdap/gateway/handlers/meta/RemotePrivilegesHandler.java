@@ -25,9 +25,12 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.AuthorizationPrivilege;
+import io.cdap.cdap.proto.security.Permission;
+import io.cdap.cdap.proto.security.PermissionAdapterFactory;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.Privilege;
 import io.cdap.cdap.proto.security.VisibilityRequest;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.security.spi.authorization.PrivilegesManager;
 import io.cdap.http.HttpResponder;
@@ -40,6 +43,8 @@ import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -54,15 +59,19 @@ public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
   private static final Type SET_OF_ACTIONS = new TypeLiteral<Set<Action>>() { }.getType();
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
+    .registerTypeAdapterFactory(new PermissionAdapterFactory())
     .create();
 
   private final PrivilegesManager privilegesManager;
   private final AuthorizationEnforcer authorizationEnforcer;
+  private final AccessEnforcer accessEnforcer;
 
   @Inject
-  RemotePrivilegesHandler(PrivilegesManager privilegesManager, AuthorizationEnforcer authorizationEnforcer) {
+  RemotePrivilegesHandler(PrivilegesManager privilegesManager, AuthorizationEnforcer authorizationEnforcer,
+                          AccessEnforcer accessEnforcer) {
     this.privilegesManager = privilegesManager;
     this.authorizationEnforcer = authorizationEnforcer;
+    this.accessEnforcer = accessEnforcer;
   }
 
   @POST
@@ -71,8 +80,14 @@ public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
     AuthorizationPrivilege authorizationPrivilege = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
                                                                   AuthorizationPrivilege.class);
     LOG.debug("Enforcing for {}", authorizationPrivilege);
-    authorizationEnforcer.enforce(authorizationPrivilege.getEntity(), authorizationPrivilege.getPrincipal(),
-                                  authorizationPrivilege.getActions());
+    Set<Permission> permissions = authorizationPrivilege.getPermissions();
+    if (authorizationPrivilege.getActions() != null) {
+      permissions = Stream.of(permissions, authorizationPrivilege.getActions())
+        .flatMap(set -> set.stream())
+        .collect(Collectors.toSet());
+    }
+    accessEnforcer.enforce(authorizationPrivilege.getEntity(), authorizationPrivilege.getPrincipal(),
+                                  permissions);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 

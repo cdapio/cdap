@@ -17,12 +17,13 @@
 package io.cdap.cdap.common;
 
 import io.cdap.cdap.api.common.HttpErrorStatusProvider;
+import io.cdap.cdap.security.spi.AccessException;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * Thrown when a user is not authenticated.
  */
-public class UnauthenticatedException extends Exception implements HttpErrorStatusProvider {
+public class UnauthenticatedException extends AccessException implements HttpErrorStatusProvider {
 
   public UnauthenticatedException() {
     super();

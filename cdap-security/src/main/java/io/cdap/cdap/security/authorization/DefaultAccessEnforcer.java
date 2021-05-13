@@ -25,8 +25,9 @@ import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
-import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.security.spi.AccessException;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,42 +43,43 @@ import javax.annotation.Nullable;
  * enforce authorization policies.
  */
 @Singleton
-public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer {
+public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DefaultAuthorizationEnforcer.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultAccessEnforcer.class);
 
-  private final AuthorizerInstantiator authorizerInstantiator;
+  private final AccessControllerInstantiator accessControllerInstantiator;
   @Nullable
   private final Principal masterUser;
   private final int logTimeTakenAsWarn;
 
   @Inject
-  DefaultAuthorizationEnforcer(CConfiguration cConf, AuthorizerInstantiator authorizerInstantiator) {
+  DefaultAccessEnforcer(CConfiguration cConf, AccessControllerInstantiator accessControllerInstantiator) {
     super(cConf);
-    this.authorizerInstantiator = authorizerInstantiator;
+    this.accessControllerInstantiator = accessControllerInstantiator;
     String masterUserName = AuthorizationUtil.getEffectiveMasterUser(cConf);
     this.masterUser = masterUserName == null ? null : new Principal(masterUserName, Principal.PrincipalType.USER);
     this.logTimeTakenAsWarn = cConf.getInt(Constants.Security.Authorization.EXTENSION_OPERATION_TIME_WARN_THRESHOLD);
   }
 
   @Override
-  public void enforce(EntityId entity, Principal principal, Action action) throws Exception {
+  public void enforce(EntityId entity, Principal principal, Permission permission) throws AccessException {
     if (!isSecurityAuthorizationEnabled()) {
       return;
     }
-    doEnforce(entity, principal, Collections.singleton(action));
+    doEnforce(entity, principal, Collections.singleton(permission));
   }
 
   @Override
-  public void enforce(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
+  public void enforce(EntityId entity, Principal principal, Set<? extends Permission> permissions)
+    throws AccessException {
     if (!isSecurityAuthorizationEnabled()) {
       return;
     }
-    doEnforce(entity, principal, actions);
+    doEnforce(entity, principal, permissions);
   }
 
   @Override
-  public void isVisible(EntityId entity, Principal principal) throws Exception {
+  public void isVisible(EntityId entity, Principal principal) throws AccessException {
     if (!isSecurityAuthorizationEnabled()) {
       return;
     }
@@ -88,7 +90,7 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
     LOG.trace("Checking single entity visibility on {} for principal {}.", entity, principal);
     long startTime = System.nanoTime();
     try {
-      authorizerInstantiator.get().isVisible(entity, principal);
+      accessControllerInstantiator.get().isVisible(entity, principal);
     } finally {
       long timeTaken = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
       String logLine = "Checked single entity visibility on {} for principal {}. Time spent in enforcement was {} ms.";
@@ -101,7 +103,8 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
   }
 
   @Override
-  public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) throws Exception {
+  public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal)
+    throws AccessException {
     if (!isSecurityAuthorizationEnabled()) {
       return entityIds;
     }
@@ -119,7 +122,7 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
     Set<? extends EntityId> moreVisibleEntities;
     long startTime = System.nanoTime();
     try {
-      moreVisibleEntities = authorizerInstantiator.get().isVisible(difference, principal);
+      moreVisibleEntities = accessControllerInstantiator.get().isVisible(difference, principal);
     } finally {
       long timeTaken = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
       String logLine = "Checked visibility of {} for principal {}. Time spent in visibility check was {} ms.";
@@ -134,22 +137,23 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
     return Collections.unmodifiableSet(visibleEntities);
   }
 
-  private void doEnforce(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
+  private void doEnforce(EntityId entity, Principal principal, Set<? extends Permission> permissions)
+    throws AccessException {
     // bypass the check when the principal is the master user and the entity is in the system namespace
     if (isAccessingSystemNSAsMasterUser(entity, principal) || isEnforcingOnSamePrincipalId(entity, principal)) {
       return;
     }
-    LOG.trace("Enforcing actions {} on {} for principal {}.", actions, entity, principal);
+    LOG.trace("Enforcing permissions {} on {} for principal {}.", permissions, entity, principal);
     long startTime = System.nanoTime();
     try {
-      authorizerInstantiator.get().enforce(entity, principal, actions);
+      accessControllerInstantiator.get().enforce(entity, principal, permissions);
     } finally {
       long timeTaken = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
-      String logLine = "Enforced actions {} on {} for principal {}. Time spent in enforcement was {} ms.";
+      String logLine = "Enforced permissions {} on {} for principal {}. Time spent in enforcement was {} ms.";
       if (timeTaken > logTimeTakenAsWarn) {
-        LOG.warn(logLine, actions, entity, principal, timeTaken);
+        LOG.warn(logLine, permissions, entity, principal, timeTaken);
       } else {
-        LOG.trace(logLine, actions, entity, principal, timeTaken);
+        LOG.trace(logLine, permissions, entity, principal, timeTaken);
       }
     }
   }

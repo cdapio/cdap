@@ -88,8 +88,8 @@ import io.cdap.cdap.operations.OperationalStatsService;
 import io.cdap.cdap.operations.guice.OperationalStatsModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.TokenSecureStoreRenewer;
+import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
-import io.cdap.cdap.security.authorization.AuthorizerInstantiator;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.store.SecureStoreService;
@@ -605,7 +605,7 @@ public class MasterServiceMain extends DaemonMain {
     private Cancellable secureStoreUpdateCancellable;
     // Executor for re-running master twill app if it gets terminated.
     private ScheduledExecutorService executor;
-    private AuthorizerInstantiator authorizerInstantiator;
+    private AccessControllerInstantiator accessControllerInstantiator;
     private TwillRunnerService twillRunner;
     private TwillRunnerService remoteExecutionTwillRunner;
     private ExploreClient exploreClient;
@@ -652,7 +652,7 @@ public class MasterServiceMain extends DaemonMain {
         throw new RuntimeException("Unable to create the metadata tables.", e);
       }
 
-      authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
+      accessControllerInstantiator = injector.getInstance(AccessControllerInstantiator.class);
       services.add(injector.getInstance(KafkaClientService.class));
       services.add(injector.getInstance(MetricsCollectionService.class));
       services.add(injector.getInstance(OperationalStatsService.class));
@@ -738,7 +738,7 @@ public class MasterServiceMain extends DaemonMain {
       }
       services.clear();
       Closeables.closeQuietly(metadataStorage);
-      Closeables.closeQuietly(authorizerInstantiator);
+      Closeables.closeQuietly(accessControllerInstantiator);
       Closeables.closeQuietly(exploreClient);
       Closeables.closeQuietly(logAppenderInitializer);
     }

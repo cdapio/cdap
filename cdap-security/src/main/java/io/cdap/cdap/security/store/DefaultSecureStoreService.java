@@ -25,12 +25,12 @@ import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.SecureKeyId;
-import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 
 import java.io.IOException;
@@ -42,16 +42,16 @@ import javax.annotation.Nullable;
  * Default implementation of the service that manages access to the Secure Store,
  */
 public class DefaultSecureStoreService extends AbstractIdleService implements SecureStoreService {
-  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
   private final SecureStoreService secureStoreService;
 
   @Inject
-  DefaultSecureStoreService(AuthorizationEnforcer authorizationEnforcer,
+  DefaultSecureStoreService(AccessEnforcer accessEnforcer,
                             AuthenticationContext authenticationContext,
                             @Named(SecureStoreServerModule.DELEGATE_SECURE_STORE_SERVICE)
                               SecureStoreService secureStoreService) {
-    this.authorizationEnforcer = authorizationEnforcer;
+    this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
     this.secureStoreService = secureStoreService;
   }
@@ -69,7 +69,7 @@ public class DefaultSecureStoreService extends AbstractIdleService implements Se
   public final List<SecureStoreMetadata> list(final String namespace) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
     List<SecureStoreMetadata> metadatas = secureStoreService.list(namespace);
-    return AuthorizationUtil.isVisible(metadatas, authorizationEnforcer, principal,
+    return AuthorizationUtil.isVisible(metadatas, accessEnforcer, principal,
                                        input -> new SecureKeyId(namespace, input.getName()), null);
   }
 
@@ -87,7 +87,7 @@ public class DefaultSecureStoreService extends AbstractIdleService implements Se
   public final SecureStoreData get(String namespace, String name) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
     SecureKeyId secureKeyId = new SecureKeyId(namespace, name);
-    authorizationEnforcer.enforce(secureKeyId, principal, Action.READ);
+    accessEnforcer.enforce(secureKeyId, principal, StandardPermission.GET);
     return secureStoreService.get(namespace, name);
   }
 
@@ -104,7 +104,7 @@ public class DefaultSecureStoreService extends AbstractIdleService implements Se
     Principal principal = authenticationContext.getPrincipal();
     NamespaceId namespaceId = new NamespaceId(namespace);
     SecureKeyId secureKeyId = namespaceId.secureKey(name);
-    authorizationEnforcer.enforce(secureKeyId, principal, Action.ADMIN);
+    accessEnforcer.enforce(secureKeyId, principal, StandardPermission.UPDATE);
     secureStoreService.put(namespace, name, value, description, properties);
   }
 
@@ -120,7 +120,7 @@ public class DefaultSecureStoreService extends AbstractIdleService implements Se
   public final void delete(String namespace, String name) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
     SecureKeyId secureKeyId = new SecureKeyId(namespace, name);
-    authorizationEnforcer.enforce(secureKeyId, principal, Action.ADMIN);
+    accessEnforcer.enforce(secureKeyId, principal, StandardPermission.DELETE);
     secureStoreService.delete(namespace, name);
   }
 

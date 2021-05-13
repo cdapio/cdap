@@ -25,6 +25,7 @@ import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.InstanceNotFoundException;
 import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.common.CallUnauthorizedException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.test.AppJarHelper;
@@ -140,7 +141,7 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
       dsFramework.deleteAllInstances(NamespaceId.DEFAULT);
       Assert.fail();
     } catch (Exception e) {
-      if (!(e instanceof UnauthorizedException)) {
+      if (!(e instanceof CallUnauthorizedException)) {
         Assert.fail();
       }
     }
@@ -194,7 +195,7 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
       dsFramework.getDatasetSpec(nonExistingInstance);
       Assert.fail();
     } catch (Exception e) {
-      if (!(e instanceof UnauthorizedException)) {
+      if (!(e instanceof CallUnauthorizedException)) {
         Assert.fail();
       }
     }
@@ -205,7 +206,7 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
       Assert.fail();
     } catch (Exception e) {
       // expected
-      if (!(e instanceof UnauthorizedException)) {
+      if (!(e instanceof CallUnauthorizedException)) {
         Assert.fail();
       }
     }
@@ -339,7 +340,7 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     try {
       operation.execute();
       Assert.fail(failureMsg);
-    } catch (UnauthorizedException expected) {
+    } catch (UnauthorizedException | CallUnauthorizedException expected) {
       // expected
     } catch (DatasetManagementException e) {
       // no other way to detect errors from DatasetServiceClient

@@ -21,6 +21,7 @@ import io.cdap.cdap.proto.id.EntityId;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Key for caching Privileges on containers. This represents a specific privilege on which authorization can be
@@ -30,12 +31,15 @@ import java.util.Set;
  */
 public class AuthorizationPrivilege {
   private final EntityId entityId;
-  private final Set<Action> actions;
+  //Will only be set from GSON. Also will automatically be converted to permissions by PermissionAdapterFactory
+  private final Set<Permission> actions;
+  private final Set<Permission> permissions;
   private final Principal principal;
 
-  public AuthorizationPrivilege(Principal principal, EntityId entityId, Set<Action> actions) {
+  public AuthorizationPrivilege(Principal principal, EntityId entityId, Set<? extends Permission> permissions) {
     this.entityId = entityId;
-    this.actions = Collections.unmodifiableSet(actions);
+    this.permissions = Collections.unmodifiableSet(permissions);
+    this.actions = null;
     this.principal = principal;
   }
 
@@ -47,7 +51,12 @@ public class AuthorizationPrivilege {
     return entityId;
   }
 
-  public Set<Action> getActions() {
+  public Set<Permission> getPermissions() {
+    return permissions;
+  }
+
+  @Nullable
+  public Set<? extends Permission> getActions() {
     return actions;
   }
 
@@ -60,20 +69,21 @@ public class AuthorizationPrivilege {
       return false;
     }
     AuthorizationPrivilege that = (AuthorizationPrivilege) o;
-    return Objects.equals(entityId, that.entityId) && actions.equals(that.actions) &&
-      Objects.equals(principal, that.principal);
+    return Objects.equals(entityId, that.entityId) && permissions.equals(that.permissions) &&
+      Objects.equals(actions, that.actions) && Objects.equals(principal, that.principal);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(entityId, actions, principal);
+    return Objects.hash(entityId, permissions, principal);
   }
 
   @Override
   public String toString() {
-    return "AuthorizationPrivilege{" +
+    return "AuthorizationPrivilege {" +
       "entityId=" + entityId +
-      ", action=" + actions +
+      ", actions=" + actions +
+      ", permissions=" + permissions +
       ", principal=" + principal +
       '}';
   }

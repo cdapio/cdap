@@ -26,6 +26,8 @@ import io.cdap.cdap.proto.WorkflowNodeStateDetail;
 import io.cdap.cdap.proto.WorkflowTokenDetail;
 import io.cdap.cdap.proto.WorkflowTokenNodeDetail;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.security.spi.AccessException;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.test.AbstractProgramManager;
 import io.cdap.cdap.test.ScheduleManager;
 import io.cdap.cdap.test.WorkflowManager;
@@ -50,7 +52,7 @@ public class DefaultWorkflowManager extends AbstractProgramManager<WorkflowManag
   }
 
   @Override
-  public List<ScheduleDetail> getProgramSchedules() {
+  public List<ScheduleDetail> getProgramSchedules() throws UnauthorizedException {
     try {
       return appFabricClient.getProgramSchedules(
         programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
@@ -62,21 +64,21 @@ public class DefaultWorkflowManager extends AbstractProgramManager<WorkflowManag
 
   @Override
   public WorkflowTokenDetail getToken(String runId, @Nullable WorkflowToken.Scope scope,
-                                      @Nullable String key) throws NotFoundException {
+                                      @Nullable String key) throws NotFoundException, UnauthorizedException {
     return appFabricClient.getWorkflowToken(programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
                                             runId, scope, key);
   }
 
   @Override
   public WorkflowTokenNodeDetail getTokenAtNode(String runId, String nodeName, @Nullable WorkflowToken.Scope scope,
-                                                @Nullable String key) throws NotFoundException {
+                                                @Nullable String key) throws NotFoundException, UnauthorizedException {
     return appFabricClient.getWorkflowToken(programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
                                             runId, nodeName, scope, key);
   }
 
   @Override
   public Map<String, WorkflowNodeStateDetail> getWorkflowNodeStates(String workflowRunId)
-    throws NotFoundException {
+    throws NotFoundException, UnauthorizedException {
     return appFabricClient.getWorkflowNodeStates(
       new ProgramRunId(programId.getNamespaceId(), programId.getApplicationId(), programId.getType(),
                        programId.getId(), workflowRunId));
@@ -87,28 +89,34 @@ public class DefaultWorkflowManager extends AbstractProgramManager<WorkflowManag
 
     return new ScheduleManager() {
       @Override
-      public void suspend() {
+      public void suspend() throws AccessException {
         try {
           appFabricClient.suspend(programId.getNamespaceId(), programId.getApplicationId(), schedName);
+        } catch (AccessException e) {
+          throw e;
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }
       }
 
       @Override
-      public void resume() {
+      public void resume() throws AccessException {
         try {
           appFabricClient.resume(programId.getNamespaceId(), programId.getApplicationId(), schedName);
+        } catch (AccessException e) {
+          throw e;
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }
       }
 
       @Override
-      public String status(int expectedCode) {
+      public String status(int expectedCode) throws AccessException {
         try {
           return appFabricClient.scheduleStatus(programId.getNamespaceId(), programId.getApplicationId(),
                                                 schedName, expectedCode);
+        } catch (AccessException e) {
+          throw e;
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }

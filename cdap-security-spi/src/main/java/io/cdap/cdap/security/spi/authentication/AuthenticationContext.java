@@ -17,13 +17,13 @@
 package io.cdap.cdap.security.spi.authentication;
 
 import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.security.spi.authorization.AccessController;
 import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
-import io.cdap.cdap.security.spi.authorization.Authorizer;
 
 /**
- * A context that determines authentication details. {@link Authorizer} extensions can obtain authentication details
- * from the {@link AuthorizationContext} available in their {@link Authorizer#initialize(AuthorizationContext)}
- * method.
+ * A context that determines authentication details. {@link AccessController} extensions can obtain authentication
+ * details from the {@link AuthorizationContext} available in their
+ * {@link AccessController#initialize(AuthorizationContext)} method.
  */
 public interface AuthenticationContext {
 

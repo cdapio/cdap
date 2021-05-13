@@ -61,6 +61,7 @@ import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.DatasetModuleId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.security.spi.AccessException;
 import io.cdap.cdap.test.internal.ApplicationManagerFactory;
 import io.cdap.cdap.test.internal.ArtifactManagerFactory;
 import org.apache.tephra.TransactionAware;
@@ -170,7 +171,8 @@ public class UnitTestManager extends AbstractTestManager {
 
   @Override
   public ApplicationManager deployApplication(NamespaceId namespace, Class<? extends Application> applicationClz,
-                                              @Nullable Config configObject, File... bundleEmbeddedJars) {
+                                              @Nullable Config configObject, File... bundleEmbeddedJars)
+    throws AccessException {
     Preconditions.checkNotNull(applicationClz, "Application class cannot be null.");
     Type configType = Artifacts.getConfigType(applicationClz);
 
@@ -191,6 +193,8 @@ public class UnitTestManager extends AbstractTestManager {
       appFabricClient.deployApplication(Id.Application.fromEntityId(applicationId),
                                         new AppRequest(artifactSummary, configObject));
       return appManagerFactory.create(applicationId);
+    } catch (AccessException e) {
+      throw e;
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

@@ -30,6 +30,7 @@ import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -124,6 +125,36 @@ public final class AuthorizationUtil {
         }
       }
       datasetTypesMapping.keySet().retainAll(authorizationEnforcer.isVisible(datasetTypesMapping.keySet(), principal));
+      visibleEntities.addAll(datasetTypesMapping.values());
+    }
+    return Collections.unmodifiableList(visibleEntities);
+  }
+
+  /**
+   * Checks the visibility of the entity info in batch size and returns the visible entities
+   *
+   * @param entityInfo the entity info to check visibility
+   * @param accessEnforcer enforcer to make the authorization check
+   * @param principal the principal to be checked
+   * @param transformer the function to transform the entity info to an entity id
+   * @param byPassFilter an optional bypass filter which allows to skip the auth check for some entities
+   * @return an unmodified list of visible entities
+   */
+  public static <EntityInfo> List<EntityInfo> isVisible(
+    Collection<EntityInfo> entityInfo, AccessEnforcer accessEnforcer, Principal principal,
+    Function<EntityInfo, EntityId> transformer, @Nullable Predicate<EntityInfo> byPassFilter) throws Exception {
+    List<EntityInfo> visibleEntities = new ArrayList<>(entityInfo.size());
+    for (List<EntityInfo> split : Iterables.partition(entityInfo,
+                                                      Constants.Security.Authorization.VISIBLE_BATCH_SIZE)) {
+      Map<EntityId, EntityInfo> datasetTypesMapping = new LinkedHashMap<>(split.size());
+      for (EntityInfo info : split) {
+        if (byPassFilter != null && byPassFilter.apply(info)) {
+          visibleEntities.add(info);
+        } else {
+          datasetTypesMapping.put(transformer.apply(info), info);
+        }
+      }
+      datasetTypesMapping.keySet().retainAll(accessEnforcer.isVisible(datasetTypesMapping.keySet(), principal));
       visibleEntities.addAll(datasetTypesMapping.values());
     }
     return Collections.unmodifiableList(visibleEntities);

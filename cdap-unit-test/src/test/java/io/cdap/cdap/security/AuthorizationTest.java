@@ -37,6 +37,7 @@ import io.cdap.cdap.api.dataset.lib.ObjectStore;
 import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
 import io.cdap.cdap.api.schedule.SchedulableProgramType;
 import io.cdap.cdap.api.workflow.ScheduleProgramInfo;
+import io.cdap.cdap.common.CallUnauthorizedException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
@@ -137,6 +138,7 @@ public class AuthorizationTest extends TestBase {
     Constants.Security.Authorization.CACHE_MAX_ENTRIES, 0
   );
   private static final EnumSet<Action> ALL_ACTIONS = EnumSet.allOf(Action.class);
+  private static final EnumSet<Action> ALL_BUT_WRITE = EnumSet.complementOf(EnumSet.of(Action.WRITE));
 
   private static final Principal ALICE = new Principal("alice", Principal.PrincipalType.USER);
   private static final Principal BOB = new Principal("bob", Principal.PrincipalType.USER);
@@ -277,8 +279,8 @@ public class AuthorizationTest extends TestBase {
     } catch (UnauthorizedException expected) {
       // expected
     }
-    // grant READ and WRITE to Bob
-    grantAndAssertSuccess(dummyAppId, BOB, ImmutableSet.of(Action.READ, Action.WRITE));
+    // grant READ and EXECUTE to Bob
+    grantAndAssertSuccess(dummyAppId, BOB, ImmutableSet.of(Action.READ, Action.EXECUTE));
     // delete should fail
     try {
       appManager.delete();
@@ -562,7 +564,7 @@ public class AuthorizationTest extends TestBase {
     addDatasetInstance(NamespaceId.SYSTEM.dataset("store"), "keyValueTable");
 
     // give bob write permission on the dataset
-    grantAndAssertSuccess(NamespaceId.SYSTEM.dataset("store"), BOB, EnumSet.of(Action.WRITE));
+    grantAndAssertSuccess(NamespaceId.SYSTEM.dataset("store"), BOB, EnumSet.of(Action.ADMIN));
 
     // switch to BOB
     SecurityRequestContext.setUserId(BOB.getName());
@@ -631,7 +633,7 @@ public class AuthorizationTest extends TestBase {
     assertDatasetIsEmpty(outputDatasetNS.getNamespaceId(), "store");
 
     // Give BOB permission to write to the dataset in another namespace
-    grantAndAssertSuccess(datasetId, BOB, EnumSet.of(Action.WRITE));
+    grantAndAssertSuccess(datasetId, BOB, EnumSet.of(Action.ADMIN));
 
     // switch back to BOB to run service again
     SecurityRequestContext.setUserId(BOB.getName());
@@ -715,8 +717,8 @@ public class AuthorizationTest extends TestBase {
 
     // give privilege to BOB on all the datasets
     grantAndAssertSuccess(NamespaceId.SYSTEM.dataset("table1"), BOB, EnumSet.of(Action.READ));
-    grantAndAssertSuccess(NamespaceId.SYSTEM.dataset("table2"), BOB, EnumSet.of(Action.WRITE));
-    grantAndAssertSuccess(otherNS.getNamespaceId().dataset("otherTable"), BOB, ALL_ACTIONS);
+    grantAndAssertSuccess(NamespaceId.SYSTEM.dataset("table2"), BOB, EnumSet.of(Action.ADMIN));
+    grantAndAssertSuccess(otherNS.getNamespaceId().dataset("otherTable"), BOB, ALL_BUT_WRITE);
 
     // Switch to BOB and run the  mapreduce job. The job will fail at the runtime since BOB is trying to read from
     // system namespace
@@ -758,7 +760,7 @@ public class AuthorizationTest extends TestBase {
       .put(inputDatasetNSId, EnumSet.of(Action.ADMIN))
       .put(outputDatasetNSId, EnumSet.of(Action.ADMIN))
       // We need to write some data into table1
-      .put(table1Id, EnumSet.of(Action.ADMIN, Action.WRITE))
+      .put(table1Id, EnumSet.of(Action.ADMIN))
       // Need to read data from table2
       .put(table2Id, EnumSet.of(Action.ADMIN, Action.READ))
       .put(inputDatasetNSId.datasetType("keyValueTable"), EnumSet.of(Action.ADMIN))
@@ -803,7 +805,7 @@ public class AuthorizationTest extends TestBase {
     assertDatasetIsEmpty(outputDatasetNS.getNamespaceId(), "table2");
 
     // give privilege to BOB on the output dataset
-    grantAndAssertSuccess(outputDatasetNS.getNamespaceId().dataset("table2"), BOB, EnumSet.of(Action.WRITE));
+    grantAndAssertSuccess(outputDatasetNS.getNamespaceId().dataset("table2"), BOB, EnumSet.of(Action.ADMIN));
 
     // switch back to BOB and run MR again. this should work
     SecurityRequestContext.setUserId(BOB.getName());
@@ -993,8 +995,8 @@ public class AuthorizationTest extends TestBase {
 
     // give privilege to BOB on all the datasets
     grantAndAssertSuccess(NamespaceId.SYSTEM.dataset("table1"), BOB, EnumSet.of(Action.READ));
-    grantAndAssertSuccess(NamespaceId.SYSTEM.dataset("table2"), BOB, EnumSet.of(Action.WRITE));
-    grantAndAssertSuccess(otherNS.getNamespaceId().dataset("otherTable"), BOB, ALL_ACTIONS);
+    grantAndAssertSuccess(NamespaceId.SYSTEM.dataset("table2"), BOB, EnumSet.of(Action.ADMIN));
+    grantAndAssertSuccess(otherNS.getNamespaceId().dataset("otherTable"), BOB, ALL_BUT_WRITE);
 
     // Switch to Bob and run the spark program. this will fail because bob is trying to read from a system dataset
     SecurityRequestContext.setUserId(BOB.getName());
@@ -1045,7 +1047,7 @@ public class AuthorizationTest extends TestBase {
     Map<EntityId, Set<Action>> neededPrivileges = ImmutableMap.<EntityId, Set<Action>>builder()
       .put(inputDatasetNSMetaId, EnumSet.of(Action.ADMIN))
       .put(outputDatasetNSMetaId, EnumSet.of(Action.ADMIN))
-      .put(inputTableId, EnumSet.of(Action.ADMIN, Action.WRITE))
+      .put(inputTableId, EnumSet.of(Action.ADMIN, Action.ADMIN))
       .put(inputDatasetNSMetaId.datasetType("keyValueTable"), EnumSet.of(Action.ADMIN))
       .put(outputTableId, EnumSet.of(Action.ADMIN, Action.READ))
       .put(outputDatasetNSMetaId.datasetType("keyValueTable"), EnumSet.of(Action.ADMIN))
@@ -1091,7 +1093,7 @@ public class AuthorizationTest extends TestBase {
     assertDatasetIsEmpty(outputDatasetNSMeta.getNamespaceId(), "output");
 
     // give privilege to BOB on the output dataset
-    grantAndAssertSuccess(outputDatasetNSMeta.getNamespaceId().dataset("output"), BOB, EnumSet.of(Action.WRITE));
+    grantAndAssertSuccess(outputDatasetNSMeta.getNamespaceId().dataset("output"), BOB, EnumSet.of(Action.ADMIN));
 
     // switch back to BOB and run spark again. this should work
     SecurityRequestContext.setUserId(BOB.getName());
@@ -1154,7 +1156,7 @@ public class AuthorizationTest extends TestBase {
       pfsService.waitForRun(ProgramRunStatus.KILLED, 1, TimeUnit.MINUTES);
     }
     // grant read and write on dataset and restart
-    grantAndAssertSuccess(datasetId, BOB, EnumSet.of(Action.WRITE, Action.READ));
+    grantAndAssertSuccess(datasetId, BOB, EnumSet.of(Action.ADMIN, Action.READ));
     pfsService.start();
     pfsService.waitForRun(ProgramRunStatus.RUNNING, 1, TimeUnit.MINUTES);
     pfsURL = pfsService.getServiceURL();
@@ -1193,7 +1195,7 @@ public class AuthorizationTest extends TestBase {
         try {
           deleteDatasetInstance(NamespaceId.SYSTEM.dataset("app.meta"));
           Assert.fail();
-        } catch (UnauthorizedException e) {
+        } catch (CallUnauthorizedException e) {
           // Expected
         } catch (Exception e) {
           Assert.fail("Getting incorrect exception");

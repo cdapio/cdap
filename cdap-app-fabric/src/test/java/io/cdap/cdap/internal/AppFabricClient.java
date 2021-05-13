@@ -25,6 +25,7 @@ import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.api.workflow.WorkflowToken;
+import io.cdap.cdap.common.CallUnauthorizedException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
@@ -280,7 +281,7 @@ public class AppFabricClient {
   }
 
   public List<ScheduleDetail> getProgramSchedules(String namespace, String app, String workflow)
-    throws NotFoundException {
+    throws NotFoundException, UnauthorizedException {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/workflows/%s/schedules",
                                getNamespacePath(namespace), app, workflow);
@@ -299,7 +300,7 @@ public class AppFabricClient {
 
   public WorkflowTokenDetail getWorkflowToken(String namespaceId, String appId, String wflowId, String runId,
                                               @Nullable WorkflowToken.Scope scope,
-                                              @Nullable String key) throws NotFoundException {
+                                              @Nullable String key) throws NotFoundException, UnauthorizedException {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/workflows/%s/runs/%s/token",
                                getNamespacePath(namespaceId), appId, wflowId, runId);
@@ -316,7 +317,8 @@ public class AppFabricClient {
 
   public WorkflowTokenNodeDetail getWorkflowToken(String namespaceId, String appId, String wflowId, String runId,
                                                   String nodeName, @Nullable WorkflowToken.Scope scope,
-                                                  @Nullable String key) throws NotFoundException {
+                                                  @Nullable String key)
+    throws NotFoundException, UnauthorizedException {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/workflows/%s/runs/%s/nodes/%s/token",
                                getNamespacePath(namespaceId), appId, wflowId, runId, nodeName);
@@ -333,7 +335,7 @@ public class AppFabricClient {
   }
 
   public Map<String, WorkflowNodeStateDetail> getWorkflowNodeStates(ProgramRunId workflowRunId)
-    throws NotFoundException {
+    throws NotFoundException, UnauthorizedException {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/workflows/%s/runs/%s/nodes/state",
                                getNamespacePath(workflowRunId.getNamespace()), workflowRunId.getApplication(),
@@ -419,7 +421,8 @@ public class AppFabricClient {
       return json.get("status");
   }
 
-  private void verifyResponse(HttpResponseStatus expected, HttpResponseStatus actual, String errorMsg) {
+  private void verifyResponse(HttpResponseStatus expected, HttpResponseStatus actual, String errorMsg)
+    throws UnauthorizedException {
     if (!expected.equals(actual)) {
       if (actual.code() == HttpResponseStatus.FORBIDDEN.code()) {
         throw new UnauthorizedException(actual.reasonPhrase());
