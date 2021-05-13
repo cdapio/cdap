@@ -37,7 +37,7 @@ import javax.annotation.Nullable;
  * Manages partitions of a logical MessageTable.
  * Each partition is a physical LevelDB table in a directory structure like:
  *
- *   [base dir]/[namespace].[tablename].[topic].[generation]/part.[start].[end]
+ *   [base dir]/v2.[namespace].[tablename].[topic].[generation]/part.[start].[end]
  *
  * Each partition contains messages with a publish time between the start (inclusive) and end (exclusive) timestamps.
  */
@@ -257,8 +257,12 @@ public class LevelDBPartitionManager implements Closeable {
     return createPartition(topicDir, closestStartTime, closestEndTime);
   }
 
+  static File getPartitionDir(File topicDir, long start, long end) {
+    return new File(topicDir, String.format("%s%d.%d", PART_PREFIX, start, end));
+  }
+
   private LevelDBPartition createPartition(File topicDir, long start, long end) throws IOException {
-    File dbPath = new File(topicDir, String.format("%s%d.%d", PART_PREFIX, start, end));
+    File dbPath = getPartitionDir(topicDir, start, end);
     ensureDirExists(dbPath);
     return new LevelDBPartition(dbPath, start, end, () -> LEVEL_DB_FACTORY.open(dbPath, dbOptions));
   }
