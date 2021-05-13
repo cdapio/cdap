@@ -46,6 +46,7 @@ public class TransformFromPairFunction<OUT, IN_KEY, IN_VAL> implements FlatMapFu
     if (emitter == null) {
       emitter = new DefaultEmitter<>();
     }
+    emitter.reset();
     transform.transform(new KeyValue<>(input._1(), input._2()), emitter);
     return emitter.getEntries().iterator();
   }
