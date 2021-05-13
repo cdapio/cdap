@@ -37,8 +37,8 @@ import io.cdap.cdap.proto.security.SecureKeyCreateRequest;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationTestModule;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
-import io.cdap.cdap.security.spi.authorization.NoOpAuthorizer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.NoOpAccessController;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
@@ -95,7 +95,7 @@ public class SecureStoreTest {
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(AuthorizationEnforcer.class).to(NoOpAuthorizer.class);
+          bind(AccessEnforcer.class).to(NoOpAccessController.class);
           bind(NamespaceAdmin.class).to(InMemoryNamespaceAdmin.class).in(Scopes.SINGLETON);
           bind(NamespaceQueryAdmin.class).to(NamespaceAdmin.class);
         }

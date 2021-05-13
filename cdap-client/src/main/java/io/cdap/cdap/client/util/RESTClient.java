@@ -21,6 +21,7 @@ import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.exception.DisconnectedException;
+import io.cdap.cdap.common.CallUnauthorizedException;
 import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.security.authentication.client.AccessToken;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
@@ -65,12 +66,12 @@ public class RESTClient {
   }
 
   public HttpResponse execute(HttpRequest request, AccessToken accessToken, int... allowedErrorCodes)
-    throws IOException, UnauthenticatedException, DisconnectedException, UnauthorizedException {
+    throws IOException, UnauthenticatedException {
     return execute(HttpRequest.builder(request).addHeaders(getAuthHeaders(accessToken)).build(), allowedErrorCodes);
   }
 
   public HttpResponse execute(HttpMethod httpMethod, URL url, AccessToken accessToken, int... allowedErrorCodes)
-    throws IOException, UnauthenticatedException, DisconnectedException, UnauthorizedException {
+    throws IOException, UnauthenticatedException, UnauthorizedException {
     return execute(HttpRequest.builder(httpMethod, url)
                      .addHeaders(getAuthHeaders(accessToken))
                      .build(), allowedErrorCodes);
@@ -78,7 +79,7 @@ public class RESTClient {
 
   public HttpResponse execute(HttpMethod httpMethod, URL url, Map<String, String> headers, AccessToken accessToken,
                               int... allowedErrorCodes)
-    throws IOException, UnauthenticatedException, DisconnectedException, UnauthorizedException {
+    throws IOException, UnauthenticatedException, UnauthorizedException {
     return execute(HttpRequest.builder(httpMethod, url)
                      .addHeaders(headers)
                      .addHeaders(getAuthHeaders(accessToken))
@@ -87,7 +88,7 @@ public class RESTClient {
 
   public HttpResponse execute(HttpMethod httpMethod, URL url, String body, Map<String, String> headers,
                               AccessToken accessToken, int... allowedErrorCodes)
-    throws IOException, UnauthenticatedException, DisconnectedException, UnauthorizedException {
+    throws IOException, UnauthenticatedException, UnauthorizedException {
     return execute(HttpRequest.builder(httpMethod, url)
                      .addHeaders(headers)
                      .addHeaders(getAuthHeaders(accessToken))
@@ -95,7 +96,7 @@ public class RESTClient {
   }
 
   public HttpResponse execute(HttpRequest request, int... allowedErrorCodes)
-    throws IOException, UnauthenticatedException, DisconnectedException, UnauthorizedException {
+    throws IOException, UnauthenticatedException {
 
     int currentTry = 0;
     HttpResponse response;
@@ -126,7 +127,7 @@ public class RESTClient {
       throw new UnauthenticatedException("Unauthorized status code received from the server.");
     }
     if (responseCode == HttpURLConnection.HTTP_FORBIDDEN) {
-      throw new UnauthorizedException(response.getResponseBodyAsString());
+      throw new CallUnauthorizedException(response.getResponseBodyAsString());
     }
     if (!isSuccessful(responseCode) && !ArrayUtils.contains(allowedErrorCodes, responseCode)) {
       throw new IOException(responseCode + ": " + response.getResponseBodyAsString());

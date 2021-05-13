@@ -25,6 +25,7 @@ import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.spi.AccessException;
 
 import java.io.File;
 import java.util.HashSet;
@@ -39,7 +40,7 @@ public abstract class AbstractTestManager implements TestManager {
 
   @Override
   public ApplicationManager deployApplication(NamespaceId namespace, Class<? extends Application> applicationClz,
-                                              File... bundleEmbeddedJars) {
+                                              File... bundleEmbeddedJars) throws AccessException {
     return deployApplication(namespace, applicationClz, null, bundleEmbeddedJars);
   }
 

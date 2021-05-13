@@ -16,16 +16,15 @@
 
 package io.cdap.cdap.security.authorization;
 
+import io.cdap.cdap.security.spi.authorization.AccessController;
+import io.cdap.cdap.security.spi.authorization.AccessControllerTest;
+
 /**
- * Thrown when an authorizer extension jar is found to be invalid during inspection.
+ * Tests for {@link InMemoryAccessController}.
  */
-public class InvalidAuthorizerException extends Exception {
-
-  public InvalidAuthorizerException(String message) {
-    super(message);
-  }
-
-  public InvalidAuthorizerException(String message, Throwable cause) {
-    super(message, cause);
+public class InMemoryAccessControllerTest extends AccessControllerTest {
+  @Override
+  protected AccessController get() {
+    return new InMemoryAccessController();
   }
 }

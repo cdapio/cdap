@@ -35,10 +35,10 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * Tests for {@link AuthorizerClassLoader}.
+ * Tests for {@link AccessControllerClassLoader}.
  */
-public class AuthorizerClassLoaderTest {
-  private final ClassLoader parent = AuthorizerClassLoader.createParent();
+public class AccessControllerClassLoaderTest {
+  private final ClassLoader parent = AccessControllerClassLoader.createParent();
 
   @Test
   public void testAuthorizerClassLoaderParentAvailableClasses() throws ClassNotFoundException {
@@ -75,7 +75,7 @@ public class AuthorizerClassLoaderTest {
     // classes from cdap-common should not be available
     assertClassUnavailable(ClassPathResources.class);
     // classes from cdap-security should not be available
-    assertClassUnavailable(AuthorizerClassLoader.class);
+    assertClassUnavailable(AccessControllerClassLoader.class);
     // classes from cdap-data-fabric should not be available
     assertClassUnavailable("io.cdap.cdap.data2.util.TableId");
     // classes from cdap-app-fabric should not be available

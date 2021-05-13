@@ -17,12 +17,13 @@
 package io.cdap.cdap.common;
 
 import io.cdap.cdap.api.common.HttpErrorStatusProvider;
+import io.cdap.cdap.security.spi.AccessException;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * Exception thrown when a feature is disabled.
  */
-public class FeatureDisabledException extends Exception implements HttpErrorStatusProvider {
+public class FeatureDisabledException extends AccessException implements HttpErrorStatusProvider {
   /**
    * Represents disabled features
    */

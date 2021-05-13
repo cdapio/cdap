@@ -38,6 +38,7 @@ import io.cdap.cdap.data2.dataset2.MultiThreadDatasetCache;
 import io.cdap.cdap.data2.transaction.Transactions;
 import io.cdap.cdap.internal.app.runtime.DefaultAdmin;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.authorization.AuthorizationContextFactory;
 import io.cdap.cdap.security.authorization.AuthorizerInstantiator;
 import io.cdap.cdap.security.authorization.DefaultAuthorizationContext;
@@ -94,6 +95,8 @@ public class AuthorizationModule extends PrivateModule {
 
     bind(AuthorizerInstantiator.class).in(Scopes.SINGLETON);
     expose(AuthorizerInstantiator.class);
+    bind(AccessControllerInstantiator.class).in(Scopes.SINGLETON);
+    expose(AccessControllerInstantiator.class);
 
     bind(PrivilegesManager.class).to(DelegatingPrivilegeManager.class);
     expose(PrivilegesManager.class);

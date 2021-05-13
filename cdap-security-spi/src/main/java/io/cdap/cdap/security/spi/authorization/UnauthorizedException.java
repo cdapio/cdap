@@ -19,7 +19,9 @@ package io.cdap.cdap.security.spi.authorization;
 import io.cdap.cdap.api.common.HttpErrorStatusProvider;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.ActionOrPermission;
 import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.security.spi.AccessException;
 
 import java.net.HttpURLConnection;
 import java.util.Collections;
@@ -32,7 +34,7 @@ import javax.annotation.Nullable;
  * Exception thrown when Authentication is successful, but a {@link Principal} is not authorized to perform an
  * {@link Action} on an {@link EntityId}.
  */
-public class UnauthorizedException extends RuntimeException implements HttpErrorStatusProvider {
+public class UnauthorizedException extends AccessException implements HttpErrorStatusProvider {
   @Nullable
   private final String principal;
   private final Set<String> missingPermissions;
@@ -43,18 +45,19 @@ public class UnauthorizedException extends RuntimeException implements HttpError
   private final boolean includePrincipal;
   private final String message;
 
-  public UnauthorizedException(Principal principal, Action action, EntityId entityId) {
+  public UnauthorizedException(Principal principal, ActionOrPermission action, EntityId entityId) {
     this(principal.toString(), Collections.singleton(action.toString()),
          String.format("entity '%s'", entityId.toString()), null, true, true, null);
   }
 
-  public UnauthorizedException(Principal principal, Set<Action> actions, EntityId entityId) {
+  public UnauthorizedException(Principal principal, Set<? extends ActionOrPermission> actions, EntityId entityId) {
     this(principal.toString(), actions.stream().map(action -> action.toString())
            .collect(Collectors.toCollection(LinkedHashSet::new)), String.format("entity '%s'", entityId.toString()),
          null, true, true, null);
   }
 
-  public UnauthorizedException(Principal principal, Set<Action> actions, EntityId entityId, Throwable ex) {
+  public UnauthorizedException(Principal principal, Set<? extends ActionOrPermission> actions,
+                               EntityId entityId, Throwable ex) {
     this(principal.toString(), actions.stream().map(action -> action.toString())
            .collect(Collectors.toCollection(LinkedHashSet::new)), String.format("entity '%s'", entityId.toString()),
          ex, true, true, null);
@@ -65,7 +68,7 @@ public class UnauthorizedException extends RuntimeException implements HttpError
          true, null);
   }
 
-  public UnauthorizedException(Principal principal, Set<Action> actions, EntityId entityId,
+  public UnauthorizedException(Principal principal, Set<? extends ActionOrPermission> actions, EntityId entityId,
                                boolean mustHaveAllPermissions) {
     this(principal.toString(), actions.stream().map(action -> action.toString())
            .collect(Collectors.toCollection(LinkedHashSet::new)), String.format("entity '%s'", entityId.toString()),
@@ -110,6 +113,11 @@ public class UnauthorizedException extends RuntimeException implements HttpError
   }
 
   public UnauthorizedException(String message) {
+    this(message, null);
+  }
+
+  public UnauthorizedException(String message, Throwable cause) {
+    super(cause);
     this.principal = null;
     this.missingPermissions = Collections.emptySet();
     this.entity = null;

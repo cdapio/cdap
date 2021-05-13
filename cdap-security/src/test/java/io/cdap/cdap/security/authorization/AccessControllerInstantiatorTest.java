@@ -22,12 +22,12 @@ import io.cdap.cdap.common.FeatureDisabledException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.proto.security.GrantedPermission;
 import io.cdap.cdap.proto.security.Principal;
-import io.cdap.cdap.proto.security.Privilege;
 import io.cdap.cdap.proto.security.Role;
+import io.cdap.cdap.security.spi.authorization.AccessController;
 import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
-import io.cdap.cdap.security.spi.authorization.Authorizer;
-import io.cdap.cdap.security.spi.authorization.NoOpAuthorizer;
+import io.cdap.cdap.security.spi.authorization.NoOpAccessController;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -46,9 +46,9 @@ import java.util.jar.Manifest;
 import javax.annotation.Nullable;
 
 /**
- * Tests for {@link AuthorizerInstantiator}.
+ * Tests for {@link AccessControllerInstantiator}.
  */
-public class AuthorizerInstantiatorTest extends AuthorizationTestBase {
+public class AccessControllerInstantiatorTest extends AuthorizationTestBase {
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
@@ -70,95 +70,96 @@ public class AuthorizerInstantiatorTest extends AuthorizationTestBase {
   }
 
   private void assertDisabled(CConfiguration cConf, FeatureDisabledException.Feature feature) throws IOException {
-    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(cConf, AUTH_CONTEXT_FACTORY)) {
-      Authorizer authorizer = instantiator.get();
+    try (AccessControllerInstantiator instantiator = new AccessControllerInstantiator(cConf, AUTH_CONTEXT_FACTORY)) {
+      AccessController accessController = instantiator.get();
       Assert.assertTrue(
         String.format("When %s is disabled, a %s must be returned, but got %s.",
-                      feature.name().toLowerCase(), NoOpAuthorizer.class.getSimpleName(),
-                      authorizer.getClass().getName()),
-        authorizer instanceof NoOpAuthorizer
+                      feature.name().toLowerCase(), NoOpAccessController.class.getSimpleName(),
+                      accessController.getClass().getName()),
+        accessController instanceof NoOpAccessController
       );
     }
   }
 
-  @Test(expected = InvalidAuthorizerException.class)
-  public void testNonExistingAuthorizerJarPath() throws Throwable {
-    CCONF.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, "/path/to/external-test-authorizer.jar");
-    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
+  @Test(expected = InvalidAccessControllerException.class)
+  public void testNonExistingAccessControllerJarPath() throws Throwable {
+    CCONF.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, "/path/to/external-test-accessController.jar");
+    try (AccessControllerInstantiator instantiator = new AccessControllerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
       instantiator.get();
-      Assert.fail("Instantiation of Authorizer should have failed because extension jar does not exist.");
+      Assert.fail("Instantiation of AccessController should have failed because extension jar does not exist.");
     } catch (Throwable e) {
       throw Throwables.getRootCause(e);
     }
   }
 
-  @Test(expected = InvalidAuthorizerException.class)
-  public void testAuthorizerJarPathIsDirectory() throws Throwable {
+  @Test(expected = InvalidAccessControllerException.class)
+  public void testAccessControllerJarPathIsDirectory() throws Throwable {
     CCONF.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, TEMPORARY_FOLDER.newFolder().getPath());
-    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
+    try (AccessControllerInstantiator instantiator = new AccessControllerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
       instantiator.get();
-      Assert.fail("Instantiation of Authorizer should have failed because extension jar is a directory");
+      Assert.fail("Instantiation of AccessController should have failed because extension jar is a directory");
     } catch (Throwable e) {
       throw Throwables.getRootCause(e);
     }
   }
 
-  @Test(expected = InvalidAuthorizerException.class)
-  public void testAuthorizerJarPathIsNotJar() throws Throwable {
+  @Test(expected = InvalidAccessControllerException.class)
+  public void testAccessControllerJarPathIsNotJar() throws Throwable {
     CCONF.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, TEMPORARY_FOLDER.newFile("abc.txt").getPath());
-    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
+    try (AccessControllerInstantiator instantiator = new AccessControllerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
       instantiator.get();
-      Assert.fail("Instantiation of Authorizer should have failed because extension jar is not a jar file");
+      Assert.fail("Instantiation of AccessController should have failed because extension jar is not a jar file");
     } catch (Throwable e) {
       throw Throwables.getRootCause(e);
     }
   }
 
-  @Test(expected = InvalidAuthorizerException.class)
+  @Test(expected = InvalidAccessControllerException.class)
   public void testMissingManifest() throws Throwable {
     Location externalAuthJar = createInvalidExternalAuthJar(null);
     CCONF.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
-    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
+    try (AccessControllerInstantiator instantiator = new AccessControllerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
       instantiator.get();
-      Assert.fail("Instantiation of Authorizer should have failed because extension jar does not have a manifest");
+      Assert.fail("Instantiation of AccessController should have failed " +
+                    "because extension jar does not have a manifest");
     } catch (Throwable e) {
       throw Throwables.getRootCause(e);
     }
   }
 
-  @Test(expected = InvalidAuthorizerException.class)
-  public void testMissingAuthorizerClassName() throws Throwable {
+  @Test(expected = InvalidAccessControllerException.class)
+  public void testMissingAccessControllerClassName() throws Throwable {
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
     Location externalAuthJar = createInvalidExternalAuthJar(manifest);
     CCONF.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
-    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
+    try (AccessControllerInstantiator instantiator = new AccessControllerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
       instantiator.get();
-      Assert.fail("Instantiation of Authorizer should have failed because extension jar's manifest does not define" +
-                    " Authorizer class.");
+      Assert.fail("Instantiation of AccessController should have failed because extension jar's manifest does not " +
+                    "define AccessController class.");
     } catch (Throwable e) {
       throw Throwables.getRootCause(e);
     }
   }
 
-  @Test(expected = InvalidAuthorizerException.class)
-  public void testDoesNotImplementAuthorizer() throws Throwable {
+  @Test(expected = InvalidAccessControllerException.class)
+  public void testDoesNotImplementAccessController() throws Throwable {
     Manifest manifest = new Manifest();
     Attributes mainAttributes = manifest.getMainAttributes();
-    mainAttributes.put(Attributes.Name.MAIN_CLASS, DoesNotImplementAuthorizer.class.getName());
-    Location externalAuthJar = AppJarHelper.createDeploymentJar(locationFactory, DoesNotImplementAuthorizer.class,
+    mainAttributes.put(Attributes.Name.MAIN_CLASS, DoesNotImplementAccessController.class.getName());
+    Location externalAuthJar = AppJarHelper.createDeploymentJar(locationFactory, DoesNotImplementAccessController.class,
                                                                 manifest);
     CCONF.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
-    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
+    try (AccessControllerInstantiator instantiator = new AccessControllerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
       instantiator.get();
-      Assert.fail("Instantiation of Authorizer should have failed because the Authorizer class defined in the" +
-                    " extension jar's manifest does not implement " + Authorizer.class.getName());
+      Assert.fail("Instantiation of AccessController should have failed because the AccessController class defined " +
+                    "in the extension jar's manifest does not implement " + AccessController.class.getName());
     } catch (Throwable e) {
       throw Throwables.getRootCause(e);
     }
   }
 
-  @Test(expected = InvalidAuthorizerException.class)
+  @Test(expected = InvalidAccessControllerException.class)
   public void testInitializationThrowsException() throws Throwable {
     Manifest manifest = new Manifest();
     Attributes mainAttributes = manifest.getMainAttributes();
@@ -166,17 +167,17 @@ public class AuthorizerInstantiatorTest extends AuthorizationTestBase {
     Location externalAuthJar = AppJarHelper.createDeploymentJar(locationFactory, ExceptionInInitialize.class,
                                                                 manifest);
     CCONF.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
-    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
+    try (AccessControllerInstantiator instantiator = new AccessControllerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
       instantiator.get();
-      Assert.fail("Instantiation of Authorizer should have failed because the Authorizer class defined in " +
-                    "the extension jar's manifest does not implement " + Authorizer.class.getName());
+      Assert.fail("Instantiation of AccessController should have failed because the AccessController class defined " +
+                    "in the extension jar's manifest does not implement " + AccessController.class.getName());
     } catch (Throwable e) {
       throw e.getCause();
     }
   }
 
   @Test
-  public void testAuthorizerExtension() throws Exception {
+  public void testAccessControllerExtension() throws Exception {
     Location externalAuthJar = createValidAuthExtensionJar();
     CConfiguration cConfCopy = CConfiguration.copy(CCONF);
     cConfCopy.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
@@ -186,22 +187,23 @@ public class AuthorizerInstantiatorTest extends AuthorizationTestBase {
 
     cConfCopy.set(Constants.Security.Authorization.EXTENSION_EXTRA_CLASSPATH, tempFile.getParent());
 
-    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
-      // should be able to load the ExternalAuthorizer class via the AuthorizerInstantiatorService
-      Authorizer externalAuthorizer1 = instantiator.get();
-      externalAuthorizer1.listAllRoles();
-      externalAuthorizer1.listPrivileges(new Principal("test", Principal.PrincipalType.USER));
+    try (AccessControllerInstantiator instantiator =
+           new AccessControllerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
+      // should be able to load the ExternalAccessController class via the AccessControllerInstantiatorService
+      AccessController externalAccessController1 = instantiator.get();
+      externalAccessController1.listAllRoles();
+      externalAccessController1.listGrants(new Principal("test", Principal.PrincipalType.USER));
 
-      ClassLoader authorizerClassLoader = externalAuthorizer1.getClass().getClassLoader();
+      ClassLoader accessControllerClassLoader = externalAccessController1.getClass().getClassLoader();
 
-      // should be able to load the ExternalAuthorizer class via the AuthorizerClassLoader
-      authorizerClassLoader.loadClass(ValidExternalAuthorizer.class.getName());
-      Assert.assertNotNull(authorizerClassLoader.getResource("conf-file.xml"));
+      // should be able to load the ExternalAccessController class via the AccessControllerClassLoader
+      accessControllerClassLoader.loadClass(ValidExternalAccessController.class.getName());
+      Assert.assertNotNull(accessControllerClassLoader.getResource("conf-file.xml"));
     }
   }
 
   @Test
-  public void testAuthorizerExtensionExtraClasspath() throws IOException, ClassNotFoundException {
+  public void testAccessControllerExtensionExtraClasspath() throws IOException, ClassNotFoundException {
     Location externalAuthJar = createValidAuthExtensionJar();
     CConfiguration cConfCopy = CConfiguration.copy(CCONF);
     cConfCopy.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
@@ -215,47 +217,48 @@ public class AuthorizerInstantiatorTest extends AuthorizationTestBase {
                   "50000");
     cConfCopy.set("foo." + Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX + "dont.include",
                   "not.prefix.should.not.be.included");
-    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
-      // should be able to load the ExternalAuthorizer class via the AuthorizerInstantiatorService
-      Authorizer externalAuthorizer1 = instantiator.get();
-      Assert.assertNotNull(externalAuthorizer1);
-      Authorizer externalAuthorizer2 = instantiator.get();
-      Assert.assertNotNull(externalAuthorizer2);
+    try (AccessControllerInstantiator instantiator =
+           new AccessControllerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
+      // should be able to load the ExternalAccessController class via the AccessControllerInstantiatorService
+      AccessController externalAccessController1 = instantiator.get();
+      Assert.assertNotNull(externalAccessController1);
+      AccessController externalAccessController2 = instantiator.get();
+      Assert.assertNotNull(externalAccessController2);
       // verify that get returns the same  instance each time it is called.
-      Assert.assertEquals(externalAuthorizer1, externalAuthorizer2);
+      Assert.assertEquals(externalAccessController1, externalAccessController2);
 
-      ClassLoader authorizerClassLoader = externalAuthorizer1.getClass().getClassLoader();
-      ClassLoader parent = authorizerClassLoader.getParent();
-      // should be able to load the Authorizer interface via the parent
-      parent.loadClass(Authorizer.class.getName());
-      // should not be able to load the ExternalAuthorizer class via the parent class loader
+      ClassLoader accessControllerClassLoader = externalAccessController1.getClass().getClassLoader();
+      ClassLoader parent = accessControllerClassLoader.getParent();
+      // should be able to load the AccessController interface via the parent
+      parent.loadClass(AccessController.class.getName());
+      // should not be able to load the ExternalAccessController class via the parent class loader
       try {
-        parent.loadClass(ValidExternalAuthorizer.class.getName());
-        Assert.fail("Should not be able to load external authorizer classes via the parent classloader of the " +
-                      "Authorizer class loader.");
+        parent.loadClass(ValidExternalAccessController.class.getName());
+        Assert.fail("Should not be able to load external accessController classes via the parent classloader of the " +
+                      "AccessController class loader.");
       } catch (ClassNotFoundException expected) {
         // expected
       }
-      // should be able to load the ExternalAuthorizer class via the AuthorizerClassLoader
-      authorizerClassLoader.loadClass(ValidExternalAuthorizer.class.getName());
+      // should be able to load the ExternalAccessController class via the AccessControllerClassLoader
+      accessControllerClassLoader.loadClass(ValidExternalAccessController.class.getName());
 
-      // have to do this because the external authorizer instance is created in a new classloader, so casting will
+      // have to do this because the external accessController instance is created in a new classloader, so casting will
       // not work.
       Gson gson = new Gson();
-      ValidExternalAuthorizer validAuthorizer = gson.fromJson(gson.toJson(externalAuthorizer1),
-                                                              ValidExternalAuthorizer.class);
+      ValidExternalAccessController validAccessController = gson.fromJson(gson.toJson(externalAccessController1),
+                                                                    ValidExternalAccessController.class);
       Properties expectedProps = new Properties();
       expectedProps.put("config.path", "/path/config.ini");
       expectedProps.put("service.address", "http://foo.bar.co:5555");
       expectedProps.put("cache.ttl.secs", "500");
       expectedProps.put("cache.max.entries", "50000");
-      Properties actualProps = validAuthorizer.getProperties();
+      Properties actualProps = validAccessController.getProperties();
       Assert.assertEquals(expectedProps, actualProps);
     }
   }
 
   private Location createInvalidExternalAuthJar(@Nullable Manifest manifest) throws IOException {
-    String jarName = "external-authorizer";
+    String jarName = "external-accessController";
     Location externalAuthJar = locationFactory.create(jarName).getTempFile(".jar");
     try (
       OutputStream out = externalAuthJar.getOutputStream();
@@ -270,19 +273,19 @@ public class AuthorizerInstantiatorTest extends AuthorizationTestBase {
 
   private Location createValidAuthExtensionJar() throws IOException {
     Manifest manifest = new Manifest();
-    manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, ValidExternalAuthorizer.class.getName());
-    return AppJarHelper.createDeploymentJar(locationFactory, ValidExternalAuthorizer.class,
+    manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, ValidExternalAccessController.class.getName());
+    return AppJarHelper.createDeploymentJar(locationFactory, ValidExternalAccessController.class,
                                             manifest);
   }
 
-  public static final class ExceptionInInitialize extends NoOpAuthorizer {
+  public static final class ExceptionInInitialize extends NoOpAccessController {
     @Override
-    public void initialize(AuthorizationContext context) throws Exception {
+    public void initialize(AuthorizationContext context) {
       throw new IllegalStateException("Testing exception during initialize");
     }
   }
 
-  public static class ValidExternalAuthorizerBase extends NoOpAuthorizer {
+  public static class ValidExternalAccessControllerBase extends NoOpAccessController {
 
     @Override
     public Set<Role> listAllRoles() {
@@ -291,10 +294,10 @@ public class AuthorizerInstantiatorTest extends AuthorizationTestBase {
     }
   }
 
-  public static final class ValidExternalAuthorizer extends ValidExternalAuthorizerBase {
+  public static final class ValidExternalAccessController extends ValidExternalAccessControllerBase {
     private Properties properties;
     @Override
-    public void initialize(AuthorizationContext context) throws Exception {
+    public void initialize(AuthorizationContext context) {
       this.properties = context.getExtensionProperties();
     }
 
@@ -303,18 +306,18 @@ public class AuthorizerInstantiatorTest extends AuthorizationTestBase {
     }
 
     @Override
-    public Set<Privilege> listPrivileges(Principal principal) {
+    public Set<GrantedPermission> listGrants(Principal principal) {
       assertContextClassLoader();
-      return super.listPrivileges(principal);
+      return super.listGrants(principal);
     }
 
     private static void assertContextClassLoader() {
-      Assert.assertEquals(ValidExternalAuthorizer.class.getClassLoader(),
+      Assert.assertEquals(ValidExternalAccessController.class.getClassLoader(),
                           Thread.currentThread().getContextClassLoader());
     }
 
   }
 
-  private static final class DoesNotImplementAuthorizer {
+  private static final class DoesNotImplementAccessController {
   }
 }

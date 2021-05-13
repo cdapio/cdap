@@ -21,15 +21,27 @@ import io.cdap.cdap.api.annotation.Beta;
  * Types of actions that users can perform on entities.
  * Actions are inherited, so granting an action on a namespace
  * would also grant that action on entities in that namespace.
+ * @deprecated please use {@link Permission}
  */
-@Beta
-public enum Action {
+@Beta @Deprecated
+public enum Action implements ActionOrPermission {
   /** Read data, metrics, and logs from the entity */
-  READ,
+  READ(StandardPermission.GET),
   /** Write data to the entitIterator<RawMessageTableEntry> entriesy */
-  WRITE,
+  WRITE(StandardPermission.UPDATE),
   /** Execute a program */
-  EXECUTE,
+  EXECUTE(ApplicationPermission.EXECUTE),
   /** Platform-related read/write privileges e.g. application and artifact deployment */
-  ADMIN,
+  ADMIN(StandardPermission.UPDATE),
+  ;
+
+  private final Permission permission;
+
+  Action(Permission permission) {
+    this.permission = permission;
+  }
+
+  public Permission getPermission() {
+    return permission;
+  }
 }

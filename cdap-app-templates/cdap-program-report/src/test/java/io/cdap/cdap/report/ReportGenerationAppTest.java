@@ -63,6 +63,7 @@ import io.cdap.cdap.report.util.Constants;
 import io.cdap.cdap.report.util.ReportContentDeserializer;
 import io.cdap.cdap.report.util.ReportField;
 import io.cdap.cdap.report.util.ReportIds;
+import io.cdap.cdap.security.spi.AccessException;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
 import io.cdap.cdap.test.SparkManager;
@@ -280,7 +281,8 @@ public class ReportGenerationAppTest extends TestBase {
   }
 
   private SparkManager deployAndStartReportingApplication(NamespaceId deployNamespace,
-                                                          Map<String, String> runtimeArguments) throws IOException {
+                                                          Map<String, String> runtimeArguments)
+    throws IOException, AccessException {
     // Trace the dependencies for the spark avro
     ApplicationBundler bundler = new ApplicationBundler(new ClassAcceptor() {
       @Override

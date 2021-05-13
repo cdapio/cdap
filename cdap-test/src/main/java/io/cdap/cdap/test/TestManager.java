@@ -34,6 +34,7 @@ import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.DatasetModuleId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.security.spi.AccessException;
 
 import java.io.File;
 import java.sql.Connection;
@@ -55,7 +56,8 @@ public interface TestManager {
    * @return An {@link ApplicationManager} to manage the deployed application.
    */
   ApplicationManager deployApplication(NamespaceId namespace,
-                                       Class<? extends Application> applicationClz, File... bundleEmbeddedJars);
+                                       Class<? extends Application> applicationClz, File... bundleEmbeddedJars)
+    throws AccessException;
   /**
    * Deploys an {@link Application}.
    *
@@ -66,7 +68,8 @@ public interface TestManager {
    * @return An {@link ApplicationManager} to manage the deployed application.
    */
   ApplicationManager deployApplication(NamespaceId namespace, Class<? extends Application> applicationClz,
-                                       @Nullable Config configObject, File... bundleEmbeddedJars);
+                                       @Nullable Config configObject, File... bundleEmbeddedJars)
+    throws AccessException;
 
   /**
    * Creates an {@link Application} with a version using an existing artifact.

@@ -157,7 +157,7 @@ public class LineageClient {
   }
 
   private <T> T getLineage(NamespacedEntityId namespacedId, String path, Class<T> type)
-    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
+    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     URL lineageURL = config.resolveNamespacedURLV3(new NamespaceId(namespacedId.getNamespace()), path);
     HttpResponse response = restClient.execute(HttpRequest.get(lineageURL).build(),
                                                config.getAccessToken(),

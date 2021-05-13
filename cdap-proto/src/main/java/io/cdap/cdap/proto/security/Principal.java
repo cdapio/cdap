@@ -23,7 +23,7 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
- * Identifies a user, group or role which can be authorized to perform an {@link Action} on a {@link EntityId}.
+ * Identifies a user, group or role which can be authorized to perform an {@link Permission} on a {@link EntityId}.
  */
 @Beta
 public class Principal {

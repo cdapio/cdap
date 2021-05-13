@@ -184,7 +184,7 @@ public class AuthorizationCLITest  {
                                                              principal.getName()));
     lines = Arrays.asList(output.split("\\r?\\n"));
     Assert.assertEquals(2, lines.size());
-    Assert.assertArrayEquals(new String[]{namespaceId.toString(), Action.READ.name()}, lines.get(1).split(","));
+    Assert.assertArrayEquals(new String[]{namespaceId.toString(), Action.ADMIN.name()}, lines.get(1).split(","));
 
 
     // test revoke actions

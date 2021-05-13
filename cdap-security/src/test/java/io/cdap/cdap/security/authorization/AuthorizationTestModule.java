@@ -23,13 +23,13 @@ import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
-import io.cdap.cdap.security.spi.authorization.PrivilegesManager;
+import io.cdap.cdap.security.spi.authorization.PermissionManager;
 
 
 /**
  * A {@link PrivateModule} that can be used in tests. Tests can enforce authorization in this module by setting
  * {@link Constants.Security.Authorization#ENABLED} and {@link Constants.Security#ENABLED} to {@code true}. However,
- * this module exposes an {@link AuthorizerInstantiator} whose {@link AuthorizationContextFactory} returns a no-op
+ * this module exposes an {@link AccessControllerInstantiator} whose {@link AuthorizationContextFactory} returns a no-op
  * {@link AuthorizationContext} that cannot perform any {@link DatasetContext}, {@link Admin} or {@link Transactional}
  * operations.
  */
@@ -37,9 +37,9 @@ public class AuthorizationTestModule extends PrivateModule {
   @Override
   protected void configure() {
     bind(AuthorizationContextFactory.class).to(NoOpAuthorizationContextFactory.class);
-    bind(AuthorizerInstantiator.class).in(Scopes.SINGLETON);
-    expose(AuthorizerInstantiator.class);
-    bind(PrivilegesManager.class).to(DelegatingPrivilegeManager.class).in(Scopes.SINGLETON);
-    expose(PrivilegesManager.class);
+    bind(AccessControllerInstantiator.class).in(Scopes.SINGLETON);
+    expose(AccessControllerInstantiator.class);
+    bind(PermissionManager.class).to(DelegatingPermissionManager.class).in(Scopes.SINGLETON);
+    expose(PermissionManager.class);
   }
 }

@@ -26,6 +26,7 @@ import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.asm.FinallyAdapter;
 import io.cdap.cdap.internal.asm.Signatures;
+import io.cdap.cdap.security.spi.authorization.AccessController;
 import io.cdap.cdap.security.spi.authorization.Authorizer;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -46,35 +47,37 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /**
- * {@link DirectoryClassLoader} for {@link Authorizer} extensions.
+ * {@link DirectoryClassLoader} for {@link AccessController} extensions.
  */
-public class AuthorizerClassLoader extends DirectoryClassLoader {
+public class AccessControllerClassLoader extends DirectoryClassLoader {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AuthorizerClassLoader.class);
+  private static final Logger LOG = LoggerFactory.getLogger(AccessControllerClassLoader.class);
   private static final Type CLASSLOADER_TYPE = Type.getType(ClassLoader.class);
   private static final Type THREAD_TYPE = Type.getType(Thread.class);
 
   private final File tmpDir;
   private final File extensionJar;
-  private final String authorizerClassName;
+  private final String accessControllerClassName;
 
   @VisibleForTesting
   static ClassLoader createParent() {
-    ClassLoader baseClassLoader = AuthorizerClassLoader.class.getClassLoader();
+    ClassLoader baseClassLoader = AccessControllerClassLoader.class.getClassLoader();
 
-    final Set<String> authorizerResources = traceSecurityDependencies(baseClassLoader);
+    final Set<String> accessControllerResources = traceSecurityDependencies(baseClassLoader);
     // by default, FilterClassLoader's defaultFilter allows all hadoop classes, which makes it so that
-    // the authorizer extension can share the same instance of UserGroupInformation. This allows kerberos credential
-    // renewal to also renew for any extension
+    // the access controller extension can share the same instance of UserGroupInformation. This allows kerberos
+    // credential renewal to also renew for any extension
     final FilterClassLoader.Filter defaultFilter = FilterClassLoader.defaultFilter();
 
     return new FilterClassLoader(baseClassLoader, new FilterClassLoader.Filter() {
       @Override
       public boolean acceptResource(String resource) {
-        return defaultFilter.acceptResource(resource) || authorizerResources.contains(resource);
+        return defaultFilter.acceptResource(resource) || accessControllerResources.contains(resource);
       }
 
       @Override
@@ -86,23 +89,24 @@ public class AuthorizerClassLoader extends DirectoryClassLoader {
 
   private static Set<String> traceSecurityDependencies(ClassLoader baseClassLoader) {
     try {
-      // Trace dependencies for Authorizer class. This will make classes from cdap-security-spi as well as cdap-proto
-      // and other dependencies of cdap-security-spi available to the authorizer extension.
-      return ClassPathResources.getResourcesWithDependencies(baseClassLoader, Authorizer.class);
+      // Trace dependencies for AccessController class. This will make classes from cdap-security-spi as well
+      // as cdap-proto and other dependencies of cdap-security-spi available to the access controller extension.
+      return ClassPathResources.getResourcesWithDependencies(baseClassLoader, AccessController.class);
     } catch (IOException e) {
-      LOG.error("Failed to determine resources for authorizer class loader while tracing dependencies of " +
-                  "Authorizer.", e);
+      LOG.error("Failed to determine resources for access controller class loader while tracing dependencies of " +
+                  "AccessController.", e);
       return ImmutableSet.of();
     }
   }
 
-  AuthorizerClassLoader(File tmpDir, File authorizerExtensionJar,
-                        @Nullable String authorizerExtraClasspath) throws IOException, InvalidAuthorizerException {
-    super(BundleJarUtil.prepareClassLoaderFolder(authorizerExtensionJar, tmpDir),
-          authorizerExtraClasspath, createParent(), "lib");
+  AccessControllerClassLoader(File tmpDir, File accessControllerExtensionJar,
+                              @Nullable String accessControllerExtraClasspath)
+    throws IOException, InvalidAccessControllerException {
+    super(BundleJarUtil.prepareClassLoaderFolder(accessControllerExtensionJar, tmpDir),
+          accessControllerExtraClasspath, createParent(), "lib");
     this.tmpDir = tmpDir;
-    this.extensionJar = authorizerExtensionJar;
-    this.authorizerClassName = extractAuthorizerClassName();
+    this.extensionJar = accessControllerExtensionJar;
+    this.accessControllerClassName = extractAccessControllerClassName();
   }
 
   @Override
@@ -122,26 +126,27 @@ public class AuthorizerClassLoader extends DirectoryClassLoader {
   }
 
   /**
-   * Returns the class name of the {@link Authorizer}.
+   * Returns the class name of the {@link AccessController}.
    */
-  public String getAuthorizerClassName() {
-    return authorizerClassName;
+  public String getAccessControllerClassName() {
+    return accessControllerClassName;
   }
 
   @Override
   protected boolean needIntercept(String className) {
-    return authorizerClassName.equals(className);
+    return accessControllerClassName.equals(className);
   }
 
   @Nullable
   @Override
   public byte[] rewriteClass(String className, InputStream input) throws IOException {
-    if (!authorizerClassName.equals(className)) {
+    if (!accessControllerClassName.equals(className)) {
       return null;
     }
 
-    // Rewrite the Authorizer class to wrap every methods call with context classloader change
-    Set<java.lang.reflect.Method> authorizerMethods = new HashSet<>(Arrays.asList(Authorizer.class.getMethods()));
+    // Rewrite the AccessController class to wrap every methods call with context classloader change
+    Set<java.lang.reflect.Method> accessControlMethods = Stream.of(Authorizer.class, AccessController.class)
+      .flatMap(c -> Stream.of(c.getMethods())).collect(Collectors.toSet());
 
     ClassReader cr = new ClassReader(input);
     ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
@@ -162,8 +167,8 @@ public class AuthorizerClassLoader extends DirectoryClassLoader {
 
         Method method = new Method(name, descriptor);
 
-        // Only rewrite methods defined in the Authorizer interface.
-        if (authorizerMethods.removeIf(m -> method.equals(Method.getMethod(m)))) {
+        // Only rewrite methods defined in the Authorizer or AccessController interface.
+        if (accessControlMethods.removeIf(m -> method.equals(Method.getMethod(m)))) {
           return rewriteMethod(access, name, descriptor, mv);
         }
 
@@ -175,10 +180,16 @@ public class AuthorizerClassLoader extends DirectoryClassLoader {
         // Generates all the missing methods on the Authorizer interface so that we can wrap them with the
         // context classloader switch.
         Set<Method> generatedMethods = new HashSet<>();
-        new HashSet<>(authorizerMethods).forEach(m -> {
+        new HashSet<>(accessControlMethods).forEach(m -> {
           Method method = Method.getMethod(m);
           // Guard against same method signature that comes from different parent interfaces
           if (!generatedMethods.add(method)) {
+            return;
+          }
+          if (m.isDefault() && Type.getType(Object.class).getInternalName().equals(superName)) {
+            // For default implementations that are not overriden in the superclass it's fine to skip the wrapping.
+            // Note that if we wanted to wrap we would need to know which of the defined interfaces actually extends
+            // the one we need and it's not trivial as those interfaces can be in the current jar we are trying to load.
             return;
           }
 
@@ -206,7 +217,7 @@ public class AuthorizerClassLoader extends DirectoryClassLoader {
 
       /**
        * Rewrites the method by wrapping the whole method call with the context classloader switch to the
-       * AuthorizerClassLoader.
+       * AccessControllerClassLoader.
        */
       private MethodVisitor rewriteMethod(int access, String name, String descriptor, MethodVisitor mv) {
         return new FinallyAdapter(Opcodes.ASM7, mv, access, name, descriptor) {
@@ -256,25 +267,26 @@ public class AuthorizerClassLoader extends DirectoryClassLoader {
   }
 
   /**
-   * Returns the {@link Authorizer} class name as declared in the Manifest.
+   * Returns the {@link AccessController} class name as declared in the Manifest.
    */
-  private String extractAuthorizerClassName() throws InvalidAuthorizerException {
+  private String extractAccessControllerClassName() throws InvalidAccessControllerException {
     Manifest manifest = getManifest();
     if (manifest == null) {
-      throw new InvalidAuthorizerException("Missing Manifest from the Authorization extension");
+      throw new InvalidAccessControllerException("Missing Manifest from the Access Control extension");
     }
 
     Attributes manifestAttributes = manifest.getMainAttributes();
     if (manifestAttributes == null) {
-      throw new InvalidAuthorizerException(
-        String.format("No attributes found in authorizer extension jar '%s'.", extensionJar));
+      throw new InvalidAccessControllerException(
+        String.format("No attributes found in access control extension jar '%s'.", extensionJar));
     }
     if (!manifestAttributes.containsKey(Attributes.Name.MAIN_CLASS)) {
-      throw new InvalidAuthorizerException(
-        String.format("Authorizer class not set in the manifest of the authorizer extension jar located at %s. " +
+      throw new InvalidAccessControllerException(
+        String.format("Access Controller class not set in the manifest of the access controle extension jar " +
+                        "located at %s. " +
                         "Please set the attribute %s to the fully qualified class name of the class that " +
                         "implements %s in the extension jar's manifest.",
-                      extensionJar, Attributes.Name.MAIN_CLASS, Authorizer.class.getName()));
+                      extensionJar, Attributes.Name.MAIN_CLASS, AccessController.class.getName()));
     }
     return manifestAttributes.getValue(Attributes.Name.MAIN_CLASS);
   }

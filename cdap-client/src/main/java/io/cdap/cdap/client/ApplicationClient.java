@@ -255,7 +255,7 @@ public class ApplicationClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void upgradeApplication(ApplicationId app, Set<String> artifactScopes, boolean allowSnapshot)
-    throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
+    throws ApplicationNotFoundException, IOException, UnauthenticatedException {
     String path = String.format("apps/%s/upgrade?allowSnapshot=%s", app.getApplication(),
                                 Boolean.toString(allowSnapshot));
 

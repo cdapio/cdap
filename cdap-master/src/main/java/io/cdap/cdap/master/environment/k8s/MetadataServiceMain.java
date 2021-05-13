@@ -50,8 +50,8 @@ import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.UGIProvider;
-import io.cdap.cdap.security.spi.authorization.NoOpAuthorizer;
-import io.cdap.cdap.security.spi.authorization.PrivilegesManager;
+import io.cdap.cdap.security.spi.authorization.NoOpAccessController;
+import io.cdap.cdap.security.spi.authorization.PermissionManager;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 
 import java.util.Arrays;
@@ -94,7 +94,7 @@ public class MetadataServiceMain extends AbstractServiceMain<EnvironmentOptions>
 
           // Current impersonation is not supported
           bind(UGIProvider.class).to(CurrentUGIProvider.class).in(Scopes.SINGLETON);
-          bind(PrivilegesManager.class).to(NoOpAuthorizer.class);
+          bind(PermissionManager.class).to(NoOpAccessController.class);
 
           bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
           // TODO (CDAP-14677): find a better way to inject metadata publisher

@@ -39,6 +39,7 @@ import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.ArtifactAlreadyExistsException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.CallUnauthorizedException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
@@ -70,6 +71,7 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.security.spi.AccessException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.BodyConsumer;
 import io.cdap.http.ChunkResponder;
@@ -163,7 +165,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public BodyConsumer create(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") final String namespaceId,
                              @PathParam("app-id") final String appId)
-    throws BadRequestException, NamespaceNotFoundException {
+    throws BadRequestException, NamespaceNotFoundException, AccessException {
 
     ApplicationId applicationId = validateApplicationId(namespaceId, appId);
 
@@ -187,7 +189,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @HeaderParam(APP_CONFIG_HEADER) String configString,
                              @HeaderParam(PRINCIPAL_HEADER) String ownerPrincipal,
                              @DefaultValue("true") @HeaderParam(SCHEDULES_HEADER) boolean updateSchedules)
-    throws BadRequestException, NamespaceNotFoundException {
+    throws BadRequestException, NamespaceNotFoundException, AccessException {
 
     NamespaceId namespace = validateNamespace(namespaceId);
     // null means use name provided by app spec
@@ -305,7 +307,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getPluginsInfo(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") final String namespaceId,
                              @PathParam("app-id") final String appId)
-    throws NamespaceNotFoundException, BadRequestException, ApplicationNotFoundException {
+    throws NamespaceNotFoundException, BadRequestException, ApplicationNotFoundException, AccessException {
 
     ApplicationId applicationId = validateApplicationId(namespaceId, appId);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(applicationLifecycleService.getPlugins(applicationId)));
@@ -379,7 +381,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void updateApp(FullHttpRequest request, HttpResponder responder,
                         @PathParam("namespace-id") final String namespaceId,
                         @PathParam("app-id") final String appName)
-    throws NotFoundException, BadRequestException, UnauthorizedException, IOException {
+    throws NotFoundException, BadRequestException, AccessException, IOException {
 
     ApplicationId appId = validateApplicationId(namespaceId, appName);
 
@@ -628,7 +630,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
         } catch (ConflictException e) {
           responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
-        } catch (UnauthorizedException e) {
+        } catch (UnauthorizedException | CallUnauthorizedException e) {
           responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
         } catch (InvalidArtifactException e) {
           responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -755,7 +757,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private NamespaceId validateNamespace(String namespaceId) throws BadRequestException, NamespaceNotFoundException {
+  private NamespaceId validateNamespace(String namespaceId) throws BadRequestException,
+    NamespaceNotFoundException, AccessException {
     NamespaceId namespace;
     if (namespaceId == null) {
       throw new BadRequestException("Path parameter namespace-id cannot be empty");
@@ -770,7 +773,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       if (!namespace.equals(NamespaceId.SYSTEM)) {
         namespaceQueryAdmin.get(namespace);
       }
-    } catch (NamespaceNotFoundException e) {
+    } catch (NamespaceNotFoundException | AccessException e) {
       throw e;
     } catch (Exception e) {
       // This can only happen when NamespaceAdmin uses HTTP calls to interact with namespaces.
@@ -782,7 +785,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private ApplicationId validateApplicationId(String namespace, String appId)
-    throws BadRequestException, NamespaceNotFoundException {
+    throws BadRequestException, NamespaceNotFoundException, AccessException {
     return validateApplicationId(validateNamespace(namespace), appId);
   }
 
@@ -791,7 +794,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private ApplicationId validateApplicationVersionId(String namespace, String appId, String versionId)
-    throws BadRequestException, NamespaceNotFoundException {
+    throws BadRequestException, NamespaceNotFoundException, AccessException {
     return validateApplicationVersionId(validateNamespace(namespace), appId, versionId);
   }
 

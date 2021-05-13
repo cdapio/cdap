@@ -49,13 +49,13 @@ import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
-import io.cdap.cdap.security.authorization.RemotePrivilegesManager;
+import io.cdap.cdap.security.authorization.RemotePermissionManager;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.RemoteUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
-import io.cdap.cdap.security.spi.authorization.PrivilegesManager;
+import io.cdap.cdap.security.spi.authorization.PermissionManager;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.noop.NoopMetadataStorage;
 import org.apache.hadoop.conf.Configuration;
@@ -150,7 +150,7 @@ public class ContextManager {
           bind(UGIProvider.class).to(RemoteUGIProvider.class).in(Scopes.SINGLETON);
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
           // bind PrivilegesManager to a remote implementation, so it does not need to instantiate the authorizer
-          bind(PrivilegesManager.class).to(RemotePrivilegesManager.class);
+          bind(PermissionManager.class).to(RemotePermissionManager.class);
           bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
         }
       }

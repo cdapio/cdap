@@ -266,7 +266,7 @@ public class CLIConfig implements TableRendererConfig {
       }
       checkConnection(clientConfig, connectionInfo, userAccessToken.getAccessToken());
       return userAccessToken;
-    } catch (IOException | JsonSyntaxException | UnauthenticatedException ignored) {
+    } catch (IOException | JsonSyntaxException | UnauthenticatedException | UnauthorizedException ignored) {
       // Fall through
     }
 

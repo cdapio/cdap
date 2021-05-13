@@ -91,8 +91,8 @@ import io.cdap.cdap.metrics.process.loader.MetricsWriterModule;
 import io.cdap.cdap.metrics.query.MetricsQueryService;
 import io.cdap.cdap.operations.OperationalStatsService;
 import io.cdap.cdap.operations.guice.OperationalStatsModule;
+import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
-import io.cdap.cdap.security.authorization.AuthorizerInstantiator;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.guice.SecurityModules;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
@@ -142,7 +142,7 @@ public class StandaloneMain {
   private final DatasetService datasetService;
   private final DatasetOpExecutorService datasetOpExecutorService;
   private final ExploreClient exploreClient;
-  private final AuthorizerInstantiator authorizerInstantiator;
+  private final AccessControllerInstantiator accessControllerInstantiator;
   private final MessagingService messagingService;
   private final OperationalStatsService operationalStatsService;
   private final TwillRunnerService remoteExecutionTwillRunnerService;
@@ -166,7 +166,7 @@ public class StandaloneMain {
 
     levelDBTableService = injector.getInstance(LevelDBTableService.class);
     messagingService = injector.getInstance(MessagingService.class);
-    authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
+    accessControllerInstantiator = injector.getInstance(AccessControllerInstantiator.class);
     router = injector.getInstance(NettyRouter.class);
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
     logQueryService = injector.getInstance(LogQueryService.class);
@@ -365,7 +365,7 @@ public class StandaloneMain {
       }
 
       logAppenderInitializer.close();
-      authorizerInstantiator.close();
+      accessControllerInstantiator.close();
       metadataStorage.close();
       levelDBTableService.close();
     } catch (Throwable e) {

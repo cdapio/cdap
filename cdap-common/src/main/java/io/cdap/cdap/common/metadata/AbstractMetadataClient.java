@@ -75,7 +75,7 @@ public abstract class AbstractMetadataClient {
    * Executes an HTTP request.
    */
   protected abstract HttpResponse execute(HttpRequest request,  int... allowedErrorCodes)
-    throws IOException, UnauthenticatedException, UnauthorizedException;
+    throws IOException, UnauthenticatedException;
 
   /**
    * Resolves the specified URL with the specified namespace
@@ -388,7 +388,7 @@ public abstract class AbstractMetadataClient {
   }
 
   private HttpResponse makeRequest(String path, HttpMethod httpMethod, @Nullable String body)
-    throws IOException, UnauthenticatedException, BadRequestException, UnauthorizedException {
+    throws IOException, UnauthenticatedException, BadRequestException {
     URL url = resolve(path);
     HttpRequest.Builder builder = HttpRequest.builder(httpMethod, url);
     if (body != null) {

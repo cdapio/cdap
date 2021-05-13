@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.inject.matcher.Matcher;
 import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.common.CallUnauthorizedException;
 import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.Action;
@@ -167,28 +168,28 @@ public class RESTClientTest {
     Assert.assertEquals("0", response.getResponseBodyAsString());
   }
 
-  @Test(expected = UnauthorizedException.class)
+  @Test(expected = CallUnauthorizedException.class)
   public void testDeleteForbidden() throws Exception {
     URL url = getBaseURI().resolve("/api/testDeleteForbidden").toURL();
     HttpRequest request = HttpRequest.delete(url).build();
     restClient.execute(request, new AccessToken("Unknown", 82000L, "Bearer"));
   }
 
-  @Test(expected = UnauthorizedException.class)
+  @Test(expected = CallUnauthorizedException.class)
   public void testGetForbidden() throws Exception {
     URL url = getBaseURI().resolve("/api/testGetForbidden").toURL();
     HttpRequest request = HttpRequest.get(url).build();
     restClient.execute(request, new AccessToken("Unknown", 82000L, "Bearer"));
   }
 
-  @Test(expected = UnauthorizedException.class)
+  @Test(expected = CallUnauthorizedException.class)
   public void testPutForbidden() throws Exception {
     URL url = getBaseURI().resolve("/api/testPutForbidden").toURL();
     HttpRequest request = HttpRequest.put(url).build();
     restClient.execute(request, new AccessToken("Unknown", 82000L, "Bearer"));
   }
 
-  @Test(expected = UnauthorizedException.class)
+  @Test(expected = CallUnauthorizedException.class)
   public void testPostForbidden() throws Exception {
     URL url = getBaseURI().resolve("/api/testPostForbidden").toURL();
     HttpRequest request = HttpRequest.post(url).build();
