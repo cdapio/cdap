@@ -48,7 +48,6 @@ import java.net.InetSocketAddress;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
-import java.util.Base64;
 import java.util.Random;
 
 /**
@@ -125,8 +124,7 @@ public class FileFetcherHttpHandlerInternalTest {
 
   private HttpResponse download(File src, Location dst) throws IOException {
     // Make a request to download the source file.
-    URL url = new URL(String.format("%s/v3Internal/location/%s", baseURL,
-                                    Base64.getEncoder().encodeToString(src.toURI().toString().getBytes())));
+    URL url = new URL(String.format("%s/v3Internal/location/%s", baseURL, src.toURI().getPath()));
     OutputStream outputStream = dst.getOutputStream();
     HttpRequest request = HttpRequest.builder(
       HttpMethod.GET, url).withContentConsumer(

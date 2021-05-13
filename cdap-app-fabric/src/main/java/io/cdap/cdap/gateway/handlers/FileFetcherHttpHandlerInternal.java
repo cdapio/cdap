@@ -36,13 +36,9 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.mortbay.log.Log;
 
 import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Base64;
 import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
@@ -64,36 +60,20 @@ public class FileFetcherHttpHandlerInternal extends AbstractHttpHandler {
   }
 
   /**
-   * Download the file specified by the base64-encoded URI
+   * Download the file specified by path based on current {@link LocationFactory}
    *
    * @param request {@link HttpRequest}
    * @param responder {@link HttpResponse}
-   * @param encodedUri base64 encoded URI that identifies the target file to download.
    */
   @GET
-  @Path("/location/{encodedUri}")
-  public void download(HttpRequest request, HttpResponder responder,
-                       @PathParam("encodedUri") String encodedUri) throws Exception {
-    URI uri;
-    try {
-      uri = new URI(new String(Base64.getDecoder().decode(encodedUri)));
-    } catch (URISyntaxException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                           String.format("Unable to parse URI schema: %s", e.getMessage()));
-      return;
-    }
-
-    if (!uri.getScheme().equals(locationFactory.getHomeLocation().toURI().getScheme())) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                           String.format("Unexpected URI schema %s, expecting %s", uri.getScheme(),
-                                         locationFactory.getHomeLocation().toURI().getScheme()));
-      return;
-    }
-
-    Location location = Locations.getLocationFromAbsolutePath(locationFactory, uri.getPath());
+  @Path("/location/**")
+  public void download(HttpRequest request, HttpResponder responder) throws Exception {
+    String prefix = String.format("%s/location/", Constants.Gateway.INTERNAL_API_VERSION_3);
+    String path = request.uri().substring(prefix.length());
+    Location location = Locations.getLocationFromAbsolutePath(locationFactory, path);
 
     if (!location.exists()) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("File %s not found", uri.toString()));
+      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("File %s not found", path));
       return;
     }
 
@@ -117,12 +97,12 @@ public class FileFetcherHttpHandlerInternal extends AbstractHttpHandler {
 
         @Override
         public void handleError(@Nullable Throwable cause) {
-          Log.warn("Error when sending chunks for uri {}", uri.toString(), cause);
+          Log.warn("Error when sending chunks for path {}", path, cause);
           Closeables.closeQuietly(inputStream);
         }
       }, new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM));
     } catch (Exception e) {
-      Log.warn("Exception when downloading uri {}", uri.toString());
+      Log.warn("Exception when initiating stream download for path {}", path);
       Closeables.closeQuietly(inputStream);
       throw e;
     }

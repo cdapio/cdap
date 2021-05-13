@@ -36,7 +36,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
 import java.nio.ByteBuffer;
-import java.util.Base64;
 
 /**
  * Download file from AppFabric via internal REST API calls.
@@ -66,32 +65,31 @@ class FileFetcher {
     OutputStream outputStream = targetLocation.getOutputStream();
     HttpRequest request = remoteClient.requestBuilder(
       HttpMethod.GET,
-      String.format("location/%s", Base64.getEncoder().encodeToString(sourceURI.toString().getBytes())))
-      .withContentConsumer(
-        new HttpContentConsumer() {
-          @Override
-          public boolean onReceived(ByteBuffer chunk) {
-            try {
-              byte[] bytes = new byte[chunk.remaining()];
-              chunk.get(bytes, 0, bytes.length);
-              outputStream.write(bytes);
-              outputStream.flush();
-            } catch (IOException e) {
-              LOG.error("Failed to download file from {} to {}", sourceURI, targetLocation.toURI(), e);
-              return false;
-            }
-            return true;
+      String.format("location/%s", sourceURI.getPath())).withContentConsumer(
+      new HttpContentConsumer() {
+        @Override
+        public boolean onReceived(ByteBuffer chunk) {
+          try {
+            byte[] bytes = new byte[chunk.remaining()];
+            chunk.get(bytes, 0, bytes.length);
+            outputStream.write(bytes);
+            outputStream.flush();
+          } catch (IOException e) {
+            LOG.error("Failed to download file from {} to {}", sourceURI, targetLocation.toURI(), e);
+            return false;
           }
+          return true;
+        }
 
-          @Override
-          public void onFinished() {
-            try {
-              outputStream.close();
-            } catch (Exception e) {
-              LOG.error("Failed to close the file downloaded from {} to {}", sourceURI, targetLocation.toURI());
-            }
+        @Override
+        public void onFinished() {
+          try {
+            outputStream.close();
+          } catch (Exception e) {
+            LOG.error("Failed to close the file downloaded from {} to {}", sourceURI, targetLocation.toURI());
           }
-        }).build();
+        }
+      }).build();
     HttpResponse httpResponse = HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
     httpResponse.consumeContent();
 
