@@ -14,9 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.etl.mock.batch;
-
-import io.cdap.cdap.etl.api.Transform;
+package io.cdap.cdap.etl.api;
 
 import java.io.Serializable;
 

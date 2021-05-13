@@ -22,10 +22,10 @@ import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.etl.api.Emitter;
+import io.cdap.cdap.etl.api.SerializableTransform;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLPullDataset;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPullRequest;
-import io.cdap.cdap.etl.api.engine.sql.request.SQLPushRequest;
 import io.cdap.cdap.format.StructuredRecordStringConverter;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 

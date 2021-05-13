@@ -20,6 +20,7 @@ import com.google.common.base.Objects;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.metrics.Metrics;
+import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.etl.api.StageMetrics;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngine;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngineException;
@@ -70,6 +71,7 @@ import javax.annotation.Nullable;
 public class BatchSQLEngineAdapter<T> implements Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(BatchSQLEngineAdapter.class);
 
+  private final JavaSparkExecutionContext sec;
   private final SQLEngine<?, ?, ?, ?> sqlEngine;
   private final Metrics metrics;
   private final Map<String, StageStatisticsCollector> statsCollectors;
@@ -78,12 +80,29 @@ public class BatchSQLEngineAdapter<T> implements Closeable {
   private final Map<SQLEngineJobKey, SQLEngineJob<?>> jobs;
 
   public BatchSQLEngineAdapter(SQLEngine<?, ?, ?, ?> sqlEngine,
-                               Metrics metrics,
+                               JavaSparkExecutionContext sec,
                                Map<String, StageStatisticsCollector> statsCollectors) {
     this.sqlEngine = sqlEngine;
-    this.metrics = metrics;
+    this.sec = sec;
+    this.metrics = sec.getMetrics();
     this.statsCollectors = statsCollectors;
     this.jobs = new HashMap<>();
+  }
+
+  /**
+   * Call the SQLEngine PrepareRun method
+   * @throws Exception if the underlying prepareRun call fails.
+   */
+  public void prepareRun() throws Exception {
+    sqlEngine.prepareRun(sec);
+  }
+
+  /**
+   * Call the SQLEngine onRunFinish method
+   * @throws Exception if the underlying onRunFinish call fails.
+   */
+  public void onRunFinish(boolean succeeded) throws Exception {
+    sqlEngine.onRunFinish(succeeded, sec);
   }
 
   /**

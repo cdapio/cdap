@@ -17,22 +17,19 @@
 package io.cdap.cdap.etl.mock.batch;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.gson.Gson;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.etl.api.Emitter;
+import io.cdap.cdap.etl.api.SerializableTransform;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLPushDataset;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPushRequest;
 import io.cdap.cdap.format.StructuredRecordStringConverter;
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
-import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
