@@ -34,6 +34,7 @@ import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,6 +62,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
 
   @Inject
   public TaskWorkerHttpHandlerInternal(CConfiguration cConf,
+                                       Configuration hConf,
                                        ArtifactRepositoryReader artifactRepositoryReader,
                                        ArtifactRepository artifactRepository,
                                        Impersonator impersonator,
@@ -69,7 +71,8 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
     this.artifactRepositoryReader = artifactRepositoryReader;
     this.artifactRepository = artifactRepository;
     this.impersonator = impersonator;
-    runnableTaskLauncher = new RunnableTaskLauncher(cConf, artifactRepositoryReader, artifactRepository, impersonator);
+    runnableTaskLauncher = new RunnableTaskLauncher(cConf, hConf, artifactRepositoryReader, artifactRepository,
+                                                    impersonator);
     this.stopper = stopper;
   }
 
