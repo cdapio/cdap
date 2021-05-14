@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.k8s.runtime;
 
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.common.internal.remote.RemoteClient;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
@@ -104,10 +107,10 @@ class FileFetcher {
    * @throws IOException if file downloading or writing to target location fails.
    */
   void download(URI sourceURI, Location targetLocation) throws IOException, IllegalArgumentException {
-    LOG.warn("wyzhang: download start");
-//    RemoteClient remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
-//                                                 new DefaultHttpRequestConfig(false),
-//                                                 Constants.Gateway.INTERNAL_API_VERSION_3);
+    RemoteClient remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
+                                                 new DefaultHttpRequestConfig(false),
+                                                 Constants.Gateway.INTERNAL_API_VERSION_3);
+    LOG.warn("wyzhang: remoteClient.resolve " + remoteClient.resolve("v3Internal/location").toString());
     Discoverable discoverable = pickRandom(discoveryServiceClient.discover(APP_FABRIC_HTTP));
     if (discoverable == null) {
       throw new IOException(String.format("service %s not found by discoveryService", APP_FABRIC_HTTP));

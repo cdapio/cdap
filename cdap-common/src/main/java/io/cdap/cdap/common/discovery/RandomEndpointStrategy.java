@@ -48,13 +48,13 @@ public final class RandomEndpointStrategy extends AbstractEndpointStrategy {
    */
   @Nullable
   public static Discoverable pickRandom(ServiceDiscovered serviceDiscovered) {
+    System.out.println("wyzhang: pickrandom start");
     // Reservoir sampling
     Discoverable result = null;
     Iterator<Discoverable> itor = serviceDiscovered.iterator();
-    System.out.println("wyzhang: start");
     int count = 0;
     while (itor.hasNext()) {
-      System.out.println("wyzhang: start one iteration");
+      System.out.println("wyzhang: pickrandom one iter");
       Discoverable next = itor.next();
       if (ThreadLocalRandom.current().nextInt(++count) == 0) {
         result = next;
