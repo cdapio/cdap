@@ -34,6 +34,7 @@ import io.cdap.cdap.etl.api.batch.BatchConnector;
 import io.cdap.cdap.etl.api.connector.BrowseRequest;
 import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.cdap.etl.api.connector.ConnectorSpec;
+import io.cdap.cdap.etl.api.connector.ConnectorSpecRequest;
 import io.cdap.cdap.etl.api.connector.DirectConnector;
 import io.cdap.cdap.etl.api.connector.SampleRequest;
 import io.cdap.cdap.etl.api.validation.ValidationException;
@@ -44,6 +45,7 @@ import io.cdap.cdap.etl.proto.connection.ConnectionId;
 import io.cdap.cdap.etl.proto.connection.PluginInfo;
 import io.cdap.cdap.etl.proto.connection.SampleResponse;
 import io.cdap.cdap.etl.proto.connection.SampleResponseCodec;
+import io.cdap.cdap.etl.proto.connection.SpecGenerationRequest;
 import io.cdap.cdap.etl.validation.SimpleFailureCollector;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -51,7 +53,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -270,27 +271,69 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
 
       try (Connector connector = getConnector(pluginConfigurer, conn.getPlugin())) {
         connector.configure(pluginConfigurer);
-        ConnectorSpec spec = connector.generateSpec(sampleRequest.getPath());
-        ConnectorSpec connectorSpec = ConnectorSpec.builder().setProperties(sampleRequest.getProperties())
-                                        .addProperties(spec.getProperties()).build();
+        ConnectorSpecRequest specRequest = ConnectorSpecRequest.builder().setPath(sampleRequest.getPath())
+                                             .setConnection(connection)
+                                             .setProperties(sampleRequest.getProperties()).build();
+        ConnectorSpec spec = connector.generateSpec(specRequest);
         if (connector instanceof DirectConnector) {
           DirectConnector directConnector = (DirectConnector) connector;
           List<StructuredRecord> sample = directConnector.sample(sampleRequest);
           responder.sendString(GSON.toJson(
-            new SampleResponse(connectorSpec, sample.isEmpty() ? null : sample.get(0).getSchema(), sample)));
+            new SampleResponse(spec, sample.isEmpty() ? null : sample.get(0).getSchema(), sample)));
           return;
         }
         if (connector instanceof BatchConnector) {
           LimitingConnector limitingConnector = new LimitingConnector((BatchConnector) connector);
           List<StructuredRecord> sample = limitingConnector.sample(sampleRequest);
           responder.sendString(GSON.toJson(
-            new SampleResponse(connectorSpec, sample.isEmpty() ? null : sample.get(0).getSchema(), sample)));
+            new SampleResponse(spec, sample.isEmpty() ? null : sample.get(0).getSchema(), sample)));
           return;
         }
         // should not happen
         responder.sendError(
           HttpURLConnection.HTTP_BAD_REQUEST,
           "Connector is not supported. The supported connector should be DirectConnector or BatchConnector.");
+      }
+    });
+  }
+
+  /**
+   * Retrieve the spec for the connector, which can be used in a source/sink
+   */
+  @POST
+  @Path(API_VERSION + "/contexts/{context}/connections/{connection}/specification")
+  public void spec(HttpServiceRequest request, HttpServiceResponder responder,
+                   @PathParam("context") String namespace,
+                   @PathParam("connection") String connection) {
+    respond(namespace, responder, namespaceSummary -> {
+      if (namespaceSummary.getName().equalsIgnoreCase(NamespaceId.SYSTEM.getNamespace())) {
+        responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST,
+                            "Generating connector spec in system namespace is currently not supported");
+        return;
+      }
+
+      SpecGenerationRequest specRequest =
+        GSON.fromJson(StandardCharsets.UTF_8.decode(request.getContent()).toString(), SpecGenerationRequest.class);
+
+      if (specRequest == null) {
+        responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST, "The request body is empty");
+        return;
+      }
+
+      if (specRequest.getPath() == null) {
+        responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST, "Path is not provided in the sample request");
+        return;
+      }
+
+      PluginConfigurer pluginConfigurer = getContext().createPluginConfigurer(namespaceSummary.getName());
+      Connection conn = store.getConnection(new ConnectionId(namespaceSummary, connection));
+
+      try (Connector connector = getConnector(pluginConfigurer, conn.getPlugin())) {
+        connector.configure(pluginConfigurer);
+        ConnectorSpecRequest connectorSpecRequest = ConnectorSpecRequest.builder().setPath(specRequest.getPath())
+                                                      .setConnection(connection)
+                                                      .setProperties(specRequest.getProperties()).build();
+        responder.sendJson(connector.generateSpec(connectorSpecRequest));
       }
     });
   }

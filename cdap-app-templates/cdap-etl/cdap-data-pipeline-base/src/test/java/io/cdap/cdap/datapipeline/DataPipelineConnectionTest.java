@@ -192,7 +192,9 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     for (int i = 0; i < 100; i++) {
       records.add(StructuredRecord.builder(schema).set("offset", i * 2L).set("body", "1").build());
     }
-    ConnectorSpec spec = ConnectorSpec.builder().addProperty("path", entities.get(1).getPath()).build();
+    ConnectorSpec spec = ConnectorSpec.builder().addProperty("path", entities.get(1).getPath())
+                           .addProperty("useConnection", "true")
+                           .addProperty("connection", String.format("${conn(%s)}", conn)).build();
     SampleResponse expectedSample = new SampleResponse(spec, schema, records);
 
     // sample the file, the file has 100 lines, so 200 should retrieve all lines

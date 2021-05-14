@@ -25,6 +25,7 @@ import io.cdap.cdap.etl.api.batch.BatchConnector;
 import io.cdap.cdap.etl.api.connector.BrowseDetail;
 import io.cdap.cdap.etl.api.connector.BrowseRequest;
 import io.cdap.cdap.etl.api.connector.ConnectorSpec;
+import io.cdap.cdap.etl.api.connector.ConnectorSpecRequest;
 import io.cdap.cdap.etl.api.connector.DirectConnector;
 import io.cdap.cdap.etl.api.connector.SampleRequest;
 import io.cdap.cdap.etl.api.validation.ValidationException;
@@ -108,8 +109,8 @@ public class LimitingConnector implements DirectConnector {
   }
 
   @Override
-  public ConnectorSpec generateSpec(String path) {
-    return batchConnector.generateSpec(path);
+  public ConnectorSpec generateSpec(ConnectorSpecRequest connectorSpecRequest) {
+    return batchConnector.generateSpec(connectorSpecRequest);
   }
 
   @Override
