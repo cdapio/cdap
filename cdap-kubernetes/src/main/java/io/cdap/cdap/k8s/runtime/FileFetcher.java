@@ -36,6 +36,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import javax.net.ssl.HttpsURLConnection;
 
 /**
  * Download file from AppFabric via internal REST API calls.
@@ -126,6 +127,10 @@ class FileFetcher {
     conn.setReadTimeout(15000);
     conn.setConnectTimeout(15000);
     conn.setChunkedStreamingMode(0);
+
+    HttpsURLConnection httpsConn = ((HttpsURLConnection) conn);
+    httpsConn.setSSLSocketFactory(HttpsURLConnection.getDefaultSSLSocketFactory());
+    httpsConn.setHostnameVerifier((s, sslSession) -> true);
     LOG.warn("wyzhang: conn " + conn.toString());
     conn.connect();
     int responseCode = conn.getResponseCode();
