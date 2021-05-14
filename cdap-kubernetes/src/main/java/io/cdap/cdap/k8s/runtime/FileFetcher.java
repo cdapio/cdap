@@ -85,7 +85,7 @@ class FileFetcher {
         return;
       } catch (IOException e) {
         retries++;
-        LOG.warn("wyzhang: download failed retries=" + retries + e.getMessage());
+        LOG.warn("wyzhang: download failed retries=" + retries + e.getMessage() + e.getStackTrace());
         if (retries >= maxRetries) {
           throw e;
         }
@@ -105,10 +105,6 @@ class FileFetcher {
    * @throws IOException if file downloading or writing to target location fails.
    */
   void download(URI sourceURI, Location targetLocation) throws IOException, IllegalArgumentException {
-//    RemoteClient remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
-//                                                 new DefaultHttpRequestConfig(false),
-//                                                 Constants.Gateway.INTERNAL_API_VERSION_3);
-//    LOG.warn("wyzhang: remoteClient.resolve " + remoteClient.resolve("v3Internal/location").toString());
     Discoverable discoverable = pickRandom(discoveryServiceClient.discover(APP_FABRIC_HTTP));
     if (discoverable == null) {
       throw new IOException(String.format("service %s not found by discoveryService", APP_FABRIC_HTTP));
