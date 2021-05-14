@@ -50,7 +50,8 @@
     <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-common</artifactId>
-      <scope>provided</scope>
+      <version>6.5.0-SNAPSHOT</version>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.twill</groupId>
