@@ -85,7 +85,8 @@ class FileFetcher {
         return;
       } catch (IOException e) {
         retries++;
-        LOG.warn("wyzhang: download failed retries=" + retries + e.getMessage() + e.getStackTrace());
+        LOG.warn("wyzhang: download failed retries=" + retries + e.getMessage());
+        e.printStackTrace();
         if (retries >= maxRetries) {
           throw e;
         }
