@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.k8s.runtime;
 
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.common.internal.remote.RemoteClient;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
@@ -77,6 +80,9 @@ class FileFetcher {
    * @throws IOException if file downloading or writing to target location fails.
    */
   void download(URI sourceURI, Location targetLocation) throws IOException {
+    RemoteClient remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
+                                                 new DefaultHttpRequestConfig(false),
+                                                 Constants.Gateway.INTERNAL_API_VERSION_3);
     Discoverable discoverable = pickRandom(discoveryServiceClient.discover(APP_FABRIC_HTTP));
     String scheme = URIScheme.getScheme(discoverable).scheme;
     LOG.warn("wyzahng: scheme " + scheme);
