@@ -108,7 +108,7 @@ public class DataprocTool {
     String imageVersion = commandLine.hasOption('i') ? commandLine.getOptionValue('i') : "1.2";
 
     String name = commandLine.getOptionValue('n');
-    try (DataprocClient client = DataprocClient.fromConf(conf)) {
+    try (DataprocClient client = DataprocClient.fromConf(conf, null)) {
       if (PROVISION.equalsIgnoreCase(command)) {
         ClusterOperationMetadata createOp = client.createCluster(name, imageVersion, Collections.emptyMap(), false);
         System.out.println(GSON.toJson(createOp));

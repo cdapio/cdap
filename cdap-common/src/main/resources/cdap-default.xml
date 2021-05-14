@@ -2692,6 +2692,14 @@
 
   <!-- Provisioner Configuration -->
   <property>
+    <name>provisioning.service.task.worker.token.enable</name>
+    <value>true</value>
+    <description>
+      If true, provisioning service will fetch token from task worker
+    </description>
+  </property>
+
+  <property>
     <name>provisioner.executor.threads</name>
     <value>10</value>
     <description>

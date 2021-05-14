@@ -1495,6 +1495,16 @@ public final class Constants {
   }
 
   /**
+   * Constants for ProvisioningService
+   */
+  public static final class ProvisioningService {
+    public static final String ACCESS_TOKEN = "access.token";
+    public static final String ACCESS_TOKEN_KEY = "access.token.key";
+    public static final String ACCESS_TOKEN_EXPIRATION = "access.token.expiration";
+    public static final String TASK_WORKER_TOKEN_ENABLE = "provisioning.service.task.worker.token.enable";
+  }
+
+  /**
    * Constants for Replication
    */
   public static final class Replication {

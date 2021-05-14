@@ -35,6 +35,8 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.async.KeyedExecutor;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.logging.LogSamplers;
 import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.common.logging.LoggingContext;
@@ -73,6 +75,7 @@ import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -92,6 +95,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -128,6 +132,7 @@ public class ProvisioningService extends AbstractIdleService {
   private final MetricsCollectionService metricsCollectionService;
   private KeyedExecutor<ProvisioningTaskKey> taskExecutor;
   private ExecutorService contextExecutor;
+  private final TaskWorkerTokenFetcher taskWorkerTokenFetcher;
 
   @Inject
   ProvisioningService(CConfiguration cConf, ProvisionerProvider provisionerProvider,
@@ -135,7 +140,8 @@ public class ProvisioningService extends AbstractIdleService {
                       ProvisionerNotifier provisionerNotifier, LocationFactory locationFactory,
                       SecureStore secureStore, ProgramStateWriter programStateWriter,
                       ProvisionerStore provisionerStore, TransactionRunner transactionRunner,
-                      MetricsCollectionService metricsCollectionService) {
+                      MetricsCollectionService metricsCollectionService,
+                      DiscoveryServiceClient discoveryServiceClient) {
     this.cConf = cConf;
     this.provisionerProvider = provisionerProvider;
     this.provisionerConfigProvider = provisionerConfigProvider;
@@ -155,6 +161,12 @@ public class ProvisioningService extends AbstractIdleService {
         LOG.error("Error cleaning up provisioning task {}", programRunId.toString(), e);
       }
     };
+
+
+    RemoteClient remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.TASK_WORKER,
+                                                 new DefaultHttpRequestConfig(false),
+                                                 String.format("%s", Constants.Gateway.INTERNAL_API_VERSION_3));
+    this.taskWorkerTokenFetcher = new TaskWorkerTokenFetcher(cConf, remoteClient);
   }
 
   @Override
@@ -767,6 +779,9 @@ public class ProvisioningService extends AbstractIdleService {
                                            @Nullable SSHContext sshContext, RuntimeMonitorType runtimeMonitorType,
                                            String provisionerName, @Nullable VersionInfo appCDAPVersion) {
     Map<String, String> evaluated = evaluateMacros(secureStore, userId, programRunId.getNamespace(), properties);
+
+    taskWorkerTokenFetcher.submit(evaluated);
+
     return new DefaultProvisionerContext(programRunId, provisionerName, evaluated, sparkCompat, sshContext,
                                          appCDAPVersion, locationFactory, runtimeMonitorType,
                                          metricsCollectionService, contextExecutor);
@@ -796,7 +811,7 @@ public class ProvisioningService extends AbstractIdleService {
                                                 .setFunctionWhitelist(ProvisionerMacroEvaluator.SECURE_FUNCTION)
                                                 .setEscaping(false)
                                                 .build());
-    Map<String, String> evaluated = new HashMap<>();
+    Map<String, String> evaluated = new ConcurrentHashMap<>();
 
     // do secure store lookups as the user that will run the program
     String oldUser = SecurityRequestContext.getUserId();

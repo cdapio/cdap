@@ -61,6 +61,7 @@ import com.google.rpc.Status;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.common.IPRange;
 import io.cdap.cdap.runtime.spi.provisioner.Node;
+import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 import org.slf4j.Logger;
@@ -119,8 +120,9 @@ final class DataprocClient implements AutoCloseable {
    * @throws IOException if failed to connect to GCP api during the client creation
    * @throws GeneralSecurityException if the client is failed to authenticate
    */
-  static DataprocClient fromConf(DataprocConf conf) throws IOException, GeneralSecurityException {
-    return fromConf(conf, true);
+  static DataprocClient fromConf(DataprocConf conf, ProvisionerContext context) throws
+    IOException, GeneralSecurityException {
+    return fromConf(conf, true, context);
   }
 
   /**
@@ -136,8 +138,9 @@ final class DataprocClient implements AutoCloseable {
    * @throws GeneralSecurityException if the client is failed to authenticate
    */
   static DataprocClient fromConf(DataprocConf conf,
-                                 boolean requireNetwork) throws IOException, GeneralSecurityException {
-    ClusterControllerClient client = getClusterControllerClient(conf);
+                                 boolean requireNetwork, ProvisionerContext context) throws
+    IOException, GeneralSecurityException {
+    ClusterControllerClient client = getClusterControllerClient(conf, context);
     Compute compute = getCompute(conf);
 
     if (!requireNetwork) {
@@ -293,8 +296,9 @@ final class DataprocClient implements AutoCloseable {
   /*
    * Using the input Google Credentials retrieve the Dataproc Cluster controller client
    */
-  private static ClusterControllerClient getClusterControllerClient(DataprocConf conf) throws IOException {
-    CredentialsProvider credentialsProvider = FixedCredentialsProvider.create(conf.getDataprocCredentials());
+  private static ClusterControllerClient getClusterControllerClient(DataprocConf conf, ProvisionerContext context)
+    throws IOException {
+    CredentialsProvider credentialsProvider = FixedCredentialsProvider.create(conf.getDataprocCredentials(context));
 
     String regionalEndpoint = conf.getRegion() + DATAPROC_GOOGLEAPIS_COM_443;
 

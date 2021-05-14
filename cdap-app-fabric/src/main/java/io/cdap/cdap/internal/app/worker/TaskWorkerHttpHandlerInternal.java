@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.worker;
 
+import com.google.common.io.CharStreams;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
@@ -33,9 +34,14 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
@@ -45,6 +51,8 @@ import javax.ws.rs.Path;
 @Singleton
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3 + "/worker")
 public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
+  static final String METADATA_SERVER_GET_TOKEN_URL =
+    "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token";
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerHttpHandlerInternal.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec()).create();
@@ -83,6 +91,28 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
     } finally {
       if (className != null) {
         stopper.accept(className);
+      }
+    }
+  }
+
+  @GET
+  @Path("/token")
+  public void token(FullHttpRequest request, HttpResponder responder) {
+    HttpURLConnection connection = null;
+    try {
+      URL url = new URL(METADATA_SERVER_GET_TOKEN_URL);
+      connection = (HttpURLConnection) url.openConnection();
+      connection.setRequestProperty("Metadata-Flavor", "Google");
+      connection.connect();
+      try (Reader reader = new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8)) {
+        responder.sendString(HttpResponseStatus.OK, CharStreams.toString(reader), EmptyHttpHeaders.INSTANCE);
+      }
+    } catch (Exception ex) {
+      LOG.error("failed to fetch token from metadata service", ex);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);
+    } finally {
+      if (connection != null) {
+        connection.disconnect();
       }
     }
   }

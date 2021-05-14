@@ -113,7 +113,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
 
     String clusterName = getClusterName(context);
 
-    try (DataprocClient client = DataprocClient.fromConf(conf)) {
+    try (DataprocClient client = DataprocClient.fromConf(conf, context)) {
       // if it already exists, it means this is a retry. We can skip actually making the request
       Optional<Cluster> existing = client.getCluster(clusterName);
       if (existing.isPresent()) {
@@ -184,7 +184,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       return ClusterStatus.NOT_EXISTS;
     }
 
-    try (DataprocClient client = DataprocClient.fromConf(conf)) {
+    try (DataprocClient client = DataprocClient.fromConf(conf, context)) {
       status = client.getClusterStatus(clusterName);
       DataprocUtils.emitMetric(context, conf.getRegion(),
                                "provisioner.clusterStatus.response.count");
@@ -200,7 +200,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
   public Cluster getClusterDetail(ProvisionerContext context, Cluster cluster) throws Exception {
     DataprocConf conf = DataprocConf.create(createContextProperties(context));
     String clusterName = getClusterName(context);
-    try (DataprocClient client = DataprocClient.fromConf(conf)) {
+    try (DataprocClient client = DataprocClient.fromConf(conf, context)) {
       Optional<Cluster> existing = client.getCluster(clusterName);
       DataprocUtils.emitMetric(context, conf.getRegion(),
                                "provisioner.clusterDetail.response.count");
@@ -218,7 +218,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       return;
     }
     String clusterName = getClusterName(context);
-    try (DataprocClient client = DataprocClient.fromConf(conf)) {
+    try (DataprocClient client = DataprocClient.fromConf(conf, context)) {
       client.deleteCluster(clusterName);
       DataprocUtils.emitMetric(context, conf.getRegion(),
                                "provisioner.deleteCluster.response.count");

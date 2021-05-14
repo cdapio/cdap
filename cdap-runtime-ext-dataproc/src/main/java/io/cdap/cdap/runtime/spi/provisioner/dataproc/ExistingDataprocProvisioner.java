@@ -89,7 +89,7 @@ public class ExistingDataprocProvisioner extends AbstractDataprocProvisioner {
     }
 
     String clusterName = contextProperties.get(CLUSTER_NAME);
-    try (DataprocClient client = DataprocClient.fromConf(conf, false)) {
+    try (DataprocClient client = DataprocClient.fromConf(conf, false, context)) {
       try {
         client.updateClusterLabels(clusterName, getSystemLabels());
       } catch (DataprocRuntimeException e) {

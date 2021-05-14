@@ -17,11 +17,17 @@
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
+import com.google.api.client.util.GenericData;
+import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.ComputeEngineCredentials;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
+import com.google.gson.Gson;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
+import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -29,6 +35,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -40,6 +47,9 @@ import javax.annotation.Nullable;
  * Configuration for Dataproc.
  */
 final class DataprocConf {
+  private static final Logger LOG = LoggerFactory.getLogger(DataprocConf.class);
+  private static final String ACCESS_TOKEN = "access.token";
+  private static final Gson GSON = new Gson();
 
   static final String CLOUD_PLATFORM_SCOPE = "https://www.googleapis.com/auth/cloud-platform";
 
@@ -374,8 +384,23 @@ final class DataprocConf {
    * @return GoogleCredentials for use with Dataproc
    * @throws IOException if there was an error reading the account key
    */
-  GoogleCredentials getDataprocCredentials() throws IOException {
+  GoogleCredentials getDataprocCredentials(ProvisionerContext context) throws IOException {
     if (accountKey == null) {
+      if (context != null && context.getProperties().containsKey(ACCESS_TOKEN)) {
+        try {
+          GenericData token = GSON.fromJson(context.getProperties().get(ACCESS_TOKEN), GenericData.class);
+          String key = token.get("access_token").toString();
+          Double expiration = Double.parseDouble(token.get("expires_in").toString());
+
+          long expiresAtMilliseconds = System.currentTimeMillis() +
+            expiration.longValue() * 1000;
+
+          return GoogleCredentials.create(new AccessToken(key, new Date(expiresAtMilliseconds)));
+        } catch (Exception e) {
+          LOG.error("failed to get dataproc credentials", e);
+        }
+      }
+
       return getComputeEngineCredentials();
     }
 

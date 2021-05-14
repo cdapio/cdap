@@ -99,7 +99,7 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
       }
 
       Storage storageClient = StorageOptions.newBuilder().setProjectId(conf.getProjectId())
-        .setCredentials(conf.getDataprocCredentials()).build().getService();
+        .setCredentials(conf.getDataprocCredentials(context)).build().getService();
       DataprocUtils.deleteGCSPath(storageClient, properties.get(BUCKET),
                                   DataprocUtils.CDAP_GCS_ROOT + "/" + context.getProgramRunInfo().getRun());
     }
@@ -160,7 +160,8 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
     Map<String, String> systemLabels = getSystemLabels();
     try {
       return Optional.of(
-        new DataprocRuntimeJobManager(new DataprocClusterInfo(context, clusterName, conf.getDataprocCredentials(),
+        new DataprocRuntimeJobManager(new DataprocClusterInfo(context, clusterName,
+                                                              conf.getDataprocCredentials(context),
                                                               DataprocClient.DATAPROC_GOOGLEAPIS_COM_443,
                                                               projectId, region, bucket, systemLabels)));
     } catch (Exception e) {
