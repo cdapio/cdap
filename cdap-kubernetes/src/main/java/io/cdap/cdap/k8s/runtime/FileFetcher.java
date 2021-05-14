@@ -73,22 +73,25 @@ class FileFetcher {
    */
   void download(URI sourceURI, Location targetLocation) throws IOException {
     Discoverable discoverable = pickRandom(discoveryServiceClient.discover(APP_FABRIC_HTTP));
-    discoverable.getPayload();
-
     String scheme = URIScheme.getScheme(discoverable).scheme;
+    LOG.warn("wyzahng: scheme " + scheme);
     InetSocketAddress address = discoverable.getSocketAddress();
+    LOG.warn("wyzahng: address " + address.toString());
     URI uri = URI.create(String.format("%s://%s:%d/%s/%s",
                                        scheme, address.getHostName(), address.getPort(),
                                        "v3Internal/location", sourceURI.getPath()));
     URL url = uri.toURL();
+    LOG.warn("wyzahng: url " + url.toString());
 
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     conn.setRequestMethod("GET");
     conn.setReadTimeout(30);
     conn.setConnectTimeout(30);
     conn.setChunkedStreamingMode(0);
+    LOG.warn("wyzahng: conn " + conn.toString());
     conn.connect();
     int responseCode = conn.getResponseCode();
+    LOG.warn("wyzahng: resp code " + responseCode);
     if (responseCode != 200) {
       if (responseCode == 404) {
         throw new FileNotFoundException(conn.getResponseMessage());
