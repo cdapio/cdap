@@ -16,9 +16,6 @@
 
 package io.cdap.cdap.k8s.runtime;
 
-import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
-import io.cdap.cdap.common.internal.remote.RemoteClient;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
@@ -124,7 +121,6 @@ class FileFetcher {
                                        "v3Internal/location", sourceURI.getPath()));
     URL url = uri.toURL();
     LOG.warn("wyzhang: url " + url.toString());
-
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     conn.setRequestMethod("GET");
     conn.setReadTimeout(15000);
