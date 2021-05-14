@@ -52,16 +52,20 @@ class FileFetcher {
   }
 
   Discoverable pickRandom(ServiceDiscovered serviceDiscovered) {
+    LOG.warn("wyzhang: serviceDiscovered = " + serviceDiscovered.toString());
     Discoverable result = null;
     Iterator<Discoverable> iter = serviceDiscovered.iterator();
     int count = 0;
+    LOG.warn("wyzhang: serviceDiscovered iter start");
     while (iter.hasNext()) {
+      LOG.warn("wyzhang: serviceDiscovered iter one iter");
       Discoverable next = iter.next();
       LOG.warn("wyzhang: discoverable = " + next.toString());
       if (ThreadLocalRandom.current().nextInt(++count) == 0) {
         result = next;
       }
     }
+    LOG.warn("wyzhang: serviceDiscovered iter end");
     return result;
   }
 
