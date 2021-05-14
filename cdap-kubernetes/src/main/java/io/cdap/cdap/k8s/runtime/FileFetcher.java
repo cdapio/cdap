@@ -112,24 +112,24 @@ class FileFetcher {
       throw new IOException(String.format("service %s not found by discoveryService", APP_FABRIC_HTTP));
     }
     String scheme = URIScheme.getScheme(discoverable).scheme;
-    LOG.warn("wyzahng: scheme " + scheme);
+    LOG.warn("wyzhang: scheme " + scheme);
     InetSocketAddress address = discoverable.getSocketAddress();
-    LOG.warn("wyzahng: address " + address.toString());
+    LOG.warn("wyzhang: address " + address.toString());
     URI uri = URI.create(String.format("%s://%s:%d/%s/%s",
                                        scheme, address.getHostName(), address.getPort(),
                                        "v3Internal/location", sourceURI.getPath()));
     URL url = uri.toURL();
-    LOG.warn("wyzahng: url " + url.toString());
+    LOG.warn("wyzhang: url " + url.toString());
 
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     conn.setRequestMethod("GET");
-    conn.setReadTimeout(30);
-    conn.setConnectTimeout(30);
+    conn.setReadTimeout(15000);
+    conn.setConnectTimeout(15000);
     conn.setChunkedStreamingMode(0);
-    LOG.warn("wyzahng: conn " + conn.toString());
+    LOG.warn("wyzhang: conn " + conn.toString());
     conn.connect();
     int responseCode = conn.getResponseCode();
-    LOG.warn("wyzahng: resp code " + responseCode);
+    LOG.warn("wyzhang: resp code " + responseCode);
     if (responseCode != 200) {
       if (responseCode == 404) {
         throw new FileNotFoundException(conn.getResponseMessage());
