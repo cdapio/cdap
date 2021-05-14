@@ -70,7 +70,8 @@ class FileFetcher {
     return result;
   }
 
-  void downloadWithRetry(URI sourceURI, Location targetLocation) throws IOException, IllegalArgumentException, InterruptedException {
+  void downloadWithRetry(URI sourceURI, Location targetLocation)
+    throws IOException, IllegalArgumentException, InterruptedException {
     long initDelaySec = 5;
     long maxDeplySec = 30;
     long maxRetries = 5;
