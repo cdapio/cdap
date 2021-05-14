@@ -49,7 +49,7 @@ import javax.annotation.Nullable;
  * Records will be pulled into Spark and operations delegated to an RDDCollection as needed.
  * @param <T> type of records stored in this {@link SparkCollection}.
  */
-public class SQLEngineCollection<T> implements SparkCollection<T> {
+public class SQLEngineCollection<T> implements SQLBackedCollection<T> {
   private final JavaSparkExecutionContext sec;
   private final JavaSparkContext jsc;
   private final SQLContext sqlContext;
