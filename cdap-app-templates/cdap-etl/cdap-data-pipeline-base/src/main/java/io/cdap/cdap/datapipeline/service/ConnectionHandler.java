@@ -51,7 +51,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -136,7 +135,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
       long now = System.currentTimeMillis();
       Connection connectionInfo = new Connection(connection, connectionId.getConnectionId(),
                                                  creationRequest.getPlugin().getName(),
-                                                 creationRequest.getDescription(), false,
+                                                 creationRequest.getDescription(), false, false,
                                                  now, now, creationRequest.getPlugin());
       store.saveConnection(connectionId, connectionInfo, creationRequest.overWrite());
       responder.sendStatus(HttpURLConnection.HTTP_OK);
