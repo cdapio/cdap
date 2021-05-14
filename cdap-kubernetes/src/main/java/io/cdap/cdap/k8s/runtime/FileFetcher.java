@@ -57,6 +57,7 @@ class FileFetcher {
     int count = 0;
     while (iter.hasNext()) {
       Discoverable next = iter.next();
+      LOG.warn("wyzhang: discoverable = " + next.toString());
       if (ThreadLocalRandom.current().nextInt(++count) == 0) {
         result = next;
       }
