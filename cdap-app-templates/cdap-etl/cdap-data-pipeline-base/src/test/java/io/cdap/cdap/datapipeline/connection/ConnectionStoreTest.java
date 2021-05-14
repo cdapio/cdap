@@ -31,13 +31,11 @@ import io.cdap.cdap.test.SystemAppTestBase;
 import io.cdap.cdap.test.TestConfiguration;
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.util.Collections;
-import java.util.List;
 
 /**
  * Unit test for connection store
@@ -66,7 +64,7 @@ public class ConnectionStoreTest extends SystemAppTestBase {
     NamespaceSummary namespace = new NamespaceSummary("default", "", 0L);
     ConnectionId connectionId = new ConnectionId(namespace, "my_conn");
     Connection expected = new Connection(
-      "my_conn", "GCS", "GCS connection", false, 0L, 0L,
+      "my_conn", "GCS", "GCS connection", false, false, 0L, 0L,
       new PluginInfo("GCS", "connector", "Google Cloud Platform", ImmutableMap.of("project", "abc"),
                      new ArtifactSelectorConfig("SYSTEM", "google-cloud", "1.0.0")));
     connectionStore.saveConnection(connectionId, expected, false);
@@ -75,7 +73,7 @@ public class ConnectionStoreTest extends SystemAppTestBase {
 
     // update the connection, the connection should be updated
     Connection updated = new Connection(
-      "my_conn", "GCS", "GCS connection updated", false, 1000L, 2000L,
+      "my_conn", "GCS", "GCS connection updated", false, false, 1000L, 2000L,
       new PluginInfo("GCS", "connector", "Google Cloud Platform",
                      ImmutableMap.of("project", "abc", "serviceAccount", "secrect.json"),
                      new ArtifactSelectorConfig("SYSTEM", "google-cloud", "1.0.0")));
@@ -91,7 +89,7 @@ public class ConnectionStoreTest extends SystemAppTestBase {
     // add a new connection
     ConnectionId newConnectioId = new ConnectionId(namespace, "mynewconn");
     Connection newConnection = new Connection(
-      "mynewconn", "BigQuery", "BigQuery connection", false, 0L, 0L,
+      "mynewconn", "BigQuery", "BigQuery connection", false, false, 0L, 0L,
       new PluginInfo("BigQuery", "connector", "Google Cloud Platform", ImmutableMap.of("project", "myproject"),
                      new ArtifactSelectorConfig("SYSTEM", "google-cloud", "1.0.0")));
     connectionStore.saveConnection(newConnectioId, newConnection, false);
@@ -104,7 +102,7 @@ public class ConnectionStoreTest extends SystemAppTestBase {
     // set to true, it should overwrite the connection and listing should still show two connections
     connectionId = new ConnectionId(namespace, "my conn");
     updated = new Connection(
-      "my conn", "GCS", "GCS connection updated", false, 1000L, 2000L,
+      "my conn", "GCS", "GCS connection updated", false, false, 1000L, 2000L,
       new PluginInfo("GCS", "connector", "Google Cloud Platform",
                      ImmutableMap.of("project", "abc", "serviceAccount", "secrect.json"),
                      new ArtifactSelectorConfig("SYSTEM", "google-cloud", "1.0.0")));
@@ -147,7 +145,7 @@ public class ConnectionStoreTest extends SystemAppTestBase {
     NamespaceSummary oldNamespace = new NamespaceSummary("default", "", 0L);
     ConnectionId id = new ConnectionId(oldNamespace, "myconn");
     Connection connection = new Connection(
-      "myconn", "GCS", "GCS connection", false, 0L, 0L,
+      "myconn", "GCS", "GCS connection", false, false, 0L, 0L,
       new PluginInfo("GCS", "connector", "Google Cloud Platform", ImmutableMap.of("project", "abc"),
                      new ArtifactSelectorConfig("SYSTEM", "google-cloud", "1.0.0")));
     connectionStore.saveConnection(id, connection, false);
@@ -167,7 +165,7 @@ public class ConnectionStoreTest extends SystemAppTestBase {
     NamespaceSummary namespace = new NamespaceSummary("default", "", 0L);
     ConnectionId connectionId = new ConnectionId(namespace, "my_conn");
     Connection connection = new Connection(
-      "my_conn", "GCS", "GCS connection", false, 0L, 0L,
+      "my_conn", "GCS", "GCS connection", false, false, 0L, 0L,
       new PluginInfo("GCS", "connector", "Google Cloud Platform", ImmutableMap.of("project", "abc"),
                      new ArtifactSelectorConfig("SYSTEM", "google-cloud", "1.0.0")));
     connectionStore.saveConnection(connectionId, connection, false);
@@ -176,7 +174,7 @@ public class ConnectionStoreTest extends SystemAppTestBase {
     try {
       connectionId = new ConnectionId(namespace, "my conn");
       connection = new Connection(
-        "my conn", "GCS", "GCS connection", false, 0L, 0L,
+        "my conn", "GCS", "GCS connection", false, false, 0L, 0L,
         new PluginInfo("GCS", "connector", "Google Cloud Platform", ImmutableMap.of("project", "abc"),
                        new ArtifactSelectorConfig("SYSTEM", "google-cloud", "1.0.0")));
       connectionStore.saveConnection(connectionId, connection, false);
@@ -188,14 +186,14 @@ public class ConnectionStoreTest extends SystemAppTestBase {
     // check pre configured connection cannot get updated
     connectionId = new ConnectionId(namespace, "default conn");
     connection = new Connection(
-      "default conn", "GCS", "GCS connection", true, 0L, 0L,
+      "default conn", "GCS", "GCS connection", true, false, 0L, 0L,
       new PluginInfo("GCS", "connector", "Google Cloud Platform", ImmutableMap.of("project", "abc"),
                      new ArtifactSelectorConfig("SYSTEM", "google-cloud", "1.0.0")));
 
     connectionStore.saveConnection(connectionId, connection, false);
 
     try {
-      connection = new Connection("default conn", "BigQuery", "", false, 0L, 0L,
+      connection = new Connection("default conn", "BigQuery", "", false, false, 0L, 0L,
                                   new PluginInfo("BigQuery", "connector", "", Collections.emptyMap(),
                                                  new ArtifactSelectorConfig()));
       connectionStore.saveConnection(connectionId, connection, true);

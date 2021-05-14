@@ -22,7 +22,6 @@ import com.google.gson.Gson;
 import io.cdap.cdap.api.NamespaceSummary;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.etl.proto.connection.Connection;
-import io.cdap.cdap.etl.proto.connection.ConnectionBadRequestException;
 import io.cdap.cdap.etl.proto.connection.ConnectionConflictException;
 import io.cdap.cdap.etl.proto.connection.ConnectionId;
 import io.cdap.cdap.etl.proto.connection.ConnectionNotFoundException;
@@ -143,8 +142,8 @@ public class ConnectionStore {
         newConnection = new Connection(connection.getName(), oldConnection.getConnectionId(),
                                        connection.getConnectionType(),
                                        connection.getDescription(), connection.isPreConfigured(),
-                                       oldConnection.getCreatedTimeMillis(), connection.getUpdatedTimeMillis(),
-                                       connection.getPlugin());
+                                       connection.isDefault(), oldConnection.getCreatedTimeMillis(),
+                                       connection.getUpdatedTimeMillis(), connection.getPlugin());
       }
 
       Collection<Field<?>> fields = getConnectionKeys(connectionId);
