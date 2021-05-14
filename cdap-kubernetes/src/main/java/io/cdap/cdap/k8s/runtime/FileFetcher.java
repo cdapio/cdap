@@ -35,6 +35,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Download file from AppFabric via internal REST API calls.
@@ -69,6 +70,26 @@ class FileFetcher {
     return result;
   }
 
+  void downloadWithRetry(URI sourceURI, Location targetLocation) throws IOException, IllegalArgumentException {
+    long initDelaySec = 5;
+    long maxDeplySec = 30;
+    long maxRetries = 5;
+    int retries = 0;
+    while (true) {
+      try {
+        download(sourceURI, targetLocation);
+        return;
+      } catch (IOException e) {
+        if (retries >= maxRetries) {
+          throw e;
+        }
+        TimeUnit.MILLISECONDS.toMillis(Math.min(initDelaySec * (1L << retries), maxDeplySec));
+      } catch (IllegalArgumentException e) {
+        throw e;
+      }
+    }
+  }
+
   /**
    * Download a file from AppFabric and store it in the target file.
    *
@@ -76,11 +97,14 @@ class FileFetcher {
    * @param targetLocation target location to store the downloaded file
    * @throws IOException if file downloading or writing to target location fails.
    */
-  void download(URI sourceURI, Location targetLocation) throws IOException {
+  void download(URI sourceURI, Location targetLocation) throws IOException, IllegalArgumentException {
 //    RemoteClient remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
 //                                                 new DefaultHttpRequestConfig(false),
 //                                                 Constants.Gateway.INTERNAL_API_VERSION_3);
     Discoverable discoverable = pickRandom(discoveryServiceClient.discover(APP_FABRIC_HTTP));
+    if (discoverable == null) {
+      throw new IOException(String.format("service %s not found by discoveryService", APP_FABRIC_HTTP))
+    }
     Thread.sleep(30000);
     String scheme = URIScheme.getScheme(discoverable).scheme;
     LOG.warn("wyzahng: scheme " + scheme);

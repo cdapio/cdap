@@ -68,7 +68,7 @@ public class FileLocalizer implements MasterEnvironmentRunnable {
     Location runtimeConfigLocation = new LocalLocationFactory().create(new File(uri.getPath()).toURI());
 
     FileFetcher fileFetcher = new FileFetcher(masterEnv.getDiscoveryServiceClientSupplier().get());
-    fileFetcher.download(uri, runtimeConfigLocation);
+    fileFetcher.downloadWithRetry(uri, runtimeConfigLocation);
 
     Path runtimeConfigDir = expand(runtimeConfigLocation,
                                    Paths.get(org.apache.twill.internal.Constants.Files.RUNTIME_CONFIG_JAR));
