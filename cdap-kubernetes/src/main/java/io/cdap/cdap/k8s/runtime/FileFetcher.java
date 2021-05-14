@@ -77,14 +77,19 @@ class FileFetcher {
     int retries = 0;
     while (true) {
       try {
+        LOG.warn("wyzhang: download start");
         download(sourceURI, targetLocation);
+        LOG.warn("wyzhang: download succeeds");
         return;
       } catch (IOException e) {
+        retries++;
+        LOG.warn("wyzhang: download failed retries=" + retries);
         if (retries >= maxRetries) {
           throw e;
         }
         TimeUnit.MILLISECONDS.toMillis(Math.min(initDelaySec * (1L << retries), maxDeplySec));
       } catch (IllegalArgumentException e) {
+        LOG.warn("wyzhang: download failed exception");
         throw e;
       }
     }
@@ -98,14 +103,14 @@ class FileFetcher {
    * @throws IOException if file downloading or writing to target location fails.
    */
   void download(URI sourceURI, Location targetLocation) throws IOException, IllegalArgumentException {
+    LOG.warn("wyzhang: download start");
 //    RemoteClient remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
 //                                                 new DefaultHttpRequestConfig(false),
 //                                                 Constants.Gateway.INTERNAL_API_VERSION_3);
     Discoverable discoverable = pickRandom(discoveryServiceClient.discover(APP_FABRIC_HTTP));
     if (discoverable == null) {
-      throw new IOException(String.format("service %s not found by discoveryService", APP_FABRIC_HTTP))
+      throw new IOException(String.format("service %s not found by discoveryService", APP_FABRIC_HTTP));
     }
-    Thread.sleep(30000);
     String scheme = URIScheme.getScheme(discoverable).scheme;
     LOG.warn("wyzahng: scheme " + scheme);
     InetSocketAddress address = discoverable.getSocketAddress();
