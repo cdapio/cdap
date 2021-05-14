@@ -16,26 +16,25 @@
 
 package io.cdap.cdap.k8s.runtime;
 
-import io.cdap.cdap.common.BadRequestException;
-import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
-import io.cdap.cdap.common.internal.remote.RemoteClient;
-import io.cdap.common.http.HttpContentConsumer;
-import io.cdap.common.http.HttpMethod;
-import io.cdap.common.http.HttpRequest;
-import io.cdap.common.http.HttpRequests;
-import io.cdap.common.http.HttpResponse;
-import io.netty.handler.codec.http.HttpResponseStatus;
+import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
 import java.net.URI;
-import java.nio.ByteBuffer;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Download file from AppFabric via internal REST API calls.
@@ -44,14 +43,25 @@ import java.nio.ByteBuffer;
  * that AppFabric is configured to access.
  */
 class FileFetcher {
+  static final String APP_FABRIC_HTTP = "appfabric";
   private static final Logger LOG = LoggerFactory.getLogger(FileFetcher.class);
-  private RemoteClient remoteClient;
+  DiscoveryServiceClient discoveryServiceClient;
 
   FileFetcher(DiscoveryServiceClient discoveryClient) {
-    this.remoteClient = new RemoteClient(discoveryClient,
-                                         Constants.Service.APP_FABRIC_HTTP,
-                                         new DefaultHttpRequestConfig(false),
-                                         Constants.Gateway.INTERNAL_API_VERSION_3);
+    this.discoveryServiceClient = discoveryClient;
+  }
+
+  Discoverable pickRandom(ServiceDiscovered serviceDiscovered) {
+    Discoverable result = null;
+    Iterator<Discoverable> iter = serviceDiscovered.iterator();
+    int count = 0;
+    while (iter.hasNext()) {
+      Discoverable next = iter.next();
+      if (ThreadLocalRandom.current().nextInt(++count) == 0) {
+        result = next;
+      }
+    }
+    return result;
   }
 
   /**
@@ -61,43 +71,71 @@ class FileFetcher {
    * @param targetLocation target location to store the downloaded file
    * @throws IOException if file downloading or writing to target location fails.
    */
-  void download(URI sourceURI, Location targetLocation) throws IOException, BadRequestException {
+  void download(URI sourceURI, Location targetLocation) throws IOException {
+    Discoverable discoverable = pickRandom(discoveryServiceClient.discover(APP_FABRIC_HTTP));
+    discoverable.getPayload();
+
+    String scheme = URIScheme.getScheme(discoverable).scheme;
+    InetSocketAddress address = discoverable.getSocketAddress();
+    URI uri = URI.create(String.format("%s://%s:%d/%s/%s",
+                                       scheme, address.getHostName(), address.getPort(),
+                                       "v3Internal/location", sourceURI.getPath()));
+    URL url = uri.toURL();
+
+    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+    conn.setRequestMethod("GET");
+    conn.setReadTimeout(30);
+    conn.setConnectTimeout(30);
+    conn.setChunkedStreamingMode(0);
+    conn.connect();
+    int responseCode = conn.getResponseCode();
+    if (responseCode != 200) {
+      if (responseCode == 404) {
+        throw new FileNotFoundException(conn.getResponseMessage());
+      }
+      if (responseCode == 400) {
+        throw new IllegalArgumentException(conn.getResponseMessage());
+      }
+      throw new IOException(conn.getResponseMessage());
+    }
+
+    InputStream inputStream = conn.getInputStream();
     OutputStream outputStream = targetLocation.getOutputStream();
-    HttpRequest request = remoteClient.requestBuilder(
-      HttpMethod.GET,
-      String.format("location/%s", sourceURI.getPath())).withContentConsumer(
-      new HttpContentConsumer() {
-        @Override
-        public boolean onReceived(ByteBuffer chunk) {
-          try {
-            byte[] bytes = new byte[chunk.remaining()];
-            chunk.get(bytes, 0, bytes.length);
-            outputStream.write(bytes);
-            outputStream.flush();
-          } catch (IOException e) {
-            LOG.error("Failed to download file from {} to {}", sourceURI, targetLocation.toURI(), e);
-            return false;
-          }
-          return true;
-        }
 
-        @Override
-        public void onFinished() {
-          // Close output stream later, so any exception can be surfaced.
-        }
-      }).build();
-    HttpResponse httpResponse = HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
-    httpResponse.consumeContent();
+    byte[] buf = new byte[64 * 1024];
+    int length;
+    while ((length = inputStream.read(buf)) > 0) {
+      outputStream.write(buf, 0, length);
+    }
     outputStream.close();
+  }
 
-    if (httpResponse.getResponseCode() != HttpResponseStatus.OK.code()) {
-      if (httpResponse.getResponseCode() == HttpResponseStatus.NOT_FOUND.code()) {
-        throw new FileNotFoundException(httpResponse.getResponseBodyAsString());
+  enum URIScheme {
+    HTTP("http", new byte[0], 80),
+    HTTPS("https", "https://".getBytes(StandardCharsets.UTF_8), 443);
+
+    private final String scheme;
+    private final byte[] discoverablePayload;
+    private final int defaultPort;
+
+
+    URIScheme(String scheme, byte[] discoverablePayload, int defaultPort) {
+      this.scheme = scheme;
+      this.discoverablePayload = discoverablePayload;
+      this.defaultPort = defaultPort;
+    }
+
+    public static URIScheme getScheme(Discoverable discoverable) {
+      for (URIScheme scheme : values()) {
+        if (scheme.isMatch(discoverable)) {
+          return scheme;
+        }
       }
-      if (httpResponse.getResponseCode() == HttpResponseStatus.BAD_REQUEST.code()) {
-        throw new BadRequestException(httpResponse.getResponseBodyAsString());
-      }
-      throw new IOException(httpResponse.getResponseBodyAsString());
+      return HTTP;
+    }
+
+    public boolean isMatch(Discoverable discoverable) {
+      return Arrays.equals(discoverablePayload, discoverable.getPayload());
     }
   }
 }
