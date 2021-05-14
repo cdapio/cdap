@@ -140,6 +140,7 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
 
   @Override
   public ServiceDiscovered discover(String name) {
+    LOG.warn("wyzhang: kb discovery service: discover " + name);
     // Get/Create the ServiceDiscovered to return.
     ServiceDiscovered serviceDiscovered = serviceDiscovereds.computeIfAbsent(name, DefaultServiceDiscovered::new);
 
@@ -147,6 +148,7 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
     WatcherThread watcherThread = this.watcherThread;
 
     if (watcherThread == null) {
+      LOG.warn("wyzhang: kb discovery service: watchThread is null ");
       synchronized (this) {
         if (closed) {
           throw new IllegalStateException("Discovery service is already closed");
@@ -158,6 +160,7 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
           watcherThread.setDaemon(true);
           watcherThread.addService(name);
           watcherThread.start();
+          LOG.warn("wyzhang: kb discovery service: watchThread start()");
           this.watcherThread = watcherThread;
           return serviceDiscovered;
         }
