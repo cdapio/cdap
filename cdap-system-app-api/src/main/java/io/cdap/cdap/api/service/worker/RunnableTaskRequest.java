@@ -14,10 +14,9 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.worker.api;
+package io.cdap.cdap.api.service.worker;
 
 
-import io.cdap.cdap.api.NamespaceSummary;
 import io.cdap.cdap.api.artifact.ArtifactId;
 
 import javax.annotation.Nullable;

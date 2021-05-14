@@ -37,6 +37,7 @@ import io.cdap.cdap.data.ProgramContextAware;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.internal.app.RemoteTaskExecutor;
 import io.cdap.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import io.cdap.cdap.internal.app.runtime.BasicProgramContext;
 import io.cdap.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
@@ -82,6 +83,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final FieldLineageWriter fieldLineageWriter;
   private final TransactionRunner transactionRunner;
   private final PreferencesFetcher preferencesFetcher;
+  private final RemoteTaskExecutor remoteTaskExecutor;
 
   @Inject
   public ServiceProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
@@ -93,7 +95,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
                               MetadataReader metadataReader, MetadataPublisher metadataPublisher,
                               NamespaceQueryAdmin namespaceQueryAdmin, PluginFinder pluginFinder,
                               FieldLineageWriter fieldLineageWriter, TransactionRunner transactionRunner,
-                              PreferencesFetcher preferencesFetcher) {
+                              PreferencesFetcher preferencesFetcher, RemoteTaskExecutor remoteTaskExecutor) {
     super(cConf);
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
@@ -111,6 +113,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.fieldLineageWriter = fieldLineageWriter;
     this.transactionRunner = transactionRunner;
     this.preferencesFetcher = preferencesFetcher;
+    this.remoteTaskExecutor = remoteTaskExecutor;
   }
 
   @Override
@@ -153,7 +156,8 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                           pluginInstantiator, secureStore, secureStoreManager,
                                                           messagingService, artifactManager, metadataReader,
                                                           metadataPublisher, namespaceQueryAdmin, pluginFinder,
-                                                          fieldLineageWriter, transactionRunner, preferencesFetcher);
+                                                          fieldLineageWriter, transactionRunner, preferencesFetcher,
+                                                          remoteTaskExecutor);
 
       // Add a service listener to make sure the plugin instantiator is closed when the http server is finished.
       component.addListener(createRuntimeServiceListener(Collections.singleton(pluginInstantiator)),

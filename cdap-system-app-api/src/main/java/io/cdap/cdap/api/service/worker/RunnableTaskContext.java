@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.worker.api;
+package io.cdap.cdap.api.service.worker;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -28,15 +28,15 @@ public class RunnableTaskContext {
   private final ByteArrayOutputStream outputStream;
   private final String param;
   @Nullable
-  private final ClassLoader parentClassLoader;
+  private final ClassLoader applicationClassLoader;
 
   public RunnableTaskContext(String param) {
     this(param, null);
   }
 
-  public RunnableTaskContext(String param, @Nullable ClassLoader parentClassLoader) {
+  public RunnableTaskContext(String param, @Nullable ClassLoader applicationClassLoader) {
     this.param = param;
-    this.parentClassLoader = parentClassLoader;
+    this.applicationClassLoader = applicationClassLoader;
     this.outputStream = new ByteArrayOutputStream();
   }
 
@@ -53,7 +53,7 @@ public class RunnableTaskContext {
   }
 
   @Nullable
-  public ClassLoader getParentClassLoader() {
-    return parentClassLoader;
+  public ClassLoader getApplicationClassLoader() {
+    return applicationClassLoader;
   }
 }

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.worker.api;
+package io.cdap.cdap.api.service.worker;
 
 /**
  * RunnableTask represents a task that can be launched by a Task worker service.

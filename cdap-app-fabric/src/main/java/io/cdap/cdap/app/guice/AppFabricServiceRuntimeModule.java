@@ -71,6 +71,7 @@ import io.cdap.cdap.gateway.handlers.VersionHandler;
 import io.cdap.cdap.gateway.handlers.WorkflowHttpHandler;
 import io.cdap.cdap.gateway.handlers.WorkflowStatsSLAHttpHandler;
 import io.cdap.cdap.gateway.handlers.meta.RemotePrivilegesHandler;
+import io.cdap.cdap.internal.app.RemoteTaskExecutor;
 import io.cdap.cdap.internal.app.deploy.LocalApplicationManager;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -330,6 +331,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       });
       bind(ProfileService.class).in(Scopes.SINGLETON);
       bind(PreferencesFetcher.class).to(LocalPreferencesFetcherInternal.class).in(Scopes.SINGLETON);
+      bind(RemoteTaskExecutor.class).in(Scopes.SINGLETON);
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
         binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));

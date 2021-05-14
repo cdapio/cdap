@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.internal.app.worker;
 
+import io.cdap.cdap.api.service.worker.RunnableTask;
+import io.cdap.cdap.api.service.worker.RunnableTaskContext;
+import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.internal.worker.api.RunnableTask;
-import io.cdap.cdap.internal.worker.api.RunnableTaskContext;
-import io.cdap.cdap.internal.worker.api.RunnableTaskRequest;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
 import org.junit.Test;
