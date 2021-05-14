@@ -87,7 +87,7 @@ class FileFetcher {
         if (retries >= maxRetries) {
           throw e;
         }
-        TimeUnit.MILLISECONDS.toMillis(Math.min(initDelaySec * (1L << retries), maxDeplySec));
+        TimeUnit.SECONDS.toMillis(Math.min(initDelaySec * (1L << retries), maxDeplySec));
       } catch (IllegalArgumentException e) {
         LOG.warn("wyzhang: download failed exception");
         throw e;
