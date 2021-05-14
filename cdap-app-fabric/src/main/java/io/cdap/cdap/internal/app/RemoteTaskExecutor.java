@@ -53,7 +53,7 @@ public class RemoteTaskExecutor {
     this.remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.TASK_WORKER,
                                          new DefaultHttpRequestConfig(false),
                                          Constants.Gateway.INTERNAL_API_VERSION_3);
-    this.retryStrategy = RetryStrategies.fromConfiguration(cConf, Constants.Service.TASK_WORKER);
+    this.retryStrategy = RetryStrategies.fromConfiguration(cConf, Constants.Service.TASK_WORKER + ".");
   }
 
   /**
