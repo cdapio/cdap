@@ -70,7 +70,7 @@ class FileFetcher {
     return result;
   }
 
-  void downloadWithRetry(URI sourceURI, Location targetLocation) throws IOException, IllegalArgumentException {
+  void downloadWithRetry(URI sourceURI, Location targetLocation) throws IOException, IllegalArgumentException, InterruptedException {
     long initDelaySec = 5;
     long maxDeplySec = 30;
     long maxRetries = 5;
@@ -87,7 +87,7 @@ class FileFetcher {
         if (retries >= maxRetries) {
           throw e;
         }
-        TimeUnit.SECONDS.toMillis(Math.min(initDelaySec * (1L << retries), maxDeplySec));
+        Thread.sleep(TimeUnit.SECONDS.toMillis(Math.min(initDelaySec * (1L << retries), maxDeplySec)));
       } catch (IllegalArgumentException e) {
         LOG.warn("wyzhang: download failed exception");
         throw e;
