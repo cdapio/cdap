@@ -144,7 +144,7 @@ class FileFetcher {
   }
 
   void downloadWithRetry(URI sourceURI, Location targetLocation)
-    throws IOException, IllegalArgumentException, InterruptedException, NoSuchAlgorithmException {
+    throws IOException, IllegalArgumentException, InterruptedException, NoSuchAlgorithmException, UnrecoverableKeyException, KeyStoreException, KeyManagementException {
     long initDelaySec = 5;
     long maxDeplySec = 30;
     long maxRetries = 5;
@@ -177,6 +177,7 @@ class FileFetcher {
 
     KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
     kmf.init(keyStore, password.toCharArray());
+    LOG.warn("wyzhang: keyManagerFactory created");
     return kmf;
   }
 
@@ -185,11 +186,10 @@ class FileFetcher {
     SSLContext sslContext = SSLContext.getInstance("SSL");
     KeyManagerFactory kmf = createKeyManagerFactory();
     TrustManagerFactory tmf = InsecureTrustManagerFactory.INSTANCE;
-
     sslContext.init(kmf == null ? null : kmf.getKeyManagers(),
                     tmf == null ? null : tmf.getTrustManagers(),
                     new SecureRandom());
-
+    LOG.warn("wyzhang: ssl socket factory created");
     return sslContext.getSocketFactory();
   }
 
@@ -222,7 +222,6 @@ class FileFetcher {
 
     HttpsURLConnection httpsConn = ((HttpsURLConnection) conn);
 
-//    new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
     httpsConn.setSSLSocketFactory(getSSLSocketFactory());
     httpsConn.setHostnameVerifier((s, sslSession) -> true);
     LOG.warn("wyzhang: conn " + conn.toString());
