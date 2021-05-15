@@ -230,8 +230,10 @@ class FileFetcher {
 
     httpsConn.setSSLSocketFactory(getSSLSocketFactory());
     httpsConn.setHostnameVerifier((s, sslSession) -> true);
-    httpsConn.setDoInput(true);
-    LOG.warn("wyzhang: conn " + conn.toString());
+    conn.setDoInput(true);
+    conn.setDoOutput(true);
+    conn.setChunkedStreamingMode(0);
+    LOG.warn("wyzhang: connecting " + conn.toString());
     conn.connect();
     int responseCode = conn.getResponseCode();
     LOG.warn("wyzhang: resp code " + responseCode);
