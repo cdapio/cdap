@@ -241,27 +241,27 @@ class FileFetcher {
     conn.setDoInput(true);
     LOG.warn("wyzhang: connecting " + conn.toString());
     conn.connect();
-    int responseCode = conn.getResponseCode();
-    LOG.warn("wyzhang: resp code " + responseCode);
-    if (responseCode != 200) {
-      if (responseCode == 404) {
-        throw new FileNotFoundException(conn.getResponseMessage());
-      }
-      if (responseCode == 400) {
-        throw new IllegalArgumentException(conn.getResponseMessage());
-      }
-      throw new IOException(conn.getResponseMessage());
-    }
+//    int responseCode = conn.getResponseCode();
+//    LOG.warn("wyzhang: resp code " + responseCode);
+//    if (responseCode != 200) {
+//      if (responseCode == 404) {
+//        throw new FileNotFoundException(conn.getResponseMessage());
+//      }
+//      if (responseCode == 400) {
+//        throw new IllegalArgumentException(conn.getResponseMessage());
+//      }
+//      throw new IOException(conn.getResponseMessage());
+//    }
 
     InputStream inputStream = conn.getInputStream();
     OutputStream outputStream = targetLocation.getOutputStream();
-
     byte[] buf = new byte[64 * 1024];
     int length;
     while ((length = inputStream.read(buf)) > 0) {
       outputStream.write(buf, 0, length);
     }
     outputStream.close();
+    inputStream.close();
   }
 
   enum URIScheme {
