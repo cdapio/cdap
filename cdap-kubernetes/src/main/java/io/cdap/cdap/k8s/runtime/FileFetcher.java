@@ -166,6 +166,7 @@ class FileFetcher {
         Thread.sleep(TimeUnit.SECONDS.toMillis(Math.min(initDelaySec * (1L << retries), maxDeplySec)));
       } catch (Exception e) {
         LOG.warn("wyzhang: download failed exception");
+        e.printStackTrace();
         throw e;
       }
     }
@@ -188,6 +189,7 @@ class FileFetcher {
     SSLContext sslContext = SSLContext.getInstance("SSL");
     KeyManagerFactory kmf = createKeyManagerFactory();
     TrustManagerFactory tmf = InsecureTrustManagerFactory.INSTANCE;
+    LOG.warn("wyzhang: ssl context init");
     sslContext.init(kmf == null ? null : kmf.getKeyManagers(),
                     tmf == null ? null : tmf.getTrustManagers(),
                     new SecureRandom());
