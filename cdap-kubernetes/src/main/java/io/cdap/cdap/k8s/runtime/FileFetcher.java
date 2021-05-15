@@ -232,13 +232,12 @@ class FileFetcher {
     conn.setRequestMethod("GET");
     conn.setReadTimeout(15000);
     conn.setConnectTimeout(15000);
-    conn.setChunkedStreamingMode(0);
-
+    
     HttpsURLConnection httpsConn = ((HttpsURLConnection) conn);
 
     httpsConn.setSSLSocketFactory(getSSLSocketFactory());
     httpsConn.setHostnameVerifier((s, sslSession) -> true);
-    conn.setDoInput(true);
+    httpsConn.setDoInput(true);
     LOG.warn("wyzhang: connecting " + conn.toString());
     conn.connect();
 //    int responseCode = conn.getResponseCode();
@@ -252,8 +251,7 @@ class FileFetcher {
 //      }
 //      throw new IOException(conn.getResponseMessage());
 //    }
-
-    InputStream inputStream = conn.getInputStream();
+    InputStream inputStream = httpsConn.getInputStream();
     OutputStream outputStream = targetLocation.getOutputStream();
     byte[] buf = new byte[64 * 1024];
     int length;
