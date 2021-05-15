@@ -173,7 +173,7 @@ class FileFetcher {
 
   KeyManagerFactory createKeyManagerFactory()
     throws NoSuchAlgorithmException, UnrecoverableKeyException, KeyStoreException {
-    String path = "/etc/cdap/security";
+    String path = "/etc/cdap/security/interalCert.pem";
     String password = "dbf4e70628f52b5e747aace1f59619ed";
     KeyStore keyStore = createKeyStore(Paths.get(path), password);
 
