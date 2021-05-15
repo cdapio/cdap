@@ -197,6 +197,14 @@ class FileFetcher {
     return sslContext.getSocketFactory();
   }
 
+//  private HttpURLConnection createURLConnection(String path, HttpMethod method) throws IOException {
+//    HttpURLConnection urlConn = (HttpURLConnection) baseURI.resolve(path).toURL().openConnection();
+//    urlConn.setRequestMethod(method.n.name());
+//    if (method.equals(HttpMethod.PUT) || method.equals(HttpMethod.POST)) {
+//      urlConn.setDoOutput(true);
+//    }
+
+
   /**
    * Download a file from AppFabric and store it in the target file.
    *
@@ -231,7 +239,6 @@ class FileFetcher {
     httpsConn.setSSLSocketFactory(getSSLSocketFactory());
     httpsConn.setHostnameVerifier((s, sslSession) -> true);
     conn.setDoInput(true);
-    conn.setDoOutput(true);
     LOG.warn("wyzhang: connecting " + conn.toString());
     conn.connect();
     int responseCode = conn.getResponseCode();
