@@ -30,6 +30,7 @@ import io.cdap.cdap.etl.api.connector.BrowseEntity;
 import io.cdap.cdap.etl.api.connector.BrowseRequest;
 import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.cdap.etl.api.connector.ConnectorSpec;
+import io.cdap.cdap.etl.api.connector.ConnectorSpecRequest;
 import io.cdap.cdap.etl.api.connector.SampleRequest;
 import io.cdap.cdap.etl.api.validation.ValidationException;
 import org.apache.hadoop.fs.Path;
@@ -123,8 +124,11 @@ public class FileConnector implements BatchConnector<LongWritable, Text> {
   }
 
   @Override
-  public ConnectorSpec generateSpec(String path) {
-    return ConnectorSpec.builder().addProperty("path", path).build();
+  public ConnectorSpec generateSpec(ConnectorSpecRequest connectorSpecRequest) {
+    return ConnectorSpec.builder().addProperty("path", connectorSpecRequest.getPath())
+             .addProperty("useConnection", "true")
+             .addProperty("connection", connectorSpecRequest.getConnectionWithMacro())
+             .build();
   }
 
   private static PluginClass getPluginClass() {

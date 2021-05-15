@@ -64,7 +64,7 @@ public interface Connector extends Closeable {
    * @param path the path of the entity
    * @return the spec which contains all the properties associated with the path
    */
-  ConnectorSpec generateSpec(String path);
+  ConnectorSpec generateSpec(ConnectorSpecRequest path);
 
   @Override
   default void close() throws IOException {
