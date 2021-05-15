@@ -144,7 +144,8 @@ class FileFetcher {
   }
 
   void downloadWithRetry(URI sourceURI, Location targetLocation)
-    throws IOException, IllegalArgumentException, InterruptedException, NoSuchAlgorithmException, UnrecoverableKeyException, KeyStoreException, KeyManagementException {
+    throws IOException, IllegalArgumentException, InterruptedException, NoSuchAlgorithmException,
+    UnrecoverableKeyException, KeyStoreException, KeyManagementException {
     long initDelaySec = 5;
     long maxDeplySec = 30;
     long maxRetries = 5;
@@ -170,7 +171,8 @@ class FileFetcher {
     }
   }
 
-  KeyManagerFactory createKeyManagerFactory() throws NoSuchAlgorithmException, UnrecoverableKeyException, KeyStoreException {
+  KeyManagerFactory createKeyManagerFactory()
+    throws NoSuchAlgorithmException, UnrecoverableKeyException, KeyStoreException {
     String path = "/etc/cdap/security";
     String password = "dbf4e70628f52b5e747aace1f59619ed";
     KeyStore keyStore = createKeyStore(Paths.get(path), password);
@@ -200,7 +202,9 @@ class FileFetcher {
    * @param targetLocation target location to store the downloaded file
    * @throws IOException if file downloading or writing to target location fails.
    */
-  void download(URI sourceURI, Location targetLocation) throws IOException, IllegalArgumentException, NoSuchAlgorithmException, UnrecoverableKeyException, KeyStoreException, KeyManagementException {
+  void download(URI sourceURI, Location targetLocation)
+    throws IOException, IllegalArgumentException, NoSuchAlgorithmException, UnrecoverableKeyException,
+    KeyStoreException, KeyManagementException {
     Discoverable discoverable = pickRandom(discoveryServiceClient.discover(APP_FABRIC_HTTP));
     if (discoverable == null) {
       throw new IOException(String.format("service %s not found by discoveryService", APP_FABRIC_HTTP));
