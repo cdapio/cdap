@@ -50,7 +50,6 @@ public class TaskWorkerService extends AbstractIdleService {
   private Cancellable cancelDiscovery;
   private InetSocketAddress bindAddress;
 
-
   @Inject
   TaskWorkerService(CConfiguration cConf,
                     SConfiguration sConf,
