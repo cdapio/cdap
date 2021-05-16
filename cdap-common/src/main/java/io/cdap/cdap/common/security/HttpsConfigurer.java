@@ -35,7 +35,7 @@ public class HttpsConfigurer {
   private final SConfiguration sConf;
   private final HttpsEnabler httpsEnabler;
 
-  public HttpsConfigurer(@Nullable CConfiguration cConf, @Nullable SConfiguration sConf) {
+  public HttpsCfonfigurer(@Nullable CConfiguration cConf, @Nullable SConfiguration sConf) {
     this.cConf = cConf;
     this.sConf = sConf;
     httpsEnabler = new HttpsEnabler();

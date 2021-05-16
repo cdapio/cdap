@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -54,12 +54,14 @@ public final class HttpsEnabler {
    * Configures keystore to use based on the given configurations. This method is intended for service to use
    * to enable https server.
    *
-   * @param filePath
-   * @param password
+   * @param filePath path to keystore file. If null, create a keystore with self signed X.509 certificate
+   * @param password passwoard for the keystore file if a keystore file is provided.
    * @return this instance
    */
-  public synchronized HttpsEnabler configureKeyStore(@Nullable String filePath, @Nullable String password) {
-    String keystorePassword = Strings.isNullOrEmpty(filePath) ? KeyStores.generateRandomPassword() : password;
+  public synchronized HttpsEnabler configureKeyStore(@Nullable String filePath, String password) {
+    String keystorePassword = Strings.isNullOrEmpty(filePath)
+      ? KeyStores.generateRandomPassword()
+      : password;
     KeyStore keyStore = Strings.isNullOrEmpty(filePath)
       ? KeyStores.generatedCertKeyStore(KeyStores.VALIDITY, password)
       : KeyStores.createKeyStore(Paths.get(filePath), password);
