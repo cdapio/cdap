@@ -22,37 +22,18 @@ import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
-import io.cdap.cdap.security.impersonation.Impersonator;
-import org.apache.hadoop.conf.Configuration;
 
 /**
  * RunnableTaskLauncher launches a {@link RunnableTask} by loading its class and calling its run method.
  */
 public class RunnableTaskLauncher {
   private final CConfiguration cConf;
-  private final Configuration hConf;
-  private final ArtifactRepositoryReader artifactRepositoryReader;
-  private final ArtifactRepository artifactRepository;
-  private final Impersonator impersonator;
 
-  public RunnableTaskLauncher(CConfiguration cConf,
-                              Configuration hConf,
-                              ArtifactRepositoryReader artifactRepositoryReader,
-                              ArtifactRepository artifactRepository,
-                              Impersonator impersonator) {
+  public RunnableTaskLauncher(CConfiguration cConf) {
     this.cConf = cConf;
-    this.hConf = hConf;
-    this.artifactRepositoryReader = artifactRepositoryReader;
-    this.artifactRepository = artifactRepository;
-    this.impersonator = impersonator;
   }
 
   public byte[] launchRunnableTask(RunnableTaskRequest request) throws Exception {
-    if (request.getArtifactId() != null) {
-      return launchSystemAppTask(request);
-    }
     ClassLoader classLoader = getClassLoader();
     Injector injector = Guice.createInjector(new RunnableTaskModule(cConf));
     Class<?> clazz = classLoader.loadClass(request.getClassName());
@@ -61,20 +42,15 @@ public class RunnableTaskLauncher {
       throw new ClassCastException(String.format("%s is not a RunnableTask", request.getClassName()));
     }
     RunnableTask runnableTask = (RunnableTask) obj;
-    RunnableTaskContext runnableTaskContext = new RunnableTaskContext(request.getParam(), classLoader);
+    RunnableTaskContext runnableTaskContext = RunnableTaskContext.getBuilder().
+      withParam(request.getParam()).
+      withDelegateTaskRequest(request.getDelegate()).
+      build();
     runnableTask.run(runnableTaskContext);
     return runnableTaskContext.getResult();
   }
 
-  private byte[] launchSystemAppTask(RunnableTaskRequest request) throws Exception {
-    RunnableTaskContext context = new RunnableTaskContext(request.getParam());
-    SystemAppTask systemAppTask = new SystemAppTask(cConf, hConf, artifactRepositoryReader, artifactRepository,
-                                                    impersonator, request);
-    systemAppTask.run(context);
-    return context.getResult();
-  }
-
-  private ClassLoader getClassLoader() throws Exception {
+  private ClassLoader getClassLoader() {
     ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
     return classLoader == null ? getClass().getClassLoader() : classLoader;
   }

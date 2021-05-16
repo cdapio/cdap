@@ -26,17 +26,18 @@ import javax.annotation.Nullable;
  */
 public class RunnableTaskContext {
   private final ByteArrayOutputStream outputStream;
+  @Nullable
   private final String param;
   @Nullable
-  private final ClassLoader applicationClassLoader;
+  private final RunnableTaskRequest delegateTaskRequest;
+  @Nullable
+  private final ClassLoader artifactClassLoader;
 
-  public RunnableTaskContext(String param) {
-    this(param, null);
-  }
-
-  public RunnableTaskContext(String param, @Nullable ClassLoader applicationClassLoader) {
+  private RunnableTaskContext(@Nullable String param, @Nullable ClassLoader artifactClassLoader,
+                              @Nullable RunnableTaskRequest delegateTaskRequest) {
     this.param = param;
-    this.applicationClassLoader = applicationClassLoader;
+    this.artifactClassLoader = artifactClassLoader;
+    this.delegateTaskRequest = delegateTaskRequest;
     this.outputStream = new ByteArrayOutputStream();
   }
 
@@ -48,12 +49,57 @@ public class RunnableTaskContext {
     return outputStream.toByteArray();
   }
 
+  @Nullable
   public String getParam() {
     return param;
   }
 
   @Nullable
-  public ClassLoader getApplicationClassLoader() {
-    return applicationClassLoader;
+  public ClassLoader getArtifactClassLoader() {
+    return artifactClassLoader;
+  }
+
+  public static Builder getBuilder() {
+    return new Builder();
+  }
+
+  @Nullable
+  public RunnableTaskRequest getDelegateTaskRequest() {
+    return delegateTaskRequest;
+  }
+
+  /**
+   * Builder for RunnableTaskContext
+   */
+  public static class Builder {
+    @Nullable
+    private String param;
+    @Nullable
+    private RunnableTaskRequest delegateTaskRequest;
+    @Nullable
+    private ClassLoader artifactClassLoader;
+
+    private Builder() {
+
+    }
+
+    public Builder withParam(@Nullable String param) {
+      this.param = param;
+      return this;
+    }
+
+    public Builder withArtifactClassLoader(@Nullable ClassLoader artifactClassLoader) {
+      this.artifactClassLoader = artifactClassLoader;
+      return this;
+    }
+
+    public Builder withDelegateTaskRequest(@Nullable RunnableTaskRequest delegateTaskRequest) {
+      this.delegateTaskRequest = delegateTaskRequest;
+      return this;
+    }
+
+    public RunnableTaskContext build() {
+      return new RunnableTaskContext(param, artifactClassLoader, delegateTaskRequest);
+    }
   }
 }

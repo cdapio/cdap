@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.worker;
 
 import com.google.inject.Guice;
+import com.google.inject.Inject;
 import com.google.inject.Injector;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.api.service.worker.RunnableTask;
@@ -41,20 +42,20 @@ public class SystemAppTask implements RunnableTask {
   private ArtifactRepositoryReader artifactRepositoryReader;
   private ArtifactRepository artifactRepository;
   private Impersonator impersonator;
-  private RunnableTaskRequest taskRequest;
 
+  @Inject
   SystemAppTask(CConfiguration cConf, Configuration hConf, ArtifactRepositoryReader artifactRepositoryReader,
-                ArtifactRepository artifactRepository, Impersonator impersonator, RunnableTaskRequest taskRequest) {
+                ArtifactRepository artifactRepository, Impersonator impersonator) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.artifactRepositoryReader = artifactRepositoryReader;
     this.artifactRepository = artifactRepository;
     this.impersonator = impersonator;
-    this.taskRequest = taskRequest;
   }
 
   @Override
   public void run(RunnableTaskContext context) throws Exception {
+    RunnableTaskRequest taskRequest = context.getDelegateTaskRequest();
     Injector injector = Guice.createInjector(new SystemAppModule(cConf, hConf));
     Id.Artifact artifactId = Id.Artifact
       .from(Id.Namespace.from(taskRequest.getNamespace()), taskRequest.getArtifactId().getName(),
@@ -72,7 +73,9 @@ public class SystemAppTask implements RunnableTask {
     }
 
     RunnableTask runnableTask = (RunnableTask) obj;
-    RunnableTaskContext runnableTaskContext = new RunnableTaskContext(taskRequest.getParam(), artifactClassLoader);
+    RunnableTaskContext runnableTaskContext = RunnableTaskContext.getBuilder().
+      withParam(taskRequest.getParam()).
+      withArtifactClassLoader(artifactClassLoader).build();
     runnableTask.run(runnableTaskContext);
     context.writeResult(runnableTaskContext.getResult());
   }

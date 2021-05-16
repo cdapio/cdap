@@ -27,11 +27,7 @@ import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.security.HttpsEnabler;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
-import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.http.NettyHttpService;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
@@ -49,31 +45,19 @@ public class TaskWorkerService extends AbstractIdleService {
 
   private final CConfiguration cConf;
   private final SConfiguration sConf;
-  private final Configuration hConf;
   private final DiscoveryService discoveryService;
   private final NettyHttpService httpService;
-  private final ArtifactRepositoryReader artifactRepositoryReader;
-  private final ArtifactRepository artifactRepository;
-  private final Impersonator impersonator;
   private Cancellable cancelDiscovery;
   private InetSocketAddress bindAddress;
 
 
   @Inject
   TaskWorkerService(CConfiguration cConf,
-                    Configuration hConf,
                     SConfiguration sConf,
-                    DiscoveryService discoveryService,
-                    ArtifactRepositoryReader artifactRepositoryReader,
-                    ArtifactRepository artifactRepository,
-                    Impersonator impersonator) {
+                    DiscoveryService discoveryService) {
     this.cConf = cConf;
     this.sConf = sConf;
-    this.hConf = hConf;
     this.discoveryService = discoveryService;
-    this.artifactRepositoryReader = artifactRepositoryReader;
-    this.artifactRepository = artifactRepository;
-    this.impersonator = impersonator;
 
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TASK_WORKER)
       .setHost(cConf.get(Constants.TaskWorker.ADDRESS))
@@ -81,8 +65,7 @@ public class TaskWorkerService extends AbstractIdleService {
       .setExecThreadPoolSize(cConf.getInt(Constants.TaskWorker.EXEC_THREADS))
       .setBossThreadPoolSize(cConf.getInt(Constants.TaskWorker.BOSS_THREADS))
       .setWorkerThreadPoolSize(cConf.getInt(Constants.TaskWorker.WORKER_THREADS))
-      .setHttpHandlers(new TaskWorkerHttpHandlerInternal(this.cConf, this.hConf, artifactRepositoryReader,
-                                                         artifactRepository, impersonator, this::stopService));
+      .setHttpHandlers(new TaskWorkerHttpHandlerInternal(this.cConf, this::stopService));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);

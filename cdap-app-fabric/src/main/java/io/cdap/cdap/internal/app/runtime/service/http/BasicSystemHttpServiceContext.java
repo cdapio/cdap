@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app.runtime.service.http;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
@@ -40,8 +42,11 @@ import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.MacroParser;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.services.DefaultSystemTableConfigurer;
+import io.cdap.cdap.internal.app.worker.SystemAppTask;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metadata.PreferencesFetcher;
+import io.cdap.cdap.proto.BasicThrowable;
+import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
@@ -66,6 +71,8 @@ public class BasicSystemHttpServiceContext extends BasicHttpServiceContext imple
   private final TransactionRunner transactionRunner;
   private final PreferencesFetcher preferencesFetcher;
   private final RemoteTaskExecutor remoteTaskExecutor;
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec()).create();
 
   /**
    * Creates a BasicSystemHttpServiceContext.
@@ -127,9 +134,9 @@ public class BasicSystemHttpServiceContext extends BasicHttpServiceContext imple
    * Get preferences for the supplied namespace.
    *
    * @param namespace the name of the namespace to fetch preferences for.
-   * @param resolved true if resolved properties are desired.
+   * @param resolved  true if resolved properties are desired.
    * @return Map containing the preferences for this namespace
-   * @throws IOException if the preferencesFetcher could not complete the request.
+   * @throws IOException              if the preferencesFetcher could not complete the request.
    * @throws IllegalArgumentException if the supplied namespace doesn't exist.
    */
   @Override
@@ -143,7 +150,10 @@ public class BasicSystemHttpServiceContext extends BasicHttpServiceContext imple
   }
 
   @Override
-  public byte[] runTask(RunnableTaskRequest runnableTaskRequest) throws IOException {
-    return remoteTaskExecutor.runTask(runnableTaskRequest);
+  public byte[] runTask(RunnableTaskRequest runnableTaskRequest) throws Exception {
+    String systemAppClassName = SystemAppTask.class.getCanonicalName();
+    RunnableTaskRequest taskRequest = RunnableTaskRequest.getBuilder(systemAppClassName)
+      .withDelegate(runnableTaskRequest).build();
+    return remoteTaskExecutor.runTask(taskRequest);
   }
 }

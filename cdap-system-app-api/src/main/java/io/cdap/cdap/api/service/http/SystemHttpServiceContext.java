@@ -89,5 +89,5 @@ public interface SystemHttpServiceContext extends HttpServiceContext, Transactio
    * @return byte[] result
    * @throws IOException if there is a problem in connecting to remote worker
    */
-  byte[] runTask(RunnableTaskRequest runnableTaskRequest) throws IOException;
+  byte[] runTask(RunnableTaskRequest runnableTaskRequest) throws Exception;
 }

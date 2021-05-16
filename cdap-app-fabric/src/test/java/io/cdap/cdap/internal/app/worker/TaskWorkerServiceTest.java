@@ -31,7 +31,6 @@ import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.internal.ServiceListenerAdapter;
@@ -77,9 +76,7 @@ public class TaskWorkerServiceTest {
     CConfiguration cConf = createCConf(port);
     SConfiguration sConf = createSConf();
 
-    TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, new Configuration(), sConf,
-                                                                new InMemoryDiscoveryService(),
-                                                                null, null, null);
+    TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, sConf, new InMemoryDiscoveryService());
     // start the service
     taskWorkerService.startAndWait();
 
@@ -115,7 +112,7 @@ public class TaskWorkerServiceTest {
 
     // Post valid request
     String want = "100";
-    RunnableTaskRequest req = new RunnableTaskRequest(TestRunnableClass.class.getName(), want);
+    RunnableTaskRequest req = RunnableTaskRequest.getBuilder(TestRunnableClass.class.getName()).withParam(want).build();
     String reqBody = GSON.toJson(req);
     HttpResponse response = HttpRequests.execute(
       HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
@@ -134,7 +131,7 @@ public class TaskWorkerServiceTest {
     URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
 
     // Post invalid request
-    RunnableTaskRequest noClassReq = new RunnableTaskRequest("NoClass", "");
+    RunnableTaskRequest noClassReq = RunnableTaskRequest.getBuilder("NoClass").build();
     String reqBody = GSON.toJson(noClassReq);
     HttpResponse response = HttpRequests.execute(
       HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
@@ -154,7 +151,8 @@ public class TaskWorkerServiceTest {
     InetSocketAddress addr = taskWorkerService.getBindAddress();
     URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
 
-    RunnableTaskRequest request = new RunnableTaskRequest(TestRunnableClass.class.getName(), "1000");
+    RunnableTaskRequest request = RunnableTaskRequest.getBuilder(TestRunnableClass.class.getName()).
+      withParam("1000").build();
 
     String reqBody = GSON.toJson(request);
     List<Callable<HttpResponse>> calls = new ArrayList<>();
