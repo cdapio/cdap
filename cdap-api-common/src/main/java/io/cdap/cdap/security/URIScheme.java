@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.common.discovery;
+package io.cdap.cdap.security;
 
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.discovery.Discoverable;
@@ -36,6 +36,12 @@ public enum URIScheme {
   private final String scheme;
   private final byte[] discoverablePayload;
   private final int defaultPort;
+
+  URIScheme(String scheme, byte[] discoverablePayload, int defaultPort) {
+    this.scheme = scheme;
+    this.discoverablePayload = discoverablePayload;
+    this.defaultPort = defaultPort;
+  }
 
   /**
    * Returns the {@link URIScheme} based on the given {@link Discoverable} payload.
@@ -76,7 +82,7 @@ public enum URIScheme {
   /**
    * Creates a {@link URI} based on the scheme from the given {@link Discoverable}.
    */
-  public static URI createURI(Discoverable discoverable, String pathFmt, Object...objs) {
+  public static URI createURI(Discoverable discoverable, String pathFmt, Object... objs) {
     String scheme = getScheme(discoverable).scheme;
     InetSocketAddress address = discoverable.getSocketAddress();
     String path = String.format(pathFmt, objs);
@@ -84,13 +90,6 @@ public enum URIScheme {
       path = path.substring(1);
     }
     return URI.create(String.format("%s://%s:%d/%s", scheme, address.getHostName(), address.getPort(), path));
-  }
-
-
-  URIScheme(String scheme, byte[] discoverablePayload, int defaultPort) {
-    this.scheme = scheme;
-    this.discoverablePayload = discoverablePayload;
-    this.defaultPort = defaultPort;
   }
 
   /**

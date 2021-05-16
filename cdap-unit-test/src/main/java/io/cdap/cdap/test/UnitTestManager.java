@@ -40,7 +40,6 @@ import io.cdap.cdap.app.runtime.spark.SparkResourceFilters;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.StickyEndpointStrategy;
-import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.ProgramResources;
@@ -61,6 +60,7 @@ import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.DatasetModuleId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.security.URIScheme;
 import io.cdap.cdap.test.internal.ApplicationManagerFactory;
 import io.cdap.cdap.test.internal.ArtifactManagerFactory;
 import org.apache.tephra.TransactionAware;
@@ -164,7 +164,7 @@ public class UnitTestManager extends AbstractTestManager {
     this.metricsManager = metricsManager;
     this.artifactManagerFactory = artifactManagerFactory;
     this.tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-      cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+                           cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     this.deploymentJarCache = CacheBuilder.newBuilder().build();
   }
 
@@ -206,6 +206,7 @@ public class UnitTestManager extends AbstractTestManager {
   public ApplicationManager getApplicationManager(ApplicationId applicationId) {
     return appManagerFactory.create(applicationId);
   }
+
   @Override
   public ArtifactManager addArtifact(ArtifactId artifactId, File artifactFile) throws Exception {
     artifactRepository.addArtifact(Id.Artifact.fromEntityId(artifactId), artifactFile);
@@ -281,7 +282,7 @@ public class UnitTestManager extends AbstractTestManager {
                                            Class<?>... pluginClasses) throws Exception {
     File pluginJar = createPluginJar(artifactId, pluginClass, pluginClasses);
     artifactRepository.addArtifact(Id.Artifact.fromEntityId(artifactId), pluginJar, parents,
-                                   additionalPlugins, Collections.<String, String>emptyMap());
+                                   additionalPlugins, Collections.emptyMap());
     Preconditions.checkState(pluginJar.delete());
     return artifactManagerFactory.create(artifactId);
   }

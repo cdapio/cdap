@@ -32,7 +32,6 @@ import com.google.gson.stream.JsonWriter;
 import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
-import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.logging.LoggingContext;
@@ -43,6 +42,7 @@ import io.cdap.cdap.logging.gateway.handlers.FormattedTextLogEvent;
 import io.cdap.cdap.logging.gateway.handlers.LogData;
 import io.cdap.cdap.logging.read.LogOffset;
 import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
+import io.cdap.cdap.security.URIScheme;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
@@ -76,7 +76,8 @@ public class LogsServiceMainTest extends MasterServiceMainTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(LogsServiceMainTest.class);
   private static final Gson GSON =
     new GsonBuilder().registerTypeAdapter(LogOffset.class, new LogOffsetAdapter()).create();
-  private static final Type LIST_LOGDATA_OFFSET_TYPE = new TypeToken<List<LogDataOffset>>() { }.getType();
+  private static final Type LIST_LOGDATA_OFFSET_TYPE = new TypeToken<List<LogDataOffset>>() {
+  }.getType();
 
   @Test
   public void testLogsService() throws Exception {

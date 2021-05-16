@@ -19,7 +19,6 @@ package io.cdap.cdap.internal.app.runtime.distributed.remote;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.internal.app.runtime.distributed.runtimejob.DefaultRuntimeJob;
 import io.cdap.cdap.internal.app.runtime.monitor.proxy.ServiceSocksProxy;
@@ -27,6 +26,7 @@ import io.cdap.cdap.master.spi.discovery.DefaultServiceDiscovered;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
+import io.cdap.cdap.security.URIScheme;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -92,8 +92,8 @@ public class RemoteExecutionDiscoveryService implements DiscoveryServiceClient, 
     // In Remote runtime, we don't support program discovery except for the SYSTEM namespace.
     for (ProgramType programType : ProgramType.values()) {
       if (programType.isDiscoverable()
-          && name.startsWith(programType.getDiscoverableTypeName() + ".")
-          && !name.startsWith(programType.getDiscoverableTypeName() + "." + NamespaceId.SYSTEM.getNamespace() + ".")) {
+        && name.startsWith(programType.getDiscoverableTypeName() + ".")
+        && !name.startsWith(programType.getDiscoverableTypeName() + "." + NamespaceId.SYSTEM.getNamespace() + ".")) {
         return new DefaultServiceDiscovered(name);
       }
     }

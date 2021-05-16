@@ -35,7 +35,6 @@ import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
-import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.NamespaceAdminTestModule;
@@ -63,6 +62,7 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.security.URIScheme;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.authorization.AuthorizationTestModule;
@@ -104,11 +104,13 @@ public class LogHttpHandlerTest {
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
-  private static final Type LIST_LOGLINE_TYPE = new TypeToken<List<LogLine>>() { }.getType();
-  private static final Type LIST_LOGDATA_OFFSET_TYPE = new TypeToken<List<LogDataOffset>>() { }.getType();
+  private static final Type LIST_LOGLINE_TYPE = new TypeToken<List<LogLine>>() {
+  }.getType();
+  private static final Type LIST_LOGDATA_OFFSET_TYPE = new TypeToken<List<LogDataOffset>>() {
+  }.getType();
   private static final Gson GSON =
     new GsonBuilder().registerTypeAdapter(LogOffset.class, new LogOffsetAdapter()).create();
-  private static final String[] FORMATS = new String[] { "text", "json" };
+  private static final String[] FORMATS = new String[]{"text", "json"};
 
   private static TransactionManager transactionManager;
   private static DatasetOpExecutorService dsOpService;
@@ -432,7 +434,7 @@ public class LogHttpHandlerTest {
         valueOfCategoryName("workflows"), "testWorkflow1");
     RunRecord runRecord = mockLogReader.getRunRecord(programId);
     String logsUrl = String.format("apps/%s/%s/%s/runs/%s/logs/next?format=json",
-                            "testTemplate1", "workflows", "testWorkflow1", runRecord.getPid());
+                                   "testTemplate1", "workflows", "testWorkflow1", runRecord.getPid());
     HttpResponse response = doGet(getVersionedAPIPath(logsUrl, MockLogReader.TEST_NAMESPACE));
     Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
     List<LogDataOffset> logDataOffsetList = GSON.fromJson(response.getResponseBodyAsString(), LIST_LOGDATA_OFFSET_TYPE);
@@ -561,7 +563,7 @@ public class LogHttpHandlerTest {
     } else {
       String fieldsToSuppress = getSuppressStr(suppress);
       prevRunIdUrl = String.format("apps/%s/%s/%s/runs/%s/logs/prev?format=%s&max=100&suppress=%s",
-                      appId, entityType, entityId, runRecord.getPid(), format, fieldsToSuppress);
+                                   appId, entityType, entityId, runRecord.getPid(), format, fieldsToSuppress);
     }
 
     HttpResponse response = doGet(getVersionedAPIPath(prevRunIdUrl, namespace));
@@ -695,7 +697,7 @@ public class LogHttpHandlerTest {
    * @param format {@link LogHttpHandler.LogFormatType}
    * @param runIdOrFilter true if the log is fetched for a runId or a filter was used
    * @param fullLogs true if /logs endpoint was used (this is because the response format is different
-   *                 for /logs vs /next or /prev)
+   * for /logs vs /next or /prev)
    * @param escapeChoice true if the response was chosen to be escaped
    * @param expectedEvents number of expected logs events
    * @param expectedStartValue expected value in the log message
@@ -705,7 +707,7 @@ public class LogHttpHandlerTest {
                           boolean fullLogs, boolean escapeChoice, int expectedEvents, int expectedStartValue)
     throws IOException {
     verifyLogs(response, entityId, format, runIdOrFilter, fullLogs, escapeChoice, expectedEvents, expectedStartValue,
-    ImmutableList.of());
+               ImmutableList.of());
   }
 
   /**
@@ -716,7 +718,7 @@ public class LogHttpHandlerTest {
    * @param format {@link LogHttpHandler.LogFormatType}
    * @param runIdOrFilter true if the log is fetched for a runId or a filter was used
    * @param fullLogs true if /logs endpoint was used (this is because the response format is different
-   *                 for /logs vs /next or /prev)
+   * for /logs vs /next or /prev)
    * @param escapeChoice true if the response was chosen to be escaped
    * @param expectedEvents number of expected logs events
    * @param expectedStartValue expected value in the log message
@@ -739,7 +741,7 @@ public class LogHttpHandlerTest {
    * @param format {@link LogHttpHandler.LogFormatType}
    * @param stepSize the number used to increment expected integer value in the log message every time
    * @param fullLogs true if /logs endpoint was used (this is because the response format is different
-   *                 for /logs vs /next or /prev)
+   * for /logs vs /next or /prev)
    * @param escapeChoice true if the response was chosen to be escaped
    * @param expectedEvents number of expected logs events
    * @param expectedStartValue expected value in the log message

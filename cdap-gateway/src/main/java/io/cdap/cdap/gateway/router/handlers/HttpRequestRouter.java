@@ -20,9 +20,9 @@ import io.cdap.cdap.common.HandlerException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
-import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.Channels;
 import io.cdap.cdap.gateway.router.RouterServiceLookup;
+import io.cdap.cdap.security.URIScheme;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
@@ -418,7 +418,7 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
         context = sslContext;
         if (context == null) {
           sslContext = context = SslContextBuilder.forClient()
-                                                  .trustManager(InsecureTrustManagerFactory.INSTANCE).build();
+            .trustManager(InsecureTrustManagerFactory.INSTANCE).build();
         }
         return context.newHandler(alloc);
       }

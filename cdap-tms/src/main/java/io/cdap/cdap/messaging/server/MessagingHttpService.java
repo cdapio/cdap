@@ -26,10 +26,10 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
-import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
-import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.common.security.HttpsConfigurer;
+import io.cdap.cdap.security.URIScheme;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.HttpHandler;
@@ -98,7 +98,7 @@ public class MessagingHttpService extends AbstractIdleService {
       .setHttpHandlers(handlers);
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
-      new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
+      new HttpsConfigurer(cConf, sConf).enable(builder);
     }
 
     this.httpService = builder.build();

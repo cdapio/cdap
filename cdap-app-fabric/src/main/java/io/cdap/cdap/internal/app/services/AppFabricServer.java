@@ -27,18 +27,18 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
-import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
-import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.common.security.HttpsConfigurer;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.bootstrap.BootstrapService;
 import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.internal.sysapp.SystemAppManagementService;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
+import io.cdap.cdap.security.URIScheme;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.spi.data.transaction.TxCallable;
@@ -84,8 +84,8 @@ public class AppFabricServer extends AbstractIdleService {
   private final TransactionRunner transactionRunner;
 
   private Cancellable cancelHttpService;
-  private Set<HttpHandler> handlers;
-  private MetricsCollectionService metricsCollectionService;
+  private final Set<HttpHandler> handlers;
+  private final MetricsCollectionService metricsCollectionService;
 
   /**
    * Construct the AppFabricServer with service factory and cConf coming from guice injection.
@@ -168,7 +168,7 @@ public class AppFabricServer extends AbstractIdleService {
                                             Constants.AppFabric.DEFAULT_WORKER_THREADS))
       .setPort(cConf.getInt(Constants.AppFabric.SERVER_PORT));
     if (sslEnabled) {
-      new HttpsEnabler().configureKeyStore(cConf, sConf).enable(httpServiceBuilder);
+      new HttpsConfigurer(cConf, sConf).enable(httpServiceBuilder);
     }
 
     cancelHttpService = startHttpService(httpServiceBuilder.build());

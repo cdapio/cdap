@@ -21,7 +21,6 @@ import com.google.gson.GsonBuilder;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.api.artifact.ArtifactInfo;
 import io.cdap.cdap.api.artifact.ArtifactScope;
-import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.client.config.ClientConfig;
@@ -31,7 +30,6 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
-import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.gateway.handlers.ArtifactHttpHandler;
@@ -41,6 +39,7 @@ import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.URIScheme;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
@@ -70,7 +69,8 @@ public abstract class ArtifactHttpHandlerTestBase extends AppFabricTestBase {
     .create();
   private static String systemArtifactsDir;
   private static ArtifactRepository artifactRepository;
-  private static final Type ARTIFACT_INFO_LIST_TYPE = new TypeToken<List<ArtifactInfo>>() { }.getType();
+  private static final Type ARTIFACT_INFO_LIST_TYPE = new TypeToken<List<ArtifactInfo>>() {
+  }.getType();
 
   @BeforeClass
   public static void setup() {
@@ -152,7 +152,7 @@ public abstract class ArtifactHttpHandlerTestBase extends AppFabricTestBase {
                                              artifactId.getArtifact(),
                                              artifactId.getVersion())).toURL();
     HttpResponse httpResponse = HttpRequests.execute(HttpRequest.get(endpoint).build(),
-                                                 new DefaultHttpRequestConfig(false));
+                                                     new DefaultHttpRequestConfig(false));
 
     int responseCode = httpResponse.getResponseCode();
     if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {

@@ -30,7 +30,6 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
-import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
@@ -39,6 +38,7 @@ import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.MetricQueryResult;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.URIScheme;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
@@ -119,7 +119,7 @@ public class RemoteMetricsSystemClient implements MetricsSystemClient {
 
     // Only query for aggregate metrics. Currently that's the only use case.
     String queryString = "aggregate=true&start=" + start + "&end=" + end + "&resolution=" + resolution + "s" +
-                          metricsParam + tagsParam + groupByParam;
+      metricsParam + tagsParam + groupByParam;
 
     URL url = getBaseURI().resolve("query?" + queryString).toURL();
     HttpResponse response = HttpRequests.execute(HttpRequest.post(url).build(), REQUEST_CONFIG);
@@ -155,7 +155,8 @@ public class RemoteMetricsSystemClient implements MetricsSystemClient {
                               ". Error code " + response.getResponseCode() +
                               ", message " + response.getResponseBodyAsString());
     }
-    return GSON.fromJson(response.getResponseBodyAsString(), new TypeToken<List<String>>() { }.getType());
+    return GSON.fromJson(response.getResponseBodyAsString(), new TypeToken<List<String>>() {
+    }.getType());
   }
 
   /**

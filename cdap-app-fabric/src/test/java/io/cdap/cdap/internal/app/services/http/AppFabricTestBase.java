@@ -56,7 +56,6 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
-import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.common.io.Locations;
@@ -105,6 +104,7 @@ import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.scheduler.Scheduler;
+import io.cdap.cdap.security.URIScheme;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
@@ -166,14 +166,21 @@ public abstract class AppFabricTestBase {
     .create();
   private static final String API_KEY = "SampleTestApiKey";
 
-  private static final Type BATCH_PROGRAM_RUNS_TYPE = new TypeToken<List<BatchProgramHistory>>() { }.getType();
-  private static final Type LIST_JSON_OBJECT_TYPE = new TypeToken<List<JsonObject>>() { }.getType();
-  private static final Type LIST_RUN_RECORD_TYPE = new TypeToken<List<RunRecord>>() { }.getType();
-  private static final Type SET_STRING_TYPE = new TypeToken<Set<String>>() { }.getType();
-  private static final Type LIST_PROFILE = new TypeToken<List<Profile>>() { }.getType();
+  private static final Type BATCH_PROGRAM_RUNS_TYPE = new TypeToken<List<BatchProgramHistory>>() {
+  }.getType();
+  private static final Type LIST_JSON_OBJECT_TYPE = new TypeToken<List<JsonObject>>() {
+  }.getType();
+  private static final Type LIST_RUN_RECORD_TYPE = new TypeToken<List<RunRecord>>() {
+  }.getType();
+  private static final Type SET_STRING_TYPE = new TypeToken<Set<String>>() {
+  }.getType();
+  private static final Type LIST_PROFILE = new TypeToken<List<Profile>>() {
+  }.getType();
 
-  protected static final Type LIST_MAP_STRING_STRING_TYPE = new TypeToken<List<Map<String, String>>>() { }.getType();
-  protected static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  protected static final Type LIST_MAP_STRING_STRING_TYPE = new TypeToken<List<Map<String, String>>>() {
+  }.getType();
+  protected static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() {
+  }.getType();
 
   protected static final String NONEXISTENT_NAMESPACE = "12jr0j90jf3foieoi33";
 
@@ -440,6 +447,7 @@ public abstract class AppFabricTestBase {
   /**
    * Adds a plugin artifact. This method is present for testing invalid plugin class json and it usage is not
    * recommended.
+   *
    * @param artifactId the artifact id
    * @param cls the application class
    * @param manifest manifest
@@ -613,7 +621,8 @@ public abstract class AppFabricTestBase {
                                    GSON.toJson(request));
     Assert.assertEquals(200, response.getResponseCode());
     Assert.assertEquals("application/json", getFirstHeaderValue(response, HttpHeaderNames.CONTENT_TYPE.toString()));
-    return readResponse(response, new TypeToken<List<BatchApplicationDetail>>() { }.getType());
+    return readResponse(response, new TypeToken<List<BatchApplicationDetail>>() {
+    }.getType());
   }
 
   protected JsonObject getAppDetails(String namespace, String appName) throws Exception {
@@ -854,7 +863,7 @@ public abstract class AppFabricTestBase {
       String.format("apps/%s/versions/%s/restart-programs?start-time-seconds=%d&end-time-seconds=%d",
                     applicationId.getApplication(), applicationId.getVersion(), startTimeSeconds, endTimeSeconds);
     String versionedPath = getVersionedAPIPath(path, Constants.Gateway.API_VERSION_3_TOKEN,
-                                                           applicationId.getNamespace());
+                                               applicationId.getNamespace());
     HttpResponse response = doPut(versionedPath, null);
     return response.getResponseCode();
   }
@@ -1171,7 +1180,8 @@ public abstract class AppFabricTestBase {
                                               programId.getNamespace());
     HttpResponse response = doGet(versionedUrl);
     Assert.assertEquals(200, response.getResponseCode());
-    return readResponse(response, new TypeToken<List<ScheduledRuntime>>() { }.getType());
+    return readResponse(response, new TypeToken<List<ScheduledRuntime>>() {
+    }.getType());
   }
 
   /**
@@ -1195,7 +1205,8 @@ public abstract class AppFabricTestBase {
       .collect(Collectors.toList());
     HttpResponse response = doPost(versionedUrl, GSON.toJson(batchPrograms));
     Assert.assertEquals(200, response.getResponseCode());
-    return readResponse(response, new TypeToken<List<BatchProgramSchedule>>() { }.getType());
+    return readResponse(response, new TypeToken<List<BatchProgramSchedule>>() {
+    }.getType());
   }
 
 

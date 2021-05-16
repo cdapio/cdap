@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.common.security;
+package io.cdap.cdap.security;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMEncryptor;
@@ -89,7 +89,7 @@ public class KeyStoresTest {
   @Test
   public void testPEMToKeyStore() throws Exception {
     // Write out PEM file. First without password for the key, then with password
-    for (String password : new String[] { "", "testing" }) {
+    for (String password : new String[]{"", "testing"}) {
       // Generate a keystore and write out PEM blocks
       KeyStore keystore = KeyStores.generatedCertKeyStore(KeyStores.VALIDITY, password);
       Key key = keystore.getKey(KeyStores.CERT_ALIAS, password.toCharArray());

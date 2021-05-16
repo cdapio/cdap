@@ -30,9 +30,8 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
-import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
-import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.common.security.HttpsConfigurer;
 import io.cdap.cdap.common.service.RetryOnStartFailureService;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
@@ -46,6 +45,7 @@ import io.cdap.cdap.logging.meta.CheckpointManagerFactory;
 import io.cdap.cdap.logging.pipeline.LogProcessorPipelineContext;
 import io.cdap.cdap.logging.pipeline.logbuffer.LogBufferPipelineConfig;
 import io.cdap.cdap.logging.pipeline.logbuffer.LogBufferProcessorPipeline;
+import io.cdap.cdap.security.URIScheme;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -117,7 +117,7 @@ public class LogBufferService extends AbstractIdleService {
       .setPort(cConf.getInt(Constants.LogBuffer.LOG_BUFFER_SERVER_BIND_PORT));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
-      new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
+      new HttpsConfigurer(cConf, sConf).enable(builder);
     }
 
     httpService = builder.build();

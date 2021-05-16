@@ -34,7 +34,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
-import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.NamespaceAdminTestModule;
@@ -70,6 +69,7 @@ import io.cdap.cdap.proto.DatasetModuleMeta;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.DatasetModuleId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.URIScheme;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.authorization.AuthorizationTestModule;
@@ -143,7 +143,7 @@ public abstract class DatasetServiceTestBase {
   private static DatasetService service;
   protected static OwnerAdmin ownerAdmin;
 
-  private int port = -1;
+  private final int port = -1;
 
   protected static void initialize() throws Exception {
     locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
@@ -211,7 +211,7 @@ public abstract class DatasetServiceTestBase {
     DatasetAdminService datasetAdminService =
       new DatasetAdminService(dsFramework, cConf, locationFactory, datasetInstantiatorFactory, impersonator);
     ImmutableSet<HttpHandler> handlers =
-      ImmutableSet.<HttpHandler>of(new DatasetAdminOpHTTPHandler(datasetAdminService));
+      ImmutableSet.of(new DatasetAdminOpHTTPHandler(datasetAdminService));
     MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
 
     opExecutorService = new DatasetOpExecutorService(cConf, SConfiguration.create(),
@@ -219,7 +219,8 @@ public abstract class DatasetServiceTestBase {
     opExecutorService.startAndWait();
 
     Map<String, DatasetModule> defaultModules =
-      injector.getInstance(Key.get(new TypeLiteral<Map<String, DatasetModule>>() { },
+      injector.getInstance(Key.get(new TypeLiteral<Map<String, DatasetModule>>() {
+                                   },
                                    Constants.Dataset.Manager.DefaultDatasetModules.class));
 
     ImmutableMap<String, DatasetModule> modules = ImmutableMap.<String, DatasetModule>builder()
@@ -303,7 +304,7 @@ public abstract class DatasetServiceTestBase {
                                Constants.Gateway.API_VERSION_3_TOKEN, namespace, path).toURL();
   }
 
-  protected Location createModuleJar(Class moduleClass, Location...bundleEmbeddedJars) throws IOException {
+  protected Location createModuleJar(Class moduleClass, Location... bundleEmbeddedJars) throws IOException {
     LocationFactory lf = new LocalLocationFactory(TMP_FOLDER.newFolder());
     File[] embeddedJars = new File[bundleEmbeddedJars.length];
     for (int i = 0; i < bundleEmbeddedJars.length; i++) {
@@ -340,7 +341,7 @@ public abstract class DatasetServiceTestBase {
   // creates a bundled jar with moduleClass and list of bundleEmbeddedJar files, moduleName and moduleClassName are
   // used to make request for deploying module.
   protected int deployModuleBundled(String moduleName, String moduleClassName, Class moduleClass,
-                                    Location...bundleEmbeddedJars) throws IOException {
+                                    Location... bundleEmbeddedJars) throws IOException {
     Location moduleJar = createModuleJar(moduleClass, bundleEmbeddedJars);
     HttpRequest request = HttpRequest.put(getUrl("/data/modules/" + moduleName))
       .addHeader("X-Class-Name", moduleClassName)
@@ -354,7 +355,8 @@ public abstract class DatasetServiceTestBase {
 
   protected ObjectResponse<List<DatasetModuleMeta>> getModules(NamespaceId namespace) throws IOException {
     return ObjectResponse.fromJsonBody(makeModulesRequest(namespace),
-                                       new TypeToken<List<DatasetModuleMeta>>() { }.getType());
+                                       new TypeToken<List<DatasetModuleMeta>>() {
+                                       }.getType());
   }
 
   protected HttpResponse makeModulesRequest(NamespaceId namespaceId) throws IOException {

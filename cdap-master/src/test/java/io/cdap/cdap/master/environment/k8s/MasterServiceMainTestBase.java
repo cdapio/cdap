@@ -20,11 +20,11 @@ import com.google.common.collect.Lists;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
-import io.cdap.cdap.common.security.KeyStores;
-import io.cdap.cdap.common.security.KeyStoresTest;
 import io.cdap.cdap.gateway.router.NettyRouter;
 import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
 import io.cdap.cdap.logging.gateway.handlers.RemoteProgramRunRecordFetcher;
+import io.cdap.cdap.security.KeyStores;
+import io.cdap.cdap.security.KeyStoresTest;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.server.ExternalAuthenticationServer;
 import org.apache.twill.common.Cancellable;
@@ -170,7 +170,7 @@ public class MasterServiceMainTestBase {
    */
   static URI getAuthenticationBaseURI() {
     ExternalAuthenticationServer externalAuthenticationServer = getServiceMainInstance(AuthenticationServiceMain.class)
-        .getInjector().getInstance(ExternalAuthenticationServer.class);
+      .getInjector().getInstance(ExternalAuthenticationServer.class);
     InetSocketAddress addr = externalAuthenticationServer.getSocketAddress();
     return URI.create(String.format("https://%s:%d/", addr.getHostName(), addr.getPort()));
   }
@@ -236,7 +236,7 @@ public class MasterServiceMainTestBase {
       sConf.writeXml(writer);
     }
 
-    initArgs = new String[] { "--env=mock", "--conf=" + confDir.getAbsolutePath() };
+    initArgs = new String[]{"--env=mock", "--conf=" + confDir.getAbsolutePath()};
     T service = serviceMainClass.newInstance();
     service.init(initArgs);
     service.start();

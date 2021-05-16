@@ -19,8 +19,8 @@ package io.cdap.cdap.security.server;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
-import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.common.utils.Networks;
+import io.cdap.cdap.security.HttpsEnabler;
 import org.eclipse.jetty.plus.jaas.spi.PropertyFileLoginModule;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -47,7 +47,7 @@ import static org.junit.Assert.assertEquals;
  * The Server's trust store contains the client's certificate & and the client's trust store contains the server's
  * certificate
  */
-public class ExternalMTLSAuthenticationServerTest extends ExternalAuthenticationServerTestBase  {
+public class ExternalMTLSAuthenticationServerTest extends ExternalAuthenticationServerTestBase {
 
   private static final String AUTH_HANDLER_CONFIG_BASE = Constants.Security.AUTH_HANDLER_CONFIG_BASE;
   private static final String VALID_CLIENT_CN = "client";

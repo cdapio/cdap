@@ -23,10 +23,10 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
-import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.internal.worker.RunnableTask;
-import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.common.security.HttpsConfigurer;
+import io.cdap.cdap.security.URIScheme;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -67,7 +67,7 @@ public class TaskWorkerService extends AbstractIdleService {
       .setHttpHandlers(new TaskWorkerHttpHandlerInternal(this.cConf, this::stopService));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
-      new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
+      new HttpsConfigurer(cConf, sConf).enable(builder);
     }
     httpService = builder.build();
   }

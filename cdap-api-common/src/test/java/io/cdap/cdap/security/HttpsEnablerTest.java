@@ -14,11 +14,8 @@
  * the License.
  */
 
-package io.cdap.cdap.common.security;
+package io.cdap.cdap.security;
 
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.cdap.http.NettyHttpService;
@@ -62,7 +59,7 @@ public class HttpsEnablerTest {
   /**
    * Testing https server with the client not trusting the server.
    */
-  @Test (expected = IOException.class)
+  @Test(expected = IOException.class)
   public void testInvalidHttpsServer() throws Exception {
     testServer(false, false);
   }
@@ -78,7 +75,7 @@ public class HttpsEnablerTest {
   /**
    * Testing client side authentication with an untrusted client side cert.
    */
-  @Test (expected = IOException.class)
+  @Test(expected = IOException.class)
   public void testInvalidClientAuthentication() throws Exception {
     testClientAuth(true, false);
   }
@@ -86,7 +83,7 @@ public class HttpsEnablerTest {
   /**
    * Testing client side authentication with the client missing the cert.
    */
-  @Test (expected = IOException.class)
+  @Test(expected = IOException.class)
   public void testMissingClientAuthentication() throws Exception {
     testClientAuth(false, true);
   }
@@ -97,15 +94,9 @@ public class HttpsEnablerTest {
     KeyStore keyStore = KeyStores.generatedCertKeyStore(1, password);
     File pemFile = KeyStoresTest.writePEMFile(TEMP_FOLDER.newFile(), keyStore, KeyStores.CERT_ALIAS, password);
 
-    CConfiguration cConf = CConfiguration.create();
-    SConfiguration sConf = SConfiguration.create();
-
-    cConf.set(Constants.Security.SSL.INTERNAL_CERT_PATH, pemFile.getAbsolutePath());
-    sConf.set(Constants.Security.SSL.INTERNAL_CERT_PASSWORD, password);
-
     // Start the server with SSL enabled
     NettyHttpService httpService = new HttpsEnabler()
-      .configureKeyStore(cConf, sConf)
+      .configureKeyStore(pemFile.getAbsolutePath(), password)
       .enable(
         NettyHttpService.builder("test")
           .setHttpHandlers(new PingHandler()))
@@ -117,9 +108,8 @@ public class HttpsEnablerTest {
       // Create a client that trust the server
       InetSocketAddress address = httpService.getBindAddress();
       URL url = new URL(String.format("https://%s:%d/ping", address.getHostName(), address.getPort()));
-      HttpsURLConnection urlConn = new HttpsEnabler().configureTrustStore(cConf, sConf)
+      HttpsURLConnection urlConn = new HttpsEnabler().configureTrustStore(pemFile.getAbsolutePath(), password)
         .enable((HttpsURLConnection) url.openConnection());
-
       Assert.assertEquals(200, urlConn.getResponseCode());
     } finally {
       httpService.stop();
@@ -186,9 +176,9 @@ public class HttpsEnablerTest {
     }
 
     NettyHttpService httpService = serverEnabler.enable(
-        NettyHttpService.builder("test")
-          .setHttpHandlers(new PingHandler())
-      ).build();
+      NettyHttpService.builder("test")
+        .setHttpHandlers(new PingHandler())
+    ).build();
 
     httpService.start();
 

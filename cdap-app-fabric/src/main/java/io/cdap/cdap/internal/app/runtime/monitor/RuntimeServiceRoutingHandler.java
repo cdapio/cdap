@@ -28,12 +28,12 @@ import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
-import io.cdap.cdap.common.discovery.URIScheme;
-import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.common.security.HttpsConfigurer;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.security.URIScheme;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.BodyConsumer;
 import io.cdap.http.BodyProducer;
@@ -102,7 +102,8 @@ public class RuntimeServiceRoutingHandler extends AbstractHttpHandler {
    * It simply verifies the request and forward the call to internal CDAP service.
    */
   @Path("/services/{service}/**")
-  @GET @DELETE
+  @GET
+  @DELETE
   public void routeService(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace") String namespace,
                            @PathParam("app") String app,
@@ -123,7 +124,8 @@ public class RuntimeServiceRoutingHandler extends AbstractHttpHandler {
    * It simply verify the request and forward the call to internal CDAP services.
    */
   @Path("/services/{service}/**")
-  @PUT @POST
+  @PUT
+  @POST
   public BodyConsumer routeServiceWithBody(HttpRequest request, HttpResponder responder,
                                            @PathParam("namespace") String namespace,
                                            @PathParam("app") String app,
@@ -212,7 +214,7 @@ public class RuntimeServiceRoutingHandler extends AbstractHttpHandler {
       }
 
       if (urlConn instanceof HttpsURLConnection) {
-        new HttpsEnabler().setTrustAll(true).enable((HttpsURLConnection) urlConn);
+        new HttpsConfigurer(null, null).setTrustAll(true).enable((HttpsURLConnection) urlConn);
       }
       for (Map.Entry<String, String> header : request.headers().entries()) {
         urlConn.setRequestProperty(header.getKey(), header.getValue());

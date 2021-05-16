@@ -23,7 +23,8 @@ import com.unboundid.util.ssl.TrustAllTrustManager;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
-import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.common.security.HttpsConfigurer;
+import io.cdap.cdap.security.HttpsEnabler;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -42,6 +43,7 @@ public class ExternalLDAPAuthenticationServerSSLTest extends ExternalLDAPAuthent
 
   private static ExternalLDAPAuthenticationServerSSLTest testServer;
   private static final HttpsEnabler HTTPS_ENABLER = new HttpsEnabler().setTrustAll(true);
+  private static HttpsConfigurer httpsConfigurer;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -70,12 +72,14 @@ public class ExternalLDAPAuthenticationServerSSLTest extends ExternalLDAPAuthent
 
     testServer = new ExternalLDAPAuthenticationServerSSLTest();
     testServer.setup();
+    httpsConfigurer = new HttpsConfigurer(cConf, sConf);
   }
 
   @AfterClass
   public static void afterClass() throws Exception {
     testServer.tearDown();
   }
+
   @Override
   protected String getProtocol() {
     return "https";
@@ -83,7 +87,7 @@ public class ExternalLDAPAuthenticationServerSSLTest extends ExternalLDAPAuthent
 
   @Override
   protected HttpURLConnection openConnection(URL url) throws Exception {
-    return HTTPS_ENABLER.enable((HttpsURLConnection) super.openConnection(url));
+    return httpsConfigurer.enable((HttpsURLConnection) super.openConnection(url));
   }
 
   @Override

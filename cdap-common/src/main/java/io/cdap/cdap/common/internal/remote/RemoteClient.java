@@ -23,8 +23,8 @@ import com.google.common.net.HttpHeaders;
 import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
-import io.cdap.cdap.common.discovery.URIScheme;
-import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.common.security.HttpsConfigurer;
+import io.cdap.cdap.security.URIScheme;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
@@ -94,7 +94,7 @@ public class RemoteClient {
    * @return the response
    * @throws IOException if there was an IOException while performing the request
    * @throws ServiceUnavailableException if there was a ConnectException while making the request, or if the response
-   *                                     was a 503
+   * was a 503
    */
   public HttpResponse execute(HttpRequest request) throws IOException {
     HttpRequest httpRequest = request;
@@ -139,7 +139,7 @@ public class RemoteClient {
     URL url = resolve(resource);
     HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
     if (urlConn instanceof HttpsURLConnection && !httpRequestConfig.isVerifySSLCert()) {
-      new HttpsEnabler().setTrustAll(true).enable((HttpsURLConnection) urlConn);
+      new HttpsConfigurer(null, null).setTrustAll(true).enable((HttpsURLConnection) urlConn);
     }
     urlConn.setConnectTimeout(httpRequestConfig.getConnectTimeout());
     urlConn.setReadTimeout(httpRequestConfig.getReadTimeout());

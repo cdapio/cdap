@@ -20,7 +20,7 @@ import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.common.security.HttpsConfigurer;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.proto.RestartServiceInstancesStatus;
 import io.cdap.cdap.proto.SystemServiceMeta;
@@ -47,7 +47,7 @@ public class MonitorHandlerTest extends AppFabricTestBase {
   private HttpURLConnection openURL(String path, HttpMethod method) throws IOException {
     HttpURLConnection urlConn = (HttpURLConnection) createURL(path).openConnection();
     if (urlConn instanceof HttpsURLConnection) {
-      new HttpsEnabler().setTrustAll(true).enable((HttpsURLConnection) urlConn);
+      new HttpsConfigurer(null, null).setTrustAll(true).enable((HttpsURLConnection) urlConn);
     }
     urlConn.setRequestMethod(method.name());
     return urlConn;

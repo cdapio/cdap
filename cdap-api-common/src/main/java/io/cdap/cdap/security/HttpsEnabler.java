@@ -14,12 +14,9 @@
  * the License.
  */
 
-package io.cdap.cdap.common.security;
+package io.cdap.cdap.security;
 
 import com.google.common.base.Strings;
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.http.NettyHttpService;
 import io.cdap.http.SSLHandlerFactory;
 import io.netty.buffer.ByteBufAllocator;
@@ -36,6 +33,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.UnrecoverableKeyException;
 import java.util.function.Supplier;
+import javax.annotation.Nullable;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -56,21 +54,17 @@ public final class HttpsEnabler {
    * Configures keystore to use based on the given configurations. This method is intended for service to use
    * to enable https server.
    *
-   * @param cConf the configuration for looking up certificate location
-   * @param sConf the security configuration for looking up certificate password
+   * @param filePath
+   * @param password
    * @return this instance
    */
-  public synchronized HttpsEnabler configureKeyStore(CConfiguration cConf, SConfiguration sConf) {
-    String path = cConf.get(Constants.Security.SSL.INTERNAL_CERT_PATH);
-
-    String password = Strings.isNullOrEmpty(path)
-      ? KeyStores.generateRandomPassword()
-      : sConf.get(Constants.Security.SSL.INTERNAL_CERT_PASSWORD, "");
-    KeyStore keyStore = Strings.isNullOrEmpty(path)
+  public synchronized HttpsEnabler configureKeyStore(@Nullable String filePath, @Nullable String password) {
+    String keystorePassword = Strings.isNullOrEmpty(filePath) ? KeyStores.generateRandomPassword() : password;
+    KeyStore keyStore = Strings.isNullOrEmpty(filePath)
       ? KeyStores.generatedCertKeyStore(KeyStores.VALIDITY, password)
-      : KeyStores.createKeyStore(Paths.get(path), password);
+      : KeyStores.createKeyStore(Paths.get(filePath), password);
 
-    return setKeyStore(keyStore, password::toCharArray);
+    return setKeyStore(keyStore, keystorePassword::toCharArray);
   }
 
   /**
@@ -78,18 +72,15 @@ public final class HttpsEnabler {
    * to trust a https service configured with the same configuration. If there is no certificate information
    * in the given configurations, no trust store will be configured.
    *
-   * @param cConf the configuration for looking up certificate location
-   * @param sConf the security configuration for looking up certificate password
+   * @param filePath
+   * @param password
    * @return this instance
    */
-  public synchronized HttpsEnabler configureTrustStore(CConfiguration cConf, SConfiguration sConf) {
-    String path = cConf.get(Constants.Security.SSL.INTERNAL_CERT_PATH);
-    if (Strings.isNullOrEmpty(path)) {
+  public synchronized HttpsEnabler configureTrustStore(@Nullable String filePath, String password) {
+    if (Strings.isNullOrEmpty(filePath)) {
       return this;
     }
-
-    return setTrustStore(KeyStores.createTrustStore(
-      KeyStores.createKeyStore(Paths.get(path), sConf.get(Constants.Security.SSL.INTERNAL_CERT_PASSWORD, ""))));
+    return setTrustStore(KeyStores.createTrustStore(KeyStores.createKeyStore(Paths.get(filePath), password)));
   }
 
   /**
@@ -135,8 +126,8 @@ public final class HttpsEnabler {
    * Sets to have the client trust all servers.
    *
    * @param trustAny if {@link true} it will trust any server;
-   *                 otherwise it will based on the trust store if it is set through {@link #setTrustStore(KeyStore)},
-   *                 or use the default trust chain.
+   * otherwise it will based on the trust store if it is set through {@link #setTrustStore(KeyStore)},
+   * or use the default trust chain.
    * @return this instance
    */
   public synchronized HttpsEnabler setTrustAll(boolean trustAny) {

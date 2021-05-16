@@ -28,7 +28,6 @@ import io.cdap.cdap.common.AuthorizationException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
@@ -42,6 +41,7 @@ import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.security.URIScheme;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpResponse;
 import io.cdap.http.AbstractHttpHandler;
@@ -116,7 +116,8 @@ public class RuntimeServiceRoutingTest {
 
         @Override
         protected void bindLogProcessor() {
-          bind(RemoteExecutionLogProcessor.class).toInstance(payloads -> { });
+          bind(RemoteExecutionLogProcessor.class).toInstance(payloads -> {
+          });
         }
       },
       new AbstractModule() {

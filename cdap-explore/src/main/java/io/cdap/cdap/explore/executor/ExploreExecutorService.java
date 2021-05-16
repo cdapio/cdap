@@ -25,14 +25,14 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
-import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
-import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.common.security.HttpsConfigurer;
 import io.cdap.cdap.explore.service.ExploreService;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.URIScheme;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Cancellable;
@@ -81,7 +81,7 @@ public class ExploreExecutorService extends AbstractIdleService {
       .setConnectionBacklog(cConf.getInt(Constants.Explore.BACKLOG_CONNECTIONS, 20000));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
-      new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
+      new HttpsConfigurer(cConf, sConf).enable(builder);
     }
 
     this.httpService = builder.build();
@@ -129,7 +129,7 @@ public class ExploreExecutorService extends AbstractIdleService {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-        .add("bindAddress", httpService.getBindAddress())
-        .toString();
+      .add("bindAddress", httpService.getBindAddress())
+      .toString();
   }
 }

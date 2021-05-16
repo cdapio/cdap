@@ -17,9 +17,9 @@
 package io.cdap.cdap.common.service;
 
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.security.URIScheme;
 import org.apache.twill.discovery.Discoverable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +46,7 @@ public final class ServiceDiscoverable {
 
   // mapping from the short discoverable component name to the program type
   private static final Map<String, ProgramType> SHORT_NAME_TO_PROGRAM_TYPE_MAPPING = new HashMap<>();
+
   static {
     for (ProgramType userServiceType : USER_SERVICE_TYPES) {
       SHORT_NAME_TO_PROGRAM_TYPE_MAPPING.put(userServiceType.getDiscoverableTypeName(), userServiceType);

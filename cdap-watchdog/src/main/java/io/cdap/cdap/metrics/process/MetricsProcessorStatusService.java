@@ -25,13 +25,13 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
-import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
-import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.common.security.HttpsConfigurer;
+import io.cdap.cdap.security.URIScheme;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Cancellable;
@@ -54,7 +54,7 @@ public class MetricsProcessorStatusService extends AbstractIdleService {
   @Inject
   public MetricsProcessorStatusService(CConfiguration cConf, SConfiguration sConf, DiscoveryService discoveryService,
                                        @Named(Constants.MetricsProcessor.METRICS_PROCESSOR_STATUS_HANDLER)
-                                       Set<HttpHandler> handlers,
+                                         Set<HttpHandler> handlers,
                                        MetricsCollectionService metricsCollectionService) {
     this.discoveryService = discoveryService;
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.METRICS_PROCESSOR)
@@ -65,7 +65,7 @@ public class MetricsProcessorStatusService extends AbstractIdleService {
       .setPort(cConf.getInt(Constants.MetricsProcessor.BIND_PORT));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
-      new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
+      new HttpsConfigurer(cConf, sConf).enable(builder);
     }
 
     this.httpService = builder.build();

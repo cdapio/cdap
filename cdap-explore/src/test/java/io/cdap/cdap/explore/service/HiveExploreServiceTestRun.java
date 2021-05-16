@@ -27,7 +27,6 @@ import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.ExploreProperties;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
-import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.explore.client.ExploreExecutionResult;
 import io.cdap.cdap.explore.jdbc.ExploreConnectionParams;
 import io.cdap.cdap.explore.jdbc.ExploreDriver;
@@ -46,6 +45,7 @@ import io.cdap.cdap.proto.TableNameInfo;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.DatasetModuleId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.URIScheme;
 import io.cdap.cdap.test.SlowTests;
 import org.apache.tephra.Transaction;
 import org.apache.twill.discovery.Discoverable;
@@ -144,7 +144,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
 
   private void testTableInfo(DatasetId datasetId, @Nullable String customDatabase, @Nullable String customTable)
     throws Exception {
-    ExploreProperties.Builder builder  = ExploreProperties.builder();
+    ExploreProperties.Builder builder = ExploreProperties.builder();
     if (customDatabase != null) {
       builder.setExploreDatabaseName(customDatabase);
     }
@@ -194,7 +194,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
   @Test
   public void getUserTables() throws Exception {
     exploreClient.submit(NAMESPACE_ID, "create table test (first INT, second STRING) " +
-                           "ROW FORMAT DELIMITED FIELDS TERMINATED BY '\\t'").get();
+      "ROW FORMAT DELIMITED FIELDS TERMINATED BY '\\t'").get();
     List<TableNameInfo> tables = exploreService.getTables(NAMESPACE_ID.getNamespace());
     Assert.assertEquals(ImmutableList.of(new TableNameInfo(NAMESPACE_DATABASE, MY_TABLE_NAME),
                                          new TableNameInfo(NAMESPACE_DATABASE, "test")),
@@ -218,13 +218,13 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     runCommand(NAMESPACE_ID, "show tables",
                true,
                Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
-               Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(MY_TABLE_NAME))));
+               Lists.newArrayList(new QueryResult(Lists.newArrayList(MY_TABLE_NAME))));
 
     runCommand(OTHER_NAMESPACE_ID, "show tables",
                true,
                Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
-               Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(OTHER_MY_TABLE_NAME)),
-                                  new QueryResult(Lists.<Object>newArrayList("test"))));
+               Lists.newArrayList(new QueryResult(Lists.newArrayList(OTHER_MY_TABLE_NAME)),
+                                  new QueryResult(Lists.newArrayList("test"))));
 
     runCommand(NAMESPACE_ID, "describe " + MY_TABLE_NAME,
                true,
@@ -234,9 +234,9 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                  new ColumnDesc("comment", "STRING", 3, "from deserializer")
                ),
                Lists.newArrayList(
-                 new QueryResult(Lists.<Object>newArrayList("key", "string", "from deserializer")),
-                 new QueryResult(Lists.<Object>newArrayList("value", "struct<name:string,ints:array<int>>",
-                                                            "from deserializer"))
+                 new QueryResult(Lists.newArrayList("key", "string", "from deserializer")),
+                 new QueryResult(Lists.newArrayList("value", "struct<name:string,ints:array<int>>",
+                                                    "from deserializer"))
                )
     );
 
@@ -248,9 +248,9 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                  new ColumnDesc("comment", "STRING", 3, "from deserializer")
                ),
                Lists.newArrayList(
-                 new QueryResult(Lists.<Object>newArrayList("key", "string", "from deserializer")),
-                 new QueryResult(Lists.<Object>newArrayList("value", "struct<name:string,ints:array<int>>",
-                                                            "from deserializer"))
+                 new QueryResult(Lists.newArrayList("key", "string", "from deserializer")),
+                 new QueryResult(Lists.newArrayList("value", "struct<name:string,ints:array<int>>",
+                                                    "from deserializer"))
                )
     );
 
@@ -260,8 +260,8 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                                   new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)
                ),
                Lists.newArrayList(
-                 new QueryResult(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
-                 new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+                 new QueryResult(Lists.newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
+                 new QueryResult(Lists.newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
     );
 
     runCommand(NAMESPACE_ID, String.format("select key, value from %s where key = '1'", MY_TABLE_NAME),
@@ -271,7 +271,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                  new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)
                ),
                Lists.newArrayList(
-                 new QueryResult(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}"))
+                 new QueryResult(Lists.newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}"))
                )
     );
 
@@ -282,8 +282,8 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                  new ColumnDesc(MY_TABLE_NAME + ".value", "struct<name:string,ints:array<int>>", 2, null)
                ),
                Lists.newArrayList(
-                 new QueryResult(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
-                 new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}"))
+                 new QueryResult(Lists.newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
+                 new QueryResult(Lists.newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}"))
                )
     );
 
@@ -293,7 +293,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                  new ColumnDesc(OTHER_MY_TABLE_NAME + ".key", "STRING", 1, null),
                  new ColumnDesc(OTHER_MY_TABLE_NAME + ".value", "struct<name:string,ints:array<int>>", 2, null)
                ),
-               ImmutableList.<QueryResult>of()
+               ImmutableList.of()
     );
 
     runCommand(NAMESPACE_ID, String.format("select * from %s where key = '2'", MY_TABLE_NAME),
@@ -303,7 +303,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                  new ColumnDesc(MY_TABLE_NAME + ".value", "struct<name:string,ints:array<int>>", 2, null)
                ),
                Lists.newArrayList(
-                 new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}"))
+                 new QueryResult(Lists.newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}"))
                )
     );
 
@@ -451,18 +451,18 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
 
       List<QueryResult> firstPreview = exploreService.previewResults(handle);
       Assert.assertEquals(ImmutableList.of(
-        new QueryResult(ImmutableList.<Object>of(MY_TABLE_NAME)),
-        new QueryResult(ImmutableList.<Object>of(getDatasetHiveName(myTable2))),
-        new QueryResult(ImmutableList.<Object>of(getDatasetHiveName(myTable3))),
-        new QueryResult(ImmutableList.<Object>of(getDatasetHiveName(myTable4))),
-        new QueryResult(ImmutableList.<Object>of(getDatasetHiveName(myTable5)))
+        new QueryResult(ImmutableList.of(MY_TABLE_NAME)),
+        new QueryResult(ImmutableList.of(getDatasetHiveName(myTable2))),
+        new QueryResult(ImmutableList.of(getDatasetHiveName(myTable3))),
+        new QueryResult(ImmutableList.of(getDatasetHiveName(myTable4))),
+        new QueryResult(ImmutableList.of(getDatasetHiveName(myTable5)))
       ), firstPreview);
 
 
       // test that preview results do not change even when the query cursor is updated by nextResults
       List<QueryResult> endResults = exploreService.nextResults(handle, 100);
       Assert.assertEquals(ImmutableList.of(
-        new QueryResult(ImmutableList.<Object>of(getDatasetHiveName(myTable6)))
+        new QueryResult(ImmutableList.of(getDatasetHiveName(myTable6)))
       ), endResults);
 
       List<QueryResult> secondPreview = exploreService.previewResults(handle);
@@ -501,7 +501,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     Assert.assertEquals(new TableInfo(
                           MY_TABLE_NAME, NAMESPACE_DATABASE, System.getProperty("user.name"),
                           tableInfo.getCreationTime(), 0, 0,
-                          ImmutableList.<TableInfo.ColumnInfo>of(),
+                          ImmutableList.of(),
                           tableInfo.getParameters(),
                           "EXTERNAL_TABLE",
                           ImmutableList.of(new TableInfo.ColumnInfo("key", "string", null),
@@ -521,7 +521,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     Assert.assertEquals(new TableInfo(
                           MY_TABLE_NAME, NAMESPACE_DATABASE, System.getProperty("user.name"),
                           tableInfo.getCreationTime(), 0, 0,
-                          ImmutableList.<TableInfo.ColumnInfo>of(),
+                          ImmutableList.of(),
                           tableInfo.getParameters(),
                           "EXTERNAL_TABLE",
                           ImmutableList.of(new TableInfo.ColumnInfo("key", "string", null),
@@ -559,12 +559,12 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
 
     // Get info of a Hive table
     exploreClient.submit(NAMESPACE_ID, "create table test (first INT, second STRING) " +
-                           "ROW FORMAT DELIMITED FIELDS TERMINATED BY '\\t'").get();
+      "ROW FORMAT DELIMITED FIELDS TERMINATED BY '\\t'").get();
     tableInfo = exploreService.getTableInfo(NAMESPACE_ID.getNamespace(), "test");
     Assert.assertEquals(new TableInfo(
                           "test", NAMESPACE_DATABASE, System.getProperty("user.name"),
                           tableInfo.getCreationTime(), 0, 0,
-                          ImmutableList.<TableInfo.ColumnInfo>of(),
+                          ImmutableList.of(),
                           tableInfo.getParameters(),
                           "MANAGED_TABLE",
                           ImmutableList.of(new TableInfo.ColumnInfo("first", "int", null),
@@ -696,7 +696,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                                     new ColumnDesc(MY_TABLE_NAME + ".value",
                                                    "struct<name:string,ints:array<int>>", 2, null)),
                  Lists.newArrayList(
-                   new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+                   new QueryResult(Lists.newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
       );
 
       query = String.format("select %s.key, %s.value, %s.key, %s.value " +
@@ -712,10 +712,10 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                                     new ColumnDesc(myTable1Name + ".value",
                                                    "struct<name:string,ints:array<int>>", 4, null)),
                  Lists.newArrayList(
-                   new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}",
-                                                         "2", "{\"name\":\"two\",\"ints\":[20,21,22,23,24]}")),
-                   new QueryResult(Lists.<Object>newArrayList(null, null, "3",
-                                                         "{\"name\":\"third\",\"ints\":[30,31,32,33,34]}")))
+                   new QueryResult(Lists.newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}",
+                                                      "2", "{\"name\":\"two\",\"ints\":[20,21,22,23,24]}")),
+                   new QueryResult(Lists.newArrayList(null, null, "3",
+                                                      "{\"name\":\"third\",\"ints\":[30,31,32,33,34]}")))
       );
 
       query = String.format("select %s.key, %s.value, %s.key, %s.value from %s " +
@@ -731,10 +731,10 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                                     new ColumnDesc(myTable1Name + ".value",
                                                    "struct<name:string,ints:array<int>>", 4, null)),
                  Lists.newArrayList(
-                   new QueryResult(Lists.<Object>newArrayList("1",
-                                                         "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}", null, null)),
-                   new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}",
-                                                         "2", "{\"name\":\"two\",\"ints\":[20,21,22,23,24]}")))
+                   new QueryResult(Lists.newArrayList("1",
+                                                      "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}", null, null)),
+                   new QueryResult(Lists.newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}",
+                                                      "2", "{\"name\":\"two\",\"ints\":[20,21,22,23,24]}")))
       );
 
       query = String.format("select %s.key, %s.value, %s.key, %s.value from %s " +
@@ -750,12 +750,12 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                                     new ColumnDesc(myTable1Name + ".value",
                                                    "struct<name:string,ints:array<int>>", 4, null)),
                  Lists.newArrayList(
-                   new QueryResult(Lists.<Object>newArrayList("1",
-                                                         "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}", null, null)),
-                   new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}",
-                                                         "2", "{\"name\":\"two\",\"ints\":[20,21,22,23,24]}")),
-                   new QueryResult(Lists.<Object>newArrayList(null, null, "3",
-                                                         "{\"name\":\"third\",\"ints\":[30,31,32,33,34]}")))
+                   new QueryResult(Lists.newArrayList("1",
+                                                      "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}", null, null)),
+                   new QueryResult(Lists.newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}",
+                                                      "2", "{\"name\":\"two\",\"ints\":[20,21,22,23,24]}")),
+                   new QueryResult(Lists.newArrayList(null, null, "3",
+                                                      "{\"name\":\"third\",\"ints\":[30,31,32,33,34]}")))
       );
     } finally {
       datasetFramework.deleteInstance(myTable1);
@@ -813,9 +813,9 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                               new ColumnDesc("TABLE_SCHEM", "STRING", 1, "Schema name."),
                               new ColumnDesc("TABLE_CATALOG", "STRING", 2, "Catalog name.")),
                             ImmutableList.of(
-                              new QueryResult(Lists.<Object>newArrayList(NAMESPACE_DATABASE, "")),
-                              new QueryResult(Lists.<Object>newArrayList(OTHER_NAMESPACE_DATABASE, "")),
-                              new QueryResult(Lists.<Object>newArrayList(DEFAULT_DATABASE, ""))));
+                              new QueryResult(Lists.newArrayList(NAMESPACE_DATABASE, "")),
+                              new QueryResult(Lists.newArrayList(OTHER_NAMESPACE_DATABASE, "")),
+                              new QueryResult(Lists.newArrayList(DEFAULT_DATABASE, ""))));
     } finally {
       deleteNamespace(testNamespace);
     }

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.common.security;
+package io.cdap.cdap.security;
 
 import com.google.common.hash.Hashing;
 import org.apache.twill.filesystem.Location;
@@ -94,7 +94,8 @@ public final class KeyStores {
   private static final int KEY_SIZE = 2048;
 
   /* private constructor */
-  private KeyStores() {}
+  private KeyStores() {
+  }
 
   /**
    * Create a Java key store with a stored self-signed certificate.
