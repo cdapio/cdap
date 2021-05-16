@@ -214,7 +214,7 @@ public class RuntimeServiceRoutingHandler extends AbstractHttpHandler {
       }
 
       if (urlConn instanceof HttpsURLConnection) {
-        new HttpsConfigurer(null, null).setTrustAll(true).enable((HttpsURLConnection) urlConn);
+        new HttpsConfigurer().setTrustAll(true).enable((HttpsURLConnection) urlConn);
       }
       for (Map.Entry<String, String> header : request.headers().entries()) {
         urlConn.setRequestProperty(header.getKey(), header.getValue());

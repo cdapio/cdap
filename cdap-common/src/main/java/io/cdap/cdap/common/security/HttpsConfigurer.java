@@ -22,7 +22,6 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.security.HttpsEnabler;
 import io.cdap.http.NettyHttpService;
 
-import javax.annotation.Nullable;
 import javax.net.ssl.HttpsURLConnection;
 
 /**
@@ -31,14 +30,20 @@ import javax.net.ssl.HttpsURLConnection;
  * This is a wrapper around {@link HttpsEnabler}
  */
 public class HttpsConfigurer {
-  private final CConfiguration cConf;
-  private final SConfiguration sConf;
-  private final HttpsEnabler httpsEnabler;
+  private CConfiguration cConf;
+  private SConfiguration sConf;
+  private HttpsEnabler httpsEnabler;
 
-  public HttpsCfonfigurer(@Nullable CConfiguration cConf, @Nullable SConfiguration sConf) {
+  public HttpsConfigurer(CConfiguration cConf, SConfiguration sConf) {
     this.cConf = cConf;
     this.sConf = sConf;
-    httpsEnabler = new HttpsEnabler();
+    this.httpsEnabler = new HttpsEnabler();
+  }
+
+  public HttpsConfigurer() {
+    this.cConf = null;
+    this.sConf = null;
+    this.httpsEnabler = new HttpsEnabler();
   }
 
   /**

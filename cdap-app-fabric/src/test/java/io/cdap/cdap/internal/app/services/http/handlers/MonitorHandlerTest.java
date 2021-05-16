@@ -47,7 +47,7 @@ public class MonitorHandlerTest extends AppFabricTestBase {
   private HttpURLConnection openURL(String path, HttpMethod method) throws IOException {
     HttpURLConnection urlConn = (HttpURLConnection) createURL(path).openConnection();
     if (urlConn instanceof HttpsURLConnection) {
-      new HttpsConfigurer(null, null).setTrustAll(true).enable((HttpsURLConnection) urlConn);
+      new HttpsConfigurer().setTrustAll(true).enable((HttpsURLConnection) urlConn);
     }
     urlConn.setRequestMethod(method.name());
     return urlConn;

@@ -139,7 +139,7 @@ public class RemoteClient {
     URL url = resolve(resource);
     HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
     if (urlConn instanceof HttpsURLConnection && !httpRequestConfig.isVerifySSLCert()) {
-      new HttpsConfigurer(null, null).setTrustAll(true).enable((HttpsURLConnection) urlConn);
+      new HttpsConfigurer().setTrustAll(true).enable((HttpsURLConnection) urlConn);
     }
     urlConn.setConnectTimeout(httpRequestConfig.getConnectTimeout());
     urlConn.setReadTimeout(httpRequestConfig.getReadTimeout());
