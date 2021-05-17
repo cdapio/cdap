@@ -57,13 +57,13 @@ import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
-import io.cdap.cdap.security.authorization.RemotePrivilegesManager;
+import io.cdap.cdap.security.authorization.RemotePermissionManager;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.RemoteUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
-import io.cdap.cdap.security.spi.authorization.PrivilegesManager;
+import io.cdap.cdap.security.spi.authorization.PermissionManager;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.TwillContext;
 
@@ -128,7 +128,7 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
         protected void configure() {
           bind(Store.class).to(DefaultStore.class);
           bind(UGIProvider.class).to(RemoteUGIProvider.class).in(Scopes.SINGLETON);
-          bind(PrivilegesManager.class).to(RemotePrivilegesManager.class);
+          bind(PermissionManager.class).to(RemotePermissionManager.class);
           bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
           // TODO (CDAP-14677): find a better way to inject metadata publisher
           bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);

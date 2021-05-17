@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.test;
 
+import io.cdap.cdap.security.spi.AccessException;
+
 /**
  * This interface is for managing the schedule of a workflow
  */
@@ -23,15 +25,15 @@ public interface ScheduleManager {
   /**
    * suspends the workflow schedule
    */
-  void suspend();
+  void suspend() throws AccessException;
 
   /**
    * Resumes the workflow schedule
    */
-  void resume();
+  void resume() throws AccessException;
 
   /**
    * returns the status of the workflow schedule
    */
-  String status(int expectedCode);
+  String status(int expectedCode) throws AccessException;
 }

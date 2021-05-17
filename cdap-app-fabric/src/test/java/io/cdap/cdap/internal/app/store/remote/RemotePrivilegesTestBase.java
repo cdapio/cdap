@@ -36,8 +36,11 @@ import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.Privilege;
+import io.cdap.cdap.security.authorization.AccessControllerWrapper;
+import io.cdap.cdap.security.authorization.AccessEnforcerWrapper;
 import io.cdap.cdap.security.authorization.InMemoryAuthorizer;
-import io.cdap.cdap.security.authorization.RemoteAuthorizationEnforcer;
+import io.cdap.cdap.security.authorization.RemoteAccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.security.spi.authorization.PrivilegesManager;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
@@ -77,6 +80,7 @@ public abstract class RemotePrivilegesTestBase {
   protected static final ProgramId PROGRAM = APP.program(ProgramType.SERVICE, "ser");
   private static final int CACHE_TIMEOUT = 3;
 
+  protected static AccessEnforcer accessEnforcer;
   protected static AuthorizationEnforcer authorizationEnforcer;
   protected static PrivilegesManager privilegesManager;
   protected static CConfiguration cConf = CConfiguration.create();
@@ -100,7 +104,8 @@ public abstract class RemotePrivilegesTestBase {
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
     waitForService(Constants.Service.APP_FABRIC_HTTP);
-    authorizationEnforcer = injector.getInstance(RemoteAuthorizationEnforcer.class);
+    accessEnforcer = injector.getInstance(RemoteAccessEnforcer.class);
+    authorizationEnforcer = new AccessEnforcerWrapper(accessEnforcer);
     privilegesManager = injector.getInstance(PrivilegesManager.class);
   }
 
@@ -112,7 +117,7 @@ public abstract class RemotePrivilegesTestBase {
 
   @After
   public void after() throws Exception {
-    ((RemoteAuthorizationEnforcer) authorizationEnforcer).clearCache();
+    ((RemoteAccessEnforcer) accessEnforcer).clearCache();
   }
 
   @Test

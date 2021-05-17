@@ -26,7 +26,9 @@ import java.util.Set;
 
 /**
  * Interface for managing privileges on {@link EntityId entities}.
+ * @deprecated use {@link PermissionManager}
  */
+@Deprecated
 public interface PrivilegesManager {
 
   /**

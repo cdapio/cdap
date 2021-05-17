@@ -53,6 +53,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.authentication.client.AccessToken;
 import io.cdap.cdap.security.authentication.client.AuthenticationClient;
 import io.cdap.cdap.security.authentication.client.basic.BasicAuthenticationClient;
+import io.cdap.cdap.security.spi.AccessException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.junit.After;
 import org.junit.Assert;
@@ -364,11 +365,12 @@ public abstract class IntegrationTestBase {
 
   protected ApplicationManager deployApplication(NamespaceId namespace,
                                                  Class<? extends Application> applicationClz,
-                                                 File...bundleEmbeddedJars) throws IOException {
+                                                 File...bundleEmbeddedJars) throws IOException, AccessException {
     return getTestManager().deployApplication(namespace, applicationClz, bundleEmbeddedJars);
   }
 
-  protected ApplicationManager deployApplication(Class<? extends Application> applicationClz) throws IOException {
+  protected ApplicationManager deployApplication(Class<? extends Application> applicationClz)
+    throws IOException, AccessException {
     return deployApplication(getConfiguredNamespace(), applicationClz);
   }
 

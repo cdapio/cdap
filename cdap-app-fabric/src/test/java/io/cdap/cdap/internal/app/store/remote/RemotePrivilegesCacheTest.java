@@ -19,14 +19,14 @@ package io.cdap.cdap.internal.app.store.remote;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.security.Action;
-import io.cdap.cdap.security.authorization.RemoteAuthorizationEnforcer;
+import io.cdap.cdap.security.authorization.RemoteAccessEnforcer;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 
 import java.io.IOException;
 
 /**
- * Test {@link RemoteAuthorizationEnforcer} with cache enabled.
+ * Test {@link RemoteAccessEnforcer} with cache enabled.
  */
 public class RemotePrivilegesCacheTest extends RemotePrivilegesTestBase {
 

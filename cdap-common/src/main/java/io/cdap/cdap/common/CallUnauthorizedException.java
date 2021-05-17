@@ -1,0 +1,52 @@
+/*
+ * Copyright © 2021 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package io.cdap.cdap.common;
+
+import io.cdap.cdap.api.common.HttpErrorStatusProvider;
+
+import java.net.HttpURLConnection;
+
+/**
+ * Wraps {@link io.cdap.cdap.security.spi.authorization.UnauthorizedException} or
+ * {@link HttpURLConnection#HTTP_FORBIDDEN} HTTP code to indicate authorization problems while making remote calls.
+ */
+public class CallUnauthorizedException extends RuntimeException implements HttpErrorStatusProvider {
+  public CallUnauthorizedException() {
+  }
+
+  public CallUnauthorizedException(String message) {
+    super(message);
+  }
+
+  public CallUnauthorizedException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
+  public CallUnauthorizedException(Throwable cause) {
+    super(cause);
+  }
+
+  public CallUnauthorizedException(String message, Throwable cause, boolean enableSuppression,
+                                   boolean writableStackTrace) {
+    super(message, cause, enableSuppression, writableStackTrace);
+  }
+
+  @Override
+  public int getStatusCode() {
+    return HttpURLConnection.HTTP_FORBIDDEN;
+  }
+}

@@ -24,8 +24,9 @@ import java.util.Objects;
 /**
  * Represents a privilege granted to a {@link Principal user}, {@link Principal group} or a {@link Principal role}.
  * It determines if the user or group can perform a given {@link Action} on an {@link EntityId}.
+ * @deprecated use {@link GrantedPermission} instead
  */
-@Beta
+@Beta @Deprecated
 public class Privilege {
   private final Authorizable authorizable;
   private final Action action;
@@ -67,7 +68,7 @@ public class Privilege {
 
   @Override
   public String toString() {
-    return "Privilege{" +
+    return "Privilege {" +
       "authorizable=" + authorizable +
       ", action=" + action +
       '}';

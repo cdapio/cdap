@@ -37,6 +37,7 @@ import io.cdap.cdap.api.dataset.lib.ObjectStore;
 import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
 import io.cdap.cdap.api.schedule.SchedulableProgramType;
 import io.cdap.cdap.api.workflow.ScheduleProgramInfo;
+import io.cdap.cdap.common.CallUnauthorizedException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
@@ -277,8 +278,8 @@ public class AuthorizationTest extends TestBase {
     } catch (UnauthorizedException expected) {
       // expected
     }
-    // grant READ and WRITE to Bob
-    grantAndAssertSuccess(dummyAppId, BOB, ImmutableSet.of(Action.READ, Action.WRITE));
+    // grant EXECUTE to Bob
+    grantAndAssertSuccess(dummyAppId, BOB, ImmutableSet.of(Action.EXECUTE));
     // delete should fail
     try {
       appManager.delete();
@@ -294,7 +295,7 @@ public class AuthorizationTest extends TestBase {
     Assert.assertTrue(!getAuthorizer().isVisible(Collections.singleton(dummyAppId), BOB).isEmpty());
 
     // bob should still have privileges granted to him
-    Assert.assertEquals(3, authorizer.listPrivileges(BOB).size());
+    Assert.assertEquals(2, authorizer.listPrivileges(BOB).size());
     // switch back to Alice
     SecurityRequestContext.setUserId(ALICE.getName());
     // Deploy a couple of apps in the namespace
@@ -888,8 +889,8 @@ public class AuthorizationTest extends TestBase {
       // Expected
     }
 
-    // give BOB READ permission in the workflow
-    grantAndAssertSuccess(workflowID, BOB, EnumSet.of(Action.READ));
+    // give BOB ADMIN permission in the workflow
+    grantAndAssertSuccess(workflowID, BOB, EnumSet.of(Action.ADMIN));
 
     // switch to BOB
     SecurityRequestContext.setUserId(BOB.getName());
@@ -1193,7 +1194,7 @@ public class AuthorizationTest extends TestBase {
         try {
           deleteDatasetInstance(NamespaceId.SYSTEM.dataset("app.meta"));
           Assert.fail();
-        } catch (UnauthorizedException e) {
+        } catch (CallUnauthorizedException e) {
           // Expected
         } catch (Exception e) {
           Assert.fail("Getting incorrect exception");
@@ -1356,8 +1357,9 @@ public class AuthorizationTest extends TestBase {
     for (Action action : actions) {
       expectedPrivilegesAfterGrant.add(new Privilege(entityId, action));
     }
-    Assert.assertEquals(Sets.union(existingPrivileges, expectedPrivilegesAfterGrant.build()),
-                        authorizer.listPrivileges(principal));
+    //TODO: We don't do comparison until after we switch to Permission as permission mapping is not 1-to-1
+    //Assert.assertEquals(Sets.union(existingPrivileges, expectedPrivilegesAfterGrant.build()),
+    //                    authorizer.listPrivileges(principal));
   }
 
   private void revokeAndAssertSuccess(final EntityId entityId) throws Exception {

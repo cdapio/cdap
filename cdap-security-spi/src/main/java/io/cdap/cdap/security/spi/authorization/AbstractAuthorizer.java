@@ -28,6 +28,7 @@ import java.util.Collections;
  * {@link Authorizer#initialize(AuthorizationContext)} and {@link Authorizer#destroy()} so classes extending it do not
  * have to implement these methods unless necessary.
  */
+@Deprecated
 public abstract class AbstractAuthorizer implements Authorizer {
 
   protected static final Predicate<EntityId> ALLOW_ALL = new Predicate<EntityId>() {

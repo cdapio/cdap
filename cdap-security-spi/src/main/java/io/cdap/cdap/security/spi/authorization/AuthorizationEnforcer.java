@@ -26,8 +26,9 @@ import java.util.Set;
 
 /**
  * Enforces authorization for a {@link Principal} to perform an {@link Action} on an {@link EntityId}.
+ * @deprecated Please use {@link AccessEnforcer}
  */
-@Beta
+@Beta @Deprecated
 public interface AuthorizationEnforcer {
 
   /**

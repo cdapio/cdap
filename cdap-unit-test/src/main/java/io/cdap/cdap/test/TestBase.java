@@ -118,16 +118,19 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.proto.profile.Profile;
-import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.scheduler.Scheduler;
+import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
+import io.cdap.cdap.security.authorization.AccessControllerWrapper;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
-import io.cdap.cdap.security.authorization.AuthorizerInstantiator;
-import io.cdap.cdap.security.authorization.InvalidAuthorizerException;
+import io.cdap.cdap.security.authorization.InvalidAccessControllerException;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
+import io.cdap.cdap.security.spi.AccessException;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
+import io.cdap.cdap.security.spi.authorization.AccessController;
 import io.cdap.cdap.security.spi.authorization.Authorizer;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
@@ -206,7 +209,7 @@ public class TestBase {
   private static MetricsManager metricsManager;
   private static TestManager testManager;
   private static NamespaceAdmin namespaceAdmin;
-  private static AuthorizerInstantiator authorizerInstantiator;
+  private static AccessControllerInstantiator accessControllerInstantiator;
   private static SecureStore secureStore;
   private static SecureStoreManager secureStoreManager;
   private static MessagingService messagingService;
@@ -357,7 +360,7 @@ public class TestBase {
 
     testManager = injector.getInstance(UnitTestManager.class);
     metricsManager = injector.getInstance(MetricsManager.class);
-    authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
+    accessControllerInstantiator = injector.getInstance(AccessControllerInstantiator.class);
 
     // This is needed so the logged-in user can successfully create the default namespace
     if (cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
@@ -365,10 +368,10 @@ public class TestBase {
       SecurityRequestContext.setUserId(user);
       InstanceId instance = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
       Principal principal = new Principal(user, Principal.PrincipalType.USER);
-      authorizerInstantiator.get().grant(Authorizable.fromEntityId(instance), principal,
-                                         ImmutableSet.of(Action.ADMIN));
-      authorizerInstantiator.get().grant(Authorizable.fromEntityId(NamespaceId.DEFAULT), principal,
-                                         ImmutableSet.of(Action.ADMIN));
+      accessControllerInstantiator.get().grant(Authorizable.fromEntityId(instance), principal,
+                                               ImmutableSet.of(StandardPermission.UPDATE));
+      accessControllerInstantiator.get().grant(Authorizable.fromEntityId(NamespaceId.DEFAULT), principal,
+                                               ImmutableSet.of(StandardPermission.UPDATE));
     }
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     if (firstInit) {
@@ -581,13 +584,14 @@ public class TestBase {
     if (cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
       InstanceId instance = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
       Principal principal = new Principal(System.getProperty("user.name"), Principal.PrincipalType.USER);
-      authorizerInstantiator.get().grant(Authorizable.fromEntityId(instance), principal, ImmutableSet.of(Action.ADMIN));
-      authorizerInstantiator.get().grant(Authorizable.fromEntityId(NamespaceId.DEFAULT),
-                                         principal, ImmutableSet.of(Action.ADMIN));
+      accessControllerInstantiator.get().grant(Authorizable.fromEntityId(instance), principal,
+                                               ImmutableSet.of(StandardPermission.UPDATE));
+      accessControllerInstantiator.get().grant(Authorizable.fromEntityId(NamespaceId.DEFAULT),
+                                               principal, ImmutableSet.of(StandardPermission.UPDATE));
     }
     
     namespaceAdmin.delete(NamespaceId.DEFAULT);
-    authorizerInstantiator.close();
+    accessControllerInstantiator.close();
 
     if (programScheduler instanceof Service) {
       ((Service) programScheduler).stopAndWait();
@@ -627,7 +631,7 @@ public class TestBase {
    */
   protected static ApplicationManager deployApplication(NamespaceId namespace,
                                                         Class<? extends Application> applicationClz,
-                                                        File... bundleEmbeddedJars) {
+                                                        File... bundleEmbeddedJars) throws AccessException {
     return deployApplication(namespace, applicationClz, null, bundleEmbeddedJars);
   }
 
@@ -644,7 +648,7 @@ public class TestBase {
    */
   protected static ApplicationManager deployApplication(NamespaceId namespace,
                                                         Class<? extends Application> applicationClz, Config appConfig,
-                                                        File... bundleEmbeddedJars) {
+                                                        File... bundleEmbeddedJars) throws AccessException {
     ApplicationManager applicationManager = getTestManager().deployApplication(namespace, applicationClz, appConfig,
                                                                                bundleEmbeddedJars);
     applicationManagers.add(applicationManager);
@@ -660,7 +664,7 @@ public class TestBase {
    * @return An {@link ApplicationManager} to manage the deployed application.
    */
   protected static ApplicationManager deployApplication(Class<? extends Application> applicationClz,
-                                                        File... bundleEmbeddedJars) {
+                                                        File... bundleEmbeddedJars) throws AccessException {
     return deployApplication(NamespaceId.DEFAULT, applicationClz, bundleEmbeddedJars);
   }
 
@@ -674,7 +678,7 @@ public class TestBase {
    * @return An {@link ApplicationManager} to manage the deployed application.
    */
   protected static ApplicationManager deployApplication(Class<? extends Application> applicationClz, Config appConfig,
-                                                        File... bundleEmbeddedJars) {
+                                                        File... bundleEmbeddedJars) throws AccessException {
     return deployApplication(NamespaceId.DEFAULT, applicationClz, appConfig, bundleEmbeddedJars);
   }
 
@@ -1052,11 +1056,17 @@ public class TestBase {
   }
 
   /**
-   * Returns an {@link Authorizer} for performing authorization operations.
+   * Returns an {@link AccessController} for performing authorization operations.
+   * @return
    */
   @Beta
-  protected static Authorizer getAuthorizer() throws IOException, InvalidAuthorizerException {
-    return authorizerInstantiator.get();
+  protected static AccessController getAccessController() throws IOException, InvalidAccessControllerException {
+    return accessControllerInstantiator.get();
+  }
+
+  @Beta
+  protected static Authorizer getAuthorizer() {
+    return new AccessControllerWrapper(accessControllerInstantiator.get());
   }
 
   /**

@@ -66,6 +66,7 @@ import io.cdap.cdap.pipeline.PipelineFactory;
 import io.cdap.cdap.scheduler.NoOpScheduler;
 import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.securestore.spi.SecretStore;
+import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.authorization.AuthorizerInstantiator;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
 import io.cdap.cdap.security.impersonation.DefaultUGIProvider;
@@ -82,6 +83,7 @@ import io.cdap.cdap.store.DefaultOwnerStore;
 public class PreviewRunnerModule extends PrivateModule {
   private final ArtifactStore artifactStore;
   private final AuthorizerInstantiator authorizerInstantiator;
+  private final AccessControllerInstantiator accessControllerInstantiator;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final PrivilegesManager privilegesManager;
   private final PreferencesService preferencesService;
@@ -94,6 +96,7 @@ public class PreviewRunnerModule extends PrivateModule {
   @Inject
   PreviewRunnerModule(ArtifactRepositoryReaderProvider readerProvider, ArtifactStore artifactStore,
                       AuthorizerInstantiator authorizerInstantiator,
+                      AccessControllerInstantiator accessControllerInstantiator,
                       AuthorizationEnforcer authorizationEnforcer,
                       PrivilegesManager privilegesManager, PreferencesService preferencesService,
                       ProgramRuntimeProviderLoader programRuntimeProviderLoader,
@@ -103,6 +106,7 @@ public class PreviewRunnerModule extends PrivateModule {
     this.artifactRepositoryReaderProvider = readerProvider;
     this.artifactStore = artifactStore;
     this.authorizerInstantiator = authorizerInstantiator;
+    this.accessControllerInstantiator = accessControllerInstantiator;
     this.authorizationEnforcer = authorizationEnforcer;
     this.privilegesManager = privilegesManager;
     this.preferencesService = preferencesService;
@@ -138,6 +142,8 @@ public class PreviewRunnerModule extends PrivateModule {
     expose(AuthorizerInstantiator.class);
     bind(AuthorizationEnforcer.class).toInstance(authorizationEnforcer);
     expose(AuthorizationEnforcer.class);
+    bind(AccessControllerInstantiator.class).toInstance(accessControllerInstantiator);
+    expose(AccessControllerInstantiator.class);
     bind(PrivilegesManager.class).toInstance(privilegesManager);
     expose(PrivilegesManager.class);
     bind(PreferencesService.class).toInstance(preferencesService);

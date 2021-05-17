@@ -17,6 +17,8 @@
 package io.cdap.cdap.common.security;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import io.cdap.cdap.common.CallUnauthorizedException;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.DatasetId;
@@ -26,11 +28,14 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ParentedId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.security.spi.AccessException;
+import io.cdap.cdap.security.spi.AccessIOException;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.objectweb.asm.Type;
 
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
@@ -38,6 +43,7 @@ import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Class used by {@link AuthEnforceRewriter} to rewrite classes with {@link AuthEnforce} annotation and call
@@ -198,5 +204,19 @@ public final class AuthEnforceUtil {
     }
     // If no interfaces match, check superclass
     return verifyEntityIdParents(entityIdClass.getSuperclass(), enforceOnClass);
+  }
+
+  public static AccessException propagateAccessException(Throwable e) throws AccessException {
+    if (e.getCause() != null && e instanceof ExecutionException) {
+      propagateAccessException(e.getCause());
+    }
+    if (e instanceof CallUnauthorizedException) {
+      throw new UnauthorizedException(e.getMessage(), e);
+    }
+    Throwables.propagateIfPossible(e, AccessException.class);
+    if (e instanceof IOException) {
+      return new AccessIOException(e);
+    }
+    return new AccessException(e);
   }
 }
