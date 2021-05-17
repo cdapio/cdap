@@ -39,6 +39,7 @@ import io.cdap.cdap.internal.capability.CapabilityNotAvailableException;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.hadoop.security.authentication.util.KerberosName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,7 +100,8 @@ public final class ScheduleTaskRunner {
 
   @VisibleForTesting
   static Map<String, String> getUserArgs(ProgramSchedule schedule,
-                                         PropertiesResolver propertiesResolver) throws IOException, NotFoundException {
+                                         PropertiesResolver propertiesResolver)
+    throws IOException, NotFoundException, UnauthorizedException {
     Map<String, String> userArgs = new HashMap<>();
     userArgs.putAll(propertiesResolver.getUserProperties(schedule.getProgramId()));
     userArgs.putAll(schedule.getProperties());

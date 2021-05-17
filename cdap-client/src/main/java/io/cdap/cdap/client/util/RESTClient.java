@@ -21,7 +21,6 @@ import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.exception.DisconnectedException;
-import io.cdap.cdap.common.CallUnauthorizedException;
 import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.security.authentication.client.AccessToken;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
@@ -66,7 +65,7 @@ public class RESTClient {
   }
 
   public HttpResponse execute(HttpRequest request, AccessToken accessToken, int... allowedErrorCodes)
-    throws IOException, UnauthenticatedException {
+    throws IOException, UnauthenticatedException, UnauthorizedException {
     return execute(HttpRequest.builder(request).addHeaders(getAuthHeaders(accessToken)).build(), allowedErrorCodes);
   }
 
@@ -96,7 +95,7 @@ public class RESTClient {
   }
 
   public HttpResponse execute(HttpRequest request, int... allowedErrorCodes)
-    throws IOException, UnauthenticatedException {
+    throws IOException, UnauthenticatedException, UnauthorizedException {
 
     int currentTry = 0;
     HttpResponse response;
@@ -127,7 +126,7 @@ public class RESTClient {
       throw new UnauthenticatedException("Unauthorized status code received from the server.");
     }
     if (responseCode == HttpURLConnection.HTTP_FORBIDDEN) {
-      throw new CallUnauthorizedException(response.getResponseBodyAsString());
+      throw new UnauthorizedException(response.getResponseBodyAsString());
     }
     if (!isSuccessful(responseCode) && !ArrayUtils.contains(allowedErrorCodes, responseCode)) {
       throw new IOException(responseCode + ": " + response.getResponseBodyAsString());

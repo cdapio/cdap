@@ -20,6 +20,7 @@ import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.ServiceUnavailableException;
@@ -74,8 +75,8 @@ public class MessagingProgramStatePublisher implements ProgramStatePublisher {
                                    .build());
         LOG.trace("Published program status notification: {}", programStatusNotification);
         done = true;
-      } catch (IOException e) {
-        Throwables.propagate(e);
+      } catch (IOException | AccessException e) {
+        throw Throwables.propagate(e);
       } catch (TopicNotFoundException | ServiceUnavailableException e) {
         // These exceptions are retry-able due to TMS not completely started
         if (startTime < 0) {
@@ -84,7 +85,7 @@ public class MessagingProgramStatePublisher implements ProgramStatePublisher {
         long retryMillis = retryStrategy.nextRetry(++failureCount, startTime);
         if (retryMillis < 0) {
           LOG.error("Failed to publish messages to TMS and exceeded retry limit.", e);
-          Throwables.propagate(e);
+          throw Throwables.propagate(e);
         }
         LOG.debug("Failed to publish messages to TMS due to {}. Will be retried in {} ms.",
                   e.getMessage(), retryMillis);

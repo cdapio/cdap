@@ -21,6 +21,7 @@ import com.google.gson.Gson;
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.dataset.lib.KeyValue;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.etl.api.Alert;
 import io.cdap.cdap.etl.api.AlertPublisher;
@@ -263,7 +264,7 @@ public abstract class BaseRDDCollection<T> implements SparkCollection<T> {
     try {
       ExternalDatasets.registerLineage(sec.getAdmin(), name, AccessType.WRITE, null,
                                        () -> datasetContext.getDataset(name));
-    } catch (DatasetManagementException e) {
+    } catch (DatasetManagementException | AccessException e) {
       LOG.warn("Unable to register dataset lineage for {}", name);
     }
   }
@@ -284,7 +285,7 @@ public abstract class BaseRDDCollection<T> implements SparkCollection<T> {
         try {
           sink.run(sparkPluginContext, countedRDD);
         } catch (Exception e) {
-          Throwables.propagate(e);
+          throw Throwables.propagate(e);
         }
       }
     };

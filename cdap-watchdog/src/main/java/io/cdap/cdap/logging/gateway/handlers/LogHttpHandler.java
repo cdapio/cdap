@@ -33,6 +33,7 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
@@ -237,7 +238,8 @@ public class LogHttpHandler extends AbstractLogHttpHandler {
     doPrev(logReader, responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, null, format, suppress);
   }
 
-  private RunRecordDetail getRunRecordMeta(ProgramRunId programRunId) throws IOException, NotFoundException {
+  private RunRecordDetail getRunRecordMeta(ProgramRunId programRunId)
+    throws IOException, NotFoundException, UnauthorizedException {
     RunRecordDetail runRecordMeta = programRunRecordFetcher.getRunRecordMeta(programRunId);
     if (runRecordMeta == null) {
       throw new NotFoundException(programRunId);

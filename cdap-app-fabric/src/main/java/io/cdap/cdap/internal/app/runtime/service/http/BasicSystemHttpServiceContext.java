@@ -28,7 +28,6 @@ import io.cdap.cdap.api.service.http.HttpServiceHandlerSpecification;
 import io.cdap.cdap.api.service.http.SystemHttpServiceContext;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.runtime.ProgramOptions;
-import io.cdap.cdap.common.CallUnauthorizedException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
@@ -95,7 +94,7 @@ public class BasicSystemHttpServiceContext extends BasicHttpServiceContext imple
     if (!namespaceId.equals(NamespaceId.SYSTEM)) {
       // should not happen in normal circumstances, as this is checked when the application is deployed.
       // could possibly be called if the user is directly casting to a SystemHttpServiceContext in user services.
-      throw new CallUnauthorizedException("System table transactions can only be run by "
+      throw new IllegalStateException("System table transactions can only be run by "
                                         + "applications in the system namespace.");
     }
     // table names are prefixed to prevent clashes with CDAP platform tables.
@@ -131,7 +130,7 @@ public class BasicSystemHttpServiceContext extends BasicHttpServiceContext imple
    */
   @Override
   public Map<String, String> getPreferencesForNamespace(String namespace, boolean resolved)
-    throws IOException, IllegalArgumentException {
+    throws IOException, IllegalArgumentException, UnauthorizedException {
     try {
       return preferencesFetcher.get(new NamespaceId(namespace), resolved).getProperties();
     } catch (NotFoundException nfe) {

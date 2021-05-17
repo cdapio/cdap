@@ -33,6 +33,7 @@ import io.cdap.cdap.hive.serde.ObjectSerializer;
 import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
 import io.cdap.cdap.internal.io.SchemaGenerator;
 import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde2.SerDe;
@@ -119,7 +120,7 @@ public class DatasetSerDe implements SerDe {
           schema = Schema.parseJson(schemaStr);
           return;
         }
-      } catch (DatasetManagementException | ServiceUnavailableException e) {
+      } catch (DatasetManagementException | ServiceUnavailableException | UnauthorizedException e) {
         throw new SerDeException("Could not instantiate dataset " + datasetId, e);
       } catch (IOException e) {
         throw new SerDeException("Exception getting schema for dataset " + datasetId, e);

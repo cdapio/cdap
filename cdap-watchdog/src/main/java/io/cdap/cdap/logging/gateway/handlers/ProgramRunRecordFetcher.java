@@ -19,6 +19,7 @@ package io.cdap.cdap.logging.gateway.handlers;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 
 import java.io.IOException;
 
@@ -33,5 +34,5 @@ public interface ProgramRunRecordFetcher {
    * @throws IOException if failed to fetch the {@link RunRecordDetail}
    * @throws NotFoundException if the program or runid is not found
    */
-  RunRecordDetail getRunRecordMeta(ProgramRunId runId) throws IOException, NotFoundException;
+  RunRecordDetail getRunRecordMeta(ProgramRunId runId) throws IOException, NotFoundException, UnauthorizedException;
 }

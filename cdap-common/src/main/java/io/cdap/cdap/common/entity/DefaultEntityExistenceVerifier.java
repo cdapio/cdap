@@ -19,6 +19,7 @@ package io.cdap.cdap.common.entity;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 
 import java.util.Map;
 
@@ -35,7 +36,7 @@ public class DefaultEntityExistenceVerifier implements EntityExistenceVerifier<E
   }
 
   @Override
-  public void ensureExists(EntityId entityId) throws NotFoundException {
+  public void ensureExists(EntityId entityId) throws NotFoundException, UnauthorizedException {
     getVerifier(entityId).ensureExists(entityId);
   }
 

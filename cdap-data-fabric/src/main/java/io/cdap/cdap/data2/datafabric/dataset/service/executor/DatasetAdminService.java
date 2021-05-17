@@ -26,6 +26,7 @@ import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.IncompatibleUpdateException;
 import io.cdap.cdap.api.dataset.Updatable;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -257,7 +258,7 @@ public class DatasetAdminService {
   }
 
   private static UserGroupInformation getUgiForDataset(Impersonator impersonator, DatasetId datasetInstanceId)
-    throws IOException {
+    throws IOException, AccessException {
     // for system dataset do not look up owner information in store as we know that it will be null.
     // Also, this is required for CDAP to start, because initially we don't want to look up owner admin
     // (causing its own lookup) as the SystemDatasetInitiator.getDataset is called when CDAP starts

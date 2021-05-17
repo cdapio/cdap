@@ -20,6 +20,7 @@ import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.etl.api.StageContext;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
@@ -51,7 +52,8 @@ public interface StreamingContext extends StageContext, Transactional {
    * @deprecated use {@link StreamingSourceContext#registerLineage(String, Schema)} to record lineage in prepare stage
    */
   @Deprecated
-  void registerLineage(String referenceName) throws DatasetManagementException, TransactionFailureException;
+  void registerLineage(String referenceName)
+    throws DatasetManagementException, TransactionFailureException, AccessException;
 
   /**
    * Indicates whether the pipeline is running in preview.

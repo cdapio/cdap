@@ -30,6 +30,7 @@ import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreData;
 import io.cdap.cdap.api.security.store.SecureStoreMetadata;
@@ -71,37 +72,39 @@ public class DefaultAuthorizationContext implements AuthorizationContext {
   }
 
   @Override
-  public boolean datasetExists(String name) throws DatasetManagementException {
+  public boolean datasetExists(String name) throws DatasetManagementException, AccessException {
     return delegateAdmin.datasetExists(name);
   }
 
   @Override
-  public String getDatasetType(String name) throws DatasetManagementException {
+  public String getDatasetType(String name) throws DatasetManagementException, AccessException {
     return delegateAdmin.getDatasetType(name);
   }
 
   @Override
-  public DatasetProperties getDatasetProperties(String name) throws DatasetManagementException {
+  public DatasetProperties getDatasetProperties(String name) throws DatasetManagementException, AccessException {
     return delegateAdmin.getDatasetProperties(name);
   }
 
   @Override
-  public void createDataset(String name, String type, DatasetProperties properties) throws DatasetManagementException {
+  public void createDataset(String name, String type, DatasetProperties properties)
+    throws DatasetManagementException, AccessException {
     delegateAdmin.createDataset(name, type, properties);
   }
 
   @Override
-  public void updateDataset(String name, DatasetProperties properties) throws DatasetManagementException {
+  public void updateDataset(String name, DatasetProperties properties)
+    throws DatasetManagementException, AccessException {
     delegateAdmin.updateDataset(name, properties);
   }
 
   @Override
-  public void dropDataset(String name) throws DatasetManagementException {
+  public void dropDataset(String name) throws DatasetManagementException, AccessException {
     delegateAdmin.dropDataset(name);
   }
 
   @Override
-  public void truncateDataset(String name) throws DatasetManagementException {
+  public void truncateDataset(String name) throws DatasetManagementException, AccessException {
     delegateAdmin.truncateDataset(name);
   }
 

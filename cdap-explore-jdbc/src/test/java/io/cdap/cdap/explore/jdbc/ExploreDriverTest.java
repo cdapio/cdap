@@ -186,7 +186,7 @@ public class ExploreDriverTest {
           TimeUnit.MILLISECONDS.sleep(200);
           statement.cancel();
         } catch (Exception e) {
-          Throwables.propagate(e);
+          throw Throwables.propagate(e);
         }
       }
     }).start();

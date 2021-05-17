@@ -20,6 +20,7 @@ import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 
 import java.io.IOException;
@@ -78,7 +79,7 @@ public interface SystemHttpServiceContext extends HttpServiceContext, Transactio
    * @throws IllegalArgumentException if the namespace doesn't exist.
    */
   default Map<String, String> getPreferencesForNamespace(String namespace, boolean resolved)
-    throws IOException, IllegalArgumentException {
+    throws IOException, IllegalArgumentException, AccessException {
     throw new UnsupportedOperationException("Not implemented");
   }
 }

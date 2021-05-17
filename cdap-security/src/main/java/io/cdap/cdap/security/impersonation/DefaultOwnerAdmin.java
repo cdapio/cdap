@@ -17,9 +17,11 @@
 package io.cdap.cdap.security.impersonation;
 
 import com.google.inject.Inject;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.AlreadyExistsException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.common.security.AuthEnforceUtil;
 import io.cdap.cdap.proto.NamespaceConfig;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.element.EntityType;
@@ -77,19 +79,23 @@ public class DefaultOwnerAdmin implements OwnerAdmin {
 
   @Nullable
   @Override
-  public ImpersonationInfo getImpersonationInfo(NamespacedEntityId entityId) throws IOException {
-    entityId = getEffectiveEntity(entityId);
-    if (!entityId.getEntityType().equals(EntityType.NAMESPACE)) {
-      KerberosPrincipalId effectiveOwner = ownerStore.getOwner(entityId);
-      if (effectiveOwner != null) {
-        return new ImpersonationInfo(effectiveOwner.getPrincipal(),
-                                     SecurityUtil.getKeytabURIforPrincipal(effectiveOwner.getPrincipal(), cConf));
+  public ImpersonationInfo getImpersonationInfo(NamespacedEntityId entityId) throws AccessException {
+    try {
+      entityId = getEffectiveEntity(entityId);
+      if (!entityId.getEntityType().equals(EntityType.NAMESPACE)) {
+        KerberosPrincipalId effectiveOwner = ownerStore.getOwner(entityId);
+        if (effectiveOwner != null) {
+          return new ImpersonationInfo(effectiveOwner.getPrincipal(),
+                                       SecurityUtil.getKeytabURIforPrincipal(effectiveOwner.getPrincipal(), cConf));
+        }
       }
+      // (CDAP-8176) Since no owner was found for the entity return namespace principal if present.
+      NamespaceConfig nsConfig = getNamespaceConfig(entityId.getNamespaceId());
+      return nsConfig.getPrincipal() == null ? null : new ImpersonationInfo(nsConfig.getPrincipal(),
+                                                                            nsConfig.getKeytabURI());
+    } catch (IOException e) {
+      throw AuthEnforceUtil.propagateAccessException(e);
     }
-    // (CDAP-8176) Since no owner was found for the entity return namespace principal if present.
-    NamespaceConfig nsConfig = getNamespaceConfig(entityId.getNamespaceId());
-    return nsConfig.getPrincipal() == null ? null : new ImpersonationInfo(nsConfig.getPrincipal(),
-                                                                          nsConfig.getKeytabURI());
   }
 
   @Nullable

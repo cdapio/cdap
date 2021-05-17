@@ -18,6 +18,7 @@ package io.cdap.cdap.common.entity;
 
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 
 /**
  * Interface to check if an {@link EntityId} exists in CDAP.
@@ -31,5 +32,5 @@ public interface EntityExistenceVerifier<ENTITY extends EntityId> {
    * @param entityId the {@link EntityId} whose existence is to be ensured
    * @throws NotFoundException if the specified {@link EntityId} does not exist
    */
-  void ensureExists(ENTITY entityId) throws NotFoundException;
+  void ensureExists(ENTITY entityId) throws NotFoundException, UnauthorizedException;
 }

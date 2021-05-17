@@ -159,7 +159,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
         java.nio.file.Files.createDirectories(credentialsDir.toPath());
       } catch (IOException ioe) {
         // we have to wrap the IOException, because Provider#get doesn't declare it
-        Throwables.propagate(ioe);
+        throw Throwables.propagate(ioe);
       }
       return credentialsDir;
     }

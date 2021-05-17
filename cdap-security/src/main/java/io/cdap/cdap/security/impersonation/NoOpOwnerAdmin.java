@@ -34,46 +34,46 @@ import javax.annotation.Nullable;
 public class NoOpOwnerAdmin implements OwnerAdmin {
   @Override
   public void add(NamespacedEntityId entityId,
-                  KerberosPrincipalId kerberosPrincipalId) throws IOException, AlreadyExistsException {
+                  KerberosPrincipalId kerberosPrincipalId) throws AlreadyExistsException {
     // no-op
   }
 
   @Nullable
   @Override
-  public KerberosPrincipalId getOwner(NamespacedEntityId entityId) throws IOException {
+  public KerberosPrincipalId getOwner(NamespacedEntityId entityId) {
     return null;
   }
 
   @Nullable
   @Override
-  public String getOwnerPrincipal(NamespacedEntityId entityId) throws IOException {
+  public String getOwnerPrincipal(NamespacedEntityId entityId) {
     return null;
   }
 
   @Override
-  public <T extends NamespacedEntityId> Map<T, String> getOwnerPrincipals(Set<T> ids) throws IOException {
+  public <T extends NamespacedEntityId> Map<T, String> getOwnerPrincipals(Set<T> ids) {
     return Collections.emptyMap();
   }
 
   @Nullable
   @Override
-  public ImpersonationInfo getImpersonationInfo(NamespacedEntityId entityId) throws IOException {
+  public ImpersonationInfo getImpersonationInfo(NamespacedEntityId entityId) {
     return null;
   }
 
   @Nullable
   @Override
-  public String getImpersonationPrincipal(NamespacedEntityId entityId) throws IOException {
+  public String getImpersonationPrincipal(NamespacedEntityId entityId) {
     return null;
   }
 
   @Override
-  public boolean exists(NamespacedEntityId entityId) throws IOException {
+  public boolean exists(NamespacedEntityId entityId) {
     return false;
   }
 
   @Override
-  public void delete(NamespacedEntityId entityId) throws IOException {
+  public void delete(NamespacedEntityId entityId) {
     // no-op
   }
 }

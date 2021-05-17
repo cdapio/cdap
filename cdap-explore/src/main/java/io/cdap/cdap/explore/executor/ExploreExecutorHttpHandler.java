@@ -52,6 +52,7 @@ import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.buffer.ByteBufInputStream;
@@ -135,7 +136,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         return null;
       }
       return datasetSpec;
-    } catch (DatasetManagementException e) {
+    } catch (DatasetManagementException | UnauthorizedException e) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error getting spec for dataset " + datasetId);
       return null;
     }

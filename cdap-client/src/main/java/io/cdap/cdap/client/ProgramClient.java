@@ -361,7 +361,7 @@ public class ProgramClient {
       Throwables.propagateIfPossible(e.getCause(), UnauthenticatedException.class);
       Throwables.propagateIfPossible(e.getCause(), ProgramNotFoundException.class);
       Throwables.propagateIfPossible(e.getCause(), IOException.class);
-      Throwables.propagate(e.getCause());
+      throw Throwables.propagate(e.getCause());
     }
   }
 

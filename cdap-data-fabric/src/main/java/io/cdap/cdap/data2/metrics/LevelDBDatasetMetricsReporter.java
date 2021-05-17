@@ -31,6 +31,7 @@ import io.cdap.cdap.data2.util.TableId;
 import io.cdap.cdap.proto.DatasetSpecificationSummary;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.twill.common.Threads;
 
 import java.util.Collection;
@@ -93,7 +94,8 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
     }
   }
 
-  private void report(Map<TableId, LevelDBTableService.TableStats> datasetStat) throws DatasetManagementException {
+  private void report(Map<TableId, LevelDBTableService.TableStats> datasetStat)
+    throws DatasetManagementException, UnauthorizedException {
     for (Map.Entry<TableId, LevelDBTableService.TableStats> statEntry : datasetStat.entrySet()) {
       String namespace = statEntry.getKey().getNamespace();
       // emit metrics for only user datasets, tables in system namespace are ignored

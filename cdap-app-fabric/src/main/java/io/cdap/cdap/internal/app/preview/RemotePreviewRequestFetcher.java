@@ -23,6 +23,7 @@ import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
@@ -51,7 +52,7 @@ public class RemotePreviewRequestFetcher implements PreviewRequestFetcher {
   }
 
   @Override
-  public Optional<PreviewRequest> fetch() throws IOException {
+  public Optional<PreviewRequest> fetch() throws IOException, UnauthorizedException {
     HttpRequest request = remoteClientInternal.requestBuilder(HttpMethod.POST, "requests/pull")
       .withBody(ByteBuffer.wrap(pollerInfoProvider.get()))
       .build();

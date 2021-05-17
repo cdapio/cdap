@@ -66,6 +66,7 @@ import io.cdap.cdap.security.impersonation.DefaultImpersonator;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -194,7 +195,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
   // DatasetMetaTable util to add modules to system namespace. However, we should definitely impose these restrictions
   // in RemoteDatasetFramework.
   @Test
-  public void testSystemNamespace() {
+  public void testSystemNamespace() throws UnauthorizedException {
     DatasetFramework framework = getFramework();
     try {
       framework.deleteModule(NamespaceId.SYSTEM.datasetModule("orderedTable-memory"));

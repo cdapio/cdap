@@ -17,6 +17,7 @@
 package io.cdap.cdap.api.artifact;
 
 import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.security.AccessException;
 
 import java.io.IOException;
 import java.util.List;
@@ -33,7 +34,7 @@ public interface ArtifactManager {
    * @return list of artifact info
    * @throws IOException when there is an error retrieving artifacts
    */
-  List<ArtifactInfo> listArtifacts() throws IOException;
+  List<ArtifactInfo> listArtifacts() throws IOException, AccessException;
 
   /**
    * Get the list of artifacts in the repository in the specified namespace and system namespace
@@ -42,7 +43,7 @@ public interface ArtifactManager {
    * @return list of artifact info
    * @throws IOException when there is an error retrieving artifacts
    */
-  List<ArtifactInfo> listArtifacts(String namespace) throws IOException;
+  List<ArtifactInfo> listArtifacts(String namespace) throws IOException, AccessException;
 
   /**
    * Create a class loader using the artifact represented by artifactInfo with parent as parentClassloader
@@ -55,7 +56,7 @@ public interface ArtifactManager {
    * @return Closeable class loader, calling close on this does the necessary cleanup.
    */
   CloseableClassLoader createClassLoader(ArtifactInfo artifactInfo,
-                                         @Nullable ClassLoader parentClassLoader) throws IOException;
+                                         @Nullable ClassLoader parentClassLoader) throws IOException, AccessException;
 
   /**
    * Create a class loader using the artifact represented by artifactInfo with parent as parentClassloader
@@ -70,5 +71,5 @@ public interface ArtifactManager {
    * @return Closeable class loader, calling close on this does the necessary cleanup.
    */
   CloseableClassLoader createClassLoader(String namespace, ArtifactInfo artifactInfo,
-                                         @Nullable ClassLoader parentClassLoader) throws IOException;
+                                         @Nullable ClassLoader parentClassLoader) throws IOException, AccessException;
 }

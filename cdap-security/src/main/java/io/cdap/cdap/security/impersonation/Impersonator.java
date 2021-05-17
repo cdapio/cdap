@@ -17,11 +17,11 @@
 package io.cdap.cdap.security.impersonation;
 
 import com.google.inject.ImplementedBy;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
 import org.apache.hadoop.security.UserGroupInformation;
 
-import java.io.IOException;
 import java.util.concurrent.Callable;
 
 /**
@@ -60,7 +60,7 @@ public interface Impersonator {
    *
    * @param entityId Entity whose effective owner's UGI will be returned
    * @return {@link UserGroupInformation}
-   * @throws IOException if there was any error fetching the {@link UserGroupInformation}
+   * @throws AccessException if there was any error fetching the {@link UserGroupInformation}
    */
-  UserGroupInformation getUGI(NamespacedEntityId entityId) throws IOException;
+  UserGroupInformation getUGI(NamespacedEntityId entityId) throws AccessException;
 }

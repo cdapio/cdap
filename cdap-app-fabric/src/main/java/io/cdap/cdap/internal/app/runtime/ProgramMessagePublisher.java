@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.runtime;
 
 import io.cdap.cdap.api.messaging.MessagePublisher;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.messaging.context.AbstractMessagePublisher;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
@@ -37,7 +38,8 @@ final class ProgramMessagePublisher extends AbstractMessagePublisher {
   }
 
   @Override
-  protected void publish(TopicId topicId, Iterator<byte[]> payloads) throws IOException, TopicNotFoundException {
+  protected void publish(TopicId topicId, Iterator<byte[]> payloads)
+    throws IOException, TopicNotFoundException, AccessException {
     if (NamespaceId.SYSTEM.equals(topicId.getNamespaceId())) {
       throw new IllegalArgumentException("Publish to '" + topicId.getNamespace() + "' namespace is not allowed");
     }

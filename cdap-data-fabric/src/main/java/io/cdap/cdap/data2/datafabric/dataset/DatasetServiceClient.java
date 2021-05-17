@@ -95,7 +95,7 @@ public class DatasetServiceClient {
 
   @Nullable
   public DatasetMeta getInstance(String instanceName)
-    throws DatasetManagementException {
+    throws DatasetManagementException, UnauthorizedException {
 
     HttpResponse response = doGet("datasets/" + instanceName);
     if (HttpResponseStatus.NOT_FOUND.code() == response.getResponseCode()) {
@@ -114,7 +114,7 @@ public class DatasetServiceClient {
     return GSON.fromJson(response.getResponseBodyAsString(), DatasetMeta.class);
   }
 
-  Collection<DatasetSpecificationSummary> getAllInstances() throws DatasetManagementException {
+  Collection<DatasetSpecificationSummary> getAllInstances() throws DatasetManagementException, UnauthorizedException {
     HttpResponse response = doGet("datasets");
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Cannot retrieve all dataset instances, details: %s",
@@ -128,7 +128,7 @@ public class DatasetServiceClient {
    * Get the dataset instances which have the specified dataset properties.
    */
   Collection<DatasetSpecificationSummary> getInstances(Map<String, String> properties)
-    throws DatasetManagementException {
+    throws DatasetManagementException, UnauthorizedException {
     HttpResponse response = doPost("datasets", GSON.toJson(properties));
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Cannot retrieve all dataset instances, details: %s",
@@ -139,7 +139,7 @@ public class DatasetServiceClient {
   }
 
   @Nullable
-  public DatasetTypeMeta getType(String typeName) throws DatasetManagementException {
+  public DatasetTypeMeta getType(String typeName) throws DatasetManagementException, UnauthorizedException {
     HttpResponse response = doGet("types/" + typeName);
     if (HttpResponseStatus.NOT_FOUND.code() == response.getResponseCode()) {
       return null;
@@ -152,13 +152,13 @@ public class DatasetServiceClient {
   }
 
   public void addInstance(String datasetInstanceName, String datasetType,
-                          DatasetProperties props) throws DatasetManagementException {
+                          DatasetProperties props) throws DatasetManagementException, UnauthorizedException {
     addInstance(datasetInstanceName, datasetType, props, null);
   }
 
   public void addInstance(String datasetInstanceName, String datasetType, DatasetProperties props,
                           @Nullable KerberosPrincipalId owner)
-    throws DatasetManagementException {
+    throws DatasetManagementException, UnauthorizedException {
     String ownerPrincipal = owner == null ? null : owner.getPrincipal();
     DatasetInstanceConfiguration creationProperties =
       new DatasetInstanceConfiguration(datasetType, props.getProperties(), props.getDescription(), ownerPrincipal);
@@ -180,7 +180,8 @@ public class DatasetServiceClient {
     }
   }
 
-  public void updateInstance(String datasetInstanceName, DatasetProperties props) throws DatasetManagementException {
+  public void updateInstance(String datasetInstanceName, DatasetProperties props)
+    throws DatasetManagementException, UnauthorizedException {
 
     HttpResponse response = doPut("datasets/" + datasetInstanceName + "/properties",
                                   GSON.toJson(props.getProperties()));
@@ -198,7 +199,7 @@ public class DatasetServiceClient {
     }
   }
 
-  void truncateInstance(String datasetInstanceName) throws DatasetManagementException {
+  void truncateInstance(String datasetInstanceName) throws DatasetManagementException, UnauthorizedException {
     HttpResponse response = doPost("datasets/" + datasetInstanceName + "/admin/truncate");
     if (HttpResponseStatus.NOT_FOUND.code() == response.getResponseCode()) {
       throw new InstanceNotFoundException(datasetInstanceName);
@@ -209,7 +210,7 @@ public class DatasetServiceClient {
     }
   }
 
-  public void deleteInstance(String datasetInstanceName) throws DatasetManagementException {
+  public void deleteInstance(String datasetInstanceName) throws DatasetManagementException, UnauthorizedException {
     HttpResponse response = doDelete("datasets/" + datasetInstanceName);
     if (HttpResponseStatus.NOT_FOUND.code() == response.getResponseCode()) {
       throw new InstanceNotFoundException(datasetInstanceName);
@@ -227,14 +228,15 @@ public class DatasetServiceClient {
   /**
    * Deletes all dataset instances inside the namespace of this client is operating in.
    */
-  void deleteInstances() throws DatasetManagementException {
+  void deleteInstances() throws DatasetManagementException, UnauthorizedException {
     HttpResponse response = doDelete("datasets");
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Failed to delete instances, details: %s", response));
     }
   }
 
-  public void addModule(String moduleName, String className, Location jarLocation) throws DatasetManagementException {
+  public void addModule(String moduleName, String className, Location jarLocation)
+    throws DatasetManagementException, UnauthorizedException {
 
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.PUT, "modules/" + moduleName)
       .addHeader("X-Class-Name", className)
@@ -251,7 +253,7 @@ public class DatasetServiceClient {
   }
 
 
-  public void deleteModule(String moduleName) throws DatasetManagementException {
+  public void deleteModule(String moduleName) throws DatasetManagementException, UnauthorizedException {
     HttpResponse response = doDelete("modules/" + moduleName);
 
     if (HttpResponseStatus.CONFLICT.code() == response.getResponseCode()) {
@@ -264,7 +266,7 @@ public class DatasetServiceClient {
     }
   }
 
-  void deleteModules() throws DatasetManagementException {
+  void deleteModules() throws DatasetManagementException, UnauthorizedException {
     HttpResponse response = doDelete("modules");
 
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
@@ -272,27 +274,33 @@ public class DatasetServiceClient {
     }
   }
 
-  private HttpResponse doGet(String resource) throws DatasetManagementException {
+  private HttpResponse doGet(String resource)
+    throws DatasetManagementException, UnauthorizedException {
     return doRequest(remoteClient.requestBuilder(HttpMethod.GET, resource));
   }
 
-  private HttpResponse doPut(String resource, String body) throws DatasetManagementException {
+  private HttpResponse doPut(String resource, String body)
+    throws DatasetManagementException, UnauthorizedException {
     return doRequest(remoteClient.requestBuilder(HttpMethod.PUT, resource).withBody(body));
   }
 
-  private HttpResponse doPost(String resource) throws DatasetManagementException {
+  private HttpResponse doPost(String resource)
+    throws DatasetManagementException, UnauthorizedException {
     return doRequest(remoteClient.requestBuilder(HttpMethod.POST, resource));
   }
 
-  private HttpResponse doPost(String resource, String body) throws DatasetManagementException {
+  private HttpResponse doPost(String resource, String body)
+    throws DatasetManagementException, UnauthorizedException {
     return doRequest(remoteClient.requestBuilder(HttpMethod.POST, resource).withBody(body));
   }
 
-  private HttpResponse doDelete(String resource) throws DatasetManagementException {
+  private HttpResponse doDelete(String resource)
+    throws DatasetManagementException, UnauthorizedException {
     return doRequest(remoteClient.requestBuilder(HttpMethod.DELETE, resource));
   }
 
-  private HttpResponse doRequest(HttpRequest.Builder requestBuilder) throws DatasetManagementException {
+  private HttpResponse doRequest(HttpRequest.Builder requestBuilder)
+    throws DatasetManagementException, UnauthorizedException {
     HttpRequest request = addUserIdHeader(requestBuilder).build();
     try {
       LOG.trace("Executing {} {}", request.getMethod(), request.getURL().getPath());

@@ -25,6 +25,7 @@ import io.cdap.cdap.api.messaging.MessageFetcher;
 import io.cdap.cdap.api.messaging.MessagePublisher;
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.etl.api.StageSubmitterContext;
 import io.cdap.cdap.etl.api.batch.BatchContext;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
@@ -158,28 +159,32 @@ public class MapReduceBatchContext extends AbstractBatchContext
   }
 
   @Override
-  public void createTopic(String topic) throws TopicAlreadyExistsException, IOException {
+  public void createTopic(String topic) throws TopicAlreadyExistsException, IOException, AccessException {
     mrContext.getAdmin().createTopic(topic);
   }
 
   @Override
   public void createTopic(String topic,
-                          Map<String, String> properties) throws TopicAlreadyExistsException, IOException {
+                          Map<String, String> properties)
+    throws TopicAlreadyExistsException, IOException, AccessException {
     mrContext.getAdmin().createTopic(topic, properties);
   }
 
   @Override
-  public Map<String, String> getTopicProperties(String topic) throws TopicNotFoundException, IOException {
+  public Map<String, String> getTopicProperties(String topic)
+    throws TopicNotFoundException, IOException, AccessException {
     return mrContext.getAdmin().getTopicProperties(topic);
   }
 
   @Override
-  public void updateTopic(String topic, Map<String, String> properties) throws TopicNotFoundException, IOException {
+  public void updateTopic(String topic, Map<String, String> properties)
+    throws TopicNotFoundException, IOException, AccessException {
     mrContext.getAdmin().updateTopic(topic, properties);
   }
 
   @Override
-  public void deleteTopic(String topic) throws TopicNotFoundException, IOException {
+  public void deleteTopic(String topic)
+    throws TopicNotFoundException, IOException, AccessException {
     mrContext.getAdmin().deleteTopic(topic);
   }
 }

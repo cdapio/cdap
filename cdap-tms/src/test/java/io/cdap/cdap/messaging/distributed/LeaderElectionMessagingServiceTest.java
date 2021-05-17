@@ -49,6 +49,7 @@ import io.cdap.cdap.messaging.store.cache.MessageTableCacheProvider;
 import io.cdap.cdap.messaging.store.leveldb.LevelDBTableFactory;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.internal.zookeeper.KillZKSession;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -188,7 +189,8 @@ public class LeaderElectionMessagingServiceTest {
   }
 
   @Test
-  public void testFencing() throws IOException, InterruptedException, ExecutionException, TimeoutException {
+  public void testFencing()
+    throws IOException, InterruptedException, ExecutionException, TimeoutException, UnauthorizedException {
     final TopicId topicId = NamespaceId.SYSTEM.topic("topic");
 
     // Change the fencing time

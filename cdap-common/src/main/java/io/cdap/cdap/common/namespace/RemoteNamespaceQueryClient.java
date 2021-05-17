@@ -22,6 +22,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
 import io.cdap.http.HttpHandler;
@@ -47,7 +48,7 @@ public class RemoteNamespaceQueryClient extends AbstractNamespaceQueryClient {
   }
 
   @Override
-  protected HttpResponse execute(HttpRequest request) throws IOException {
+  protected HttpResponse execute(HttpRequest request) throws IOException, UnauthorizedException {
     return remoteClient.execute(addUserIdHeader(request));
   }
 

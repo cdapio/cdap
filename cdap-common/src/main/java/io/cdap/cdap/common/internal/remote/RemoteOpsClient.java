@@ -26,6 +26,7 @@ import io.cdap.cdap.proto.WorkflowTokenNodeDetail;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.cdap.proto.codec.WorkflowTokenDetailCodec;
 import io.cdap.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
@@ -55,11 +56,12 @@ public class RemoteOpsClient {
                                          new DefaultHttpRequestConfig(false), "/v1/execute/");
   }
 
-  protected HttpResponse executeRequest(String methodName, Object... arguments) {
+  protected HttpResponse executeRequest(String methodName, Object... arguments) throws UnauthorizedException {
     return executeRequest(methodName, ImmutableMap.<String, String>of(), arguments);
   }
 
-  protected HttpResponse executeRequest(String methodName, Map<String, String> headers, Object... arguments) {
+  protected HttpResponse executeRequest(String methodName, Map<String, String> headers, Object... arguments)
+    throws UnauthorizedException {
     String body = GSON.toJson(createBody(arguments));
     HttpRequest.Builder builder = remoteClient.requestBuilder(HttpMethod.POST, methodName).addHeaders(headers);
     if (body != null) {

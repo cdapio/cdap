@@ -75,7 +75,7 @@ public abstract class AbstractMetadataClient {
    * Executes an HTTP request.
    */
   protected abstract HttpResponse execute(HttpRequest request,  int... allowedErrorCodes)
-    throws IOException, UnauthenticatedException;
+    throws IOException, UnauthenticatedException, UnauthorizedException;
 
   /**
    * Resolves the specified URL with the specified namespace
@@ -190,7 +190,7 @@ public abstract class AbstractMetadataClient {
   private HttpResponse searchMetadataHelper(@Nullable List<NamespaceId> namespaces, String query, Set<String> targets,
                                             @Nullable String sort, int offset, int limit, int numCursors,
                                             @Nullable String cursor, boolean showHidden)
-    throws IOException, UnauthenticatedException, BadRequestException {
+    throws IOException, UnauthenticatedException, BadRequestException, UnauthorizedException {
     StringBuilder path = new StringBuilder();
     if (namespaces != null && namespaces.size() == 1) {
       path.append("namespaces/").append(namespaces.get(0).getNamespace()).append("/");
@@ -249,7 +249,7 @@ public abstract class AbstractMetadataClient {
   }
 
   private HttpResponse getMetadataHelper(MetadataEntity metadataEntity, @Nullable MetadataScope scope)
-    throws IOException, UnauthenticatedException, BadRequestException {
+    throws IOException, UnauthenticatedException, BadRequestException, UnauthorizedException {
     String path = String.format("%s/metadata", constructPath(metadataEntity));
     path = addQueryParams(path, metadataEntity, scope);
     return makeRequest(path, HttpMethod.GET, null);
@@ -388,7 +388,7 @@ public abstract class AbstractMetadataClient {
   }
 
   private HttpResponse makeRequest(String path, HttpMethod httpMethod, @Nullable String body)
-    throws IOException, UnauthenticatedException, BadRequestException {
+    throws IOException, UnauthenticatedException, BadRequestException, UnauthorizedException {
     URL url = resolve(path);
     HttpRequest.Builder builder = HttpRequest.builder(httpMethod, url);
     if (body != null) {

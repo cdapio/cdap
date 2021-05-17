@@ -32,6 +32,7 @@ import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
@@ -67,7 +68,8 @@ public class RemoteScheduleFetcher implements ScheduleFetcher {
    * Get the schedule identified by the given schedule id
    */
   @Override
-  public ScheduleDetail get(ScheduleId scheduleId) throws IOException, ScheduleNotFoundException {
+  public ScheduleDetail get(ScheduleId scheduleId)
+    throws IOException, ScheduleNotFoundException, UnauthorizedException {
     String url = String.format(
       "namespaces/%s/apps/%s/versions/%s/schedules/%s",
       scheduleId.getNamespace(), scheduleId.getApplication(), scheduleId.getVersion(), scheduleId.getSchedule());
@@ -85,7 +87,8 @@ public class RemoteScheduleFetcher implements ScheduleFetcher {
    * Get the list of schedules for the given program id
    */
   @Override
-  public List<ScheduleDetail> list(ProgramId programId) throws IOException, ProgramNotFoundException {
+  public List<ScheduleDetail> list(ProgramId programId)
+    throws IOException, ProgramNotFoundException, UnauthorizedException {
     String url = String.format("namespaces/%s/apps/%s/versions/%s/schedules",
                                programId.getNamespace(), programId.getApplication(), programId.getVersion());
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
@@ -102,7 +105,7 @@ public class RemoteScheduleFetcher implements ScheduleFetcher {
 
   // TODO: refactor out into a util function that can be shared by RemoteApplicationDetailFetcher
   //       RemotePreferencesFetcherInternal and RemoteScheduleFetcher
-  private HttpResponse execute(HttpRequest request) throws IOException, NotFoundException {
+  private HttpResponse execute(HttpRequest request) throws IOException, NotFoundException, UnauthorizedException {
     HttpResponse httpResponse = remoteClient.execute(request);
     if (httpResponse.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException(httpResponse.getResponseBodyAsString());

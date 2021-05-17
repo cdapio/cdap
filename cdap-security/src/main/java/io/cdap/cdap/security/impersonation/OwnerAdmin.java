@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.security.impersonation;
 
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.AlreadyExistsException;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
@@ -112,11 +113,11 @@ public interface OwnerAdmin {
    * </p>
    * @param entityId the {@link EntityId} whose owner principal information needs to be retrieved
    * @return {@link ImpersonationInfo} of the effective owner for the given entity.
-   * @throws IOException if  failed to get the store
+   * @throws AccessException if  failed to get the store
    * @throws IllegalArgumentException if the given entity is not of supported type.
    */
   @Nullable
-  ImpersonationInfo getImpersonationInfo(NamespacedEntityId entityId) throws IOException;
+  ImpersonationInfo getImpersonationInfo(NamespacedEntityId entityId) throws AccessException;
 
   /**
    * <p>Delegates to {@link #getImpersonationInfo(NamespacedEntityId)}} to retrieve the owner information by tracing

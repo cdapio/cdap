@@ -146,7 +146,7 @@ public class LineageClient {
    */
   public FieldLineageSummary getFieldLineage(DatasetId datasetId, long startTime, long endTime,
                                              String direction)
-    throws IOException, BadRequestException, NotFoundException, UnauthenticatedException {
+    throws IOException, BadRequestException, NotFoundException, UnauthenticatedException, UnauthorizedException {
     String path = String.format("datasets/%s/lineage/allfieldlineage?start=%s&end=%s", datasetId.getDataset(),
                                 URLEncoder.encode(Long.toString(startTime), "UTF-8"),
                                 URLEncoder.encode(Long.toString(endTime), "UTF-8"));
@@ -157,7 +157,7 @@ public class LineageClient {
   }
 
   private <T> T getLineage(NamespacedEntityId namespacedId, String path, Class<T> type)
-    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
+    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
     URL lineageURL = config.resolveNamespacedURLV3(new NamespaceId(namespacedId.getNamespace()), path);
     HttpResponse response = restClient.execute(HttpRequest.get(lineageURL).build(),
                                                config.getAccessToken(),

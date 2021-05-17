@@ -56,6 +56,7 @@ import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.RemoteUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.spi.authorization.PermissionManager;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.noop.NoopMetadataStorage;
 import org.apache.hadoop.conf.Configuration;
@@ -199,7 +200,8 @@ public class ContextManager {
       this(datasetFramework, null, datasetInstantiatorFactory);
     }
 
-    public DatasetSpecification getDatasetSpec(DatasetId datasetId) throws DatasetManagementException {
+    public DatasetSpecification getDatasetSpec(DatasetId datasetId)
+      throws DatasetManagementException, UnauthorizedException {
       return datasetFramework.getDatasetSpec(datasetId);
     }
 

@@ -22,6 +22,7 @@ import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.common.DatasetNotFoundException;
 import io.cdap.cdap.common.entity.EntityExistenceVerifier;
 import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 
 /**
  * {@link EntityExistenceVerifier} for {@link DatasetId datasets}.
@@ -35,7 +36,7 @@ public class DatasetExistenceVerifier implements EntityExistenceVerifier<Dataset
   }
 
   @Override
-  public void ensureExists(DatasetId datasetId) throws DatasetNotFoundException {
+  public void ensureExists(DatasetId datasetId) throws DatasetNotFoundException, UnauthorizedException {
     try {
       if (!dsFramework.hasInstance(datasetId)) {
         throw new DatasetNotFoundException(datasetId);

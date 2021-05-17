@@ -30,6 +30,7 @@ import io.cdap.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import io.cdap.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
 import io.cdap.cdap.proto.DatasetTypeMeta;
 import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 
 import java.io.IOException;
 
@@ -115,7 +116,8 @@ public class InMemoryDatasetOpExecutor implements DatasetOpExecutor {
     getAdmin(datasetInstanceId).upgrade();
   }
 
-  private DatasetAdmin getAdmin(DatasetId datasetInstanceId) throws IOException, DatasetManagementException {
+  private DatasetAdmin getAdmin(DatasetId datasetInstanceId)
+    throws IOException, DatasetManagementException, UnauthorizedException {
     return client.getAdmin(datasetInstanceId, null);
   }
 }

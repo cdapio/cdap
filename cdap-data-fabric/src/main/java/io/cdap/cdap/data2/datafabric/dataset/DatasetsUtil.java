@@ -36,6 +36,7 @@ import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.dataset2.lib.file.FileSetDataset;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,7 +65,7 @@ public final class DatasetsUtil {
                                                          DatasetId datasetInstanceId, String typeName,
                                                          DatasetProperties props,
                                                          @Nullable Map<String, String> arguments)
-    throws DatasetManagementException, IOException {
+    throws DatasetManagementException, IOException, UnauthorizedException {
     createIfNotExists(datasetFramework, datasetInstanceId, typeName, props);
     if (arguments == null) {
       arguments = Collections.emptyMap();
@@ -81,7 +82,7 @@ public final class DatasetsUtil {
                                                          DatasetId datasetId,
                                                          String datasetTypename,
                                                          DatasetProperties datasetProperties)
-    throws DatasetManagementException, IOException {
+    throws DatasetManagementException, IOException, UnauthorizedException {
 
     try {
       return datasetContext.getDataset(datasetId.getNamespace(), datasetId.getDataset());
@@ -100,7 +101,7 @@ public final class DatasetsUtil {
                                                          DatasetId datasetId,
                                                          String datasetTypename,
                                                          Supplier<DatasetProperties> datasetPropertiesSupplier)
-    throws DatasetManagementException, IOException {
+    throws DatasetManagementException, IOException, UnauthorizedException {
 
     try {
       return datasetContext.getDataset(datasetId.getNamespace(), datasetId.getDataset());
@@ -115,7 +116,8 @@ public final class DatasetsUtil {
    */
   public static void createIfNotExists(DatasetFramework datasetFramework,
                                        DatasetId datasetInstanceId, String typeName,
-                                       DatasetProperties props) throws DatasetManagementException, IOException {
+                                       DatasetProperties props)
+    throws DatasetManagementException, IOException, UnauthorizedException {
 
     if (!datasetFramework.hasInstance(datasetInstanceId)) {
       try {

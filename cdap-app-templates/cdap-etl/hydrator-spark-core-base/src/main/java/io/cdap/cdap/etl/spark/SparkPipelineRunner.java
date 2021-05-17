@@ -407,7 +407,7 @@ public abstract class SparkPipelineRunner {
     }
     executorService.shutdownNow();
     if (error != null) {
-      Throwables.propagate(error);
+      throw Throwables.propagate(error);
     }
   }
 

@@ -16,9 +16,8 @@
 
 package io.cdap.cdap.security.impersonation;
 
+import io.cdap.cdap.api.security.AccessException;
 import org.apache.hadoop.security.UserGroupInformation;
-
-import java.io.IOException;
 
 /**
  * Facilitates getting UserGroupInformation configured for a given {@link ImpersonationRequest}.
@@ -32,5 +31,5 @@ public interface UGIProvider {
    *                            the type of the operation
    * @return the {@link UGIWithPrincipal} for the configured user
    */
-  UGIWithPrincipal getConfiguredUGI(ImpersonationRequest impersonationRequest) throws IOException;
+  UGIWithPrincipal getConfiguredUGI(ImpersonationRequest impersonationRequest) throws AccessException;
 }

@@ -31,7 +31,7 @@ import javax.annotation.Nullable;
  */
 public class AuthorizationPrivilege {
   private final EntityId entityId;
-  // Will only be set from GSON. Also will automatically be converted to permissions by PermissionAdapterFactory
+  //Will only be set from GSON. Also will automatically be converted to permissions by PermissionAdapterFactory
   private final Set<Permission> actions;
   private final Set<Permission> permissions;
   private final Principal principal;

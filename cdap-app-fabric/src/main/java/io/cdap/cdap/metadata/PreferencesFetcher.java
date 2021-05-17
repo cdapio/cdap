@@ -19,6 +19,7 @@ package io.cdap.cdap.metadata;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.proto.PreferencesDetail;
 import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 
 import java.io.IOException;
 
@@ -34,5 +35,6 @@ public interface PreferencesFetcher {
    * @throws IOException if failed to get preferences
    * @throws NotFoundException if the given entity doesn't exist.
    */
-  PreferencesDetail get(EntityId entityId, boolean resolved) throws IOException, NotFoundException;
+  PreferencesDetail get(EntityId entityId, boolean resolved)
+    throws IOException, NotFoundException, UnauthorizedException;
 }

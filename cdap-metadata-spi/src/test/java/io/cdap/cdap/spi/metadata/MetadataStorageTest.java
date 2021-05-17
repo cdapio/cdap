@@ -1777,7 +1777,7 @@ public abstract class MetadataStorageTest {
         Assert.assertTrue(ImmutableSet.of(Metadata.EMPTY, new Metadata(USER, tags("b")))
                             .contains(mds.read(new Read(entity))));
       } catch (Exception e) {
-        Throwables.propagate(e);
+        throw Throwables.propagate(e);
       }
     });
     // clean up

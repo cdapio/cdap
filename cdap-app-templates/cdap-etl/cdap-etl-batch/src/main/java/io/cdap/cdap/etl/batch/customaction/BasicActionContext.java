@@ -23,6 +23,7 @@ import io.cdap.cdap.api.customaction.CustomActionContext;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.lineage.field.Operation;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.api.security.store.SecureStoreData;
 import io.cdap.cdap.api.security.store.SecureStoreMetadata;
 import io.cdap.cdap.etl.api.action.ActionContext;
@@ -95,7 +96,8 @@ public class BasicActionContext extends AbstractStageContext implements ActionCo
   }
 
   @Override
-  public void registerLineage(String referenceName, AccessType accessType) throws DatasetManagementException {
+  public void registerLineage(String referenceName, AccessType accessType)
+    throws DatasetManagementException, AccessException {
     Supplier<Dataset> datasetSupplier =
       () -> Transactionals.execute(context, (TxCallable<Dataset>) ctx -> ctx.getDataset(referenceName));
     ExternalDatasets.registerLineage(admin, referenceName, accessType, null, datasetSupplier);

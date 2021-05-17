@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.runtime.artifact;
 
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
@@ -37,7 +38,8 @@ public interface ArtifactFinder {
    * @return the location of the artifact.
    * @throws ArtifactNotFoundException if no plugin can be found
    */
-  Location getArtifactLocation(ArtifactId artifactId) throws ArtifactNotFoundException, IOException;
+  Location getArtifactLocation(ArtifactId artifactId)
+    throws ArtifactNotFoundException, IOException, UnauthorizedException;
 
   /**
    * Finds the locations of multiple artifacts. If an artifact could not be found, the artifact will not be
@@ -47,7 +49,8 @@ public interface ArtifactFinder {
    * @return map of artifact id to artifact location
    * @throws IOException if there was an exception fetching the locations
    */
-  default Map<ArtifactId, Location> getArtifactLocations(Collection<ArtifactId> artifactIds) throws IOException {
+  default Map<ArtifactId, Location> getArtifactLocations(Collection<ArtifactId> artifactIds)
+    throws IOException, UnauthorizedException {
     Map<ArtifactId, Location> locations = new HashMap<>(artifactIds.size());
     for (ArtifactId id : artifactIds) {
       try {

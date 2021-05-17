@@ -42,6 +42,7 @@ import io.cdap.cdap.messaging.data.RawMessage;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TxConstants;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -590,7 +591,8 @@ public class MessagingHttpServiceTest {
   }
 
   @Test
-  public void testReuseRequest() throws IOException, TopicAlreadyExistsException, TopicNotFoundException {
+  public void testReuseRequest()
+    throws IOException, TopicAlreadyExistsException, TopicNotFoundException, UnauthorizedException {
     // This test a StoreRequest object can be reused.
     // This test is to verify storing transaction messages to the payload table
     TopicId topicId = new NamespaceId("ns1").topic("testReuseRequest");
@@ -618,7 +620,8 @@ public class MessagingHttpServiceTest {
   }
 
   @Test
-  public void testLargePublish() throws IOException, TopicAlreadyExistsException, TopicNotFoundException {
+  public void testLargePublish()
+    throws IOException, TopicAlreadyExistsException, TopicNotFoundException, UnauthorizedException {
     // A 5MB message, which is larger than the 1MB buffer.
     String message = Strings.repeat("01234", 1024 * 1024);
 

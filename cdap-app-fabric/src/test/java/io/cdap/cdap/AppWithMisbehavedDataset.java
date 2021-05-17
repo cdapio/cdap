@@ -120,7 +120,7 @@ public class AppWithMisbehavedDataset extends AbstractApplication {
           }
         });
       } catch (TransactionFailureException e) {
-        Throwables.propagate(e);
+        throw Throwables.propagate(e);
       }
     }
   }

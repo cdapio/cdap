@@ -37,6 +37,7 @@ import io.cdap.cdap.messaging.store.cache.MessageTableCacheProvider;
 import io.cdap.cdap.messaging.store.hbase.HBaseTableFactory;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.twill.api.ElectionHandler;
 import org.apache.twill.common.Threads;
 import org.apache.twill.internal.zookeeper.LeaderElection;
@@ -130,27 +131,29 @@ public class LeaderElectionMessagingService extends AbstractIdleService implemen
   }
 
   @Override
-  public void createTopic(TopicMetadata topicMetadata) throws TopicAlreadyExistsException, IOException {
+  public void createTopic(TopicMetadata topicMetadata)
+    throws TopicAlreadyExistsException, IOException, UnauthorizedException {
     getMessagingService().createTopic(topicMetadata);
   }
 
   @Override
-  public void updateTopic(TopicMetadata topicMetadata) throws TopicNotFoundException, IOException {
+  public void updateTopic(TopicMetadata topicMetadata)
+    throws TopicNotFoundException, IOException, UnauthorizedException {
     getMessagingService().updateTopic(topicMetadata);
   }
 
   @Override
-  public void deleteTopic(TopicId topicId) throws TopicNotFoundException, IOException {
+  public void deleteTopic(TopicId topicId) throws TopicNotFoundException, IOException, UnauthorizedException {
     getMessagingService().deleteTopic(topicId);
   }
 
   @Override
-  public TopicMetadata getTopic(TopicId topicId) throws TopicNotFoundException, IOException {
+  public TopicMetadata getTopic(TopicId topicId) throws TopicNotFoundException, IOException, UnauthorizedException {
     return getMessagingService().getTopic(topicId);
   }
 
   @Override
-  public List<TopicId> listTopics(NamespaceId namespaceId) throws IOException {
+  public List<TopicId> listTopics(NamespaceId namespaceId) throws IOException, UnauthorizedException {
     return getMessagingService().listTopics(namespaceId);
   }
 
@@ -161,17 +164,19 @@ public class LeaderElectionMessagingService extends AbstractIdleService implemen
 
   @Override
   @Nullable
-  public RollbackDetail publish(StoreRequest request) throws TopicNotFoundException, IOException {
+  public RollbackDetail publish(StoreRequest request)
+    throws TopicNotFoundException, IOException, UnauthorizedException {
     return getMessagingService().publish(request);
   }
 
   @Override
-  public void storePayload(StoreRequest request) throws TopicNotFoundException, IOException {
+  public void storePayload(StoreRequest request) throws TopicNotFoundException, IOException, UnauthorizedException {
     getMessagingService().storePayload(request);
   }
 
   @Override
-  public void rollback(TopicId topicId, RollbackDetail rollbackDetail) throws TopicNotFoundException, IOException {
+  public void rollback(TopicId topicId, RollbackDetail rollbackDetail)
+    throws TopicNotFoundException, IOException, UnauthorizedException {
     getMessagingService().rollback(topicId, rollbackDetail);
   }
 

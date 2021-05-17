@@ -32,6 +32,7 @@ import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
 import io.cdap.cdap.proto.DatasetSpecificationSummary;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.twill.common.Threads;
@@ -100,14 +101,14 @@ public class HBaseDatasetMetricsReporter extends AbstractScheduledService implem
     return executor;
   }
 
-  private void reportHBaseStats() throws IOException, DatasetManagementException {
+  private void reportHBaseStats() throws IOException, DatasetManagementException, UnauthorizedException {
     Map<TableId, HBaseTableUtil.TableStats> tableStats = hBaseTableUtil.getTableStats(hAdmin);
     if (tableStats.size() > 0) {
       report(tableStats);
     }
   }
 
-  private void report(Map<TableId, HBaseTableUtil.TableStats> tableStats) throws IOException {
+  private void report(Map<TableId, HBaseTableUtil.TableStats> tableStats) throws IOException, UnauthorizedException {
     Map<String, String> reverseNamespaceMap = hBaseTableUtil.getHBaseToCDAPNamespaceMap();
     for (Map.Entry<TableId, HBaseTableUtil.TableStats> statEntry : tableStats.entrySet()) {
       String hbaseNamespace = statEntry.getKey().getNamespace();

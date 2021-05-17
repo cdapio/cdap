@@ -77,6 +77,7 @@ import io.cdap.cdap.security.impersonation.InMemoryOwnerStore;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.OwnerStore;
 import io.cdap.cdap.security.spi.authorization.NoOpAuthorizer;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.tephra.DefaultTransactionExecutor;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
@@ -379,7 +380,8 @@ public abstract class AbstractDatasetFrameworkTest {
   }
 
   @Test
-  public void testMultipleTransitiveDependencies() throws DatasetManagementException, IOException {
+  public void testMultipleTransitiveDependencies()
+    throws DatasetManagementException, IOException, UnauthorizedException {
     // Adding modules
     DatasetFramework framework = getFramework();
     try {

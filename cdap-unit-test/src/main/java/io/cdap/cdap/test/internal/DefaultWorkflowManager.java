@@ -17,6 +17,7 @@
 package io.cdap.cdap.test.internal;
 
 import com.google.common.base.Throwables;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.id.Id;
@@ -26,7 +27,6 @@ import io.cdap.cdap.proto.WorkflowNodeStateDetail;
 import io.cdap.cdap.proto.WorkflowTokenDetail;
 import io.cdap.cdap.proto.WorkflowTokenNodeDetail;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import io.cdap.cdap.security.spi.AccessException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.test.AbstractProgramManager;
 import io.cdap.cdap.test.ScheduleManager;

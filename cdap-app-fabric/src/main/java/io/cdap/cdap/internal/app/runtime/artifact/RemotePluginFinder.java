@@ -40,6 +40,7 @@ import io.cdap.cdap.proto.artifact.PluginInfo;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
@@ -146,7 +147,8 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
   private List<PluginInfo> getPlugins(NamespaceId namespaceId,
                                       ArtifactId parentArtifactId,
                                       String pluginType,
-                                      String pluginName) throws IOException, PluginNotExistsException {
+                                      String pluginName)
+    throws IOException, PluginNotExistsException, UnauthorizedException {
     HttpRequest.Builder requestBuilder =
       remoteClient.requestBuilder(
         HttpMethod.GET,
@@ -184,7 +186,8 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
    * Retrieves the {@link Location} of a given artifact.
    */
   @Override
-  public Location getArtifactLocation(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
+  public Location getArtifactLocation(ArtifactId artifactId)
+    throws IOException, ArtifactNotFoundException, UnauthorizedException {
     HttpRequest.Builder requestBuilder =
       remoteClientInternal.requestBuilder(
         HttpMethod.GET, String.format("namespaces/%s/artifacts/%s/versions/%s/location",

@@ -105,7 +105,7 @@ public class AppWithPlugin extends AbstractApplication {
         Object plugin = context.newPluginInstance("workflowplugin");
         table.write("val", plugin.toString());
       } catch (InstantiationException e) {
-        Throwables.propagate(e);
+        throw Throwables.propagate(e);
       }
     }
   }

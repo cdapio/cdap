@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.security.impersonation;
 
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.net.InetAddress;
 
 /**
@@ -62,7 +62,7 @@ public class SecurityUtilTest {
   }
 
   @Test
-  public void testGetKeytabURIforUser() throws IOException {
+  public void testGetKeytabURIforUser() throws AccessException {
     String user = "alice";
     String confPath = "/dir1/dir2/${name}/${name}.keytab";
     String expectedPath = "/dir1/dir2/alice/alice.keytab";
@@ -75,7 +75,7 @@ public class SecurityUtilTest {
   }
 
   @Test
-  public void testNoKeytabPath() throws IOException {
+  public void testNoKeytabPath() throws AccessException {
     String user = "alice";
     CConfiguration cConf = CConfiguration.create();
     // this should throw a illegal argument exception with proper message as what to set

@@ -17,11 +17,13 @@
 package io.cdap.cdap.security.impersonation;
 
 import com.google.inject.Inject;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.FeatureDisabledException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.common.security.AuthEnforceUtil;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.utils.DirUtils;
@@ -32,6 +34,7 @@ import io.cdap.cdap.proto.NamespaceConfig;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.security.spi.AccessIOException;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authentication.util.KerberosName;
 import org.apache.twill.filesystem.Location;
@@ -77,7 +80,7 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
    * On master side, we can cache the explore request
    */
   @Override
-  protected boolean checkExploreAndDetermineCache(ImpersonationRequest impersonationRequest) throws IOException {
+  protected boolean checkExploreAndDetermineCache(ImpersonationRequest impersonationRequest) throws AccessException {
     if (impersonationRequest.getEntityId().getEntityType().equals(EntityType.NAMESPACE) &&
       impersonationRequest.getImpersonatedOpType().equals(ImpersonatedOpType.EXPLORE)) {
       // CDAP-8355 If the operation being impersonated is an explore query then check if the namespace configuration
@@ -98,10 +101,8 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
                                              NamespaceConfig.EXPLORE_AS_PRINCIPAL, String.valueOf(true));
         }
 
-      } catch (IOException e) {
-        throw e;
       } catch (Exception e) {
-        throw new IOException(e);
+        throw AuthEnforceUtil.propagateAccessException(e);
       }
     }
     return true;
@@ -114,64 +115,68 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
    * @throws IOException if there was any IOException during localization of the keytab
    */
   @Override
-  protected UGIWithPrincipal createUGI(ImpersonationRequest impersonationRequest) throws IOException {
+  protected UGIWithPrincipal createUGI(ImpersonationRequest impersonationRequest) throws AccessException {
 
-    // Get impersonation keytab and principal from runtime arguments if present
-    Map<String, String> properties = getRuntimeProperties(impersonationRequest.getEntityId());
-    if ((properties != null) && (properties.containsKey(SystemArguments.RUNTIME_KEYTAB_PATH))
-          && (properties.containsKey(SystemArguments.RUNTIME_PRINCIPAL_NAME))) {
-      String keytab = properties.get(SystemArguments.RUNTIME_KEYTAB_PATH);
-      String principal = properties.get(SystemArguments.RUNTIME_PRINCIPAL_NAME);
-      LOG.debug("Using runtime config principal: {}, keytab: {}", principal, keytab);
-      UserGroupInformation ugi = UserGroupInformation.loginUserFromKeytabAndReturnUGI(principal, keytab);
-      return new UGIWithPrincipal(principal, ugi);
-    }
-
-    // no need to get a UGI if the current UGI is the one we're requesting; simply return it
-    String configuredPrincipalShortName = new KerberosName(impersonationRequest.getPrincipal()).getShortName();
-    if (UserGroupInformation.getCurrentUser().getShortUserName().equals(configuredPrincipalShortName)) {
-      return new UGIWithPrincipal(impersonationRequest.getPrincipal(), UserGroupInformation.getCurrentUser());
-    }
-
-    String keytab = impersonationRequest.getKeytabURI();
-    if (keytab == null) {
-      throw new IOException("Missing keytab file from the impersonation request " + impersonationRequest);
-    }
-    URI keytabURI = URI.create(keytab);
-    boolean isKeytabLocal = keytabURI.getScheme() == null || "file".equals(keytabURI.getScheme());
-
-    File localKeytabFile = isKeytabLocal ?
-      new File(keytabURI.getPath()) : localizeKeytab(locationFactory.create(keytabURI));
     try {
-      String expandedPrincipal = SecurityUtil.expandPrincipal(impersonationRequest.getPrincipal());
-      LOG.debug("Logging in as: principal={}, keytab={}", expandedPrincipal, localKeytabFile);
-
-      // Note: if the keytab file is not local then then localizeKeytab function call above which tries to localize the
-      // keytab from HDFS will throw IOException if the file does not exists or is not readable. Where as if the file
-      // is local then the localizeKeytab function is not called so its important that we throw IOException if the local
-      // keytab file is not readable to ensure that the client gets the same exception in both the modes.
-      if (!Files.isReadable(localKeytabFile.toPath())) {
-        throw new IOException(String.format("Keytab file is not a readable file: %s", localKeytabFile));
+      // Get impersonation keytab and principal from runtime arguments if present
+      Map<String, String> properties = getRuntimeProperties(impersonationRequest.getEntityId());
+      if ((properties != null) && (properties.containsKey(SystemArguments.RUNTIME_KEYTAB_PATH))
+            && (properties.containsKey(SystemArguments.RUNTIME_PRINCIPAL_NAME))) {
+        String keytab = properties.get(SystemArguments.RUNTIME_KEYTAB_PATH);
+        String principal = properties.get(SystemArguments.RUNTIME_PRINCIPAL_NAME);
+        LOG.debug("Using runtime config principal: {}, keytab: {}", principal, keytab);
+        UserGroupInformation ugi = UserGroupInformation.loginUserFromKeytabAndReturnUGI(principal, keytab);
+        return new UGIWithPrincipal(principal, ugi);
       }
 
-      UserGroupInformation loggedInUGI;
+      // no need to get a UGI if the current UGI is the one we're requesting; simply return it
+      String configuredPrincipalShortName = new KerberosName(impersonationRequest.getPrincipal()).getShortName();
+      if (UserGroupInformation.getCurrentUser().getShortUserName().equals(configuredPrincipalShortName)) {
+        return new UGIWithPrincipal(impersonationRequest.getPrincipal(), UserGroupInformation.getCurrentUser());
+      }
+
+      String keytab = impersonationRequest.getKeytabURI();
+      if (keytab == null) {
+        throw new AccessIOException("Missing keytab file from the impersonation request " + impersonationRequest);
+      }
+      URI keytabURI = URI.create(keytab);
+      boolean isKeytabLocal = keytabURI.getScheme() == null || "file".equals(keytabURI.getScheme());
+
+      File localKeytabFile = isKeytabLocal ?
+        new File(keytabURI.getPath()) : localizeKeytab(locationFactory.create(keytabURI));
       try {
-        loggedInUGI =
-          UserGroupInformation.loginUserFromKeytabAndReturnUGI(expandedPrincipal, localKeytabFile.getAbsolutePath());
-      } catch (Exception e) {
-        // rethrow the exception with additional information tagged, so the user knows which principal/keytab is
-        // not working
-        throw new IOException(String.format("Failed to login for principal=%s, keytab=%s. Check that the principal " +
-                                              "was not deleted and that the keytab is still valid.",
-                                            expandedPrincipal, keytabURI),
-                              e);
-      }
+        String expandedPrincipal = SecurityUtil.expandPrincipal(impersonationRequest.getPrincipal());
+        LOG.debug("Logging in as: principal={}, keytab={}", expandedPrincipal, localKeytabFile);
 
-      return new UGIWithPrincipal(impersonationRequest.getPrincipal(), loggedInUGI);
-    } finally {
-      if (!isKeytabLocal && !localKeytabFile.delete()) {
-        LOG.warn("Failed to delete file: {}", localKeytabFile);
+        // Note: if the keytab file is not local then then localizeKeytab function call above which tries to localize
+        // the keytab from HDFS will throw IOException if the file does not exists or is not readable. Where as if
+        // the file is local then the localizeKeytab function is not called so its important that we throw IOException
+        // if the local keytab file is not readable to ensure that the client gets the same exception in both the modes.
+        if (!Files.isReadable(localKeytabFile.toPath())) {
+          throw new AccessIOException(String.format("Keytab file is not a readable file: %s", localKeytabFile));
+        }
+
+        UserGroupInformation loggedInUGI;
+        try {
+          loggedInUGI =
+            UserGroupInformation.loginUserFromKeytabAndReturnUGI(expandedPrincipal, localKeytabFile.getAbsolutePath());
+        } catch (Exception e) {
+          // rethrow the exception with additional information tagged, so the user knows which principal/keytab is
+          // not working
+          throw new AccessException(String.format("Failed to login for principal=%s, keytab=%s. Check that " +
+                                                    "the principal was not deleted and that the keytab is still valid.",
+                                              expandedPrincipal, keytabURI),
+                                e);
+        }
+
+        return new UGIWithPrincipal(impersonationRequest.getPrincipal(), loggedInUGI);
+      } finally {
+        if (!isKeytabLocal && !localKeytabFile.delete()) {
+          LOG.warn("Failed to delete file: {}", localKeytabFile);
+        }
       }
+    } catch (IOException e) {
+      throw new AccessIOException(e);
     }
   }
 

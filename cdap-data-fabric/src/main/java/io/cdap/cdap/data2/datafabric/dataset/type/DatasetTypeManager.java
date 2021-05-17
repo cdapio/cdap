@@ -336,7 +336,7 @@ public class DatasetTypeManager {
         } catch (Exception e) {
           // the only checked exception the try-catch throws is IOException
           Throwables.propagateIfInstanceOf(e, IOException.class);
-          Throwables.propagate(e);
+          throw Throwables.propagate(e);
         }
 
         return true;
@@ -385,7 +385,7 @@ public class DatasetTypeManager {
           });
         } catch (Exception e) {
           // the callable throws no checked exceptions
-          Throwables.propagate(e);
+          throw Throwables.propagate(e);
         }
 
         // check if there are any instances that use types of these modules?

@@ -34,6 +34,7 @@ import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.store.NamespaceStore;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.AfterClass;
@@ -80,7 +81,7 @@ public class EntityExistenceTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  public void testExists() throws NotFoundException {
+  public void testExists() throws NotFoundException, UnauthorizedException {
     existenceVerifier.ensureExists(new InstanceId(EXISTS));
     existenceVerifier.ensureExists(NAMESPACE);
     existenceVerifier.ensureExists(ARTIFACT);
@@ -91,7 +92,7 @@ public class EntityExistenceTest {
   }
 
   @Test
-  public void testDoesNotExist() {
+  public void testDoesNotExist() throws UnauthorizedException {
     assertDoesNotExist(new InstanceId(DOES_NOT_EXIST));
     assertDoesNotExist(new NamespaceId(DOES_NOT_EXIST));
     assertDoesNotExist(NamespaceId.DEFAULT.artifact(DOES_NOT_EXIST, "1.0"));
@@ -102,7 +103,7 @@ public class EntityExistenceTest {
   }
 
   @SuppressWarnings("unchecked")
-  private void assertDoesNotExist(EntityId entityId) {
+  private void assertDoesNotExist(EntityId entityId) throws UnauthorizedException {
     try {
       existenceVerifier.ensureExists(entityId);
       Assert.fail(String.format("Entity %s is not expected to exist but it does.", entityId));

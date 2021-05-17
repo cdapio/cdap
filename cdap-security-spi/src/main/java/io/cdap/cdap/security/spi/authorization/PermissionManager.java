@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.security.spi.authorization;
 
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.GrantedPermission;
 import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
-import io.cdap.cdap.security.spi.AccessException;
 
 import java.util.Set;
 

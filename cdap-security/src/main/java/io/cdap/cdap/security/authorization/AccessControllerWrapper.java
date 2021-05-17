@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.security.authorization;
 
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.Privilege;
 import io.cdap.cdap.proto.security.Role;
-import io.cdap.cdap.security.spi.AccessException;
 import io.cdap.cdap.security.spi.authorization.AccessController;
 import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
 import io.cdap.cdap.security.spi.authorization.Authorizer;
@@ -94,8 +94,8 @@ public class AccessControllerWrapper extends AccessEnforcerWrapper implements Au
   @Override
   public Set<Privilege> listPrivileges(Principal principal) throws Exception {
     return accessController.listGrants(principal).stream()
-      .map(p -> new Privilege(p.getAuthorizable(), AuthorizerWrapper.getAction(
-        p.getPermission(), p.getAuthorizable().getEntityType())))
+      .map(p -> new Privilege(p.getAuthorizable(),
+                              AuthorizerWrapper.getAction(p.getPermission(), p.getAuthorizable().getEntityType())))
       .collect(Collectors.toSet());
   }
 

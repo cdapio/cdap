@@ -31,7 +31,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
-import io.cdap.cdap.common.CallUnauthorizedException;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
@@ -39,13 +39,11 @@ import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.security.AuthEnforceUtil;
 import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
 import io.cdap.cdap.proto.id.EntityId;
-import io.cdap.cdap.proto.security.ActionOrPermission;
 import io.cdap.cdap.proto.security.AuthorizationPrivilege;
 import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.PermissionAdapterFactory;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.VisibilityRequest;
-import io.cdap.cdap.security.spi.AccessException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
@@ -265,7 +263,7 @@ public class RemoteAccessEnforcer extends AbstractAccessEnforcer {
       return new EnforcementResponse(false, new IOException(String.format("Failed to enforce with code %d: %s",
                                                                    response.getResponseCode(),
                                                                    response.getResponseBodyAsString())));
-    } catch (CallUnauthorizedException e) {
+    } catch (UnauthorizedException e) {
       return new EnforcementResponse(false, e);
     }
   }
@@ -283,7 +281,7 @@ public class RemoteAccessEnforcer extends AbstractAccessEnforcer {
       return new EnforcementResponse(false, new IOException(String.format("Failed to enforce with code %d: %s",
                                                                    response.getResponseCode(),
                                                                    response.getResponseBodyAsString())));
-    } catch (CallUnauthorizedException e) {
+    } catch (UnauthorizedException e) {
       return new EnforcementResponse(false, e);
     }
   }

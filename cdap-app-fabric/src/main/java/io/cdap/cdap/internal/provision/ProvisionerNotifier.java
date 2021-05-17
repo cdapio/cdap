@@ -22,6 +22,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.api.retry.RetryableException;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -133,7 +134,7 @@ public class ProvisionerNotifier {
           messagingService.publish(storeRequest);
         } catch (TopicNotFoundException e) {
           throw new RetryableException(e);
-        } catch (IOException e) {
+        } catch (IOException | AccessException e) {
           throw Throwables.propagate(e);
         }
         return null;

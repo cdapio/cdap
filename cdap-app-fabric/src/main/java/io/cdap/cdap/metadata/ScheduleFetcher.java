@@ -21,6 +21,7 @@ import io.cdap.cdap.internal.app.runtime.schedule.ScheduleNotFoundException;
 import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 
 import java.io.IOException;
 import java.util.List;
@@ -36,7 +37,7 @@ public interface ScheduleFetcher {
    * @throws IOException if failed to get the detail of the given schedule
    * @throws ScheduleNotFoundException if the given schedule doesn't exist.
    */
-  ScheduleDetail get(ScheduleId scheduleId) throws IOException, ScheduleNotFoundException;
+  ScheduleDetail get(ScheduleId scheduleId) throws IOException, ScheduleNotFoundException, UnauthorizedException;
 
   /**
    *
@@ -48,5 +49,5 @@ public interface ScheduleFetcher {
    * @throws IOException if failed to get the list of schedules for the given program
    * @throws ProgramNotFoundException if the given program id doesn't exist
    */
-  List<ScheduleDetail> list(ProgramId programId) throws IOException, ProgramNotFoundException;
+  List<ScheduleDetail> list(ProgramId programId) throws IOException, ProgramNotFoundException, UnauthorizedException;
 }

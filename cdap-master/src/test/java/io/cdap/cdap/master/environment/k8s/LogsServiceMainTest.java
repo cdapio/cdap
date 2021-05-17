@@ -43,6 +43,7 @@ import io.cdap.cdap.logging.gateway.handlers.FormattedTextLogEvent;
 import io.cdap.cdap.logging.gateway.handlers.LogData;
 import io.cdap.cdap.logging.read.LogOffset;
 import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
@@ -217,7 +218,7 @@ public class LogsServiceMainTest extends MasterServiceMainTestBase {
           throw new IOException("Append call failed with " + response.getResponseCode()
                                   + " " + response.getResponseMessage() + " " + response.getResponseBodyAsString());
         }
-      } catch (IOException e) {
+      } catch (IOException | UnauthorizedException e) {
         LOG.error("Failed to append log", e);
       }
     }

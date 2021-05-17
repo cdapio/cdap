@@ -24,6 +24,7 @@ import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.InstanceConflictException;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
 import io.cdap.cdap.etl.api.streaming.StreamingContext;
@@ -78,7 +79,7 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
 
   @Override
   public void registerLineage(String referenceName)
-    throws DatasetManagementException, TransactionFailureException {
+    throws DatasetManagementException, TransactionFailureException, AccessException {
 
     try {
       if (!admin.datasetExists(referenceName)) {

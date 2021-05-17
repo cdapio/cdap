@@ -25,6 +25,7 @@ import io.cdap.cdap.api.dataset.DatasetAdmin;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.artifact.AppRequest;
@@ -34,7 +35,6 @@ import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.DatasetModuleId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ScheduleId;
-import io.cdap.cdap.security.spi.AccessException;
 
 import java.io.File;
 import java.sql.Connection;

@@ -24,6 +24,7 @@ import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
@@ -55,7 +56,8 @@ public class RemoteProgramRunRecordFetcher implements ProgramRunRecordFetcher {
    * @throws IOException if failed to fetch {@link RunRecordDetail}
    * @throws NotFoundException if the program or runid is not found
    */
-  public RunRecordDetail getRunRecordMeta(ProgramRunId runId) throws IOException, NotFoundException {
+  public RunRecordDetail getRunRecordMeta(ProgramRunId runId)
+    throws IOException, NotFoundException, UnauthorizedException {
     String url = String.format("namespaces/%s/apps/%s/versions/%s/%s/%s/runs/%s",
                                runId.getNamespace(),
                                runId.getApplication(),
@@ -71,7 +73,7 @@ public class RemoteProgramRunRecordFetcher implements ProgramRunRecordFetcher {
       .build();
   }
 
-  private HttpResponse execute(HttpRequest request) throws IOException, NotFoundException {
+  private HttpResponse execute(HttpRequest request) throws IOException, NotFoundException, UnauthorizedException {
     HttpResponse httpResponse = remoteClient.execute(request);
     if (httpResponse.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException(httpResponse.getResponseBodyAsString());
