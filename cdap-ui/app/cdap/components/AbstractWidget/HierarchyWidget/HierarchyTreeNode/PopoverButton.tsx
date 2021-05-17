@@ -55,7 +55,7 @@ const PopoverButton = ({ setShowMultiSelect, addNewRecordToParent }: IPopoverBut
 
   return (
     <React.Fragment>
-      <AddIcon onClick={handleClick} />
+      <AddIcon onClick={handleClick} data-cy="add-popup" />
       <Popover
         open={open}
         anchorEl={anchorEl}
@@ -68,7 +68,6 @@ const PopoverButton = ({ setShowMultiSelect, addNewRecordToParent }: IPopoverBut
           vertical: 'top',
           horizontal: 'center',
         }}
-        data-cy="add-popup"
       >
         <fieldset className={classes.popoverContainer}>
           <ButtonIcon

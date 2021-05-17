@@ -57,16 +57,12 @@ const HierarchyTreeLeaf = ({ option, selected }: IHierarchyTreeLeafProps) => {
   return (
     <div className={classes.itemWrapper}>
       <div>
-        <Checkbox checked={selected} color="primary" />
+        <Checkbox checked={selected} color="primary" data-cy={`option-${option.name}`} />
         {option.name}
         {option.children &&
           option.children.length !== 0 &&
           option.children.map((child: IChildProps) => (
-            <HierarchyTreeLeaf
-              option={child}
-              selected={selected}
-              data-cy={`option-${option.name}`}
-            />
+            <HierarchyTreeLeaf option={child} selected={selected} />
           ))}
       </div>
       <span>{option.type}</span>
