@@ -1236,7 +1236,7 @@
           <exclusion>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>  
+          </exclusion>
           <exclusion>
             <groupId>org.codehaus.janino</groupId>
             <artifactId>janino</artifactId>
@@ -1248,6 +1248,10 @@
           <exclusion>
             <groupId>stax</groupId>
             <artifactId>stax-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.pentaho</groupId>
+            <artifactId>*</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
