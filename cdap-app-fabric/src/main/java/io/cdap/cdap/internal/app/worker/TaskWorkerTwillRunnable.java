@@ -27,6 +27,7 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
@@ -36,6 +37,8 @@ import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
+import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.common.security.KeyStores;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
@@ -54,6 +57,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.net.URI;
+import java.nio.file.Path;
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -74,10 +81,10 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
   }
 
   @VisibleForTesting
-  static Injector createInjector(CConfiguration cConf, Configuration hConf) {
+  static Injector createInjector(CConfiguration cConf, Configuration hConf, SConfiguration sConf) {
     List<Module> modules = new ArrayList<>();
 
-    modules.add(new ConfigModule(cConf, hConf));
+    modules.add(new ConfigModule(cConf, hConf, sConf));
     modules.add(new IOModule());
 
     // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
@@ -162,7 +169,9 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
     hConf.clear();
     hConf.addResource(new File(getArgument("hConf")).toURI().toURL());
 
-    Injector injector = createInjector(cConf, hConf);
+    SConfiguration sConf = SConfiguration.create();
+
+    Injector injector = createInjector(cConf, hConf, sConf);
 
     // Initialize logging context
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);

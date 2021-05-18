@@ -67,6 +67,8 @@ public class TaskWorkerService extends AbstractIdleService {
       .setHttpHandlers(new TaskWorkerHttpHandlerInternal(this.cConf, this::stopService));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
+      // Unset
+      cConf.unset(Constants.Security.SSL.INTERNAL_CERT_PATH);
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
     }
     httpService = builder.build();
