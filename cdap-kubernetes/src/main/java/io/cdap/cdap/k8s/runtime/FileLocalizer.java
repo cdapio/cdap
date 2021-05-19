@@ -68,21 +68,8 @@ public class FileLocalizer implements MasterEnvironmentRunnable {
 
     // Localize the runtime config jar
     URI uri = URI.create(args[0]);
-    Location runtimeConfigLocation;
-    if (context.getLocationFactory().getHomeLocation().toURI().getScheme().equals(uri.getScheme())) {
-      runtimeConfigLocation = context.getLocationFactory().create(uri);
-    } else {
-      // Localize the runtime config jar
-      runtimeConfigLocation = new LocalLocationFactory().create(new File(uri.getPath()).toURI());
-      File runtimeConfig = new File(runtimeConfigLocation.toURI());
-      Files.createDirectories(runtimeConfig.toPath().getParent());
-      Files.createFile(runtimeConfig.toPath());
-      try (FileOutputStream outputStream = new FileOutputStream(runtimeConfig)) {
-        masterEnv.downloadFile(uri, outputStream);
-      }
-    }
 
-    Path runtimeConfigDir = expand(runtimeConfigLocation, Paths.get(Constants.Files.RUNTIME_CONFIG_JAR));
+    Path runtimeConfigDir = expand(uri, Paths.get(Constants.Files.RUNTIME_CONFIG_JAR));
 
     try (Reader reader = Files.newBufferedReader(runtimeConfigDir.resolve(Constants.Files.TWILL_SPEC),
                                                  StandardCharsets.UTF_8)) {
@@ -96,14 +83,12 @@ public class FileLocalizer implements MasterEnvironmentRunnable {
           LOG.info("Stop localization on request");
           break;
         }
-
-        Location location = context.getLocationFactory().create(localFile.getURI());
         Path targetPath = targetDir.resolve(localFile.getName());
 
         if (localFile.isArchive()) {
-          expand(location, targetPath);
+          expand(localFile.getURI(), targetPath);
         } else {
-          copy(location, targetPath);
+          copy(localFile.getURI(), targetPath);
         }
       }
     }
@@ -114,18 +99,18 @@ public class FileLocalizer implements MasterEnvironmentRunnable {
     stopped = true;
   }
 
-  private void copy(Location location, Path target) throws IOException {
-    LOG.debug("Localize {} to {}", location, target);
+  private void copy(URI uri, Path target) throws IOException {
+    LOG.debug("Localize {} to {}", uri, target);
     try (FileOutputStream outputStream = new FileOutputStream(new File(target.toUri()))) {
-      masterEnv.downloadFile(location.toURI(), outputStream);
+      masterEnv.downloadFile(uri, outputStream);
     }
   }
 
-  private Path expand(Location location, Path targetDir) throws IOException {
-    LOG.debug("Localize and expand {} to {}", location, targetDir);
+  private Path expand(URI uri, Path targetDir) throws IOException {
+    LOG.debug("Localize and expand {} to {}", uri, targetDir);
 
     try (ByteArrayOutputStream os = new ByteArrayOutputStream(64 * 1024)) {
-      masterEnv.downloadFile(location.toURI(), os);
+      masterEnv.downloadFile(uri, os);
       try (ZipInputStream is = new ZipInputStream(new ByteArrayInputStream(os.toByteArray()))) {
         Path targetPath = Files.createDirectories(targetDir);
         ZipEntry entry;
