@@ -21,18 +21,18 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
 import org.apache.twill.api.LocalFile;
 import org.apache.twill.filesystem.LocalLocationFactory;
-import org.apache.twill.filesystem.Location;
 import org.apache.twill.internal.Constants;
 import org.apache.twill.internal.TwillRuntimeSpecification;
 import org.apache.twill.internal.json.TwillRuntimeSpecificationAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.io.Reader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -66,11 +66,23 @@ public class FileLocalizer implements MasterEnvironmentRunnable {
       throw new IllegalArgumentException("Expected to have two arguments: runtime config uri and the runnable name.");
     }
 
+    LocalLocationFactory localLocationFactory = new LocalLocationFactory();
+
     // Localize the runtime config jar
     URI uri = URI.create(args[0]);
+    Path runtimeConfigDir;
+    if (localLocationFactory.getHomeLocation().toURI().getScheme().equals(uri.getScheme())) {
+      try (FileInputStream is = new FileInputStream(new File(uri))) {
+        runtimeConfigDir = expand(is, Paths.get(Constants.Files.RUNTIME_CONFIG_JAR));
+      }
+    } else {
+      try (PipedOutputStream os = new PipedOutputStream(); PipedInputStream is = new PipedInputStream(os)) {
+        masterEnv.downloadFile(uri, os);
+        runtimeConfigDir = expand(is, Paths.get(Constants.Files.RUNTIME_CONFIG_JAR));
+      }
+    }
 
-    Path runtimeConfigDir = expand(uri, Paths.get(Constants.Files.RUNTIME_CONFIG_JAR));
-
+    // Localize the runtime LocalFiles
     try (Reader reader = Files.newBufferedReader(runtimeConfigDir.resolve(Constants.Files.TWILL_SPEC),
                                                  StandardCharsets.UTF_8)) {
       TwillRuntimeSpecification twillRuntimeSpec = TwillRuntimeSpecificationAdapter.create().fromJson(reader);
@@ -85,10 +97,15 @@ public class FileLocalizer implements MasterEnvironmentRunnable {
         }
         Path targetPath = targetDir.resolve(localFile.getName());
 
-        if (localFile.isArchive()) {
-          expand(localFile.getURI(), targetPath);
-        } else {
-          copy(localFile.getURI(), targetPath);
+        try (PipedOutputStream os = new PipedOutputStream(); PipedInputStream is = new PipedInputStream(os)) {
+          masterEnv.downloadFile(localFile.getURI(), os);
+          if (localFile.isArchive()) {
+            LOG.debug("Localize and expand {} to {}", uri, targetDir);
+            expand(is, targetPath);
+          } else {
+            LOG.debug("Localize {} to {}", uri, targetPath);
+            Files.copy(is, targetPath, StandardCopyOption.REPLACE_EXISTING);
+          }
         }
       }
     }
@@ -99,30 +116,17 @@ public class FileLocalizer implements MasterEnvironmentRunnable {
     stopped = true;
   }
 
-  private void copy(URI uri, Path target) throws IOException {
-    LOG.debug("Localize {} to {}", uri, target);
-    try (FileOutputStream outputStream = new FileOutputStream(new File(target.toUri()))) {
-      masterEnv.downloadFile(uri, outputStream);
-    }
-  }
-
-  private Path expand(URI uri, Path targetDir) throws IOException {
-    LOG.debug("Localize and expand {} to {}", uri, targetDir);
-
-    try (ByteArrayOutputStream os = new ByteArrayOutputStream(64 * 1024)) {
-      masterEnv.downloadFile(uri, os);
-      try (ZipInputStream is = new ZipInputStream(new ByteArrayInputStream(os.toByteArray()))) {
-        Path targetPath = Files.createDirectories(targetDir);
-        ZipEntry entry;
-        while ((entry = is.getNextEntry()) != null && !stopped) {
-          Path outputPath = targetPath.resolve(entry.getName());
-
-          if (entry.isDirectory()) {
-            Files.createDirectories(outputPath);
-          } else {
-            Files.createDirectories(outputPath.getParent());
-            Files.copy(is, outputPath, StandardCopyOption.REPLACE_EXISTING);
-          }
+  private Path expand(InputStream inputStream, Path targetDir) throws IOException {
+    try (ZipInputStream is = new ZipInputStream(inputStream)) {
+      Path targetPath = Files.createDirectories(targetDir);
+      ZipEntry entry;
+      while ((entry = is.getNextEntry()) != null && !stopped) {
+        Path outputPath = targetPath.resolve(entry.getName());
+        if (entry.isDirectory()) {
+          Files.createDirectories(outputPath);
+        } else {
+          Files.createDirectories(outputPath.getParent());
+          Files.copy(is, outputPath, StandardCopyOption.REPLACE_EXISTING);
         }
       }
     }
