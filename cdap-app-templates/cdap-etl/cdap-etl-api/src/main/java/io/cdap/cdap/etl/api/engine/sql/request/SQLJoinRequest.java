@@ -23,46 +23,22 @@ import io.cdap.cdap.etl.api.join.JoinDefinition;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Collections;
+import javax.annotation.Nullable;
 
 /**
  * Class representing a Request to execute as join operation on a SQL engine.
  */
 @Beta
-public class SQLJoinRequest implements Serializable {
+public class SQLJoinRequest extends SQLJoinDefinition implements Serializable {
   private static final long serialVersionUID = -5049631486914347507L;
-  private final String datasetName;
-  private final Schema datasetSchema;
-  private final JoinDefinition joinDefinition;
   private final Collection<SQLDataset> inputDatasets;
 
   public SQLJoinRequest(String datasetName,
                         JoinDefinition joinDefinition,
                         Collection<SQLDataset> inputDatasets) {
-    this.datasetName = datasetName;
-    this.datasetSchema = joinDefinition.getOutputSchema();
-    this.joinDefinition = joinDefinition;
+    super(datasetName, joinDefinition);
     this.inputDatasets = inputDatasets;
-  }
-
-  /**
-   * Get the name of the dataset which contains the result of this operation.
-   */
-  public String getDatasetName() {
-    return datasetName;
-  }
-
-  /**
-   * Get the schema for the result of this join operation.
-   */
-  public Schema getDatasetSchema() {
-    return datasetSchema;
-  }
-
-  /**
-   * Get the join definition for this request.
-   */
-  public JoinDefinition getJoinDefinition() {
-    return joinDefinition;
   }
 
   /**

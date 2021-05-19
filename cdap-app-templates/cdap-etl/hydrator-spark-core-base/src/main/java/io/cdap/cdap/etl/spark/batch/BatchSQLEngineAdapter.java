@@ -27,6 +27,7 @@ import io.cdap.cdap.etl.api.engine.sql.SQLEngineException;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDataset;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLPullDataset;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLPushDataset;
+import io.cdap.cdap.etl.api.engine.sql.request.SQLJoinDefinition;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLJoinRequest;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPullRequest;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPushRequest;
@@ -249,6 +250,19 @@ public class BatchSQLEngineAdapter<T> implements Closeable {
     }
 
     return false;
+  }
+
+  /**
+   * Verify if a Join Definition can be executed on a SQL Engine.
+   *
+   * @param datasetName    the dataset name to use to store the result of the join operation
+   * @param joinDefinition the Join Definition
+   * @return boolean specifying if this join operation can be executed on the SQL engine.
+   */
+  public boolean canJoin(String datasetName,
+                         JoinDefinition joinDefinition) {
+    SQLJoinDefinition sqlJoinDefinition = new SQLJoinDefinition(datasetName, joinDefinition);
+    return sqlEngine.canJoin(sqlJoinDefinition);
   }
 
   /**
