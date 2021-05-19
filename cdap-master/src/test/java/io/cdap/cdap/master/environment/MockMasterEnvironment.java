@@ -27,6 +27,9 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ZKDiscoveryService;
 import org.apache.twill.zookeeper.ZKClientService;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URI;
 import java.util.function.Supplier;
 
 /**
@@ -77,6 +80,11 @@ public class MockMasterEnvironment implements MasterEnvironment {
   @Override
   public Supplier<TwillRunnerService> getTwillRunnerSupplier() {
     return () -> twillRunnerService;
+  }
+
+  @Override
+  public void downloadFile(URI srcURI, OutputStream outputStream) throws IOException {
+    throw new IOException("unimplemented");
   }
 
 

@@ -42,6 +42,8 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Collections;
@@ -98,6 +100,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private PodKillerTask podKillerTask;
   private KubeTwillRunnerService twillRunner;
   private PodInfo podInfo;
+  private FileFetcher fileFetcher;
 
   @Override
   public void initialize(MasterEnvironmentContext context) throws IOException, ApiException {
@@ -155,6 +158,9 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     twillRunner = new KubeTwillRunnerService(context, namespace, discoveryService,
                                              podInfo, resourcePrefix,
                                              Collections.singletonMap(instanceLabel, instanceName));
+
+    fileFetcher = new FileFetcher(discoveryService);
+
     LOG.info("Kubernetes environment initialized with pod labels {}", podLabels);
   }
 
@@ -182,6 +188,11 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   @Override
   public Supplier<TwillRunnerService> getTwillRunnerSupplier() {
     return () -> twillRunner;
+  }
+
+  @Override
+  public void downloadFile(URI srcURI, OutputStream outputStream) throws IOException {
+    fileFetcher.download(srcURI, outputStream);
   }
 
   @Override

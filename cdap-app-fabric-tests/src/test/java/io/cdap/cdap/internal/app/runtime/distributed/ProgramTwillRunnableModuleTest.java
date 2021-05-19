@@ -51,6 +51,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.Supplier;
@@ -177,6 +180,11 @@ public class ProgramTwillRunnableModuleTest {
     @Override
     public Supplier<TwillRunnerService> getTwillRunnerSupplier() {
       return NoopTwillRunnerService::new;
+    }
+
+    @Override
+    public void downloadFile(URI srcURI, OutputStream outputStream) throws IOException {
+      throw new IOException("Unimplemented");
     }
   }
 }

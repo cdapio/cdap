@@ -20,6 +20,9 @@ import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URI;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -85,4 +88,9 @@ public interface MasterEnvironment {
    * Returns a {@link Supplier} of {@link TwillRunnerService} for running programs.
    */
   Supplier<TwillRunnerService> getTwillRunnerSupplier();
+
+  /**
+   * Download file specified by the URI.
+   */
+  void downloadFile(URI srcURI, OutputStream outputStream) throws IOException;
 }

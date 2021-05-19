@@ -28,9 +28,11 @@ import org.apache.twill.internal.json.TwillRuntimeSpecificationAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.Reader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -49,10 +51,12 @@ public class FileLocalizer implements MasterEnvironmentRunnable {
   private static final Logger LOG = LoggerFactory.getLogger(FileLocalizer.class);
 
   private final MasterEnvironmentContext context;
+  private final MasterEnvironment masterEnv;
   private volatile boolean stopped;
 
-  public FileLocalizer(MasterEnvironmentContext context, @SuppressWarnings("unused") MasterEnvironment masterEnv) {
+  public FileLocalizer(MasterEnvironmentContext context, MasterEnvironment masterEnv) {
     this.context = context;
+    this.masterEnv = masterEnv;
   }
 
   @Override
@@ -68,7 +72,14 @@ public class FileLocalizer implements MasterEnvironmentRunnable {
     if (context.getLocationFactory().getHomeLocation().toURI().getScheme().equals(uri.getScheme())) {
       runtimeConfigLocation = context.getLocationFactory().create(uri);
     } else {
-      runtimeConfigLocation = new LocalLocationFactory().create(new File(uri).toURI());
+      // Localize the runtime config jar
+      runtimeConfigLocation = new LocalLocationFactory().create(new File(uri.getPath()).toURI());
+      File runtimeConfig = new File(runtimeConfigLocation.toURI());
+      Files.createDirectories(runtimeConfig.toPath().getParent());
+      Files.createFile(runtimeConfig.toPath());
+      try (FileOutputStream outputStream = new FileOutputStream(runtimeConfig)) {
+        masterEnv.downloadFile(uri, outputStream);
+      }
     }
 
     Path runtimeConfigDir = expand(runtimeConfigLocation, Paths.get(Constants.Files.RUNTIME_CONFIG_JAR));
@@ -105,26 +116,28 @@ public class FileLocalizer implements MasterEnvironmentRunnable {
 
   private void copy(Location location, Path target) throws IOException {
     LOG.debug("Localize {} to {}", location, target);
-
-    try (InputStream is = location.getInputStream()) {
-      Files.copy(is, target, StandardCopyOption.REPLACE_EXISTING);
+    try (FileOutputStream outputStream = new FileOutputStream(new File(target.toUri()))) {
+      masterEnv.downloadFile(location.toURI(), outputStream);
     }
   }
 
   private Path expand(Location location, Path targetDir) throws IOException {
     LOG.debug("Localize and expand {} to {}", location, targetDir);
 
-    try (ZipInputStream is = new ZipInputStream(location.getInputStream())) {
-      Path targetPath = Files.createDirectories(targetDir);
-      ZipEntry entry;
-      while ((entry = is.getNextEntry()) != null && !stopped) {
-        Path outputPath = targetPath.resolve(entry.getName());
+    try (ByteArrayOutputStream os = new ByteArrayOutputStream(64 * 1024)) {
+      masterEnv.downloadFile(location.toURI(), os);
+      try (ZipInputStream is = new ZipInputStream(new ByteArrayInputStream(os.toByteArray()))) {
+        Path targetPath = Files.createDirectories(targetDir);
+        ZipEntry entry;
+        while ((entry = is.getNextEntry()) != null && !stopped) {
+          Path outputPath = targetPath.resolve(entry.getName());
 
-        if (entry.isDirectory()) {
-          Files.createDirectories(outputPath);
-        } else {
-          Files.createDirectories(outputPath.getParent());
-          Files.copy(is, outputPath, StandardCopyOption.REPLACE_EXISTING);
+          if (entry.isDirectory()) {
+            Files.createDirectories(outputPath);
+          } else {
+            Files.createDirectories(outputPath.getParent());
+            Files.copy(is, outputPath, StandardCopyOption.REPLACE_EXISTING);
+          }
         }
       }
     }
