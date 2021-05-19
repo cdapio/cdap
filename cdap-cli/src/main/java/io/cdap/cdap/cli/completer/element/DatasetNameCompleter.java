@@ -23,8 +23,8 @@ import com.google.common.collect.Lists;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.completer.StringsCompleter;
 import io.cdap.cdap.client.DatasetClient;
-import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.proto.DatasetSpecificationSummary;
+import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 
 import java.io.IOException;

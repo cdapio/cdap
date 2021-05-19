@@ -18,13 +18,13 @@ package io.cdap.cdap.explore.jdbc;
 
 import com.google.common.collect.Iterables;
 import io.cdap.cdap.common.ServiceUnavailableException;
-import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.explore.client.FixedAddressExploreClient;
 import io.cdap.cdap.explore.service.ExploreException;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

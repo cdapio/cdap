@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,11 +14,12 @@
  * the License.
  */
 
-package io.cdap.cdap.common;
+package io.cdap.cdap.security.spi.authentication;
 
 import io.cdap.cdap.api.common.HttpErrorStatusProvider;
 import io.cdap.cdap.api.security.AccessException;
-import io.netty.handler.codec.http.HttpResponseStatus;
+
+import java.net.HttpURLConnection;
 
 /**
  * Thrown when a user is not authenticated.
@@ -39,6 +40,6 @@ public class UnauthenticatedException extends AccessException implements HttpErr
 
   @Override
   public int getStatusCode() {
-    return HttpResponseStatus.UNAUTHORIZED.code();
+    return HttpURLConnection.HTTP_UNAUTHORIZED;
   }
 }

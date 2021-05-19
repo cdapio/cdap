@@ -22,7 +22,7 @@ import io.cdap.cdap.cli.ElementType;
 import io.cdap.cdap.cli.util.AbstractCommand;
 import io.cdap.cdap.client.PreferencesClient;
 import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.common.UnauthenticatedException;
+import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.cli.Arguments;
 

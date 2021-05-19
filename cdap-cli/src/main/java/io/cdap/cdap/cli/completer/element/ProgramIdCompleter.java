@@ -20,9 +20,9 @@ import com.google.common.base.Supplier;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.completer.StringsCompleter;
 import io.cdap.cdap.client.ApplicationClient;
-import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.proto.ProgramRecord;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 
 import java.io.IOException;

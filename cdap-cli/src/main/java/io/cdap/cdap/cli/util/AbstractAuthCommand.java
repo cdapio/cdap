@@ -23,10 +23,10 @@ import io.cdap.cdap.cli.ArgumentName;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.ElementType;
 import io.cdap.cdap.cli.exception.CommandInputError;
-import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.common.cli.Arguments;
 import io.cdap.common.cli.Command;
 

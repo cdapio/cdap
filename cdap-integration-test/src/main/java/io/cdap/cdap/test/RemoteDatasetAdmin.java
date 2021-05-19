@@ -22,9 +22,9 @@ import io.cdap.cdap.client.DatasetClient;
 import io.cdap.cdap.common.DatasetAlreadyExistsException;
 import io.cdap.cdap.common.DatasetNotFoundException;
 import io.cdap.cdap.common.DatasetTypeNotFoundException;
-import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.proto.DatasetInstanceConfiguration;
 import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 
 import java.io.IOException;

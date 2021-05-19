@@ -18,9 +18,9 @@ package io.cdap.cdap.client;
 
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.util.RESTClient;
-import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.common.metadata.AbstractMetadataClient;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
