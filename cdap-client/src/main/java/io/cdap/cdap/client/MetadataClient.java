@@ -50,7 +50,7 @@ public class MetadataClient extends AbstractMetadataClient {
 
   @Override
   protected HttpResponse execute(HttpRequest request, int... allowedErrorCodes)
-    throws IOException, UnauthenticatedException {
+    throws IOException, UnauthenticatedException, UnauthorizedException {
     // the allowed codes are the ones that AbstractNamespaceClient expects to be able to handle
     return restClient.execute(request, config.getAccessToken(),
                               HttpURLConnection.HTTP_BAD_REQUEST,

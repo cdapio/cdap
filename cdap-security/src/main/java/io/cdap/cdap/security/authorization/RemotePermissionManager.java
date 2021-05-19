@@ -30,6 +30,7 @@ import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.Privilege;
 import io.cdap.cdap.security.spi.authorization.PermissionManager;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpResponse;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
@@ -56,28 +57,30 @@ public class RemotePermissionManager extends RemoteOpsClient implements Permissi
   }
 
   @Override
-  public void grant(Authorizable authorizable, Principal principal, Set<? extends Permission> permissions) {
+  public void grant(Authorizable authorizable, Principal principal, Set<? extends Permission> permissions)
+    throws UnauthorizedException {
     LOG.trace("Making request to grant {} on {} to {}", permissions, authorizable, principal);
     executeRequest("grant", authorizable, principal, permissions);
     LOG.debug("Granted {} on {} to {} successfully", permissions, authorizable, principal);
   }
 
   @Override
-  public void revoke(Authorizable authorizable, Principal principal, Set<? extends Permission> permissions) {
+  public void revoke(Authorizable authorizable, Principal principal, Set<? extends Permission> permissions)
+    throws UnauthorizedException {
     LOG.trace("Making request to revoke {} on {} to {}", permissions, authorizable, principal);
     executeRequest("revoke", authorizable, principal, permissions);
     LOG.debug("Revoked {} on {} to {} successfully", permissions, authorizable, principal);
   }
 
   @Override
-  public void revoke(Authorizable authorizable) {
+  public void revoke(Authorizable authorizable) throws UnauthorizedException {
     LOG.trace("Making request to revoke all permissions on {}", authorizable);
     executeRequest("revokeAll", authorizable);
     LOG.debug("Revoked all permissions on {} successfully", authorizable);
   }
 
   @Override
-  public Set<GrantedPermission> listGrants(Principal principal) {
+  public Set<GrantedPermission> listGrants(Principal principal) throws UnauthorizedException {
     LOG.trace("Listing privileges for {}", principal);
     HttpResponse httpResponse = executeRequest("listGrants", principal);
     String responseBody = httpResponse.getResponseBodyAsString();

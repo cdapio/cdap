@@ -32,6 +32,7 @@ import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.netty.handler.codec.http.HttpRequest;
@@ -66,7 +67,7 @@ public final class DirectRuntimeRequestValidator implements RuntimeRequestValida
       .expireAfterWrite(pollTimeMillis, TimeUnit.MILLISECONDS)
       .build(new CacheLoader<ProgramRunId, Boolean>() {
         @Override
-        public Boolean load(ProgramRunId programRunId) throws IOException {
+        public Boolean load(ProgramRunId programRunId) throws IOException, UnauthorizedException {
           return isValid(programRunId);
         }
       });
@@ -88,7 +89,7 @@ public final class DirectRuntimeRequestValidator implements RuntimeRequestValida
   /**
    * Checks if the given {@link ProgramRunId} is valid.
    */
-  private boolean isValid(ProgramRunId programRunId) throws IOException {
+  private boolean isValid(ProgramRunId programRunId) throws IOException, UnauthorizedException {
     RunRecordDetail runRecord = TransactionRunners.run(txRunner, context -> {
       return AppMetadataStore.create(context).getRun(programRunId);
     }, IOException.class);

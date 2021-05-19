@@ -59,6 +59,7 @@ import io.cdap.cdap.proto.id.Ids;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.WorkflowId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -262,7 +263,7 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
                                        @PathParam("app-id") String applicationId,
                                        @PathParam("workflow-id") String workflowId,
                                        @PathParam("run-id") String runId)
-    throws NotFoundException, DatasetManagementException {
+    throws NotFoundException, DatasetManagementException, UnauthorizedException {
     WorkflowSpecification workflowSpec = getWorkflowSpecForValidRun(namespaceId, applicationId, workflowId, runId);
     Map<String, DatasetSpecificationSummary> localDatasetSummaries = new HashMap<>();
     for (Map.Entry<String, DatasetCreationSpec> localDatasetEntry : workflowSpec.getLocalDatasetSpecs().entrySet()) {

@@ -25,7 +25,6 @@ import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.api.workflow.WorkflowToken;
-import io.cdap.cdap.common.CallUnauthorizedException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;

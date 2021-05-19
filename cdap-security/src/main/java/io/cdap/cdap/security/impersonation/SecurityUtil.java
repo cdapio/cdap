@@ -16,12 +16,14 @@
 
 package io.cdap.cdap.security.impersonation;
 
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.security.auth.AuthenticationMode;
+import io.cdap.cdap.security.spi.AccessIOException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authentication.util.KerberosName;
@@ -227,15 +229,19 @@ public final class SecurityUtil {
    * @return The location of the keytab
    * @throws IOException If the principal is not a valid kerberos principal
    */
-  static String getKeytabURIforPrincipal(String principal, CConfiguration cConf) throws IOException {
-    String confPath = cConf.getRaw(Constants.Security.KEYTAB_PATH);
-    if (confPath == null) {
-      throw new IllegalArgumentException(String.format("Failed to get a valid keytab path. " +
-                                                         "Please ensure that you have specified %s in cdap-site.xml",
-                                                       Constants.Security.KEYTAB_PATH));
+  static String getKeytabURIforPrincipal(String principal, CConfiguration cConf) throws AccessException {
+    try {
+      String confPath = cConf.getRaw(Constants.Security.KEYTAB_PATH);
+      if (confPath == null) {
+        throw new IllegalArgumentException(String.format("Failed to get a valid keytab path. " +
+                                                           "Please ensure that you have specified %s in cdap-site.xml",
+                                                         Constants.Security.KEYTAB_PATH));
+      }
+      String name = new KerberosName(principal).getShortName();
+      return confPath.replace(Constants.USER_NAME_SPECIFIER, name);
+    } catch (IOException e) {
+      throw new AccessIOException(e);
     }
-    String name = new KerberosName(principal).getShortName();
-    return confPath.replace(Constants.USER_NAME_SPECIFIER, name);
   }
 
   /**
@@ -247,7 +253,7 @@ public final class SecurityUtil {
    * </ul>
    */
   public static ImpersonationInfo createImpersonationInfo(OwnerAdmin ownerAdmin, CConfiguration cConf,
-                                                          NamespacedEntityId entityId) throws IOException {
+                                                          NamespacedEntityId entityId) throws AccessException {
     ImpersonationInfo impersonationInfo = ownerAdmin.getImpersonationInfo(entityId);
     if (impersonationInfo == null) {
       // here we don't need to get the keytab file since we use delegation tokens accross system containers

@@ -21,6 +21,7 @@ import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 
 import java.io.IOException;
 import java.util.List;
@@ -41,7 +42,7 @@ public interface MessagingService {
    * @throws IOException if failed to create the topic
    * @throws ServiceUnavailableException if the messaging service is not available
    */
-  void createTopic(TopicMetadata topicMetadata) throws TopicAlreadyExistsException, IOException;
+  void createTopic(TopicMetadata topicMetadata) throws TopicAlreadyExistsException, IOException, UnauthorizedException;
 
   /**
    * Updates the metadata of a topic.
@@ -51,7 +52,7 @@ public interface MessagingService {
    * @throws IOException if failed to update the topic metadata
    * @throws ServiceUnavailableException if the messaging service is not available
    */
-  void updateTopic(TopicMetadata topicMetadata) throws TopicNotFoundException, IOException;
+  void updateTopic(TopicMetadata topicMetadata) throws TopicNotFoundException, IOException, UnauthorizedException;
 
   /**
    * Deletes a topic
@@ -61,7 +62,7 @@ public interface MessagingService {
    * @throws IOException if failed to delete the topic
    * @throws ServiceUnavailableException if the messaging service is not available
    */
-  void deleteTopic(TopicId topicId) throws TopicNotFoundException, IOException;
+  void deleteTopic(TopicId topicId) throws TopicNotFoundException, IOException, UnauthorizedException;
 
   /**
    * Returns the metadata of the given topic.
@@ -72,7 +73,7 @@ public interface MessagingService {
    * @throws IOException if failed to retrieve topic metadata.
    * @throws ServiceUnavailableException if the messaging service is not available
    */
-  TopicMetadata getTopic(TopicId topicId) throws TopicNotFoundException, IOException;
+  TopicMetadata getTopic(TopicId topicId) throws TopicNotFoundException, IOException, UnauthorizedException;
 
   /**
    * Returns the list of topics available under the given namespace.
@@ -82,7 +83,7 @@ public interface MessagingService {
    * @throws IOException if failed to retrieve topics.
    * @throws ServiceUnavailableException if the messaging service is not available
    */
-  List<TopicId> listTopics(NamespaceId namespaceId) throws IOException;
+  List<TopicId> listTopics(NamespaceId namespaceId) throws IOException, UnauthorizedException;
 
   /**
    * Prepares to fetch messages from the given topic.
@@ -106,7 +107,7 @@ public interface MessagingService {
    * @throws ServiceUnavailableException if the messaging service is not available
    */
   @Nullable
-  RollbackDetail publish(StoreRequest request) throws TopicNotFoundException, IOException;
+  RollbackDetail publish(StoreRequest request) throws TopicNotFoundException, IOException, UnauthorizedException;
 
   /**
    * Stores a list of messages to the messaging system. It is for long / distributed transactional publishing use case.
@@ -116,7 +117,7 @@ public interface MessagingService {
    * @throws IOException if failed to store messages
    * @throws ServiceUnavailableException if the messaging service is not available
    */
-  void storePayload(StoreRequest request) throws TopicNotFoundException, IOException;
+  void storePayload(StoreRequest request) throws TopicNotFoundException, IOException, UnauthorizedException;
 
   /**
    * Rollbacks messages published to the given topic with the given transaction.
@@ -129,5 +130,6 @@ public interface MessagingService {
    * @throws IOException if failed to rollback changes
    * @throws ServiceUnavailableException if the messaging service is not available
    */
-  void rollback(TopicId topicId, RollbackDetail rollbackDetail) throws TopicNotFoundException, IOException;
+  void rollback(TopicId topicId, RollbackDetail rollbackDetail)
+    throws TopicNotFoundException, IOException, UnauthorizedException;
 }

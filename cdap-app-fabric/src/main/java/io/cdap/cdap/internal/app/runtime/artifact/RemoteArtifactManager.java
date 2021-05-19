@@ -16,6 +16,7 @@
 package io.cdap.cdap.internal.app.runtime.artifact;
 
 
+import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
@@ -23,6 +24,7 @@ import com.google.inject.assistedinject.Assisted;
 import io.cdap.cdap.api.artifact.ArtifactInfo;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
@@ -34,6 +36,7 @@ import io.cdap.cdap.internal.guava.reflect.TypeToken;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
@@ -89,7 +92,7 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
    * @throws IOException If there are any exception while retrieving artifacts
    */
   @Override
-  public List<ArtifactInfo> listArtifacts() throws IOException {
+  public List<ArtifactInfo> listArtifacts() throws IOException, UnauthorizedException {
     return listArtifacts(namespaceId.getNamespace());
   }
 
@@ -103,20 +106,26 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
    * @throws IOException If there are any exception while retrieving artifacts
    */
   @Override
-  public List<ArtifactInfo> listArtifacts(String namespace) throws IOException {
-    return Retries.callWithRetries(() -> {
-      HttpRequest.Builder requestBuilder =
-        remoteClientInternal.requestBuilder(HttpMethod.GET,
-                                            String.format("namespaces/%s/artifacts", namespace));
-      // add header if auth is enabled
-      if (authorizationEnabled) {
-        requestBuilder.addHeader(Constants.Security.Headers.USER_ID, authenticationContext.getPrincipal().getName());
-      }
-      return getArtifactsList(requestBuilder.build());
-    }, retryStrategy);
+  public List<ArtifactInfo> listArtifacts(String namespace) throws IOException, UnauthorizedException {
+    try {
+      return Retries.callWithRetries(() -> {
+        HttpRequest.Builder requestBuilder =
+          remoteClientInternal.requestBuilder(HttpMethod.GET,
+                                              String.format("namespaces/%s/artifacts", namespace));
+        // add header if auth is enabled
+        if (authorizationEnabled) {
+          requestBuilder.addHeader(Constants.Security.Headers.USER_ID, authenticationContext.getPrincipal().getName());
+        }
+        return getArtifactsList(requestBuilder.build());
+      }, retryStrategy);
+    } catch (UnauthorizedException | IOException e) {
+      throw e;
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 
-  private List<ArtifactInfo> getArtifactsList(HttpRequest httpRequest) throws IOException {
+  private List<ArtifactInfo> getArtifactsList(HttpRequest httpRequest) throws IOException, UnauthorizedException {
     HttpResponse httpResponse = remoteClientInternal.execute(httpRequest);
 
     if (httpResponse.getResponseCode() == HttpResponseStatus.NOT_FOUND.code()) {
@@ -132,7 +141,8 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
 
   @Override
   protected Location getArtifactLocation(ArtifactInfo artifactInfo,
-                                         @Nullable String artifactNamespace) throws IOException {
+                                         @Nullable String artifactNamespace)
+    throws IOException, UnauthorizedException {
     String namespace;
     if (ArtifactScope.SYSTEM.equals(artifactInfo.getScope())) {
       namespace = NamespaceId.SYSTEM.getNamespace();

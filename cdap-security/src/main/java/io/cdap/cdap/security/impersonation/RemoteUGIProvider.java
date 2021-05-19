@@ -19,13 +19,16 @@ package io.cdap.cdap.security.impersonation;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.security.AuthEnforceUtil;
 import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
@@ -68,13 +71,20 @@ public class RemoteUGIProvider extends AbstractCachedUGIProvider {
   }
 
   @Override
-  protected UGIWithPrincipal createUGI(ImpersonationRequest impersonationRequest) throws IOException {
+  protected UGIWithPrincipal createUGI(ImpersonationRequest impersonationRequest)
+    throws AccessException {
     ImpersonationRequest jsonRequest = new ImpersonationRequest(impersonationRequest.getEntityId(),
                                                                 impersonationRequest.getImpersonatedOpType(),
                                                                 impersonationRequest.getPrincipal());
     PrincipalCredentials principalCredentials =
-      GSON.fromJson(executeRequest(jsonRequest).getResponseBodyAsString(), PrincipalCredentials.class);
-    LOG.debug("Received response: {}", principalCredentials);
+      null;
+    try {
+      principalCredentials = GSON.fromJson(executeRequest(jsonRequest).getResponseBodyAsString(),
+                                           PrincipalCredentials.class);
+      LOG.debug("Received response: {}", principalCredentials);
+    } catch (IOException e) {
+      throw AuthEnforceUtil.propagateAccessException(e);
+    }
 
     Location location = locationFactory.create(URI.create(principalCredentials.getCredentialsPath()));
     try {
@@ -87,6 +97,8 @@ public class RemoteUGIProvider extends AbstractCachedUGIProvider {
       UserGroupInformation impersonatedUGI = UserGroupInformation.createRemoteUser(user);
       impersonatedUGI.addCredentials(readCredentials(location));
       return new UGIWithPrincipal(principalCredentials.getPrincipal(), impersonatedUGI);
+    } catch (IOException e) {
+      throw AuthEnforceUtil.propagateAccessException(e);
     } finally {
       try {
         if (!location.delete()) {
@@ -102,12 +114,13 @@ public class RemoteUGIProvider extends AbstractCachedUGIProvider {
    * In remote mode, we should not cache the explore request
    */
   @Override
-  protected boolean checkExploreAndDetermineCache(ImpersonationRequest impersonationRequest) throws IOException {
+  protected boolean checkExploreAndDetermineCache(ImpersonationRequest impersonationRequest) {
     return !(impersonationRequest.getEntityId().getEntityType().equals(EntityType.NAMESPACE) &&
       impersonationRequest.getImpersonatedOpType().equals(ImpersonatedOpType.EXPLORE));
   }
 
-  private HttpResponse executeRequest(ImpersonationRequest impersonationRequest) throws IOException {
+  private HttpResponse executeRequest(ImpersonationRequest impersonationRequest)
+    throws IOException, UnauthorizedException {
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.POST, "impersonation/credentials")
       .withBody(GSON.toJson(impersonationRequest))
       .build();

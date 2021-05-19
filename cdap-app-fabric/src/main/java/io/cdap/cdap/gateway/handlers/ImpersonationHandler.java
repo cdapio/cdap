@@ -19,6 +19,7 @@ package io.cdap.cdap.gateway.handlers;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ServiceException;
 import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
@@ -86,7 +87,7 @@ public class ImpersonationHandler extends AbstractHttpHandler {
     UGIWithPrincipal ugiWithPrincipal;
     try {
       ugiWithPrincipal = ugiProvider.getConfiguredUGI(impersonationRequest);
-    } catch (IOException e) {
+    } catch (AccessException e) {
       throw new ServiceException(e, HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
     Credentials credentials = ImpersonationUtils.doAs(ugiWithPrincipal.getUGI(), new Callable<Credentials>() {

@@ -23,6 +23,7 @@ import io.cdap.cdap.api.messaging.MessagePublisher;
 import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.api.spark.SparkClientContext;
 import io.cdap.cdap.etl.api.StageSubmitterContext;
@@ -54,28 +55,31 @@ public class SparkSubmitterContext extends AbstractBatchContext implements Stage
   }
 
   @Override
-  public void createTopic(String topic) throws TopicAlreadyExistsException, IOException {
+  public void createTopic(String topic) throws TopicAlreadyExistsException, IOException, AccessException {
     admin.createTopic(topic);
   }
 
   @Override
   public void createTopic(String topic,
-                          Map<String, String> properties) throws TopicAlreadyExistsException, IOException {
+                          Map<String, String> properties)
+    throws TopicAlreadyExistsException, IOException, AccessException {
     admin.createTopic(topic, properties);
   }
 
   @Override
-  public Map<String, String> getTopicProperties(String topic) throws TopicNotFoundException, IOException {
+  public Map<String, String> getTopicProperties(String topic)
+    throws TopicNotFoundException, IOException, AccessException {
     return admin.getTopicProperties(topic);
   }
 
   @Override
-  public void updateTopic(String topic, Map<String, String> properties) throws TopicNotFoundException, IOException {
+  public void updateTopic(String topic, Map<String, String> properties)
+    throws TopicNotFoundException, IOException, AccessException {
     admin.updateTopic(topic, properties);
   }
 
   @Override
-  public void deleteTopic(String topic) throws TopicNotFoundException, IOException {
+  public void deleteTopic(String topic) throws TopicNotFoundException, IOException, AccessException {
     admin.deleteTopic(topic);
   }
 

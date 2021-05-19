@@ -17,19 +17,19 @@
 package io.cdap.cdap.security.impersonation;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.security.AuthEnforceUtil;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -54,16 +54,17 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
   /**
    * Creates a new {@link UGIWithPrincipal} based on the given {@link ImpersonationRequest}.
    */
-  protected abstract UGIWithPrincipal createUGI(ImpersonationRequest impersonationRequest) throws IOException;
+  protected abstract UGIWithPrincipal createUGI(ImpersonationRequest impersonationRequest) throws AccessException;
 
   /**
    * Checks the {@link ImpersonationRequest} is an explore request and determine whether to cache the result or not
    */
   protected abstract boolean checkExploreAndDetermineCache(
-    ImpersonationRequest impersonationRequest) throws IOException;
+    ImpersonationRequest impersonationRequest) throws AccessException;
 
   @Override
-  public final UGIWithPrincipal getConfiguredUGI(ImpersonationRequest impersonationRequest) throws IOException {
+  public final UGIWithPrincipal getConfiguredUGI(ImpersonationRequest impersonationRequest)
+    throws AccessException {
     try {
       UGIWithPrincipal ugi = impersonationRequest.getImpersonatedOpType().equals(ImpersonatedOpType.EXPLORE) ||
         impersonationRequest.getPrincipal() == null ?
@@ -83,11 +84,7 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
                                                                  info.getPrincipal(), info.getKeytabURI());
       return isCache ? ugiCache.get(new UGICacheKey(newRequest)) : createUGI(newRequest);
     } catch (ExecutionException e) {
-      Throwable cause = e.getCause();
-      // Propagate if the cause is an IOException or RuntimeException
-      Throwables.propagateIfPossible(cause, IOException.class);
-      // Otherwise always wrap it with IOException
-      throw new IOException(cause);
+      throw AuthEnforceUtil.propagateAccessException(e);
     }
   }
 
@@ -109,7 +106,7 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
       });
   }
 
-  private ImpersonationInfo getPrincipalForEntity(ImpersonationRequest request) throws IOException {
+  private ImpersonationInfo getPrincipalForEntity(ImpersonationRequest request) throws AccessException {
     ImpersonationInfo impersonationInfo = SecurityUtil.createImpersonationInfo(ownerAdmin, cConf,
                                                                                request.getEntityId());
     LOG.debug("Obtained impersonation info: {} for entity {}", impersonationInfo, request.getEntityId());

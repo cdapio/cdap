@@ -22,6 +22,7 @@ import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.api.metadata.MetadataReader;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
 import io.cdap.cdap.api.service.http.HttpServiceContext;
@@ -184,24 +185,26 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
   }
 
   @Override
-  public List<ArtifactInfo> listArtifacts() throws IOException {
+  public List<ArtifactInfo> listArtifacts() throws IOException, AccessException {
     return artifactManager.listArtifacts();
   }
 
   @Override
-  public List<ArtifactInfo> listArtifacts(String namespace) throws IOException {
+  public List<ArtifactInfo> listArtifacts(String namespace) throws IOException, AccessException {
     return artifactManager.listArtifacts(namespace);
   }
 
   @Override
   public CloseableClassLoader createClassLoader(ArtifactInfo artifactInfo,
-                                                @Nullable ClassLoader parentClassLoader) throws IOException {
+                                                @Nullable ClassLoader parentClassLoader)
+    throws IOException, AccessException {
     return artifactManager.createClassLoader(artifactInfo, parentClassLoader);
   }
 
   @Override
   public CloseableClassLoader createClassLoader(String namespace, ArtifactInfo artifactInfo,
-                                                @Nullable ClassLoader parentClassLoader) throws IOException {
+                                                @Nullable ClassLoader parentClassLoader)
+    throws IOException, AccessException {
     return artifactManager.createClassLoader(namespace, artifactInfo, parentClassLoader);
   }
 

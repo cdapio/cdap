@@ -19,6 +19,7 @@ package io.cdap.cdap.api.messaging;
 import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.security.AccessException;
 import org.apache.tephra.TransactionFailureException;
 
 import java.io.IOException;
@@ -46,8 +47,10 @@ public interface MessagePublisher {
    * Publishes messages to the given topic. Identical to calling the method
    * {@link #publish(String, String, Charset, String...)}
    * with charset set to {@link StandardCharsets#UTF_8}.
+   * @throws AccessException if caller do not have proper access to the topic
    */
-  void publish(String namespace, String topic, String...payloads) throws TopicNotFoundException, IOException;
+  void publish(String namespace, String topic, String...payloads)
+    throws TopicNotFoundException, IOException, AccessException;
 
   /**
    * Publishes messages to the given topic. Each payload string will be encoded as a byte array using the given
@@ -61,9 +64,11 @@ public interface MessagePublisher {
    *                                  characters, {@code _}, or {@code -}.
    * @throws IOException if there was a failure to communicate with the messaging system
    * @throws TopicNotFoundException if the given topic doesn't exist
+   * @throws AccessException if caller do not have proper access to the topic
    */
   void publish(String namespace, String topic,
-               Charset charset, String...payloads) throws TopicNotFoundException, IOException;
+               Charset charset, String...payloads)
+    throws TopicNotFoundException, IOException, AccessException;
 
   /**
    * Publishes messages to the given topic.
@@ -75,8 +80,10 @@ public interface MessagePublisher {
    *                                  characters, {@code _}, or {@code -}.
    * @throws IOException if failed to communicate with the messaging system
    * @throws TopicNotFoundException if the given topic doesn't exist
+   * @throws AccessException if caller do not have proper access to the topic
    */
-  void publish(String namespace, String topic, byte[]...payloads) throws TopicNotFoundException, IOException;
+  void publish(String namespace, String topic, byte[]...payloads)
+    throws TopicNotFoundException, IOException, AccessException;
 
   /**
    * Publishes messages to the given topic. Each payload string will be encoded as a byte array using the given
@@ -90,9 +97,11 @@ public interface MessagePublisher {
    *                                  characters, {@code _}, or {@code -}.
    * @throws IOException if there was a failure to communicate with the messaging system
    * @throws TopicNotFoundException if the given topic doesn't exist
+   * @throws AccessException if caller do not have proper access to the topic
    */
   void publish(String namespace, String topic,
-               Charset charset, Iterator<String> payloads) throws TopicNotFoundException, IOException;
+               Charset charset, Iterator<String> payloads)
+    throws TopicNotFoundException, IOException, AccessException;
 
   /**
    * Publishes messages to the given topic.
@@ -104,6 +113,8 @@ public interface MessagePublisher {
    *                                  characters, {@code _}, or {@code -}.
    * @throws IOException if there was a failure to communicate with the messaging system
    * @throws TopicNotFoundException if the given topic doesn't exist
+   * @throws AccessException if caller do not have proper access to the topic
    */
-  void publish(String namespace, String topic, Iterator<byte[]> payloads) throws TopicNotFoundException, IOException;
+  void publish(String namespace, String topic, Iterator<byte[]> payloads)
+    throws TopicNotFoundException, IOException, AccessException;
 }

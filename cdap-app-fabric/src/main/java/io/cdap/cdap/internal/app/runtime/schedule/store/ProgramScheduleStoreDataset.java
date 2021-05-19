@@ -42,6 +42,7 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.data.InvalidFieldException;
 import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.StructuredTable;
@@ -703,7 +704,7 @@ public class ProgramScheduleStoreDataset {
    * @param datasetFramework framework to add types and datasets to
    */
   public static void setupDatasets(DatasetFramework datasetFramework) throws IOException,
-    DatasetManagementException {
+    DatasetManagementException, UnauthorizedException {
     datasetFramework.addInstance(Schedulers.STORE_TYPE_NAME, Schedulers.STORE_DATASET_ID, DatasetProperties.EMPTY);
   }
 }

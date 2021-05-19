@@ -21,6 +21,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.proto.metadata.MetadataSearchResponse;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.metadata.SearchRequest;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
@@ -60,7 +61,7 @@ public class MetadataSearchClient {
    * @return {@link MetadataSearchResponse}
    * @throws IOException
    */
-  public MetadataSearchResponse search(SearchRequest request) throws IOException {
+  public MetadataSearchResponse search(SearchRequest request) throws IOException, UnauthorizedException {
     HttpRequest httpRequest = remoteClient
       .requestBuilder(HttpMethod.GET, buildRequestURL(request)).build();
     HttpResponse response = remoteClient.execute(httpRequest);

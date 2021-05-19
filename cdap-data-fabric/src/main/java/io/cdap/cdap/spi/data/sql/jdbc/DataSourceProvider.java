@@ -149,7 +149,7 @@ public class DataSourceProvider implements Provider<DataSource> {
       JDBCDriverShim driverShim = new JDBCDriverShim(driver);
       DriverManager.registerDriver(driverShim);
     } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | SQLException e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
 
     LOG.info("Successfully loaded {} from {}", driverName, driverExtensionPath);

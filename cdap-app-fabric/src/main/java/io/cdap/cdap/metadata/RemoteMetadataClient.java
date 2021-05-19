@@ -52,7 +52,8 @@ public class RemoteMetadataClient extends AbstractMetadataClient {
   }
 
   @Override
-  protected HttpResponse execute(HttpRequest request, int... allowedErrorCodes) throws IOException {
+  protected HttpResponse execute(HttpRequest request, int... allowedErrorCodes)
+    throws IOException, UnauthorizedException {
     LOG.trace("Making metadata request {}", request);
     HttpResponse response = remoteClient.execute(addUserIdHeader(request));
     LOG.trace("Received response {} for request {}", response, request);

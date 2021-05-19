@@ -44,6 +44,7 @@ import io.cdap.cdap.messaging.data.RawMessage;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.test.SlowTests;
 import org.apache.tephra.TxConstants;
 import org.junit.AfterClass;
@@ -81,7 +82,7 @@ public class TestTMSLogging {
 
 
   @BeforeClass
-  public static void init() throws IOException, TopicAlreadyExistsException {
+  public static void init() throws IOException, TopicAlreadyExistsException, UnauthorizedException {
     cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     cConf.setInt(Constants.MessagingSystem.HTTP_SERVER_CONSUME_CHUNK_SIZE, 128);
@@ -115,7 +116,7 @@ public class TestTMSLogging {
   }
 
   @AfterClass
-  public static void finish() throws TopicNotFoundException, IOException {
+  public static void finish() throws TopicNotFoundException, IOException, UnauthorizedException {
     for (TopicId topicId : topicIds.values()) {
       client.deleteTopic(topicId);
     }

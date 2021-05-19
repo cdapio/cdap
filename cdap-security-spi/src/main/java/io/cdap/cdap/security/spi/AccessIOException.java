@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.security.spi;
 
+import io.cdap.cdap.api.security.AccessException;
+
 /**
  * Security exception related to networking IO problems. Often wraps {@link java.io.IOException}
  */

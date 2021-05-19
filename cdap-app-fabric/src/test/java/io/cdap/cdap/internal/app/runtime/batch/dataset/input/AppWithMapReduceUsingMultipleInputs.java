@@ -146,7 +146,7 @@ public class AppWithMapReduceUsingMultipleInputs extends AbstractApplication {
         // assert that the user gets the TextInputFormat, as opposed to the MultiInputFormat from the context
         Preconditions.checkArgument(context.getInputFormatClass() == TextInputFormat.class);
       } catch (ClassNotFoundException e) {
-        Throwables.propagate(e);
+        throw Throwables.propagate(e);
       }
     }
 

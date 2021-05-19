@@ -55,6 +55,7 @@ import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.preview.DataTracer;
 import io.cdap.cdap.api.schedule.TriggeringScheduleInfo;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreData;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
@@ -810,6 +811,9 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
           } catch (TopicNotFoundException e) {
             // this shouldn't happen since the TMS creates the data event topic on startup.
             throw new IOException("Unexpected exception due to missing topic '" + dataEventTopic + "'", e);
+          } catch (AccessException e) {
+            throw new IOException("Unexpected access exception during publishing notification to '"
+                                    + dataEventTopic + "'", e);
           } catch (IOException e) {
             long sleepTime = retryStrategy.nextRetry(++failure, startTime);
             if (sleepTime < 0) {

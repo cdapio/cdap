@@ -198,7 +198,7 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
       finishDatasets(jobContext, success);
     } catch (Exception e) {
       Throwables.propagateIfInstanceOf(e, IOException.class);
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
   }
 

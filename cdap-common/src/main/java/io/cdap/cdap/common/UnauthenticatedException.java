@@ -17,7 +17,7 @@
 package io.cdap.cdap.common;
 
 import io.cdap.cdap.api.common.HttpErrorStatusProvider;
-import io.cdap.cdap.security.spi.AccessException;
+import io.cdap.cdap.api.security.AccessException;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**

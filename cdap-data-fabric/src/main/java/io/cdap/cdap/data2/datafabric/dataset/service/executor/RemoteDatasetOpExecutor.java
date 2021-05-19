@@ -30,6 +30,7 @@ import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.proto.DatasetTypeMeta;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
@@ -99,13 +100,13 @@ public class RemoteDatasetOpExecutor implements DatasetOpExecutor {
   }
 
   private DatasetAdminOpResponse executeAdminOp(DatasetId datasetInstanceId, String opName)
-    throws IOException, HandlerException, ConflictException {
+    throws IOException, HandlerException, ConflictException, UnauthorizedException {
     HttpResponse httpResponse = doRequest(datasetInstanceId, opName, null);
     return GSON.fromJson(Bytes.toString(httpResponse.getResponseBody()), DatasetAdminOpResponse.class);
   }
 
   private HttpResponse doRequest(DatasetId datasetInstanceId, String opName,
-                                 @Nullable String body) throws IOException, ConflictException {
+                                 @Nullable String body) throws IOException, ConflictException, UnauthorizedException {
     String path = String.format("namespaces/%s/data/datasets/%s/admin/%s", datasetInstanceId.getNamespace(),
                                 datasetInstanceId.getEntityName(), opName);
     LOG.trace("executing POST on {} with body {}", path, body);

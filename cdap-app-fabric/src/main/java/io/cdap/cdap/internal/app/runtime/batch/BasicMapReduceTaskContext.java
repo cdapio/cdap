@@ -71,6 +71,7 @@ import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionAware;
@@ -276,7 +277,8 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
         return new AbstractMessagePublisher() {
           @Override
           protected void publish(TopicId topicId,
-                                 Iterator<byte[]> payloads) throws IOException, TopicNotFoundException {
+                                 Iterator<byte[]> payloads)
+            throws IOException, TopicNotFoundException, UnauthorizedException {
             if (!allowedTopic.equals(topicId)) {
               throw new UnsupportedOperationException("Publish to topic '" + topicId.getTopic() + "' is not supported");
             }

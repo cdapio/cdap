@@ -17,6 +17,7 @@
 package io.cdap.cdap.security.authorization;
 
 import com.google.common.base.Throwables;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.security.AuthEnforceUtil;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.EntityId;
@@ -28,7 +29,6 @@ import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.Role;
 import io.cdap.cdap.proto.security.StandardPermission;
-import io.cdap.cdap.security.spi.AccessException;
 import io.cdap.cdap.security.spi.authorization.AccessController;
 import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
 import io.cdap.cdap.security.spi.authorization.Authorizer;

@@ -42,6 +42,7 @@ import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpResponse;
 import io.cdap.http.AbstractHttpHandler;
@@ -160,7 +161,7 @@ public class RuntimeServiceRoutingTest {
   }
 
   @Test
-  public void testGetAndDelete() throws IOException {
+  public void testGetAndDelete() throws IOException, UnauthorizedException {
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app", "1.0").workflow("workflow").run(RunIds.generate());
     RemoteAuthenticator.setDefaultAuthenticator(new MockRemoteAuthenticator(programRunId));
 
@@ -186,7 +187,7 @@ public class RuntimeServiceRoutingTest {
   }
 
   @Test
-  public void testPutAndPost() throws IOException {
+  public void testPutAndPost() throws IOException, UnauthorizedException {
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app", "1.0").workflow("workflow").run(RunIds.generate());
     RemoteAuthenticator.setDefaultAuthenticator(new MockRemoteAuthenticator(programRunId));
 
@@ -218,7 +219,7 @@ public class RuntimeServiceRoutingTest {
   }
 
   @Test
-  public void testUnauthorized() throws IOException {
+  public void testUnauthorized() throws IOException, UnauthorizedException {
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app", "1.0").workflow("workflow").run(RunIds.generate());
     RemoteClient remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.RUNTIME,
                                                  DefaultHttpRequestConfig.DEFAULT,

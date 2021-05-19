@@ -29,6 +29,7 @@ import io.cdap.cdap.data2.dataset2.DynamicDatasetCache;
 import io.cdap.cdap.data2.metadata.lineage.AccessType;
 import io.cdap.cdap.data2.transaction.Transactions;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionFailureException;
@@ -70,7 +71,7 @@ public abstract class DynamicDatasetCacheTest {
   protected DynamicDatasetCache cache;
 
   @BeforeClass
-  public static void init() throws DatasetManagementException, IOException {
+  public static void init() throws DatasetManagementException, IOException, UnauthorizedException {
     dsFramework = dsFrameworkUtil.getFramework();
     dsFramework.addModule(NAMESPACE.datasetModule("testDataset"), new TestDatasetModule());
     dsFramework.addModule(NAMESPACE2.datasetModule("testDataset"), new TestDatasetModule());
@@ -83,7 +84,7 @@ public abstract class DynamicDatasetCacheTest {
   }
 
   @AfterClass
-  public static void tearDown() throws IOException, DatasetManagementException {
+  public static void tearDown() throws IOException, DatasetManagementException, UnauthorizedException {
     dsFrameworkUtil.deleteInstance(NAMESPACE.dataset("a"));
     dsFrameworkUtil.deleteInstance(NAMESPACE.dataset("b"));
     dsFrameworkUtil.deleteInstance(NAMESPACE.dataset("c"));

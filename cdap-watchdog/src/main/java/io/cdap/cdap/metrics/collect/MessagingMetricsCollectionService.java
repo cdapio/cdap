@@ -34,6 +34,7 @@ import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.client.StoreRequestBuilder;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -102,7 +103,7 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
     publishMetric(topicPayloads.values());
   }
 
-  private void publishMetric(Iterable<TopicPayload> topicPayloads) throws IOException {
+  private void publishMetric(Iterable<TopicPayload> topicPayloads) throws IOException, UnauthorizedException {
     for (TopicPayload topicPayload : topicPayloads) {
       topicPayload.publish(messagingService);
     }
@@ -137,7 +138,7 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
       payloads.add(payload);
     }
 
-    void publish(MessagingService messagingService) throws IOException {
+    void publish(MessagingService messagingService) throws IOException, UnauthorizedException {
       if (payloads.isEmpty()) {
         return;
       }

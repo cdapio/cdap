@@ -18,6 +18,7 @@ package io.cdap.cdap.security.impersonation;
 
 
 import com.google.common.io.Files;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -218,7 +219,7 @@ public class DefaultUGIProviderTest extends AppFabricTestBase {
 
   private void verifyCaching(DefaultUGIProvider provider, ImpersonationRequest aliceImpRequest,
                              ImpersonationRequest bobImpRequest, UGIWithPrincipal aliceUGIWithPrincipal,
-                             UGIWithPrincipal bobUGIWithPrincipal) throws IOException {
+                             UGIWithPrincipal bobUGIWithPrincipal) throws IOException, AccessException {
     // Fetch the bob UGI again, it should still return the valid one
     Assert.assertSame(bobUGIWithPrincipal, provider.getConfiguredUGI(bobImpRequest));
 
@@ -227,8 +228,8 @@ public class DefaultUGIProviderTest extends AppFabricTestBase {
     Assert.assertNotSame(aliceUGIWithPrincipal, provider.getConfiguredUGI(aliceImpRequest));
     try {
       provider.getConfiguredUGI(bobImpRequest);
-      Assert.fail("Expected IOException when getting UGI for " + bobImpRequest);
-    } catch (IOException e) {
+      Assert.fail("Expected AccessException when getting UGI for " + bobImpRequest);
+    } catch (AccessException e) {
       // Expected
     }
   }
@@ -241,7 +242,8 @@ public class DefaultUGIProviderTest extends AppFabricTestBase {
   }
 
   private UGIWithPrincipal verifyAndGetUGI(UGIProvider provider, KerberosPrincipalId principalId,
-                                           ImpersonationRequest impersonationRequest) throws IOException {
+                                           ImpersonationRequest impersonationRequest)
+    throws IOException, AccessException {
     UGIWithPrincipal ugiWithPrincipal = provider.getConfiguredUGI(impersonationRequest);
     Assert.assertEquals(UserGroupInformation.AuthenticationMethod.KERBEROS,
                         ugiWithPrincipal.getUGI().getAuthenticationMethod());

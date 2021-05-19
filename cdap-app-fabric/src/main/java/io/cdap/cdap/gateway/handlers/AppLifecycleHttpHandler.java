@@ -33,13 +33,13 @@ import com.google.inject.Singleton;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.ArtifactAlreadyExistsException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
-import io.cdap.cdap.common.CallUnauthorizedException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
@@ -71,7 +71,6 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
-import io.cdap.cdap.security.spi.AccessException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.BodyConsumer;
 import io.cdap.http.ChunkResponder;
@@ -630,7 +629,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
         } catch (ConflictException e) {
           responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
-        } catch (UnauthorizedException | CallUnauthorizedException e) {
+        } catch (UnauthorizedException e) {
           responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
         } catch (InvalidArtifactException e) {
           responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());

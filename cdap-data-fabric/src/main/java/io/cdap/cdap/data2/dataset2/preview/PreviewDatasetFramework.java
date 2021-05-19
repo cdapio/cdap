@@ -34,6 +34,7 @@ import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.security.spi.authorization.NoOpAuthorizer;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 
 import java.io.IOException;
 import java.util.Map;
@@ -106,7 +107,8 @@ public class PreviewDatasetFramework extends ForwardingDatasetFramework {
   @Override
   public void addInstance(String datasetTypeName, DatasetId datasetInstanceId,
                           DatasetProperties props,
-                          @Nullable KerberosPrincipalId ownerPrincipal) throws DatasetManagementException, IOException {
+                          @Nullable KerberosPrincipalId ownerPrincipal)
+    throws DatasetManagementException, IOException, UnauthorizedException {
     if (ownerPrincipal != null) {
       throw new UnsupportedOperationException("Creating dataset instance with owner is not supported in preview, " +
                                                 "please try to start the preview without the ownership");
@@ -116,7 +118,8 @@ public class PreviewDatasetFramework extends ForwardingDatasetFramework {
 
   @Override
   public void updateInstance(DatasetId datasetInstanceId,
-                             DatasetProperties props) throws DatasetManagementException, IOException {
+                             DatasetProperties props)
+    throws DatasetManagementException, IOException, UnauthorizedException {
     // allow updates to the datasets in preview space only
     if (delegate.hasInstance(datasetInstanceId)) {
       delegate.updateInstance(datasetInstanceId, props);
@@ -126,7 +129,8 @@ public class PreviewDatasetFramework extends ForwardingDatasetFramework {
 
   @Nullable
   @Override
-  public DatasetSpecification getDatasetSpec(DatasetId datasetInstanceId) throws DatasetManagementException {
+  public DatasetSpecification getDatasetSpec(DatasetId datasetInstanceId)
+    throws DatasetManagementException, UnauthorizedException {
     if (DatasetsUtil.isUserDataset(datasetInstanceId)) {
       DatasetSpecification datasetSpec = actualDatasetFramework.getDatasetSpec(datasetInstanceId);
       return datasetSpec != null ? datasetSpec : delegate.getDatasetSpec(datasetInstanceId);
@@ -135,7 +139,8 @@ public class PreviewDatasetFramework extends ForwardingDatasetFramework {
   }
 
   @Override
-  public boolean hasInstance(DatasetId datasetInstanceId) throws DatasetManagementException {
+  public boolean hasInstance(DatasetId datasetInstanceId)
+    throws DatasetManagementException, UnauthorizedException {
     if (DatasetsUtil.isUserDataset(datasetInstanceId)) {
       return actualDatasetFramework.hasInstance(datasetInstanceId) || delegate.hasInstance(datasetInstanceId);
     }
@@ -143,7 +148,8 @@ public class PreviewDatasetFramework extends ForwardingDatasetFramework {
   }
 
   @Override
-  public void truncateInstance(DatasetId datasetInstanceId) throws DatasetManagementException, IOException {
+  public void truncateInstance(DatasetId datasetInstanceId)
+    throws DatasetManagementException, IOException, UnauthorizedException {
     // If dataset exists in the preview space then only truncate it otherwise its a no-op
     if (delegate.hasInstance(datasetInstanceId)) {
       delegate.truncateInstance(datasetInstanceId);
@@ -151,7 +157,8 @@ public class PreviewDatasetFramework extends ForwardingDatasetFramework {
   }
 
   @Override
-  public void deleteInstance(DatasetId datasetInstanceId) throws DatasetManagementException, IOException {
+  public void deleteInstance(DatasetId datasetInstanceId)
+    throws DatasetManagementException, IOException, UnauthorizedException {
     // If dataset exists in the preview space then only delete it otherwise its a no-op
     if (delegate.hasInstance(datasetInstanceId)) {
       delegate.deleteInstance(datasetInstanceId);
@@ -162,7 +169,7 @@ public class PreviewDatasetFramework extends ForwardingDatasetFramework {
   @Override
   @SuppressWarnings("unchecked")
   public <T extends DatasetAdmin> T getAdmin(DatasetId datasetInstanceId, @Nullable ClassLoader classLoader)
-    throws DatasetManagementException, IOException {
+    throws DatasetManagementException, IOException, UnauthorizedException {
     // Return the no-op admin for the dataset from the real space
     if (actualDatasetFramework.hasInstance(datasetInstanceId)) {
       return (T) NOOP_DATASET_ADMIN;
@@ -175,7 +182,7 @@ public class PreviewDatasetFramework extends ForwardingDatasetFramework {
   @SuppressWarnings("unchecked")
   public <T extends DatasetAdmin> T getAdmin(DatasetId datasetInstanceId, @Nullable ClassLoader classLoader,
                                              DatasetClassLoaderProvider classLoaderProvider)
-    throws DatasetManagementException, IOException {
+    throws DatasetManagementException, IOException, UnauthorizedException {
     // Return the no-op admin for the dataset from the real space
     if (actualDatasetFramework.hasInstance(datasetInstanceId)) {
       return (T) NOOP_DATASET_ADMIN;

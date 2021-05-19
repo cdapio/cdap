@@ -29,6 +29,7 @@ import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
@@ -60,7 +61,8 @@ public class RemoteApplicationDetailFetcher implements ApplicationDetailFetcher 
   /**
    * Get the application detail for the given application id
    */
-  public ApplicationDetail get(ApplicationId appId) throws IOException, NotFoundException {
+  public ApplicationDetail get(ApplicationId appId)
+    throws IOException, NotFoundException, UnauthorizedException {
     String url = String.format("namespaces/%s/app/%s/versions/%s",
                                appId.getNamespace(), appId.getApplication(), appId.getVersion());
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
@@ -72,7 +74,8 @@ public class RemoteApplicationDetailFetcher implements ApplicationDetailFetcher 
   /**
    * Get details of all applications in the given namespace
    */
-  public List<ApplicationDetail> list(String namespace) throws IOException, NamespaceNotFoundException {
+  public List<ApplicationDetail> list(String namespace)
+    throws IOException, NamespaceNotFoundException, UnauthorizedException {
     String url = String.format("namespaces/%s/apps", namespace);
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
     HttpResponse httpResponse;
@@ -86,7 +89,7 @@ public class RemoteApplicationDetailFetcher implements ApplicationDetailFetcher 
     return objectResponse.getResponseObject();
   }
 
-  private HttpResponse execute(HttpRequest request) throws IOException, NotFoundException {
+  private HttpResponse execute(HttpRequest request) throws IOException, NotFoundException, UnauthorizedException {
     HttpResponse httpResponse = remoteClient.execute(request);
     if (httpResponse.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException(httpResponse.getResponseBodyAsString());

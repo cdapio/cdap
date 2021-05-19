@@ -56,6 +56,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.WorkflowId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -104,7 +105,8 @@ public class DefaultStore implements Store {
    *
    * @param framework framework to add types and datasets to
    */
-  public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
+  public static void setupDatasets(DatasetFramework framework)
+    throws IOException, DatasetManagementException, UnauthorizedException {
     framework.addInstance(Table.class.getName(), AppMetadataStore.APP_META_INSTANCE_ID, DatasetProperties.EMPTY);
     framework.addInstance(Table.class.getName(), WORKFLOW_STATS_INSTANCE_ID, DatasetProperties.EMPTY);
   }

@@ -18,7 +18,8 @@ package io.cdap.cdap.common.security;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import io.cdap.cdap.common.CallUnauthorizedException;
+import com.google.common.util.concurrent.UncheckedExecutionException;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.DatasetId;
@@ -28,7 +29,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ParentedId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.security.Action;
-import io.cdap.cdap.security.spi.AccessException;
 import io.cdap.cdap.security.spi.AccessIOException;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
@@ -207,11 +207,8 @@ public final class AuthEnforceUtil {
   }
 
   public static AccessException propagateAccessException(Throwable e) throws AccessException {
-    if (e.getCause() != null && e instanceof ExecutionException) {
+    if (e.getCause() != null && (e instanceof ExecutionException || e instanceof UncheckedExecutionException)) {
       propagateAccessException(e.getCause());
-    }
-    if (e instanceof CallUnauthorizedException) {
-      throw new UnauthorizedException(e.getMessage(), e);
     }
     Throwables.propagateIfPossible(e, AccessException.class);
     if (e instanceof IOException) {

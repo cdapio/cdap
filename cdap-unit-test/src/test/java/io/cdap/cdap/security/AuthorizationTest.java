@@ -37,7 +37,6 @@ import io.cdap.cdap.api.dataset.lib.ObjectStore;
 import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
 import io.cdap.cdap.api.schedule.SchedulableProgramType;
 import io.cdap.cdap.api.workflow.ScheduleProgramInfo;
-import io.cdap.cdap.common.CallUnauthorizedException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
@@ -623,7 +622,8 @@ public class AuthorizationTest extends TestBase {
     Assert.assertEquals(500, response.getResponseCode());
     // This is a hack that works around the fact that we cannot properly catch exceptions in the service handler.
     // TODO: Figure out a way to stop checking error messages.
-    Assert.assertTrue(response.getResponseBodyAsString().contains("'" + BOB + "' has insufficient privileges"));
+    Assert.assertTrue("Wrong message " + response.getResponseBodyAsString(),
+                      response.getResponseBodyAsString().contains("'" + BOB + "' has insufficient privileges"));
 
     serviceManager.stop();
     serviceManager.waitForStopped(10, TimeUnit.SECONDS);
@@ -1194,7 +1194,7 @@ public class AuthorizationTest extends TestBase {
         try {
           deleteDatasetInstance(NamespaceId.SYSTEM.dataset("app.meta"));
           Assert.fail();
-        } catch (CallUnauthorizedException e) {
+        } catch (UnauthorizedException e) {
           // Expected
         } catch (Exception e) {
           Assert.fail("Getting incorrect exception");

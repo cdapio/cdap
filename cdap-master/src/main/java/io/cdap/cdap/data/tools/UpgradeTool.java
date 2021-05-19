@@ -74,6 +74,7 @@ import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -450,7 +451,7 @@ public class UpgradeTool {
    * can be upgraded when the user runs CDAP's Hbase Upgrade after upgrading to a newer version of Hbase.
    */
   private void initializeDSFramework(DatasetFramework datasetFramework, boolean includeNewDatasets)
-    throws IOException, DatasetManagementException {
+    throws IOException, DatasetManagementException, UnauthorizedException {
     // Note: do no remove this block even if it's empty. Read the comment below and function doc above
     //noinspection StatementWithEmptyBody
     if (includeNewDatasets) {

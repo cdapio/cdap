@@ -17,11 +17,11 @@
 package io.cdap.cdap.security.spi.authorization;
 
 import io.cdap.cdap.api.common.HttpErrorStatusProvider;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.ActionOrPermission;
 import io.cdap.cdap.proto.security.Principal;
-import io.cdap.cdap.security.spi.AccessException;
 
 import java.net.HttpURLConnection;
 import java.util.Collections;

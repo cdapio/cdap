@@ -55,6 +55,7 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.internal.ApplicationBundler;
@@ -99,7 +100,8 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void addModule(DatasetModuleId moduleId, DatasetModule module) throws DatasetManagementException {
+  public void addModule(DatasetModuleId moduleId, DatasetModule module)
+    throws DatasetManagementException, UnauthorizedException {
     Class<?> moduleClass = DatasetModules.getDatasetModuleClass(module);
     try {
       Location deploymentJar = createDeploymentJar(moduleClass);
@@ -124,90 +126,95 @@ public class RemoteDatasetFramework implements DatasetFramework {
 
   @Override
   public void addModule(DatasetModuleId moduleId, DatasetModule module,
-                        Location jarLocation) throws DatasetManagementException {
+                        Location jarLocation) throws DatasetManagementException, UnauthorizedException {
     clientCache.getUnchecked(moduleId.getParent())
       .addModule(moduleId.getEntityName(), DatasetModules.getDatasetModuleClass(module).getName(), jarLocation);
   }
 
   @Override
-  public void deleteModule(DatasetModuleId moduleId) throws DatasetManagementException {
+  public void deleteModule(DatasetModuleId moduleId) throws DatasetManagementException, UnauthorizedException {
     clientCache.getUnchecked(moduleId.getParent()).deleteModule(moduleId.getEntityName());
   }
 
   @Override
-  public void deleteAllModules(NamespaceId namespaceId) throws DatasetManagementException {
+  public void deleteAllModules(NamespaceId namespaceId) throws DatasetManagementException, UnauthorizedException {
     clientCache.getUnchecked(namespaceId).deleteModules();
   }
 
   @Override
   public void addInstance(String datasetType, DatasetId datasetInstanceId, DatasetProperties props,
                           @Nullable KerberosPrincipalId ownerPrincipal)
-    throws DatasetManagementException {
+    throws DatasetManagementException, UnauthorizedException {
     clientCache.getUnchecked(datasetInstanceId.getParent())
       .addInstance(datasetInstanceId.getEntityName(), datasetType, props, ownerPrincipal);
   }
 
   @Override
   public void updateInstance(DatasetId datasetInstanceId, DatasetProperties props)
-    throws DatasetManagementException {
+    throws DatasetManagementException, UnauthorizedException {
     clientCache.getUnchecked(datasetInstanceId.getParent())
       .updateInstance(datasetInstanceId.getEntityName(), props);
   }
 
   @Override
   public Collection<DatasetSpecificationSummary> getInstances(NamespaceId namespaceId)
-    throws DatasetManagementException {
+    throws DatasetManagementException, UnauthorizedException {
     return clientCache.getUnchecked(namespaceId).getAllInstances();
   }
 
   @Override
   public Collection<DatasetSpecificationSummary> getInstances(NamespaceId namespaceId, Map<String, String> properties)
-    throws DatasetManagementException {
+    throws DatasetManagementException, UnauthorizedException {
     return clientCache.getUnchecked(namespaceId).getInstances(properties);
   }
 
   @Nullable
   @Override
-  public DatasetSpecification getDatasetSpec(DatasetId datasetInstanceId) throws DatasetManagementException {
+  public DatasetSpecification getDatasetSpec(DatasetId datasetInstanceId)
+    throws DatasetManagementException, UnauthorizedException {
     DatasetMeta meta = clientCache.getUnchecked(datasetInstanceId.getParent())
       .getInstance(datasetInstanceId.getEntityName());
     return meta == null ? null : meta.getSpec();
   }
 
   @Override
-  public boolean hasInstance(DatasetId datasetInstanceId) throws DatasetManagementException {
+  public boolean hasInstance(DatasetId datasetInstanceId) throws DatasetManagementException, UnauthorizedException {
     return clientCache.getUnchecked(datasetInstanceId.getParent())
       .getInstance(datasetInstanceId.getEntityName()) != null;
   }
 
   @Override
-  public boolean hasType(DatasetTypeId datasetTypeId) throws DatasetManagementException {
+  public boolean hasType(DatasetTypeId datasetTypeId) throws DatasetManagementException, UnauthorizedException {
     return clientCache.getUnchecked(datasetTypeId.getParent()).getType(datasetTypeId.getEntityName()) != null;
   }
 
   @Override
-  public DatasetTypeMeta getTypeInfo(DatasetTypeId datasetTypeId) throws DatasetManagementException {
+  public DatasetTypeMeta getTypeInfo(DatasetTypeId datasetTypeId)
+    throws DatasetManagementException, UnauthorizedException {
     return clientCache.getUnchecked(datasetTypeId.getParent()).getType(datasetTypeId.getEntityName());
   }
 
   @Override
-  public void truncateInstance(DatasetId datasetInstanceId) throws DatasetManagementException {
+  public void truncateInstance(DatasetId datasetInstanceId)
+    throws DatasetManagementException, UnauthorizedException {
     clientCache.getUnchecked(datasetInstanceId.getParent()).truncateInstance(datasetInstanceId.getEntityName());
   }
 
   @Override
-  public void deleteInstance(DatasetId datasetInstanceId) throws DatasetManagementException {
+  public void deleteInstance(DatasetId datasetInstanceId)
+    throws DatasetManagementException, UnauthorizedException {
     clientCache.getUnchecked(datasetInstanceId.getParent()).deleteInstance(datasetInstanceId.getEntityName());
   }
 
   @Override
-  public void deleteAllInstances(NamespaceId namespaceId) throws DatasetManagementException {
+  public void deleteAllInstances(NamespaceId namespaceId)
+    throws DatasetManagementException, UnauthorizedException {
     clientCache.getUnchecked(namespaceId).deleteInstances();
   }
 
   @Override
   public <T extends DatasetAdmin> T getAdmin(DatasetId datasetInstanceId, ClassLoader classLoader)
-    throws DatasetManagementException, IOException {
+    throws DatasetManagementException, IOException, UnauthorizedException {
     return getAdmin(datasetInstanceId, classLoader, new ConstantClassLoaderProvider(classLoader));
   }
 
@@ -216,7 +223,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
   public <T extends DatasetAdmin> T getAdmin(DatasetId datasetInstanceId,
                                              @Nullable ClassLoader parentClassLoader,
                                              DatasetClassLoaderProvider classLoaderProvider)
-    throws DatasetManagementException, IOException {
+    throws DatasetManagementException, IOException, UnauthorizedException {
     DatasetMeta instanceInfo = clientCache.getUnchecked(datasetInstanceId.getParent())
       .getInstance(datasetInstanceId.getEntityName());
     if (instanceInfo == null) {
@@ -233,7 +240,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
                                           @Nullable ClassLoader classLoader,
                                           DatasetClassLoaderProvider classLoaderProvider,
                                           @Nullable Iterable<? extends EntityId> owners, AccessType accessType)
-    throws DatasetManagementException, IOException {
+    throws DatasetManagementException, IOException, UnauthorizedException {
 
     DatasetMeta datasetMeta = clientCache.getUnchecked(id.getParent()).getInstance(id.getEntityName());
     if (datasetMeta == null) {

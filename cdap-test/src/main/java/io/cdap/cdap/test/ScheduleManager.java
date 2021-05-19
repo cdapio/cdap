@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.test;
 
-import io.cdap.cdap.security.spi.AccessException;
+import io.cdap.cdap.api.security.AccessException;
 
 /**
  * This interface is for managing the schedule of a workflow

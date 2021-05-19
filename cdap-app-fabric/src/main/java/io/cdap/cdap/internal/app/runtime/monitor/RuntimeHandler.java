@@ -21,6 +21,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -31,6 +32,7 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.BodyConsumer;
 import io.cdap.http.HandlerContext;
@@ -296,7 +298,7 @@ public class RuntimeHandler extends AbstractHttpHandler {
         } catch (EOFException e) {
           inputStream.reset();
         }
-      } catch (IOException | BadRequestException e) {
+      } catch (IOException | BadRequestException | AccessException e) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST,
                              "Failed to process request due to exception " + e.getMessage());
         throw new RuntimeException(e);
@@ -315,7 +317,9 @@ public class RuntimeHandler extends AbstractHttpHandler {
           responder.sendStatus(HttpResponseStatus.OK);
         } catch (BadRequestException e) {
           responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-        } catch (IOException e) {
+        } catch (UnauthorizedException e) {
+          responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
+        } catch (IOException | AccessException e) {
           responder.sendString(HttpResponseStatus.SERVICE_UNAVAILABLE,
                                "Failed to process all messages due to " + e.getMessage());
         }
@@ -359,6 +363,6 @@ public class RuntimeHandler extends AbstractHttpHandler {
      * @throws IOException if there is error when processing the payload
      * @throws BadRequestException if the request is invalid
      */
-    void process(Iterator<byte[]> payloads) throws IOException, BadRequestException;
+    void process(Iterator<byte[]> payloads) throws IOException, BadRequestException, AccessException;
   }
 }

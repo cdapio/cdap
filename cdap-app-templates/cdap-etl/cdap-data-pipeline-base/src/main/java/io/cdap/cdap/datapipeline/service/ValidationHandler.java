@@ -30,6 +30,7 @@ import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.api.service.http.AbstractSystemHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
@@ -89,7 +90,7 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
   @POST
   @Path("v1/contexts/{context}/validations/stage")
   public void validateStage(HttpServiceRequest request, HttpServiceResponder responder,
-                            @PathParam("context") String namespace) throws IOException {
+                            @PathParam("context") String namespace) throws IOException, AccessException {
     if (!getContext().getAdmin().namespaceExists(namespace)) {
       responder.sendError(HttpURLConnection.HTTP_NOT_FOUND, String.format("Namespace '%s' does not exist", namespace));
       return;

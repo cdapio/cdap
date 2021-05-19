@@ -17,6 +17,7 @@
 package io.cdap.cdap.api.messaging;
 
 import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.security.AccessException;
 
 import java.io.IOException;
 import java.util.Map;
@@ -36,8 +37,9 @@ public interface MessagingAdmin {
    * @throws IllegalArgumentException if the topic name is invalid. A valid id should only contain alphanumeric
    *                                  characters, {@code _}, or {@code -}.
    * @throws TopicAlreadyExistsException if the topic already exists
+   * @throws AccessException if caller do not have proper access to the topic
    */
-  void createTopic(String topic) throws TopicAlreadyExistsException, IOException;
+  void createTopic(String topic) throws TopicAlreadyExistsException, IOException, AccessException;
 
   /**
    * Creates a new topic.
@@ -49,8 +51,10 @@ public interface MessagingAdmin {
    * @throws IllegalArgumentException if the topic name is invalid. A valid id should only contain alphanumeric
    *                                  characters, {@code _}, or {@code -}.
    * @throws TopicAlreadyExistsException if the topic already exists
+   * @throws AccessException if caller do not have proper access to the topic
    */
-  void createTopic(String topic, Map<String, String> properties) throws TopicAlreadyExistsException, IOException;
+  void createTopic(String topic, Map<String, String> properties)
+    throws TopicAlreadyExistsException, IOException, AccessException;
 
   /**
    * Returns the properties of a topic.
@@ -61,8 +65,9 @@ public interface MessagingAdmin {
    * @throws IllegalArgumentException if the topic name is invalid. A valid id should only contain alphanumeric
    *                                  characters, {@code _}, or {@code -}.
    * @throws TopicNotFoundException if the topic does not exist
+   * @throws AccessException if caller do not have proper access to the topic
    */
-  Map<String, String> getTopicProperties(String topic) throws TopicNotFoundException, IOException;
+  Map<String, String> getTopicProperties(String topic) throws TopicNotFoundException, IOException, AccessException;
 
   /**
    * Updates the properties of a topic.
@@ -74,8 +79,10 @@ public interface MessagingAdmin {
    * @throws IllegalArgumentException if the topic name is invalid. A valid id should only contain alphanumeric
    *                                  characters, {@code _}, or {@code -}.
    * @throws TopicNotFoundException if the topic does not exist
+   * @throws AccessException if caller do not have proper access to the topic
    */
-  void updateTopic(String topic, Map<String, String> properties) throws TopicNotFoundException, IOException;
+  void updateTopic(String topic, Map<String, String> properties)
+    throws TopicNotFoundException, IOException, AccessException;
 
   /**
    * Deletes a topic.
@@ -86,6 +93,7 @@ public interface MessagingAdmin {
    * @throws IllegalArgumentException if the topic name is invalid. A valid id should only contain alphanumeric
    *                                  characters, {@code _}, or {@code -}.
    * @throws TopicNotFoundException if the topic does not exist
+   * @throws AccessException if caller do not have proper access to the topic
    */
-  void deleteTopic(String topic) throws TopicNotFoundException, IOException;
+  void deleteTopic(String topic) throws TopicNotFoundException, IOException, AccessException;
 }

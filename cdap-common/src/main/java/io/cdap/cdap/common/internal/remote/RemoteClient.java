@@ -20,7 +20,6 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.net.HttpHeaders;
-import io.cdap.cdap.common.CallUnauthorizedException;
 import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
@@ -97,7 +96,7 @@ public class RemoteClient {
    * @throws ServiceUnavailableException if there was a ConnectException while making the request, or if the response
    *                                     was a 503
    */
-  public HttpResponse execute(HttpRequest request) throws IOException {
+  public HttpResponse execute(HttpRequest request) throws IOException, UnauthorizedException {
     HttpRequest httpRequest = request;
     URL rewrittenURL = rewriteURL(request.getURL());
 
@@ -124,7 +123,7 @@ public class RemoteClient {
         case HttpURLConnection.HTTP_GATEWAY_TIMEOUT:
           throw new ServiceUnavailableException(discoverableServiceName, response.getResponseBodyAsString());
         case HttpURLConnection.HTTP_FORBIDDEN:
-          throw new CallUnauthorizedException(response.getResponseBodyAsString());
+          throw new UnauthorizedException(response.getResponseBodyAsString());
         default:
           return response;
       }

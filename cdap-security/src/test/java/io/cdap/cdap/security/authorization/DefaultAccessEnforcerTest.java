@@ -17,6 +17,7 @@
 package io.cdap.cdap.security.authorization;
 
 import com.google.common.collect.ImmutableSet;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.test.AppJarHelper;
@@ -28,7 +29,6 @@ import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
-import io.cdap.cdap.security.spi.AccessException;
 import io.cdap.cdap.security.spi.authorization.AccessController;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;

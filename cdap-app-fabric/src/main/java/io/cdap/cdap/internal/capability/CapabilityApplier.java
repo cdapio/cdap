@@ -443,7 +443,7 @@ class CapabilityApplier {
 
   @VisibleForTesting
   EntityResult<ApplicationId> getApplications(NamespaceId namespace, String capability, @Nullable String cursor,
-                                              int offset, int limit) throws IOException {
+                                              int offset, int limit) throws IOException, UnauthorizedException {
     String capabilityTag = String.format(CAPABILITY, capability);
     SearchRequest searchRequest = SearchRequest.of(capabilityTag)
       .addNamespace(namespace.getNamespace())

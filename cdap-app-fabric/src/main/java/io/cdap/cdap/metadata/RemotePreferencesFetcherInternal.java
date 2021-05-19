@@ -28,6 +28,7 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
@@ -56,7 +57,8 @@ public class RemotePreferencesFetcherInternal implements PreferencesFetcher {
   /**
    * Get preferences for the given identify
    */
-  public PreferencesDetail get(EntityId entityId, boolean resolved) throws IOException, NotFoundException {
+  public PreferencesDetail get(EntityId entityId, boolean resolved)
+    throws IOException, NotFoundException, UnauthorizedException {
     HttpResponse httpResponse;
     String url = getPreferencesURI(entityId, resolved);
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
@@ -98,7 +100,7 @@ public class RemotePreferencesFetcherInternal implements PreferencesFetcher {
     return uri;
   }
 
-  private HttpResponse execute(HttpRequest request) throws IOException, NotFoundException {
+  private HttpResponse execute(HttpRequest request) throws IOException, NotFoundException, UnauthorizedException {
     HttpResponse httpResponse = remoteClient.execute(request);
     if (httpResponse.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException(httpResponse.getResponseBodyAsString());

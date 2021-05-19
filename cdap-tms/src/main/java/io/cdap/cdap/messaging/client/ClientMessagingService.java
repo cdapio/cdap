@@ -44,6 +44,7 @@ import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.data.RawMessage;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequestConfig;
@@ -116,7 +117,8 @@ public final class ClientMessagingService implements MessagingService {
   }
 
   @Override
-  public void createTopic(TopicMetadata topicMetadata) throws TopicAlreadyExistsException, IOException {
+  public void createTopic(TopicMetadata topicMetadata)
+    throws TopicAlreadyExistsException, IOException, UnauthorizedException {
     TopicId topicId = topicMetadata.getTopicId();
 
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.PUT, createTopicPath(topicId))
@@ -131,7 +133,8 @@ public final class ClientMessagingService implements MessagingService {
   }
 
   @Override
-  public void updateTopic(TopicMetadata topicMetadata) throws TopicNotFoundException, IOException {
+  public void updateTopic(TopicMetadata topicMetadata)
+    throws TopicNotFoundException, IOException, UnauthorizedException {
     TopicId topicId = topicMetadata.getTopicId();
 
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.PUT, createTopicPath(topicId) + "/properties")
@@ -146,7 +149,8 @@ public final class ClientMessagingService implements MessagingService {
   }
 
   @Override
-  public void deleteTopic(TopicId topicId) throws TopicNotFoundException, IOException {
+  public void deleteTopic(TopicId topicId)
+    throws TopicNotFoundException, IOException, UnauthorizedException {
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.DELETE, createTopicPath(topicId)).build();
     HttpResponse response = remoteClient.execute(request);
 
@@ -157,7 +161,8 @@ public final class ClientMessagingService implements MessagingService {
   }
 
   @Override
-  public TopicMetadata getTopic(TopicId topicId) throws TopicNotFoundException, IOException {
+  public TopicMetadata getTopic(TopicId topicId)
+    throws TopicNotFoundException, IOException, UnauthorizedException {
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.GET, createTopicPath(topicId)).build();
     HttpResponse response = remoteClient.execute(request);
 
@@ -171,7 +176,8 @@ public final class ClientMessagingService implements MessagingService {
   }
 
   @Override
-  public List<TopicId> listTopics(NamespaceId namespaceId) throws IOException {
+  public List<TopicId> listTopics(NamespaceId namespaceId)
+    throws IOException, UnauthorizedException {
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.GET, namespaceId.getNamespace() + "/topics").build();
     HttpResponse response = remoteClient.execute(request);
 
@@ -192,7 +198,8 @@ public final class ClientMessagingService implements MessagingService {
 
   @Nullable
   @Override
-  public RollbackDetail publish(StoreRequest request) throws TopicNotFoundException, IOException {
+  public RollbackDetail publish(StoreRequest request)
+    throws TopicNotFoundException, IOException, UnauthorizedException {
     HttpResponse response = performWriteRequest(request, true);
 
     byte[] body = response.getResponseBody();
@@ -206,12 +213,14 @@ public final class ClientMessagingService implements MessagingService {
   }
 
   @Override
-  public void storePayload(StoreRequest request) throws TopicNotFoundException, IOException {
+  public void storePayload(StoreRequest request)
+    throws TopicNotFoundException, IOException, UnauthorizedException {
     performWriteRequest(request, false);
   }
 
   @Override
-  public void rollback(TopicId topicId, RollbackDetail rollbackDetail) throws TopicNotFoundException, IOException {
+  public void rollback(TopicId topicId, RollbackDetail rollbackDetail)
+    throws TopicNotFoundException, IOException, UnauthorizedException {
     ByteBuffer requestBody = (rollbackDetail instanceof ClientRollbackDetail)
       ? ByteBuffer.wrap(((ClientRollbackDetail) rollbackDetail).getEncoded())
       : encodeRollbackDetail(rollbackDetail);
@@ -240,7 +249,8 @@ public final class ClientMessagingService implements MessagingService {
    * @throws TopicNotFoundException if the topic to write to does not exist
    */
   private HttpResponse performWriteRequest(StoreRequest request,
-                                           boolean publish) throws IOException, TopicNotFoundException {
+                                           boolean publish)
+    throws IOException, TopicNotFoundException, UnauthorizedException {
     GenericRecord record = new GenericData.Record(Schemas.V1.PublishRequest.SCHEMA);
     if (request.isTransactional()) {
       record.put("transactionWritePointer", request.getTransactionWritePointer());

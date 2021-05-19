@@ -27,6 +27,7 @@ import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.InstanceConflictException;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.etl.api.lineage.AccessType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,7 +90,7 @@ public final class ExternalDatasets {
         }
       }
       return Input.ofDataset(inputName, Collections.unmodifiableMap(arguments)).alias(input.getAlias());
-    } catch (DatasetManagementException e) {
+    } catch (DatasetManagementException | AccessException e) {
       throw Throwables.propagate(e);
     }
   }
@@ -139,7 +140,7 @@ public final class ExternalDatasets {
         }
       }
       return Output.ofDataset(outputName, Collections.unmodifiableMap(arguments)).alias(output.getAlias());
-    } catch (DatasetManagementException e) {
+    } catch (DatasetManagementException | AccessException e) {
       throw Throwables.propagate(e);
     }
   }
@@ -153,7 +154,8 @@ public final class ExternalDatasets {
    */
   public static void registerLineage(Admin admin, String referenceName,
                                      AccessType accessType, @Nullable Schema schema,
-                                     Supplier<Dataset> datasetSupplier) throws DatasetManagementException {
+                                     Supplier<Dataset> datasetSupplier)
+    throws DatasetManagementException, AccessException {
     DatasetProperties datasetProperties;
     if (schema == null) {
       datasetProperties = DatasetProperties.EMPTY;

@@ -25,6 +25,7 @@ import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.common.DatasetNotFoundException;
 import io.cdap.cdap.format.StructuredRecordStringConverter;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.JobConf;
@@ -101,7 +102,7 @@ public class DatasetOutputFormat implements OutputFormat<Void, Text> {
               String.format("Dataset '%s' does not have the schema property.", datasetSpec.getName()));
           }
           recordSchema = Schema.parseJson(schemaStr);
-        } catch (IOException | DatasetManagementException e) {
+        } catch (IOException | DatasetManagementException | UnauthorizedException e) {
           try {
             recordWritable.close();
           } catch (IOException e1) {

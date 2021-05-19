@@ -19,6 +19,7 @@ package io.cdap.cdap.etl.api.action;
 import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.lineage.field.LineageRecorder;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
 import io.cdap.cdap.etl.api.StageContext;
@@ -68,7 +69,8 @@ public interface ActionContext extends StageContext, Transactional, SecureStore,
    * @throws TransactionFailureException thrown if there was an error while fetching the dataset to register usage
    */
  default void registerLineage(String referenceName,
-                              AccessType accessType) throws DatasetManagementException, TransactionFailureException {
+                              AccessType accessType)
+   throws DatasetManagementException, TransactionFailureException, AccessException {
    // no-op
  }
 }

@@ -31,6 +31,7 @@ import io.cdap.cdap.api.dataset.lib.TimePartitionedFileSet;
 import io.cdap.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.tephra.TransactionAware;
@@ -301,7 +302,9 @@ public class TimePartitionedFileSetTest {
    * input start time and (time + end * minutes) as input end time, returns the expected list of paths.
    */
   private void validateInputPaths(long time, long start, long end, final String ... expected)
-    throws IOException, DatasetManagementException, InterruptedException, TransactionFailureException {
+    throws IOException, DatasetManagementException,
+    InterruptedException, TransactionFailureException, UnauthorizedException {
+
     Map<String, String> arguments = Maps.newHashMap();
     TimePartitionedFileSetArguments.setInputStartTime(arguments, time + start * MINUTE);
     TimePartitionedFileSetArguments.setInputEndTime(arguments, time + end * MINUTE);

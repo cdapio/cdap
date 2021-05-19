@@ -28,6 +28,7 @@ import io.cdap.cdap.data.dataset.SystemDatasetInstantiator;
 import io.cdap.cdap.hive.context.ContextManager;
 import io.cdap.cdap.hive.context.TxnCodec;
 import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionAware;
@@ -81,7 +82,7 @@ public class DatasetAccessor implements Closeable {
     return (T) dataset;
   }
 
-  public DatasetSpecification getDatasetSpec() throws DatasetManagementException {
+  public DatasetSpecification getDatasetSpec() throws DatasetManagementException, UnauthorizedException {
     return context.getDatasetSpec(datasetId);
   }
 

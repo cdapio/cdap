@@ -17,6 +17,7 @@
 package io.cdap.cdap.api.dataset;
 
 import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.security.AccessException;
 
 /**
  * Provides dataset management functions.
@@ -30,7 +31,8 @@ public interface DatasetManager {
    * @return whether a dataset of that name exists
    * @throws DatasetManagementException for any issues encountered in the dataset system
    */
-  boolean datasetExists(String name) throws DatasetManagementException;
+  boolean datasetExists(String name)
+    throws DatasetManagementException, AccessException;
 
   /**
    * Get the type of a dataset.
@@ -39,7 +41,8 @@ public interface DatasetManager {
    * @throws InstanceNotFoundException if the dataset does not exist
    * @throws DatasetManagementException for any issues encountered in the dataset system
    */
-  String getDatasetType(String name) throws DatasetManagementException;
+  String getDatasetType(String name)
+    throws DatasetManagementException, AccessException;
 
   /**
    * Get the properties with which a dataset was created or updated.
@@ -48,7 +51,8 @@ public interface DatasetManager {
    * @throws InstanceNotFoundException if the dataset does not exist
    * @throws DatasetManagementException for any issues encountered in the dataset system
    */
-  DatasetProperties getDatasetProperties(String name) throws DatasetManagementException;
+  DatasetProperties getDatasetProperties(String name)
+    throws DatasetManagementException, AccessException;
 
   /**
    * Create a new dataset instance.
@@ -59,7 +63,8 @@ public interface DatasetManager {
    * @throws DatasetManagementException for any issues encountered in the dataset system,
    *         or if the dataset type's create method fails.
    */
-  void createDataset(String name, String type, DatasetProperties properties) throws DatasetManagementException;
+  void createDataset(String name, String type, DatasetProperties properties)
+    throws DatasetManagementException, AccessException;
 
   /**
    * Update an existing dataset with new properties.
@@ -69,7 +74,8 @@ public interface DatasetManager {
    * @throws DatasetManagementException for any issues encountered in the dataset system,
    *         or if the dataset type's update method fails.
    */
-  void updateDataset(String name, DatasetProperties properties) throws DatasetManagementException;
+  void updateDataset(String name, DatasetProperties properties)
+    throws DatasetManagementException, AccessException;
 
   /**
    * Delete a dataset instance.
@@ -78,7 +84,7 @@ public interface DatasetManager {
    * @throws DatasetManagementException for any issues encountered in the dataset system,
    *         or if the dataset type's drop method fails.
    */
-  void dropDataset(String name) throws DatasetManagementException;
+  void dropDataset(String name) throws DatasetManagementException, AccessException;
 
   /**
    * Truncate a dataset, that is, delete all its data.
@@ -87,5 +93,5 @@ public interface DatasetManager {
    * @throws DatasetManagementException for any issues encountered in the dataset system,
    *         or if the dataset type's truncate method fails.
    */
-  void truncateDataset(String name) throws DatasetManagementException;
+  void truncateDataset(String name) throws DatasetManagementException, AccessException;
 }

@@ -19,6 +19,7 @@ package io.cdap.cdap.service;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.artifact.ArtifactInfo;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
@@ -48,7 +49,7 @@ public class ServiceArtifactApp extends AbstractApplication {
 
     @GET
     @Path("/list")
-    public void list(HttpServiceRequest request, HttpServiceResponder responder) throws IOException {
+    public void list(HttpServiceRequest request, HttpServiceResponder responder) throws IOException, AccessException {
       responder.sendJson(getContext().listArtifacts());
     }
 
@@ -57,7 +58,8 @@ public class ServiceArtifactApp extends AbstractApplication {
     public void load(HttpServiceRequest request, HttpServiceResponder responder,
                      @QueryParam("parent") String parent,
                      @QueryParam("plugin") String plugin,
-                     @QueryParam("class") String className) throws IOException, ClassNotFoundException {
+                     @QueryParam("class") String className)
+      throws IOException, ClassNotFoundException, AccessException {
       List<ArtifactInfo> artifacts = getContext().listArtifacts();
 
       ArtifactInfo parentInfo = artifacts.stream()

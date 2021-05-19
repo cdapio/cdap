@@ -25,6 +25,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.lang.DirectoryClassLoader;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,7 +63,7 @@ public abstract class AbstractArtifactManager implements ArtifactManager {
    * @throws IOException if failed to locate the {@link Location} of the artifact
    */
   protected abstract Location getArtifactLocation(ArtifactInfo artifactInfo,
-                                                  @Nullable String namespace) throws IOException;
+                                                  @Nullable String namespace) throws IOException, UnauthorizedException;
 
   /**
    * Create a class loader with artifact jar unpacked contents and parent for this classloader is the supplied
@@ -77,13 +78,15 @@ public abstract class AbstractArtifactManager implements ArtifactManager {
    */
   @Override
   public CloseableClassLoader createClassLoader(ArtifactInfo artifactInfo,
-                                                @Nullable ClassLoader parentClassLoader) throws IOException {
+                                                @Nullable ClassLoader parentClassLoader)
+    throws IOException, UnauthorizedException {
     return createClassLoader(null, artifactInfo, parentClassLoader);
   }
 
   @Override
   public CloseableClassLoader createClassLoader(@Nullable String namespace, ArtifactInfo artifactInfo,
-                                                @Nullable ClassLoader parentClassLoader) throws IOException {
+                                                @Nullable ClassLoader parentClassLoader)
+    throws IOException, UnauthorizedException {
     File unpackedDir = DirUtils.createTempDir(tmpDir);
     BundleJarUtil.prepareClassLoaderFolder(getArtifactLocation(artifactInfo, namespace), unpackedDir);
     DirectoryClassLoader directoryClassLoader =
