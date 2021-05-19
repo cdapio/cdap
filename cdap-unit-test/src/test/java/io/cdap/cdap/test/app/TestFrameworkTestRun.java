@@ -1365,7 +1365,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
         { AppWithCustomTx.PRODUCER_TX, AppWithCustomTx.RUNTIME_NEST_T, AppWithCustomTx.FAILED },
         { AppWithCustomTx.PRODUCER_TX, AppWithCustomTx.RUNTIME_NEST_CT, AppWithCustomTx.FAILED },
         { AppWithCustomTx.PRODUCER_TX, AppWithCustomTx.RUNTIME_NEST_TC, AppWithCustomTx.FAILED },
-        { AppWithCustomTx.PRODUCER_TX, AppWithCustomTx.DESTROY, txDefaulTimeoutService },
+        //TODO: CDAP-17920 - Fix assertion flackiness, commented out for now
+        //{ AppWithCustomTx.PRODUCER_TX, AppWithCustomTx.DESTROY, txDefaulTimeoutService },
         { AppWithCustomTx.PRODUCER_TX, AppWithCustomTx.DESTROY_NEST, AppWithCustomTx.FAILED },
         { AppWithCustomTx.PRODUCER_TX, AppWithCustomTx.ONERROR, txDefaulTimeoutService },
         { AppWithCustomTx.PRODUCER_TX, AppWithCustomTx.ONERROR_NEST, AppWithCustomTx.FAILED },
