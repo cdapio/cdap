@@ -1077,14 +1077,14 @@ public class TestBase {
   }
 
   /**
-   * Returns a {@link FieldLineageAdmin to interact with field lineage.
+   * Returns a {@link FieldLineageAdmin} to interact with field lineage.
    */
   protected static FieldLineageAdmin getFieldLineageAdmin() {
     return fieldLineageAdmin;
   }
 
   /**
-   * Returns a {@link LineageAdmin to interact with field lineage.
+   * Returns a {@link LineageAdmin} to interact with field lineage.
    */
   protected static LineageAdmin getLineageAdmin() {
     return lineageAdmin;
