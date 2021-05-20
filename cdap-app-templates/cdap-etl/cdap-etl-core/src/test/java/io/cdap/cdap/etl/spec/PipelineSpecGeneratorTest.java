@@ -43,6 +43,7 @@ import io.cdap.cdap.etl.api.engine.sql.SQLEngineException;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDataset;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLPullDataset;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLPushDataset;
+import io.cdap.cdap.etl.api.engine.sql.request.SQLJoinDefinition;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLJoinRequest;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPullRequest;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPushRequest;
@@ -1160,7 +1161,7 @@ public class PipelineSpecGeneratorTest {
     }
 
     @Override
-    public boolean canJoin(SQLJoinRequest joinRequest) {
+    public boolean canJoin(SQLJoinDefinition joinRequest) {
       return false;
     }
 

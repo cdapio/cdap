@@ -20,11 +20,11 @@ import io.cdap.cdap.api.RuntimeContext;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.etl.api.PipelineConfigurable;
-import io.cdap.cdap.etl.api.StageContext;
 import io.cdap.cdap.etl.api.SubmitterLifecycle;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDataset;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLPullDataset;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLPushDataset;
+import io.cdap.cdap.etl.api.engine.sql.request.SQLJoinDefinition;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLJoinRequest;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPullRequest;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPushRequest;
@@ -83,10 +83,10 @@ public interface SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT>
   /**
    * Check if the supplied Join Definition can be executed in this engine.
    *
-   * @param joinRequest the join request to validate.
+   * @param joinDefinition the join definition to validate
    * @return boolean specifying if this join operation can be executed in the SQl Engine.
    */
-  boolean canJoin(SQLJoinRequest joinRequest);
+  boolean canJoin(SQLJoinDefinition joinDefinition);
 
   /**
    * Executes the join operation defined by the supplied join request.

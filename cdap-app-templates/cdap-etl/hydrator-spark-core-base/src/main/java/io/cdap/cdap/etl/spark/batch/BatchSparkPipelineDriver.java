@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.spark.batch;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -91,6 +92,20 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
   private transient Map<String, Integer> stagePartitions;
   private transient FunctionCache.Factory functionCacheFactory;
   private transient BatchSQLEngineAdapter sqlEngineAdapter = null;
+
+  /**
+   * Empty constructor, used when instantiating this class.
+   */
+  public BatchSparkPipelineDriver() {
+  }
+
+  /**
+   * Only used during unit testing.
+   */
+  @VisibleForTesting
+  protected BatchSparkPipelineDriver(BatchSQLEngineAdapter sqlEngineAdapter) {
+    this.sqlEngineAdapter = sqlEngineAdapter;
+  }
 
   @Override
   protected SparkCollection<RecordInfo<Object>> getSource(StageSpec stageSpec,
@@ -238,7 +253,7 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
                                                    Map<String, SparkCollection<Object>> inputDataCollections,
                                                    @Nullable Integer numPartitions) {
 
-    if (sqlEngineAdapter != null && canJoinOnSQLEngine(joinDefinition, inputDataCollections)) {
+    if (sqlEngineAdapter != null && canJoinOnSQLEngine(stageName, joinDefinition, inputDataCollections)) {
       // If we can execute this join operation using the SQL engine, we need to replace all Input collections with
       // collections representing data that has been pushed to the SQL engine.
       for (JoinStage joinStage : joinDefinition.getStages()) {
@@ -271,12 +286,19 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
    *
    * 1. One of the sides of the join is a broadcast, unle
    *
+   * @param stageName the name of the Stage
    * @param joinDefinition the Join Definition
    * @param inputDataCollections the input data collections
    * @return boolean used to decide wether to pushdown this collection or not.
    */
-  public static boolean canJoinOnSQLEngine(JoinDefinition joinDefinition,
-                                           Map<String, SparkCollection<Object>> inputDataCollections) {
+  protected boolean canJoinOnSQLEngine(String stageName,
+                                       JoinDefinition joinDefinition,
+                                       Map<String, SparkCollection<Object>> inputDataCollections) {
+    // Check if the SQL engine is able to execute this join definition.
+    // If not supported, the Join will be executed in Spark.
+    if (!sqlEngineAdapter.canJoin(stageName, joinDefinition)) {
+      return false;
+    }
 
     boolean containsBroadcastStage = false;
 
