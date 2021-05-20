@@ -36,6 +36,8 @@ import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.api.logging.LogHandler;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
 import java.util.Collections;
@@ -58,7 +60,7 @@ import javax.annotation.Nullable;
  * Kubernetes version of a TwillController.
  */
 class KubeTwillController implements ExtendedTwillController {
-
+  private static final Logger LOG = LoggerFactory.getLogger(KubeTwillController.class);
   private final String kubeNamespace;
   private final RunId runId;
   private final CompletableFuture<KubeTwillController> completion;
@@ -162,11 +164,15 @@ class KubeTwillController implements ExtendedTwillController {
     String podName = String.format("%s-%d", meta.getName(), instanceId);
 
     try {
-      api.deleteNamespacedPodAsync(podName, kubeNamespace, null, deleteOptions, null, null, null, null,
-                                   createCallbackFutureAdapter(resultFuture, r -> runnable));
+      // TODO: CDAP-18000 Make this async call when CDAP-18000 is fixed
+      api.deleteNamespacedPod(podName, kubeNamespace, null, deleteOptions, null, null, null, null);
     } catch (ApiException e) {
       resultFuture.completeExceptionally(e);
+    } catch (Exception ex) {
+      // TODO: CDAP-18000 Ignore any exception apart from ApiException till we upgrade the kubernetes client library
+      LOG.trace("Ignoring exception while deleting pod {}", podName, ex);
     }
+    resultFuture.complete("success");
     return resultFuture;
   }
 
