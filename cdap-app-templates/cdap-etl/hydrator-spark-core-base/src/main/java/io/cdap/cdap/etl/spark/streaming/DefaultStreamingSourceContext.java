@@ -58,7 +58,7 @@ public class DefaultStreamingSourceContext extends AbstractBatchContext implemen
   @Override
   public void registerLineage(String referenceName,
                               @Nullable Schema schema)
-    throws DatasetManagementException, TransactionFailureException, AccessException {
+    throws DatasetManagementException, TransactionFailureException {
     ExternalDatasets.registerLineage(admin, referenceName, AccessType.READ, schema, () -> getDataset(referenceName));
   }
 }

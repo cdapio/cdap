@@ -56,12 +56,12 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
 
   @Override
   public void createDataset(String datasetName, String typeName, DatasetProperties properties)
-    throws DatasetManagementException, AccessException {
+    throws DatasetManagementException {
     admin.createDataset(datasetName, typeName, properties);
   }
 
   @Override
-  public boolean datasetExists(String datasetName) throws DatasetManagementException, AccessException {
+  public boolean datasetExists(String datasetName) throws DatasetManagementException {
     return admin.datasetExists(datasetName);
   }
 

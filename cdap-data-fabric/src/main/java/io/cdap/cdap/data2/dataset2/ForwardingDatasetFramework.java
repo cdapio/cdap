@@ -32,7 +32,6 @@ import io.cdap.cdap.proto.id.DatasetTypeId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
@@ -53,98 +52,92 @@ public class ForwardingDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void addModule(DatasetModuleId moduleId, DatasetModule module)
-    throws DatasetManagementException, UnauthorizedException {
+  public void addModule(DatasetModuleId moduleId, DatasetModule module) throws DatasetManagementException {
     delegate.addModule(moduleId, module);
   }
 
   @Override
   public void addModule(DatasetModuleId moduleId, DatasetModule module, Location jarLocation)
-    throws DatasetManagementException, UnauthorizedException {
+    throws DatasetManagementException {
     delegate.addModule(moduleId, module, jarLocation);
   }
 
   @Override
-  public void deleteModule(DatasetModuleId moduleId) throws DatasetManagementException, UnauthorizedException {
+  public void deleteModule(DatasetModuleId moduleId) throws DatasetManagementException {
     delegate.deleteModule(moduleId);
   }
 
   @Override
-  public void deleteAllModules(NamespaceId namespaceId) throws DatasetManagementException, UnauthorizedException {
+  public void deleteAllModules(NamespaceId namespaceId) throws DatasetManagementException {
     delegate.deleteAllModules(namespaceId);
   }
 
   @Override
   public void addInstance(String datasetTypeName, DatasetId datasetInstanceId, DatasetProperties props,
                           @Nullable KerberosPrincipalId ownerPrincipal)
-    throws DatasetManagementException, IOException, UnauthorizedException {
+    throws DatasetManagementException, IOException {
     delegate.addInstance(datasetTypeName, datasetInstanceId, props, ownerPrincipal);
   }
 
   @Override
   public void updateInstance(DatasetId datasetInstanceId, DatasetProperties props)
-    throws DatasetManagementException, IOException, UnauthorizedException {
+    throws DatasetManagementException, IOException {
     delegate.updateInstance(datasetInstanceId, props);
   }
 
   @Override
   public Collection<DatasetSpecificationSummary> getInstances(NamespaceId namespaceId)
-    throws DatasetManagementException, UnauthorizedException {
+    throws DatasetManagementException {
     return delegate.getInstances(namespaceId);
   }
 
   @Override
   public Collection<DatasetSpecificationSummary> getInstances(NamespaceId namespaceId, Map<String, String> properties)
-    throws DatasetManagementException, UnauthorizedException {
+    throws DatasetManagementException {
     return delegate.getInstances(namespaceId, properties);
   }
 
   @Nullable
   @Override
-  public DatasetSpecification getDatasetSpec(DatasetId datasetInstanceId)
-    throws DatasetManagementException, UnauthorizedException {
+  public DatasetSpecification getDatasetSpec(DatasetId datasetInstanceId) throws DatasetManagementException {
     return delegate.getDatasetSpec(datasetInstanceId);
   }
 
   @Override
-  public boolean hasInstance(DatasetId datasetInstanceId) throws DatasetManagementException, UnauthorizedException {
+  public boolean hasInstance(DatasetId datasetInstanceId) throws DatasetManagementException {
     return delegate.hasInstance(datasetInstanceId);
   }
 
   @Override
-  public boolean hasType(DatasetTypeId datasetTypeId) throws DatasetManagementException, UnauthorizedException {
+  public boolean hasType(DatasetTypeId datasetTypeId) throws DatasetManagementException {
     return delegate.hasType(datasetTypeId);
   }
 
   @Nullable
   @Override
-  public DatasetTypeMeta getTypeInfo(DatasetTypeId datasetTypeId)
-    throws DatasetManagementException, UnauthorizedException {
+  public DatasetTypeMeta getTypeInfo(DatasetTypeId datasetTypeId) throws DatasetManagementException {
     return delegate.getTypeInfo(datasetTypeId);
   }
 
   @Override
-  public void truncateInstance(DatasetId datasetInstanceId)
-    throws DatasetManagementException, IOException, UnauthorizedException {
+  public void truncateInstance(DatasetId datasetInstanceId) throws DatasetManagementException, IOException {
     delegate.truncateInstance(datasetInstanceId);
   }
 
   @Override
-  public void deleteInstance(DatasetId datasetInstanceId)
-    throws DatasetManagementException, IOException, UnauthorizedException {
+  public void deleteInstance(DatasetId datasetInstanceId) throws DatasetManagementException, IOException {
     delegate.deleteInstance(datasetInstanceId);
   }
 
   @Override
-  public void deleteAllInstances(NamespaceId namespaceId)
-    throws DatasetManagementException, IOException, UnauthorizedException {
+  public void deleteAllInstances(NamespaceId namespaceId) throws DatasetManagementException, IOException {
     delegate.deleteAllInstances(namespaceId);
   }
 
   @Nullable
   @Override
   public <T extends DatasetAdmin> T getAdmin(DatasetId datasetInstanceId, @Nullable ClassLoader classLoader)
-    throws DatasetManagementException, IOException, UnauthorizedException {
+    throws DatasetManagementException, IOException {
     return delegate.getAdmin(datasetInstanceId, classLoader);
   }
 
@@ -152,7 +145,7 @@ public class ForwardingDatasetFramework implements DatasetFramework {
   @Override
   public <T extends DatasetAdmin> T getAdmin(DatasetId datasetInstanceId, @Nullable ClassLoader classLoader,
                                              DatasetClassLoaderProvider classLoaderProvider)
-    throws DatasetManagementException, IOException, UnauthorizedException {
+    throws DatasetManagementException, IOException {
     return delegate.getAdmin(datasetInstanceId, classLoader, classLoaderProvider);
   }
 
@@ -162,7 +155,7 @@ public class ForwardingDatasetFramework implements DatasetFramework {
                                           @Nullable ClassLoader classLoader,
                                           DatasetClassLoaderProvider classLoaderProvider,
                                           @Nullable Iterable<? extends EntityId> owners, AccessType accessType)
-    throws DatasetManagementException, IOException, UnauthorizedException {
+    throws DatasetManagementException, IOException {
     return delegate.getDataset(datasetInstanceId, arguments, classLoader, classLoaderProvider, owners, accessType);
   }
 

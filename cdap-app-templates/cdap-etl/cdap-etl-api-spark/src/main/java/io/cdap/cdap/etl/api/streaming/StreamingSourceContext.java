@@ -18,7 +18,6 @@ package io.cdap.cdap.etl.api.streaming;
 
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
-import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.etl.api.batch.BatchContext;
 import org.apache.tephra.TransactionFailureException;
 
@@ -38,8 +37,7 @@ public interface StreamingSourceContext extends BatchContext {
    * @throws TransactionFailureException thrown if there was an error while fetching the dataset to register usage
    */
   void registerLineage(String referenceName,
-                       @Nullable Schema schema)
-    throws DatasetManagementException, TransactionFailureException, AccessException;
+                       @Nullable Schema schema) throws DatasetManagementException, TransactionFailureException;
 
   /**
    * Indicates whether the pipeline is running in preview.

@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.data2.datafabric.dataset;
 
-import com.google.common.base.Throwables;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.dataset.DatasetManager;
 import io.cdap.cdap.api.dataset.DatasetProperties;
@@ -29,7 +28,6 @@ import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 
 import java.io.IOException;
 import javax.annotation.Nullable;
@@ -63,136 +61,99 @@ public class DefaultDatasetManager implements DatasetManager {
   }
 
   @Override
-  public boolean datasetExists(final String name) throws DatasetManagementException, UnauthorizedException {
-    try {
-      return Retries.callWithRetries(new Retries.Callable<Boolean, Exception>() {
-        @Override
-        public Boolean call() throws DatasetManagementException, UnauthorizedException {
-          return datasetFramework.getDatasetSpec(createInstanceId(name)) != null;
-        }
-      }, retryStrategy);
-    } catch (UnauthorizedException | DatasetManagementException e) {
-      throw e;
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+  public boolean datasetExists(final String name) throws DatasetManagementException {
+    return Retries.callWithRetries(new Retries.Callable<Boolean, DatasetManagementException>() {
+      @Override
+      public Boolean call() throws DatasetManagementException {
+        return datasetFramework.getDatasetSpec(createInstanceId(name)) != null;
+      }
+    }, retryStrategy);
   }
 
   @Override
-  public String getDatasetType(final String name) throws DatasetManagementException, UnauthorizedException {
-    try {
-      return Retries.callWithRetries(new Retries.Callable<String, Exception>() {
-        @Override
-        public String call() throws DatasetManagementException, UnauthorizedException {
-          DatasetSpecification spec = datasetFramework.getDatasetSpec(createInstanceId(name));
-          if (spec == null) {
-            throw new InstanceNotFoundException(name);
-          }
-          return spec.getType();
+  public String getDatasetType(final String name) throws DatasetManagementException {
+    return Retries.callWithRetries(new Retries.Callable<String, DatasetManagementException>() {
+      @Override
+      public String call() throws DatasetManagementException {
+        DatasetSpecification spec = datasetFramework.getDatasetSpec(createInstanceId(name));
+        if (spec == null) {
+          throw new InstanceNotFoundException(name);
         }
-      }, retryStrategy);
-    } catch (UnauthorizedException | DatasetManagementException e) {
-      throw e;
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+        return spec.getType();
+      }
+    }, retryStrategy);
   }
 
   @Override
-  public DatasetProperties getDatasetProperties(final String name)
-    throws DatasetManagementException, UnauthorizedException {
-    try {
-      return Retries.callWithRetries(new Retries.Callable<DatasetProperties, Exception>() {
-        @Override
-        public DatasetProperties call() throws DatasetManagementException, UnauthorizedException {
-          DatasetSpecification spec = datasetFramework.getDatasetSpec(createInstanceId(name));
-          if (spec == null) {
-            throw new InstanceNotFoundException(name);
-          }
-          return DatasetProperties.of(spec.getOriginalProperties());
+  public DatasetProperties getDatasetProperties(final String name) throws DatasetManagementException {
+    return Retries.callWithRetries(new Retries.Callable<DatasetProperties, DatasetManagementException>() {
+      @Override
+      public DatasetProperties call() throws DatasetManagementException {
+        DatasetSpecification spec = datasetFramework.getDatasetSpec(createInstanceId(name));
+        if (spec == null) {
+          throw new InstanceNotFoundException(name);
         }
-      }, retryStrategy);
-    } catch (UnauthorizedException | DatasetManagementException e) {
-      throw e;
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+        return DatasetProperties.of(spec.getOriginalProperties());
+      }
+    }, retryStrategy);
   }
 
   @Override
   public void createDataset(final String name, final String type,
-                            final DatasetProperties properties)
-    throws DatasetManagementException, UnauthorizedException {
-    try {
-      Retries.runWithRetries(() -> {
+                            final DatasetProperties properties) throws DatasetManagementException {
+    Retries.runWithRetries(() -> {
+      try {
         // we have to do this check since addInstance method can only be used when app impersonation is enabled
         if (principalId != null) {
           datasetFramework.addInstance(type, createInstanceId(name), properties, principalId);
         } else {
           datasetFramework.addInstance(type, createInstanceId(name), properties);
         }
-      }, retryStrategy);
-    } catch (IOException ioe) {
-      // not the prettiest message, but this replicates exactly what RemoteDatasetFramework throws
-      throw new DatasetManagementException(String.format("Failed to add instance %s, details: %s",
-                                                         name, ioe.getMessage()), ioe);
-    } catch (UnauthorizedException | DatasetManagementException e) {
-      throw e;
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+      } catch (IOException ioe) {
+        // not the prettiest message, but this replicates exactly what RemoteDatasetFramework throws
+        throw new DatasetManagementException(String.format("Failed to add instance %s, details: %s",
+                                                           name, ioe.getMessage()), ioe);
+      }
+    }, retryStrategy);
   }
 
   @Override
-  public void updateDataset(final String name, final DatasetProperties properties)
-    throws DatasetManagementException, UnauthorizedException {
-    try {
-      Retries.runWithRetries(() -> {
-          datasetFramework.updateInstance(createInstanceId(name), properties);
-      }, retryStrategy);
-    } catch (IOException ioe) {
-      // not the prettiest message, but this replicates exactly what RemoteDatasetFramework throws
-      throw new DatasetManagementException(String.format("Failed to update instance %s, details: %s",
-                                                         name, ioe.getMessage()), ioe);
-    } catch (UnauthorizedException | DatasetManagementException e) {
-      throw e;
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+  public void updateDataset(final String name, final DatasetProperties properties) throws DatasetManagementException {
+    Retries.runWithRetries(() -> {
+      try {
+        datasetFramework.updateInstance(createInstanceId(name), properties);
+      } catch (IOException ioe) {
+        // not the prettiest message, but this replicates exactly what RemoteDatasetFramework throws
+        throw new DatasetManagementException(String.format("Failed to update instance %s, details: %s",
+                                                           name, ioe.getMessage()), ioe);
+      }
+    }, retryStrategy);
   }
 
   @Override
-  public void dropDataset(final String name) throws DatasetManagementException, UnauthorizedException {
-    try {
-      Retries.runWithRetries(() -> {
-          datasetFramework.deleteInstance(createInstanceId(name));
-      }, retryStrategy);
-    } catch (IOException ioe) {
-      // not the prettiest message, but this replicates exactly what RemoteDatasetFramework throws
-      throw new DatasetManagementException(String.format("Failed to delete instance %s, details: %s",
-                                                         name, ioe.getMessage()), ioe);
-    } catch (UnauthorizedException | DatasetManagementException e) {
-      throw e;
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+  public void dropDataset(final String name) throws DatasetManagementException {
+    Retries.runWithRetries(() -> {
+      try {
+        datasetFramework.deleteInstance(createInstanceId(name));
+      } catch (IOException ioe) {
+        // not the prettiest message, but this replicates exactly what RemoteDatasetFramework throws
+        throw new DatasetManagementException(String.format("Failed to delete instance %s, details: %s",
+                                                           name, ioe.getMessage()), ioe);
+      }
+    }, retryStrategy);
   }
 
   @Override
-  public void truncateDataset(final String name) throws DatasetManagementException, UnauthorizedException {
-    try {
-      Retries.runWithRetries(() -> {
-          datasetFramework.truncateInstance(createInstanceId(name));
-      }, retryStrategy);
-    } catch (IOException ioe) {
-      // not the prettiest message, but this replicates exactly what RemoteDatasetFramework throws
-      throw new DatasetManagementException(String.format("Failed to truncate instance %s, details: %s",
-                                                         name, ioe.getMessage()), ioe);
-    } catch (UnauthorizedException | DatasetManagementException e) {
-      throw e;
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+  public void truncateDataset(final String name) throws DatasetManagementException {
+    Retries.runWithRetries(() -> {
+      try {
+        datasetFramework.truncateInstance(createInstanceId(name));
+      } catch (IOException ioe) {
+        // not the prettiest message, but this replicates exactly what RemoteDatasetFramework throws
+        throw new DatasetManagementException(String.format("Failed to truncate instance %s, details: %s",
+                                                           name, ioe.getMessage()), ioe);
+      }
+    }, retryStrategy);
   }
 
   private DatasetId createInstanceId(String name) {

@@ -100,14 +100,15 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void addModule(DatasetModuleId moduleId, DatasetModule module)
-    throws DatasetManagementException, UnauthorizedException {
+  public void addModule(DatasetModuleId moduleId, DatasetModule module) throws DatasetManagementException {
     Class<?> moduleClass = DatasetModules.getDatasetModuleClass(module);
     try {
       Location deploymentJar = createDeploymentJar(moduleClass);
       try {
         clientCache.getUnchecked(moduleId.getParent())
           .addModule(moduleId.getEntityName(), moduleClass.getName(), deploymentJar);
+      } catch (UnauthorizedException e) {
+        throw new DatasetManagementException("Access denied adding module " + moduleId, e);
       } finally {
         try {
           deploymentJar.delete();
@@ -126,95 +127,146 @@ public class RemoteDatasetFramework implements DatasetFramework {
 
   @Override
   public void addModule(DatasetModuleId moduleId, DatasetModule module,
-                        Location jarLocation) throws DatasetManagementException, UnauthorizedException {
-    clientCache.getUnchecked(moduleId.getParent())
-      .addModule(moduleId.getEntityName(), DatasetModules.getDatasetModuleClass(module).getName(), jarLocation);
+                        Location jarLocation) throws DatasetManagementException {
+    try {
+      clientCache.getUnchecked(moduleId.getParent())
+        .addModule(moduleId.getEntityName(), DatasetModules.getDatasetModuleClass(module).getName(), jarLocation);
+    } catch (UnauthorizedException e) {
+      throw new DatasetManagementException("Access denied adding module " + moduleId, e);
+    }
   }
 
   @Override
-  public void deleteModule(DatasetModuleId moduleId) throws DatasetManagementException, UnauthorizedException {
-    clientCache.getUnchecked(moduleId.getParent()).deleteModule(moduleId.getEntityName());
+  public void deleteModule(DatasetModuleId moduleId) throws DatasetManagementException {
+    try {
+      clientCache.getUnchecked(moduleId.getParent()).deleteModule(moduleId.getEntityName());
+    } catch (UnauthorizedException e) {
+      throw new DatasetManagementException("Access denied deleting module " + moduleId, e);
+    }
   }
 
   @Override
-  public void deleteAllModules(NamespaceId namespaceId) throws DatasetManagementException, UnauthorizedException {
-    clientCache.getUnchecked(namespaceId).deleteModules();
+  public void deleteAllModules(NamespaceId namespaceId) throws DatasetManagementException {
+    try {
+      clientCache.getUnchecked(namespaceId).deleteModules();
+    } catch (UnauthorizedException e) {
+      throw new DatasetManagementException("Access denied deleting modules from " + namespaceId, e);
+    }
   }
 
   @Override
   public void addInstance(String datasetType, DatasetId datasetInstanceId, DatasetProperties props,
                           @Nullable KerberosPrincipalId ownerPrincipal)
-    throws DatasetManagementException, UnauthorizedException {
-    clientCache.getUnchecked(datasetInstanceId.getParent())
-      .addInstance(datasetInstanceId.getEntityName(), datasetType, props, ownerPrincipal);
+    throws DatasetManagementException {
+    try {
+      clientCache.getUnchecked(datasetInstanceId.getParent())
+        .addInstance(datasetInstanceId.getEntityName(), datasetType, props, ownerPrincipal);
+    } catch (UnauthorizedException e) {
+      throw new DatasetManagementException("Access denied adding dataset " + datasetInstanceId, e);
+    }
   }
 
   @Override
   public void updateInstance(DatasetId datasetInstanceId, DatasetProperties props)
-    throws DatasetManagementException, UnauthorizedException {
-    clientCache.getUnchecked(datasetInstanceId.getParent())
-      .updateInstance(datasetInstanceId.getEntityName(), props);
+    throws DatasetManagementException {
+    try {
+      clientCache.getUnchecked(datasetInstanceId.getParent())
+        .updateInstance(datasetInstanceId.getEntityName(), props);
+    } catch (UnauthorizedException e) {
+      throw new DatasetManagementException("Access denied updating dataset " + datasetInstanceId, e);
+    }
   }
 
   @Override
   public Collection<DatasetSpecificationSummary> getInstances(NamespaceId namespaceId)
-    throws DatasetManagementException, UnauthorizedException {
-    return clientCache.getUnchecked(namespaceId).getAllInstances();
+    throws DatasetManagementException {
+    try {
+      return clientCache.getUnchecked(namespaceId).getAllInstances();
+    } catch (UnauthorizedException e) {
+      throw new DatasetManagementException("Access denied getting datasets in " + namespaceId, e);
+    }
   }
 
   @Override
   public Collection<DatasetSpecificationSummary> getInstances(NamespaceId namespaceId, Map<String, String> properties)
-    throws DatasetManagementException, UnauthorizedException {
-    return clientCache.getUnchecked(namespaceId).getInstances(properties);
+    throws DatasetManagementException {
+    try {
+      return clientCache.getUnchecked(namespaceId).getInstances(properties);
+    } catch (UnauthorizedException e) {
+      throw new DatasetManagementException("Access denied getting datasets in " + namespaceId, e);
+    }
   }
 
   @Nullable
   @Override
-  public DatasetSpecification getDatasetSpec(DatasetId datasetInstanceId)
-    throws DatasetManagementException, UnauthorizedException {
-    DatasetMeta meta = clientCache.getUnchecked(datasetInstanceId.getParent())
-      .getInstance(datasetInstanceId.getEntityName());
-    return meta == null ? null : meta.getSpec();
+  public DatasetSpecification getDatasetSpec(DatasetId datasetInstanceId) throws DatasetManagementException {
+    try {
+      DatasetMeta meta = clientCache.getUnchecked(datasetInstanceId.getParent())
+        .getInstance(datasetInstanceId.getEntityName());
+      return meta == null ? null : meta.getSpec();
+    } catch (UnauthorizedException e) {
+      throw new DatasetManagementException("Access denied getting dataset " + datasetInstanceId, e);
+    }
   }
 
   @Override
-  public boolean hasInstance(DatasetId datasetInstanceId) throws DatasetManagementException, UnauthorizedException {
-    return clientCache.getUnchecked(datasetInstanceId.getParent())
-      .getInstance(datasetInstanceId.getEntityName()) != null;
+  public boolean hasInstance(DatasetId datasetInstanceId) throws DatasetManagementException {
+    try {
+      return clientCache.getUnchecked(datasetInstanceId.getParent())
+        .getInstance(datasetInstanceId.getEntityName()) != null;
+    } catch (UnauthorizedException e) {
+      throw new DatasetManagementException("Access denied getting dataset " + datasetInstanceId, e);
+    }
   }
 
   @Override
-  public boolean hasType(DatasetTypeId datasetTypeId) throws DatasetManagementException, UnauthorizedException {
-    return clientCache.getUnchecked(datasetTypeId.getParent()).getType(datasetTypeId.getEntityName()) != null;
+  public boolean hasType(DatasetTypeId datasetTypeId) throws DatasetManagementException {
+    try {
+      return clientCache.getUnchecked(datasetTypeId.getParent()).getType(datasetTypeId.getEntityName()) != null;
+    } catch (UnauthorizedException e) {
+      throw new DatasetManagementException("Access denied getting dataset type " + datasetTypeId, e);
+    }
   }
 
   @Override
-  public DatasetTypeMeta getTypeInfo(DatasetTypeId datasetTypeId)
-    throws DatasetManagementException, UnauthorizedException {
-    return clientCache.getUnchecked(datasetTypeId.getParent()).getType(datasetTypeId.getEntityName());
+  public DatasetTypeMeta getTypeInfo(DatasetTypeId datasetTypeId) throws DatasetManagementException {
+    try {
+      return clientCache.getUnchecked(datasetTypeId.getParent()).getType(datasetTypeId.getEntityName());
+    } catch (UnauthorizedException e) {
+      throw new DatasetManagementException("Access denied getting dataset type " + datasetTypeId, e);
+    }
   }
 
   @Override
-  public void truncateInstance(DatasetId datasetInstanceId)
-    throws DatasetManagementException, UnauthorizedException {
-    clientCache.getUnchecked(datasetInstanceId.getParent()).truncateInstance(datasetInstanceId.getEntityName());
+  public void truncateInstance(DatasetId datasetInstanceId) throws DatasetManagementException {
+    try {
+      clientCache.getUnchecked(datasetInstanceId.getParent()).truncateInstance(datasetInstanceId.getEntityName());
+    } catch (UnauthorizedException e) {
+      throw new DatasetManagementException("Access denied truncating dataset " + datasetInstanceId, e);
+    }
   }
 
   @Override
-  public void deleteInstance(DatasetId datasetInstanceId)
-    throws DatasetManagementException, UnauthorizedException {
-    clientCache.getUnchecked(datasetInstanceId.getParent()).deleteInstance(datasetInstanceId.getEntityName());
+  public void deleteInstance(DatasetId datasetInstanceId) throws DatasetManagementException {
+    try {
+      clientCache.getUnchecked(datasetInstanceId.getParent()).deleteInstance(datasetInstanceId.getEntityName());
+    } catch (UnauthorizedException e) {
+      throw new DatasetManagementException("Access denied deletings dataset " + datasetInstanceId, e);
+    }
   }
 
   @Override
-  public void deleteAllInstances(NamespaceId namespaceId)
-    throws DatasetManagementException, UnauthorizedException {
-    clientCache.getUnchecked(namespaceId).deleteInstances();
+  public void deleteAllInstances(NamespaceId namespaceId) throws DatasetManagementException {
+    try {
+      clientCache.getUnchecked(namespaceId).deleteInstances();
+    } catch (UnauthorizedException e) {
+      throw new DatasetManagementException("Access denied deletings datasets in " + namespaceId, e);
+    }
   }
 
   @Override
   public <T extends DatasetAdmin> T getAdmin(DatasetId datasetInstanceId, ClassLoader classLoader)
-    throws DatasetManagementException, IOException, UnauthorizedException {
+    throws DatasetManagementException, IOException {
     return getAdmin(datasetInstanceId, classLoader, new ConstantClassLoaderProvider(classLoader));
   }
 
@@ -223,15 +275,19 @@ public class RemoteDatasetFramework implements DatasetFramework {
   public <T extends DatasetAdmin> T getAdmin(DatasetId datasetInstanceId,
                                              @Nullable ClassLoader parentClassLoader,
                                              DatasetClassLoaderProvider classLoaderProvider)
-    throws DatasetManagementException, IOException, UnauthorizedException {
-    DatasetMeta instanceInfo = clientCache.getUnchecked(datasetInstanceId.getParent())
-      .getInstance(datasetInstanceId.getEntityName());
-    if (instanceInfo == null) {
-      return null;
-    }
+    throws DatasetManagementException, IOException {
+    try {
+      DatasetMeta instanceInfo = clientCache.getUnchecked(datasetInstanceId.getParent())
+        .getInstance(datasetInstanceId.getEntityName());
+      if (instanceInfo == null) {
+        return null;
+      }
 
-    DatasetType type = getType(instanceInfo.getType(), parentClassLoader, classLoaderProvider);
-    return (T) type.getAdmin(DatasetContext.from(datasetInstanceId.getNamespace()), instanceInfo.getSpec());
+      DatasetType type = getType(instanceInfo.getType(), parentClassLoader, classLoaderProvider);
+      return (T) type.getAdmin(DatasetContext.from(datasetInstanceId.getNamespace()), instanceInfo.getSpec());
+    } catch (UnauthorizedException e) {
+      throw new DatasetManagementException("Access denied getting admin for " + datasetInstanceId, e);
+    }
   }
 
   @Nullable
@@ -240,15 +296,19 @@ public class RemoteDatasetFramework implements DatasetFramework {
                                           @Nullable ClassLoader classLoader,
                                           DatasetClassLoaderProvider classLoaderProvider,
                                           @Nullable Iterable<? extends EntityId> owners, AccessType accessType)
-    throws DatasetManagementException, IOException, UnauthorizedException {
+    throws DatasetManagementException, IOException {
 
-    DatasetMeta datasetMeta = clientCache.getUnchecked(id.getParent()).getInstance(id.getEntityName());
-    if (datasetMeta == null) {
-      return null;
+    try {
+      DatasetMeta datasetMeta = clientCache.getUnchecked(id.getParent()).getInstance(id.getEntityName());
+      if (datasetMeta == null) {
+        return null;
+      }
+
+      DatasetType type = getType(datasetMeta.getType(), classLoader, classLoaderProvider);
+      return (T) type.getDataset(DatasetContext.from(id.getNamespace()), datasetMeta.getSpec(), arguments);
+    } catch (UnauthorizedException e) {
+      throw new DatasetManagementException("Access denied getting dataset " + id, e);
     }
-
-    DatasetType type = getType(datasetMeta.getType(), classLoader, classLoaderProvider);
-    return (T) type.getDataset(DatasetContext.from(id.getNamespace()), datasetMeta.getSpec(), arguments);
   }
 
   @Override
@@ -349,8 +409,8 @@ public class RemoteDatasetFramework implements DatasetFramework {
    * @return an instance of the DatasetType
    */
   private <T extends DatasetType> T getType(DatasetTypeMeta datasetTypeMeta,
-                                           @Nullable ClassLoader classLoader,
-                                           DatasetClassLoaderProvider classLoaderProvider) {
+                                            @Nullable ClassLoader classLoader,
+                                            DatasetClassLoaderProvider classLoaderProvider) {
 
     if (classLoader == null) {
       classLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), getClass().getClassLoader());

@@ -79,7 +79,7 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
 
   @Override
   public void registerLineage(String referenceName)
-    throws DatasetManagementException, TransactionFailureException, AccessException {
+    throws DatasetManagementException, TransactionFailureException {
 
     try {
       if (!admin.datasetExists(referenceName)) {
