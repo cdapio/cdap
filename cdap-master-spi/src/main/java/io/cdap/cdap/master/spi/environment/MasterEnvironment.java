@@ -58,12 +58,12 @@ public interface MasterEnvironment {
   /**
    * Creates a new instance of {@link MasterEnvironmentRunnable} from the given class name.
    *
-   * @param context a {@link MasterEnvironmentContext} to provide information about the CDAP environment
+   * @param context a {@link MasterEnvironmentRunnableContext} to provide access to CDAP resources.
    * @param runnableClass the {@link MasterEnvironmentRunnable} class to create an instance from
    * @return a new instance of the given class
    * @throws Exception if failed to create a new instance
    */
-  MasterEnvironmentRunnable createRunnable(MasterEnvironmentContext context,
+  MasterEnvironmentRunnable createRunnable(MasterEnvironmentRunnableContext context,
                                            Class<? extends MasterEnvironmentRunnable> runnableClass) throws Exception;
 
   /**

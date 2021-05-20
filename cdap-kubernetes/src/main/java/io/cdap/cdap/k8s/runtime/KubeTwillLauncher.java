@@ -22,8 +22,8 @@ import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.master.environment.k8s.KubeMasterEnvironment;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
-import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
+import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnableContext;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.apis.CoreV1Api;
 import io.kubernetes.client.models.V1DeleteOptions;
@@ -56,13 +56,13 @@ public class KubeTwillLauncher implements MasterEnvironmentRunnable {
 
   private static final Logger LOG = LoggerFactory.getLogger(KubeTwillLauncher.class);
 
-  private final MasterEnvironmentContext context;
+  private final MasterEnvironmentRunnableContext context;
   private final KubeMasterEnvironment masterEnv;
 
   private volatile boolean stopped;
   private TwillRunnable twillRunnable;
 
-  public KubeTwillLauncher(MasterEnvironmentContext context, MasterEnvironment masterEnv) {
+  public KubeTwillLauncher(MasterEnvironmentRunnableContext context, MasterEnvironment masterEnv) {
     this.context = context;
     if (!(masterEnv instanceof KubeMasterEnvironment)) {
       // This shouldn't happen

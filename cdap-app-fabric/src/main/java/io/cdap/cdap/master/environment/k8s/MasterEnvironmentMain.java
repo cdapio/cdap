@@ -23,10 +23,12 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
 import io.cdap.cdap.common.options.OptionsParser;
 import io.cdap.cdap.common.utils.ProjectInfo;
+import io.cdap.cdap.master.environment.DefaultMasterEnvironmentRunnableContext;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
+import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnableContext;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
@@ -106,8 +108,10 @@ public class MasterEnvironmentMain {
                                                + MasterEnvironmentRunnable.class);
         }
 
+        MasterEnvironmentRunnableContext runnableContext =
+          new DefaultMasterEnvironmentRunnableContext(context.getLocationFactory());
         @SuppressWarnings("unchecked")
-        MasterEnvironmentRunnable runnable = masterEnv.createRunnable(context,
+        MasterEnvironmentRunnable runnable = masterEnv.createRunnable(runnableContext,
                                                                       (Class<? extends MasterEnvironmentRunnable>) cls);
         AtomicBoolean completed = new AtomicBoolean();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {

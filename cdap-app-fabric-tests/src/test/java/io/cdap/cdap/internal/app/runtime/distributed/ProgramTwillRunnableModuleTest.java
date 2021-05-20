@@ -37,8 +37,8 @@ import io.cdap.cdap.internal.app.runtime.worker.WorkerProgramRunner;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
-import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
+import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnableContext;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.hadoop.conf.Configuration;
@@ -154,8 +154,9 @@ public class ProgramTwillRunnableModuleTest {
     private final InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
 
     @Override
-    public MasterEnvironmentRunnable createRunnable(MasterEnvironmentContext context,
-                                                    Class<? extends MasterEnvironmentRunnable> runnableClass) {
+    public MasterEnvironmentRunnable createRunnable(
+      MasterEnvironmentRunnableContext context,
+      Class<? extends MasterEnvironmentRunnable> runnableClass) throws Exception {
       throw new UnsupportedOperationException();
     }
 
