@@ -41,7 +41,6 @@ import io.cdap.cdap.proto.id.DatasetTypeId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
@@ -83,8 +82,7 @@ public interface DatasetFramework {
    * @throws DatasetManagementException in case of problems
    * @throws ServiceUnavailableException when the dataset service is not running
    */
-  void addModule(DatasetModuleId moduleId, DatasetModule module)
-    throws DatasetManagementException, UnauthorizedException;
+  void addModule(DatasetModuleId moduleId, DatasetModule module) throws DatasetManagementException;
 
   /**
    * Adds dataset types by adding dataset module to the system with a jar location containing all dataset classes
@@ -99,7 +97,7 @@ public interface DatasetFramework {
    * @throws ServiceUnavailableException when the dataset service is not running
    */
   void addModule(DatasetModuleId moduleId, DatasetModule module,
-                 Location jarLocation) throws DatasetManagementException, UnauthorizedException;
+                 Location jarLocation) throws DatasetManagementException;
 
   /**
    * Deletes dataset module and its types from the system.
@@ -109,7 +107,7 @@ public interface DatasetFramework {
    * @throws DatasetManagementException
    * @throws ServiceUnavailableException when the dataset service is not running
    */
-  void deleteModule(DatasetModuleId moduleId) throws DatasetManagementException, UnauthorizedException;
+  void deleteModule(DatasetModuleId moduleId) throws DatasetManagementException;
 
   /**
    * Deletes dataset modules and its types in the specified namespace.
@@ -119,7 +117,7 @@ public interface DatasetFramework {
    * @throws DatasetManagementException
    * @throws ServiceUnavailableException when the dataset service is not running
    */
-  void deleteAllModules(NamespaceId namespaceId) throws DatasetManagementException, UnauthorizedException;
+  void deleteAllModules(NamespaceId namespaceId) throws DatasetManagementException;
 
   /**
    * Adds information about dataset instance to the system.
@@ -138,8 +136,7 @@ public interface DatasetFramework {
    * @throws ServiceUnavailableException when the dataset service is not running
    */
   default void addInstance(String datasetTypeName, DatasetId datasetInstanceId,
-                           DatasetProperties props)
-    throws DatasetManagementException, IOException, UnauthorizedException {
+                           DatasetProperties props) throws DatasetManagementException, IOException {
     addInstance(datasetTypeName, datasetInstanceId, props, null);
   }
 
@@ -164,8 +161,7 @@ public interface DatasetFramework {
    * @throws ServiceUnavailableException when the dataset service is not running
    */
   void addInstance(String datasetTypeName, DatasetId datasetInstanceId, DatasetProperties props,
-                   @Nullable KerberosPrincipalId ownerPrincipal)
-    throws DatasetManagementException, IOException, UnauthorizedException;
+                   @Nullable KerberosPrincipalId ownerPrincipal) throws DatasetManagementException, IOException;
 
   /**
    * Updates the existing dataset instance in the system.
@@ -183,7 +179,7 @@ public interface DatasetFramework {
    * @throws ServiceUnavailableException when the dataset service is not running
    */
   void updateInstance(DatasetId datasetInstanceId, DatasetProperties props)
-    throws DatasetManagementException, IOException, UnauthorizedException;
+    throws DatasetManagementException, IOException;
 
   /**
    * Get all dataset instances in the specified namespace
@@ -191,8 +187,7 @@ public interface DatasetFramework {
    * @param namespaceId the specified namespace id
    * @return a collection of {@link DatasetSpecification}s for all datasets in the specified namespace
    */
-  Collection<DatasetSpecificationSummary> getInstances(NamespaceId namespaceId)
-    throws DatasetManagementException, UnauthorizedException;
+  Collection<DatasetSpecificationSummary> getInstances(NamespaceId namespaceId) throws DatasetManagementException;
 
   /**
    * Get dataset instances in the specified namespace having specified dataset properties.
@@ -203,7 +198,7 @@ public interface DatasetFramework {
    * having specified properties
    */
   Collection<DatasetSpecificationSummary> getInstances(NamespaceId namespaceId, Map<String, String> properties)
-    throws DatasetManagementException, UnauthorizedException;
+    throws DatasetManagementException;
 
   /**
    * Gets the {@link DatasetSpecification} for the specified dataset instance id
@@ -212,8 +207,7 @@ public interface DatasetFramework {
    * @return {@link DatasetSpecification} of the dataset or {@code null} if dataset not not exist
    */
   @Nullable
-  DatasetSpecification getDatasetSpec(DatasetId datasetInstanceId)
-    throws DatasetManagementException, UnauthorizedException;
+  DatasetSpecification getDatasetSpec(DatasetId datasetInstanceId) throws DatasetManagementException;
 
   /**
    * @param datasetInstanceId the {@link DatasetId} to check for existence
@@ -221,7 +215,7 @@ public interface DatasetFramework {
    * @throws DatasetManagementException
    * @throws ServiceUnavailableException when the dataset service is not running
    */
-  boolean hasInstance(DatasetId datasetInstanceId) throws DatasetManagementException, UnauthorizedException;
+  boolean hasInstance(DatasetId datasetInstanceId) throws DatasetManagementException;
 
   /**
    * Checks if the specified type exists in the 'system' namespace
@@ -230,7 +224,7 @@ public interface DatasetFramework {
    * @throws DatasetManagementException
    * @throws ServiceUnavailableException when the dataset service is not running
    */
-  default boolean hasSystemType(String typeName) throws DatasetManagementException, UnauthorizedException {
+  default boolean hasSystemType(String typeName) throws DatasetManagementException {
     return hasType(NamespaceId.SYSTEM.datasetType(typeName));
   }
 
@@ -242,7 +236,7 @@ public interface DatasetFramework {
    * @throws ServiceUnavailableException when the dataset service is not running
    */
   @VisibleForTesting
-  boolean hasType(DatasetTypeId datasetTypeId) throws DatasetManagementException, UnauthorizedException;
+  boolean hasType(DatasetTypeId datasetTypeId) throws DatasetManagementException;
 
   /**
    * @return the meta data for a dataset type or null if it does not exist.
@@ -250,7 +244,7 @@ public interface DatasetFramework {
    * @throws ServiceUnavailableException when the dataset service is not running
    */
   @Nullable
-  DatasetTypeMeta getTypeInfo(DatasetTypeId datasetTypeId) throws DatasetManagementException, UnauthorizedException;
+  DatasetTypeMeta getTypeInfo(DatasetTypeId datasetTypeId) throws DatasetManagementException;
 
   /**
    * Truncates a dataset instance.
@@ -261,8 +255,7 @@ public interface DatasetFramework {
    * @throws DatasetManagementException
    * @throws ServiceUnavailableException when the dataset service is not running
    */
-  void truncateInstance(DatasetId datasetInstanceId)
-    throws DatasetManagementException, IOException, UnauthorizedException;
+  void truncateInstance(DatasetId datasetInstanceId) throws DatasetManagementException, IOException;
 
   /**
    * Deletes dataset instance from the system.
@@ -274,8 +267,7 @@ public interface DatasetFramework {
    * @throws DatasetManagementException
    * @throws ServiceUnavailableException when the dataset service is not running
    */
-  void deleteInstance(DatasetId datasetInstanceId)
-    throws DatasetManagementException, IOException, UnauthorizedException;
+  void deleteInstance(DatasetId datasetInstanceId) throws DatasetManagementException, IOException;
 
   /**
    * Deletes all dataset instances in the specified namespace.
@@ -285,8 +277,7 @@ public interface DatasetFramework {
    * @throws DatasetManagementException
    * @throws ServiceUnavailableException when the dataset service is not running
    */
-  void deleteAllInstances(NamespaceId namespaceId)
-    throws DatasetManagementException, IOException, UnauthorizedException;
+  void deleteAllInstances(NamespaceId namespaceId) throws DatasetManagementException, IOException;
 
   /**
    * Gets dataset instance admin to be used to perform administrative operations. The given classloader must
@@ -303,7 +294,7 @@ public interface DatasetFramework {
    */
   @Nullable
   <T extends DatasetAdmin> T getAdmin(DatasetId datasetInstanceId, @Nullable ClassLoader classLoader)
-    throws DatasetManagementException, IOException, UnauthorizedException;
+    throws DatasetManagementException, IOException;
 
   /**
    * Gets dataset instance admin to be used to perform administrative operations. The class loader provider
@@ -323,7 +314,7 @@ public interface DatasetFramework {
   <T extends DatasetAdmin> T getAdmin(DatasetId datasetInstanceId,
                                       @Nullable ClassLoader classLoader,
                                       DatasetClassLoaderProvider classLoaderProvider)
-    throws DatasetManagementException, IOException, UnauthorizedException;
+    throws DatasetManagementException, IOException;
 
   /**
    * Gets dataset to be used to perform data operations.
@@ -340,7 +331,7 @@ public interface DatasetFramework {
   @Nullable
   default <T extends Dataset> T getDataset(DatasetId datasetInstanceId, Map<String, String> arguments,
                                            @Nullable ClassLoader classLoader)
-    throws DatasetManagementException, IOException, UnauthorizedException {
+    throws DatasetManagementException, IOException {
 
     return getDataset(datasetInstanceId, arguments, classLoader,
                       new ConstantClassLoaderProvider(classLoader), null, AccessType.UNKNOWN);
@@ -368,7 +359,7 @@ public interface DatasetFramework {
                                    DatasetClassLoaderProvider classLoaderProvider,
                                    @Nullable Iterable<? extends EntityId> owners,
                                    AccessType accessType)
-    throws DatasetManagementException, IOException, UnauthorizedException;
+    throws DatasetManagementException, IOException;
 
   /**
    * Write lineage for a particular dataset instance.

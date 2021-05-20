@@ -136,7 +136,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         return null;
       }
       return datasetSpec;
-    } catch (DatasetManagementException | UnauthorizedException e) {
+    } catch (DatasetManagementException e) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error getting spec for dataset " + datasetId);
       return null;
     }

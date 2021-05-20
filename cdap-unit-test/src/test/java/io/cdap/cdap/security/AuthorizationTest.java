@@ -1197,7 +1197,9 @@ public class AuthorizationTest extends TestBase {
         } catch (UnauthorizedException e) {
           // Expected
         } catch (Exception e) {
-          Assert.fail("Getting incorrect exception");
+          if (!(e.getCause() instanceof UnauthorizedException)) {
+            throw new AssertionError("Getting incorrect exception", e);
+          }
         }
         return null;
       }

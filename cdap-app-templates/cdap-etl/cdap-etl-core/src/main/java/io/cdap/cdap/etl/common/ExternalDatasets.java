@@ -90,7 +90,7 @@ public final class ExternalDatasets {
         }
       }
       return Input.ofDataset(inputName, Collections.unmodifiableMap(arguments)).alias(input.getAlias());
-    } catch (DatasetManagementException | AccessException e) {
+    } catch (DatasetManagementException e) {
       throw Throwables.propagate(e);
     }
   }
@@ -140,7 +140,7 @@ public final class ExternalDatasets {
         }
       }
       return Output.ofDataset(outputName, Collections.unmodifiableMap(arguments)).alias(output.getAlias());
-    } catch (DatasetManagementException | AccessException e) {
+    } catch (DatasetManagementException e) {
       throw Throwables.propagate(e);
     }
   }
@@ -155,7 +155,7 @@ public final class ExternalDatasets {
   public static void registerLineage(Admin admin, String referenceName,
                                      AccessType accessType, @Nullable Schema schema,
                                      Supplier<Dataset> datasetSupplier)
-    throws DatasetManagementException, AccessException {
+    throws DatasetManagementException {
     DatasetProperties datasetProperties;
     if (schema == null) {
       datasetProperties = DatasetProperties.EMPTY;

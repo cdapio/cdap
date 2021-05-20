@@ -139,8 +139,8 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     try {
       dsFramework.deleteAllInstances(NamespaceId.DEFAULT);
       Assert.fail();
-    } catch (Exception e) {
-      if (!(e instanceof UnauthorizedException)) {
+    } catch (DatasetManagementException e) {
+      if (!(e.getCause() instanceof UnauthorizedException)) {
         Assert.fail();
       }
     }
@@ -193,8 +193,8 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
       // user will not be able to get the info about the instance since he does not have any privilege on the instance
       dsFramework.getDatasetSpec(nonExistingInstance);
       Assert.fail();
-    } catch (Exception e) {
-      if (!(e instanceof UnauthorizedException)) {
+    } catch (DatasetManagementException e) {
+      if (!(e.getCause() instanceof UnauthorizedException)) {
         Assert.fail();
       }
     }
@@ -203,9 +203,9 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
       // instance
       dsFramework.hasInstance(nonExistingInstance);
       Assert.fail();
-    } catch (Exception e) {
+    } catch (DatasetManagementException e) {
       // expected
-      if (!(e instanceof UnauthorizedException)) {
+      if (!(e.getCause() instanceof UnauthorizedException)) {
         Assert.fail();
       }
     }
@@ -344,7 +344,8 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
       // expected
     } catch (DatasetManagementException e) {
       // no other way to detect errors from DatasetServiceClient
-      Assert.assertTrue(e.getMessage().contains("Response code: 403, message: 'Forbidden'"));
+      Assert.assertTrue(e.getMessage().contains("Response code: 403, message: 'Forbidden'")
+                          || e.getCause() instanceof UnauthorizedException);
     }
   }
 

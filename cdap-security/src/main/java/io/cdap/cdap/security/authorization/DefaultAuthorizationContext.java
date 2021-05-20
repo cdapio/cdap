@@ -72,39 +72,39 @@ public class DefaultAuthorizationContext implements AuthorizationContext {
   }
 
   @Override
-  public boolean datasetExists(String name) throws DatasetManagementException, AccessException {
+  public boolean datasetExists(String name) throws DatasetManagementException {
     return delegateAdmin.datasetExists(name);
   }
 
   @Override
-  public String getDatasetType(String name) throws DatasetManagementException, AccessException {
+  public String getDatasetType(String name) throws DatasetManagementException {
     return delegateAdmin.getDatasetType(name);
   }
 
   @Override
-  public DatasetProperties getDatasetProperties(String name) throws DatasetManagementException, AccessException {
+  public DatasetProperties getDatasetProperties(String name) throws DatasetManagementException {
     return delegateAdmin.getDatasetProperties(name);
   }
 
   @Override
   public void createDataset(String name, String type, DatasetProperties properties)
-    throws DatasetManagementException, AccessException {
+    throws DatasetManagementException {
     delegateAdmin.createDataset(name, type, properties);
   }
 
   @Override
   public void updateDataset(String name, DatasetProperties properties)
-    throws DatasetManagementException, AccessException {
+    throws DatasetManagementException {
     delegateAdmin.updateDataset(name, properties);
   }
 
   @Override
-  public void dropDataset(String name) throws DatasetManagementException, AccessException {
+  public void dropDataset(String name) throws DatasetManagementException {
     delegateAdmin.dropDataset(name);
   }
 
   @Override
-  public void truncateDataset(String name) throws DatasetManagementException, AccessException {
+  public void truncateDataset(String name) throws DatasetManagementException {
     delegateAdmin.truncateDataset(name);
   }
 

@@ -21,7 +21,6 @@ import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.InstanceConflictException;
-import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.etl.api.TransformContext;
 import io.cdap.cdap.etl.api.action.SettableArguments;
 
@@ -41,7 +40,7 @@ public interface BatchContext extends DatasetContext, TransformContext {
    *         or if the dataset type's create method fails.
    */
   void createDataset(String datasetName, String typeName, DatasetProperties properties)
-    throws DatasetManagementException, AccessException;
+    throws DatasetManagementException;
 
   /**
    * Check whether a dataset exists in the current namespace.
@@ -49,7 +48,7 @@ public interface BatchContext extends DatasetContext, TransformContext {
    * @return whether a dataset of that name exists
    * @throws DatasetManagementException for any issues encountered in the dataset system
    */
-  boolean datasetExists(String datasetName) throws DatasetManagementException, AccessException;
+  boolean datasetExists(String datasetName) throws DatasetManagementException;
 
   /**
    * Returns settable pipeline arguments. These arguments are shared by all pipeline stages, so plugins should be

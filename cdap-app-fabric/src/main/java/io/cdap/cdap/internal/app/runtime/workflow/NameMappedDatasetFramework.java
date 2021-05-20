@@ -30,7 +30,6 @@ import io.cdap.cdap.data2.metadata.lineage.AccessType;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
-import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -92,38 +91,36 @@ public class NameMappedDatasetFramework extends ForwardingProgramContextAwareDat
   @Override
   public void addInstance(String datasetTypeName, DatasetId datasetInstanceId, DatasetProperties props,
                           @Nullable KerberosPrincipalId ownerPrincipal)
-    throws IOException, DatasetManagementException, UnauthorizedException {
+    throws IOException, DatasetManagementException {
     super.addInstance(datasetTypeName, getMappedDatasetInstance(datasetInstanceId), props, ownerPrincipal);
   }
 
   @Override
   public void updateInstance(DatasetId datasetInstanceId, DatasetProperties props)
-    throws DatasetManagementException, IOException, UnauthorizedException {
+    throws DatasetManagementException, IOException {
     super.updateInstance(getMappedDatasetInstance(datasetInstanceId), props);
   }
 
   @Nullable
   @Override
-  public DatasetSpecification getDatasetSpec(DatasetId datasetInstanceId)
-    throws DatasetManagementException, UnauthorizedException {
+  public DatasetSpecification getDatasetSpec(DatasetId datasetInstanceId) throws DatasetManagementException {
     return super.getDatasetSpec(getMappedDatasetInstance(datasetInstanceId));
   }
 
   @Override
-  public boolean hasInstance(DatasetId datasetInstanceId) throws DatasetManagementException, UnauthorizedException {
+  public boolean hasInstance(DatasetId datasetInstanceId) throws DatasetManagementException {
     return super.hasInstance(getMappedDatasetInstance(datasetInstanceId));
   }
 
   @Override
-  public void deleteInstance(DatasetId datasetInstanceId)
-    throws DatasetManagementException, IOException, UnauthorizedException {
+  public void deleteInstance(DatasetId datasetInstanceId) throws DatasetManagementException, IOException {
     super.deleteInstance(getMappedDatasetInstance(datasetInstanceId));
   }
 
   @Nullable
   @Override
   public <T extends DatasetAdmin> T getAdmin(DatasetId datasetInstanceId, @Nullable ClassLoader classLoader)
-    throws DatasetManagementException, IOException, UnauthorizedException {
+    throws DatasetManagementException, IOException {
     return super.getAdmin(getMappedDatasetInstance(datasetInstanceId), classLoader);
   }
 
@@ -131,7 +128,7 @@ public class NameMappedDatasetFramework extends ForwardingProgramContextAwareDat
   @Override
   public <T extends DatasetAdmin> T getAdmin(DatasetId datasetInstanceId, @Nullable ClassLoader classLoader,
                                              DatasetClassLoaderProvider classLoaderProvider)
-    throws DatasetManagementException, IOException, UnauthorizedException {
+    throws DatasetManagementException, IOException {
     return super.getAdmin(getMappedDatasetInstance(datasetInstanceId), classLoader, classLoaderProvider);
   }
 
@@ -141,7 +138,7 @@ public class NameMappedDatasetFramework extends ForwardingProgramContextAwareDat
                                           @Nullable ClassLoader classLoader,
                                           DatasetClassLoaderProvider classLoaderProvider,
                                           @Nullable Iterable<? extends EntityId> owners, AccessType accessType)
-    throws DatasetManagementException, IOException, UnauthorizedException {
+    throws DatasetManagementException, IOException {
     return super.getDataset(getMappedDatasetInstance(datasetInstanceId),
                             arguments, classLoader, classLoaderProvider, owners, accessType);
   }

@@ -289,7 +289,7 @@ public class AdminApp extends AbstractApplication {
 
         admin.dropDataset("d");
       }
-    } catch (DatasetManagementException | AccessException e) {
+    } catch (DatasetManagementException e) {
       throw Throwables.propagate(e);
     }
 

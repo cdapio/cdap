@@ -264,7 +264,7 @@ public abstract class BaseRDDCollection<T> implements SparkCollection<T> {
     try {
       ExternalDatasets.registerLineage(sec.getAdmin(), name, AccessType.WRITE, null,
                                        () -> datasetContext.getDataset(name));
-    } catch (DatasetManagementException | AccessException e) {
+    } catch (DatasetManagementException e) {
       LOG.warn("Unable to register dataset lineage for {}", name);
     }
   }
