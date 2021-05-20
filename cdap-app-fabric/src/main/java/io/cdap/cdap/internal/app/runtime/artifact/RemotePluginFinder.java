@@ -46,6 +46,7 @@ import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -215,12 +216,14 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
 
     String path = response.getResponseBodyAsString();
     Location location = Locations.getLocationFromAbsolutePath(locationFactory, path);
-    if (!location.exists()) {
-      /* throw new IOException(String.format("Artifact Location does not exist %s for artifact %s version %s",
-                                          path, artifactId.getArtifact(), artifactId.getVersion()));*/
-      getAndStoreArtifact(artifactId, location);
+    LOG.error("Greeshma: locaion: " + location.toString());
+    Location localLocation = new LocalLocationFactory().create(location.toURI());
+    LOG.error("Greeshma: local locaion: " + localLocation.toString());
+    if (!localLocation.exists()) {
+      LOG.error("Greeshma: locaion doesn't exit: " + localLocation.toString());
+      getAndStoreArtifact(artifactId, localLocation);
     }
-    return location;
+    return localLocation;
   }
 
   private void getAndStoreArtifact(ArtifactId artifactId, Location location) throws IOException {
