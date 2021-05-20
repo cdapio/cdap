@@ -86,8 +86,16 @@ public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
         .flatMap(set -> set.stream())
         .collect(Collectors.toSet());
     }
-    accessEnforcer.enforce(authorizationPrivilege.getEntity(), authorizationPrivilege.getPrincipal(),
-                                  permissions);
+    if (authorizationPrivilege.getChildEntityType() != null) {
+      //It's expected that we'll always have one, but let's handle generic case
+      for (Permission permission: permissions) {
+        accessEnforcer.enforceOnParent(authorizationPrivilege.getChildEntityType(), authorizationPrivilege.getEntity(),
+                                       authorizationPrivilege.getPrincipal(), permission);
+      }
+    } else {
+      accessEnforcer.enforce(authorizationPrivilege.getEntity(), authorizationPrivilege.getPrincipal(),
+                             permissions);
+    }
     responder.sendStatus(HttpResponseStatus.OK);
   }
 

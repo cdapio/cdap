@@ -21,6 +21,7 @@ import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.EntityId;
@@ -112,13 +113,17 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
       accessController.grant(Authorizable.fromEntityId(NS), ALICE, ImmutableSet.of(StandardPermission.GET,
                                                                                    StandardPermission.UPDATE));
       accessController.grant(Authorizable.fromEntityId(ds), BOB, ImmutableSet.of(StandardPermission.UPDATE));
+      accessController.grant(Authorizable.fromEntityId(NS, EntityType.DATASET), ALICE,
+                             ImmutableSet.of(StandardPermission.LIST));
 
-      // auth enforcement for alice should succeed on ns for actions read and write
+      // auth enforcement for alice should succeed on ns for actions read, write and list datasets
       authEnforcementService.enforce(NS, ALICE, ImmutableSet.of(StandardPermission.GET, StandardPermission.UPDATE));
+      authEnforcementService.enforceOnParent(EntityType.DATASET, NS, ALICE, StandardPermission.LIST);
       assertAuthorizationFailure(authEnforcementService, NS, ALICE, EnumSet.allOf(StandardPermission.class));
-      // alice do not have READ or WRITE on the dataset, so authorization should fail
+      // alice do not have CREATE, READ or WRITE on the dataset, so authorization should fail
       assertAuthorizationFailure(authEnforcementService, ds, ALICE, StandardPermission.GET);
       assertAuthorizationFailure(authEnforcementService, ds, ALICE, StandardPermission.UPDATE);
+      assertAuthorizationFailure(authEnforcementService, EntityType.DATASET, NS, ALICE, StandardPermission.CREATE);
 
       // Alice doesn't have Delete right on NS, hence should fail.
       assertAuthorizationFailure(authEnforcementService, NS, ALICE, StandardPermission.DELETE);
@@ -138,51 +143,6 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
       assertAuthorizationFailure(authEnforcementService, NS, ALICE, StandardPermission.GET);
       assertAuthorizationFailure(authEnforcementService, NS, ALICE, StandardPermission.UPDATE);
       authEnforcementService.enforce(ds, BOB, StandardPermission.UPDATE);
-    }
-  }
-
-  @Test
-  public void testSingleIsVisible() throws IOException, AccessException {
-    try (AccessControllerInstantiator accessControllerInstantiator =
-           new AccessControllerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
-      AccessController accessController = accessControllerInstantiator.get();
-      NamespaceId ns1 = new NamespaceId("ns1");
-      NamespaceId ns2 = new NamespaceId("ns2");
-      DatasetId ds11 = ns1.dataset("ds11");
-      DatasetId ds12 = ns1.dataset("ds12");
-      DatasetId ds21 = ns2.dataset("ds21");
-      DatasetId ds22 = ns2.dataset("ds22");
-      DatasetId ds23 = ns2.dataset("ds33");
-      Set<NamespaceId> namespaces = ImmutableSet.of(ns1, ns2);
-      // Alice has access on ns1, ns2, ds11, ds21, ds23, Bob has access on ds11, ds12, ds22
-      accessController.grant(Authorizable.fromEntityId(ns1), ALICE, Collections.singleton(StandardPermission.UPDATE));
-      accessController.grant(Authorizable.fromEntityId(ns2), ALICE, Collections.singleton(StandardPermission.UPDATE));
-      accessController.grant(Authorizable.fromEntityId(ds11), ALICE, Collections.singleton(StandardPermission.GET));
-      accessController.grant(Authorizable.fromEntityId(ds11), BOB, Collections.singleton(StandardPermission.UPDATE));
-      accessController.grant(Authorizable.fromEntityId(ds21), ALICE, Collections.singleton(StandardPermission.UPDATE));
-      accessController.grant(Authorizable.fromEntityId(ds12), BOB, Collections.singleton(StandardPermission.UPDATE));
-      accessController.grant(Authorizable.fromEntityId(ds12), BOB, EnumSet.allOf(StandardPermission.class));
-      accessController.grant(Authorizable.fromEntityId(ds21), ALICE, Collections.singleton(StandardPermission.UPDATE));
-      accessController.grant(Authorizable.fromEntityId(ds23), ALICE, Collections.singleton(StandardPermission.UPDATE));
-      accessController.grant(Authorizable.fromEntityId(ds22), BOB, Collections.singleton(StandardPermission.UPDATE));
-      DefaultAccessEnforcer authEnforcementService =
-        new DefaultAccessEnforcer(CCONF, accessControllerInstantiator);
-      authEnforcementService.isVisible(ns1, ALICE);
-      authEnforcementService.isVisible(ns2, ALICE);
-      // bob should also be able to list two namespaces since he has privileges on the dataset in both namespaces
-      authEnforcementService.isVisible(ns1, BOB);
-      authEnforcementService.isVisible(ns2, BOB);
-      authEnforcementService.isVisible(ds11, ALICE);
-      authEnforcementService.isVisible(ds21, ALICE);
-      authEnforcementService.isVisible(ds23, ALICE);
-      // this will be empty since now isVisible will not check the hierarchy privilege for the parent of the entity
-      assertSingleVisibilityFailure(authEnforcementService, ds12, ALICE);
-      assertSingleVisibilityFailure(authEnforcementService, ds22, ALICE);
-      authEnforcementService.isVisible(ds11, BOB);
-      authEnforcementService.isVisible(ds12, BOB);
-      authEnforcementService.isVisible(ds22, BOB);
-      assertSingleVisibilityFailure(authEnforcementService, ds21, BOB);
-      assertSingleVisibilityFailure(authEnforcementService, ds23, BOB);
     }
   }
 
@@ -239,7 +199,7 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
         new DefaultAccessEnforcer(cConfCopy, accessControllerInstantiator);
       NamespaceId ns1 = new NamespaceId("ns1");
       accessEnforcer.enforce(NamespaceId.SYSTEM, systemUser, EnumSet.allOf(StandardPermission.class));
-      accessEnforcer.isVisible(NamespaceId.SYSTEM, systemUser);
+      accessEnforcer.enforce(NamespaceId.SYSTEM, systemUser, StandardPermission.GET);
       Assert.assertEquals(ImmutableSet.of(NamespaceId.SYSTEM),
                           accessEnforcer.isVisible(ImmutableSet.of(ns1, NamespaceId.SYSTEM),
                                                           systemUser));
@@ -257,8 +217,8 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
                                                ImmutableSet.of(StandardPermission.UPDATE));
       authEnforcementService.enforce(NS, ALICE, StandardPermission.UPDATE);
       authEnforcementService.enforce(ds, BOB, StandardPermission.UPDATE);
-      authEnforcementService.isVisible(NS, BOB);
-      authEnforcementService.isVisible(ds, BOB);
+      authEnforcementService.enforce(NS, BOB, StandardPermission.GET);
+      authEnforcementService.enforce(ds, BOB, StandardPermission.GET);
       Assert.assertEquals(2, authEnforcementService.isVisible(ImmutableSet.<EntityId>of(NS, ds), BOB).size());
     }
   }
@@ -270,6 +230,18 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
       authEnforcementService.enforce(entityId, principal, permission);
       Assert.fail(String.format("Expected %s to not have '%s' privilege on %s but it does.",
                                 principal, permission, entityId));
+    } catch (UnauthorizedException expected) {
+      // expected
+    }
+  }
+
+  private void assertAuthorizationFailure(AccessEnforcer authEnforcementService, EntityType entityType,
+                                          EntityId parentId, Principal principal,
+                                          Permission permission) throws AccessException {
+    try {
+      authEnforcementService.enforceOnParent(entityType, parentId, principal, permission);
+      Assert.fail(String.format("Expected %s to not have '%s' privilege on %s in %s but it does.",
+                                principal, permission, entityType, parentId));
     } catch (UnauthorizedException expected) {
       // expected
     }
@@ -290,7 +262,7 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
   private void assertSingleVisibilityFailure(AccessEnforcer authEnforcementService,
                                           EntityId entityId, Principal principal) throws AccessException {
     try {
-      authEnforcementService.isVisible(entityId, principal);
+      authEnforcementService.enforce(entityId, principal, StandardPermission.GET);
       Assert.fail(String.format("Expected %s to not have visibility privilege on %s but it does.",
                                 principal, entityId));
     } catch (UnauthorizedException expected) {

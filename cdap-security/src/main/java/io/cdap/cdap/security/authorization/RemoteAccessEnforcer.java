@@ -38,6 +38,7 @@ import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.security.AuthEnforceUtil;
 import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.security.AuthorizationPrivilege;
 import io.cdap.cdap.proto.security.Permission;
@@ -181,17 +182,12 @@ public class RemoteAccessEnforcer extends AbstractAccessEnforcer {
   }
 
   @Override
-  public void enforce(EntityId entity, Principal principal, Permission permission) throws AccessException {
-    enforce(entity, principal, Collections.singleton(permission));
-  }
-
-  @Override
   public void enforce(EntityId entity, Principal principal, Set<? extends Permission> permissions)
     throws AccessException {
     if (!isSecurityAuthorizationEnabled()) {
       return;
     }
-    AuthorizationPrivilege authorizationPrivilege = new AuthorizationPrivilege(principal, entity, permissions);
+    AuthorizationPrivilege authorizationPrivilege = new AuthorizationPrivilege(principal, entity, permissions, null);
 
     try {
       EnforcementResponse res = cacheEnabled ?
@@ -205,16 +201,18 @@ public class RemoteAccessEnforcer extends AbstractAccessEnforcer {
   }
 
   @Override
-  public void isVisible(EntityId entity, Principal principal) throws AccessException {
+  public void enforceOnParent(EntityType entityType, EntityId parentId, Principal principal, Permission permission)
+    throws AccessException {
     if (!isSecurityAuthorizationEnabled()) {
       return;
     }
-    AuthorizationPrivilege authorizationPrivilege = new AuthorizationPrivilege(principal, entity,
-                                                                               Collections.emptySet());
+    AuthorizationPrivilege authorizationPrivilege = new AuthorizationPrivilege(principal, parentId,
+                                                                               Collections.singleton(permission),
+                                                                               entityType);
 
     try {
       EnforcementResponse res = cacheEnabled ?
-        singleVisibilityCache.get(authorizationPrivilege) : doIsVisibleSingleEntity(authorizationPrivilege);
+        authPolicyCache.get(authorizationPrivilege) : doEnforce(authorizationPrivilege);
       if (!res.isSuccess()) {
         throw res.getException();
       }

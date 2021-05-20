@@ -16,7 +16,9 @@
 
 package io.cdap.cdap.proto.security;
 
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 
 import java.util.Collections;
 import java.util.Objects;
@@ -35,10 +37,13 @@ public class AuthorizationPrivilege {
   private final Set<Permission> actions;
   private final Set<Permission> permissions;
   private final Principal principal;
+  private final EntityType childEntityType;
 
-  public AuthorizationPrivilege(Principal principal, EntityId entityId, Set<? extends Permission> permissions) {
+  public AuthorizationPrivilege(Principal principal, EntityId entityId, Set<? extends Permission> permissions,
+                                EntityType childEntityType) {
     this.entityId = entityId;
     this.permissions = Collections.unmodifiableSet(permissions);
+    this.childEntityType = childEntityType;
     this.actions = null;
     this.principal = principal;
   }
@@ -60,6 +65,15 @@ public class AuthorizationPrivilege {
     return actions;
   }
 
+  /**
+   * @return child entity type for {@link AccessEnforcer#enforceOnParent(EntityType, EntityId, Principal, Permission)}
+   * checks.
+   */
+  @Nullable
+  public EntityType getChildEntityType() {
+    return childEntityType;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -70,12 +84,13 @@ public class AuthorizationPrivilege {
     }
     AuthorizationPrivilege that = (AuthorizationPrivilege) o;
     return Objects.equals(entityId, that.entityId) && permissions.equals(that.permissions) &&
+      Objects.equals(childEntityType, that.childEntityType) &&
       Objects.equals(actions, that.actions) && Objects.equals(principal, that.principal);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(entityId, permissions, principal);
+    return Objects.hash(entityId, permissions, principal, childEntityType);
   }
 
   @Override
@@ -85,6 +100,7 @@ public class AuthorizationPrivilege {
       ", actions=" + actions +
       ", permissions=" + permissions +
       ", principal=" + principal +
+      ", childEntityType=" + childEntityType +
       '}';
   }
 }

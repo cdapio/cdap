@@ -52,6 +52,7 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.Networks;
@@ -79,21 +80,26 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.scheduler.Scheduler;
+import io.cdap.cdap.security.authorization.InMemoryAccessController;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.store.StoreDefinition;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.tephra.TransactionManager;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.concurrent.TimeUnit;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 import javax.annotation.Nullable;
 
 /**
@@ -347,6 +353,31 @@ public class AppFabricTestHelper {
   private static Location createAppJar(Class<?> appClass, Supplier<File> folderSupplier) throws IOException {
     LocationFactory lf = new LocalLocationFactory(DirUtils.createTempDir(folderSupplier.get()));
     return AppJarHelper.createDeploymentJar(lf, appClass);
+  }
+
+  /**
+   * Enables in-memory auhtorization in the provided configuration. Default user is given superuser rights,
+   * so that you can use it to grant permissions to others. While in
+   * {@link io.cdap.cdap.internal.app.services.http.AppFabricTestBase} use
+   * {@link io.cdap.cdap.security.spi.authentication.SecurityRequestContext#setUserId(String)} or
+   * {@link io.cdap.cdap.internal.app.services.http.AppFabricTestBase#doAs(String, Retries.Runnable)}
+   * to set user
+   * for the call.
+   */
+  public static CConfiguration enableAuthorization(CConfiguration cConf, TemporaryFolder temporaryFolder)
+    throws IOException {
+    cConf.setBoolean(Constants.Security.ENABLED, true);
+    cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
+    cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
+    Manifest manifest = new Manifest();
+    manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, InMemoryAccessController.class.getName());
+    LocationFactory locationFactory = new LocalLocationFactory(temporaryFolder.newFolder());
+    Location externalAuthJar = AppJarHelper.createDeploymentJar(
+      locationFactory, InMemoryAccessController.class, manifest);
+    cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
+    cConf.set(Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX + "superusers",
+              UserGroupInformation.getCurrentUser().getShortUserName());
+    return cConf;
   }
 }
 

@@ -32,6 +32,16 @@ public enum StandardPermission implements Permission {
     }
   },
   /**
+   * List permission can be used on parent entity to check if a principal has access to list specific children
+   * types.
+   */
+  LIST {
+    @Override
+    public boolean isCheckedOnParent() {
+      return true;
+    }
+  },
+  /**
    * Read access to an entity.
    */
   GET,

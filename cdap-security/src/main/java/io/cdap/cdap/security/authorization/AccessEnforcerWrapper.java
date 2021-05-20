@@ -21,6 +21,7 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 
@@ -54,7 +55,7 @@ public class AccessEnforcerWrapper implements AuthorizationEnforcer {
 
   @Override
   public void isVisible(EntityId entityId, Principal principal) throws AccessException {
-    accessEnforcer.isVisible(entityId, principal);
+    accessEnforcer.enforce(entityId, principal, StandardPermission.GET);
   }
 
   @Override

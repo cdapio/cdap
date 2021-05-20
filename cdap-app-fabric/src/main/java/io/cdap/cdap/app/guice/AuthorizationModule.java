@@ -42,9 +42,11 @@ import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.authorization.AuthorizationContextFactory;
 import io.cdap.cdap.security.authorization.AuthorizerInstantiator;
 import io.cdap.cdap.security.authorization.DefaultAuthorizationContext;
+import io.cdap.cdap.security.authorization.DelegatingPermissionManager;
 import io.cdap.cdap.security.authorization.DelegatingPrivilegeManager;
 import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
 import io.cdap.cdap.security.spi.authorization.Authorizer;
+import io.cdap.cdap.security.spi.authorization.PermissionManager;
 import io.cdap.cdap.security.spi.authorization.PrivilegesManager;
 import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionSystemClient;
@@ -100,6 +102,8 @@ public class AuthorizationModule extends PrivateModule {
 
     bind(PrivilegesManager.class).to(DelegatingPrivilegeManager.class);
     expose(PrivilegesManager.class);
+    bind(PermissionManager.class).to(DelegatingPermissionManager.class);
+    expose(PermissionManager.class);
   }
 
   @Singleton

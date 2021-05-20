@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.security.spi.authorization;
 
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.GrantedPermission;
@@ -30,12 +31,6 @@ import java.util.Set;
  * A no-op authorizer to use when authorization is disabled.
  */
 public class NoOpAccessController implements AccessController {
-
-  @Override
-  public void enforce(EntityId entity, Principal principal, Permission permission) {
-    // no-op
-  }
-
   @Override
   public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) {
     return entityIds;
@@ -43,6 +38,11 @@ public class NoOpAccessController implements AccessController {
 
   @Override
   public void enforce(EntityId entity, Principal principal, Set<? extends Permission> permissions) {
+    // no-op
+  }
+
+  @Override
+  public void enforceOnParent(EntityType entityType, EntityId parentId, Principal principal, Permission permission) {
     // no-op
   }
 

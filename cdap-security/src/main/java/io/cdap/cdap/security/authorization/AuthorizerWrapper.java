@@ -33,6 +33,7 @@ import io.cdap.cdap.security.spi.authorization.AccessController;
 import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
 import io.cdap.cdap.security.spi.authorization.Authorizer;
 
+import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -41,6 +42,7 @@ import java.util.stream.Collectors;
  * Wraps an {@link Authorizer} and creates an {@link AccessController} out of it
  */
 public class AuthorizerWrapper implements AccessController {
+  private static final Set<EntityType> ENTITIES_SUPPORTING_READ = EnumSet.of(EntityType.DATASET, EntityType.SECUREKEY);
   private final Authorizer authorizer;
 
   public AuthorizerWrapper(Authorizer authorizer) {
@@ -162,7 +164,11 @@ public class AuthorizerWrapper implements AccessController {
   @Override
   public void enforce(EntityId entity, Principal principal, Permission permission) throws AccessException {
     try {
-      authorizer.enforce(entity, principal, getAction(permission, entity.getEntityType()));
+      if (permission == StandardPermission.GET && ENTITIES_SUPPORTING_READ.contains(entity.getEntityType())) {
+        authorizer.isVisible(entity, principal);
+      } else {
+        authorizer.enforce(entity, principal, getAction(permission, entity.getEntityType()));
+      }
     } catch (Exception e) {
       throw AuthEnforceUtil.propagateAccessException(e);
     }
@@ -172,16 +178,25 @@ public class AuthorizerWrapper implements AccessController {
   public void enforce(EntityId entity, Principal principal, Set<? extends Permission> permissions)
     throws AccessException {
     try {
-      authorizer.enforce(entity, principal, getActionSet(permissions, entity.getEntityType()));
+      Set<Action> actions = getActionSet(permissions, entity.getEntityType());
+      if (actions.contains(Action.READ) && !ENTITIES_SUPPORTING_READ.contains(entity.getEntityType())) {
+        //Convert GET into visibility check
+        authorizer.isVisible(entity, principal);
+        actions.remove(Action.READ);
+      }
+      if (!actions.isEmpty()) {
+        authorizer.enforce(entity, principal, actions);
+      }
     } catch (Exception e) {
       throw AuthEnforceUtil.propagateAccessException(e);
     }
   }
 
   @Override
-  public void isVisible(EntityId entityId, Principal principal) throws AccessException {
+  public void enforceOnParent(EntityType entityType, EntityId parentId, Principal principal, Permission permission)
+    throws AccessException {
     try {
-      authorizer.isVisible(entityId, principal);
+      authorizer.enforce(parentId, principal, Action.ADMIN);
     } catch (Exception e) {
       throw AuthEnforceUtil.propagateAccessException(e);
     }
@@ -199,12 +214,11 @@ public class AuthorizerWrapper implements AccessController {
 
   private Set<Action> getActionSet(Set<? extends Permission> permissions, EntityType entityType) {
     return permissions.stream().map(p -> getAction(p, entityType))
-      .collect(Collectors.toCollection(LinkedHashSet::new));
+      .collect(Collectors.toCollection(() -> EnumSet.noneOf(Action.class)));
   }
 
   static Action getAction(Permission permission, EntityType entityType) {
-    if (StandardPermission.GET == permission
-      && (entityType == EntityType.DATASET || entityType == EntityType.SECUREKEY)) {
+    if (StandardPermission.GET == permission) {
       return Action.READ;
     } else if (StandardPermission.UPDATE == permission && entityType == EntityType.DATASET) {
       return Action.WRITE;
