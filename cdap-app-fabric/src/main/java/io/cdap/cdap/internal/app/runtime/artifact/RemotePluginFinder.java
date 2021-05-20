@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.runtime.artifact;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
+import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -47,9 +48,14 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.reflect.Type;
+import java.net.HttpURLConnection;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
@@ -63,6 +69,7 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
 
   private static final Gson GSON = new Gson();
   private static final Type PLUGIN_INFO_LIST_TYPE = new TypeToken<List<PluginInfo>>() { }.getType();
+  private static final Logger LOG = LoggerFactory.getLogger(RemotePluginFinder.class);
 
   private final RemoteClient remoteClient;
   private final RemoteClient remoteClientInternal;
@@ -147,17 +154,19 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
                                       ArtifactId parentArtifactId,
                                       String pluginType,
                                       String pluginName) throws IOException, PluginNotExistsException {
+    String pluginUrl = String
+      .format("namespaces/%s/artifacts/%s/versions/%s/extensions/%s/plugins/%s?scope=%s&pluginScope=%s",
+              NamespaceId.SYSTEM.equals(namespaceId) ? NamespaceId.DEFAULT.getNamespace() : namespaceId
+                .getNamespace(), parentArtifactId.getArtifact(),
+              parentArtifactId.getVersion(), pluginType, pluginName,
+              NamespaceId.SYSTEM.equals(parentArtifactId.getNamespaceId())
+                ? ArtifactScope.SYSTEM : ArtifactScope.USER,
+              NamespaceId.SYSTEM.equals(namespaceId.getNamespaceId())
+                ? ArtifactScope.SYSTEM : ArtifactScope.USER
+      );
+    LOG.info("using plugin url to find in remote plugin finder : {}", pluginUrl);
     HttpRequest.Builder requestBuilder =
-      remoteClient.requestBuilder(
-        HttpMethod.GET,
-        String.format("namespaces/%s/artifacts/%s/versions/%s/extensions/%s/plugins/%s?scope=%s&pluginScope=%s",
-                      namespaceId.getNamespace(), parentArtifactId.getArtifact(),
-                      parentArtifactId.getVersion(), pluginType, pluginName,
-                      NamespaceId.SYSTEM.equals(parentArtifactId.getNamespaceId())
-                        ? ArtifactScope.SYSTEM : ArtifactScope.USER,
-                      NamespaceId.SYSTEM.equals(namespaceId.getNamespaceId())
-                        ? ArtifactScope.SYSTEM : ArtifactScope.USER
-                      ));
+      remoteClient.requestBuilder(HttpMethod.GET, pluginUrl);
     // add header if auth is enabled
     if (authorizationEnabled) {
       requestBuilder.addHeader(Constants.Security.Headers.USER_ID, authenticationContext.getPrincipal().getName());
@@ -207,9 +216,39 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
     String path = response.getResponseBodyAsString();
     Location location = Locations.getLocationFromAbsolutePath(locationFactory, path);
     if (!location.exists()) {
-      throw new IOException(String.format("Artifact Location does not exist %s for artifact %s version %s",
-                                          path, artifactId.getArtifact(), artifactId.getVersion()));
+      /* throw new IOException(String.format("Artifact Location does not exist %s for artifact %s version %s",
+                                          path, artifactId.getArtifact(), artifactId.getVersion()));*/
+      getAndStoreArtifact(artifactId, location);
     }
     return location;
+  }
+
+  private void getAndStoreArtifact(ArtifactId artifactId, Location location) throws IOException {
+    HttpResponse httpResponse;
+    String namespaceId = artifactId.getNamespace();
+    ArtifactScope scope = ArtifactScope.USER;
+    // Cant use 'system' as the namespace in the request because that generates an error, the namespace doesnt matter
+    // as long as it exists. Using default because it will always be there
+    if (ArtifactScope.SYSTEM.toString().equalsIgnoreCase(namespaceId)) {
+      namespaceId = "default";
+      scope = ArtifactScope.SYSTEM;
+    }
+    String url = String.format("namespaces/%s/artifacts/%s/versions/%s/download?scope=%s",
+                               namespaceId,
+                               artifactId.getArtifact(),
+                               artifactId.getVersion(),
+                               scope);
+
+    //LOG.debug("Fetching artifact from " + url);
+    HttpRequest.Builder requestBuilder = remoteClientInternal.requestBuilder(HttpMethod.GET, url);
+    httpResponse = remoteClientInternal.execute(requestBuilder.build());
+    if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
+      throw new IOException(String.format("Failed to fetch artifact %s version %s from app-fabric",
+                                          artifactId.getArtifact(), artifactId.getVersion()));
+    }
+    OutputStream outputStream = location.getOutputStream();
+    ByteStreams.copy(new ByteArrayInputStream(httpResponse.getResponseBody()), outputStream);
+    outputStream.close();
+    //LOG.debug("Stored artifact into " + location.toURI().toString());
   }
 }

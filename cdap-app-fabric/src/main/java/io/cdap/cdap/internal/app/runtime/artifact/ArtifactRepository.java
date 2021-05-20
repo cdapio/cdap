@@ -344,4 +344,5 @@ public interface ArtifactRepository extends ArtifactRepositoryReader {
    * @throws Exception
    */
   List<ArtifactInfo> getArtifactsInfo(NamespaceId namespace) throws Exception;
+
 }

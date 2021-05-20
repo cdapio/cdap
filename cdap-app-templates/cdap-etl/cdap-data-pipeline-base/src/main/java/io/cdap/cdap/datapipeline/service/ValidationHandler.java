@@ -27,12 +27,14 @@ import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.service.http.AbstractSystemHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
+import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.validation.ValidationException;
@@ -58,6 +60,8 @@ import io.cdap.cdap.etl.spec.PipelineSpecGenerator;
 import io.cdap.cdap.etl.validation.ValidatingConfigurer;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.artifact.AppRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -79,6 +83,7 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
     .serializeNulls()
     .create();
   private static final Type APP_REQUEST_TYPE = new TypeToken<AppRequest<JsonObject>>() { }.getType();
+  private static final Logger LOG = LoggerFactory.getLogger(ValidationHandler.class);
 
   @GET
   @Path("v1/health")
@@ -90,81 +95,21 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
   @Path("v1/contexts/{context}/validations/stage")
   public void validateStage(HttpServiceRequest request, HttpServiceResponder responder,
                             @PathParam("context") String namespace) throws IOException {
-    if (!getContext().getAdmin().namespaceExists(namespace)) {
-      responder.sendError(HttpURLConnection.HTTP_NOT_FOUND, String.format("Namespace '%s' does not exist", namespace));
-      return;
-    }
 
-    StageValidationRequest validationRequest;
+    RemoteValidationRequest remoteValidationRequest = new RemoteValidationRequest(namespace, StandardCharsets.UTF_8
+      .decode(request.getContent()).toString());
+    RunnableTaskRequest runnableTaskRequest =
+      RunnableTaskRequest.getBuilder(RemoteValidationTask.class.getCanonicalName()).
+        withNamespace(namespace).
+        withArtifact(getContext().getApplicationSpecification().getArtifactId()).
+        withParam(GSON.toJson(remoteValidationRequest)).
+        build();
     try {
-      validationRequest = GSON.fromJson(StandardCharsets.UTF_8.decode(request.getContent()).toString(),
-                                        StageValidationRequest.class);
-      validationRequest.validate();
-    } catch (JsonSyntaxException e) {
-      responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST, "Unable to decode request body: " + e.getMessage());
-      return;
-    } catch (IllegalArgumentException e) {
-      responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST, "Invalid stage config: " + e.getMessage());
-      return;
-    }
-
-    ETLStage stageConfig = validationRequest.getStage();
-    ValidatingConfigurer validatingConfigurer =
-      new ValidatingConfigurer(getContext().createPluginConfigurer(namespace));
-    // Batch or Streaming doesn't matter for a single stage.
-    PipelineSpecGenerator<ETLBatchConfig, BatchPipelineSpec> pipelineSpecGenerator =
-      new BatchPipelineSpecGenerator(validatingConfigurer, Collections.emptySet(), Collections.emptySet(),
-                                     Engine.SPARK);
-
-    DefaultStageConfigurer stageConfigurer = new DefaultStageConfigurer(stageConfig.getName());
-    for (StageSchema stageSchema : validationRequest.getInputSchemas()) {
-      stageConfigurer.addInputSchema(stageSchema.getStage(), stageSchema.getSchema());
-      stageConfigurer.addInputStage(stageSchema.getStage());
-    }
-    DefaultPipelineConfigurer pipelineConfigurer =
-      new DefaultPipelineConfigurer(validatingConfigurer, stageConfig.getName(), Engine.SPARK, stageConfigurer);
-
-    Map<String, String> arguments = Collections.emptyMap();
-
-    // Fetch preferences for this instance and namespace and use them as program arguments if the user selects
-    // this option.
-    if (validationRequest.getResolveMacrosFromPreferences()) {
-      try {
-        arguments = getContext().getPreferencesForNamespace(namespace, true);
-      } catch (IllegalArgumentException iae) {
-        // If this method returns IllegalArgumentException, it means the namespace doesn't exist.
-        // If this is the case, we return a 404 error.
-        responder.sendError(HttpURLConnection.HTTP_NOT_FOUND,
-                            String.format("Namespace '%s' does not exist", namespace));
-        return;
-      }
-    }
-
-    // evaluate secure macros
-    Map<String, MacroEvaluator> evaluators = ImmutableMap.of(
-      SecureStoreMacroEvaluator.FUNCTION_NAME, new SecureStoreMacroEvaluator(namespace, getContext()),
-      OAuthMacroEvaluator.FUNCTION_NAME, new OAuthMacroEvaluator(getContext()),
-      ConnectionMacroEvaluator.FUNCTION_NAME, new ConnectionMacroEvaluator(namespace, getContext())
-    );
-    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(arguments), evaluators);
-
-    Map<String, String> evaluatedProperties = getContext()
-      .evaluateMacros(namespace, stageConfig.getPlugin().getProperties(), macroEvaluator,
-                      MacroParserOptions.builder()
-                        .skipInvalidMacros()
-                        .setEscaping(false)
-                        .setFunctionWhitelist(evaluators.keySet())
-                        .build());
-    ETLPlugin originalConfig = stageConfig.getPlugin();
-    ETLPlugin evaluatedConfig = new ETLPlugin(originalConfig.getName(), originalConfig.getType(),
-                                              evaluatedProperties, originalConfig.getArtifactConfig());
-
-    try {
-      StageSpec spec = pipelineSpecGenerator.configureStage(stageConfig.getName(), evaluatedConfig,
-                                                            pipelineConfigurer).build();
-      responder.sendString(GSON.toJson(new StageValidationResponse(spec)));
-    } catch (ValidationException e) {
-      responder.sendString(GSON.toJson(new StageValidationResponse(e.getFailures())));
+      byte[] bytes = getContext().runTask(runnableTaskRequest);
+      responder.sendString(Bytes.toString(bytes));
+    } catch (Exception e) {
+      LOG.error("Exception from remote task", e);
+      responder.sendError(HttpURLConnection.HTTP_INTERNAL_ERROR, "Error from remote task " + e.getMessage());
     }
   }
 

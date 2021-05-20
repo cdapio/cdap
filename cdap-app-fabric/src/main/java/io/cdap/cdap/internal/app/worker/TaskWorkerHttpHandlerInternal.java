@@ -82,9 +82,10 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
                               request.content().toString(StandardCharsets.UTF_8), ex));
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);
     } finally {
-      if (className != null) {
+      inflightRequests.decrementAndGet();
+      /*if (className != null) {
         stopper.accept(className);
-      }
+      }*/
     }
   }
 

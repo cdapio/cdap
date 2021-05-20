@@ -32,13 +32,17 @@ public class RunnableTaskContext {
   private final RunnableTaskRequest delegateTaskRequest;
   @Nullable
   private final ClassLoader artifactClassLoader;
+  @Nullable
+  private final RunnableTaskSystemAppContext systemAppContext;
 
   private RunnableTaskContext(@Nullable String param, @Nullable ClassLoader artifactClassLoader,
-                              @Nullable RunnableTaskRequest delegateTaskRequest) {
+                              @Nullable RunnableTaskRequest delegateTaskRequest,
+                              @Nullable RunnableTaskSystemAppContext systemAppContext) {
     this.param = param;
     this.artifactClassLoader = artifactClassLoader;
     this.delegateTaskRequest = delegateTaskRequest;
     this.outputStream = new ByteArrayOutputStream();
+    this.systemAppContext = systemAppContext;
   }
 
   public void writeResult(byte[] data) throws IOException {
@@ -57,6 +61,11 @@ public class RunnableTaskContext {
   @Nullable
   public ClassLoader getArtifactClassLoader() {
     return artifactClassLoader;
+  }
+
+  @Nullable
+  public RunnableTaskSystemAppContext getSystemAppContext() {
+    return systemAppContext;
   }
 
   public static Builder getBuilder() {
@@ -78,6 +87,8 @@ public class RunnableTaskContext {
     private RunnableTaskRequest delegateTaskRequest;
     @Nullable
     private ClassLoader artifactClassLoader;
+    @Nullable
+    private RunnableTaskSystemAppContext systemAppContext;
 
     private Builder() {
 
@@ -98,8 +109,13 @@ public class RunnableTaskContext {
       return this;
     }
 
+    public Builder withSystemAppContext(@Nullable RunnableTaskSystemAppContext systemAppContext) {
+      this.systemAppContext = systemAppContext;
+      return this;
+    }
+
     public RunnableTaskContext build() {
-      return new RunnableTaskContext(param, artifactClassLoader, delegateTaskRequest);
+      return new RunnableTaskContext(param, artifactClassLoader, delegateTaskRequest, systemAppContext);
     }
   }
 }

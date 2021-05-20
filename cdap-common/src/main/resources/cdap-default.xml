@@ -4250,7 +4250,7 @@
 
   <property>
     <name>task.worker.container.count</name>
-    <value>2</value>
+    <value>1</value>
     <description>
       Number of task worker containers for task execution.
     </description>

@@ -34,21 +34,28 @@ import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.common.namespace.guice.NamespaceQueryAdminModule;
 import io.cdap.cdap.data.runtime.DataFabricModules;
+import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
 import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReader;
+import io.cdap.cdap.internal.app.runtime.artifact.RemotePluginFinder;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.metadata.PreferencesFetcher;
+import io.cdap.cdap.metadata.RemotePreferencesFetcherInternal;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.security.auth.context.MasterAuthenticationContext;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.DefaultImpersonator;
 import io.cdap.cdap.security.impersonation.Impersonator;
@@ -106,12 +113,17 @@ public class SystemAppModule extends AbstractModule {
     bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class).in(Scopes.SINGLETON);
     bind(ArtifactRepository.class).to(DefaultArtifactRepository.class).in(Scopes.SINGLETON);
     bind(Impersonator.class).to(DefaultImpersonator.class).in(Scopes.SINGLETON);
+    bind(PreferencesFetcher.class).to(RemotePreferencesFetcherInternal.class).in(Scopes.SINGLETON);
+    bind(PluginFinder.class).to(RemotePluginFinder.class);
 
     install(new IOModule());
     install(new DFSLocationModule());
     install(new MessagingClientModule());
+    install(new AuthorizationEnforcementModule().getDistributedModules());
     install(new NamespaceQueryAdminModule());
     install(new MetricsClientRuntimeModule().getDistributedModules());
     install(new DataFabricModules("task-worker").getDistributedModules());
+    install(new DataSetsModules().getDistributedModules());
+    install(new SecureStoreClientModule());
   }
 }

@@ -69,6 +69,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -81,7 +82,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
 /**
@@ -740,5 +740,10 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     ArtifactSystemMetadataWriter writer =
       new ArtifactSystemMetadataWriter(metadataServiceClient, artifactId, artifactInfo);
     writer.write();
+  }
+
+  @Override
+  public InputStream getArtifactBytes(Id.Artifact artifactId) throws Exception {
+    return artifactRepositoryReader.getArtifactBytes(artifactId);
   }
 }

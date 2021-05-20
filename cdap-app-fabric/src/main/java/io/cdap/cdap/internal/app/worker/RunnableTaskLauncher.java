@@ -22,6 +22,7 @@ import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
+import org.apache.hadoop.conf.Configuration;
 
 /**
  * RunnableTaskLauncher launches a {@link RunnableTask} by loading its class and calling its run method.
@@ -35,7 +36,7 @@ public class RunnableTaskLauncher {
 
   public byte[] launchRunnableTask(RunnableTaskRequest request) throws Exception {
     ClassLoader classLoader = getClassLoader();
-    Injector injector = Guice.createInjector(new RunnableTaskModule(cConf));
+    Injector injector = Guice.createInjector(new SystemAppModule(cConf, new Configuration()));
     Class<?> clazz = classLoader.loadClass(request.getClassName());
     Object obj = injector.getInstance(clazz);
     if (!(obj instanceof RunnableTask)) {

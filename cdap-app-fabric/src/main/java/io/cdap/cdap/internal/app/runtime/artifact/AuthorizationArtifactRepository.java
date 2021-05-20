@@ -48,6 +48,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
@@ -291,5 +292,10 @@ public class AuthorizationArtifactRepository implements ArtifactRepository {
                                            return ArtifactScope.SYSTEM.equals(input.getScope());
                                          }
                                        });
+  }
+
+  @Override
+  public InputStream getArtifactBytes(Id.Artifact artifactId) throws Exception {
+    return delegate.getArtifactBytes(artifactId);
   }
 }

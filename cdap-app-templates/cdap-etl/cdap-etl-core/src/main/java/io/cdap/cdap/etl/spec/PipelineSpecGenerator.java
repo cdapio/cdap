@@ -425,6 +425,8 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
    */
   private Object getPlugin(String stageName, ETLPlugin etlPlugin, TrackedPluginSelector pluginSelector, String type,
                            String pluginName, FailureCollector collector) {
+    LOG.info("In getPlugin with stageName:{} , type:{} , pluginName:{}, pluginConfigurer: {}", stageName, type,
+             pluginName, pluginConfigurer);
     Object plugin = null;
     try {
       // Call to usePlugin may throw IllegalArgumentException if hte plugin with the same id is already deployed.
@@ -448,9 +450,11 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       if (numFailures == 0) {
         collector.addFailure(e.getMessage(), null);
       }
+      LOG.error("InvalidPluginConfigException", e);
     } catch (Exception e) {
       // TODO: Catch specific exceptions when CDAP-15744 is fixed
       collector.addFailure(e.getMessage(), null).withStacktrace(e.getStackTrace());
+      LOG.error("Exception", e);
     }
 
     // throw validation exception if any error occurred while creating a new instance of the plugin

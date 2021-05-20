@@ -71,7 +71,7 @@ public class RunnableTaskRequest {
   @Override
   public String toString() {
     String requestString = "RunnableTaskRequest{className=%s, param=%s, artifactId=%s, " +
-      "namespace=%s, module=%s, delegate=%s}";
+      "namespace=%s, delegate=%s}";
     return String.format(requestString, className, param, artifactId, namespace, delegate);
   }
 

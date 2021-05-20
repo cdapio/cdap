@@ -21,6 +21,7 @@ import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 
+import java.io.InputStream;
 import java.util.List;
 
 /**
@@ -44,4 +45,10 @@ public class LocalArtifactRepositoryReader implements ArtifactRepositoryReader {
   public List<ArtifactDetail> getArtifactDetails(ArtifactRange range, int limit, ArtifactSortOrder order) {
     return artifactStore.getArtifacts(range, limit, order);
   }
+
+  @Override
+  public InputStream getArtifactBytes(Id.Artifact artifactId) throws Exception {
+    return artifactStore.getArtifact(artifactId).getDescriptor().getLocation().getInputStream();
+  }
+
 }
