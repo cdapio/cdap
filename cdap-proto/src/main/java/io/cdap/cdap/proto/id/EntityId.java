@@ -18,8 +18,10 @@ package io.cdap.cdap.proto.id;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.proto.element.EntityType;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Deque;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -69,6 +71,10 @@ public abstract class EntityId {
   private static final Pattern namespacePattern = Pattern.compile("[a-zA-Z0-9_]+");
   // Allow '.' for versionId
   private static final Pattern versionIdPattern = Pattern.compile("[\\.a-zA-Z0-9_-]+");
+  /**
+   * Estimate of maximum height of entity tree (max length of {@link #getHierarchy()}
+   */
+  public static final int ENTITY_TREE_MAX_HEIGHTS = 5;
 
   public static void ensureValidId(String propertyName, String name) {
     if (!isValidId(name)) {
@@ -121,7 +127,7 @@ public abstract class EntityId {
 
   private final EntityType entity;
   // Hierarchy should be transient since it acts like a cache variable and should not be JSON serialized.
-  private transient Vector<EntityId> hierarchy;
+  private transient volatile Deque<EntityId> hierarchy;
 
   protected EntityId(EntityType entity) {
     if (entity == null) {
@@ -343,16 +349,20 @@ public abstract class EntityId {
   }
 
   public Iterable<EntityId> getHierarchy() {
+    return getHierarchy(false);
+  }
+
+  public Iterable<EntityId> getHierarchy(boolean reverse) {
     if (hierarchy == null) {
-      Vector<EntityId> hierarchy = new Vector<>();
+      Deque<EntityId> hierarchy = new ArrayDeque<>(ENTITY_TREE_MAX_HEIGHTS);
       EntityId current = this;
       while (current instanceof ParentedId) {
-        hierarchy.insertElementAt(current, 0);
+        hierarchy.addFirst(current);
         current = ((ParentedId) current).getParent();
       }
-      hierarchy.insertElementAt(current, 0);
+      hierarchy.addFirst(current);
       this.hierarchy = hierarchy;
     }
-    return hierarchy;
+    return reverse ? hierarchy::descendingIterator : hierarchy;
   }
 }
