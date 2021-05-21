@@ -33,16 +33,15 @@ import java.net.HttpURLConnection;
 public class DefaultMasterEnvironmentRunnableContext implements MasterEnvironmentRunnableContext {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final LocationFactory locationFactory;
-  private final RemoteClient remoteClientInternal;
+  private final RemoteClient remoteClient;
 
   @Inject
   public DefaultMasterEnvironmentRunnableContext(DiscoveryServiceClient discoveryServiceClient,
                                                  LocationFactory locationFactory) {
     this.discoveryServiceClient = discoveryServiceClient;
     this.locationFactory = locationFactory;
-    this.remoteClientInternal = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
-                                                 new DefaultHttpRequestConfig(false),
-                                                 String.format("%s", Constants.Gateway.INTERNAL_API_VERSION_3));
+    this.remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
+                                         new DefaultHttpRequestConfig(false), "");
   }
 
   @Override
@@ -55,6 +54,6 @@ public class DefaultMasterEnvironmentRunnableContext implements MasterEnvironmen
    */
   @Override
   public HttpURLConnection openHttpURLConnection(String resource) throws IOException {
-    return remoteClientInternal.openConnection(resource);
+    return remoteClient.openConnection(resource);
   }
 }

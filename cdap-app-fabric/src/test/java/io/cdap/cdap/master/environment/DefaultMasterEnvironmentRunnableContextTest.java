@@ -23,6 +23,7 @@ import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
+import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
@@ -40,7 +41,6 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +59,6 @@ import javax.ws.rs.PathParam;
  */
 public class DefaultMasterEnvironmentRunnableContextTest {
   @ClassRule
-  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
   private static final Logger LOG = LoggerFactory.getLogger(DefaultMasterEnvironmentRunnableContextTest.class);
   private static DefaultMasterEnvironmentRunnableContext context;
   private static DiscoveryService discoveryService;
@@ -71,6 +70,7 @@ public class DefaultMasterEnvironmentRunnableContextTest {
     discoveryService = new InMemoryDiscoveryService();
 
     Injector injector = Guice.createInjector(
+      new LocalLocationModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -111,7 +111,6 @@ public class DefaultMasterEnvironmentRunnableContextTest {
   /**
    * Mock http service handler
    */
-  @Path(Constants.Gateway.INTERNAL_API_VERSION_3)
   public static final class MockHttpHandler extends AbstractHttpHandler {
     @GET
     @Path("/echo/{message}")
