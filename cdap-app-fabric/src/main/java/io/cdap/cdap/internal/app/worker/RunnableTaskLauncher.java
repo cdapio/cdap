@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app.worker;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.internal.worker.RunnableTask;
 import io.cdap.cdap.common.internal.worker.RunnableTaskContext;
@@ -39,9 +41,11 @@ public class RunnableTaskLauncher {
     if (classLoader == null) {
       classLoader = getClass().getClassLoader();
     }
+
     Class<?> clazz = classLoader.loadClass(request.getClassName());
 
-    Object obj = clazz.getDeclaredConstructor().newInstance();
+    Injector injector = Guice.createInjector(new RunnableTaskModule(cConf));
+    Object obj = injector.getInstance(clazz);
 
     if (!(obj instanceof RunnableTask)) {
       throw new ClassCastException(String.format("%s is not a RunnableTask", request.getClassName()));

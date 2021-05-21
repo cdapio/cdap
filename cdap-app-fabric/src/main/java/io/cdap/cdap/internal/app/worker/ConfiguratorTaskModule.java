@@ -23,6 +23,7 @@ import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.namespace.RemoteNamespaceQueryClient;
@@ -53,8 +54,15 @@ import org.apache.twill.filesystem.LocationFactory;
  */
 public class ConfiguratorTaskModule extends AbstractModule {
 
+  private final CConfiguration cConf;
+
+  public ConfiguratorTaskModule(CConfiguration cConf) {
+    this.cConf = cConf;
+  }
+
   @Override
   protected void configure() {
+    bind(CConfiguration.class).toInstance(cConf);
     MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
     bind(DiscoveryService.class)
       .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));

@@ -22,6 +22,7 @@ import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import io.cdap.cdap.app.deploy.ConfigResponse;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.internal.worker.RunnableTask;
 import io.cdap.cdap.common.internal.worker.RunnableTaskContext;
 import io.cdap.cdap.common.io.Locations;
@@ -39,6 +40,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -49,13 +51,16 @@ public class ConfiguratorTask implements RunnableTask {
   private static final Logger LOG = LoggerFactory.getLogger(ConfiguratorTask.class);
 
 
-  public ConfiguratorTask() {
+  private final CConfiguration cConf;
 
+  @Inject
+  public ConfiguratorTask(CConfiguration cConf) {
+    this.cConf = cConf;
   }
 
   @Override
   public void run(RunnableTaskContext context) throws Exception {
-    Injector injector = Guice.createInjector(new ConfiguratorTaskModule());
+    Injector injector = Guice.createInjector(new ConfiguratorTaskModule(cConf));
     Configurator configurator = injector.getInstance(Configurator.class);
     configurator.run(context);
   }
@@ -117,7 +122,7 @@ public class ConfiguratorTask implements RunnableTask {
       }
 
       String json = GSON.toJson(result);
-      context.writeResult(json.getBytes());
+      context.writeResult(json.getBytes(StandardCharsets.UTF_8));
     }
 
   }
