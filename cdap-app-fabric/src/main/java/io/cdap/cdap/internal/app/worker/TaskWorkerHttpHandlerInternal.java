@@ -25,8 +25,12 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.logging.gateway.handlers.AbstractLogHttpHandler;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
+import io.cdap.http.BodyProducer;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -36,8 +40,11 @@ import org.slf4j.LoggerFactory;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import javax.annotation.Nullable;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
 
 /**
  * Internal {@link HttpHandler} for Task worker.
@@ -48,6 +55,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerHttpHandlerInternal.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec()).create();
+
   private final RunnableTaskLauncher runnableTaskLauncher;
   private final Consumer<String> stopper;
   private final AtomicInteger inflightRequests = new AtomicInteger(0);
@@ -73,14 +81,15 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
         GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), RunnableTaskRequest.class);
       className = runnableTaskRequest.getClassName();
       byte[] response = runnableTaskLauncher.launchRunnableTask(runnableTaskRequest);
-      responder.sendByteArray(HttpResponseStatus.OK, response, EmptyHttpHeaders.INSTANCE);
+
+      responder.sendContent(HttpResponseStatus.OK,
+                            new RunnableTaskBodyProducer(response, stopper, className),
+                            new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM));
     } catch (ClassNotFoundException | ClassCastException ex) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);
     } catch (Exception ex) {
-      LOG.error(String.format("Failed to run task %s",
-                              request.content().toString(StandardCharsets.UTF_8), ex));
+      LOG.error("Failed to run runnable task", ex);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);
-    } finally {
       if (className != null) {
         stopper.accept(className);
       }
@@ -94,5 +103,44 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
   private String exceptionToJson(Exception ex) {
     BasicThrowable basicThrowable = new BasicThrowable(ex);
     return GSON.toJson(basicThrowable);
+  }
+
+  /**
+   * By using BodyProducer instead of simply sending out response bytes,
+   * the handler can get notified (through finished method) when sending the response is done,
+   * so it can safely call the stopper to kill the worker pod.
+   */
+  private static class RunnableTaskBodyProducer extends BodyProducer {
+    private final byte[] response;
+    private final Consumer<String> stopper;
+    private final String className;
+    private boolean done = false;
+
+    RunnableTaskBodyProducer(byte[] response, Consumer<String> stopper, String className) {
+      this.response = response;
+      this.stopper = stopper;
+      this.className = className;
+    }
+
+    @Override
+    public ByteBuf nextChunk() {
+      if (done) {
+        return Unpooled.EMPTY_BUFFER;
+      }
+
+      done = true;
+      return Unpooled.wrappedBuffer(response);
+    }
+
+    @Override
+    public void finished() {
+      stopper.accept(className);
+    }
+
+    @Override
+    public void handleError(@Nullable Throwable cause) {
+      LOG.error("Error when sending chunks", cause);
+      stopper.accept(className);
+    }
   }
 }
