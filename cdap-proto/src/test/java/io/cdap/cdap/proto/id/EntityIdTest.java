@@ -15,6 +15,7 @@
  */
 package io.cdap.cdap.proto.id;
 
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -27,6 +28,7 @@ import org.junit.Test;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -294,11 +296,14 @@ public class EntityIdTest {
 
     List<EntityId> expectedHierarchy = new ArrayList<>();
     expectedHierarchy.add(namespace);
-    Assert.assertEquals(expectedHierarchy, namespace.getHierarchy());
+    Assert.assertEquals(expectedHierarchy, Lists.newArrayList(namespace.getHierarchy()));
+    Assert.assertEquals(expectedHierarchy, Lists.newArrayList(namespace.getHierarchy(true)));
     expectedHierarchy.add(app);
-    Assert.assertEquals(expectedHierarchy, app.getHierarchy());
+    Assert.assertEquals(expectedHierarchy, Lists.newArrayList(app.getHierarchy()));
+    Assert.assertEquals(Lists.reverse(expectedHierarchy), Lists.newArrayList(app.getHierarchy(true)));
     expectedHierarchy.add(program);
-    Assert.assertEquals(expectedHierarchy, program.getHierarchy());
+    Assert.assertEquals(expectedHierarchy, Lists.newArrayList(program.getHierarchy()));
+    Assert.assertEquals(Lists.reverse(expectedHierarchy), Lists.newArrayList(program.getHierarchy(true)));
   }
 
 /*  @Test(expected = UnsupportedOperationException.class)
