@@ -75,14 +75,14 @@ public class LevelDBMessageTableTest extends MessageTableTest {
   @Test
   public void testUpgrade() throws Exception {
     File baseDir = tmpFolder.newFolder();
-    String tableName = "messages";
+    String tableName = "tms.messages";
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.MessagingSystem.LOCAL_DATA_DIR, baseDir.getAbsolutePath());
     cConf.set(Constants.MessagingSystem.MESSAGE_TABLE_NAME, tableName);
     cConf.set(Constants.MessagingSystem.LOCAL_DATA_PARTITION_SECONDS, Integer.toString(1));
     LevelDBTableFactory tableFactory = new LevelDBTableFactory(cConf);
 
-    TopicId topicId = new TopicId("system", "upgrade-test");
+    TopicId topicId = new TopicId("default", "preview");
     int generation = 1;
     TopicMetadata topicMetadata =
       new TopicMetadata(topicId, Collections.singletonMap(TopicMetadata.GENERATION_KEY, String.valueOf(generation)));
