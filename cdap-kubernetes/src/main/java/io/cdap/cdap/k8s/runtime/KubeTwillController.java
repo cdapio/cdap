@@ -166,11 +166,15 @@ class KubeTwillController implements ExtendedTwillController {
     String podName = String.format("%s-%d", meta.getName(), instanceId);
 
     try {
-      api.deleteNamespacedPodAsync(podName, kubeNamespace, null, deleteOptions, null, null, null, null,
-                                   createCallbackFutureAdapter(resultFuture, r -> runnable));
+      // TODO: CDAP-18000 Make this async call when CDAP-18000 is fixed
+      api.deleteNamespacedPod(podName, kubeNamespace, null, deleteOptions, null, null, null, null);
     } catch (ApiException e) {
       completeExceptionally(resultFuture, e);
+    } catch (Exception ex) {
+      // TODO: CDAP-18000 Ignore any exception apart from ApiException till we upgrade the kubernetes client library
+      LOG.trace("Ignoring exception while deleting pod {}", podName, ex);
     }
+    resultFuture.complete("success");
     return resultFuture;
   }
 
