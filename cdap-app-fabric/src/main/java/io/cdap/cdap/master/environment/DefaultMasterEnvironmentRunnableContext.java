@@ -16,21 +16,45 @@
 
 package io.cdap.cdap.master.environment;
 
+import com.google.inject.Inject;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnableContext;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
+
+import java.io.IOException;
+import java.net.HttpURLConnection;
 
 /**
  * Default implementation of {@link MasterEnvironmentRunnableContext}.
  */
 public class DefaultMasterEnvironmentRunnableContext implements MasterEnvironmentRunnableContext {
+  private final DiscoveryServiceClient discoveryServiceClient;
   private final LocationFactory locationFactory;
+  private final RemoteClient remoteClientInternal;
 
-  public DefaultMasterEnvironmentRunnableContext(LocationFactory locationFactory) {
+  @Inject
+  public DefaultMasterEnvironmentRunnableContext(DiscoveryServiceClient discoveryServiceClient,
+                                                 LocationFactory locationFactory) {
+    this.discoveryServiceClient = discoveryServiceClient;
     this.locationFactory = locationFactory;
+    this.remoteClientInternal = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
+                                                 new DefaultHttpRequestConfig(false),
+                                                 String.format("%s", Constants.Gateway.INTERNAL_API_VERSION_3));
   }
 
   @Override
   public LocationFactory getLocationFactory() {
     return locationFactory;
+  }
+
+  /**
+   * Opens a {@link HttpURLConnection} for the given resource path.
+   */
+  @Override
+  public HttpURLConnection openHttpURLConnection(String resource) throws IOException {
+    return remoteClientInternal.openConnection(resource);
   }
 }
