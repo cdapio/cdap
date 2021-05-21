@@ -27,7 +27,12 @@ import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.internal.worker.RunnableTask;
 import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.http.HandlerHook;
+import io.cdap.http.HttpResponder;
 import io.cdap.http.NettyHttpService;
+import io.cdap.http.internal.HandlerInfo;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -35,7 +40,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Launches an HTTP server for receiving and handling {@link RunnableTask}
@@ -62,13 +70,16 @@ public class TaskWorkerService extends AbstractIdleService {
     this.hConf = hConf;
     this.discoveryService = discoveryService;
 
+    List<TaskWorkerHandlerHook> hooks = new ArrayList<>();
+    hooks.add(new TaskWorkerHandlerHook());
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TASK_WORKER)
       .setHost(cConf.get(Constants.TaskWorker.ADDRESS))
       .setPort(cConf.getInt(Constants.TaskWorker.PORT))
       .setExecThreadPoolSize(cConf.getInt(Constants.TaskWorker.EXEC_THREADS))
       .setBossThreadPoolSize(cConf.getInt(Constants.TaskWorker.BOSS_THREADS))
       .setWorkerThreadPoolSize(cConf.getInt(Constants.TaskWorker.WORKER_THREADS))
-      .setHttpHandlers(new TaskWorkerHttpHandlerInternal(this.cConf, hConf, this::stopService));
+      .setHttpHandlers(new TaskWorkerHttpHandlerInternal(this.cConf, hConf, this::stopService))
+      .setHandlerHooks(hooks);
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
@@ -89,8 +100,8 @@ public class TaskWorkerService extends AbstractIdleService {
   @Override
   protected void shutDown() throws Exception {
     LOG.info("Shutting down TaskWorkerService");
+    httpService.stop(1, 2, TimeUnit.SECONDS);
     cancelDiscovery.cancel();
-    httpService.stop(5, 5, TimeUnit.SECONDS);
     LOG.debug("Shutting down TaskWorkerService has completed");
   }
 
@@ -105,5 +116,22 @@ public class TaskWorkerService extends AbstractIdleService {
   @VisibleForTesting
   public InetSocketAddress getBindAddress() {
     return bindAddress;
+  }
+
+  private static class TaskWorkerHandlerHook implements HandlerHook {
+    private final AtomicInteger inflightRequests = new AtomicInteger(0);
+
+    @Override
+    public boolean preCall(HttpRequest request, HttpResponder responder, HandlerInfo handlerInfo) {
+      if (inflightRequests.incrementAndGet() > 1) {
+        responder.sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS);
+        return false;
+      }
+      return true;
+    }
+
+    @Override
+    public void postCall(HttpRequest request, HttpResponseStatus status, HandlerInfo handlerInfo) {
+    }
   }
 }
