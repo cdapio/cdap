@@ -17,8 +17,8 @@
 package io.cdap.cdap.k8s.runtime;
 
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
-import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
+import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnableContext;
 import org.apache.twill.api.LocalFile;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -48,10 +48,11 @@ public class FileLocalizer implements MasterEnvironmentRunnable {
 
   private static final Logger LOG = LoggerFactory.getLogger(FileLocalizer.class);
 
-  private final MasterEnvironmentContext context;
+  private final MasterEnvironmentRunnableContext context;
   private volatile boolean stopped;
 
-  public FileLocalizer(MasterEnvironmentContext context, @SuppressWarnings("unused") MasterEnvironment masterEnv) {
+  public FileLocalizer(MasterEnvironmentRunnableContext context,
+                       @SuppressWarnings("unused") MasterEnvironment masterEnv) {
     this.context = context;
   }
 

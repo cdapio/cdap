@@ -23,6 +23,7 @@ import io.cdap.cdap.k8s.runtime.KubeTwillRunnerService;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
+import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnableContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentTask;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.apis.CoreV1Api;
@@ -190,10 +191,10 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   }
 
   @Override
-  public MasterEnvironmentRunnable createRunnable(MasterEnvironmentContext context,
+  public MasterEnvironmentRunnable createRunnable(MasterEnvironmentRunnableContext context,
                                                   Class<? extends MasterEnvironmentRunnable> cls) throws Exception {
-    // All MasterEnvironmentRunnable class supported by kube env takes two parameters in the constructor.
-    return cls.getConstructor(MasterEnvironmentContext.class, MasterEnvironment.class).newInstance(context, this);
+    return cls.getConstructor(MasterEnvironmentRunnableContext.class, MasterEnvironment.class)
+      .newInstance(context, this);
   }
 
   /**
