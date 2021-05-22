@@ -18,7 +18,8 @@ package io.cdap.cdap.internal.app.store.remote;
 
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.ApplicationPermission;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.authorization.RemoteAccessEnforcer;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -37,12 +38,12 @@ public class RemotePrivilegesCacheTest extends RemotePrivilegesTestBase {
   }
 
   @Override
-  public void testAuthorizationEnforcer() throws Exception {
-    super.testAuthorizationEnforcer();
+  public void testAccessEnforcer() throws Exception {
+    super.testAccessEnforcer();
 
     // The super class revokes all privileges after test is done. Since cache is enabled, enforce should still work.
-    authorizationEnforcer.enforce(APP, ALICE, Action.ADMIN);
-    authorizationEnforcer.enforce(PROGRAM, ALICE, Action.EXECUTE);
+    accessEnforcer.enforce(APP, ALICE, StandardPermission.UPDATE);
+    accessEnforcer.enforce(PROGRAM, ALICE, ApplicationPermission.EXECUTE);
   }
 
   @Override
@@ -51,15 +52,6 @@ public class RemotePrivilegesCacheTest extends RemotePrivilegesTestBase {
 
     // The super class revokes all privileges after test is done. Since cache is enabled, visibility should still work.
     Assert.assertEquals(ImmutableSet.of(NS, APP, PROGRAM),
-                        authorizationEnforcer.isVisible(ImmutableSet.of(NS, APP, PROGRAM), ALICE));
-  }
-
-  @Override
-  public void testSingleVisibility() throws Exception {
-    super.testSingleVisibility();
-
-    // The super class revokes all privileges after test is done. Since cache is enabled, visibility should still work.
-    authorizationEnforcer.isVisible(PROGRAM, ALICE);
-    shouldNotHaveVisibility(authorizationEnforcer, PROGRAM, BOB);
+                        accessEnforcer.isVisible(ImmutableSet.of(NS, APP, PROGRAM), ALICE));
   }
 }

@@ -17,26 +17,41 @@
 package io.cdap.cdap.internal.app.services.http.handlers;
 
 import com.google.common.collect.ImmutableSet;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.provision.MockProvisioner;
 import io.cdap.cdap.proto.EntityScope;
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.proto.provisioner.ProvisionerDetail;
 import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
 import io.cdap.cdap.proto.provisioner.ProvisionerPropertyValue;
+import io.cdap.cdap.proto.security.Authorizable;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
+import io.cdap.cdap.security.spi.authorization.PermissionManager;
 import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
+import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
+import static java.net.HttpURLConnection.HTTP_FORBIDDEN;
+import static java.net.HttpURLConnection.HTTP_OK;
 
 /**
  * Unit tests for profile http handler
@@ -48,6 +63,49 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
       .add(new ProvisionerPropertyValue("2nd property", "2nd value", true))
       .add(new ProvisionerPropertyValue("3rd property", "3rd value", false))
       .build();
+
+  @ClassRule
+  public static final TemporaryFolder TEMPORARY_FOLDER = new TemporaryFolder();
+  public static final String READ_ONLY_SYSTEM_USER_NAME = "readOnlySystem";
+  public static final String READ_ONLY_USER_NAME = "readOnly";
+  public static final String READ_WRITE_USER_NAME = "readWrite";
+  public static final String NO_ACCESS_USER_NAME = "noAccess";
+  public static final Principal READ_ONLY_USER = new Principal(READ_ONLY_USER_NAME, Principal.PrincipalType.USER);
+  public static final Principal READ_ONLY_SYSTEM_USER =
+    new Principal(READ_ONLY_SYSTEM_USER_NAME, Principal.PrincipalType.USER);
+  public static final Principal READ_WRITE_USER = new Principal(READ_WRITE_USER_NAME, Principal.PrincipalType.USER);
+
+  @BeforeClass
+  public static void beforeClass() throws Exception {
+    CConfiguration cConf = AppFabricTestHelper.enableAuthorization(createBasicCConf(), TEMPORARY_FOLDER);
+    initializeAndStartServices(cConf);
+    PermissionManager permissionManager = getInjector().getInstance(PermissionManager.class);
+    permissionManager.grant(Authorizable.fromEntityId(NamespaceId.SYSTEM, EntityType.PROFILE), READ_WRITE_USER,
+                            ImmutableSet.of(StandardPermission.LIST));
+    permissionManager.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT, EntityType.PROFILE), READ_WRITE_USER,
+                            ImmutableSet.of(StandardPermission.LIST));
+    permissionManager.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT), READ_WRITE_USER,
+                            EnumSet.allOf(StandardPermission.class));
+    permissionManager.grant(Authorizable.fromString("profile:system.p1"), READ_WRITE_USER,
+                            EnumSet.allOf(StandardPermission.class));
+    permissionManager.grant(Authorizable.fromString("profile:default.MyProfile"), READ_WRITE_USER,
+                            EnumSet.allOf(StandardPermission.class));
+    permissionManager.grant(Authorizable.fromString("profile:system." + Profile.NATIVE_NAME), READ_WRITE_USER,
+                            EnumSet.allOf(StandardPermission.class));
+
+
+    permissionManager.grant(Authorizable.fromEntityId(NamespaceId.SYSTEM, EntityType.PROFILE), READ_ONLY_SYSTEM_USER,
+                            ImmutableSet.of(StandardPermission.LIST));
+    permissionManager.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT, EntityType.PROFILE), READ_ONLY_SYSTEM_USER,
+                            ImmutableSet.of(StandardPermission.LIST));
+    permissionManager.grant(Authorizable.fromString("profile:system." + Profile.NATIVE_NAME), READ_ONLY_SYSTEM_USER,
+                            EnumSet.of(StandardPermission.GET));
+
+    permissionManager.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT, EntityType.PROFILE), READ_ONLY_USER,
+                            ImmutableSet.of(StandardPermission.LIST));
+    permissionManager.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT.profile("p1")), READ_ONLY_USER,
+                            EnumSet.of(StandardPermission.GET));
+  }
 
   @Test
   public void testSystemProfiles() throws Exception {
@@ -85,6 +143,36 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
     deleteProfile(p2Id, 200);
     disableSystemProfile(p1.getName(), 200);
     deleteSystemProfile(p1.getName(), 200);
+
+    doAs(READ_WRITE_USER_NAME, () -> {
+      listSystemProfiles(HttpURLConnection.HTTP_OK);
+      listProfiles(NamespaceId.DEFAULT, true, HttpURLConnection.HTTP_OK);
+      putSystemProfile(p1.getName(), p1, HttpURLConnection.HTTP_OK);
+      getSystemProfile(Profile.NATIVE.getName(), HttpURLConnection.HTTP_OK);
+      disableSystemProfile(p1.getName(), HttpURLConnection.HTTP_OK);
+      enableSystemProfile(p1.getName(), HttpURLConnection.HTTP_OK);
+      disableSystemProfile(p1.getName(), HttpURLConnection.HTTP_OK);
+      deleteSystemProfile(p1.getName(), HttpURLConnection.HTTP_OK);
+    });
+    doAs(READ_ONLY_SYSTEM_USER_NAME, () -> {
+      listSystemProfiles(HttpURLConnection.HTTP_OK);
+      listProfiles(NamespaceId.DEFAULT, true, HttpURLConnection.HTTP_OK);
+      putSystemProfile(p1.getName(), p1, HTTP_FORBIDDEN);
+      getSystemProfile(Profile.NATIVE.getName(), HttpURLConnection.HTTP_OK);
+      disableSystemProfile(p1.getName(), HTTP_FORBIDDEN);
+      enableSystemProfile(p1.getName(), HTTP_FORBIDDEN);
+      deleteSystemProfile(p1.getName(), HTTP_FORBIDDEN);
+    });
+    doAs(READ_ONLY_USER_NAME, () -> {
+      listSystemProfiles(HTTP_FORBIDDEN);
+      listProfiles(NamespaceId.DEFAULT, true, HTTP_FORBIDDEN);
+      listProfiles(NamespaceId.DEFAULT, false, HttpURLConnection.HTTP_OK);
+      getSystemProfile(Profile.NATIVE.getName(), HTTP_FORBIDDEN);
+      putSystemProfile(p1.getName(), p1, HTTP_FORBIDDEN);
+      disableSystemProfile(p1.getName(), HTTP_FORBIDDEN);
+      enableSystemProfile(p1.getName(), HTTP_FORBIDDEN);
+      deleteSystemProfile(p1.getName(), HTTP_FORBIDDEN);
+    });
   }
 
   @Test
@@ -119,6 +207,14 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
 
     // get a nonexisting profile should get a not found code
     getProfile(NamespaceId.DEFAULT.profile("nonExisting"), 404);
+    doAs(READ_ONLY_USER_NAME, () -> {
+      listProfiles(NamespaceId.DEFAULT, false, HttpURLConnection.HTTP_OK);
+      getProfile(profileId, HttpURLConnection.HTTP_OK);
+    });
+    doAs(NO_ACCESS_USER_NAME, () -> {
+      listProfiles(NamespaceId.DEFAULT, false, HTTP_FORBIDDEN);
+      getProfile(profileId, HTTP_FORBIDDEN);
+    });
   }
 
   @Test
@@ -164,6 +260,20 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
     ProvisionerDetail test = new ProvisionerDetail(spec.getName(), spec.getLabel(), spec.getDescription(),
                                                    new ArrayList<>(), null, false);
     putProfile(NamespaceId.DEFAULT.profile(test.getName()), test, 400);
+
+    doAs(READ_ONLY_USER_NAME, () -> {
+      putProfile(expectedProfileId, expected, HTTP_FORBIDDEN);
+      disableProfile(expectedProfileId, HTTP_FORBIDDEN);
+      enableProfile(expectedProfileId, HTTP_FORBIDDEN);
+      deleteProfile(expectedProfileId, HTTP_FORBIDDEN);
+    });
+    doAs(READ_WRITE_USER_NAME, () -> {
+      putProfile(expectedProfileId, expected, HTTP_OK);
+      disableProfile(expectedProfileId, HTTP_OK);
+      enableProfile(expectedProfileId, HTTP_OK);
+      disableProfile(expectedProfileId, HTTP_OK);
+      deleteProfile(expectedProfileId, HTTP_OK);
+    });
   }
 
   @Test

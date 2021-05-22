@@ -16,14 +16,17 @@
 
 package io.cdap.cdap.security.spi.authorization;
 
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.StandardPermission;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -36,6 +39,16 @@ public class UnauthorizedExceptionTest {
     String expected = String.format("Principal '%s' has insufficient privileges to perform action '%s' " +
                                       "on entity '%s'.", TEST_PRINCIPAL, Action.ADMIN, TEST_NAMESPACE_ENTITY);
     String got = new UnauthorizedException(TEST_PRINCIPAL, Action.ADMIN, TEST_NAMESPACE_ENTITY).getMessage();
+    Assert.assertEquals(expected, got);
+  }
+
+  @Test
+  public void testSingleActionReturnsExpectedMessageWithChild() {
+    String expected = String.format("Principal '%s' has insufficient privileges to perform action '%s' " +
+                                      "on %s in entity '%s'.", TEST_PRINCIPAL, StandardPermission.CREATE,
+                                    EntityType.DATASET.name().toLowerCase(), TEST_NAMESPACE_ENTITY);
+    String got = new UnauthorizedException(TEST_PRINCIPAL, EnumSet.of(StandardPermission.CREATE),
+                                           TEST_NAMESPACE_ENTITY, EntityType.DATASET).getMessage();
     Assert.assertEquals(expected, got);
   }
 

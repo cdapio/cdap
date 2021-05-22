@@ -79,27 +79,12 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
   }
 
   @Override
-  public void isVisible(EntityId entity, Principal principal) throws AccessException {
+  public void enforceOnParent(EntityType entityType, EntityId parentId, Principal principal, Permission permission)
+    throws AccessException {
     if (!isSecurityAuthorizationEnabled()) {
       return;
     }
-    if (isAccessingSystemNSAsMasterUser(entity, principal) || isEnforcingOnSamePrincipalId(entity, principal)) {
-      return;
-    }
-
-    LOG.trace("Checking single entity visibility on {} for principal {}.", entity, principal);
-    long startTime = System.nanoTime();
-    try {
-      accessControllerInstantiator.get().isVisible(entity, principal);
-    } finally {
-      long timeTaken = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
-      String logLine = "Checked single entity visibility on {} for principal {}. Time spent in enforcement was {} ms.";
-      if (timeTaken > logTimeTakenAsWarn) {
-        LOG.warn(logLine, entity, principal, timeTaken);
-      } else {
-        LOG.trace(logLine, entity, principal, timeTaken);
-      }
-    }
+    doEnforce(entityType, parentId, principal, permission);
   }
 
   @Override
@@ -154,6 +139,27 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
         LOG.warn(logLine, permissions, entity, principal, timeTaken);
       } else {
         LOG.trace(logLine, permissions, entity, principal, timeTaken);
+      }
+    }
+  }
+
+  private void doEnforce(EntityType entityType, EntityId parentId, Principal principal, Permission permission)
+    throws AccessException {
+    // bypass the check when the principal is the master user and the entity is in the system namespace
+    if (isAccessingSystemNSAsMasterUser(parentId, principal) || isEnforcingOnSamePrincipalId(parentId, principal)) {
+      return;
+    }
+    LOG.trace("Enforcing permission {} on {} in {} for principal {}.", permission, entityType, parentId, principal);
+    long startTime = System.nanoTime();
+    try {
+      accessControllerInstantiator.get().enforceOnParent(entityType, parentId, principal, permission);
+    } finally {
+      long timeTaken = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
+      String logLine = "Enforced permission {} on {} for principal {}. Time spent in enforcement was {} ms.";
+      if (timeTaken > logTimeTakenAsWarn) {
+        LOG.warn(logLine, permission, entityType, parentId, principal, timeTaken);
+      } else {
+        LOG.trace(logLine, permission, entityType, parentId, principal, timeTaken);
       }
     }
   }

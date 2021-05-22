@@ -18,6 +18,7 @@ package io.cdap.cdap.security.authorization;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Sets;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
@@ -42,6 +43,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import javax.annotation.Nullable;
 
 /**
  * In-memory implementation of {@link AccessController}.
@@ -71,15 +73,27 @@ public class InMemoryAccessController implements AccessController {
     }
   }
 
+
   @Override
   public void enforce(EntityId entity, Principal principal, Set<? extends Permission> permissions)
     throws UnauthorizedException {
+    enforce(entity, null, principal, permissions);
+  }
+
+  @Override
+  public void enforceOnParent(EntityType entityType, EntityId parentId, Principal principal, Permission permission)
+    throws UnauthorizedException {
+    enforce(parentId, entityType, principal, Collections.singleton(permission));
+  }
+
+  private void enforce(EntityId entity, @Nullable EntityType childType,
+                       Principal principal, Set<? extends Permission> permissions) throws UnauthorizedException {
     // super users do not have any enforcement
     if (superUsers.contains(principal) || superUsers.contains(allSuperUsers)) {
       return;
     }
     // permissions allowed for this principal
-    Set<? extends Permission> allowed = getPermissions(entity, principal);
+    Set<? extends Permission> allowed = getPermissions(entity, childType, principal);
     if (allowed.containsAll(permissions)) {
       return;
     }
@@ -91,7 +105,7 @@ public class InMemoryAccessController implements AccessController {
       }
     }
     if (!allowedForRoles.containsAll(permissions)) {
-      throw new UnauthorizedException(principal, Sets.difference(permissions, allowed), entity);
+      throw new UnauthorizedException(principal, Sets.difference(permissions, allowed), entity, childType);
     }
   }
 
@@ -207,6 +221,10 @@ public class InMemoryAccessController implements AccessController {
 
   private Set<? extends Permission> getPermissions(EntityId entityId, Principal principal) {
     return getPermissions(Authorizable.fromEntityId(entityId), principal);
+  }
+
+  private Set<? extends Permission> getPermissions(EntityId entityId, EntityType childType, Principal principal) {
+    return getPermissions(Authorizable.fromEntityId(entityId, childType), principal);
   }
 
   private Set<Permission> getPermissions(Authorizable authorizable, Principal principal) {

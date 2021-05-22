@@ -22,20 +22,19 @@ import com.google.gson.JsonSyntaxException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.MethodNotAllowedException;
 import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.common.ProfileConflictException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.internal.provision.ProvisioningService;
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.proto.profile.ProfileCreateRequest;
 import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
 import io.cdap.cdap.proto.provisioner.ProvisionerPropertyValue;
-import io.cdap.cdap.proto.security.Action;
-import io.cdap.cdap.security.authorization.AuthorizationUtil;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.buffer.ByteBufInputStream;
@@ -67,17 +66,17 @@ import javax.ws.rs.QueryParam;
 public class ProfileHttpHandler extends AbstractHttpHandler {
   private static final Gson GSON = new GsonBuilder().create();
 
-  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
   private final ProfileService profileService;
   private final ProvisioningService provisioningService;
 
   @Inject
-  public ProfileHttpHandler(AuthorizationEnforcer authorizationEnforcer,
+  public ProfileHttpHandler(AccessEnforcer accessEnforcer,
                             AuthenticationContext authenticationContext,
                             ProfileService profileService,
                             ProvisioningService provisioningService) {
-    this.authorizationEnforcer = authorizationEnforcer;
+    this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
     this.profileService = profileService;
     this.provisioningService = provisioningService;
@@ -87,7 +86,8 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/profiles")
   public void getSystemProfiles(HttpRequest request, HttpResponder responder) throws Exception {
     NamespaceId namespaceId = NamespaceId.SYSTEM;
-    AuthorizationUtil.ensureAccess(namespaceId, authorizationEnforcer, authenticationContext.getPrincipal());
+    accessEnforcer.enforceOnParent(EntityType.PROFILE, namespaceId, authenticationContext.getPrincipal(),
+                                   StandardPermission.LIST);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profileService.getProfiles(namespaceId, true)));
   }
 
@@ -95,9 +95,8 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/profiles/{profile-name}")
   public void getSystemProfile(HttpRequest request, HttpResponder responder,
                                @PathParam("profile-name") String profileName) throws Exception {
-    NamespaceId namespaceId = NamespaceId.SYSTEM;
-    AuthorizationUtil.ensureAccess(namespaceId, authorizationEnforcer, authenticationContext.getPrincipal());
-    ProfileId profileId = getValidatedProfile(namespaceId, profileName);
+    ProfileId profileId = getValidatedProfile(NamespaceId.SYSTEM, profileName);
+    accessEnforcer.enforce(profileId, authenticationContext.getPrincipal(), StandardPermission.GET);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profileService.getProfile(profileId)));
   }
 
@@ -105,9 +104,8 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/profiles/{profile-name}")
   public void writeSystemProfile(FullHttpRequest request, HttpResponder responder,
                                  @PathParam("profile-name") String profileName) throws Exception {
-    NamespaceId namespaceId = NamespaceId.SYSTEM;
-    authorizationEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), Action.EXECUTE);
-    ProfileId profileId = getValidatedProfile(namespaceId, profileName);
+    ProfileId profileId = getValidatedProfile(NamespaceId.SYSTEM, profileName);
+    accessEnforcer.enforce(profileId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     writeProfile(profileId, request);
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -116,9 +114,9 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/profiles/{profile-name}/enable")
   public void enableSystemProfile(HttpRequest request, HttpResponder responder,
                                   @PathParam("profile-name") String profileName) throws Exception {
-    NamespaceId namespaceId = NamespaceId.SYSTEM;
-    authorizationEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), Action.EXECUTE);
-    profileService.enableProfile(getValidatedProfile(namespaceId, profileName));
+    ProfileId profileId = getValidatedProfile(NamespaceId.SYSTEM, profileName);
+    accessEnforcer.enforce(profileId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
+    profileService.enableProfile(profileId);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -126,8 +124,8 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/profiles/{profile-name}/disable")
   public void disableSystemProfile(HttpRequest request, HttpResponder responder,
                                    @PathParam("profile-name") String profileName) throws Exception {
-    NamespaceId namespaceId = NamespaceId.SYSTEM;
-    authorizationEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), Action.EXECUTE);
+    ProfileId profileId = getValidatedProfile(NamespaceId.SYSTEM, profileName);
+    accessEnforcer.enforce(profileId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     profileService.disableProfile(getValidatedProfile(NamespaceId.SYSTEM, profileName));
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -136,9 +134,9 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/profiles/{profile-name}")
   public void deleteSystemProfile(HttpRequest request, HttpResponder responder,
                                   @PathParam("profile-name") String profileName) throws Exception {
-    NamespaceId namespaceId = NamespaceId.SYSTEM;
-    authorizationEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), Action.EXECUTE);
-    profileService.deleteProfile(getValidatedProfile(namespaceId, profileName));
+    ProfileId profileId = getValidatedProfile(NamespaceId.SYSTEM, profileName);
+    accessEnforcer.enforce(profileId, authenticationContext.getPrincipal(), StandardPermission.DELETE);
+    profileService.deleteProfile(getValidatedProfile(NamespaceId.SYSTEM, profileName));
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -151,8 +149,13 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
                           @PathParam("namespace-id") String namespaceId,
                           @QueryParam("includeSystem") @DefaultValue("false") String includeSystem) throws Exception {
     NamespaceId namespace = getValidatedNamespace(namespaceId);
-    AuthorizationUtil.ensureAccess(namespace, authorizationEnforcer, authenticationContext.getPrincipal());
+    accessEnforcer.enforceOnParent(EntityType.PROFILE, namespace, authenticationContext.getPrincipal(),
+                                   StandardPermission.LIST);
     boolean include = Boolean.valueOf(includeSystem);
+    if (include) {
+      accessEnforcer.enforceOnParent(EntityType.PROFILE, NamespaceId.SYSTEM, authenticationContext.getPrincipal(),
+                                     StandardPermission.LIST);
+    }
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profileService.getProfiles(namespace, include)));
   }
 
@@ -165,7 +168,7 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
                          @PathParam("namespace-id") String namespaceId,
                          @PathParam("profile-name") String profileName) throws Exception {
     ProfileId profileId = getValidatedProfile(namespaceId, profileName);
-    AuthorizationUtil.ensureAccess(profileId, authorizationEnforcer, authenticationContext.getPrincipal());
+    accessEnforcer.enforce(profileId, authenticationContext.getPrincipal(), StandardPermission.GET);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profileService.getProfile(profileId)));
   }
 
@@ -178,7 +181,7 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
                            @PathParam("namespace-id") String namespaceId,
                            @PathParam("profile-name") String profileName) throws Exception {
     ProfileId profileId = getValidatedProfile(namespaceId, profileName);
-    authorizationEnforcer.enforce(profileId, authenticationContext.getPrincipal(), Action.EXECUTE);
+    accessEnforcer.enforce(profileId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     writeProfile(profileId, request);
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -193,9 +196,9 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   public void deleteProfile(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("profile-name") String profileName) throws Exception {
-    authorizationEnforcer.enforce(getValidatedNamespace(namespaceId),
-                                  authenticationContext.getPrincipal(), Action.EXECUTE);
-    profileService.deleteProfile(getValidatedProfile(namespaceId, profileName));
+    ProfileId profileId = getValidatedProfile(namespaceId, profileName);
+    accessEnforcer.enforce(profileId, authenticationContext.getPrincipal(), StandardPermission.DELETE);
+    profileService.deleteProfile(profileId);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -204,9 +207,8 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   public void getProfileStatus(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("profile-name") String profileName) throws Exception {
-    AuthorizationUtil.ensureAccess(getValidatedNamespace(namespaceId),
-                                   authorizationEnforcer, authenticationContext.getPrincipal());
     ProfileId profileId = getValidatedProfile(namespaceId, profileName);
+    accessEnforcer.enforce(profileId, authenticationContext.getPrincipal(), StandardPermission.GET);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profileService.getProfile(profileId).getStatus()));
   }
 
@@ -219,9 +221,10 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   public void disableProfile(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("profile-name") String profileName) throws Exception {
-    authorizationEnforcer.enforce(getValidatedNamespace(namespaceId),
-                                  authenticationContext.getPrincipal(), Action.EXECUTE);
-    profileService.disableProfile(getValidatedProfile(namespaceId, profileName));
+    ProfileId profileId = getValidatedProfile(namespaceId, profileName);
+    accessEnforcer.enforce(profileId,
+                           authenticationContext.getPrincipal(), StandardPermission.UPDATE);
+    profileService.disableProfile(profileId);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -234,7 +237,7 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("profile-name") String profileName) throws Exception {
     ProfileId profileId = getValidatedProfile(namespaceId, profileName);
-    authorizationEnforcer.enforce(profileId, authenticationContext.getPrincipal(), Action.EXECUTE);
+    accessEnforcer.enforce(profileId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     profileService.enableProfile(profileId);
     responder.sendStatus(HttpResponseStatus.OK);
   }

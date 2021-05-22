@@ -18,6 +18,7 @@ package io.cdap.cdap.security.spi.authorization;
 
 import io.cdap.cdap.api.common.HttpErrorStatusProvider;
 import io.cdap.cdap.api.security.AccessException;
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.ActionOrPermission;
@@ -47,31 +48,35 @@ public class UnauthorizedException extends AccessException implements HttpErrorS
 
   public UnauthorizedException(Principal principal, ActionOrPermission action, EntityId entityId) {
     this(principal.toString(), Collections.singleton(action.toString()),
-         String.format("entity '%s'", entityId.toString()), null, true, true, null);
+         getEntityLabel(entityId), null, true, true, null);
   }
 
   public UnauthorizedException(Principal principal, Set<? extends ActionOrPermission> actions, EntityId entityId) {
-    this(principal.toString(), actions.stream().map(action -> action.toString())
-           .collect(Collectors.toCollection(LinkedHashSet::new)), String.format("entity '%s'", entityId.toString()),
-         null, true, true, null);
+    this(principal, actions, entityId, (EntityType) null);
   }
 
+  public UnauthorizedException(Principal principal, Set<? extends ActionOrPermission> actions, EntityId entityId,
+                               @Nullable EntityType childType) {
+    this(principal.toString(), actions.stream().map(action -> action.toString())
+           .collect(Collectors.toCollection(LinkedHashSet::new)), getEntityLabel(entityId, childType),
+         null, true, true, null);
+  }
   public UnauthorizedException(Principal principal, Set<? extends ActionOrPermission> actions,
                                EntityId entityId, Throwable ex) {
     this(principal.toString(), actions.stream().map(action -> action.toString())
-           .collect(Collectors.toCollection(LinkedHashSet::new)), String.format("entity '%s'", entityId.toString()),
+           .collect(Collectors.toCollection(LinkedHashSet::new)), getEntityLabel(entityId),
          ex, true, true, null);
   }
 
   public UnauthorizedException(Principal principal, EntityId entityId) {
-    this(principal.toString(), Collections.emptySet(), String.format("entity '%s'", entityId.toString()), null, true,
+    this(principal.toString(), Collections.emptySet(), getEntityLabel(entityId), null, true,
          true, null);
   }
 
   public UnauthorizedException(Principal principal, Set<? extends ActionOrPermission> actions, EntityId entityId,
                                boolean mustHaveAllPermissions) {
     this(principal.toString(), actions.stream().map(action -> action.toString())
-           .collect(Collectors.toCollection(LinkedHashSet::new)), String.format("entity '%s'", entityId.toString()),
+           .collect(Collectors.toCollection(LinkedHashSet::new)), getEntityLabel(entityId),
          null, mustHaveAllPermissions, true, null);
   }
 
@@ -124,6 +129,15 @@ public class UnauthorizedException extends AccessException implements HttpErrorS
     this.includePrincipal = false;
     this.addendum = null;
     this.message = message;
+  }
+
+  private static String getEntityLabel(EntityId entityId) {
+    return getEntityLabel(entityId, null);
+  }
+
+  private static String getEntityLabel(EntityId entityId, @Nullable EntityType childType) {
+    return childType == null ? String.format("entity '%s'", entityId.toString())
+      : String.format("%s in entity '%s'", childType.name().toLowerCase(), entityId.toString());
   }
 
   @Override

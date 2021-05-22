@@ -34,32 +34,32 @@ import java.util.Set;
  */
 public class DelegatingPermissionManager implements PermissionManager {
 
-  private final AccessController delegateAuthorizer;
+  private final AccessController delegateAccessController;
 
   @Inject
   DelegatingPermissionManager(AccessControllerInstantiator accessControllerInstantiator) {
-    this.delegateAuthorizer = accessControllerInstantiator.get();
+    this.delegateAccessController = accessControllerInstantiator.get();
   }
 
   @Override
   public void grant(Authorizable authorizable, Principal principal, Set<? extends Permission> permissions)
     throws AccessException {
-    delegateAuthorizer.grant(authorizable, principal, permissions);
+    delegateAccessController.grant(authorizable, principal, permissions);
   }
 
   @Override
   public void revoke(Authorizable authorizable, Principal principal, Set<? extends Permission> permissions)
     throws AccessException {
-    delegateAuthorizer.revoke(authorizable, principal, permissions);
+    delegateAccessController.revoke(authorizable, principal, permissions);
   }
 
   @Override
   public void revoke(Authorizable authorizable) throws AccessException {
-    delegateAuthorizer.revoke(authorizable);
+    delegateAccessController.revoke(authorizable);
   }
 
   @Override
   public Set<GrantedPermission> listGrants(Principal principal) throws AccessException {
-    return delegateAuthorizer.listGrants(principal);
+    return delegateAccessController.listGrants(principal);
   }
 }

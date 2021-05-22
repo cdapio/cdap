@@ -16,6 +16,7 @@
 package io.cdap.cdap.proto.security;
 
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.DatasetId;
@@ -23,6 +24,7 @@ import io.cdap.cdap.proto.id.DatasetModuleId;
 import io.cdap.cdap.proto.id.DatasetTypeId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.SecureKeyId;
 import org.junit.Assert;
@@ -33,6 +35,7 @@ import org.junit.Test;
  */
 public class AuthorizableTest {
   private static final String ILLEGAL_MSG = "Entity value is missing some parts or containing more parts";
+  private static final String WRONG_TYPE = "No enum constant";
   private static final String UNSUPPORTED_MSG = "Privilege can only be granted at the artifact/application level.";
 
   @Test
@@ -70,6 +73,15 @@ public class AuthorizableTest {
     Assert.assertEquals(widcardId, Authorizable.fromString(widcardId).toString());
 
     verifyInvalidString("namespace:ns.ns1");
+  }
+
+  @Test
+  public void testChild() {
+    Authorizable authorizable;
+    NamespaceId namespaceId = new NamespaceId("test_ns");
+    authorizable = Authorizable.fromEntityId(namespaceId, EntityType.PROFILE);
+    Assert.assertEquals("namespace:test_ns:profile", authorizable.toString());
+    Assert.assertEquals(authorizable, Authorizable.fromString(authorizable.toString()));
   }
 
   @Test
@@ -140,6 +152,16 @@ public class AuthorizableTest {
   }
 
   @Test
+  public void testProfile() {
+    ProfileId profileId = new ProfileId("ns", "test_secure");
+    Authorizable authorizable = Authorizable.fromEntityId(profileId);
+    Assert.assertEquals(profileId.toString(), authorizable.toString());
+
+    String widcardId = profileId.toString().replace("est", "*es?t");
+    Assert.assertEquals(widcardId, Authorizable.fromString(widcardId).toString());
+  }
+
+  @Test
   public void testSecureKey() {
     SecureKeyId secureKeyId = new SecureKeyId("ns", "test_secure");
     Authorizable authorizable = Authorizable.fromEntityId(secureKeyId);
@@ -172,11 +194,12 @@ public class AuthorizableTest {
   private void verifyInvalidString(String invalidString) {
     try {
       Authorizable.fromString(invalidString);
-      Assert.fail();
+      Assert.fail("Should have failed for " + invalidString);
     } catch (IllegalArgumentException e) {
-      Assert.assertTrue(e.getMessage().contains(ILLEGAL_MSG));
+      Assert.assertTrue("Unexpected message " + e.getMessage(),
+                        e.getMessage().contains(ILLEGAL_MSG) || e.getMessage().contains(WRONG_TYPE));
     } catch (UnsupportedOperationException e) {
-      Assert.assertTrue(e.getMessage().contains(UNSUPPORTED_MSG));
+      Assert.assertTrue("Unexpected message " + e.getMessage(), e.getMessage().contains(UNSUPPORTED_MSG));
     }
   }
 }

@@ -23,6 +23,7 @@ import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.Privilege;
 import io.cdap.cdap.proto.security.Role;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authorization.AccessController;
 import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
 import io.cdap.cdap.security.spi.authorization.Authorizer;
@@ -82,7 +83,7 @@ public class AccessControllerWrapper extends AccessEnforcerWrapper implements Au
 
   @Override
   public void isVisible(EntityId entityId, Principal principal) throws AccessException {
-    accessController.isVisible(entityId, principal);
+    accessController.enforce(entityId, principal, StandardPermission.GET);
   }
 
   @Override

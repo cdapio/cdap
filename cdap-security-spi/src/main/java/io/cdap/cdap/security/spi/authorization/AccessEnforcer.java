@@ -18,9 +18,12 @@ package io.cdap.cdap.security.spi.authorization;
 
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.security.AccessException;
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.ParentedId;
 import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.StandardPermission;
 
 import java.util.Collections;
 import java.util.Set;
@@ -56,20 +59,19 @@ public interface AccessEnforcer {
   void enforce(EntityId entity, Principal principal, Set<? extends Permission> permissions) throws AccessException;
 
   /**
-   * Checks whether a single {@link EntityId} is visible to the specified {@link Principal}.
-   * An entity is visible to a principal if the principal has {@link io.cdap.cdap.proto.security.StandardPermission#GET}
-   * priviledge on the entity.
-   * However, visibility check behavior can be overwritten at the authorization extension level.
+   * Enforces specific {@link Permission#isCheckedOnParent()} permission for {@link EntityType} on it's parent
+   * {@link EntityId}. E.g. one can check if it's possible to {@link StandardPermission#LIST}
+   * {@link EntityType#PROFILE} in specific {@link io.cdap.cdap.proto.id.NamespaceId}.
    *
-   * @param entityId the entity on which the visibility check is to be performed
-   * @param principal the principal to check the visibility for
-   * @throws UnauthorizedException if the entity is not visible to the principal
+   * @param entityType the {@link EntityType} on which authorization is to be enforced
+   * @param parentId the {@link EntityId} of parent entity on which authorization is to be enforced
+   * @param principal the {@link Principal} that performs the permission
+   * @param permission the {@link Permission} being performed. Permission must return true on
+   * {@link Permission#isCheckedOnParent()}.
+   * @throws UnauthorizedException if the principal is not authorized to perform the specified permission on the entity
    */
-  default void isVisible(EntityId entityId, Principal principal) throws AccessException {
-    if (isVisible(Collections.singleton(entityId), principal).isEmpty()) {
-      throw new UnauthorizedException(principal, entityId);
-    }
-  }
+  void enforceOnParent(EntityType entityType, EntityId parentId, Principal principal,
+                       Permission permission) throws AccessException;
 
   /**
    * Checks whether the set of {@link EntityId}s are visible to the specified {@link Principal}.
