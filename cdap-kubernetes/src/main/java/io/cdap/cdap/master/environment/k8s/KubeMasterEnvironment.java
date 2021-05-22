@@ -45,8 +45,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -67,7 +69,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
   // Contains the list of configuration / secret names coming from the Pod information, which are
   // needed to propagate to deployments created via the KubeTwillRunnerService
-  private static final Set<String> CONFIG_NAMES = ImmutableSet.of("cdap-conf", "hadoop-conf", "cdap-security");
+  private static Set<String> CONFIG_VOLUMES = ImmutableSet.of("cdap-conf", "hadoop-conf", "cdap-security");
   private static final Set<String> CUSTOM_VOLUME_PREFIX = ImmutableSet.of("cdap-cm-vol-", "cdap-se-vol-");
 
   private static final String MASTER_MAX_INSTANCES = "master.service.max.instances";
@@ -83,6 +85,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String POD_LABELS_FILE = "master.environment.k8s.pod.labels.file";
   private static final String POD_KILLER_SELECTOR = "master.environment.k8s.pod.killer.selector";
   private static final String POD_KILLER_DELAY_MILLIS = "master.environment.k8s.pod.killer.delay.millis";
+  private static final String CONFIG_VOLUME_LIST = "master.environment.k8s.config.volume.list";
 
   private static final String DEFAULT_NAMESPACE = "default";
   private static final String DEFAULT_INSTANCE_LABEL = "cdap.instance";
@@ -110,6 +113,11 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     conf.put(MASTER_MAX_INSTANCES, "1");
     // No TX in K8s
     conf.put(DATA_TX_ENABLED, Boolean.toString(false));
+
+    // Update the list of config volumes to be included in pod info.
+    if (!conf.get(CONFIG_VOLUME_LIST).isEmpty()) {
+      CONFIG_VOLUMES = new HashSet<String>(Arrays.asList(conf.get(CONFIG_VOLUME_LIST).split(", ")));
+    }
 
     // Load the pod labels from the configured path. It should be setup by the CDAP operator
     podInfo = createPodInfo(conf);
@@ -259,12 +267,12 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
     // Get the config volumes from the pod
     List<V1Volume> volumes = pod.getSpec().getVolumes().stream()
-      .filter(v -> CONFIG_NAMES.contains(v.getName()) || isCustomVolumePrefix(v.getName()))
+      .filter(v -> CONFIG_VOLUMES.contains(v.getName()) || isCustomVolumePrefix(v.getName()))
       .collect(Collectors.toList());
 
     // Get the volume mounts from the container
     List<V1VolumeMount> mounts = container.getVolumeMounts().stream()
-      .filter(m -> CONFIG_NAMES.contains(m.getName()) || isCustomVolumePrefix(m.getName()))
+      .filter(m -> CONFIG_VOLUMES.contains(m.getName()) || isCustomVolumePrefix(m.getName()))
       .collect(Collectors.toList());
 
     List<V1EnvVar> envs = container.getEnv();
