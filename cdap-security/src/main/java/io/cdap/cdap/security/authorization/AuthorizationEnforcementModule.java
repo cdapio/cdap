@@ -21,11 +21,10 @@ import com.google.inject.Module;
 import com.google.inject.Scopes;
 import io.cdap.cdap.common.runtime.RuntimeModule;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 
 /**
- * A module that contains bindings for {@link AuthorizationEnforcer}.
+ * A module that contains bindings for {@link AccessEnforcer}.
  */
 public class AuthorizationEnforcementModule extends RuntimeModule {
 
@@ -35,7 +34,6 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
       @Override
       protected void configure() {
         bind(AccessEnforcer.class).to(DefaultAccessEnforcer.class).in(Scopes.SINGLETON);
-        bind(AuthorizationEnforcer.class).to(AccessEnforcerWrapper.class).in(Scopes.SINGLETON);
         bind(ContextAccessEnforcer.class).to(DefaultContextAccessEnforcer.class).in(Scopes.SINGLETON);
       }
     };
@@ -47,7 +45,6 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
       @Override
       protected void configure() {
         bind(AccessEnforcer.class).to(DefaultAccessEnforcer.class).in(Scopes.SINGLETON);
-        bind(AuthorizationEnforcer.class).to(AccessEnforcerWrapper.class).in(Scopes.SINGLETON);
         bind(ContextAccessEnforcer.class).to(DefaultContextAccessEnforcer.class).in(Scopes.SINGLETON);
       }
     };
@@ -63,7 +60,6 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
       @Override
       protected void configure() {
         bind(AccessEnforcer.class).to(RemoteAccessEnforcer.class).in(Scopes.SINGLETON);
-        bind(AuthorizationEnforcer.class).to(AccessEnforcerWrapper.class).in(Scopes.SINGLETON);
         bind(ContextAccessEnforcer.class).to(DefaultContextAccessEnforcer.class).in(Scopes.SINGLETON);
       }
     };
@@ -77,7 +73,6 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
       @Override
       protected void configure() {
         bind(AccessEnforcer.class).to(DefaultAccessEnforcer.class).in(Scopes.SINGLETON);
-        bind(AuthorizationEnforcer.class).to(AccessEnforcerWrapper.class).in(Scopes.SINGLETON);
         bind(ContextAccessEnforcer.class).to(DefaultContextAccessEnforcer.class).in(Scopes.SINGLETON);
       }
     };

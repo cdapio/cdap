@@ -125,13 +125,11 @@ import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
-import io.cdap.cdap.security.authorization.AccessControllerWrapper;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.authorization.InvalidAccessControllerException;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.AccessController;
-import io.cdap.cdap.security.spi.authorization.Authorizer;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
@@ -1064,11 +1062,6 @@ public class TestBase {
   @Beta
   protected static AccessController getAccessController() throws IOException, InvalidAccessControllerException {
     return accessControllerInstantiator.get();
-  }
-
-  @Beta
-  protected static Authorizer getAuthorizer() {
-    return new AccessControllerWrapper(accessControllerInstantiator.get());
   }
 
   /**

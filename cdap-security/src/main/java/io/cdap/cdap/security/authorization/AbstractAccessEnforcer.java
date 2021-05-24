@@ -38,28 +38,6 @@ public abstract class AbstractAccessEnforcer implements AccessEnforcer {
     this.securityAuthorizationEnabled = AuthorizationUtil.isSecurityAuthorizationEnabled(cConf);
   }
 
-  @Override
-  public void enforce(EntityId entity, Principal principal, Set<? extends Permission> permissions)
-    throws AccessException {
-    if (!isSecurityAuthorizationEnabled()) {
-      return;
-    }
-
-    Set<Permission> disallowed = new HashSet<>();
-    UnauthorizedException unauthorizedException = new UnauthorizedException(principal, entity);
-    for (Permission permission : permissions) {
-      try {
-        enforce(entity, principal, permission);
-      } catch (UnauthorizedException e) {
-        disallowed.add(permission);
-        unauthorizedException.addSuppressed(e);
-      }
-    }
-    if (!disallowed.isEmpty()) {
-      throw new UnauthorizedException(principal, disallowed, entity, unauthorizedException);
-    }
-  }
-
   protected boolean isSecurityAuthorizationEnabled() {
     return securityAuthorizationEnabled;
   }
