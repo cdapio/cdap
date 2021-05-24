@@ -33,8 +33,6 @@ import javax.annotation.Nullable;
  */
 public class AuthorizationPrivilege {
   private final EntityId entityId;
-  //Will only be set from GSON. Also will automatically be converted to permissions by PermissionAdapterFactory
-  private final Set<Permission> actions;
   private final Set<Permission> permissions;
   private final Principal principal;
   private final EntityType childEntityType;
@@ -44,7 +42,6 @@ public class AuthorizationPrivilege {
     this.entityId = entityId;
     this.permissions = Collections.unmodifiableSet(permissions);
     this.childEntityType = childEntityType;
-    this.actions = null;
     this.principal = principal;
   }
 
@@ -59,12 +56,6 @@ public class AuthorizationPrivilege {
   public Set<Permission> getPermissions() {
     return permissions;
   }
-
-  @Nullable
-  public Set<? extends Permission> getActions() {
-    return actions;
-  }
-
   /**
    * @return child entity type for {@link AccessEnforcer#enforceOnParent(EntityType, EntityId, Principal, Permission)}
    * checks.
@@ -85,7 +76,7 @@ public class AuthorizationPrivilege {
     AuthorizationPrivilege that = (AuthorizationPrivilege) o;
     return Objects.equals(entityId, that.entityId) && permissions.equals(that.permissions) &&
       Objects.equals(childEntityType, that.childEntityType) &&
-      Objects.equals(actions, that.actions) && Objects.equals(principal, that.principal);
+      Objects.equals(principal, that.principal);
   }
 
   @Override
@@ -97,7 +88,6 @@ public class AuthorizationPrivilege {
   public String toString() {
     return "AuthorizationPrivilege {" +
       "entityId=" + entityId +
-      ", actions=" + actions +
       ", permissions=" + permissions +
       ", principal=" + principal +
       ", childEntityType=" + childEntityType +
