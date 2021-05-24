@@ -20,6 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -83,7 +84,7 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
                                                                  impersonationRequest.getImpersonatedOpType(),
                                                                  info.getPrincipal(), info.getKeytabURI());
       return isCache ? ugiCache.get(new UGICacheKey(newRequest)) : createUGI(newRequest);
-    } catch (ExecutionException e) {
+    } catch (ExecutionException | UncheckedExecutionException e) {
       throw AuthEnforceUtil.propagateAccessException(e);
     }
   }
