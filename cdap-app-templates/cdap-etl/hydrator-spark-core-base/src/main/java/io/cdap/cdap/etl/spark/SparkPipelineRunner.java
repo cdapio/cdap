@@ -965,7 +965,9 @@ public abstract class SparkPipelineRunner {
   private SparkCollection<Object> filterPortRecords(StageSpec stageSpec,
                                                     SparkCollection<RecordInfo<Object>> stageData,
                                                     @Nullable String port) {
-    if (stageData instanceof SQLBackedCollection) {
+    // Port filtering can only be applied to SQL Backed Collections when there is no output port specified.
+    // This is due to the fact that records need to be present in Spark to apply this filtering operation.
+    if (port == null && stageData instanceof SQLBackedCollection) {
       return new WrappedSQLEngineCollection<>((SQLBackedCollection<RecordInfo<Object>>) stageData,
                                               (c) -> c.flatMap(stageSpec, new OutputPassFilter<>(port)));
     }
