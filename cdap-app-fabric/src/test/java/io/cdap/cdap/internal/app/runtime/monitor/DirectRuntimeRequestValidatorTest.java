@@ -26,7 +26,6 @@ import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.store.Store;
-import io.cdap.cdap.common.AuthorizationException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.app.RunIds;
@@ -50,8 +49,8 @@ import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
-import io.cdap.cdap.security.spi.authorization.NoOpAuthorizer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.NoOpAccessController;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
@@ -103,7 +102,7 @@ public class DirectRuntimeRequestValidatorTest {
         @Override
         protected void configure() {
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
-          bind(AuthorizationEnforcer.class).to(NoOpAuthorizer.class);
+          bind(AccessEnforcer.class).to(NoOpAccessController.class);
           bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class);
           bind(Store.class).to(DefaultStore.class);
         }
@@ -124,7 +123,7 @@ public class DirectRuntimeRequestValidatorTest {
   }
 
   @Test
-  public void testValid() throws BadRequestException, AuthorizationException {
+  public void testValid() throws BadRequestException {
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").spark("spark").run(RunIds.generate());
 
     // Insert the run
@@ -144,7 +143,7 @@ public class DirectRuntimeRequestValidatorTest {
   }
 
   @Test (expected = BadRequestException.class)
-  public void testInvalid() throws BadRequestException, AuthorizationException {
+  public void testInvalid() throws BadRequestException {
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").spark("spark").run(RunIds.generate());
 
     // Validation should fail
@@ -154,7 +153,7 @@ public class DirectRuntimeRequestValidatorTest {
   }
 
   @Test (expected = BadRequestException.class)
-  public void testNotRunning() throws BadRequestException, AuthorizationException {
+  public void testNotRunning() throws BadRequestException {
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").spark("spark").run(RunIds.generate());
 
     // Insert a completed run
@@ -176,7 +175,7 @@ public class DirectRuntimeRequestValidatorTest {
   }
 
   @Test
-  public void testFetcher() throws BadRequestException, AuthorizationException {
+  public void testFetcher() throws BadRequestException {
     ArtifactId artifactId = new ArtifactId("test", new ArtifactVersion("1.0"), ArtifactScope.USER);
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").spark("spark").run(RunIds.generate());
     RunRecordDetail runRecord = RunRecordDetail.builder()

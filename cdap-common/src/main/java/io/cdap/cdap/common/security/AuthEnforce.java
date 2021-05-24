@@ -18,7 +18,8 @@ package io.cdap.cdap.common.security;
 
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.proto.id.EntityId;
-import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.Permission;
+import io.cdap.cdap.proto.security.StandardPermission;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -43,7 +44,7 @@ import javax.ws.rs.QueryParam;
  * {@link AuthEnforce#enforceOn()}: CDAP entities (see {@link EntityId}) class on which enforcement will be done. If
  * you want to enforce on the parent of the entity specify that EntityId class here
  * <p>
- * {@link AuthEnforce#actions()}: An array of {@link Action} to be checked during enforcement
+ * {@link AuthEnforce#permissions()}: An array of {@link StandardPermission} to be checked during enforcement
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
@@ -69,7 +70,7 @@ public @interface AuthEnforce {
   Class<? extends EntityId> enforceOn();
 
   /**
-   * An array of {@link Action} to be checked during enforcement
+   * An array of {@link StandardPermission} to be checked during enforcement
    */
-  Action[] actions();
+  StandardPermission[] permissions();
 }

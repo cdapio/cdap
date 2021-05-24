@@ -33,15 +33,16 @@ import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import io.cdap.cdap.proto.artifact.ApplicationClassInfo;
 import io.cdap.cdap.proto.artifact.ApplicationClassSummary;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +50,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -65,16 +65,16 @@ public class AuthorizationArtifactRepository implements ArtifactRepository {
   private static final Logger LOG = LoggerFactory.getLogger(AuthorizationArtifactRepository.class);
 
   private final ArtifactRepository delegate;
-  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
 
   @Inject
   public AuthorizationArtifactRepository(@Named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO)
                                            ArtifactRepository artifactRepository,
-                                         AuthorizationEnforcer authorizationEnforcer,
+                                         AccessEnforcer accessEnforcer,
                                          AuthenticationContext authenticationContext) {
     this.delegate = artifactRepository;
-    this.authorizationEnforcer = authorizationEnforcer;
+    this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
   }
 
@@ -88,31 +88,35 @@ public class AuthorizationArtifactRepository implements ArtifactRepository {
   public void clear(NamespaceId namespace) throws Exception {
     List<ArtifactSummary> artifacts = delegate.getArtifactSummaries(namespace, false);
     for (ArtifactSummary artifactSummary : artifacts) {
-      authorizationEnforcer.enforce(namespace.artifact(artifactSummary.getName(), artifactSummary.getVersion()),
-                                    authenticationContext.getPrincipal(), Action.ADMIN);
+      accessEnforcer.enforce(namespace.artifact(artifactSummary.getName(), artifactSummary.getVersion()),
+                             authenticationContext.getPrincipal(), StandardPermission.DELETE);
     }
     delegate.clear(namespace);
   }
 
   @Override
   public List<ArtifactSummary> getArtifactSummaries(NamespaceId namespace, boolean includeSystem) throws Exception {
-    List<ArtifactSummary> artifacts = delegate.getArtifactSummaries(namespace, includeSystem);
-    return filterAuthorizedArtifacts(artifacts, namespace);
+    accessEnforcer.enforceOnParent(EntityType.ARTIFACT, namespace, authenticationContext.getPrincipal(),
+                                   StandardPermission.LIST);
+    return delegate.getArtifactSummaries(namespace, includeSystem);
   }
 
   @Override
   public List<ArtifactSummary> getArtifactSummaries(NamespaceId namespace, String name, int limit,
                                                     ArtifactSortOrder order) throws Exception {
-    List<ArtifactSummary> artifacts = delegate.getArtifactSummaries(namespace, name, limit, order);
-    return filterAuthorizedArtifacts(artifacts, namespace);
+    accessEnforcer.enforceOnParent(EntityType.ARTIFACT, namespace, authenticationContext.getPrincipal(),
+                                   StandardPermission.LIST);
+    return delegate.getArtifactSummaries(namespace, name, limit, order);
   }
 
   @Override
   public List<ArtifactSummary> getArtifactSummaries(ArtifactRange range, int limit,
                                                     ArtifactSortOrder order) throws Exception {
-    List<ArtifactSummary> artifacts = delegate.getArtifactSummaries(range, limit, order);
-    // todo - CDAP-11560 should filter in artifact store
-    return filterAuthorizedArtifacts(artifacts, new NamespaceId(range.getNamespace()));
+    accessEnforcer.enforceOnParent(EntityType.ARTIFACT, new NamespaceId(range.getNamespace()),
+                                   authenticationContext.getPrincipal(),
+                                   StandardPermission.LIST);
+
+    return delegate.getArtifactSummaries(range, limit, order);
   }
 
   @Override
@@ -120,9 +124,7 @@ public class AuthorizationArtifactRepository implements ArtifactRepository {
     ArtifactId artifact = artifactId.toEntityId();
     // No authorization for system artifacts
     if (!NamespaceId.SYSTEM.equals(artifact.getParent())) {
-      // need at least one privilege to get the artifact detail
-      AuthorizationUtil.ensureOnePrivilege(artifact, EnumSet.allOf(Action.class), authorizationEnforcer,
-                                           authenticationContext.getPrincipal());
+      accessEnforcer.enforce(artifact, authenticationContext.getPrincipal(), StandardPermission.GET);
     }
     return delegate.getArtifact(artifactId);
   }
@@ -138,7 +140,7 @@ public class AuthorizationArtifactRepository implements ArtifactRepository {
 
     final NamespaceId namespaceId = new NamespaceId(range.getNamespace());
     return AuthorizationUtil.isVisible(
-      artifacts, authorizationEnforcer, authenticationContext.getPrincipal(),
+      artifacts, accessEnforcer, authenticationContext.getPrincipal(),
       new Function<ArtifactDetail, EntityId>() {
         @Override
         public EntityId apply(ArtifactDetail input) {
@@ -206,31 +208,31 @@ public class AuthorizationArtifactRepository implements ArtifactRepository {
                                     Map<String, String> properties) throws Exception {
     // To add an artifact, a user must have ADMIN privilege on the artifact is being added
     Principal principal = authenticationContext.getPrincipal();
-    authorizationEnforcer.enforce(artifactId.toEntityId(), principal, Action.ADMIN);
+    accessEnforcer.enforce(artifactId.toEntityId(), principal, StandardPermission.CREATE);
     return delegate.addArtifact(artifactId, artifactFile, parentArtifacts, additionalPlugins, properties);
   }
 
   @Override
   public void writeArtifactProperties(Id.Artifact artifactId, Map<String, String> properties) throws Exception {
-    authorizationEnforcer.enforce(artifactId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
+    accessEnforcer.enforce(artifactId.toEntityId(), authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     delegate.writeArtifactProperties(artifactId, properties);
   }
 
   @Override
   public void writeArtifactProperty(Id.Artifact artifactId, String key, String value) throws Exception {
-    authorizationEnforcer.enforce(artifactId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
+    accessEnforcer.enforce(artifactId.toEntityId(), authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     delegate.writeArtifactProperty(artifactId, key, value);
   }
 
   @Override
   public void deleteArtifactProperty(Id.Artifact artifactId, String key) throws Exception {
-    authorizationEnforcer.enforce(artifactId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
+    accessEnforcer.enforce(artifactId.toEntityId(), authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     delegate.deleteArtifactProperty(artifactId, key);
   }
 
   @Override
   public void deleteArtifactProperties(Id.Artifact artifactId) throws Exception {
-    authorizationEnforcer.enforce(artifactId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
+    accessEnforcer.enforce(artifactId.toEntityId(), authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     delegate.deleteArtifactProperties(artifactId);
   }
 
@@ -238,7 +240,7 @@ public class AuthorizationArtifactRepository implements ArtifactRepository {
   public void addSystemArtifacts() throws Exception {
     // to add system artifacts, users should have admin privileges on the system namespace
     Principal principal = authenticationContext.getPrincipal();
-    authorizationEnforcer.enforce(NamespaceId.SYSTEM, principal, Action.ADMIN);
+    accessEnforcer.enforceOnParent(EntityType.ARTIFACT, NamespaceId.SYSTEM, principal, StandardPermission.CREATE);
     delegate.addSystemArtifacts();
   }
 
@@ -246,50 +248,14 @@ public class AuthorizationArtifactRepository implements ArtifactRepository {
   public void deleteArtifact(Id.Artifact artifactId) throws Exception {
     // for deleting artifacts, users need admin privileges on the artifact being deleted.
     Principal principal = authenticationContext.getPrincipal();
-    authorizationEnforcer.enforce(artifactId.toEntityId(), principal, Action.ADMIN);
+    accessEnforcer.enforce(artifactId.toEntityId(), principal, StandardPermission.DELETE);
     delegate.deleteArtifact(artifactId);
   }
 
   @Override
   public List<ArtifactInfo> getArtifactsInfo(final NamespaceId namespace) throws Exception {
-    List<ArtifactInfo> artifactInfos = delegate.getArtifactsInfo(namespace);
-    // todo - CDAP-11560 should filter in artifact store
-    return AuthorizationUtil.isVisible(artifactInfos, authorizationEnforcer, authenticationContext.getPrincipal(),
-                                       new Function<ArtifactInfo, EntityId>() {
-                                         @Override
-                                         public EntityId apply(ArtifactInfo input) {
-                                           return namespace.artifact(input.getName(), input.getVersion());
-                                         }
-                                       },
-                                       new Predicate<ArtifactInfo>() {
-                                         @Override
-                                         public boolean apply(ArtifactInfo input) {
-                                           return ArtifactScope.SYSTEM.equals(input.getScope());
-                                         }
-                                       });
-  }
-
-  /**
-   * Filter a list of {@link ArtifactSummary} that ensures the logged-in user has a {@link Action privilege} on
-   *
-   * @param artifacts the {@link List<ArtifactSummary>} to filter with
-   * @param namespace namespace of the artifacts
-   * @return filtered list of {@link ArtifactSummary}
-   */
-  private List<ArtifactSummary> filterAuthorizedArtifacts(List<ArtifactSummary> artifacts,
-                                                          final NamespaceId namespace) throws Exception {
-    return AuthorizationUtil.isVisible(artifacts, authorizationEnforcer, authenticationContext.getPrincipal(),
-                                       new Function<ArtifactSummary, EntityId>() {
-                                         @Override
-                                         public EntityId apply(ArtifactSummary input) {
-                                           return namespace.artifact(input.getName(), input.getVersion());
-                                         }
-                                       },
-                                       new Predicate<ArtifactSummary>() {
-                                         @Override
-                                         public boolean apply(ArtifactSummary input) {
-                                           return ArtifactScope.SYSTEM.equals(input.getScope());
-                                         }
-                                       });
+    accessEnforcer.enforceOnParent(EntityType.ARTIFACT, namespace, authenticationContext.getPrincipal(),
+                                   StandardPermission.LIST);
+    return delegate.getArtifactsInfo(namespace);
   }
 }

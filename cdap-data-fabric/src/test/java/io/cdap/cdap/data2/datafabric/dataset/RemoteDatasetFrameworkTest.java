@@ -65,7 +65,7 @@ import io.cdap.cdap.security.authorization.AuthorizationTestModule;
 import io.cdap.cdap.security.impersonation.DefaultImpersonator;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
@@ -159,7 +159,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
     DiscoveryExploreClient exploreClient = new DiscoveryExploreClient(discoveryServiceClient, authenticationContext);
     ExploreFacade exploreFacade = new ExploreFacade(exploreClient, cConf);
-    AuthorizationEnforcer authorizationEnforcer = injector.getInstance(AuthorizationEnforcer.class);
+    AccessEnforcer accessEnforcer = injector.getInstance(AccessEnforcer.class);
 
     DatasetTypeManager typeManager = new DatasetTypeManager(cConf, locationFactory, impersonator, transactionRunner);
     DatasetInstanceManager instanceManager = new DatasetInstanceManager(transactionRunner);
@@ -167,7 +167,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                                                          namespacePathLocator, cConf, impersonator,
                                                                          txSystemClientService, transactionRunner,
                                                                          DEFAULT_MODULES);
-    DatasetTypeService typeService = new AuthorizationDatasetTypeService(noAuthTypeService, authorizationEnforcer,
+    DatasetTypeService typeService = new AuthorizationDatasetTypeService(noAuthTypeService, accessEnforcer,
                                                                          authenticationContext);
 
 
@@ -175,7 +175,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     DatasetInstanceService instanceService = new DatasetInstanceService(typeService, noAuthTypeService,
                                                                         instanceManager, opExecutor,
                                                                         exploreFacade, namespaceQueryAdmin, ownerAdmin,
-                                                                        authorizationEnforcer, authenticationContext,
+                                                                        accessEnforcer, authenticationContext,
                                                                         new NoOpMetadataServiceClient());
     instanceService.setAuditPublisher(inMemoryAuditPublisher);
 

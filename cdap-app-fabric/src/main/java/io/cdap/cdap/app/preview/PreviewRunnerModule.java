@@ -67,13 +67,12 @@ import io.cdap.cdap.scheduler.NoOpScheduler;
 import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.securestore.spi.SecretStore;
 import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
-import io.cdap.cdap.security.authorization.AuthorizerInstantiator;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
 import io.cdap.cdap.security.impersonation.DefaultUGIProvider;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.OwnerStore;
 import io.cdap.cdap.security.impersonation.UGIProvider;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.PrivilegesManager;
 import io.cdap.cdap.store.DefaultOwnerStore;
 
@@ -82,9 +81,8 @@ import io.cdap.cdap.store.DefaultOwnerStore;
  */
 public class PreviewRunnerModule extends PrivateModule {
   private final ArtifactStore artifactStore;
-  private final AuthorizerInstantiator authorizerInstantiator;
   private final AccessControllerInstantiator accessControllerInstantiator;
-  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AccessEnforcer accessEnforcer;
   private final PrivilegesManager privilegesManager;
   private final PreferencesService preferencesService;
   private final ProgramRuntimeProviderLoader programRuntimeProviderLoader;
@@ -95,9 +93,8 @@ public class PreviewRunnerModule extends PrivateModule {
 
   @Inject
   PreviewRunnerModule(ArtifactRepositoryReaderProvider readerProvider, ArtifactStore artifactStore,
-                      AuthorizerInstantiator authorizerInstantiator,
                       AccessControllerInstantiator accessControllerInstantiator,
-                      AuthorizationEnforcer authorizationEnforcer,
+                      AccessEnforcer accessEnforcer,
                       PrivilegesManager privilegesManager, PreferencesService preferencesService,
                       ProgramRuntimeProviderLoader programRuntimeProviderLoader,
                       PluginFinderProvider pluginFinderProvider,
@@ -105,9 +102,8 @@ public class PreviewRunnerModule extends PrivateModule {
                       MessagingService messagingService) {
     this.artifactRepositoryReaderProvider = readerProvider;
     this.artifactStore = artifactStore;
-    this.authorizerInstantiator = authorizerInstantiator;
     this.accessControllerInstantiator = accessControllerInstantiator;
-    this.authorizationEnforcer = authorizationEnforcer;
+    this.accessEnforcer = accessEnforcer;
     this.privilegesManager = privilegesManager;
     this.preferencesService = preferencesService;
     this.programRuntimeProviderLoader = programRuntimeProviderLoader;
@@ -138,10 +134,8 @@ public class PreviewRunnerModule extends PrivateModule {
       .toInstance(messagingService);
     expose(MessagingService.class).annotatedWith(Names.named(PreviewConfigModule.GLOBAL_TMS));
 
-    bind(AuthorizerInstantiator.class).toInstance(authorizerInstantiator);
-    expose(AuthorizerInstantiator.class);
-    bind(AuthorizationEnforcer.class).toInstance(authorizationEnforcer);
-    expose(AuthorizationEnforcer.class);
+    bind(AccessEnforcer.class).toInstance(accessEnforcer);
+    expose(AccessEnforcer.class);
     bind(AccessControllerInstantiator.class).toInstance(accessControllerInstantiator);
     expose(AccessControllerInstantiator.class);
     bind(PrivilegesManager.class).toInstance(privilegesManager);

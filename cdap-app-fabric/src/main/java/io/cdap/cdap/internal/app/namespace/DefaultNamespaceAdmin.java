@@ -43,13 +43,14 @@ import io.cdap.cdap.proto.NamespaceConfig;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.AccessPermission;
 import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.impersonation.ImpersonationUtils;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.store.NamespaceStore;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -82,7 +83,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   // Use Provider to abstract out
   private final Provider<NamespaceResourceDeleter> resourceDeleter;
   private final Provider<StorageProviderNamespaceAdmin> storageProviderNamespaceAdmin;
-  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
   private final Impersonator impersonator;
   private final LoadingCache<NamespaceId, NamespaceMeta> namespaceMetaCache;
@@ -97,7 +98,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
                                Provider<NamespaceResourceDeleter> resourceDeleter,
                                Provider<StorageProviderNamespaceAdmin> storageProviderNamespaceAdmin,
                                CConfiguration cConf,
-                               Impersonator impersonator, AuthorizationEnforcer authorizationEnforcer,
+                               Impersonator impersonator, AccessEnforcer accessEnforcer,
                                AuthenticationContext authenticationContext) {
     this.resourceDeleter = resourceDeleter;
     this.nsStore = nsStore;
@@ -105,7 +106,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     this.dsFramework = dsFramework;
     this.metricsCollectionService = metricsCollectionService;
     this.authenticationContext = authenticationContext;
-    this.authorizationEnforcer = authorizationEnforcer;
+    this.accessEnforcer = accessEnforcer;
     this.storageProviderNamespaceAdmin = storageProviderNamespaceAdmin;
     this.impersonator = impersonator;
     this.namespaceMetaCache = CacheBuilder.newBuilder().build(new CacheLoader<NamespaceId, NamespaceMeta>() {
@@ -136,9 +137,9 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     String ownerPrincipal = metadata.getConfig().getPrincipal();
     Principal requestingUser = authenticationContext.getPrincipal();
     if (ownerPrincipal != null) {
-      authorizationEnforcer.enforce(new KerberosPrincipalId(ownerPrincipal), requestingUser, Action.ADMIN);
+      accessEnforcer.enforce(new KerberosPrincipalId(ownerPrincipal), requestingUser, AccessPermission.SET_OWNER);
     }
-    authorizationEnforcer.enforce(namespace, requestingUser, Action.ADMIN);
+    accessEnforcer.enforce(namespace, requestingUser, StandardPermission.CREATE);
 
     // If this namespace has custom mapping then validate the given custom mapping
     if (hasCustomMapping(metadata)) {
@@ -260,7 +261,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * @throws NamespaceNotFoundException if the specified namespace does not exist
    */
   @Override
-  @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, actions = Action.ADMIN)
+  @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, permissions = StandardPermission.DELETE)
   public synchronized void delete(@Name("namespaceId") final NamespaceId namespaceId) throws Exception {
     // TODO: CDAP-870, CDAP-1427: Delete should be in a single transaction.
     NamespaceMeta namespaceMeta = get(namespaceId);
@@ -323,7 +324,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     if (!exists(namespaceId)) {
       throw new NamespaceNotFoundException(namespaceId);
     }
-    authorizationEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), Action.ADMIN);
+    accessEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
 
     NamespaceMeta existingMeta = nsStore.get(namespaceId);
     // Already ensured that namespace exists, so namespace meta should not be null
@@ -386,7 +387,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     final Principal principal = authenticationContext.getPrincipal();
 
     //noinspection ConstantConditions
-    return AuthorizationUtil.isVisible(namespaces, authorizationEnforcer, principal,
+    return AuthorizationUtil.isVisible(namespaces, accessEnforcer, principal,
                                        NamespaceMeta::getNamespaceId,
                                        input -> principal.getName().equals(input.getConfig().getPrincipal()));
   }
@@ -408,7 +409,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     // See: CDAP-7387
     if (masterShortUserName == null || !masterShortUserName.equals(principal.getName())) {
       try {
-        AuthorizationUtil.ensureAccess(namespaceId, authorizationEnforcer, principal);
+        accessEnforcer.enforce(namespaceId, principal, StandardPermission.GET);
       } catch (UnauthorizedException e) {
         lastUnauthorizedException = e;
       }

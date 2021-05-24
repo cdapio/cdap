@@ -177,6 +177,13 @@ public class AccessControllerClassLoader extends DirectoryClassLoader {
 
       @Override
       public void visitEnd() {
+        if (Type.getType(Object.class).getInternalName().equals(superName)) {
+          // For default implementations that are not overriden in the superclass it's fine to skip the wrapping.
+          // Note that if we wanted to wrap we would need to know which of the defined interfaces actually extends
+          // the one we need and it's not trivial as those interfaces can be in the current jar we are trying to load.
+          return;
+        }
+
         // Generates all the missing methods on the Authorizer interface so that we can wrap them with the
         // context classloader switch.
         Set<Method> generatedMethods = new HashSet<>();
@@ -186,13 +193,6 @@ public class AccessControllerClassLoader extends DirectoryClassLoader {
           if (!generatedMethods.add(method)) {
             return;
           }
-          if (m.isDefault() && Type.getType(Object.class).getInternalName().equals(superName)) {
-            // For default implementations that are not overriden in the superclass it's fine to skip the wrapping.
-            // Note that if we wanted to wrap we would need to know which of the defined interfaces actually extends
-            // the one we need and it's not trivial as those interfaces can be in the current jar we are trying to load.
-            return;
-          }
-
           // Generate the method by calling super.[method]
           String signature = Signatures.getMethodSignature(
             method, TypeToken.of(m.getGenericReturnType()),

@@ -48,7 +48,7 @@ import io.cdap.cdap.security.authorization.AuthorizationTestModule;
 import io.cdap.cdap.security.impersonation.DefaultImpersonator;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -74,7 +74,7 @@ public class ConfiguratorTest {
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
   private static CConfiguration conf;
-  private static AuthorizationEnforcer authEnforcer;
+  private static AccessEnforcer authEnforcer;
   private static AuthenticationContext authenticationContext;
 
   @BeforeClass
@@ -85,7 +85,7 @@ public class ConfiguratorTest {
                                              new AuthorizationTestModule(),
                                              new AuthorizationEnforcementModule().getInMemoryModules(),
                                              new AuthenticationContextModules().getNoOpModule());
-    authEnforcer = injector.getInstance(AuthorizationEnforcer.class);
+    authEnforcer = injector.getInstance(AccessEnforcer.class);
     authenticationContext = injector.getInstance(AuthenticationContext.class);
   }
 

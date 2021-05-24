@@ -67,7 +67,7 @@ import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.tephra.TransactionSystemClient;
@@ -266,7 +266,7 @@ public final class SparkRuntimeContextProvider {
         pluginInstantiator,
         injector.getInstance(SecureStore.class),
         injector.getInstance(SecureStoreManager.class),
-        injector.getInstance(AuthorizationEnforcer.class),
+        injector.getInstance(AccessEnforcer.class),
         injector.getInstance(AuthenticationContext.class),
         injector.getInstance(MessagingService.class),
         serviceAnnouncer,

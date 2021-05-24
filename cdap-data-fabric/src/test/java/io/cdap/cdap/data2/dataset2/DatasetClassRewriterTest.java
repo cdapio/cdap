@@ -23,6 +23,7 @@ import io.cdap.cdap.api.annotation.ReadWrite;
 import io.cdap.cdap.api.annotation.WriteOnly;
 import io.cdap.cdap.api.dataset.DataSetException;
 import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.dataset.DatasetClassRewriter;
 import io.cdap.cdap.data2.dataset2.customds.CustomDatasetApp;
 import io.cdap.cdap.data2.dataset2.customds.CustomOperations;
@@ -34,13 +35,16 @@ import io.cdap.cdap.data2.dataset2.customds.TopLevelExtendsDataset;
 import io.cdap.cdap.data2.metadata.lineage.AccessType;
 import io.cdap.cdap.internal.asm.ByteCodeClassLoader;
 import io.cdap.cdap.internal.asm.ClassDefinition;
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.Authorizable;
+import io.cdap.cdap.proto.security.GrantedPermission;
+import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
-import io.cdap.cdap.proto.security.Privilege;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.junit.Assert;
 import org.junit.Test;
@@ -50,6 +54,7 @@ import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -75,7 +80,7 @@ public class DatasetClassRewriterTest {
     classLoader.addClass(rewrite(CustomDatasetApp.InnerDataset.class));
 
     InMemoryAccessRecorder accessRecorder = new InMemoryAccessRecorder();
-    TestAuthorizationEnforcer authEnforcer = new TestAuthorizationEnforcer(EnumSet.allOf(Action.class));
+    TestAccessEnforcer authEnforcer = new TestAccessEnforcer(EnumSet.allOf(StandardPermission.class));
     testDatasetAccessRecord(accessRecorder,
                             createDataset(accessRecorder, authEnforcer, TopLevelDataset.class.getName(), classLoader));
 
@@ -117,7 +122,7 @@ public class DatasetClassRewriterTest {
     InMemoryAccessRecorder accessRecorder = new InMemoryAccessRecorder();
 
     // Test no access
-    TestAuthorizationEnforcer authEnforcer = new TestAuthorizationEnforcer(EnumSet.noneOf(Action.class));
+    TestAccessEnforcer authEnforcer = new TestAccessEnforcer(EnumSet.noneOf(StandardPermission.class));
     testNoAccess(createDataset(accessRecorder, authEnforcer, TopLevelDataset.class.getName(), classLoader));
     testNoAccess(createDataset(accessRecorder, authEnforcer,
                                DefaultTopLevelExtendsDataset.class.getName(), classLoader));
@@ -131,7 +136,7 @@ public class DatasetClassRewriterTest {
                                new Class<?>[] { CustomDatasetApp.class }, new Object[] { new CustomDatasetApp()}));
 
     // Test read only access
-    authEnforcer = new TestAuthorizationEnforcer(EnumSet.of(Action.READ));
+    authEnforcer = new TestAccessEnforcer(EnumSet.of(StandardPermission.GET));
     testReadOnlyAccess(createDataset(accessRecorder, authEnforcer, TopLevelDataset.class.getName(), classLoader));
     testReadOnlyAccess(createDataset(accessRecorder, authEnforcer,
                                      DefaultTopLevelExtendsDataset.class.getName(), classLoader));
@@ -146,7 +151,7 @@ public class DatasetClassRewriterTest {
                                      new Object[] { new CustomDatasetApp()}));
 
     // Test write only access
-    authEnforcer = new TestAuthorizationEnforcer(EnumSet.of(Action.WRITE));
+    authEnforcer = new TestAccessEnforcer(EnumSet.of(StandardPermission.UPDATE));
     testWriteOnlyAccess(createDataset(accessRecorder, authEnforcer, TopLevelDataset.class.getName(), classLoader));
     testWriteOnlyAccess(createDataset(accessRecorder, authEnforcer,
                                       DefaultTopLevelExtendsDataset.class.getName(), classLoader));
@@ -174,9 +179,9 @@ public class DatasetClassRewriterTest {
                   new Class<?>[0], new Object[0], null);
     Assert.assertEquals(ImmutableList.of(AccessType.UNKNOWN), accessRecorder.getLineageRecorded());
     Assert.assertEquals(ImmutableList.of(AccessType.UNKNOWN), accessRecorder.getAuditRecorded());
-    Assert.assertEquals(1, authorizationRecorder.getPrivileges().size());
+    Assert.assertEquals(1, authorizationRecorder.getGrantedPermissions().size());
     // Expects the enforcer still get called
-    Assert.assertNull(authorizationRecorder.getPrivileges().get(0));
+    Assert.assertNull(authorizationRecorder.getGrantedPermissions().get(0));
 
     accessRecorder.clear();
     authorizationRecorder.clear();
@@ -186,8 +191,8 @@ public class DatasetClassRewriterTest {
                   new Class<?>[0], new Object[0], ReadOnly.class);
     Assert.assertEquals(ImmutableList.of(AccessType.READ), accessRecorder.getLineageRecorded());
     Assert.assertEquals(ImmutableList.of(AccessType.READ), accessRecorder.getAuditRecorded());
-    Assert.assertEquals(ImmutableList.of(new Privilege(DATASET_ID, Action.READ)),
-                        authorizationRecorder.getPrivileges());
+    Assert.assertEquals(ImmutableList.of(new GrantedPermission(DATASET_ID, StandardPermission.GET)),
+                        authorizationRecorder.getGrantedPermissions());
 
     accessRecorder.clear();
     authorizationRecorder.clear();
@@ -197,8 +202,8 @@ public class DatasetClassRewriterTest {
                   new Class<?>[0], new Object[0], WriteOnly.class);
     Assert.assertEquals(ImmutableList.of(AccessType.WRITE), accessRecorder.getLineageRecorded());
     Assert.assertEquals(ImmutableList.of(AccessType.WRITE), accessRecorder.getAuditRecorded());
-    Assert.assertEquals(ImmutableList.of(new Privilege(DATASET_ID, Action.WRITE)),
-                        authorizationRecorder.getPrivileges());
+    Assert.assertEquals(ImmutableList.of(new GrantedPermission(DATASET_ID, StandardPermission.UPDATE)),
+                        authorizationRecorder.getGrantedPermissions());
 
     accessRecorder.clear();
     authorizationRecorder.clear();
@@ -208,20 +213,20 @@ public class DatasetClassRewriterTest {
                   new Class<?>[0], new Object[0], ReadWrite.class);
     Assert.assertEquals(ImmutableList.of(AccessType.READ_WRITE), accessRecorder.getLineageRecorded());
     Assert.assertEquals(ImmutableList.of(AccessType.READ_WRITE), accessRecorder.getAuditRecorded());
-    Assert.assertTrue(ImmutableSet.of(new Privilege(DATASET_ID, Action.READ),
-                                      new Privilege(DATASET_ID, Action.WRITE))
-                        .containsAll(authorizationRecorder.getPrivileges()));
+    Assert.assertTrue(ImmutableSet.of(new GrantedPermission(DATASET_ID, StandardPermission.GET),
+                                      new GrantedPermission(DATASET_ID, StandardPermission.UPDATE))
+                        .containsAll(authorizationRecorder.getGrantedPermissions()));
   }
 
   private <T extends Dataset & CustomOperations> T createDataset(InMemoryAccessRecorder accessRecorder,
-                                                                 AuthorizationEnforcer authEnforcer,
+                                                                 AccessEnforcer authEnforcer,
                                                                  final String className,
                                                                  final ClassLoader classLoader) throws Exception {
     return createDataset(accessRecorder, authEnforcer, className, classLoader, new Class<?>[0], new Object[0]);
   }
 
   private <T extends Dataset & CustomOperations> T createDataset(InMemoryAccessRecorder accessRecorder,
-                                                                 AuthorizationEnforcer authEnforcer,
+                                                                 AccessEnforcer authEnforcer,
                                                                  final String className,
                                                                  final ClassLoader classLoader,
                                                                  final Class<?>[] paramTypes,
@@ -230,7 +235,7 @@ public class DatasetClassRewriterTest {
   }
 
   private <T extends Dataset & CustomOperations> T createDataset(InMemoryAccessRecorder accessRecorder,
-                                                                 AuthorizationEnforcer authEnforcer,
+                                                                 AccessEnforcer authEnforcer,
                                                                  final String className,
                                                                  final ClassLoader classLoader,
                                                                  final Class<?>[] paramTypes,
@@ -380,66 +385,81 @@ public class DatasetClassRewriterTest {
     }
   }
 
-  private static final class TestAuthorizationEnforcer implements AuthorizationEnforcer {
+  private static final class TestAccessEnforcer implements AccessEnforcer {
 
-    private final Set<Action> allowedActions;
+    private final Set<? extends Permission> allowedPermissions;
 
-    private TestAuthorizationEnforcer(Set<Action> allowedActions) {
-      this.allowedActions = allowedActions;
+    private TestAccessEnforcer(Set<? extends Permission> allowedPermissions) {
+      this.allowedPermissions = allowedPermissions;
     }
 
     @Override
-    public void enforce(EntityId entity, Principal principal, Action action) throws Exception {
-      if (!allowedActions.contains(action)) {
-        throw new UnauthorizedException("Not allow to perform " + action + " " + entity + " by " + principal);
+    public void enforce(EntityId entity, Principal principal, Permission permission) throws UnauthorizedException {
+      if (!allowedPermissions.contains(permission)) {
+        throw new UnauthorizedException("Not allow to perform " + permission + " " + entity + " by " + principal);
       }
     }
 
     @Override
-    public void enforce(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
-      if (!allowedActions.containsAll(actions)) {
-        throw new UnauthorizedException("Not allow to perform " + actions + " " + entity + " by " + principal);
+    public void enforce(EntityId entity, Principal principal, Set<? extends Permission> permissions)
+      throws UnauthorizedException {
+      if (!allowedPermissions.containsAll(permissions)) {
+        throw new UnauthorizedException("Not allow to perform " + permissions + " " + entity + " by " + principal);
       }
     }
 
     @Override
-    public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) throws Exception {
+    public void enforceOnParent(EntityType entityType, EntityId parentId, Principal principal, Permission permission)
+      throws UnauthorizedException {
+      if (!allowedPermissions.contains(permission)) {
+        throw new UnauthorizedException("Not allow to perform " + permission + " " + parentId + "/" + entityType
+                                          + " by " + principal);
+      }
+    }
+
+    @Override
+    public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) {
       return entityIds;
     }
   }
 
-  private static final class AuthorizationRecorder implements AuthorizationEnforcer {
+  private static final class AuthorizationRecorder implements AccessEnforcer {
 
-    private final List<Privilege> privileges = new ArrayList<>();
+    private final List<GrantedPermission> grantedPermissions = new ArrayList<>();
 
     @Override
-    public void enforce(EntityId entity, Principal principal, Action action) throws Exception {
-      enforce(entity, principal, EnumSet.of(action));
+    public void enforce(EntityId entity, Principal principal, Permission permission) {
+      enforce(entity, principal, Collections.singleton(permission));
     }
 
     @Override
-    public void enforce(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
-      if (actions.isEmpty()) {
+    public void enforce(EntityId entity, Principal principal, Set<? extends Permission> permissions) {
+      if (permissions.isEmpty()) {
         // Put a null to the list so that we know this method has been called.
-        privileges.add(null);
+        grantedPermissions.add(null);
         return;
       }
-      for (Action action : actions) {
-        privileges.add(new Privilege(entity, action));
+      for (Permission permission : permissions) {
+        grantedPermissions.add(new GrantedPermission(entity, permission));
       }
     }
 
     @Override
-    public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) throws Exception {
+    public void enforceOnParent(EntityType entityType, EntityId parentId, Principal principal, Permission permission) {
+      grantedPermissions.add(new GrantedPermission(Authorizable.fromEntityId(parentId, entityType), permission));
+    }
+
+    @Override
+    public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) {
       return entityIds;
     }
 
-    List<Privilege> getPrivileges() {
-      return privileges;
+    List<GrantedPermission> getGrantedPermissions() {
+      return grantedPermissions;
     }
 
     void clear() {
-      privileges.clear();
+      grantedPermissions.clear();
     }
   }
 

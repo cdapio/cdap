@@ -33,8 +33,9 @@ import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import io.cdap.cdap.master.spi.twill.StatefulDisk;
 import io.cdap.cdap.master.spi.twill.StatefulTwillPreparer;
 import io.cdap.cdap.messaging.MessagingService;
-import io.cdap.cdap.security.authorization.AuthorizerInstantiator;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.ResourceSpecification;
@@ -74,7 +75,9 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
   DistributedPreviewManager(CConfiguration cConf, Configuration hConf, DiscoveryService discoveryService,
                             @Named(DataSetsModules.BASE_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
                             TransactionSystemClient transactionSystemClient,
-                            AuthorizerInstantiator authorizerInstantiator, AuthorizationEnforcer authorizationEnforcer,
+                            AccessControllerInstantiator accessControllerInstantiator,
+                            AccessEnforcer accessEnforcer,
+                            AuthenticationContext authenticationContext,
                             @Named(PreviewConfigModule.PREVIEW_LEVEL_DB) LevelDBTableService previewLevelDBTableService,
                             @Named(PreviewConfigModule.PREVIEW_CCONF) CConfiguration previewCConf,
                             @Named(PreviewConfigModule.PREVIEW_HCONF) Configuration previewHConf,
@@ -84,9 +87,10 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
                             MetricsCollectionService metricsCollectionService,
                             PreviewDataCleanupService previewDataCleanupService,
                             TwillRunner twillRunner) {
-    super(discoveryService, datasetFramework, transactionSystemClient, authorizerInstantiator, authorizationEnforcer,
-          previewLevelDBTableService, previewCConf, previewHConf, previewSConf, previewRequestQueue, previewStore,
-          previewRunStopper, messagingService, previewDataCleanupService, metricsCollectionService);
+    super(discoveryService, datasetFramework, transactionSystemClient, accessControllerInstantiator,
+          accessEnforcer, authenticationContext, previewLevelDBTableService, previewCConf, previewHConf, previewSConf,
+          previewRequestQueue, previewStore, previewRunStopper, messagingService, previewDataCleanupService,
+          metricsCollectionService);
 
     this.cConf = cConf;
     this.hConf = hConf;

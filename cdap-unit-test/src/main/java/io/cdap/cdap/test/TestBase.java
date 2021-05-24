@@ -170,6 +170,7 @@ import java.nio.file.Paths;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -346,10 +347,11 @@ public class TestBase {
       exploreExecutorService.startAndWait();
       // wait for explore service to be discoverable
       DiscoveryServiceClient discoveryService = injector.getInstance(DiscoveryServiceClient.class);
-      EndpointStrategy endpointStrategy = new RandomEndpointStrategy(() ->
-        discoveryService.discover(Constants.Service.EXPLORE_HTTP_USER_SERVICE));
+      EndpointStrategy endpointStrategy = new RandomEndpointStrategy(() -> discoveryService.discover(
+        Constants.Service.EXPLORE_HTTP_USER_SERVICE));
       Preconditions.checkNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS),
-                                 "%s service is not up after 5 seconds", Constants.Service.EXPLORE_HTTP_USER_SERVICE);
+                                 "%s service is not up after 5 seconds",
+                                 Constants.Service.EXPLORE_HTTP_USER_SERVICE);
       exploreClient = injector.getInstance(ExploreClient.class);
     }
     programScheduler = injector.getInstance(Scheduler.class);
@@ -369,9 +371,9 @@ public class TestBase {
       InstanceId instance = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
       Principal principal = new Principal(user, Principal.PrincipalType.USER);
       accessControllerInstantiator.get().grant(Authorizable.fromEntityId(instance), principal,
-                                               ImmutableSet.of(StandardPermission.UPDATE));
+                                               EnumSet.allOf(StandardPermission.class));
       accessControllerInstantiator.get().grant(Authorizable.fromEntityId(NamespaceId.DEFAULT), principal,
-                                               ImmutableSet.of(StandardPermission.UPDATE));
+                                               EnumSet.allOf(StandardPermission.class));
     }
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     if (firstInit) {
@@ -589,7 +591,7 @@ public class TestBase {
       accessControllerInstantiator.get().grant(Authorizable.fromEntityId(NamespaceId.DEFAULT),
                                                principal, ImmutableSet.of(StandardPermission.UPDATE));
     }
-    
+
     namespaceAdmin.delete(NamespaceId.DEFAULT);
     accessControllerInstantiator.close();
 

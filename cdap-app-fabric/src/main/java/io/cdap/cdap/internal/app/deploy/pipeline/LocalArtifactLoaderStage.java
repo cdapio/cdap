@@ -41,11 +41,11 @@ import io.cdap.cdap.pipeline.Pipeline;
 import io.cdap.cdap.pipeline.Stage;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
-import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import org.apache.twill.filesystem.Location;
 
@@ -69,7 +69,7 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
   private final Store store;
   private final ArtifactRepository artifactRepository;
   private final Impersonator impersonator;
-  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
   private final PluginFinder pluginFinder;
   private final CapabilityReader capabilityReader;
@@ -79,7 +79,7 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
    * Constructor with hit for handling type.
    */
   public LocalArtifactLoaderStage(CConfiguration cConf, Store store, ArtifactRepository artifactRepository,
-                                  Impersonator impersonator, AuthorizationEnforcer authorizationEnforcer,
+                                  Impersonator impersonator, AccessEnforcer accessEnforcer,
                                   AuthenticationContext authenticationContext, PluginFinder pluginFinder,
                                   CapabilityReader capabilityReader) {
     super(TypeToken.of(AppDeploymentInfo.class));
@@ -87,7 +87,7 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
     this.store = store;
     this.artifactRepository = artifactRepository;
     this.impersonator = impersonator;
-    this.authorizationEnforcer = authorizationEnforcer;
+    this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
     this.pluginFinder = pluginFinder;
     this.capabilityReader = capabilityReader;
@@ -136,7 +136,7 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
     } else {
       applicationId = deploymentInfo.getNamespaceId().app(specification.getName(), appVersion);
     }
-    authorizationEnforcer.enforce(applicationId, authenticationContext.getPrincipal(), Action.ADMIN);
+    accessEnforcer.enforce(applicationId, authenticationContext.getPrincipal(), StandardPermission.CREATE);
     capabilityReader.checkAllEnabled(specification);
 
     MetadataMutation.Create mutation = null;

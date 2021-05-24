@@ -16,10 +16,12 @@
 
 package io.cdap.cdap.security.authorization;
 
+import io.cdap.cdap.api.security.AccessException;
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.EntityId;
-import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 
 import java.util.Collections;
 import java.util.Set;
@@ -29,24 +31,26 @@ import java.util.Set;
  * This is used for testing as in {@link AuthEnforceRewriterTest} to ensure that enforce was successfully called after
  * class rewrite.
  */
-public class ExceptionAuthorizationEnforcer implements AuthorizationEnforcer {
+public class ExceptionAccessEnforcer implements AccessEnforcer {
 
   @Override
-  public void enforce(EntityId entity, Principal principal, Action action) throws Exception {
+  public void enforce(EntityId entity, Principal principal, Set<? extends Permission> permissions)
+    throws ExpectedException {
     throw new ExpectedException(entity);
   }
 
   @Override
-  public void enforce(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
-    throw new ExpectedException(entity);
+  public void enforceOnParent(EntityType entityType, EntityId parentId, Principal principal, Permission permission)
+    throws AccessException {
+    throw new ExpectedException(parentId);
   }
 
   @Override
-  public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) throws Exception {
+  public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) {
     return Collections.emptySet();
   }
 
-  class ExpectedException extends Exception {
+  class ExpectedException extends AccessException {
     // just a dummy exception for test which is thrown if authorization enforcement call was successful
     private final EntityId entityId; // entity on which authorization enforcement is being performed
 

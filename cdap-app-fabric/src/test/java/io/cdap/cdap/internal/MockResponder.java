@@ -48,6 +48,10 @@ public final class MockResponder extends AbstractHttpResponder {
     return status;
   }
 
+  public String getResponseContentAsString() {
+    return content.toString(StandardCharsets.UTF_8);
+  }
+
   public <T> T decodeResponseContent(Type type) {
     return decodeResponseContent(type, GSON);
   }

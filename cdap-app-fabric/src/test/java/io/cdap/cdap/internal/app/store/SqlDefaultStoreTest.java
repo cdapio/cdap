@@ -27,7 +27,7 @@ import io.cdap.cdap.internal.app.namespace.NamespaceResourceDeleter;
 import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.sql.PostgresInstantiator;
 import io.cdap.cdap.spi.data.sql.PostgresSqlStructuredTableAdmin;
@@ -72,7 +72,7 @@ public class SqlDefaultStoreTest extends DefaultStoreTest {
       nsStore, store, injector.getInstance(DatasetFramework.class),
       injector.getInstance(MetricsCollectionService.class), injector.getProvider(NamespaceResourceDeleter.class),
       injector.getProvider(StorageProviderNamespaceAdmin.class), injector.getInstance(CConfiguration.class),
-      injector.getInstance(Impersonator.class), injector.getInstance(AuthorizationEnforcer.class),
+      injector.getInstance(Impersonator.class), injector.getInstance(AccessEnforcer.class),
       injector.getInstance(AuthenticationContext.class));
   }
 

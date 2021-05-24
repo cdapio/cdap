@@ -41,7 +41,7 @@ import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.ServiceAnnouncer;
@@ -64,7 +64,7 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
   private final TransactionSystemClient txClient;
   private final DatasetFramework datasetFramework;
   private final WorkflowProgramInfo workflowProgramInfo;
-  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
   private final ServiceAnnouncer serviceAnnouncer;
   private final PluginFinder pluginFinder;
@@ -85,7 +85,7 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
                       @Nullable PluginInstantiator pluginInstantiator,
                       SecureStore secureStore,
                       SecureStoreManager secureStoreManager,
-                      AuthorizationEnforcer authorizationEnforcer,
+                      AccessEnforcer accessEnforcer,
                       AuthenticationContext authenticationContext,
                       MessagingService messagingService, ServiceAnnouncer serviceAnnouncer,
                       PluginFinder pluginFinder, LocationFactory locationFactory,
@@ -102,7 +102,7 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
     this.txClient = txClient;
     this.datasetFramework = datasetFramework;
     this.workflowProgramInfo = workflowProgramInfo;
-    this.authorizationEnforcer = authorizationEnforcer;
+    this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
     this.serviceAnnouncer = serviceAnnouncer;
     this.pluginFinder = pluginFinder;
@@ -194,10 +194,10 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
   }
 
   /**
-   * Returns the {@link AuthorizationEnforcer} that can be used for this program.
+   * Returns the {@link AccessEnforcer} that can be used for this program.
    */
-  public AuthorizationEnforcer getAuthorizationEnforcer() {
-    return authorizationEnforcer;
+  public AccessEnforcer getAccessEnforcer() {
+    return accessEnforcer;
   }
 
   /**

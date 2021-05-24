@@ -58,11 +58,6 @@ public class InMemoryAccessController implements AccessController {
   private final Principal allSuperUsers = new Principal("*", Principal.PrincipalType.USER);
 
   @Override
-  public void destroy() {
-
-  }
-
-  @Override
   public void initialize(AuthorizationContext context) {
     Properties properties = context.getExtensionProperties();
     if (properties.containsKey("superusers")) {

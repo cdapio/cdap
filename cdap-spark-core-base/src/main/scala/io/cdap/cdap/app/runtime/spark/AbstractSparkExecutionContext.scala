@@ -102,7 +102,7 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
                                                                  runtimeContext.getHostname,
                                                                  sparkTxHandler)
   private val applicationEndLatch = new CountDownLatch(1)
-  private val authorizationEnforcer = runtimeContext.getAuthorizationEnforcer
+  private val accessEnforcer = runtimeContext.getAccessEnforcer
   private val authenticationContext = runtimeContext.getAuthenticationContext
   private val interpreterCount = new AtomicInteger(0)
 

@@ -31,8 +31,9 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
@@ -53,19 +54,19 @@ import javax.ws.rs.QueryParam;
 @Path(Constants.Gateway.API_VERSION_3)
 public class LogHttpHandler extends AbstractLogHttpHandler {
 
-  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
   private final LogReader logReader;
   private final ProgramRunRecordFetcher programRunRecordFetcher;
 
   @Inject
-  public LogHttpHandler(AuthorizationEnforcer authorizationEnforcer,
+  public LogHttpHandler(AccessEnforcer accessEnforcer,
                         AuthenticationContext authenticationContext,
                         LogReader logReader,
                         ProgramRunRecordFetcher programRunFetcher,
                         CConfiguration cConf) {
     super(cConf);
-    this.authorizationEnforcer = authorizationEnforcer;
+    this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
     this.logReader = logReader;
     this.programRunRecordFetcher = programRunFetcher;
@@ -200,7 +201,7 @@ public class LogHttpHandler extends AbstractLogHttpHandler {
                       @QueryParam("filter") @DefaultValue("") String filterStr,
                       @QueryParam("format") @DefaultValue("text") String format,
                       @QueryParam("suppress") List<String> suppress) throws Exception {
-    authorizationEnforcer.isVisible(NamespaceId.SYSTEM, authenticationContext.getPrincipal());
+    accessEnforcer.enforce(NamespaceId.SYSTEM, authenticationContext.getPrincipal(), StandardPermission.GET);
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Id.Namespace.SYSTEM.getId(), componentId,
                                                                            serviceId);
     doGetLogs(logReader, responder, loggingContext, fromTimeSecsParam,
@@ -216,7 +217,7 @@ public class LogHttpHandler extends AbstractLogHttpHandler {
                       @QueryParam("filter") @DefaultValue("") String filterStr,
                       @QueryParam("format") @DefaultValue("text") String format,
                       @QueryParam("suppress") List<String> suppress) throws Exception {
-    authorizationEnforcer.isVisible(NamespaceId.SYSTEM, authenticationContext.getPrincipal());
+    accessEnforcer.enforce(NamespaceId.SYSTEM, authenticationContext.getPrincipal(), StandardPermission.GET);
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Id.Namespace.SYSTEM.getId(), componentId,
                                                                            serviceId);
     doNext(logReader, responder, loggingContext, maxEvents,
@@ -232,7 +233,7 @@ public class LogHttpHandler extends AbstractLogHttpHandler {
                       @QueryParam("filter") @DefaultValue("") String filterStr,
                       @QueryParam("format") @DefaultValue("text") String format,
                       @QueryParam("suppress") List<String> suppress) throws Exception {
-    authorizationEnforcer.isVisible(NamespaceId.SYSTEM, authenticationContext.getPrincipal());
+    accessEnforcer.enforce(NamespaceId.SYSTEM, authenticationContext.getPrincipal(), StandardPermission.GET);
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Id.Namespace.SYSTEM.getId(), componentId,
                                                                            serviceId);
     doPrev(logReader, responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, null, format, suppress);
@@ -251,6 +252,6 @@ public class LogHttpHandler extends AbstractLogHttpHandler {
     throws Exception {
     ApplicationId appId = new ApplicationId(namespace, application);
     ProgramId programId = new ProgramId(appId, ProgramType.valueOfCategoryName(programType), program);
-    authorizationEnforcer.isVisible(programId, authenticationContext.getPrincipal());
+    accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.GET);
   }
 }

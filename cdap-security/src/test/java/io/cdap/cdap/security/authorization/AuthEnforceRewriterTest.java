@@ -59,31 +59,31 @@ public class AuthEnforceRewriterTest {
     invokeSetters(cls, rewrittenObject);
     // tests a valid AuthEnforce annotation which has single action
     testRewrite(getMethod(cls, "testSingleAction", NamespaceId.class), rewrittenObject,
-                ExceptionAuthorizationEnforcer.ExpectedException.class, NamespaceId.DEFAULT);
+                ExceptionAccessEnforcer.ExpectedException.class, NamespaceId.DEFAULT);
     // tests a valid AuthEnforce annotation which has multiple action
     testRewrite(getMethod(cls, "testMultipleAction", NamespaceId.class), rewrittenObject,
-                ExceptionAuthorizationEnforcer.ExpectedException.class, NamespaceId.DEFAULT);
+                ExceptionAccessEnforcer.ExpectedException.class, NamespaceId.DEFAULT);
     // test that the class rewrite did not affect other non annotated methods
     testRewrite(getMethod(cls, "testNoAuthEnforceAnnotation", NamespaceId.class), rewrittenObject,
                 DummyAuthEnforce.EnforceNotCalledException.class, NamespaceId.DEFAULT);
     // test that the class rewrite works for method whose signature does not specify throws exception
     testRewrite(getMethod(cls, "testMethodWithoutException", NamespaceId.class), rewrittenObject,
-                ExceptionAuthorizationEnforcer.ExpectedException.class, NamespaceId.DEFAULT);
+                ExceptionAccessEnforcer.ExpectedException.class, NamespaceId.DEFAULT);
 
     testRewrite(getMethod(cls, "testNameAnnotationPref", NamespaceId.class, String.class), rewrittenObject,
-                NamespaceId.DEFAULT, ExceptionAuthorizationEnforcer.ExpectedException.class,
+                NamespaceId.DEFAULT, ExceptionAccessEnforcer.ExpectedException.class,
                 NamespaceId.DEFAULT, "dataset");
 
     testRewrite(getMethod(cls, "testMultipleParts", String.class, String.class), rewrittenObject,
                 new DatasetId("ns", "dataset"),
-                ExceptionAuthorizationEnforcer.ExpectedException.class, "ns", "dataset");
+                ExceptionAccessEnforcer.ExpectedException.class, "ns", "dataset");
 
     testRewrite(getMethod(cls, "testQueryPathParamAnnotations", String.class, String.class), rewrittenObject,
                 new DatasetId("ns", "dataset"),
-                ExceptionAuthorizationEnforcer.ExpectedException.class, "ns", "dataset");
+                ExceptionAccessEnforcer.ExpectedException.class, "ns", "dataset");
 
     testRewrite(getMethod(cls, "testMultipleAnnotationsPref", NamespaceId.class), rewrittenObject,
-                ExceptionAuthorizationEnforcer.ExpectedException.class, NamespaceId.DEFAULT);
+                ExceptionAccessEnforcer.ExpectedException.class, NamespaceId.DEFAULT);
 
     // test that class rewriting does not happen for classes which does not have AuthEnforce annotation on its method
     cls = classLoader.loadClass(DummyAuthEnforce.ClassWithoutAuthEnforce.class.getName());
@@ -98,20 +98,20 @@ public class AuthEnforceRewriterTest {
     rewrittenObject = loadRewritten(classLoader, DummyAuthEnforce.class.getName(), cls.getName());
     invokeSetters(cls, rewrittenObject);
     testRewrite(getMethod(cls, "testSomeOtherAction", NamespaceId.class), rewrittenObject,
-                ExceptionAuthorizationEnforcer.ExpectedException.class, NamespaceId.DEFAULT);
+                ExceptionAccessEnforcer.ExpectedException.class, NamespaceId.DEFAULT);
 
     // test that class rewriting works for a valid annotation with field instances
     cls = classLoader.loadClass(DummyAuthEnforce.ValidAuthEnforceWithFields.class.getName());
     rewrittenObject = loadRewritten(classLoader, DummyAuthEnforce.class.getName(), cls.getName());
     invokeSetters(cls, rewrittenObject);
     testRewrite(getMethod(cls, "testNoParameters"), rewrittenObject,
-                ExceptionAuthorizationEnforcer.ExpectedException.class);
+                ExceptionAccessEnforcer.ExpectedException.class);
     testRewrite(getMethod(cls, "testParaNameSameAsField", NamespaceId.class), rewrittenObject,
-                new NamespaceId("ns"), ExceptionAuthorizationEnforcer.ExpectedException.class, NamespaceId.DEFAULT);
+                new NamespaceId("ns"), ExceptionAccessEnforcer.ExpectedException.class, NamespaceId.DEFAULT);
     testRewrite(getMethod(cls, "testParaPreference", InstanceId.class), rewrittenObject,
-                new InstanceId("i1"), ExceptionAuthorizationEnforcer.ExpectedException.class, new InstanceId("i1"));
+                new InstanceId("i1"), ExceptionAccessEnforcer.ExpectedException.class, new InstanceId("i1"));
     testRewrite(getMethod(cls, "testThisClassPreference", NamespaceId.class), rewrittenObject,
-                new NamespaceId("ns"), ExceptionAuthorizationEnforcer.ExpectedException.class, NamespaceId.DEFAULT);
+                new NamespaceId("ns"), ExceptionAccessEnforcer.ExpectedException.class, NamespaceId.DEFAULT);
   }
 
   @Test
@@ -167,20 +167,20 @@ public class AuthEnforceRewriterTest {
       if (!(e instanceof InvocationTargetException && expectedException.isAssignableFrom(e.getCause().getClass()))) {
 
         Assert.fail(String.format("Got exception %s while expecting %s%s%s", e.getCause(),
-                                  ExceptionAuthorizationEnforcer.ExpectedException.class.getName(),
+                                  ExceptionAccessEnforcer.ExpectedException.class.getName(),
                                   System.lineSeparator(), getFormattedStackTrace(e.getStackTrace())));
       }
       if (entityId != null) {
-        if (!ExceptionAuthorizationEnforcer.ExpectedException.class.isAssignableFrom(e.getCause().getClass())) {
+        if (!ExceptionAccessEnforcer.ExpectedException.class.isAssignableFrom(e.getCause().getClass())) {
           Assert.fail(String.format("Exception %s is not assignable from %s to match entity %s", e.getCause(),
-                                    ExceptionAuthorizationEnforcer.ExpectedException.class.getName(), entityId));
+                                    ExceptionAccessEnforcer.ExpectedException.class.getName(), entityId));
 
         }
-        ExceptionAuthorizationEnforcer.ExpectedException exception =
-                (ExceptionAuthorizationEnforcer.ExpectedException) e.getCause();
+        ExceptionAccessEnforcer.ExpectedException exception =
+                (ExceptionAccessEnforcer.ExpectedException) e.getCause();
         if (!exception.getEntityId().equals(entityId)) {
           Assert.fail(String.format("Expected %s with entity %s but found %s",
-                                    ExceptionAuthorizationEnforcer.ExpectedException.class.getSimpleName(),
+                                    ExceptionAccessEnforcer.ExpectedException.class.getSimpleName(),
                                     entityId, exception.getEntityId()));
         }
       }
@@ -203,7 +203,7 @@ public class AuthEnforceRewriterTest {
         if (declaredMethod.getName().contains(AuthEnforceRewriter.AUTHENTICATION_CONTEXT_FIELD_NAME)) {
           declaredMethod.invoke(rewrittenObject, new AuthenticationTestContext());
         } else if (declaredMethod.getName().contains(AuthEnforceRewriter.AUTHORIZATION_ENFORCER_FIELD_NAME)) {
-          declaredMethod.invoke(rewrittenObject, new ExceptionAuthorizationEnforcer());
+          declaredMethod.invoke(rewrittenObject, new ExceptionAccessEnforcer());
         } else {
           throw new IllegalStateException(String.format("Found an expected setter method with name %s. While trying " +
                                                                 "invoke setter for %s and %s",

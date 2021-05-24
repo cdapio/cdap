@@ -20,6 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -45,6 +46,7 @@ import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.PermissionAdapterFactory;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.VisibilityRequest;
+import io.cdap.cdap.security.spi.AccessIOException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
@@ -61,6 +63,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -124,7 +127,6 @@ public class RemoteAccessEnforcer extends AbstractAccessEnforcer {
     }
   }
   private final LoadingCache<AuthorizationPrivilege, EnforcementResponse> authPolicyCache;
-  private final LoadingCache<AuthorizationPrivilege, EnforcementResponse> singleVisibilityCache;
   private final LoadingCache<VisibilityKey, Boolean> visibilityCache;
 
   @Inject
@@ -147,18 +149,6 @@ public class RemoteAccessEnforcer extends AbstractAccessEnforcer {
         public EnforcementResponse load(AuthorizationPrivilege authorizationPrivilege) throws Exception {
           LOG.trace("Cache miss for {}", authorizationPrivilege);
           return doEnforce(authorizationPrivilege);
-        }
-      });
-
-    singleVisibilityCache = CacheBuilder.newBuilder()
-      .expireAfterWrite(cacheTTLSecs, TimeUnit.SECONDS)
-      .maximumSize(perCacheSize)
-      .build(new CacheLoader<AuthorizationPrivilege, EnforcementResponse>() {
-        @Override
-        @ParametersAreNonnullByDefault
-        public EnforcementResponse load(AuthorizationPrivilege authorizationPrivilege) throws Exception {
-          LOG.trace("Cache miss for {}", authorizationPrivilege);
-          return doIsVisibleSingleEntity(authorizationPrivilege);
         }
       });
 
@@ -266,24 +256,6 @@ public class RemoteAccessEnforcer extends AbstractAccessEnforcer {
     }
   }
 
-  private EnforcementResponse doIsVisibleSingleEntity(AuthorizationPrivilege authorizationPrivilege)
-    throws IOException {
-    HttpRequest request = remoteClient.requestBuilder(HttpMethod.POST, "isSingleVisible")
-      .withBody(GSON.toJson(authorizationPrivilege))
-      .build();
-    try {
-      HttpResponse response = remoteClient.execute(request);
-      if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
-        return new EnforcementResponse(true, null);
-      }
-      return new EnforcementResponse(false, new IOException(String.format("Failed to enforce with code %d: %s",
-                                                                   response.getResponseCode(),
-                                                                   response.getResponseBodyAsString())));
-    } catch (UnauthorizedException e) {
-      return new EnforcementResponse(false, e);
-    }
-  }
-
   private Set<? extends EntityId> visibilityCheckCall(VisibilityRequest visibilityRequest)
     throws IOException, UnauthorizedException {
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.POST, "isVisible")
@@ -320,6 +292,17 @@ public class RemoteAccessEnforcer extends AbstractAccessEnforcer {
         return new VisibilityKey(principal, entityId);
       }
     });
+  }
+
+  private AccessException propagateAccessException(Throwable e) throws AccessException {
+    if (e.getCause() != null && e instanceof ExecutionException) {
+      propagateAccessException(e.getCause());
+    }
+    Throwables.propagateIfPossible(e, AccessException.class);
+    if (e instanceof IOException) {
+      return new AccessIOException(e);
+    }
+    return new AccessException(e);
   }
 
   private static class VisibilityKey {

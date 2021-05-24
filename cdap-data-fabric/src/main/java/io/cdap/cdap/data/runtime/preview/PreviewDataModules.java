@@ -42,7 +42,7 @@ import io.cdap.cdap.data2.registry.NoOpUsageRegistry;
 import io.cdap.cdap.data2.registry.UsageRegistry;
 import io.cdap.cdap.data2.registry.UsageWriter;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.noop.NoopMetadataStorage;
 import org.apache.tephra.TransactionSystemClient;
@@ -117,23 +117,23 @@ public class PreviewDataModules {
     private final DatasetFramework inMemoryDatasetFramework;
     private final DatasetFramework remoteDatasetFramework;
     private final AuthenticationContext authenticationContext;
-    private final AuthorizationEnforcer authorizationEnforcer;
+    private final AccessEnforcer accessEnforcer;
 
     @Inject
     PreviewDatasetFrameworkProvider(@Named("localDatasetFramework")DatasetFramework inMemoryDatasetFramework,
                                     @Named("actualDatasetFramework")DatasetFramework remoteDatasetFramework,
                                     AuthenticationContext authenticationContext,
-                                    AuthorizationEnforcer authorizationEnforcer) {
+                                    AccessEnforcer accessEnforcer) {
       this.inMemoryDatasetFramework = inMemoryDatasetFramework;
       this.remoteDatasetFramework = remoteDatasetFramework;
       this.authenticationContext = authenticationContext;
-      this.authorizationEnforcer = authorizationEnforcer;
+      this.accessEnforcer = accessEnforcer;
     }
 
     @Override
     public DatasetFramework get() {
       return new PreviewDatasetFramework(inMemoryDatasetFramework, remoteDatasetFramework,
-                                         authenticationContext, authorizationEnforcer);
+                                         authenticationContext, accessEnforcer);
     }
   }
 }

@@ -32,14 +32,15 @@ import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.ApplicationPermission;
 import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.authorization.AuthorizationUtil;
-import io.cdap.cdap.security.authorization.AuthorizerInstantiator;
-import io.cdap.cdap.security.authorization.InMemoryAuthorizer;
+import io.cdap.cdap.security.authorization.InMemoryAccessController;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
-import io.cdap.cdap.security.spi.authorization.Authorizer;
+import io.cdap.cdap.security.spi.authorization.AccessController;
 import io.cdap.cdap.spi.metadata.SearchRequest;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -54,6 +55,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -67,7 +69,7 @@ public class MetadataAdminAuthorizationTest {
 
   private static CConfiguration cConf;
   private static MetadataAdmin metadataAdmin;
-  private static Authorizer authorizer;
+  private static AccessController accessController;
   private static AppFabricServer appFabricServer;
 
   @BeforeClass
@@ -75,19 +77,21 @@ public class MetadataAdminAuthorizationTest {
     cConf = createCConf();
     final Injector injector = AppFabricTestHelper.getInjector(cConf);
     metadataAdmin = injector.getInstance(MetadataAdmin.class);
-    authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
+    accessController = injector.getInstance(AccessControllerInstantiator.class).get();
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
 
     // Wait for the default namespace creation
     String user = AuthorizationUtil.getEffectiveMasterUser(cConf);
-    authorizer.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT), new Principal(user, Principal.PrincipalType.USER),
-                     Collections.singleton(Action.ADMIN));
+    accessController.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT),
+                           new Principal(user, Principal.PrincipalType.USER),
+                           EnumSet.allOf(StandardPermission.class));
     // Starting the Appfabric server will create the default namespace
     Tasks.waitFor(true, () -> injector.getInstance(NamespaceAdmin.class).exists(NamespaceId.DEFAULT),
                   5, TimeUnit.SECONDS);
-    authorizer.revoke(Authorizable.fromEntityId(NamespaceId.DEFAULT), new Principal(user, Principal.PrincipalType.USER),
-                      Collections.singleton(Action.ADMIN));
+    accessController.revoke(Authorizable.fromEntityId(NamespaceId.DEFAULT),
+                            new Principal(user, Principal.PrincipalType.USER),
+                            Collections.singleton(StandardPermission.UPDATE));
   }
 
   @Test
@@ -95,44 +99,51 @@ public class MetadataAdminAuthorizationTest {
     SecurityRequestContext.setUserId(ALICE.getName());
     ApplicationId applicationId = NamespaceId.DEFAULT.app(AllProgramsApp.NAME);
     // grant all the privileges needed to deploy the app
-    authorizer.grant(Authorizable.fromEntityId(applicationId), ALICE, Collections.singleton(Action.ADMIN));
-    authorizer.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT.artifact(AllProgramsApp.class.getSimpleName(),
-                                                                            "1.0-SNAPSHOT")),
-                     ALICE, Collections.singleton(Action.ADMIN));
-    authorizer.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME)), ALICE,
-                     Collections.singleton(Action.ADMIN));
-    authorizer.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME2)), ALICE,
-                     Collections.singleton(Action.ADMIN));
-    authorizer.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME3)), ALICE,
-                     Collections.singleton(Action.ADMIN));
-    authorizer.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT.dataset(AllProgramsApp.DS_WITH_SCHEMA_NAME)), ALICE,
-                     Collections.singleton(Action.ADMIN));
-    authorizer.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT.datasetType(KeyValueTable.class.getName())), ALICE,
-                     Collections.singleton(Action.ADMIN));
-    authorizer.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT.datasetType(KeyValueTable.class.getName())), ALICE,
-                     Collections.singleton(Action.ADMIN));
-    authorizer.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT.datasetType(ObjectMappedTable.class.getName())),
-                     ALICE,
-                     Collections.singleton(Action.ADMIN));
+    accessController.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT), ALICE,
+                           Collections.singleton(StandardPermission.GET));
+    accessController.grant(Authorizable.fromEntityId(applicationId), ALICE,
+                           Collections.singleton(StandardPermission.CREATE));
+    accessController.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT.artifact(AllProgramsApp.class.getSimpleName(),
+                                                                                  "1.0-SNAPSHOT")),
+                           ALICE, Collections.singleton(StandardPermission.CREATE));
+    accessController.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME)), ALICE,
+                           EnumSet.of(StandardPermission.CREATE, StandardPermission.GET));
+    accessController.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME2)), ALICE,
+                           EnumSet.of(StandardPermission.CREATE, StandardPermission.GET));
+    accessController.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME3)), ALICE,
+                           EnumSet.of(StandardPermission.CREATE, StandardPermission.GET));
+    accessController.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT.dataset(AllProgramsApp.DS_WITH_SCHEMA_NAME)),
+                           ALICE,
+                           EnumSet.of(StandardPermission.CREATE, StandardPermission.GET));
+    accessController.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT.datasetType(KeyValueTable.class.getName())),
+                           ALICE,
+                           Collections.singleton(StandardPermission.UPDATE));
+    accessController.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT.datasetType(KeyValueTable.class.getName())),
+                           ALICE,
+                           Collections.singleton(StandardPermission.UPDATE));
+    accessController.grant(Authorizable.fromEntityId(
+      NamespaceId.DEFAULT.datasetType(ObjectMappedTable.class.getName())),
+                           ALICE,
+                           Collections.singleton(StandardPermission.UPDATE));
     // no auto grant now, need to have privileges on the program to be able to see the programs
-    authorizer.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.SERVICE,
-                                                                     AllProgramsApp.NoOpService.NAME)), ALICE,
-                     Collections.singleton(Action.EXECUTE));
-    authorizer.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.WORKER,
-                                                                     AllProgramsApp.NoOpWorker.NAME)), ALICE,
-                     Collections.singleton(Action.EXECUTE));
-    authorizer.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.SPARK,
-                                                                     AllProgramsApp.NoOpSpark.NAME)), ALICE,
-                     Collections.singleton(Action.EXECUTE));
-    authorizer.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.MAPREDUCE,
-                                                                     AllProgramsApp.NoOpMR.NAME)), ALICE,
-                     Collections.singleton(Action.EXECUTE));
-    authorizer.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.MAPREDUCE,
-                                                                     AllProgramsApp.NoOpMR2.NAME)), ALICE,
-                     Collections.singleton(Action.EXECUTE));
-    authorizer.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.WORKFLOW,
-                                                                     AllProgramsApp.NoOpWorkflow.NAME)), ALICE,
-                     Collections.singleton(Action.EXECUTE));
+    accessController.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.SERVICE,
+                                                                           AllProgramsApp.NoOpService.NAME)), ALICE,
+                           Collections.singleton(ApplicationPermission.EXECUTE));
+    accessController.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.WORKER,
+                                                                           AllProgramsApp.NoOpWorker.NAME)), ALICE,
+                           Collections.singleton(ApplicationPermission.EXECUTE));
+    accessController.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.SPARK,
+                                                                           AllProgramsApp.NoOpSpark.NAME)), ALICE,
+                           Collections.singleton(ApplicationPermission.EXECUTE));
+    accessController.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.MAPREDUCE,
+                                                                           AllProgramsApp.NoOpMR.NAME)), ALICE,
+                           Collections.singleton(ApplicationPermission.EXECUTE));
+    accessController.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.MAPREDUCE,
+                                                                           AllProgramsApp.NoOpMR2.NAME)), ALICE,
+                           Collections.singleton(ApplicationPermission.EXECUTE));
+    accessController.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.WORKFLOW,
+                                                                           AllProgramsApp.NoOpWorkflow.NAME)), ALICE,
+                           Collections.singleton(ApplicationPermission.EXECUTE));
 
     AppFabricTestHelper.deployApplication(Id.Namespace.DEFAULT, AllProgramsApp.class, "{}", cConf);
 
@@ -168,7 +179,7 @@ public class MetadataAdminAuthorizationTest {
     cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
     cConf.setInt(Constants.Security.Authorization.CACHE_MAX_ENTRIES, 0);
     LocationFactory locationFactory = new LocalLocationFactory(new File(TEMPORARY_FOLDER.newFolder().toURI()));
-    Location authorizerJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAuthorizer.class);
+    Location authorizerJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAccessController.class);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, authorizerJar.toURI().getPath());
     return cConf;
   }

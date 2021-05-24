@@ -22,9 +22,10 @@ import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.common.lang.ClassRewriter;
-import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.Permission;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -73,7 +74,7 @@ import javax.ws.rs.QueryParam;
  * Pass 2: This pass only happen if a method with {@link AuthEnforce} annotation is found in the class during the
  * first pass. In this pass we rewrite the method which has {@link AuthEnforce} annotation. In the rewrite we
  * generate a call to
- * {@link AuthEnforceUtil#enforce(AuthorizationEnforcer, Object[], Class, AuthenticationContext, Set)} with
+ * {@link AuthEnforceUtil#enforce(AccessEnforcer, Object[], Class, AuthenticationContext, Set)} with
  * all the annotation details collected in the first pass.
  * </p>
  * <p>
@@ -84,8 +85,9 @@ import javax.ws.rs.QueryParam;
  * Before:
  * <pre>
  *     public class ValidAuthEnforceAnnotations {
- *      &#064;AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, actions = Action.ADMIN)
- *      public void testSingleAction(@Name("namespaceId") NamespaceId namespaceId) throws Exception {
+ *      &#064;AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class,
+ *        permissions = StandardPermission.UPDATE)
+ *      public void testSinglePermission(@Name("namespaceId") NamespaceId namespaceId) throws Exception {
  *        System.out.println("Hello");
  *      }
  *     }
@@ -95,12 +97,12 @@ import javax.ws.rs.QueryParam;
  * After:
  * <pre>
  *     public class ValidAuthEnforceAnnotations {
- *      private final AuthorizationEnforcer _[timestamp]authorizationEnforcer;
+ *      private final AccessEnforcer _[timestamp]accessEnforcer;
  *      private final AuthenticationContext _[timestamp]authenticationContext;
  *
  *      @Inject
- *      public void set_[timestamp]authorizationEnforcer (AuthorizationEnforcer authorizationEnforcer) {
- *        _[timestamp]authorizationEnforcer = authorizationEnforcer
+ *      public void set_[timestamp]accessEnforcer (AccessEnforcer accessEnforcer) {
+ *        _[timestamp]accessEnforcer = accessEnforcer
  *      }
  *
  *      @Inject
@@ -108,9 +110,9 @@ import javax.ws.rs.QueryParam;
  *        _[timestamp]authenticationContext = authenticationContext
  *      }
  *
- *      public void testSingleAction(@Name("namespaceId") NamespaceId namespaceId) throws Exception {
- *        AuthEnforceUtil.enforce(_[timestamp]authorizationEnforcer, namespaceId, _[timestamp]authenticationContext,
- *                                              Set<Action.Admin>);
+ *      public void testSinglePermission(@Name("namespaceId") NamespaceId namespaceId) throws Exception {
+ *        AuthEnforceUtil.enforce(_[timestamp]accessEnforcer, namespaceId, _[timestamp]authenticationContext,
+ *                                              Set<StandardPermission.UPDATE>);
  *        System.out.println("Hello");
  *      }
  *     }
@@ -121,14 +123,14 @@ public class AuthEnforceRewriter implements ClassRewriter {
 
   public static final String GENERATED_FIELD_PREFIX = "_";
   public static final String GENERATED_SETTER_METHOD_PREFIX = "set";
-  public static final String AUTHORIZATION_ENFORCER_FIELD_NAME = AuthorizationEnforcer.class.getSimpleName();
+  public static final String AUTHORIZATION_ENFORCER_FIELD_NAME = AccessEnforcer.class.getSimpleName();
   public static final String AUTHENTICATION_CONTEXT_FIELD_NAME = AuthenticationContext.class.getSimpleName();
 
   private static final Logger LOG = LoggerFactory.getLogger(AuthEnforceRewriter.class);
 
-  private static final Type AUTHORIZATION_ENFORCER_TYPE = Type.getType(AuthorizationEnforcer.class);
+  private static final Type AUTHORIZATION_ENFORCER_TYPE = Type.getType(AccessEnforcer.class);
   private static final Type AUTHENTICATION_CONTEXT_TYPE = Type.getType(AuthenticationContext.class);
-  private static final Type ACTION_TYPE = Type.getType(Action.class);
+  private static final Type STANDARD_PERMISSION_TYPE = Type.getType(StandardPermission.class);
   private static final Type NAME_TYPE = Type.getType(Name.class);
   private static final Type AUTH_ENFORCE_UTIL_TYPE = Type.getType(AuthEnforceUtil.class);
   private static final Set<String> SUPPORTED_PARAMETER_ANNOTATIONS =
@@ -287,7 +289,7 @@ public class AuthEnforceRewriter implements ClassRewriter {
           // Store all the information properly for the second pass
           methodAnnotations.put(new Method(methodName, methodDesc),
                                 new AnnotationDetail(entityPartDetails, nodeProcessor.getEnforceOn(),
-                                                     nodeProcessor.getActions(), paramPositions));
+                                                     nodeProcessor.getPermissions(), paramPositions));
         }
 
         /** Helper Methods **/
@@ -353,7 +355,7 @@ public class AuthEnforceRewriter implements ClassRewriter {
    * A {@link ClassVisitor} which is used in second pass of {@link AuthEnforceRewriter} to rewrite methods which has
    * {@link AuthEnforce} annotation on it with the annotation details collected from the first pass. This is only
    * called for classes which has at least one such method. This class does byte code rewrite to generate call to
-   * {@link AuthEnforceUtil#enforce(AuthorizationEnforcer, Object[], Class, AuthenticationContext, Set)}. To
+   * {@link AuthEnforceUtil#enforce(AccessEnforcer, Object[], Class, AuthenticationContext, Set)}. To
    * see an example of generated byte code please see the documentation for {@link AuthEnforceRewriter}
    */
   private final class AuthEnforceAnnotationRewriter extends ClassVisitor {
@@ -362,7 +364,7 @@ public class AuthEnforceRewriter implements ClassRewriter {
     private final Type classType;
     private final Map<Method, AnnotationDetail> methodAnnotations;
     private final String authenticationContextFieldName;
-    private final String authorizationEnforcerFieldName;
+    private final String accessEnforcerFieldName;
 
     AuthEnforceAnnotationRewriter(String className, ClassWriter cw, Map<String, Type> fieldDetails,
                                   Map<Method, AnnotationDetail> methodAnnotations) {
@@ -371,7 +373,7 @@ public class AuthEnforceRewriter implements ClassRewriter {
       this.classType = Type.getObjectType(className.replace(".", "/"));
       this.methodAnnotations = methodAnnotations;
       this.authenticationContextFieldName = generateUniqueFieldName(AUTHENTICATION_CONTEXT_FIELD_NAME);
-      this.authorizationEnforcerFieldName = generateUniqueFieldName(AUTHORIZATION_ENFORCER_FIELD_NAME);
+      this.accessEnforcerFieldName = generateUniqueFieldName(AUTHORIZATION_ENFORCER_FIELD_NAME);
     }
 
     @Override
@@ -388,15 +390,15 @@ public class AuthEnforceRewriter implements ClassRewriter {
         @Override
         protected void onMethodEnter() {
           LOG.trace("AuthEnforce annotation found in class {} on method {}. Authorization enforcement command will " +
-                      "be generated for Entities: {}, enforceOn: {}, actions: {}.", className, methodName,
-                    annotationDetail.getEntities(), annotationDetail.getEnforceOn(), annotationDetail.getActions());
+                      "be generated for Entities: {}, enforceOn: {}, permissions: {}.", className, methodName,
+                    annotationDetail.getEntities(), annotationDetail.getEnforceOn(), annotationDetail.getPermissions());
 
           // do class rewrite to generate the call to
-          // AuthEnforceUtil#enforce(AuthorizationEnforcer, EntityId, AuthenticationContext, Set)
+          // AuthEnforceUtil#enforce(AccessEnforcer, EntityId, AuthenticationContext, Set)
 
-          // this.authorizationEnforcer
+          // this.accessEnforcer
           loadThis();
-          getField(classType, authorizationEnforcerFieldName, AUTHORIZATION_ENFORCER_TYPE);
+          getField(classType, accessEnforcerFieldName, AUTHORIZATION_ENFORCER_TYPE);
 
           // push the parameters of method call on to the stack
 
@@ -427,20 +429,20 @@ public class AuthEnforceRewriter implements ClassRewriter {
           loadThis();
           getField(classType, authenticationContextFieldName, AUTHENTICATION_CONTEXT_TYPE);
 
-          // push all the actions on to the stack
-          List<Type> actionEnumSetParamTypes = new ArrayList<>();
-          for (Action action : annotationDetail.getActions()) {
-            getStatic(ACTION_TYPE, action.name().toUpperCase(), ACTION_TYPE);
-            // store the Type of Enum for all the action pushed on stack as it will later be used to generate a
+          // push all the permissions on to the stack
+          List<Type> permissionEnumSetParamTypes = new ArrayList<>();
+          for (Permission permission : annotationDetail.getPermissions()) {
+            getStatic(STANDARD_PERMISSION_TYPE, permission.name().toUpperCase(), STANDARD_PERMISSION_TYPE);
+            // store the Type of Enum for all the permission pushed on stack as it will later be used to generate a
             // method call instruction
-            actionEnumSetParamTypes.add(Type.getType(Enum.class));
+            permissionEnumSetParamTypes.add(Type.getType(Enum.class));
           }
 
-          // create a EnumSet from the above actions
+          // create a EnumSet from the above permissions
           invokeStatic(Type.getType(EnumSet.class),
                        new Method("of", Type.getMethodDescriptor(Type.getType(EnumSet.class),
-                                                                 actionEnumSetParamTypes.toArray(
-                                                                   new Type[actionEnumSetParamTypes.size()]))));
+                                                                 permissionEnumSetParamTypes.toArray(
+                                                                   new Type[permissionEnumSetParamTypes.size()]))));
 
           // generate a call to AuthEnforceUtil#enforce with the above parameters on the stack
           invokeStatic(AUTH_ENFORCE_UTIL_TYPE,
@@ -486,8 +488,8 @@ public class AuthEnforceRewriter implements ClassRewriter {
     @Override
     public void visitEnd() {
       // If this class had method annotation then we need to generate the authenticationContext and
-      // authorizationEnforcer field and their setters
-      generateFieldAndSetter(authorizationEnforcerFieldName, AUTHORIZATION_ENFORCER_TYPE);
+      // accessEnforcer field and their setters
+      generateFieldAndSetter(accessEnforcerFieldName, AUTHORIZATION_ENFORCER_TYPE);
       generateFieldAndSetter(authenticationContextFieldName, AUTHENTICATION_CONTEXT_TYPE);
       super.visitEnd();
     }
@@ -542,7 +544,7 @@ public class AuthEnforceRewriter implements ClassRewriter {
    */
   private static class AuthEnforceAnnotationNodeProcessor {
 
-    private final Set<Action> actions = new HashSet<>();
+    private final Set<Permission> permissions = new HashSet<>();
     private Type enforceOn;
     private List<String> entities;
 
@@ -558,14 +560,14 @@ public class AuthEnforceRewriter implements ClassRewriter {
           entities = (List<String>) values.get(i + 1);
         } else if ("enforceOn".equals(name)) {
           enforceOn = (Type) values.get(i + 1);
-        } else if ("actions".equals(name)) {
-          // Actions is a ArrayList<String[]> where each String array is of size 2. String[0] is class name Action
-          // class and String[1] is the action which was specified in the annotation
-          List<String[]> actionWithClassName = (List<String[]>) values.get(i + 1);
-          for (String[] action : actionWithClassName) {
-            Preconditions.checkArgument(action.length == 2);
-            Preconditions.checkArgument(Type.getType(action[0]).equals(Type.getType(Action.class)));
-            actions.add(Action.valueOf(action[1]));
+        } else if ("permissions".equals(name)) {
+          // Permissions is a ArrayList<String[]> where each String array is of size 2. String[0] is class name
+          // StandardPermission class and String[1] is the permission which was specified in the annotation
+          List<String[]> permissionWithClassName = (List<String[]>) values.get(i + 1);
+          for (String[] permission : permissionWithClassName) {
+            Preconditions.checkArgument(permission.length == 2);
+            Preconditions.checkArgument(Type.getType(permission[0]).equals(Type.getType(StandardPermission.class)));
+            permissions.add(StandardPermission.valueOf(permission[1]));
           }
         } else {
           throw new RuntimeException(String.format("Found invalid entry %s while parsing AuthEnforce details " +
@@ -582,14 +584,14 @@ public class AuthEnforceRewriter implements ClassRewriter {
       return entities;
     }
 
-    Set<Action> getActions() {
-      return actions;
+    Set<Permission> getPermissions() {
+      return permissions;
     }
 
     @Override
     public String toString() {
       return "AuthEnforceAnnotationNodeProcessor{" +
-        "actions=" + actions +
+        "permissions=" + permissions +
         ", enforceOn=" + enforceOn +
         ", entities=" + entities +
         '}';
@@ -603,14 +605,14 @@ public class AuthEnforceRewriter implements ClassRewriter {
   private static final class AnnotationDetail {
     private final List<EntityPartDetail> entityParts;
     private final Type enforceOn;
-    private final Set<Action> actions;
+    private final Set<Permission> permissions;
     private final Map<String, Integer> parameterAnnotation;
 
-    AnnotationDetail(List<EntityPartDetail> entityParts, Type enforceOn, Set<Action> actions,
+    AnnotationDetail(List<EntityPartDetail> entityParts, Type enforceOn, Set<Permission> permissions,
                      Map<String, Integer> parameterAnnotation) {
       this.entityParts = entityParts;
       this.enforceOn = enforceOn;
-      this.actions = actions;
+      this.permissions = permissions;
       this.parameterAnnotation = parameterAnnotation;
     }
 
@@ -622,8 +624,8 @@ public class AuthEnforceRewriter implements ClassRewriter {
       return enforceOn;
     }
 
-    Set<Action> getActions() {
-      return actions;
+    Set<Permission> getPermissions() {
+      return permissions;
     }
 
     Map<String, Integer> getParameterAnnotation() {

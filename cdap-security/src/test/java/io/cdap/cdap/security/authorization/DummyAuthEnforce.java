@@ -25,7 +25,7 @@ import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ScheduleId;
-import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.StandardPermission;
 
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
@@ -45,7 +45,7 @@ public class DummyAuthEnforce {
    */
   public class ValidAuthEnforceAnnotations {
 
-    @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, actions = Action.ADMIN)
+    @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, permissions = StandardPermission.UPDATE)
     public void testSingleAction(@Name("namespaceId") NamespaceId namespaceId) throws Exception {
       // the above annotation will call enforce after class rewrite which should throw an exception.
       // If the line below is reached it means that enforce was not called as it supposed to be
@@ -53,14 +53,15 @@ public class DummyAuthEnforce {
     }
 
     @VisibleForTesting // NOTE : tests that the presence of other annotations does not affect class rewrite
-    @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, actions = {Action.ADMIN, Action.READ})
+    @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, 
+      permissions = {StandardPermission.UPDATE, StandardPermission.GET})
     public void testMultipleAction(@Name("namespaceId") NamespaceId namespaceId) throws Exception {
       // the above annotation will call enforce after class rewrite which should throw an exception.
       // If the line below is reached it means that enforce was not called as it supposed to be
       throw new EnforceNotCalledException();
     }
 
-    @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, actions = Action.ADMIN)
+    @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, permissions = StandardPermission.UPDATE)
     public void testMethodWithoutException(@Name("namespaceId") NamespaceId namespaceId) {
       // no-op
       // After class rewrite we make a call to AuthorizationEnforcer.enforce which can throw UnauthorizedException.
@@ -75,7 +76,8 @@ public class DummyAuthEnforce {
     }
 
     // test AuthEnforce annotation which has multiple string parts in entities
-    @AuthEnforce(entities = {"namespace", "dataset"}, enforceOn = DatasetId.class, actions = Action.ADMIN)
+    @AuthEnforce(entities = {"namespace", "dataset"}, enforceOn = DatasetId.class,
+      permissions = StandardPermission.UPDATE)
     public void testMultipleParts(@Name("namespace") String namespace,
                                   @Name("dataset") String dataset) throws Exception {
       // the above annotation will call enforce after class rewrite which should throw an exception.
@@ -84,7 +86,8 @@ public class DummyAuthEnforce {
     }
 
     // test AuthEnforce where method parameters are marked with QueryParam and PathParam
-    @AuthEnforce(entities = {"namespace", "dataset"}, enforceOn = DatasetId.class, actions = Action.ADMIN)
+    @AuthEnforce(entities = {"namespace", "dataset"}, enforceOn = DatasetId.class,
+      permissions = StandardPermission.UPDATE)
     public void testQueryPathParamAnnotations(@QueryParam("namespace") String namespace,
                                               @PathParam("dataset") String dataset) throws Exception {
       // the above annotation will call enforce after class rewrite which should throw an exception.
@@ -93,7 +96,7 @@ public class DummyAuthEnforce {
     }
 
     // test the preference of Name annotation when a method parameter is marked with Name and PathParam both
-    @AuthEnforce(entities = "namespace", enforceOn = NamespaceId.class, actions = Action.ADMIN)
+    @AuthEnforce(entities = "namespace", enforceOn = NamespaceId.class, permissions = StandardPermission.UPDATE)
     public void testMultipleAnnotationsPref(@Name("namespace") @PathParam("namespaceId") NamespaceId namespaceId)
             throws Exception {
       // the above annotation will call enforce after class rewrite which should throw an exception.
@@ -102,7 +105,7 @@ public class DummyAuthEnforce {
     }
 
     // test the preference of Name annotation when two different parameters are marked with same name but one with Name
-    @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, actions = Action.ADMIN)
+    @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, permissions = StandardPermission.UPDATE)
     public void testNameAnnotationPref(@Name("namespaceId") NamespaceId namespaceId,
                                        @PathParam("namespaceId") String ns)
             throws Exception {
@@ -118,7 +121,7 @@ public class DummyAuthEnforce {
    */
   public class AnotherValidAuthEnforceAnnotations {
 
-    @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, actions = Action.ADMIN)
+    @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, permissions = StandardPermission.UPDATE)
     public void testSomeOtherAction(@Name("namespaceId") NamespaceId namespaceId) throws Exception {
       // the above annotation will call enforce after class rewrite which should throw an exception.
       // If the line below is reached it means that enforce was not called as it supposed to be
@@ -134,7 +137,7 @@ public class DummyAuthEnforce {
     public NamespaceId someEntity = new NamespaceId("ns");
 
     // test when method has no parameters and enforcement is one field
-    @AuthEnforce(entities = "someEntity", enforceOn = NamespaceId.class, actions = Action.ADMIN)
+    @AuthEnforce(entities = "someEntity", enforceOn = NamespaceId.class, permissions = StandardPermission.UPDATE)
     public void testNoParameters() throws Exception {
       // the above annotation will call enforce after class rewrite which should throw an exception.
       // If the line below is reached it means that enforce was not called as it supposed to be
@@ -142,7 +145,7 @@ public class DummyAuthEnforce {
     }
 
     // test that having a para name same as field name
-    @AuthEnforce(entities = "someEntity", enforceOn = NamespaceId.class, actions = Action.ADMIN)
+    @AuthEnforce(entities = "someEntity", enforceOn = NamespaceId.class, permissions = StandardPermission.UPDATE)
     public void testParaNameSameAsField(NamespaceId someEntity) throws Exception {
       // the above annotation will call enforce after class rewrite which should throw an exception.
       // If the line below is reached it means that enforce was not called as it supposed to be
@@ -151,7 +154,7 @@ public class DummyAuthEnforce {
 
     // tests that when a method parameter has Named annotation same as class field name and when specified in
     // AuthEnforce entities method parameter gets preference
-    @AuthEnforce(entities = "someEntity", enforceOn = InstanceId.class, actions = Action.ADMIN)
+    @AuthEnforce(entities = "someEntity", enforceOn = InstanceId.class, permissions = StandardPermission.UPDATE)
     public void testParaPreference(@Name("someEntity") InstanceId instanceId) throws Exception {
       // the above annotation will call enforce after class rewrite which should throw an exception.
       // If the line below is reached it means that enforce was not called as it supposed to be
@@ -160,7 +163,7 @@ public class DummyAuthEnforce {
 
     // tests that when parameter has same Name annotation as the one specified in AuthEnforce annotation saying
     // this.name give preference to class field than the default method parameters
-    @AuthEnforce(entities = "this.someEntity", enforceOn = NamespaceId.class, actions = Action.ADMIN)
+    @AuthEnforce(entities = "this.someEntity", enforceOn = NamespaceId.class, permissions = StandardPermission.UPDATE)
     public void testThisClassPreference(@Name("someEntity") NamespaceId namespaceId) throws Exception {
       // the above annotation will call enforce after class rewrite which should throw an exception.
       // If the line below is reached it means that enforce was not called as it supposed to be
@@ -173,7 +176,8 @@ public class DummyAuthEnforce {
    */
   public class AbsentEntityName {
 
-    @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, actions = {Action.ADMIN, Action.READ})
+    @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class,
+      permissions = {StandardPermission.UPDATE, StandardPermission.GET})
     public void testEntityNameAbsence(NamespaceId namespaceId) throws Exception {
       // no-op
     }
@@ -184,7 +188,8 @@ public class DummyAuthEnforce {
    */
   public class BlankEntityName {
 
-    @AuthEnforce(entities = "", enforceOn = NamespaceId.class, actions = {Action.ADMIN, Action.READ})
+    @AuthEnforce(entities = "", enforceOn = NamespaceId.class,
+      permissions = {StandardPermission.UPDATE, StandardPermission.GET})
     public void testBlankEntityName(@Name("") NamespaceId namespaceId) throws Exception {
       // no-op
     }
@@ -195,7 +200,8 @@ public class DummyAuthEnforce {
    */
   public class InvalidParameterAnnotationType {
 
-    @AuthEnforce(entities = "wrongType", enforceOn = NamespaceId.class, actions = {Action.ADMIN, Action.READ})
+    @AuthEnforce(entities = "wrongType", enforceOn = NamespaceId.class,
+      permissions = {StandardPermission.UPDATE, StandardPermission.GET})
     public void testEntityNameAbsence(@Named("wrongType") NamespaceId namespaceId) throws Exception {
       // no-op
     }
@@ -206,7 +212,8 @@ public class DummyAuthEnforce {
    */
   public class DuplicateAnnotationName {
 
-    @AuthEnforce(entities = "wrongType", enforceOn = DatasetId.class, actions = {Action.ADMIN, Action.READ})
+    @AuthEnforce(entities = "wrongType", enforceOn = DatasetId.class,
+      permissions = {StandardPermission.UPDATE, StandardPermission.GET})
     public void testDuplicationAnnotationWithSameName(@Name("name") String s1, @Name("name") String s2)
             throws Exception {
       // no-op
@@ -218,7 +225,8 @@ public class DummyAuthEnforce {
    */
   public class EntityWithString {
 
-    @AuthEnforce(entities = {"entity", "string"}, enforceOn = DatasetId.class, actions = {Action.ADMIN, Action.READ})
+    @AuthEnforce(entities = {"entity", "string"}, enforceOn = DatasetId.class,
+      permissions = {StandardPermission.UPDATE, StandardPermission.GET})
     public void testEntityAndString(@Name("entity") NamespaceId p1, @Name("string") String p2)
             throws Exception {
       // no-op
@@ -230,7 +238,8 @@ public class DummyAuthEnforce {
    */
   public class SameQueryAndPathParam {
 
-    @AuthEnforce(entities = "wrongType", enforceOn = DatasetId.class, actions = {Action.ADMIN, Action.READ})
+    @AuthEnforce(entities = "wrongType", enforceOn = DatasetId.class,
+      permissions = {StandardPermission.UPDATE, StandardPermission.GET})
     public void testDuplicationAnnotationWithSameName(@QueryParam("name") String s1, @PathParam("name") String s2)
             throws Exception {
       // no-op
@@ -242,7 +251,7 @@ public class DummyAuthEnforce {
    */
   public class LessMultipleParts {
 
-    @AuthEnforce(entities = {"namespace"}, enforceOn = DatasetId.class, actions = Action.ADMIN)
+    @AuthEnforce(entities = {"namespace"}, enforceOn = DatasetId.class, permissions = StandardPermission.UPDATE)
     public void testLessMultipleParts(@Name("namespace") String namespace) throws Exception {
       // no-op
     }
@@ -253,7 +262,8 @@ public class DummyAuthEnforce {
    */
   public class MoreMultipleParts {
 
-    @AuthEnforce(entities = {"namespace", "artifact", "version"}, enforceOn = DatasetId.class, actions = Action.READ)
+    @AuthEnforce(entities = {"namespace", "artifact", "version"}, enforceOn = DatasetId.class,
+      permissions = StandardPermission.GET)
     public void testMoreMultipleParts(@Name("namespace") String namespace, @Name("artifact") String artifact,
                                       @Name("version") String version) throws Exception {
       // no-op
@@ -265,7 +275,7 @@ public class DummyAuthEnforce {
    */
   public class MultipleEntityIds {
 
-    @AuthEnforce(entities = {"namespace", "dataset"}, enforceOn = DatasetId.class, actions = Action.READ)
+    @AuthEnforce(entities = {"namespace", "dataset"}, enforceOn = DatasetId.class, permissions = StandardPermission.GET)
     public void testMultipleEntityIds(@Name("namespace") NamespaceId namespace, @Name("artifact") DatasetId dataset)
             throws Exception {
       // no-op
@@ -277,7 +287,7 @@ public class DummyAuthEnforce {
    */
   public class InvalidAuthEnforceEntityType {
 
-    @AuthEnforce(entities = {"schedule"}, enforceOn = ScheduleId.class, actions = Action.READ)
+    @AuthEnforce(entities = {"schedule"}, enforceOn = ScheduleId.class, permissions = StandardPermission.GET)
     public void testInvalidEnforceOn(@Name("schedule") ScheduleId scheduleId) throws Exception {
       // no-op
     }
@@ -289,7 +299,8 @@ public class DummyAuthEnforce {
    */
   public class InvalidEntityName {
 
-    @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, actions = {Action.ADMIN, Action.READ})
+    @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class,
+      permissions = {StandardPermission.UPDATE, StandardPermission.GET})
     public void testWrongEntityName(@Name("wrongId") NamespaceId namespaceId) throws Exception {
       // no-op
     }
@@ -300,7 +311,8 @@ public class DummyAuthEnforce {
    */
   public class DuplicateEntityName {
 
-    @AuthEnforce(entities = "duplicateName", enforceOn = NamespaceId.class, actions = {Action.ADMIN, Action.READ})
+    @AuthEnforce(entities = "duplicateName", enforceOn = NamespaceId.class,
+      permissions = {StandardPermission.UPDATE, StandardPermission.GET})
     public void testDuplicateEntityName(@Name("duplicateName") NamespaceId namespaceId,
                                        @Name("duplicateName") NamespaceId anotherNamespaceId) throws Exception {
       // no-op
@@ -322,7 +334,7 @@ public class DummyAuthEnforce {
    */
   public interface InterfaceWithAuthAnnotation {
 
-    @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, actions = Action.ADMIN)
+    @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, permissions = StandardPermission.UPDATE)
     void interfaceMethodWithAuthEnforce(@Name("namespaceId") NamespaceId namespaceId) throws Exception;
   }
 

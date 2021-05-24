@@ -76,7 +76,7 @@ import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
 import io.cdap.cdap.security.impersonation.InMemoryOwnerStore;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.OwnerStore;
-import io.cdap.cdap.security.spi.authorization.NoOpAuthorizer;
+import io.cdap.cdap.security.spi.authorization.NoOpAccessController;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.tephra.DefaultTransactionExecutor;
 import org.apache.tephra.TransactionAware;
@@ -641,7 +641,7 @@ public abstract class AbstractDatasetFrameworkTest {
     ProgramRunId runId = new ProgramId("ns", "app", ProgramType.WORKER, "worker").run(RunIds.generate().getId());
     LineageWriterDatasetFramework lineageFramework =
       new LineageWriterDatasetFramework(framework, new NoOpLineageWriter(), new NoOpUsageRegistry(),
-                                        new AuthenticationTestContext(), new NoOpAuthorizer());
+                                        new AuthenticationTestContext(), new NoOpAccessController());
     lineageFramework.setContext(new TestProgramContext(runId));
     lineageFramework.setAuditPublisher(inMemoryAuditPublisher);
     lineageFramework.getDataset(MY_TABLE, ImmutableMap.<String, String>of(), getClass().getClassLoader());

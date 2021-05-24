@@ -23,6 +23,7 @@ import io.cdap.cdap.api.security.store.SecureStoreData;
 import io.cdap.cdap.api.security.store.SecureStoreMetadata;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.SecureKeyId;
 import io.cdap.cdap.proto.security.Principal;
@@ -67,10 +68,10 @@ public class DefaultSecureStoreService extends AbstractIdleService implements Se
    */
   @Override
   public final List<SecureStoreMetadata> list(final String namespace) throws Exception {
+    accessEnforcer.enforceOnParent(EntityType.SECUREKEY, new NamespaceId(namespace),
+                                   authenticationContext.getPrincipal(), StandardPermission.LIST);
     Principal principal = authenticationContext.getPrincipal();
-    List<SecureStoreMetadata> metadatas = secureStoreService.list(namespace);
-    return AuthorizationUtil.isVisible(metadatas, accessEnforcer, principal,
-                                       input -> new SecureKeyId(namespace, input.getName()), null);
+    return secureStoreService.list(namespace);
   }
 
   /**
