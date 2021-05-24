@@ -101,6 +101,7 @@ public class LevelDBMessageTableTest extends MessageTableTest {
     File oldDir = new File(baseDir,
                            topicDir.getName().substring(LevelDBTableFactory.MESSAGE_TABLE_VERSION.length() + 1));
     Files.move(partitionDir.toPath(), oldDir.toPath());
+    Files.delete(topicDir.toPath());
 
     // now run the upgrade and make sure the table is readable.
     tableFactory = new LevelDBTableFactory(cConf);
