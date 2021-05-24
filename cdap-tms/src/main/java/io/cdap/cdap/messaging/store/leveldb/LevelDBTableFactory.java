@@ -138,12 +138,10 @@ public final class LevelDBTableFactory implements TableFactory {
       }
       // only message tables should be moved
       int firstDotIdx = dirName.indexOf('.');
-      int secondDotIdx = dirName.indexOf('.', firstDotIdx + 1);
-      if (firstDotIdx < 0 || secondDotIdx < 0) {
+      if (firstDotIdx < 0) {
         continue;
       }
-      String tableName = dirName.substring(firstDotIdx + 1, secondDotIdx);
-      if (!tableName.equals(messageTableName)) {
+      if (!dirName.startsWith(messageTableName, firstDotIdx + 1)) {
         continue;
       }
 
@@ -153,6 +151,8 @@ public final class LevelDBTableFactory implements TableFactory {
       if (v2TopicPartitionDir.exists()) {
         DirUtils.deleteDirectoryContents(v2TopicPartitionDir);
       }
+
+      LOG.info("Upgrading {} to {}", dirName, v2TopicPartitionDir.getName());
       Files.move(tableDir.toPath(), v2TopicPartitionDir.toPath());
     }
   }
