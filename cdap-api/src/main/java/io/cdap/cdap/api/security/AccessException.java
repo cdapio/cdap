@@ -19,7 +19,7 @@ package io.cdap.cdap.api.security;
 /**
  * General exception thrown from security calls in case of any problems.
  */
-public class AccessException extends Exception {
+public class AccessException extends RuntimeException {
   public AccessException() {
   }
 
