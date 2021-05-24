@@ -14,7 +14,6 @@
  * the License.
 */
 
-require('cypress-plugin-retries');
 const compareSnapshotCommand = require('cypress-visual-regression/dist/command');
 compareSnapshotCommand();
 

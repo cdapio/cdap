@@ -27,6 +27,7 @@ const SearchBox = ({ search, onChange }) => {
       placeholder={T.translate('features.DataPrep.DataPrepBrowser.GCSBrowser.Search.placeholder')}
       value={search}
       onChange={onChange}
+      data-cy="gcs-search-box"
     />
   );
 };

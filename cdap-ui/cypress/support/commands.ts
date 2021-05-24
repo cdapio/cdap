@@ -74,14 +74,16 @@ Cypress.Commands.add(
 );
 
 Cypress.Commands.add('upload_draft_via_api', (headers, pipelineJson) => {
-  return cy.request({
-    method: 'PUT',
-    url: `http://${Cypress.env('host')}:11015/v3/configuration/user`,
-    headers,
-    body: pipelineJson
-  }).then(resp => {
-    expect(resp.status).to.be.eq(200);
-  });
+  return cy
+    .request({
+      method: 'PUT',
+      url: `http://${Cypress.env('host')}:11015/v3/configuration/user`,
+      headers,
+      body: pipelineJson,
+    })
+    .then((resp) => {
+      expect(resp.status).to.be.eq(200);
+    });
 });
 
 Cypress.Commands.add('cleanup_pipelines', (headers, pipelineName) => {
@@ -561,14 +563,26 @@ Cypress.Commands.add('get_pipeline_stage_json', (stageName: string) => {
   });
 });
 
-Cypress.Commands.add('open_node_property', (element: INodeIdentifier) => {
-  const { nodeName, nodeType, nodeId } = element;
-  const elementId = `[data-cy="plugin-node-${nodeName}-${nodeType}-${nodeId}"]`;
-  cy.get(`${elementId} .node .node-metadata .node-version`).invoke('hide');
-  cy.get(`${elementId} .node .node-configure-btn`)
-    .invoke('show')
-    .click();
-});
+Cypress.Commands.add(
+  'open_node_property',
+  (
+    element: INodeIdentifier,
+    options?: Partial<
+      Cypress.Loggable &
+        Cypress.Timeoutable &
+        Cypress.Withinable &
+        Cypress.Shadow &
+        Cypress.Forceable
+    >
+  ) => {
+    const { nodeName, nodeType, nodeId } = element;
+    const elementId = `[data-cy="plugin-node-${nodeName}-${nodeType}-${nodeId}"]`;
+    cy.get(`${elementId} .node .node-metadata .node-version`).invoke('hide');
+    cy.get(`${elementId} .node .node-configure-btn`)
+      .invoke('show')
+      .click(options);
+  }
+);
 
 Cypress.Commands.add('close_node_property', () => {
   cy.get('[data-testid="close-config-popover"]').click();
@@ -722,15 +736,19 @@ Cypress.Commands.add('cleanup_secure_key', (headers, secureKeyName) => {
 });
 
 Cypress.Commands.add('delete_artifact_via_api', (headers, artifactName, version) => {
-  return cy.request({
-    method: 'DELETE',
-    url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/artifacts/${artifactName}/versions/${version}`,
-    headers,
-    failOnStatusCode: false
-  }).then(resp => {
-    // 404 if the artifact is already deleted.
-    expect(resp.status).to.be.oneOf([200, 404]);
-  });
+  return cy
+    .request({
+      method: 'DELETE',
+      url: `http://${Cypress.env(
+        'host'
+      )}:11015/v3/namespaces/default/artifacts/${artifactName}/versions/${version}`,
+      headers,
+      failOnStatusCode: false,
+    })
+    .then((resp) => {
+      // 404 if the artifact is already deleted.
+      expect(resp.status).to.be.oneOf([200, 404]);
+    });
 });
 
 Cypress.Commands.add('fit_pipeline_to_screen', () => {

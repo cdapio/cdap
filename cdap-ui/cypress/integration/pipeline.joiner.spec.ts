@@ -283,10 +283,10 @@ describe('Creating pipeline with joiner in pipeline studio', () => {
   it('Should show appropriate message when preview has not been run yet', () => {
     cy.window().then((window) => {
       skipPreviewTests = window.CDAP_CONFIG.hydrator.previewEnabled !== true;
+      if (skipPreviewTests) {
+        skip();
+      }
     });
-    if (skipPreviewTests) {
-      skip();
-    }
     cy.get(dataCy('pipeline-preview-btn')).click();
     cy.get(dataCy(`${joinerNode.nodeName}-preview-data-btn`)).click();
     cy.contains(runPreviewMsg).should('be.visible');
@@ -296,10 +296,10 @@ describe('Creating pipeline with joiner in pipeline studio', () => {
   it('Should show appropriate message when preview has been stopped before data is generated', () => {
     cy.window().then((window) => {
       skipPreviewTests = window.CDAP_CONFIG.hydrator.previewEnabled !== true;
+      if (skipPreviewTests) {
+        skip();
+      }
     });
-    if (skipPreviewTests) {
-      skip();
-    }
     // Start and then immediately stop preview
     cy.get(dataCy('preview-top-run-btn')).click();
     cy.get(dataCy('stop-preview-btn')).click();
@@ -314,14 +314,15 @@ describe('Creating pipeline with joiner in pipeline studio', () => {
   it('Should show preview data with record view by default for sink', () => {
     cy.window().then((window) => {
       skipPreviewTests = window.CDAP_CONFIG.hydrator.previewEnabled !== true;
+      if (skipPreviewTests) {
+        skip();
+      }
     });
-    if (skipPreviewTests) {
-      skip();
-    }
     // Start and run preview
     cy.get(dataCy('preview-top-run-btn')).click();
     cy.get(dataCy('stop-preview-btn')).should('be.visible');
-    cy.get(dataCy('preview-top-run-btn'), { timeout: 70000 }).should('exist');
+    cy.wait(2000);
+    cy.get(dataCy('preview-top-run-btn'), { timeout: 120000 }).should('exist');
     cy.get(dataCy(`plugin-node-BigQueryTable-batchsink-3`)).within(() => {
       cy.get(dataCy(`${sinkNode.nodeName}-preview-data-btn`)).click();
     });
@@ -331,9 +332,9 @@ describe('Creating pipeline with joiner in pipeline studio', () => {
 
     cy.get(dataCy('record-dropdown')).click();
     cy.contains('Record 3').click();
-    cy.get(dataCy('value-string_81_1')).should('be.visible');
+    cy.get(dataCy('fieldname-field')).should('be.visible');
     cy.get(dataCy('previous-record-btn')).click();
-    cy.get(dataCy('value-string_35_1')).should('be.visible');
+    cy.get(dataCy('fieldname-field')).should('be.visible');
     cy.get(dataCy('toggle-Record')).click();
 
     cy.get(dataCy('toggle-Table'), { timeout: 10000 }).should('be.visible');
@@ -344,10 +345,10 @@ describe('Creating pipeline with joiner in pipeline studio', () => {
   it('Should show preview data for all inputs for joiner', () => {
     cy.window().then((window) => {
       skipPreviewTests = window.CDAP_CONFIG.hydrator.previewEnabled !== true;
+      if (skipPreviewTests) {
+        skip();
+      }
     });
-    if (skipPreviewTests) {
-      skip();
-    }
 
     cy.get(dataCy(`plugin-node-Joiner-batchjoiner-2`)).within(() => {
       cy.get(dataCy(`${joinerNode.nodeName}-preview-data-btn`)).click();

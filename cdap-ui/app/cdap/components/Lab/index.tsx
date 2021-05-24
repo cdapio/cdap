@@ -77,6 +77,10 @@ class Lab extends React.Component<ILabProps, ILabState> {
 
   public updatePreference = (event: React.ChangeEvent<HTMLInputElement>) => {
     const experiments = this.state.experiments.map((experiment: IExperiment) => {
+      if (!experiment) {
+        return;
+      }
+
       if (experiment.experimentId === event.target.name) {
         experiment.enabled = !experiment.enabled;
         window.localStorage.setItem(event.target.name, experiment.enabled.toString());
@@ -113,52 +117,58 @@ class Lab extends React.Component<ILabProps, ILabState> {
             </TableHead>
             <TableBody>
               {this.state &&
-                this.state.experiments.map((experiment: IExperiment) => (
-                  <TableRow key={experiment.experimentId}>
-                    <TableCell>
-                      {experiment.screenshot ? (
-                        <img className={classes.screenshot} src={experiment.screenshot} />
-                      ) : (
-                        <NewReleasesRoundedIcon className={classes.defaultExperimentIcon} />
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="h5">{experiment.name}</Typography>
-                      <br />
-                      <Typography variant="body1">{experiment.description}</Typography>
-                      <br />
-                      <Typography variant="caption">ID: {experiment.experimentId}</Typography>
-                      <br />
-                      <If condition={experiment.showValue}>
-                        <TextField
-                          data-cy={`${experiment.experimentId}-field`}
-                          variant="outlined"
-                          margin="dense"
-                          label={experiment.valueLabel || 'Experiment value'}
-                          type={experiment.valueType}
-                          onChange={this.updateExperimentValue}
-                          name={`${experiment.experimentId}-value`}
-                          defaultValue={getExperimentValue(experiment.experimentId)}
-                        ></TextField>
-                      </If>
-                    </TableCell>
-                    <TableCell className={classes.switchCell}>
-                      <FormControlLabel
-                        label={experiment.enabled ? 'Enabled' : 'Disabled'}
-                        control={
-                          <Switch
-                            data-cy={`${experiment.experimentId}-switch`}
-                            name={experiment.experimentId}
-                            color="primary"
-                            onChange={this.updatePreference}
-                            checked={experiment.enabled}
-                            value={experiment.enabled}
-                          />
-                        }
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
+                this.state.experiments.map((experiment: IExperiment) => {
+                  if (!experiment) {
+                    return null;
+                  }
+
+                  return (
+                    <TableRow key={experiment.experimentId}>
+                      <TableCell>
+                        {experiment.screenshot ? (
+                          <img className={classes.screenshot} src={experiment.screenshot} />
+                        ) : (
+                          <NewReleasesRoundedIcon className={classes.defaultExperimentIcon} />
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="h5">{experiment.name}</Typography>
+                        <br />
+                        <Typography variant="body1">{experiment.description}</Typography>
+                        <br />
+                        <Typography variant="caption">ID: {experiment.experimentId}</Typography>
+                        <br />
+                        <If condition={experiment.showValue}>
+                          <TextField
+                            data-cy={`${experiment.experimentId}-field`}
+                            variant="outlined"
+                            margin="dense"
+                            label={experiment.valueLabel || 'Experiment value'}
+                            type={experiment.valueType}
+                            onChange={this.updateExperimentValue}
+                            name={`${experiment.experimentId}-value`}
+                            defaultValue={getExperimentValue(experiment.experimentId)}
+                          ></TextField>
+                        </If>
+                      </TableCell>
+                      <TableCell className={classes.switchCell}>
+                        <FormControlLabel
+                          label={experiment.enabled ? 'Enabled' : 'Disabled'}
+                          control={
+                            <Switch
+                              data-cy={`${experiment.experimentId}-switch`}
+                              name={experiment.experimentId}
+                              color="primary"
+                              onChange={this.updatePreference}
+                              checked={experiment.enabled}
+                              value={experiment.enabled}
+                            />
+                          }
+                        />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
             </TableBody>
           </Table>
         </Paper>

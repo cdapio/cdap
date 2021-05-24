@@ -67,10 +67,10 @@ describe('Creating a pipeline with missing artifacts', () => {
     cy.get(`[title="File"] ~ ${dataCy('node-properties-btn')}`).click({
       force: true
     });
-    cy.get(`#File ${dataCy('node-badge')}`).should('not.be.visible');
+    cy.get(`#File ${dataCy('node-badge')}`).should('does.not.exist');
     cy.get(dataCy('plugin-properties-validate-btn')).should('be.visible');
     cy.get('[data-testid=close-config-popover]').click();
-    cy.get(dataCy('plugin-properties-validate-btn')).should('not.be.visible');
+    cy.get(dataCy('plugin-properties-validate-btn')).should('does.not.exist');
     cy.get(`[title="PDFExtractor"] ~ ${dataCy('node-properties-btn')}`)
         .should('be.disabled');
     cy.get(`#PDFExtractor ${dataCy('node-badge')}`).should('be.visible');
@@ -78,9 +78,9 @@ describe('Creating a pipeline with missing artifacts', () => {
     cy.get(`[title="PDFExtractor"] ~ ${dataCy('node-properties-btn')}`).click({
       force: true
     });
-    cy.get(dataCy('plugin-properties-validate-btn')).should('not.be.visible');
+    cy.get(dataCy('plugin-properties-validate-btn')).should('does.not.exist');
     cy.get(`#PDFExtractor ${dataCy('node-badge')}`).click();
-    cy.get(dataCy('plugin-properties-validate-btn')).should('not.be.visible');
+    cy.get(dataCy('plugin-properties-validate-btn')).should('does.not.exist');
     cy.get(dataCy('pipeline-metadata')).click({force: true});
     cy.get('#pipeline-name-input').should('be.visible');
     cy.get('#pipeline-name-input')
@@ -103,14 +103,14 @@ describe('Creating a pipeline with missing artifacts', () => {
     cy.get(dataCy('pipeline-draft-save-btn')).click();
     cy.reload();
     cy.get('[title="PDFExtractor"]').should('exist');
-    cy.get(`#PDFExtractor ${dataCy('node-badge')}`).should('not.be.visible');
+    cy.get(`#PDFExtractor ${dataCy('node-badge')}`).should('does.not.exist');
     cy.get(`[title="PDFExtractor"] ~ ${dataCy('node-properties-btn')}`)
         .should('not.be.disabled');
     cy.get(`[title="PDFExtractor"] ~ ${dataCy('node-properties-btn')}`).click({
       force: true
     });
     cy.get(dataCy('plugin-properties-validate-btn')).should('be.visible');
-    cy.get('[data-testid=close-config-popover]').click();
+    cy.close_node_property();
     cy.get(dataCy('deploy-pipeline-btn')).click();
     cy.get(dataCy('Deployed')).should('exist');
   });

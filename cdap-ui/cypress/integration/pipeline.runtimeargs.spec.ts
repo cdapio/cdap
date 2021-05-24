@@ -65,10 +65,10 @@ describe('Creating pipeline with macros ', () => {
     cy.visit('/pipelines/ns/default/studio');
     cy.window().then((window) => {
       skipPreviewTests = window.CDAP_CONFIG.hydrator.previewEnabled !== true;
+      if (skipPreviewTests) {
+        skip();
+      }
     });
-    if (skipPreviewTests) {
-      skip();
-    }
     cy.upload_pipeline(
       'pipeline_with_macros.json',
       '#pipeline-import-config-link > input[type="file"]'
@@ -291,6 +291,7 @@ describe('Deploying pipeline with temporary runtime arguments', () => {
   });
 
   it('should fail running with invalid runtime arguments', () => {
+    cy.get('.arrow-btn-container').click();
     cy.get(dataCy(RUNTIME_ARGS_MODELESS_LOADING_SELECTOR)).should('not.exist');
     cy.get(dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)).should('exist');
     cy.add_runtime_args_row_with_value(2, 'system.profile.name', 'unknown');
@@ -353,7 +354,7 @@ describe('Deploying pipeline with saved runtime arguments', () => {
     cy.update_runtime_args_row(0, 'source_path', SOURCE_PATH_VAL, true);
     cy.update_runtime_args_row(1, 'sink_path', SINK_PATH_VAL, true);
     cy.get(dataCy('save-runtime-args-btn')).click();
-    cy.get(dataCy('save-runtime-args-btn')).should('not.be.visible');
+    cy.get(dataCy('save-runtime-args-btn')).should('does.not.exist');
     cy.get(dataCy('pipeline-run-btn')).should('be.visible');
     cy.get(dataCy('pipeline-run-btn')).click({ force: true });
     cy.get(dataCy('Succeeded'), { timeout: PIPELINE_RUN_TIMEOUT }).should('exist');
@@ -384,7 +385,7 @@ describe('Deploying pipeline with saved runtime arguments', () => {
     cy.assert_runtime_args_row(4, 'runtime_args_key4', 'runtime_args_value4');
     // saving previously entered arguments and openeing the modal again to verify
     cy.get(dataCy('save-runtime-args-btn')).click();
-    cy.get(dataCy('save-runtime-args-btn')).should('not.be.visible');
+    cy.get(dataCy('save-runtime-args-btn')).should('does.not.exist');
     cy.get('.arrow-btn-container').click();
     cy.assert_runtime_args_row(2, 'runtime_args_key2', 'runtime_args_value2');
     cy.assert_runtime_args_row(3, 'runtime_args_key3', 'runtime_args_value3');
