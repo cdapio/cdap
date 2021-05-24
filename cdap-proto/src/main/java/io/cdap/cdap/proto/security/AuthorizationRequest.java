@@ -18,8 +18,6 @@ package io.cdap.cdap.proto.security;
 
 import io.cdap.cdap.api.annotation.Beta;
 
-import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -31,16 +29,19 @@ public class AuthorizationRequest {
 
   private final Authorizable authorizable;
   private final Principal principal;
+  //This will only be set by GSon when deserializing a legacy request with actions
   private final Set<Action> actions;
+  private final Set<? extends Permission> permissions;
 
   protected AuthorizationRequest(Authorizable authorizable, @Nullable Principal principal,
-                                 @Nullable Set<Action> actions) {
+                                 @Nullable Set<? extends Permission> permissions) {
     if (authorizable == null) {
       throw new IllegalArgumentException("Authorizable is required");
     }
     this.authorizable = authorizable;
     this.principal = principal;
-    this.actions = (actions != null) ? Collections.unmodifiableSet(new LinkedHashSet<>(actions)) : null;
+    this.actions = null;
+    this.permissions = permissions;
   }
 
   public Authorizable getAuthorizable() {
@@ -52,8 +53,13 @@ public class AuthorizationRequest {
     return principal;
   }
 
-  @Nullable
+  @Nullable @Deprecated
   public Set<Action> getActions() {
     return actions;
+  }
+
+  @Nullable
+  public Set<? extends Permission> getPermissions() {
+    return permissions;
   }
 }

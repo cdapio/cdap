@@ -24,12 +24,12 @@ import io.cdap.cdap.cli.CommandCategory;
 import io.cdap.cdap.cli.command.security.AddRoleToPrincipalCommand;
 import io.cdap.cdap.cli.command.security.CreateRoleCommand;
 import io.cdap.cdap.cli.command.security.DropRoleCommand;
-import io.cdap.cdap.cli.command.security.GrantActionCommand;
+import io.cdap.cdap.cli.command.security.GrantPermissionCommand;
 import io.cdap.cdap.cli.command.security.ListPrivilegesCommand;
 import io.cdap.cdap.cli.command.security.ListRolesCommand;
 import io.cdap.cdap.cli.command.security.RemoveRoleFromPrincipalCommand;
-import io.cdap.cdap.cli.command.security.RevokeActionForPrincipalCommand;
 import io.cdap.cdap.cli.command.security.RevokeEntityCommand;
+import io.cdap.cdap.cli.command.security.RevokePermissionForPrincipalCommand;
 import io.cdap.common.cli.Command;
 import io.cdap.common.cli.CommandSet;
 
@@ -42,8 +42,8 @@ public class SecurityCommands extends CommandSet<Command> implements Categorized
   public SecurityCommands(Injector injector) {
     super(
       ImmutableList.<Command>builder()
-        .add(injector.getInstance(GrantActionCommand.class))
-        .add(injector.getInstance(RevokeActionForPrincipalCommand.class))
+        .add(injector.getInstance(GrantPermissionCommand.class))
+        .add(injector.getInstance(RevokePermissionForPrincipalCommand.class))
         .add(injector.getInstance(RevokeEntityCommand.class))
         .add(injector.getInstance(ListPrivilegesCommand.class))
         //role management commands

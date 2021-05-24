@@ -27,8 +27,8 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.GrantedPermission;
 import io.cdap.cdap.proto.security.Permission;
+import io.cdap.cdap.proto.security.PermissionAdapterFactory;
 import io.cdap.cdap.proto.security.Principal;
-import io.cdap.cdap.proto.security.Privilege;
 import io.cdap.cdap.security.spi.authorization.PermissionManager;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpResponse;
@@ -48,8 +48,9 @@ public class RemotePermissionManager extends RemoteOpsClient implements Permissi
   private static final Logger LOG = LoggerFactory.getLogger(RemotePermissionManager.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
+    .registerTypeAdapterFactory(new PermissionAdapterFactory())
     .create();
-  private static final Type SET_PRIVILEGES_TYPE = new TypeToken<Set<Privilege>>() { }.getType();
+  private static final Type SET_GRANTED_PERMISSIONS_TYPE = new TypeToken<Set<GrantedPermission>>() { }.getType();
 
   @Inject
   RemotePermissionManager(DiscoveryServiceClient discoveryClient) {
@@ -85,6 +86,6 @@ public class RemotePermissionManager extends RemoteOpsClient implements Permissi
     HttpResponse httpResponse = executeRequest("listGrants", principal);
     String responseBody = httpResponse.getResponseBodyAsString();
     LOG.debug("List privileges response for principal {}: {}", principal, responseBody);
-    return GSON.fromJson(responseBody, SET_PRIVILEGES_TYPE);
+    return GSON.fromJson(responseBody, SET_GRANTED_PERMISSIONS_TYPE);
   }
 }

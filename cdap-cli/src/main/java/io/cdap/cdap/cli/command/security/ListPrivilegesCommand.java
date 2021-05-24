@@ -21,7 +21,6 @@ import com.google.inject.Inject;
 import io.cdap.cdap.cli.ArgumentName;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.util.AbstractAuthCommand;
-import io.cdap.cdap.cli.util.RowMaker;
 import io.cdap.cdap.cli.util.table.Table;
 import io.cdap.cdap.client.AuthorizationClient;
 import io.cdap.cdap.proto.security.Principal;
@@ -29,7 +28,6 @@ import io.cdap.cdap.proto.security.Privilege;
 import io.cdap.common.cli.Arguments;
 
 import java.io.PrintStream;
-import java.util.List;
 
 /**
  * Lists {@link Privilege} given to a {@link Principal}
@@ -50,13 +48,10 @@ public class ListPrivilegesCommand extends AbstractAuthCommand {
     String principalName = arguments.get(ArgumentName.PRINCIPAL_NAME.toString());
     Table table = Table.builder()
       .setHeader("Authorizable", "Action")
-      .setRows(Lists.newArrayList(client.listPrivileges(new Principal(principalName, Principal.PrincipalType.valueOf
-        (principalType.toUpperCase())))), new RowMaker<Privilege>() {
-        @Override
-        public List<?> makeRow(Privilege privilege) {
-          return Lists.newArrayList(privilege.getAuthorizable().toString(), privilege.getAction().name());
-        }
-      }).build();
+      .setRows(Lists.newArrayList(client.listGrants(new Principal(principalName, Principal.PrincipalType.valueOf
+        (principalType.toUpperCase())))), grantedPermission
+        -> Lists.newArrayList(grantedPermission.getAuthorizable().toString(),
+                              grantedPermission.getPermission().name())).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 

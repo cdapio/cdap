@@ -25,7 +25,9 @@ import io.cdap.cdap.cli.ElementType;
 import io.cdap.cdap.cli.exception.CommandInputError;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramId;
-import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.Permission;
+import io.cdap.cdap.proto.security.PermissionType;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.common.cli.Arguments;
 import io.cdap.common.cli.Command;
@@ -40,15 +42,18 @@ public abstract class AbstractAuthCommand implements Command {
 
   protected final CLIConfig cliConfig;
 
-  protected static final Function<String, Set<Action>> ACTIONS_STRING_TO_SET = new Function<String, Set<Action>>() {
-    @Override
-    public Set<Action> apply(String input) {
-      ImmutableSet.Builder<Action> resultBuilder = ImmutableSet.builder();
-      for (String action : Splitter.on(",").trimResults().split(input)) {
-        resultBuilder.add(Action.valueOf(action.toUpperCase()));
+  protected static final Function<String, Set<Permission>> PERMISSION_STRING_TO_SET = input -> {
+    ImmutableSet.Builder<Permission> resultBuilder = ImmutableSet.builder();
+    for (String action : Splitter.on(",").trimResults().split(input)) {
+      String[] parsed = action.split("[.]", 2);
+      if (parsed.length == 1) {
+        resultBuilder.add(StandardPermission.valueOf(parsed[0].toUpperCase()));
+      } else {
+        resultBuilder.add(PermissionType.valueOf(parsed[0].toUpperCase(), parsed[1].toUpperCase()));
+
       }
-      return resultBuilder.build();
     }
+    return resultBuilder.build();
   };
 
   public AbstractAuthCommand(CLIConfig cliConfig) {

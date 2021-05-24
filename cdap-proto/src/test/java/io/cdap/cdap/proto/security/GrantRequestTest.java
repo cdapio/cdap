@@ -21,7 +21,7 @@ import io.cdap.cdap.proto.id.Ids;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.LinkedHashSet;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -32,9 +32,8 @@ public class GrantRequestTest {
   @Test
   public void testValidation() {
     Principal bob = new Principal("bob", Principal.PrincipalType.USER);
-    Set<Action> actions = new LinkedHashSet<>();
-    actions.add(Action.READ);
-    new GrantRequest(Ids.namespace("foo"), bob, actions);
+    Set<Permission> permissions = Collections.singleton(StandardPermission.GET);
+    new GrantRequest(Ids.namespace("foo"), bob, permissions);
 
     try {
       new GrantRequest(Ids.namespace("foo"), null, null);
@@ -51,14 +50,14 @@ public class GrantRequestTest {
     }
 
     try {
-      new GrantRequest(Ids.namespace("foo"), null, actions);
+      new GrantRequest(Ids.namespace("foo"), null, permissions);
       Assert.fail();
     } catch (IllegalArgumentException e) {
       // expected
     }
 
     try {
-      new GrantRequest((EntityId) null, bob, actions);
+      new GrantRequest((EntityId) null, bob, permissions);
       Assert.fail();
     } catch (IllegalArgumentException e) {
       // expected

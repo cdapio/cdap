@@ -18,11 +18,11 @@ package io.cdap.cdap.gateway.handlers;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.client.AuthorizationClient;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.cdap.common.FeatureDisabledException;
-import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.AuthenticationChannelHandler;
@@ -32,20 +32,19 @@ import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.Ids;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.Authorizable;
+import io.cdap.cdap.proto.security.GrantedPermission;
+import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
-import io.cdap.cdap.proto.security.Privilege;
 import io.cdap.cdap.proto.security.Role;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.auth.context.MasterAuthenticationContext;
+import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.authorization.AuthorizationContextFactory;
-import io.cdap.cdap.security.authorization.AuthorizerInstantiator;
-import io.cdap.cdap.security.authorization.InMemoryAuthorizer;
+import io.cdap.cdap.security.authorization.InMemoryAccessController;
 import io.cdap.cdap.security.authorization.NoOpAuthorizationContextFactory;
-import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
+import io.cdap.cdap.security.spi.authorization.AccessController;
 import io.cdap.cdap.security.spi.authorization.AlreadyExistsException;
-import io.cdap.cdap.security.spi.authorization.Authorizer;
-import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelHandlerContext;
@@ -57,7 +56,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Properties;
@@ -85,12 +83,12 @@ public class AuthorizationHandlerTest {
     conf.setBoolean(Constants.Security.Authorization.ENABLED, true);
     conf.setBoolean(Constants.Security.ENABLED, true);
     properties.setProperty("superusers", admin.getName());
-    final InMemoryAuthorizer auth = new InMemoryAuthorizer();
+    final InMemoryAccessController auth = new InMemoryAccessController();
     auth.initialize(FACTORY.create(properties));
     service = new CommonNettyHttpServiceBuilder(conf, getClass().getSimpleName())
-      .setHttpHandlers(new AuthorizationHandler(auth, new AuthorizerInstantiator(conf, FACTORY) {
+      .setHttpHandlers(new AuthorizationHandler(auth, new AccessControllerInstantiator(conf, FACTORY) {
         @Override
-        public Authorizer get() {
+        public AccessController get() {
           return auth;
         }
       }, conf, new MasterAuthenticationContext()))
@@ -139,13 +137,13 @@ public class AuthorizationHandlerTest {
 
   private void testDisabled(CConfiguration cConf, FeatureDisabledException.Feature feature,
                             String configSetting) throws Exception {
-    final InMemoryAuthorizer authorizer = new InMemoryAuthorizer();
+    final InMemoryAccessController accessController = new InMemoryAccessController();
     NettyHttpService service = new CommonNettyHttpServiceBuilder(cConf, getClass().getSimpleName())
       .setHttpHandlers(new AuthorizationHandler(
-        authorizer, new AuthorizerInstantiator(cConf, FACTORY) {
+        accessController, new AccessControllerInstantiator(cConf, FACTORY) {
         @Override
-        public Authorizer get() {
-          return authorizer;
+        public AccessController get() {
+          return accessController;
         }
       }, cConf, new MasterAuthenticationContext()))
       .build();
@@ -168,14 +166,14 @@ public class AuthorizationHandlerTest {
       verifyFeatureDisabled(new DisabledFeatureCaller() {
         @Override
         public void call() throws Exception {
-          client.grant(Authorizable.fromEntityId(ns1), admin, ImmutableSet.of(Action.READ));
+          client.grant(Authorizable.fromEntityId(ns1), admin, ImmutableSet.of(StandardPermission.GET));
         }
       }, feature, configSetting);
 
       verifyFeatureDisabled(new DisabledFeatureCaller() {
         @Override
         public void call() throws Exception {
-          client.revoke(Authorizable.fromEntityId(ns1), admin, ImmutableSet.of(Action.READ));
+          client.revoke(Authorizable.fromEntityId(ns1), admin, ImmutableSet.of(StandardPermission.GET));
         }
       }, feature, configSetting);
 
@@ -189,7 +187,7 @@ public class AuthorizationHandlerTest {
       verifyFeatureDisabled(new DisabledFeatureCaller() {
         @Override
         public void call() throws Exception {
-          client.listPrivileges(admin);
+          client.listGrants(admin);
         }
       }, feature, configSetting);
 
@@ -233,15 +231,15 @@ public class AuthorizationHandlerTest {
   }
 
   @Test
-  public void testRevokeEntityUserActions() throws Exception {
-    // grant() and revoke(EntityId, String, Set<Action>)
-    verifyAuthFailure(ns1, admin, Action.READ);
+  public void testRevokeEntityUserPermissions() throws Exception {
+    // grant() and revoke(EntityId, String, Set<Permission>)
+    verifyAuthFailure(ns1, admin, StandardPermission.GET);
 
-    client.grant(Authorizable.fromEntityId(ns1), admin, ImmutableSet.of(Action.READ));
-    verifyAuthSuccess(ns1, admin, Action.READ);
+    client.grant(Authorizable.fromEntityId(ns1), admin, ImmutableSet.of(StandardPermission.GET));
+    verifyAuthSuccess(ns1, admin, StandardPermission.GET);
 
-    client.revoke(Authorizable.fromEntityId(ns1), admin, ImmutableSet.of(Action.READ));
-    verifyAuthFailure(ns1, admin, Action.READ);
+    client.revoke(Authorizable.fromEntityId(ns1), admin, ImmutableSet.of(StandardPermission.GET));
+    verifyAuthFailure(ns1, admin, StandardPermission.GET);
   }
 
   @Test
@@ -250,14 +248,14 @@ public class AuthorizationHandlerTest {
     Principal bob = new Principal("bob", Principal.PrincipalType.USER);
 
     // grant() and revoke(EntityId, String)
-    client.grant(Authorizable.fromEntityId(ns1), adminGroup, ImmutableSet.of(Action.READ));
-    client.grant(Authorizable.fromEntityId(ns1), bob, ImmutableSet.of(Action.READ));
-    verifyAuthSuccess(ns1, adminGroup, Action.READ);
-    verifyAuthSuccess(ns1, bob, Action.READ);
+    client.grant(Authorizable.fromEntityId(ns1), adminGroup, ImmutableSet.of(StandardPermission.GET));
+    client.grant(Authorizable.fromEntityId(ns1), bob, ImmutableSet.of(StandardPermission.GET));
+    verifyAuthSuccess(ns1, adminGroup, StandardPermission.GET);
+    verifyAuthSuccess(ns1, bob, StandardPermission.GET);
 
-    client.revoke(Authorizable.fromEntityId(ns1), adminGroup, EnumSet.allOf(Action.class));
-    verifyAuthFailure(ns1, adminGroup, Action.READ);
-    verifyAuthSuccess(ns1, bob, Action.READ);
+    client.revoke(Authorizable.fromEntityId(ns1), adminGroup, EnumSet.allOf(StandardPermission.class));
+    verifyAuthFailure(ns1, adminGroup, StandardPermission.GET);
+    verifyAuthSuccess(ns1, bob, StandardPermission.GET);
   }
 
   @Test
@@ -266,17 +264,17 @@ public class AuthorizationHandlerTest {
     Principal bob = new Principal("bob", Principal.PrincipalType.USER);
 
     // grant() and revoke(EntityId)
-    client.grant(Authorizable.fromEntityId(ns1), adminGroup, ImmutableSet.of(Action.READ));
-    client.grant(Authorizable.fromEntityId(ns1), bob, ImmutableSet.of(Action.READ));
-    client.grant(Authorizable.fromEntityId(ns2), adminGroup, ImmutableSet.of(Action.READ));
-    verifyAuthSuccess(ns1, adminGroup, Action.READ);
-    verifyAuthSuccess(ns1, bob, Action.READ);
-    verifyAuthSuccess(ns2, adminGroup, Action.READ);
+    client.grant(Authorizable.fromEntityId(ns1), adminGroup, ImmutableSet.of(StandardPermission.GET));
+    client.grant(Authorizable.fromEntityId(ns1), bob, ImmutableSet.of(StandardPermission.GET));
+    client.grant(Authorizable.fromEntityId(ns2), adminGroup, ImmutableSet.of(StandardPermission.GET));
+    verifyAuthSuccess(ns1, adminGroup, StandardPermission.GET);
+    verifyAuthSuccess(ns1, bob, StandardPermission.GET);
+    verifyAuthSuccess(ns2, adminGroup, StandardPermission.GET);
 
     client.revoke(Authorizable.fromEntityId(ns1));
-    verifyAuthFailure(ns1, adminGroup, Action.READ);
-    verifyAuthFailure(ns1, bob, Action.READ);
-    verifyAuthSuccess(ns2, adminGroup, Action.READ);
+    verifyAuthFailure(ns1, adminGroup, StandardPermission.GET);
+    verifyAuthFailure(ns1, bob, StandardPermission.GET);
+    verifyAuthSuccess(ns2, adminGroup, StandardPermission.GET);
   }
 
   @Test
@@ -331,25 +329,26 @@ public class AuthorizationHandlerTest {
     Assert.assertEquals(Sets.newHashSet(engineers), client.listRoles(spiderman));
 
     // check that spiderman who has engineers roles cannot read from ns1
-    verifyAuthFailure(ns1, spiderman, Action.READ);
+    verifyAuthFailure(ns1, spiderman, StandardPermission.GET);
 
     // give a permission to engineers role
-    client.grant(Authorizable.fromEntityId(ns1), engineers, ImmutableSet.of(Action.READ));
+    client.grant(Authorizable.fromEntityId(ns1), engineers, ImmutableSet.of(StandardPermission.GET));
 
     // check that a spiderman who has engineers role has access
-    verifyAuthSuccess(ns1, spiderman, Action.READ);
+    verifyAuthSuccess(ns1, spiderman, StandardPermission.GET);
 
-    // list privileges for spiderman should have read action on ns1
-    Assert.assertEquals(Sets.newHashSet(new Privilege(ns1, Action.READ)), client.listPrivileges(spiderman));
+    // list grantedPermissions for spiderman should have read permission on ns1
+    Assert.assertEquals(Sets.newHashSet(new GrantedPermission(ns1, StandardPermission.GET)),
+                        client.listGrants(spiderman));
 
-    // revoke action from the role
-    client.revoke(Authorizable.fromEntityId(ns1), engineers, ImmutableSet.of(Action.READ));
+    // revoke permission from the role
+    client.revoke(Authorizable.fromEntityId(ns1), engineers, ImmutableSet.of(StandardPermission.GET));
 
-    // now the privileges for spiderman should be empty
-    Assert.assertEquals(new HashSet<>(), client.listPrivileges(spiderman));
+    // now the grantedPermissions for spiderman should be empty
+    Assert.assertEquals(new HashSet<>(), client.listGrants(spiderman));
 
     // check that the user of this role is not authorized to do the revoked operation
-    verifyAuthFailure(ns1, spiderman, Action.READ);
+    verifyAuthFailure(ns1, spiderman, StandardPermission.GET);
 
     // remove an user from a existing role
     client.removeRoleFromPrincipal(engineers, spiderman);
@@ -371,15 +370,15 @@ public class AuthorizationHandlerTest {
   @Test
   public void testGrantOnNonExistingEntity() throws Exception {
     // should be able to grant on non existing entities
-    client.grant(Authorizable.fromEntityId(Ids.namespace("ns3")), admin, ImmutableSet.of(Action.ADMIN));
-    verifyAuthSuccess(Ids.namespace("ns3"), admin, Action.ADMIN);
+    client.grant(Authorizable.fromEntityId(Ids.namespace("ns3")), admin, ImmutableSet.of(StandardPermission.UPDATE));
+    verifyAuthSuccess(Ids.namespace("ns3"), admin, StandardPermission.UPDATE);
   }
 
   @Test
   public void testRevokeOnNonExistingEntity()
-    throws FeatureDisabledException, UnauthenticatedException, UnauthorizedException, IOException, NotFoundException {
+    throws FeatureDisabledException, AccessException {
     // revoke on non exiting entities should work fine
-    client.revoke(Authorizable.fromEntityId(Ids.namespace("ns3")), admin, ImmutableSet.of(Action.ADMIN));
+    client.revoke(Authorizable.fromEntityId(Ids.namespace("ns3")), admin, ImmutableSet.of(StandardPermission.UPDATE));
   }
 
   @Test
@@ -390,35 +389,38 @@ public class AuthorizationHandlerTest {
 
   @Test
   public void testWildCardEntities() throws Exception {
-    // in-mem authorizer does not support wildcard privileges so we can't actually enforce after grant.
-    // this test is just to check that our grant apis work fine. After grant we list privileges to check for existence
+    // in-mem authorizer does not support wildcard grantedPermissions so we can't actually enforce after grant.
+    // this test is just to check that our grant apis work fine. After grant we list grantedPermissions to check for
+    // existence
     DatasetId datasetId = new DatasetId("ns", "wildcard");
     String wildcardEntityStar = datasetId.toString().replace("wildcard", "*");
-    client.grant(Authorizable.fromString(wildcardEntityStar), admin, ImmutableSet.of(Action.ADMIN));
+    client.grant(Authorizable.fromString(wildcardEntityStar), admin, ImmutableSet.of(StandardPermission.UPDATE));
     String wildcardEntityQuestion = datasetId.toString().replace("wildcard", "someSt?");
-    client.grant(Authorizable.fromString(wildcardEntityQuestion), admin, ImmutableSet.of(Action.ADMIN));
+    client.grant(Authorizable.fromString(wildcardEntityQuestion), admin, ImmutableSet.of(StandardPermission.UPDATE));
 
-    Set<Privilege> privileges = client.listPrivileges(admin);
-    Assert.assertTrue(privileges.contains(new Privilege(Authorizable.fromString(wildcardEntityStar), Action.ADMIN)));
-    Assert.assertTrue(privileges.contains(new Privilege(Authorizable.fromString(wildcardEntityQuestion),
-                                                        Action.ADMIN)));
+    Set<GrantedPermission> grantedPermissions = client.listGrants(admin);
+    Assert.assertTrue(grantedPermissions.contains(new GrantedPermission(Authorizable.fromString(wildcardEntityStar),
+                                                                        StandardPermission.UPDATE)));
+    Assert.assertTrue(grantedPermissions.contains(new GrantedPermission(Authorizable.fromString(wildcardEntityQuestion),
+                                                        StandardPermission.UPDATE)));
 
-    // revoke privilege from the wildcard entity and it should not exist anymore
-    client.revoke(Authorizable.fromString(wildcardEntityQuestion), admin, ImmutableSet.of(Action.ADMIN));
-    privileges = client.listPrivileges(admin);
-    Assert.assertFalse(privileges.contains(new Privilege(Authorizable.fromString(wildcardEntityQuestion),
-                                                         Action.ADMIN)));
+    // revoke grantedPermission from the wildcard entity and it should not exist anymore
+    client.revoke(Authorizable.fromString(wildcardEntityQuestion), admin, ImmutableSet.of(StandardPermission.UPDATE));
+    grantedPermissions = client.listGrants(admin);
+    Assert.assertFalse(grantedPermissions.contains(
+      new GrantedPermission(Authorizable.fromString(wildcardEntityQuestion), StandardPermission.UPDATE)));
 
     // revoke all should work too
-    String authFromPrivilege = null;
-    for (Privilege privilege : privileges) {
-      if (privilege.getAuthorizable().getEntityType().equals(EntityType.DATASET)) {
-        authFromPrivilege = privilege.getAuthorizable().toString();
+    String authFromGrantedPermission = null;
+    for (GrantedPermission grantedPermission : grantedPermissions) {
+      if (grantedPermission.getAuthorizable().getEntityType().equals(EntityType.DATASET)) {
+        authFromGrantedPermission = grantedPermission.getAuthorizable().toString();
       }
     }
-    client.revoke(Authorizable.fromString(authFromPrivilege));
-    privileges = client.listPrivileges(admin);
-    Assert.assertFalse(privileges.contains(new Privilege(Authorizable.fromString(wildcardEntityStar), Action.ADMIN)));
+    client.revoke(Authorizable.fromString(authFromGrantedPermission));
+    grantedPermissions = client.listGrants(admin);
+    Assert.assertFalse(grantedPermissions.contains(
+      new GrantedPermission(Authorizable.fromString(wildcardEntityStar), StandardPermission.UPDATE)));
   }
 
   /**
@@ -448,25 +450,27 @@ public class AuthorizationHandlerTest {
     }
   }
 
-  private void verifyAuthSuccess(EntityId entity, Principal principal, Action action) throws Exception {
-    Set<Privilege> privileges = client.listPrivileges(principal);
-    Privilege privilegeToCheck = new Privilege(entity, action);
+  private void verifyAuthSuccess(EntityId entity, Principal principal, Permission permission) throws Exception {
+    Set<GrantedPermission> grantedPermissions = client.listGrants(principal);
+    GrantedPermission grantedPermissionToCheck = new GrantedPermission(entity, permission);
     Assert.assertTrue(
       String.format(
-        "Expected principal %s to have the privilege %s, but found that it did not.", principal, privilegeToCheck
+        "Expected principal %s to have the grantedPermission %s, but found that it did not.",
+        principal, grantedPermissionToCheck
       ),
-      privileges.contains(privilegeToCheck)
+      grantedPermissions.contains(grantedPermissionToCheck)
     );
   }
 
-  private void verifyAuthFailure(EntityId entity, Principal principal, Action action) throws Exception {
-    Set<Privilege> privileges = client.listPrivileges(principal);
-    Privilege privilegeToCheck = new Privilege(entity, action);
+  private void verifyAuthFailure(EntityId entity, Principal principal, Permission permission) throws Exception {
+    Set<GrantedPermission> grantedPermissions = client.listGrants(principal);
+    GrantedPermission grantedPermissionToCheck = new GrantedPermission(entity, permission);
     Assert.assertFalse(
       String.format(
-        "Expected principal %s to not have the privilege %s, but found that it did.", principal, privilegeToCheck
+        "Expected principal %s to not have the grantedPermission %s, but found that it did.",
+        principal, grantedPermissionToCheck
       ),
-      privileges.contains(privilegeToCheck)
+      grantedPermissions.contains(grantedPermissionToCheck)
     );
   }
 

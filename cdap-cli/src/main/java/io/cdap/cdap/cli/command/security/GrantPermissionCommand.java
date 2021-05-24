@@ -23,8 +23,8 @@ import io.cdap.cdap.cli.ArgumentName;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.util.AbstractAuthCommand;
 import io.cdap.cdap.client.AuthorizationClient;
-import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.Authorizable;
+import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.common.cli.Arguments;
 
@@ -34,12 +34,12 @@ import java.util.Set;
 /**
  * Grants a user permission to perform certain actions on an auhorizable.
  */
-public class GrantActionCommand extends AbstractAuthCommand {
+public class GrantPermissionCommand extends AbstractAuthCommand {
 
   private final AuthorizationClient client;
 
   @Inject
-  GrantActionCommand(AuthorizationClient client, CLIConfig cliConfig) {
+  GrantPermissionCommand(AuthorizationClient client, CLIConfig cliConfig) {
     super(cliConfig);
     this.client = client;
   }
@@ -51,24 +51,24 @@ public class GrantActionCommand extends AbstractAuthCommand {
     Principal.PrincipalType principalType =
       Principal.PrincipalType.valueOf(arguments.get("principal-type").toUpperCase());
     Principal principal = new Principal(principalName, principalType);
-    Set<Action> actions = ACTIONS_STRING_TO_SET.apply(arguments.get("actions"));
-    // actions is not an optional argument so should never be null
-    Preconditions.checkNotNull(actions, "Actions can never be null in the grant command.");
+    Set<Permission> permissions = PERMISSION_STRING_TO_SET.apply(arguments.get("permissions"));
+    // permissions is not an optional argument so should never be null
+    Preconditions.checkNotNull(permissions, "Permissions can never be null in the grant command.");
 
-    client.grant(authorizable, principal, actions);
-    output.printf("Successfully granted action(s) '%s' on entity '%s' to %s '%s'\n",
-                  Joiner.on(",").join(actions), authorizable.toString(), principal.getType(), principal.getName());
+    client.grant(authorizable, principal, permissions);
+    output.printf("Successfully granted permission(s) '%s' on entity '%s' to %s '%s'\n",
+                  Joiner.on(",").join(permissions), authorizable.toString(), principal.getType(), principal.getName());
   }
 
   @Override
   public String getPattern() {
-    return String.format("grant actions <actions> on entity <%s> to <%s> <%s>", ArgumentName.ENTITY,
+    return String.format("grant permissions <permissions> on entity <%s> to <%s> <%s>", ArgumentName.ENTITY,
                          ArgumentName.PRINCIPAL_TYPE, ArgumentName.PRINCIPAL_NAME);
   }
 
   @Override
   public String getDescription() {
-    return String.format("Grants a principal privileges to perform certain actions on an authorizable. %s %s",
-      ArgumentName.ENTITY_DESCRIPTION_ACTIONS, ArgumentName.ENTITY_DESCRIPTION_ALL_STRING);
+    return String.format("Grants a principal permissions to perform certain actions on an authorizable. %s %s",
+                         ArgumentName.ENTITY_DESCRIPTION_PERMISSIONS, ArgumentName.ENTITY_DESCRIPTION_ALL_STRING);
   }
 }
