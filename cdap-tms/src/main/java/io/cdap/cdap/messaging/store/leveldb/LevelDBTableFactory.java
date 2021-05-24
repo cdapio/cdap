@@ -152,6 +152,9 @@ public final class LevelDBTableFactory implements TableFactory {
         DirUtils.deleteDirectoryContents(v2TopicPartitionDir);
       }
 
+      // Make sure appropriate directories are created. This is needed because File.move() call does not create new
+      // parent directories.
+      Files.createDirectories(v2TopicPartitionDir.toPath().getParent());
       LOG.info("Upgrading {} to {}", dirName, v2TopicPartitionDir.getName());
       Files.move(tableDir.toPath(), v2TopicPartitionDir.toPath());
     }
