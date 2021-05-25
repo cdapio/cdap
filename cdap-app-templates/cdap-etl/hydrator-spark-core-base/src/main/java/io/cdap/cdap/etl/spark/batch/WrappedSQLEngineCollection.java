@@ -62,6 +62,23 @@ public class WrappedSQLEngineCollection<T, U> implements SQLBackedCollection<U> 
     return unwrapped;
   }
 
+  /**
+   * Executes an operation on the underlying collection and then wraps it in the same mapper for this collection.
+   *
+   * This is useful when executing multiple operations in sequence where we need to delegate the operation to the
+   * underlying SQL engine and keep delaying the pull operation.
+   *
+   * By calling this over all wrapped collections, we will eventually reach an instance of a
+   * {@link SQLEngineCollection} where the actual operation will take place.
+   *
+   * @param remapper function used to re-map the underlying collection.
+   * @return SQL Backed collection after re-mapping the underlying colleciton and re-adding the mapper.
+   */
+  private SparkCollection<U> rewrap(
+    java.util.function.Function<SparkCollection<T>, SparkCollection<T>> remapper) {
+    return new WrappedSQLEngineCollection<>((SQLBackedCollection<T>) remapper.apply(wrapped), mapper);
+  }
+
   @Override
   public <C> C getUnderlying() {
     return unwrap().getUnderlying();
@@ -156,11 +173,11 @@ public class WrappedSQLEngineCollection<T, U> implements SQLBackedCollection<U> 
 
   @Override
   public SparkCollection<U> join(JoinRequest joinRequest) {
-    return unwrap().join(joinRequest);
+    return rewrap(c -> c.join(joinRequest));
   }
 
   @Override
   public SparkCollection<U> join(JoinExpressionRequest joinExpressionRequest) {
-    return unwrap().join(joinExpressionRequest);
+    return rewrap(c -> c.join(joinExpressionRequest));
   }
 }
