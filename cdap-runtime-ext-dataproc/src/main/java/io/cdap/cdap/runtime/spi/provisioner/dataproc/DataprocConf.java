@@ -58,6 +58,7 @@ final class DataprocConf {
   // The property name for the GCE cluster meta data
   // It can be overridden by profile runtime arguments (system.profile.properties.clusterMetaData)
   static final String CLUSTER_MEATA_DATA = "clusterMetaData";
+  static final String CLUSTER_LABELS = "clusterLabels";
   // The property name for the serviceAccount that is passed to Dataproc when creating the Dataproc Cluster
   // Dataproc will pass it to GCE when creating the GCE cluster.
   // It can be overridden by profile runtime arguments (system.profile.properties.serviceAccount)
@@ -109,6 +110,7 @@ final class DataprocConf {
   private final Map<String, String> clusterProperties;
 
   private final Map<String, String> clusterMetaData;
+  private final Map<String, String> clusterLabels;
   private final List<String> networkTags;
   private final String initActions;
   private final String autoScalingPolicy;
@@ -125,7 +127,7 @@ final class DataprocConf {
          conf.encryptionKeyName, conf.gcsBucket, conf.serviceAccount,
          conf.preferExternalIP, conf.stackdriverLoggingEnabled, conf.stackdriverMonitoringEnabled,
          conf.componentGatewayEnabled, conf.skipDelete, conf.publicKey, conf.imageVersion, conf.customImageUri,
-         conf.clusterMetaData, conf.networkTags, conf.initActions, conf.runtimeJobManagerEnabled,
+         conf.clusterMetaData, conf.clusterLabels, conf.networkTags, conf.initActions, conf.runtimeJobManagerEnabled,
          conf.clusterProperties, conf.autoScalingPolicy, conf.idleTTLMinutes);
   }
 
@@ -141,10 +143,10 @@ final class DataprocConf {
                        boolean stackdriverMonitoringEnabled, boolean componentGatewayEnable, boolean skipDelete,
                        @Nullable SSHPublicKey publicKey, @Nullable String imageVersion,
                        @Nullable String customImageUri,
-                       @Nullable Map<String, String> clusterMetaData, List<String> networkTags,
+                       @Nullable Map<String, String> clusterMetaData,
+                       @Nullable Map<String, String> clusterLabels, List<String> networkTags,
                        @Nullable String initActions, boolean runtimeJobManagerEnabled,
-                       Map<String, String> clusterProperties, @Nullable String autoScalingPolicy,
-                       int idleTTLMinutes) {
+                       Map<String, String> clusterProperties, @Nullable String autoScalingPolicy, int idleTTLMinutes) {
     this.accountKey = accountKey;
     this.region = region;
     this.zone = zone;
@@ -181,6 +183,7 @@ final class DataprocConf {
     this.imageVersion = imageVersion;
     this.customImageUri = customImageUri;
     this.clusterMetaData = clusterMetaData;
+    this.clusterLabels = clusterLabels;
     this.networkTags = networkTags;
     this.initActions = initActions;
     this.runtimeJobManagerEnabled = runtimeJobManagerEnabled;
@@ -324,6 +327,10 @@ final class DataprocConf {
 
   Map<String, String> getClusterMetaData() {
     return clusterMetaData;
+  }
+
+  Map<String, String> getClusterLabels() {
+    return clusterLabels;
   }
 
   List<String> getNetworkTags() {
@@ -529,6 +536,9 @@ final class DataprocConf {
     Map<String, String> clusterMetaData = Collections.unmodifiableMap(
       DataprocUtils.parseKeyValueConfig(getString(properties, CLUSTER_MEATA_DATA), ";", "\\|"));
 
+    Map<String, String> clusterLabels = Collections.unmodifiableMap(
+      DataprocUtils.parseKeyValueConfig(getString(properties, CLUSTER_LABELS), ";", "\\|"));
+
     String networkTagsProperty = Optional.ofNullable(getString(properties, "networkTags")).orElse("");
     List<String> networkTags = Collections.unmodifiableList(Arrays.stream(networkTagsProperty.split(","))
                                                               .map(String::trim)
@@ -553,8 +563,8 @@ final class DataprocConf {
                             gcpCmekKeyName, gcpCmekBucket, serviceAccount, preferExternalIP,
                             stackdriverLoggingEnabled, stackdriverMonitoringEnabled,
                             componentGatewayEnabled, skipDelete,
-                            publicKey, imageVersion, customImageUri, clusterMetaData, networkTags, initActions,
-                            runtimeJobManagerEnabled, clusterProps, autoScalingPolicy, idleTTL);
+                            publicKey, imageVersion, customImageUri, clusterMetaData, clusterLabels, networkTags,
+                            initActions, runtimeJobManagerEnabled, clusterProps, autoScalingPolicy, idleTTL);
   }
 
   // the UI never sends nulls, it only sends empty strings.

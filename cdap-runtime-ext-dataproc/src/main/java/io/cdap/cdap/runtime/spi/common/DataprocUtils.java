@@ -101,7 +101,7 @@ public final class DataprocUtils {
   }
 
   /**
-   * Utilty class to parse the keyvalue string from UI Widget and return back HashMap.
+   * Utility class to parse the keyvalue string from UI Widget and return back HashMap.
    * String is of format  <key><keyValueDelimiter><value><delimiter><key><keyValueDelimiter><value>
    * eg:  networktag1=out2internet;networktag2=priority
    * The return from the method is a map with key value pairs of (networktag1 out2internet) and (networktag2 priority)

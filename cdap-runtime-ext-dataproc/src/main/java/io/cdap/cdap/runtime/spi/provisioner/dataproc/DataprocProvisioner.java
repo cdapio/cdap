@@ -127,14 +127,15 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       }
 
       // Reload system context properties and get system labels
-      Map<String, String> systemLabels = getSystemLabels();
-      LOG.info("Creating Dataproc cluster {} in project {}, in region {}, with image {}, with system labels {}",
-               clusterName, conf.getProjectId(),
-               conf.getRegion(), imageDescription, systemLabels);
+      Map<String, String> labels = new HashMap<>();
+      labels.putAll(getSystemLabels());
+      labels.putAll(conf.getClusterLabels());
+      LOG.info("Creating Dataproc cluster {} in project {}, in region {}, with image {}, with labels {}",
+               clusterName, conf.getProjectId(), conf.getRegion(), imageDescription, labels);
 
       boolean privateInstance = Boolean.parseBoolean(getSystemContext().getProperties().get(PRIVATE_INSTANCE));
       ClusterOperationMetadata createOperationMeta = client.createCluster(clusterName, imageVersion,
-                                                                          systemLabels, privateInstance);
+                                                                          labels, privateInstance);
       int numWarnings = createOperationMeta.getWarningsCount();
       if (numWarnings > 0) {
         LOG.warn("Encountered {} warning{} while creating Dataproc cluster:\n{}",
