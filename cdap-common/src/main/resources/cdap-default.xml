@@ -3611,7 +3611,7 @@
   <!-- Retry configuration for task worker -->
   <property>
     <name>task.worker.retry.policy.base.delay.ms</name>
-    <value>500</value>
+    <value>0</value>
     <description>
       The base delay between retries in milliseconds
     </description>
@@ -3619,7 +3619,7 @@
 
   <property>
     <name>task.worker.retry.policy.max.delay.ms</name>
-    <value>3000</value>
+    <value>0</value>
     <description>
       The maximum delay between retries in milliseconds
     </description>
@@ -3627,7 +3627,7 @@
 
   <property>
     <name>task.worker.retry.policy.max.retries</name>
-    <value>10</value>
+    <value>20</value>
     <description>
       The maximum number of retries to attempt before aborting
     </description>
@@ -4250,7 +4250,7 @@
 
   <property>
     <name>task.worker.container.count</name>
-    <value>1</value>
+    <value>10</value>
     <description>
       Number of task worker containers for task execution.
     </description>
@@ -4266,7 +4266,7 @@
 
   <property>
     <name>task.worker.container.memory.mb</name>
-    <value>756</value>
+    <value>256</value>
     <description>
       Memory in megabytes for each task worker.
     </description>

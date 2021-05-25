@@ -214,7 +214,9 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
     }
 
     String path = response.getResponseBodyAsString();
+    LOG.info("path in RemotePluginFinder {}", path);
     Location location = Locations.getLocationFromAbsolutePath(locationFactory, path);
+    LOG.info("location in RemotePluginFinder {}", location.toURI());
     if (!location.exists()) {
       /* throw new IOException(String.format("Artifact Location does not exist %s for artifact %s version %s",
                                           path, artifactId.getArtifact(), artifactId.getVersion()));*/

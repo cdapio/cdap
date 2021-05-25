@@ -20,13 +20,13 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.MapBinder;
 import io.cdap.cdap.app.guice.DefaultProgramRunnerFactory;
+import io.cdap.cdap.app.guice.DistributedArtifactManagerModule;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
-import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
@@ -41,9 +41,7 @@ import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
 import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
-import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReader;
-import io.cdap.cdap.internal.app.runtime.artifact.RemotePluginFinder;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
 import io.cdap.cdap.master.environment.MasterEnvironments;
@@ -64,6 +62,8 @@ import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.LocationFactory;
 
 /**
  * Modules loaded for system app tasks
@@ -114,10 +114,12 @@ public class SystemAppModule extends AbstractModule {
     bind(ArtifactRepository.class).to(DefaultArtifactRepository.class).in(Scopes.SINGLETON);
     bind(Impersonator.class).to(DefaultImpersonator.class).in(Scopes.SINGLETON);
     bind(PreferencesFetcher.class).to(RemotePreferencesFetcherInternal.class).in(Scopes.SINGLETON);
-    bind(PluginFinder.class).to(RemotePluginFinder.class);
+    //bind(PluginFinder.class).to(RemotePluginFinder.class);
+    bind(LocationFactory.class).to(LocalLocationFactory.class);
 
+    install(new DistributedArtifactManagerModule());
     install(new IOModule());
-    install(new DFSLocationModule());
+    //install(new DFSLocationModule());
     install(new MessagingClientModule());
     install(new AuthorizationEnforcementModule().getDistributedModules());
     install(new NamespaceQueryAdminModule());

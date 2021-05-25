@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.worker;
 import io.cdap.cdap.api.Admin;
 import io.cdap.cdap.api.ServiceDiscoverer;
 import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
@@ -40,6 +41,7 @@ import io.cdap.cdap.common.service.ServiceDiscoverable;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.internal.app.DefaultPluginConfigurer;
 import io.cdap.cdap.internal.app.runtime.DefaultAdmin;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.MacroParser;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -76,14 +78,17 @@ public class DefaultRunnableTaskSystemAppContext implements RunnableTaskSystemAp
   private final DiscoveryServiceClient discoveryServiceClient;
   private final SecureStore secureStore;
   private final String namespace;
+  private final ArtifactManager artifactManager;
   private final RetryStrategy retryStrategy;
+  private final String serviceName;
 
   DefaultRunnableTaskSystemAppContext(CConfiguration cConf, DatasetFramework dsFramework, String namespace,
                                       SecureStoreManager secureStoreManager, MessagingService messagingService,
                                       RetryStrategy retryStrategy, NamespaceQueryAdmin namespaceQueryAdmin,
                                       PreferencesFetcher preferencesFetcher, ClassLoader classLoader,
                                       PluginFinder pluginFinder, ArtifactId artifactId,
-                                      DiscoveryServiceClient discoveryServiceClient, SecureStore secureStore) {
+                                      DiscoveryServiceClient discoveryServiceClient, SecureStore secureStore,
+                                      ArtifactManagerFactory artifactManagerFactory, String serviceName) {
     this.cConf = cConf;
     this.namespace = namespace;
     NamespaceId namespaceId = new NamespaceId(namespace);
@@ -96,7 +101,9 @@ public class DefaultRunnableTaskSystemAppContext implements RunnableTaskSystemAp
     this.pluginFinder = pluginFinder;
     this.artifactId = artifactId;
     this.discoveryServiceClient = discoveryServiceClient;
+    this.artifactManager = artifactManagerFactory.create(new NamespaceId(namespace), retryStrategy);
     this.secureStore = secureStore;
+    this.serviceName = serviceName;
   }
 
   @Override
@@ -117,7 +124,10 @@ public class DefaultRunnableTaskSystemAppContext implements RunnableTaskSystemAp
   public PluginConfigurer createPluginConfigurer(String namespace) throws IOException {
     File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
-    File pluginsDir = Files.createTempDirectory(tmpDir.toPath(), "plugins").toFile();
+    File pluginsDir = new File(tmpDir, "plugins").getAbsoluteFile();
+    if (!pluginsDir.exists()) {
+      Files.createDirectory(pluginsDir.toPath());
+    }
     PluginInstantiator instantiator = new PluginInstantiator(cConf, classLoader, pluginsDir);
     io.cdap.cdap.proto.id.ArtifactId protoArtifactId =
       new io.cdap.cdap.proto.id.ArtifactId(namespace, artifactId.getName(), artifactId.getVersion().getVersion());
@@ -147,6 +157,16 @@ public class DefaultRunnableTaskSystemAppContext implements RunnableTaskSystemAp
   @Override
   public SecureStore getSecureStore() {
     return null;
+  }
+
+  @Override
+  public ArtifactManager getArtifactManager() {
+    return artifactManager;
+  }
+
+  @Override
+  public String getServiceName() {
+    return serviceName;
   }
 
   @Override

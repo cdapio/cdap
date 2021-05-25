@@ -18,6 +18,7 @@ package io.cdap.cdap.api.service.worker;
 
 import io.cdap.cdap.api.Admin;
 import io.cdap.cdap.api.ServiceDiscoverer;
+import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
@@ -44,5 +45,9 @@ public interface RunnableTaskSystemAppContext {
   ServiceDiscoverer getServiceDiscoverer();
 
   SecureStore getSecureStore();
+
+  ArtifactManager getArtifactManager();
+
+  String getServiceName();
 
 }

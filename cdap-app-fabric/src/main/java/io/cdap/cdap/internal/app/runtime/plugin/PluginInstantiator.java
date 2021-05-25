@@ -135,7 +135,9 @@ public class PluginInstantiator implements Closeable {
    * @throws IOException if failed to copy the artifact JAR
    */
   public void addArtifact(Location artifactLocation, ArtifactId destArtifact) throws IOException {
+    LOG.info("artifactLocation in PluginInstantiator {}", artifactLocation.toURI());
     File destFile = new File(pluginDir, Artifacts.getFileName(destArtifact));
+    LOG.info("destFile in PluginInstantiator {}, exists ? {}", destFile.getAbsolutePath(), destFile.exists());
     if (!destFile.exists()) {
       Locations.linkOrCopy(artifactLocation, destFile);
     }
