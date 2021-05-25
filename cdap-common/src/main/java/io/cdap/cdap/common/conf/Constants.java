@@ -398,6 +398,7 @@ public final class Constants {
     public static final String EXEC_THREADS = "task.worker.exec.threads";
     public static final String BOSS_THREADS = "task.worker.boss.threads";
     public static final String WORKER_THREADS = "task.worker.worker.threads";
+    public static final String METADATA_SERVICE_END_POINT = "task.worker.metadata.service.endpoint";
   }
 
   /**

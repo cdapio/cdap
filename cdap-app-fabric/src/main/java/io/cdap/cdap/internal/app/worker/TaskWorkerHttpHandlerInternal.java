@@ -26,6 +26,9 @@ import io.cdap.cdap.common.http.AbstractBodyConsumer;
 import io.cdap.cdap.logging.gateway.handlers.AbstractLogHttpHandler;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
+import io.cdap.common.http.HttpRequest;
+import io.cdap.common.http.HttpRequests;
+import io.cdap.common.http.HttpResponse;
 import io.cdap.http.BodyConsumer;
 import io.cdap.http.BodyProducer;
 import io.cdap.http.HttpHandler;
@@ -35,17 +38,18 @@ import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
@@ -73,10 +77,12 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
   private final RunnableTaskLauncher runnableTaskLauncher;
   private final Consumer<String> stopper;
   private final AtomicInteger inflightRequests = new AtomicInteger(0);
+  private final String metadataServiceEndpoint;
 
   public TaskWorkerHttpHandlerInternal(CConfiguration cConf, Consumer<String> stopper) {
     super(cConf);
     runnableTaskLauncher = new RunnableTaskLauncher(cConf);
+    this.metadataServiceEndpoint = cConf.get(Constants.TaskWorker.METADATA_SERVICE_END_POINT);
     this.stopper = stopper;
   }
 
@@ -109,20 +115,40 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
     }
   }
 
+  @GET
+  @Path("/token")
+  public void token(io.netty.handler.codec.http.HttpRequest request, HttpResponder responder) {
+    if (metadataServiceEndpoint == null) {
+      responder.sendString(HttpResponseStatus.NOT_IMPLEMENTED,
+                           String.format("%s has not been set", Constants.TaskWorker.METADATA_SERVICE_END_POINT));
+      return;
+    }
+
+    try {
+      URL url = new URL(metadataServiceEndpoint);
+      HttpRequest tokenRequest = HttpRequest.get(url).addHeader("Metadata-Flavor", "Google").build();
+      HttpResponse tokenResponse = HttpRequests.execute(tokenRequest);
+      responder.sendByteArray(HttpResponseStatus.OK, tokenResponse.getResponseBody(), EmptyHttpHeaders.INSTANCE);
+    } catch (Exception ex) {
+      LOG.warn("failed to fetch token from metadata service", ex);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);
+    }
+  }
+
   /**
    * Run a task specified by query parameters {@code className} and {@code param}.
    * Request body contains the content of a file uploaded by the caller that is available to the task
    * at runtime via {@link RunnableTaskContext}.
    *
-   * @param request {@link HttpRequest} whose body should be a file content.
+   * @param request   {@link HttpRequest} whose body should be a file content.
    * @param responder {@link HttpResponder}
    * @param className classname of the task to run
-   * @param param parameter(s) to the task
+   * @param param     parameter(s) to the task
    * @return {@link BodyConsumer}
    */
   @POST
   @Path("/task")
-  public BodyConsumer runTask(HttpRequest request, HttpResponder responder,
+  public BodyConsumer runTask(io.netty.handler.codec.http.HttpRequest request, HttpResponder responder,
                               @QueryParam("className") String className,
                               @QueryParam("param") String param) {
     if (inflightRequests.incrementAndGet() > 1) {

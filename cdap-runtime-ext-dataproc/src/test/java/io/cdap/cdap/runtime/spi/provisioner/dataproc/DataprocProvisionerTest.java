@@ -25,6 +25,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -76,12 +77,14 @@ public class DataprocProvisionerTest {
     props.put("dataproc:am.primary_only", "true");
     props.put("clusterMetaData", "metadata-key1|metadata-val1;metadata-key2|metadata-val2");
     props.put("clusterLabels", "label-key1|label-val1;label-key2|label-val2");
+    props.put("token.endpoint", "point1");
 
     DataprocConf conf = DataprocConf.create(props);
 
     Assert.assertEquals("pid", conf.getProjectId());
     Assert.assertEquals("region1", conf.getRegion());
     Assert.assertEquals("region1-a", conf.getZone());
+    Assert.assertEquals("point1", conf.getTokenEndpoint());
     Map<String, String> clusterMetaData = conf.getClusterMetaData();
     Assert.assertEquals("metadata-val1", clusterMetaData.get("metadata-key1"));
     Assert.assertEquals("metadata-val2", clusterMetaData.get("metadata-key2"));
@@ -130,6 +133,7 @@ public class DataprocProvisionerTest {
     String resourceMaxPercentVal = "0.5";
     String clusterMetaData = "metadata-key1|metadata-val1;metadata-key2|metadata-val2";
     String serviceAccount = "service-account-1";
+    String tokenEndpoint = "end-point1";
 
     //default system properties defined by DataprocProvisioner
     provisionerSystemContext.addProperty(DataprocConf.NETWORK, "old-network");
@@ -137,6 +141,7 @@ public class DataprocProvisionerTest {
     provisionerSystemContext
       .addProperty(DataprocConf.CLUSTER_MEATA_DATA, clusterMetaData);
     provisionerSystemContext.addProperty(DataprocConf.SERVICE_ACCOUNT, serviceAccount);
+    provisionerSystemContext.addProperty(DataprocConf.TOKEN_ENDPOINT_KEY, tokenEndpoint);
 
     //default system properties defined by AbstractDataprocProvisioner
     provisionerSystemContext.addProperty(resourceMaxPercentKey, resourceMaxPercentVal);
@@ -159,6 +164,7 @@ public class DataprocProvisionerTest {
     Assert.assertEquals(resourceMaxPercentVal, properties.get(resourceMaxPercentKey));
     Assert.assertEquals(clusterMetaData, properties.get(DataprocConf.CLUSTER_MEATA_DATA));
     Assert.assertEquals(serviceAccount, properties.get(DataprocConf.SERVICE_ACCOUNT));
+    Assert.assertEquals(tokenEndpoint, properties.get(DataprocConf.TOKEN_ENDPOINT_KEY));
     Assert.assertEquals("job_manager", properties.get(DataprocConf.RUNTIME_JOB_MANAGER));
     Assert.assertNull(properties.get("non-system-default-key"));
   }
