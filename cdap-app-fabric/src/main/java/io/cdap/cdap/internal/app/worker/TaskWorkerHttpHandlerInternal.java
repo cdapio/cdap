@@ -42,8 +42,6 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import javax.ws.rs.POST;
@@ -74,7 +72,6 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
   @Path("/run")
   public void run(FullHttpRequest request, HttpResponder responder) {
     String className = null;
-    CountDownLatch latch = new CountDownLatch(1);
     try {
       RunnableTaskRequest runnableTaskRequest =
         GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), RunnableTaskRequest.class);
@@ -83,41 +80,17 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
 
       InputStream responseStream = new ByteArrayInputStream(response);
 
-      responder.sendContent(HttpResponseStatus.OK, new BodyProducer() {
-        @Override
-        public ByteBuf nextChunk() throws Exception {
-          byte[] buf = new byte[64 * 1024];
-          int len = responseStream.read(buf);
-          if (len == -1) {
-            return Unpooled.EMPTY_BUFFER;
-          }
-          return Unpooled.wrappedBuffer(buf, 0, len);
-        }
-
-        @Override
-        public void finished() {
-          Closeables.closeQuietly(responseStream);
-          latch.countDown();
-        }
-
-        @Override
-        public void handleError(@Nullable Throwable cause) {
-          LOG.error("Error when sending chunks", cause);
-        }
-      }, new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM));
+      responder.sendContent(HttpResponseStatus.OK,
+                            new RunnableTaskBodyProducer(responseStream, stopper, className),
+                            new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM));
     } catch (ClassNotFoundException | ClassCastException ex) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);
-      latch.countDown();
     } catch (Exception ex) {
       LOG.error(String.format("Failed to run task %s",
                               request.content().toString(StandardCharsets.UTF_8)), ex);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);
-      latch.countDown();
-    } finally {
-      try {
-        latch.await(5, TimeUnit.SECONDS);
-      } catch (InterruptedException e) {
-        LOG.error("Waiting for sending task worker response failed ", e);
+      if (className != null) {
+        stopper.accept(className);
       }
       stopper.accept(className);
     }
@@ -130,5 +103,39 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
   private String exceptionToJson(Exception ex) {
     BasicThrowable basicThrowable = new BasicThrowable(ex);
     return GSON.toJson(basicThrowable);
+  }
+
+  private static class RunnableTaskBodyProducer extends BodyProducer {
+    private final InputStream responseStream;
+    private final Consumer<String> stopper;
+    private final String className;
+
+    RunnableTaskBodyProducer(InputStream responseStream, Consumer<String> stopper, String className) {
+      this.responseStream = responseStream;
+      this.stopper = stopper;
+      this.className = className;
+    }
+
+    @Override
+    public ByteBuf nextChunk() throws Exception {
+      byte[] buf = new byte[64 * 1024];
+      int len = responseStream.read(buf);
+      if (len == -1) {
+        return Unpooled.EMPTY_BUFFER;
+      }
+      return Unpooled.wrappedBuffer(buf, 0, len);
+    }
+
+    @Override
+    public void finished() throws Exception {
+      Closeables.closeQuietly(responseStream);
+      stopper.accept(className);
+    }
+
+    @Override
+    public void handleError(@Nullable Throwable cause) {
+      LOG.error("Error when sending chunks", cause);
+      stopper.accept(className);
+    }
   }
 }
