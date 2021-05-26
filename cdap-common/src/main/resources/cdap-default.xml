@@ -265,6 +265,22 @@
   </property>
 
   <property>
+    <name>twill.security.secret.disk.name</name>
+    <value>cdap-security</value>
+    <description>
+      The name of the Twill security disk mount which contains cdap-security.xml.
+    </description>
+  </property>
+
+  <property>
+    <name>twill.security.secret.disk.path</name>
+    <value>/etc/cdap/security</value>
+    <description>
+      The absolute directory of the Twill security disk mount which contains cdap-security.xml.
+    </description>
+  </property>
+
+  <property>
     <name>twill.yarn.am.memory.mb</name>
     <value>512</value>
     <description>
