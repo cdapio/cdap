@@ -166,12 +166,14 @@ final class ArtifactClassLoaderFactory {
     }
 
     try {
+      long time = System.nanoTime();
       final File unpackDir = entityImpersonator.impersonate(new Callable<File>() {
         @Override
         public File call() throws IOException {
           return BundleJarUtil.prepareClassLoaderFolder(artifactLocation, DirUtils.createTempDir(tmpDir));
         }
       });
+      LOG.info("Unpack time for file {} {}", unpackDir.getAbsolutePath(), System.nanoTime() - time);
 
       final CloseableClassLoader parentClassLoader = createClassLoader(artifactLocations, entityImpersonator);
       return new CloseableClassLoader(new DirectoryClassLoader(unpackDir, parentClassLoader, "lib"), new Closeable() {

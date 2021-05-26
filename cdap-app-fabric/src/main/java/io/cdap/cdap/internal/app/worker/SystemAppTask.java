@@ -46,6 +46,8 @@ import io.cdap.cdap.security.impersonation.Impersonator;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -54,6 +56,8 @@ import java.io.OutputStream;
  * SystemAppTask launches a task created by system app with application classloader
  */
 public class SystemAppTask implements RunnableTask {
+
+  private static final Logger LOG = LoggerFactory.getLogger(SystemAppTask.class);
 
   private CConfiguration cConf;
   private Configuration hConf;
@@ -98,14 +102,17 @@ public class SystemAppTask implements RunnableTask {
 
   @Override
   public void run(RunnableTaskContext context) throws Exception {
+    long sTime = System.nanoTime();
     RunnableTaskRequest taskRequest = context.getDelegateTaskRequest();
     Injector injector = Guice.createInjector(new SystemAppModule(cConf, hConf));
     String namespace = taskRequest.getNamespace();
     Id.Artifact artifactId = Id.Artifact
       .from(Id.Namespace.SYSTEM, taskRequest.getArtifactId().getName(),
             taskRequest.getArtifactId().getVersion());
+    long artifactDeatilTime = System.nanoTime();
     ArtifactDetail artifactDetail = artifactRepositoryReader.getArtifact(artifactId);
-    EntityImpersonator classLoaderImpersonator = new EntityImpersonator(artifactId.toEntityId(), impersonator);
+    LOG.info("Total time for getting ArtifactDetail {}", System.nanoTime() - artifactDeatilTime);
+    long artifactlocationTime = System.nanoTime();
     Location artifactLocation = artifactDetail.getDescriptor().getLocation();
     if (!artifactLocation.exists()) {
       OutputStream outputStream = artifactLocation.getOutputStream();
@@ -113,12 +120,20 @@ public class SystemAppTask implements RunnableTask {
       ByteStreams.copy(artifactBytes, outputStream);
       outputStream.close();
     }
+    LOG.info("Total time for download in artifactLocation {}", System.nanoTime() - artifactlocationTime);
+    long classLoadTime = System.nanoTime();
+    EntityImpersonator classLoaderImpersonator = new EntityImpersonator(artifactId.toEntityId(), impersonator);
     CloseableClassLoader artifactClassLoader = artifactRepository
       .createArtifactClassLoader(artifactLocation,
                                  classLoaderImpersonator);
     String taskClassName = taskRequest.getClassName();
+    LOG.info("Total time for createArtifactClassLoader {}", System.nanoTime() - classLoadTime);
     Class<?> clazz = artifactClassLoader.loadClass(taskClassName);
+    long classLoadTime1 = System.nanoTime();
+    LOG.info("Total time for load class {}", System.nanoTime() - classLoadTime1);
+    long classLoadTime2 = System.nanoTime();
     Object obj = injector.getInstance(clazz);
+    LOG.info("Total time for instantiating class {}", System.nanoTime() - classLoadTime2);
     if (!(obj instanceof RunnableTask)) {
       throw new ClassCastException(String.format("%s is not a RunnableTask", taskClassName));
     }
@@ -136,5 +151,6 @@ public class SystemAppTask implements RunnableTask {
       withSystemAppContext(systemAppContext).build();
     runnableTask.run(runnableTaskContext);
     context.writeResult(runnableTaskContext.getResult());
+    LOG.info("Total time in {} {}", this.getClass().getName(), System.nanoTime() - sTime);
   }
 }

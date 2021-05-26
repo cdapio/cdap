@@ -67,13 +67,14 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
       responder.sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS);
       return;
     }
-
+    long sTime = System.nanoTime();
     String className = null;
     try {
       RunnableTaskRequest runnableTaskRequest =
         GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), RunnableTaskRequest.class);
       className = runnableTaskRequest.getClassName();
       byte[] response = runnableTaskLauncher.launchRunnableTask(runnableTaskRequest);
+      LOG.info("Total time in {} {}", this.getClass().getName(), System.nanoTime() - sTime);
       responder.sendByteArray(HttpResponseStatus.OK, response, EmptyHttpHeaders.INSTANCE);
     } catch (ClassNotFoundException | ClassCastException ex) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);

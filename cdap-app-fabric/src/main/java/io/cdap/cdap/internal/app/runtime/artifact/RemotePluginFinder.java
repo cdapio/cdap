@@ -221,6 +221,14 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
       /* throw new IOException(String.format("Artifact Location does not exist %s for artifact %s version %s",
                                           path, artifactId.getArtifact(), artifactId.getVersion()));*/
       getAndStoreArtifact(artifactId, location);
+    /*LOG.error("Greeshma: locaion: " + location.toString());
+    Location localLocation = new LocalLocationFactory().create(location.toURI());
+    LOG.error("Greeshma: local locaion: " + localLocation.toString());
+    if (!localLocation.exists()) {
+      LOG.error("Greeshma: locaion doesn't exit: " + localLocation.toString());
+      getAndStoreArtifact(artifactId, localLocation);
+      } return localLocation;
+     */
     }
     return location;
   }

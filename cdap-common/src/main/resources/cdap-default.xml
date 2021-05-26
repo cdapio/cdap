@@ -3627,7 +3627,7 @@
 
   <property>
     <name>task.worker.retry.policy.max.retries</name>
-    <value>20</value>
+    <value>100</value>
     <description>
       The maximum number of retries to attempt before aborting
     </description>
@@ -4250,7 +4250,7 @@
 
   <property>
     <name>task.worker.container.count</name>
-    <value>10</value>
+    <value>1</value>
     <description>
       Number of task worker containers for task execution.
     </description>
