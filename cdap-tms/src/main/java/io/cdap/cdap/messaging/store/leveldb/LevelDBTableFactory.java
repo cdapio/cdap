@@ -101,7 +101,7 @@ public final class LevelDBTableFactory implements TableFactory {
   @Override
   public void init() throws IOException {
     ensureDirExists(baseDir);
-    Path metaFile = Paths.get(baseDir.getAbsolutePath(), "meta");
+    Path metaFile = Paths.get(baseDir.getPath()).resolve("meta");
     Metadata metadata = new Metadata(1);
     if (Files.exists(metaFile)) {
       String metaStr = new String(Files.readAllBytes(metaFile), StandardCharsets.UTF_8);
