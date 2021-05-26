@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2020-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,6 +30,7 @@ import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
+import io.cdap.cdap.master.spi.twill.SecureTwillPreparer;
 import io.cdap.cdap.master.spi.twill.StatefulDisk;
 import io.cdap.cdap.master.spi.twill.StatefulTwillPreparer;
 import io.cdap.cdap.messaging.MessagingService;
@@ -175,6 +176,14 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
               .withStatefulRunnable(PreviewRunnerTwillRunnable.class.getSimpleName(), false,
                                     new StatefulDisk("preview-runner-data", diskSize,
                                                      cConf.get(Constants.CFG_LOCAL_DATA_DIR)));
+          }
+
+          if (twillPreparer instanceof SecureTwillPreparer) {
+            String twillUserIdentity = cConf.get(Constants.Twill.Security.IDENTITY_USER);
+            if (twillUserIdentity != null) {
+              twillPreparer = ((SecureTwillPreparer) twillPreparer)
+                .withIdentity(PreviewRunnerTwillRunnable.class.getSimpleName(), twillUserIdentity);
+            }
           }
 
           activeController = twillPreparer.start(5, TimeUnit.MINUTES);
