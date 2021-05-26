@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.worker;
 
-import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
@@ -39,8 +38,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
@@ -78,10 +75,8 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
       className = runnableTaskRequest.getClassName();
       byte[] response = runnableTaskLauncher.launchRunnableTask(runnableTaskRequest);
 
-      InputStream responseStream = new ByteArrayInputStream(response);
-
       responder.sendContent(HttpResponseStatus.OK,
-                            new RunnableTaskBodyProducer(responseStream, stopper, className),
+                            new RunnableTaskBodyProducer(response, stopper, className),
                             new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM));
     } catch (ClassNotFoundException | ClassCastException ex) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);
@@ -106,29 +101,29 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
   }
 
   private static class RunnableTaskBodyProducer extends BodyProducer {
-    private final InputStream responseStream;
+    private final byte[] response;
     private final Consumer<String> stopper;
     private final String className;
+    private boolean done = false;
 
-    RunnableTaskBodyProducer(InputStream responseStream, Consumer<String> stopper, String className) {
-      this.responseStream = responseStream;
+    RunnableTaskBodyProducer(byte[] response, Consumer<String> stopper, String className) {
+      this.response = response;
       this.stopper = stopper;
       this.className = className;
     }
 
     @Override
-    public ByteBuf nextChunk() throws Exception {
-      byte[] buf = new byte[64 * 1024];
-      int len = responseStream.read(buf);
-      if (len == -1) {
+    public ByteBuf nextChunk() {
+      if (done) {
         return Unpooled.EMPTY_BUFFER;
       }
-      return Unpooled.wrappedBuffer(buf, 0, len);
+
+      done = true;
+      return Unpooled.wrappedBuffer(response);
     }
 
     @Override
-    public void finished() throws Exception {
-      Closeables.closeQuietly(responseStream);
+    public void finished() {
       stopper.accept(className);
     }
 
