@@ -78,6 +78,9 @@ public class DataprocProvisionerTest {
     props.put("clusterMetaData", "metadata-key1|metadata-val1;metadata-key2|metadata-val2");
     props.put("clusterLabels", "label-key1|label-val1;label-key2|label-val2");
     props.put("token.endpoint", "point1");
+    props.put("secureBootEnabled", "false");
+    props.put("vTpmEnabled", "true");
+    props.put("integrityMonitoringEnabled", "true");
 
     DataprocConf conf = DataprocConf.create(props);
 
@@ -99,6 +102,10 @@ public class DataprocProvisionerTest {
     Assert.assertEquals("100", dataprocProps.get("spark:spark.reducer.maxSizeInFlight"));
     Assert.assertEquals("xyz", dataprocProps.get("hadoop-env:MAPREDUCE_CLASSPATH"));
     Assert.assertEquals("true", dataprocProps.get("dataproc:am.primary_only"));
+
+    Assert.assertFalse(conf.isSecureBootEnabled());
+    Assert.assertTrue(conf.isvTpmEnabled());
+    Assert.assertTrue(conf.isIntegrityMonitoringEnabled());
   }
 
   @Test

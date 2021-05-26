@@ -50,6 +50,7 @@ import com.google.cloud.dataproc.v1.GetClusterRequest;
 import com.google.cloud.dataproc.v1.InstanceGroupConfig;
 import com.google.cloud.dataproc.v1.LifecycleConfig;
 import com.google.cloud.dataproc.v1.NodeInitializationAction;
+import com.google.cloud.dataproc.v1.ShieldedInstanceConfig;
 import com.google.cloud.dataproc.v1.SoftwareConfig;
 import com.google.cloud.dataproc.v1.UpdateClusterRequest;
 import com.google.common.base.Strings;
@@ -364,6 +365,11 @@ final class DataprocClient implements AutoCloseable {
 
       GceClusterConfig.Builder clusterConfig = GceClusterConfig.newBuilder()
         .addServiceAccountScopes(DataprocConf.CLOUD_PLATFORM_SCOPE)
+        .setShieldedInstanceConfig(
+          ShieldedInstanceConfig.newBuilder()
+            .setEnableSecureBoot(conf.isSecureBootEnabled())
+            .setEnableVtpm(conf.isvTpmEnabled())
+            .setEnableIntegrityMonitoring(conf.isIntegrityMonitoringEnabled()).build())
         .putAllMetadata(metadata);
 
       if (conf.getServiceAccount() != null) {
