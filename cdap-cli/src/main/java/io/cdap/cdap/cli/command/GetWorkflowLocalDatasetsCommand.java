@@ -25,9 +25,9 @@ import io.cdap.cdap.cli.util.RowMaker;
 import io.cdap.cdap.cli.util.table.Table;
 import io.cdap.cdap.client.WorkflowClient;
 import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.proto.DatasetSpecificationSummary;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.cli.Arguments;
 

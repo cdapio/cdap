@@ -24,7 +24,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.lib.PartitionKey;
-import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.explore.service.ExploreException;
 import io.cdap.cdap.explore.service.MetaDataInfo;
 import io.cdap.cdap.proto.ColumnDesc;
@@ -33,6 +32,7 @@ import io.cdap.cdap.proto.QueryResult;
 import io.cdap.cdap.proto.QueryStatus;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 
 import java.io.IOException;
 import java.util.Iterator;

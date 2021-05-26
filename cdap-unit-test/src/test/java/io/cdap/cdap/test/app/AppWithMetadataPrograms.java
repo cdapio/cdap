@@ -28,8 +28,8 @@ import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import io.cdap.cdap.common.BadRequestException;
-import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.netty.handler.codec.http.HttpResponseStatus;
 

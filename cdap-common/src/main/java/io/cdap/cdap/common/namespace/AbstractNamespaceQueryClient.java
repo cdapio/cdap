@@ -18,9 +18,9 @@ package io.cdap.cdap.common.namespace;
 
 import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.common.NamespaceNotFoundException;
-import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;

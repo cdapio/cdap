@@ -22,8 +22,8 @@ import io.cdap.cdap.cli.ProgramIdArgument;
 import io.cdap.cdap.cli.util.ArgumentParser;
 import io.cdap.cdap.client.ServiceClient;
 import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.proto.id.ServiceId;
+import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.cli.completers.PrefixCompleter;
 
