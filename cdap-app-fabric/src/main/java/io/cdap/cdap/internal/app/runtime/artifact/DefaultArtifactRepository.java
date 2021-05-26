@@ -81,7 +81,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
 /**
@@ -93,7 +92,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
   private final ArtifactStore artifactStore;
   private final ArtifactRepositoryReader artifactRepositoryReader;
   private final ArtifactClassLoaderFactory artifactClassLoaderFactory;
-  private final ArtifactInspector artifactInspector;
+  private final DefaultArtifactInspector artifactInspector;
   private final Set<File> systemArtifactDirs;
   private final ArtifactConfigReader configReader;
   private final MetadataServiceClient metadataServiceClient;
@@ -109,7 +108,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     this.artifactStore = artifactStore;
     this.artifactRepositoryReader = artifactRepositoryReader;
     this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, programRunnerFactory);
-    this.artifactInspector = new ArtifactInspector(cConf, artifactClassLoaderFactory);
+    this.artifactInspector = new DefaultArtifactInspector(cConf, artifactClassLoaderFactory);
     this.systemArtifactDirs = new HashSet<>();
     String systemArtifactsDir = cConf.get(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR);
     if (!Strings.isNullOrEmpty(systemArtifactsDir)) {
@@ -253,7 +252,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
                                     @Nullable Set<ArtifactRange> parentArtifacts,
                                     @Nullable Set<PluginClass> additionalPlugins) throws Exception {
     return addArtifact(artifactId, artifactFile, parentArtifacts, additionalPlugins,
-                       Collections.<String, String>emptyMap());
+                       Collections.emptyMap());
   }
 
   @Override
@@ -484,16 +483,16 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     final List<ArtifactDetail> artifactDetails = artifactStore.getArtifacts(namespace);
 
     return Lists.transform(artifactDetails, new Function<ArtifactDetail, ArtifactInfo>() {
-        @Nullable
-        @Override
-        public ArtifactInfo apply(@Nullable ArtifactDetail input) {
-          // transform artifactDetail to artifactInfo
-          ArtifactId artifactId = input.getDescriptor().getArtifactId();
-          return new ArtifactInfo(artifactId.getName(), artifactId.getVersion().getVersion(), artifactId.getScope(),
-                                  input.getMeta().getClasses(), input.getMeta().getProperties(),
-                                  input.getMeta().getUsableBy());
-        }
-      });
+      @Nullable
+      @Override
+      public ArtifactInfo apply(@Nullable ArtifactDetail input) {
+        // transform artifactDetail to artifactInfo
+        ArtifactId artifactId = input.getDescriptor().getArtifactId();
+        return new ArtifactInfo(artifactId.getName(), artifactId.getVersion().getVersion(), artifactId.getScope(),
+                                input.getMeta().getClasses(), input.getMeta().getProperties(),
+                                input.getMeta().getUsableBy());
+      }
+    });
   }
 
   private void addSystemArtifact(SystemArtifactInfo systemArtifactInfo) throws Exception {
@@ -541,10 +540,10 @@ public class DefaultArtifactRepository implements ArtifactRepository {
       return artifact;
     } else {
       ArtifactClasses newArtifactClasses = ArtifactClasses.builder()
-                                             .addApps(artifact.getArtifactClasses().getApps())
-                                             .addPlugins(artifact.getArtifactClasses().getPlugins())
-                                             .addPlugins(additionalPlugins)
-                                             .build();
+        .addApps(artifact.getArtifactClasses().getApps())
+        .addPlugins(artifact.getArtifactClasses().getPlugins())
+        .addPlugins(additionalPlugins)
+        .build();
       return new ArtifactClassesWithMetadata(newArtifactClasses, artifact.getMutations());
     }
   }

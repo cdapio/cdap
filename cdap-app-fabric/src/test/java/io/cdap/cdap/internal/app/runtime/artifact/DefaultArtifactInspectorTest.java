@@ -59,13 +59,14 @@ import java.util.Set;
 import java.util.jar.Manifest;
 
 /**
+ *
  */
-public class ArtifactInspectorTest {
+public class DefaultArtifactInspectorTest {
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   private static ArtifactClassLoaderFactory classLoaderFactory;
-  private static ArtifactInspector artifactInspector;
+  private static DefaultArtifactInspector artifactInspector;
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -73,7 +74,7 @@ public class ArtifactInspectorTest {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
 
     classLoaderFactory = new ArtifactClassLoaderFactory(cConf, new DummyProgramRunnerFactory());
-    artifactInspector = new ArtifactInspector(cConf, classLoaderFactory);
+    artifactInspector = new DefaultArtifactInspector(cConf, classLoaderFactory);
   }
 
   @Test(expected = InvalidArtifactException.class)
@@ -201,9 +202,9 @@ public class ArtifactInspectorTest {
       );
 
       PluginClass expected = PluginClass.builder()
-                               .setName("nested").setType("dummy").setDescription("Nested config")
-                               .setClassName(NestedConfigPlugin.class.getName()).setConfigFieldName("config")
-                               .setProperties(expectedFields).build();
+        .setName("nested").setType("dummy").setDescription("Nested config")
+        .setClassName(NestedConfigPlugin.class.getName()).setConfigFieldName("config")
+        .setProperties(expectedFields).build();
 
       Assert.assertEquals(Collections.singleton(expected), plugins);
     }
@@ -232,25 +233,25 @@ public class ArtifactInspectorTest {
 
   @Test
   public void testGetClassNameCheckPredicate() {
-    Assert.assertTrue(ArtifactInspector.getClassNameCheckPredicate(ImmutableList.of(
+    Assert.assertTrue(DefaultArtifactInspector.getClassNameCheckPredicate(ImmutableList.of(
       "my.package"
     )).test("my/package/my.class"));
-    Assert.assertTrue(ArtifactInspector.getClassNameCheckPredicate(ImmutableList.of(
+    Assert.assertTrue(DefaultArtifactInspector.getClassNameCheckPredicate(ImmutableList.of(
       "blah", "my.package", "blah2"
     )).test("my/package/my.class"));
-    Assert.assertTrue(ArtifactInspector.getClassNameCheckPredicate(ImmutableList.of(
+    Assert.assertTrue(DefaultArtifactInspector.getClassNameCheckPredicate(ImmutableList.of(
       "my.package", "my.package.subpackage"
     )).test("my/package/subpackage/my.class"));
-    Assert.assertFalse(ArtifactInspector.getClassNameCheckPredicate(ImmutableList.of(
+    Assert.assertFalse(DefaultArtifactInspector.getClassNameCheckPredicate(ImmutableList.of(
       "my.package"
     )).test("my/package/subpackage/my.class"));
-    Assert.assertFalse(ArtifactInspector.getClassNameCheckPredicate(ImmutableList.of(
+    Assert.assertFalse(DefaultArtifactInspector.getClassNameCheckPredicate(ImmutableList.of(
       "my.package"
     )).test("prefix/my/package/my.class"));
-    Assert.assertFalse(ArtifactInspector.getClassNameCheckPredicate(ImmutableList.of(
+    Assert.assertFalse(DefaultArtifactInspector.getClassNameCheckPredicate(ImmutableList.of(
       "my.package"
     )).test("prefix/my/package/my.notclass"));
-    Assert.assertFalse(ArtifactInspector.getClassNameCheckPredicate(ImmutableList.of(
+    Assert.assertFalse(DefaultArtifactInspector.getClassNameCheckPredicate(ImmutableList.of(
       "my.package"
     )).test("prefix/my/package/my.class/some.class"));
   }
@@ -263,7 +264,7 @@ public class ArtifactInspectorTest {
 
   private static File createJar(Class<?> cls, File destFile, Manifest manifest) throws IOException {
     Location deploymentJar = AppJarHelper.createDeploymentJar(new LocalLocationFactory(TMP_FOLDER.newFolder()),
-      cls, manifest);
+                                                              cls, manifest);
     DirUtils.mkdirs(destFile.getParentFile());
     Locations.linkOrCopyOverwrite(deploymentJar, destFile);
     return destFile;

@@ -99,15 +99,15 @@ import javax.annotation.Nullable;
 /**
  * Inspects a jar file to determine metadata about the artifact.
  */
-final class ArtifactInspector {
-  private static final Logger LOG = LoggerFactory.getLogger(ArtifactInspector.class);
+final class DefaultArtifactInspector {
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultArtifactInspector.class);
 
   private final CConfiguration cConf;
   private final ArtifactClassLoaderFactory artifactClassLoaderFactory;
   private final ReflectionSchemaGenerator schemaGenerator;
   private final MetadataValidator metadataValidator;
 
-  ArtifactInspector(CConfiguration cConf, ArtifactClassLoaderFactory artifactClassLoaderFactory) {
+  DefaultArtifactInspector(CConfiguration cConf, ArtifactClassLoaderFactory artifactClassLoaderFactory) {
     this.cConf = cConf;
     this.artifactClassLoaderFactory = artifactClassLoaderFactory;
     this.schemaGenerator = new ReflectionSchemaGenerator(false);
@@ -120,12 +120,12 @@ final class ArtifactInspector {
    * @param artifactId the id of the artifact to inspect
    * @param artifactFile the artifact file
    * @param parentClassLoader the parent classloader to use when inspecting plugins contained in the artifact.
-   *                          For example, a ProgramClassLoader created from the artifact the input artifact extends
+   * For example, a ProgramClassLoader created from the artifact the input artifact extends
    * @param additionalPlugins Additional plugin classes
    * @return metadata about the classes contained in the artifact
    * @throws IOException if there was an exception opening the jar file
    * @throws InvalidArtifactException if the artifact is invalid. For example, if the application main class is not
-   *                                  actually an Application.
+   * actually an Application.
    */
   ArtifactClassesWithMetadata inspectArtifact(Id.Artifact artifactId, File artifactFile,
                                               @Nullable ClassLoader parentClassLoader,
@@ -138,8 +138,9 @@ final class ArtifactInspector {
 
     Path stageDir = Files.createTempDirectory(tmpDir, artifactFile.getName());
     try {
-      File unpackedDir = BundleJarUtil.prepareClassLoaderFolder(artifactLocation,
-                                             Files.createTempDirectory(stageDir, "unpacked-").toFile());
+      File unpackedDir = BundleJarUtil.prepareClassLoaderFolder(
+        artifactLocation,
+        Files.createTempDirectory(stageDir, "unpacked-").toFile());
       try (
         CloseableClassLoader artifactClassLoader = artifactClassLoaderFactory.createClassLoader(unpackedDir);
         PluginInstantiator pluginInstantiator =
@@ -169,7 +170,7 @@ final class ArtifactInspector {
                                                       ArtifactClasses.Builder builder,
                                                       Location artifactLocation,
                                                       ClassLoader artifactClassLoader) throws IOException,
-                                                                                              InvalidArtifactException {
+    InvalidArtifactException {
 
     // right now we force users to include the application main class as an attribute in their manifest,
     // which forces them to have a single application class.
@@ -352,6 +353,7 @@ final class ArtifactInspector {
   /**
    * Given list of packages produces a predicate that can check if a given jar file name is a class within
    * one of the packages (but not subpackages).
+   *
    * @param packages list to packages class must belong to
    * @return a predicate that would tell if class file belong to one of package names
    */
@@ -384,7 +386,6 @@ final class ArtifactInspector {
    * The requirements are case insensitive and always represented in lowercase.
    *
    * @param cls the plugin class whose requirement needs to be found
-   *
    * @return {@link Requirements} containing the requirements specified by the plugin (in lowercase). If the plugin does
    * not specify any {@link io.cdap.cdap.api.annotation.Requirements} then the {@link Requirements} will be empty.
    */
