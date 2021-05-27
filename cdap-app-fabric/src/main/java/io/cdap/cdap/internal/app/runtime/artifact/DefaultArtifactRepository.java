@@ -92,7 +92,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
   private final ArtifactStore artifactStore;
   private final ArtifactRepositoryReader artifactRepositoryReader;
   private final ArtifactClassLoaderFactory artifactClassLoaderFactory;
-  private final DefaultArtifactInspector artifactInspector;
+  private final ArtifactInspector artifactInspector;
   private final Set<File> systemArtifactDirs;
   private final ArtifactConfigReader configReader;
   private final MetadataServiceClient metadataServiceClient;
