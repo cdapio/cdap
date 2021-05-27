@@ -17,30 +17,27 @@
 
 package io.cdap.cdap.etl.proto.connection;
 
-import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
+import io.cdap.cdap.api.data.schema.Schema;
 
-import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * Plugin information inside a connection
+ * Response for the spec endpoint. The schema and properties are set on each available plugins.
+ * This looks duplicated but it is our standard way on representing a plugin.
+ * Detail information about a connector, contains all the plugins related to the connector and their versions.
  */
-public class PluginInfo extends PluginMeta {
+public class ConnectorDetail {
+  private final Set<PluginDetail> relatedPlugins;
 
-  private final String category;
-
-  public PluginInfo(String name, String type, @Nullable String category, Map<String, String> properties,
-                    ArtifactSelectorConfig artifact) {
-    super(name, type, properties, artifact);
-    this.category = category;
+  public ConnectorDetail(Set<PluginDetail> relatedPlugins) {
+    this.relatedPlugins = relatedPlugins;
   }
 
-  @Nullable
-  public String getCategory() {
-    return category;
+  public Set<PluginDetail> getRelatedPlugins() {
+    return relatedPlugins;
   }
-
 
   @Override
   public boolean equals(Object o) {
@@ -52,16 +49,12 @@ public class PluginInfo extends PluginMeta {
       return false;
     }
 
-    if (!super.equals(o)) {
-      return false;
-    }
-
-    PluginInfo that = (PluginInfo) o;
-    return Objects.equals(category, that.category);
+    ConnectorDetail that = (ConnectorDetail) o;
+    return Objects.equals(relatedPlugins, that.relatedPlugins);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), category);
+    return Objects.hash(relatedPlugins);
   }
 }

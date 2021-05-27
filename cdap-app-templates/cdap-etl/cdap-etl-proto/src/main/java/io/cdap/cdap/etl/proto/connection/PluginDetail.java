@@ -17,41 +17,28 @@
 
 package io.cdap.cdap.etl.proto.connection;
 
-import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.cdap.etl.api.connector.ConnectorSpec;
+import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 
-import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
- * Response for a sample request
+ * Plugin detail
  */
-public class SampleResponse {
-  private final ConnectorDetail detail;
-  // schema for the sample, this is a separate field since we don't want to serialize each record with schema.
-  // if the sample is empty, schema is null
+public class PluginDetail extends PluginMeta {
   private final Schema schema;
-  private final List<StructuredRecord> sample;
 
-  public SampleResponse(ConnectorDetail connectorDetail, @Nullable Schema schema, List<StructuredRecord> sample) {
-    this.detail = connectorDetail;
+  public PluginDetail(String name, String type, Map<String, String> properties, ArtifactSelectorConfig artifact,
+                      @Nullable Schema schema) {
+    super(name, type, properties, artifact);
     this.schema = schema;
-    this.sample = sample;
-  }
-
-  public ConnectorDetail getDetail() {
-    return detail;
   }
 
   @Nullable
   public Schema getSchema() {
     return schema;
-  }
-
-  public List<StructuredRecord> getSample() {
-    return sample;
   }
 
   @Override
@@ -64,14 +51,16 @@ public class SampleResponse {
       return false;
     }
 
-    SampleResponse that = (SampleResponse) o;
-    return Objects.equals(detail, that.detail) &&
-             Objects.equals(schema, that.schema) &&
-             Objects.equals(sample, that.sample);
+    if (!super.equals(o)) {
+      return false;
+    }
+
+    PluginDetail that = (PluginDetail) o;
+    return Objects.equals(schema, that.schema);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(detail, schema, sample);
+    return Objects.hash(super.hashCode(), schema);
   }
 }

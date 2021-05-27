@@ -109,7 +109,7 @@ public class LimitingConnector implements DirectConnector {
   }
 
   @Override
-  public ConnectorSpec generateSpec(ConnectorSpecRequest connectorSpecRequest) {
+  public ConnectorSpec generateSpec(ConnectorSpecRequest connectorSpecRequest) throws IOException {
     return batchConnector.generateSpec(connectorSpecRequest);
   }
 

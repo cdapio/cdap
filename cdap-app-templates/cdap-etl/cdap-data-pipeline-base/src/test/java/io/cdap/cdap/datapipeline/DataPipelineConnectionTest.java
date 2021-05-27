@@ -18,6 +18,7 @@
 package io.cdap.cdap.datapipeline;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -35,7 +36,6 @@ import io.cdap.cdap.etl.api.connector.BrowseDetail;
 import io.cdap.cdap.etl.api.connector.BrowseEntity;
 import io.cdap.cdap.etl.api.connector.BrowseRequest;
 import io.cdap.cdap.etl.api.connector.Connector;
-import io.cdap.cdap.etl.api.connector.ConnectorSpec;
 import io.cdap.cdap.etl.api.connector.SampleRequest;
 import io.cdap.cdap.etl.mock.batch.MockSink;
 import io.cdap.cdap.etl.mock.batch.MockSource;
@@ -44,6 +44,8 @@ import io.cdap.cdap.etl.mock.test.HydratorTestBase;
 import io.cdap.cdap.etl.mock.transform.IdentityTransform;
 import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 import io.cdap.cdap.etl.proto.connection.ConnectionCreationRequest;
+import io.cdap.cdap.etl.proto.connection.ConnectorDetail;
+import io.cdap.cdap.etl.proto.connection.PluginDetail;
 import io.cdap.cdap.etl.proto.connection.PluginInfo;
 import io.cdap.cdap.etl.proto.connection.SampleResponse;
 import io.cdap.cdap.etl.proto.connection.SampleResponseCodec;
@@ -84,6 +86,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -192,10 +195,16 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     for (int i = 0; i < 100; i++) {
       records.add(StructuredRecord.builder(schema).set("offset", i * 2L).set("body", "1").build());
     }
-    ConnectorSpec spec = ConnectorSpec.builder().addProperty("path", entities.get(1).getPath())
-                           .addProperty("useConnection", "true")
-                           .addProperty("connection", String.format("${conn(%s)}", conn)).build();
-    SampleResponse expectedSample = new SampleResponse(spec, schema, records);
+    ArtifactSelectorConfig artifact = new ArtifactSelectorConfig(APP_ARTIFACT_ID.getNamespace(),
+                                                                 APP_ARTIFACT_ID.getArtifact(),
+                                                                 APP_ARTIFACT_ID.getVersion());
+    Map<String, String> properties = ImmutableMap.of("path", entities.get(1).getPath(),
+                                                     "useConnection", "true",
+                                                     "connection", String.format("${conn(%s)}", conn));
+    ConnectorDetail detail = new ConnectorDetail(
+      ImmutableSet.of(new PluginDetail("file", "batchsource", properties, artifact, schema),
+                      new PluginDetail("file", "streamingsource", properties, artifact, schema)));
+    SampleResponse expectedSample = new SampleResponse(detail, schema, records);
 
     // sample the file, the file has 100 lines, so 200 should retrieve all lines
     SampleResponse sampleResponse = sampleConnection(conn, entities.get(1).getPath(), 200);
@@ -207,7 +216,7 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
 
     // sample 50, should only get 50
     sampleResponse = sampleConnection(conn, entities.get(1).getPath(), 50);
-    expectedSample = new SampleResponse(spec, schema, records.subList(0, 50));
+    expectedSample = new SampleResponse(detail, schema, records.subList(0, 50));
     Assert.assertEquals(expectedSample, sampleResponse);
 
     deleteConnection(conn);

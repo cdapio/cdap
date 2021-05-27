@@ -28,7 +28,6 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.cdap.etl.api.connector.ConnectorSpec;
 import io.cdap.cdap.format.StructuredRecordStringConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +37,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Codec to serialize/deserialize sample response
@@ -49,11 +49,11 @@ public class SampleResponseCodec implements JsonSerializer<SampleResponse>, Json
   public SampleResponse deserialize(JsonElement json, Type typeOfT,
                                     JsonDeserializationContext context) throws JsonParseException {
     JsonObject jsonObj = json.getAsJsonObject();
-    ConnectorSpec spec = context.deserialize(jsonObj.get("spec"), ConnectorSpec.class);
+    ConnectorDetail detail = context.deserialize(jsonObj.get("detail"), ConnectorDetail.class);
     JsonElement schemaJson = jsonObj.get("schema");
     Schema schema = schemaJson == null ? null : context.deserialize(schemaJson, Schema.class);
     if (schema == null) {
-      return new SampleResponse(spec, schema, Collections.emptyList());
+      return new SampleResponse(detail, schema, Collections.emptyList());
     }
 
     JsonArray jsonArray = jsonObj.get("sample").getAsJsonArray();
@@ -67,13 +67,13 @@ public class SampleResponseCodec implements JsonSerializer<SampleResponse>, Json
         LOG.warn("Error converting the json string {} to StructuredRecord", recordString, e);
       }
     });
-    return new SampleResponse(spec, schema, sample);
+    return new SampleResponse(detail, schema, sample);
   }
 
   @Override
   public JsonElement serialize(SampleResponse sample, Type typeOfSrc, JsonSerializationContext context) {
     JsonObject jsonObj = new JsonObject();
-    jsonObj.add("spec", context.serialize(sample.getSpec(), ConnectorSpec.class));
+    jsonObj.add("detail", context.serialize(sample.getDetail(), ConnectorDetail.class));
     jsonObj.add("schema", context.serialize(sample.getSchema(), Schema.class));
     JsonArray sampleArray = new JsonArray();
     sample.getSample().forEach(record -> {

@@ -20,11 +20,12 @@ package io.cdap.cdap.etl.proto.connection;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.cdap.etl.api.connector.ConnectorSpec;
+import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import org.junit.Assert;
 import org.junit.Test;
@@ -49,8 +50,9 @@ public class SampleResponseCodecTest {
   @Test
   public void testEmptySample() throws Exception {
     SampleResponse sampleResponse = new SampleResponse(
-      ConnectorSpec.builder().setProperties(ImmutableMap.of("k1", "v1", "k2", "v2")).build(), null,
-      Collections.emptyList());
+      new ConnectorDetail(ImmutableSet.of(
+        new PluginDetail("file", "batchsource", ImmutableMap.of("k1", "v1", "k2", "v2"), new ArtifactSelectorConfig(),
+                         null))), null, Collections.emptyList());
     String jsonString = GSON.toJson(sampleResponse);
     SampleResponse deserialized = GSON.fromJson(jsonString, SampleResponse.class);
     Assert.assertEquals(sampleResponse, deserialized);
@@ -120,7 +122,9 @@ public class SampleResponseCodecTest {
         .build();
     List<StructuredRecord> sample = ImmutableList.of(record1, record2);
     SampleResponse sampleResponse = new SampleResponse(
-      ConnectorSpec.builder().setProperties(ImmutableMap.of("k1", "v1", "k2", "v2")).build(), schema, sample);
+      new ConnectorDetail(ImmutableSet.of(new PluginDetail("file", "batchsource",
+                                                           ImmutableMap.of("k1", "v1", "k2", "v2"),
+                                                           new ArtifactSelectorConfig(), schema))), schema, sample);
     String jsonString = GSON.toJson(sampleResponse);
     SampleResponse deserialized = GSON.fromJson(jsonString, SampleResponse.class);
     Assert.assertEquals(sampleResponse, deserialized);

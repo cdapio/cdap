@@ -15,32 +15,36 @@
  *
  */
 
-package io.cdap.cdap.etl.proto.connection;
-
-import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
+package io.cdap.cdap.etl.api.connector;
 
 import java.util.Map;
 import java.util.Objects;
-import javax.annotation.Nullable;
 
 /**
- * Plugin information inside a connection
+ * Plugin spec on what plugins are related to the connector
  */
-public class PluginInfo extends PluginMeta {
+public class PluginSpec {
+  private final String name;
+  private final String type;
+  private final Map<String, String> properties;
 
-  private final String category;
-
-  public PluginInfo(String name, String type, @Nullable String category, Map<String, String> properties,
-                    ArtifactSelectorConfig artifact) {
-    super(name, type, properties, artifact);
-    this.category = category;
+  public PluginSpec(String name, String type, Map<String, String> properties) {
+    this.name = name;
+    this.type = type;
+    this.properties = properties;
   }
 
-  @Nullable
-  public String getCategory() {
-    return category;
+  public String getName() {
+    return name;
   }
 
+  public String getType() {
+    return type;
+  }
+
+  public Map<String, String> getProperties() {
+    return properties;
+  }
 
   @Override
   public boolean equals(Object o) {
@@ -52,16 +56,14 @@ public class PluginInfo extends PluginMeta {
       return false;
     }
 
-    if (!super.equals(o)) {
-      return false;
-    }
-
-    PluginInfo that = (PluginInfo) o;
-    return Objects.equals(category, that.category);
+    PluginSpec that = (PluginSpec) o;
+    return Objects.equals(name, that.name) &&
+             Objects.equals(type, that.type) &&
+             Objects.equals(properties, that.properties);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), category);
+    return Objects.hash(name, type, properties);
   }
 }

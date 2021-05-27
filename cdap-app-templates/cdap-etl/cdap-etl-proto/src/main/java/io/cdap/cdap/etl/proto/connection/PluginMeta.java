@@ -21,26 +21,38 @@ import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 
 import java.util.Map;
 import java.util.Objects;
-import javax.annotation.Nullable;
 
 /**
- * Plugin information inside a connection
+ * Plugin metadata information
  */
-public class PluginInfo extends PluginMeta {
+public class PluginMeta {
+  private final String name;
+  private final String type;
+  private final Map<String, String> properties;
+  private final ArtifactSelectorConfig artifact;
 
-  private final String category;
-
-  public PluginInfo(String name, String type, @Nullable String category, Map<String, String> properties,
-                    ArtifactSelectorConfig artifact) {
-    super(name, type, properties, artifact);
-    this.category = category;
+  public PluginMeta(String name, String type, Map<String, String> properties, ArtifactSelectorConfig artifact) {
+    this.name = name;
+    this.type = type;
+    this.properties = properties;
+    this.artifact = artifact;
   }
 
-  @Nullable
-  public String getCategory() {
-    return category;
+  public String getName() {
+    return name;
   }
 
+  public String getType() {
+    return type;
+  }
+
+  public Map<String, String> getProperties() {
+    return properties;
+  }
+
+  public ArtifactSelectorConfig getArtifact() {
+    return artifact;
+  }
 
   @Override
   public boolean equals(Object o) {
@@ -52,16 +64,15 @@ public class PluginInfo extends PluginMeta {
       return false;
     }
 
-    if (!super.equals(o)) {
-      return false;
-    }
-
-    PluginInfo that = (PluginInfo) o;
-    return Objects.equals(category, that.category);
+    PluginMeta that = (PluginMeta) o;
+    return Objects.equals(name, that.name) &&
+             Objects.equals(type, that.type) &&
+             Objects.equals(properties, that.properties) &&
+             Objects.equals(artifact, that.artifact);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), category);
+    return Objects.hash(name, type,  properties, artifact);
   }
 }
