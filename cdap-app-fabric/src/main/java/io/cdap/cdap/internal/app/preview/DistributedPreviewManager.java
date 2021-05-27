@@ -169,7 +169,8 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
             int diskSize = cConf.getInt(Constants.Preview.CONTAINER_DISK_SIZE_GB);
             twillPreparer = ((StatefulTwillPreparer) twillPreparer)
               .withStatefulRunnable(PreviewRunnerTwillRunnable.class.getSimpleName(), false,
-                                    new StatefulDisk("preview-runner-data", diskSize, "/data"));
+                                    new StatefulDisk("preview-runner-data", diskSize,
+                                                     cConf.get(Constants.CFG_LOCAL_DATA_DIR)));
           }
 
           activeController = twillPreparer.start(5, TimeUnit.MINUTES);
