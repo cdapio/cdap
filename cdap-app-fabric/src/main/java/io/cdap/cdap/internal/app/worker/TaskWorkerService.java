@@ -85,8 +85,8 @@ public class TaskWorkerService extends AbstractIdleService {
   @Override
   protected void shutDown() throws Exception {
     LOG.info("Shutting down TaskWorkerService");
+    httpService.stop(1, 2, TimeUnit.SECONDS);
     cancelDiscovery.cancel();
-    httpService.stop(5, 5, TimeUnit.SECONDS);
     LOG.debug("Shutting down TaskWorkerService has completed");
   }
 
