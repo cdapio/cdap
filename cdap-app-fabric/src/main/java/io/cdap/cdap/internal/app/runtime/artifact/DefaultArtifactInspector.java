@@ -99,7 +99,7 @@ import javax.annotation.Nullable;
 /**
  * Inspects a jar file to determine metadata about the artifact.
  */
-final class DefaultArtifactInspector {
+final class DefaultArtifactInspector implements ArtifactInspector {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultArtifactInspector.class);
 
   private final CConfiguration cConf;
@@ -127,9 +127,10 @@ final class DefaultArtifactInspector {
    * @throws InvalidArtifactException if the artifact is invalid. For example, if the application main class is not
    * actually an Application.
    */
-  ArtifactClassesWithMetadata inspectArtifact(Id.Artifact artifactId, File artifactFile,
-                                              @Nullable ClassLoader parentClassLoader,
-                                              Set<PluginClass> additionalPlugins)
+  @Override
+  public ArtifactClassesWithMetadata inspectArtifact(Id.Artifact artifactId, File artifactFile,
+                                                     @Nullable ClassLoader parentClassLoader,
+                                                     Set<PluginClass> additionalPlugins)
     throws IOException, InvalidArtifactException {
     Path tmpDir = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                             cConf.get(Constants.AppFabric.TEMP_DIR)).toAbsolutePath();
