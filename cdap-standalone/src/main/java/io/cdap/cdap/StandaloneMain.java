@@ -417,8 +417,8 @@ public class StandaloneMain {
    */
   @SuppressWarnings("unused")
   public static void doMain(String[] args) {
-    StandaloneMain main = create(CConfiguration.create(), new Configuration());
     try {
+      StandaloneMain main = create(CConfiguration.create(), new Configuration());
       if (args.length > 0) {
         System.out.printf("%s takes no arguments\n", StandaloneMain.class.getSimpleName());
         System.out.println("These arguments are being ignored:");
