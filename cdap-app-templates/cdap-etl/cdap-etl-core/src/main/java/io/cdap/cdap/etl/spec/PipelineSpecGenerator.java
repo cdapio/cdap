@@ -713,6 +713,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       stopNodes.add(currentCondition);
       Set<String> parents = dag.parentsOf(currentStage, stopNodes);
       parents.retainAll(dag.getSources());
+      parents.remove(currentCondition);
       if (parents.size() > 0) {
         String paths = "";
         for (String parent : parents) {
