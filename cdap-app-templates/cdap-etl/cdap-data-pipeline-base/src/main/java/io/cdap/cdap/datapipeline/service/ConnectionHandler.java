@@ -42,6 +42,8 @@ import io.cdap.cdap.etl.proto.connection.Connection;
 import io.cdap.cdap.etl.proto.connection.ConnectionBadRequestException;
 import io.cdap.cdap.etl.proto.connection.ConnectionCreationRequest;
 import io.cdap.cdap.etl.proto.connection.ConnectionId;
+import io.cdap.cdap.etl.proto.connection.ConnectorDetail;
+import io.cdap.cdap.etl.proto.connection.PluginDetail;
 import io.cdap.cdap.etl.proto.connection.PluginInfo;
 import io.cdap.cdap.etl.proto.connection.SampleResponse;
 import io.cdap.cdap.etl.proto.connection.SampleResponseCodec;
@@ -53,8 +55,10 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -269,24 +273,27 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
       PluginConfigurer pluginConfigurer = getContext().createPluginConfigurer(namespaceSummary.getName());
       Connection conn = store.getConnection(new ConnectionId(namespaceSummary, connection));
 
-      try (Connector connector = getConnector(pluginConfigurer, conn.getPlugin())) {
+      PluginInfo plugin = conn.getPlugin();
+      try (Connector connector = getConnector(pluginConfigurer, plugin)) {
         connector.configure(pluginConfigurer);
         ConnectorSpecRequest specRequest = ConnectorSpecRequest.builder().setPath(sampleRequest.getPath())
                                              .setConnection(connection)
                                              .setProperties(sampleRequest.getProperties()).build();
         ConnectorSpec spec = connector.generateSpec(specRequest);
+        ConnectorDetail detail = getConnectorDetail(plugin, spec);
+
         if (connector instanceof DirectConnector) {
           DirectConnector directConnector = (DirectConnector) connector;
           List<StructuredRecord> sample = directConnector.sample(sampleRequest);
           responder.sendString(GSON.toJson(
-            new SampleResponse(spec, sample.isEmpty() ? null : sample.get(0).getSchema(), sample)));
+            new SampleResponse(detail, sample.isEmpty() ? null : sample.get(0).getSchema(), sample)));
           return;
         }
         if (connector instanceof BatchConnector) {
           LimitingConnector limitingConnector = new LimitingConnector((BatchConnector) connector);
           List<StructuredRecord> sample = limitingConnector.sample(sampleRequest);
           responder.sendString(GSON.toJson(
-            new SampleResponse(spec, sample.isEmpty() ? null : sample.get(0).getSchema(), sample)));
+            new SampleResponse(detail, sample.isEmpty() ? null : sample.get(0).getSchema(), sample)));
           return;
         }
         // should not happen
@@ -333,9 +340,18 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
         ConnectorSpecRequest connectorSpecRequest = ConnectorSpecRequest.builder().setPath(specRequest.getPath())
                                                       .setConnection(connection)
                                                       .setProperties(specRequest.getProperties()).build();
-        responder.sendJson(connector.generateSpec(connectorSpecRequest));
+        ConnectorSpec spec = connector.generateSpec(connectorSpecRequest);
+        responder.sendString(GSON.toJson(getConnectorDetail(conn.getPlugin(), spec)));
       }
     });
+  }
+
+  private ConnectorDetail getConnectorDetail(PluginInfo plugin, ConnectorSpec spec) {
+    Set<PluginDetail> relatedPlugins = new HashSet<>();
+    spec.getRelatedPlugins().forEach(pluginSpec -> relatedPlugins.add(
+      new PluginDetail(pluginSpec.getName(), pluginSpec.getType(), pluginSpec.getProperties(), plugin.getArtifact(),
+                       spec.getSchema())));
+    return new ConnectorDetail(relatedPlugins);
   }
 
   private Connector getConnector(PluginConfigurer configurer, PluginInfo pluginInfo) {

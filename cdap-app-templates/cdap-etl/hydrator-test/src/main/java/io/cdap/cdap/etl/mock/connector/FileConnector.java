@@ -17,6 +17,7 @@
 
 package io.cdap.cdap.etl.mock.connector;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
@@ -31,6 +32,7 @@ import io.cdap.cdap.etl.api.connector.BrowseRequest;
 import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.cdap.etl.api.connector.ConnectorSpec;
 import io.cdap.cdap.etl.api.connector.ConnectorSpecRequest;
+import io.cdap.cdap.etl.api.connector.PluginSpec;
 import io.cdap.cdap.etl.api.connector.SampleRequest;
 import io.cdap.cdap.etl.api.validation.ValidationException;
 import org.apache.hadoop.fs.Path;
@@ -125,9 +127,13 @@ public class FileConnector implements BatchConnector<LongWritable, Text> {
 
   @Override
   public ConnectorSpec generateSpec(ConnectorSpecRequest connectorSpecRequest) {
-    return ConnectorSpec.builder().addProperty("path", connectorSpecRequest.getPath())
-             .addProperty("useConnection", "true")
-             .addProperty("connection", connectorSpecRequest.getConnectionWithMacro())
+    Map<String, String> properties = ImmutableMap.of("path", connectorSpecRequest.getPath(),
+                                                     "useConnection", "true",
+                                                     "connection", connectorSpecRequest.getConnectionWithMacro());
+    return ConnectorSpec.builder()
+             .setSchema(DEFAULT_SCHEMA)
+             .addRelatedPlugin(new PluginSpec("file", "batchsource", properties))
+             .addRelatedPlugin(new PluginSpec("file", "streamingsource", properties))
              .build();
   }
 

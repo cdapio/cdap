@@ -17,22 +17,33 @@
 
 package io.cdap.cdap.etl.api.connector;
 
-import java.util.HashMap;
-import java.util.Map;
+import io.cdap.cdap.api.data.schema.Schema;
+
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * The connector spec contains all the properties based on the path and plugin config
  */
 public class ConnectorSpec {
-  private final Map<String, String> properties;
+  // schema is null when the connector is unable to retrieve it from the resource
+  private final Schema schema;
+  private final Set<PluginSpec> relatedPlugins;
 
-  private ConnectorSpec(Map<String, String> properties) {
-    this.properties = properties;
+  private ConnectorSpec(@Nullable Schema schema, Set<PluginSpec> relatedPlugins) {
+    this.schema = schema;
+    this.relatedPlugins = relatedPlugins;
   }
 
-  public Map<String, String> getProperties() {
-    return properties;
+  @Nullable
+  public Schema getSchema() {
+    return schema;
+  }
+
+  public Set<PluginSpec> getRelatedPlugins() {
+    return relatedPlugins;
   }
 
   @Override
@@ -40,17 +51,19 @@ public class ConnectorSpec {
     if (this == o) {
       return true;
     }
+
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
 
     ConnectorSpec that = (ConnectorSpec) o;
-    return Objects.equals(properties, that.properties);
+    return Objects.equals(schema, that.schema) &&
+             Objects.equals(relatedPlugins, that.relatedPlugins);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(properties);
+    return Objects.hash(schema, relatedPlugins);
   }
 
   /**
@@ -64,30 +77,31 @@ public class ConnectorSpec {
    * Builder for {@link BrowseEntityProperty}
    */
   public static class Builder {
-    private Map<String, String> properties;
+    private Schema schema;
+    private Set<PluginSpec> relatedPlugins;
 
     public Builder() {
-      this.properties = new HashMap<>();
+      this.relatedPlugins = new HashSet<>();
     }
 
-    public Builder setProperties(Map<String, String> properties) {
-      this.properties.clear();
-      this.properties.putAll(properties);
+    public Builder setSchema(@Nullable Schema schema) {
+      this.schema = schema;
       return this;
     }
 
-    public Builder addProperty(String key, String value) {
-      this.properties.put(key, value);
+    public Builder setRelatedPlugins(Set<PluginSpec> relatedPlugins) {
+      this.relatedPlugins.clear();
+      this.relatedPlugins.addAll(relatedPlugins);
       return this;
     }
 
-    public Builder addProperties(Map<String, String> properties) {
-      this.properties.putAll(properties);
+    public Builder addRelatedPlugin(PluginSpec relatedPlugin) {
+      this.relatedPlugins.add(relatedPlugin);
       return this;
     }
 
     public ConnectorSpec build() {
-      return new ConnectorSpec(properties);
+      return new ConnectorSpec(schema, relatedPlugins);
     }
   }
 }
