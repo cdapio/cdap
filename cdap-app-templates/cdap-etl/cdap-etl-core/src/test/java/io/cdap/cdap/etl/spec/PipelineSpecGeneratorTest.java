@@ -1030,6 +1030,32 @@ public class PipelineSpecGeneratorTest {
   }
 
   @Test
+  public void testSourceConditionWithMultipleInputStepWithinBranch() {
+    //
+    //  condition1-----source-----condition2------t1-------sink
+    //                                 |                    |
+    //                                 |----------t2---------
+    //
+
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
+      .addStage(new ETLStage("condition1", MOCK_CONDITION))
+      .addStage(new ETLStage("source", MOCK_SOURCE))
+      .addStage(new ETLStage("condition2", MOCK_CONDITION))
+      .addStage(new ETLStage("t1", MOCK_TRANSFORM_A))
+      .addStage(new ETLStage("t2", MOCK_TRANSFORM_A))
+      .addStage(new ETLStage("sink", MOCK_SINK))
+      .addConnection("condition1", "source", true)
+      .addConnection("source", "condition2")
+      .addConnection("condition2", "t1", true)
+      .addConnection("condition2", "t2", false)
+      .addConnection("t1", "sink")
+      .addConnection("t2", "sink")
+      .build();
+    specGenerator.generateSpec(etlConfig);
+  }
+
+  @Test
   public void testSimpleValidCondition() throws ValidationException {
 
     //  source--condition-----t1-----sink
