@@ -35,7 +35,7 @@ public class RunnableTaskLauncherTest {
     RunnableTaskRequest request = new RunnableTaskRequest(TestRunnableTask.class.getName(), want);
 
     RunnableTaskLauncher launcher = new RunnableTaskLauncher(CConfiguration.create());
-    byte[] got = launcher.launchRunnableTask(request);
+    byte[] got = launcher.launchRunnableTask(request, null);
     Assert.assertEquals(want, new String(got, StandardCharsets.UTF_8));
   }
 

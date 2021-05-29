@@ -20,6 +20,9 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.internal.worker.RunnableTask;
 import io.cdap.cdap.common.internal.worker.RunnableTaskContext;
 
+import java.net.URI;
+import javax.annotation.Nullable;
+
 /**
  * RunnableTaskLauncher launches a {@link RunnableTask} by loading its class and calling its run method.
  */
@@ -30,7 +33,7 @@ public class RunnableTaskLauncher {
     this.cConf = cConf;
   }
 
-  public byte[] launchRunnableTask(RunnableTaskRequest request) throws Exception {
+  public byte[] launchRunnableTask(RunnableTaskRequest request, @Nullable URI fileURI) throws Exception {
 
     ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
     if (classLoader == null) {
@@ -44,7 +47,7 @@ public class RunnableTaskLauncher {
       throw new ClassCastException(String.format("%s is not a RunnableTask", request.getClassName()));
     }
     RunnableTask runnableTask = (RunnableTask) obj;
-    RunnableTaskContext runnableTaskContext = new RunnableTaskContext(request.getParam());
+    RunnableTaskContext runnableTaskContext = new RunnableTaskContext(request.getParam(), fileURI);
     runnableTask.run(runnableTaskContext);
     return runnableTaskContext.getResult();
   }
