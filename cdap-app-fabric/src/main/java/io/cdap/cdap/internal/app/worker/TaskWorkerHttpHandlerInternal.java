@@ -22,9 +22,12 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.http.AbstractBodyConsumer;
+import io.cdap.cdap.common.internal.worker.RunnableTaskContext;
 import io.cdap.cdap.logging.gateway.handlers.AbstractLogHttpHandler;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
+import io.cdap.http.BodyConsumer;
 import io.cdap.http.BodyProducer;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
@@ -33,16 +36,20 @@ import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
@@ -53,8 +60,16 @@ import javax.ws.rs.core.MediaType;
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3 + "/worker")
 public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerHttpHandlerInternal.class);
-  private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec()).create();
+  private static final Gson GSON = new GsonBuilder().registerTypeAdapter(BasicThrowable.class,
+                                                                         new BasicThrowableCodec()).create();
+  /**
+   * Prefix of temporary file.
+   */
+  private static final String PREFIX = "task_worker";
+  /**
+   * Extension of temporary file.
+   */
+  private static final String EXT = ".tmp";
 
   private final RunnableTaskLauncher runnableTaskLauncher;
   private final Consumer<String> stopper;
@@ -80,7 +95,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
       RunnableTaskRequest runnableTaskRequest =
         GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), RunnableTaskRequest.class);
       className = runnableTaskRequest.getClassName();
-      byte[] response = runnableTaskLauncher.launchRunnableTask(runnableTaskRequest);
+      byte[] response = runnableTaskLauncher.launchRunnableTask(runnableTaskRequest, null);
 
       responder.sendContent(HttpResponseStatus.OK,
                             new RunnableTaskBodyProducer(response, stopper, className),
@@ -94,6 +109,71 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
         stopper.accept(className);
       }
     }
+  }
+
+  /**
+   * Run a task specified by query parameters {@code className} and {@code param}.
+   * Request body contains the content of a file uploaded by the caller that is available to the task
+   * at runtime via {@link RunnableTaskContext}.
+   *
+   * @param request {@link HttpRequest} whose body should be a file content.
+   * @param responder {@link HttpResponder}
+   * @param className classname of the task to run
+   * @param param parameter(s) to the task
+   * @return {@link BodyConsumer}
+   */
+  @POST
+  @Path("/task")
+  public BodyConsumer runTask(HttpRequest request, HttpResponder responder,
+                              @QueryParam("className") String className,
+                              @QueryParam("param") String param) {
+    if (inflightRequests.incrementAndGet() > 1) {
+      responder.sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS);
+      return null;
+    }
+
+    try {
+      // Download file content to local tmp dir.
+      final File tmpFile = File.createTempFile(PREFIX, EXT);
+
+      return new AbstractBodyConsumer(tmpFile) {
+        @Override
+        protected void onFinish(HttpResponder responder, File uploadedFile) {
+          try {
+            RunnableTaskRequest runnableTaskRequest = new RunnableTaskRequest(className, param);
+            byte[] response = runnableTaskLauncher.launchRunnableTask(runnableTaskRequest, tmpFile.toURI());
+            responder.sendByteArray(HttpResponseStatus.OK,
+                                    response,
+                                    EmptyHttpHeaders.INSTANCE);
+          } catch (ClassNotFoundException | ClassCastException ex) {
+            responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                                 exceptionToJson(ex),
+                                 EmptyHttpHeaders.INSTANCE);
+          } catch (Exception ex) {
+            LOG.error(String.format("Failed to run task %s", ex));
+            responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex),
+                                 EmptyHttpHeaders.INSTANCE);
+          } finally {
+            tmpFile.delete();
+            stopper.accept(className);
+          }
+        }
+
+        @Override
+        protected void onError(Throwable cause) {
+          tmpFile.delete();
+          LOG.info("Failed to download file to run task", className);
+          responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                               exceptionToJson(new Exception(cause)),
+                               EmptyHttpHeaders.INSTANCE);
+        }
+      };
+    } catch (IOException e) {
+      LOG.error("Failed to download file to run task", className);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(e), EmptyHttpHeaders.INSTANCE);
+      stopper.accept(className);
+    }
+    return null;
   }
 
   /**

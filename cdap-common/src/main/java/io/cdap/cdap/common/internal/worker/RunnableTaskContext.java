@@ -18,6 +18,8 @@ package io.cdap.cdap.common.internal.worker;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URI;
+import javax.annotation.Nullable;
 
 /**
  * Represents a context for a {@link RunnableTask}.
@@ -26,9 +28,11 @@ import java.io.IOException;
 public class RunnableTaskContext {
   private final ByteArrayOutputStream outputStream;
   private final String param;
+  private final URI fileURI;
 
-  public RunnableTaskContext(String param) {
+  public RunnableTaskContext(String param, @Nullable URI fileURI) {
     this.param = param;
+    this.fileURI = fileURI;
     this.outputStream = new ByteArrayOutputStream();
   }
 
@@ -42,5 +46,9 @@ public class RunnableTaskContext {
 
   public String getParam() {
     return param;
+  }
+
+  public URI getFileURI() {
+    return fileURI;
   }
 }
