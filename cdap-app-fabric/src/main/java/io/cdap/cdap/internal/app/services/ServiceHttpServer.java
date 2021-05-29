@@ -59,6 +59,7 @@ import io.cdap.cdap.internal.lang.Reflections;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.http.NettyHttpService;
 import org.apache.tephra.TransactionSystemClient;
@@ -94,7 +95,8 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                            ArtifactManager artifactManager, MetadataReader metadataReader,
                            MetadataPublisher metadataPublisher, NamespaceQueryAdmin namespaceQueryAdmin,
                            PluginFinder pluginFinder, FieldLineageWriter fieldLineageWriter,
-                           TransactionRunner transactionRunner, PreferencesFetcher preferencesFetcher) {
+                           TransactionRunner transactionRunner, PreferencesFetcher preferencesFetcher,
+                           ContextAccessEnforcer contextAccessEnforcer) {
     super(host, program, programOptions, instanceId, serviceAnnouncer, TransactionControl.IMPLICIT);
 
     this.cConf = cConf;
@@ -105,7 +107,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                                                txClient, pluginInstantiator, secureStore, secureStoreManager,
                                                messagingService, artifactManager, metadataReader, metadataPublisher,
                                                pluginFinder, fieldLineageWriter, transactionRunner,
-                                               preferencesFetcher);
+                                               preferencesFetcher, contextAccessEnforcer);
     this.context = contextFactory.create(null, null);
     this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
@@ -143,7 +145,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
   /**
    *
    * @return a service builder preconfigured with common settings. {@link AuthenticationChannelHandler} will be added
-   * if seucrity is on in the configuration. Also {@link io.cdap.cdap.common.HttpExceptionHandler} will be installed.
+   * if security is on in the configuration. Also {@link io.cdap.cdap.common.HttpExceptionHandler} will be installed.
    */
   @Override
   protected NettyHttpService.Builder createHttpServiceBuilder(String serviceName) {
@@ -166,7 +168,8 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                                                               PluginFinder pluginFinder,
                                                               FieldLineageWriter fieldLineageWriter,
                                                               TransactionRunner transactionRunner,
-                                                              PreferencesFetcher preferencesFetcher) {
+                                                              PreferencesFetcher preferencesFetcher,
+                                                              ContextAccessEnforcer contextAccessEnforcer) {
     return (spec, handlerClass) -> {
       if (handlerClass != null && AbstractSystemHttpServiceHandler.class.isAssignableFrom(handlerClass)) {
         return new BasicSystemHttpServiceContext(program, programOptions, cConf, spec, instanceId, instanceCount,
@@ -174,7 +177,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                                                  txClient, pluginInstantiator, secureStore, secureStoreManager,
                                                  messagingService, artifactManager, metadataReader, metadataPublisher,
                                                  namespaceQueryAdmin, pluginFinder, fieldLineageWriter,
-                                                 transactionRunner, preferencesFetcher);
+                                                 transactionRunner, preferencesFetcher, contextAccessEnforcer);
       }
       return new BasicHttpServiceContext(program, programOptions, cConf, spec, instanceId, instanceCount,
                                          metricsCollectionService, datasetFramework, discoveryServiceClient,
