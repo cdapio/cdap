@@ -31,6 +31,10 @@ import io.cdap.cdap.etl.proto.v2.DataStreamsConfig;
 import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
 import io.cdap.cdap.etl.proto.v2.ETLConfig;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
+import io.cdap.cdap.proto.element.EntityType;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
@@ -59,10 +63,12 @@ public class DraftHandler extends AbstractDataPipelineHandler {
   private Metrics metrics;
 
   private DraftService draftService;
+  private ContextAccessEnforcer contextAccessEnforcer;
 
   @Override
   public void initialize(SystemHttpServiceContext context) throws Exception {
     super.initialize(context);
+    contextAccessEnforcer = context.getContextAccessEnforcer();
     this.draftService = new DraftService(context, this.metrics);
   }
 
@@ -116,6 +122,7 @@ public class DraftHandler extends AbstractDataPipelineHandler {
                        @PathParam("context") String namespaceName,
                        @PathParam("draft") String draftId) {
 
+    contextAccessEnforcer.enforce(new NamespaceId(namespaceName), StandardPermission.UPDATE);
     respond(namespaceName, responder, (namespace) -> {
 
       String requestStr = StandardCharsets.UTF_8.decode(request.getContent()).toString();
@@ -137,6 +144,7 @@ public class DraftHandler extends AbstractDataPipelineHandler {
   public void deleteDraft(HttpServiceRequest request, HttpServiceResponder responder,
                           @PathParam("context") String namespaceName,
                           @PathParam("draft") String draftId) {
+    contextAccessEnforcer.enforce(new NamespaceId(namespaceName), StandardPermission.UPDATE);
     respond(namespaceName, responder, (namespace) -> {
       String userId = request.getUserId();
       userId = userId == null ? "" : userId;

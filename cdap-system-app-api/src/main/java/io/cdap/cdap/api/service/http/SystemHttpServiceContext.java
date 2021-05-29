@@ -23,6 +23,7 @@ import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 
 import java.io.IOException;
@@ -85,6 +86,12 @@ public interface SystemHttpServiceContext extends HttpServiceContext, Transactio
     throws IOException, IllegalArgumentException, AccessException {
     throw new UnsupportedOperationException("Not implemented");
   }
+
+  /**
+   *
+   * @return {@link ContextAccessEnforcer} that can be used to enforce access for current request
+   */
+  ContextAccessEnforcer getContextAccessEnforcer();
 
   /**
    * Runs the task from {@link RunnableTaskRequest} remotely on a task worker

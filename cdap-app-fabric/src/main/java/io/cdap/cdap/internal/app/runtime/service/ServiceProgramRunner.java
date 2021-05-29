@@ -52,6 +52,7 @@ import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
@@ -82,6 +83,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final FieldLineageWriter fieldLineageWriter;
   private final TransactionRunner transactionRunner;
   private final PreferencesFetcher preferencesFetcher;
+  private final ContextAccessEnforcer contextAccessEnforcer;
 
   @Inject
   public ServiceProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
@@ -93,7 +95,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
                               MetadataReader metadataReader, MetadataPublisher metadataPublisher,
                               NamespaceQueryAdmin namespaceQueryAdmin, PluginFinder pluginFinder,
                               FieldLineageWriter fieldLineageWriter, TransactionRunner transactionRunner,
-                              PreferencesFetcher preferencesFetcher) {
+                              PreferencesFetcher preferencesFetcher, ContextAccessEnforcer contextAccessEnforcer) {
     super(cConf);
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
@@ -111,6 +113,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.fieldLineageWriter = fieldLineageWriter;
     this.transactionRunner = transactionRunner;
     this.preferencesFetcher = preferencesFetcher;
+    this.contextAccessEnforcer = contextAccessEnforcer;
   }
 
   @Override
@@ -153,7 +156,8 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                           pluginInstantiator, secureStore, secureStoreManager,
                                                           messagingService, artifactManager, metadataReader,
                                                           metadataPublisher, namespaceQueryAdmin, pluginFinder,
-                                                          fieldLineageWriter, transactionRunner, preferencesFetcher);
+                                                          fieldLineageWriter, transactionRunner, preferencesFetcher,
+                                                          contextAccessEnforcer);
 
       // Add a service listener to make sure the plugin instantiator is closed when the http server is finished.
       component.addListener(createRuntimeServiceListener(Collections.singleton(pluginInstantiator)),
