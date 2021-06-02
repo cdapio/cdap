@@ -27,10 +27,10 @@ import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.internal.worker.RunnableTask;
 import io.cdap.cdap.common.security.HttpsEnabler;
-import io.cdap.cdap.internal.app.worker.TaskWorkerHttpHandlerInternal;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +54,8 @@ public class FileLocalizerService extends AbstractIdleService {
   @Inject
   FileLocalizerService(CConfiguration cConf,
                        SConfiguration sConf,
-                       DiscoveryService discoveryService) {
+                       DiscoveryService discoveryService,
+                       ArtifactLocalizer artifactLocalizer, LocationFactory locationFactory) {
     this.cConf = cConf;
     this.sConf = sConf;
     this.discoveryService = discoveryService;
@@ -65,7 +66,7 @@ public class FileLocalizerService extends AbstractIdleService {
       .setExecThreadPoolSize(cConf.getInt(Constants.FileLocalizer.EXEC_THREADS))
       .setBossThreadPoolSize(cConf.getInt(Constants.FileLocalizer.BOSS_THREADS))
       .setWorkerThreadPoolSize(cConf.getInt(Constants.FileLocalizer.WORKER_THREADS))
-      .setHttpHandlers(new TaskWorkerHttpHandlerInternal(this.cConf, this::stopService));
+      .setHttpHandlers(new FileLocalizerHttpHandlerInternal(this.cConf, this::stopService, artifactLocalizer, locationFactory));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);

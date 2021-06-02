@@ -18,19 +18,23 @@ package io.cdap.cdap.internal.app.worker.sidecar;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.logging.gateway.handlers.AbstractLogHttpHandler;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
-import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.function.Consumer;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 
@@ -43,16 +47,36 @@ public class FileLocalizerHttpHandlerInternal extends AbstractLogHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(FileLocalizerHttpHandlerInternal.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec()).create();
+  private final Consumer<String> stopper;
+  private final ArtifactLocalizer artifactLocalizer;
+  private final LocationFactory locationFactory;
 
-  @Inject
-  public FileLocalizerHttpHandlerInternal(CConfiguration cConf) {
+  public FileLocalizerHttpHandlerInternal(CConfiguration cConf, Consumer<String> stopper,
+                                          ArtifactLocalizer artifactLocalizer,
+                                          LocationFactory locationFactory) {
     super(cConf);
+    this.stopper = stopper;
+    this.artifactLocalizer = artifactLocalizer;
+    this.locationFactory = locationFactory;
+  }
+  @GET
+  @Path("/localize/**")
+  public void localize(HttpRequest request, HttpResponder responder) throws Exception {
+    String prefix = String.format("%s/worker/localize/", Constants.Gateway.INTERNAL_API_VERSION_3);
+    String path = request.uri().substring(prefix.length());
+    Location location = Locations.getLocationFromAbsolutePath(locationFactory, path);
+    Location artifact = artifactLocalizer.getArtifact(location);
+    responder.sendString(HttpResponseStatus.OK, artifact.toString());
   }
 
   @GET
-  @Path("/localize")
-  public void run(FullHttpRequest request, HttpResponder responder) {
-
+  @Path("/unpack/**")
+  public void unpack(HttpRequest request, HttpResponder responder) throws Exception {
+    String prefix = String.format("%s/worker/unpack/", Constants.Gateway.INTERNAL_API_VERSION_3);
+    String path = request.uri().substring(prefix.length());
+    Location location = Locations.getLocationFromAbsolutePath(locationFactory, path);
+    Location artifact = artifactLocalizer.getAndUnpackArtifact(location);
+    responder.sendString(HttpResponseStatus.OK, artifact.toString());
   }
 
   /**
