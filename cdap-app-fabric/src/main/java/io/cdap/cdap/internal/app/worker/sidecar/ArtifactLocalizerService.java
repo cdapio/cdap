@@ -21,7 +21,6 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
@@ -56,7 +55,7 @@ public class ArtifactLocalizerService extends AbstractIdleService {
       .setPort(cConf.getInt(Constants.ArtifactLocalizer.PORT))
       .setBossThreadPoolSize(cConf.getInt(Constants.ArtifactLocalizer.BOSS_THREADS))
       .setWorkerThreadPoolSize(cConf.getInt(Constants.ArtifactLocalizer.WORKER_THREADS))
-      .setHttpHandlers(new ArtifactLocalizerHttpHandlerInternal(cConf));
+      .setHttpHandlers(new ArtifactLocalizerHttpHandlerInternal(artifactLocalizer));
 
     httpService = builder.build();
   }

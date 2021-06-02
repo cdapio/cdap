@@ -107,14 +107,24 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("artifact-name") String artifactName,
                                @PathParam("artifact-version") String artifactVersion,
-                               @QueryParam("scope") @DefaultValue("user") String scope) throws Exception {
+                               @QueryParam("scope") @DefaultValue("user") String scope,
+                               @QueryParam("lastModified") @DefaultValue("0") String lastModified) throws Exception {
 
     NamespaceId namespace = validateAndGetScopedNamespace(Ids.namespace(namespaceId), scope);
     ArtifactId artifactId = new ArtifactId(namespace.getNamespace(), artifactName, artifactVersion);
     ArtifactDetail artifactDetail = artifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId));
     Location location = artifactDetail.getDescriptor().getLocation();
-    responder.sendContent(HttpResponseStatus.OK, new LocationBodyProducer(location),
-                          new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM));
+
+    io.netty.handler.codec.http.HttpHeaders headers = new DefaultHttpHeaders()
+      .add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM)
+      .add(HttpHeaders.LAST_MODIFIED, location.lastModified());
+
+    if (Long.parseLong(lastModified) == location.lastModified()) {
+      responder.sendString(HttpResponseStatus.NO_CONTENT, "", headers);
+      return;
+    }
+
+    responder.sendContent(HttpResponseStatus.OK, new LocationBodyProducer(location), headers);
   }
 
   @GET
@@ -194,8 +204,8 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
   }
 
   /**
-   * Check that the namespace exists, and check if the request is only supposed to include system artifacts,
-   * and returning the system namespace if so.
+   * Check that the namespace exists, and check if the request is only supposed to include system artifacts, and
+   * returning the system namespace if so.
    *
    * @param namespace NamespaceId to validate
    * @param scope ArtifactScope for the given artifact

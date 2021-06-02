@@ -16,23 +16,22 @@
 
 package io.cdap.cdap.internal.app.worker.sidecar;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.proto.BasicThrowable;
-import io.cdap.cdap.proto.codec.BasicThrowableCodec;
+import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import org.apache.twill.filesystem.Location;
 
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
  * Internal {@link HttpHandler} for File Localizer.
@@ -40,20 +39,26 @@ import javax.ws.rs.Path;
 @Singleton
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3 + "/worker")
 public class ArtifactLocalizerHttpHandlerInternal extends AbstractHttpHandler {
-  private static final Logger LOG = LoggerFactory.getLogger(ArtifactLocalizerHttpHandlerInternal.class);
-  private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec()).create();
+  private final ArtifactLocalizer artifactLocalizer;
 
   @Inject
-  public ArtifactLocalizerHttpHandlerInternal(CConfiguration cConf) {
-    super();
-
+  public ArtifactLocalizerHttpHandlerInternal(ArtifactLocalizer artifactLocalizer) {
+    this.artifactLocalizer = artifactLocalizer;
   }
 
   @GET
-  @Path("/localize")
-  public void run(HttpRequest request, HttpResponder responder) {
-    //implementation will be added in a followup PR.
+  @Path("/artifact/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}")
+  public void artifact(HttpRequest request, HttpResponder responder,
+                       @PathParam("namespace-id") String namespaceId,
+                       @PathParam("artifact-name") String artifactName,
+                       @PathParam("artifact-version") String artifactVersion,
+                       @QueryParam("unpack") @DefaultValue("false") String unpack) throws Exception {
+    Location artifact;
+    if (Boolean.parseBoolean(unpack)) {
+      artifact = artifactLocalizer.getAndUnpackArtifact(new ArtifactId(namespaceId, artifactName, artifactVersion));
+    } else {
+      artifact = artifactLocalizer.getArtifact(new ArtifactId(namespaceId, artifactName, artifactVersion));
+    }
+    responder.sendString(HttpResponseStatus.OK, artifact.toString());
   }
-
 }

@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.app.runtime.artifact;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
-import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -28,8 +27,6 @@ import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginSelector;
 import io.cdap.cdap.common.ArtifactNotFoundException;
-import io.cdap.cdap.common.BadRequestException;
-import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
@@ -51,15 +48,9 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.lang.reflect.Type;
-import java.net.HttpURLConnection;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
@@ -70,7 +61,6 @@ import java.util.concurrent.TimeUnit;
  * Implementation of {@link PluginFinder} that use the artifact HTTP endpoints for finding plugins.
  */
 public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
-  private static final Logger LOG = LoggerFactory.getLogger(RemotePluginFinder.class);
   private static final Gson GSON = new Gson();
   private static final Type PLUGIN_INFO_LIST_TYPE = new TypeToken<List<PluginInfo>>() { }.getType();
 
@@ -82,9 +72,9 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
   private final RetryStrategy retryStrategy;
 
   @Inject
-  RemotePluginFinder(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient,
-                     AuthenticationContext authenticationContext,
-                     LocationFactory locationFactory) {
+  protected RemotePluginFinder(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient,
+                               AuthenticationContext authenticationContext,
+                               LocationFactory locationFactory) {
     this.remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
                                          new DefaultHttpRequestConfig(false),
                                          String.format("%s", Constants.Gateway.API_VERSION_3));
@@ -217,74 +207,10 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
 
     String path = response.getResponseBodyAsString();
     Location location = Locations.getLocationFromAbsolutePath(locationFactory, path);
-
-    // If the artifact doesn't exist locally then fetch it from app fabric and save it locally
     if (!location.exists()) {
-      LOG.debug("Artifact '{}' is not present locally at {}, attempting to fetch it from app-fabric.",
-                artifactId.getArtifact(), path);
-
-      Retries.runWithRetries(() -> getAndStoreArtifact(artifactId, location), retryStrategy);
+      throw new IOException(String.format("Artifact Location does not exist %s for artifact %s version %s",
+                                          path, artifactId.getArtifact(), artifactId.getVersion()));
     }
     return location;
-  }
-
-  private void getAndStoreArtifact(ArtifactId artifactId, Location location) throws IOException {
-    String namespaceId = artifactId.getNamespace();
-    ArtifactScope scope = ArtifactScope.USER;
-    // Cant use 'system' as the namespace in the request because that generates an error, the namespace doesnt matter
-    // as long as it exists. Using default because it will always be there
-    if (NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespaceId)) {
-      namespaceId = "default";
-      scope = ArtifactScope.SYSTEM;
-    }
-    String url = String.format("namespaces/%s/artifacts/%s/versions/%s/download?scope=%s",
-                               namespaceId,
-                               artifactId.getArtifact(),
-                               artifactId.getVersion(),
-                               scope);
-
-    LOG.debug("Fetching artifact from " + url);
-    HttpURLConnection connection = remoteClientInternal.openConnection(HttpMethod.GET, url);
-    try {
-      try (InputStream is = connection.getInputStream();
-           OutputStream os = location.getOutputStream()) {
-        ByteStreams.copy(is, os);
-
-        throwIfError(artifactId, connection);
-        LOG.debug("Stored artifact into {}", location.toURI());
-      } catch (BadRequestException e) {
-        // Just treat bad request as IOException since it won't be retriable
-        throw new IOException(e);
-      }
-    } finally {
-      connection.disconnect();
-    }
-  }
-
-  /**
-   * Validates the response from the given {@link HttpURLConnection} to be 200, or throws exception if it is not 200.
-   */
-  private void throwIfError(ArtifactId artifactId,
-                            HttpURLConnection urlConn) throws IOException, BadRequestException {
-    int responseCode = urlConn.getResponseCode();
-    if (responseCode == HttpURLConnection.HTTP_OK) {
-      return;
-    }
-    try (InputStream errorStream = urlConn.getErrorStream()) {
-      String errorMsg = "unknown error";
-      if (errorStream != null) {
-        errorMsg = new String(ByteStreams.toByteArray(errorStream), StandardCharsets.UTF_8);
-      }
-      switch (responseCode) {
-        case HttpURLConnection.HTTP_BAD_REQUEST:
-          throw new BadRequestException(errorMsg);
-        case HttpURLConnection.HTTP_UNAVAILABLE:
-          throw new ServiceUnavailableException(Constants.Service.APP_FABRIC_HTTP, errorMsg);
-      }
-
-      throw new IOException(
-        String.format("Failed to fetch artifact %s version %s from %s. Response code: %d. Error: %s",
-                      artifactId.getArtifact(), artifactId.getVersion(), urlConn.getURL(), responseCode, errorMsg));
-    }
   }
 }
