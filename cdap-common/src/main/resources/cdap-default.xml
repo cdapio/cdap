@@ -4240,7 +4240,7 @@
 
   <property>
     <name>task.worker.container.memory.mb</name>
-    <value>756</value>
+    <value>400</value>
     <description>
       Memory in megabytes for each task worker.
     </description>
@@ -4304,7 +4304,7 @@
 
   <property>
     <name>artifact.localizer.container.memory.mb</name>
-    <value>100</value>
+    <value>300</value>
     <description>
       Memory in megabytes for each task worker.
     </description>
