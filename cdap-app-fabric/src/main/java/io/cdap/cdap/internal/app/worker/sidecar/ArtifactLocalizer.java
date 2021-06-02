@@ -17,10 +17,14 @@ package io.cdap.cdap.internal.app.worker.sidecar;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
+import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.internal.app.runtime.artifact.RemotePluginFinder;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequestConfig;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -42,29 +46,39 @@ public class ArtifactLocalizer {
 
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactLocalizer.class);
 
-
   private static final String PD_DIR = "data/";
   private final RemoteClient remoteClient;
+  private final RemotePluginFinder remotePluginFinder;
   private LocationFactory locationFactory;
 
   @Inject
-  public ArtifactLocalizer(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient) {
+  public ArtifactLocalizer(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient, RemotePluginFinder remotePluginFinder) {
     this.remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
-                                                       HttpRequestConfig.DEFAULT,
-                                                       Constants.Gateway.INTERNAL_API_VERSION_3);
+                                         HttpRequestConfig.DEFAULT,
+                                         Constants.Gateway.INTERNAL_API_VERSION_3);
+    this.remotePluginFinder = remotePluginFinder;
     locationFactory = new LocalLocationFactory();
   }
 
   @VisibleForTesting
-  public ArtifactLocalizer(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient, File basePath) {
+  public ArtifactLocalizer(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient,
+                           RemotePluginFinder remotePluginFinder,
+                           File basePath) {
     this.remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
                                          HttpRequestConfig.DEFAULT,
                                          Constants.Gateway.INTERNAL_API_VERSION_3);
+    this.remotePluginFinder = remotePluginFinder;
     locationFactory = new LocalLocationFactory(basePath);
   }
 
-  public Location getArtifact(Location remoteLocation) throws IOException {
+  public Location getArtifact(String namespaceId, String artifactName, String artifactVersion) throws IOException, ArtifactNotFoundException, UnauthorizedException {
+    Location artifactLocation = remotePluginFinder
+      .getArtifactLocation(new ArtifactId(namespaceId, artifactName, artifactVersion));
 
+    return getArtifact(artifactLocation);
+  }
+
+  public Location getArtifact(Location remoteLocation) throws IOException {
 
     // If the location already exists then its cached and we dont need to do anything
     Location localLocation = getArtifactLocalLocation(remoteLocation);

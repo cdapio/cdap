@@ -25,7 +25,9 @@ import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.RemotePluginFinder;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.internal.app.worker.RemoteWorkerPluginFinder;
 import io.cdap.cdap.internal.app.worker.TaskWorkerServiceTest;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
@@ -76,10 +78,11 @@ public class FileLocalizerServiceTest extends AppFabricTestBase {
     CConfiguration cConf = createCConf(port);
     SConfiguration sConf = createSConf();
     DiscoveryServiceClient discoveryClient = getInjector().getInstance(DiscoveryServiceClient.class);
+    RemotePluginFinder remotePluginFinder = getInjector().getInstance(RemotePluginFinder.class);
     ArtifactLocalizerService artifactLocalizerService =
       new ArtifactLocalizerService(cConf, sConf, new InMemoryDiscoveryService(),
                                    new ArtifactLocalizer(cConf, discoveryClient,
-                                                         tmpFolder.newFolder()),
+                                                         remotePluginFinder, tmpFolder.newFolder()),
                                    new LocalLocationFactory());
     // start the service
     artifactLocalizerService.startAndWait();
@@ -95,6 +98,25 @@ public class FileLocalizerServiceTest extends AppFabricTestBase {
   @After
   public void tearDown() throws Exception {
     this.localizerService.shutDown();
+  }
+
+  @Test
+  public void testPluginFinder() throws Exception {
+
+    LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
+    ArtifactRepository artifactRepository = getInjector().getInstance(ArtifactRepository.class);
+    RemoteWorkerPluginFinder pluginFinder = getInjector().getInstance(RemoteWorkerPluginFinder.class);
+
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "some-task", "1.0.0-SNAPSHOT");
+    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, TaskWorkerServiceTest.TestRunnableClass.class);
+    File appJarFile = new File(tmpFolder.newFolder(),
+                               String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
+    Files.copy(Locations.newInputSupplier(appJar), appJarFile);
+    appJar.delete();
+
+    artifactRepository.addArtifact(artifactId, appJarFile);
+
+    pluginFinder.getArtifactLocation(artifactId.toEntityId());
   }
 
   @Test

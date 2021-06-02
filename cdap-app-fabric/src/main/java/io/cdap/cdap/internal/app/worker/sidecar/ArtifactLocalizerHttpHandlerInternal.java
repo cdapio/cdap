@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 /**
  * Internal {@link HttpHandler} for File Localizer.
@@ -54,6 +55,16 @@ public class ArtifactLocalizerHttpHandlerInternal extends AbstractLogHttpHandler
     super(cConf);
     this.artifactLocalizer = artifactLocalizer;
     this.locationFactory = locationFactory;
+  }
+
+  @GET
+  @Path("/artifact/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}")
+  public void artifact(HttpRequest request, HttpResponder responder,
+                       @PathParam("namespace-id") String namespaceId,
+                       @PathParam("artifact-name") String artifactName,
+                       @PathParam("artifact-version") String artifactVersion) throws Exception {
+    Location artifact = artifactLocalizer.getArtifact(namespaceId, artifactName, artifactVersion);
+    responder.sendString(HttpResponseStatus.OK, artifact.toString());
   }
 
   @GET
@@ -77,8 +88,8 @@ public class ArtifactLocalizerHttpHandlerInternal extends AbstractLogHttpHandler
   }
 
   /**
-   * Return json representation of an exception.
-   * Used to propagate exception across network for better surfacing errors and debuggability.
+   * Return json representation of an exception. Used to propagate exception across network for better surfacing errors
+   * and debuggability.
    */
   private String exceptionToJson(Exception ex) {
     BasicThrowable basicThrowable = new BasicThrowable(ex);
