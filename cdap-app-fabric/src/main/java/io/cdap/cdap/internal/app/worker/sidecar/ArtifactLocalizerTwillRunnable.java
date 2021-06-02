@@ -145,6 +145,7 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
 
   @Override
   public void stop() {
+    LOG.info("Stopping artifact localizer");
     artifactLocalizerService.stop();
   }
 
