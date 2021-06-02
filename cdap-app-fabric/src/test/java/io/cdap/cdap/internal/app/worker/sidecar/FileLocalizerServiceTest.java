@@ -51,13 +51,13 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 
 /**
- * Unit test for {@link FileLocalizerService}.
+ * Unit test for {@link ArtifactLocalizerService}.
  */
 public class FileLocalizerServiceTest extends AppFabricTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(FileLocalizerServiceTest.class);
   private static final Gson GSON = new Gson();
 
-  private FileLocalizerService localizerService;
+  private ArtifactLocalizerService localizerService;
 
   private CConfiguration createCConf(int port) {
     CConfiguration cConf = CConfiguration.create();
@@ -72,18 +72,19 @@ public class FileLocalizerServiceTest extends AppFabricTestBase {
     return sConf;
   }
 
-  private FileLocalizerService setupFileLocalizerService(int port) throws IOException {
+  private ArtifactLocalizerService setupFileLocalizerService(int port) throws IOException {
     CConfiguration cConf = createCConf(port);
     SConfiguration sConf = createSConf();
     DiscoveryServiceClient discoveryClient = getInjector().getInstance(DiscoveryServiceClient.class);
-    FileLocalizerService FileLocalizerService = new FileLocalizerService(cConf, sConf, new InMemoryDiscoveryService(),
-                                                                         new ArtifactLocalizer(cConf, discoveryClient,
-                                                                                               tmpFolder.newFolder()),
-                                                                         new LocalLocationFactory());
+    ArtifactLocalizerService artifactLocalizerService =
+      new ArtifactLocalizerService(cConf, sConf, new InMemoryDiscoveryService(),
+                                   new ArtifactLocalizer(cConf, discoveryClient,
+                                                         tmpFolder.newFolder()),
+                                   new LocalLocationFactory());
     // start the service
-    FileLocalizerService.startAndWait();
+    artifactLocalizerService.startAndWait();
 
-    return FileLocalizerService;
+    return artifactLocalizerService;
   }
 
   @Before

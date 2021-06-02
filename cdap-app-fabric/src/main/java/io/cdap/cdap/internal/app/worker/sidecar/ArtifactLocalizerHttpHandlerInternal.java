@@ -34,7 +34,6 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.function.Consumer;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 
@@ -43,22 +42,20 @@ import javax.ws.rs.Path;
  */
 @Singleton
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3 + "/worker")
-public class FileLocalizerHttpHandlerInternal extends AbstractLogHttpHandler {
-  private static final Logger LOG = LoggerFactory.getLogger(FileLocalizerHttpHandlerInternal.class);
+public class ArtifactLocalizerHttpHandlerInternal extends AbstractLogHttpHandler {
+  private static final Logger LOG = LoggerFactory.getLogger(ArtifactLocalizerHttpHandlerInternal.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec()).create();
-  private final Consumer<String> stopper;
   private final ArtifactLocalizer artifactLocalizer;
   private final LocationFactory locationFactory;
 
-  public FileLocalizerHttpHandlerInternal(CConfiguration cConf, Consumer<String> stopper,
-                                          ArtifactLocalizer artifactLocalizer,
-                                          LocationFactory locationFactory) {
+  public ArtifactLocalizerHttpHandlerInternal(CConfiguration cConf, ArtifactLocalizer artifactLocalizer,
+                                              LocationFactory locationFactory) {
     super(cConf);
-    this.stopper = stopper;
     this.artifactLocalizer = artifactLocalizer;
     this.locationFactory = locationFactory;
   }
+
   @GET
   @Path("/localize/**")
   public void localize(HttpRequest request, HttpResponder responder) throws Exception {

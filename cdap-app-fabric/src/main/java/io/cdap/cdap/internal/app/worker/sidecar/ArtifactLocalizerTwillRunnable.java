@@ -36,8 +36,6 @@ import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
-import io.cdap.cdap.internal.app.worker.TaskWorkerService;
-import io.cdap.cdap.internal.app.worker.TaskWorkerTwillApplication;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
@@ -62,16 +60,16 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 /**
- * The {@link TwillRunnable} for running {@link TaskWorkerService}.
+ * The {@link TwillRunnable} for running {@link ArtifactLocalizerService}.
  */
-public class FileLocalizerTwillRunnable extends AbstractTwillRunnable {
+public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
 
-  private static final Logger LOG = LoggerFactory.getLogger(FileLocalizerTwillRunnable.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ArtifactLocalizerTwillRunnable.class);
 
-  private FileLocalizerService fileLocalizerService;
+  private ArtifactLocalizerService fileLocalizerService;
   private LogAppenderInitializer logAppenderInitializer;
 
-  public FileLocalizerTwillRunnable(String cConfFileName, String hConfFileName) {
+  public ArtifactLocalizerTwillRunnable(String cConfFileName, String hConfFileName) {
     super(ImmutableMap.of("cConf", cConfFileName, "hConf", hConfFileName));
   }
 
@@ -133,20 +131,20 @@ public class FileLocalizerTwillRunnable extends AbstractTwillRunnable {
       }
     }, Threads.SAME_THREAD_EXECUTOR);
 
-    LOG.debug("Starting task worker");
+    LOG.debug("Starting artifact localizer");
     fileLocalizerService.start();
 
     try {
       Uninterruptibles.getUninterruptibly(future);
-      LOG.debug("task worker stopped");
+      LOG.debug("Artifact localizer stopped");
     } catch (ExecutionException e) {
-      LOG.warn("Task worker stopped with exception", e);
+      LOG.warn("Artifact localizer stopped with exception", e);
     }
   }
 
   @Override
   public void stop() {
-    LOG.info("Stopping task worker");
+    LOG.info("Stopping artifact localizer");
     fileLocalizerService.stop();
   }
 
@@ -174,6 +172,6 @@ public class FileLocalizerTwillRunnable extends AbstractTwillRunnable {
                                                               Constants.Logging.COMPONENT_NAME,
                                                               "File_Localizer");
     LoggingContextAccessor.setLoggingContext(loggingContext);
-    fileLocalizerService = injector.getInstance(FileLocalizerService.class);
+    fileLocalizerService = injector.getInstance(ArtifactLocalizerService.class);
   }
 }

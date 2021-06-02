@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.internal.app.worker;
 
-import io.cdap.cdap.internal.app.worker.sidecar.FileLocalizerTwillRunnable;
+import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerTwillRunnable;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;
@@ -51,7 +51,7 @@ public class TaskWorkerTwillApplication implements TwillApplication {
       .add("hConf.xml", hConfFileURI)
       .apply()
       //add sidecar container
-      .add(new FileLocalizerTwillRunnable("cConf.xml", "hConf.xml"), resourceSpec)
+      .add(new ArtifactLocalizerTwillRunnable("cConf.xml", "hConf.xml"), resourceSpec)
       .withLocalFiles()
       .add("cConf.xml", cConfFileURI)
       .add("hConf.xml", hConfFileURI)
