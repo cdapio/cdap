@@ -30,6 +30,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
+import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
 import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.guice.ZKDiscoveryModule;
@@ -101,6 +102,7 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
         }
       });
       modules.add(new RemoteLogAppenderModule());
+      modules.add(new LocalLocationModule());
     }
 
     return Guice.createInjector(modules);
