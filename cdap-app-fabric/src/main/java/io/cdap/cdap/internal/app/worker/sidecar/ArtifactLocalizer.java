@@ -52,7 +52,8 @@ public class ArtifactLocalizer {
   private LocationFactory locationFactory;
 
   @Inject
-  public ArtifactLocalizer(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient, RemotePluginFinder remotePluginFinder) {
+  public ArtifactLocalizer(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient,
+                           RemotePluginFinder remotePluginFinder) {
     this.remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
                                          HttpRequestConfig.DEFAULT,
                                          Constants.Gateway.INTERNAL_API_VERSION_3);
@@ -71,7 +72,8 @@ public class ArtifactLocalizer {
     locationFactory = new LocalLocationFactory(basePath);
   }
 
-  public Location getArtifact(String namespaceId, String artifactName, String artifactVersion) throws IOException, ArtifactNotFoundException, UnauthorizedException {
+  public Location getArtifact(String namespaceId, String artifactName, String artifactVersion) throws IOException,
+    ArtifactNotFoundException, UnauthorizedException {
     Location artifactLocation = remotePluginFinder
       .getArtifactLocation(new ArtifactId(namespaceId, artifactName, artifactVersion));
 
@@ -127,6 +129,8 @@ public class ArtifactLocalizer {
 
   private Path getUnpackLocalPath(Location remoteLocation) {
     // TODO: Fix this really gross way to get a path
-    return Paths.get(getLocalLocation("unpacked", remoteLocation).toString().replace(".jar", ""));
+    return Paths.get(getLocalLocation("unpacked", remoteLocation)
+                       .toString()
+                       .replace(".jar", ""));
   }
 }
