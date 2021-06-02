@@ -59,6 +59,27 @@ public class FileFetcherHttpHandlerInternal extends AbstractHttpHandler {
     this.locationFactory = locationFactory;
   }
 
+  @GET
+  @Path("/test/**")
+  public void test(HttpRequest request, HttpResponder responder) throws Exception {
+    responder.sendContent(HttpResponseStatus.OK, new BodyProducer() {
+      @Override
+      public ByteBuf nextChunk() throws Exception {
+        return null;
+      }
+
+      @Override
+      public void finished() throws Exception {
+
+      }
+
+      @Override
+      public void handleError(@Nullable Throwable throwable) {
+
+      }
+    }, new DefaultHttpHeaders().add("test-header", "RRR"));
+  }
+
   /**
    * Download the file specified by path based on current {@link LocationFactory}
    *

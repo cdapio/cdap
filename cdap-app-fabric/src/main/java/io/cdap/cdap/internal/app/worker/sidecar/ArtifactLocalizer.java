@@ -15,13 +15,12 @@
 package io.cdap.cdap.internal.app.worker.sidecar;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
+import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
-import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.internal.app.runtime.artifact.RemotePluginFinder;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
@@ -36,11 +35,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 
 public class ArtifactLocalizer {
 
@@ -48,7 +46,6 @@ public class ArtifactLocalizer {
 
   private static final String PD_DIR = "data/";
   private final RemoteClient remoteClient;
-  private final RemotePluginFinder remotePluginFinder;
   private LocationFactory locationFactory;
 
   @Inject
@@ -57,7 +54,6 @@ public class ArtifactLocalizer {
     this.remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
                                          HttpRequestConfig.DEFAULT,
                                          Constants.Gateway.INTERNAL_API_VERSION_3);
-    this.remotePluginFinder = remotePluginFinder;
     locationFactory = new LocalLocationFactory();
   }
 
@@ -68,68 +64,92 @@ public class ArtifactLocalizer {
     this.remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
                                          HttpRequestConfig.DEFAULT,
                                          Constants.Gateway.INTERNAL_API_VERSION_3);
-    this.remotePluginFinder = remotePluginFinder;
     locationFactory = new LocalLocationFactory(basePath);
   }
 
-  public Location getArtifact(String namespaceId, String artifactName, String artifactVersion) throws IOException,
+  public Location getArtifact(ArtifactId artifactId) throws IOException,
     ArtifactNotFoundException, UnauthorizedException {
-    Location artifactLocation = remotePluginFinder
-      .getArtifactLocation(new ArtifactId(namespaceId, artifactName, artifactVersion));
 
-    return getArtifact(artifactLocation);
-  }
-
-  public Location getArtifact(Location remoteLocation) throws IOException {
-
-    // If the location already exists then its cached and we dont need to do anything
-    Location localLocation = getArtifactLocalLocation(remoteLocation);
+    Location localLocation = getArtifactLocalLocation(artifactId);
+    int lastModifiedTimestamp = 0;
+    // If the local cache exists, check if we have a timestamp directory
     if (localLocation.exists()) {
-      return localLocation;
-    }
-
-    String url = "location" + remoteLocation.toString();
-    HttpURLConnection connection = remoteClient.openConnection(HttpMethod.GET, url);
-    LOG.error("Connection opened to: " + connection.getURL().toString());
-    try {
-      try (InputStream is = connection.getInputStream()) {
-        try (OutputStream os = localLocation.getOutputStream()) {
-          ByteStreams.copy(is, os);
-        }
-        LOG.debug("Stored artifact into " + localLocation.toString());
-      } catch (Exception e) {
-        LOG.error("Got exception when trying to store artifact into: " + localLocation.toString(), e);
-        // Just treat bad request as IOException since it won't be retriable
-        throw new IOException(e);
+      String[] fileList = Paths.get(localLocation.toURI()).toFile().list();
+      if (fileList != null && fileList.length > 1) {
+        Integer integer = Arrays.stream(fileList).map(Integer::valueOf).max(Integer::compare).get();
       }
-    } finally {
-      connection.disconnect();
     }
 
-    return localLocation;
+    String namespaceId = artifactId.getNamespace();
+    ArtifactScope scope = ArtifactScope.USER;
+    // Cant use 'system' as the namespace in the request because that generates an error, the namespace doesnt matter
+    // as long as it exists. Using default because it will always be there
+    if (ArtifactScope.SYSTEM.toString().equalsIgnoreCase(namespaceId)) {
+      namespaceId = "default";
+      scope = ArtifactScope.SYSTEM;
+    }
+    String url = String.format("test/namespaces/%s/artifacts/%s/versions/%s/download?scope=%s",
+                               namespaceId,
+                               artifactId.getArtifact(),
+                               artifactId.getVersion(),
+                               scope);
+
+    HttpURLConnection urlConn = remoteClient.openConnection(HttpMethod.GET, url);
+
+    return null;
   }
 
-  public Location getAndUnpackArtifact(Location remoteLocation) throws Exception {
-    Location artifactLocation = getArtifact(remoteLocation);
+  //  public Location getArtifact(Location remoteLocation) throws IOException {
+  //
+  //    // If the location already exists then its cached and we dont need to do anything
+  //    Location localLocation = getArtifactLocalLocation(remoteLocation);
+  //    if (localLocation.exists()) {
+  //      return localLocation;
+  //    }
+  //
+  //    String url = "location" + remoteLocation.toString();
+  //    HttpURLConnection connection = remoteClient.openConnection(HttpMethod.GET, url);
+  //    LOG.error("Connection opened to: " + connection.getURL().toString());
+  //    try {
+  //      try (InputStream is = connection.getInputStream()) {
+  //        try (OutputStream os = localLocation.getOutputStream()) {
+  //          ByteStreams.copy(is, os);
+  //        }
+  //        LOG.debug("Stored artifact into " + localLocation.toString());
+  //      } catch (Exception e) {
+  //        LOG.error("Got exception when trying to store artifact into: " + localLocation.toString(), e);
+  //        // Just treat bad request as IOException since it won't be retriable
+  //        throw new IOException(e);
+  //      }
+  //    } finally {
+  //      connection.disconnect();
+  //    }
+  //
+  //    return localLocation;
+  //  }
 
-    File artifactFile = Paths.get(artifactLocation.toURI()).toFile();
-    Path targetPath = getUnpackLocalPath(remoteLocation);
-    BundleJarUtil.unJar(artifactFile, targetPath.toFile());
-    return locationFactory.create(targetPath.toUri());
-  }
+  //  public Location getAndUnpackArtifact(Location remoteLocation) throws Exception {
+  //    Location artifactLocation = getArtifact(remoteLocation);
+  //
+  //    File artifactFile = Paths.get(artifactLocation.toURI()).toFile();
+  //    Path targetPath = getUnpackLocalPath(remoteLocation);
+  //    BundleJarUtil.unJar(artifactFile, targetPath.toFile());
+  //    return locationFactory.create(targetPath.toUri());
+  //  }
 
-  private Location getLocalLocation(String basePath, Location remoteLocation) {
-    String path = Paths.get(PD_DIR, basePath, remoteLocation.toString()).toString();
+  private Location getLocalLocation(String basePath, ArtifactId artifactId) {
+    String path = Paths.get(PD_DIR, basePath, artifactId.getNamespace(), artifactId.getArtifact(),
+                            artifactId.getVersion()).toString();
     return locationFactory.create(path);
   }
 
-  private Location getArtifactLocalLocation(Location remoteLocation) {
-    return getLocalLocation("artifacts", remoteLocation);
+  private Location getArtifactLocalLocation(ArtifactId artifactId) {
+    return getLocalLocation("artifacts", artifactId);
   }
 
-  private Path getUnpackLocalPath(Location remoteLocation) {
+  private Path getUnpackLocalPath(ArtifactId artifactId) {
     // TODO: Fix this really gross way to get a path
-    return Paths.get(getLocalLocation("unpacked", remoteLocation)
+    return Paths.get(getLocalLocation("unpacked", artifactId)
                        .toString()
                        .replace(".jar", ""));
   }

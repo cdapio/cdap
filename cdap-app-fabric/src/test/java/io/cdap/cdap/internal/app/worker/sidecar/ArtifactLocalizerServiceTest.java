@@ -55,8 +55,8 @@ import java.util.Arrays;
 /**
  * Unit test for {@link ArtifactLocalizerService}.
  */
-public class FileLocalizerServiceTest extends AppFabricTestBase {
-  private static final Logger LOG = LoggerFactory.getLogger(FileLocalizerServiceTest.class);
+public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
+  private static final Logger LOG = LoggerFactory.getLogger(ArtifactLocalizerServiceTest.class);
   private static final Gson GSON = new Gson();
 
   private ArtifactLocalizerService localizerService;
@@ -101,7 +101,7 @@ public class FileLocalizerServiceTest extends AppFabricTestBase {
   }
 
   @Test
-  public void testPluginFinder() throws Exception {
+  public void testArtifact() throws Exception {
 
     LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
     ArtifactRepository artifactRepository = getInjector().getInstance(ArtifactRepository.class);
@@ -113,6 +113,13 @@ public class FileLocalizerServiceTest extends AppFabricTestBase {
                                String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
     Files.copy(Locations.newInputSupplier(appJar), appJarFile);
     appJar.delete();
+
+    InetSocketAddress addr = localizerService.getBindAddress();
+    URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
+    String url = String.format("/v3Internal/worker/artifact/namespaces/%s/artifacts/%s/versions/%s", artifactId.getNamespace().getId(), artifactId.getName(), artifactId.getVersion());
+    HttpRequest request = HttpRequest.get(uri.resolve(url).toURL()).build();
+    HttpResponse response = HttpRequests.execute(request);
+
 
     artifactRepository.addArtifact(artifactId, appJarFile);
 

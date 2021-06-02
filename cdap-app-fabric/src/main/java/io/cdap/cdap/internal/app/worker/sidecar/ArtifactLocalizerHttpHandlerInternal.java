@@ -25,6 +25,7 @@ import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.logging.gateway.handlers.AbstractLogHttpHandler;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
+import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
@@ -63,7 +64,7 @@ public class ArtifactLocalizerHttpHandlerInternal extends AbstractLogHttpHandler
                        @PathParam("namespace-id") String namespaceId,
                        @PathParam("artifact-name") String artifactName,
                        @PathParam("artifact-version") String artifactVersion) throws Exception {
-    Location artifact = artifactLocalizer.getArtifact(namespaceId, artifactName, artifactVersion);
+    Location artifact = artifactLocalizer.getArtifact(new ArtifactId(namespaceId, artifactName, artifactVersion));
     responder.sendString(HttpResponseStatus.OK, artifact.toString());
   }
 
