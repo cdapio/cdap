@@ -4369,7 +4369,7 @@
 
   <property>
     <name>artifact.localizer.container.memory.mb</name>
-    <value>100</value>
+    <value>300</value>
     <description>
       Memory in megabytes for each task worker.
     </description>
