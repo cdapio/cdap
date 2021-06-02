@@ -29,7 +29,7 @@ import io.cdap.cdap.app.deploy.ConfigResponse;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
-import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
@@ -37,6 +37,7 @@ import io.cdap.cdap.internal.app.runtime.artifact.ApplicationClassCodec;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.RequirementsCodec;
+import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerClient;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import org.apache.twill.filesystem.Location;
@@ -86,24 +87,25 @@ public class ConfiguratorTask implements RunnableTask {
     private final PluginFinder pluginFinder;
     private final ArtifactRepository artifactRepository;
     private final CConfiguration cConf;
+    private final ArtifactLocalizerClient artifactLocalizerClient;
 
     @Inject
     ConfiguratorTaskRunner(Impersonator impersonator, PluginFinder pluginFinder,
-                           ArtifactRepository artifactRepository, CConfiguration cConf) {
+                           ArtifactRepository artifactRepository, CConfiguration cConf,
+                           ArtifactLocalizerClient artifactLocalizerClient) {
       this.impersonator = impersonator;
       this.pluginFinder = pluginFinder;
       this.artifactRepository = artifactRepository;
       this.cConf = cConf;
+      this.artifactLocalizerClient = artifactLocalizerClient;
     }
 
     public ConfigResponse configure(AppDeploymentInfo info) throws Exception {
       // Getting the pipeline app from appfabric
       LOG.debug("Fetching artifact '{}' from app-fabric to create artifact class loader.", info.getArtifactId());
 
-      Location artifactLocation = artifactRepository
-        .getArtifact(Id.Artifact.fromEntityId(info.getArtifactId()))
-        .getDescriptor()
-        .getLocation();
+      Location artifactLocation = Locations
+        .toLocation(artifactLocalizerClient.getUnpackedArtifactLocation(info.getArtifactId()));
 
       // Creates a new deployment info with the newly fetched artifact
       AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(info, artifactLocation);
