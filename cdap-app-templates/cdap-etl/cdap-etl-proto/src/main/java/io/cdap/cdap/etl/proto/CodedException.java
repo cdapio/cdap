@@ -16,10 +16,12 @@
 
 package io.cdap.cdap.etl.proto;
 
+import io.cdap.cdap.api.common.HttpErrorStatusProvider;
+
 /**
  * An exception that contains an HTTP error code.
  */
-public class CodedException extends RuntimeException {
+public class CodedException extends RuntimeException implements HttpErrorStatusProvider {
   private final int code;
 
   public CodedException(int code, String message) {
@@ -32,7 +34,18 @@ public class CodedException extends RuntimeException {
     this.code = code;
   }
 
+  /**
+   *
+   * @return HTTP error code
+   * @deprecated use {@link #getStatusCode()} instead
+   */
+  @Deprecated
   public int getCode() {
+    return code;
+  }
+
+  @Override
+  public int getStatusCode() {
     return code;
   }
 }

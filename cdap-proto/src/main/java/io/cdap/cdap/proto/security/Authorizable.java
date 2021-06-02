@@ -174,6 +174,13 @@ public class Authorizable {
   }
 
   /**
+   * @return the type of children for parent-only permission checks
+   */
+  public EntityType getChildType() {
+    return childType;
+  }
+
+  /**
    * @return a string representation of the authorizable which is compatible with {@link EntityId#toString()}.
    */
   @Override

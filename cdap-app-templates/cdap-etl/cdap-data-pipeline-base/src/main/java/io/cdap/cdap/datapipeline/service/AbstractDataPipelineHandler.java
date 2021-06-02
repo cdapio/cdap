@@ -19,6 +19,7 @@ package io.cdap.cdap.datapipeline.service;
 
 import com.google.gson.JsonSyntaxException;
 import io.cdap.cdap.api.NamespaceSummary;
+import io.cdap.cdap.api.common.HttpErrorStatusProvider;
 import io.cdap.cdap.api.service.http.AbstractSystemHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
@@ -66,14 +67,16 @@ public class AbstractDataPipelineHandler extends AbstractSystemHttpServiceHandle
 
     try {
       callable.respond(namespaceSummary);
-    } catch (CodedException e) {
-      responder.sendError(e.getCode(), e.getMessage());
     } catch (IllegalArgumentException e) {
       responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
     } catch (JsonSyntaxException e) {
       responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST, "Unable to decode request body: " + e.getMessage());
     } catch (Throwable t) {
-      responder.sendError(HttpURLConnection.HTTP_INTERNAL_ERROR, t.getMessage());
+      if (t instanceof HttpErrorStatusProvider) {
+        responder.sendError(((HttpErrorStatusProvider) t).getStatusCode(), t.getMessage());
+      } else {
+        responder.sendError(HttpURLConnection.HTTP_INTERNAL_ERROR, t.getMessage());
+      }
     }
   }
 

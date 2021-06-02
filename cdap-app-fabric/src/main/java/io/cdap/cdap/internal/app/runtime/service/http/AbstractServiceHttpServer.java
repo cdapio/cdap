@@ -130,12 +130,19 @@ public abstract class AbstractServiceHttpServer<T> extends AbstractIdleService {
                                                                context.getHandlerMetricsContext()));
     }
 
-    NettyHttpService.Builder builder = NettyHttpService.builder(program.getName() + "-http")
+    NettyHttpService.Builder builder = createHttpServiceBuilder(program.getName() + "-http")
       .setHost(host)
       .setPort(0)
       .setHttpHandlers(nettyHttpHandlers);
 
     return SystemArguments.configureNettyHttpService(programOptions.getUserArguments().asMap(), builder).build();
+  }
+
+  /**
+   * Create a netty http service builder. Children classes can customize is as needed
+   */
+  protected NettyHttpService.Builder createHttpServiceBuilder(String serviceName) {
+    return NettyHttpService.builder(serviceName);
   }
 
   /**

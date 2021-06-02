@@ -41,19 +41,27 @@ import io.cdap.cdap.etl.proto.v2.ETLStage;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.security.Authorizable;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.test.TestConfiguration;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -67,10 +75,31 @@ public class DraftServiceTest extends DataPipelineServiceTest {
       .registerTypeAdapter(Draft.class, new DraftTypeAdapter())
       .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
       .create();
+  public static final String TEST_NAMESPACE = "testNamespace";
+  public static final String ALICE_NAME = "alice";
+  public static final Principal ALICE_PRINCIPAL = new Principal(ALICE_NAME, Principal.PrincipalType.USER);
 
   private enum DraftType {
     Batch,
     Streaming
+  }
+
+  @ClassRule
+  public static final TestConfiguration AUTH_CONFIG = new TestConfiguration().enableAuthorization(TMP_FOLDER);
+
+  /**
+   * User name to perform calls
+   */
+  private String user;
+  /**
+   * Expected HTTP code from calls
+   */
+  private int expectedCode;
+
+  @Before
+  public void clearState() {
+    user = null;
+    expectedCode = HttpURLConnection.HTTP_OK;
   }
 
   @Test
@@ -140,6 +169,30 @@ public class DraftServiceTest extends DataPipelineServiceTest {
   }
 
   @Test
+  public void testDraftAuthorization() throws Exception {
+    user = ALICE_NAME;
+    HttpResponse response;
+    // Check Alice can't list requests
+    expectedCode = HttpURLConnection.HTTP_FORBIDDEN;
+    listDrafts(NamespaceId.DEFAULT.getNamespace(), false, "", "", "");
+    // Grant her nesessary privilidges
+    getAccessController().grant(Authorizable.fromEntityId(NamespaceId.DEFAULT),
+                                ALICE_PRINCIPAL,
+                                EnumSet.of(StandardPermission.GET));
+
+    // Check Alice can list requests now
+    expectedCode = HttpURLConnection.HTTP_OK;
+    listDrafts(NamespaceId.DEFAULT.getNamespace(), false, "", "", "");
+    // Check Bob still can't do it
+    user = "bob";
+    expectedCode = HttpURLConnection.HTTP_FORBIDDEN;
+    listDrafts(NamespaceId.DEFAULT.getNamespace(), false, "", "", "");
+    // Check Alice can't do it for other namespace
+    user = ALICE_NAME;
+    listDrafts(TEST_NAMESPACE, false, "", "", "");
+  }
+
+  @Test
   public void testListBatchDraftFilter()
       throws Exception {
     testListDraftFilter(DraftType.Batch);
@@ -155,13 +208,13 @@ public class DraftServiceTest extends DataPipelineServiceTest {
     throws IOException, TimeoutException, InterruptedException, ExecutionException {
     //Create 2 drafts per namespace, each belonging to a different user
     NamespaceSummary namespace = new NamespaceSummary(NamespaceId.DEFAULT.getNamespace(), "", 0);
-    String user = "";
 
     List<DraftId> draftsToCleanUp = new ArrayList<>();
     for (int i = 0; i < 4; i++) {
       String id = String.format("draft-%d", i);
       String name = String.format("draft-name-%d", i);
-      DraftId draftId = new DraftId(namespace, id, user);
+      String owner = String.format("draft-user-%d", i);
+      DraftId draftId = new DraftId(namespace, id, owner);
       draftsToCleanUp.add(draftId);
       if (draftType == DraftType.Batch) {
         createBatchPipelineDraft(draftId, name, "This is a test pipeline.");
@@ -243,12 +296,10 @@ public class DraftServiceTest extends DataPipelineServiceTest {
         .resolve(String
             .format("v1/contexts/%s/drafts/?%s", namespaceName, String.join("&", queryParams)))
         .toURL();
-    HttpRequest request = HttpRequest.builder(HttpMethod.GET, draftURL)
-        .build();
-    HttpResponse response = HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
-    Assert.assertEquals(200, response.getResponseCode());
-    return GSON.fromJson(response.getResponseBodyAsString(), new TypeToken<ArrayList<Draft>>() {
-    }.getType());
+    HttpResponse response = executeRequest(draftURL, HttpMethod.GET);
+    assertResponseCode(response);
+    return expectedCode != HttpURLConnection.HTTP_OK ? null :
+      GSON.fromJson(response.getResponseBodyAsString(), new TypeToken<ArrayList<Draft>>() { }.getType());
   }
 
   private HttpResponse deleteDraft(DraftId draftId) throws IOException {
@@ -256,15 +307,13 @@ public class DraftServiceTest extends DataPipelineServiceTest {
         .resolve(String
             .format("v1/contexts/%s/drafts/%s", draftId.getNamespace().getName(), draftId.getId()))
         .toURL();
-    HttpRequest request = HttpRequest.builder(HttpMethod.DELETE, draftURL)
-        .build();
-    HttpResponse response = HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
+    HttpResponse response = executeRequest(draftURL, HttpMethod.DELETE);
     return response;
   }
 
   private void deleteDraftAndCheck(DraftId draftId) throws IOException {
     HttpResponse response = deleteDraft(draftId);
-    Assert.assertEquals(200, response.getResponseCode());
+    assertResponseCode(response);
   }
 
   private HttpResponse fetchDraft(DraftId draftId) throws IOException {
@@ -272,16 +321,15 @@ public class DraftServiceTest extends DataPipelineServiceTest {
         .resolve(String
             .format("v1/contexts/%s/drafts/%s", draftId.getNamespace().getName(), draftId.getId()))
         .toURL();
-    HttpRequest request = HttpRequest.builder(HttpMethod.GET, draftURL)
-        .build();
-    HttpResponse response = HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
+    HttpResponse response = executeRequest(draftURL, HttpMethod.GET);
     return response;
   }
 
   private Draft getDraft(DraftId draftId) throws IOException {
     HttpResponse response = fetchDraft(draftId);
-    Assert.assertEquals(200, response.getResponseCode());
-    return GSON.fromJson(response.getResponseBodyAsString(), Draft.class);
+    assertResponseCode(response);
+    return expectedCode != HttpURLConnection.HTTP_OK ? null :
+      GSON.fromJson(response.getResponseBodyAsString(), Draft.class);
   }
 
   private Draft createBatchPipelineDraft(DraftId draftId, String name, String description)
@@ -329,11 +377,10 @@ public class DraftServiceTest extends DataPipelineServiceTest {
         .resolve(String
             .format("v1/contexts/%s/drafts/%s", draftId.getNamespace().getName(), draftId.getId()))
         .toURL();
-    HttpRequest request = HttpRequest.builder(HttpMethod.PUT, createDraftURL)
-        .withBody(GSON.toJson(draftStoreRequest))
-        .build();
-    HttpResponse response = HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
-    Assert.assertEquals(200, response.getResponseCode());
+    HttpRequest.Builder request = HttpRequest.builder(HttpMethod.PUT, createDraftURL)
+        .withBody(GSON.toJson(draftStoreRequest));
+    HttpResponse response = executeRequest(request);
+    assertResponseCode(response);
   }
 
   /**
@@ -366,6 +413,26 @@ public class DraftServiceTest extends DataPipelineServiceTest {
             TimeUnit.SECONDS);
     Assert.assertEquals(expected,
         getMetricsManager().getTotalMetric(Collections.EMPTY_MAP, "user." + metric));
+  }
+
+  private HttpResponse executeRequest(URL draftURL, HttpMethod method) throws IOException {
+    return executeRequest(HttpRequest.builder(method, draftURL));
+  }
+
+  private HttpResponse executeRequest(HttpRequest.Builder builder) throws IOException {
+    if (user != null) {
+      builder.addHeader(io.cdap.cdap.common.conf.Constants.Security.Headers.USER_ID, user);
+    }
+    return HttpRequests.execute(builder.build(), new DefaultHttpRequestConfig(false));
+  }
+
+  private void assertResponseCode(HttpResponse response) {
+    assertResponseCode(expectedCode, response);
+  }
+
+  private static void assertResponseCode(int expectedCode, HttpResponse response) {
+    Assert.assertEquals("Wrong answer: " + response.getResponseBodyAsString(),
+                        expectedCode, response.getResponseCode());
   }
 
   /**

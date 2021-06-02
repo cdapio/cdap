@@ -75,7 +75,7 @@ public interface AccessEnforcer {
 
   /**
    * Checks whether the set of {@link EntityId}s are visible to the specified {@link Principal}.
-   * An entity is visible to a principal if the principal has any privileges on the entity, or any of its descendants.
+   * An entity is visible to a principal if the principal has {@link StandardPermission#GET} on the entity.
    * However, visibility check behavior can be overwritten at the authorization extension level.
    *
    * @param entityIds the entities on which the visibility check is to be performed

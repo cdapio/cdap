@@ -196,7 +196,11 @@ public class AuthorizerWrapper implements AccessController {
   public void enforceOnParent(EntityType entityType, EntityId parentId, Principal principal, Permission permission)
     throws AccessException {
     try {
-      authorizer.enforce(parentId, principal, Action.ADMIN);
+      if (permission == StandardPermission.LIST) {
+        authorizer.isVisible(parentId, principal);
+      } else {
+        authorizer.enforce(parentId, principal, Action.ADMIN);
+      }
     } catch (Exception e) {
       throw AuthEnforceUtil.propagateAccessException(e);
     }

@@ -20,6 +20,7 @@ import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.Transactionals;
 import io.cdap.cdap.api.TxCallable;
+import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.annotation.TransactionControl;
 import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.metadata.MetadataReader;
@@ -35,6 +36,8 @@ import io.cdap.cdap.api.service.http.HttpServiceHandlerSpecification;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.http.AuthenticationChannelHandler;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.lang.InstantiatorFactory;
 import io.cdap.cdap.common.lang.PropertyFieldSetter;
 import io.cdap.cdap.common.logging.LoggingContext;
@@ -137,6 +140,16 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
     return context.getLoggingContext();
   }
 
+  /**
+   *
+   * @return a service builder preconfigured with common settings. {@link AuthenticationChannelHandler} will be added
+   * if seucrity is on in the configuration. Also {@link io.cdap.cdap.common.HttpExceptionHandler} will be installed.
+   */
+  @Override
+  protected NettyHttpService.Builder createHttpServiceBuilder(String serviceName) {
+    return new CommonNettyHttpServiceBuilder(cConf, serviceName);
+  }
+
   private BasicHttpServiceContextFactory createContextFactory(Program program, ProgramOptions programOptions,
                                                               int instanceId, final AtomicInteger instanceCount,
                                                               MetricsCollectionService metricsCollectionService,
@@ -225,7 +238,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
         @Override
         public void execute(ThrowingRunnable runnable, boolean transactional) throws Exception {
           if (transactional) {
-            context.execute(datasetContext -> runnable.run());
+            Transactionals.execute(context, (TxRunnable) datasetContext -> runnable.run(), Exception.class);
           } else {
             context.execute(runnable);
           }

@@ -592,7 +592,8 @@ public class AuthorizationTest extends TestBase {
 
     // Try to write data, it should fail as BOB don't have the permission to get system dataset
     URL url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "write/data");
-    HttpResponse response = executeHttp(HttpRequest.put(url).build());
+    HttpResponse response = executeAuthenticated(HttpRequest
+                         .put(url));
     Assert.assertEquals(500, response.getResponseCode());
     Assert.assertTrue(response.getResponseBodyAsString().contains("Cannot access dataset store in system namespace"));
 
@@ -634,7 +635,8 @@ public class AuthorizationTest extends TestBase {
 
     // Call to the service would result in failure due to BOB doesn't have permission on the namespace as set in args
     URL url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "write/data");
-    HttpResponse response = executeHttp(HttpRequest.put(url).build());
+    HttpResponse response = executeAuthenticated(HttpRequest
+                         .put(url));
     Assert.assertEquals(500, response.getResponseCode());
     // This is a hack that works around the fact that we cannot properly catch exceptions in the service handler.
     // TODO: Figure out a way to stop checking error messages.
@@ -657,7 +659,8 @@ public class AuthorizationTest extends TestBase {
     serviceManager.start(args);
     for (int i = 0; i < 10; i++) {
       url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "write/" + i);
-      response = executeHttp(HttpRequest.put(url).build());
+      response = executeAuthenticated(HttpRequest
+                           .put(url));
       Assert.assertEquals(200, response.getResponseCode());
     }
 
@@ -1179,11 +1182,9 @@ public class AuthorizationTest extends TestBase {
     URL pfsURL = pfsService.getServiceURL();
     String apiPath = String.format("partitions/%s/subpartitions/%s", partition, subPartition);
     URL url = new URL(pfsURL, apiPath);
-    HttpRequest request;
     HttpResponse response;
     try {
-      request = HttpRequest.post(url).withBody(text).build();
-      response = executeHttp(request);
+      response = executeAuthenticated(HttpRequest.post(url).withBody(text));
       // should fail because bob does not have write privileges on the dataset
       Assert.assertEquals(500, response.getResponseCode());
     } finally {
@@ -1197,18 +1198,15 @@ public class AuthorizationTest extends TestBase {
     pfsURL = pfsService.getServiceURL();
     url = new URL(pfsURL, apiPath);
     try  {
-      request = HttpRequest.post(url).withBody(text).build();
-      response = executeHttp(request);
+      response = executeAuthenticated(HttpRequest.post(url).withBody(text));
       // should succeed now because bob was granted write privileges on the dataset
       Assert.assertEquals(200, response.getResponseCode());
       // make sure that the partition was added
-      request = HttpRequest.get(url).build();
-      response = executeHttp(request);
+      response = executeAuthenticated(HttpRequest.get(url));
       Assert.assertEquals(200, response.getResponseCode());
       Assert.assertEquals(text, response.getResponseBodyAsString());
       // drop the partition
-      request = HttpRequest.delete(url).build();
-      response = executeHttp(request);
+      response = executeAuthenticated(HttpRequest.delete(url));
       Assert.assertEquals(200, response.getResponseCode());
     } finally {
       pfsService.stop();
@@ -1512,5 +1510,11 @@ public class AuthorizationTest extends TestBase {
         return true;
       }
     }, 10, TimeUnit.SECONDS);
+  }
+
+  private HttpResponse executeAuthenticated(HttpRequest.Builder builder) throws IOException {
+    return executeHttp(builder
+                         .addHeader(Constants.Security.Headers.USER_ID, SecurityRequestContext.getUserId())
+                         .build());
   }
 }

@@ -98,6 +98,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import javax.annotation.Nullable;
@@ -356,7 +357,7 @@ public class AppFabricTestHelper {
   }
 
   /**
-   * Enables in-memory auhtorization in the provided configuration. Default user is given superuser rights,
+   * Enables in-memory authorization in the provided configuration. Default user is given superuser rights,
    * so that you can use it to grant permissions to others. While in
    * {@link io.cdap.cdap.internal.app.services.http.AppFabricTestBase} use
    * {@link io.cdap.cdap.security.spi.authentication.SecurityRequestContext#setUserId(String)} or
@@ -366,18 +367,28 @@ public class AppFabricTestHelper {
    */
   public static CConfiguration enableAuthorization(CConfiguration cConf, TemporaryFolder temporaryFolder)
     throws IOException {
-    cConf.setBoolean(Constants.Security.ENABLED, true);
-    cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
-    cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
+    enableAuthorization(cConf::set, temporaryFolder);
+    return cConf;
+  }
+
+  /**
+   * More generic method of {@link #enableAuthorization(CConfiguration, TemporaryFolder)}. Allows to set
+   * configuration values that enable security on any set-like method, e.g. in CConfiguration or Map.
+   */
+  public static void enableAuthorization(BiConsumer<String, String> confSetter, TemporaryFolder temporaryFolder)
+    throws IOException {
+    confSetter.accept(Constants.Security.ENABLED, Boolean.toString(true));
+    confSetter.accept(Constants.Security.KERBEROS_ENABLED, Boolean.toString(false));
+    confSetter.accept(Constants.Security.Authorization.ENABLED, Boolean.toString(true));
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, InMemoryAccessController.class.getName());
     LocationFactory locationFactory = new LocalLocationFactory(temporaryFolder.newFolder());
     Location externalAuthJar = AppJarHelper.createDeploymentJar(
       locationFactory, InMemoryAccessController.class, manifest);
-    cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
-    cConf.set(Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX + "superusers",
+    confSetter.accept(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
+    confSetter.accept(Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX + "superusers",
               UserGroupInformation.getCurrentUser().getShortUserName());
-    return cConf;
   }
+
 }
 
