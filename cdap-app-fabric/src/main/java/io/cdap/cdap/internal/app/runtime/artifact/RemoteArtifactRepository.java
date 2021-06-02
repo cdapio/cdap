@@ -188,7 +188,7 @@ public class RemoteArtifactRepository implements ArtifactRepository {
 
   @Override
   public ArtifactDetail getArtifact(Id.Artifact artifactId) throws Exception {
-    throw new UnsupportedOperationException();
+    return artifactRepositoryReader.getArtifact(artifactId);
   }
 
   @Override

@@ -17,8 +17,8 @@
 package io.cdap.cdap.gateway.handlers;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
-import com.google.common.net.HttpHeaders;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -46,6 +46,9 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaderValues;
+import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.filesystem.Location;
@@ -53,6 +56,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -61,7 +68,6 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
 
 /**
  * Internal {@link io.cdap.http.HttpHandler} for managing artifacts.
@@ -113,8 +119,22 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
     ArtifactId artifactId = new ArtifactId(namespace.getNamespace(), artifactName, artifactVersion);
     ArtifactDetail artifactDetail = artifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId));
     Location location = artifactDetail.getDescriptor().getLocation();
-    responder.sendContent(HttpResponseStatus.OK, new LocationBodyProducer(location),
-                          new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM));
+
+    ZonedDateTime newModifiedDate =
+      ZonedDateTime.ofInstant(Instant.ofEpochMilli(location.lastModified()), ZoneId.of("GMT"));
+
+    HttpHeaders headers = new DefaultHttpHeaders()
+      .add(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_OCTET_STREAM)
+      .add(HttpHeaderNames.LAST_MODIFIED, newModifiedDate.format(DateTimeFormatter.RFC_1123_DATE_TIME));
+
+    String lastModified = request.headers().get(HttpHeaderNames.IF_MODIFIED_SINCE);
+    if (!Strings.isNullOrEmpty(lastModified) &&
+      newModifiedDate.equals(ZonedDateTime.parse(lastModified, DateTimeFormatter.RFC_1123_DATE_TIME))) {
+      responder.sendStatus(HttpResponseStatus.NOT_MODIFIED, headers);
+      return;
+    }
+
+    responder.sendContent(HttpResponseStatus.OK, new LocationBodyProducer(location), headers);
   }
 
   @GET
@@ -194,8 +214,8 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
   }
 
   /**
-   * Check that the namespace exists, and check if the request is only supposed to include system artifacts,
-   * and returning the system namespace if so.
+   * Check that the namespace exists, and check if the request is only supposed to include system artifacts, and
+   * returning the system namespace if so.
    *
    * @param namespace NamespaceId to validate
    * @param scope ArtifactScope for the given artifact

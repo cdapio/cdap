@@ -21,13 +21,8 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.conf.SConfiguration;
-import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
-import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.http.NettyHttpService;
-import org.apache.twill.common.Cancellable;
-import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,21 +37,18 @@ public class ArtifactLocalizerService extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactLocalizerService.class);
 
-  private final DiscoveryService discoveryService;
   private final NettyHttpService httpService;
   private InetSocketAddress bindAddress;
 
   @Inject
   ArtifactLocalizerService(CConfiguration cConf,
-                           DiscoveryService discoveryService) {
-    this.discoveryService = discoveryService;
-
+                           ArtifactLocalizer artifactLocalizer) {
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TASK_WORKER)
       .setHost(InetAddress.getLoopbackAddress().getHostName())
       .setPort(cConf.getInt(Constants.ArtifactLocalizer.PORT))
       .setBossThreadPoolSize(cConf.getInt(Constants.ArtifactLocalizer.BOSS_THREADS))
       .setWorkerThreadPoolSize(cConf.getInt(Constants.ArtifactLocalizer.WORKER_THREADS))
-      .setHttpHandlers(new ArtifactLocalizerHttpHandlerInternal(cConf));
+      .setHttpHandlers(new ArtifactLocalizerHttpHandlerInternal(artifactLocalizer));
 
     httpService = builder.build();
   }
@@ -67,6 +59,8 @@ public class ArtifactLocalizerService extends AbstractIdleService {
     httpService.start();
     bindAddress = httpService.getBindAddress();
     LOG.debug("Starting ArtifactLocalizerService has completed");
+
+    // TODO: (CDAP-18051) Add cleanup task for out of date cached artifacts
   }
 
   @Override

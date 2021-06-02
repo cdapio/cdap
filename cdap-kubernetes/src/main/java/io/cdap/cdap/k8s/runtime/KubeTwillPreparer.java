@@ -109,7 +109,6 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.stream.Collectors;
 
-
 /**
  * Kubernetes version of a TwillRunner.
  * <p>
