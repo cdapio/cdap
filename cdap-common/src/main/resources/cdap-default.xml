@@ -4296,7 +4296,7 @@
 
   <property>
     <name>file.localizer.bind.port</name>
-    <value>11020</value>
+    <value>11021</value>
     <description>
       The port to bind the task worker service to.
     </description>

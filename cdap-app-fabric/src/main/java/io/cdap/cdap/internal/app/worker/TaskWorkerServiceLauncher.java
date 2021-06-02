@@ -21,6 +21,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.internal.app.worker.sidecar.FileLocalizerTwillRunnable;
 import io.cdap.cdap.master.spi.twill.StatefulDisk;
 import io.cdap.cdap.master.spi.twill.StatefulTwillPreparer;
 import org.apache.hadoop.conf.Configuration;
@@ -151,6 +152,8 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
             int diskSize = cConf.getInt(Constants.TaskWorker.CONTAINER_DISK_SIZE_GB);
             twillPreparer = ((StatefulTwillPreparer) twillPreparer)
               .withStatefulRunnable(TaskWorkerTwillRunnable.class.getSimpleName(), false,
+                                    new StatefulDisk("task-worker-data", diskSize, "/data"))
+              .withStatefulRunnable(FileLocalizerTwillRunnable.class.getSimpleName(), false,
                                     new StatefulDisk("task-worker-data", diskSize, "/data"));
           }
 
