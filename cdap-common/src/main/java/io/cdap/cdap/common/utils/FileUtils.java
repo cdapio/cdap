@@ -97,6 +97,16 @@ public class FileUtils {
     return idx >= 0 ? name.substring(idx + 1) : "";
   }
 
+  /**
+   * Returns the name of a given file without the extension, if one is present.
+   * @param name name of the file
+   * @return the name of the file without the extension
+   */
+  public static String getNameWithoutExtension(String name) {
+    int idx = name.lastIndexOf('.');
+    return idx >= 0 ? name.substring(0, idx) : name;
+  }
+
   private static int parsePermissionGroup(String permissions, int start) {
     return parseBit(permissions, start, 'r', 4)
       + parseBit(permissions, start + 1, 'w', 2)
