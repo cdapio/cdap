@@ -401,16 +401,23 @@ public final class Constants {
   }
 
   /**
-   * Task worker.
+   * Artifact localizer.
    */
-  public static final class FileLocalizer {
+  public static final class ArtifactLocalizer {
+
     /**
-     * File Localizer http handler configuration
+     * Artifact localizer sidecar container configurations
      */
-    public static final String PORT = "file.localizer.bind.port";
-    public static final String EXEC_THREADS = "file.localizer.exec.threads";
-    public static final String BOSS_THREADS = "file.localizer.boss.threads";
-    public static final String WORKER_THREADS = "file.localizer.worker.threads";
+    public static final String CONTAINER_MEMORY_MB = "artifact.localizer.container.memory.mb";
+    public static final String CONTAINER_CORES = "artifact.localizer.container.num.cores";
+
+    /**
+     * Artifact localizer http handler configuration
+     */
+    public static final String PORT = "artifact.localizer.bind.port";
+    public static final String EXEC_THREADS = "artifact.localizer.exec.threads";
+    public static final String BOSS_THREADS = "artifact.localizer.boss.threads";
+    public static final String WORKER_THREADS = "artifact.localizer.worker.threads";
   }
 
   /**

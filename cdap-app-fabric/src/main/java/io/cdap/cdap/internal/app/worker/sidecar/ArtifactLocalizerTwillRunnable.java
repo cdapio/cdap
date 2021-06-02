@@ -61,12 +61,14 @@ import java.util.concurrent.ExecutionException;
 
 /**
  * The {@link TwillRunnable} for running {@link ArtifactLocalizerService}.
+ *
+ * This runnable will run as a sidecar container for {@link io.cdap.cdap.internal.app.worker.TaskWorkerTwillRunnable}
  */
 public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
 
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactLocalizerTwillRunnable.class);
 
-  private ArtifactLocalizerService fileLocalizerService;
+  private ArtifactLocalizerService artifactLocalizerService;
   private LogAppenderInitializer logAppenderInitializer;
 
   public ArtifactLocalizerTwillRunnable(String cConfFileName, String hConfFileName) {
@@ -119,7 +121,7 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
   @Override
   public void run() {
     CompletableFuture<Service.State> future = new CompletableFuture<>();
-    fileLocalizerService.addListener(new ServiceListenerAdapter() {
+    artifactLocalizerService.addListener(new ServiceListenerAdapter() {
       @Override
       public void terminated(Service.State from) {
         future.complete(from);
@@ -132,7 +134,7 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
     }, Threads.SAME_THREAD_EXECUTOR);
 
     LOG.debug("Starting artifact localizer");
-    fileLocalizerService.start();
+    artifactLocalizerService.start();
 
     try {
       Uninterruptibles.getUninterruptibly(future);
@@ -145,7 +147,7 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
   @Override
   public void stop() {
     LOG.info("Stopping artifact localizer");
-    fileLocalizerService.stop();
+    artifactLocalizerService.stop();
   }
 
   @Override
@@ -170,8 +172,8 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
 
     LoggingContext loggingContext = new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                                               Constants.Logging.COMPONENT_NAME,
-                                                              "File_Localizer");
+                                                              "Artifact_Localizer");
     LoggingContextAccessor.setLoggingContext(loggingContext);
-    fileLocalizerService = injector.getInstance(ArtifactLocalizerService.class);
+    artifactLocalizerService = injector.getInstance(ArtifactLocalizerService.class);
   }
 }

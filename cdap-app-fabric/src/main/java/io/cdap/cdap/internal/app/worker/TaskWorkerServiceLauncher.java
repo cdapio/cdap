@@ -132,17 +132,25 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
             hConf.writeXml(writer);
           }
 
-          ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
+          ResourceSpecification taskworkerResourceSpec = ResourceSpecification.Builder.with()
             .setVirtualCores(cConf.getInt(Constants.TaskWorker.CONTAINER_CORES))
             .setMemory(cConf.getInt(Constants.TaskWorker.CONTAINER_MEMORY_MB), ResourceSpecification.SizeUnit.MEGA)
             .setInstances(cConf.getInt(Constants.TaskWorker.CONTAINER_COUNT))
             .build();
 
-          LOG.info("Starting TaskWorker pool with {} instances", resourceSpec.getInstances());
+          ResourceSpecification artifactLocalizerResourceSpec = ResourceSpecification.Builder.with()
+            .setVirtualCores(cConf.getInt(Constants.ArtifactLocalizer.CONTAINER_CORES))
+            .setMemory(cConf.getInt(Constants.ArtifactLocalizer.CONTAINER_MEMORY_MB),
+                       ResourceSpecification.SizeUnit.MEGA)
+            .setInstances(cConf.getInt(Constants.TaskWorker.CONTAINER_COUNT))
+            .build();
 
-          TwillPreparer twillPreparer = twillRunner.prepare(new TaskWorkerTwillApplication(cConfPath.toUri(),
-                                                                                           hConfPath.toUri(),
-                                                                                           resourceSpec));
+          LOG.info("Starting TaskWorker pool with {} instances", taskworkerResourceSpec.getInstances());
+
+          TwillPreparer twillPreparer = twillRunner.prepare(
+            new TaskWorkerTwillApplication(cConfPath.toUri(), hConfPath.toUri(), taskworkerResourceSpec,
+                                           artifactLocalizerResourceSpec));
+
           String priorityClass = cConf.get(Constants.TaskWorker.CONTAINER_PRIORITY_CLASS_NAME);
           if (priorityClass != null) {
             twillPreparer = twillPreparer.setSchedulerQueue(priorityClass);

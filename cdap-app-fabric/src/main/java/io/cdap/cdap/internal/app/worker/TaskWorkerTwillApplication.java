@@ -24,7 +24,7 @@ import org.apache.twill.api.TwillSpecification;
 import java.net.URI;
 
 /**
- * The {@link TwillApplication} for launching task workers
+ * The {@link TwillApplication} for launching task workers along with artifact localizers as sidecar containers.
  */
 public class TaskWorkerTwillApplication implements TwillApplication {
 
@@ -32,12 +32,16 @@ public class TaskWorkerTwillApplication implements TwillApplication {
 
   private final URI cConfFileURI;
   private final URI hConfFileURI;
-  private final ResourceSpecification resourceSpec;
+  private final ResourceSpecification taskworkerResourceSpec;
+  private final ResourceSpecification artifactLocalizerResourceSpec;
 
-  public TaskWorkerTwillApplication(URI cConfFileURI, URI hConfFileURI, ResourceSpecification resourceSpec) {
+  public TaskWorkerTwillApplication(URI cConfFileURI, URI hConfFileURI,
+                                    ResourceSpecification taskworkerResourceSpec,
+                                    ResourceSpecification artifactLocalizerResourceSpec) {
     this.cConfFileURI = cConfFileURI;
     this.hConfFileURI = hConfFileURI;
-    this.resourceSpec = resourceSpec;
+    this.taskworkerResourceSpec = taskworkerResourceSpec;
+    this.artifactLocalizerResourceSpec = artifactLocalizerResourceSpec;
   }
 
   @Override
@@ -45,13 +49,14 @@ public class TaskWorkerTwillApplication implements TwillApplication {
     return TwillSpecification.Builder.with()
       .setName(NAME)
       .withRunnable()
-      .add(new TaskWorkerTwillRunnable("cConf.xml", "hConf.xml"), resourceSpec)
+      .add(new TaskWorkerTwillRunnable("cConf.xml", "hConf.xml"), taskworkerResourceSpec)
       .withLocalFiles()
       .add("cConf.xml", cConfFileURI)
       .add("hConf.xml", hConfFileURI)
       .apply()
       //add sidecar container
-      .add(new ArtifactLocalizerTwillRunnable("cConf.xml", "hConf.xml"), resourceSpec)
+      .add(new ArtifactLocalizerTwillRunnable("cConf.xml", "hConf.xml"),
+           artifactLocalizerResourceSpec)
       .withLocalFiles()
       .add("cConf.xml", cConfFileURI)
       .add("hConf.xml", hConfFileURI)
