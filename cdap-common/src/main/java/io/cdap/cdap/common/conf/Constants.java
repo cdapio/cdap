@@ -401,6 +401,19 @@ public final class Constants {
   }
 
   /**
+   * Task worker.
+   */
+  public static final class FileLocalizer {
+    /**
+     * File Localizer http handler configuration
+     */
+    public static final String PORT = "file.localizer.bind.port";
+    public static final String EXEC_THREADS = "file.localizer.exec.threads";
+    public static final String BOSS_THREADS = "file.localizer.boss.threads";
+    public static final String WORKER_THREADS = "file.localizer.worker.threads";
+  }
+
+  /**
    * Scheduler options.
    */
   public static final class Scheduler {

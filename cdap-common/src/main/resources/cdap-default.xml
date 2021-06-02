@@ -4293,4 +4293,36 @@
       The number of boss threads for the task worker.
     </description>
   </property>
+
+  <property>
+    <name>file.localizer.bind.port</name>
+    <value>11020</value>
+    <description>
+      The port to bind the task worker service to.
+    </description>
+  </property>
+
+  <property>
+    <name>file.localizer.worker.threads</name>
+    <value>10</value>
+    <description>
+      The number of worker threads in the task worker.
+    </description>
+  </property>
+
+  <property>
+    <name>file.localizer.exec.threads</name>
+    <value>10</value>
+    <description>
+      The number of executor threads for the task worker.
+    </description>
+  </property>
+
+  <property>
+    <name>file.localizer.boss.threads</name>
+    <value>1</value>
+    <description>
+      The number of boss threads for the task worker.
+    </description>
+  </property>
 </configuration>
