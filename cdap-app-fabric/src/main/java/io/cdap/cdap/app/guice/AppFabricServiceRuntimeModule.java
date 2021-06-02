@@ -34,7 +34,6 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
-import com.google.inject.util.Providers;
 import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.deploy.ManagerFactory;
@@ -107,7 +106,6 @@ import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.services.RunRecordCorrectorService;
 import io.cdap.cdap.internal.app.services.ScheduledRunRecordCorrectorService;
 import io.cdap.cdap.internal.app.store.DefaultStore;
-import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerClient;
 import io.cdap.cdap.internal.bootstrap.guice.BootstrapModules;
 import io.cdap.cdap.internal.capability.CapabilityModule;
 import io.cdap.cdap.internal.pipeline.SynchronousPipelineFactory;
@@ -294,7 +292,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
     @Override
     protected void configure() {
-      bind(ArtifactLocalizerClient.class).toProvider(Providers.of(null));
       bind(PipelineFactory.class).to(SynchronousPipelineFactory.class);
 
       bind(PluginFinder.class).to(LocalPluginFinder.class);

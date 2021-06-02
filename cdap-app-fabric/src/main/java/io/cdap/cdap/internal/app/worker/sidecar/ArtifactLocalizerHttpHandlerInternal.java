@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.internal.app.worker.sidecar;
 
-import avro.shaded.com.google.common.annotations.VisibleForTesting;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Singleton;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.id.ArtifactId;

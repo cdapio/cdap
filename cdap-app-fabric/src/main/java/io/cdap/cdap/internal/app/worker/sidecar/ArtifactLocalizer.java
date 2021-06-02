@@ -145,7 +145,7 @@ public class ArtifactLocalizer {
       }
       File tempUnpackDir = DirUtils.createTempDir(unpackDir.getParentFile());
       try {
-        BundleJarUtil.unJar(jarLocation, tempUnpackDir);
+        BundleJarUtil.prepareClassLoaderFolder(jarLocation, tempUnpackDir);
         Files.move(tempUnpackDir.toPath(), unpackDir.toPath(), StandardCopyOption.ATOMIC_MOVE,
                    StandardCopyOption.REPLACE_EXISTING);
       } finally {
