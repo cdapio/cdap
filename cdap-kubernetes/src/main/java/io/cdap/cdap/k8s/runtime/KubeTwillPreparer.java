@@ -479,10 +479,10 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       V1ObjectMeta metadata = createResourceMetadata(resourceType, mainRuntimeSpec.getName(),
                                                      timeoutUnit.toMillis(timeout));
       if (V1Deployment.class.equals(resourceType)) {
-        metadata = createDeployment(metadata, twillSpec.getRunnables(),
+        metadata = createDeployment(metadata, twillSpec.getRunnables().values().stream().collect(Collectors.toList()),
                                     runtimeConfigLocation);
       } else {
-        metadata = createStatefulSet(metadata, twillSpec.getRunnables(),
+        metadata = createStatefulSet(metadata, twillSpec.getRunnables().values().stream().collect(Collectors.toList()),
                                      runtimeConfigLocation, statefulRunnable);
       }
 
@@ -558,7 +558,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    * Deploys a {@link V1Deployment} to for runnable exeuction in Kubernetes.
    */
   private V1ObjectMeta createDeployment(V1ObjectMeta metadata,
-                                        Map<String, RuntimeSpecification> runtimeSpecs,
+                                        List<RuntimeSpecification> runtimeSpecs,
                                         Location runtimeConfigLocation) throws ApiException {
     AppsV1Api appsApi = new AppsV1Api(apiClient);
 
@@ -573,7 +573,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    * Deploys a {@link V1StatefulSet} to for runnable exeuction in Kubernetes.
    */
   private V1ObjectMeta createStatefulSet(V1ObjectMeta metadata,
-                                         Map<String, RuntimeSpecification> runtimeSpecs,
+                                         List<RuntimeSpecification> runtimeSpecs,
                                          Location runtimeConfigLocation,
                                          StatefulRunnable statefulRunnable) throws ApiException {
     AppsV1Api appsApi = new AppsV1Api(apiClient);
@@ -590,13 +590,12 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    * given {@link RuntimeSpecification}
    */
   private V1Deployment buildDeployment(V1ObjectMeta metadata,
-                                       Map<String, RuntimeSpecification> runtimeSpecs, Location runtimeConfigLocation) {
-    int replicas = getMainRuntimeSpecification(runtimeSpecs).getResourceSpecification().getInstances();
+                                       List<RuntimeSpecification> runtimeSpecs, Location runtimeConfigLocation) {
     return new V1DeploymentBuilder()
       .withMetadata(metadata)
       .withNewSpec()
         .withSelector(new V1LabelSelector().matchLabels(metadata.getLabels()))
-        .withReplicas(replicas)
+        .withReplicas(runtimeSpecs.iterator().next().getResourceSpecification().getInstances())
         .withNewTemplate()
           .withMetadata(metadata)
           .withSpec(createPodSpec(runtimeConfigLocation, runtimeSpecs))
@@ -609,7 +608,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    * Returns a {@link V1StatefulSet} object for the {@link TwillRunnable} represented by the
    * given {@link RuntimeSpecification}
    */
-  private V1StatefulSet buildStatefulSet(V1ObjectMeta metadata, Map<String, RuntimeSpecification> runtimeSpecs,
+  private V1StatefulSet buildStatefulSet(V1ObjectMeta metadata, List<RuntimeSpecification> runtimeSpecs,
                                          Location runtimeConfigLocation, StatefulRunnable statefulRunnable) {
     List<StatefulDisk> disks = statefulRunnable.getStatefulDisks();
 
@@ -774,7 +773,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    * @return a {@link V1PodSpec}
    */
   private V1PodSpec createPodSpec(Location runtimeConfigLocation,
-                                  Map<String, RuntimeSpecification> runtimeSpecs, V1VolumeMount... extraMounts) {
+                                  List<RuntimeSpecification> runtimeSpecs, V1VolumeMount... extraMounts) {
     String workDir = "/workDir-" + twillRunId.getId();
 
     V1Volume podInfoVolume = createPodInfoVolume(podInfo);
