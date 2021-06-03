@@ -145,10 +145,6 @@ class KubeTwillPreparer implements TwillPreparer, StatefulTwillPreparer {
                     PodInfo podInfo, TwillSpecification spec, RunId twillRunId, Location appLocation,
                     String resourcePrefix, Map<String, String> extraLabels,
                     KubeTwillControllerFactory controllerFactory) {
-    // only expect one runnable for now
-//    if (spec.getRunnables().size() != 1) {
-//      throw new IllegalStateException("Kubernetes runner currently only supports one Twill Runnable");
-//    }
     this.masterEnvContext = masterEnvContext;
     this.apiClient = apiClient;
     this.kubeNamespace = kubeNamespace;
@@ -687,7 +683,7 @@ class KubeTwillPreparer implements TwillPreparer, StatefulTwillPreparer {
     String workDir = "/workDir-" + twillRunId.getId();
 
     V1Volume podInfoVolume = createPodInfoVolume(podInfo);
-    V1ResourceRequirements resourceRequirements =
+    V1ResourceRequirements initContainerresourceRequirements =
       createResourceRequirements(runtimeSpecs.iterator().next().getResourceSpecification());
 
     // Add volume mounts to the container. Add those from the current pod for mount cdap and hadoop conf.
@@ -714,7 +710,8 @@ class KubeTwillPreparer implements TwillPreparer, StatefulTwillPreparer {
       .addToVolumes(podInfoVolume,
                     new V1Volume().name("workdir").emptyDir(new V1EmptyDirVolumeSource()))
       .withInitContainers(createContainer("file-localizer", podInfo.getContainerImage(), workDir,
-                                          resourceRequirements, volumeMounts, environs, FileLocalizer.class,
+                                          initContainerresourceRequirements, volumeMounts, environs,
+                                          FileLocalizer.class,
                                           runtimeConfigLocation.toURI().toString(),
                                           runtimeSpecs.iterator().next().getName()))
       .withContainers(createContainers(runtimeSpecs, workDir, volumeMounts))
