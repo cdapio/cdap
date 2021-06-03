@@ -497,6 +497,8 @@ public final class Constants {
     // tables. Constant could be moved to Table after that is changed. See CDAP-1193 for more info
     public static final String TABLE_TX_DISABLED = "dataset.table.tx.disabled";
 
+    public static final String CUSTOM_MODULE_ENABLED = "dataset.custom.module.enabled";
+
     public static final String DATA_DIR = "dataset.data.dir";
     public static final String DEFAULT_DATA_DIR = "data";
 

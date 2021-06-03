@@ -17,18 +17,22 @@
 package io.cdap.cdap.internal;
 
 import com.google.common.base.Throwables;
+import io.cdap.cdap.common.utils.DirUtils;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
 
 /**
- * Utility for creating temp folder in unit-tests. All files and dirs created using it will be cleaned up by
- * {@link java.io.File#deleteOnExit()} which is set for every created dir and file automatically.
+ * Utility for creating temp folder in unit-tests.
  *
  * Note: it is preferable to use {@link org.junit.rules.TemporaryFolder} when you can instead of this tool. Use this one
  *       when you don't have access to the unit-test test lifecycle (like static init of some utility classes, etc.).
+ *
+ * @deprecated Don't use this. Use {@link TemporaryFolder} instead
  */
-public class TempFolder {
+@Deprecated
+final class TempFolder {
   private File folder;
 
   /**
@@ -41,7 +45,6 @@ public class TempFolder {
       if (!folder.mkdir()) {
         throw new RuntimeException("Could NOT create temp dir at " + folder.getAbsolutePath());
       }
-      folder.deleteOnExit();
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
@@ -56,7 +59,6 @@ public class TempFolder {
       if (!file.createNewFile()) {
         throw new RuntimeException("Could NOT create temp file at " + file.getAbsolutePath());
       }
-      file.deleteOnExit();
       return file;
     } catch (IOException e) {
       throw Throwables.propagate(e);
@@ -71,7 +73,6 @@ public class TempFolder {
     if (!file.mkdir()) {
       throw new RuntimeException("Could NOT create temp dir at " + file.getAbsolutePath());
     }
-    file.deleteOnExit();
     return file;
   }
 
@@ -87,16 +88,12 @@ public class TempFolder {
    * Usually not called directly, since it is automatically done via deleteOnExit().
    */
   public void delete() {
-    recursiveDelete(folder);
-  }
-
-  private void recursiveDelete(File file) {
-    File[] files = file.listFiles();
-    if (files != null) {
-      for (File each : files) {
-        recursiveDelete(each);
+    try {
+      if (folder.isDirectory()) {
+        DirUtils.deleteDirectoryContents(folder, true);
       }
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
-    file.delete();
   }
 }

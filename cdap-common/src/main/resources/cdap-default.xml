@@ -1131,6 +1131,14 @@
   </property>
 
   <property>
+    <name>dataset.custom.module.enabled</name>
+    <value>true</value>
+    <description>
+      Enable the support of custom dataset module
+    </description>
+  </property>
+
+  <property>
     <name>dataset.data.dir</name>
     <value>data</value>
     <description>

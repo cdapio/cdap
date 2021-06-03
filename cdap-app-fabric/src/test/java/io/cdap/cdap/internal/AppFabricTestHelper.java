@@ -19,6 +19,7 @@ package io.cdap.cdap.internal;
 import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
@@ -47,6 +48,7 @@ import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.common.NamespaceAlreadyExistsException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.CConfigurationUtil;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.id.Id;
@@ -58,8 +60,8 @@ import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
+import io.cdap.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
 import io.cdap.cdap.internal.app.deploy.LocalApplicationManager;
-import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
@@ -77,7 +79,6 @@ import io.cdap.cdap.metadata.MetadataSubscriberService;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.security.authorization.InMemoryAccessController;
@@ -97,6 +98,8 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
@@ -112,6 +115,7 @@ public class AppFabricTestHelper {
   public static CConfiguration configuration;
   private static Injector injector;
   private static MetadataStorage metadataStorage;
+  private static List<Service> services;
 
   public static Injector getInjector() {
     return getInjector(CConfiguration.create());
@@ -141,8 +145,12 @@ public class AppFabricTestHelper {
   public static synchronized Injector getInjector(CConfiguration conf, @Nullable SConfiguration sConf,
                                                   Module overrides) {
     if (injector == null) {
+      services = new ArrayList<>();
+
       configuration = conf;
-      configuration.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder("data").getAbsolutePath());
+      if (!CConfigurationUtil.isOverridden(configuration, Constants.CFG_LOCAL_DATA_DIR)) {
+        configuration.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder("data").getAbsolutePath());
+      }
       configuration.set(Constants.AppFabric.REST_PORT, Integer.toString(Networks.getRandomPort()));
       configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
       // Speed up tests
@@ -151,19 +159,18 @@ public class AppFabricTestHelper {
 
       injector = Guice.createInjector(Modules.override(new AppFabricTestModule(configuration, sConf)).with(overrides));
 
-      MessagingService messagingService = injector.getInstance(MessagingService.class);
-      if (messagingService instanceof Service) {
-        ((Service) messagingService).startAndWait();
-      }
+      startService(injector, MessagingService.class);
+      startService(injector, TransactionManager.class);
 
-      injector.getInstance(TransactionManager.class).startAndWait();
       metadataStorage = injector.getInstance(MetadataStorage.class);
       try {
         metadataStorage.createIndex();
       } catch (IOException e) {
         throw new RuntimeException("Unable to create the metadata tables.", e);
       }
-      injector.getInstance(MetadataService.class).startAndWait();
+
+      startService(injector, MetadataService.class);
+
       // Register the tables before services will need to use them
       StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
       StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
@@ -178,15 +185,14 @@ public class AppFabricTestHelper {
         throw new RuntimeException("Failed to create the system tables", e);
       }
 
-      injector.getInstance(DatasetOpExecutorService.class).startAndWait();
-      injector.getInstance(DatasetService.class).startAndWait();
-      injector.getInstance(MetricsCollectionService.class).startAndWait();
-      injector.getInstance(MetadataSubscriberService.class).startAndWait();
-      injector.getInstance(ProgramNotificationSubscriberService.class).startAndWait();
-      Scheduler programScheduler = injector.getInstance(Scheduler.class);
-      if (programScheduler instanceof Service) {
-        ((Service) programScheduler).startAndWait();
-      }
+      startService(injector, DatasetOpExecutorService.class);
+      startService(injector, DatasetService.class);
+      startService(injector, MetricsCollectionService.class);
+      startService(injector, MetadataSubscriberService.class);
+      startService(injector, ProgramNotificationSubscriberService.class);
+
+      Scheduler programScheduler = startService(injector, Scheduler.class);
+
       // Wait for the scheduler to be functional.
       if (programScheduler instanceof CoreSchedulerService) {
         try {
@@ -204,7 +210,17 @@ public class AppFabricTestHelper {
    */
   public static void shutdown() {
     Closeables.closeQuietly(metadataStorage);
+
+    if (services != null) {
+      Lists.reverse(services).forEach(Service::stopAndWait);
+    }
+
+    InMemoryTableService.reset();
+
     metadataStorage = null;
+    injector = null;
+    services = null;
+    TEMP_FOLDER.delete();
   }
 
   public static byte[] createSourceId(long sourceId) {
@@ -216,22 +232,35 @@ public class AppFabricTestHelper {
   /**
    * @return an instance of {@link LocalApplicationManager}
    */
-  public static Manager<AppDeploymentInfo, ApplicationWithPrograms> getLocalManager() throws IOException {
+  public static Manager<AppDeploymentInfo, ApplicationWithPrograms> getLocalManager() {
+    return getLocalManager(CConfiguration.create());
+  }
+
+  /**
+   * @return an instance of {@link LocalApplicationManager} created from the given configuration
+   */
+  public static Manager<AppDeploymentInfo, ApplicationWithPrograms> getLocalManager(CConfiguration cConf) {
     ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> factory =
-      getInjector().getInstance(Key.get(
+      getInjector(cConf).getInstance(Key.get(
         new TypeLiteral<ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms>>() { }
       ));
 
-    return factory.create(new ProgramTerminator() {
-      @Override
-      public void stop(ProgramId programId) throws Exception {
-        //No-op
-      }
+    return factory.create(programId -> {
+      //No-op
     });
   }
 
   public static void ensureNamespaceExists(NamespaceId namespaceId) throws Exception {
     ensureNamespaceExists(namespaceId, CConfiguration.create());
+  }
+
+  private static <T> T startService(Injector injector, Class<T> cls) {
+    T instance = injector.getInstance(cls);
+    if (instance instanceof Service) {
+      services.add((Service) instance);
+      ((Service) instance).startAndWait();
+    }
+    return instance;
   }
 
   private static void ensureNamespaceExists(NamespaceId namespaceId, CConfiguration cConf) throws Exception {

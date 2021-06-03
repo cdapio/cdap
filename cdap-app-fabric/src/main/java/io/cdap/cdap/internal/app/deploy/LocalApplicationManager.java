@@ -67,7 +67,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   public static final String ARTIFACT_CLASSLOADER_KEY = "artifact.classLoader";
 
   private final PipelineFactory pipelineFactory;
-  private final CConfiguration configuration;
+  private final CConfiguration cConf;
   private final Store store;
   private final OwnerAdmin ownerAdmin;
   private final ProgramTerminator programTerminator;
@@ -87,7 +87,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   private final ConfiguratorFactory configuratorFactory;
 
   @Inject
-  LocalApplicationManager(CConfiguration configuration, PipelineFactory pipelineFactory,
+  LocalApplicationManager(CConfiguration cConf, PipelineFactory pipelineFactory,
                           Store store, OwnerAdmin ownerAdmin,
                           DatasetFramework datasetFramework,
                           @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
@@ -100,7 +100,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
                           StructuredTableAdmin structuredTableAdmin,
                           PluginFinder pluginFinder, CapabilityReader capabilityReader,
                           ConfiguratorFactory configuratorFactory) {
-    this.configuration = configuration;
+    this.cConf = cConf;
     this.pipelineFactory = pipelineFactory;
     this.store = store;
     this.ownerAdmin = ownerAdmin;
@@ -124,14 +124,14 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   @Override
   public ListenableFuture<O> deploy(I input) throws Exception {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
-    pipeline.addLast(new LocalArtifactLoaderStage(configuration, store, artifactRepository, impersonator,
+    pipeline.addLast(new LocalArtifactLoaderStage(cConf, store, artifactRepository, impersonator,
                                                   accessEnforcer, authenticationContext, pluginFinder,
                                                   capabilityReader, configuratorFactory));
     pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework, ownerAdmin, authenticationContext));
     pipeline.addLast(new CreateSystemTablesStage(structuredTableAdmin));
-    pipeline.addLast(new DeployDatasetModulesStage(configuration, datasetFramework, inMemoryDatasetFramework,
+    pipeline.addLast(new DeployDatasetModulesStage(cConf, datasetFramework, inMemoryDatasetFramework,
                                                    ownerAdmin, authenticationContext));
-    pipeline.addLast(new CreateDatasetInstancesStage(configuration, datasetFramework, ownerAdmin,
+    pipeline.addLast(new CreateDatasetInstancesStage(cConf, datasetFramework, ownerAdmin,
                                                      authenticationContext));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator,
                                                     metricsSystemClient, metadataServiceClient, programScheduler));

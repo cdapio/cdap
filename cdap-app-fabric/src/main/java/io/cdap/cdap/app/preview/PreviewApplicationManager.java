@@ -66,7 +66,7 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
   private final ConfiguratorFactory configuratorFactory;
 
   @Inject
-  PreviewApplicationManager(CConfiguration configuration, PipelineFactory pipelineFactory,
+  PreviewApplicationManager(CConfiguration cConf, PipelineFactory pipelineFactory,
                             Store store, OwnerAdmin ownerAdmin, DatasetFramework datasetFramework,
                             @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
                             UsageRegistry usageRegistry, ArtifactRepository artifactRepository,
@@ -74,7 +74,7 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
                             AccessEnforcer accessEnforcer, PluginFinder pluginFinder,
                             CapabilityReader capabilityReader,
                             ConfiguratorFactory configuratorFactory) {
-    this.cConf = configuration;
+    this.cConf = cConf;
     this.pipelineFactory = pipelineFactory;
     this.store = store;
     this.datasetFramework = datasetFramework;

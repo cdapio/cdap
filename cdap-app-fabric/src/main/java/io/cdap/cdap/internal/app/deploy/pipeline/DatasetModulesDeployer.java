@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.deploy.pipeline;
 
 import com.google.common.collect.Iterables;
 import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -102,9 +103,21 @@ final class DatasetModulesDeployer {
     }
   }
 
-  private  void loadAndDeployModule(ClassLoader artifactClassLoader, String className, final Location jarLocation,
-                                    String moduleName, NamespaceId namespaceId,
-                                    String authorizingUser) throws Exception {
+  /**
+   * Returns {@code true} if the given set of dataset modules containing non system defined dataset type.
+   */
+  boolean hasNonSystemDatasetModules(Map<String, String> modules) throws DatasetManagementException {
+    for (String type : modules.values()) {
+      if (!systemDatasetFramework.hasSystemType(type)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private void loadAndDeployModule(ClassLoader artifactClassLoader, String className, final Location jarLocation,
+                                   String moduleName, NamespaceId namespaceId,
+                                   String authorizingUser) throws Exception {
 
     // note: using app class loader to load module class
     @SuppressWarnings("unchecked")
