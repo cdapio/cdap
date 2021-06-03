@@ -21,6 +21,8 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashSet;
 
@@ -28,6 +30,7 @@ import java.util.LinkedHashSet;
  * Extracts a {@link UserIdentity} by directly reading it from request headers.
  */
 public class ProxyUserIdentityExtractor implements UserIdentityExtractor {
+  private static final Logger LOG = LoggerFactory.getLogger(ProxyUserIdentityExtractor.class);
   public static final String NAME = "ProxyUserIdentityExtractor";
 
   private static final int EXPIRATION_SECS = 1000;
@@ -66,6 +69,8 @@ public class ProxyUserIdentityExtractor implements UserIdentityExtractor {
 
     // Parse the access token from authorization header. The header will be in "Bearer" form.
     String auth = request.headers().get(HttpHeaderNames.AUTHORIZATION);
+    LOG.trace("Extracted user identity header '{}' and authorization header length '{}'", userIdentity,
+              auth == null ? "NULL" : String.valueOf(auth.length()));
     String userCredential = null;
     if (auth != null) {
       int idx = auth.trim().indexOf(' ');

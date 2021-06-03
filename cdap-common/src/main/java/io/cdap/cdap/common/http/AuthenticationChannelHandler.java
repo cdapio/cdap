@@ -53,6 +53,8 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
       currentUserId = request.headers().get(Constants.Security.Headers.USER_ID);
       currentUserIP = request.headers().get(Constants.Security.Headers.USER_IP);
       String authHeader = request.headers().get(HttpHeaderNames.AUTHORIZATION);
+      LOG.trace("Got user ID '{}', user IP '{}', and authorization header length '{}'", currentUserId, currentUserIP,
+                authHeader == null ? "NULL" : String.valueOf(authHeader.length()));
       if (authHeader != null) {
         int idx = authHeader.trim().indexOf(' ');
         if (idx < 0) {

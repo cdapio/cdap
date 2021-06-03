@@ -110,6 +110,7 @@ public class Principal {
       "name='" + name + '\'' +
       ", type=" + type +
       ", kerberosPrincipal=" + kerberosPrincipal +
+      ", credentialLength=" + (credential == null ? "NULL" : String.valueOf(credential.length())) +
       '}';
   }
 }

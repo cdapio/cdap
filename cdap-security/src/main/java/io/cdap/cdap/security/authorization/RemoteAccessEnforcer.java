@@ -253,6 +253,7 @@ public class RemoteAccessEnforcer extends AbstractAccessEnforcer {
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.POST, "enforce")
       .withBody(GSON.toJson(authorizationPrivilege))
       .build();
+    LOG.trace("Remotely enforcing on authorization privilege {}", authorizationPrivilege);
     try {
       HttpResponse response = remoteClient.execute(request);
       if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
@@ -289,6 +290,7 @@ public class RemoteAccessEnforcer extends AbstractAccessEnforcer {
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.POST, "isVisible")
       .withBody(GSON.toJson(visibilityRequest))
       .build();
+    LOG.trace("Remotely checking visibility on authorization privilege {}", visibilityRequest);
     return GSON.fromJson(remoteClient.execute(request).getResponseBodyAsString(), SET_ENTITY_TYPE);
   }
 
