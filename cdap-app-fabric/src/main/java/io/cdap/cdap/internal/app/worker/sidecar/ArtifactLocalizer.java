@@ -48,16 +48,13 @@ public class ArtifactLocalizer {
 
   private static final String PD_DIR = "data/";
   private final RemoteClient remoteClient;
-  private final RemotePluginFinder remotePluginFinder;
   private LocationFactory locationFactory;
 
   @Inject
-  public ArtifactLocalizer(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient,
-                           RemotePluginFinder remotePluginFinder) {
+  public ArtifactLocalizer(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient) {
     this.remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
                                          HttpRequestConfig.DEFAULT,
                                          Constants.Gateway.INTERNAL_API_VERSION_3);
-    this.remotePluginFinder = remotePluginFinder;
     locationFactory = new LocalLocationFactory();
   }
 
@@ -68,17 +65,16 @@ public class ArtifactLocalizer {
     this.remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
                                          HttpRequestConfig.DEFAULT,
                                          Constants.Gateway.INTERNAL_API_VERSION_3);
-    this.remotePluginFinder = remotePluginFinder;
     locationFactory = new LocalLocationFactory(basePath);
   }
 
-  public Location getArtifact(String namespaceId, String artifactName, String artifactVersion) throws IOException,
-    ArtifactNotFoundException, UnauthorizedException {
-    Location artifactLocation = remotePluginFinder
-      .getArtifactLocation(new ArtifactId(namespaceId, artifactName, artifactVersion));
-
-    return getArtifact(artifactLocation);
-  }
+//  public Location getArtifact(String namespaceId, String artifactName, String artifactVersion) throws IOException,
+//    ArtifactNotFoundException, UnauthorizedException {
+//    Location artifactLocation = remotePluginFinder
+//      .getArtifactLocation(new ArtifactId(namespaceId, artifactName, artifactVersion));
+//
+//    return getArtifact(artifactLocation);
+//  }
 
   public Location getArtifact(Location remoteLocation) throws IOException {
 

@@ -57,15 +57,15 @@ public class ArtifactLocalizerHttpHandlerInternal extends AbstractLogHttpHandler
     this.locationFactory = locationFactory;
   }
 
-  @GET
-  @Path("/artifact/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}")
-  public void artifact(HttpRequest request, HttpResponder responder,
-                       @PathParam("namespace-id") String namespaceId,
-                       @PathParam("artifact-name") String artifactName,
-                       @PathParam("artifact-version") String artifactVersion) throws Exception {
-    Location artifact = artifactLocalizer.getArtifact(namespaceId, artifactName, artifactVersion);
-    responder.sendString(HttpResponseStatus.OK, artifact.toString());
-  }
+//  @GET
+//  @Path("/artifact/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}")
+//  public void artifact(HttpRequest request, HttpResponder responder,
+//                       @PathParam("namespace-id") String namespaceId,
+//                       @PathParam("artifact-name") String artifactName,
+//                       @PathParam("artifact-version") String artifactVersion) throws Exception {
+//    Location artifact = artifactLocalizer.getArtifact(namespaceId, artifactName, artifactVersion);
+//    responder.sendString(HttpResponseStatus.OK, artifact.toString());
+//  }
 
   @GET
   @Path("/localize/**")

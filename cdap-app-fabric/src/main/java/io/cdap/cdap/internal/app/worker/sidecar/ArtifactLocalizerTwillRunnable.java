@@ -49,6 +49,8 @@ import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -98,6 +100,7 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
             .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
           bind(DiscoveryServiceClient.class)
             .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
+          bind(LocationFactory.class).to(LocalLocationFactory.class);
         }
       });
       modules.add(new RemoteLogAppenderModule());
