@@ -27,11 +27,11 @@ import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.RemotePluginFinder;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
-import io.cdap.cdap.internal.app.worker.RemoteWorkerPluginFinder;
 import io.cdap.cdap.internal.app.worker.TaskWorkerServiceTest;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -81,8 +81,8 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
     RemotePluginFinder remotePluginFinder = getInjector().getInstance(RemotePluginFinder.class);
     ArtifactLocalizerService artifactLocalizerService =
       new ArtifactLocalizerService(cConf, sConf, new InMemoryDiscoveryService(),
-                                   new ArtifactLocalizer(cConf, discoveryClient,
-                                                         remotePluginFinder, tmpFolder.newFolder()),
+                                   new ArtifactLocalizer(discoveryClient,
+                                                         tmpFolder.newFolder()),
                                    new LocalLocationFactory());
     // start the service
     artifactLocalizerService.startAndWait();
@@ -105,7 +105,6 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
 
     LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
     ArtifactRepository artifactRepository = getInjector().getInstance(ArtifactRepository.class);
-    RemoteWorkerPluginFinder pluginFinder = getInjector().getInstance(RemoteWorkerPluginFinder.class);
 
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "some-task", "1.0.0-SNAPSHOT");
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, TaskWorkerServiceTest.TestRunnableClass.class);
@@ -113,17 +112,39 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
                                String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
     Files.copy(Locations.newInputSupplier(appJar), appJarFile);
     appJar.delete();
-
-    InetSocketAddress addr = localizerService.getBindAddress();
-    URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
-    String url = String.format("/v3Internal/worker/artifact/namespaces/%s/artifacts/%s/versions/%s", artifactId.getNamespace().getId(), artifactId.getName(), artifactId.getVersion());
-    HttpRequest request = HttpRequest.get(uri.resolve(url).toURL()).build();
-    HttpResponse response = HttpRequests.execute(request);
-
-
     artifactRepository.addArtifact(artifactId, appJarFile);
 
-    pluginFinder.getArtifactLocation(artifactId.toEntityId());
+    String artifactPath = callSidecar(artifactId);
+
+    // Make sure the artifact was actually cached
+    Assert.assertTrue(Paths.get(artifactPath).toFile().exists());
+
+    // Call the sidecar again and make sure the same path was returned
+    String sameArtifactPath = callSidecar(artifactId);
+    Assert.assertEquals(artifactPath, sameArtifactPath);
+
+    // Delete and recreate the artifact to update the last modified date
+    artifactRepository.deleteArtifact(artifactId);
+    artifactRepository.addArtifact(artifactId, appJarFile);
+
+    String newArtifactPath = callSidecar(artifactId);
+
+    //Make sure the two paths arent the same and that the old one is gone
+    Assert.assertNotEquals(artifactPath, newArtifactPath);
+    Assert.assertTrue(Paths.get(newArtifactPath).toFile().exists());
+    Assert.assertFalse(Paths.get(artifactPath).toFile().exists());
+  }
+
+  private String callSidecar(Id.Artifact artifactId) throws IOException {
+    InetSocketAddress addr = localizerService.getBindAddress();
+    URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
+    String url = String
+      .format("/v3Internal/worker/artifact/namespaces/%s/artifacts/%s/versions/%s", artifactId.getNamespace().getId(),
+              artifactId.getName(), artifactId.getVersion());
+    HttpRequest request = HttpRequest.get(uri.resolve(url).toURL()).build();
+    HttpResponse response = HttpRequests.execute(request);
+    Assert.assertEquals(response.getResponseCode(), HttpResponseStatus.OK);
+    return response.getResponseBodyAsString();
   }
 
   @Test

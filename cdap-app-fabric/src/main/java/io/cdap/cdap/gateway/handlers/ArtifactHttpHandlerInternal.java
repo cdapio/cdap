@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.gateway.handlers;
 
+import com.google.common.io.Closeables;
+import com.google.common.net.HttpHeaders;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -37,20 +39,28 @@ import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.http.AbstractHttpHandler;
+import io.cdap.http.BodyProducer;
 import io.cdap.http.HttpResponder;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
 
 /**
  * Internal {@link io.cdap.http.HttpHandler} for managing artifacts.
@@ -64,6 +74,7 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
     .create();
   private static final Type ARTIFACT_INFO_LIST_TYPE = new TypeToken<List<ArtifactInfo>>() { }.getType();
   private static final Type ARTIFACT_DETAIL_LIST_TYPE = new TypeToken<List<ArtifactDetail>>() { }.getType();
+  private static final int CHUNK_SIZE = 1024 * 64;
 
   private final ArtifactRepository artifactRepository;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
@@ -109,10 +120,54 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
     ArtifactRange range =
       new ArtifactRange(namespaceId.getNamespace(), artifactName,
                         new ArtifactVersionRange(new ArtifactVersion(lower), true,
-                                                 new ArtifactVersion(upper),  true));
+                                                 new ArtifactVersion(upper), true));
     ArtifactSortOrder sortOrder = ArtifactSortOrder.valueOf(order);
     List<ArtifactDetail> artifactDetailList = artifactRepository.getArtifactDetails(range, limit, sortOrder);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(artifactDetailList, ARTIFACT_DETAIL_LIST_TYPE));
+  }
+
+  @GET
+  @Path("test/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}/download")
+  public void test(HttpRequest request, HttpResponder responder,
+                   @PathParam("namespace-id") String namespace,
+                   @PathParam("artifact-name") String artifactName,
+                   @PathParam("artifact-version") String artifactVersion,
+                   @QueryParam("scope") @DefaultValue("user") String scope,
+  @QueryParam("lastModified") @DefaultValue("0") String lastModified) throws Exception {
+    ArtifactId artifactId = new ArtifactId(namespace, artifactName, artifactVersion);
+    ArtifactDetail artifactDetail = artifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId));
+
+    Location location = artifactDetail.getDescriptor().getLocation();
+    if (Long.parseLong(lastModified) == location.lastModified()){
+      responder.sendString(HttpResponseStatus.NO_CONTENT, "");
+      return;
+    }
+
+    InputStream artifactStream = location.getInputStream();
+    responder.sendContent(HttpResponseStatus.OK, new BodyProducer() {
+
+      @Override
+      public ByteBuf nextChunk() throws Exception {
+        ByteBuf buffer = Unpooled.buffer(CHUNK_SIZE);
+        buffer.writeBytes(artifactStream, CHUNK_SIZE);
+        return buffer;
+      }
+
+      @Override
+      public void finished() throws Exception {
+        Closeables.closeQuietly(artifactStream);
+      }
+
+      @Override
+      public void handleError(@Nullable Throwable cause) {
+        LOG.warn(
+          "Exception when initiating stream download for artifact {}, version {} in namespace {} using scope {}: {}",
+          artifactName, artifactVersion, "", scope, cause);
+        Closeables.closeQuietly(artifactStream);
+      }
+    }, new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM)
+                            .add(HttpHeaders.LAST_MODIFIED,
+                                 location.lastModified()));
   }
 
   @GET

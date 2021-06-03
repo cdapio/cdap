@@ -21,7 +21,6 @@ import com.google.gson.GsonBuilder;
 import com.google.inject.Singleton;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.logging.gateway.handlers.AbstractLogHttpHandler;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
@@ -64,29 +63,29 @@ public class ArtifactLocalizerHttpHandlerInternal extends AbstractLogHttpHandler
                        @PathParam("namespace-id") String namespaceId,
                        @PathParam("artifact-name") String artifactName,
                        @PathParam("artifact-version") String artifactVersion) throws Exception {
-    Location artifact = artifactLocalizer.getArtifact(new ArtifactId(namespaceId, artifactName, artifactVersion));
+    Location artifact = artifasdsadasactLocalizer.getArtifact(new ArtifactId(namespaceId, artifactName, artifactVersion));
     responder.sendString(HttpResponseStatus.OK, artifact.toString());
   }
 
-  @GET
-  @Path("/localize/**")
-  public void localize(HttpRequest request, HttpResponder responder) throws Exception {
-    String prefix = String.format("%s/worker/localize/", Constants.Gateway.INTERNAL_API_VERSION_3);
-    String path = request.uri().substring(prefix.length());
-    Location location = Locations.getLocationFromAbsolutePath(locationFactory, path);
-    Location artifact = artifactLocalizer.getArtifact(location);
-    responder.sendString(HttpResponseStatus.OK, artifact.toString());
-  }
-
-  @GET
-  @Path("/unpack/**")
-  public void unpack(HttpRequest request, HttpResponder responder) throws Exception {
-    String prefix = String.format("%s/worker/unpack/", Constants.Gateway.INTERNAL_API_VERSION_3);
-    String path = request.uri().substring(prefix.length());
-    Location location = Locations.getLocationFromAbsolutePath(locationFactory, path);
-    Location artifact = artifactLocalizer.getAndUnpackArtifact(location);
-    responder.sendString(HttpResponseStatus.OK, artifact.toString());
-  }
+//  @GET
+//  @Path("/localize/**")
+//  public void localize(HttpRequest request, HttpResponder responder) throws Exception {
+//    String prefix = String.format("%s/worker/localize/", Constants.Gateway.INTERNAL_API_VERSION_3);
+//    String path = request.uri().substring(prefix.length());
+//    Location location = Locations.getLocationFromAbsolutePath(locationFactory, path);
+//    Location artifact = artifactLocalizer.getArtifact(location);
+//    responder.sendString(HttpResponseStatus.OK, artifact.toString());
+//  }
+//
+//  @GET
+//  @Path("/unpack/**")
+//  public void unpack(HttpRequest request, HttpResponder responder) throws Exception {
+//    String prefix = String.format("%s/worker/unpack/", Constants.Gateway.INTERNAL_API_VERSION_3);
+//    String path = request.uri().substring(prefix.length());
+//    Location location = Locations.getLocationFromAbsolutePath(locationFactory, path);
+//    Location artifact = artifactLocalizer.getAndUnpackArtifact(location);
+//    responder.sendString(HttpResponseStatus.OK, artifact.toString());
+//  }
 
   /**
    * Return json representation of an exception. Used to propagate exception across network for better surfacing errors
