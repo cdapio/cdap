@@ -75,7 +75,7 @@ public class ArtifactLocalizer {
     // If the local cache exists, check if we have a timestamp directory
     if (localLocation.exists()) {
       String[] fileList = Paths.get(localLocation.toURI()).toFile().list();
-      if (fileList != null && fileList.length > 1) {
+      if (fileList != null && fileList.length > 0) {
         //Split on period to get timestamp without the .jar extension
         lastModifiedTimestamp = Arrays.stream(fileList).map(s -> Long.valueOf(s.split("\\.")[0]))
           .max(Long::compare).get();
@@ -110,7 +110,7 @@ public class ArtifactLocalizer {
     }
 
     Map<String, List<String>> headers = urlConn.getHeaderFields();
-    if (!headers.containsKey(HttpHeaders.LAST_MODIFIED)) {
+    if (!headers.containsKey(HttpHeaders.LAST_MODIFIED) || headers.get(HttpHeaders.LAST_MODIFIED).size() == 0) {
       //TODO figure out how to handle this
       return null;
     }
@@ -145,47 +145,11 @@ public class ArtifactLocalizer {
   public Location getAndUnpackArtifact(ArtifactId artifactId) throws IOException {
     Location jarLocation = getArtifact(artifactId);
     Location unpackDir = getUnpackLocalPath(artifactId, Long.valueOf(jarLocation.getName().split("\\.")[0]));
-    BundleJarUtil.unJar(jarLocation, new File(unpackDir.toURI()));
+    if(!unpackDir.exists()){
+      BundleJarUtil.unJar(jarLocation, new File(unpackDir.toURI()));
+    }
     return unpackDir;
   }
-
-  //  public Location getArtifact(Location remoteLocation) throws IOException {
-  //
-  //    // If the location already exists then its cached and we dont need to do anything
-  //    Location localLocation = getArtifactLocalLocation(remoteLocation);
-  //    if (localLocation.exists()) {
-  //      return localLocation;
-  //    }
-  //
-  //    String url = "location" + remoteLocation.toString();
-  //    HttpURLConnection connection = remoteClient.openConnection(HttpMethod.GET, url);
-  //    LOG.error("Connection opened to: " + connection.getURL().toString());
-  //    try {
-  //      try (InputStream is = connection.getInputStream()) {
-  //        try (OutputStream os = localLocation.getOutputStream()) {
-  //          ByteStreams.copy(is, os);
-  //        }
-  //        LOG.debug("Stored artifact into " + localLocation.toString());
-  //      } catch (Exception e) {
-  //        LOG.error("Got exception when trying to store artifact into: " + localLocation.toString(), e);
-  //        // Just treat bad request as IOException since it won't be retriable
-  //        throw new IOException(e);
-  //      }
-  //    } finally {
-  //      connection.disconnect();
-  //    }
-  //
-  //    return localLocation;
-  //  }
-
-  //  public Location getAndUnpackArtifact(Location remoteLocation) throws Exception {
-  //    Location artifactLocation = getArtifact(remoteLocation);
-  //
-  //    File artifactFile = Paths.get(artifactLocation.toURI()).toFile();
-  //    Path targetPath = getUnpackLocalPath(remoteLocation);
-  //    BundleJarUtil.unJar(artifactFile, targetPath.toFile());
-  //    return locationFactory.create(targetPath.toUri());
-  //  }
 
   private String getLocalPath(String basePath, ArtifactId artifactId) {
     return Paths.get(PD_DIR, basePath, artifactId.getNamespace(), artifactId.getArtifact(),

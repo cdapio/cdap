@@ -31,7 +31,6 @@ import io.cdap.cdap.internal.app.worker.TaskWorkerServiceTest;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -101,6 +100,58 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
   }
 
   @Test
+  public void testUnpackArtifact() throws Exception {
+
+    LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
+    ArtifactRepository artifactRepository = getInjector().getInstance(ArtifactRepository.class);
+
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "some-task", "1.0.0-SNAPSHOT");
+    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, TaskWorkerServiceTest.TestRunnableClass.class);
+    File appJarFile = new File(tmpFolder.newFolder(),
+                               String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
+    File newAppJarFile = new File(tmpFolder.newFolder(),
+                                  String.format("%s-%s-copy.jar", artifactId.getName(),
+                                                artifactId.getVersion().getVersion()));
+    Files.copy(Locations.newInputSupplier(appJar), appJarFile);
+    appJar.delete();
+    artifactRepository.addArtifact(artifactId, appJarFile);
+
+    String unpackedDir = callSidecar(artifactId, true);
+
+    // Make sure the artifact was actually cached
+    validateUnpackDir(unpackedDir);
+
+    // Call the sidecar again and make sure the same path was returned
+    String sameUnpackedDir = callSidecar(artifactId, true);
+    Assert.assertEquals(unpackedDir, sameUnpackedDir);
+
+    // Delete and recreate the artifact to update the last modified date
+    artifactRepository.deleteArtifact(artifactId);
+    Files.copy(appJarFile, newAppJarFile);
+    artifactRepository.addArtifact(artifactId, newAppJarFile);
+
+    String newUnpackDir = callSidecar(artifactId, true);
+
+    //Make sure the two paths arent the same and that the old one is gone
+    Assert.assertNotEquals(unpackedDir, newUnpackDir);
+    validateUnpackDir(newUnpackDir);
+    Assert.assertFalse(Paths.get(unpackedDir).toFile().exists());
+  }
+
+  private void validateUnpackDir(String dirPath){
+    File unpackedFile = Paths.get(dirPath).toFile();
+
+    // Make sure the directory exists
+    Assert.assertTrue(unpackedFile.exists());
+    Assert.assertTrue(unpackedFile.isDirectory());
+
+    // Make sure theres multiple files in the directory and one of them is a manifest
+    String[] fileNames = unpackedFile.list();
+    Assert.assertTrue(fileNames.length > 1);
+    Assert.assertTrue(Arrays.stream(fileNames).anyMatch(s -> s.equals("META-INF")));
+  }
+
+  @Test
   public void testArtifact() throws Exception {
 
     LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
@@ -110,6 +161,9 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, TaskWorkerServiceTest.TestRunnableClass.class);
     File appJarFile = new File(tmpFolder.newFolder(),
                                String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
+    File newAppJarFile = new File(tmpFolder.newFolder(),
+                                  String.format("%s-%s-copy.jar", artifactId.getName(),
+                                                artifactId.getVersion().getVersion()));
     Files.copy(Locations.newInputSupplier(appJar), appJarFile);
     appJar.delete();
     artifactRepository.addArtifact(artifactId, appJarFile);
@@ -125,7 +179,8 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
 
     // Delete and recreate the artifact to update the last modified date
     artifactRepository.deleteArtifact(artifactId);
-    artifactRepository.addArtifact(artifactId, appJarFile);
+    Files.copy(appJarFile, newAppJarFile);
+    artifactRepository.addArtifact(artifactId, newAppJarFile);
 
     String newArtifactPath = callSidecar(artifactId);
 
@@ -136,86 +191,21 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
   }
 
   private String callSidecar(Id.Artifact artifactId) throws IOException {
+    return callSidecar(artifactId, false);
+  }
+
+  private String callSidecar(Id.Artifact artifactId, boolean unpack) throws IOException {
     InetSocketAddress addr = localizerService.getBindAddress();
     URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
     String url = String
       .format("/v3Internal/worker/artifact/namespaces/%s/artifacts/%s/versions/%s", artifactId.getNamespace().getId(),
               artifactId.getName(), artifactId.getVersion());
+    if(unpack){
+      url+="?unpack=true";
+    }
     HttpRequest request = HttpRequest.get(uri.resolve(url).toURL()).build();
     HttpResponse response = HttpRequests.execute(request);
-    Assert.assertEquals(response.getResponseCode(), HttpResponseStatus.OK);
+    Assert.assertEquals(response.getResponseCode(), HttpURLConnection.HTTP_OK);
     return response.getResponseBodyAsString();
-  }
-
-  @Test
-  public void testLocalize() throws Exception {
-
-    LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
-    ArtifactRepository artifactRepository = getInjector().getInstance(ArtifactRepository.class);
-
-    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "some-task", "1.0.0-SNAPSHOT");
-    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, TaskWorkerServiceTest.TestRunnableClass.class);
-    File appJarFile = new File(tmpFolder.newFolder(),
-                               String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
-    Files.copy(Locations.newInputSupplier(appJar), appJarFile);
-    appJar.delete();
-
-    artifactRepository.addArtifact(artifactId, appJarFile);
-
-    //Send a valid get request
-    InetSocketAddress addr = localizerService.getBindAddress();
-    URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
-    String url = "/v3Internal/worker/localize" + appJarFile.toString();
-    HttpRequest request = HttpRequest.get(uri.resolve(url).toURL()).build();
-    HttpResponse response = HttpRequests.execute(request);
-
-    Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-    String artifactPath = response.getResponseBodyAsString();
-
-    // Make sure the artifact was actually cached
-    Assert.assertTrue(Paths.get(artifactPath).toFile().exists());
-
-    //Send the request again and make sure the same path is returned
-    HttpResponse secondResponse = HttpRequests.execute(request);
-    Assert.assertEquals(HttpURLConnection.HTTP_OK, secondResponse.getResponseCode());
-    String secondArtifact = secondResponse.getResponseBodyAsString();
-    Assert.assertEquals(artifactPath, secondArtifact);
-  }
-
-  @Test
-  public void testUnpack() throws Exception {
-    LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
-    ArtifactRepository artifactRepository = getInjector().getInstance(ArtifactRepository.class);
-
-    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "some-task", "1.0.0-SNAPSHOT");
-    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, TaskWorkerServiceTest.TestRunnableClass.class);
-    File appJarFile = new File(tmpFolder.newFolder(),
-                               String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
-    Files.copy(Locations.newInputSupplier(appJar), appJarFile);
-    appJar.delete();
-
-    artifactRepository.addArtifact(artifactId, appJarFile);
-
-    // Get the unpacked artifact path
-    InetSocketAddress addr = localizerService.getBindAddress();
-    URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
-    String url = "/v3Internal/worker/unpack" + appJarFile.toString();
-    HttpRequest request = HttpRequest.get(uri.resolve(url).toURL()).build();
-    HttpResponse response = HttpRequests.execute(request);
-
-    Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-    String unpackedDir = response.getResponseBodyAsString();
-
-    // Make sure the artifact was actually cached
-    File unpackedFile = Paths.get(unpackedDir).toFile();
-
-    // Make sure the directory exists
-    Assert.assertTrue(unpackedFile.exists());
-    Assert.assertTrue(unpackedFile.isDirectory());
-
-    // Make sure theres multiple files in the directory and one of them is a manifest
-    String[] fileNames = unpackedFile.list();
-    Assert.assertTrue(fileNames.length > 1);
-    Assert.assertTrue(Arrays.stream(fileNames).anyMatch(s -> s.equals("META-INF")));
   }
 }

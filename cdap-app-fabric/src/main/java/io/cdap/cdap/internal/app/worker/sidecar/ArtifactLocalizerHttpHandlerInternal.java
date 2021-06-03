@@ -34,9 +34,11 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
  * Internal {@link HttpHandler} for File Localizer.
@@ -62,30 +64,16 @@ public class ArtifactLocalizerHttpHandlerInternal extends AbstractLogHttpHandler
   public void artifact(HttpRequest request, HttpResponder responder,
                        @PathParam("namespace-id") String namespaceId,
                        @PathParam("artifact-name") String artifactName,
-                       @PathParam("artifact-version") String artifactVersion) throws Exception {
-    Location artifact = artifasdsadasactLocalizer.getArtifact(new ArtifactId(namespaceId, artifactName, artifactVersion));
+                       @PathParam("artifact-version") String artifactVersion,
+                       @QueryParam("unpack")  @DefaultValue("false") String unpack) throws Exception {
+    Location artifact;
+    if (Boolean.parseBoolean(unpack)){
+      artifact = artifactLocalizer.getAndUnpackArtifact(new ArtifactId(namespaceId, artifactName, artifactVersion));
+    }else{
+      artifact = artifactLocalizer.getArtifact(new ArtifactId(namespaceId, artifactName, artifactVersion));
+    }
     responder.sendString(HttpResponseStatus.OK, artifact.toString());
   }
-
-//  @GET
-//  @Path("/localize/**")
-//  public void localize(HttpRequest request, HttpResponder responder) throws Exception {
-//    String prefix = String.format("%s/worker/localize/", Constants.Gateway.INTERNAL_API_VERSION_3);
-//    String path = request.uri().substring(prefix.length());
-//    Location location = Locations.getLocationFromAbsolutePath(locationFactory, path);
-//    Location artifact = artifactLocalizer.getArtifact(location);
-//    responder.sendString(HttpResponseStatus.OK, artifact.toString());
-//  }
-//
-//  @GET
-//  @Path("/unpack/**")
-//  public void unpack(HttpRequest request, HttpResponder responder) throws Exception {
-//    String prefix = String.format("%s/worker/unpack/", Constants.Gateway.INTERNAL_API_VERSION_3);
-//    String path = request.uri().substring(prefix.length());
-//    Location location = Locations.getLocationFromAbsolutePath(locationFactory, path);
-//    Location artifact = artifactLocalizer.getAndUnpackArtifact(location);
-//    responder.sendString(HttpResponseStatus.OK, artifact.toString());
-//  }
 
   /**
    * Return json representation of an exception. Used to propagate exception across network for better surfacing errors
