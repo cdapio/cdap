@@ -16,23 +16,18 @@
 
 package io.cdap.cdap.internal.app.worker;
 
+import com.google.inject.Guice;
+import org.junit.Test;
+
+import java.util.Collections;
+
 /**
- * Request for launching a runnable task.
+ * Test for SystemAppModule
  */
-public class RunnableTaskRequest {
-  private final String className;
-  private final String param;
+public class SystemAppModuleTest {
 
-  public RunnableTaskRequest(String className, String param) {
-    this.className = className;
-    this.param = param;
-  }
-
-  public String getClassName() {
-    return className;
-  }
-
-  public String getParam() {
-    return param;
+  @Test
+  public void test() {
+    Guice.createInjector(Collections.singleton(new SystemAppModule()));
   }
 }
