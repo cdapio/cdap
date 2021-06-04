@@ -277,7 +277,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
                        podNameFile.getName(), podUid, podUidFile.getName(), namespace, podLabels, ownerReferences,
                        serviceAccountName, runtimeClassName,
                        volumes, containerLabelName, container.getImage(), mounts,
-                       envs == null ? Collections.emptyList() : envs);
+                       envs == null ? Collections.emptyList() : envs, pod.getSpec().getSecurityContext());
   }
 
   /**

@@ -44,6 +44,7 @@ import io.kubernetes.client.models.V1ObjectMeta;
 import io.kubernetes.client.models.V1ObjectMetaBuilder;
 import io.kubernetes.client.models.V1PersistentVolumeClaim;
 import io.kubernetes.client.models.V1PersistentVolumeClaimBuilder;
+import io.kubernetes.client.models.V1PodSecurityContext;
 import io.kubernetes.client.models.V1PodSpec;
 import io.kubernetes.client.models.V1PodSpecBuilder;
 import io.kubernetes.client.models.V1ResourceRequirements;
@@ -718,6 +719,7 @@ class KubeTwillPreparer implements TwillPreparer, StatefulTwillPreparer {
       .withContainers(createContainer(runnableName, podInfo.getContainerImage(), workDir,
                                       resourceRequirements, volumeMounts, environs, KubeTwillLauncher.class,
                                       runnableName))
+      .withSecurityContext(podInfo.getSecurityContext())
       .build();
   }
 
