@@ -72,8 +72,10 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
-  private static final Type ARTIFACT_INFO_LIST_TYPE = new TypeToken<List<ArtifactInfo>>() { }.getType();
-  private static final Type ARTIFACT_DETAIL_LIST_TYPE = new TypeToken<List<ArtifactDetail>>() { }.getType();
+  private static final Type ARTIFACT_INFO_LIST_TYPE = new TypeToken<List<ArtifactInfo>>() {
+  }.getType();
+  private static final Type ARTIFACT_DETAIL_LIST_TYPE = new TypeToken<List<ArtifactDetail>>() {
+  }.getType();
   private static final int CHUNK_SIZE = 1024 * 64;
 
   private final ArtifactRepository artifactRepository;
@@ -133,12 +135,12 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
                    @PathParam("artifact-name") String artifactName,
                    @PathParam("artifact-version") String artifactVersion,
                    @QueryParam("scope") @DefaultValue("user") String scope,
-  @QueryParam("lastModified") @DefaultValue("0") String lastModified) throws Exception {
+                   @QueryParam("lastModified") @DefaultValue("0") String lastModified) throws Exception {
     ArtifactId artifactId = new ArtifactId(namespace, artifactName, artifactVersion);
     ArtifactDetail artifactDetail = artifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId));
 
     Location location = artifactDetail.getDescriptor().getLocation();
-    if (Long.parseLong(lastModified) == location.lastModified()){
+    if (Long.parseLong(lastModified) == location.lastModified()) {
       responder.sendString(HttpResponseStatus.NO_CONTENT, "");
       return;
     }

@@ -65,11 +65,11 @@ public class ArtifactLocalizerHttpHandlerInternal extends AbstractLogHttpHandler
                        @PathParam("namespace-id") String namespaceId,
                        @PathParam("artifact-name") String artifactName,
                        @PathParam("artifact-version") String artifactVersion,
-                       @QueryParam("unpack")  @DefaultValue("false") String unpack) throws Exception {
+                       @QueryParam("unpack") @DefaultValue("false") String unpack) throws Exception {
     Location artifact;
-    if (Boolean.parseBoolean(unpack)){
+    if (Boolean.parseBoolean(unpack)) {
       artifact = artifactLocalizer.getAndUnpackArtifact(new ArtifactId(namespaceId, artifactName, artifactVersion));
-    }else{
+    } else {
       artifact = artifactLocalizer.getArtifact(new ArtifactId(namespaceId, artifactName, artifactVersion));
     }
     responder.sendString(HttpResponseStatus.OK, artifact.toString());

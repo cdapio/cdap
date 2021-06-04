@@ -145,7 +145,7 @@ public class ArtifactLocalizer {
   public Location getAndUnpackArtifact(ArtifactId artifactId) throws IOException {
     Location jarLocation = getArtifact(artifactId);
     Location unpackDir = getUnpackLocalPath(artifactId, Long.valueOf(jarLocation.getName().split("\\.")[0]));
-    if(!unpackDir.exists()){
+    if (!unpackDir.exists()) {
       BundleJarUtil.unJar(jarLocation, new File(unpackDir.toURI()));
     }
     return unpackDir;
