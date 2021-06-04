@@ -160,8 +160,6 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
             int diskSize = cConf.getInt(Constants.TaskWorker.CONTAINER_DISK_SIZE_GB);
             twillPreparer = ((StatefulTwillPreparer) twillPreparer)
               .withStatefulRunnable(TaskWorkerTwillRunnable.class.getSimpleName(), false,
-                                    new StatefulDisk("task-worker-data", diskSize, "/data"))
-              .withStatefulRunnable(ArtifactLocalizerTwillRunnable.class.getSimpleName(), false,
                                     new StatefulDisk("task-worker-data", diskSize, "/data"));
           }
 
