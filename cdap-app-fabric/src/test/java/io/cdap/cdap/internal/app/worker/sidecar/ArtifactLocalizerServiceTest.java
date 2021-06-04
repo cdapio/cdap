@@ -138,7 +138,7 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
     Assert.assertFalse(Paths.get(unpackedDir).toFile().exists());
   }
 
-  private void validateUnpackDir(String dirPath){
+  private void validateUnpackDir(String dirPath) {
     File unpackedFile = Paths.get(dirPath).toFile();
 
     // Make sure the directory exists
@@ -200,8 +200,8 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
     String url = String
       .format("/v3Internal/worker/artifact/namespaces/%s/artifacts/%s/versions/%s", artifactId.getNamespace().getId(),
               artifactId.getName(), artifactId.getVersion());
-    if(unpack){
-      url+="?unpack=true";
+    if (unpack) {
+      url += "?unpack=true";
     }
     HttpRequest request = HttpRequest.get(uri.resolve(url).toURL()).build();
     HttpResponse response = HttpRequests.execute(request);
