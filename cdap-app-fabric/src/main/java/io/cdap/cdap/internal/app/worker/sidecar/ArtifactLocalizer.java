@@ -16,12 +16,17 @@ package io.cdap.cdap.internal.app.worker.sidecar;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.CharStreams;
 import com.google.common.net.HttpHeaders;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.service.Retries;
+import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequestConfig;
@@ -35,13 +40,16 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import javax.validation.constraints.NotNull;
 
 public class ArtifactLocalizer {
@@ -50,6 +58,7 @@ public class ArtifactLocalizer {
 
   private static final String PD_DIR = "data/";
   private final RemoteClient remoteClient;
+  private final RetryStrategy retryStrategy;
   private LocationFactory locationFactory;
 
   @Inject
@@ -58,6 +67,7 @@ public class ArtifactLocalizer {
                                          HttpRequestConfig.DEFAULT,
                                          Constants.Gateway.INTERNAL_API_VERSION_3);
     this.locationFactory = locationFactory;
+    this.retryStrategy = RetryStrategies.exponentialDelay(100, 1000, TimeUnit.MILLISECONDS);
   }
 
   @VisibleForTesting
@@ -66,9 +76,10 @@ public class ArtifactLocalizer {
                                          HttpRequestConfig.DEFAULT,
                                          Constants.Gateway.INTERNAL_API_VERSION_3);
     locationFactory = new LocalLocationFactory(basePath);
+    this.retryStrategy = RetryStrategies.exponentialDelay(100, 1000, TimeUnit.MILLISECONDS);
   }
 
-  public Location getArtifact(ArtifactId artifactId) throws IOException {
+  public Location getArtifact(ArtifactId artifactId) throws Exception {
 
     Location localLocation = getArtifactDirLocation(artifactId);
     Long lastModifiedTimestamp = null;
@@ -101,22 +112,43 @@ public class ArtifactLocalizer {
       url += String.format("&lastModified=%d", lastModifiedTimestamp);
     }
 
-    HttpURLConnection urlConn = remoteClient.openConnection(HttpMethod.GET, url);
+    Long finalLastModifiedTimestamp = lastModifiedTimestamp;
+    String finalUrl = url;
+    Location newLocation = Retries.callWithRetries(() -> {
+      HttpURLConnection urlConn = remoteClient.openConnection(HttpMethod.GET, finalUrl);
 
-    // If we get this response that means we already have the most up to date artifact
-    if (urlConn.getResponseCode() == HttpURLConnection.HTTP_NO_CONTENT) {
+      if (urlConn.getResponseCode() != HttpURLConnection.HTTP_OK) {
+        switch (urlConn.getResponseCode()) {
+          // If we get this response that means we already have the most up to date artifact
+          case HttpURLConnection.HTTP_NO_CONTENT:
+            urlConn.disconnect();
+            return getArtifactJarLocation(artifactId, finalLastModifiedTimestamp);
+          case HttpURLConnection.HTTP_NOT_FOUND:
+            throw new ArtifactNotFoundException(artifactId);
+            //TODO: maybe add a case for auth error?
+          default:
+            String err = CharStreams.toString(new InputStreamReader(urlConn.getErrorStream(), StandardCharsets.UTF_8));
+            throw new IOException(
+              String.format("Failed to fetch artifact %s from app-fabric due to %s", artifactId, err));
+        }
+      }
+
+      Map<String, List<String>> headers = urlConn.getHeaderFields();
+      if (!headers.containsKey(HttpHeaders.LAST_MODIFIED) || headers.get(HttpHeaders.LAST_MODIFIED).size() == 0) {
+        //TODO figure out how to handle this
+        return null;
+      }
+
+      // TODO figure out why this is a list
+      Long newTimestamp = Long.valueOf(headers.get(HttpHeaders.LAST_MODIFIED).get(0));
+      Location newJarLocation = getArtifactJarLocation(artifactId, newTimestamp);
+      try (InputStream in = urlConn.getInputStream();
+           OutputStream out = newJarLocation.getOutputStream()) {
+        ByteStreams.copy(in, out);
+      }
       urlConn.disconnect();
-      return getArtifactJarLocation(artifactId, lastModifiedTimestamp);
-    }
-
-    Map<String, List<String>> headers = urlConn.getHeaderFields();
-    if (!headers.containsKey(HttpHeaders.LAST_MODIFIED) || headers.get(HttpHeaders.LAST_MODIFIED).size() == 0) {
-      //TODO figure out how to handle this
-      return null;
-    }
-
-    // TODO figure out why this is a list
-    Long newTimestamp = Long.valueOf(headers.get(HttpHeaders.LAST_MODIFIED).get(0));
+      return newJarLocation;
+    }, retryStrategy);
 
     // This means we already have a jar but its out of date, we should delete the jar and the unpacked directory
     if (lastModifiedTimestamp != null) {
@@ -133,16 +165,10 @@ public class ArtifactLocalizer {
       }
     }
 
-    Location newJarLocation = getArtifactJarLocation(artifactId, newTimestamp);
-    try (InputStream in = urlConn.getInputStream();
-         OutputStream out = newJarLocation.getOutputStream()) {
-      ByteStreams.copy(in, out);
-    }
-
-    return newJarLocation;
+    return newLocation;
   }
 
-  public Location getAndUnpackArtifact(ArtifactId artifactId) throws IOException {
+  public Location getAndUnpackArtifact(ArtifactId artifactId) throws Exception {
     Location jarLocation = getArtifact(artifactId);
     Location unpackDir = getUnpackLocalPath(artifactId, Long.valueOf(jarLocation.getName().split("\\.")[0]));
     if (!unpackDir.exists()) {

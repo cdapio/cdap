@@ -28,9 +28,7 @@ import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.RemotePluginFinder;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.app.worker.TaskWorkerServiceTest;
-import io.cdap.common.http.HttpRequest;
-import io.cdap.common.http.HttpRequests;
-import io.cdap.common.http.HttpResponse;
+import io.cdap.cdap.proto.id.NamespaceId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -45,9 +43,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
-import java.net.URI;
 import java.nio.file.Paths;
 import java.util.Arrays;
 
@@ -92,6 +87,7 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
   @Before
   public void setUp() throws Exception {
     this.localizerService = setupFileLocalizerService(10001);
+    getInjector().getInstance(ArtifactRepository.class).clear(NamespaceId.DEFAULT);
   }
 
   @After
@@ -104,6 +100,7 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
 
     LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
     ArtifactRepository artifactRepository = getInjector().getInstance(ArtifactRepository.class);
+    ArtifactLocalizerClient client = getInjector().getInstance(ArtifactLocalizerClient.class);
 
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "some-task", "1.0.0-SNAPSHOT");
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, TaskWorkerServiceTest.TestRunnableClass.class);
@@ -116,13 +113,13 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
     appJar.delete();
     artifactRepository.addArtifact(artifactId, appJarFile);
 
-    String unpackedDir = callSidecar(artifactId, true);
+    Location unpackedDir = client.getUnpackedArtifactLocation(artifactId.toEntityId());
 
     // Make sure the artifact was actually cached
     validateUnpackDir(unpackedDir);
 
     // Call the sidecar again and make sure the same path was returned
-    String sameUnpackedDir = callSidecar(artifactId, true);
+    Location sameUnpackedDir = client.getUnpackedArtifactLocation(artifactId.toEntityId());
     Assert.assertEquals(unpackedDir, sameUnpackedDir);
 
     // Delete and recreate the artifact to update the last modified date
@@ -130,16 +127,16 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
     Files.copy(appJarFile, newAppJarFile);
     artifactRepository.addArtifact(artifactId, newAppJarFile);
 
-    String newUnpackDir = callSidecar(artifactId, true);
+    Location newUnpackDir = client.getUnpackedArtifactLocation(artifactId.toEntityId());
 
     //Make sure the two paths arent the same and that the old one is gone
     Assert.assertNotEquals(unpackedDir, newUnpackDir);
     validateUnpackDir(newUnpackDir);
-    Assert.assertFalse(Paths.get(unpackedDir).toFile().exists());
+    Assert.assertFalse(unpackedDir.exists());
   }
 
-  private void validateUnpackDir(String dirPath) {
-    File unpackedFile = Paths.get(dirPath).toFile();
+  private void validateUnpackDir(Location dirPath) {
+    File unpackedFile = Paths.get(dirPath.toURI()).toFile();
 
     // Make sure the directory exists
     Assert.assertTrue(unpackedFile.exists());
@@ -156,6 +153,7 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
 
     LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
     ArtifactRepository artifactRepository = getInjector().getInstance(ArtifactRepository.class);
+    ArtifactLocalizerClient client = getInjector().getInstance(ArtifactLocalizerClient.class);
 
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "some-task", "1.0.0-SNAPSHOT");
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, TaskWorkerServiceTest.TestRunnableClass.class);
@@ -168,13 +166,13 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
     appJar.delete();
     artifactRepository.addArtifact(artifactId, appJarFile);
 
-    String artifactPath = callSidecar(artifactId);
+    Location artifactPath = client.getArtifactLocation(artifactId.toEntityId());
 
     // Make sure the artifact was actually cached
-    Assert.assertTrue(Paths.get(artifactPath).toFile().exists());
+    Assert.assertTrue(artifactPath.exists());
 
     // Call the sidecar again and make sure the same path was returned
-    String sameArtifactPath = callSidecar(artifactId);
+    Location sameArtifactPath = client.getArtifactLocation(artifactId.toEntityId());
     Assert.assertEquals(artifactPath, sameArtifactPath);
 
     // Delete and recreate the artifact to update the last modified date
@@ -182,30 +180,11 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
     Files.copy(appJarFile, newAppJarFile);
     artifactRepository.addArtifact(artifactId, newAppJarFile);
 
-    String newArtifactPath = callSidecar(artifactId);
+    Location newArtifactPath = client.getArtifactLocation(artifactId.toEntityId());
 
     //Make sure the two paths arent the same and that the old one is gone
     Assert.assertNotEquals(artifactPath, newArtifactPath);
-    Assert.assertTrue(Paths.get(newArtifactPath).toFile().exists());
-    Assert.assertFalse(Paths.get(artifactPath).toFile().exists());
-  }
-
-  private String callSidecar(Id.Artifact artifactId) throws IOException {
-    return callSidecar(artifactId, false);
-  }
-
-  private String callSidecar(Id.Artifact artifactId, boolean unpack) throws IOException {
-    InetSocketAddress addr = localizerService.getBindAddress();
-    URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
-    String url = String
-      .format("/v3Internal/worker/artifact/namespaces/%s/artifacts/%s/versions/%s", artifactId.getNamespace().getId(),
-              artifactId.getName(), artifactId.getVersion());
-    if (unpack) {
-      url += "?unpack=true";
-    }
-    HttpRequest request = HttpRequest.get(uri.resolve(url).toURL()).build();
-    HttpResponse response = HttpRequests.execute(request);
-    Assert.assertEquals(response.getResponseCode(), HttpURLConnection.HTTP_OK);
-    return response.getResponseBodyAsString();
+    Assert.assertTrue(newArtifactPath.exists());
+    Assert.assertFalse(artifactPath.exists());
   }
 }

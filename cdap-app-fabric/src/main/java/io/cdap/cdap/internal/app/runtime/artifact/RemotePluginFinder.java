@@ -73,9 +73,9 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
   private final RetryStrategy retryStrategy;
 
   @Inject
-  public RemotePluginFinder(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient,
-                     AuthenticationContext authenticationContext,
-                     LocationFactory locationFactory) {
+  protected RemotePluginFinder(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient,
+                               AuthenticationContext authenticationContext,
+                               LocationFactory locationFactory) {
     this.remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
                                          new DefaultHttpRequestConfig(false),
                                          String.format("%s", Constants.Gateway.API_VERSION_3));
