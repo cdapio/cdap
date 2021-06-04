@@ -18,6 +18,9 @@ package io.cdap.cdap.master.spi.environment;
 
 import org.apache.twill.filesystem.LocationFactory;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+
 /**
  * Context object available to {@link MasterEnvironmentRunnable} for access to CDAP resources.
  */
@@ -26,4 +29,9 @@ public interface MasterEnvironmentRunnableContext {
    * Returns the {@link LocationFactory} used by the CDAP.
    */
   LocationFactory getLocationFactory();
+
+  /**
+   * Opens a {@link HttpURLConnection} for the given resource path.
+   */
+  HttpURLConnection openHttpURLConnection(String resource) throws IOException;
 }

@@ -109,7 +109,8 @@ public class MasterEnvironmentMain {
         }
 
         MasterEnvironmentRunnableContext runnableContext =
-          new DefaultMasterEnvironmentRunnableContext(context.getLocationFactory());
+          new DefaultMasterEnvironmentRunnableContext(masterEnv.getDiscoveryServiceClientSupplier().get(),
+                                                      context.getLocationFactory());
         @SuppressWarnings("unchecked")
         MasterEnvironmentRunnable runnable = masterEnv.createRunnable(runnableContext,
                                                                       (Class<? extends MasterEnvironmentRunnable>) cls);
