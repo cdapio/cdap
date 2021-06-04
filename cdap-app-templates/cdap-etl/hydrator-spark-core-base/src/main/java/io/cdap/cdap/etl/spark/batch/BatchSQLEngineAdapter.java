@@ -128,10 +128,12 @@ public class BatchSQLEngineAdapter<T> implements Closeable {
 
     Runnable pushTask = () -> {
       try {
+        LOG.debug("Starting push for dataset '{}'", datasetName);
         SQLDataset result = pushInternal(datasetName, schema, collection);
+        LOG.debug("Completed push for dataset '{}'", datasetName);
         future.complete(result);
-      } catch (Exception e) {
-        future.completeExceptionally(e);
+      } catch (Throwable t) {
+        future.completeExceptionally(t);
       }
     };
 
@@ -188,11 +190,13 @@ public class BatchSQLEngineAdapter<T> implements Closeable {
 
     Runnable pullTask = () -> {
       try {
+        LOG.debug("Starting pull for dataset '{}'", job.getDatasetName());
         waitForJobAndHandleExceptionInternal(job);
         JavaRDD<T> result = pullInternal(job.waitFor(), jsc);
+        LOG.debug("Completed pull for dataset '{}'", job.getDatasetName());
         future.complete(result);
-      } catch (Exception e) {
-        future.completeExceptionally(e);
+      } catch (Throwable t) {
+        future.completeExceptionally(t);
       }
     };
 
@@ -285,6 +289,7 @@ public class BatchSQLEngineAdapter<T> implements Closeable {
 
     Runnable joinTask = () -> {
       try {
+        LOG.debug("Starting join for dataset '{}'", datasetName);
         Collection<SQLDataset> inputDatasets = getJoinInputDatasets(joinDefinition);
         SQLJoinRequest joinRequest = new SQLJoinRequest(datasetName, joinDefinition, inputDatasets);
 
@@ -293,8 +298,9 @@ public class BatchSQLEngineAdapter<T> implements Closeable {
         }
 
         joinInternal(future, joinRequest);
-      } catch (Exception e) {
-        future.completeExceptionally(e);
+        LOG.debug("Completed join for dataset '{}'", datasetName);
+      } catch (Throwable t) {
+        future.completeExceptionally(t);
       }
     };
 
@@ -436,9 +442,9 @@ public class BatchSQLEngineAdapter<T> implements Closeable {
     } catch (CancellationException ce) {
       LOG.error("SQL Engine Task was cancelled", ce);
       ex = new SQLEngineException(ce);
-    } catch (Exception e) {
-      LOG.error("SQL Engine Task threw unexpected exception", e);
-      ex = new SQLEngineException(e);
+    } catch (Throwable t) {
+      LOG.error("SQL Engine Task failed with unexpected throwable", t);
+      ex = new SQLEngineException(t);
     }
     // Throw SQL Exception if needed.
     if (ex != null) {
@@ -462,8 +468,8 @@ public class BatchSQLEngineAdapter<T> implements Closeable {
       // from the SQL engine.
       try {
         close();
-      } catch (RuntimeException re) {
-        e.addSuppressed(re);
+      } catch (Throwable t) {
+        e.addSuppressed(t);
       }
       throw e;
     }
