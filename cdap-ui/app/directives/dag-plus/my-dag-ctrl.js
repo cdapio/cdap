@@ -729,7 +729,7 @@ angular.module(PKG.name + '.commons')
         }
 
         if (connObj.source && connObj.target) {
-          connObj.cssClass = `connection-id-${sourceNode.name}-${targetNode.name}`;
+          connObj.cssClass = `connection-id-${sourceNode.id}-${targetNode.id}`;
           let newConn = vm.instance.connect(connObj);
           if (
             targetNode.type === 'condition' ||
@@ -789,7 +789,7 @@ angular.module(PKG.name + '.commons')
       let defaultConnectorSettings = vm.defaultDagSettings.Connector;
       connObj.connector = [defaultConnectorSettings[0], Object.assign({}, defaultConnectorSettings[1], { midpoint: 0 })];
 
-      connObj.cssClass = `connection-id-${sourceNode.name}-${targetNode.name}`;
+      connObj.cssClass = `connection-id-${sourceNode.id}-${targetNode.id}`;
       vm.instance.connect(connObj);
     };
 
