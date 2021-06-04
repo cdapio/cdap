@@ -114,7 +114,7 @@ public class ArtifactLocalizer {
 
     Long finalLastModifiedTimestamp = lastModifiedTimestamp;
     String finalUrl = url;
-    Location newLocation = Retries.callWithRetries(() -> {
+    Location newJarLocation = Retries.callWithRetries(() -> {
       HttpURLConnection urlConn = remoteClient.openConnection(HttpMethod.GET, finalUrl);
 
       if (urlConn.getResponseCode() != HttpURLConnection.HTTP_OK) {
@@ -141,18 +141,22 @@ public class ArtifactLocalizer {
 
       // TODO figure out why this is a list
       Long newTimestamp = Long.valueOf(headers.get(HttpHeaders.LAST_MODIFIED).get(0));
-      Location newJarLocation = getArtifactJarLocation(artifactId, newTimestamp);
+      Location newLocation = getArtifactJarLocation(artifactId, newTimestamp);
       try (InputStream in = urlConn.getInputStream();
-           OutputStream out = newJarLocation.getOutputStream()) {
+           OutputStream out = newLocation.getOutputStream()) {
         ByteStreams.copy(in, out);
       }
       urlConn.disconnect();
-      return newJarLocation;
+      return newLocation;
     }, retryStrategy);
 
+    // If we didn't have a version that was previous cached then we're done and we can return the location
+    if (lastModifiedTimestamp == null){
+      return newJarLocation;
+    }
     // This means we already have a jar but its out of date, we should delete the jar and the unpacked directory
-    if (lastModifiedTimestamp != null) {
-      Location oldJarLocation = getArtifactJarLocation(artifactId, lastModifiedTimestamp);
+    Location oldJarLocation = getArtifactJarLocation(artifactId, lastModifiedTimestamp);
+    if (!newJarLocation.equals(oldJarLocation)) {
       Location oldUnpackLocation = getUnpackLocalPath(artifactId, lastModifiedTimestamp);
 
       try {
@@ -165,7 +169,7 @@ public class ArtifactLocalizer {
       }
     }
 
-    return newLocation;
+    return newJarLocation;
   }
 
   public Location getAndUnpackArtifact(ArtifactId artifactId) throws Exception {

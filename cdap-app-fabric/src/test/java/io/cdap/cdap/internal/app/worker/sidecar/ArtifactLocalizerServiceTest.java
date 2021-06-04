@@ -124,6 +124,8 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
 
     // Delete and recreate the artifact to update the last modified date
     artifactRepository.deleteArtifact(artifactId);
+
+    Thread.sleep(1000);
     Files.copy(appJarFile, newAppJarFile);
     artifactRepository.addArtifact(artifactId, newAppJarFile);
 
@@ -177,6 +179,9 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
 
     // Delete and recreate the artifact to update the last modified date
     artifactRepository.deleteArtifact(artifactId);
+
+    // Wait a bit before recreating the artifact to make sure the last modified time is different
+        Thread.sleep(1000);
     Files.copy(appJarFile, newAppJarFile);
     artifactRepository.addArtifact(artifactId, newAppJarFile);
 
