@@ -32,8 +32,8 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
-import io.cdap.cdap.security.spi.authorization.NoOpAuthorizer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.NoOpAccessController;
 
 import java.io.IOException;
 import java.util.Map;
@@ -70,7 +70,7 @@ public class PreviewDatasetFramework extends ForwardingDatasetFramework {
     public void close() {
     }
   };
-  private static final AuthorizationEnforcer NOOP_ENFORCER = new NoOpAuthorizer();
+  private static final AccessEnforcer NOOP_ENFORCER = new NoOpAccessController();
   private static final DefaultDatasetRuntimeContext.DatasetAccessRecorder NOOP_DATASET_ACCESS_RECORDER =
     new DefaultDatasetRuntimeContext.DatasetAccessRecorder() {
       @Override
@@ -86,7 +86,7 @@ public class PreviewDatasetFramework extends ForwardingDatasetFramework {
 
   private final DatasetFramework actualDatasetFramework;
   private final AuthenticationContext authenticationContext;
-  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AccessEnforcer accessEnforcer;
 
   /**
    * Create instance of the {@link PreviewDatasetFramework}.
@@ -96,11 +96,11 @@ public class PreviewDatasetFramework extends ForwardingDatasetFramework {
    */
   public PreviewDatasetFramework(DatasetFramework local, DatasetFramework actual,
                                  AuthenticationContext authenticationContext,
-                                 AuthorizationEnforcer authorizationEnforcer) {
+                                 AccessEnforcer accessEnforcer) {
     super(local);
     this.actualDatasetFramework = actual;
     this.authenticationContext = authenticationContext;
-    this.authorizationEnforcer = authorizationEnforcer;
+    this.accessEnforcer = accessEnforcer;
   }
 
   @Override
@@ -194,12 +194,12 @@ public class PreviewDatasetFramework extends ForwardingDatasetFramework {
     Principal principal = authenticationContext.getPrincipal();
 
     try {
-      AuthorizationEnforcer enforcer;
+      AccessEnforcer enforcer;
 
       final boolean isUserDataset = DatasetsUtil.isUserDataset(datasetInstanceId);
       // only for the datasets from the real space enforce the authorization.
       if (isUserDataset && actualDatasetFramework.hasInstance(datasetInstanceId)) {
-        enforcer = authorizationEnforcer;
+        enforcer = accessEnforcer;
       } else {
         enforcer = NOOP_ENFORCER;
       }

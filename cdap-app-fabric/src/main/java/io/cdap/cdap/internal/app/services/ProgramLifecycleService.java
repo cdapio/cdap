@@ -80,13 +80,14 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.proto.provisioner.ProvisionerDetail;
-import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.AccessPermission;
+import io.cdap.cdap.proto.security.ApplicationPermission;
 import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
-import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.logging.LogEntry;
@@ -128,7 +129,7 @@ public class ProgramLifecycleService {
   private final ProgramRuntimeService runtimeService;
   private final PropertiesResolver propertiesResolver;
   private final PreferencesService preferencesService;
-  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
   private final ProvisionerNotifier provisionerNotifier;
   private final ProvisioningService provisioningService;
@@ -141,7 +142,7 @@ public class ProgramLifecycleService {
   ProgramLifecycleService(CConfiguration cConf,
                           Store store, ProfileService profileService, ProgramRuntimeService runtimeService,
                           PropertiesResolver propertiesResolver,
-                          PreferencesService preferencesService, AuthorizationEnforcer authorizationEnforcer,
+                          PreferencesService preferencesService, AccessEnforcer accessEnforcer,
                           AuthenticationContext authenticationContext,
                           ProvisionerNotifier provisionerNotifier, ProvisioningService provisioningService,
                           ProgramStateWriter programStateWriter, CapabilityReader capabilityReader,
@@ -152,7 +153,7 @@ public class ProgramLifecycleService {
     this.runtimeService = runtimeService;
     this.propertiesResolver = propertiesResolver;
     this.preferencesService = preferencesService;
-    this.authorizationEnforcer = authorizationEnforcer;
+    this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
     this.provisionerNotifier = provisionerNotifier;
     this.provisioningService = provisioningService;
@@ -187,7 +188,7 @@ public class ProgramLifecycleService {
    */
   public Map<ProgramId, ProgramStatus> getProgramStatuses(Collection<ProgramId> programIds) throws Exception {
     // filter the result
-    Set<? extends EntityId> visibleEntities = authorizationEnforcer.isVisible(new LinkedHashSet<>(programIds),
+    Set<? extends EntityId> visibleEntities = accessEnforcer.isVisible(new LinkedHashSet<>(programIds),
                                                                               authenticationContext.getPrincipal());
     List<ProgramId> filteredIds = programIds.stream().filter(visibleEntities::contains).collect(Collectors.toList());
 
@@ -207,7 +208,7 @@ public class ProgramLifecycleService {
    *                           found in the app
    */
   public long getProgramRunCount(ProgramId programId) throws Exception {
-    AuthorizationUtil.ensureAccess(programId, authorizationEnforcer, authenticationContext.getPrincipal());
+    accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.GET);
     return store.getProgramRunCount(programId);
   }
 
@@ -220,7 +221,7 @@ public class ProgramLifecycleService {
   public List<RunCountResult> getProgramRunCounts(List<ProgramId> programIds) throws Exception {
     // filter the result
     Principal principal = authenticationContext.getPrincipal();
-    Set<? extends EntityId> visibleEntities = authorizationEnforcer.isVisible(new HashSet<>(programIds), principal);
+    Set<? extends EntityId> visibleEntities = accessEnforcer.isVisible(new HashSet<>(programIds), principal);
     Set<ProgramId> filteredIds = programIds.stream().filter(visibleEntities::contains).collect(Collectors.toSet());
 
     Map<ProgramId, RunCountResult> programCounts = store.getProgramRunCounts(filteredIds).stream()
@@ -251,7 +252,7 @@ public class ProgramLifecycleService {
    * @throws Exception if authorization failed
    */
   public RunRecordDetail getRunRecordMeta(ProgramRunId programRunId) throws Exception {
-    AuthorizationUtil.ensureAccess(programRunId, authorizationEnforcer, authenticationContext.getPrincipal());
+    accessEnforcer.enforce(programRunId, authenticationContext.getPrincipal(), StandardPermission.GET);
 
     ProgramSpecification programSpec = getProgramSpecificationWithoutAuthz(programRunId.getParent());
     if (programSpec == null) {
@@ -280,7 +281,7 @@ public class ProgramLifecycleService {
    */
   public List<RunRecordDetail> getRunRecordMetas(ProgramId programId, ProgramRunStatus programRunStatus,
                                                  long start, long end, int limit) throws Exception {
-    AuthorizationUtil.ensureAccess(programId, authorizationEnforcer, authenticationContext.getPrincipal());
+    accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.GET);
     ProgramSpecification programSpec = getProgramSpecificationWithoutAuthz(programId);
     if (programSpec == null) {
       throw new NotFoundException(programId);
@@ -331,7 +332,7 @@ public class ProgramLifecycleService {
 
   private void addProgramHistory(List<ProgramHistory> histories, List<ProgramId> programs,
                                  ProgramRunStatus programRunStatus, long start, long end, int limit) throws Exception {
-    Set<? extends EntityId> visibleEntities = authorizationEnforcer.isVisible(new HashSet<>(programs),
+    Set<? extends EntityId> visibleEntities = accessEnforcer.isVisible(new HashSet<>(programs),
                                                                               authenticationContext.getPrincipal());
     for (ProgramHistory programHistory : store.getRuns(programs, programRunStatus, start, end, limit)) {
       ProgramId programId = programHistory.getProgramId();
@@ -353,7 +354,7 @@ public class ProgramLifecycleService {
    */
   private ProgramStatus getExistingAppProgramStatus(ApplicationSpecification appSpec,
                                                     ProgramId programId) throws Exception {
-    AuthorizationUtil.ensureAccess(programId, authorizationEnforcer, authenticationContext.getPrincipal());
+    accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.GET);
     ProgramSpecification spec = getExistingAppProgramSpecification(appSpec, programId);
     if (spec == null) {
       // program doesn't exist
@@ -394,8 +395,7 @@ public class ProgramLifecycleService {
    */
   @Nullable
   public ProgramSpecification getProgramSpecification(ProgramId programId) throws Exception {
-    AuthorizationUtil.ensureOnePrivilege(programId, EnumSet.allOf(Action.class), authorizationEnforcer,
-                                         authenticationContext.getPrincipal());
+    accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.GET);
     return getProgramSpecificationWithoutAuthz(programId);
   }
 
@@ -439,11 +439,11 @@ public class ProgramLifecycleService {
    * @throws NotFoundException if the specified program or the app it belongs to is not found in the specified namespace
    * @throws IOException if there is an error starting the program
    * @throws UnauthorizedException if the logged in user is not authorized to start the program. To start a program,
-   *                               a user requires {@link Action#EXECUTE} on the program
+   *                               a user requires {@link ApplicationPermission#EXECUTE} on the program
    * @throws Exception if there were other exceptions checking if the current user is authorized to start the program
    */
   public RunId run(ProgramId programId, Map<String, String> overrides, boolean debug) throws Exception {
-    authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
+    accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), ApplicationPermission.EXECUTE);
     checkConcurrentExecution(programId);
 
     Map<String, String> sysArgs = propertiesResolver.getSystemProperties(programId);
@@ -468,7 +468,7 @@ public class ProgramLifecycleService {
    * @throws NotFoundException if the specified program or the app it belongs to is not found in the specified namespace
    * @throws IOException if there is an error starting the program
    * @throws UnauthorizedException if the logged in user is not authorized to start the program. To start a program,
-   *                               a user requires {@link Action#EXECUTE} on the program
+   *                               a user requires {@link ApplicationPermission#EXECUTE} on the program
    * @throws Exception if there were other exceptions checking if the current user is authorized to start the program
    */
   public Set<RunId> restart(ApplicationId applicationId, long startTimeSeconds, long endTimeSeconds) throws Exception {
@@ -591,11 +591,11 @@ public class ProgramLifecycleService {
    * @throws NotFoundException if the specified program or the app it belongs to is not found in the specified namespace
    * @throws IOException if there is an error starting the program
    * @throws UnauthorizedException if the logged in user is not authorized to start the program. To start a program,
-   *                               a user requires {@link Action#EXECUTE} on the program
+   *                               a user requires {@link ApplicationPermission#EXECUTE} on the program
    * @throws Exception if there were other exceptions checking if the current user is authorized to start the program
    */
   public ProgramController start(ProgramId programId, Map<String, String> overrides, boolean debug) throws Exception {
-    authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
+    accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), ApplicationPermission.EXECUTE);
     checkConcurrentExecution(programId);
 
     Map<String, String> sysArgs = propertiesResolver.getSystemProperties(programId);
@@ -730,10 +730,11 @@ public class ProgramLifecycleService {
    * @throws BadRequestException if an attempt is made to stop a program that is either not running or
    *                             was started by a workflow
    * @throws UnauthorizedException if the user issuing the command is not authorized to stop the program. To stop a
-   *                               program, a user requires {@link Action#EXECUTE} permission on the program.
+   *                               program, a user requires {@link ApplicationPermission#EXECUTE} permission on
+   *                               the program.
    */
   public List<ListenableFuture<ProgramRunId>> issueStop(ProgramId programId, @Nullable String runId) throws Exception {
-    authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
+    accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), ApplicationPermission.EXECUTE);
 
     // See if the program is running as per the runtime service
     Map<RunId, RuntimeInfo> runtimeInfos = findRuntimeInfo(programId, runId);
@@ -848,10 +849,10 @@ public class ProgramLifecycleService {
    * @throws NotFoundException if the specified program was not found
    * @throws UnauthorizedException if the current user does not have sufficient privileges to save runtime arguments for
    *                               the specified program. To save runtime arguments for a program, a user requires
-   *                               {@link Action#ADMIN} privileges on the program.
+   *                               {@link StandardPermission#UPDATE} privileges on the program.
    */
   public void saveRuntimeArgs(ProgramId programId, Map<String, String> runtimeArgs) throws Exception {
-    authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.ADMIN);
+    accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     Store.ensureProgramExists(programId, store.getApplication(programId.getParent()));
     preferencesService.setProperties(programId, runtimeArgs);
   }
@@ -864,12 +865,10 @@ public class ProgramLifecycleService {
    * @throws NotFoundException if the specified program was not found
    * @throws UnauthorizedException if the current user does not have sufficient privileges to get runtime arguments for
    * the specified program. To get runtime arguments for a program, a user requires
-   * {@link Action#READ} privileges on the program.
+   * {@link StandardPermission#GET} privileges on the program.
    */
   public Map<String, String> getRuntimeArgs(@Name("programId") ProgramId programId) throws Exception {
-    // user can have READ, ADMIN or EXECUTE to retrieve the runtime arguments
-    AuthorizationUtil.ensureOnePrivilege(programId, EnumSet.of(Action.READ, Action.EXECUTE, Action.ADMIN),
-                                         authorizationEnforcer, authenticationContext.getPrincipal());
+    accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.GET);
     Store.ensureProgramExists(programId, store.getApplication(programId.getParent()));
     return preferencesService.getProperties(programId);
   }
@@ -885,11 +884,12 @@ public class ProgramLifecycleService {
    * @throws ExecutionException if there is an error while asynchronously updating log levels.
    * @throws BadRequestException if the log level is not valid or the program type is not supported.
    * @throws UnauthorizedException if the user does not have privileges to update log levels for the specified program.
-   *                               To update log levels for a program, a user needs {@link Action#ADMIN} on the program.
+   *                               To update log levels for a program, a user needs {@link StandardPermission#UPDATE}
+   *                               on the program.
    */
   public void updateProgramLogLevels(ProgramId programId, Map<String, LogEntry.Level> logLevels,
                                      @Nullable String runId) throws Exception {
-    authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.ADMIN);
+    accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     if (!EnumSet.of(ProgramType.SERVICE, ProgramType.WORKER).contains(programId.getType())) {
       throw new BadRequestException(String.format("Updating log levels for program type %s is not supported",
                                                   programId.getType().getPrettyName()));
@@ -908,11 +908,12 @@ public class ProgramLifecycleService {
    * @throws InterruptedException if there is an error while asynchronously resetting log levels.
    * @throws ExecutionException if there is an error while asynchronously resetting log levels.
    * @throws UnauthorizedException if the user does not have privileges to reset log levels for the specified program.
-   *                               To reset log levels for a program, a user needs {@link Action#ADMIN} on the program.
+   *                               To reset log levels for a program, a user needs {@link StandardPermission#UPDATE}
+   *                               on the program.
    */
   public void resetProgramLogLevels(ProgramId programId, Set<String> loggerNames,
                                     @Nullable String runId) throws Exception {
-    authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.ADMIN);
+    accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     if (!EnumSet.of(ProgramType.SERVICE, ProgramType.WORKER).contains(programId.getType())) {
       throw new BadRequestException(String.format("Resetting log levels for program type %s is not supported",
                                                   programId.getType().getPrettyName()));
@@ -924,7 +925,7 @@ public class ProgramLifecycleService {
    * Ensures the caller is authorized to check if the given program exists.
    */
   public void ensureProgramExists(ProgramId programId) throws Exception {
-    AuthorizationUtil.ensureAccess(programId, authorizationEnforcer, authenticationContext.getPrincipal());
+    accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.GET);
     Store.ensureProgramExists(programId, store.getApplication(programId.getParent()));
   }
 
@@ -1025,10 +1026,11 @@ public class ProgramLifecycleService {
    * @throws ExecutionException if there is an error while asynchronously updating instances
    * @throws BadRequestException if the number of instances specified is less than 0
    * @throws UnauthorizedException if the user does not have privileges to set instances for the specified program.
-   *                               To set instances for a program, a user needs {@link Action#ADMIN} on the program.
+   *                               To set instances for a program, a user needs {@link StandardPermission#UPDATE}
+   *                               on the program.
    */
   public void setInstances(ProgramId programId, int instances) throws Exception {
-    authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.ADMIN);
+    accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     if (instances < 1) {
       throw new BadRequestException(String.format("Instance count should be greater than 0. Got %s.", instances));
     }
@@ -1091,7 +1093,7 @@ public class ProgramLifecycleService {
 
   private boolean hasAccess(ProgramId programId) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
-    return !authorizationEnforcer.isVisible(Collections.singleton(programId), principal).isEmpty();
+    return !accessEnforcer.isVisible(Collections.singleton(programId), principal).isEmpty();
   }
 
   private void setWorkerInstances(ProgramId programId, int instances)
@@ -1224,7 +1226,7 @@ public class ProgramLifecycleService {
       LOG.debug("Checking authorisation for user: {}, using runtime config principal: {}",
                 authenticationContext.getPrincipal(), principal);
       KerberosPrincipalId kid = new KerberosPrincipalId(principal);
-      authorizationEnforcer.enforce(kid, authenticationContext.getPrincipal(), Action.ADMIN);
+      accessEnforcer.enforce(kid, authenticationContext.getPrincipal(), AccessPermission.IMPERSONATE);
     }
   }
 }

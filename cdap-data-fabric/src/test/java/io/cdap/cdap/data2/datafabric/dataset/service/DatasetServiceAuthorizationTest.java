@@ -25,23 +25,27 @@ import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.InstanceNotFoundException;
 import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.proto.DatasetSpecificationSummary;
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.DatasetModuleId;
 import io.cdap.cdap.proto.id.DatasetTypeId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.ApplicationPermission;
 import io.cdap.cdap.proto.security.Authorizable;
+import io.cdap.cdap.proto.security.GrantedPermission;
+import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
-import io.cdap.cdap.proto.security.Privilege;
-import io.cdap.cdap.security.authorization.AuthorizerInstantiator;
-import io.cdap.cdap.security.authorization.InMemoryAuthorizer;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
+import io.cdap.cdap.security.authorization.InMemoryAccessController;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
-import io.cdap.cdap.security.spi.authorization.Authorizer;
+import io.cdap.cdap.security.spi.authorization.AccessController;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -62,13 +66,13 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
   private static final Principal ALICE = new Principal("alice", Principal.PrincipalType.USER);
   private static final Principal BOB = new Principal("bob", Principal.PrincipalType.USER);
 
-  private static Authorizer authorizer;
+  private static AccessController accessController;
 
   @BeforeClass
   public static void setup() throws Exception {
     locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
     initializeAndStartService(createCConf());
-    authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
+    accessController = injector.getInstance(AccessControllerInstantiator.class).get();
   }
 
   protected static CConfiguration createCConf() throws IOException {
@@ -78,7 +82,7 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     // we only want to test authorization, but we don't specify principal/keytab, so disable kerberos
     cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
     cConf.setInt(Constants.Security.Authorization.CACHE_MAX_ENTRIES, 0);
-    Location authorizerJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAuthorizer.class);
+    Location authorizerJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAccessController.class);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, authorizerJar.toURI().getPath());
     return cConf;
   }
@@ -92,8 +96,9 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     assertAuthorizationFailure(() -> dsFramework.addInstance(Table.class.getName(), dsId, DatasetProperties.EMPTY),
                                "Alice should not be able to add a dataset instance since she does not have ADMIN" +
                                  " privileges on the dataset");
-    // grant alice ADMIN access to the dsId and ADMIN access on the dataset type
-    grantAndAssertSuccess(dsId, ALICE, ImmutableSet.of(Action.ADMIN));
+    // grant alice full access to the dsId
+    grantAndAssertSuccess(dsId, ALICE, EnumSet.allOf(StandardPermission.class));
+    grantAndAssertSuccess(NamespaceId.DEFAULT, EntityType.DATASET, ALICE, EnumSet.of(StandardPermission.LIST));
     // now adding an instance should succeed
     dsFramework.addInstance(Table.class.getName(), dsId, DatasetProperties.EMPTY);
     // alice should be able to perform all operations on the dataset
@@ -106,11 +111,13 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
                                String.format("Expected %s to not be have access to %s.", BOB, dsId));
     assertAuthorizationFailure(
       () -> dsFramework.updateInstance(dsId, DatasetProperties.builder().add("key", "val").build()),
-      String.format("Expected %s to not be have %s privilege on %s.", BOB, Action.ADMIN, dsId));
+      String.format("Expected %s to not be have %s privilege on %s.", BOB, StandardPermission.UPDATE, dsId));
     assertAuthorizationFailure(() -> dsFramework.truncateInstance(dsId),
                                String.format("Expected %s to not be have %s privilege on %s.",
-                                             BOB, Action.ADMIN, dsId));
-    grantAndAssertSuccess(dsId, BOB, ImmutableSet.of(Action.ADMIN));
+                                             BOB, StandardPermission.UPDATE, dsId));
+    grantAndAssertSuccess(dsId, BOB, ImmutableSet.of(StandardPermission.GET, StandardPermission.UPDATE,
+                                                     StandardPermission.DELETE));
+    grantAndAssertSuccess(NamespaceId.DEFAULT, EntityType.DATASET, BOB, EnumSet.of(StandardPermission.LIST));
     // now update should succeed
     dsFramework.updateInstance(dsId, DatasetProperties.builder().add("key", "val").build());
     // as should truncate
@@ -119,30 +126,24 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     Assert.assertNotNull(datasetSpec);
     Assert.assertEquals("val", datasetSpec.getProperty("key"));
     // grant Bob corresponding privilege to create the dataset
-    grantAndAssertSuccess(dsId1, BOB, ImmutableSet.of(Action.ADMIN));
-    grantAndAssertSuccess(dsId2, BOB, ImmutableSet.of(Action.ADMIN));
+    grantAndAssertSuccess(dsId1, BOB, ImmutableSet.of(StandardPermission.CREATE));
+    grantAndAssertSuccess(dsId2, BOB, ImmutableSet.of(StandardPermission.CREATE, StandardPermission.DELETE));
     dsFramework.addInstance(Table.class.getName(), dsId1, DatasetProperties.EMPTY);
     dsFramework.addInstance(Table.class.getName(), dsId2, DatasetProperties.EMPTY);
     // since Bob now has some privileges on all datasets, the list API should return all datasets for him
     Assert.assertEquals(ImmutableSet.of(dsId, dsId1, dsId2),
                         summaryToDatasetIdSet(dsFramework.getInstances(NamespaceId.DEFAULT)));
-    // Alice should only be able to see dsId, since she only has privilege on this dataset
-    SecurityRequestContext.setUserId(ALICE.getName());
-    Assert.assertEquals(ImmutableSet.of(dsId),
-                        summaryToDatasetIdSet(dsFramework.getInstances(NamespaceId.DEFAULT)));
-
     // Grant privileges on other datasets to user Alice
-    grantAndAssertSuccess(dsId1, ALICE, ImmutableSet.of(Action.EXECUTE));
-    grantAndAssertSuccess(dsId2, ALICE, ImmutableSet.of(Action.EXECUTE));
+    grantAndAssertSuccess(dsId1, ALICE, ImmutableSet.of(ApplicationPermission.EXECUTE));
+    grantAndAssertSuccess(dsId2, ALICE, ImmutableSet.of(ApplicationPermission.EXECUTE));
 
-    // Alice should not be able to delete any datasets since she does not have ADMIN on all datasets in the namespace
+    SecurityRequestContext.setUserId(ALICE.getName());
+    // Alice should not be able to delete any datasets since she does not have DELETE on all datasets in the namespace
     try {
       dsFramework.deleteAllInstances(NamespaceId.DEFAULT);
       Assert.fail();
-    } catch (DatasetManagementException e) {
-      if (!(e.getCause() instanceof UnauthorizedException)) {
-        Assert.fail();
-      }
+    } catch (UnauthorizedException e) {
+      //Expected
     }
     // alice should still be able to see all dataset instances
     Assert.assertEquals(ImmutableSet.of(dsId1, dsId2, dsId),
@@ -152,10 +153,10 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     assertAuthorizationFailure(() -> dsFramework.deleteInstance(dsId1),
                                String.format("Alice should not be able to delete instance %s since she does not " +
                                                "have privileges", dsId1));
-    grantAndAssertSuccess(dsId1, ALICE, ImmutableSet.of(Action.ADMIN));
+    grantAndAssertSuccess(dsId1, ALICE, ImmutableSet.of(StandardPermission.DELETE, StandardPermission.CREATE));
     Assert.assertEquals(ImmutableSet.of(dsId1, dsId2, dsId),
                         summaryToDatasetIdSet(dsFramework.getInstances(NamespaceId.DEFAULT)));
-    // since Alice now is ADMIN for dsId1, she should be able to delete it
+    // since Alice now has DELETE for dsId1, she should be able to delete it
     dsFramework.deleteInstance(dsId1);
 
     // Now Alice only see dsId2 and dsId from list.
@@ -171,7 +172,7 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     SecurityRequestContext.setUserId(ALICE.getName());
     dsFramework.deleteInstance(dsId);
 
-    grantAndAssertSuccess(dsId2, ALICE, EnumSet.of(Action.ADMIN));
+    grantAndAssertSuccess(dsId2, ALICE, EnumSet.of(StandardPermission.CREATE, StandardPermission.DELETE));
     // add add the instance again
     dsFramework.addInstance(Table.class.getName(), dsId, DatasetProperties.EMPTY);
     dsFramework.addInstance(Table.class.getName(), dsId1, DatasetProperties.EMPTY);
@@ -179,7 +180,7 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
 
     Assert.assertEquals(ImmutableSet.of(dsId, dsId1, dsId2),
                         summaryToDatasetIdSet(dsFramework.getInstances(NamespaceId.DEFAULT)));
-    // should be successful since ALICE has ADMIN on all datasets
+    // should be successful since ALICE has DELETE on all datasets
     dsFramework.deleteAllInstances(NamespaceId.DEFAULT);
     Assert.assertTrue(dsFramework.getInstances(NamespaceId.DEFAULT).isEmpty());
   }
@@ -193,26 +194,21 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
       // user will not be able to get the info about the instance since he does not have any privilege on the instance
       dsFramework.getDatasetSpec(nonExistingInstance);
       Assert.fail();
-    } catch (DatasetManagementException e) {
-      if (!(e.getCause() instanceof UnauthorizedException)) {
-        Assert.fail();
-      }
+    } catch (UnauthorizedException e) {
+      //Expected
     }
     try {
       // user will not be able to check the existence on the instance since he does not have any privilege on the
       // instance
       dsFramework.hasInstance(nonExistingInstance);
       Assert.fail();
-    } catch (DatasetManagementException e) {
+    } catch (UnauthorizedException e) {
       // expected
-      if (!(e.getCause() instanceof UnauthorizedException)) {
-        Assert.fail();
-      }
     }
     SecurityRequestContext.setUserId(ALICE.getName());
     // user need to have access to the dataset to do any operations, even though the dataset does not exist
-    grantAndAssertSuccess(nonExistingInstance, ALICE, EnumSet.of(Action.ADMIN));
-    grantAndAssertSuccess(nonExistingModule, ALICE, EnumSet.of(Action.ADMIN));
+    grantAndAssertSuccess(nonExistingInstance, ALICE, EnumSet.allOf(StandardPermission.class));
+    grantAndAssertSuccess(nonExistingModule, ALICE, EnumSet.allOf(StandardPermission.class));
     // after grant user should be able to check the dataset info
     Assert.assertNull(dsFramework.getDatasetSpec(nonExistingInstance));
     Assert.assertFalse(dsFramework.hasInstance(nonExistingInstance));
@@ -227,7 +223,7 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
       "Alice needs to have READ/ADMIN on the dataset type to create the dataset");
     assertNotFound(() -> dsFramework.deleteModule(nonExistingModule),
                    String.format("Expected %s to not exist", nonExistingModule));
-    grantAndAssertSuccess(nonExistingType, ALICE, EnumSet.of(Action.ADMIN));
+    grantAndAssertSuccess(nonExistingType, ALICE, EnumSet.allOf(StandardPermission.class));
     Assert.assertNull(String.format("Expected %s to not exist", nonExistingType),
                       dsFramework.getTypeInfo(nonExistingType));
   }
@@ -245,13 +241,16 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     assertAuthorizationFailure(
       () -> dsFramework.addModule(module1, new TestModule1x(), moduleJar),
       String.format("Expected module add operation to fail for %s because she does not have %s on %s",
-                    ALICE, Action.ADMIN, module1));
+                    ALICE, StandardPermission.UPDATE, module1));
     // grant alice ADMIN on module1
-    grantAndAssertSuccess(module1, ALICE, EnumSet.of(Action.ADMIN));
+    grantAndAssertSuccess(module1, ALICE, EnumSet.of(StandardPermission.UPDATE, StandardPermission.DELETE,
+                                                     StandardPermission.CREATE));
     // grant all privileges needed to create a dataset
-    grantAndAssertSuccess(type1, ALICE, EnumSet.of(Action.ADMIN));
-    grantAndAssertSuccess(type1x, ALICE, EnumSet.of(Action.ADMIN));
-    grantAndAssertSuccess(datasetId, ALICE, EnumSet.of(Action.ADMIN));
+    grantAndAssertSuccess(type1, ALICE, EnumSet.of(StandardPermission.UPDATE, StandardPermission.GET,
+                                                   StandardPermission.DELETE));
+    grantAndAssertSuccess(type1x, ALICE, EnumSet.of(StandardPermission.UPDATE, StandardPermission.GET,
+                                                    StandardPermission.DELETE));
+    grantAndAssertSuccess(datasetId, ALICE, EnumSet.allOf(StandardPermission.class));
     dsFramework.addModule(module1, new TestModule1x(), moduleJar);
     // all operations on module1 should succeed as alice
     Assert.assertNotNull(dsFramework.getTypeInfo(type1));
@@ -265,9 +264,9 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
       String.format("Creating an instance of a type from %s should fail as %s does not have any privileges on it.",
                     module1, BOB));
 
-    // granting ADMIN on the module, BOB should now be able to create the dataset type
-    grantAndAssertSuccess(module2, BOB, EnumSet.of(Action.ADMIN));
-    grantAndAssertSuccess(type2, BOB, EnumSet.of(Action.ADMIN));
+    // granting CREATE on the module, BOB should now be able to create the dataset type
+    grantAndAssertSuccess(module2, BOB, EnumSet.of(StandardPermission.CREATE, StandardPermission.DELETE));
+    grantAndAssertSuccess(type2, BOB, EnumSet.of(StandardPermission.UPDATE, StandardPermission.GET));
 
     // adding a module should now succeed as bob though, because bob has admin privilege on the module
     dsFramework.addModule(module2, new TestModule2(), createModuleJar(TestModule2.class));
@@ -297,13 +296,13 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     dsFramework.deleteAllInstances(NamespaceId.DEFAULT);
     SecurityRequestContext.setUserId(BOB.getName());
     // After granting admin on the modules, deleting all modules should succeed
-    grantAndAssertSuccess(module1, BOB, EnumSet.of(Action.ADMIN));
+    grantAndAssertSuccess(module1, BOB, EnumSet.of(StandardPermission.UPDATE, StandardPermission.DELETE));
     dsFramework.deleteAllModules(NamespaceId.DEFAULT);
   }
 
   @After
   public void cleanup() throws Exception {
-    authorizer.revoke(Authorizable.fromEntityId(NamespaceId.DEFAULT));
+    accessController.revoke(Authorizable.fromEntityId(NamespaceId.DEFAULT));
   }
 
   private Set<DatasetId> summaryToDatasetIdSet(Collection<DatasetSpecificationSummary> datasetSpecs) {
@@ -312,16 +311,23 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     return ImmutableSet.copyOf(datasetIds);
   }
 
-  private void grantAndAssertSuccess(EntityId entityId, Principal principal, Set<Action> actions) throws Exception {
-    Set<Privilege> existingPrivileges = authorizer.listPrivileges(principal);
-    authorizer.grant(Authorizable.fromEntityId(entityId), principal, actions);
-    ImmutableSet.Builder<Privilege> expectedPrivilegesAfterGrant = ImmutableSet.builder();
-    for (Action action : actions) {
-      expectedPrivilegesAfterGrant.add(new Privilege(entityId, action));
+  private void grantAndAssertSuccess(EntityId entityId, Principal principal, Set<? extends Permission> permissions)
+    throws AccessException {
+    grantAndAssertSuccess(entityId, null, principal, permissions);
+  }
+
+  private void grantAndAssertSuccess(EntityId entityId, EntityType childType,
+                                     Principal principal, Set<? extends Permission> permissions)
+    throws AccessException {
+    Set<GrantedPermission> existingPrivileges = accessController.listGrants(principal);
+    Authorizable authorizable = Authorizable.fromEntityId(entityId, childType);
+    accessController.grant(authorizable, principal, permissions);
+    ImmutableSet.Builder<GrantedPermission> expectedPrivilegesAfterGrant = ImmutableSet.builder();
+    for (Permission permission : permissions) {
+      expectedPrivilegesAfterGrant.add(new GrantedPermission(authorizable, permission));
     }
-    //TODO: Reinstate after full migration to new permission model
-    //Assert.assertEquals(Sets.union(existingPrivileges, expectedPrivilegesAfterGrant.build()),
-    //                    authorizer.listPrivileges(principal));
+    Assert.assertEquals(Sets.union(existingPrivileges, expectedPrivilegesAfterGrant.build()),
+                        accessController.listGrants(principal));
   }
 
   private void assertNotFound(DatasetOperationExecutor operation, String failureMsg) throws Exception {
@@ -332,7 +338,8 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
       // expected
     } catch (DatasetManagementException e) {
       // no other way to detect errors from DatasetServiceClient
-      Assert.assertTrue(e.getMessage().contains("Response code: 404, message: 'Not Found'"));
+      Assert.assertTrue("Wrong message: " + e.getMessage(),
+                        e.getMessage().contains("Response code: 404, message: 'Not Found'"));
     }
   }
 

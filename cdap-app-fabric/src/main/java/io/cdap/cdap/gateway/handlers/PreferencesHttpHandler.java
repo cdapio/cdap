@@ -31,10 +31,9 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
-import io.cdap.cdap.proto.security.Action;
-import io.cdap.cdap.security.authorization.AuthorizationUtil;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.store.NamespaceStore;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -57,18 +56,18 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
 
   private static final Gson GSON = new Gson();
 
-  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
   private final PreferencesService preferencesService;
   private final Store store;
   private final NamespaceStore nsStore;
 
   @Inject
-  PreferencesHttpHandler(AuthorizationEnforcer authorizationEnforcer,
+  PreferencesHttpHandler(AccessEnforcer accessEnforcer,
                          AuthenticationContext authenticationContext,
                          PreferencesService preferencesService,
                          Store store, NamespaceStore nsStore) {
-    this.authorizationEnforcer = authorizationEnforcer;
+    this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
     this.preferencesService = preferencesService;
     this.store = store;
@@ -80,7 +79,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   public void getInstancePrefs(HttpRequest request, HttpResponder responder) throws Exception {
     InstanceId instanceId = new InstanceId("");
-    AuthorizationUtil.ensureAccess(instanceId, authorizationEnforcer, authenticationContext.getPrincipal());
+    accessEnforcer.enforce(instanceId, authenticationContext.getPrincipal(), StandardPermission.GET);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(preferencesService.getProperties()));
   }
 
@@ -88,7 +87,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   @DELETE
   public void deleteInstancePrefs(HttpRequest request, HttpResponder responder) throws Exception {
     InstanceId instanceId = new InstanceId("");
-    authorizationEnforcer.enforce(instanceId, authenticationContext.getPrincipal(), Action.ADMIN);
+    accessEnforcer.enforce(instanceId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     preferencesService.deleteProperties();
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -98,7 +97,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void setInstancePrefs(FullHttpRequest request, HttpResponder responder) throws Exception {
     InstanceId instanceId = new InstanceId("");
-    authorizationEnforcer.enforce(instanceId, authenticationContext.getPrincipal(), Action.ADMIN);
+    accessEnforcer.enforce(instanceId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     try {
       Map<String, String> propMap = decodeArguments(request);
       preferencesService.setProperties(propMap);
@@ -116,7 +115,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
                                 @PathParam("namespace-id") String namespace, @QueryParam("resolved") boolean resolved)
     throws Exception {
     NamespaceId namespaceId = new NamespaceId(namespace);
-    AuthorizationUtil.ensureAccess(namespaceId, authorizationEnforcer, authenticationContext.getPrincipal());
+    accessEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), StandardPermission.GET);
     if (nsStore.get(namespaceId) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not present", namespace));
     } else {
@@ -136,7 +135,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   public void setNamespacePrefs(FullHttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") String namespace) throws Exception {
     NamespaceId namespaceId = new NamespaceId(namespace);
-    authorizationEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), Action.ADMIN);
+    accessEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     if (nsStore.get(namespaceId) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not present", namespace));
       return;
@@ -156,7 +155,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   public void deleteNamespacePrefs(HttpRequest request, HttpResponder responder,
                                    @PathParam("namespace-id") String namespace) throws Exception {
     NamespaceId namespaceId = new NamespaceId(namespace);
-    authorizationEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), Action.ADMIN);
+    accessEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     if (nsStore.get(namespaceId) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not present", namespace));
     } else {
@@ -173,7 +172,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
                           @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId,
                           @QueryParam("resolved") boolean resolved) throws Exception {
     ApplicationId applicationId = new ApplicationId(namespace, appId);
-    AuthorizationUtil.ensureAccess(applicationId, authorizationEnforcer, authenticationContext.getPrincipal());
+    accessEnforcer.enforce(applicationId, authenticationContext.getPrincipal(), StandardPermission.GET);
     if (store.getApplication(applicationId) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Application %s in Namespace %s not present",
                                                                        appId, namespace));
@@ -193,7 +192,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
                           @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId)
     throws Exception {
     ApplicationId applicationId = new ApplicationId(namespace, appId);
-    authorizationEnforcer.enforce(applicationId, authenticationContext.getPrincipal(), Action.ADMIN);
+    accessEnforcer.enforce(applicationId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     if (store.getApplication(applicationId) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Application %s in Namespace %s not present",
                                                                        appId, namespace));
@@ -215,7 +214,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId)
     throws Exception {
     ApplicationId applicationId = new ApplicationId(namespace, appId);
-    authorizationEnforcer.enforce(applicationId, authenticationContext.getPrincipal(), Action.ADMIN);
+    accessEnforcer.enforce(applicationId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     if (store.getApplication(applicationId) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Application %s in Namespace %s not present",
                                                                        appId, namespace));
@@ -234,7 +233,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
                               @PathParam("program-type") String programType, @PathParam("program-id") String programId,
                               @QueryParam("resolved") boolean resolved) throws Exception {
     ProgramId program = new ProgramId(namespace, appId, getProgramType(programType), programId);
-    authorizationEnforcer.enforce(program, authenticationContext.getPrincipal(), Action.ADMIN);
+    accessEnforcer.enforce(program, authenticationContext.getPrincipal(), StandardPermission.GET);
     Store.ensureProgramExists(program, store.getApplication(program.getParent()));
     if (resolved) {
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(preferencesService.getResolvedProperties(program)));
@@ -252,7 +251,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
                               @PathParam("program-type") String programType,
                               @PathParam("program-id") String programId) throws Exception {
     ProgramId program = new ProgramId(namespace, appId, getProgramType(programType), programId);
-    authorizationEnforcer.enforce(program, authenticationContext.getPrincipal(), Action.ADMIN);
+    accessEnforcer.enforce(program, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     Store.ensureProgramExists(program, store.getApplication(program.getParent()));
     try {
       Map<String, String> propMap = decodeArguments(request);
@@ -270,7 +269,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
                                  @PathParam("program-type") String programType,
                                  @PathParam("program-id") String programId) throws Exception {
     ProgramId program = new ProgramId(namespace, appId, getProgramType(programType), programId);
-    authorizationEnforcer.enforce(program, authenticationContext.getPrincipal(), Action.ADMIN);
+    accessEnforcer.enforce(program, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     Store.ensureProgramExists(program, store.getApplication(program.getParent()));
     preferencesService.deleteProperties(program);
     responder.sendStatus(HttpResponseStatus.OK);

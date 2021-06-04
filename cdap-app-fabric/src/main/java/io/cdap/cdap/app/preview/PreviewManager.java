@@ -16,6 +16,7 @@
 package io.cdap.cdap.app.preview;
 
 import com.google.gson.JsonElement;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.logging.read.LogReader;
 import io.cdap.cdap.metrics.query.MetricsQueryHelper;
@@ -49,7 +50,7 @@ public interface PreviewManager {
    * @return the status of the preview
    * @throws NotFoundException if preview application is not found
    */
-  PreviewStatus getStatus(ApplicationId applicationId) throws NotFoundException;
+  PreviewStatus getStatus(ApplicationId applicationId) throws NotFoundException, AccessException;
 
   /**
    * Stop the preview run represented by this {@link ApplicationId}.
@@ -64,7 +65,7 @@ public interface PreviewManager {
    * @param tracerName the name of the tracer used for preview
    * @return the {@link Map} of properties associated with the tracer for a given preview
    */
-  Map<String, List<JsonElement>> getData(ApplicationId applicationId, String tracerName);
+  Map<String, List<JsonElement>> getData(ApplicationId applicationId, String tracerName) throws AccessException;
 
   /**
    * Get the run id of the program executed as a part of preview.

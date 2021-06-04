@@ -24,8 +24,9 @@ package io.cdap.cdap.proto.security;
 public interface Permission extends ActionOrPermission {
   /**
    *
-   * @return if specific permission can be checked on parent. It's usually used for permission checked when
-   * entity have not got an id yet, e.g. "create" permission.
+   * @return if specific permission can be checked on parent. It's usually used for permission check when
+   * entity have not got an id yet, e.g. "create" permission. It still can be enforced on a specific entity
+   * if it's name is known.
    */
   default boolean isCheckedOnParent() {
     return false;

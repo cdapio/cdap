@@ -22,18 +22,18 @@ import com.google.inject.name.Named;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.proto.DatasetModuleMeta;
 import io.cdap.cdap.proto.DatasetTypeMeta;
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.DatasetModuleId;
 import io.cdap.cdap.proto.id.DatasetTypeId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.http.BodyConsumer;
 
-import java.util.EnumSet;
 import java.util.List;
 import javax.inject.Inject;
 
@@ -43,16 +43,16 @@ import javax.inject.Inject;
 public class AuthorizationDatasetTypeService extends AbstractIdleService implements DatasetTypeService {
 
   private final DatasetTypeService delegate;
-  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
 
   @Inject
   public AuthorizationDatasetTypeService(
     @Named(DataSetServiceModules.NOAUTH_DATASET_TYPE_SERVICE) DatasetTypeService datasetTypeService,
-    AuthorizationEnforcer authorizationEnforcer,
+    AccessEnforcer accessEnforcer,
     AuthenticationContext authenticationContext) {
     this.delegate = datasetTypeService;
-    this.authorizationEnforcer = authorizationEnforcer;
+    this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
   }
 
@@ -68,22 +68,16 @@ public class AuthorizationDatasetTypeService extends AbstractIdleService impleme
 
   @Override
   public List<DatasetModuleMeta> listModules(final NamespaceId namespaceId) throws Exception {
-    List<DatasetModuleMeta> modules = delegate.listModules(namespaceId);
-    return AuthorizationUtil.isVisible(modules, authorizationEnforcer, authenticationContext.getPrincipal(),
-                                       new Function<DatasetModuleMeta, EntityId>() {
-                                         @Override
-                                         public EntityId apply(DatasetModuleMeta input) {
-                                           return namespaceId.datasetModule(input.getName());
-                                         }
-                                       }, null);
+    accessEnforcer.enforceOnParent(EntityType.DATASET_MODULE, namespaceId, authenticationContext.getPrincipal(),
+                                   StandardPermission.LIST);
+    return delegate.listModules(namespaceId);
   }
 
   @Override
   public DatasetModuleMeta getModule(DatasetModuleId datasetModuleId) throws Exception {
     // No authorization for system modules
     if (!NamespaceId.SYSTEM.equals(datasetModuleId.getNamespaceId())) {
-      AuthorizationUtil.ensureOnePrivilege(datasetModuleId, EnumSet.allOf(Action.class),
-                                           authorizationEnforcer, authenticationContext.getPrincipal());
+      accessEnforcer.enforce(datasetModuleId, authenticationContext.getPrincipal(), StandardPermission.GET);
     }
     return delegate.getModule(datasetModuleId);
   }
@@ -92,15 +86,15 @@ public class AuthorizationDatasetTypeService extends AbstractIdleService impleme
   public BodyConsumer addModule(DatasetModuleId datasetModuleId, String className,
                                 boolean forceUpdate) throws Exception {
     final Principal principal = authenticationContext.getPrincipal();
-    // enforce that the principal has ADMIN access on the dataset module
-    authorizationEnforcer.enforce(datasetModuleId, principal, Action.ADMIN);
+    // enforce that the principal has CREATE access on the dataset module
+    accessEnforcer.enforce(datasetModuleId, principal, StandardPermission.CREATE);
     return delegate.addModule(datasetModuleId, className, forceUpdate);
   }
 
   @Override
   public void delete(DatasetModuleId datasetModuleId) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
-    authorizationEnforcer.enforce(datasetModuleId, principal, Action.ADMIN);
+    accessEnforcer.enforce(datasetModuleId, principal, StandardPermission.DELETE);
     delegate.delete(datasetModuleId);
   }
 
@@ -109,29 +103,23 @@ public class AuthorizationDatasetTypeService extends AbstractIdleService impleme
     Principal principal = authenticationContext.getPrincipal();
     for (DatasetModuleMeta meta : delegate.listModules(namespaceId)) {
       DatasetModuleId datasetModuleId = namespaceId.datasetModule(meta.getName());
-      authorizationEnforcer.enforce(datasetModuleId, principal, Action.ADMIN);
+      accessEnforcer.enforce(datasetModuleId, principal, StandardPermission.DELETE);
     }
     delegate.deleteAll(namespaceId);
   }
 
   @Override
   public List<DatasetTypeMeta> listTypes(final NamespaceId namespaceId) throws Exception {
-    List<DatasetTypeMeta> types = delegate.listTypes(namespaceId);
-    return AuthorizationUtil.isVisible(types, authorizationEnforcer, authenticationContext.getPrincipal(),
-                                       new Function<DatasetTypeMeta, EntityId>() {
-                                         @Override
-                                         public EntityId apply(DatasetTypeMeta input) {
-                                           return namespaceId.datasetType(input.getName());
-                                         }
-                                       }, null);
+    accessEnforcer.enforceOnParent(EntityType.DATASET, namespaceId, authenticationContext.getPrincipal(),
+                                   StandardPermission.LIST);
+    return delegate.listTypes(namespaceId);
   }
 
   @Override
   public DatasetTypeMeta getType(DatasetTypeId datasetTypeId) throws Exception {
     // No authorization for system dataset types
     if (!NamespaceId.SYSTEM.equals(datasetTypeId.getNamespaceId())) {
-      AuthorizationUtil.ensureOnePrivilege(datasetTypeId, EnumSet.allOf(Action.class),
-                                           authorizationEnforcer, authenticationContext.getPrincipal());
+      accessEnforcer.enforce(datasetTypeId, authenticationContext.getPrincipal(), StandardPermission.GET);
     }
     return delegate.getType(datasetTypeId);
   }

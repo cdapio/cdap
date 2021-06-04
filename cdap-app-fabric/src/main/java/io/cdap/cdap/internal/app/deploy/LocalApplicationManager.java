@@ -49,7 +49,7 @@ import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 
 /**
@@ -80,7 +80,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   private final Impersonator impersonator;
   private final AuthenticationContext authenticationContext;
   private final io.cdap.cdap.scheduler.Scheduler programScheduler;
-  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AccessEnforcer accessEnforcer;
   private final StructuredTableAdmin structuredTableAdmin;
   private final PluginFinder pluginFinder;
   private final CapabilityReader capabilityReader;
@@ -95,7 +95,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
                           MetadataServiceClient metadataServiceClient,
                           Impersonator impersonator, AuthenticationContext authenticationContext,
                           Scheduler programScheduler,
-                          AuthorizationEnforcer authorizationEnforcer,
+                          AccessEnforcer accessEnforcer,
                           StructuredTableAdmin structuredTableAdmin,
                           PluginFinder pluginFinder, CapabilityReader capabilityReader) {
     this.configuration = configuration;
@@ -112,7 +112,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     this.impersonator = impersonator;
     this.authenticationContext = authenticationContext;
     this.programScheduler = programScheduler;
-    this.authorizationEnforcer = authorizationEnforcer;
+    this.accessEnforcer = accessEnforcer;
     this.structuredTableAdmin = structuredTableAdmin;
     this.pluginFinder = pluginFinder;
     this.capabilityReader = capabilityReader;
@@ -122,7 +122,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   public ListenableFuture<O> deploy(I input) throws Exception {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
     pipeline.addLast(new LocalArtifactLoaderStage(configuration, store, artifactRepository, impersonator,
-                                                  authorizationEnforcer, authenticationContext, pluginFinder,
+                                                  accessEnforcer, authenticationContext, pluginFinder,
                                                   capabilityReader));
     pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework, ownerAdmin, authenticationContext));
     pipeline.addLast(new CreateSystemTablesStage(structuredTableAdmin));

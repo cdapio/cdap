@@ -28,9 +28,10 @@ import io.cdap.cdap.data2.metadata.lineage.AccessType;
 import io.cdap.cdap.data2.metadata.writer.LineageWriterDatasetFramework;
 import io.cdap.cdap.internal.dataset.DatasetRuntimeContext;
 import io.cdap.cdap.proto.id.DatasetId;
-import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.spi.data.nosql.NoSqlStructuredTableDatasetDefinition;
 import org.apache.twill.common.Cancellable;
 
@@ -69,11 +70,12 @@ public class DefaultDatasetRuntimeContext extends DatasetRuntimeContext {
   }
 
   private static final Map<Class<? extends Annotation>, AccessInfo> ANNOTATION_TO_ACCESS_INFO = ImmutableMap.of(
-    ReadOnly.class, new AccessInfo(EnumSet.of(Action.READ), AccessType.READ),
-    WriteOnly.class, new AccessInfo(EnumSet.of(Action.WRITE), AccessType.WRITE),
-    ReadWrite.class, new AccessInfo(EnumSet.of(Action.READ, Action.WRITE), AccessType.READ_WRITE)
+    ReadOnly.class, new AccessInfo(EnumSet.of(StandardPermission.GET), AccessType.READ),
+    WriteOnly.class, new AccessInfo(EnumSet.of(StandardPermission.UPDATE), AccessType.WRITE),
+    ReadWrite.class, new AccessInfo(EnumSet.of(StandardPermission.GET, StandardPermission.UPDATE),
+                                    AccessType.READ_WRITE)
   );
-  private static final AccessInfo UNKNOWN_ACCESS_INFO = new AccessInfo(EnumSet.noneOf(Action.class),
+  private static final AccessInfo UNKNOWN_ACCESS_INFO = new AccessInfo(EnumSet.noneOf(StandardPermission.class),
                                                                        AccessType.UNKNOWN);
 
   private final ThreadLocal<CallStack> callStack = new InheritableThreadLocal<CallStack>() {
@@ -89,7 +91,7 @@ public class DefaultDatasetRuntimeContext extends DatasetRuntimeContext {
       }
     };
 
-  private final AuthorizationEnforcer enforcer;
+  private final AccessEnforcer enforcer;
   private final DatasetAccessRecorder accessRecorder;
   private final Principal principal;
   private final DatasetId datasetId;
@@ -113,7 +115,7 @@ public class DefaultDatasetRuntimeContext extends DatasetRuntimeContext {
    * Iterable, AccessType)} and
    * {@link NoSqlStructuredTableDatasetDefinition#getDataset(DatasetContext, DatasetSpecification, Map, ClassLoader)}
    */
-  public static <T> T execute(AuthorizationEnforcer enforcer,
+  public static <T> T execute(AccessEnforcer enforcer,
                               DatasetAccessRecorder accessRecorder,
                               Principal principal,
                               DatasetId datasetId,
@@ -130,7 +132,7 @@ public class DefaultDatasetRuntimeContext extends DatasetRuntimeContext {
     }
   }
 
-  private DefaultDatasetRuntimeContext(AuthorizationEnforcer enforcer, DatasetAccessRecorder accessRecorder,
+  private DefaultDatasetRuntimeContext(AccessEnforcer enforcer, DatasetAccessRecorder accessRecorder,
                                        Principal principal, DatasetId datasetId,
                                        @Nullable Class<? extends Annotation> constructorDefaultAnnotation) {
     this.enforcer = enforcer;
@@ -163,10 +165,10 @@ public class DefaultDatasetRuntimeContext extends DatasetRuntimeContext {
     // If the method is not annotated, the action set is empty, which means the user need to have some privileges,
     // but we won't allow no privilege at all
     try {
-      enforcer.enforce(datasetId, principal, accessInfo.getActions());
+      enforcer.enforce(datasetId, principal, accessInfo.getPermissions());
     } catch (Exception e) {
       throw new DataSetException("The principal " + principal + " is not authorized to access " + datasetId +
-                                   " for operation types " + accessInfo.getActions(), e);
+                                   " for operation types " + accessInfo.getPermissions(), e);
     }
 
     recordAccess(callStack.enter(accessInfo.getAccessType()), accessInfo.getAccessType());
@@ -201,16 +203,16 @@ public class DefaultDatasetRuntimeContext extends DatasetRuntimeContext {
    */
   private static final class AccessInfo {
 
-    private final Set<Action> actions;
+    private final Set<? extends Permission> permissions;
     private final AccessType accessType;
 
-    private AccessInfo(Set<Action> actions, AccessType accessType) {
-      this.actions = actions;
+    private AccessInfo(Set<? extends Permission> permissions, AccessType accessType) {
+      this.permissions = permissions;
       this.accessType = accessType;
     }
 
-    Set<Action> getActions() {
-      return actions;
+    Set<? extends Permission> getPermissions() {
+      return permissions;
     }
 
     AccessType getAccessType() {

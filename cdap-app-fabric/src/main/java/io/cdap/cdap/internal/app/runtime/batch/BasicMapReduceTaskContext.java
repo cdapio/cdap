@@ -70,7 +70,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
 import org.apache.tephra.Transaction;
@@ -108,7 +108,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   private final WorkflowProgramInfo workflowProgramInfo;
   private final Transaction transaction;
   private final TaskLocalizationContext taskLocalizationContext;
-  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
   private final MapReduceClassLoader mapReduceClassLoader;
 
@@ -138,7 +138,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                             Map<String, File> localizedResources,
                             SecureStore secureStore,
                             SecureStoreManager secureStoreManager,
-                            AuthorizationEnforcer authorizationEnforcer,
+                            AccessEnforcer accessEnforcer,
                             AuthenticationContext authenticationContext,
                             MessagingService messagingService, MapReduceClassLoader mapReduceClassLoader,
                             MetadataReader metadataReader, MetadataPublisher metadataPublisher,
@@ -153,7 +153,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     this.transaction = transaction;
     this.spec = spec;
     this.taskLocalizationContext = new DefaultTaskLocalizationContext(localizedResources);
-    this.authorizationEnforcer = authorizationEnforcer;
+    this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
     this.mapReduceClassLoader = mapReduceClassLoader;
     initializeTransactionAwares();
@@ -437,10 +437,10 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   }
 
   /**
-   * Return {@link AuthorizationEnforcer} to enforce authorization checks in MR tasks.
+   * Return {@link AccessEnforcer} to enforce authorization checks in MR tasks.
    */
-  public AuthorizationEnforcer getAuthorizationEnforcer() {
-    return authorizationEnforcer;
+  public AccessEnforcer getAccessEnforcer() {
+    return accessEnforcer;
   }
 
   /**

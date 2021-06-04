@@ -28,10 +28,10 @@ import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ParentedId;
 import io.cdap.cdap.proto.id.ProgramId;
-import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.security.spi.AccessIOException;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.objectweb.asm.Type;
 
@@ -74,20 +74,20 @@ public final class AuthEnforceUtil {
   /**
    * Performs authorization enforcement
    *
-   * @param authorizationEnforcer the {@link AuthorizationEnforcer} to use for performing the enforcement
+   * @param accessEnforcer the {@link AccessEnforcer} to use for performing the enforcement
    * @param entities an {@link Object}[] of Strings from which an entity on which enforcement needs to be
    * performed
    * can be created of just {@link EntityId} on which on whose parent enforcement needs
    * to be performed
    * @param authenticationContext the {@link AuthenticationContext}  of the user that performs the action
-   * @param actions the {@link Action}s to check for during enforcement
+   * @param permissions the {@link Permission}s to check for during enforcement
    * @throws Exception {@link UnauthorizedException} if the given authenticationContext is not authorized to perform
-   * the specified actions on the entity
+   * the specified permissions on the entity
    */
-  public static void enforce(AuthorizationEnforcer authorizationEnforcer, Object[] entities,
+  public static void enforce(AccessEnforcer accessEnforcer, Object[] entities,
                              Class<? extends EntityId> entityClass, AuthenticationContext authenticationContext,
-                             Set<Action> actions) throws Exception {
-    authorizationEnforcer.enforce(getEntityId(entities, entityClass), authenticationContext.getPrincipal(), actions);
+                             Set<? extends Permission> permissions) throws Exception {
+    accessEnforcer.enforce(getEntityId(entities, entityClass), authenticationContext.getPrincipal(), permissions);
   }
 
   private static EntityId getEntityId(Object[] entities, Class<? extends EntityId> entityClass)

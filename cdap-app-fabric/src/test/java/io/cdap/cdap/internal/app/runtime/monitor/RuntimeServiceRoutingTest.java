@@ -23,8 +23,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.app.guice.RuntimeServerModule;
-import io.cdap.cdap.common.AuthorizationException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -42,6 +42,7 @@ import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpResponse;
@@ -110,7 +111,7 @@ public class RuntimeServiceRoutingTest {
             String expected = "test " + Base64.getEncoder().encodeToString(
               Hashing.md5().hashString(programRunId.toString()).asBytes());
             if (!expected.equals(authHeader)) {
-              throw new AuthorizationException("Program run " + programRunId + " is not authorized");
+              throw new UnauthenticatedException("Program run " + programRunId + " is not authorized");
             }
           });
         }

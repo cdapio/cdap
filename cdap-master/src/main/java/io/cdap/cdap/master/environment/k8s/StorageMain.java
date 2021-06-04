@@ -33,8 +33,8 @@ import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
-import io.cdap.cdap.security.spi.authorization.NoOpAuthorizer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.NoOpAccessController;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
@@ -74,7 +74,7 @@ public class StorageMain {
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(AuthorizationEnforcer.class).to(NoOpAuthorizer.class);
+          bind(AccessEnforcer.class).to(NoOpAccessController.class);
           bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class);
           // The metrics collection service might not get started at this moment,
           // so inject a NoopMetricsCollectionService.

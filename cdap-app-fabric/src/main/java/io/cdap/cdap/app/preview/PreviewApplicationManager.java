@@ -39,7 +39,7 @@ import io.cdap.cdap.pipeline.PipelineFactory;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 
 /**
  * This class is concrete implementation of {@link Manager} that deploys a Preview Application.
@@ -59,7 +59,7 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
   private final ArtifactRepository artifactRepository;
   private final Impersonator impersonator;
   private final AuthenticationContext authenticationContext;
-  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AccessEnforcer accessEnforcer;
   private final PluginFinder pluginFinder;
   private final CapabilityReader capabilityReader;
 
@@ -69,7 +69,7 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
                             @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
                             UsageRegistry usageRegistry, ArtifactRepository artifactRepository,
                             AuthenticationContext authenticationContext, Impersonator impersonator,
-                            AuthorizationEnforcer authorizationEnforcer, PluginFinder pluginFinder,
+                            AccessEnforcer accessEnforcer, PluginFinder pluginFinder,
                             CapabilityReader capabilityReader) {
     this.cConf = configuration;
     this.pipelineFactory = pipelineFactory;
@@ -81,7 +81,7 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
     this.impersonator = impersonator;
     this.authenticationContext = authenticationContext;
     this.ownerAdmin = ownerAdmin;
-    this.authorizationEnforcer = authorizationEnforcer;
+    this.accessEnforcer = accessEnforcer;
     this.pluginFinder = pluginFinder;
     this.capabilityReader = capabilityReader;
   }
@@ -90,7 +90,7 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
   public ListenableFuture<O> deploy(I input) throws Exception {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
     pipeline.addLast(new LocalArtifactLoaderStage(cConf, store, artifactRepository, impersonator,
-                                                  authorizationEnforcer, authenticationContext, pluginFinder,
+                                                  accessEnforcer, authenticationContext, pluginFinder,
                                                   capabilityReader));
     pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework, ownerAdmin, authenticationContext));
     pipeline.addLast(new DeployDatasetModulesStage(cConf, datasetFramework, inMemoryDatasetFramework,

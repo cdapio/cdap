@@ -61,7 +61,7 @@ import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.tephra.TransactionSystemClient;
@@ -99,7 +99,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
   private final DiscoveryServiceClient discoveryServiceClient;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
-  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
   private final MessagingService messagingService;
   private final ServiceAnnouncer serviceAnnouncer;
@@ -115,7 +115,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                      MetricsCollectionService metricsCollectionService,
                      DiscoveryServiceClient discoveryServiceClient,
                      SecureStore secureStore, SecureStoreManager secureStoreManager,
-                     AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
+                     AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext,
                      MessagingService messagingService, ServiceAnnouncer serviceAnnouncer,
                      PluginFinder pluginFinder, MetadataReader metadataReader, MetadataPublisher metadataPublisher,
                      FieldLineageWriter fieldLineageWriter, NamespaceQueryAdmin namespaceQueryAdmin) {
@@ -129,7 +129,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
     this.discoveryServiceClient = discoveryServiceClient;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
-    this.authorizationEnforcer = authorizationEnforcer;
+    this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
     this.messagingService = messagingService;
     this.serviceAnnouncer = serviceAnnouncer;
@@ -188,7 +188,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                                                                    discoveryServiceClient,
                                                                    metricsCollectionService, workflowInfo,
                                                                    pluginInstantiator, secureStore, secureStoreManager,
-                                                                   authorizationEnforcer, authenticationContext,
+                                                                   accessEnforcer, authenticationContext,
                                                                    messagingService, serviceAnnouncer, pluginFinder,
                                                                    locationFactory, metadataReader, metadataPublisher,
                                                                    namespaceQueryAdmin, fieldLineageWriter, () -> { });

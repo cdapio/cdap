@@ -32,6 +32,7 @@ import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.preview.PreviewManager;
 import io.cdap.cdap.app.preview.PreviewRequest;
@@ -52,7 +53,6 @@ import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
-import io.cdap.cdap.common.security.AuthEnforce;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
@@ -89,15 +89,16 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.ApplicationPermission;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
-import io.cdap.cdap.security.authorization.AuthorizerInstantiator;
+import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
 import io.cdap.cdap.security.impersonation.DefaultUGIProvider;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.OwnerStore;
 import io.cdap.cdap.security.impersonation.UGIProvider;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.store.DefaultOwnerStore;
@@ -122,8 +123,9 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultPreviewManager.class);
 
-  private final AuthorizerInstantiator authorizerInstantiator;
-  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AccessControllerInstantiator accessControllerInstantiator;
+  private final AccessEnforcer accessEnforcer;
+  private final AuthenticationContext authenticationContext;
   private final CConfiguration previewCConf;
   private final Configuration previewHConf;
   private final SConfiguration previewSConf;
@@ -146,7 +148,9 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   DefaultPreviewManager(DiscoveryService discoveryService,
                         @Named(DataSetsModules.BASE_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
                         TransactionSystemClient transactionSystemClient,
-                        AuthorizerInstantiator authorizerInstantiator, AuthorizationEnforcer authorizationEnforcer,
+                        AccessControllerInstantiator accessControllerInstantiator,
+                        AccessEnforcer accessEnforcer,
+                        AuthenticationContext authenticationContext,
                         @Named(PreviewConfigModule.PREVIEW_LEVEL_DB) LevelDBTableService previewLevelDBTableService,
                         @Named(PreviewConfigModule.PREVIEW_CCONF) CConfiguration previewCConf,
                         @Named(PreviewConfigModule.PREVIEW_HCONF) Configuration previewHConf,
@@ -155,14 +159,15 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
                         PreviewRunStopper previewRunStopper, MessagingService messagingService,
                         PreviewDataCleanupService previewDataCleanupService,
                         MetricsCollectionService metricsCollectionService) {
+    this.authenticationContext = authenticationContext;
     this.previewCConf = previewCConf;
     this.previewHConf = previewHConf;
     this.previewSConf = previewSConf;
     this.datasetFramework = datasetFramework;
     this.discoveryService = discoveryService;
     this.transactionSystemClient = transactionSystemClient;
-    this.authorizationEnforcer = authorizationEnforcer;
-    this.authorizerInstantiator = authorizerInstantiator;
+    this.accessEnforcer = accessEnforcer;
+    this.accessControllerInstantiator = accessControllerInstantiator;
     this.previewLevelDBTableService = previewLevelDBTableService;
     this.previewRequestQueue = previewRequestQueue;
     this.previewStore = previewStore;
@@ -201,10 +206,10 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   }
 
   @Override
-  @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, actions = Action.ADMIN)
   public ApplicationId start(@Name("namespaceId") NamespaceId namespace, AppRequest<?> appRequest) throws Exception {
     // make sure preview id is unique for each run
     ApplicationId previewApp = namespace.app(RunIds.generate().getId());
+    accessEnforcer.enforce(previewApp, authenticationContext.getPrincipal(), ApplicationPermission.PREVIEW);
     ProgramId programId = getProgramIdFromRequest(previewApp, appRequest);
     PreviewRequest previewRequest = new PreviewRequest(programId, appRequest);
 
@@ -217,8 +222,9 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   }
 
   @Override
-  @AuthEnforce(entities = "applicationId", enforceOn = NamespaceId.class, actions = Action.ADMIN)
-  public PreviewStatus getStatus(@Name("applicationId") ApplicationId applicationId) throws NotFoundException {
+  public PreviewStatus getStatus(@Name("applicationId") ApplicationId applicationId)
+    throws NotFoundException, AccessException {
+    accessEnforcer.enforce(applicationId, authenticationContext.getPrincipal(), ApplicationPermission.PREVIEW);
     PreviewStatus status = previewStore.getPreviewStatus(applicationId);
     if (status == null) {
       throw new NotFoundException(applicationId);
@@ -236,8 +242,8 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   }
 
   @Override
-  @AuthEnforce(entities = "applicationId", enforceOn = NamespaceId.class, actions = Action.ADMIN)
   public void stopPreview(@Name("applicationId") ApplicationId applicationId) throws Exception {
+    accessEnforcer.enforce(applicationId, authenticationContext.getPrincipal(), ApplicationPermission.PREVIEW);
     PreviewStatus status = getStatus(applicationId);
     if (status.getStatus().isEndState()) {
       throw new BadRequestException(String.format("Preview run cannot be stopped. It is already in %s state.",
@@ -252,14 +258,15 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   }
 
   @Override
-  @AuthEnforce(entities = "applicationId", enforceOn = NamespaceId.class, actions = Action.ADMIN)
-  public Map<String, List<JsonElement>> getData(@Name("applicationId") ApplicationId applicationId, String tracerName) {
+  public Map<String, List<JsonElement>> getData(@Name("applicationId") ApplicationId applicationId, String tracerName)
+    throws AccessException {
+    accessEnforcer.enforce(applicationId, authenticationContext.getPrincipal(), ApplicationPermission.PREVIEW);
     return previewStore.get(applicationId, tracerName);
   }
 
   @Override
-  @AuthEnforce(entities = "applicationId", enforceOn = NamespaceId.class, actions = Action.ADMIN)
   public ProgramRunId getRunId(@Name("applicationId") ApplicationId applicationId) throws Exception {
+    accessEnforcer.enforce(applicationId, authenticationContext.getPrincipal(), ApplicationPermission.PREVIEW);
     return previewStore.getProgramRunId(applicationId);
   }
 
@@ -304,10 +311,10 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
       new PrivateModule() {
         @Override
         protected void configure() {
-          bind(AuthorizerInstantiator.class).toInstance(authorizerInstantiator);
-          expose(AuthorizerInstantiator.class);
-          bind(AuthorizationEnforcer.class).toInstance(authorizationEnforcer);
-          expose(AuthorizationEnforcer.class);
+          bind(AccessControllerInstantiator.class).toInstance(accessControllerInstantiator);
+          expose(AccessControllerInstantiator.class);
+          bind(AccessEnforcer.class).toInstance(accessEnforcer);
+          expose(AccessEnforcer.class);
 
           bind(PreviewStore.class).toInstance(previewStore);
           expose(PreviewStore.class);

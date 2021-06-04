@@ -424,7 +424,7 @@ public class AppFabricClient {
     throws UnauthorizedException {
     if (!expected.equals(actual)) {
       if (actual.code() == HttpResponseStatus.FORBIDDEN.code()) {
-        throw new UnauthorizedException(actual.reasonPhrase());
+        throw new UnauthorizedException(errorMsg + ": " + actual.reasonPhrase());
       }
       throw new IllegalStateException(String.format("Expected %s, got %s. Error: %s",
                                                     expected, actual, errorMsg));
@@ -468,7 +468,8 @@ public class AppFabricClient {
       }
       mockResponder = new MockResponder();
       bodyConsumer.finished(mockResponder);
-      verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Failed to deploy app");
+      verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Failed to deploy app (" +
+        mockResponder.getResponseContentAsString() + ")");
     }
     return deployedJar;
   }
@@ -492,7 +493,8 @@ public class AppFabricClient {
 
     bodyConsumer.chunk(Unpooled.copiedBuffer(GSON.toJson(appRequest), StandardCharsets.UTF_8), mockResponder);
     bodyConsumer.finished(mockResponder);
-    verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Failed to deploy app");
+    verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Failed to deploy app (" +
+      mockResponder.getResponseContentAsString() + ")");
   }
 
   public void updateApplication(ApplicationId appId, AppRequest appRequest) throws Exception {

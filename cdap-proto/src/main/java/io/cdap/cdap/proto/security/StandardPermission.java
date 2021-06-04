@@ -21,9 +21,8 @@ package io.cdap.cdap.proto.security;
  */
 public enum StandardPermission implements Permission {
   /**
-   * Create permission should be used when entity is created with a generated name.
-   * In this case it's checked on entity parent. If name is supplied beforehand,
-   * {@link #UPDATE} should be checked instead.
+   * Create an entity. Can be used both with enforceOnParent when name is not known beforehand and with
+   * enforce when name is provided.
    */
   CREATE {
     @Override

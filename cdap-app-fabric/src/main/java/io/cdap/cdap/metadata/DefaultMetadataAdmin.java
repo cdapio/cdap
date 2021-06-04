@@ -25,7 +25,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.MetadataKind;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
@@ -51,16 +51,16 @@ import javax.annotation.Nullable;
 public class DefaultMetadataAdmin extends MetadataValidator implements MetadataAdmin {
 
   private final MetadataStorage storage;
-  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
 
   @Inject
   DefaultMetadataAdmin(MetadataStorage storage, CConfiguration cConf,
-                       AuthorizationEnforcer authorizationEnforcer,
+                       AccessEnforcer accessEnforcer,
                        AuthenticationContext authenticationContext) {
     super(cConf);
     this.storage = storage;
-    this.authorizationEnforcer = authorizationEnforcer;
+    this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
   }
 
@@ -190,7 +190,7 @@ public class DefaultMetadataAdmin extends MetadataValidator implements MetadataA
       response.getLimit(),
       response.getTotalResults(),
       ImmutableList.copyOf(
-        AuthorizationUtil.isVisible(response.getResults(), authorizationEnforcer, authenticationContext.getPrincipal(),
+        AuthorizationUtil.isVisible(response.getResults(), accessEnforcer, authenticationContext.getPrincipal(),
                                     input -> EntityId.getSelfOrParentEntityId(input.getEntity()), null)));
   }
 }

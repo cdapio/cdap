@@ -80,7 +80,7 @@ import io.cdap.cdap.security.impersonation.InMemoryOwnerStore;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.OwnerStore;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -183,7 +183,7 @@ public abstract class DatasetServiceTestBase {
         }
       });
 
-    AuthorizationEnforcer authEnforcer = injector.getInstance(AuthorizationEnforcer.class);
+    AccessEnforcer authEnforcer = injector.getInstance(AccessEnforcer.class);
 
     AuthenticationContext authenticationContext = injector.getInstance(AuthenticationContext.class);
 

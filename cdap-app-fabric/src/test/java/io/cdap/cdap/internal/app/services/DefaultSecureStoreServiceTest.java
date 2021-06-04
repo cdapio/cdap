@@ -34,18 +34,20 @@ import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.SecureKeyId;
-import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.Authorizable;
+import io.cdap.cdap.proto.security.GrantedPermission;
+import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
-import io.cdap.cdap.proto.security.Privilege;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.authorization.AuthorizationUtil;
-import io.cdap.cdap.security.authorization.AuthorizerInstantiator;
-import io.cdap.cdap.security.authorization.InMemoryAuthorizer;
+import io.cdap.cdap.security.authorization.InMemoryAccessController;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
-import io.cdap.cdap.security.spi.authorization.Authorizer;
+import io.cdap.cdap.security.spi.authorization.AccessController;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -76,7 +78,7 @@ public class DefaultSecureStoreServiceTest {
   private static SecureStore secureStore;
   private static SecureStoreManager secureStoreManager;
   private static AppFabricServer appFabricServer;
-  private static Authorizer authorizer;
+  private static AccessController accessController;
   private static DiscoveryServiceClient discoveryServiceClient;
 
   @ClassRule
@@ -94,12 +96,13 @@ public class DefaultSecureStoreServiceTest {
     waitForService(Constants.Service.DATASET_MANAGER);
     secureStore = injector.getInstance(SecureStore.class);
     secureStoreManager = injector.getInstance(SecureStoreManager.class);
-    authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
+    accessController = injector.getInstance(AccessControllerInstantiator.class).get();
 
     // Wait for the default namespace creation
     String user = AuthorizationUtil.getEffectiveMasterUser(cConf);
-    authorizer.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT), new Principal(user, Principal.PrincipalType.USER),
-                     Collections.singleton(Action.ADMIN));
+    accessController.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT),
+                           new Principal(user, Principal.PrincipalType.USER),
+                           EnumSet.allOf(StandardPermission.class));
     // Starting the Appfabric server will create the default namespace
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
@@ -107,8 +110,9 @@ public class DefaultSecureStoreServiceTest {
         return injector.getInstance(NamespaceAdmin.class).exists(NamespaceId.DEFAULT);
       }
     }, 5, TimeUnit.SECONDS);
-    authorizer.revoke(Authorizable.fromEntityId(NamespaceId.DEFAULT), new Principal(user, Principal.PrincipalType.USER),
-                      Collections.singleton(Action.ADMIN));
+    accessController.revoke(Authorizable.fromEntityId(NamespaceId.DEFAULT),
+                            new Principal(user, Principal.PrincipalType.USER),
+                            Collections.singleton(StandardPermission.UPDATE));
   }
 
   private static void waitForService(String service) {
@@ -133,7 +137,7 @@ public class DefaultSecureStoreServiceTest {
     cConf.setInt(Constants.Security.Authorization.CACHE_MAX_ENTRIES, 0);
 
     LocationFactory locationFactory = new LocalLocationFactory(TEMPORARY_FOLDER.newFolder());
-    Location authorizerJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAuthorizer.class);
+    Location authorizerJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAccessController.class);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, authorizerJar.toURI().getPath());
 
     // set secure store provider
@@ -154,7 +158,10 @@ public class DefaultSecureStoreServiceTest {
     }
 
     // Grant ALICE admin access to the secure key
-    grantAndAssertSuccess(secureKeyId1, ALICE, EnumSet.of(Action.ADMIN));
+    grantAndAssertSuccess(NamespaceId.DEFAULT, ALICE, EnumSet.of(StandardPermission.GET));
+    grantAndAssertSuccess(Authorizable.fromEntityId(NamespaceId.DEFAULT, EntityType.SECUREKEY),
+                                                    ALICE, EnumSet.of(StandardPermission.LIST));
+    grantAndAssertSuccess(secureKeyId1, ALICE, EnumSet.allOf(StandardPermission.class));
     // Write should succeed
     secureStoreManager.put(NamespaceId.DEFAULT.getNamespace(), KEY1, VALUE1, DESCRIPTION1,
                            Collections.<String, String>emptyMap());
@@ -163,7 +170,7 @@ public class DefaultSecureStoreServiceTest {
     Assert.assertEquals(1, metadatas.size());
     Assert.assertEquals(KEY1, metadatas.get(0).getName());
     Assert.assertEquals(DESCRIPTION1, metadatas.get(0).getDescription());
-    revokeAndAssertSuccess(secureKeyId1, ALICE, EnumSet.allOf(Action.class));
+    revokeAndAssertSuccess(secureKeyId1, ALICE, EnumSet.allOf(StandardPermission.class));
 
     // Should not be able to list the keys since ALICE does not have privilege on the secure key
     try {
@@ -174,8 +181,10 @@ public class DefaultSecureStoreServiceTest {
 
     // Give BOB read access and verify that he can read the stored data
     SecurityRequestContext.setUserId(BOB.getName());
-    grantAndAssertSuccess(NamespaceId.DEFAULT, BOB, EnumSet.of(Action.READ));
-    grantAndAssertSuccess(secureKeyId1, BOB, EnumSet.of(Action.READ));
+    grantAndAssertSuccess(NamespaceId.DEFAULT, BOB, EnumSet.of(StandardPermission.GET));
+    grantAndAssertSuccess(secureKeyId1, BOB, EnumSet.of(StandardPermission.GET));
+    grantAndAssertSuccess(Authorizable.fromEntityId(NamespaceId.DEFAULT, EntityType.SECUREKEY),
+                          BOB, EnumSet.of(StandardPermission.LIST));
     Assert.assertEquals(VALUE1, new String(secureStore.get(NamespaceId.DEFAULT.getNamespace(), KEY1).get(),
                                            Charsets.UTF_8));
     metadatas = secureStore.list(NamespaceId.DEFAULT.getNamespace());
@@ -190,36 +199,43 @@ public class DefaultSecureStoreServiceTest {
     }
 
     // Grant Bob ADMIN access and he should be able to delete the key
-    grantAndAssertSuccess(secureKeyId1, BOB, ImmutableSet.of(Action.ADMIN));
+    grantAndAssertSuccess(secureKeyId1, BOB, ImmutableSet.of(StandardPermission.DELETE));
     secureStoreManager.delete(NamespaceId.DEFAULT.getNamespace(), KEY1);
     Assert.assertEquals(0, secureStore.list(NamespaceId.DEFAULT.getNamespace()).size());
-    Predicate<Privilege> secureKeyIdFilter = new Predicate<Privilege>() {
+    Predicate<GrantedPermission> secureKeyIdFilter = new Predicate<GrantedPermission>() {
       @Override
-      public boolean apply(Privilege input) {
+      public boolean apply(GrantedPermission input) {
         return input.getAuthorizable().equals(Authorizable.fromEntityId(secureKeyId1));
       }
     };
   }
 
-  private void grantAndAssertSuccess(EntityId entityId, Principal principal, Set<Action> actions) throws Exception {
-    Set<Privilege> existingPrivileges = authorizer.listPrivileges(principal);
-    authorizer.grant(Authorizable.fromEntityId(entityId), principal, actions);
-    ImmutableSet.Builder<Privilege> expectedPrivilegesAfterGrant = ImmutableSet.builder();
-    for (Action action : actions) {
-      expectedPrivilegesAfterGrant.add(new Privilege(entityId, action));
-    }
-    //TODO: Commented out for the time of migration to new Permissions
-    //Assert.assertEquals(Sets.union(existingPrivileges, expectedPrivilegesAfterGrant.build()),
-    //                    authorizer.listPrivileges(principal));
+  private void grantAndAssertSuccess(EntityId entityId, Principal principal, Set<? extends Permission> permissions)
+    throws Exception {
+    grantAndAssertSuccess(Authorizable.fromEntityId(entityId), principal, permissions);
   }
 
-  private void revokeAndAssertSuccess(EntityId entityId, Principal principal, Set<Action> actions) throws Exception {
-    Set<Privilege> existingPrivileges = authorizer.listPrivileges(principal);
-    authorizer.revoke(Authorizable.fromEntityId(entityId), principal, actions);
-    Set<Privilege> revokedPrivileges = new HashSet<>();
-    for (Action action : actions) {
-      revokedPrivileges.add(new Privilege(entityId, action));
+  private void grantAndAssertSuccess(Authorizable authorizable, Principal principal,
+                                     Set<? extends Permission> permissions)
+    throws Exception {
+    Set<GrantedPermission> existingPrivileges = accessController.listGrants(principal);
+    accessController.grant(authorizable, principal, permissions);
+    ImmutableSet.Builder<GrantedPermission> expectedPrivilegesAfterGrant = ImmutableSet.builder();
+    for (Permission permission : permissions) {
+      expectedPrivilegesAfterGrant.add(new GrantedPermission(authorizable, permission));
     }
-    Assert.assertEquals(Sets.difference(existingPrivileges, revokedPrivileges), authorizer.listPrivileges(principal));
+    Assert.assertEquals(Sets.union(existingPrivileges, expectedPrivilegesAfterGrant.build()),
+                        accessController.listGrants(principal));
+  }
+
+  private void revokeAndAssertSuccess(EntityId entityId, Principal principal, Set<? extends Permission> permissions)
+    throws Exception {
+    Set<GrantedPermission> existingPrivileges = accessController.listGrants(principal);
+    accessController.revoke(Authorizable.fromEntityId(entityId), principal, permissions);
+    Set<GrantedPermission> revokedPrivileges = new HashSet<>();
+    for (Permission permission : permissions) {
+      revokedPrivileges.add(new GrantedPermission(entityId, permission));
+    }
+    Assert.assertEquals(Sets.difference(existingPrivileges, revokedPrivileges), accessController.listGrants(principal));
   }
 }

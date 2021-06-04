@@ -42,8 +42,8 @@ import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
-import io.cdap.cdap.security.spi.authorization.NoOpAuthorizer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.NoOpAccessController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,7 +58,7 @@ import javax.annotation.Nullable;
 public class LineageWriterDatasetFramework extends ForwardingDatasetFramework implements ProgramContextAware {
 
   private static final Logger LOG = LoggerFactory.getLogger(LineageWriterDatasetFramework.class);
-  private static final AuthorizationEnforcer SYSTEM_NAMESPACE_ENFORCER = new NoOpAuthorizer();
+  private static final AccessEnforcer SYSTEM_NAMESPACE_ENFORCER = new NoOpAccessController();
   private static final DefaultDatasetRuntimeContext.DatasetAccessRecorder SYSTEM_NAMESPACE_ACCESS_RECORDER =
     new DefaultDatasetRuntimeContext.DatasetAccessRecorder() {
       @Override
@@ -75,7 +75,7 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
   private final UsageWriter usageWriter;
   private final LineageWriter lineageWriter;
   private final AuthenticationContext authenticationContext;
-  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AccessEnforcer accessEnforcer;
   private volatile ProgramContext programContext;
 
   private AuditPublisher auditPublisher;
@@ -85,12 +85,12 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
                                        LineageWriter lineageWriter,
                                        UsageWriter usageWriter,
                                        AuthenticationContext authenticationContext,
-                                       AuthorizationEnforcer authorizationEnforcer) {
+                                       AccessEnforcer accessEnforcer) {
     super(datasetFramework);
     this.lineageWriter = lineageWriter;
     this.usageWriter = usageWriter;
     this.authenticationContext = authenticationContext;
-    this.authorizationEnforcer = authorizationEnforcer;
+    this.accessEnforcer = accessEnforcer;
   }
 
   @SuppressWarnings("unused")
@@ -117,13 +117,13 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
     try {
       // For system, skip authorization and lineage (user program shouldn't allow to access system dataset CDAP-6649)
       // For non-system dataset, always perform authorization and lineage.
-      AuthorizationEnforcer enforcer;
+      AccessEnforcer enforcer;
       DefaultDatasetRuntimeContext.DatasetAccessRecorder accessRecorder;
       if (!DatasetsUtil.isUserDataset(datasetInstanceId)) {
         enforcer = SYSTEM_NAMESPACE_ENFORCER;
         accessRecorder = SYSTEM_NAMESPACE_ACCESS_RECORDER;
       } else {
-        enforcer = authorizationEnforcer;
+        enforcer = accessEnforcer;
         accessRecorder = new BasicDatasetAccessRecorder(datasetInstanceId, accessType, owners);
       }
 
