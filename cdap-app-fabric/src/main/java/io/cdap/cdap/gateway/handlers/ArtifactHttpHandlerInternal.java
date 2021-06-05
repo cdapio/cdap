@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.gateway.handlers;
 
+import com.google.common.base.Throwables;
+import com.google.common.io.Closeables;
+import com.google.common.net.HttpHeaders;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -23,9 +26,11 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.cdap.cdap.api.artifact.ArtifactInfo;
 import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.artifact.ArtifactVersionRange;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
@@ -35,22 +40,30 @@ import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.Ids;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.http.AbstractHttpHandler;
+import io.cdap.http.BodyProducer;
 import io.cdap.http.HttpResponder;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
 
 /**
  * Internal {@link io.cdap.http.HttpHandler} for managing artifacts.
@@ -65,6 +78,8 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
   private static final Type ARTIFACT_INFO_LIST_TYPE = new TypeToken<List<ArtifactInfo>>() { }.getType();
   private static final Type ARTIFACT_DETAIL_LIST_TYPE = new TypeToken<List<ArtifactDetail>>() { }.getType();
 
+  private static final int CHUNK_SIZE = 64 * 1024;
+  
   private final ArtifactRepository artifactRepository;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
 
@@ -91,6 +106,50 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
   }
 
   @GET
+  @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}/download")
+  public void getArtifactBytes(HttpRequest request, HttpResponder responder,
+                               @PathParam("namespace-id") String namespaceId,
+                               @PathParam("artifact-name") String artifactName,
+                               @PathParam("artifact-version") String artifactVersion,
+                               @QueryParam("scope") @DefaultValue("user") String scope) throws Exception {
+
+    NamespaceId namespace = validateAndGetScopedNamespace(Ids.namespace(namespaceId), scope);
+    ArtifactId artifactId = new ArtifactId(namespace.getNamespace(), artifactName, artifactVersion);
+    InputStream artifactStream = artifactRepository.newInputStream(Id.Artifact.fromEntityId(artifactId));
+
+    try {
+      responder.sendContent(HttpResponseStatus.OK, new BodyProducer() {
+
+        @Override
+        public ByteBuf nextChunk() throws Exception {
+          ByteBuf buffer = Unpooled.buffer(CHUNK_SIZE);
+          buffer.writeBytes(artifactStream, CHUNK_SIZE);
+          return buffer;
+        }
+
+        @Override
+        public void finished() throws Exception {
+          Closeables.closeQuietly(artifactStream);
+        }
+
+        @Override
+        public void handleError(@Nullable Throwable cause) {
+          LOG.warn(
+            "Exception when initiating stream download for artifact {}, version {} in namespace {} using scope {}: {}",
+            artifactName, artifactVersion, namespaceId, scope, cause);
+          Closeables.closeQuietly(artifactStream);
+        }
+      }, new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM));
+    } catch (Exception e) {
+      LOG.warn(
+        "Exception when initiating stream download for artifact {}, version {} in namespace {} using scope {}: {}",
+        artifactName, artifactVersion, namespaceId, scope, e);
+      Closeables.closeQuietly(artifactStream);
+      throw e;
+    }
+  }
+
+  @GET
   @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/versions")
   public void getArtifactDetailForVersions(HttpRequest request, HttpResponder responder,
                                            @PathParam("namespace-id") String namespace,
@@ -109,7 +168,7 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
     ArtifactRange range =
       new ArtifactRange(namespaceId.getNamespace(), artifactName,
                         new ArtifactVersionRange(new ArtifactVersion(lower), true,
-                                                 new ArtifactVersion(upper),  true));
+                                                 new ArtifactVersion(upper), true));
     ArtifactSortOrder sortOrder = ArtifactSortOrder.valueOf(order);
     List<ArtifactDetail> artifactDetailList = artifactRepository.getArtifactDetails(range, limit, sortOrder);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(artifactDetailList, ARTIFACT_DETAIL_LIST_TYPE));
@@ -148,5 +207,47 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                            "Error reading artifact metadata from the store.");
     }
+  }
+
+  private ArtifactScope validateScope(String scope) throws BadRequestException {
+    try {
+      return ArtifactScope.valueOf(scope.toUpperCase());
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException("Invalid scope " + scope);
+    }
+  }
+
+  private NamespaceId validateAndGetScopedNamespace(NamespaceId namespace, @Nullable String scope)
+    throws NamespaceNotFoundException, BadRequestException {
+    if (scope != null) {
+      return validateAndGetScopedNamespace(namespace, validateScope(scope));
+    }
+    return validateAndGetScopedNamespace(namespace, ArtifactScope.USER);
+  }
+
+  /**
+   * Check that the namespace exists, and check if the request is only supposed to include system artifacts,
+   * and returning the system namespace if so.
+   *
+   * @param namespace NamespaceId to validate
+   * @param scope ArtifactScope for the given artifact
+   * @return The scoped NamespaceId (SYSTEM if the artifact scope is SYSTEM otherwise the given namespace)
+   * @throws NamespaceNotFoundException If the given namespace does not exist
+   */
+  private NamespaceId validateAndGetScopedNamespace(NamespaceId namespace, ArtifactScope scope)
+    throws NamespaceNotFoundException {
+
+    try {
+      namespaceQueryAdmin.get(namespace);
+    } catch (NamespaceNotFoundException e) {
+      throw e;
+    } catch (Exception e) {
+      // This can only happen when NamespaceAdmin uses HTTP to interact with namespaces.
+      // Within AppFabric, NamespaceAdmin is bound to DefaultNamespaceAdmin which directly interacts with MDS.
+      // Hence, this should never happen.
+      throw Throwables.propagate(e);
+    }
+
+    return ArtifactScope.SYSTEM.equals(scope) ? NamespaceId.SYSTEM : namespace;
   }
 }

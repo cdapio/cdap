@@ -16,25 +16,41 @@
 
 package io.cdap.cdap.internal.app.worker;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
+import io.cdap.cdap.common.conf.CConfiguration;
 
 import java.net.URI;
-import javax.annotation.Nullable;
 
 /**
  * RunnableTaskLauncher launches a {@link RunnableTask} by loading its class and calling its run method.
  */
 public class RunnableTaskLauncher {
+  private final CConfiguration cConf;
 
-  public byte[] launchRunnableTask(RunnableTaskRequest request, @Nullable URI fileURI) throws Exception {
-    ClassLoader classLoader = getClassLoader();
+  public RunnableTaskLauncher(CConfiguration cConf) {
+    this.cConf = cConf;
+  }
+
+  public byte[] launchRunnableTask(RunnableTaskRequest request, URI fileURI) throws Exception {
+
+    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+    if (classLoader == null) {
+      classLoader = getClass().getClassLoader();
+    }
+
     Class<?> clazz = classLoader.loadClass(request.getClassName());
-    if (!RunnableTask.class.isAssignableFrom(clazz)) {
+
+    Injector injector = Guice.createInjector(new RunnableTaskModule(cConf));
+    Object obj = injector.getInstance(clazz);
+
+    if (!(obj instanceof RunnableTask)) {
       throw new ClassCastException(String.format("%s is not a RunnableTask", request.getClassName()));
     }
-    RunnableTask runnableTask = (RunnableTask) clazz.getDeclaredConstructor().newInstance();
+    RunnableTask runnableTask = (RunnableTask) obj;
     RunnableTaskContext runnableTaskContext = RunnableTaskContext.getBuilder().
       withParam(request.getParam()).withFileURI(fileURI).build();
     runnableTask.run(runnableTaskContext);

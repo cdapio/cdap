@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.app.worker;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -75,10 +74,9 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
   private final Consumer<String> stopper;
   private final AtomicInteger inflightRequests = new AtomicInteger(0);
 
-  @Inject
-  TaskWorkerHttpHandlerInternal(CConfiguration cConf, Consumer<String> stopper) {
+  public TaskWorkerHttpHandlerInternal(CConfiguration cConf, Consumer<String> stopper) {
     super(cConf);
-    runnableTaskLauncher = new RunnableTaskLauncher();
+    runnableTaskLauncher = new RunnableTaskLauncher(cConf);
     this.stopper = stopper;
   }
 
@@ -103,7 +101,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
     } catch (ClassNotFoundException | ClassCastException ex) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);
     } catch (Exception ex) {
-      LOG.error("Failed to run runnable task", ex);
+      LOG.error("Failed to run task {}: {}", request.content().toString(StandardCharsets.UTF_8), ex);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);
       if (className != null) {
         stopper.accept(className);

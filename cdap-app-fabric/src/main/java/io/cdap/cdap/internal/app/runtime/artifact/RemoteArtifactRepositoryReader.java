@@ -16,13 +16,16 @@
 
 package io.cdap.cdap.internal.app.runtime.artifact;
 
+import com.google.common.io.ByteStreams;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.id.Id;
@@ -32,6 +35,7 @@ import io.cdap.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import io.cdap.cdap.gateway.handlers.ArtifactHttpHandlerInternal;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
@@ -39,13 +43,15 @@ import io.cdap.common.http.HttpResponse;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import sun.net.www.protocol.http.HttpURLConnection;
 
+import java.io.FilterInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Type;
+import java.net.HttpURLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-
 
 /**
  * Implementation for fetching artifact metadata from remote {@link ArtifactHttpHandlerInternal}
@@ -71,9 +77,9 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
 
   /**
    * Fetches {@link ArtifactDetail} from {@link AppLifecycleHttpHandler}
-   *
-   * Note that {@link Location} in {@link ArtifactDescriptor} doesn't get transported over, we need to instantiate
-   * it based on the location URI in the received {@link ArtifactDetail} to construct a complete {@link ArtifactDetail}.
+   * <p>
+   * Note that {@link Location} in {@link ArtifactDescriptor} doesn't get transported over, we need to instantiate it
+   * based on the location URI in the received {@link ArtifactDetail} to construct a complete {@link ArtifactDetail}.
    */
   @Override
   public ArtifactDetail getArtifact(Id.Artifact artifactId) throws Exception {
@@ -91,6 +97,46 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
       new ArtifactDetail(new ArtifactDescriptor(detail.getDescriptor().getArtifactId(), artifactLocation),
                          detail.getMeta());
     return artifactDetail;
+  }
+
+  /**
+   * Returns an input stream for reading the artifact bytes. If no such artifact exists, or an error occurs during
+   * reading, an exception is thrown.
+   *
+   * @param artifactId the id of the artifact to get
+   * @return an InputStream for the artifact bytes
+   * @throws IOException if there as an exception reading from the store.
+   * @throws NotFoundException if the given artifact does not exist
+   */
+  @Override
+  public InputStream newInputStream(Id.Artifact artifactId) throws IOException, NotFoundException {
+    String namespaceId = artifactId.getNamespace().getId();
+    ArtifactScope scope = ArtifactScope.USER;
+    // Cant use 'system' as the namespace in the request because that generates an error, the namespace doesnt matter
+    // as long as it exists. Using default because it will always be there
+    if (NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespaceId)) {
+      namespaceId = NamespaceId.DEFAULT.getNamespace();
+      scope = ArtifactScope.SYSTEM;
+    }
+    String url = String.format("namespaces/%s/artifacts/%s/versions/%s/download?scope=%s",
+                               namespaceId,
+                               artifactId.getName(),
+                               artifactId.getVersion(),
+                               scope);
+    HttpURLConnection urlConn = remoteClient.openConnection(HttpMethod.GET, url);
+    throwIfError(artifactId, urlConn);
+
+    // Use FilterInputStream and override close to ensure the connection is closed once the input stream is closed
+    return new FilterInputStream(urlConn.getInputStream()) {
+      @Override
+      public void close() throws IOException {
+        try {
+          super.close();
+        } finally {
+          urlConn.disconnect();
+        }
+      }
+    };
   }
 
   @Override
@@ -125,5 +171,32 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
       throw new IOException(httpResponse.getResponseBodyAsString());
     }
     return httpResponse;
+  }
+
+  /**
+   * Validates the response from the given {@link HttpURLConnection} to be 200, or throws exception if it is not 200.
+   */
+  private void throwIfError(Id.Artifact artifactId,
+                            HttpURLConnection urlConn) throws IOException, NotFoundException {
+    int responseCode = urlConn.getResponseCode();
+    if (responseCode == HttpURLConnection.HTTP_OK) {
+      return;
+    }
+    try (InputStream errorStream = urlConn.getErrorStream()) {
+      String errorMsg = "unknown error";
+      if (errorStream != null) {
+        errorMsg = new String(ByteStreams.toByteArray(errorStream), StandardCharsets.UTF_8);
+      }
+      switch (responseCode) {
+        case HttpURLConnection.HTTP_UNAVAILABLE:
+          throw new ServiceUnavailableException(Constants.Service.APP_FABRIC_HTTP, errorMsg);
+        case HttpURLConnection.HTTP_NOT_FOUND:
+          throw new NotFoundException(artifactId);
+      }
+
+      throw new IOException(
+        String.format("Failed to fetch artifact %s version %s from %s. Response code: %d. Error: %s",
+                      artifactId.getName(), artifactId.getVersion(), urlConn.getURL(), responseCode, errorMsg));
+    }
   }
 }

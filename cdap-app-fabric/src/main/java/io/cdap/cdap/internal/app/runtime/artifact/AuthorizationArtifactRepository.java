@@ -28,6 +28,7 @@ import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginSelector;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.common.ArtifactNotFoundException;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import io.cdap.cdap.proto.artifact.ApplicationClassInfo;
@@ -49,6 +50,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -127,6 +129,11 @@ public class AuthorizationArtifactRepository implements ArtifactRepository {
       accessEnforcer.enforce(artifact, authenticationContext.getPrincipal(), StandardPermission.GET);
     }
     return delegate.getArtifact(artifactId);
+  }
+
+  @Override
+  public InputStream newInputStream(Id.Artifact artifactId) throws IOException, NotFoundException {
+    return delegate.newInputStream(artifactId);
   }
 
   @Override

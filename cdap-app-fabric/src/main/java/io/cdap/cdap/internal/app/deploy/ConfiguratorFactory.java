@@ -1,37 +1,26 @@
 /*
  * Copyright © 2021 Cask Data, Inc.
- *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
  * http://www.apache.org/licenses/LICENSE-2.0
- *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
+ *
  */
 
-package io.cdap.cdap.internal.app.worker;
+package io.cdap.cdap.internal.app.deploy;
 
-import com.google.inject.AbstractModule;
-import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.app.deploy.Configurator;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 
 /**
- * Module for Runnable tasks.
+ * ConfiguratorFactory interface which is used by Guice to pass in the appDeploymentInfo to the configurator during
+ * runtime
  */
-public class RunnableTaskModule extends AbstractModule {
-
-  private final CConfiguration cConf;
-
-  public RunnableTaskModule(CConfiguration cConf) {
-    this.cConf = cConf;
-  }
-
-  @Override
-  protected void configure() {
-    bind(CConfiguration.class).toInstance(cConf);
-  }
+public interface ConfiguratorFactory {
+  Configurator create(AppDeploymentInfo appDeploymentInfo);
 }
