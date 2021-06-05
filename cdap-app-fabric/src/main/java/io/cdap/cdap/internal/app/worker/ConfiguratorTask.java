@@ -14,122 +14,134 @@
 
 package io.cdap.cdap.internal.app.worker;
 
+import com.google.common.base.Throwables;
 import com.google.common.io.ByteStreams;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import io.cdap.cdap.api.artifact.ApplicationClass;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.app.deploy.ConfigResponse;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
-import io.cdap.cdap.internal.app.deploy.pipeline.ConfiguratorConfig;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
+import io.cdap.cdap.internal.app.runtime.artifact.ApplicationClassCodec;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
-import io.cdap.cdap.security.impersonation.EntityImpersonator;
+import io.cdap.cdap.internal.app.runtime.artifact.RequirementsCodec;
+import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
  * ConfiguratorTask is a RunnableTask for performing the configurator config.
  */
 public class ConfiguratorTask implements RunnableTask {
-  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .registerTypeAdapter(ApplicationClass.class, new ApplicationClassCodec())
+    .registerTypeAdapter(Requirements.class, new RequirementsCodec())
+    .create();
   private static final Logger LOG = LoggerFactory.getLogger(ConfiguratorTask.class);
 
   private final CConfiguration cConf;
 
   @Inject
-  public ConfiguratorTask(CConfiguration cConf) {
+  ConfiguratorTask(CConfiguration cConf) {
     this.cConf = cConf;
   }
 
   @Override
   public void run(RunnableTaskContext context) throws Exception {
-    Injector injector = Guice.createInjector(new ConfiguratorTaskModule(cConf));
-    Configurator configurator = injector.getInstance(Configurator.class);
-    configurator.run(context);
+    AppDeploymentInfo deploymentInfo = GSON.fromJson(context.getParam(), AppDeploymentInfo.class);
+
+    Injector injector = Guice.createInjector(
+      new ConfigModule(cConf),
+      new LocalLocationModule(),
+      new ConfiguratorTaskModule()
+    );
+    ConfigResponse result = injector.getInstance(ConfiguratorTaskRunner.class).configure(deploymentInfo);
+    context.writeResult(GSON.toJson(result).getBytes(StandardCharsets.UTF_8));
   }
 
   /**
-   * Configurator performs the configurator config.
+   * Class to preform the configurator task execution.
    */
-  public static class Configurator {
+  private static class ConfiguratorTaskRunner {
     private final Impersonator impersonator;
     private final PluginFinder pluginFinder;
     private final ArtifactRepository artifactRepository;
-    private final LocationFactory locationFactory;
     private final CConfiguration cConf;
 
     @Inject
-    public Configurator(Impersonator impersonator, PluginFinder pluginFinder,
-                        ArtifactRepository artifactRepository, LocationFactory locationFactory,
-                        CConfiguration cConf) {
+    ConfiguratorTaskRunner(Impersonator impersonator, PluginFinder pluginFinder,
+                           ArtifactRepository artifactRepository, CConfiguration cConf) {
       this.impersonator = impersonator;
       this.pluginFinder = pluginFinder;
       this.artifactRepository = artifactRepository;
-      this.locationFactory = locationFactory;
       this.cConf = cConf;
     }
 
-    public void run(RunnableTaskContext context) throws Exception {
-      ConfiguratorConfig config = GSON.fromJson(context.getParam(), ConfiguratorConfig.class);
-
+    public ConfigResponse configure(AppDeploymentInfo info) throws Exception {
       // Getting the pipeline app from appfabric
-      LOG.info("Fetching artifact '{}' from app-fabric to create artifact class loader.",
-               config.getArtifactId().getArtifact());
-      Location artifactLocation = Locations.getLocationFromAbsolutePath(
-        locationFactory, config.getArtifactLocationURI().getPath());
+      LOG.debug("Fetching artifact '{}' from app-fabric to create artifact class loader.", info.getArtifactId());
 
-      try (InputStream is = artifactRepository.newInputStream(Id.Artifact.fromEntityId(config.getArtifactId()));
-           OutputStream os = artifactLocation.getOutputStream()) {
-        ByteStreams.copy(is, os);
-      }
-
-      LOG.info("Successfully fetched artifact '{}'.", config.getArtifactId().getArtifact());
-
-      EntityImpersonator classLoaderImpersonator =
-        new EntityImpersonator(config.getArtifactId(), impersonator);
-      ClassLoader artifactClassLoader = artifactRepository.createArtifactClassLoader(artifactLocation,
-                                                                                     classLoaderImpersonator);
-
-      Id.Namespace namespaceId = Id.Namespace.from(config.getAppNamespace().getEntityName());
-      Id.Artifact artifactId = Id.Artifact
-        .from(Id.Namespace.from(config.getArtifactId().getNamespace()), config.getArtifactId().toApiArtifactId());
-
-      InMemoryConfigurator configurator = new InMemoryConfigurator(
-        cConf, namespaceId, artifactId,
-        config.getAppClassName(), pluginFinder,
-        artifactClassLoader,
-        config.getApplicationName(), config.getApplicationVersion(),
-        config.getConfigString());
-
-      ListenableFuture<ConfigResponse> future = configurator.config();
-      ConfigResponseResult result;
-
+      Path tempDir = Files.createTempDirectory(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR)).toPath(),
+                                               "configurator");
       try {
-        result = new ConfigResponseResult(future.get(120, TimeUnit.SECONDS), null);
-      } catch (Exception ex) {
-        LOG.error("Encountered error while validating pipeline: ", ex);
-        result = new ConfigResponseResult(null, ex);
-      }
+        Location artifactLocation = Locations.toLocation(
+          Files.createTempFile(tempDir, info.getArtifactId().getArtifact(), ".jar"));
 
-      String json = GSON.toJson(result);
-      context.writeResult(json.getBytes(StandardCharsets.UTF_8));
+        try (InputStream is = artifactRepository.newInputStream(Id.Artifact.fromEntityId(info.getArtifactId()));
+             OutputStream os = artifactLocation.getOutputStream()) {
+          ByteStreams.copy(is, os);
+        }
+
+        LOG.debug("Successfully fetched artifact '{}'.", info.getArtifactId());
+
+        // Creates a new deployment info with the newly fetched artifact
+        AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(info, artifactLocation);
+        InMemoryConfigurator configurator = new InMemoryConfigurator(cConf, pluginFinder, impersonator,
+                                                                     artifactRepository, deploymentInfo);
+        try {
+          return configurator.config().get(120, TimeUnit.SECONDS);
+        } catch (ExecutionException e) {
+          // We don't need the ExecutionException being reported back to the RemoteTaskExecutor, hence only
+          // propagating the actual cause.
+          Throwables.propagateIfPossible(e.getCause(), Exception.class);
+          throw Throwables.propagate(e.getCause());
+        }
+      } finally {
+        try {
+          DirUtils.deleteDirectoryContents(tempDir.toFile());
+        } catch (IOException e) {
+          LOG.warn("Failed to cleanup temporary directory {}", tempDir, e);
+        }
+      }
     }
   }
 }

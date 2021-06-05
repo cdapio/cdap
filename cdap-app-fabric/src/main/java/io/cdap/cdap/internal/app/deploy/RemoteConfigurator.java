@@ -20,87 +20,56 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import io.cdap.cdap.api.artifact.ApplicationClass;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.app.deploy.ConfigResponse;
 import io.cdap.cdap.app.deploy.Configurator;
-import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
-import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.internal.app.RemoteTaskExecutor;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
-import io.cdap.cdap.internal.app.deploy.pipeline.ConfiguratorConfig;
-import io.cdap.cdap.internal.app.worker.ConfigResponseResult;
+import io.cdap.cdap.internal.app.runtime.artifact.ApplicationClassCodec;
+import io.cdap.cdap.internal.app.runtime.artifact.RequirementsCodec;
 import io.cdap.cdap.internal.app.worker.ConfiguratorTask;
-import io.cdap.cdap.proto.id.ArtifactId;
-import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.common.http.HttpMethod;
-import io.cdap.common.http.HttpRequest;
-import io.cdap.common.http.HttpResponse;
+import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.Location;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import java.nio.charset.StandardCharsets;
 
 /**
  * RemoteConfigurator sends a request to another {@link Configurator} running remotely.
  */
 public class RemoteConfigurator implements Configurator {
-  private static final Logger LOG = LoggerFactory.getLogger(RemoteConfigurator.class);
-  private static final Gson GSON = new GsonBuilder().create();
-  private final ConfiguratorConfig config;
 
-  private final RemoteClient remoteClientInternal;
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .registerTypeAdapter(ApplicationClass.class, new ApplicationClassCodec())
+    .registerTypeAdapter(Requirements.class, new RequirementsCodec())
+    .create();
+
+  private final AppDeploymentInfo deploymentInfo;
+  private final RemoteTaskExecutor remoteTaskExecutor;
 
   @Inject
-  public RemoteConfigurator(DiscoveryServiceClient discoveryServiceClient, @Assisted AppDeploymentInfo deploymentInfo) {
-    this.config = new ConfiguratorConfig(deploymentInfo);
-    this.remoteClientInternal = new RemoteClient(discoveryServiceClient, Constants.Service.TASK_WORKER,
-                                                 new DefaultHttpRequestConfig(false),
-                                                 Constants.Gateway.INTERNAL_API_VERSION_3);
-  }
-
-  public RemoteConfigurator(NamespaceId appNamespace, ArtifactId artifactId,
-                            String appClassName, String applicationName, String applicationVersion, String configString,
-                            DiscoveryServiceClient discoveryServiceClient, Location artifactLocation) {
-    this.config = new ConfiguratorConfig(appNamespace,
-                                         artifactId, appClassName,
-                                         applicationName,
-                                         applicationVersion,
-                                         configString, artifactLocation.toURI());
-
-    this.remoteClientInternal = new RemoteClient(discoveryServiceClient, Constants.Service.TASK_WORKER,
-                                                 new DefaultHttpRequestConfig(false),
-                                                 Constants.Gateway.INTERNAL_API_VERSION_3);
+  public RemoteConfigurator(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient,
+                            @Assisted AppDeploymentInfo deploymentInfo) {
+    this.deploymentInfo = deploymentInfo;
+    this.remoteTaskExecutor = new RemoteTaskExecutor(cConf, discoveryServiceClient);
   }
 
   @Override
   public ListenableFuture<ConfigResponse> config() {
-
-    String jsonResponse = "";
-
     try {
-      String param = GSON.toJson(config);
-      RunnableTaskRequest req = RunnableTaskRequest.getBuilder(ConfiguratorTask.class.getName()).withParam(param)
+      RunnableTaskRequest request = RunnableTaskRequest.getBuilder(ConfiguratorTask.class.getName())
+        .withParam(GSON.toJson(deploymentInfo))
         .build();
-      String reqBody = GSON.toJson(req);
 
-      HttpRequest.Builder requestBuilder = remoteClientInternal.requestBuilder(
-        HttpMethod.POST, "/worker/run").withBody(reqBody);
-      HttpResponse response = remoteClientInternal.execute(requestBuilder.build());
-
-      jsonResponse = response.getResponseBodyAsString();
+      byte[] result = remoteTaskExecutor.runTask(request);
+      return Futures.immediateFuture(GSON.fromJson(new String(result, StandardCharsets.UTF_8),
+                                                   DefaultConfigResponse.class));
     } catch (Exception ex) {
-      LOG.warn("Exception caught during RemoteConfigurator.config, got json response: {} with error {}", jsonResponse,
-               ex);
       return Futures.immediateFailedFuture(ex);
     }
-
-    ConfigResponseResult configResponse = GSON.fromJson(jsonResponse, ConfigResponseResult.class);
-    if (configResponse.getException() != null) {
-      //TODO: Refactor to use RemoteTaskExecutor once PR #13383 is merged
-      Exception exception = new Exception(configResponse.getException().getMessage());
-      exception.setStackTrace(configResponse.getException().getStackTraces());
-      return Futures.immediateFailedFuture(exception);
-    }
-    return Futures.immediateFuture(configResponse.getConfigResponse());
   }
 }

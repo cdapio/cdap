@@ -39,12 +39,9 @@ import io.cdap.cdap.internal.app.deploy.pipeline.LocalArtifactLoaderStage;
 import io.cdap.cdap.internal.app.deploy.pipeline.MetadataWriterStage;
 import io.cdap.cdap.internal.app.deploy.pipeline.ProgramGenerationStage;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.capability.CapabilityReader;
-import io.cdap.cdap.pipeline.Context;
 import io.cdap.cdap.pipeline.Pipeline;
 import io.cdap.cdap.pipeline.PipelineFactory;
-import io.cdap.cdap.pipeline.Stage;
 import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
@@ -59,12 +56,6 @@ import io.cdap.cdap.spi.data.StructuredTableAdmin;
  * @param <O> Output type.
  */
 public class LocalApplicationManager<I, O> implements Manager<I, O> {
-
-  /**
-   * The key used in the {@link Stage} {@link Context} property for storing the artifact classloader of the artifact
-   * used during deployment.
-   */
-  public static final String ARTIFACT_CLASSLOADER_KEY = "artifact.classLoader";
 
   private final PipelineFactory pipelineFactory;
   private final CConfiguration cConf;
@@ -82,7 +73,6 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   private final io.cdap.cdap.scheduler.Scheduler programScheduler;
   private final AccessEnforcer accessEnforcer;
   private final StructuredTableAdmin structuredTableAdmin;
-  private final PluginFinder pluginFinder;
   private final CapabilityReader capabilityReader;
   private final ConfiguratorFactory configuratorFactory;
 
@@ -98,7 +88,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
                           Scheduler programScheduler,
                           AccessEnforcer accessEnforcer,
                           StructuredTableAdmin structuredTableAdmin,
-                          PluginFinder pluginFinder, CapabilityReader capabilityReader,
+                          CapabilityReader capabilityReader,
                           ConfiguratorFactory configuratorFactory) {
     this.cConf = cConf;
     this.pipelineFactory = pipelineFactory;
@@ -116,7 +106,6 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     this.programScheduler = programScheduler;
     this.accessEnforcer = accessEnforcer;
     this.structuredTableAdmin = structuredTableAdmin;
-    this.pluginFinder = pluginFinder;
     this.capabilityReader = capabilityReader;
     this.configuratorFactory = configuratorFactory;
   }
@@ -124,13 +113,12 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   @Override
   public ListenableFuture<O> deploy(I input) throws Exception {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
-    pipeline.addLast(new LocalArtifactLoaderStage(cConf, store, artifactRepository, impersonator,
-                                                  accessEnforcer, authenticationContext, pluginFinder,
+    pipeline.addLast(new LocalArtifactLoaderStage(cConf, store, accessEnforcer, authenticationContext,
                                                   capabilityReader, configuratorFactory));
     pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework, ownerAdmin, authenticationContext));
     pipeline.addLast(new CreateSystemTablesStage(structuredTableAdmin));
-    pipeline.addLast(new DeployDatasetModulesStage(cConf, datasetFramework, inMemoryDatasetFramework,
-                                                   ownerAdmin, authenticationContext));
+    pipeline.addLast(new DeployDatasetModulesStage(cConf, datasetFramework, inMemoryDatasetFramework, ownerAdmin,
+                                                   authenticationContext, artifactRepository, impersonator));
     pipeline.addLast(new CreateDatasetInstancesStage(cConf, datasetFramework, ownerAdmin,
                                                      authenticationContext));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator,

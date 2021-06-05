@@ -23,12 +23,26 @@ import javax.annotation.Nullable;
  */
 public class RemoteTaskException extends Exception {
 
+  private final String remoteExceptionClassName;
+
   /**
-   *
+   * @param remoteExceptionClassName the Exception class name that was thrown from the remote task
    * @param message String message for the exception
    * @param cause {@link Throwable} cause for the exception, is nullable.
    */
-  RemoteTaskException(String message, @Nullable Throwable cause) {
+  RemoteTaskException(String remoteExceptionClassName, String message, @Nullable Throwable cause) {
     super(message, cause);
+    this.remoteExceptionClassName = remoteExceptionClassName;
+  }
+
+  public String getRemoteExceptionClassName() {
+    return remoteExceptionClassName;
+  }
+
+  @Override
+  public String toString() {
+    String s = getClass().getName() + ": Remote Exception " + getRemoteExceptionClassName();
+    String message = getLocalizedMessage();
+    return (message != null) ? (s + ": " + message) : s;
   }
 }

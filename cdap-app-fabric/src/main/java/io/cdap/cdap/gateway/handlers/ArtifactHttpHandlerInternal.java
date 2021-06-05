@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.gateway.handlers;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
-import com.google.common.io.Closeables;
 import com.google.common.net.HttpHeaders;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -33,6 +33,7 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.http.LocationBodyProducer;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
@@ -43,17 +44,14 @@ import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.Ids;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.http.AbstractHttpHandler;
-import io.cdap.http.BodyProducer;
 import io.cdap.http.HttpResponder;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
@@ -78,14 +76,12 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
   private static final Type ARTIFACT_INFO_LIST_TYPE = new TypeToken<List<ArtifactInfo>>() { }.getType();
   private static final Type ARTIFACT_DETAIL_LIST_TYPE = new TypeToken<List<ArtifactDetail>>() { }.getType();
 
-  private static final int CHUNK_SIZE = 64 * 1024;
-  
   private final ArtifactRepository artifactRepository;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   @Inject
-  ArtifactHttpHandlerInternal(ArtifactRepository artifactRepository,
-                              NamespaceQueryAdmin namespaceQueryAdmin) {
+  @VisibleForTesting
+  public ArtifactHttpHandlerInternal(ArtifactRepository artifactRepository, NamespaceQueryAdmin namespaceQueryAdmin) {
     this.artifactRepository = artifactRepository;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
@@ -115,38 +111,10 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
 
     NamespaceId namespace = validateAndGetScopedNamespace(Ids.namespace(namespaceId), scope);
     ArtifactId artifactId = new ArtifactId(namespace.getNamespace(), artifactName, artifactVersion);
-    InputStream artifactStream = artifactRepository.newInputStream(Id.Artifact.fromEntityId(artifactId));
-
-    try {
-      responder.sendContent(HttpResponseStatus.OK, new BodyProducer() {
-
-        @Override
-        public ByteBuf nextChunk() throws Exception {
-          ByteBuf buffer = Unpooled.buffer(CHUNK_SIZE);
-          buffer.writeBytes(artifactStream, CHUNK_SIZE);
-          return buffer;
-        }
-
-        @Override
-        public void finished() throws Exception {
-          Closeables.closeQuietly(artifactStream);
-        }
-
-        @Override
-        public void handleError(@Nullable Throwable cause) {
-          LOG.warn(
-            "Exception when initiating stream download for artifact {}, version {} in namespace {} using scope {}: {}",
-            artifactName, artifactVersion, namespaceId, scope, cause);
-          Closeables.closeQuietly(artifactStream);
-        }
-      }, new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM));
-    } catch (Exception e) {
-      LOG.warn(
-        "Exception when initiating stream download for artifact {}, version {} in namespace {} using scope {}: {}",
-        artifactName, artifactVersion, namespaceId, scope, e);
-      Closeables.closeQuietly(artifactStream);
-      throw e;
-    }
+    ArtifactDetail artifactDetail = artifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId));
+    Location location = artifactDetail.getDescriptor().getLocation();
+    responder.sendContent(HttpResponseStatus.OK, new LocationBodyProducer(location),
+                          new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM));
   }
 
   @GET

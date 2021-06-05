@@ -16,12 +16,11 @@
 
 package io.cdap.cdap.internal.app.deploy.pipeline;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.annotations.SerializedName;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.internal.app.deploy.LocalApplicationManager;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
-import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -35,7 +34,7 @@ import javax.annotation.Nullable;
 public class AppDeploymentInfo {
 
   private final ArtifactId artifactId;
-  private final Location artifactLocation;
+  private final transient Location artifactLocation;
   private final NamespaceId namespaceId;
   private final ApplicationClass applicationClass;
   private final String appName;
@@ -46,18 +45,24 @@ public class AppDeploymentInfo {
   @SerializedName("update-schedules")
   private final boolean updateSchedules;
 
-  public AppDeploymentInfo(ArtifactDescriptor artifactDescriptor, NamespaceId namespaceId,
-                           ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
-                           @Nullable String configString) {
-    this(artifactDescriptor, namespaceId, applicationClass, appName, appVersion, configString, null, true);
+  public AppDeploymentInfo(AppDeploymentInfo info, Location artifactLocation) {
+    this(info.artifactId, artifactLocation, info.namespaceId, info.applicationClass, info.appName, info.appVersion,
+         info.configString, info.ownerPrincipal, info.updateSchedules);
   }
 
-  public AppDeploymentInfo(ArtifactDescriptor artifactDescriptor, NamespaceId namespaceId,
+  @VisibleForTesting
+  public AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
+                           ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
+                           @Nullable String configString) {
+    this(artifactId, artifactLocation, namespaceId, applicationClass, appName, appVersion, configString, null, true);
+  }
+
+  public AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
                            ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
                            @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
                            boolean updateSchedules) {
-    this.artifactId = Artifacts.toProtoArtifactId(namespaceId, artifactDescriptor.getArtifactId());
-    this.artifactLocation = artifactDescriptor.getLocation();
+    this.artifactId = artifactId;
+    this.artifactLocation = artifactLocation;
     this.namespaceId = namespaceId;
     this.applicationClass = applicationClass;
     this.appName = appName;
@@ -78,6 +83,10 @@ public class AppDeploymentInfo {
    * Returns the {@link Location} to the artifact that is used by the application.
    */
   public Location getArtifactLocation() {
+    if (artifactLocation == null) {
+      // This shouldn't happen. This is to guard against wrong usage of this class.
+      throw new IllegalStateException("Artifact location is not available");
+    }
     return artifactLocation;
   }
 

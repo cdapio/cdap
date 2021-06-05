@@ -17,14 +17,17 @@
 package io.cdap.cdap.internal.app.deploy.pipeline;
 
 import com.google.common.reflect.TypeToken;
+import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
-import io.cdap.cdap.internal.app.deploy.LocalApplicationManager;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.pipeline.AbstractStage;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.security.authorization.AuthorizationUtil;
+import io.cdap.cdap.security.impersonation.EntityImpersonator;
+import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 
@@ -39,16 +42,21 @@ public class DeployDatasetModulesStage extends AbstractStage<ApplicationDeployab
   private final DatasetModulesDeployer deployer;
   private final OwnerAdmin ownerAdmin;
   private final AuthenticationContext authenticationContext;
+  private final Impersonator impersonator;
+  private final ArtifactRepository artifactRepository;
   private final boolean allowCustomModule;
 
   public DeployDatasetModulesStage(CConfiguration cConf,
                                    DatasetFramework datasetFramework, DatasetFramework inMemoryDatasetFramework,
-                                   OwnerAdmin ownerAdmin, AuthenticationContext authenticationContext) {
+                                   OwnerAdmin ownerAdmin, AuthenticationContext authenticationContext,
+                                   ArtifactRepository artifactRepository, Impersonator impersonator) {
     super(TypeToken.of(ApplicationDeployable.class));
     this.deployer = new DatasetModulesDeployer(datasetFramework, inMemoryDatasetFramework, cConf);
     this.ownerAdmin = ownerAdmin;
     this.authenticationContext = authenticationContext;
     this.allowCustomModule = cConf.getBoolean(Constants.Dataset.CUSTOM_MODULE_ENABLED);
+    this.impersonator = impersonator;
+    this.artifactRepository = artifactRepository;
   }
 
   /**
@@ -66,11 +74,15 @@ public class DeployDatasetModulesStage extends AbstractStage<ApplicationDeployab
       String authorizingUser =
         AuthorizationUtil.getAppAuthorizingUser(ownerAdmin, authenticationContext, input.getApplicationId(),
                                                 ownerPrincipal);
-      ClassLoader classLoader = getContext().getProperty(LocalApplicationManager.ARTIFACT_CLASSLOADER_KEY);
-      deployer.deployModules(input.getApplicationId().getParent(),
-                             datasetModules,
-                             input.getArtifactLocation(),
-                             classLoader, authorizingUser);
+
+      EntityImpersonator classLoaderImpersonator = new EntityImpersonator(input.getArtifactId(), impersonator);
+      try (CloseableClassLoader classLoader = artifactRepository.createArtifactClassLoader(input.getArtifactLocation(),
+                                                                                           classLoaderImpersonator)) {
+        deployer.deployModules(input.getApplicationId().getParent(),
+                               datasetModules,
+                               input.getArtifactLocation(),
+                               classLoader, authorizingUser);
+      }
     } else if (deployer.hasNonSystemDatasetModules(datasetModules)) {
       throw new IllegalStateException("Custom dataset module is not supported. " +
                                         "One of the dataset module is a custom module: " + datasetModules);
