@@ -97,6 +97,14 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
 
     @Nullable
     private Long sleepInMillis;
+
+    public void setConfig(ConnectionConfig connectionConfig, String schema, String metadataOperations,
+                          Long sleepInMillis) {
+      this.connectionConfig = connectionConfig;
+      this.schema = schema;
+      this.metadataOperations = metadataOperations;
+      this.sleepInMillis = sleepInMillis;
+    }
   }
 
   /**
@@ -104,6 +112,10 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
    */
   public static class ConnectionConfig extends PluginConfig {
     private String tableName;
+
+    public void setTableName(String tableName) {
+      this.tableName = tableName;
+    }
   }
 
   @Override

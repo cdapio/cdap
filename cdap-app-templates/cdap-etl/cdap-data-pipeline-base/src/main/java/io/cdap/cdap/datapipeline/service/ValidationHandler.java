@@ -34,29 +34,18 @@ import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.api.service.http.AbstractSystemHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
-import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.api.batch.BatchSource;
-import io.cdap.cdap.etl.api.validation.ValidationException;
 import io.cdap.cdap.etl.batch.BatchPipelineSpec;
-import io.cdap.cdap.etl.batch.BatchPipelineSpecGenerator;
 import io.cdap.cdap.etl.common.BasicArguments;
 import io.cdap.cdap.etl.common.ConnectionMacroEvaluator;
 import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
-import io.cdap.cdap.etl.common.DefaultPipelineConfigurer;
-import io.cdap.cdap.etl.common.DefaultStageConfigurer;
 import io.cdap.cdap.etl.common.OAuthMacroEvaluator;
 import io.cdap.cdap.etl.common.SecureStoreMacroEvaluator;
-import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
-import io.cdap.cdap.etl.proto.v2.ETLPlugin;
-import io.cdap.cdap.etl.proto.v2.ETLStage;
 import io.cdap.cdap.etl.proto.v2.spec.PipelineSpec;
 import io.cdap.cdap.etl.proto.v2.spec.PluginSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
-import io.cdap.cdap.etl.proto.v2.validation.StageSchema;
 import io.cdap.cdap.etl.proto.v2.validation.StageValidationRequest;
 import io.cdap.cdap.etl.proto.v2.validation.StageValidationResponse;
-import io.cdap.cdap.etl.spec.PipelineSpecGenerator;
-import io.cdap.cdap.etl.validation.ValidatingConfigurer;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.artifact.AppRequest;
 
@@ -66,6 +55,8 @@ import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -91,6 +82,11 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
   @Path("v1/contexts/{context}/validations/stage")
   public void validateStage(HttpServiceRequest request, HttpServiceResponder responder,
                             @PathParam("context") String namespace) throws IOException, AccessException {
+    validateLocally(request, responder, namespace);
+  }
+
+  private void validateLocally(HttpServiceRequest request, HttpServiceResponder responder,
+                               String namespace) throws IOException {
     if (!getContext().getAdmin().namespaceExists(namespace)) {
       responder.sendError(HttpURLConnection.HTTP_NOT_FOUND, String.format("Namespace '%s' does not exist", namespace));
       return;
@@ -109,24 +105,7 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
       return;
     }
 
-    ETLStage stageConfig = validationRequest.getStage();
-    ValidatingConfigurer validatingConfigurer =
-      new ValidatingConfigurer(getContext().createPluginConfigurer(namespace));
-    // Batch or Streaming doesn't matter for a single stage.
-    PipelineSpecGenerator<ETLBatchConfig, BatchPipelineSpec> pipelineSpecGenerator =
-      new BatchPipelineSpecGenerator(validatingConfigurer, Collections.emptySet(), Collections.emptySet(),
-                                     Engine.SPARK);
-
-    DefaultStageConfigurer stageConfigurer = new DefaultStageConfigurer(stageConfig.getName());
-    for (StageSchema stageSchema : validationRequest.getInputSchemas()) {
-      stageConfigurer.addInputSchema(stageSchema.getStage(), stageSchema.getSchema());
-      stageConfigurer.addInputStage(stageSchema.getStage());
-    }
-    DefaultPipelineConfigurer pipelineConfigurer =
-      new DefaultPipelineConfigurer(validatingConfigurer, stageConfig.getName(), Engine.SPARK, stageConfigurer);
-
     Map<String, String> arguments = Collections.emptyMap();
-
     // Fetch preferences for this instance and namespace and use them as program arguments if the user selects
     // this option.
     if (validationRequest.getResolveMacrosFromPreferences()) {
@@ -141,32 +120,29 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
       }
     }
 
-    // evaluate secure macros
+    Map<String, String> finalArguments = arguments;
+    Function<Map<String, String>, Map<String, String>> macroFn =
+      macroProperties -> evaluateMacros(namespace, finalArguments, macroProperties);
+    String validationResponse = GSON.toJson(ValidationUtils.validate(validationRequest,
+                                                                     getContext().createPluginConfigurer(namespace),
+                                                                     macroFn));
+    responder.sendString(validationResponse);
+  }
+
+  private Map<String, String> evaluateMacros(String namespace, Map<String, String> programArgs,
+                                             Map<String, String> macroProperties) {
     Map<String, MacroEvaluator> evaluators = ImmutableMap.of(
       SecureStoreMacroEvaluator.FUNCTION_NAME, new SecureStoreMacroEvaluator(namespace, getContext()),
       OAuthMacroEvaluator.FUNCTION_NAME, new OAuthMacroEvaluator(getContext()),
       ConnectionMacroEvaluator.FUNCTION_NAME, new ConnectionMacroEvaluator(namespace, getContext())
     );
-    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(arguments), evaluators);
-
-    Map<String, String> evaluatedProperties = getContext()
-      .evaluateMacros(namespace, stageConfig.getPlugin().getProperties(), macroEvaluator,
-                      MacroParserOptions.builder()
-                        .skipInvalidMacros()
-                        .setEscaping(false)
-                        .setFunctionWhitelist(evaluators.keySet())
-                        .build());
-    ETLPlugin originalConfig = stageConfig.getPlugin();
-    ETLPlugin evaluatedConfig = new ETLPlugin(originalConfig.getName(), originalConfig.getType(),
-                                              evaluatedProperties, originalConfig.getArtifactConfig());
-
-    try {
-      StageSpec spec = pipelineSpecGenerator.configureStage(stageConfig.getName(), evaluatedConfig,
-                                                            pipelineConfigurer).build();
-      responder.sendString(GSON.toJson(new StageValidationResponse(spec)));
-    } catch (ValidationException e) {
-      responder.sendString(GSON.toJson(new StageValidationResponse(e.getFailures())));
-    }
+    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(programArgs), evaluators);
+    MacroParserOptions macroParserOptions = MacroParserOptions.builder()
+      .skipInvalidMacros()
+      .setEscaping(false)
+      .setFunctionWhitelist(evaluators.keySet())
+      .build();
+    return getContext().evaluateMacros(namespace, macroProperties, macroEvaluator, macroParserOptions);
   }
 
   @POST
