@@ -21,6 +21,7 @@ package io.cdap.cdap.etl.api.batch;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.etl.api.connector.Connector;
+import io.cdap.cdap.etl.api.connector.ConnectorContext;
 import io.cdap.cdap.etl.api.connector.SampleRequest;
 
 import java.io.IOException;
@@ -35,9 +36,11 @@ public interface BatchConnector<KEY_IN, VAL_IN> extends Connector {
 
   /**
    * Return the input format this connector will use to do the sampling
+   *
+   * @param context context for the connector
    * @throws IOException if unable to retrieve the input format provider
    */
-  InputFormatProvider getInputFormatProvider(SampleRequest request) throws IOException;
+  InputFormatProvider getInputFormatProvider(ConnectorContext context, SampleRequest request) throws IOException;
 
   /**
    * Transform the sampled key and value back to StructuredRecord

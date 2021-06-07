@@ -24,6 +24,8 @@ import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.batch.BatchConnector;
 import io.cdap.cdap.etl.api.connector.BrowseDetail;
 import io.cdap.cdap.etl.api.connector.BrowseRequest;
+import io.cdap.cdap.etl.api.connector.ConnectorConfigurer;
+import io.cdap.cdap.etl.api.connector.ConnectorContext;
 import io.cdap.cdap.etl.api.connector.ConnectorSpec;
 import io.cdap.cdap.etl.api.connector.ConnectorSpecRequest;
 import io.cdap.cdap.etl.api.connector.DirectConnector;
@@ -58,8 +60,8 @@ public class LimitingConnector implements DirectConnector {
   }
 
   @Override
-  public List<StructuredRecord> sample(SampleRequest request) throws IOException {
-    InputFormatProvider inputFormatProvider = batchConnector.getInputFormatProvider(request);
+  public List<StructuredRecord> sample(ConnectorContext context, SampleRequest request) throws IOException {
+    InputFormatProvider inputFormatProvider = batchConnector.getInputFormatProvider(context, request);
 
     // use limiting format to read from the input format
     Map<String, String> configs =
@@ -99,22 +101,23 @@ public class LimitingConnector implements DirectConnector {
   }
 
   @Override
-  public void test(FailureCollector collector) throws ValidationException {
-    batchConnector.test(collector);
+  public void test(ConnectorContext context) throws ValidationException {
+    batchConnector.test(context);
   }
 
   @Override
-  public BrowseDetail browse(BrowseRequest request) throws IOException {
-    return batchConnector.browse(request);
+  public BrowseDetail browse(ConnectorContext context, BrowseRequest request) throws IOException {
+    return batchConnector.browse(context, request);
   }
 
   @Override
-  public ConnectorSpec generateSpec(ConnectorSpecRequest connectorSpecRequest) throws IOException {
-    return batchConnector.generateSpec(connectorSpecRequest);
+  public ConnectorSpec generateSpec(ConnectorContext context,
+                                    ConnectorSpecRequest connectorSpecRequest) throws IOException {
+    return batchConnector.generateSpec(context, connectorSpecRequest);
   }
 
   @Override
-  public void configure(PluginConfigurer configurer) {
+  public void configure(ConnectorConfigurer configurer) {
     batchConnector.configure(configurer);
   }
 

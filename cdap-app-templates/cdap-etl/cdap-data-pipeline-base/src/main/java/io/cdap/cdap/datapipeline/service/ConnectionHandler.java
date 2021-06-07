@@ -29,10 +29,14 @@ import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import io.cdap.cdap.api.service.http.SystemHttpServiceContext;
 import io.cdap.cdap.datapipeline.connection.ConnectionStore;
+import io.cdap.cdap.datapipeline.connection.DefaultConnectorConfigurer;
+import io.cdap.cdap.datapipeline.connection.DefaultConnectorContext;
 import io.cdap.cdap.datapipeline.connection.LimitingConnector;
 import io.cdap.cdap.etl.api.batch.BatchConnector;
 import io.cdap.cdap.etl.api.connector.BrowseRequest;
 import io.cdap.cdap.etl.api.connector.Connector;
+import io.cdap.cdap.etl.api.connector.ConnectorConfigurer;
+import io.cdap.cdap.etl.api.connector.ConnectorContext;
 import io.cdap.cdap.etl.api.connector.ConnectorSpec;
 import io.cdap.cdap.etl.api.connector.ConnectorSpecRequest;
 import io.cdap.cdap.etl.api.connector.DirectConnector;
@@ -183,11 +187,13 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
         GSON.fromJson(StandardCharsets.UTF_8.decode(request.getContent()).toString(), ConnectionCreationRequest.class);
 
       PluginConfigurer pluginConfigurer = getContext().createPluginConfigurer(namespaceSummary.getName());
+      ConnectorConfigurer connectorConfigurer = new DefaultConnectorConfigurer(pluginConfigurer);
+      SimpleFailureCollector failureCollector = new SimpleFailureCollector();
+      ConnectorContext connectorContext = new DefaultConnectorContext(failureCollector, pluginConfigurer);
       try (Connector connector = getConnector(pluginConfigurer, creationRequest.getPlugin())) {
-        connector.configure(pluginConfigurer);
-        SimpleFailureCollector failureCollector = new SimpleFailureCollector();
+        connector.configure(connectorConfigurer);
         try {
-          connector.test(failureCollector);
+          connector.test(connectorContext);
           failureCollector.getOrThrowException();
         } catch (ValidationException e) {
           responder.sendJson(e.getFailures());
@@ -228,11 +234,13 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
       }
 
       PluginConfigurer pluginConfigurer = getContext().createPluginConfigurer(namespaceSummary.getName());
+      ConnectorConfigurer connectorConfigurer = new DefaultConnectorConfigurer(pluginConfigurer);
+      ConnectorContext connectorContext = new DefaultConnectorContext(new SimpleFailureCollector(), pluginConfigurer);
       Connection conn = store.getConnection(new ConnectionId(namespaceSummary, connection));
 
       try (Connector connector = getConnector(pluginConfigurer, conn.getPlugin())) {
-        connector.configure(pluginConfigurer);
-        responder.sendJson(connector.browse(browseRequest));
+        connector.configure(connectorConfigurer);
+        responder.sendJson(connector.browse(connectorContext, browseRequest));
       }
     });
   }
@@ -271,27 +279,29 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
       }
 
       PluginConfigurer pluginConfigurer = getContext().createPluginConfigurer(namespaceSummary.getName());
+      ConnectorConfigurer connectorConfigurer = new DefaultConnectorConfigurer(pluginConfigurer);
+      ConnectorContext connectorContext = new DefaultConnectorContext(new SimpleFailureCollector(), pluginConfigurer);
       Connection conn = store.getConnection(new ConnectionId(namespaceSummary, connection));
 
       PluginInfo plugin = conn.getPlugin();
       try (Connector connector = getConnector(pluginConfigurer, plugin)) {
-        connector.configure(pluginConfigurer);
+        connector.configure(connectorConfigurer);
         ConnectorSpecRequest specRequest = ConnectorSpecRequest.builder().setPath(sampleRequest.getPath())
                                              .setConnection(connection)
                                              .setProperties(sampleRequest.getProperties()).build();
-        ConnectorSpec spec = connector.generateSpec(specRequest);
+        ConnectorSpec spec = connector.generateSpec(connectorContext, specRequest);
         ConnectorDetail detail = getConnectorDetail(plugin, spec);
 
         if (connector instanceof DirectConnector) {
           DirectConnector directConnector = (DirectConnector) connector;
-          List<StructuredRecord> sample = directConnector.sample(sampleRequest);
+          List<StructuredRecord> sample = directConnector.sample(connectorContext, sampleRequest);
           responder.sendString(GSON.toJson(
             new SampleResponse(detail, sample.isEmpty() ? null : sample.get(0).getSchema(), sample)));
           return;
         }
         if (connector instanceof BatchConnector) {
           LimitingConnector limitingConnector = new LimitingConnector((BatchConnector) connector);
-          List<StructuredRecord> sample = limitingConnector.sample(sampleRequest);
+          List<StructuredRecord> sample = limitingConnector.sample(connectorContext, sampleRequest);
           responder.sendString(GSON.toJson(
             new SampleResponse(detail, sample.isEmpty() ? null : sample.get(0).getSchema(), sample)));
           return;
@@ -333,14 +343,16 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
       }
 
       PluginConfigurer pluginConfigurer = getContext().createPluginConfigurer(namespaceSummary.getName());
+      ConnectorConfigurer connectorConfigurer = new DefaultConnectorConfigurer(pluginConfigurer);
+      ConnectorContext connectorContext = new DefaultConnectorContext(new SimpleFailureCollector(), pluginConfigurer);
       Connection conn = store.getConnection(new ConnectionId(namespaceSummary, connection));
 
       try (Connector connector = getConnector(pluginConfigurer, conn.getPlugin())) {
-        connector.configure(pluginConfigurer);
+        connector.configure(connectorConfigurer);
         ConnectorSpecRequest connectorSpecRequest = ConnectorSpecRequest.builder().setPath(specRequest.getPath())
                                                       .setConnection(connection)
                                                       .setProperties(specRequest.getProperties()).build();
-        ConnectorSpec spec = connector.generateSpec(connectorSpecRequest);
+        ConnectorSpec spec = connector.generateSpec(connectorContext, connectorSpecRequest);
         responder.sendString(GSON.toJson(getConnectorDetail(conn.getPlugin(), spec)));
       }
     });
