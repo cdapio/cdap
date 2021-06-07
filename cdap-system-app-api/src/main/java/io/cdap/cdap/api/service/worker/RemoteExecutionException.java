@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app;
+package io.cdap.cdap.api.service.worker;
 
 /**
  * A exception class for wrapping an {@link Exception} coming from remote task execution.
@@ -23,7 +23,14 @@ package io.cdap.cdap.internal.app;
  */
 public class RemoteExecutionException extends Exception {
 
+  private final RemoteTaskException cause;
+
   public RemoteExecutionException(RemoteTaskException cause) {
     super(cause.getMessage(), cause);
+    this.cause = cause;
+  }
+
+  public RemoteTaskException getCause() {
+    return cause;
   }
 }

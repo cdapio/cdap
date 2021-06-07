@@ -39,11 +39,17 @@ import javax.annotation.Nullable;
 public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
 
   private final String namespaceId;
+  @Nullable
   private final String applicationId;
 
   public AbstractServiceDiscoverer(ProgramId programId) {
     this.namespaceId = programId.getNamespace();
     this.applicationId = programId.getApplication();
+  }
+
+  public AbstractServiceDiscoverer(String namespaceId) {
+    this.namespaceId = namespaceId;
+    this.applicationId = null;
   }
 
   @Override
@@ -62,6 +68,9 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
 
   @Override
   public URL getServiceURL(String serviceId) {
+    if (applicationId == null) {
+      throw new UnsupportedOperationException("Application Id is not available");
+    }
     return getServiceURL(applicationId, serviceId);
   }
 

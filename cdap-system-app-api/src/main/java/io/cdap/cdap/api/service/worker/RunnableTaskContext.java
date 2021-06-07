@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.api.service.worker;
 
+import io.cdap.cdap.api.artifact.ArtifactId;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -30,12 +32,19 @@ public class RunnableTaskContext {
   private final String param;
   private final URI fileURI;
   @Nullable
-  private final ClassLoader artifactClassLoader;
+  private final String namespace;
+  @Nullable
+  private final ArtifactId artifactId;
+  @Nullable
+  private final SystemAppTaskContext systemAppTaskContext;
 
-  public RunnableTaskContext(String param, @Nullable ClassLoader artifactClassLoader, @Nullable URI fileURI) {
+  public RunnableTaskContext(String param, @Nullable URI fileURI, @Nullable String namespace,
+                             @Nullable ArtifactId artifactId, @Nullable SystemAppTaskContext systemAppTaskContext) {
     this.param = param;
     this.fileURI = fileURI;
-    this.artifactClassLoader = artifactClassLoader;
+    this.namespace = namespace;
+    this.artifactId = artifactId;
+    this.systemAppTaskContext = systemAppTaskContext;
     this.outputStream = new ByteArrayOutputStream();
   }
 
@@ -56,8 +65,18 @@ public class RunnableTaskContext {
   }
 
   @Nullable
-  public ClassLoader getArtifactClassLoader() {
-    return artifactClassLoader;
+  public String getNamespace() {
+    return namespace;
+  }
+
+  @Nullable
+  public ArtifactId getArtifactId() {
+    return artifactId;
+  }
+
+  @Nullable
+  public SystemAppTaskContext getRunnableTaskSystemAppContext() {
+    return systemAppTaskContext;
   }
 
   public static Builder getBuilder() {
@@ -70,9 +89,13 @@ public class RunnableTaskContext {
   public static class Builder {
     private String param;
     @Nullable
-    private ClassLoader artifactClassLoader;
-    @Nullable
     private URI fileURI;
+    @Nullable
+    private String namespace;
+    @Nullable
+    private ArtifactId artifactId;
+    @Nullable
+    private SystemAppTaskContext systemAppTaskContext;
 
     private Builder() {
 
@@ -83,18 +106,29 @@ public class RunnableTaskContext {
       return this;
     }
 
-    public Builder withArtifactClassLoader(@Nullable ClassLoader artifactClassLoader) {
-      this.artifactClassLoader = artifactClassLoader;
-      return this;
-    }
-
     public Builder withFileURI(@Nullable URI fileURI) {
       this.fileURI = fileURI;
       return this;
     }
 
+    public Builder withNamespace(@Nullable String namespace) {
+      this.namespace = namespace;
+      return this;
+    }
+
+    public Builder withArtifactId(@Nullable ArtifactId artifactId) {
+      this.artifactId = artifactId;
+      return this;
+    }
+
+    public Builder withTaskSystemAppContext(@Nullable SystemAppTaskContext
+                                              systemAppTaskContext) {
+      this.systemAppTaskContext = systemAppTaskContext;
+      return this;
+    }
+
     public RunnableTaskContext build() {
-      return new RunnableTaskContext(param, artifactClassLoader, fileURI);
+      return new RunnableTaskContext(param, fileURI, namespace, artifactId, systemAppTaskContext);
     }
   }
 }
