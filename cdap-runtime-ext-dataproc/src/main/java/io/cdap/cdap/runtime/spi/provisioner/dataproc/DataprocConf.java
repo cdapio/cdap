@@ -17,7 +17,6 @@
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
-import com.google.auth.oauth2.ComputeEngineCredentials;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
@@ -43,6 +42,7 @@ final class DataprocConf {
 
   static final String CLOUD_PLATFORM_SCOPE = "https://www.googleapis.com/auth/cloud-platform";
 
+  static final String TOKEN_ENDPOINT_KEY = "token.endpoint";
   static final String PROJECT_ID_KEY = "projectId";
   static final String AUTO_DETECT = "auto-detect";
   static final String NETWORK = "network";
@@ -118,6 +118,8 @@ final class DataprocConf {
 
   private final boolean runtimeJobManagerEnabled;
 
+  private final String tokenEndpoint;
+
   DataprocConf(DataprocConf conf, String network, String subnet) {
     this(conf.accountKey, conf.region, conf.zone, conf.projectId, conf.networkHostProjectID, network, subnet,
          conf.masterNumNodes, conf.masterCPUs, conf.masterMemoryMB, conf.masterDiskGB, conf.masterDiskType,
@@ -128,7 +130,7 @@ final class DataprocConf {
          conf.preferExternalIP, conf.stackdriverLoggingEnabled, conf.stackdriverMonitoringEnabled,
          conf.componentGatewayEnabled, conf.skipDelete, conf.publicKey, conf.imageVersion, conf.customImageUri,
          conf.clusterMetaData, conf.clusterLabels, conf.networkTags, conf.initActions, conf.runtimeJobManagerEnabled,
-         conf.clusterProperties, conf.autoScalingPolicy, conf.idleTTLMinutes);
+         conf.clusterProperties, conf.autoScalingPolicy, conf.idleTTLMinutes, conf.tokenEndpoint);
   }
 
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
@@ -146,7 +148,8 @@ final class DataprocConf {
                        @Nullable Map<String, String> clusterMetaData,
                        @Nullable Map<String, String> clusterLabels, List<String> networkTags,
                        @Nullable String initActions, boolean runtimeJobManagerEnabled,
-                       Map<String, String> clusterProperties, @Nullable String autoScalingPolicy, int idleTTLMinutes) {
+                       Map<String, String> clusterProperties, @Nullable String autoScalingPolicy, int idleTTLMinutes,
+                       @Nullable String tokenEndpoint) {
     this.accountKey = accountKey;
     this.region = region;
     this.zone = zone;
@@ -190,6 +193,7 @@ final class DataprocConf {
     this.clusterProperties = clusterProperties;
     this.autoScalingPolicy = autoScalingPolicy;
     this.idleTTLMinutes = idleTTLMinutes;
+    this.tokenEndpoint = tokenEndpoint;
   }
 
   String getRegion() {
@@ -362,6 +366,11 @@ final class DataprocConf {
     return idleTTLMinutes;
   }
 
+  @Nullable
+  public String getTokenEndpoint() {
+    return tokenEndpoint;
+  }
+
   /**
    * @return GoogleCredential for use with Compute
    * @throws IOException if there was an error reading the account key
@@ -383,22 +392,11 @@ final class DataprocConf {
    */
   GoogleCredentials getDataprocCredentials() throws IOException {
     if (accountKey == null) {
-      return getComputeEngineCredentials();
+      return ComputeEngineCredentials.getOrCreate(tokenEndpoint);
     }
 
     try (InputStream is = new ByteArrayInputStream(accountKey.getBytes(StandardCharsets.UTF_8))) {
       return GoogleCredentials.fromStream(is).createScoped(CLOUD_PLATFORM_SCOPE);
-    }
-  }
-
-  private static GoogleCredentials getComputeEngineCredentials() throws IOException {
-    try {
-      GoogleCredentials credentials = ComputeEngineCredentials.create();
-      credentials.refreshAccessToken();
-      return credentials;
-    } catch (IOException e) {
-      throw new IOException("Unable to get credentials from the environment. "
-                              + "Please explicitly set the account key.", e);
     }
   }
 
@@ -428,10 +426,12 @@ final class DataprocConf {
   static DataprocConf create(Map<String, String> properties, @Nullable SSHPublicKey publicKey) {
     String accountKey = getString(properties, "accountKey");
     if (accountKey == null || AUTO_DETECT.equals(accountKey)) {
+      String endPoint = getString(properties, TOKEN_ENDPOINT_KEY);
       try {
-        getComputeEngineCredentials();
+        ComputeEngineCredentials.getOrCreate(endPoint);
       } catch (IOException e) {
-        throw new IllegalArgumentException(e.getMessage(), e);
+        throw new IllegalArgumentException("Unable to get credentials from the environment. "
+                                             + "Please explicitly set the account key.", e);
       }
     }
     String projectId = getString(properties, PROJECT_ID_KEY);
@@ -554,6 +554,7 @@ final class DataprocConf {
     String autoScalingPolicy = getString(properties, "autoScalingPolicy");
     int idleTTL = getInt(properties, "idleTTL", 0);
 
+    String tokenEndpoint = getString(properties, TOKEN_ENDPOINT_KEY);
     return new DataprocConf(accountKey, region, zone, projectId, networkHostProjectID, network, subnet,
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
                             masterDiskType, masterMachineType,
@@ -564,7 +565,8 @@ final class DataprocConf {
                             stackdriverLoggingEnabled, stackdriverMonitoringEnabled,
                             componentGatewayEnabled, skipDelete,
                             publicKey, imageVersion, customImageUri, clusterMetaData, clusterLabels, networkTags,
-                            initActions, runtimeJobManagerEnabled, clusterProps, autoScalingPolicy, idleTTL);
+                            initActions, runtimeJobManagerEnabled, clusterProps, autoScalingPolicy, idleTTL,
+                            tokenEndpoint);
   }
 
   // the UI never sends nulls, it only sends empty strings.
