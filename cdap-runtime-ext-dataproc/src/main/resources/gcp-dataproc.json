@@ -419,6 +419,19 @@
           }
         },
         {
+          "widget-type": "keyvalue",
+          "label": "Labels",
+          "name": "clusterLabels",
+          "description": "Specifies labels for the Dataproc cluster being created.",
+          "widget-attributes": {
+            "showDelimiter": "false",
+            "delimiter": ";",
+            "kv-delimiter": "|",
+            "key-placeholder": "Key",
+            "value-placeholder": "Value"
+          }
+        },
+        {
           "widget-type": "textbox",
           "label": "Max Idle Time",
           "name": "idleTTL",

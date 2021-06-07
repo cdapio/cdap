@@ -75,6 +75,7 @@ public class DataprocProvisionerTest {
     props.put("hadoop-env:MAPREDUCE_CLASSPATH", "xyz");
     props.put("dataproc:am.primary_only", "true");
     props.put("clusterMetaData", "metadata-key1|metadata-val1;metadata-key2|metadata-val2");
+    props.put("clusterLabels", "label-key1|label-val1;label-key2|label-val2");
 
     DataprocConf conf = DataprocConf.create(props);
 
@@ -84,6 +85,10 @@ public class DataprocProvisionerTest {
     Map<String, String> clusterMetaData = conf.getClusterMetaData();
     Assert.assertEquals("metadata-val1", clusterMetaData.get("metadata-key1"));
     Assert.assertEquals("metadata-val2", clusterMetaData.get("metadata-key2"));
+
+    Map<String, String> clusterLabels = conf.getClusterLabels();
+    Assert.assertEquals("label-val1", clusterLabels.get("label-key1"));
+    Assert.assertEquals("label-val2", clusterLabels.get("label-key2"));
 
     Map<String, String> dataprocProps = conf.getClusterProperties();
     Assert.assertEquals(3, dataprocProps.size());
