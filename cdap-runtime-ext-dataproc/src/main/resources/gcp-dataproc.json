@@ -348,6 +348,65 @@
       ]
     },
     {
+      "label": "Shielded VMs",
+      "properties": [
+        {
+          "widget-type": "toggle",
+          "label": "Enable Secure Boot",
+          "name": "secureBootEnabled",
+          "description": "Defines whether the Dataproc VMs have Secure Boot enabled.",
+          "widget-attributes": {
+            "default": "false",
+            "on": {
+              "value": "true",
+              "label": "True"
+            },
+            "off": {
+              "value": "false",
+              "label": "False"
+            },
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "toggle",
+          "label": "Enable vTPM",
+          "name": "vTpmEnabled",
+          "description": "Defines whether the Dataproc VMs have the virtual Trusted Platform Module (vTPM) enabled.",
+          "widget-attributes": {
+            "default": "false",
+            "on": {
+              "value": "true",
+              "label": "True"
+            },
+            "off": {
+              "value": "false",
+              "label": "False"
+            },
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "toggle",
+          "label": "Enable Integrity Monitoring",
+          "name": "integrityMonitoringEnabled",
+          "description": "Defines whether Dataproc VMs have integrity monitoring enabled.",
+          "widget-attributes": {
+            "default": "false",
+            "on": {
+              "value": "true",
+              "label": "True"
+            },
+            "off": {
+              "value": "false",
+              "label": "False"
+            },
+            "size": "medium"
+          }
+        }
+      ]
+    },
+    {
       "label": "Advanced Settings",
       "properties": [
         {

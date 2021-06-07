@@ -67,6 +67,10 @@ final class DataprocConf {
   static final Pattern CLUSTER_PROPERTIES_PATTERN = Pattern.compile("^[a-zA-Z0-9\\-]+:");
   static final int MAX_NETWORK_TAGS = 64;
 
+  static final String SECURE_BOOT_ENABLED = "secureBootEnabled";
+  static final String VTPM_ENABLED = "vTpmEnabled";
+  static final String INTEGRITY_MONITORING_ENABLED = "integrityMonitoringEnabled";
+
   private final String accountKey;
   private final String region;
   private final String zone;
@@ -116,6 +120,10 @@ final class DataprocConf {
   private final String autoScalingPolicy;
   private final int idleTTLMinutes;
 
+  private final boolean secureBootEnabled;
+  private final boolean vTpmEnabled;
+  private final boolean integrityMonitoringEnabled;
+
   private final boolean runtimeJobManagerEnabled;
 
   private final String tokenEndpoint;
@@ -130,7 +138,8 @@ final class DataprocConf {
          conf.preferExternalIP, conf.stackdriverLoggingEnabled, conf.stackdriverMonitoringEnabled,
          conf.componentGatewayEnabled, conf.skipDelete, conf.publicKey, conf.imageVersion, conf.customImageUri,
          conf.clusterMetaData, conf.clusterLabels, conf.networkTags, conf.initActions, conf.runtimeJobManagerEnabled,
-         conf.clusterProperties, conf.autoScalingPolicy, conf.idleTTLMinutes, conf.tokenEndpoint);
+         conf.clusterProperties, conf.autoScalingPolicy, conf.idleTTLMinutes, conf.tokenEndpoint,
+         conf.secureBootEnabled, conf.vTpmEnabled, conf.integrityMonitoringEnabled);
   }
 
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
@@ -149,7 +158,8 @@ final class DataprocConf {
                        @Nullable Map<String, String> clusterLabels, List<String> networkTags,
                        @Nullable String initActions, boolean runtimeJobManagerEnabled,
                        Map<String, String> clusterProperties, @Nullable String autoScalingPolicy, int idleTTLMinutes,
-                       @Nullable String tokenEndpoint) {
+                       @Nullable String tokenEndpoint, boolean secureBootEnabled, boolean vTpmEnabled,
+                       boolean integrityMonitoringEnabled) {
     this.accountKey = accountKey;
     this.region = region;
     this.zone = zone;
@@ -194,6 +204,9 @@ final class DataprocConf {
     this.autoScalingPolicy = autoScalingPolicy;
     this.idleTTLMinutes = idleTTLMinutes;
     this.tokenEndpoint = tokenEndpoint;
+    this.secureBootEnabled = secureBootEnabled;
+    this.vTpmEnabled = vTpmEnabled;
+    this.integrityMonitoringEnabled = integrityMonitoringEnabled;
   }
 
   String getRegion() {
@@ -369,6 +382,18 @@ final class DataprocConf {
   @Nullable
   public String getTokenEndpoint() {
     return tokenEndpoint;
+  }
+
+  public boolean isSecureBootEnabled() {
+    return secureBootEnabled;
+  }
+
+  public boolean isvTpmEnabled() {
+    return vTpmEnabled;
+  }
+
+  public boolean isIntegrityMonitoringEnabled() {
+    return integrityMonitoringEnabled;
   }
 
   /**
@@ -555,6 +580,11 @@ final class DataprocConf {
     int idleTTL = getInt(properties, "idleTTL", 0);
 
     String tokenEndpoint = getString(properties, TOKEN_ENDPOINT_KEY);
+    boolean secureBootEnabled = Boolean.parseBoolean(properties.getOrDefault(SECURE_BOOT_ENABLED, "false"));
+    boolean vTpmEnabled = Boolean.parseBoolean(properties.getOrDefault(VTPM_ENABLED, "false"));
+    boolean integrityMonitoringEnabled = Boolean.parseBoolean(
+      properties.getOrDefault(INTEGRITY_MONITORING_ENABLED, "false"));
+
     return new DataprocConf(accountKey, region, zone, projectId, networkHostProjectID, network, subnet,
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
                             masterDiskType, masterMachineType,
@@ -566,7 +596,7 @@ final class DataprocConf {
                             componentGatewayEnabled, skipDelete,
                             publicKey, imageVersion, customImageUri, clusterMetaData, clusterLabels, networkTags,
                             initActions, runtimeJobManagerEnabled, clusterProps, autoScalingPolicy, idleTTL,
-                            tokenEndpoint);
+                            tokenEndpoint, secureBootEnabled, vTpmEnabled, integrityMonitoringEnabled);
   }
 
   // the UI never sends nulls, it only sends empty strings.
