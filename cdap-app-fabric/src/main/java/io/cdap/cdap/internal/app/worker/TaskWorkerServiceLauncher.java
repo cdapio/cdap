@@ -169,9 +169,6 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
             twillPreparer = ((StatefulTwillPreparer) twillPreparer)
               .withStatefulRunnable(TaskWorkerTwillRunnable.class.getSimpleName(), false,
                                     new StatefulDisk("task-worker-data", diskSize,
-                                                     cConf.get(Constants.CFG_LOCAL_DATA_DIR)))
-              .withStatefulRunnable(ArtifactLocalizerTwillRunnable.class.getSimpleName(), false,
-                                    new StatefulDisk("task-worker-data", diskSize,
                                                      cConf.get(Constants.CFG_LOCAL_DATA_DIR)));
           }
 
