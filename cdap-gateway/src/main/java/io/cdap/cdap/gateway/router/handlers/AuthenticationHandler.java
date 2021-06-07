@@ -22,8 +22,11 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.logging.AuditLogEntry;
 import io.cdap.cdap.common.utils.Networks;
+import io.cdap.cdap.security.auth.AESCipher;
+import io.cdap.cdap.security.auth.CipherException;
 import io.cdap.cdap.security.auth.UserIdentityExtractionResponse;
 import io.cdap.cdap.security.auth.UserIdentityExtractionState;
 import io.cdap.cdap.security.auth.UserIdentityExtractor;
@@ -74,22 +77,27 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
   private static final Logger AUDIT_LOGGER = LoggerFactory.getLogger(Constants.Router.AUDIT_LOGGER_NAME);
 
   private final CConfiguration cConf;
+  private final SConfiguration sConf;
   private final String realm;
   private final Pattern bypassPattern;
   private final boolean auditLogEnabled;
   private final List<String> authServerURLs;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final UserIdentityExtractor userIdentityExtractor;
+  private final AESCipher aesCipher;
 
-  public AuthenticationHandler(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient,
+  public AuthenticationHandler(CConfiguration cConf, SConfiguration sConf,
+                               DiscoveryServiceClient discoveryServiceClient,
                                UserIdentityExtractor userIdentityExtractor) {
     this.cConf = cConf;
+    this.sConf = sConf;
     this.realm = cConf.get(Constants.Security.CFG_REALM);
     this.bypassPattern = createBypassPattern(cConf);
     this.auditLogEnabled = cConf.getBoolean(Constants.Router.ROUTER_AUDIT_LOG_ENABLED);
     this.authServerURLs = getConfiguredAuthServerURLs(cConf);
     this.discoveryServiceClient = discoveryServiceClient;
     this.userIdentityExtractor = userIdentityExtractor;
+    this.aesCipher = new AESCipher();
   }
 
   @Override
@@ -111,7 +119,10 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
       UserIdentityPair userIdentityPair = extractionResponse.getIdentityPair();
       // User identity extraction succeeded, so set some header properties and allow the call through
       request.headers().remove(HttpHeaderNames.AUTHORIZATION);
-      String credential = userIdentityPair.getUserCredential();
+
+      // If enabled, encrypt and pass use credential between services in crypto form.
+      String credential = encryptUserCredential(userIdentityPair.getUserCredential());
+
       // For backwards compatibility, we continue propagating credentials by default. This may change in the future.
       if (cConf.getBoolean(Constants.Security.Authentication.PROPAGATE_USER_CREDENTIAL, true) &&
         credential != null) {
@@ -236,6 +247,18 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
     logEntry.setResponse(response);
 
     AUDIT_LOGGER.trace(logEntry.toString());
+  }
+
+  private String encryptUserCredential(String credential) throws CipherException {
+    LOG.warn("wyzhang: " + this.getClass().getName() + " cred : " + credential);
+
+    if (credential == null ||
+      !cConf.getBoolean(Constants.Security.Authentication.USER_CREDENTIAL_ENCRYPTION_ENABLED, false)) {
+      return credential;
+    }
+    LOG.warn("wyzhang: " + this.getClass().getName() + " cred encrypted. ");
+    return aesCipher.encrypt(sConf.get(Constants.Security.Authentication.USER_CREDENTIAL_ENCRYPTION_ENABLED),
+                             credential);
   }
 
 

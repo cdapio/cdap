@@ -25,6 +25,7 @@ import io.cdap.cdap.common.FeatureDisabledException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.http.AuthenticationChannelHandler;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.proto.element.EntityType;
@@ -81,6 +82,7 @@ public class AuthorizationHandlerTest {
 
   @Before
   public void setUp() throws Exception {
+    SConfiguration sConf = SConfiguration.create();
     CConfiguration conf = CConfiguration.create();
     conf.setBoolean(Constants.Security.Authorization.ENABLED, true);
     conf.setBoolean(Constants.Security.ENABLED, true);
@@ -93,7 +95,7 @@ public class AuthorizationHandlerTest {
         public Authorizer get() {
           return auth;
         }
-      }, conf, new MasterAuthenticationContext()))
+      }, conf, new MasterAuthenticationContext(sConf)))
       .setChannelPipelineModifier(new ChannelPipelineModifier() {
         @Override
         public void modify(ChannelPipeline pipeline) {
@@ -126,7 +128,8 @@ public class AuthorizationHandlerTest {
     CConfiguration cConf = CConfiguration.create();
     cConf.setBoolean(Constants.Security.ENABLED, false);
     cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
-    testDisabled(cConf, FeatureDisabledException.Feature.AUTHENTICATION, Constants.Security.ENABLED);
+    SConfiguration sConf = SConfiguration.create();
+    testDisabled(cConf, sConf, FeatureDisabledException.Feature.AUTHENTICATION, Constants.Security.ENABLED);
   }
 
   @Test
@@ -134,10 +137,12 @@ public class AuthorizationHandlerTest {
     CConfiguration cConf = CConfiguration.create();
     cConf.setBoolean(Constants.Security.ENABLED, true);
     cConf.setBoolean(Constants.Security.Authorization.ENABLED, false);
-    testDisabled(cConf, FeatureDisabledException.Feature.AUTHORIZATION, Constants.Security.Authorization.ENABLED);
+    SConfiguration sConf = SConfiguration.create();
+    testDisabled(cConf, sConf, FeatureDisabledException.Feature.AUTHORIZATION,
+                 Constants.Security.Authorization.ENABLED);
   }
 
-  private void testDisabled(CConfiguration cConf, FeatureDisabledException.Feature feature,
+  private void testDisabled(CConfiguration cConf, SConfiguration sConf, FeatureDisabledException.Feature feature,
                             String configSetting) throws Exception {
     final InMemoryAuthorizer authorizer = new InMemoryAuthorizer();
     NettyHttpService service = new CommonNettyHttpServiceBuilder(cConf, getClass().getSimpleName())
@@ -147,7 +152,7 @@ public class AuthorizationHandlerTest {
         public Authorizer get() {
           return authorizer;
         }
-      }, cConf, new MasterAuthenticationContext()))
+      }, cConf, new MasterAuthenticationContext(sConf)))
       .build();
     service.start();
     try {

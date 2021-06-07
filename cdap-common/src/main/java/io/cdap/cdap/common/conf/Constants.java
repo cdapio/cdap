@@ -1110,6 +1110,11 @@ public final class Constants {
       public static final String PROXY_USER_ID_HEADER = "security.authentication.proxy.user.identity.header";
       /** Determines whether to propagate the end user credential as part of the Principal. */
       public static final String PROPAGATE_USER_CREDENTIAL = "security.authentication.propagate.user.credentials";
+
+      public static final String USER_CREDENTIAL_ENCRYPTION_ENABLED =
+        "security.authentication.user.credential.encryption.enabled";
+      public static final String USER_CREDENTIAL_ENCRYPTION_KEY =
+        "security.authentication.user.credentials.encryption.key";
     }
 
     /**
