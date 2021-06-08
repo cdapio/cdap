@@ -825,7 +825,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       .addToVolumes(podInfoVolume,
                     new V1Volume().name("workdir").emptyDir(new V1EmptyDirVolumeSource()))
       .withInitContainers(createContainer("file-localizer", podInfo.getContainerImage(), workDir,
-                                          initContainerResourceRequirements, volumeMounts, initContainerEnvirons,
+                                          resourceRequirements, volumeMounts, initContainerEnvirons,
                                           FileLocalizer.class,
                                           runtimeConfigLocation.toURI().toString(),
                                           mainRuntimeSpec.getName()))
