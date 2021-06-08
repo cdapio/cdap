@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Random;
 
@@ -37,9 +38,9 @@ public class AESCipherTest {
     byte[] decryptedData = cipher.decrypt(secret, cipherData);
     Assert.assertTrue(Arrays.equals(plainData, decryptedData));
 
-    String plainString = new String(generateRandomBytes(64));
-    String cipherString = cipher.encrypt(secret, plainString);
-    String decryptedString = cipher.decrypt(secret, cipherString);
+    String plainString = new String(generateRandomBytes(64), StandardCharsets.UTF_8);
+    cipherData = cipher.encrypt(secret, plainString.getBytes());
+    String decryptedString = new String(cipher.decrypt(secret, cipherData), StandardCharsets.UTF_8);
     Assert.assertTrue(plainString.equals(decryptedString));
   }
 
