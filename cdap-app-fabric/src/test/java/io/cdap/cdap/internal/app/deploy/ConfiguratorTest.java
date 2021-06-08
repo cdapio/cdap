@@ -25,7 +25,7 @@ import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.ConfigTestApp;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.app.ProgramType;
-import io.cdap.cdap.api.artifact.CloseableClassLoader;
+import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.app.deploy.ConfigResponse;
 import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.runtime.DummyProgramRunnerFactory;
@@ -35,6 +35,7 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.AuthorizationArtifactRepository;
@@ -42,11 +43,11 @@ import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.LocalPluginFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.authorization.AuthorizationTestModule;
 import io.cdap.cdap.security.impersonation.DefaultImpersonator;
-import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -105,31 +106,29 @@ public class ConfiguratorTest {
                                                                           authEnforcer, authenticationContext);
     PluginFinder pluginFinder = new LocalPluginFinder(artifactRepo);
 
+    AppDeploymentInfo appDeploymentInfo = new AppDeploymentInfo(artifactId.toEntityId(), appJar,
+      NamespaceId.DEFAULT, new ApplicationClass(AllProgramsApp.class.getName(), "", null),
+      null, null, null);
+
     // Create a configurator that is testable. Provide it a application.
-    try (CloseableClassLoader artifactClassLoader =
-           artifactRepo.createArtifactClassLoader(
-             appJar, new EntityImpersonator(artifactId.getNamespace().toEntityId(),
-                                            new DefaultImpersonator(cConf, null)))) {
-      Configurator configurator = new InMemoryConfigurator(conf, Id.Namespace.DEFAULT, artifactId,
-                                                           AllProgramsApp.class.getName(), pluginFinder,
-                                                           artifactClassLoader, null, null, "");
-      // Extract response from the configurator.
-      ListenableFuture<ConfigResponse> result = configurator.config();
-      ConfigResponse response = result.get(10, TimeUnit.SECONDS);
-      Assert.assertNotNull(response);
+    Configurator configurator = new InMemoryConfigurator(conf, pluginFinder, new DefaultImpersonator(cConf, null),
+                                                         artifactRepo, appDeploymentInfo);
+    // Extract response from the configurator.
+    ListenableFuture<ConfigResponse> result = configurator.config();
+    ConfigResponse response = result.get(10, TimeUnit.SECONDS);
+    Assert.assertNotNull(response);
 
-      // Deserialize the JSON spec back into Application object.
-      AppSpecInfo appSpecInfo = GSON.fromJson(response.getResponse(), AppSpecInfo.class);
-      ApplicationSpecification specification = appSpecInfo.getAppSpec();
-      Assert.assertNotNull(specification);
-      Assert.assertEquals(AllProgramsApp.NAME, specification.getName()); // Simple checks.
+    // Deserialize the JSON spec back into Application object.
+    AppSpecInfo appSpecInfo = GSON.fromJson(response.getResponse(), AppSpecInfo.class);
+    ApplicationSpecification specification = appSpecInfo.getAppSpec();
+    Assert.assertNotNull(specification);
+    Assert.assertEquals(AllProgramsApp.NAME, specification.getName()); // Simple checks.
 
-      ApplicationSpecification expectedSpec = Specifications.from(new AllProgramsApp());
-      for (ProgramType programType : ProgramType.values()) {
-        Assert.assertEquals(expectedSpec.getProgramsByType(programType), specification.getProgramsByType(programType));
-      }
-      Assert.assertEquals(expectedSpec.getDatasets(), specification.getDatasets());
+    ApplicationSpecification expectedSpec = Specifications.from(new AllProgramsApp());
+    for (ProgramType programType : ProgramType.values()) {
+      Assert.assertEquals(expectedSpec.getProgramsByType(programType), specification.getProgramsByType(programType));
     }
+    Assert.assertEquals(expectedSpec.getDatasets(), specification.getDatasets());
   }
 
   @Test
@@ -148,42 +147,45 @@ public class ConfiguratorTest {
                                                                           authEnforcer, authenticationContext);
     PluginFinder pluginFinder = new LocalPluginFinder(artifactRepo);
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("myTable");
+
+    AppDeploymentInfo appDeploymentInfo = new AppDeploymentInfo(artifactId.toEntityId(), appJar,
+      NamespaceId.DEFAULT, new ApplicationClass(ConfigTestApp.class.getName(), "", null),
+      null, null, new Gson().toJson(config));
+
     // Create a configurator that is testable. Provide it an application.
-    try (CloseableClassLoader artifactClassLoader =
-           artifactRepo.createArtifactClassLoader(
-             appJar, new EntityImpersonator(artifactId.getNamespace().toEntityId(),
-                                            new DefaultImpersonator(cConf, null)))) {
+    Configurator configurator = new InMemoryConfigurator(conf, pluginFinder, new DefaultImpersonator(cConf, null),
+                                                         artifactRepo, appDeploymentInfo);
 
-      Configurator configuratorWithConfig =
-        new InMemoryConfigurator(conf, Id.Namespace.DEFAULT, artifactId, ConfigTestApp.class.getName(),
-                                 pluginFinder, artifactClassLoader, null, null, new Gson().toJson(config));
+    ListenableFuture<ConfigResponse> result = configurator.config();
+    ConfigResponse response = result.get(10, TimeUnit.SECONDS);
+    Assert.assertNotNull(response);
 
-      ListenableFuture<ConfigResponse> result = configuratorWithConfig.config();
-      ConfigResponse response = result.get(10, TimeUnit.SECONDS);
-      Assert.assertNotNull(response);
+    AppSpecInfo appSpecInfo = GSON.fromJson(response.getResponse(), AppSpecInfo.class);
+    ApplicationSpecification specification = appSpecInfo.getAppSpec();
+    Assert.assertNotNull(specification);
+    Assert.assertEquals(1, specification.getDatasets().size());
+    Assert.assertTrue(specification.getDatasets().containsKey("myTable"));
 
-      AppSpecInfo appSpecInfo = GSON.fromJson(response.getResponse(), AppSpecInfo.class);
-      ApplicationSpecification specification = appSpecInfo.getAppSpec();
-      Assert.assertNotNull(specification);
-      Assert.assertEquals(1, specification.getDatasets().size());
-      Assert.assertTrue(specification.getDatasets().containsKey("myTable"));
+    // Create a deployment info without the app configuration
+    appDeploymentInfo = new AppDeploymentInfo(artifactId.toEntityId(), appJar,
+      NamespaceId.DEFAULT, new ApplicationClass(ConfigTestApp.class.getName(), "", null),
+      null, null, null);
 
-      Configurator configuratorWithoutConfig = new InMemoryConfigurator(
-        conf, Id.Namespace.DEFAULT, artifactId, ConfigTestApp.class.getName(),
-        pluginFinder, artifactClassLoader, null, null, null);
-      result = configuratorWithoutConfig.config();
-      response = result.get(10, TimeUnit.SECONDS);
-      Assert.assertNotNull(response);
+    Configurator configuratorWithoutConfig = new InMemoryConfigurator(conf, pluginFinder,
+                                                                      new DefaultImpersonator(cConf, null),
+                                                                      artifactRepo, appDeploymentInfo);
+    result = configuratorWithoutConfig.config();
+    response = result.get(10, TimeUnit.SECONDS);
+    Assert.assertNotNull(response);
 
-      specification = GSON.fromJson(response.getResponse(), AppSpecInfo.class).getAppSpec();
-      Assert.assertNotNull(specification);
-      Assert.assertEquals(1, specification.getDatasets().size());
-      Assert.assertTrue(specification.getDatasets().containsKey(ConfigTestApp.DEFAULT_TABLE));
-      Assert.assertNotNull(specification.getProgramSchedules().get(ConfigTestApp.SCHEDULE_NAME));
+    specification = GSON.fromJson(response.getResponse(), AppSpecInfo.class).getAppSpec();
+    Assert.assertNotNull(specification);
+    Assert.assertEquals(1, specification.getDatasets().size());
+    Assert.assertTrue(specification.getDatasets().containsKey(ConfigTestApp.DEFAULT_TABLE));
+    Assert.assertNotNull(specification.getProgramSchedules().get(ConfigTestApp.SCHEDULE_NAME));
 
-      ProgramStatusTrigger trigger = (ProgramStatusTrigger) specification.getProgramSchedules()
-                                                                         .get(ConfigTestApp.SCHEDULE_NAME).getTrigger();
-      Assert.assertEquals(trigger.getProgramId().getProgram(), ConfigTestApp.WORKFLOW_NAME);
-    }
+    ProgramStatusTrigger trigger = (ProgramStatusTrigger) specification.getProgramSchedules()
+                                                                       .get(ConfigTestApp.SCHEDULE_NAME).getTrigger();
+    Assert.assertEquals(trigger.getProgramId().getProgram(), ConfigTestApp.WORKFLOW_NAME);
   }
 }

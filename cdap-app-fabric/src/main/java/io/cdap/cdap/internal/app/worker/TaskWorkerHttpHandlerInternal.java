@@ -19,16 +19,17 @@ package io.cdap.cdap.internal.app.worker;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Singleton;
+import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.AbstractBodyConsumer;
-import io.cdap.cdap.logging.gateway.handlers.AbstractLogHttpHandler;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
+import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.BodyConsumer;
 import io.cdap.http.BodyProducer;
 import io.cdap.http.HttpHandler;
@@ -61,7 +62,7 @@ import javax.ws.rs.core.MediaType;
  */
 @Singleton
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3 + "/worker")
-public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
+public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerHttpHandlerInternal.class);
   private static final Gson GSON = new GsonBuilder().registerTypeAdapter(BasicThrowable.class,
                                                                          new BasicThrowableCodec()).create();
@@ -80,10 +81,12 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
   private final String metadataServiceEndpoint;
 
   public TaskWorkerHttpHandlerInternal(CConfiguration cConf, Consumer<String> stopper) {
-    super(cConf);
-    runnableTaskLauncher = new RunnableTaskLauncher(cConf);
+    this.runnableTaskLauncher = new RunnableTaskLauncher(cConf);
     this.metadataServiceEndpoint = cConf.get(Constants.TaskWorker.METADATA_SERVICE_END_POINT);
-    this.stopper = stopper;
+    this.stopper = s -> {
+      stopper.accept(s);
+      inflightRequests.decrementAndGet();
+    };
   }
 
   @POST
@@ -107,7 +110,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
     } catch (ClassNotFoundException | ClassCastException ex) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);
     } catch (Exception ex) {
-      LOG.error("Failed to run task {}: {}", request.content().toString(StandardCharsets.UTF_8), ex);
+      LOG.error("Failed to run task {}", request.content().toString(StandardCharsets.UTF_8), ex);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);
       if (className != null) {
         stopper.accept(className);
@@ -158,7 +161,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
 
     try {
       // Download file content to local tmp dir.
-      final File tmpFile = File.createTempFile(PREFIX, EXT);
+      File tmpFile = File.createTempFile(PREFIX, EXT);
 
       return new AbstractBodyConsumer(tmpFile) {
         @Override
@@ -186,15 +189,19 @@ public class TaskWorkerHttpHandlerInternal extends AbstractLogHttpHandler {
 
         @Override
         protected void onError(Throwable cause) {
-          tmpFile.delete();
-          LOG.info("Failed to download file to run task", className);
-          responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                               exceptionToJson(new Exception(cause)),
-                               EmptyHttpHeaders.INSTANCE);
+          try {
+            tmpFile.delete();
+            LOG.info("Failed to download file to run task {}", className);
+            responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                                 exceptionToJson(new Exception(cause)),
+                                 EmptyHttpHeaders.INSTANCE);
+          } finally {
+            stopper.accept(className);
+          }
         }
       };
     } catch (IOException e) {
-      LOG.error("Failed to download file to run task", className);
+      LOG.error("Failed to download file to run task {}", className);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(e), EmptyHttpHeaders.INSTANCE);
       stopper.accept(className);
     }

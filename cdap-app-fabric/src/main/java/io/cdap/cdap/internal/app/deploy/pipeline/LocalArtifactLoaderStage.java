@@ -30,26 +30,15 @@ import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
-import io.cdap.cdap.internal.app.deploy.LocalApplicationManager;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.metadata.MetadataValidator;
 import io.cdap.cdap.pipeline.AbstractStage;
-import io.cdap.cdap.pipeline.Context;
-import io.cdap.cdap.pipeline.Pipeline;
-import io.cdap.cdap.pipeline.Stage;
 import io.cdap.cdap.proto.id.ApplicationId;
-import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.security.StandardPermission;
-import io.cdap.cdap.security.impersonation.EntityImpersonator;
-import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import org.apache.twill.filesystem.Location;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
@@ -60,20 +49,14 @@ import java.util.concurrent.TimeUnit;
  * This stage is responsible for reading the JAR and generating an ApplicationSpecification that is forwarded to the
  * next stage of processing.
  * </p>
- * An active {@link ClassLoader} for the artifact used during deployment will be set to the {@link Context} property
- * with the key {@link LocalApplicationManager#ARTIFACT_CLASSLOADER_KEY}. It is expected a {@link
- * Pipeline#setFinally(Stage)} stage to clean it up after the pipeline execution finished.
  */
 public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
-  private static final Logger LOG = LoggerFactory.getLogger(LocalArtifactLoaderStage.class);
+
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
-  private final CConfiguration cConf;
+
   private final Store store;
-  private final ArtifactRepository artifactRepository;
-  private final Impersonator impersonator;
   private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
-  private final PluginFinder pluginFinder;
   private final CapabilityReader capabilityReader;
   private final MetadataValidator metadataValidator;
   private final ConfiguratorFactory configuratorFactory;
@@ -81,19 +64,15 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
   /**
    * Constructor with hit for handling type.
    */
-  public LocalArtifactLoaderStage(CConfiguration cConf, Store store, ArtifactRepository artifactRepository,
-                                  Impersonator impersonator, AccessEnforcer accessEnforcer,
-                                  AuthenticationContext authenticationContext, PluginFinder pluginFinder,
+  public LocalArtifactLoaderStage(CConfiguration cConf, Store store,
+                                  AccessEnforcer accessEnforcer,
+                                  AuthenticationContext authenticationContext,
                                   CapabilityReader capabilityReader,
                                   ConfiguratorFactory configuratorFactory) {
     super(TypeToken.of(AppDeploymentInfo.class));
-    this.cConf = cConf;
     this.store = store;
-    this.artifactRepository = artifactRepository;
-    this.impersonator = impersonator;
     this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
-    this.pluginFinder = pluginFinder;
     this.capabilityReader = capabilityReader;
     this.metadataValidator = new MetadataValidator(cConf);
     this.configuratorFactory = configuratorFactory;
@@ -108,16 +87,7 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
   @Override
   public void process(AppDeploymentInfo deploymentInfo) throws Exception {
 
-    ArtifactId artifactId = deploymentInfo.getArtifactId();
-    Location artifactLocation = deploymentInfo.getArtifactLocation();
     String appVersion = deploymentInfo.getApplicationVersion();
-
-    EntityImpersonator classLoaderImpersonator =
-      new EntityImpersonator(artifactId, impersonator);
-    ClassLoader artifactClassLoader = artifactRepository.createArtifactClassLoader(artifactLocation,
-                                                                                   classLoaderImpersonator);
-    getContext().setProperty(LocalApplicationManager.ARTIFACT_CLASSLOADER_KEY, artifactClassLoader);
-
     Configurator configurator = this.configuratorFactory.create(deploymentInfo);
 
     ListenableFuture<ConfigResponse> result = configurator.config();

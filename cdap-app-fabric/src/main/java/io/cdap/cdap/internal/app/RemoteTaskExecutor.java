@@ -33,6 +33,7 @@ import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
+import java.net.HttpURLConnection;
 import java.net.NoRouteToHostException;
 
 /**
@@ -71,7 +72,7 @@ public class RemoteTaskExecutor {
             String.format("Received response code %s for %s", httpResponse.getResponseCode(),
                           runnableTaskRequest.getClassName()));
         }
-        if (httpResponse.getResponseCode() != 200) {
+        if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
           BasicThrowable basicThrowable = GSON
             .fromJson(new String(httpResponse.getResponseBody()), BasicThrowable.class);
           throw createExceptionObject(basicThrowable);
@@ -85,12 +86,13 @@ public class RemoteTaskExecutor {
   }
 
   private Exception createExceptionObject(BasicThrowable basicThrowable) {
-    String exceptionMessage = String.format("Throwable %s thrown with message %s",
-                                            basicThrowable.getClassName(), basicThrowable.getMessage());
     BasicThrowable cause = basicThrowable.getCause();
     Exception causeException = cause == null ? null : createExceptionObject(cause);
-    RemoteTaskException remoteTaskException = new RemoteTaskException(exceptionMessage, causeException);
+    RemoteTaskException remoteTaskException = new RemoteTaskException(basicThrowable.getClassName(),
+                                                                      basicThrowable.getMessage(), causeException);
     remoteTaskException.setStackTrace(basicThrowable.getStackTraces());
-    return new Exception("Exception from remote task", remoteTaskException);
+
+    // Wrap the remote exception as the cause so that we retain the local stacktrace of the exception.
+    return new RemoteExecutionException(remoteTaskException);
   }
 }

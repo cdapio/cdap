@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.deploy;
 
 import com.google.common.base.Throwables;
-import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -29,6 +28,7 @@ import com.google.inject.assistedinject.Assisted;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.app.DefaultAppConfigurer;
 import io.cdap.cdap.app.DefaultApplicationContext;
 import io.cdap.cdap.app.deploy.ConfigResponse;
@@ -54,11 +54,9 @@ import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import javax.annotation.Nullable;
 
 /**
  * In Memory Configurator doesn't spawn a external process, but does this in memory.
@@ -70,7 +68,6 @@ public final class InMemoryConfigurator implements Configurator {
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
 
   private final CConfiguration cConf;
-  private final ClassLoader artifactClassLoader;
   private final String applicationName;
   private final String applicationVersion;
   private final String configString;
@@ -105,28 +102,6 @@ public final class InMemoryConfigurator implements Configurator {
     this.impersonator = impersonator;
     this.artifactRepository = artifactRepository;
     this.artifactLocation = deploymentInfo.getArtifactLocation();
-    this.artifactClassLoader = null;
-  }
-
-  public InMemoryConfigurator(CConfiguration cConf, Id.Namespace appNamespace, Id.Artifact artifactId,
-                              String appClassName, PluginFinder pluginFinder, ClassLoader artifactClassLoader,
-                              @Nullable String applicationName, @Nullable String applicationVersion,
-                              @Nullable String configString) {
-    this.cConf = cConf;
-    this.appNamespace = appNamespace;
-    this.artifactId = artifactId;
-    this.appClassName = appClassName;
-    this.artifactClassLoader = artifactClassLoader;
-    this.applicationName = applicationName;
-    this.applicationVersion = applicationVersion;
-    this.configString = configString == null ? "" : configString;
-    this.pluginFinder = pluginFinder;
-
-    this.baseUnpackDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                                  cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
-    this.artifactRepository = null;
-    this.impersonator = null;
-    this.artifactLocation = null;
   }
 
   /**
@@ -141,36 +116,25 @@ public final class InMemoryConfigurator implements Configurator {
   public ListenableFuture<ConfigResponse> config() {
 
     // Create the classloader
-    ClassLoader classLoader = artifactClassLoader;
-    if (classLoader == null) {
-      EntityImpersonator classLoaderImpersonator = new EntityImpersonator(artifactId.toEntityId(), impersonator);
-      try {
-        classLoader = artifactRepository.createArtifactClassLoader(artifactLocation, classLoaderImpersonator);
-      } catch (Exception e) {
-        return Futures.immediateFailedFuture(e);
-      }
-    }
+    EntityImpersonator classLoaderImpersonator = new EntityImpersonator(artifactId.toEntityId(), impersonator);
+    try (CloseableClassLoader classLoader = artifactRepository.createArtifactClassLoader(artifactLocation,
+                                                                                         classLoaderImpersonator)) {
+      SettableFuture<ConfigResponse> result = SettableFuture.create();
 
-    SettableFuture<ConfigResponse> result = SettableFuture.create();
-    try {
       Object appMain = classLoader.loadClass(appClassName).newInstance();
       if (!(appMain instanceof Application)) {
         throw new IllegalStateException(String.format("Application main class is of invalid type: %s",
                                                       appMain.getClass().getName()));
       }
 
-      Application app = (Application) appMain;
+      Application<?> app = (Application<?>) appMain;
       ConfigResponse response = createResponse(app, classLoader);
       result.set(response);
 
       return result;
+
     } catch (Throwable t) {
       return Futures.immediateFailedFuture(t);
-    } finally {
-      // If this class loader was not passed in then we should close it
-      if (artifactClassLoader == null && classLoader instanceof Closeable) {
-        Closeables.closeQuietly((Closeable) classLoader);
-      }
     }
   }
 

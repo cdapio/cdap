@@ -93,10 +93,8 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
     ArtifactDetail detail = GSON.fromJson(httpResponse.getResponseBodyAsString(), ARTIFACT_DETAIL_TYPE);
     Location artifactLocation =
       Locations.getLocationFromAbsolutePath(locationFactory, detail.getDescriptor().getLocationURI().getPath());
-    ArtifactDetail artifactDetail =
-      new ArtifactDetail(new ArtifactDescriptor(detail.getDescriptor().getArtifactId(), artifactLocation),
-                         detail.getMeta());
-    return artifactDetail;
+    return new ArtifactDetail(new ArtifactDescriptor(detail.getDescriptor().getArtifactId(), artifactLocation),
+                            detail.getMeta());
   }
 
   /**
@@ -142,12 +140,12 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
   @Override
   public List<ArtifactDetail> getArtifactDetails(ArtifactRange range, int limit, ArtifactSortOrder order)
     throws Exception {
-    String url = String.format("namespaces/%s/artifacts/%s/versions?lower=%s&upper=%s&limit=%s&order=%s",
+    String url = String.format("namespaces/%s/artifacts/%s/versions?lower=%s&upper=%s&limit=%d&order=%s",
                                range.getNamespace(),
                                range.getName(),
                                range.getLower().toString(),
                                range.getUpper().toString(),
-                               String.valueOf(limit),
+                               limit,
                                order.name());
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
     HttpResponse httpResponse = execute(requestBuilder.build());

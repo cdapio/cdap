@@ -33,7 +33,6 @@ import io.cdap.cdap.internal.app.deploy.pipeline.DeploymentCleanupStage;
 import io.cdap.cdap.internal.app.deploy.pipeline.LocalArtifactLoaderStage;
 import io.cdap.cdap.internal.app.deploy.pipeline.ProgramGenerationStage;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.pipeline.Pipeline;
 import io.cdap.cdap.pipeline.PipelineFactory;
@@ -61,7 +60,6 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
   private final Impersonator impersonator;
   private final AuthenticationContext authenticationContext;
   private final AccessEnforcer accessEnforcer;
-  private final PluginFinder pluginFinder;
   private final CapabilityReader capabilityReader;
   private final ConfiguratorFactory configuratorFactory;
 
@@ -71,7 +69,7 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
                             @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
                             UsageRegistry usageRegistry, ArtifactRepository artifactRepository,
                             AuthenticationContext authenticationContext, Impersonator impersonator,
-                            AccessEnforcer accessEnforcer, PluginFinder pluginFinder,
+                            AccessEnforcer accessEnforcer,
                             CapabilityReader capabilityReader,
                             ConfiguratorFactory configuratorFactory) {
     this.cConf = cConf;
@@ -85,7 +83,6 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
     this.authenticationContext = authenticationContext;
     this.ownerAdmin = ownerAdmin;
     this.accessEnforcer = accessEnforcer;
-    this.pluginFinder = pluginFinder;
     this.capabilityReader = capabilityReader;
     this.configuratorFactory = configuratorFactory;
   }
@@ -93,12 +90,11 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
   @Override
   public ListenableFuture<O> deploy(I input) throws Exception {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
-    pipeline.addLast(new LocalArtifactLoaderStage(cConf, store, artifactRepository, impersonator,
-                                                  accessEnforcer, authenticationContext, pluginFinder,
+    pipeline.addLast(new LocalArtifactLoaderStage(cConf, store, accessEnforcer, authenticationContext,
                                                   capabilityReader, configuratorFactory));
     pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework, ownerAdmin, authenticationContext));
-    pipeline.addLast(new DeployDatasetModulesStage(cConf, datasetFramework, inMemoryDatasetFramework,
-                                                   ownerAdmin, authenticationContext));
+    pipeline.addLast(new DeployDatasetModulesStage(cConf, datasetFramework, inMemoryDatasetFramework, ownerAdmin,
+                                                   authenticationContext, artifactRepository, impersonator));
     pipeline.addLast(new CreateDatasetInstancesStage(cConf, datasetFramework, ownerAdmin, authenticationContext));
     pipeline.addLast(new ProgramGenerationStage());
     pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry, ownerAdmin));

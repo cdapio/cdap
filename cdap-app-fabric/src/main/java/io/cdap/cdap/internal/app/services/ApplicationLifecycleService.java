@@ -73,9 +73,7 @@ import io.cdap.cdap.internal.profile.AdminEventPublisher;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.ApplicationDetail;
-import io.cdap.cdap.proto.DatasetDetail;
 import io.cdap.cdap.proto.PluginInstanceDetail;
-import io.cdap.cdap.proto.ProgramRecord;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
@@ -573,10 +571,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       updatedAppConfig = GSON.toJson(updateResult.getNewConfig(), configType);
     }
 
-
     // Deploy application with with potentially new app config and new artifact.
-    AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactDetail.getDescriptor(), appId.getParent(),
-                                                             appClass, appId.getApplication(),
+    AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactId, artifactDetail.getDescriptor().getLocation(),
+                                                             appId.getParent(), appClass, appId.getApplication(),
                                                              appId.getVersion(), updatedAppConfig, ownerPrincipal,
                                                              updateSchedules);
 
@@ -913,9 +910,10 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       capabilityReader.checkAllEnabled(appClass.getRequirements().getCapabilities());
     }
     // deploy application with newly added artifact
-    AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactDetail.getDescriptor(), namespaceId,
-                                                             appClass, appName, appVersion,
-                                                             configStr, ownerPrincipal, updateSchedules);
+    AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(
+      Artifacts.toProtoArtifactId(namespaceId, artifactDetail.getDescriptor().getArtifactId()),
+      artifactDetail.getDescriptor().getLocation(), namespaceId, appClass, appName,
+      appVersion, configStr, ownerPrincipal, updateSchedules);
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);
     // TODO: (CDAP-3258) Manager needs MUCH better error handling.

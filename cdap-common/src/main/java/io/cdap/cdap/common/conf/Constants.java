@@ -370,7 +370,6 @@ public final class Constants {
    * Task worker.
    */
   public static final class TaskWorker {
-    public static final String ENABLED = "task.worker.enabled";
 
     /**
      * Task worker pool configuration

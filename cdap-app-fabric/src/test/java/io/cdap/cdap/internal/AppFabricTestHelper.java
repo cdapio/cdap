@@ -312,17 +312,17 @@ public class AppFabricTestHelper {
   public static ApplicationWithPrograms deployApplicationWithManager(Id.Namespace namespace, Class<?> appClass,
                                                                      Supplier<File> folderSupplier,
                                                                      Config config) throws Exception  {
-    ensureNamespaceExists(namespace.toEntityId());
+    NamespaceId namespaceId = namespace.toEntityId();
+    ensureNamespaceExists(namespaceId);
     Location deployedJar = createAppJar(appClass, folderSupplier);
     ArtifactVersion artifactVersion = new ArtifactVersion(String.format("1.0.%d", System.currentTimeMillis()));
     ArtifactId artifactId = new ArtifactId(appClass.getSimpleName(), artifactVersion, ArtifactScope.USER);
-    ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(artifactId, deployedJar);
     ArtifactRepository artifactRepository = getInjector().getInstance(ArtifactRepository.class);
-    artifactRepository.addArtifact(Id.Artifact.fromEntityId(Artifacts.toProtoArtifactId(namespace.toEntityId(),
-                                                                                        artifactId)),
+    artifactRepository.addArtifact(Id.Artifact.fromEntityId(Artifacts.toProtoArtifactId(namespaceId, artifactId)),
                                    new File(deployedJar.toURI()));
     ApplicationClass applicationClass = new ApplicationClass(appClass.getName(), "", null);
-    AppDeploymentInfo info = new AppDeploymentInfo(artifactDescriptor, namespace.toEntityId(),
+    AppDeploymentInfo info = new AppDeploymentInfo(Artifacts.toProtoArtifactId(namespaceId, artifactId),
+                                                   deployedJar, namespaceId,
                                                    applicationClass, null, null,
                                                    config == null ? null : new Gson().toJson(config));
     return getLocalManager().deploy(info).get();
