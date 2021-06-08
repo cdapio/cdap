@@ -39,8 +39,8 @@ public class AESCipher {
   private static final String AES = "AES";
   private static final String ENCRYPTION_ALGORITHM = "AES/GCM/NoPadding";
 
-  public static final int GCM_IV_LENGTH_BYTES = 12;
-  public static final int GCM_TAG_LENGTH_BYTES = 16;
+  private static final int GCM_IV_LENGTH_BYTES = 12;
+  private static final int GCM_TAG_LENGTH_BYTES = 16;
 
   private static final String PBE_ALGORITHM = "PBKDF2WithHmacSHA256";
   private static final int PBE_ITERATION_COUNT = 65536;

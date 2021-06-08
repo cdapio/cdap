@@ -32,16 +32,28 @@ public class AESCipherTest {
   public void testEncryptionAndDecryption() throws CipherException {
     AESCipher cipher = new AESCipher();
 
-    String secret = "password for encryption";
+    String password = "password for encryption";
     byte[] plainData = generateRandomBytes(2 * 1024);
-    byte[] cipherData = cipher.encrypt(secret, plainData);
-    byte[] decryptedData = cipher.decrypt(secret, cipherData);
+    byte[] cipherData = cipher.encrypt(password, plainData);
+    byte[] decryptedData = cipher.decrypt(password, cipherData);
     Assert.assertTrue(Arrays.equals(plainData, decryptedData));
 
     String plainString = new String(generateRandomBytes(64), StandardCharsets.UTF_8);
-    cipherData = cipher.encrypt(secret, plainString.getBytes());
-    String decryptedString = new String(cipher.decrypt(secret, cipherData), StandardCharsets.UTF_8);
+    cipherData = cipher.encrypt(password, plainString.getBytes());
+    String decryptedString = new String(cipher.decrypt(password, cipherData), StandardCharsets.UTF_8);
     Assert.assertTrue(plainString.equals(decryptedString));
+  }
+
+  @Test(expected = CipherException.class)
+  public void testDecryptionException() throws CipherException {
+    AESCipher cipher = new AESCipher();
+
+    String password = "password for encryption";
+    byte[] plainData = generateRandomBytes(32);
+    byte[] cipherData = cipher.encrypt(password, plainData);
+    // Intentionally corrupt the encrypted data to cause exception.
+    cipherData[0] = 0;
+    byte[] decryptedData = cipher.decrypt(password, cipherData);
   }
 
   private byte[] generateRandomBytes(int len) {
