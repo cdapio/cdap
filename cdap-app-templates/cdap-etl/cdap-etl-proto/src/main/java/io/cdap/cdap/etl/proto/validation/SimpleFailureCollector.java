@@ -15,7 +15,7 @@
  *
  */
 
-package io.cdap.cdap.etl.validation;
+package io.cdap.cdap.etl.proto.validation;
 
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.validation.ValidationException;

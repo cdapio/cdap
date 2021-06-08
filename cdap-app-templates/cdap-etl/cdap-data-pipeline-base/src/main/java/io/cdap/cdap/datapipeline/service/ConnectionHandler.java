@@ -52,7 +52,7 @@ import io.cdap.cdap.etl.proto.connection.PluginInfo;
 import io.cdap.cdap.etl.proto.connection.SampleResponse;
 import io.cdap.cdap.etl.proto.connection.SampleResponseCodec;
 import io.cdap.cdap.etl.proto.connection.SpecGenerationRequest;
-import io.cdap.cdap.etl.validation.SimpleFailureCollector;
+import io.cdap.cdap.etl.proto.validation.SimpleFailureCollector;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.id.NamespaceId;
 
