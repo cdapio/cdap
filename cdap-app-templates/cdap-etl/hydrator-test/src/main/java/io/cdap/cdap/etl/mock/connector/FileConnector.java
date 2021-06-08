@@ -30,6 +30,7 @@ import io.cdap.cdap.etl.api.connector.BrowseDetail;
 import io.cdap.cdap.etl.api.connector.BrowseEntity;
 import io.cdap.cdap.etl.api.connector.BrowseRequest;
 import io.cdap.cdap.etl.api.connector.Connector;
+import io.cdap.cdap.etl.api.connector.ConnectorContext;
 import io.cdap.cdap.etl.api.connector.ConnectorSpec;
 import io.cdap.cdap.etl.api.connector.ConnectorSpecRequest;
 import io.cdap.cdap.etl.api.connector.PluginSpec;
@@ -63,7 +64,8 @@ public class FileConnector implements BatchConnector<LongWritable, Text> {
   );
 
   @Override
-  public InputFormatProvider getInputFormatProvider(SampleRequest request) throws IOException {
+  public InputFormatProvider getInputFormatProvider(ConnectorContext context,
+                                                    SampleRequest request) throws IOException {
     Job job = Job.getInstance();
     File file = new File(request.getPath());
     FileInputFormat.addInputPath(job, new Path(file.toURI()));
@@ -87,12 +89,12 @@ public class FileConnector implements BatchConnector<LongWritable, Text> {
   }
 
   @Override
-  public void test(FailureCollector collector) throws ValidationException {
+  public void test(ConnectorContext context) throws ValidationException {
     // no-op
   }
 
   @Override
-  public BrowseDetail browse(BrowseRequest request) throws IOException {
+  public BrowseDetail browse(ConnectorContext context, BrowseRequest request) throws IOException {
     File file = new File(request.getPath());
     // if it does not exist, error out
     if (!file.exists()) {
@@ -126,7 +128,7 @@ public class FileConnector implements BatchConnector<LongWritable, Text> {
   }
 
   @Override
-  public ConnectorSpec generateSpec(ConnectorSpecRequest connectorSpecRequest) {
+  public ConnectorSpec generateSpec(ConnectorContext context, ConnectorSpecRequest connectorSpecRequest) {
     Map<String, String> properties = ImmutableMap.of("path", connectorSpecRequest.getPath(),
                                                      "useConnection", "true",
                                                      "connection", connectorSpecRequest.getConnectionWithMacro());

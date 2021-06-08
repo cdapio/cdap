@@ -17,20 +17,10 @@
 
 package io.cdap.cdap.etl.api.connector;
 
-import io.cdap.cdap.api.data.format.StructuredRecord;
-
-import java.io.IOException;
-import java.util.List;
+import io.cdap.cdap.api.plugin.PluginConfigurer;
 
 /**
- * Connector that directly reads from the resources.
+ * Configurer for a connector
  */
-public interface DirectConnector extends Connector {
-
-  /**
-   * Directly get the sample results from the given request
-   *
-   * @param context context for the connector
-   */
-  List<StructuredRecord> sample(ConnectorContext context, SampleRequest request) throws IOException;
+public interface ConnectorConfigurer extends PluginConfigurer {
 }

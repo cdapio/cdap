@@ -17,20 +17,27 @@
 
 package io.cdap.cdap.etl.api.connector;
 
-import io.cdap.cdap.api.data.format.StructuredRecord;
-
-import java.io.IOException;
-import java.util.List;
+import io.cdap.cdap.api.plugin.PluginConfigurer;
+import io.cdap.cdap.etl.api.FailureCollector;
 
 /**
- * Connector that directly reads from the resources.
+ * Context for a connector used in each method
  */
-public interface DirectConnector extends Connector {
+public interface ConnectorContext {
 
   /**
-   * Directly get the sample results from the given request
+   * Returns a failure collector.
    *
-   * @param context context for the connector
+   * @return a failure collector
    */
-  List<StructuredRecord> sample(ConnectorContext context, SampleRequest request) throws IOException;
+  FailureCollector getFailureCollector();
+
+  /**
+   * Returns the plugin configurer.
+   * This is useful when the connector is not able to determine which plugin to use during configure time.
+   * For example, file related connectors do not know which format plugin to use without the path
+   *
+   * @return the plugin configurer
+   */
+  PluginConfigurer getPluginConfigurer();
 }

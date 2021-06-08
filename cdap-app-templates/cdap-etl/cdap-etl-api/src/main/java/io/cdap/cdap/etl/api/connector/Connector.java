@@ -17,7 +17,6 @@
 
 package io.cdap.cdap.etl.api.connector;
 
-import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.validation.ValidationException;
 
@@ -34,17 +33,17 @@ public interface Connector extends Closeable {
    * Configure this connector, for example, the database connector will need to load the jdbc driver.
    * This method is guaranteed to be called before any other method in this class.
    */
-  default void configure(PluginConfigurer configurer) {
+  default void configure(ConnectorConfigurer configurer) {
     // no-op
   }
 
   /**
    * Test if the connector is able to connect to the resource
    *
-   * @param collector a collector used to collect the failures
+   * @param context context for the connector
    * @throws ValidationException if the connector is not able to connect to the source
    */
-  void test(FailureCollector collector) throws ValidationException;
+  void test(ConnectorContext context) throws ValidationException;
 
   /**
    * Browse the resources on the given request. The browse request expects a path to represent the hierarchy of the
@@ -53,18 +52,20 @@ public interface Connector extends Closeable {
    * For example, for a file based connector, the path will just be the file/directory path
    * for a database connector, the path can be {database}/{table}
    *
+   * @param context context for the connector
    * @param request the browse request
    */
-  BrowseDetail browse(BrowseRequest request) throws IOException;
+  BrowseDetail browse(ConnectorContext context, BrowseRequest request) throws IOException;
 
   /**
    * Generate spec based on the given path, the spec should contain all the properties associated with the path.
    * For example, for bigquery, this can be a map containing "datasets": {dataset}, "table": {table}
    *
+   * @param context context for the connector
    * @param path the path of the entity
    * @return the spec which contains all the properties associated with the path
    */
-  ConnectorSpec generateSpec(ConnectorSpecRequest path) throws IOException;
+  ConnectorSpec generateSpec(ConnectorContext context, ConnectorSpecRequest path) throws IOException;
 
   @Override
   default void close() throws IOException {
