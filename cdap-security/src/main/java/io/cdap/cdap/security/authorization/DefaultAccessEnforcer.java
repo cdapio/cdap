@@ -155,7 +155,7 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
       accessControllerInstantiator.get().enforceOnParent(entityType, parentId, principal, permission);
     } finally {
       long timeTaken = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
-      String logLine = "Enforced permission {} on {} for principal {}. Time spent in enforcement was {} ms.";
+      String logLine = "Enforced permission {} on {} in {} for principal {}. Time spent in enforcement was {} ms.";
       if (timeTaken > logTimeTakenAsWarn) {
         LOG.warn(logLine, permission, entityType, parentId, principal, timeTaken);
       } else {

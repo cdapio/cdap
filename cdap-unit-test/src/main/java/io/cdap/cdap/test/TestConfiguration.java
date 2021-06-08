@@ -17,7 +17,9 @@
 package io.cdap.cdap.test;
 
 import com.google.common.base.Preconditions;
+import io.cdap.cdap.internal.AppFabricTestHelper;
 import org.junit.rules.ExternalResource;
+import org.junit.rules.TemporaryFolder;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -31,7 +33,7 @@ import java.util.Map;
  * <pre>{@code
  * class MyUnitTest extends TestBase {
  *
- *   &#64;ClassRule
+ *   @ClassRule
  *   public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", "false");
  *
  *   ....
@@ -44,6 +46,8 @@ public class TestConfiguration extends ExternalResource {
 
   public static final String PROPERTY_PREFIX = "cdap.unit.test.";
   private final Map<String, String> configs;
+  private boolean enableAuthorization;
+  private TemporaryFolder temporaryFolder;
 
   /**
    * Creates a new instance with the give list of configurations.
@@ -73,8 +77,22 @@ public class TestConfiguration extends ExternalResource {
     this.configs = new HashMap<>(configs);
   }
 
+  /**
+   * Enables authorization for this test
+   * @return this TestConfiguration
+   * @param temporaryFolder
+   */
+  public TestConfiguration enableAuthorization(TemporaryFolder temporaryFolder) {
+    this.temporaryFolder = temporaryFolder;
+    this.enableAuthorization = true;
+    return this;
+  }
+
   @Override
   protected void before() throws Throwable {
+    if (enableAuthorization) {
+      AppFabricTestHelper.enableAuthorization((k, v) -> configs.put(PROPERTY_PREFIX + k, v), temporaryFolder);
+    }
     // Use the system properties map as a mean to communicate unit-test specific CDAP configurations to the
     // TestBase class, which it will use to setup the CConfiguration.
     // All keys set into the properties are prefixed with PROPERTY_PREFIX.
