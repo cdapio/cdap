@@ -54,7 +54,6 @@ public class TaskWorkerTwillApplication implements TwillApplication {
       .add("cConf.xml", cConfFileURI)
       .add("hConf.xml", hConfFileURI)
       .apply()
-      //add sidecar container
       .add(new ArtifactLocalizerTwillRunnable("cConf.xml", "hConf.xml"),
            artifactLocalizerResourceSpec)
       .withLocalFiles()
