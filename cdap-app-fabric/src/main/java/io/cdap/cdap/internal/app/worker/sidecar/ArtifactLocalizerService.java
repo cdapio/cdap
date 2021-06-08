@@ -36,7 +36,7 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Launches an HTTP server for receiving and unpacking and caching artifacts.
+ * Launches an HTTP/HTTPS server for receiving and unpacking and caching artifacts.
  */
 public class ArtifactLocalizerService extends AbstractIdleService {
 
