@@ -207,7 +207,7 @@ public class NettyRouter extends AbstractIdleService {
           pipeline.addLast("http-status-request-handler", new HttpStatusRequestHandler());
           if (securityEnabled) {
             pipeline.addLast("access-token-authenticator",
-                             new AuthenticationHandler(cConf, discoveryServiceClient, userIdentityExtractor));
+                             new AuthenticationHandler(cConf, sConf, discoveryServiceClient, userIdentityExtractor));
           }
           if (cConf.getBoolean(Constants.Router.ROUTER_AUDIT_LOG_ENABLED)) {
             pipeline.addLast("audit-log", new AuditLogHandler());
