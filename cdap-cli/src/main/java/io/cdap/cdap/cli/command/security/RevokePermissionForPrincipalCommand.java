@@ -22,24 +22,24 @@ import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.client.AuthorizationClient;
 
 /**
- * Revokes a principal's permission to perform certain actions on an entity.
+ * Revokes a principal's permission to perform certain permissions on an entity.
  */
-public class RevokeActionForPrincipalCommand extends RevokeActionCommand {
+public class RevokePermissionForPrincipalCommand extends RevokePermissionCommand {
 
   @Inject
-  RevokeActionForPrincipalCommand(AuthorizationClient client, CLIConfig cliConfig) {
+  RevokePermissionForPrincipalCommand(AuthorizationClient client, CLIConfig cliConfig) {
     super(client, cliConfig);
   }
 
   @Override
   public String getPattern() {
-    return String.format("revoke actions <actions> on entity <%s> from <%s> <%s>", ArgumentName.ENTITY,
+    return String.format("revoke permissions <permissions> on entity <%s> from <%s> <%s>", ArgumentName.ENTITY,
                          ArgumentName.PRINCIPAL_TYPE, ArgumentName.PRINCIPAL_NAME);
   }
 
   @Override
   public String getDescription() {
-    return String.format("Revokes a principal's privileges to perform certain actions on an entity. %s %s",
-      ArgumentName.ENTITY_DESCRIPTION_ACTIONS, ArgumentName.ENTITY_DESCRIPTION_ALL_STRING);
+    return String.format("Revokes a principal's privileges to perform certain permissions on an entity. %s %s",
+      ArgumentName.ENTITY_DESCRIPTION_PERMISSIONS, ArgumentName.ENTITY_DESCRIPTION_ALL_STRING);
   }
 }

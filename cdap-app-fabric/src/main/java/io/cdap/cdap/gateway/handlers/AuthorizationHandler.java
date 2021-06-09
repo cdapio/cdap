@@ -21,6 +21,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.FeatureDisabledException;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -32,16 +33,19 @@ import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.AuthorizationRequest;
 import io.cdap.cdap.proto.security.GrantRequest;
+import io.cdap.cdap.proto.security.Permission;
+import io.cdap.cdap.proto.security.PermissionAdapterFactory;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.Privilege;
 import io.cdap.cdap.proto.security.RevokeRequest;
 import io.cdap.cdap.proto.security.Role;
-import io.cdap.cdap.security.authorization.AuthorizerInstantiator;
+import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
-import io.cdap.cdap.security.spi.authorization.Authorizer;
-import io.cdap.cdap.security.spi.authorization.PrivilegesManager;
+import io.cdap.cdap.security.spi.authorization.AccessController;
+import io.cdap.cdap.security.spi.authorization.PermissionManager;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;
@@ -52,8 +56,10 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Type;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.EnumSet;
+import java.util.Collections;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -62,7 +68,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- * Exposes {@link Authorizer} operations via HTTP.
+ * Exposes {@link AccessController} operations via HTTP.
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/security/authorization")
 public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
@@ -70,20 +76,21 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
   private static final Logger AUDIT_LOG = LoggerFactory.getLogger("authorization-access");
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
+    .registerTypeAdapterFactory(new PermissionAdapterFactory())
     .create();
   private static final Type PRIVILEGE_SET_TYPE = new TypeToken<Set<Privilege>>() { }.getType();
 
   private final boolean authenticationEnabled;
   private final boolean authorizationEnabled;
-  private final PrivilegesManager privilegesManager;
-  private final Authorizer authorizer;
+  private final PermissionManager permissionManager;
+  private final AccessController accessController;
   private final AuthenticationContext authenticationContext;
 
   @Inject
-  AuthorizationHandler(PrivilegesManager privilegesManager, AuthorizerInstantiator authorizerInstantiator,
+  AuthorizationHandler(PermissionManager permissionManager, AccessControllerInstantiator accessControllerInstantiator,
                        CConfiguration cConf, AuthenticationContext authenticationContext) {
-    this.privilegesManager = privilegesManager;
-    this.authorizer = authorizerInstantiator.get();
+    this.permissionManager = permissionManager;
+    this.accessController = accessControllerInstantiator.get();
     this.authenticationContext = authenticationContext;
     this.authenticationEnabled = cConf.getBoolean(Constants.Security.ENABLED);
     this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
@@ -92,7 +99,8 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
   @Path("/privileges/grant")
   @POST
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void grant(FullHttpRequest httpRequest, HttpResponder httpResponder) throws Exception {
+  public void grant(FullHttpRequest httpRequest, HttpResponder httpResponder) throws BadRequestException,
+    FeatureDisabledException, UnknownHostException, AccessException {
     ensureSecurityEnabled();
 
     GrantRequest request = parseBody(httpRequest, GrantRequest.class);
@@ -100,8 +108,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
       throw new BadRequestException("Missing request body");
     }
 
-    Set<Action> actions = request.getActions() == null ? EnumSet.allOf(Action.class) : request.getActions();
-    privilegesManager.grant(request.getAuthorizable(), request.getPrincipal(), actions);
+    permissionManager.grant(request.getAuthorizable(), request.getPrincipal(), getRequestPermissions(request));
 
     httpResponder.sendStatus(HttpResponseStatus.OK);
     createLogEntry(httpRequest, HttpResponseStatus.OK);
@@ -110,7 +117,8 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
   @Path("/privileges/revoke")
   @POST
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void revoke(FullHttpRequest httpRequest, HttpResponder httpResponder) throws Exception {
+  public void revoke(FullHttpRequest httpRequest, HttpResponder httpResponder) throws FeatureDisabledException,
+    BadRequestException, UnknownHostException, AccessException {
     ensureSecurityEnabled();
 
     RevokeRequest request = parseBody(httpRequest, RevokeRequest.class);
@@ -118,11 +126,10 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
       throw new BadRequestException("Missing request body");
     }
 
-    if (request.getPrincipal() == null && request.getActions() == null) {
-      privilegesManager.revoke(request.getAuthorizable());
+    if (request.getPrincipal() == null && request.getActions() == null && request.getPermissions() == null) {
+      permissionManager.revoke(request.getAuthorizable());
     } else {
-      Set<Action> actions = request.getActions() == null ? EnumSet.allOf(Action.class) : request.getActions();
-      privilegesManager.revoke(request.getAuthorizable(), request.getPrincipal(), actions);
+      permissionManager.revoke(request.getAuthorizable(), request.getPrincipal(), getRequestPermissions(request));
     }
 
     httpResponder.sendStatus(HttpResponseStatus.OK);
@@ -137,7 +144,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     ensureSecurityEnabled();
     Principal principal = new Principal(principalName, Principal.PrincipalType.valueOf(principalType.toUpperCase()));
     httpResponder.sendJson(HttpResponseStatus.OK,
-                           GSON.toJson(authorizer.listPrivileges(principal), PRIVILEGE_SET_TYPE));
+                           GSON.toJson(accessController.listGrants(principal), PRIVILEGE_SET_TYPE));
     createLogEntry(httpRequest, HttpResponseStatus.OK);
   }
 
@@ -151,7 +158,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
   public void createRole(HttpRequest httpRequest, HttpResponder httpResponder,
                          @PathParam("role-name") String roleName) throws Exception {
     ensureSecurityEnabled();
-    authorizer.createRole(new Role(roleName));
+    accessController.createRole(new Role(roleName));
     httpResponder.sendStatus(HttpResponseStatus.OK);
     createLogEntry(httpRequest, HttpResponseStatus.OK);
   }
@@ -161,7 +168,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
   public void dropRole(HttpRequest httpRequest, HttpResponder httpResponder,
                        @PathParam("role-name") String roleName) throws Exception {
     ensureSecurityEnabled();
-    authorizer.dropRole(new Role(roleName));
+    accessController.dropRole(new Role(roleName));
     httpResponder.sendStatus(HttpResponseStatus.OK);
     createLogEntry(httpRequest, HttpResponseStatus.OK);
   }
@@ -170,7 +177,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
   @GET
   public void listAllRoles(HttpRequest httpRequest, HttpResponder httpResponder) throws Exception {
     ensureSecurityEnabled();
-    httpResponder.sendJson(HttpResponseStatus.OK, GSON.toJson(authorizer.listAllRoles()));
+    httpResponder.sendJson(HttpResponseStatus.OK, GSON.toJson(accessController.listAllRoles()));
     createLogEntry(httpRequest, HttpResponseStatus.OK);
   }
 
@@ -181,7 +188,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
                         @PathParam("principal-name") String principalName) throws Exception {
     ensureSecurityEnabled();
     Principal principal = new Principal(principalName, Principal.PrincipalType.valueOf(principalType.toUpperCase()));
-    httpResponder.sendJson(HttpResponseStatus.OK, GSON.toJson(authorizer.listRoles(principal)));
+    httpResponder.sendJson(HttpResponseStatus.OK, GSON.toJson(accessController.listRoles(principal)));
     createLogEntry(httpRequest, HttpResponseStatus.OK);
   }
 
@@ -193,7 +200,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
                                  @PathParam("role-name") String roleName) throws Exception {
     ensureSecurityEnabled();
     Principal principal = new Principal(principalName, Principal.PrincipalType.valueOf(principalType.toUpperCase()));
-    authorizer.addRoleToPrincipal(new Role(roleName), principal);
+    accessController.addRoleToPrincipal(new Role(roleName), principal);
     httpResponder.sendStatus(HttpResponseStatus.OK);
     createLogEntry(httpRequest, HttpResponseStatus.OK);
   }
@@ -206,7 +213,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
                                       @PathParam("role-name") String roleName) throws Exception {
     ensureSecurityEnabled();
     Principal principal = new Principal(principalName, Principal.PrincipalType.valueOf(principalType.toUpperCase()));
-    authorizer.removeRoleFromPrincipal(new Role(roleName), principal);
+    accessController.removeRoleFromPrincipal(new Role(roleName), principal);
     httpResponder.sendStatus(HttpResponseStatus.OK);
     createLogEntry(httpRequest, HttpResponseStatus.OK);
   }
@@ -229,5 +236,14 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     logEntry.setUserName(authenticationContext.getPrincipal().getName());
     logEntry.setResponse(responseStatus.code(), 0L);
     AUDIT_LOG.trace(logEntry.toString());
+  }
+
+  private Set<? extends Permission> getRequestPermissions(AuthorizationRequest request) {
+    Set<? extends Permission> permissions = Objects.firstNonNull(request.getPermissions(), Collections.emptySet());
+    if (request.getActions() != null) {
+      permissions = Stream.concat(permissions.stream(), request.getActions().stream().map(Action::getPermission))
+        .collect(Collectors.toSet());
+    }
+    return permissions;
   }
 }

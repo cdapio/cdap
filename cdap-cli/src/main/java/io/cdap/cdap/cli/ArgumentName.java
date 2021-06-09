@@ -178,7 +178,8 @@ public enum ArgumentName {
     "'namespace:<namespace-name>'.\n" +
     "\n");
 
-  public static final String ENTITY_DESCRIPTION_ACTIONS = "'<actions>' is a comma-separated list of " +
-    "privileges, any of 'READ', 'WRITE', 'EXECUTE', or 'ADMIN'.";
+  public static final String ENTITY_DESCRIPTION_PERMISSIONS = "'<permissions>' is a comma-separated list of " +
+    "privileges, any of 'GET', 'CREATE', 'UPDATE', 'DELETE', 'LIST', 'APPLICATION.EXECUTE', 'APPLICATION.PREVIEW', " +
+    "'ACCESS.SET_OWNER' or 'ACCESS.IMPERSONATE'";
 }
 

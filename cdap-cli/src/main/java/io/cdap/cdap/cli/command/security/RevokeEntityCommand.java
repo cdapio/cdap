@@ -24,7 +24,7 @@ import io.cdap.cdap.client.AuthorizationClient;
 /**
  * Revokes all permissions for all principal on an entity
  */
-public class RevokeEntityCommand extends RevokeActionCommand {
+public class RevokeEntityCommand extends RevokePermissionCommand {
 
   @Inject
   RevokeEntityCommand(AuthorizationClient client, CLIConfig cliConfig) {

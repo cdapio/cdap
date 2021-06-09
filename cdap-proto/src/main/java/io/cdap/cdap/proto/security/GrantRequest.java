@@ -27,17 +27,17 @@ import java.util.Set;
 @Beta
 public class GrantRequest extends AuthorizationRequest {
 
-  public GrantRequest(Authorizable authorizable, Principal principal, Set<Action> actions) {
-    super(authorizable, principal, actions);
+  public GrantRequest(Authorizable authorizable, Principal principal, Set<? extends Permission> permissions) {
+    super(authorizable, principal, permissions);
     if (principal == null) {
       throw new IllegalArgumentException("principal is required");
     }
-    if (actions == null) {
-      throw new IllegalArgumentException("actions is required");
+    if (permissions == null) {
+      throw new IllegalArgumentException("permissions is required");
     }
   }
 
-  public GrantRequest(EntityId entityId, Principal principal, Set<Action> actions) {
-    this(Authorizable.fromEntityId(entityId), principal, actions);
+  public GrantRequest(EntityId entityId, Principal principal, Set<? extends Permission> permissions) {
+    this(Authorizable.fromEntityId(entityId), principal, permissions);
   }
 }

@@ -23,8 +23,8 @@ import io.cdap.cdap.cli.ArgumentName;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.util.AbstractAuthCommand;
 import io.cdap.cdap.client.AuthorizationClient;
-import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.Authorizable;
+import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.common.cli.Arguments;
 
@@ -34,12 +34,12 @@ import java.util.Set;
 /**
  * Revoke command base class
  */
-public abstract class RevokeActionCommand extends AbstractAuthCommand {
+public abstract class RevokePermissionCommand extends AbstractAuthCommand {
 
   private final AuthorizationClient client;
 
   @Inject
-  RevokeActionCommand(AuthorizationClient client, CLIConfig cliConfig) {
+  RevokePermissionCommand(AuthorizationClient client, CLIConfig cliConfig) {
     super(cliConfig);
     this.client = client;
   }
@@ -52,22 +52,26 @@ public abstract class RevokeActionCommand extends AbstractAuthCommand {
     Principal.PrincipalType principalType =
       type != null ? Principal.PrincipalType.valueOf(type.toUpperCase()) : null;
     Principal principal = type != null ? new Principal(principalName, principalType) : null;
-    String actionsString = arguments.getOptional("actions", null);
-    Set<Action> actions = actionsString == null ? null : ACTIONS_STRING_TO_SET.apply(actionsString);
+    String permissionsString = arguments.getOptional("permissions", null);
+    Set<Permission> permissions = permissionsString == null ? null : PERMISSION_STRING_TO_SET.apply(permissionsString);
 
-    client.revoke(authorizable, principal, actions);
-    if (principal == null && actions == null) {
-      // Revoked all actions for all principals on the entity
-      output.printf("Successfully revoked all actions on entity '%s' for all principals", authorizable.toString());
+    client.revoke(authorizable, principal, permissions);
+    if (principal == null && permissions == null) {
+      // Revoked all permissions for all principals on the entity
+      output.printf("Successfully revoked all permissions on entity '%s' for all principals", authorizable.toString());
     } else {
       // currently, the CLI only supports 2 scenarios:
-      // 1. both actions and principal are null - supported in the if block.
-      // 2. both actions and principal are non-null - supported here. So it should be ok to have preconditions here to
-      // enforce that both are non-null. In fact, if only one of them is null, the CLI will fail to parse the command.
-      Preconditions.checkNotNull(actions, "Actions cannot be null when principal is not null in the revoke command");
-      Preconditions.checkNotNull(principal, "Principal cannot be null when actions is not null in the revoke command");
-      output.printf("Successfully revoked action(s) '%s' on entity '%s' for %s '%s'\n",
-                    Joiner.on(",").join(actions), authorizable.toString(), principal.getType(), principal.getName());
+      // 1. both permissions and principal are null - supported in the if block.
+      // 2. both permissions and principal are non-null - supported here. So it should be ok to have preconditions here
+      // to enforce that both are non-null. In fact, if only one of them is null, the CLI will fail to parse the
+      // command.
+      Preconditions.checkNotNull(permissions,
+                                 "Permissions cannot be null when principal is not null in the revoke command");
+      Preconditions.checkNotNull(principal,
+                                 "Principal cannot be null when permissions is not null in the revoke command");
+      output.printf("Successfully revoked permission(s) '%s' on entity '%s' for %s '%s'\n",
+                    Joiner.on(",").join(permissions), authorizable.toString(),
+                    principal.getType(), principal.getName());
     }
   }
 }

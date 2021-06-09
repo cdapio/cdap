@@ -26,6 +26,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.util.RESTClient;
 import io.cdap.cdap.common.ApplicationNotFoundException;
@@ -284,7 +285,7 @@ public class ApplicationClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void delete(ApplicationId app)
-    throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
+    throws ApplicationNotFoundException, IOException, AccessException {
     String path = String.format("apps/%s/versions/%s", app.getApplication(), app.getVersion());
     HttpResponse response = restClient.execute(HttpMethod.DELETE,
                                                config.resolveNamespacedURLV3(app.getParent(), path),
@@ -300,7 +301,7 @@ public class ApplicationClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public void deleteAll(NamespaceId namespace) throws IOException, UnauthenticatedException, UnauthorizedException {
+  public void deleteAll(NamespaceId namespace) throws IOException, AccessException {
     restClient.execute(HttpMethod.DELETE, config.resolveNamespacedURLV3(namespace, "apps"), config.getAccessToken());
   }
 
@@ -312,7 +313,7 @@ public class ApplicationClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public boolean exists(ApplicationId app) throws IOException, UnauthenticatedException, UnauthorizedException {
+  public boolean exists(ApplicationId app) throws IOException, AccessException {
     HttpResponse response = restClient.execute(
       HttpMethod.GET,
       config.resolveNamespacedURLV3(app.getParent(), "apps/" + app.getApplication()),

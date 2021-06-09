@@ -21,7 +21,7 @@ import io.cdap.cdap.proto.id.Ids;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.LinkedHashSet;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -32,21 +32,20 @@ public class RevokeRequestTest {
   @Test
   public void testValidation() {
     Principal bob = new Principal("bob", Principal.PrincipalType.USER);
-    Set<Action> actions = new LinkedHashSet<>();
-    actions.add(Action.READ);
-    new RevokeRequest(Ids.namespace("foo"), bob, actions);
+    Set<Permission> permissions = Collections.singleton(StandardPermission.GET);
+    new RevokeRequest(Ids.namespace("foo"), bob, permissions);
     new RevokeRequest(Ids.namespace("foo"), bob, null);
     new RevokeRequest(Ids.namespace("foo"), null, null);
 
     try {
-      new RevokeRequest(Ids.namespace("foo"), null, actions);
+      new RevokeRequest(Ids.namespace("foo"), null, permissions);
       Assert.fail();
     } catch (IllegalArgumentException e) {
       // expected
     }
 
     try {
-      new RevokeRequest((EntityId) null, null, actions);
+      new RevokeRequest((EntityId) null, null, permissions);
       Assert.fail();
     } catch (IllegalArgumentException e) {
       // expected
