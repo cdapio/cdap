@@ -130,7 +130,8 @@ public class HubPackage {
    */
   public void installPlugin(URL url, ArtifactRepository artifactRepository, File tmpDir) throws Exception {
     // Deserialize spec.json
-    URL specURL = new URL(url, "/v2/packages/" + name + "/" + version + "/spec.json");
+    URL specURL = new URL(url.getProtocol(), url.getHost(), url.getPort(),
+                          url.getPath() + "/packages/" + name + "/" + version + "/spec.json");
     Spec spec = GSON.fromJson(HttpClients.doGetAsString(specURL), Spec.class);
     for (Spec.Action action: spec.getActions()) {
       // Get plugin jar and json names under one_step_deploy_plugin action in the spec
@@ -144,7 +145,9 @@ public class HubPackage {
         LOG.warn("Ignoring plugin {} due to missing config", name);
         continue;
       }
-      URL configURL = new URL(url, Joiner.on("/").join(Arrays.asList("/v2/packages", name, version, configFilename)));
+      URL configURL = new URL(url.getProtocol(), url.getHost(), url.getPort(),
+                              url.getPath() +
+                                Joiner.on("/").join(Arrays.asList("/packages", name, version, configFilename)));
       // Download plugin json from hub
       JsonObject jsonObj = GSON.fromJson(HttpClients.doGetAsString(configURL), JsonObject.class);
       List<String> parents = GSON.fromJson(jsonObj.get("parents"), new TypeToken<List<String>>() {
@@ -158,7 +161,9 @@ public class HubPackage {
       // Download plugin jar from hub
       File destination = File.createTempFile("artifact-", ".jar", tmpDir);
       FileChannel channel = new FileOutputStream(destination, false).getChannel();
-      URL jarURL = new URL(url, Joiner.on("/").join(Arrays.asList("/v2/packages", name, version, jarName)));
+      URL jarURL = new URL(url.getProtocol(), url.getHost(), url.getPort(),
+                           url.getPath() +
+                             Joiner.on("/").join(Arrays.asList("/packages", name, version, jarName)));
       HttpRequest request = HttpRequest.get(jarURL).withContentConsumer(new HttpContentConsumer() {
         @Override
         public boolean onReceived(ByteBuffer buffer) {

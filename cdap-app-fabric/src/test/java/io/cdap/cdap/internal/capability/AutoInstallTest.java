@@ -84,7 +84,7 @@ public class AutoInstallTest {
     Path mockPath = PowerMockito.mock(Path.class);
     Mockito.when(Paths.get(mockFile.getPath())).thenReturn(mockPath);
 
-    URL packagesUrl = new URL("https://my.hub.io/v2/packages.json");
+    URL packagesUrl = new URL("https://my.hub.io/packages.json");
     HubPackage pkg1 = new HubPackage("my-plugin", "1.0.0", "My Plugin",
                                      "My Plugin", "Cask", "Cask", "[6.1.1,6.3.0]",
                                      1554766945, true, Collections.singletonList("hydrator-plugin"),
@@ -100,7 +100,7 @@ public class AutoInstallTest {
                                      false, null);
     String packagesJson = GSON.toJson(ImmutableList.of(pkg1, pkg2, pkg3));
 
-    URL specUrl = new URL("https://my.hub.io/v2/packages/my-plugin/2.0.0/spec.json");
+    URL specUrl = new URL("https://my.hub.io/packages/my-plugin/2.0.0/spec.json");
     List<Spec.Action.Argument> arguments = Arrays.asList(
       new Spec.Action.Argument("config", "my-plugin-2.0.0.json", false),
       new Spec.Action.Argument("jar", "my-plugin-2.0.0.jar", false),
@@ -112,7 +112,7 @@ public class AutoInstallTest {
                          Collections.singletonList("hydrator-plugin"), true, Collections.singletonList(action));
     String specJson = GSON.toJson(spec);
 
-    URL configUrl = new URL("https://my.hub.io/v2/packages/my-plugin/2.0.0/my-plugin-2.0.0.json");
+    URL configUrl = new URL("https://my.hub.io/packages/my-plugin/2.0.0/my-plugin-2.0.0.json");
     Map<String, String> properties = ImmutableMap.of("key1", "value1", "key2", "value2");
     Map<String, Object> config = ImmutableMap.of("parents",
                                                  ImmutableList.of("system:cdap-data-pipeline[6.3.1,6.4.0]",
