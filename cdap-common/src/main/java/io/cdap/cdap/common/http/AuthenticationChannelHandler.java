@@ -47,6 +47,7 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
    */
   @Override
   public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+    SecurityRequestContext.reset();
     if (msg instanceof HttpRequest) {
       // TODO: authenticate the user using user id - CDAP-688
       HttpRequest request = (HttpRequest) msg;
@@ -72,8 +73,11 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
       SecurityRequestContext.setUserCredential(currentUserCredential);
       SecurityRequestContext.setUserIP(currentUserIP);
     }
-
-    ctx.fireChannelRead(msg);
+    try {
+      ctx.fireChannelRead(msg);
+    } finally {
+      SecurityRequestContext.reset();
+    }
   }
 
   @Override
