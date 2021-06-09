@@ -54,6 +54,7 @@ final class DataprocConf {
   static final String SKIP_DELETE = "skipDelete";
   static final String IMAGE_VERSION = "imageVersion";
   static final String CUSTOM_IMAGE_URI = "customImageUri";
+  static final String ENCRYPTION_KEY_NAME = "encryptionKeyName";
   static final String RUNTIME_JOB_MANAGER = "runtime.job.manager";
   // The property name for the GCE cluster meta data
   // It can be overridden by profile runtime arguments (system.profile.properties.clusterMetaData)
@@ -555,7 +556,7 @@ final class DataprocConf {
 
     String imageVersion = getString(properties, IMAGE_VERSION);
     String customImageUri = getString(properties, CUSTOM_IMAGE_URI);
-    String gcpCmekKeyName = getString(properties, "encryptionKeyName");
+    String gcpCmekKeyName = getString(properties, ENCRYPTION_KEY_NAME);
     String gcpCmekBucket = getString(properties, "gcsBucket");
 
     Map<String, String> clusterMetaData = Collections.unmodifiableMap(
