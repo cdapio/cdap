@@ -321,7 +321,7 @@ class CapabilityApplier {
       for (URL hub : Optional.ofNullable(hubs).orElse(Collections.emptyList())) {
         HubPackage[] hubPackages;
         try {
-          URL url = new URL(hub, "/v2/packages.json");
+          URL url = new URL(hub.getProtocol(), hub.getHost(), hub.getPort(), hub.getPath() + "/packages.json");
           String packagesJson = HttpClients.doGetAsString(url);
           // Deserialize packages.json from hub
           // See https://cdap.atlassian.net/wiki/spaces/DOCS/pages/554401840/Hub+API?src=search#Get-Hub-Catalog
