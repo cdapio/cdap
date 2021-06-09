@@ -1706,6 +1706,7 @@
             <redirectTestOutputToFile>${surefire.redirectTestOutputToFile}</redirectTestOutputToFile>
             <reuseForks>false</reuseForks>
             <forkCount>3</forkCount>
+            <forkedProcessTimeoutInSeconds>1800</forkedProcessTimeoutInSeconds>
             <reportFormat>plain</reportFormat>
             <trimStackTrace>false</trimStackTrace>
             <systemPropertyVariables>
