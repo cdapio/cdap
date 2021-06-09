@@ -596,12 +596,12 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     return new V1DeploymentBuilder()
       .withMetadata(metadata)
       .withNewSpec()
-        .withSelector(new V1LabelSelector().matchLabels(metadata.getLabels()))
-        .withReplicas(replicas)
-        .withNewTemplate()
-          .withMetadata(metadata)
-          .withSpec(createPodSpec(runtimeConfigLocation, runtimeSpecs))
-        .endTemplate()
+      .withSelector(new V1LabelSelector().matchLabels(metadata.getLabels()))
+      .withReplicas(replicas)
+      .withNewTemplate()
+      .withMetadata(metadata)
+      .withSpec(createPodSpec(runtimeConfigLocation, runtimeSpecs))
+      .endTemplate()
       .endSpec()
       .build();
   }
@@ -618,15 +618,15 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     return new V1StatefulSetBuilder()
       .withMetadata(metadata)
       .withNewSpec()
-        .withSelector(new V1LabelSelector().matchLabels(metadata.getLabels()))
-        .withReplicas(replicas)
-        .withPodManagementPolicy(statefulRunnable.isOrderedStart() ? "OrderedReady" : "Parallel")
-        .addAllToVolumeClaimTemplates(disks.stream().map(this::createPVC).collect(Collectors.toList()))
-        .withNewTemplate()
-          .withMetadata(metadata)
-          .withSpec(createPodSpec(runtimeConfigLocation, runtimeSpecs,
-                                  disks.stream().map(this::createDiskMount).toArray(V1VolumeMount[]::new)))
-        .endTemplate()
+      .withSelector(new V1LabelSelector().matchLabels(metadata.getLabels()))
+      .withReplicas(replicas)
+      .withPodManagementPolicy(statefulRunnable.isOrderedStart() ? "OrderedReady" : "Parallel")
+      .addAllToVolumeClaimTemplates(disks.stream().map(this::createPVC).collect(Collectors.toList()))
+      .withNewTemplate()
+      .withMetadata(metadata)
+      .withSpec(createPodSpec(runtimeConfigLocation, runtimeSpecs,
+                              disks.stream().map(this::createDiskMount).toArray(V1VolumeMount[]::new)))
+      .endTemplate()
       .endSpec()
       .build();
   }
