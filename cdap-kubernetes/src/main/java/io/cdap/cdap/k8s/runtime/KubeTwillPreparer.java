@@ -219,6 +219,10 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   /**
    * Currently, KubeTwillPreparer only supports one StatefulRunnables for a Twill application.
    * Therefore, the provided {@link StatefulDisk} applies to all the containers that correspond to Twill runnables.
+   * @param mainRunnableName name of the main {@link TwillRunnable}
+   * @param orderedStart {@code true} to start replicas one by one; {@code false} to start replicas in parallel
+   * @param disks
+   * @return
    */
   @Override
   public KubeTwillPreparer withStatefulRunnable(String runnableName, boolean orderedStart, StatefulDisk... disks) {
@@ -233,11 +237,11 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       throw new IllegalArgumentException("Each stateful disk must have unique mount path");
     }
 
-    if (statefulRunnables.entrySet().size() > 1 && !statefulRunnables.containsKey(runnableName)) {
+    if (statefulRunnables.entrySet().size() > 1 && !statefulRunnables.containsKey(mainRunnableName)) {
       throw new IllegalArgumentException("Multiple statefulRunnables for a Twill application is not supported");
     }
 
-    statefulRunnables.put(runnableName, new StatefulRunnable(orderedStart, Arrays.asList(disks)));
+    statefulRunnables.put(mainRunnableName, new StatefulRunnable(orderedStart, Arrays.asList(disks)));
     return this;
   }
 
@@ -479,10 +483,10 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       V1ObjectMeta metadata = createResourceMetadata(resourceType, mainRuntimeSpec.getName(),
                                                      timeoutUnit.toMillis(timeout));
       if (V1Deployment.class.equals(resourceType)) {
-        metadata = createDeployment(metadata, twillSpec.getRunnables().values().stream().collect(Collectors.toList()),
+        metadata = createDeployment(metadata, twillSpec.getRunnables(),
                                     runtimeConfigLocation);
       } else {
-        metadata = createStatefulSet(metadata, twillSpec.getRunnables().values().stream().collect(Collectors.toList()),
+        metadata = createStatefulSet(metadata, twillSpec.getRunnables(),
                                      runtimeConfigLocation, statefulRunnable);
       }
 
@@ -558,7 +562,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    * Deploys a {@link V1Deployment} to for runnable exeuction in Kubernetes.
    */
   private V1ObjectMeta createDeployment(V1ObjectMeta metadata,
-                                        List<RuntimeSpecification> runtimeSpecs,
+                                        Map<String, RuntimeSpecification> runtimeSpecs,
                                         Location runtimeConfigLocation) throws ApiException {
     AppsV1Api appsApi = new AppsV1Api(apiClient);
 
@@ -573,7 +577,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    * Deploys a {@link V1StatefulSet} to for runnable exeuction in Kubernetes.
    */
   private V1ObjectMeta createStatefulSet(V1ObjectMeta metadata,
-                                         List<RuntimeSpecification> runtimeSpecs,
+                                         Map<String, RuntimeSpecification> runtimeSpecs,
                                          Location runtimeConfigLocation,
                                          StatefulRunnable statefulRunnable) throws ApiException {
     AppsV1Api appsApi = new AppsV1Api(apiClient);
@@ -590,12 +594,13 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    * given {@link RuntimeSpecification}
    */
   private V1Deployment buildDeployment(V1ObjectMeta metadata,
-                                       List<RuntimeSpecification> runtimeSpecs, Location runtimeConfigLocation) {
+                                       Map<String, RuntimeSpecification> runtimeSpecs, Location runtimeConfigLocation) {
+    int replicas = getMainRuntimeSpecification(runtimeSpecs).getResourceSpecification().getInstances();
     return new V1DeploymentBuilder()
       .withMetadata(metadata)
       .withNewSpec()
         .withSelector(new V1LabelSelector().matchLabels(metadata.getLabels()))
-        .withReplicas(runtimeSpecs.iterator().next().getResourceSpecification().getInstances())
+        .withReplicas(replicas)
         .withNewTemplate()
           .withMetadata(metadata)
           .withSpec(createPodSpec(runtimeConfigLocation, runtimeSpecs))
@@ -608,7 +613,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    * Returns a {@link V1StatefulSet} object for the {@link TwillRunnable} represented by the
    * given {@link RuntimeSpecification}
    */
-  private V1StatefulSet buildStatefulSet(V1ObjectMeta metadata, List<RuntimeSpecification> runtimeSpecs,
+  private V1StatefulSet buildStatefulSet(V1ObjectMeta metadata, Map<String, RuntimeSpecification> runtimeSpecs,
                                          Location runtimeConfigLocation, StatefulRunnable statefulRunnable) {
     List<StatefulDisk> disks = statefulRunnable.getStatefulDisks();
 
@@ -773,7 +778,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    * @return a {@link V1PodSpec}
    */
   private V1PodSpec createPodSpec(Location runtimeConfigLocation,
-                                  List<RuntimeSpecification> runtimeSpecs, V1VolumeMount... extraMounts) {
+                                  Map<String, RuntimeSpecification> runtimeSpecs, V1VolumeMount... extraMounts) {
     String workDir = "/workDir-" + twillRunId.getId();
 
     V1Volume podInfoVolume = createPodInfoVolume(podInfo);
@@ -806,7 +811,8 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     // Setup the container environment. Inherit everything from the current pod.
     Map<String, String> initContainerEnvirons = podInfo.getContainerEnvironments().stream()
       .collect(Collectors.toMap(V1EnvVar::getName, V1EnvVar::getValue));
-    // Add all environments of the the main runnable for the init container.
+    // Add all environments of the first runnable which is considered the main runnable
+    // to the init container.
     if (environments.get(mainRuntimeSpec.getName()) != null) {
       initContainerEnvirons.putAll(environments.get(mainRuntimeSpec.getName()));
     }
@@ -825,7 +831,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       .addToVolumes(podInfoVolume,
                     new V1Volume().name("workdir").emptyDir(new V1EmptyDirVolumeSource()))
       .withInitContainers(createContainer("file-localizer", podInfo.getContainerImage(), workDir,
-                                          resourceRequirements, volumeMounts, initContainerEnvirons,
+                                          initContainerResourceRequirements, volumeMounts, initContainerEnvirons,
                                           FileLocalizer.class,
                                           runtimeConfigLocation.toURI().toString(),
                                           mainRuntimeSpec.getName()))
