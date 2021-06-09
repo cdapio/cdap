@@ -41,7 +41,6 @@ import java.util.concurrent.TimeUnit;
 public class ArtifactLocalizerService extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactLocalizerService.class);
-  private static final String BIND_ADDRESS = "127.0.0.1";
 
   private final DiscoveryService discoveryService;
   private final NettyHttpService httpService;
