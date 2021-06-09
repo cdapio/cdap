@@ -56,6 +56,7 @@ import io.kubernetes.client.models.V1StatefulSet;
 import io.kubernetes.client.models.V1StatefulSetBuilder;
 import io.kubernetes.client.models.V1Volume;
 import io.kubernetes.client.models.V1VolumeMount;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.Configs;
 import org.apache.twill.api.LocalFile;
@@ -219,10 +220,6 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   /**
    * Currently, KubeTwillPreparer only supports one StatefulRunnables for a Twill application.
    * Therefore, the provided {@link StatefulDisk} applies to all the containers that correspond to Twill runnables.
-   * @param mainRunnableName name of the main {@link TwillRunnable}
-   * @param orderedStart {@code true} to start replicas one by one; {@code false} to start replicas in parallel
-   * @param disks
-   * @return
    */
   @Override
   public KubeTwillPreparer withStatefulRunnable(String runnableName, boolean orderedStart, StatefulDisk... disks) {
@@ -237,11 +234,11 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       throw new IllegalArgumentException("Each stateful disk must have unique mount path");
     }
 
-    if (statefulRunnables.entrySet().size() > 1 && !statefulRunnables.containsKey(mainRunnableName)) {
+    if (statefulRunnables.entrySet().size() > 1 && !statefulRunnables.containsKey(runnableName)) {
       throw new IllegalArgumentException("Multiple statefulRunnables for a Twill application is not supported");
     }
 
-    statefulRunnables.put(mainRunnableName, new StatefulRunnable(orderedStart, Arrays.asList(disks)));
+    statefulRunnables.put(runnableName, new StatefulRunnable(orderedStart, Arrays.asList(disks)));
     return this;
   }
 
@@ -811,8 +808,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     // Setup the container environment. Inherit everything from the current pod.
     Map<String, String> initContainerEnvirons = podInfo.getContainerEnvironments().stream()
       .collect(Collectors.toMap(V1EnvVar::getName, V1EnvVar::getValue));
-    // Add all environments of the first runnable which is considered the main runnable
-    // to the init container.
+    // Add all environments of the the main runnable for the init container.
     if (environments.get(mainRuntimeSpec.getName()) != null) {
       initContainerEnvirons.putAll(environments.get(mainRuntimeSpec.getName()));
     }

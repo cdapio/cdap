@@ -28,11 +28,11 @@ public interface StatefulTwillPreparer extends DependentTwillPreparer {
   /**
    * Declares the given runnable with stateful execution.
    *
-   * @param mainRunnableName name of the {@link TwillRunnable}
+   * @param runnableName name of the {@link TwillRunnable}
    * @param orderedStart {@code true} to start replicas one by one; {@code false} to start replicas in parallel
    * @param statefulDisk an optional list of {@link StatefulDisk} available for the runnable container
    * @return this {@link TwillPreparer}
    */
-  StatefulTwillPreparer withStatefulRunnable(String mainRunnableName, boolean orderedStart,
+  StatefulTwillPreparer withStatefulRunnable(String runnableName, boolean orderedStart,
                                              StatefulDisk... statefulDisk);
 }
