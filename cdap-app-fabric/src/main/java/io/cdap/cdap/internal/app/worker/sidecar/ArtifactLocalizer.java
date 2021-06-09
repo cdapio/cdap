@@ -207,10 +207,7 @@ public class ArtifactLocalizer {
     File newLocation = getArtifactJarLocation(artifactId, newTimestamp);
 
     try (InputStream in = urlConn.getInputStream()) {
-      //      boolean mkdirs = newLocation.mkdirs();
-      //      boolean newFile = newLocation.createNewFile();
       FileUtils.copyInputStreamToFile(in, newLocation);
-      //      ByteStreams.copy(in, out);
     }
     urlConn.disconnect();
     return newLocation;
