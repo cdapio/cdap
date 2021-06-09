@@ -27,7 +27,6 @@ import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.app.worker.TaskWorkerServiceTest;
 import io.cdap.cdap.proto.id.NamespaceId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.After;
@@ -37,7 +36,6 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.Arrays;
 
 /**
@@ -59,9 +57,7 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
     CConfiguration cConf = createCConf(port);
     DiscoveryServiceClient discoveryClient = getInjector().getInstance(DiscoveryServiceClient.class);
     ArtifactLocalizerService artifactLocalizerService =
-      new ArtifactLocalizerService(cConf, new InMemoryDiscoveryService(),
-                                   new ArtifactLocalizer(discoveryClient,
-                                                         tmpFolder.newFolder()));
+      new ArtifactLocalizerService(cConf, new ArtifactLocalizer(discoveryClient, tmpFolder.newFolder().getPath()));
     // start the service
     artifactLocalizerService.startAndWait();
 
@@ -97,13 +93,13 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
     appJar.delete();
     artifactRepository.addArtifact(artifactId, appJarFile);
 
-    Location unpackedDir = client.getUnpackedArtifactLocation(artifactId.toEntityId());
+    File unpackedDir = client.getUnpackedArtifactLocation(artifactId.toEntityId());
 
     // Make sure the artifact was actually cached
     validateUnpackDir(unpackedDir);
 
     // Call the sidecar again and make sure the same path was returned
-    Location sameUnpackedDir = client.getUnpackedArtifactLocation(artifactId.toEntityId());
+    File sameUnpackedDir = client.getUnpackedArtifactLocation(artifactId.toEntityId());
     Assert.assertEquals(unpackedDir, sameUnpackedDir);
 
     // Delete and recreate the artifact to update the last modified date
@@ -113,7 +109,7 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
     Files.copy(appJarFile, newAppJarFile);
     artifactRepository.addArtifact(artifactId, newAppJarFile);
 
-    Location newUnpackDir = client.getUnpackedArtifactLocation(artifactId.toEntityId());
+    File newUnpackDir = client.getUnpackedArtifactLocation(artifactId.toEntityId());
 
     //Make sure the two paths arent the same and that the old one is gone
     Assert.assertNotEquals(unpackedDir, newUnpackDir);
@@ -121,9 +117,7 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
     Assert.assertFalse(unpackedDir.exists());
   }
 
-  private void validateUnpackDir(Location dirPath) {
-    File unpackedFile = Paths.get(dirPath.toURI()).toFile();
-
+  private void validateUnpackDir(File unpackedFile) {
     // Make sure the directory exists
     Assert.assertTrue(unpackedFile.exists());
     Assert.assertTrue(unpackedFile.isDirectory());
@@ -152,24 +146,23 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
     appJar.delete();
     artifactRepository.addArtifact(artifactId, appJarFile);
 
-    Location artifactPath = client.getArtifactLocation(artifactId.toEntityId());
+    File artifactPath = client.getArtifactLocation(artifactId.toEntityId());
 
     // Make sure the artifact was actually cached
     Assert.assertTrue(artifactPath.exists());
 
     // Call the sidecar again and make sure the same path was returned
-    Location sameArtifactPath = client.getArtifactLocation(artifactId.toEntityId());
+    File sameArtifactPath = client.getArtifactLocation(artifactId.toEntityId());
     Assert.assertEquals(artifactPath, sameArtifactPath);
 
     // Delete and recreate the artifact to update the last modified date
     artifactRepository.deleteArtifact(artifactId);
 
     // Wait a bit before recreating the artifact to make sure the last modified time is different
-        Thread.sleep(1000);
     Files.copy(appJarFile, newAppJarFile);
     artifactRepository.addArtifact(artifactId, newAppJarFile);
 
-    Location newArtifactPath = client.getArtifactLocation(artifactId.toEntityId());
+    File newArtifactPath = client.getArtifactLocation(artifactId.toEntityId());
 
     //Make sure the two paths arent the same and that the old one is gone
     Assert.assertNotEquals(artifactPath, newArtifactPath);

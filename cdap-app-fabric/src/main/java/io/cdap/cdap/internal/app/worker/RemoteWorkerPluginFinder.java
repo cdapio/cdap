@@ -17,6 +17,7 @@ package io.cdap.cdap.internal.app.worker;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.internal.app.runtime.artifact.RemotePluginFinder;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerClient;
 import io.cdap.cdap.proto.id.ArtifactId;
@@ -44,6 +45,6 @@ public class RemoteWorkerPluginFinder extends RemotePluginFinder {
   @Override
   public Location getArtifactLocation(
     ArtifactId artifactId) throws IOException, ArtifactNotFoundException, UnauthorizedException {
-    return artifactLocalizerClient.getArtifactLocation(artifactId);
+    return Locations.toLocation(artifactLocalizerClient.getArtifactLocation(artifactId));
   }
 }

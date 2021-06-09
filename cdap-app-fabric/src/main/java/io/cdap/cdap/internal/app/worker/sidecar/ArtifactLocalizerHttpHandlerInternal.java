@@ -25,8 +25,8 @@ import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.apache.twill.filesystem.Location;
 
+import java.io.File;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -53,12 +53,13 @@ public class ArtifactLocalizerHttpHandlerInternal extends AbstractHttpHandler {
                        @PathParam("artifact-name") String artifactName,
                        @PathParam("artifact-version") String artifactVersion,
                        @QueryParam("unpack") @DefaultValue("false") String unpack) throws Exception {
-    Location artifact;
+    File artifactPath;
+    ArtifactId artifactId = new ArtifactId(namespaceId, artifactName, artifactVersion);
     if (Boolean.parseBoolean(unpack)) {
-      artifact = artifactLocalizer.getAndUnpackArtifact(new ArtifactId(namespaceId, artifactName, artifactVersion));
+      artifactPath = artifactLocalizer.getAndUnpackArtifact(artifactId);
     } else {
-      artifact = artifactLocalizer.getArtifact(new ArtifactId(namespaceId, artifactName, artifactVersion));
+      artifactPath = artifactLocalizer.getArtifact(artifactId);
     }
-    responder.sendString(HttpResponseStatus.OK, artifact.toString());
+    responder.sendString(HttpResponseStatus.OK, artifactPath.toString());
   }
 }

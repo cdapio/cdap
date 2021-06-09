@@ -31,6 +31,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
@@ -94,8 +95,8 @@ public class ConfiguratorTask implements RunnableTask {
 
     @Inject
     ConfiguratorTaskRunner(Impersonator impersonator, PluginFinder pluginFinder,
-                                  ArtifactRepository artifactRepository, CConfiguration cConf,
-                                  ArtifactLocalizerClient artifactLocalizerClient) {
+                           ArtifactRepository artifactRepository, CConfiguration cConf,
+                           ArtifactLocalizerClient artifactLocalizerClient) {
       this.impersonator = impersonator;
       this.pluginFinder = pluginFinder;
       this.artifactRepository = artifactRepository;
@@ -107,7 +108,8 @@ public class ConfiguratorTask implements RunnableTask {
       // Getting the pipeline app from appfabric
       LOG.debug("Fetching artifact '{}' from app-fabric to create artifact class loader.", info.getArtifactId());
 
-      Location artifactLocation = artifactLocalizerClient.getArtifactLocation(info.getArtifactId());
+      Location artifactLocation = Locations
+        .toLocation(artifactLocalizerClient.getArtifactLocation(info.getArtifactId()));
 
       try (InputStream is = artifactRepository.newInputStream(Id.Artifact.fromEntityId(info.getArtifactId()));
            OutputStream os = artifactLocation.getOutputStream()) {

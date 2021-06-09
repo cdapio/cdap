@@ -15,9 +15,7 @@
 package io.cdap.cdap.internal.app.worker.sidecar;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
-import com.google.common.net.HttpHeaders;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.retry.RetryableException;
@@ -31,10 +29,9 @@ import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequestConfig;
+import org.apache.commons.io.FileUtils;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocalLocationFactory;
-import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
+import org.jboss.resteasy.util.HttpHeaderNames;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +39,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -53,32 +49,35 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.validation.constraints.NotNull;
 
+/**
+ * ArtifactLocalizer is responsible for fetching, caching and unpacking artifacts requested by the worker pod. The HTTP
+ * endpoints are defined in {@link ArtifactLocalizerHttpHandlerInternal}. This class will run in the sidecar container
+ * that is defined by {@link ArtifactLocalizerTwillRunnable}.
+ */
 public class ArtifactLocalizer {
 
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactLocalizer.class);
 
   // TODO: Move this directory name into a cConf property
   private static final String PD_DIR = "data/";
+  public static final String LAST_MODIFIED_HEADER = HttpHeaderNames.LAST_MODIFIED.toLowerCase();
   private final RemoteClient remoteClient;
   private final RetryStrategy retryStrategy;
-  private final LocationFactory locationFactory;
+  private String basePath;
 
   @Inject
-  public ArtifactLocalizer(DiscoveryServiceClient discoveryServiceClient, LocationFactory locationFactory) {
+  public ArtifactLocalizer(DiscoveryServiceClient discoveryServiceClient) {
     this.remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
                                          HttpRequestConfig.DEFAULT,
                                          Constants.Gateway.INTERNAL_API_VERSION_3);
-    this.locationFactory = locationFactory;
     this.retryStrategy = RetryStrategies.exponentialDelay(100, 1000, TimeUnit.MILLISECONDS);
+    this.basePath = "";
   }
 
   @VisibleForTesting
-  public ArtifactLocalizer(DiscoveryServiceClient discoveryServiceClient, File basePath) {
-    this.remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
-                                         HttpRequestConfig.DEFAULT,
-                                         Constants.Gateway.INTERNAL_API_VERSION_3);
-    locationFactory = new LocalLocationFactory(basePath);
-    this.retryStrategy = RetryStrategies.exponentialDelay(100, 1000, TimeUnit.MILLISECONDS);
+  public ArtifactLocalizer(DiscoveryServiceClient discoveryServiceClient, String basePath) {
+    this(discoveryServiceClient);
+    this.basePath = basePath;
   }
 
   /**
@@ -91,9 +90,9 @@ public class ArtifactLocalizer {
    * @throws IOException if there was an exception while fetching or caching the artifact
    * @throws Exception if there was an unexpected error
    */
-  public Location getArtifact(ArtifactId artifactId) throws Exception {
+  public File getArtifact(ArtifactId artifactId) throws Exception {
     LOG.debug("Fetching artifact info for {}", artifactId);
-    Location localLocation = getArtifactDirLocation(artifactId);
+    File localLocation = getArtifactDirLocation(artifactId);
     Long lastModifiedTimestamp = null;
     // If the local cache exists, check if we have a timestamp directory
     if (localLocation.exists()) {
@@ -120,30 +119,25 @@ public class ArtifactLocalizer {
                                artifactId.getVersion(),
                                scope);
 
-    if (lastModifiedTimestamp != null) {
-      LOG.debug("Found existing local version with timestamp {}", lastModifiedTimestamp);
-      url += String.format("&lastModified=%d", lastModifiedTimestamp);
-    }
-
     Long finalLastModifiedTimestamp = lastModifiedTimestamp;
-    String finalUrl = url;
-    Location newJarLocation = Retries
-      .callWithRetries(() -> fetchArtifact(artifactId, finalUrl, finalLastModifiedTimestamp), retryStrategy);
+    File newJarLocation = Retries
+      .callWithRetries(() -> fetchArtifact(artifactId, url, finalLastModifiedTimestamp), retryStrategy);
 
-    // If we didn't have a version that was previous cached then we're done and we can return the location
-    if (lastModifiedTimestamp == null) {
+    // If the lastModifiedTimestamp is null then there is no previous cache to delete and we can just return
+    if(lastModifiedTimestamp == null){
       return newJarLocation;
     }
 
+    // TODO (CDAP-18051): Migrate this cleanup task to its own service
     // This means we already have a jar but its out of date, we should delete the jar and the unpacked directory
-    Location oldJarLocation = getArtifactJarLocation(artifactId, lastModifiedTimestamp);
+    File oldJarLocation = getArtifactJarLocation(artifactId, lastModifiedTimestamp);
     LOG.debug("Got new location as {} with old location as {}", newJarLocation, oldJarLocation);
     if (!newJarLocation.equals(oldJarLocation)) {
-      Location oldUnpackLocation = getUnpackLocalPath(artifactId, lastModifiedTimestamp);
+      File oldUnpackLocation = getUnpackLocalPath(artifactId, lastModifiedTimestamp);
       LOG.debug("Deleting previously cached jar");
       try {
         oldJarLocation.delete();
-        oldUnpackLocation.delete(true);
+        FileUtils.deleteDirectory(oldUnpackLocation);
       } catch (IOException e) {
         //Catch and log the exception, this should not cause the operation to fail
         LOG.warn("Failed to delete old cached jar for artifact {} version {}: {}", artifactId.getArtifact(),
@@ -163,27 +157,31 @@ public class ArtifactLocalizer {
    * @throws IOException if there was an exception while fetching, caching or unpacking the artifact
    * @throws Exception if there was an unexpected error
    */
-  public Location getAndUnpackArtifact(ArtifactId artifactId) throws Exception {
+  public File getAndUnpackArtifact(ArtifactId artifactId) throws Exception {
     LOG.debug("Unpacking artifact {}", artifactId);
-    Location jarLocation = getArtifact(artifactId);
-    Location unpackDir = getUnpackLocalPath(artifactId, Long.valueOf(jarLocation.getName().split("\\.")[0]));
+    File jarLocation = getArtifact(artifactId);
+    File unpackDir = getUnpackLocalPath(artifactId, Long.valueOf(jarLocation.getName().split("\\.")[0]));
     LOG.debug("Got unpack directory as {}", unpackDir);
     if (!unpackDir.exists()) {
       LOG.debug("Unpack directory doesnt exist, creating it now");
-      BundleJarUtil.unJar(jarLocation, new File(unpackDir.toURI()));
+      BundleJarUtil.unJar(jarLocation, unpackDir);
     }
     return unpackDir;
   }
 
-  private Location fetchArtifact(ArtifactId artifactId, String url,
-                                 Long lastModifiedTimestamp) throws IOException, ArtifactNotFoundException {
+  private File fetchArtifact(ArtifactId artifactId, String url,
+                             Long lastModifiedTimestamp) throws IOException, ArtifactNotFoundException {
     HttpURLConnection urlConn = remoteClient.openConnection(HttpMethod.GET, url);
+    if (lastModifiedTimestamp != null) {
+      LOG.debug("Found existing local version with timestamp {}", lastModifiedTimestamp);
+      urlConn.setRequestProperty(HttpHeaderNames.IF_MODIFIED_SINCE, String.valueOf(lastModifiedTimestamp));
+    }
 
     if (urlConn.getResponseCode() != HttpURLConnection.HTTP_OK) {
       switch (urlConn.getResponseCode()) {
         // If we get this response that means we already have the most up to date artifact
-        case HttpURLConnection.HTTP_NO_CONTENT:
-          LOG.debug("Call to app fabric returned NO_CONTENT");
+        case HttpURLConnection.HTTP_NOT_MODIFIED:
+          LOG.debug("Call to app fabric returned NOT_MODIFIED");
           urlConn.disconnect();
           return getArtifactJarLocation(artifactId, lastModifiedTimestamp);
         case HttpURLConnection.HTTP_NOT_FOUND:
@@ -196,41 +194,42 @@ public class ArtifactLocalizer {
     }
 
     Map<String, List<String>> headers = urlConn.getHeaderFields();
-    if (!headers.containsKey(HttpHeaders.LAST_MODIFIED) || headers.get(HttpHeaders.LAST_MODIFIED).size() != 1) {
-      //Not sure how this would since this endpoint should always set the header.
+    if (!headers.containsKey(LAST_MODIFIED_HEADER) ||
+      headers.get(LAST_MODIFIED_HEADER).size() != 1) {
+      //Not sure how this would happen since this endpoint should always set the header.
       // If it does happen we should retry.
       throw new RetryableException(String
                                      .format("The response from %s did not contain the %s header.", url,
-                                             HttpHeaders.LAST_MODIFIED));
+                                             LAST_MODIFIED_HEADER));
     }
 
-    Long newTimestamp = Long.valueOf(headers.get(HttpHeaders.LAST_MODIFIED).get(0));
-    Location newLocation = getArtifactJarLocation(artifactId, newTimestamp);
-    try (InputStream in = urlConn.getInputStream();
-         OutputStream out = newLocation.getOutputStream()) {
-      ByteStreams.copy(in, out);
+    Long newTimestamp = Long.valueOf(headers.get(LAST_MODIFIED_HEADER).get(0));
+    File newLocation = getArtifactJarLocation(artifactId, newTimestamp);
+
+    try (InputStream in = urlConn.getInputStream()) {
+      //      boolean mkdirs = newLocation.mkdirs();
+      //      boolean newFile = newLocation.createNewFile();
+      FileUtils.copyInputStreamToFile(in, newLocation);
+      //      ByteStreams.copy(in, out);
     }
     urlConn.disconnect();
     return newLocation;
   }
 
-  private String getLocalPath(String basePath, ArtifactId artifactId) {
-    return Paths.get(PD_DIR, basePath, artifactId.getNamespace(), artifactId.getArtifact(),
-                     artifactId.getVersion()).toString();
+  private Path getLocalPath(String dirName, ArtifactId artifactId) {
+    return Paths.get(basePath, PD_DIR, dirName, artifactId.getNamespace(), artifactId.getArtifact(),
+                     artifactId.getVersion());
   }
 
-  private Location getArtifactDirLocation(ArtifactId artifactId) {
-    return locationFactory.create(getLocalPath("artifacts", artifactId));
+  private File getArtifactDirLocation(ArtifactId artifactId) {
+    return getLocalPath("artifacts", artifactId).toFile();
   }
 
-  private Location getArtifactJarLocation(ArtifactId artifactId, @NotNull Long lastModifiedTimestamp) {
-    Path path = Paths
-      .get(getLocalPath("artifacts", artifactId), String.format("%d.jar", lastModifiedTimestamp));
-    return locationFactory.create(path.toString());
+  private File getArtifactJarLocation(ArtifactId artifactId, @NotNull Long lastModifiedTimestamp) {
+    return getLocalPath("artifacts", artifactId).resolve(String.format("%d.jar", lastModifiedTimestamp)).toFile();
   }
 
-  private Location getUnpackLocalPath(ArtifactId artifactId, @NotNull Long lastModifiedTimestamp) {
-    Path path = Paths.get(getLocalPath("unpacked", artifactId), lastModifiedTimestamp.toString());
-    return locationFactory.create(path.toString());
+  private File getUnpackLocalPath(ArtifactId artifactId, @NotNull Long lastModifiedTimestamp) {
+    return getLocalPath("unpacked", artifactId).resolve(lastModifiedTimestamp.toString()).toFile();
   }
 }

@@ -18,17 +18,15 @@ import com.google.inject.Inject;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
-import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -39,15 +37,12 @@ public class ArtifactLocalizerClient {
 
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactLocalizerClient.class);
   private final String sidecarBaseURL;
-  private LocationFactory locationFactory;
 
   @Inject
-  ArtifactLocalizerClient(CConfiguration cConf, LocationFactory locationFactory) {
+  ArtifactLocalizerClient(CConfiguration cConf) {
     this.sidecarBaseURL = String
-      .format("http://%s:%d/%s/worker", ArtifactLocalizerService.BIND_ADDRESS,
-              cConf.getInt(Constants.ArtifactLocalizer.PORT),
+      .format("http://localhost:%d/%s/worker", cConf.getInt(Constants.ArtifactLocalizer.PORT),
               Constants.Gateway.INTERNAL_API_VERSION_3_TOKEN);
-    this.locationFactory = locationFactory;
   }
 
   /**
@@ -60,7 +55,7 @@ public class ArtifactLocalizerClient {
    * @throws IOException if there was an exception while fetching or caching the artifact
    * @throws Exception if there was an unexpected error
    */
-  public Location getArtifactLocation(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
+  public File getArtifactLocation(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
     return sendRequest(artifactId, false);
   }
 
@@ -74,11 +69,11 @@ public class ArtifactLocalizerClient {
    * @throws IOException if there was an exception while fetching, caching or unpacking the artifact
    * @throws Exception if there was an unexpected error
    */
-  public Location getUnpackedArtifactLocation(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
+  public File getUnpackedArtifactLocation(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
     return sendRequest(artifactId, true);
   }
 
-  private Location sendRequest(ArtifactId artifactId, boolean unpack) throws IOException, ArtifactNotFoundException {
+  private File sendRequest(ArtifactId artifactId, boolean unpack) throws IOException, ArtifactNotFoundException {
     String urlPath = String
       .format("/artifact/namespaces/%s/artifacts/%s/versions/%s?unpack=%b", artifactId.getNamespace(),
               artifactId.getArtifact(),
@@ -106,6 +101,7 @@ public class ArtifactLocalizerClient {
 
     String path = httpResponse.getResponseBodyAsString();
     LOG.debug("ArtifactLocalizer request returned path {}", path);
-    return Locations.getLocationFromAbsolutePath(locationFactory, path);
+
+    return new File(path);
   }
 }
