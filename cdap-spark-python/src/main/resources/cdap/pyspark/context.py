@@ -14,6 +14,9 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
+from __future__ import print_function
+from builtins import str
+from builtins import object
 import os
 from py4j.java_gateway import java_import, JavaGateway
 from threading import RLock
@@ -228,5 +231,5 @@ class SparkRuntimeContext(object):
         cls._gateway = gateway
         cls._jvm = gateway.jvm
         cls._runtimeContext = cls._jvm.SparkRuntimeContextProvider.get()
-        print "Java gateway initialized with gateway port ", gatewayPort
+        print("Java gateway initialized with gateway port ", gatewayPort)
 
