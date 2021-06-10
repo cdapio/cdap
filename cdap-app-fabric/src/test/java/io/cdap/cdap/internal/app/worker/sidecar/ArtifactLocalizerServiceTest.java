@@ -158,6 +158,9 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
     // Delete and recreate the artifact to update the last modified date
     artifactRepository.deleteArtifact(artifactId);
 
+    // This sleep is needed to delay the file copy so that the lastModified time on the file is different
+    Thread.sleep(1000);
+    
     // Wait a bit before recreating the artifact to make sure the last modified time is different
     Files.copy(appJarFile, newAppJarFile);
     artifactRepository.addArtifact(artifactId, newAppJarFile);

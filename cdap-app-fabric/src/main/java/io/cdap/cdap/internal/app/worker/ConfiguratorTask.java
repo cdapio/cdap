@@ -15,7 +15,6 @@
 package io.cdap.cdap.internal.app.worker;
 
 import com.google.common.base.Throwables;
-import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Guice;
@@ -30,7 +29,6 @@ import io.cdap.cdap.app.deploy.ConfigResponse;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
-import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
@@ -46,8 +44,6 @@ import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -110,13 +106,6 @@ public class ConfiguratorTask implements RunnableTask {
 
       Location artifactLocation = Locations
         .toLocation(artifactLocalizerClient.getArtifactLocation(info.getArtifactId()));
-
-      try (InputStream is = artifactRepository.newInputStream(Id.Artifact.fromEntityId(info.getArtifactId()));
-           OutputStream os = artifactLocation.getOutputStream()) {
-        ByteStreams.copy(is, os);
-      }
-
-      LOG.debug("Successfully fetched artifact '{}'.", info.getArtifactId());
 
       // Creates a new deployment info with the newly fetched artifact
       AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(info, artifactLocation);
