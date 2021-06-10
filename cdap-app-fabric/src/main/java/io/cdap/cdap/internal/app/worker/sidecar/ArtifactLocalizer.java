@@ -43,6 +43,11 @@ import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -53,10 +58,14 @@ import javax.validation.constraints.NotNull;
  * ArtifactLocalizer is responsible for fetching, caching and unpacking artifacts requested by the worker pod. The HTTP
  * endpoints are defined in {@link ArtifactLocalizerHttpHandlerInternal}. This class will run in the sidecar container
  * that is defined by {@link ArtifactLocalizerTwillRunnable}.
+ * <p>
+ * Artifacts will be cached using the following file structure: /PD_DIRECTORY/artifacts/<namespace>/<artifact-name>/<artifact-version>/<last-modified-timestamp>.jar
+ * Artifacts will be unpacked using the following file structure: /PD_DIRECTORY/unpacked/<namespace>/<artifact-name>/<artifact-version>/<last-modified-timestamp>/...
  */
 public class ArtifactLocalizer {
 
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactLocalizer.class);
+  private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.RFC_1123_DATE_TIME;
 
   // TODO: Move this directory name into a cConf property
   private static final String PD_DIR = "data/";
@@ -64,6 +73,9 @@ public class ArtifactLocalizer {
   private final RemoteClient remoteClient;
   private final RetryStrategy retryStrategy;
   private String basePath;
+
+
+
 
   @Inject
   public ArtifactLocalizer(DiscoveryServiceClient discoveryServiceClient) {
@@ -92,13 +104,13 @@ public class ArtifactLocalizer {
    */
   public File getArtifact(ArtifactId artifactId) throws Exception {
     LOG.debug("Fetching artifact info for {}", artifactId);
-    File localLocation = getArtifactDirLocation(artifactId);
+    File artifactDir = getArtifactDirLocation(artifactId);
     Long lastModifiedTimestamp = null;
     // If the local cache exists, check if we have a timestamp directory
-    if (localLocation.exists()) {
-      String[] fileList = Paths.get(localLocation.toURI()).toFile().list();
+    if (artifactDir.exists()) {
+      String[] fileList = artifactDir.list();
       if (fileList != null && fileList.length > 0) {
-        //Split on period to get timestamp without the .jar extension
+        // Split on period to get timestamp without the .jar extension
         lastModifiedTimestamp = Arrays.stream(fileList).map(s -> Long.valueOf(s.split("\\.")[0]))
           .max(Long::compare).get();
       }
@@ -124,7 +136,7 @@ public class ArtifactLocalizer {
       .callWithRetries(() -> fetchArtifact(artifactId, url, finalLastModifiedTimestamp), retryStrategy);
 
     // If the lastModifiedTimestamp is null then there is no previous cache to delete and we can just return
-    if(lastModifiedTimestamp == null){
+    if (lastModifiedTimestamp == null) {
       return newJarLocation;
     }
 
@@ -174,7 +186,9 @@ public class ArtifactLocalizer {
     HttpURLConnection urlConn = remoteClient.openConnection(HttpMethod.GET, url);
     if (lastModifiedTimestamp != null) {
       LOG.debug("Found existing local version with timestamp {}", lastModifiedTimestamp);
-      urlConn.setRequestProperty(HttpHeaderNames.IF_MODIFIED_SINCE, String.valueOf(lastModifiedTimestamp));
+      ZonedDateTime lastModifiedDate =
+        ZonedDateTime.ofInstant(Instant.ofEpochMilli(lastModifiedTimestamp), ZoneId.systemDefault());
+      urlConn.setRequestProperty(HttpHeaderNames.IF_MODIFIED_SINCE, lastModifiedDate.format(DATE_TIME_FORMATTER));
     }
 
     if (urlConn.getResponseCode() != HttpURLConnection.HTTP_OK) {
@@ -203,7 +217,10 @@ public class ArtifactLocalizer {
                                              LAST_MODIFIED_HEADER));
     }
 
-    Long newTimestamp = Long.valueOf(headers.get(LAST_MODIFIED_HEADER).get(0));
+    ZonedDateTime newModifiedDate = LocalDateTime
+      .parse(headers.get(LAST_MODIFIED_HEADER).get(0), DATE_TIME_FORMATTER)
+      .atZone(ZoneId.systemDefault());
+    Long newTimestamp = newModifiedDate.toInstant().toEpochMilli();
     File newLocation = getArtifactJarLocation(artifactId, newTimestamp);
 
     try (InputStream in = urlConn.getInputStream()) {

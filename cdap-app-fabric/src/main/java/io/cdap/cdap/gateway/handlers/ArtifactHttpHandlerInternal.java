@@ -17,6 +17,7 @@
 package io.cdap.cdap.gateway.handlers;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -55,12 +56,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
@@ -81,7 +85,8 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
   private final ArtifactRepository artifactRepository;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
 
-  public static final String LAST_MODIFIED_HEADER = "if-modified-since";
+  private static final String IF_MODIFIED_SINCE_HEADER = HttpHeaderNames.IF_MODIFIED_SINCE.toString();
+  private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.RFC_1123_DATE_TIME;
 
   @Inject
   @VisibleForTesting
@@ -111,20 +116,24 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("artifact-name") String artifactName,
                                @PathParam("artifact-version") String artifactVersion,
-                               @QueryParam("scope") @DefaultValue("user") String scope,
-                               @DefaultValue("0") @HeaderParam(LAST_MODIFIED_HEADER) final String lastModified) throws Exception {
+                               @QueryParam("scope") @DefaultValue("user") String scope) throws Exception {
 
     NamespaceId namespace = validateAndGetScopedNamespace(Ids.namespace(namespaceId), scope);
     ArtifactId artifactId = new ArtifactId(namespace.getNamespace(), artifactName, artifactVersion);
     ArtifactDetail artifactDetail = artifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId));
     Location location = artifactDetail.getDescriptor().getLocation();
 
+    ZonedDateTime newModifiedDate =
+      ZonedDateTime.ofInstant(Instant.ofEpochMilli(location.lastModified()), ZoneId.systemDefault());
+
     HttpHeaders headers = new DefaultHttpHeaders()
       .add(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_OCTET_STREAM)
-      .add(HttpHeaderNames.LAST_MODIFIED, location.lastModified());
+      .add(HttpHeaderNames.LAST_MODIFIED, newModifiedDate.format(DATE_TIME_FORMATTER));
 
-    if (Long.parseLong(lastModified) == location.lastModified()) {
-      responder.sendString(HttpResponseStatus.NOT_MODIFIED, "", headers);
+    String lastModified = request.headers().get(IF_MODIFIED_SINCE_HEADER);
+    if (!Strings.isNullOrEmpty(lastModified) &&
+      newModifiedDate.equals(ZonedDateTime.parse(lastModified, DATE_TIME_FORMATTER))) {
+      responder.sendStatus(HttpResponseStatus.NOT_MODIFIED, headers);
       return;
     }
 
