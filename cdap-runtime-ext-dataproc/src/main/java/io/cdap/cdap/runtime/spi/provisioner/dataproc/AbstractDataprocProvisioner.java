@@ -181,8 +181,8 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
     if (DataprocConf.CLUSTER_PROPERTIES_PATTERN.matcher(property).find()) {
       return true;
     }
-    return ImmutableSet.of(DataprocConf.RUNTIME_JOB_MANAGER, BUCKET, DataprocConf.TOKEN_ENDPOINT_KEY)
-      .contains(property);
+    return ImmutableSet.of(DataprocConf.RUNTIME_JOB_MANAGER, BUCKET, DataprocConf.TOKEN_ENDPOINT_KEY,
+                           DataprocConf.ENCRYPTION_KEY_NAME).contains(property);
   }
 
   /**
