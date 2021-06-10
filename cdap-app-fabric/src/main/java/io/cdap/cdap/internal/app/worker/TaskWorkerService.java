@@ -95,7 +95,7 @@ public class TaskWorkerService extends AbstractIdleService {
      * based on number of requests per particular class,
      * the service gets stopped.
      */
-    stopAndWait();
+    stop();
   }
 
   @VisibleForTesting
