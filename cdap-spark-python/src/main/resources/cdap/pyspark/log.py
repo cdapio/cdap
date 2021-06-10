@@ -14,6 +14,7 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
+from __future__ import print_function
 from logging import Handler
 
 __all__ = ["CDAPLogHandler"]
@@ -24,4 +25,4 @@ class CDAPLogHandler(Handler):
     Handler.__init__(self)
 
   def emit(self, event):
-    print("Event", dir(event))
+    print(("Event", dir(event)))

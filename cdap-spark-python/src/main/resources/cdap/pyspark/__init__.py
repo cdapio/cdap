@@ -14,6 +14,7 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-from context import *
+from __future__ import absolute_import
+from .context import *
 
 __all__ = ["SparkExecutionContext", "Metrics", "ServiceDiscoverer"]
