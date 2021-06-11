@@ -388,6 +388,7 @@ public final class Constants {
     public static final String CONTAINER_MEMORY_MULTIPLIER = "task.worker.container.memory.multiplier";
     public static final String CONTAINER_HEAP_RESERVED_RATIO = "task.worker.container.java.heap.memory.ratio";
     public static final String CONTAINER_PRIORITY_CLASS_NAME = "task.worker.container.priority.class.name";
+    public static final String CONTAINER_KILL_AFTER_EXECUTION = "task.worker.container.kill.after.execution";
 
     /**
      * Task worker http handler configuration

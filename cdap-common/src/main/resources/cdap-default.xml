@@ -4304,6 +4304,14 @@
   </property>
 
   <property>
+    <name>task.worker.container.kill.after.execution</name>
+    <value>true</value>
+    <description>
+      If true, kill the task worker container after it executes a request.
+    </description>
+  </property>
+
+  <property>
     <name>task.worker.bind.address</name>
     <value>0.0.0.0</value>
     <description>
