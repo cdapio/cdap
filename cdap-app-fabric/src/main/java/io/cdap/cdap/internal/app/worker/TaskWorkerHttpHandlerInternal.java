@@ -84,8 +84,13 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     this.runnableTaskLauncher = new RunnableTaskLauncher(cConf);
     this.metadataServiceEndpoint = cConf.get(Constants.TaskWorker.METADATA_SERVICE_END_POINT);
     this.stopper = s -> {
-      stopper.accept(s);
-      inflightRequests.decrementAndGet();
+      if (cConf.getBoolean(Constants.TaskWorker.CONTAINER_KILL_AFTER_EXECUTION)) {
+        if (s != null) {
+          stopper.accept(s);
+        }
+      } else {
+        inflightRequests.decrementAndGet();
+      }
     };
   }
 
@@ -109,12 +114,11 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
                             new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM));
     } catch (ClassNotFoundException | ClassCastException ex) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);
+      stopper.accept(className);
     } catch (Exception ex) {
       LOG.error("Failed to run task {}", request.content().toString(StandardCharsets.UTF_8), ex);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);
-      if (className != null) {
-        stopper.accept(className);
-      }
+      stopper.accept(className);
     }
   }
 
