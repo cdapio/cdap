@@ -19,8 +19,6 @@ package io.cdap.cdap.datapipeline.connection;
 
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.format.StructuredRecord;
-import io.cdap.cdap.api.plugin.PluginConfigurer;
-import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.batch.BatchConnector;
 import io.cdap.cdap.etl.api.connector.BrowseDetail;
 import io.cdap.cdap.etl.api.connector.BrowseRequest;
@@ -117,7 +115,7 @@ public class LimitingConnector implements DirectConnector {
   }
 
   @Override
-  public void configure(ConnectorConfigurer configurer) {
+  public void configure(ConnectorConfigurer configurer) throws IOException {
     batchConnector.configure(configurer);
   }
 
