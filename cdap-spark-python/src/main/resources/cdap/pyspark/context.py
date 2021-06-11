@@ -15,8 +15,7 @@
 # the License.
 
 from __future__ import print_function
-from builtins import str
-from builtins import object
+
 import os
 from py4j.java_gateway import java_import, JavaGateway
 from threading import RLock
