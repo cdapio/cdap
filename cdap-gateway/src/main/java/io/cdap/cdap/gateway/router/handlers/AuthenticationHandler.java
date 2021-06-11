@@ -22,8 +22,11 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.logging.AuditLogEntry;
 import io.cdap.cdap.common.utils.Networks;
+import io.cdap.cdap.security.auth.CipherException;
+import io.cdap.cdap.security.auth.TinkCipher;
 import io.cdap.cdap.security.auth.UserIdentityExtractionResponse;
 import io.cdap.cdap.security.auth.UserIdentityExtractionState;
 import io.cdap.cdap.security.auth.UserIdentityExtractor;
@@ -74,6 +77,7 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
   private static final Logger AUDIT_LOGGER = LoggerFactory.getLogger(Constants.Router.AUDIT_LOGGER_NAME);
 
   private final CConfiguration cConf;
+  private final SConfiguration sConf;
   private final String realm;
   private final Pattern bypassPattern;
   private final boolean auditLogEnabled;
@@ -81,9 +85,11 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final UserIdentityExtractor userIdentityExtractor;
 
-  public AuthenticationHandler(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient,
+  public AuthenticationHandler(CConfiguration cConf, SConfiguration sConf,
+                               DiscoveryServiceClient discoveryServiceClient,
                                UserIdentityExtractor userIdentityExtractor) {
     this.cConf = cConf;
+    this.sConf = sConf;
     this.realm = cConf.get(Constants.Security.CFG_REALM);
     this.bypassPattern = createBypassPattern(cConf);
     this.auditLogEnabled = cConf.getBoolean(Constants.Router.ROUTER_AUDIT_LOG_ENABLED);
@@ -111,7 +117,9 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
       UserIdentityPair userIdentityPair = extractionResponse.getIdentityPair();
       // User identity extraction succeeded, so set some header properties and allow the call through
       request.headers().remove(HttpHeaderNames.AUTHORIZATION);
-      String credential = userIdentityPair.getUserCredential();
+
+      String credential = getUserCredential(userIdentityPair);
+
       // For backwards compatibility, we continue propagating credentials by default. This may change in the future.
       if (cConf.getBoolean(Constants.Security.Authentication.PROPAGATE_USER_CREDENTIAL, true) &&
         credential != null) {
@@ -217,6 +225,19 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
     } finally {
       cancellable.cancel();
     }
+  }
+
+  /**
+   * Get user credential from {@link UserIdentityPair} and return it in encrypted form if enabled.
+   */
+  @Nullable
+  private String getUserCredential(UserIdentityPair userIdentityPair) throws CipherException {
+    String userCredential = userIdentityPair.getUserCredential();
+    if (userCredential == null ||
+      !sConf.getBoolean(Constants.Security.Authentication.USER_CREDENTIAL_ENCRYPTION_ENABLED, false)) {
+      return userCredential;
+    }
+    return new TinkCipher(sConf).encryptStringToBase64(userCredential, null);
   }
 
   private void addAuthServerUrls(Iterable<Discoverable> discoverables, String protocol, int port, JsonArray result) {

@@ -22,16 +22,20 @@ import com.google.inject.Singleton;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.security.auth.CipherException;
+import io.cdap.cdap.security.auth.TinkCipher;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -47,14 +51,17 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultAccessEnforcer.class);
 
+  private final SConfiguration sConf;
   private final AccessControllerInstantiator accessControllerInstantiator;
   @Nullable
   private final Principal masterUser;
   private final int logTimeTakenAsWarn;
 
   @Inject
-  DefaultAccessEnforcer(CConfiguration cConf, AccessControllerInstantiator accessControllerInstantiator) {
+  DefaultAccessEnforcer(CConfiguration cConf, SConfiguration sConf,
+                        AccessControllerInstantiator accessControllerInstantiator) {
     super(cConf);
+    this.sConf = sConf;
     this.accessControllerInstantiator = accessControllerInstantiator;
     String masterUserName = AuthorizationUtil.getEffectiveMasterUser(cConf);
     this.masterUser = masterUserName == null ? null : new Principal(masterUserName, Principal.PrincipalType.USER);
@@ -102,6 +109,8 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
       }
     }
 
+    principal = getUserPrinciple(principal);
+
     Set<? extends EntityId> difference = Sets.difference(entityIds, visibleEntities);
     LOG.trace("Checking visibility of {} for principal {}.", difference, principal);
     Set<? extends EntityId> moreVisibleEntities;
@@ -112,9 +121,9 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
       long timeTaken = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
       String logLine = "Checked visibility of {} for principal {}. Time spent in visibility check was {} ms.";
       if (timeTaken > logTimeTakenAsWarn) {
-        LOG.warn(logLine,  difference, principal, timeTaken);
+        LOG.warn(logLine, difference, principal, timeTaken);
       } else {
-        LOG.trace(logLine,  difference, principal, timeTaken);
+        LOG.trace(logLine, difference, principal, timeTaken);
       }
     }
     visibleEntities.addAll(moreVisibleEntities);
@@ -128,6 +137,9 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
     if (isAccessingSystemNSAsMasterUser(entity, principal) || isEnforcingOnSamePrincipalId(entity, principal)) {
       return;
     }
+
+    principal = getUserPrinciple(principal);
+
     LOG.trace("Enforcing permissions {} on {} for principal {}.", permissions, entity, principal);
     long startTime = System.nanoTime();
     try {
@@ -149,6 +161,9 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
     if (isAccessingSystemNSAsMasterUser(parentId, principal) || isEnforcingOnSamePrincipalId(parentId, principal)) {
       return;
     }
+
+    principal = getUserPrinciple(principal);
+
     LOG.trace("Enforcing permission {} on {} in {} for principal {}.", permission, entityType, parentId, principal);
     long startTime = System.nanoTime();
     try {
@@ -163,6 +178,28 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
       }
     }
   }
+
+  private Principal getUserPrinciple(Principal principle) throws AccessException {
+    if (principle.getCredential() == null ||
+      !sConf.getBoolean(Constants.Security.Authentication.USER_CREDENTIAL_ENCRYPTION_ENABLED, false)) {
+      return principle;
+    }
+
+    // When user credential encryption is enabled, credential should be encrypted upon arrival
+    // at router and decrypted right here before calling auth extension.
+    try {
+      String plainCredential = new String(new TinkCipher(sConf).decryptFromBase64(principle.getCredential(),
+                                                                                  null),
+                                          StandardCharsets.UTF_8);
+      return new Principal(principle.getName(),
+                           principle.getType(),
+                           principle.getKerberosPrincipal(),
+                           plainCredential);
+    } catch (CipherException e) {
+      throw new AccessException("Failed to decrypt credential in principle: " + e.getMessage(), e);
+    }
+  }
+
 
   private boolean isAccessingSystemNSAsMasterUser(EntityId entityId, Principal principal) {
     return entityId instanceof NamespacedEntityId &&

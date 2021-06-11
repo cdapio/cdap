@@ -86,6 +86,18 @@ public class TinkCipher {
   }
 
   /**
+   * Encrypt the string and return encrypted data in base64 encoded form.
+   *
+   * @param plainData data to be encrypted
+   * @param associatedData used for integrity checking during decryption.
+   * @return encrypted data in base64 encoded form
+   * @throws CipherException if encryption fails
+   */
+  public String encryptStringToBase64(String plainData, @Nullable byte[] associatedData) throws CipherException {
+    return Base64.getEncoder().encodeToString(encrypt(plainData.getBytes(), associatedData));
+  }
+
+  /**
    * Encrypt the data and return encrypted data in base64 encoded form.
    *
    * @param plainData data to be encrypted
@@ -126,6 +138,18 @@ public class TinkCipher {
    */
   public byte[] decryptFromBase64(String cipherData, byte[] associatedData) throws CipherException {
     return decrypt(Base64.getDecoder().decode(cipherData), associatedData);
+  }
+
+  /**
+   * Decrypt the cipher data that was encrypted and base-encoded from a string.
+   *
+   * @param cipherData data in base64 encoded form that needs to be decrypted
+   * @param associatedData used for integrity checking, must be the same as that used during encryption.
+   * @return decrypted data
+   * @throws CipherException if decryption fails
+   */
+  public String decryptStringFromBase64(String cipherData, byte[] associatedData) throws CipherException {
+    return new String(decrypt(Base64.getDecoder().decode(cipherData), associatedData), StandardCharsets.UTF_8);
   }
 }
 

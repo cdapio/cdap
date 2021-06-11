@@ -18,6 +18,7 @@ package io.cdap.cdap.security.authorization;
 
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -35,6 +36,7 @@ public class AuthorizationTestBase {
   @ClassRule
   public static final TemporaryFolder TEMPORARY_FOLDER = new TemporaryFolder();
   protected static final CConfiguration CCONF = CConfiguration.create();
+  protected static final SConfiguration SCONF = SConfiguration.create();
   protected static final AuthorizationContextFactory AUTH_CONTEXT_FACTORY = new NoOpAuthorizationContextFactory();
   protected static final AuthenticationContext AUTH_CONTEXT = new AuthenticationTestContext();
   protected static LocationFactory locationFactory;
