@@ -1247,6 +1247,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
+  //CDAP-18061 opened for tacking fix of this flaky test case
   @Ignore
   @Category(SlowTests.class)
   @Test
