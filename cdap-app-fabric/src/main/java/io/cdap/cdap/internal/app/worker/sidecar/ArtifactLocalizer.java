@@ -180,7 +180,13 @@ public class ArtifactLocalizer {
       // If we get this response that means we already have the most up to date artifact
       if (urlConn.getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
         LOG.debug("Call to app fabric returned NOT_MODIFIED");
-        return getArtifactJarLocation(artifactId, lastModifiedTimestamp);
+        File artifactJarLocation = getArtifactJarLocation(artifactId, lastModifiedTimestamp);
+        if (!artifactJarLocation.exists()) {
+          throw new RetryableException(
+            String.format("Locally cached artifact jar for %s is missing, this was likely caused by a race condition.",
+                          artifactId));
+        }
+        return artifactJarLocation;
       }
 
       throwIfError(urlConn, artifactId);
