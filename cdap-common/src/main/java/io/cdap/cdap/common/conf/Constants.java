@@ -129,6 +129,7 @@ public final class Constants {
     public static final String RUNTIME = "runtime";
     public static final String AUTHENTICATION = "authentication";
     public static final String TASK_WORKER = "task.worker";
+    public static final String ARTIFACT_LOCALIZER = "artifact.localizer";
 
     public static final String SERVICE_INSTANCE_TABLE_NAME = "cdap.services.instances";
     /** Scheduler queue name to submit the master service app. */
@@ -398,6 +399,25 @@ public final class Constants {
     public static final String BOSS_THREADS = "task.worker.boss.threads";
     public static final String WORKER_THREADS = "task.worker.worker.threads";
     public static final String METADATA_SERVICE_END_POINT = "task.worker.metadata.service.endpoint";
+  }
+
+  /**
+   * Artifact localizer.
+   */
+  public static final class ArtifactLocalizer {
+
+    /**
+     * Artifact localizer sidecar container configurations
+     */
+    public static final String CONTAINER_MEMORY_MB = "artifact.localizer.container.memory.mb";
+    public static final String CONTAINER_CORES = "artifact.localizer.container.num.cores";
+
+    /**
+     * Artifact localizer http handler configuration
+     */
+    public static final String PORT = "artifact.localizer.bind.port";
+    public static final String BOSS_THREADS = "artifact.localizer.boss.threads";
+    public static final String WORKER_THREADS = "artifact.localizer.worker.threads";
   }
 
   /**

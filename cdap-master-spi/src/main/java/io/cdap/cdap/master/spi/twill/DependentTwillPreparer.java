@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,19 +20,15 @@ import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunnable;
 
 /**
- * Extension interface for {@link TwillPreparer} to implement if it supports stateful execution of
- * {@link TwillRunnable}.
+ * Extension interface for {@link TwillPreparer} to specify dependent {@link TwillRunnable}.
  */
-public interface StatefulTwillPreparer extends DependentTwillPreparer {
+public interface DependentTwillPreparer extends TwillPreparer {
 
   /**
-   * Declares the given runnable with stateful execution.
-   *
-   * @param runnableName name of the {@link TwillRunnable}
-   * @param orderedStart {@code true} to start replicas one by one; {@code false} to start replicas in parallel
-   * @param statefulDisk an optional list of {@link StatefulDisk} available for the runnable container
+   * Specifies the main runnable name along with its dependent runnables that will go with it in the same pod.
+   * @param mainRunnableName name of the main {@link TwillRunnable}
+   * @param dependentRunnableName names of dependent {@link TwillRunnable}
    * @return this {@link TwillPreparer}
    */
-  StatefulTwillPreparer withStatefulRunnable(String runnableName, boolean orderedStart,
-                                             StatefulDisk... statefulDisk);
+  DependentTwillPreparer dependentRunnableNames(String mainRunnableName, String... dependentRunnableName);
 }

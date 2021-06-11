@@ -21,6 +21,8 @@ import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerTwillRunnable;
+import io.cdap.cdap.master.spi.twill.DependentTwillPreparer;
 import io.cdap.cdap.master.spi.twill.StatefulDisk;
 import io.cdap.cdap.master.spi.twill.StatefulTwillPreparer;
 import org.apache.hadoop.conf.Configuration;
@@ -131,20 +133,34 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
             hConf.writeXml(writer);
           }
 
-          ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
+          ResourceSpecification taskworkerResourceSpec = ResourceSpecification.Builder.with()
             .setVirtualCores(cConf.getInt(Constants.TaskWorker.CONTAINER_CORES))
             .setMemory(cConf.getInt(Constants.TaskWorker.CONTAINER_MEMORY_MB), ResourceSpecification.SizeUnit.MEGA)
             .setInstances(cConf.getInt(Constants.TaskWorker.CONTAINER_COUNT))
             .build();
 
-          LOG.info("Starting TaskWorker pool with {} instances", resourceSpec.getInstances());
+          ResourceSpecification artifactLocalizerResourceSpec = ResourceSpecification.Builder.with()
+            .setVirtualCores(cConf.getInt(Constants.ArtifactLocalizer.CONTAINER_CORES))
+            .setMemory(cConf.getInt(Constants.ArtifactLocalizer.CONTAINER_MEMORY_MB),
+                       ResourceSpecification.SizeUnit.MEGA)
+            .setInstances(cConf.getInt(Constants.TaskWorker.CONTAINER_COUNT))
+            .build();
 
-          TwillPreparer twillPreparer = twillRunner.prepare(new TaskWorkerTwillApplication(cConfPath.toUri(),
-                                                                                           hConfPath.toUri(),
-                                                                                           resourceSpec));
+          LOG.info("Starting TaskWorker pool with {} instances", taskworkerResourceSpec.getInstances());
+
+          TwillPreparer twillPreparer = twillRunner.prepare(
+            new TaskWorkerTwillApplication(cConfPath.toUri(), hConfPath.toUri(), taskworkerResourceSpec,
+                                           artifactLocalizerResourceSpec));
+
           String priorityClass = cConf.get(Constants.TaskWorker.CONTAINER_PRIORITY_CLASS_NAME);
           if (priorityClass != null) {
             twillPreparer = twillPreparer.setSchedulerQueue(priorityClass);
+          }
+
+          if (twillPreparer instanceof DependentTwillPreparer) {
+            twillPreparer = ((DependentTwillPreparer) twillPreparer)
+              .dependentRunnableNames(TaskWorkerTwillRunnable.class.getSimpleName(),
+                                      ArtifactLocalizerTwillRunnable.class.getSimpleName());
           }
 
           if (twillPreparer instanceof StatefulTwillPreparer) {
