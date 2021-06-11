@@ -673,6 +673,7 @@ public class AutoJoinerTest extends HydratorTestBase {
     String output = UUID.randomUUID().toString();
     String sqlEnginePlugin = UUID.randomUUID().toString();
     ETLBatchConfig config = ETLBatchConfig.builder()
+      .setPushdownEnabled(true)
       .setTransformationPushdown(
         new ETLTransformationPushdown(MockSQLEngine.getPlugin(sqlEnginePlugin,
                                                               joinInputDir.getAbsolutePath(),

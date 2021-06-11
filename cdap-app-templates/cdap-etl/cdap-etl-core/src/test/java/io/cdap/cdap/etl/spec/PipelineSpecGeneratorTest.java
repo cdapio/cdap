@@ -874,6 +874,7 @@ public class PipelineSpecGeneratorTest {
     ETLBatchConfig config = ETLBatchConfig.builder()
       .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("action", MOCK_ACTION))
+      .setPushdownEnabled(true)
       .setTransformationPushdown(new ETLTransformationPushdown(MOCK_SQL_ENGINE))
       .build();
     PipelineSpec actual = specGenerator.generateSpec(config);
@@ -889,6 +890,54 @@ public class PipelineSpecGeneratorTest {
       .setSqlEngineStageSpec(
         StageSpec.builder("sqlengine_mocksqlengine",
                           new PluginSpec(BatchSQLEngine.PLUGIN_TYPE, "mocksqlengine", emptyMap, ARTIFACT_ID)).build())
+      .build();
+
+    Assert.assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testSQLEngineNotEnabled() throws ValidationException {
+    ETLBatchConfig config = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
+      .addStage(new ETLStage("action", MOCK_ACTION))
+      .setPushdownEnabled(false)
+      .setTransformationPushdown(new ETLTransformationPushdown(MOCK_SQL_ENGINE))
+      .build();
+    PipelineSpec actual = specGenerator.generateSpec(config);
+
+    Map<String, String> emptyMap = ImmutableMap.of();
+    PipelineSpec expected = BatchPipelineSpec.builder()
+      .addStage(
+        StageSpec.builder("action", new PluginSpec(Action.PLUGIN_TYPE, "mockaction", emptyMap, ARTIFACT_ID)).build())
+      .setResources(config.getResources())
+      .setDriverResources(config.getDriverResources())
+      .setClientResources(config.getClientResources())
+      .setStageLoggingEnabled(config.isStageLoggingEnabled())
+      .setSqlEngineStageSpec(null)
+      .build();
+
+    Assert.assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testSQLEngineEnabledButNotConfigured() throws ValidationException {
+    ETLBatchConfig config = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
+      .addStage(new ETLStage("action", MOCK_ACTION))
+      .setPushdownEnabled(true)
+      .setTransformationPushdown(null)
+      .build();
+    PipelineSpec actual = specGenerator.generateSpec(config);
+
+    Map<String, String> emptyMap = ImmutableMap.of();
+    PipelineSpec expected = BatchPipelineSpec.builder()
+      .addStage(
+        StageSpec.builder("action", new PluginSpec(Action.PLUGIN_TYPE, "mockaction", emptyMap, ARTIFACT_ID)).build())
+      .setResources(config.getResources())
+      .setDriverResources(config.getDriverResources())
+      .setClientResources(config.getClientResources())
+      .setStageLoggingEnabled(config.isStageLoggingEnabled())
+      .setSqlEngineStageSpec(null)
       .build();
 
     Assert.assertEquals(expected, actual);
