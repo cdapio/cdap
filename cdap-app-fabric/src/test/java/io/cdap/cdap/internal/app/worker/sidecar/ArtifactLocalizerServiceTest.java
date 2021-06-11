@@ -21,6 +21,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.service.RetryStrategyType;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
@@ -50,14 +51,23 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
     cConf.set(Constants.TaskWorker.ADDRESS, "localhost");
     cConf.setInt(Constants.TaskWorker.PORT, port);
     cConf.setBoolean(Constants.Security.SSL.INTERNAL_ENABLED, false);
+
+    String prefix = "task.worker.";
+    cConf.set(prefix + Constants.Retry.TYPE, RetryStrategyType.FIXED_DELAY.toString());
+    cConf.set(prefix + Constants.Retry.MAX_RETRIES, "100");
+    cConf.set(prefix + Constants.Retry.MAX_TIME_SECS, "10");
+    cConf.set(prefix + Constants.Retry.DELAY_BASE_MS, "200");
     return cConf;
   }
 
   private ArtifactLocalizerService setupFileLocalizerService(int port) throws IOException {
     CConfiguration cConf = createCConf(port);
+
     DiscoveryServiceClient discoveryClient = getInjector().getInstance(DiscoveryServiceClient.class);
+    String tempFolderPath = tmpFolder.newFolder().getPath();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, "");
     ArtifactLocalizerService artifactLocalizerService =
-      new ArtifactLocalizerService(cConf, new ArtifactLocalizer(discoveryClient, tmpFolder.newFolder().getPath()));
+      new ArtifactLocalizerService(cConf, new ArtifactLocalizer(cConf, discoveryClient, tempFolderPath));
     // start the service
     artifactLocalizerService.startAndWait();
 
@@ -160,7 +170,7 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
 
     // This sleep is needed to delay the file copy so that the lastModified time on the file is different
     Thread.sleep(1000);
-    
+
     // Wait a bit before recreating the artifact to make sure the last modified time is different
     Files.copy(appJarFile, newAppJarFile);
     artifactRepository.addArtifact(artifactId, newAppJarFile);

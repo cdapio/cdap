@@ -29,6 +29,11 @@ import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 
+/**
+ * RemoteWorkerPluginFinder is an extension of {@link RemotePluginFinder} that is meant to be used exclusively in tasks
+ * running in the {@link TaskWorkerTwillRunnable}. This implementation uses the {@link ArtifactLocalizerClient} to
+ * download and cache the given artifact on the local file system.
+ */
 public class RemoteWorkerPluginFinder extends RemotePluginFinder {
   private final ArtifactLocalizerClient artifactLocalizerClient;
 

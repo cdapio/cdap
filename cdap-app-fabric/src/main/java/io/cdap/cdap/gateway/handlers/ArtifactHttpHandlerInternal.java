@@ -85,7 +85,6 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
   private final ArtifactRepository artifactRepository;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
 
-  private static final String IF_MODIFIED_SINCE_HEADER = HttpHeaderNames.IF_MODIFIED_SINCE.toString();
   private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.RFC_1123_DATE_TIME;
 
   @Inject
@@ -124,13 +123,13 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
     Location location = artifactDetail.getDescriptor().getLocation();
 
     ZonedDateTime newModifiedDate =
-      ZonedDateTime.ofInstant(Instant.ofEpochMilli(location.lastModified()), ZoneId.systemDefault());
+      ZonedDateTime.ofInstant(Instant.ofEpochMilli(location.lastModified()), ZoneId.of("GMT"));
 
     HttpHeaders headers = new DefaultHttpHeaders()
       .add(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_OCTET_STREAM)
       .add(HttpHeaderNames.LAST_MODIFIED, newModifiedDate.format(DATE_TIME_FORMATTER));
 
-    String lastModified = request.headers().get(IF_MODIFIED_SINCE_HEADER);
+    String lastModified = request.headers().get(HttpHeaderNames.IF_MODIFIED_SINCE);
     if (!Strings.isNullOrEmpty(lastModified) &&
       newModifiedDate.equals(ZonedDateTime.parse(lastModified, DATE_TIME_FORMATTER))) {
       responder.sendStatus(HttpResponseStatus.NOT_MODIFIED, headers);

@@ -21,16 +21,20 @@ import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequestConfig;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.resteasy.util.HttpHeaderNames;
 import org.slf4j.Logger;
@@ -42,19 +46,18 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
 
 /**
  * ArtifactLocalizer is responsible for fetching, caching and unpacking artifacts requested by the worker pod. The HTTP
@@ -62,32 +65,32 @@ import javax.validation.constraints.NotNull;
  * that is defined by {@link ArtifactLocalizerTwillRunnable}.
  * <p>
  * Artifacts will be cached using the following file structure: /PD_DIRECTORY/artifacts/<namespace>/<artifact-name>/<artifact-version>/<last-modified-timestamp>.jar
+ * <p>
  * Artifacts will be unpacked using the following file structure: /PD_DIRECTORY/unpacked/<namespace>/<artifact-name>/<artifact-version>/<last-modified-timestamp>/...
  */
 public class ArtifactLocalizer {
 
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactLocalizer.class);
   private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.RFC_1123_DATE_TIME;
-
   // TODO: Move this directory name into a cConf property
   private static final String PD_DIR = "data/";
-  public static final String LAST_MODIFIED_HEADER = HttpHeaderNames.LAST_MODIFIED.toLowerCase();
+  private static final String LAST_MODIFIED_HEADER = HttpHeaderNames.LAST_MODIFIED.toLowerCase();
+
   private final RemoteClient remoteClient;
   private final RetryStrategy retryStrategy;
-  private String basePath;
+  private final String basePath;
 
   @Inject
-  public ArtifactLocalizer(DiscoveryServiceClient discoveryServiceClient) {
-    this.remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
-                                         HttpRequestConfig.DEFAULT,
-                                         Constants.Gateway.INTERNAL_API_VERSION_3);
-    this.retryStrategy = RetryStrategies.exponentialDelay(100, 1000, TimeUnit.MILLISECONDS);
-    this.basePath = "";
+  ArtifactLocalizer(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient) {
+    this(cConf, discoveryServiceClient, "");
   }
 
   @VisibleForTesting
-  public ArtifactLocalizer(DiscoveryServiceClient discoveryServiceClient, String basePath) {
-    this(discoveryServiceClient);
+  public ArtifactLocalizer(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient, String basePath) {
+    this.remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
+                                         HttpRequestConfig.DEFAULT,
+                                         Constants.Gateway.INTERNAL_API_VERSION_3);
+    this.retryStrategy = RetryStrategies.fromConfiguration(cConf, Constants.Service.TASK_WORKER + ".");
     this.basePath = basePath;
   }
 
@@ -106,7 +109,7 @@ public class ArtifactLocalizer {
     Long lastModifiedTimestamp = getCurrentLastModifiedTimestamp(artifactId);
 
     File newJarLocation = Retries
-      .callWithRetries(() -> fetchArtifact(artifactId, getURL(artifactId), lastModifiedTimestamp), retryStrategy);
+      .callWithRetries(() -> fetchArtifact(artifactId, lastModifiedTimestamp), retryStrategy);
 
     // If the lastModifiedTimestamp is not null then we might need to delete the old cache.
     if (lastModifiedTimestamp != null) {
@@ -142,14 +145,30 @@ public class ArtifactLocalizer {
    * fetchArtifact attempts to connect to app fabric to download the given artifact. This method will throw {@link
    * RetryableException} in certain circumstances so using this with the
    */
-  private File fetchArtifact(ArtifactId artifactId, String url,
-                             Long lastModifiedTimestamp) throws IOException, ArtifactNotFoundException {
+  private File fetchArtifact(ArtifactId artifactId,
+                             @Nullable Long lastModifiedTimestamp) throws IOException, ArtifactNotFoundException {
+
+    String namespaceId = artifactId.getNamespace();
+    ArtifactScope scope = ArtifactScope.USER;
+    // Cant use 'system' as the namespace in the request because that generates an error, the namespace doesnt matter
+    // as long as it exists. Using default because it will always be there
+    if (ArtifactScope.SYSTEM.toString().equalsIgnoreCase(namespaceId)) {
+      namespaceId = NamespaceId.DEFAULT.getEntityName();
+      scope = ArtifactScope.SYSTEM;
+    }
+
+    String url = String.format("namespaces/%s/artifacts/%s/versions/%s/download?scope=%s",
+                               namespaceId,
+                               artifactId.getArtifact(),
+                               artifactId.getVersion(),
+                               scope);
+
     HttpURLConnection urlConn = remoteClient.openConnection(HttpMethod.GET, url);
     if (lastModifiedTimestamp != null) {
-      LOG.debug("Found existing local version with timestamp {}", lastModifiedTimestamp);
+      LOG.debug("Found existing local version for {} with timestamp {}", artifactId, lastModifiedTimestamp);
 
       ZonedDateTime lastModifiedDate = ZonedDateTime
-        .ofInstant(Instant.ofEpochMilli(lastModifiedTimestamp), ZoneId.systemDefault());
+        .ofInstant(Instant.ofEpochMilli(lastModifiedTimestamp), ZoneId.of("GMT"));
       urlConn.setRequestProperty(HttpHeaderNames.IF_MODIFIED_SINCE, lastModifiedDate.format(DATE_TIME_FORMATTER));
     }
 
@@ -163,33 +182,26 @@ public class ArtifactLocalizer {
       throwIfError(urlConn, artifactId);
 
       ZonedDateTime newModifiedDate = getLastModifiedHeader(urlConn);
-      Long newTimestamp = newModifiedDate.toInstant().toEpochMilli();
+      long newTimestamp = newModifiedDate.toInstant().toEpochMilli();
       File newLocation = getArtifactJarLocation(artifactId, newTimestamp);
+      DirUtils.mkdirs(newLocation.getParentFile());
 
+      // Download the artifact to a temporary file then atomically rename it to the final name to avoid race conditions with
+      // multiple threads.
+      File tempFile = Files.createTempFile(newLocation.getParentFile().toPath(), String.valueOf(newTimestamp), ".jar")
+        .toFile();
       try (InputStream in = urlConn.getInputStream()) {
-        FileUtils.copyInputStreamToFile(in, newLocation);
+        FileUtils.copyInputStreamToFile(in, tempFile);
+        Files.move(tempFile.toPath(), newLocation.toPath(), StandardCopyOption.ATOMIC_MOVE,
+                   StandardCopyOption.REPLACE_EXISTING);
+      } finally {
+        tempFile.delete();
       }
+
       return newLocation;
     } finally {
       urlConn.disconnect();
     }
-  }
-
-  private String getURL(ArtifactId artifactId) {
-    String namespaceId = artifactId.getNamespace();
-    ArtifactScope scope = ArtifactScope.USER;
-    // Cant use 'system' as the namespace in the request because that generates an error, the namespace doesnt matter
-    // as long as it exists. Using default because it will always be there
-    if (ArtifactScope.SYSTEM.toString().equalsIgnoreCase(namespaceId)) {
-      namespaceId = "default";
-      scope = ArtifactScope.SYSTEM;
-    }
-
-    return String.format("namespaces/%s/artifacts/%s/versions/%s/download?scope=%s",
-                         namespaceId,
-                         artifactId.getArtifact(),
-                         artifactId.getVersion(),
-                         scope);
   }
 
   /**
@@ -200,16 +212,13 @@ public class ArtifactLocalizer {
   private Long getCurrentLastModifiedTimestamp(ArtifactId artifactId) {
     File artifactDir = getArtifactDirLocation(artifactId);
 
-    // If the local cache exists, check if we have a timestamp directory
-    if (artifactDir.exists()) {
-      String[] fileList = artifactDir.list();
-      if (fileList != null && fileList.length > 0) {
-        // Split on period to get timestamp without the .jar extension (see full filepath in class JavaDoc)
-        return Arrays.stream(fileList).map(s -> Long.valueOf(s.split("\\.")[0]))
-          .max(Long::compare).get();
-      }
-    }
-    return null;
+    // Check if we have cached jars in the artifact directory, if so return the latest modified timestamp.
+    return DirUtils.listFiles(artifactDir, File::isFile).stream()
+      .map(File::getName)
+      .map(FilenameUtils::removeExtension)
+      .map(Long::valueOf)
+      .max(Long::compare)
+      .orElse(null);
   }
 
   /**
@@ -239,9 +248,14 @@ public class ArtifactLocalizer {
    */
   private ZonedDateTime getLastModifiedHeader(HttpURLConnection urlConn) {
     Map<String, List<String>> headers = urlConn.getHeaderFields();
-    if (!headers.containsKey(LAST_MODIFIED_HEADER) ||
-      headers.get(LAST_MODIFIED_HEADER).size() != 1) {
-      //Not sure how this would happen since this endpoint should always set the header.
+    List<String> lastModifiedHeader = headers.entrySet().stream()
+      .filter(headerEntry -> LAST_MODIFIED_HEADER.equalsIgnoreCase(headerEntry.getKey()))
+      .map(Map.Entry::getValue)
+      .findFirst()
+      .orElse(null);
+
+    if (lastModifiedHeader == null || lastModifiedHeader.size() != 1) {
+      // This should never happen since this endpoint should always set the header.
       // If it does happen we should retry.
       throw new RetryableException(String.format("The response from %s did not contain the %s header.",
                                                  urlConn.getURL(), LAST_MODIFIED_HEADER));
@@ -249,7 +263,7 @@ public class ArtifactLocalizer {
 
     return LocalDateTime
       .parse(headers.get(LAST_MODIFIED_HEADER).get(0), DATE_TIME_FORMATTER)
-      .atZone(ZoneId.systemDefault());
+      .atZone(ZoneId.of("GMT"));
   }
 
   /**
@@ -290,7 +304,7 @@ public class ArtifactLocalizer {
    * Returns a {@link File} representing the cached jar for the given artifact and timestamp. The file path is:
    * /PD_DIRECTORY/artifacts/<namespace>/<artifact-name>/<artifact-version>/<last-modified-timestamp>.jar
    */
-  private File getArtifactJarLocation(ArtifactId artifactId, @NotNull Long lastModifiedTimestamp) {
+  private File getArtifactJarLocation(ArtifactId artifactId, long lastModifiedTimestamp) {
     return getLocalPath("artifacts", artifactId).resolve(String.format("%d.jar", lastModifiedTimestamp)).toFile();
   }
 
@@ -298,7 +312,7 @@ public class ArtifactLocalizer {
    * Returns a {@link File} representing the directory containing the unpacked contents of the jar for the given
    * artifact and timestamp. The file path is: /PD_DIRECTORY/unpacked/<namespace>/<artifact-name>/<artifact-version>/<last-modified-timestamp>
    */
-  private File getUnpackLocalPath(ArtifactId artifactId, @NotNull Long lastModifiedTimestamp) {
-    return getLocalPath("unpacked", artifactId).resolve(lastModifiedTimestamp.toString()).toFile();
+  private File getUnpackLocalPath(ArtifactId artifactId, long lastModifiedTimestamp) {
+    return getLocalPath("unpacked", artifactId).resolve(String.valueOf(lastModifiedTimestamp)).toFile();
   }
 }
