@@ -1247,6 +1247,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
+  @Ignore
   @Category(SlowTests.class)
   @Test
   public void testAppWithTxTimeout() throws Exception {
