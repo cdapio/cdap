@@ -63,10 +63,14 @@ import javax.annotation.Nullable;
  * ArtifactLocalizer is responsible for fetching, caching and unpacking artifacts requested by the worker pod. The HTTP
  * endpoints are defined in {@link ArtifactLocalizerHttpHandlerInternal}. This class will run in the sidecar container
  * that is defined by {@link ArtifactLocalizerTwillRunnable}.
- * <p>
- * Artifacts will be cached using the following file structure: /PD_DIRECTORY/artifacts/<namespace>/<artifact-name>/<artifact-version>/<last-modified-timestamp>.jar
- * <p>
- * Artifacts will be unpacked using the following file structure: /PD_DIRECTORY/unpacked/<namespace>/<artifact-name>/<artifact-version>/<last-modified-timestamp>/...
+ *
+ * Artifacts will be cached using the following file structure:
+ *
+ * /PD_DIRECTORY/artifacts/<namespace>/<artifact-name>/<artifact-version>/<last-modified-timestamp>.jar
+ *
+ * Artifacts will be unpacked using the following file structure:
+ *
+ * /PD_DIRECTORY/unpacked/<namespace>/<artifact-name>/<artifact-version>/<last-modified-timestamp>/...
  */
 public class ArtifactLocalizer {
 
@@ -186,8 +190,8 @@ public class ArtifactLocalizer {
       File newLocation = getArtifactJarLocation(artifactId, newTimestamp);
       DirUtils.mkdirs(newLocation.getParentFile());
 
-      // Download the artifact to a temporary file then atomically rename it to the final name to avoid race conditions with
-      // multiple threads.
+      // Download the artifact to a temporary file then atomically rename it to the final name to
+      // avoid race conditions with multiple threads.
       File tempFile = Files.createTempFile(newLocation.getParentFile().toPath(), String.valueOf(newTimestamp), ".jar")
         .toFile();
       try (InputStream in = urlConn.getInputStream()) {
@@ -302,6 +306,7 @@ public class ArtifactLocalizer {
 
   /**
    * Returns a {@link File} representing the cached jar for the given artifact and timestamp. The file path is:
+   *
    * /PD_DIRECTORY/artifacts/<namespace>/<artifact-name>/<artifact-version>/<last-modified-timestamp>.jar
    */
   private File getArtifactJarLocation(ArtifactId artifactId, long lastModifiedTimestamp) {
@@ -310,7 +315,9 @@ public class ArtifactLocalizer {
 
   /**
    * Returns a {@link File} representing the directory containing the unpacked contents of the jar for the given
-   * artifact and timestamp. The file path is: /PD_DIRECTORY/unpacked/<namespace>/<artifact-name>/<artifact-version>/<last-modified-timestamp>
+   * artifact and timestamp. The file path is:
+   *
+   * /PD_DIRECTORY/unpacked/<namespace>/<artifact-name>/<artifact-version>/<last-modified-timestamp>
    */
   private File getUnpackLocalPath(ArtifactId artifactId, long lastModifiedTimestamp) {
     return getLocalPath("unpacked", artifactId).resolve(String.valueOf(lastModifiedTimestamp)).toFile();
