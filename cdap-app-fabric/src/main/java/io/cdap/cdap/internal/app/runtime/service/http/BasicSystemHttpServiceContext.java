@@ -23,6 +23,8 @@ import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.metadata.MetadataReader;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.plugin.Plugin;
+import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
 import io.cdap.cdap.api.service.http.HttpServiceHandlerSpecification;
@@ -32,13 +34,16 @@ import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.lang.CombineClassLoader;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.internal.app.DefaultPluginConfigurer;
 import io.cdap.cdap.internal.app.RemoteTaskExecutor;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.MacroParser;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginClassLoaders;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.services.DefaultSystemTableConfigurer;
 import io.cdap.cdap.internal.app.worker.SystemAppTask;
@@ -57,6 +62,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -154,5 +160,21 @@ public class BasicSystemHttpServiceContext extends BasicHttpServiceContext imple
       .withParam(systemAppParam)
       .build();
     return remoteTaskExecutor.runTask(taskRequest);
+  }
+
+  @Override
+  public ClassLoader createPluginClassloader(PluginConfigurer pluginConfigurer) {
+    if (!(pluginConfigurer instanceof DefaultPluginConfigurer)) {
+      throw new UnsupportedOperationException("Unsupported");
+    }
+    DefaultPluginConfigurer configurer = (DefaultPluginConfigurer) pluginConfigurer;
+
+    Map<String, Plugin> plugins = configurer.getPlugins().entrySet().stream()
+                                    .collect(Collectors.toMap(Map.Entry::getKey, v -> v.getValue().getPlugin()));
+
+    ClassLoader classLoader = PluginClassLoaders.createFilteredPluginsClassLoader(
+      plugins, configurer.getPluginInstantiator());
+
+    return new CombineClassLoader(null, getClass().getClassLoader(), classLoader);
   }
 }

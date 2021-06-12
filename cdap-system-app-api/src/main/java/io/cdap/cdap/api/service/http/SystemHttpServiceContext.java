@@ -20,6 +20,7 @@ import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
+import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -91,4 +92,6 @@ public interface SystemHttpServiceContext extends HttpServiceContext, Transactio
    * @throws IOException if there is a problem in connecting to remote worker
    */
   byte[] runTask(RunnableTaskRequest runnableTaskRequest) throws Exception;
+
+  ClassLoader createPluginClassloader(PluginConfigurer pluginConfigurer);
 }

@@ -300,7 +300,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
           return;
         }
         if (connector instanceof BatchConnector) {
-          LimitingConnector limitingConnector = new LimitingConnector((BatchConnector) connector);
+          LimitingConnector limitingConnector = new LimitingConnector((BatchConnector) connector, getContext());
           List<StructuredRecord> sample = limitingConnector.sample(connectorContext, sampleRequest);
           responder.sendString(GSON.toJson(
             new SampleResponse(detail, sample.isEmpty() ? null : sample.get(0).getSchema(), sample)));
