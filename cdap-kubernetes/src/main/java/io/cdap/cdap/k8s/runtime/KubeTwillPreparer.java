@@ -27,6 +27,7 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
 import io.cdap.cdap.master.spi.twill.DependentTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecretDisk;
 import io.cdap.cdap.master.spi.twill.SecureTwillPreparer;
+import io.cdap.cdap.master.spi.twill.SecurityContext;
 import io.cdap.cdap.master.spi.twill.StatefulDisk;
 import io.cdap.cdap.master.spi.twill.StatefulTwillPreparer;
 import io.kubernetes.client.ApiClient;
@@ -52,6 +53,8 @@ import io.kubernetes.client.models.V1PodSpecBuilder;
 import io.kubernetes.client.models.V1ResourceRequirements;
 import io.kubernetes.client.models.V1ResourceRequirementsBuilder;
 import io.kubernetes.client.models.V1SecretVolumeSource;
+import io.kubernetes.client.models.V1SecurityContext;
+import io.kubernetes.client.models.V1SecurityContextBuilder;
 import io.kubernetes.client.models.V1StatefulSet;
 import io.kubernetes.client.models.V1StatefulSetBuilder;
 import io.kubernetes.client.models.V1Volume;
@@ -152,6 +155,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private Set<String> dependentRunnableNames;
   private String serviceAccountName;
   private final Map<String, SecretDiskRunnable> secretDiskRunnables;
+  private final HashMap<String, V1SecurityContext> containerSecurityContexts;
 
   KubeTwillPreparer(MasterEnvironmentContext masterEnvContext, ApiClient apiClient, String kubeNamespace,
                     PodInfo podInfo, TwillSpecification spec, RunId twillRunId, Location appLocation,
@@ -176,6 +180,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     this.dependentRunnableNames = new HashSet<>();
     this.serviceAccountName = null;
     this.secretDiskRunnables = new HashMap<>();
+    this.containerSecurityContexts = new HashMap<>();
   }
 
   /**
@@ -241,8 +246,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     return this;
   }
 
-  @Override
-  public SecureTwillPreparer withIdentity(String runnableName, String identity) {
+  public void setIdentity(String runnableName, String identity) {
     if (!twillSpec.getRunnables().containsKey(runnableName)) {
       throw new IllegalArgumentException("Runnable " + runnableName + " not found");
     }
@@ -253,12 +257,31 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       throw new IllegalArgumentException("KubeTwillPreparer does not support setting per-container service accounts.");
     }
     serviceAccountName = identity;
-    return this;
   }
 
   @Override
   public SecureTwillPreparer withSecretDisk(String runnableName, SecretDisk... secretDisks) {
     secretDiskRunnables.put(runnableName, new SecretDiskRunnable(Arrays.asList(secretDisks)));
+    return this;
+  }
+
+  @Override
+  public SecureTwillPreparer withSecurityContext(String runnableName,
+                                                          SecurityContext securityContext) {
+    if (securityContext.getIdentity() != null) {
+      setIdentity(runnableName, securityContext.getIdentity());
+    }
+
+    if (securityContext.getUserId() != null || securityContext.getGroupId() != null) {
+      V1SecurityContextBuilder builder = new V1SecurityContextBuilder();
+      if (securityContext.getUserId() != null) {
+        builder.withRunAsUser(securityContext.getUserId());
+      }
+      if (securityContext.getGroupId() != null) {
+        builder.withRunAsGroup(securityContext.getGroupId());
+      }
+      containerSecurityContexts.put(runnableName, builder.build());
+    }
     return this;
   }
 
@@ -890,7 +913,12 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       .map(e -> new V1EnvVar().name(e.getKey()).value(e.getValue()))
       .collect(Collectors.toList());
 
-    return new V1ContainerBuilder()
+    V1ContainerBuilder builder = new V1ContainerBuilder();
+    if (containerSecurityContexts.containsKey(name)) {
+      builder.withSecurityContext(containerSecurityContexts.get(name));
+    }
+
+    return builder
       .withName(cleanse(name, 254))
       .withImage(containerImage)
       .withWorkingDir(workDir)
