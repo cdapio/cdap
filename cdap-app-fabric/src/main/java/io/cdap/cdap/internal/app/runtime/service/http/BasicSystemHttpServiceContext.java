@@ -32,7 +32,9 @@ import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
@@ -70,6 +72,7 @@ public class BasicSystemHttpServiceContext extends BasicHttpServiceContext imple
   private final TransactionRunner transactionRunner;
   private final PreferencesFetcher preferencesFetcher;
   private final RemoteTaskExecutor remoteTaskExecutor;
+  private final CConfiguration cConf;
 
   /**
    * Creates a BasicSystemHttpServiceContext.
@@ -94,6 +97,7 @@ public class BasicSystemHttpServiceContext extends BasicHttpServiceContext imple
     this.namespaceId = program.getId().getNamespaceId();
     this.transactionRunner = transactionRunner;
     this.preferencesFetcher = preferencesFetcher;
+    this.cConf = cConf;
     this.remoteTaskExecutor = new RemoteTaskExecutor(cConf, discoveryServiceClient);
   }
 
@@ -140,19 +144,36 @@ public class BasicSystemHttpServiceContext extends BasicHttpServiceContext imple
   public Map<String, String> getPreferencesForNamespace(String namespace, boolean resolved)
     throws IOException, IllegalArgumentException, UnauthorizedException {
     try {
-      return preferencesFetcher.get(new NamespaceId(namespace), resolved).getProperties();
+      return Retries
+        .callWithRetries(() -> preferencesFetcher.get(new NamespaceId(namespace), resolved).getProperties(),
+                         getRetryStrategy());
     } catch (NotFoundException nfe) {
       throw new IllegalArgumentException(String.format("Namespace '%s' does not exist", namespace), nfe);
+    } catch (IOException | IllegalArgumentException | UnauthorizedException e) {
+      //keep the behavior same prior to retry logic
+      throw e;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 
   @Override
   public byte[] runTask(RunnableTaskRequest runnableTaskRequest) throws Exception {
+    if (!isRemoteTaskEnabled()) {
+      throw new RuntimeException("Remote task worker is not enabled. Task cannot be executed.");
+    }
     String systemAppClassName = SystemAppTask.class.getName();
     String systemAppParam = GSON.toJson(runnableTaskRequest);
     RunnableTaskRequest taskRequest = RunnableTaskRequest.getBuilder(systemAppClassName)
       .withParam(systemAppParam)
+      .withNamespace(getNamespace())
+      .withArtifact(getArtifactId().toApiArtifactId())
       .build();
     return remoteTaskExecutor.runTask(taskRequest);
+  }
+
+  @Override
+  public boolean isRemoteTaskEnabled() {
+    return cConf.getBoolean(Constants.TaskWorker.POOL_ENABLE, false);
   }
 }

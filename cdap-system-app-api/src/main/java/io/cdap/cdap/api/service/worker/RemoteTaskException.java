@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app;
+package io.cdap.cdap.api.service.worker;
 
 import javax.annotation.Nullable;
 
@@ -30,7 +30,7 @@ public class RemoteTaskException extends Exception {
    * @param message String message for the exception
    * @param cause {@link Throwable} cause for the exception, is nullable.
    */
-  RemoteTaskException(String remoteExceptionClassName, String message, @Nullable Throwable cause) {
+  public RemoteTaskException(String remoteExceptionClassName, String message, @Nullable Throwable cause) {
     super(message, cause);
     this.remoteExceptionClassName = remoteExceptionClassName;
   }

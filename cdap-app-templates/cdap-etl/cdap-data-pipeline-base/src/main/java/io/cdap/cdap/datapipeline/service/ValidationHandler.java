@@ -27,6 +27,7 @@ import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
@@ -34,6 +35,9 @@ import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.api.service.http.AbstractSystemHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
+import io.cdap.cdap.api.service.worker.RemoteExecutionException;
+import io.cdap.cdap.api.service.worker.RemoteTaskException;
+import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.batch.BatchPipelineSpec;
 import io.cdap.cdap.etl.common.BasicArguments;
@@ -45,9 +49,10 @@ import io.cdap.cdap.etl.proto.v2.spec.PipelineSpec;
 import io.cdap.cdap.etl.proto.v2.spec.PluginSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.proto.v2.validation.StageValidationRequest;
-import io.cdap.cdap.etl.proto.v2.validation.StageValidationResponse;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.artifact.AppRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -56,7 +61,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -70,7 +74,9 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .serializeNulls()
     .create();
-  private static final Type APP_REQUEST_TYPE = new TypeToken<AppRequest<JsonObject>>() { }.getType();
+  private static final Type APP_REQUEST_TYPE = new TypeToken<AppRequest<JsonObject>>() {
+  }.getType();
+  private static final Logger LOG = LoggerFactory.getLogger(ValidationHandler.class);
 
   @GET
   @Path("v1/health")
@@ -82,16 +88,49 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
   @Path("v1/contexts/{context}/validations/stage")
   public void validateStage(HttpServiceRequest request, HttpServiceResponder responder,
                             @PathParam("context") String namespace) throws IOException, AccessException {
-    validateLocally(request, responder, namespace);
-  }
-
-  private void validateLocally(HttpServiceRequest request, HttpServiceResponder responder,
-                               String namespace) throws IOException {
     if (!getContext().getAdmin().namespaceExists(namespace)) {
       responder.sendError(HttpURLConnection.HTTP_NOT_FOUND, String.format("Namespace '%s' does not exist", namespace));
       return;
     }
 
+    //Validate remotely if remote execution is enabled
+    if (getContext().isRemoteTaskEnabled()) {
+      validateRemotely(request, responder, namespace);
+      return;
+    }
+    validateLocally(request, responder, namespace);
+  }
+
+  private void validateRemotely(HttpServiceRequest request, HttpServiceResponder responder,
+                                String namespace) throws IOException {
+    String validationRequestString = StandardCharsets.UTF_8.decode(request.getContent()).toString();
+    RemoteValidationRequest remoteValidationRequest = new RemoteValidationRequest(namespace, validationRequestString);
+    RunnableTaskRequest runnableTaskRequest = RunnableTaskRequest.getBuilder(RemoteValidationTask.class.getName()).
+      withParam(GSON.toJson(remoteValidationRequest)).
+      build();
+    try {
+      byte[] bytes = getContext().runTask(runnableTaskRequest);
+      responder.sendString(Bytes.toString(bytes));
+    } catch (RemoteExecutionException e) {
+      RemoteTaskException remoteTaskException = e.getCause();
+      responder.sendError(
+        getExceptionCode(remoteTaskException.getRemoteExceptionClassName(), remoteTaskException.getMessage(),
+                         namespace), remoteTaskException.getMessage());
+    } catch (Exception e) {
+      responder.sendError(HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
+    }
+  }
+
+  private int getExceptionCode(String exceptionClass, String exceptionMessage, String namespace) {
+    if (IllegalArgumentException.class.getName().equals(exceptionClass)) {
+      return String.format(RemoteValidationTask.NAMESPACE_DOES_NOT_EXIST, namespace).equals(exceptionMessage) ?
+        HttpURLConnection.HTTP_NOT_FOUND : HttpURLConnection.HTTP_BAD_REQUEST;
+    }
+    return HttpURLConnection.HTTP_INTERNAL_ERROR;
+  }
+
+  private void validateLocally(HttpServiceRequest request, HttpServiceResponder responder,
+                               String namespace) throws IOException {
     StageValidationRequest validationRequest;
     try {
       validationRequest = GSON.fromJson(StandardCharsets.UTF_8.decode(request.getContent()).toString(),
@@ -120,29 +159,23 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
       }
     }
 
-    Map<String, String> finalArguments = arguments;
-    Function<Map<String, String>, Map<String, String>> macroFn =
-      macroProperties -> evaluateMacros(namespace, finalArguments, macroProperties);
-    String validationResponse = GSON.toJson(ValidationUtils.validate(validationRequest,
-                                                                     getContext().createPluginConfigurer(namespace),
-                                                                     macroFn));
-    responder.sendString(validationResponse);
-  }
-
-  private Map<String, String> evaluateMacros(String namespace, Map<String, String> programArgs,
-                                             Map<String, String> macroProperties) {
     Map<String, MacroEvaluator> evaluators = ImmutableMap.of(
       SecureStoreMacroEvaluator.FUNCTION_NAME, new SecureStoreMacroEvaluator(namespace, getContext()),
       OAuthMacroEvaluator.FUNCTION_NAME, new OAuthMacroEvaluator(getContext()),
       ConnectionMacroEvaluator.FUNCTION_NAME, new ConnectionMacroEvaluator(namespace, getContext())
     );
-    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(programArgs), evaluators);
+    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(arguments), evaluators);
     MacroParserOptions macroParserOptions = MacroParserOptions.builder()
       .skipInvalidMacros()
       .setEscaping(false)
       .setFunctionWhitelist(evaluators.keySet())
       .build();
-    return getContext().evaluateMacros(namespace, macroProperties, macroEvaluator, macroParserOptions);
+    Function<Map<String, String>, Map<String, String>> macroFn =
+      macroProperties -> getContext().evaluateMacros(namespace, macroProperties, macroEvaluator, macroParserOptions);
+    String validationResponse = GSON.toJson(ValidationUtils.validate(validationRequest,
+                                                                     getContext().createPluginConfigurer(namespace),
+                                                                     macroFn));
+    responder.sendString(validationResponse);
   }
 
   @POST

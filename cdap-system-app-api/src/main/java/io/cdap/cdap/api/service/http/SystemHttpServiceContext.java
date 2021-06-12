@@ -91,4 +91,10 @@ public interface SystemHttpServiceContext extends HttpServiceContext, Transactio
    * @throws IOException if there is a problem in connecting to remote worker
    */
   byte[] runTask(RunnableTaskRequest runnableTaskRequest) throws Exception;
+
+  /**
+   * Returns boolean indicating whether remote task execution is enabled
+   * @return
+   */
+  boolean isRemoteTaskEnabled();
 }

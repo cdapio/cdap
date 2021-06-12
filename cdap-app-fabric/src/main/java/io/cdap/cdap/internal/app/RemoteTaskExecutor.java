@@ -18,6 +18,8 @@ package io.cdap.cdap.internal.app;
 
 import com.google.gson.Gson;
 import io.cdap.cdap.api.retry.RetryableException;
+import io.cdap.cdap.api.service.worker.RemoteExecutionException;
+import io.cdap.cdap.api.service.worker.RemoteTaskException;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;

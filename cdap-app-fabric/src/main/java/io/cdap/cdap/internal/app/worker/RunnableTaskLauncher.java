@@ -52,7 +52,10 @@ public class RunnableTaskLauncher {
     }
     RunnableTask runnableTask = (RunnableTask) obj;
     RunnableTaskContext runnableTaskContext = RunnableTaskContext.getBuilder().
-      withParam(request.getParam()).withFileURI(fileURI).build();
+      withParam(request.getParam()).withFileURI(fileURI).
+      withArtifactId(request.getArtifactId()).
+      withNamespace(request.getNamespace()).
+      build();
     runnableTask.run(runnableTaskContext);
     return runnableTaskContext.getResult();
   }
