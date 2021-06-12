@@ -33,7 +33,7 @@ public interface Connector extends Closeable {
    * Configure this connector, for example, the database connector will need to load the jdbc driver.
    * This method is guaranteed to be called before any other method in this class.
    */
-  default void configure(ConnectorConfigurer configurer) {
+  default void configure(ConnectorConfigurer configurer) throws IOException {
     // no-op
   }
 

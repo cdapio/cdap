@@ -29,9 +29,10 @@ public class BrowseEntityProperty {
    */
   public enum PropertyType {
     STRING,
-    DATE,
+    DATE_LOCAL_ISO,
     TIMESTAMP_MILLIS,
-    NUMBER
+    NUMBER,
+    SIZE_BYTES
   }
 
   private final String key;
@@ -80,31 +81,31 @@ public class BrowseEntityProperty {
   /**
    * Get the builder to build this object
    */
-  public static Builder builder(String name, String path, PropertyType type) {
-    return new Builder(name, path, type);
+  public static Builder builder(String key, String value, PropertyType type) {
+    return new Builder(key, value, type);
   }
 
   /**
    * Builder for {@link BrowseEntityProperty}
    */
   public static class Builder {
-    private String name;
-    private String path;
+    private String key;
+    private String value;
     private PropertyType type;
 
-    public Builder(String name, String path, PropertyType type) {
-      this.name = name;
+    public Builder(String key, String value, PropertyType type) {
+      this.key = key;
       this.type = type;
-      this.path = path;
+      this.value = value;
     }
 
-    public Builder setName(String name) {
-      this.name = name;
+    public Builder setKey(String key) {
+      this.key = key;
       return this;
     }
 
-    public Builder setPath(String path) {
-      this.path = path;
+    public Builder setValue(String value) {
+      this.value = value;
       return this;
     }
 
@@ -114,7 +115,9 @@ public class BrowseEntityProperty {
     }
 
     public BrowseEntityProperty build() {
-      return new BrowseEntityProperty(name, path, type);
+      // TODO: CDAP-18062 validate if the type matches the format, for example, if type is a date,
+      //  validate the value is ISO format
+      return new BrowseEntityProperty(key, value, type);
     }
   }
 }
