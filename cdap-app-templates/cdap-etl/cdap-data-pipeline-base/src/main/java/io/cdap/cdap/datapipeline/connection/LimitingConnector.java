@@ -65,6 +65,7 @@ public class LimitingConnector implements DirectConnector {
     Map<String, String> configs =
       LimitingInputFormatProvider.getConfiguration(inputFormatProvider, request.getLimit());
     Configuration hConf = new Configuration();
+    hConf.setClassLoader(context.getPluginConfigurer().createClassLoader());
     configs.forEach(hConf::set);
 
     Job job = Job.getInstance(hConf);

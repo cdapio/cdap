@@ -76,4 +76,9 @@ public class DefaultConnectorConfigurer implements ConnectorConfigurer {
                                             MacroParserOptions options) throws InvalidMacroException {
     return delegate.evaluateMacros(properties, evaluator, options);
   }
+
+  @Override
+  public ClassLoader createClassLoader() {
+    return delegate.createClassLoader();
+  }
 }

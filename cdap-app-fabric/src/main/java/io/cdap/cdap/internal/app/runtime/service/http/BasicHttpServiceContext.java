@@ -37,6 +37,7 @@ import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.internal.app.DefaultPluginConfigurer;
+import io.cdap.cdap.internal.app.DefaultServicePluginConfigurer;
 import io.cdap.cdap.internal.app.runtime.AbstractContext;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
@@ -171,6 +172,7 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
     try {
       File pluginsDir = Files.createTempDirectory(tmpDir.toPath(), "plugins").toFile();
       PluginInstantiator instantiator = new PluginInstantiator(cConf, getProgram().getClassLoader(), pluginsDir);
+      // this closeables will be closed after each execution of a handler event
       closeables.add(() -> {
         try {
           instantiator.close();
@@ -178,7 +180,8 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
           DirUtils.deleteDirectoryContents(pluginsDir, true);
         }
       });
-      return new DefaultPluginConfigurer(artifactId, new NamespaceId(namespace), instantiator, pluginFinder);
+      return new DefaultServicePluginConfigurer(artifactId, new NamespaceId(namespace), instantiator, pluginFinder,
+                                                getProgram().getClassLoader());
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

@@ -126,4 +126,15 @@ public interface PluginConfigurer {
    */
   Map<String, String> evaluateMacros(Map<String, String> properties,
                                      MacroEvaluator evaluator, MacroParserOptions options) throws InvalidMacroException;
+
+  /**
+   * Creates a new instance of {@link ClassLoader} that contains this program classloader, all the plugins
+   * export-package classloader instantiated by this configurer and system classloader in that loading order.
+   * Currently this method is only supported in services.
+   *
+   * @return a combined classloader
+   */
+  default ClassLoader createClassLoader() {
+    throw new UnsupportedOperationException("Creating classloader for all plugins is not supported.");
+  }
 }
