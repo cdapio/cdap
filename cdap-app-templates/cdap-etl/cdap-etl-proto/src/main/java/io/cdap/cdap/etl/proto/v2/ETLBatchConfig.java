@@ -46,6 +46,7 @@ public final class ETLBatchConfig extends ETLConfig {
   private final List<ETLStage> actions;
   private final Boolean service;
   // support for SQL Engines
+  private final Boolean pushdownEnabled;
   private final ETLTransformationPushdown transformationPushdown;
 
   private ETLBatchConfig(Set<ETLStage> stages,
@@ -63,6 +64,7 @@ public final class ETLBatchConfig extends ETLConfig {
                          Map<String, String> engineProperties,
                          Boolean service,
                          List<Object> comments,
+                         @Nullable Boolean pushdownEnabled,
                          @Nullable ETLTransformationPushdown transformationPushdown) {
     super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, processTimingEnabled,
           numOfRecordsPreview, engineProperties, comments);
@@ -74,6 +76,7 @@ public final class ETLBatchConfig extends ETLConfig {
     this.actions = null;
     this.service = service;
     // fields related to SQL Engines
+    this.pushdownEnabled = pushdownEnabled;
     this.transformationPushdown = transformationPushdown;
   }
 
@@ -121,6 +124,10 @@ public final class ETLBatchConfig extends ETLConfig {
     return maxConcurrentRuns;
   }
 
+  public boolean isPushdownEnabled() {
+    return pushdownEnabled != null ? pushdownEnabled : false;
+  }
+
   @Nullable
   public ETLTransformationPushdown getTransformationPushdown() {
     return transformationPushdown;
@@ -143,7 +150,7 @@ public final class ETLBatchConfig extends ETLConfig {
     return new ETLBatchConfig(upgradedStages, connections, postActions, resources, stageLoggingEnabled,
                               processTimingEnabled, engine, schedule, driverResources, clientResources,
                               numOfRecordsPreview, maxConcurrentRuns, properties, service, comments,
-                              transformationPushdown);
+                              pushdownEnabled, transformationPushdown);
   }
 
   @Override
@@ -209,7 +216,7 @@ public final class ETLBatchConfig extends ETLConfig {
   public static ETLBatchConfig forSystemService() {
     return new ETLBatchConfig(Collections.emptySet(), Collections.emptySet(), Collections.emptyList(),
                               null, false, false, null, null, null, null, 0, null, Collections.emptyMap(), true,
-                              Collections.emptyList(), null);
+                              Collections.emptyList(), false, null);
   }
 
   /**
@@ -220,6 +227,7 @@ public final class ETLBatchConfig extends ETLConfig {
     private Engine engine;
     private List<ETLStage> endingActions;
     private Integer maxConcurrentRuns;
+    private Boolean pushdownEnabled;
     private ETLTransformationPushdown transformationPushdown;
     // Only used for upgrade purpose.
     private List<Object> comments;
@@ -271,6 +279,11 @@ public final class ETLBatchConfig extends ETLConfig {
       return this;
     }
 
+    public Builder setPushdownEnabled(Boolean pushdownEnabled) {
+      this.pushdownEnabled = pushdownEnabled;
+      return this;
+    }
+
     public Builder setTransformationPushdown(ETLTransformationPushdown transformationPushdown) {
       this.transformationPushdown = transformationPushdown;
       return this;
@@ -280,7 +293,7 @@ public final class ETLBatchConfig extends ETLConfig {
       return new ETLBatchConfig(stages, connections, endingActions, resources, stageLoggingEnabled,
                                 processTimingEnabled, engine, schedule, driverResources, clientResources,
                                 numOfRecordsPreview, maxConcurrentRuns, properties, false, comments,
-                                transformationPushdown);
+                                pushdownEnabled, transformationPushdown);
     }
   }
 }

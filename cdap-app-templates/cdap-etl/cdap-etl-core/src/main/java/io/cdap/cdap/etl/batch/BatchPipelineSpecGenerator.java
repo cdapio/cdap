@@ -67,7 +67,8 @@ public class BatchPipelineSpecGenerator extends PipelineSpecGenerator<ETLBatchCo
   }
 
   private StageSpec configureSqlEngine(ETLBatchConfig config) throws ValidationException {
-    if (config.getTransformationPushdown() == null || config.getTransformationPushdown().getPlugin() == null) {
+    if (!config.isPushdownEnabled() || config.getTransformationPushdown() == null
+      || config.getTransformationPushdown().getPlugin() == null) {
       return null;
     }
 
