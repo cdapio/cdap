@@ -17,10 +17,9 @@
 
 package io.cdap.cdap.etl.api.connector;
 
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * An entity that is browsable or samplable, or both.
@@ -33,10 +32,10 @@ public class BrowseEntity {
   private final String type;
   private final boolean canSample;
   private final boolean canBrowse;
-  private final Set<BrowseEntityProperty> properties;
+  private final Map<String, BrowseEntityPropertyValue> properties;
 
   private BrowseEntity(String name, String path, String type, boolean canSample, boolean canBrowse,
-                       Set<BrowseEntityProperty> properties) {
+                       Map<String, BrowseEntityPropertyValue> properties) {
     this.name = name;
     this.path = path;
     this.type = type;
@@ -65,7 +64,7 @@ public class BrowseEntity {
     return canBrowse;
   }
 
-  public Collection<BrowseEntityProperty> getProperties() {
+  public Map<String, BrowseEntityPropertyValue> getProperties() {
     return properties;
   }
 
@@ -109,13 +108,13 @@ public class BrowseEntity {
     private String type;
     private boolean canSample;
     private boolean canBrowse;
-    private Set<BrowseEntityProperty> properties;
+    private Map<String, BrowseEntityPropertyValue> properties;
 
     public Builder(String name, String path, String type) {
       this.name = name;
       this.type = type;
       this.path = path;
-      this.properties = new HashSet<>();
+      this.properties = new HashMap<>();
     }
 
     public Builder setName(String name) {
@@ -143,9 +142,14 @@ public class BrowseEntity {
       return this;
     }
 
-    public Builder setProperties(Collection<BrowseEntityProperty> properties) {
+    public Builder addProperty(String key, BrowseEntityPropertyValue value) {
+      this.properties.put(key, value);
+      return this;
+    }
+
+    public Builder setProperties(Map<String, BrowseEntityPropertyValue> properties) {
       this.properties.clear();
-      this.properties.addAll(properties);
+      this.properties.putAll(properties);
       return this;
     }
 
