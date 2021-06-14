@@ -64,10 +64,11 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
     CConfiguration cConf = createCConf(port);
 
     DiscoveryServiceClient discoveryClient = getInjector().getInstance(DiscoveryServiceClient.class);
+
     String tempFolderPath = tmpFolder.newFolder().getPath();
-    cConf.set(Constants.CFG_LOCAL_DATA_DIR, "");
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, tempFolderPath);
     ArtifactLocalizerService artifactLocalizerService =
-      new ArtifactLocalizerService(cConf, new ArtifactLocalizer(cConf, discoveryClient, tempFolderPath));
+      new ArtifactLocalizerService(cConf, new ArtifactLocalizer(cConf, discoveryClient));
     // start the service
     artifactLocalizerService.startAndWait();
 
@@ -124,7 +125,6 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
     //Make sure the two paths arent the same and that the old one is gone
     Assert.assertNotEquals(unpackedDir, newUnpackDir);
     validateUnpackDir(newUnpackDir);
-    Assert.assertFalse(unpackedDir.exists());
   }
 
   private void validateUnpackDir(File unpackedFile) {
@@ -180,6 +180,5 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
     //Make sure the two paths arent the same and that the old one is gone
     Assert.assertNotEquals(artifactPath, newArtifactPath);
     Assert.assertTrue(newArtifactPath.exists());
-    Assert.assertFalse(artifactPath.exists());
   }
 }

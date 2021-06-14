@@ -91,11 +91,9 @@ public class ArtifactLocalizerClient {
 
     if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
       if (httpResponse.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-        LOG.warn("ArtifactLocalizer returned NOT_FOUND for {}", artifactId);
         throw new ArtifactNotFoundException(artifactId);
       }
       String errorMsg = httpResponse.getResponseBodyAsString();
-      LOG.warn("ArtifactLocalizer returned unexpected error: {}", errorMsg);
       throw new IOException(errorMsg);
     }
 

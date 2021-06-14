@@ -33,6 +33,7 @@ import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import io.cdap.cdap.gateway.handlers.ArtifactHttpHandlerInternal;
+import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerClient;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -65,14 +66,17 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
 
   private final RemoteClient remoteClient;
   private final LocationFactory locationFactory;
+  private final ArtifactLocalizerClient artifactLocalizerClient;
 
   @Inject
   public RemoteArtifactRepositoryReader(DiscoveryServiceClient discoveryClient,
-                                        LocationFactory locationFactory) {
+                                        LocationFactory locationFactory,
+                                        ArtifactLocalizerClient artifactLocalizerClient) {
     this.remoteClient = new RemoteClient(
       discoveryClient, Constants.Service.APP_FABRIC_HTTP,
       new DefaultHttpRequestConfig(false), Constants.Gateway.INTERNAL_API_VERSION_3);
     this.locationFactory = locationFactory;
+    this.artifactLocalizerClient = artifactLocalizerClient;
   }
 
   /**
@@ -91,10 +95,18 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
     httpResponse = execute(requestBuilder.build());
     ArtifactDetail detail = GSON.fromJson(httpResponse.getResponseBodyAsString(), ARTIFACT_DETAIL_TYPE);
-    Location artifactLocation =
-      Locations.getLocationFromAbsolutePath(locationFactory, detail.getDescriptor().getLocationURI().getPath());
+
+    // If the artifactLocalizerClient is available, use that to localize the artifact and fetch the location
+    Location artifactLocation;
+    if (artifactLocalizerClient != null) {
+      artifactLocation = Locations
+        .toLocation(artifactLocalizerClient.getArtifactLocation(artifactId.toEntityId()));
+    } else {
+      artifactLocation = Locations
+        .getLocationFromAbsolutePath(locationFactory, detail.getDescriptor().getLocationURI().getPath());
+    }
     return new ArtifactDetail(new ArtifactDescriptor(detail.getDescriptor().getArtifactId(), artifactLocation),
-                            detail.getMeta());
+                              detail.getMeta());
   }
 
   /**

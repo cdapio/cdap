@@ -85,8 +85,6 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
   private final ArtifactRepository artifactRepository;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
 
-  private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.RFC_1123_DATE_TIME;
-
   @Inject
   @VisibleForTesting
   public ArtifactHttpHandlerInternal(ArtifactRepository artifactRepository, NamespaceQueryAdmin namespaceQueryAdmin) {
@@ -127,11 +125,11 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
 
     HttpHeaders headers = new DefaultHttpHeaders()
       .add(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_OCTET_STREAM)
-      .add(HttpHeaderNames.LAST_MODIFIED, newModifiedDate.format(DATE_TIME_FORMATTER));
+      .add(HttpHeaderNames.LAST_MODIFIED, newModifiedDate.format(DateTimeFormatter.RFC_1123_DATE_TIME));
 
     String lastModified = request.headers().get(HttpHeaderNames.IF_MODIFIED_SINCE);
     if (!Strings.isNullOrEmpty(lastModified) &&
-      newModifiedDate.equals(ZonedDateTime.parse(lastModified, DATE_TIME_FORMATTER))) {
+      newModifiedDate.equals(ZonedDateTime.parse(lastModified, DateTimeFormatter.RFC_1123_DATE_TIME))) {
       responder.sendStatus(HttpResponseStatus.NOT_MODIFIED, headers);
       return;
     }

@@ -14,7 +14,6 @@
 
 package io.cdap.cdap.internal.app.worker.sidecar;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.CharStreams;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactScope;
@@ -51,7 +50,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -59,43 +57,58 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
+import static io.cdap.cdap.common.conf.Constants.CFG_LOCAL_DATA_DIR;
+
 /**
  * ArtifactLocalizer is responsible for fetching, caching and unpacking artifacts requested by the worker pod. The HTTP
  * endpoints are defined in {@link ArtifactLocalizerHttpHandlerInternal}. This class will run in the sidecar container
  * that is defined by {@link ArtifactLocalizerTwillRunnable}.
  *
  * Artifacts will be cached using the following file structure:
- *
- * /PD_DIRECTORY/artifacts/<namespace>/<artifact-name>/<artifact-version>/<last-modified-timestamp>.jar
+ * /DATA_DIRECTORY/artifacts/<namespace>/<artifact-name>/<artifact-version>/<last-modified-timestamp>.jar
  *
  * Artifacts will be unpacked using the following file structure:
+ * /DATA_DIRECTORY/unpacked/<namespace>/<artifact-name>/<artifact-version>/<last-modified-timestamp>/...
  *
- * /PD_DIRECTORY/unpacked/<namespace>/<artifact-name>/<artifact-version>/<last-modified-timestamp>/...
+ * The procedure for fetching an artifact is:
+ *
+ * 1. Check if there is a locally cached version of the artifact, if so fetch the lastModified timestamp from
+ * the filename.
+ * 2. Send a request to the 'download artifact' endpoint in appfabric and provide the lastModified timestamp (if
+ * available)
+ * 3. If a lastModified timestamp was not specified, or there is a newer version of the artifact: appfabric will stream
+ * the bytes for the newest version of the jar and pass the new lastModified timestamp in the response headers
+ *
+ *  OR
+ *
+ *  If the provided lastModified timestamp matches the newest version of the artifact: appfabric will return
+ *  NOT_MODIFIED
+ *
+ * 4. If a newer version was found, delete the old cached jar and unpack directory (if it exists).
+ *
+ * 5. Return the local path to the newest version of the artifact jar.
+ *
+ * NOTE: There is no need to invalidate the cache at any point since we will always need to call appfabric to confirm
+ * that the cached version is the newest version available.
  */
 public class ArtifactLocalizer {
 
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactLocalizer.class);
-  private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.RFC_1123_DATE_TIME;
   // TODO: Move this directory name into a cConf property
-  private static final String PD_DIR = "data/";
+
   private static final String LAST_MODIFIED_HEADER = HttpHeaderNames.LAST_MODIFIED.toLowerCase();
 
   private final RemoteClient remoteClient;
   private final RetryStrategy retryStrategy;
-  private final String basePath;
+  private final String dataDir;
 
   @Inject
   ArtifactLocalizer(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient) {
-    this(cConf, discoveryServiceClient, "");
-  }
-
-  @VisibleForTesting
-  public ArtifactLocalizer(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient, String basePath) {
     this.remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
                                          HttpRequestConfig.DEFAULT,
                                          Constants.Gateway.INTERNAL_API_VERSION_3);
     this.retryStrategy = RetryStrategies.fromConfiguration(cConf, Constants.Service.TASK_WORKER + ".");
-    this.basePath = basePath;
+    this.dataDir = cConf.get(CFG_LOCAL_DATA_DIR);
   }
 
   /**
@@ -110,17 +123,7 @@ public class ArtifactLocalizer {
    */
   public File getArtifact(ArtifactId artifactId) throws Exception {
     LOG.debug("Fetching artifact info for {}", artifactId);
-    Long lastModifiedTimestamp = getCurrentLastModifiedTimestamp(artifactId);
-
-    File newJarLocation = Retries
-      .callWithRetries(() -> fetchArtifact(artifactId, lastModifiedTimestamp), retryStrategy);
-
-    // If the lastModifiedTimestamp is not null then we might need to delete the old cache.
-    if (lastModifiedTimestamp != null) {
-      // TODO (CDAP-18051): Migrate this cleanup task to its own service
-      deleteOldCache(artifactId, lastModifiedTimestamp, newJarLocation);
-    }
-    return newJarLocation;
+    return Retries.callWithRetries(() -> fetchArtifact(artifactId), retryStrategy);
   }
 
   /**
@@ -136,10 +139,10 @@ public class ArtifactLocalizer {
   public File getAndUnpackArtifact(ArtifactId artifactId) throws Exception {
     LOG.debug("Unpacking artifact {}", artifactId);
     File jarLocation = getArtifact(artifactId);
-    File unpackDir = getUnpackLocalPath(artifactId, Long.valueOf(jarLocation.getName().split("\\.")[0]));
+    File unpackDir = getUnpackLocalPath(artifactId, Long.parseLong(jarLocation.getName().split("\\.")[0]));
     LOG.debug("Got unpack directory as {}", unpackDir);
     if (!unpackDir.exists()) {
-      LOG.debug("Unpack directory doesn't exist, creating it now");
+      LOG.debug("Unpack directory doesn't exist, unpacking into {}", unpackDir);
       BundleJarUtil.unJar(jarLocation, unpackDir);
     }
     return unpackDir;
@@ -148,10 +151,14 @@ public class ArtifactLocalizer {
   /**
    * fetchArtifact attempts to connect to app fabric to download the given artifact. This method will throw {@link
    * RetryableException} in certain circumstances so using this with the
+   *
+   * @param artifactId the id of the artifact to fetch
+   * @return a File pointing to the locally cached jar of the newest version
+   * @throws IOException If an unexpected error occurs while writing the artifact to the filesystem
+   * @throws ArtifactNotFoundException If the given artifact does not exist
    */
-  private File fetchArtifact(ArtifactId artifactId,
-                             @Nullable Long lastModifiedTimestamp) throws IOException, ArtifactNotFoundException {
-
+  private File fetchArtifact(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
+    Long lastModifiedTimestamp = getCurrentLastModifiedTimestamp(artifactId);
     String namespaceId = artifactId.getNamespace();
     ArtifactScope scope = ArtifactScope.USER;
     // Cant use 'system' as the namespace in the request because that generates an error, the namespace doesnt matter
@@ -168,22 +175,24 @@ public class ArtifactLocalizer {
                                scope);
 
     HttpURLConnection urlConn = remoteClient.openConnection(HttpMethod.GET, url);
-    if (lastModifiedTimestamp != null) {
-      LOG.debug("Found existing local version for {} with timestamp {}", artifactId, lastModifiedTimestamp);
-
-      ZonedDateTime lastModifiedDate = ZonedDateTime
-        .ofInstant(Instant.ofEpochMilli(lastModifiedTimestamp), ZoneId.of("GMT"));
-      urlConn.setRequestProperty(HttpHeaderNames.IF_MODIFIED_SINCE, lastModifiedDate.format(DATE_TIME_FORMATTER));
-    }
-
     try {
+      if (lastModifiedTimestamp != null) {
+        LOG.debug("Found existing local version for {} with timestamp {}", artifactId, lastModifiedTimestamp);
+
+        ZonedDateTime lastModifiedDate = ZonedDateTime
+          .ofInstant(Instant.ofEpochMilli(lastModifiedTimestamp), ZoneId.of("GMT"));
+        urlConn.setRequestProperty(HttpHeaderNames.IF_MODIFIED_SINCE, lastModifiedDate.format(
+          DateTimeFormatter.RFC_1123_DATE_TIME));
+      }
+
       // If we get this response that means we already have the most up to date artifact
       if (urlConn.getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
-        LOG.debug("Call to app fabric returned NOT_MODIFIED");
+        LOG.debug("Call to app fabric returned NOT_MODIFIED for {} with lastModifiedTimestamp of {}", artifactId,
+                  lastModifiedTimestamp);
         File artifactJarLocation = getArtifactJarLocation(artifactId, lastModifiedTimestamp);
         if (!artifactJarLocation.exists()) {
           throw new RetryableException(
-            String.format("Locally cached artifact jar for %s is missing, this was likely caused by a race condition.",
+            String.format("Locally cached artifact jar for %s is missing.",
                           artifactId));
         }
         return artifactJarLocation;
@@ -232,28 +241,6 @@ public class ArtifactLocalizer {
   }
 
   /**
-   * Helper method for handling the deletion of the old cache files, if required. This will also delete the directory
-   * containing the unpacked contents of the out-of-date jar.
-   */
-  private void deleteOldCache(ArtifactId artifactId, Long lastModifiedTimestamp, File newJarLocation) {
-    // This means we already have a jar but its out of date, we should delete the jar and the unpacked directory
-    File oldJarLocation = getArtifactJarLocation(artifactId, lastModifiedTimestamp);
-    LOG.debug("Got new location as {} with old location as {}", newJarLocation, oldJarLocation);
-    if (!newJarLocation.equals(oldJarLocation)) {
-      File oldUnpackLocation = getUnpackLocalPath(artifactId, lastModifiedTimestamp);
-      LOG.debug("Deleting previously cached jar");
-      try {
-        oldJarLocation.delete();
-        FileUtils.deleteDirectory(oldUnpackLocation);
-      } catch (IOException e) {
-        //Catch and log the exception, this should not cause the operation to fail
-        LOG.warn("Failed to delete old cached jar for artifact {} version {}: {}", artifactId.getArtifact(),
-                 artifactId.getVersion(), e);
-      }
-    }
-  }
-
-  /**
    * Helper function for verifying, extracting and converting the Last-Modified header from the URL connection.
    */
   private ZonedDateTime getLastModifiedHeader(HttpURLConnection urlConn) {
@@ -271,16 +258,15 @@ public class ArtifactLocalizer {
                                                  urlConn.getURL(), LAST_MODIFIED_HEADER));
     }
 
-    return LocalDateTime
-      .parse(headers.get(LAST_MODIFIED_HEADER).get(0), DATE_TIME_FORMATTER)
-      .atZone(ZoneId.of("GMT"));
+    return ZonedDateTime
+      .parse(headers.get(LAST_MODIFIED_HEADER).get(0), DateTimeFormatter.RFC_1123_DATE_TIME);
   }
 
   /**
    * Helper method for catching and throwing any errors that might have occurred when attempting to connect.
    */
-  private void throwIfError(HttpURLConnection urlConn, ArtifactId artifactId) throws IOException,
-    ArtifactNotFoundException {
+  private void throwIfError(HttpURLConnection urlConn, ArtifactId artifactId)
+    throws IOException, ArtifactNotFoundException {
     int responseCode = urlConn.getResponseCode();
     if (responseCode == HttpURLConnection.HTTP_OK) {
       return;
@@ -298,7 +284,7 @@ public class ArtifactLocalizer {
   }
 
   private Path getLocalPath(String dirName, ArtifactId artifactId) {
-    return Paths.get(basePath, PD_DIR, dirName, artifactId.getNamespace(), artifactId.getArtifact(),
+    return Paths.get(dataDir, dirName, artifactId.getNamespace(), artifactId.getArtifact(),
                      artifactId.getVersion());
   }
 

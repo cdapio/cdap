@@ -34,7 +34,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 
 /**
- * Internal {@link HttpHandler} for File Localizer.
+ * Internal {@link HttpHandler} for Artifact Localizer.
  */
 @Singleton
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3 + "/worker")
@@ -52,10 +52,10 @@ public class ArtifactLocalizerHttpHandlerInternal extends AbstractHttpHandler {
                        @PathParam("namespace-id") String namespaceId,
                        @PathParam("artifact-name") String artifactName,
                        @PathParam("artifact-version") String artifactVersion,
-                       @QueryParam("unpack") @DefaultValue("false") String unpack) throws Exception {
+                       @QueryParam("unpack") @DefaultValue("false") boolean unpack) throws Exception {
     File artifactPath;
     ArtifactId artifactId = new ArtifactId(namespaceId, artifactName, artifactVersion);
-    if (Boolean.parseBoolean(unpack)) {
+    if (unpack) {
       artifactPath = artifactLocalizer.getAndUnpackArtifact(artifactId);
     } else {
       artifactPath = artifactLocalizer.getArtifact(artifactId);
