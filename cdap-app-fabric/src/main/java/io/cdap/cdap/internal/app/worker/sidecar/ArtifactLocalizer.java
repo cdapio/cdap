@@ -79,10 +79,10 @@ import static io.cdap.cdap.common.conf.Constants.CFG_LOCAL_DATA_DIR;
  * 3. If a lastModified timestamp was not specified, or there is a newer version of the artifact: appfabric will stream
  * the bytes for the newest version of the jar and pass the new lastModified timestamp in the response headers
  *
- *  OR
+ * OR
  *
- *  If the provided lastModified timestamp matches the newest version of the artifact: appfabric will return
- *  NOT_MODIFIED
+ * If the provided lastModified timestamp matches the newest version of the artifact: appfabric will return
+ * NOT_MODIFIED
  *
  * 4. If a newer version was found, delete the old cached jar and unpack directory (if it exists).
  *
@@ -94,8 +94,6 @@ import static io.cdap.cdap.common.conf.Constants.CFG_LOCAL_DATA_DIR;
 public class ArtifactLocalizer {
 
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactLocalizer.class);
-  // TODO: Move this directory name into a cConf property
-
   private static final String LAST_MODIFIED_HEADER = HttpHeaderNames.LAST_MODIFIED.toLowerCase();
 
   private final RemoteClient remoteClient;
@@ -143,7 +141,20 @@ public class ArtifactLocalizer {
     LOG.debug("Got unpack directory as {}", unpackDir);
     if (!unpackDir.exists()) {
       LOG.debug("Unpack directory doesn't exist, unpacking into {}", unpackDir);
-      BundleJarUtil.unJar(jarLocation, unpackDir);
+
+      // Ensure the path leading to the unpack directory is created so we can create a temp directory
+      if (!unpackDir.getParentFile().exists() && !unpackDir.getParentFile().mkdirs()) {
+        throw new IOException(String.format("Failed to create one or more directories along the path %s",
+                                            unpackDir.getParentFile().getPath()));
+      }
+      File tempUnpackDir = Files.createTempDirectory(unpackDir.getParentFile().toPath(), "unpack").toFile();
+      try {
+        BundleJarUtil.unJar(jarLocation, tempUnpackDir);
+        Files.move(tempUnpackDir.toPath(), unpackDir.toPath(), StandardCopyOption.ATOMIC_MOVE,
+                   StandardCopyOption.REPLACE_EXISTING);
+      } finally {
+        FileUtils.deleteDirectory(tempUnpackDir);
+      }
     }
     return unpackDir;
   }
@@ -290,7 +301,7 @@ public class ArtifactLocalizer {
 
   /**
    * Returns a {@link File} representing the cache directory jars for the given artifact. The file path is:
-   * /PD_DIRECTORY/artifacts/<namespace>/<artifact-name>/<artifact-version>/
+   * /DATA_DIRECTORY/artifacts/<namespace>/<artifact-name>/<artifact-version>/
    */
   private File getArtifactDirLocation(ArtifactId artifactId) {
     return getLocalPath("artifacts", artifactId).toFile();
@@ -298,8 +309,7 @@ public class ArtifactLocalizer {
 
   /**
    * Returns a {@link File} representing the cached jar for the given artifact and timestamp. The file path is:
-   *
-   * /PD_DIRECTORY/artifacts/<namespace>/<artifact-name>/<artifact-version>/<last-modified-timestamp>.jar
+   * /DATA_DIRECTORY/artifacts/<namespace>/<artifact-name>/<artifact-version>/<last-modified-timestamp>.jar
    */
   private File getArtifactJarLocation(ArtifactId artifactId, long lastModifiedTimestamp) {
     return getLocalPath("artifacts", artifactId).resolve(String.format("%d.jar", lastModifiedTimestamp)).toFile();
@@ -308,8 +318,7 @@ public class ArtifactLocalizer {
   /**
    * Returns a {@link File} representing the directory containing the unpacked contents of the jar for the given
    * artifact and timestamp. The file path is:
-   *
-   * /PD_DIRECTORY/unpacked/<namespace>/<artifact-name>/<artifact-version>/<last-modified-timestamp>
+   * /DATA_DIRECTORY/unpacked/<namespace>/<artifact-name>/<artifact-version>/<last-modified-timestamp>
    */
   private File getUnpackLocalPath(ArtifactId artifactId, long lastModifiedTimestamp) {
     return getLocalPath("unpacked", artifactId).resolve(String.valueOf(lastModifiedTimestamp)).toFile();

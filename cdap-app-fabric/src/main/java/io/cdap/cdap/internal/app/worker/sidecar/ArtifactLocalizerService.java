@@ -59,7 +59,8 @@ public class ArtifactLocalizerService extends AbstractIdleService {
     httpService.start();
     bindAddress = httpService.getBindAddress();
     LOG.debug("Starting ArtifactLocalizerService has completed");
-    // TODO (CDAP-18051): Add cleanup task for out of date cached artifacts
+
+    // TODO: (CDAP-18051) Add cleanup task for out of date cached artifacts
   }
 
   @Override

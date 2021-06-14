@@ -53,13 +53,10 @@ public class ArtifactLocalizerHttpHandlerInternal extends AbstractHttpHandler {
                        @PathParam("artifact-name") String artifactName,
                        @PathParam("artifact-version") String artifactVersion,
                        @QueryParam("unpack") @DefaultValue("false") boolean unpack) throws Exception {
-    File artifactPath;
+
     ArtifactId artifactId = new ArtifactId(namespaceId, artifactName, artifactVersion);
-    if (unpack) {
-      artifactPath = artifactLocalizer.getAndUnpackArtifact(artifactId);
-    } else {
-      artifactPath = artifactLocalizer.getArtifact(artifactId);
-    }
+    File artifactPath = unpack ? artifactLocalizer.getAndUnpackArtifact(artifactId) :
+      artifactLocalizer.getArtifact(artifactId);
     responder.sendString(HttpResponseStatus.OK, artifactPath.toString());
   }
 }

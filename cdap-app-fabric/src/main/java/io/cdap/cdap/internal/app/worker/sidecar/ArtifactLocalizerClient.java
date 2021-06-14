@@ -33,6 +33,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 
+/**
+ * ArtifactLocalizerClient is used by tasks that extend {@link io.cdap.cdap.api.service.worker.RunnableTask} to fetch,
+ * cache and unpack artifacts locally.
+ */
 public class ArtifactLocalizerClient {
 
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactLocalizerClient.class);
@@ -53,7 +57,6 @@ public class ArtifactLocalizerClient {
    * @return The Local Location for this artifact
    * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws IOException if there was an exception while fetching or caching the artifact
-   * @throws Exception if there was an unexpected error
    */
   public File getArtifactLocation(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
     return sendRequest(artifactId, false);
@@ -67,7 +70,6 @@ public class ArtifactLocalizerClient {
    * @return The Local Location of the directory that contains the unpacked artifact files
    * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws IOException if there was an exception while fetching, caching or unpacking the artifact
-   * @throws Exception if there was an unexpected error
    */
   public File getUnpackedArtifactLocation(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
     return sendRequest(artifactId, true);
@@ -78,7 +80,7 @@ public class ArtifactLocalizerClient {
       .format("/artifact/namespaces/%s/artifacts/%s/versions/%s?unpack=%b", artifactId.getNamespace(),
               artifactId.getArtifact(),
               artifactId.getVersion(), unpack);
-    URL url = null;
+    URL url;
     try {
       url = new URI(sidecarBaseURL + urlPath).toURL();
     } catch (URISyntaxException e) {
