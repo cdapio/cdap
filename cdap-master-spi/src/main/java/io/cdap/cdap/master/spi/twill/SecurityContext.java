@@ -52,23 +52,23 @@ public class SecurityContext {
   /**
    * Builds and returns an instance of {@link SecurityContext}.
    */
-  public static class SecurityContextBuilder {
+  public static class Builder {
 
     private Long userId;
     private Long groupId;
     private String identity;
 
-    public SecurityContextBuilder withUserId(long userId) {
+    public Builder withUserId(Long userId) {
       this.userId = userId;
       return this;
     }
 
-    public SecurityContextBuilder withGroupId(long groupId) {
+    public Builder withGroupId(Long groupId) {
       this.groupId = groupId;
       return this;
     }
 
-    public SecurityContextBuilder withIdentity(String identity) {
+    public Builder withIdentity(String identity) {
       this.identity = identity;
       return this;
     }

@@ -156,6 +156,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private String serviceAccountName;
   private final Map<String, SecretDiskRunnable> secretDiskRunnables;
   private final HashMap<String, V1SecurityContext> containerSecurityContexts;
+  private final Map<String, Set<String>> readonlyDisks;
 
   KubeTwillPreparer(MasterEnvironmentContext masterEnvContext, ApiClient apiClient, String kubeNamespace,
                     PodInfo podInfo, TwillSpecification spec, RunId twillRunId, Location appLocation,
@@ -181,6 +182,14 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     this.serviceAccountName = null;
     this.secretDiskRunnables = new HashMap<>();
     this.containerSecurityContexts = new HashMap<>();
+    this.readonlyDisks = new HashMap<>();
+  }
+
+  @Override
+  public StatefulTwillPreparer withReadonlyDisk(String runnableName, String diskName) {
+    readonlyDisks.putIfAbsent(runnableName , new HashSet<>());
+    readonlyDisks.get(runnableName).add(diskName);
+    return this;
   }
 
   /**
@@ -246,7 +255,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     return this;
   }
 
-  public void setIdentity(String runnableName, String identity) {
+  private void setIdentity(String runnableName, String identity) {
     if (!twillSpec.getRunnables().containsKey(runnableName)) {
       throw new IllegalArgumentException("Runnable " + runnableName + " not found");
     }
@@ -918,12 +927,28 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       builder.withSecurityContext(containerSecurityContexts.get(name));
     }
 
+    List<V1VolumeMount> containerVolumeMounts = new ArrayList<>();
+    for (V1VolumeMount mount : volumeMounts) {
+      if (readonlyDisks.containsKey(name) && readonlyDisks.get(name).contains(mount.getName())) {
+        containerVolumeMounts.add(new V1VolumeMount()
+                                    .readOnly(true)
+                                    .name(mount.getName())
+                                    .mountPath(mount.getMountPath())
+                                    .mountPropagation(mount.getMountPropagation())
+                                    .subPath(mount.getSubPath())
+                                    .subPathExpr(mount.getSubPathExpr())
+        );
+      } else {
+        containerVolumeMounts.add(mount);
+      }
+    }
+
     return builder
       .withName(cleanse(name, 254))
       .withImage(containerImage)
       .withWorkingDir(workDir)
       .withResources(resourceRequirements)
-      .addAllToVolumeMounts(volumeMounts)
+      .addAllToVolumeMounts(containerVolumeMounts)
       .addAllToEnv(containerEnvironments)
       .addToArgs(masterEnvContext.getRunnableArguments(runnableClass, args))
       .build();

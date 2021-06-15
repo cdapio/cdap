@@ -182,8 +182,7 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
           if (twillPreparer instanceof SecureTwillPreparer) {
             String twillUserIdentity = cConf.get(Constants.Twill.Security.IDENTITY_USER);
             if (twillUserIdentity != null) {
-              SecurityContext securityContext = new SecurityContext
-                .SecurityContextBuilder()
+              SecurityContext securityContext = new SecurityContext.Builder()
                 .withIdentity(twillUserIdentity).build();
               twillPreparer = ((SecureTwillPreparer) twillPreparer)
                 .withSecurityContext(PreviewRunnerTwillRunnable.class.getSimpleName(), securityContext);
