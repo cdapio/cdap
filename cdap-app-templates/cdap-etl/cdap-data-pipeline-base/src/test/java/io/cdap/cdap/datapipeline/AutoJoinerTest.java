@@ -212,7 +212,7 @@ public class AutoJoinerTest extends HydratorTestBase {
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     Map<String, String> args = Collections.singletonMap(MockAutoJoiner.PARTITIONS_ARGUMENT, "1");
-    workflowManager.startAndWaitForRun(args, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+    workflowManager.startAndWaitForGoodRun(args, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     DataSetManager<Table> outputManager = getDataset(output);
     List<StructuredRecord> actual = MockSink.readOutput(outputManager);
@@ -554,7 +554,7 @@ public class AutoJoinerTest extends HydratorTestBase {
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     Map<String, String> args = Collections.singletonMap(MockAutoJoiner.PARTITIONS_ARGUMENT, "1");
-    workflowManager.startAndWaitForRun(args, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+    workflowManager.startAndWaitForGoodRun(args, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     DataSetManager<Table> outputManager = getDataset(output);
     List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);
@@ -631,7 +631,7 @@ public class AutoJoinerTest extends HydratorTestBase {
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     Map<String, String> args = Collections.singletonMap(MockAutoJoiner.PARTITIONS_ARGUMENT, "1");
-    workflowManager.startAndWaitForRun(args, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+    workflowManager.startAndWaitForGoodRun(args, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     DataSetManager<Table> outputManager = getDataset(output);
     List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);
@@ -714,7 +714,7 @@ public class AutoJoinerTest extends HydratorTestBase {
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     Map<String, String> args = Collections.singletonMap(MockAutoJoiner.PARTITIONS_ARGUMENT, "1");
-    workflowManager.startAndWaitForRun(args, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+    workflowManager.startAndWaitForGoodRun(args, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     DataSetManager<Table> outputManager = getDataset(output);
     List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);
@@ -1008,7 +1008,7 @@ public class AutoJoinerTest extends HydratorTestBase {
     MockSource.writeInput(inputManager, interestData);
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
-    workflowManager.startAndWaitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+    workflowManager.startAndWaitForGoodRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     DataSetManager<Table> outputManager = getDataset(output);
     List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);
@@ -1145,7 +1145,7 @@ public class AutoJoinerTest extends HydratorTestBase {
     MockSource.writeInput(inputManager, attributesData);
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
-    workflowManager.startAndWaitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+    workflowManager.startAndWaitForGoodRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     DataSetManager<Table> outputManager = getDataset(output);
     List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);
@@ -1326,7 +1326,7 @@ public class AutoJoinerTest extends HydratorTestBase {
     MockSource.writeInput(inputManager, records);
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
-    workflowManager.startAndWaitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+    workflowManager.startAndWaitForGoodRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     DataSetManager<Table> outputManager = getDataset(output);
     List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);
@@ -1416,7 +1416,7 @@ public class AutoJoinerTest extends HydratorTestBase {
     MockSource.writeInput(inputManager, records);
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
-    workflowManager.startAndWaitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+    workflowManager.startAndWaitForGoodRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     DataSetManager<Table> outputManager = getDataset(output);
     List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);
@@ -1531,7 +1531,7 @@ public class AutoJoinerTest extends HydratorTestBase {
     MockSource.writeInput(inputManager, records);
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
-    workflowManager.startAndWaitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+    workflowManager.startAndWaitForGoodRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     DataSetManager<Table> outputManager = getDataset(output);
     List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);
@@ -1620,7 +1620,7 @@ public class AutoJoinerTest extends HydratorTestBase {
     runtimeArgs.put("required", joinerProperties.get(MockAutoJoiner.Conf.REQUIRED));
     runtimeArgs.put("select", joinerProperties.get(MockAutoJoiner.Conf.SELECT));
     runtimeArgs.put("schema", expectedSchema.toString());
-    workflowManager.startAndWaitForRun(runtimeArgs, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+    workflowManager.startAndWaitForGoodRun(runtimeArgs, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     DataSetManager<Table> outputManager = getDataset(output);
     List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);

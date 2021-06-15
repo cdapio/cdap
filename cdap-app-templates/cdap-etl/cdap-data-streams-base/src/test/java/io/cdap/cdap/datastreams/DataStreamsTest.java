@@ -1103,7 +1103,7 @@ public class DataStreamsTest extends HydratorTestBase {
 
     Map<String, String> args = Collections.singletonMap(io.cdap.cdap.etl.common.Constants.CONSOLIDATE_STAGES, "true");
     SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
-    sparkManager.startAndWaitForRun(args, ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+    sparkManager.startAndWaitForGoodRun(args, ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     Schema flattenSchema =
       Schema.recordOf("erroruser",
@@ -1189,7 +1189,7 @@ public class DataStreamsTest extends HydratorTestBase {
     // run pipeline
     Map<String, String> args = Collections.singletonMap(io.cdap.cdap.etl.common.Constants.CONSOLIDATE_STAGES, "true");
     SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
-    sparkManager.startAndWaitForRun(args, ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+    sparkManager.startAndWaitForGoodRun(args, ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     // check output
     // sink1 should only have records where both name and email are null (user0)
@@ -1376,7 +1376,7 @@ public class DataStreamsTest extends HydratorTestBase {
     // run pipeline
     Map<String, String> args = Collections.singletonMap(io.cdap.cdap.etl.common.Constants.CONSOLIDATE_STAGES, "true");
     SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
-    sparkManager.startAndWaitForRun(args, ProgramRunStatus.RUNNING, 5, TimeUnit.MINUTES);
+    sparkManager.startAndWaitForGoodRun(args, ProgramRunStatus.RUNNING, 5, TimeUnit.MINUTES);
 
 
     Schema errorSchema =

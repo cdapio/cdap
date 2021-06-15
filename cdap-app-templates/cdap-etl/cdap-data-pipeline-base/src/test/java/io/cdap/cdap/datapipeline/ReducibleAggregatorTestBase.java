@@ -117,7 +117,7 @@ public class ReducibleAggregatorTestBase extends HydratorTestBase {
     MockSource.writeInput(inputManager, userData);
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
-    workflowManager.startAndWaitForRun(arguments, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+    workflowManager.startAndWaitForGoodRun(arguments, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     DataSetManager<Table> outputManager = getDataset(output);
     List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);
