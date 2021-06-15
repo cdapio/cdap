@@ -22,10 +22,10 @@ import java.util.Objects;
 /**
  * Object that represents an explore entity property.
  */
-public class BrowseEntityProperty {
+public class BrowseEntityPropertyValue {
 
   /**
-   * The property type for the browse entity
+   * The property type for the browse entity property
    */
   public enum PropertyType {
     STRING,
@@ -35,18 +35,13 @@ public class BrowseEntityProperty {
     SIZE_BYTES
   }
 
-  private final String key;
+
   private final String value;
   private final PropertyType type;
 
-  private BrowseEntityProperty(String key, String value, PropertyType type) {
-    this.key = key;
+  private BrowseEntityPropertyValue(String value, PropertyType type) {
     this.value = value;
     this.type = type;
-  }
-
-  public String getKey() {
-    return key;
   }
 
   public String getValue() {
@@ -67,41 +62,33 @@ public class BrowseEntityProperty {
       return false;
     }
 
-    BrowseEntityProperty that = (BrowseEntityProperty) o;
-    return Objects.equals(key, that.key) &&
-      Objects.equals(value, that.value) &&
-      Objects.equals(type, that.type);
+    BrowseEntityPropertyValue that = (BrowseEntityPropertyValue) o;
+    return Objects.equals(value, that.value) &&
+             Objects.equals(type, that.type);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(key, value, type);
+    return Objects.hash(value, type);
   }
 
   /**
    * Get the builder to build this object
    */
-  public static Builder builder(String key, String value, PropertyType type) {
-    return new Builder(key, value, type);
+  public static Builder builder(String value, PropertyType type) {
+    return new Builder(value, type);
   }
 
   /**
-   * Builder for {@link BrowseEntityProperty}
+   * Builder for {@link BrowseEntityPropertyValue}
    */
   public static class Builder {
-    private String key;
     private String value;
     private PropertyType type;
 
-    public Builder(String key, String value, PropertyType type) {
-      this.key = key;
+    public Builder(String value, PropertyType type) {
       this.type = type;
       this.value = value;
-    }
-
-    public Builder setKey(String key) {
-      this.key = key;
-      return this;
     }
 
     public Builder setValue(String value) {
@@ -114,10 +101,10 @@ public class BrowseEntityProperty {
       return this;
     }
 
-    public BrowseEntityProperty build() {
+    public BrowseEntityPropertyValue build() {
       // TODO: CDAP-18062 validate if the type matches the format, for example, if type is a date,
       //  validate the value is ISO format
-      return new BrowseEntityProperty(key, value, type);
+      return new BrowseEntityPropertyValue(value, type);
     }
   }
 }

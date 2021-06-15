@@ -36,12 +36,15 @@ public class BrowseDetail {
   // explore entity type -> sample property
   private final Set<BrowseEntityTypeInfo> sampleProperties;
   private final List<BrowseEntity> entities;
+  // this will list all the available properties from the entities so UI knows what to expect
+  private final Set<String> propertyHeaders;
 
   private BrowseDetail(int totalCount, Set<BrowseEntityTypeInfo> sampleProperties,
-                       List<BrowseEntity> entities) {
+                       List<BrowseEntity> entities, Set<String> propertyHeaders) {
     this.totalCount = totalCount;
     this.sampleProperties = sampleProperties;
     this.entities = entities;
+    this.propertyHeaders = propertyHeaders;
   }
 
   public Collection<BrowseEntityTypeInfo> getSampleProperties() {
@@ -54,6 +57,10 @@ public class BrowseDetail {
 
   public List<BrowseEntity> getEntities() {
     return entities;
+  }
+
+  public Set<String> getPropertyHeaders() {
+    return propertyHeaders;
   }
 
   @Override
@@ -69,12 +76,13 @@ public class BrowseDetail {
     BrowseDetail that = (BrowseDetail) o;
     return totalCount == that.totalCount &&
       Objects.equals(sampleProperties, that.sampleProperties) &&
-      Objects.equals(entities, that.entities);
+      Objects.equals(entities, that.entities) &&
+      Objects.equals(propertyHeaders, that.propertyHeaders);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(totalCount, sampleProperties, entities);
+    return Objects.hash(totalCount, sampleProperties, entities, propertyHeaders);
   }
 
   /**
@@ -125,7 +133,11 @@ public class BrowseDetail {
     }
 
     public BrowseDetail build() {
-      return new BrowseDetail(totalCount, sampleProperties, entities);
+      Set<String> propertyHeaders = new HashSet<>();
+      entities.forEach(entity -> {
+        propertyHeaders.addAll(entity.getProperties().keySet());
+      });
+      return new BrowseDetail(totalCount, sampleProperties, entities, propertyHeaders);
     }
   }
 }

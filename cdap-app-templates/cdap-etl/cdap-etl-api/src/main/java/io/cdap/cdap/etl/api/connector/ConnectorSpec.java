@@ -74,7 +74,7 @@ public class ConnectorSpec {
   }
 
   /**
-   * Builder for {@link BrowseEntityProperty}
+   * Builder for {@link ConnectorSpec}
    */
   public static class Builder {
     private Schema schema;
