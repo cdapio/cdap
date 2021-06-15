@@ -35,4 +35,12 @@ public interface StatefulTwillPreparer extends DependentTwillPreparer {
    */
   StatefulTwillPreparer withStatefulRunnable(String runnableName, boolean orderedStart,
                                              StatefulDisk... statefulDisk);
+
+  /**
+   * Mount the provided disk name for the given runnable name as readonly volume.
+   * @param runnableName name of the {@link TwillRunnable}
+   * @param diskName name of the {@link StatefulDisk}
+   * @return @return this {@link TwillPreparer}
+   */
+  StatefulTwillPreparer withReadonlyDisk(String runnableName, String diskName);
 }

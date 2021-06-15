@@ -267,8 +267,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
           if (twillPreparer instanceof SecureTwillPreparer) {
             String twillSystemIdentity = cConf.get(Constants.Twill.Security.IDENTITY_SYSTEM);
             if (twillSystemIdentity != null) {
-              SecurityContext securityContext = new SecurityContext
-                .SecurityContextBuilder()
+              SecurityContext securityContext = new SecurityContext.Builder()
                 .withIdentity(twillSystemIdentity).build();
               twillPreparer = ((SecureTwillPreparer) twillPreparer).withSecurityContext(runnable, securityContext);
             }
