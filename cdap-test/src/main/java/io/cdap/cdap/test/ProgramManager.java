@@ -52,6 +52,20 @@ public interface ProgramManager<T extends ProgramManager> {
     throws InterruptedException, ExecutionException, TimeoutException;
 
   /**
+   * Starts the program and waits for one additional run of the specified status. This is essentially a
+   * call to {@link #start()} followed by a call to {@link #waitForRuns(ProgramRunStatus, int, long, TimeUnit)}.
+   * Fails early if run gets into status that's {@link ProgramRunStatus#isUnsuccessful()}.
+   * It should not be used if there is another run in progress.
+   *
+   * @param status the status of the run to wait for
+   * @param timeout amount of time units to wait
+   * @param timeoutUnit time unit type
+   * @return the program manager itself
+   */
+  T startAndWaitForGoodRun(ProgramRunStatus status, long timeout, TimeUnit timeoutUnit)
+    throws InterruptedException, ExecutionException, TimeoutException;
+
+  /**
    * Starts the program with arguments
    * @param arguments the arguments to start the program with
    * @return T the ProgramManager, itself
@@ -71,6 +85,23 @@ public interface ProgramManager<T extends ProgramManager> {
    * @return the program manager itself
    */
   T startAndWaitForRun(Map<String, String> arguments, ProgramRunStatus status, long timeout, TimeUnit timeoutUnit)
+    throws InterruptedException, ExecutionException, TimeoutException;
+
+  /**
+   * Starts the program with arguments and waits for one additional run of the specified status.
+   * Fails early if run gets into status that's {@link ProgramRunStatus#isUnsuccessful()}.
+   * This method assumes another run is not started by another thread. This is essentially a
+   * call to {@link #start(Map)} ()} followed by a call to {@link #waitForRuns(ProgramRunStatus, int, long, TimeUnit)}.
+   * It should not be used if there is another run in progress.
+   *
+   * @param arguments the arguments to start the program with
+   * @param status the status of the run to wait for
+   * @param timeout amount of time units to wait
+   * @param timeoutUnit time unit type
+   * @return the program manager itself
+   */
+  T startAndWaitForGoodRun(Map<String, String> arguments, ProgramRunStatus status, long timeout,
+                           TimeUnit timeoutUnit)
     throws InterruptedException, ExecutionException, TimeoutException;
 
   /**

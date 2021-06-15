@@ -111,7 +111,7 @@ public class DataPipelineServiceTest extends HydratorTestBase {
     appManager = getApplicationManager(pipeline);
     waitForAppToDeploy(appManager, pipeline);
     serviceManager = appManager.getServiceManager(io.cdap.cdap.etl.common.Constants.STUDIO_SERVICE_NAME);
-    serviceManager.startAndWaitForRun(ProgramRunStatus.RUNNING, 2, TimeUnit.MINUTES);
+    serviceManager.startAndWaitForGoodRun(ProgramRunStatus.RUNNING, 2, TimeUnit.MINUTES);
     serviceURI = serviceManager.getServiceURL(1, TimeUnit.MINUTES).toURI();
   }
 
