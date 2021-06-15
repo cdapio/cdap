@@ -54,6 +54,8 @@ import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
+import io.cdap.cdap.master.spi.twill.SecretDisk;
+import io.cdap.cdap.master.spi.twill.SecureTwillPreparer;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.store.SecureStoreUtils;
@@ -259,6 +261,18 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
           }
           twillPreparer.setLogLevels(runnable, transformLogLevels(runnableDefinition.getLogLevels()));
           twillPreparer.withConfiguration(runnable, runnableDefinition.getTwillRunnableConfigs());
+
+          // Add cdap-security.xml if using secrets, and set the runnable identity.
+          if (twillPreparer instanceof SecureTwillPreparer) {
+            String twillSystemIdentity = cConf.get(Constants.Twill.Security.IDENTITY_SYSTEM);
+            if (twillSystemIdentity != null) {
+              twillPreparer = ((SecureTwillPreparer) twillPreparer).withIdentity(runnable, twillSystemIdentity);
+            }
+            String securityName = cConf.get(Constants.Twill.Security.SECRET_DISK_NAME);
+            String securityPath = cConf.get(Constants.Twill.Security.SECRET_DISK_PATH);
+            twillPreparer = ((SecureTwillPreparer) twillPreparer)
+              .withSecretDisk(runnable, new SecretDisk(securityName, securityPath));
+          }
         }
 
         if (options.isDebug()) {

@@ -1606,4 +1606,33 @@ public final class Constants {
      */
     public static final String AUTO_INSTALL_THREADS = "capability.autoinstall.threads";
   }
+
+  /**
+   * Constants for Twill.
+   */
+  public static final class Twill {
+    /**
+     * Constants for Twill's security-related extension methods.
+     */
+    public static final class Security {
+      /**
+       * User identity for Twill runnables which execute user code.
+       */
+      public static final String IDENTITY_USER = "twill.security.identity.user";
+      /**
+       * System identity for Twill runnables which do not execute user code.
+       */
+      public static final String IDENTITY_SYSTEM = "twill.security.identity.system";
+
+      /**
+       * The secret name for the cdap-security.xml disk mount.
+       */
+      public static final String SECRET_DISK_NAME = "twill.security.secret.disk.name";
+
+      /**
+       * The secret path for the cdap-security.xml disk mount.
+       */
+      public static final String SECRET_DISK_PATH = "twill.security.secret.disk.path";
+    }
+  }
 }

@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.preview;
 
-import io.cdap.cdap.common.conf.Constants;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;

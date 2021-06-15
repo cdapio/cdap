@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,6 +25,8 @@ import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
 import io.cdap.cdap.master.spi.twill.DependentTwillPreparer;
+import io.cdap.cdap.master.spi.twill.SecretDisk;
+import io.cdap.cdap.master.spi.twill.SecureTwillPreparer;
 import io.cdap.cdap.master.spi.twill.StatefulDisk;
 import io.cdap.cdap.master.spi.twill.StatefulTwillPreparer;
 import io.kubernetes.client.ApiClient;
@@ -49,6 +51,7 @@ import io.kubernetes.client.models.V1PodSpec;
 import io.kubernetes.client.models.V1PodSpecBuilder;
 import io.kubernetes.client.models.V1ResourceRequirements;
 import io.kubernetes.client.models.V1ResourceRequirementsBuilder;
+import io.kubernetes.client.models.V1SecretVolumeSource;
 import io.kubernetes.client.models.V1StatefulSet;
 import io.kubernetes.client.models.V1StatefulSetBuilder;
 import io.kubernetes.client.models.V1Volume;
@@ -121,8 +124,7 @@ import java.util.stream.Collectors;
  * main container, and the rest will be treated as sidecar containers.
  * TODO (CDAP-18058): This assumption needs to be changed by using {@link TwillSpecification.PlacementPolicy}.
  */
-class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer {
-
+class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer, SecureTwillPreparer {
   private static final Logger LOG = LoggerFactory.getLogger(KubeTwillPreparer.class);
 
   private static final String CPU_MULTIPLIER = "master.environment.k8s.container.cpu.multiplier";
@@ -148,6 +150,8 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private String schedulerQueue;
   private String mainRunnableName;
   private Set<String> dependentRunnableNames;
+  private String serviceAccountName;
+  private final Map<String, SecretDiskRunnable> secretDiskRunnables;
 
   KubeTwillPreparer(MasterEnvironmentContext masterEnvContext, ApiClient apiClient, String kubeNamespace,
                     PodInfo podInfo, TwillSpecification spec, RunId twillRunId, Location appLocation,
@@ -170,6 +174,8 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     this.resourcePrefix = resourcePrefix;
     this.extraLabels = extraLabels;
     this.dependentRunnableNames = new HashSet<>();
+    this.serviceAccountName = null;
+    this.secretDiskRunnables = new HashMap<>();
   }
 
   /**
@@ -215,8 +221,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    * Therefore, the provided {@link StatefulDisk} applies to all the containers that correspond to Twill runnables.
    */
   @Override
-  public KubeTwillPreparer withStatefulRunnable(String runnableName,
-                                                boolean orderedStart, StatefulDisk... disks) {
+  public KubeTwillPreparer withStatefulRunnable(String runnableName, boolean orderedStart, StatefulDisk... disks) {
     if (!twillSpec.getRunnables().containsKey(runnableName)) {
       throw new IllegalArgumentException("Runnable " + runnableName + " not found");
     }
@@ -233,6 +238,27 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     }
 
     statefulRunnables.put(runnableName, new StatefulRunnable(orderedStart, Arrays.asList(disks)));
+    return this;
+  }
+
+  @Override
+  public SecureTwillPreparer withIdentity(String runnableName, String identity) {
+    if (!twillSpec.getRunnables().containsKey(runnableName)) {
+      throw new IllegalArgumentException("Runnable " + runnableName + " not found");
+    }
+    // In Kubernetes, the identity represents the service account used to run the pod.
+    // The service account cannot be set at a container level, so we simply set it for all containers and throw an
+    // exception if there are multiple calls to withIdentity with different names.
+    if (serviceAccountName != null && !serviceAccountName.equals(identity)) {
+      throw new IllegalArgumentException("KubeTwillPreparer does not support setting per-container service accounts.");
+    }
+    serviceAccountName = identity;
+    return this;
+  }
+
+  @Override
+  public SecureTwillPreparer withSecretDisk(String runnableName, SecretDisk... secretDisks) {
+    secretDiskRunnables.put(runnableName, new SecretDiskRunnable(Arrays.asList(secretDisks)));
     return this;
   }
 
@@ -754,6 +780,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     V1Volume podInfoVolume = createPodInfoVolume(podInfo);
 
     RuntimeSpecification mainRuntimeSpec = getMainRuntimeSpecification(runtimeSpecs);
+    String runnableName = mainRuntimeSpec.getName();
     V1ResourceRequirements initContainerResourceRequirements =
       createResourceRequirements(mainRuntimeSpec.getResourceSpecification());
 
@@ -764,6 +791,18 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     // Add the working directory the file localization by the init container
     volumeMounts.add(new V1VolumeMount().name("workdir").mountPath(workDir));
     volumeMounts.addAll(Arrays.asList(extraMounts));
+
+    // Add secret disks as secret volume mounts
+    List<V1Volume> secretVolumes = new ArrayList<>();
+    if (secretDiskRunnables.containsKey(runnableName)) {
+      for (SecretDisk secretDisk : secretDiskRunnables.get(runnableName).getSecretDisks()) {
+        String secretName = secretDisk.getName();
+        String mountPath = secretDisk.getPath();
+        secretVolumes.add(new V1Volume().name(secretName).secret(new V1SecretVolumeSource()
+                                                                        .secretName(secretName)));
+        volumeMounts.add(new V1VolumeMount().name(secretName).mountPath(mountPath).readOnly(true));
+      }
+    }
 
     // Setup the container environment. Inherit everything from the current pod.
     Map<String, String> initContainerEnvirons = podInfo.getContainerEnvironments().stream()
@@ -776,10 +815,14 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     if (schedulerQueue != null) {
       podSpecBuilder = podSpecBuilder.withPriorityClassName(schedulerQueue);
     }
+    if (serviceAccountName == null) {
+      serviceAccountName = podInfo.getServiceAccountName();
+    }
     return podSpecBuilder
-      .withServiceAccountName(podInfo.getServiceAccountName())
+      .withServiceAccountName(serviceAccountName)
       .withRuntimeClassName(podInfo.getRuntimeClassName())
       .addAllToVolumes(podInfo.getVolumes())
+      .addAllToVolumes(secretVolumes)
       .addToVolumes(podInfoVolume,
                     new V1Volume().name("workdir").emptyDir(new V1EmptyDirVolumeSource()))
       .withInitContainers(createContainer("file-localizer", podInfo.getContainerImage(), workDir,
@@ -938,6 +981,21 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
 
     List<StatefulDisk> getStatefulDisks() {
       return statefulDisks;
+    }
+  }
+
+  /**
+   * Class to hold information about secret disk runnables.
+   */
+  private static final class SecretDiskRunnable {
+    private final List<SecretDisk> secretDisks;
+
+    private SecretDiskRunnable(List<SecretDisk> secretDisks) {
+      this.secretDisks = secretDisks;
+    }
+
+    List<SecretDisk> getSecretDisks() {
+      return secretDisks;
     }
   }
 }
