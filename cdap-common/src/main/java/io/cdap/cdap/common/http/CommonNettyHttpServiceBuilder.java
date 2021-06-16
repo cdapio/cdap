@@ -30,6 +30,8 @@ import javax.annotation.Nullable;
  */
 public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
 
+  public static final String AUTHENTICATOR_NAME = "authenticator";
+
   private ChannelPipelineModifier pipelineModifier;
   private ChannelPipelineModifier additionalModifier;
 
@@ -45,7 +47,7 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
           // This is needed before we use a InheritableThreadLocal in SecurityRequestContext
           // to remember the user id.
           EventExecutor executor = pipeline.context("dispatcher").executor();
-          pipeline.addBefore(executor, "dispatcher", "authenticator",
+          pipeline.addBefore(executor, "dispatcher", AUTHENTICATOR_NAME,
                              new AuthenticationChannelHandler(cConf.getBoolean(Constants.Security
                                                                                  .ENFORCE_INTERNAL_AUTH)));
         }
@@ -54,8 +56,21 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
     this.setExceptionHandler(new HttpExceptionHandler());
   }
 
+  /**
+   * Sets pipeline modifier, preserving the security one installed in constructor.
+   */
   @Override
-  public NettyHttpService.Builder setChannelPipelineModifier(ChannelPipelineModifier channelPipelineModifier) {
+  public NettyHttpService.Builder setChannelPipelineModifier(ChannelPipelineModifier additionalPipelineModifier) {
+    additionalModifier = additionalPipelineModifier;
+    return this;
+  }
+
+  /**
+   * Sets a pipeline modifier replacing the security one installed in constructor.
+   */
+  public NettyHttpService.Builder replaceDefaultChannelPipelineModifier(
+    ChannelPipelineModifier channelPipelineModifier) {
+
     pipelineModifier = channelPipelineModifier;
     return this;
   }

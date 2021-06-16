@@ -64,6 +64,7 @@ import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.guice.CoreSecurityModules;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.Configs;
@@ -280,6 +281,7 @@ public class DistributedWorkflowProgramRunnerTest {
       new MessagingClientModule(),
       new ExploreClientModule(),
       new AuditModule(),
+      new CoreSecurityModules().getDistributedModule(cConf),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getMasterModule(),
       new TwillModule(),

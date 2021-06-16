@@ -45,7 +45,6 @@ import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
 
 /**
  *  A {@link TwillPreparer} implementation that uses runtime job manager to launch a single {@link TwillRunnable}.
@@ -54,16 +53,16 @@ class RuntimeJobTwillPreparer extends AbstractRuntimeTwillPreparer {
 
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeJobTwillPreparer.class);
 
-  private final Location serviceProxySecretLocation;
+  private final Map<String, Location> secretFiles;
   private final Supplier<RuntimeJobManager> jobManagerSupplier;
 
   RuntimeJobTwillPreparer(CConfiguration cConf, Configuration hConf,
                           TwillSpecification twillSpec, ProgramRunId programRunId,
-                          ProgramOptions programOptions, @Nullable Location serviceProxySecretLocation,
+                          ProgramOptions programOptions, Map<String, Location> secretFiles,
                           LocationCache locationCache, LocationFactory locationFactory,
                           TwillControllerFactory controllerFactory, Supplier<RuntimeJobManager> jobManagerSupplier) {
     super(cConf, hConf, twillSpec, programRunId, programOptions, locationCache, locationFactory, controllerFactory);
-    this.serviceProxySecretLocation = serviceProxySecretLocation;
+    this.secretFiles = secretFiles;
     this.jobManagerSupplier = jobManagerSupplier;
   }
 
@@ -74,12 +73,13 @@ class RuntimeJobTwillPreparer extends AbstractRuntimeTwillPreparer {
     try (RuntimeJobManager jobManager = jobManagerSupplier.get()) {
       timeoutChecker.throwIfTimeout();
       Map<String, LocalFile> localizeFiles = new HashMap<>(localFiles);
-      if (serviceProxySecretLocation != null) {
-        localizeFiles.put(Constants.RuntimeMonitor.SERVICE_PROXY_PASSWORD_FILE,
-                          new DefaultLocalFile(Constants.RuntimeMonitor.SERVICE_PROXY_PASSWORD_FILE,
-                                               serviceProxySecretLocation.toURI(),
-                                               serviceProxySecretLocation.lastModified(),
-                                               serviceProxySecretLocation.length(),
+      for (Map.Entry<String, Location> secretFile: secretFiles.entrySet()) {
+        Location secretFileLocation = secretFile.getValue();
+        localizeFiles.put(secretFile.getKey(),
+                          new DefaultLocalFile(secretFile.getKey(),
+                                               secretFileLocation.toURI(),
+                                               secretFileLocation.lastModified(),
+                                               secretFileLocation.length(),
                                                false, null));
       }
 

@@ -52,6 +52,7 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -66,6 +67,15 @@ import java.util.concurrent.TimeUnit;
 public class RuntimeServiceMainTest extends MasterServiceMainTestBase {
 
   private static final Gson GSON = new Gson();
+
+  @BeforeClass
+  public static void init() throws Exception {
+    //We write through runtime client to this topic in this test, so add it to the allow list
+    cConf.set(Constants.RuntimeMonitor.TOPICS_CONFIGS,
+              cConf.get(Constants.RuntimeMonitor.TOPICS_CONFIGS, "") + ","
+                + Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC);
+    MasterServiceMainTestBase.init();
+  }
 
   @Test
   public void testRuntimeService() throws Exception {

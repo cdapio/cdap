@@ -96,7 +96,6 @@ public class AuthorizationHandlerTest {
         @Override
         public void modify(ChannelPipeline pipeline) {
           pipeline.addBefore("dispatcher", "usernamesetter", new TestUserNameSetter());
-          pipeline.addAfter("usernamesetter", "authenticator", new AuthenticationChannelHandler(false));
         }
       })
       .build();

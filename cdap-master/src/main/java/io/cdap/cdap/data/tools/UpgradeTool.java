@@ -40,6 +40,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.DFSLocationModule;
+import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
 import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.guice.ZKDiscoveryModule;
@@ -72,6 +73,7 @@ import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.messaging.store.hbase.HBaseTableFactory;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.guice.CoreSecurityModules;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
@@ -198,6 +200,8 @@ public class UpgradeTool {
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new SystemDatasetRuntimeModule().getDistributedModules(),
       new KafkaClientModule(),
+      new IOModule(),
+      new CoreSecurityModules().getDistributedModule(cConf),
       new AuthenticationContextModules().getMasterModule(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getMasterModule(),

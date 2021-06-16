@@ -90,6 +90,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.TokenSecureStoreRenewer;
 import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.guice.CoreSecurityModules;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.store.SecureStoreService;
@@ -569,6 +570,7 @@ public class MasterServiceMain extends DaemonMain {
       new MessagingClientModule(),
       new ExploreClientModule(),
       new AuditModule(),
+      new CoreSecurityModules().getDistributedModule(cConf),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getMasterModule(),
       new TwillModule(),
