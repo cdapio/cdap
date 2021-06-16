@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.runtime.service.http;
 
 import com.google.gson.Gson;
+import io.cdap.cdap.api.NamespaceSummary;
 import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
@@ -46,6 +47,7 @@ import io.cdap.cdap.internal.app.services.DefaultSystemTableConfigurer;
 import io.cdap.cdap.internal.app.worker.SystemAppTask;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metadata.PreferencesFetcher;
+import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
@@ -56,9 +58,12 @@ import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
 /**
@@ -73,6 +78,7 @@ public class BasicSystemHttpServiceContext extends BasicHttpServiceContext imple
   private final PreferencesFetcher preferencesFetcher;
   private final RemoteTaskExecutor remoteTaskExecutor;
   private final CConfiguration cConf;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   /**
    * Creates a BasicSystemHttpServiceContext.
@@ -99,6 +105,7 @@ public class BasicSystemHttpServiceContext extends BasicHttpServiceContext imple
     this.preferencesFetcher = preferencesFetcher;
     this.cConf = cConf;
     this.remoteTaskExecutor = new RemoteTaskExecutor(cConf, discoveryServiceClient);
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
   @Override
@@ -175,5 +182,13 @@ public class BasicSystemHttpServiceContext extends BasicHttpServiceContext imple
   @Override
   public boolean isRemoteTaskEnabled() {
     return cConf.getBoolean(Constants.TaskWorker.POOL_ENABLE, false);
+  }
+
+  @Override
+  public List<NamespaceSummary> listNamespaces() throws Exception {
+    List<NamespaceSummary> summaries = new ArrayList<>();
+    namespaceQueryAdmin.list().forEach(
+      ns -> summaries.add(new NamespaceSummary(ns.getName(), ns.getDescription(), ns.getGeneration())));
+    return summaries;
   }
 }
