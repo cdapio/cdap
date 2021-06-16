@@ -504,9 +504,6 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     // as WARN, which pollute the logs a lot if there are concurrent Spark job running (e.g. a fork in Workflow).
     configs.put("spark.ui.port", "0");
 
-    // Force python 2. Spark 3 runs with python 3 by default, but we don't support it yet
-    configs.put("spark.pyspark.python", "python");
-
     // Setup app.id and executor.id for Metric System
     configs.put("spark.app.id", context.getApplicationSpecification().getName());
     configs.put("spark.executor.id", context.getApplicationSpecification().getName());
