@@ -21,6 +21,7 @@ import io.cdap.cdap.WorkflowAppWithFork;
 import io.cdap.cdap.api.annotation.Requirements;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.internal.AppFabricTestHelper;
@@ -66,9 +67,10 @@ import java.util.UUID;
     artifactRepository = getInjector().getInstance(ArtifactRepository.class);
     CConfiguration cConfiguration = getInjector().getInstance(CConfiguration.class);
     DiscoveryServiceClient client = getInjector().getInstance(DiscoveryServiceClient.class);
+    RemoteClientFactory remoteClientFactory = getInjector().getInstance(RemoteClientFactory.class);
     capabilityApplier = new CapabilityApplier(null, null,
                                               null, null, null,
-                                              null, client, cConfiguration);
+                                              null, cConfiguration, remoteClientFactory);
   }
 
   @AfterClass

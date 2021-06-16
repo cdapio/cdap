@@ -38,6 +38,7 @@ import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.http.AuthenticationChannelHandler;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.lang.InstantiatorFactory;
 import io.cdap.cdap.common.lang.PropertyFieldSetter;
 import io.cdap.cdap.common.logging.LoggingContext;
@@ -96,7 +97,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                            MetadataPublisher metadataPublisher, NamespaceQueryAdmin namespaceQueryAdmin,
                            PluginFinder pluginFinder, FieldLineageWriter fieldLineageWriter,
                            TransactionRunner transactionRunner, PreferencesFetcher preferencesFetcher,
-                           ContextAccessEnforcer contextAccessEnforcer) {
+                           RemoteClientFactory remoteClientFactory, ContextAccessEnforcer contextAccessEnforcer) {
     super(host, program, programOptions, instanceId, serviceAnnouncer, TransactionControl.IMPLICIT);
 
     this.cConf = cConf;
@@ -107,7 +108,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                                                txClient, pluginInstantiator, secureStore, secureStoreManager,
                                                messagingService, artifactManager, metadataReader, metadataPublisher,
                                                pluginFinder, fieldLineageWriter, transactionRunner,
-                                               preferencesFetcher, contextAccessEnforcer);
+                                               preferencesFetcher, remoteClientFactory, contextAccessEnforcer);
     this.context = contextFactory.create(null, null);
     this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
@@ -169,6 +170,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                                                               FieldLineageWriter fieldLineageWriter,
                                                               TransactionRunner transactionRunner,
                                                               PreferencesFetcher preferencesFetcher,
+                                                              RemoteClientFactory remoteClientFactory,
                                                               ContextAccessEnforcer contextAccessEnforcer) {
     return (spec, handlerClass) -> {
       if (handlerClass != null && AbstractSystemHttpServiceHandler.class.isAssignableFrom(handlerClass)) {
@@ -177,13 +179,14 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                                                  txClient, pluginInstantiator, secureStore, secureStoreManager,
                                                  messagingService, artifactManager, metadataReader, metadataPublisher,
                                                  namespaceQueryAdmin, pluginFinder, fieldLineageWriter,
-                                                 transactionRunner, preferencesFetcher, contextAccessEnforcer);
+                                                 transactionRunner, preferencesFetcher, remoteClientFactory,
+                                                 contextAccessEnforcer);
       }
       return new BasicHttpServiceContext(program, programOptions, cConf, spec, instanceId, instanceCount,
                                          metricsCollectionService, datasetFramework, discoveryServiceClient,
                                          txClient, pluginInstantiator, secureStore, secureStoreManager,
                                          messagingService, artifactManager, metadataReader, metadataPublisher,
-                                         namespaceQueryAdmin, pluginFinder, fieldLineageWriter);
+                                         namespaceQueryAdmin, pluginFinder, fieldLineageWriter, remoteClientFactory);
     };
   }
 

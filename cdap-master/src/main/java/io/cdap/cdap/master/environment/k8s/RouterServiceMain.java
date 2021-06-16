@@ -33,6 +33,7 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.guice.SecurityModule;
 import io.cdap.cdap.security.guice.SecurityModules;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
@@ -59,6 +60,8 @@ public class RouterServiceMain extends AbstractServiceMain<EnvironmentOptions> {
   protected List<Module> getServiceModules(MasterEnvironment masterEnv,
                                            EnvironmentOptions options, CConfiguration cConf) {
     List<Module> modules = new ArrayList<>();
+
+    modules.add(new AuthenticationContextModules().getMasterModule());
     modules.add(new MessagingClientModule());
     modules.add(new RouterModules().getDistributedModules());
     modules.add(new DFSLocationModule());

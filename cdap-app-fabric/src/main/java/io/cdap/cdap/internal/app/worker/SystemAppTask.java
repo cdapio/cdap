@@ -35,6 +35,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -119,12 +120,12 @@ public class SystemAppTask implements RunnableTask {
                                                          ArtifactId artifactId, ClassLoader artifactClassLoader) {
     PreferencesFetcher preferencesFetcher = injector.getInstance(PreferencesFetcher.class);
     PluginFinder pluginFinder = injector.getInstance(PluginFinder.class);
-    DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     SecureStore secureStore = injector.getInstance(SecureStore.class);
     ArtifactManagerFactory artifactManagerFactory = injector.getInstance(ArtifactManagerFactory.class);
-    return new DefaultSystemAppTaskContext(cConf, preferencesFetcher, pluginFinder, discoveryServiceClient,
+    RemoteClientFactory remoteClientFactory = injector.getInstance(RemoteClientFactory.class);
+    return new DefaultSystemAppTaskContext(cConf, preferencesFetcher, pluginFinder,
                                            secureStore, systemAppNamespace, artifactId, artifactClassLoader,
-                                           artifactManagerFactory, Constants.Service.TASK_WORKER);
+                                           artifactManagerFactory, Constants.Service.TASK_WORKER, remoteClientFactory);
   }
 
   private void streamArtifactIfRequired(Id.Artifact artifactId, Location artifactLocation,

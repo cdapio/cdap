@@ -29,6 +29,7 @@ import io.cdap.cdap.common.SecureKeyNotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.proto.id.SecureKeyId;
 import io.cdap.cdap.proto.security.SecureKeyCreateRequest;
 import io.cdap.common.http.HttpMethod;
@@ -54,9 +55,9 @@ public class RemoteSecureStore implements SecureStoreManager, SecureStore {
 
   @VisibleForTesting
   @Inject
-  RemoteSecureStore(DiscoveryServiceClient discoveryServiceClient) {
-    this.remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.SECURE_STORE_SERVICE,
-                                         new DefaultHttpRequestConfig(false), "/v3/namespaces/");
+  RemoteSecureStore(RemoteClientFactory remoteClientFactory) {
+    this.remoteClient = remoteClientFactory.createRemoteClient(
+      Constants.Service.SECURE_STORE_SERVICE, new DefaultHttpRequestConfig(false), "/v3/namespaces/");
   }
 
   @Override

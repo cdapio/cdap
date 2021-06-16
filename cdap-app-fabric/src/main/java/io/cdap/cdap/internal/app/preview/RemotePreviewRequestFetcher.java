@@ -23,6 +23,7 @@ import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
@@ -43,11 +44,12 @@ public class RemotePreviewRequestFetcher implements PreviewRequestFetcher {
   private final PreviewRequestPollerInfoProvider pollerInfoProvider;
 
   @Inject
-  RemotePreviewRequestFetcher(DiscoveryServiceClient discoveryServiceClient,
-                              PreviewRequestPollerInfoProvider pollerInfoProvider) {
-    this.remoteClientInternal = new RemoteClient(discoveryServiceClient, Constants.Service.PREVIEW_HTTP,
-                                                 new DefaultHttpRequestConfig(false),
-                                                 Constants.Gateway.INTERNAL_API_VERSION_3 + "/previews");
+  RemotePreviewRequestFetcher(PreviewRequestPollerInfoProvider pollerInfoProvider,
+                              RemoteClientFactory remoteClientFactory) {
+    this.remoteClientInternal = remoteClientFactory.createRemoteClient(
+      Constants.Service.PREVIEW_HTTP,
+      new DefaultHttpRequestConfig(false),
+      Constants.Gateway.INTERNAL_API_VERSION_3 + "/previews");
     this.pollerInfoProvider = pollerInfoProvider;
   }
 

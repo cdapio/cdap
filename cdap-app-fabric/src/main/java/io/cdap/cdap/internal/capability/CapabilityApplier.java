@@ -33,6 +33,7 @@ import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
@@ -58,7 +59,6 @@ import io.cdap.cdap.proto.metadata.MetadataSearchResultRecord;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.metadata.SearchRequest;
 import org.apache.twill.common.Threads;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -113,14 +113,14 @@ class CapabilityApplier {
   CapabilityApplier(SystemProgramManagementService systemProgramManagementService,
                     ApplicationLifecycleService applicationLifecycleService, NamespaceAdmin namespaceAdmin,
                     ProgramLifecycleService programLifecycleService, CapabilityStatusStore capabilityStatusStore,
-                    ArtifactRepository artifactRepository, DiscoveryServiceClient discoveryClient,
-                    CConfiguration cConf) {
+                    ArtifactRepository artifactRepository,
+                    CConfiguration cConf, RemoteClientFactory remoteClientFactory) {
     this.systemProgramManagementService = systemProgramManagementService;
     this.applicationLifecycleService = applicationLifecycleService;
     this.programLifecycleService = programLifecycleService;
     this.capabilityStatusStore = capabilityStatusStore;
     this.namespaceAdmin = namespaceAdmin;
-    this.metadataSearchClient = new MetadataSearchClient(discoveryClient);
+    this.metadataSearchClient = new MetadataSearchClient(remoteClientFactory);
     this.artifactRepository = artifactRepository;
     this.tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();

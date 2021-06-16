@@ -24,6 +24,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.logging.appender.AbstractLogPublisher;
 import io.cdap.cdap.logging.appender.LogAppender;
@@ -38,7 +39,6 @@ import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -60,20 +60,20 @@ public class RemoteLogAppender extends LogAppender {
   private static final String APPENDER_NAME = "RemoteLogAppender";
 
   private final CConfiguration cConf;
-  private final DiscoveryServiceClient discoveryServiceClient;
   private final AtomicReference<RemoteLogPublisher> publisher;
+  private final RemoteClientFactory remoteClientFactory;
 
   @Inject
-  public RemoteLogAppender(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient) {
+  public RemoteLogAppender(CConfiguration cConf, RemoteClientFactory remoteClientFactory) {
+    this.remoteClientFactory = remoteClientFactory;
     setName(APPENDER_NAME);
     this.cConf = cConf;
-    this.discoveryServiceClient = discoveryServiceClient;
     this.publisher = new AtomicReference<>();
   }
 
   @Override
   public void start() {
-    RemoteLogPublisher publisher = new RemoteLogPublisher(cConf, discoveryServiceClient);
+    RemoteLogPublisher publisher = new RemoteLogPublisher(cConf, remoteClientFactory);
     Optional.ofNullable(this.publisher.getAndSet(publisher)).ifPresent(RemoteLogPublisher::stopAndWait);
     publisher.startAndWait();
     addInfo("Successfully started " + APPENDER_NAME);
@@ -111,7 +111,7 @@ public class RemoteLogAppender extends LogAppender {
     private final DatumWriter<List<ByteBuffer>> datumWriter;
     private final RemoteClient remoteClient;
 
-    private RemoteLogPublisher(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient) {
+    private RemoteLogPublisher(CConfiguration cConf, RemoteClientFactory remoteClientFactory) {
       super(cConf.getInt(Constants.Logging.APPENDER_QUEUE_SIZE, 512),
             RetryStrategies.fromConfiguration(cConf, "system.log.process."));
       this.numPartitions = cConf.getInt(Constants.Logging.NUM_PARTITIONS);
@@ -121,8 +121,9 @@ public class RemoteLogAppender extends LogAppender {
       // DatumWriter stores schema in non final variable. However, this schem will not change per thread. So we are
       // not using ThreadLocal for datumWriter
       this.datumWriter = new GenericDatumWriter<>(Schema.createArray(Schema.create(Schema.Type.BYTES)));
-      this.remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.LOG_BUFFER_SERVICE,
-                                           new DefaultHttpRequestConfig(false), "/v1/logs");
+      this.remoteClient = remoteClientFactory.createRemoteClient(Constants.Service.LOG_BUFFER_SERVICE,
+                                                                 new DefaultHttpRequestConfig(false),
+                                                                 "/v1/logs");
     }
 
     @Override

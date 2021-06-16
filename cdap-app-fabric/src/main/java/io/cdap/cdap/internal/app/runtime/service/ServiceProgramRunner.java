@@ -31,6 +31,7 @@ import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.data.ProgramContextAware;
@@ -83,6 +84,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final FieldLineageWriter fieldLineageWriter;
   private final TransactionRunner transactionRunner;
   private final PreferencesFetcher preferencesFetcher;
+  private final RemoteClientFactory remoteClientFactory;
   private final ContextAccessEnforcer contextAccessEnforcer;
 
   @Inject
@@ -95,7 +97,8 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
                               MetadataReader metadataReader, MetadataPublisher metadataPublisher,
                               NamespaceQueryAdmin namespaceQueryAdmin, PluginFinder pluginFinder,
                               FieldLineageWriter fieldLineageWriter, TransactionRunner transactionRunner,
-                              PreferencesFetcher preferencesFetcher, ContextAccessEnforcer contextAccessEnforcer) {
+                              PreferencesFetcher preferencesFetcher, RemoteClientFactory remoteClientFactory,
+                              ContextAccessEnforcer contextAccessEnforcer) {
     super(cConf);
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
@@ -113,6 +116,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.fieldLineageWriter = fieldLineageWriter;
     this.transactionRunner = transactionRunner;
     this.preferencesFetcher = preferencesFetcher;
+    this.remoteClientFactory = remoteClientFactory;
     this.contextAccessEnforcer = contextAccessEnforcer;
   }
 
@@ -157,7 +161,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                           messagingService, artifactManager, metadataReader,
                                                           metadataPublisher, namespaceQueryAdmin, pluginFinder,
                                                           fieldLineageWriter, transactionRunner, preferencesFetcher,
-                                                          contextAccessEnforcer);
+                                                          remoteClientFactory, contextAccessEnforcer);
 
       // Add a service listener to make sure the plugin instantiator is closed when the http server is finished.
       component.addListener(createRuntimeServiceListener(Collections.singleton(pluginInstantiator)),

@@ -23,7 +23,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
-import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.app.guice.RuntimeServerModule;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -35,6 +34,7 @@ import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.gateway.handlers.PingHandler;
 import io.cdap.cdap.messaging.MessagingService;
@@ -42,6 +42,7 @@ import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
@@ -55,7 +56,6 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -87,11 +87,11 @@ public class RuntimeServiceRoutingTest {
 
   private static final String MOCK_SERVICE = "mock";
 
-  private DiscoveryServiceClient discoveryServiceClient;
   private MessagingService messagingService;
   private RuntimeServer runtimeServer;
   private NettyHttpService mockService;
   private Cancellable mockServiceCancellable;
+  private RemoteClientFactory remoteClientFactory;
 
   @Before
   public void beforeTest() throws Exception {
@@ -103,6 +103,7 @@ public class RuntimeServiceRoutingTest {
       new LocalLocationModule(),
       new InMemoryDiscoveryModule(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
+      new AuthenticationContextModules().getNoOpModule(),
       new RuntimeServerModule() {
         @Override
         protected void bindRequestValidator() {
@@ -118,7 +119,8 @@ public class RuntimeServiceRoutingTest {
 
         @Override
         protected void bindLogProcessor() {
-          bind(RemoteExecutionLogProcessor.class).toInstance(payloads -> { });
+          bind(RemoteExecutionLogProcessor.class).toInstance(payloads -> {
+          });
         }
       },
       new AbstractModule() {
@@ -147,7 +149,7 @@ public class RuntimeServiceRoutingTest {
     mockServiceCancellable = injector.getInstance(DiscoveryService.class)
       .register(URIScheme.createDiscoverable(MOCK_SERVICE, mockService));
 
-    discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
+    remoteClientFactory = injector.getInstance(RemoteClientFactory.class);
   }
 
   @After
@@ -166,9 +168,10 @@ public class RuntimeServiceRoutingTest {
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app", "1.0").workflow("workflow").run(RunIds.generate());
     RemoteAuthenticator.setDefaultAuthenticator(new MockRemoteAuthenticator(programRunId));
 
-    RemoteClient remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.RUNTIME,
-                                                 DefaultHttpRequestConfig.DEFAULT,
-                                                 Constants.Gateway.INTERNAL_API_VERSION_3 + "/runtime/namespaces");
+    RemoteClient remoteClient = remoteClientFactory.createRemoteClient(
+      Constants.Service.RUNTIME,
+      DefaultHttpRequestConfig.DEFAULT,
+      Constants.Gateway.INTERNAL_API_VERSION_3 + "/runtime/namespaces");
 
     for (HttpMethod method : EnumSet.of(HttpMethod.GET, HttpMethod.DELETE)) {
       for (int status : Arrays.asList(200, 400, 404, 500)) {
@@ -192,9 +195,10 @@ public class RuntimeServiceRoutingTest {
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app", "1.0").workflow("workflow").run(RunIds.generate());
     RemoteAuthenticator.setDefaultAuthenticator(new MockRemoteAuthenticator(programRunId));
 
-    RemoteClient remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.RUNTIME,
-                                                 DefaultHttpRequestConfig.DEFAULT,
-                                                 Constants.Gateway.INTERNAL_API_VERSION_3 + "/runtime/namespaces");
+    RemoteClient remoteClient = remoteClientFactory.createRemoteClient(
+      Constants.Service.RUNTIME,
+      DefaultHttpRequestConfig.DEFAULT,
+      Constants.Gateway.INTERNAL_API_VERSION_3 + "/runtime/namespaces");
     String largeContent = Strings.repeat("Testing", 32768);
 
     for (String content : Arrays.asList("", "Small content", largeContent)) {
@@ -222,9 +226,10 @@ public class RuntimeServiceRoutingTest {
   @Test
   public void testUnauthorized() throws IOException, UnauthorizedException {
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app", "1.0").workflow("workflow").run(RunIds.generate());
-    RemoteClient remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.RUNTIME,
-                                                 DefaultHttpRequestConfig.DEFAULT,
-                                                 Constants.Gateway.INTERNAL_API_VERSION_3 + "/runtime/namespaces");
+    RemoteClient remoteClient = remoteClientFactory.createRemoteClient(
+      Constants.Service.RUNTIME,
+      DefaultHttpRequestConfig.DEFAULT,
+      Constants.Gateway.INTERNAL_API_VERSION_3 + "/runtime/namespaces");
     io.cdap.common.http.HttpRequest request =
       remoteClient.requestBuilder(HttpMethod.GET,
                                   String.format("%s/apps/%s/versions/%s/%s/%s/runs/%s/services/%s/mock/%s/%d",

@@ -27,13 +27,13 @@ import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.app.deploy.ConfigResponse;
 import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.internal.app.RemoteTaskExecutor;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.runtime.artifact.ApplicationClassCodec;
 import io.cdap.cdap.internal.app.runtime.artifact.RequirementsCodec;
 import io.cdap.cdap.internal.app.worker.ConfiguratorTask;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.nio.charset.StandardCharsets;
 
@@ -52,10 +52,11 @@ public class RemoteConfigurator implements Configurator {
   private final RemoteTaskExecutor remoteTaskExecutor;
 
   @Inject
-  public RemoteConfigurator(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient,
-                            @Assisted AppDeploymentInfo deploymentInfo) {
+  public RemoteConfigurator(CConfiguration cConf,
+                            @Assisted AppDeploymentInfo deploymentInfo,
+                            RemoteClientFactory remoteClientFactory) {
     this.deploymentInfo = deploymentInfo;
-    this.remoteTaskExecutor = new RemoteTaskExecutor(cConf, discoveryServiceClient);
+    this.remoteTaskExecutor = new RemoteTaskExecutor(cConf, remoteClientFactory);
   }
 
   @Override

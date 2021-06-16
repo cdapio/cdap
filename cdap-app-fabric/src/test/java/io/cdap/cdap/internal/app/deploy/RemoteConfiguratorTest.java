@@ -33,6 +33,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.test.AppJarHelper;
@@ -55,6 +56,7 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnableContext;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryService;
@@ -91,6 +93,7 @@ public class RemoteConfiguratorTest {
   private static CConfiguration cConf;
   private static NettyHttpService httpService;
   private static InMemoryDiscoveryService discoveryService;
+  private static RemoteClientFactory remoteClientFactory;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -114,6 +117,7 @@ public class RemoteConfiguratorTest {
 
     discoveryService.register(URIScheme.createDiscoverable(Constants.Service.TASK_WORKER, httpService));
     discoveryService.register(URIScheme.createDiscoverable(Constants.Service.APP_FABRIC_HTTP, httpService));
+    remoteClientFactory = new RemoteClientFactory(discoveryService, new AuthenticationTestContext());
   }
 
   @AfterClass
@@ -140,7 +144,7 @@ public class RemoteConfiguratorTest {
                                                    new ApplicationClass(AllProgramsApp.class.getName(), "", null),
                                                    null, null, null);
 
-    Configurator configurator = new RemoteConfigurator(cConf, discoveryService, info);
+    Configurator configurator = new RemoteConfigurator(cConf, info, remoteClientFactory);
 
     // Extract response from the configurator.
     ListenableFuture<ConfigResponse> result = configurator.config();
@@ -172,7 +176,7 @@ public class RemoteConfiguratorTest {
                                                    new ApplicationClass(AllProgramsApp.class.getName(), "", null),
                                                    null, null, null);
 
-    Configurator configurator = new RemoteConfigurator(cConf, discoveryService, info);
+    Configurator configurator = new RemoteConfigurator(cConf, info, remoteClientFactory);
 
     // Expect the future.get would throw an exception
     configurator.config().get(10, TimeUnit.SECONDS);
@@ -191,7 +195,7 @@ public class RemoteConfiguratorTest {
                                                    new ApplicationClass(ConfigTestApp.class.getName(), "", null),
                                                    "BadApp", null, GSON.toJson("invalid"));
 
-    Configurator configurator = new RemoteConfigurator(cConf, discoveryService, info);
+    Configurator configurator = new RemoteConfigurator(cConf, info, remoteClientFactory);
 
     // Expect the future.get would throw an exception
     configurator.config().get(10, TimeUnit.SECONDS);

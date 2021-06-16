@@ -1194,6 +1194,8 @@ public final class Constants {
       public static final String USER_PRINCIPAL = "CDAP-User-Principal";
       /** program id passed from program container to cdap service containers */
       public static final String PROGRAM_ID = "CDAP-Program-Id";
+      /** token to authorize runtime service calls */
+      public static final String RUNTIME_TOKEN = "X-CDAP-Runtime-Token";
     }
 
     /**

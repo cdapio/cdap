@@ -383,7 +383,7 @@ public final class SparkRuntimeUtils {
     }
 
     RuntimeClient runtimeClient = new RuntimeClient(runtimeContext.getCConfiguration(),
-                                                    runtimeContext.getDiscoveryServiceClient());
+                                                    runtimeContext.getRemoteClientFactory());
     Retries.runWithRetries(() -> runtimeClient.uploadSparkEventLogs(programRunId, eventFile),
                            RetryStrategies.fromConfiguration(runtimeContext.getCConfiguration(), "spark."));
     LOG.debug("Uploaded event logs file {} for program run {}", eventFile, programRunId);

@@ -31,12 +31,12 @@ import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
-import io.cdap.cdap.internal.app.DefaultPluginConfigurer;
 import io.cdap.cdap.internal.app.DefaultServicePluginConfigurer;
 import io.cdap.cdap.internal.app.runtime.AbstractContext;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
@@ -85,7 +85,7 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
    * @param programOptions program options for the program execution context
    * @param cConf the CDAP configuration
    * @param spec spec of the service handler of this context. If {@code null} is provided, this context
-   *             is not associated with any service handler (e.g. for the http server itself).
+*             is not associated with any service handler (e.g. for the http server itself).
    * @param instanceId instanceId of the component.
    * @param instanceCount total number of instances of the component.
    * @param metricsCollectionService metricsCollectionService to use for emitting metrics.
@@ -102,6 +102,7 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
    * @param namespaceQueryAdmin the {@link NamespaceQueryAdmin} for querying namespace information
    * @param pluginFinder the {@link PluginFinder} for plugin discovery
    * @param fieldLineageWriter the {@link FieldLineageWriter} for writing out field level lineage
+   * @param remoteClientFactory
    */
   public BasicHttpServiceContext(Program program, ProgramOptions programOptions, CConfiguration cConf,
                                  @Nullable HttpServiceHandlerSpecification spec,
@@ -115,12 +116,12 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
                                  MetadataPublisher metadataPublisher,
                                  NamespaceQueryAdmin namespaceQueryAdmin,
                                  PluginFinder pluginFinder,
-                                 FieldLineageWriter fieldLineageWriter) {
+                                 FieldLineageWriter fieldLineageWriter, RemoteClientFactory remoteClientFactory) {
     super(program, programOptions, cConf, spec == null ? Collections.emptySet() : spec.getDatasets(),
-          dsFramework, txClient, discoveryServiceClient, false,
+          dsFramework, txClient, false,
           metricsCollectionService, createMetricsTags(spec, instanceId),
           secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher,
-          namespaceQueryAdmin, fieldLineageWriter);
+          namespaceQueryAdmin, fieldLineageWriter, remoteClientFactory);
     this.cConf = cConf;
     this.artifactId = ProgramRunners.getArtifactId(programOptions);
     this.spec = spec;

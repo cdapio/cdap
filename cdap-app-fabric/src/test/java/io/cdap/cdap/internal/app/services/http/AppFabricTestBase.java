@@ -57,6 +57,7 @@ import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
@@ -105,6 +106,7 @@ import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.scheduler.Scheduler;
+import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
@@ -212,6 +214,7 @@ public abstract class AppFabricTestBase {
   private static DatasetClient datasetClient;
   private static MetadataClient metadataClient;
   private static MetricStore metricStore;
+  private static RemoteClientFactory remoteClientFactory;
 
   private static HttpRequestConfig httpRequestConfig;
 
@@ -277,8 +280,9 @@ public abstract class AppFabricTestBase {
     metadataSubscriberService.startAndWait();
     locationFactory = getInjector().getInstance(LocationFactory.class);
     datasetClient = new DatasetClient(getClientConfig(discoveryClient, Constants.Service.DATASET_MANAGER));
+    remoteClientFactory = new RemoteClientFactory(discoveryClient, new AuthenticationTestContext());
     metadataClient = new MetadataClient(getClientConfig(discoveryClient, Constants.Service.METADATA_SERVICE));
-    metadataServiceClient = new DefaultMetadataServiceClient(discoveryClient);
+    metadataServiceClient = new DefaultMetadataServiceClient(remoteClientFactory);
     metricStore = injector.getInstance(MetricStore.class);
 
     Scheduler programScheduler = injector.getInstance(Scheduler.class);

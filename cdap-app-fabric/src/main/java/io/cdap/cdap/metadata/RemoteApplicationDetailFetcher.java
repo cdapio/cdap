@@ -25,6 +25,7 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -51,11 +52,11 @@ public class RemoteApplicationDetailFetcher implements ApplicationDetailFetcher 
   private final RemoteClient remoteClient;
 
   @Inject
-  public RemoteApplicationDetailFetcher(DiscoveryServiceClient discoveryClient) {
-    this.remoteClient = new RemoteClient(discoveryClient,
-                                         Constants.Service.APP_FABRIC_HTTP,
-                                         new DefaultHttpRequestConfig(false),
-                                         Constants.Gateway.INTERNAL_API_VERSION_3);
+  public RemoteApplicationDetailFetcher(RemoteClientFactory remoteClientFactory) {
+    this.remoteClient = remoteClientFactory.createRemoteClient(
+      Constants.Service.APP_FABRIC_HTTP,
+      new DefaultHttpRequestConfig(false),
+      Constants.Gateway.INTERNAL_API_VERSION_3);
   }
 
   /**

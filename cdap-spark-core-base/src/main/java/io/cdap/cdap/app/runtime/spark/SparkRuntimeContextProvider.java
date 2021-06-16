@@ -42,6 +42,7 @@ import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.lang.FilterClassLoader;
@@ -260,7 +261,6 @@ public final class SparkRuntimeContextProvider {
         getHostname(),
         injector.getInstance(TransactionSystemClient.class),
         programDatasetFramework,
-        injector.getInstance(DiscoveryServiceClient.class),
         metricsCollectionService,
         contextConfig.getWorkflowProgramInfo(),
         pluginInstantiator,
@@ -276,8 +276,8 @@ public final class SparkRuntimeContextProvider {
         injector.getInstance(MetadataPublisher.class),
         injector.getInstance(NamespaceQueryAdmin.class),
         injector.getInstance(FieldLineageWriter.class),
-        closeable
-      );
+        injector.getInstance(RemoteClientFactory.class),
+        closeable);
       LoggingContextAccessor.setLoggingContext(sparkRuntimeContext.getLoggingContext());
       return sparkRuntimeContext;
     } catch (Exception e) {
