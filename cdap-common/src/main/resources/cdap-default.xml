@@ -2797,7 +2797,6 @@
     <description>
       A comma-separated list of topic config to be monitored by runtime monitor
     </description>
-    <final>true</final>
   </property>
 
   <property>
@@ -2874,6 +2873,14 @@
     <value>20</value>
     <description>
       Maximum number of threads being used by runtime monitor for runtime monitoring
+    </description>
+  </property>
+
+  <property>
+    <name>app.program.runtime.monitor.audit.log.enabled</name>
+    <value>${security.enabled}</value>
+    <description>
+      Determine if access audit log is enabled
     </description>
   </property>
 

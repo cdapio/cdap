@@ -71,6 +71,9 @@ import java.util.stream.IntStream;
 @RunWith(Parameterized.class)
 public class RuntimeClientServerTest {
 
+  public static final String TEST_TOPIC_KEY = "topic.key";
+  public static final String TEST_TOPIC = "topic";
+
   @Parameterized.Parameters(name = "{index}: compression = {0}")
   public static Collection<Object[]> parameters() {
     return Arrays.asList(new Object[][]{
@@ -100,6 +103,8 @@ public class RuntimeClientServerTest {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     cConf.setBoolean(Constants.RuntimeMonitor.COMPRESSION_ENABLED, compression);
     cConf.setBoolean(Constants.AppFabric.SPARK_EVENT_LOGS_ENABLED, true);
+    cConf.set(TEST_TOPIC_KEY, TEST_TOPIC);
+    cConf.set(Constants.RuntimeMonitor.TOPICS_CONFIGS, Constants.Logging.TMS_TOPIC_PREFIX + ":1," + TEST_TOPIC_KEY);
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
@@ -166,7 +171,7 @@ public class RuntimeClientServerTest {
   @Test
   public void testLargeMessage() throws Exception {
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").workflow("workflow").run(RunIds.generate());
-    TopicId topicId = NamespaceId.SYSTEM.topic("topic");
+    TopicId topicId = NamespaceId.SYSTEM.topic(TEST_TOPIC);
 
     List<Message> messages = new ArrayList<>();
     for (int i = 0; i < 10; i++) {
@@ -199,7 +204,7 @@ public class RuntimeClientServerTest {
   @Test
   public void testLogMessage() throws Exception {
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").workflow("workflow").run(RunIds.generate());
-    TopicId topicId = NamespaceId.SYSTEM.topic(cConf.get(Constants.Logging.TMS_TOPIC_PREFIX) + "-1");
+    TopicId topicId = NamespaceId.SYSTEM.topic(cConf.get(Constants.Logging.TMS_TOPIC_PREFIX) + "0");
 
     List<Message> messages = IntStream.range(0, 100).mapToObj(this::createMessage).collect(Collectors.toList());
     runtimeClient.sendMessages(programRunId, topicId, messages.iterator());

@@ -153,7 +153,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
 
     // Get Program Options
     ProgramOptions programOpts = readJsonFile(new File(DistributedProgramRunner.PROGRAM_OPTIONS_FILE_NAME),
-                                                 ProgramOptions.class);
+                                              ProgramOptions.class);
     ProgramRunId programRunId = programOpts.getProgramId().run(ProgramRunners.getRunId(programOpts));
     ProgramId programId = programRunId.getParent();
 
@@ -296,6 +296,13 @@ public class DefaultRuntimeJob implements RuntimeJob {
       }
     }
 
+    // Pass runtime token to distributed jobs
+    Path tokenFile = Paths.get(Constants.Security.Authentication.RUNTIME_TOKEN_FILE);
+    if (Files.exists(tokenFile)) {
+      cConf.set(Constants.Security.Authentication.RUNTIME_TOKEN,
+                new String(Files.readAllBytes(tokenFile), StandardCharsets.UTF_8));
+    }
+
     return cConf;
   }
 
@@ -345,7 +352,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
     modules.add(new IOModule());
     modules.add(new TMSLogAppenderModule());
     modules.add(new RemoteExecutionDiscoveryModule());
-    modules.add(new AuthenticationContextModules().getProgramContainerModule());
+    modules.add(new AuthenticationContextModules().getProgramContainerModule(cConf));
     modules.add(new MetricsClientRuntimeModule().getDistributedModules());
     modules.add(new MessagingServerRuntimeModule().getStandaloneModules());
 

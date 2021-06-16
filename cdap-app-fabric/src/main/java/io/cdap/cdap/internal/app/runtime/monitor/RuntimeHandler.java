@@ -58,9 +58,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -81,6 +83,7 @@ public class RuntimeHandler extends AbstractHttpHandler {
   private final String logsTopicPrefix;
   private final boolean eventLogsEnabled;
   private final Location eventLogsBaseLocation;
+  private final Set<String> allowedTopics;
 
   @Inject
   RuntimeHandler(CConfiguration cConf, MessagingService messagingService,
@@ -92,6 +95,7 @@ public class RuntimeHandler extends AbstractHttpHandler {
     this.logsTopicPrefix = cConf.get(Constants.Logging.TMS_TOPIC_PREFIX);
     this.eventLogsEnabled = cConf.getBoolean(Constants.AppFabric.SPARK_EVENT_LOGS_ENABLED);
     this.eventLogsBaseLocation = locationFactory.create(cConf.get(Constants.AppFabric.SPARK_EVENT_LOGS_DIR));
+    this.allowedTopics = new HashSet<>(RuntimeMonitors.createTopicConfigs(cConf).values());
   }
 
   @Override
@@ -140,6 +144,10 @@ public class RuntimeHandler extends AbstractHttpHandler {
                                                  ProgramType.valueOfCategoryName(programType, BadRequestException::new),
                                                  program, run);
     requestValidator.validate(programRunId, request);
+
+    if (!allowedTopics.contains(topic)) {
+      throw new UnauthorizedException("Access denied accessing topic " + topic);
+    }
 
     TopicId topicId = NamespaceId.SYSTEM.topic(topic);
     if (topic.startsWith(logsTopicPrefix)) {
