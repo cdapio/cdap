@@ -289,10 +289,10 @@ public class Spark2Test extends TestBase {
     }
 
     File outputDir = new File(TMP_FOLDER.newFolder(), "output");
-    appManager.getSparkManager(PythonSpark2.class.getSimpleName())
-      .startAndWaitForRun(ImmutableMap.of("input.file", inputFile.getAbsolutePath(),
-                                          "output.path", outputDir.getAbsolutePath()),
-                          ProgramRunStatus.COMPLETED, 2, TimeUnit.MINUTES);
+    appManager.getSparkManager(PythonSpark2.class.getSimpleName()).startAndWaitForGoodRun(
+      ImmutableMap.of("input.file", inputFile.getAbsolutePath(),
+                      "output.path", outputDir.getAbsolutePath()),
+      ProgramRunStatus.COMPLETED, 2, TimeUnit.MINUTES);
 
     // Verify the result
     File resultFile = DirUtils.listFiles(outputDir).stream()

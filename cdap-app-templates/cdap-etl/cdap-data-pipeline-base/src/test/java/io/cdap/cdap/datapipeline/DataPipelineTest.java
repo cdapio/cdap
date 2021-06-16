@@ -277,7 +277,7 @@ public class DataPipelineTest extends HydratorTestBase {
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
-    workflowManager.startAndWaitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+    workflowManager.startAndWaitForGoodRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     FieldLineageAdmin fieldAdmin = getFieldLineageAdmin();
 
@@ -373,7 +373,7 @@ public class DataPipelineTest extends HydratorTestBase {
     runtimeArgs.put("field", "name");
     runtimeArgs.put("value", "samuel");
     WorkflowManager manager = appManager.getWorkflowManager(SmartWorkflow.NAME);
-    manager.startAndWaitForRun(runtimeArgs, ProgramRunStatus.COMPLETED, 3, TimeUnit.MINUTES);
+    manager.startAndWaitForGoodRun(runtimeArgs, ProgramRunStatus.COMPLETED, 3, TimeUnit.MINUTES);
 
     DataSetManager<Table> sinkTable = getDataset(sinkName);
     List<StructuredRecord> outputRecords = MockSink.readOutput(sinkTable);
@@ -772,7 +772,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     Map<String, String> args = Collections.singletonMap(io.cdap.cdap.etl.common.Constants.CONSOLIDATE_STAGES, "true");
-    workflowManager.startAndWaitForRun(args, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+    workflowManager.startAndWaitForGoodRun(args, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
 
     Schema flattenSchema =
@@ -1958,7 +1958,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     Map<String, String> args = Collections.singletonMap(io.cdap.cdap.etl.common.Constants.CONSOLIDATE_STAGES, "true");
-    workflowManager.startAndWaitForRun(args, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+    workflowManager.startAndWaitForGoodRun(args, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     // sink1 should get records from source1 and source2
     Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel, recordBob);
@@ -2451,7 +2451,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     Map<String, String> args = Collections.singletonMap(io.cdap.cdap.etl.common.Constants.CONSOLIDATE_STAGES, "true");
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
-    workflowManager.startAndWaitForRun(args, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+    workflowManager.startAndWaitForGoodRun(args, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     StructuredRecord joinRecordSamuel = StructuredRecord.builder(outSchema)
       .set("customer_id", "1").set("customer_name", "samuel")
@@ -2867,7 +2867,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     Map<String, String> args = Collections.singletonMap(io.cdap.cdap.etl.common.Constants.CONSOLIDATE_STAGES, "true");
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
-    workflowManager.startAndWaitForRun(args, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+    workflowManager.startAndWaitForGoodRun(args, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
     List<RunRecord> history = workflowManager.getHistory();
     // there should be only one completed run
     Assert.assertEquals(1, history.size());
@@ -3578,7 +3578,7 @@ public class DataPipelineTest extends HydratorTestBase {
     // run pipeline
     Map<String, String> args = Collections.singletonMap(io.cdap.cdap.etl.common.Constants.CONSOLIDATE_STAGES, "true");
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
-    workflowManager.startAndWaitForRun(args, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+    workflowManager.startAndWaitForGoodRun(args, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
 
     Schema errorSchema =

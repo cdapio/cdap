@@ -74,7 +74,7 @@ public class DynamicPluginServiceTestRun extends TestFrameworkTestBase {
     AppRequest<Void> appRequest = new AppRequest<>(summary);
     ApplicationManager appManager = deployApplication(appId, appRequest);
     serviceManager = appManager.getServiceManager(DynamicPluginServiceApp.SERVICE_NAME);
-    serviceManager.startAndWaitForRun(ProgramRunStatus.RUNNING, 2, TimeUnit.MINUTES);
+    serviceManager.startAndWaitForGoodRun(ProgramRunStatus.RUNNING, 2, TimeUnit.MINUTES);
 
     baseURI = serviceManager.getServiceURL(1, TimeUnit.MINUTES).toURI();
   }

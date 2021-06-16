@@ -129,7 +129,7 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     appManager = getApplicationManager(pipeline);
     waitForAppToDeploy(appManager, pipeline);
     serviceManager = appManager.getServiceManager(io.cdap.cdap.etl.common.Constants.STUDIO_SERVICE_NAME);
-    serviceManager.startAndWaitForRun(ProgramRunStatus.RUNNING, 2, TimeUnit.MINUTES);
+    serviceManager.startAndWaitForGoodRun(ProgramRunStatus.RUNNING, 2, TimeUnit.MINUTES);
     serviceURI = serviceManager.getServiceURL(1, TimeUnit.MINUTES).toURI();
   }
 
@@ -326,7 +326,7 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     MockSource.writeInput(sourceTable, ImmutableList.of(samuel, dwayne));
 
     WorkflowManager manager = appManager.getWorkflowManager(SmartWorkflow.NAME);
-    manager.startAndWaitForRun(ProgramRunStatus.COMPLETED, 3, TimeUnit.MINUTES);
+    manager.startAndWaitForGoodRun(ProgramRunStatus.COMPLETED, 3, TimeUnit.MINUTES);
 
     DataSetManager<Table> sinkTable = getDataset(sinkTableName);
     List<StructuredRecord> outputRecords = MockSink.readOutput(sinkTable);

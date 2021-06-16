@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.test;
 
+import io.cdap.cdap.api.Predicate;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.proto.ProgramRunStatus;
@@ -23,6 +24,7 @@ import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.id.ProgramId;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -66,18 +68,43 @@ public abstract class AbstractProgramManager<T extends ProgramManager> implement
   }
 
   @Override
+  public T startAndWaitForGoodRun(ProgramRunStatus status, long timeout, TimeUnit timeoutUnit)
+    throws InterruptedException, ExecutionException, TimeoutException {
+
+    return startAndWaitForGoodRun(Collections.emptyMap(), status, timeout, timeoutUnit);
+  }
+
+  @Override
   public T startAndWaitForRun(Map<String, String> arguments, ProgramRunStatus status, long timeout,
                               TimeUnit timeoutUnit) throws InterruptedException, ExecutionException, TimeoutException {
     return startAndWaitForRun(arguments, status, timeout, timeoutUnit, 50, TimeUnit.MILLISECONDS);
   }
 
   @Override
+  public T startAndWaitForGoodRun(Map<String, String> arguments, ProgramRunStatus status, long timeout,
+                                  TimeUnit timeoutUnit)
+    throws InterruptedException, ExecutionException, TimeoutException {
+
+    return startAndWaitForRun(arguments, status, r -> r != null && r.isUnsuccessful(), timeout, timeoutUnit,
+                              50, TimeUnit.MILLISECONDS);
+  }
+
+  @Override
   public T startAndWaitForRun(Map<String, String> arguments, ProgramRunStatus status, long timeout,
+                              TimeUnit timeoutUnit, long sleepTime, TimeUnit sleepUnit)
+    throws InterruptedException, ExecutionException, TimeoutException {
+
+    return startAndWaitForRun(arguments, status, s -> false, timeout, timeoutUnit, sleepTime, sleepUnit);
+  }
+
+  public T startAndWaitForRun(Map<String, String> arguments, ProgramRunStatus status,
+                              Predicate<ProgramRunStatus> failPredicate,
+                              long timeout,
                               TimeUnit timeoutUnit, long sleepTime, TimeUnit sleepUnit)
     throws InterruptedException, ExecutionException, TimeoutException {
     int count = getHistory(status).size();
     T manager = start(arguments);
-    waitForRuns(status, count + 1, timeout, timeoutUnit, sleepTime, sleepUnit);
+    waitForRuns(status, failPredicate, count + 1, timeout, timeoutUnit, sleepTime, sleepUnit);
     return manager;
   }
 
@@ -106,7 +133,21 @@ public abstract class AbstractProgramManager<T extends ProgramManager> implement
   @Override
   public void waitForRuns(ProgramRunStatus status, int runCount, long timeout, TimeUnit timeoutUnit, long sleepTime,
                           TimeUnit sleepUnit) throws InterruptedException, ExecutionException, TimeoutException {
-    Tasks.waitFor(true, () -> getHistory(status).size() >= runCount, timeout, timeoutUnit, sleepTime, sleepUnit);
+    waitForRuns(status, s -> false, runCount, timeout, timeoutUnit, sleepTime, sleepUnit);
+  }
+
+  public void waitForRuns(ProgramRunStatus status, Predicate<ProgramRunStatus> failPredicate, int runCount,
+                          long timeout, TimeUnit timeoutUnit, long sleepTime, TimeUnit sleepUnit)
+    throws InterruptedException, ExecutionException, TimeoutException {
+
+    Tasks.waitFor(true, () -> {
+      if (failPredicate.apply(getLastRunStatus())) {
+        throw new AssertionError("Latest run failed with status " + getLastRunStatus() +
+                                   " while waiting for " + runCount + " " + status + " run(s)"
+        );
+      }
+      return getHistory(status).size() >= runCount;
+    }, timeout, timeoutUnit, sleepTime, sleepUnit);
   }
 
   @Override
@@ -171,5 +212,14 @@ public abstract class AbstractProgramManager<T extends ProgramManager> implement
   @Override
   public Map<String, String> getRuntimeArgs() throws Exception {
     return applicationManager.getRuntimeArgs(programId);
+  }
+
+  private ProgramRunStatus getLastRunStatus() {
+    return applicationManager
+      .getHistory(programId, ProgramRunStatus.ALL)
+      .stream()
+      .max(Comparator.comparing(r -> r.getStartTs()))
+      .map(r -> r.getStatus())
+      .orElse(null);
   }
 }

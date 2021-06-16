@@ -107,7 +107,7 @@ public class SystemAppTestBaseTest extends SystemAppTestBase {
     ApplicationManager applicationManager = deployApplication(NamespaceId.SYSTEM, SystemTestApp.class);
 
     ServiceManager serviceManager = applicationManager.getServiceManager(SystemTestApp.SERVICE_NAME);
-    serviceManager.startAndWaitForRun(ProgramRunStatus.RUNNING, 2, TimeUnit.MINUTES);
+    serviceManager.startAndWaitForGoodRun(ProgramRunStatus.RUNNING, 2, TimeUnit.MINUTES);
     URI serviceURI = serviceManager.getServiceURL(1, TimeUnit.MINUTES).toURI();
 
     String key = "k0";
