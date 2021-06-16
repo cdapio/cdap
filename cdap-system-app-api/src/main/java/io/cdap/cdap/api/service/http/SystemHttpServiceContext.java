@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.api.service.http;
 
+import io.cdap.cdap.api.NamespaceSummary;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
@@ -25,6 +26,7 @@ import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -97,4 +99,9 @@ public interface SystemHttpServiceContext extends HttpServiceContext, Transactio
    * @return
    */
   boolean isRemoteTaskEnabled();
+
+  /**
+   * List all the namespaces
+   */
+  List<NamespaceSummary> listNamespaces() throws Exception;
 }
