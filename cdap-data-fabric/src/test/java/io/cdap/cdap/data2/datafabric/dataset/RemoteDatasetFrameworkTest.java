@@ -33,6 +33,7 @@ import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import io.cdap.cdap.data.runtime.StorageModule;
@@ -144,8 +145,9 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     AuthenticationContext authenticationContext = injector.getInstance(AuthenticationContext.class);
+    RemoteClientFactory remoteClientFactory = injector.getInstance(RemoteClientFactory.class);
 
-    framework = new RemoteDatasetFramework(cConf, discoveryServiceClient, registryFactory, authenticationContext);
+    framework = new RemoteDatasetFramework(cConf, registryFactory, authenticationContext, remoteClientFactory);
     SystemDatasetInstantiatorFactory datasetInstantiatorFactory =
       new SystemDatasetInstantiatorFactory(locationFactory, framework, cConf);
 
@@ -171,7 +173,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                                                          authenticationContext);
 
 
-    DatasetOpExecutor opExecutor = new RemoteDatasetOpExecutor(discoveryServiceClient, authenticationContext);
+    DatasetOpExecutor opExecutor = new RemoteDatasetOpExecutor(authenticationContext, remoteClientFactory);
     DatasetInstanceService instanceService = new DatasetInstanceService(typeService, noAuthTypeService,
                                                                         instanceManager, opExecutor,
                                                                         exploreFacade, namespaceQueryAdmin, ownerAdmin,

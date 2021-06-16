@@ -35,6 +35,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.messaging.MessageFetcher;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.RollbackDetail;
@@ -62,7 +63,6 @@ import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.tephra.TransactionCodec;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -105,14 +105,14 @@ public final class ClientMessagingService implements MessagingService {
   private final boolean compressPayload;
 
   @Inject
-  ClientMessagingService(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient) {
-    this(discoveryServiceClient, cConf.getBoolean(Constants.MessagingSystem.HTTP_COMPRESS_PAYLOAD));
+  ClientMessagingService(CConfiguration cConf, RemoteClientFactory remoteClientFactory) {
+    this(remoteClientFactory, cConf.getBoolean(Constants.MessagingSystem.HTTP_COMPRESS_PAYLOAD));
   }
 
   @VisibleForTesting
-  public ClientMessagingService(DiscoveryServiceClient discoveryServiceClient, boolean compressPayload) {
-    this.remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.MESSAGING_SERVICE,
-                                         HTTP_REQUEST_CONFIG, "/v1/namespaces/");
+  public ClientMessagingService(RemoteClientFactory remoteClientFactory, boolean compressPayload) {
+    this.remoteClient = remoteClientFactory.createRemoteClient(
+      Constants.Service.MESSAGING_SERVICE, HTTP_REQUEST_CONFIG, "/v1/namespaces/");
     this.compressPayload = compressPayload;
   }
 

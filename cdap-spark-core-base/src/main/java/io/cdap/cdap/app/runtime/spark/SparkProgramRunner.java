@@ -42,6 +42,7 @@ import io.cdap.cdap.app.runtime.spark.submit.LocalSparkSubmitter;
 import io.cdap.cdap.app.runtime.spark.submit.SparkSubmitter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.lang.FilterClassLoader;
 import io.cdap.cdap.common.lang.InstantiatorFactory;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
@@ -68,7 +69,6 @@ import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.common.Threads;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,7 +96,6 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
   private final TransactionSystemClient txClient;
   private final DatasetFramework datasetFramework;
   private final MetricsCollectionService metricsCollectionService;
-  private final DiscoveryServiceClient discoveryServiceClient;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
   private final AccessEnforcer accessEnforcer;
@@ -108,17 +107,18 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
   private final FieldLineageWriter fieldLineageWriter;
   private final MetadataPublisher metadataPublisher;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final RemoteClientFactory remoteClientFactory;
 
   @Inject
   SparkProgramRunner(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
                      TransactionSystemClient txClient, DatasetFramework datasetFramework,
                      MetricsCollectionService metricsCollectionService,
-                     DiscoveryServiceClient discoveryServiceClient,
                      SecureStore secureStore, SecureStoreManager secureStoreManager,
                      AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext,
                      MessagingService messagingService, ServiceAnnouncer serviceAnnouncer,
                      PluginFinder pluginFinder, MetadataReader metadataReader, MetadataPublisher metadataPublisher,
-                     FieldLineageWriter fieldLineageWriter, NamespaceQueryAdmin namespaceQueryAdmin) {
+                     FieldLineageWriter fieldLineageWriter, NamespaceQueryAdmin namespaceQueryAdmin,
+                     RemoteClientFactory remoteClientFactory) {
     super(cConf);
     this.cConf = cConf;
     this.hConf = hConf;
@@ -126,7 +126,6 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
     this.txClient = txClient;
     this.datasetFramework = datasetFramework;
     this.metricsCollectionService = metricsCollectionService;
-    this.discoveryServiceClient = discoveryServiceClient;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.accessEnforcer = accessEnforcer;
@@ -138,6 +137,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
     this.fieldLineageWriter = fieldLineageWriter;
     this.metadataPublisher = metadataPublisher;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.remoteClientFactory = remoteClientFactory;
   }
 
   @Override
@@ -185,13 +185,14 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
 
       SparkRuntimeContext runtimeContext = new SparkRuntimeContext(new Configuration(hConf), program, options, cConf,
                                                                    host, txClient, programDatasetFramework,
-                                                                   discoveryServiceClient,
                                                                    metricsCollectionService, workflowInfo,
                                                                    pluginInstantiator, secureStore, secureStoreManager,
                                                                    accessEnforcer, authenticationContext,
                                                                    messagingService, serviceAnnouncer, pluginFinder,
                                                                    locationFactory, metadataReader, metadataPublisher,
-                                                                   namespaceQueryAdmin, fieldLineageWriter, () -> { });
+                                                                   namespaceQueryAdmin, fieldLineageWriter,
+                                                                   remoteClientFactory, () -> { }
+      );
       closeables.addFirst(runtimeContext);
 
       Spark spark;

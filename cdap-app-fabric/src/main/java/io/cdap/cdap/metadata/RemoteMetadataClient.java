@@ -20,6 +20,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.metadata.AbstractMetadataClient;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
@@ -44,10 +45,10 @@ public class RemoteMetadataClient extends AbstractMetadataClient {
   private final AuthenticationContext authenticationContext;
 
   @Inject
-  RemoteMetadataClient(final DiscoveryServiceClient discoveryClient,
-                       AuthenticationContext authenticationContext) {
-    this.remoteClient = new RemoteClient(discoveryClient, Constants.Service.METADATA_SERVICE,
-                                         new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);
+  RemoteMetadataClient(AuthenticationContext authenticationContext, RemoteClientFactory remoteClientFactory) {
+    this.remoteClient = remoteClientFactory.createRemoteClient(
+      Constants.Service.METADATA_SERVICE,
+      new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);
     this.authenticationContext = authenticationContext;
   }
 

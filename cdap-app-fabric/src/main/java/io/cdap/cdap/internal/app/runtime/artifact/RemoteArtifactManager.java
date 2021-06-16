@@ -24,11 +24,11 @@ import com.google.inject.assistedinject.Assisted;
 import io.cdap.cdap.api.artifact.ArtifactInfo;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategy;
@@ -59,7 +59,8 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
-  private static final Type ARTIFACT_INFO_LIST_TYPE = new TypeToken<List<ArtifactInfo>>() { }.getType();
+  private static final Type ARTIFACT_INFO_LIST_TYPE = new TypeToken<List<ArtifactInfo>>() {
+  }.getType();
   private final LocationFactory locationFactory;
   private final AuthenticationContext authenticationContext;
   private final NamespaceId namespaceId;
@@ -70,22 +71,24 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
   @Inject
   RemoteArtifactManager(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient,
                         LocationFactory locationFactory, AuthenticationContext authenticationContext,
-                        @Assisted NamespaceId namespaceId, @Assisted RetryStrategy retryStrategy) {
+                        @Assisted NamespaceId namespaceId, @Assisted RetryStrategy retryStrategy,
+                        RemoteClientFactory remoteClientFactory) {
     super(cConf);
     this.locationFactory = locationFactory;
     this.authenticationContext = authenticationContext;
     this.namespaceId = namespaceId;
     this.retryStrategy = retryStrategy;
     this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
-    this.remoteClientInternal = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
-                                                 new DefaultHttpRequestConfig(false),
-                                                 String.format("%s", Constants.Gateway.INTERNAL_API_VERSION_3));
+    this.remoteClientInternal = remoteClientFactory.createRemoteClient(
+      Constants.Service.APP_FABRIC_HTTP,
+      new DefaultHttpRequestConfig(false),
+      String.format("%s", Constants.Gateway.INTERNAL_API_VERSION_3));
   }
 
   /**
    * For the specified namespace, return the available artifacts in the namespace and also the artifacts in system
    * namespace.
-   *
+   * <p>
    * If the app-fabric service is unavailable, it will be retried based on the passed in retry strategy.
    *
    * @return {@link List<ArtifactInfo>}
@@ -99,7 +102,7 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
   /**
    * For the specified namespace, return the available artifacts in the namespace and also the artifacts in system
    * namespace.
-   *
+   * <p>
    * If the app-fabric service is unavailable, it will be retried based on the passed in retry strategy.
    *
    * @return {@link List<ArtifactInfo>}

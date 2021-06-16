@@ -30,6 +30,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.RollbackDetail;
@@ -42,10 +43,10 @@ import io.cdap.cdap.messaging.data.RawMessage;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TxConstants;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -107,6 +108,7 @@ public class MessagingHttpServiceTest {
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new InMemoryDiscoveryModule(),
+      new AuthenticationContextModules().getNoOpModule(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
       new AbstractModule() {
         @Override
@@ -118,7 +120,7 @@ public class MessagingHttpServiceTest {
 
     httpService = injector.getInstance(MessagingHttpService.class);
     httpService.startAndWait();
-    client = new ClientMessagingService(injector.getInstance(DiscoveryServiceClient.class), compressPayload);
+    client = new ClientMessagingService(injector.getInstance(RemoteClientFactory.class), compressPayload);
   }
 
   @After

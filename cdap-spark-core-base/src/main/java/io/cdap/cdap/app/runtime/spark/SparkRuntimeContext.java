@@ -30,6 +30,7 @@ import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
@@ -79,7 +80,6 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
   SparkRuntimeContext(Configuration hConf, Program program, ProgramOptions programOptions,
                       CConfiguration cConf, String hostname, TransactionSystemClient txClient,
                       DatasetFramework datasetFramework,
-                      DiscoveryServiceClient discoveryServiceClient,
                       MetricsCollectionService metricsCollectionService,
                       @Nullable WorkflowProgramInfo workflowProgramInfo,
                       @Nullable PluginInstantiator pluginInstantiator,
@@ -91,11 +91,11 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
                       PluginFinder pluginFinder, LocationFactory locationFactory,
                       MetadataReader metadataReader, MetadataPublisher metadataPublisher,
                       NamespaceQueryAdmin namespaceQueryAdmin, FieldLineageWriter fieldLineageWriter,
-                      Closeable closeable) {
+                      RemoteClientFactory remoteClientFactory, Closeable closeable) {
     super(program, programOptions, cConf, getSparkSpecification(program).getDatasets(), datasetFramework, txClient,
-          discoveryServiceClient, true, metricsCollectionService, createMetricsTags(workflowProgramInfo),
+          true, metricsCollectionService, createMetricsTags(workflowProgramInfo),
           secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher,
-          namespaceQueryAdmin, fieldLineageWriter);
+          namespaceQueryAdmin, fieldLineageWriter, remoteClientFactory);
     this.cConf = cConf;
     this.hConf = hConf;
     this.hostname = hostname;

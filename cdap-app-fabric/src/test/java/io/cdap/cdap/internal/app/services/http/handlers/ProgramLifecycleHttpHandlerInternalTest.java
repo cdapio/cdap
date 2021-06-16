@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.services.http.handlers;
 
 import io.cdap.cdap.SleepingWorkflowApp;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.gateway.handlers.ProgramLifecycleHttpHandlerInternal;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
@@ -49,7 +50,7 @@ public class ProgramLifecycleHttpHandlerInternalTest extends AppFabricTestBase {
   @BeforeClass
   public static void init() {
     programRunRecordFetcher = new RemoteProgramRunRecordFetcher(
-      getInjector().getInstance(DiscoveryServiceClient.class));
+      getInjector().getInstance(RemoteClientFactory.class));
   }
 
   @Test

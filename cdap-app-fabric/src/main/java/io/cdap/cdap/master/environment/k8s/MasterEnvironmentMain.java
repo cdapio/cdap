@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.common.app.MainClassLoader;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
 import io.cdap.cdap.common.options.OptionsParser;
 import io.cdap.cdap.common.utils.ProjectInfo;
@@ -29,6 +30,7 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnableContext;
+import io.cdap.cdap.security.auth.context.MasterAuthenticationContext;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
@@ -108,9 +110,11 @@ public class MasterEnvironmentMain {
                                                + MasterEnvironmentRunnable.class);
         }
 
+        //TODO: CDAP-17754 Use proper authenticaiton context with internal token from configuration
+        RemoteClientFactory remoteClientFactory = new RemoteClientFactory(
+          masterEnv.getDiscoveryServiceClientSupplier().get(), new MasterAuthenticationContext());
         MasterEnvironmentRunnableContext runnableContext =
-          new DefaultMasterEnvironmentRunnableContext(masterEnv.getDiscoveryServiceClientSupplier().get(),
-                                                      context.getLocationFactory());
+          new DefaultMasterEnvironmentRunnableContext(context.getLocationFactory(), remoteClientFactory);
         @SuppressWarnings("unchecked")
         MasterEnvironmentRunnable runnable = masterEnv.createRunnable(runnableContext,
                                                                       (Class<? extends MasterEnvironmentRunnable>) cls);

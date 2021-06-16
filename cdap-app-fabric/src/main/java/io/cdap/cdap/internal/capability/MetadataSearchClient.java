@@ -20,6 +20,7 @@ import com.google.gson.Gson;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.proto.metadata.MetadataSearchResponse;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.metadata.SearchRequest;
@@ -49,9 +50,10 @@ public class MetadataSearchClient {
   private static final Gson GSON = new Gson();
   private final RemoteClient remoteClient;
 
-  MetadataSearchClient(DiscoveryServiceClient discoveryClient) {
-    this.remoteClient = new RemoteClient(discoveryClient, Constants.Service.METADATA_SERVICE,
-                                         new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);
+  MetadataSearchClient(RemoteClientFactory remoteClientFactory) {
+    this.remoteClient = remoteClientFactory.createRemoteClient(
+      Constants.Service.METADATA_SERVICE,
+      new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);
   }
 
   /**
