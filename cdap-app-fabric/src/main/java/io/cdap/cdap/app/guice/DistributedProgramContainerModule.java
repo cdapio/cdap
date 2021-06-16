@@ -115,17 +115,6 @@ public class DistributedProgramContainerModule extends AbstractModule {
   @Override
   protected void configure() {
     List<Module> modules = getCoreModules();
-    String principal = programOpts.getArguments().getOption(ProgramOptionConstants.PRINCIPAL);
-
-    AuthenticationContextModules authModules = new AuthenticationContextModules();
-    if (cConf.getBoolean(Constants.Security.ENFORCE_INTERNAL_AUTH)) {
-      modules.add(authModules.getInternalAuthMasterModule(cConf));
-      modules.add(CoreSecurityModules.getDistributedModule(cConf));
-    } else if (principal == null) {
-      modules.add(authModules.getProgramContainerModule());
-    } else {
-      modules.add(authModules.getProgramContainerModule(principal));
-    }
 
     install(Modules.override(modules).with(new AbstractModule() {
       @Override
@@ -240,6 +229,13 @@ public class DistributedProgramContainerModule extends AbstractModule {
   }
 
   private void addOnPremiseModules(List<Module> modules) {
+    if (cConf.getBoolean(Constants.Security.ENFORCE_INTERNAL_AUTH)) {
+      modules.add(new AuthenticationContextModules().getInternalAuthMasterModule(cConf));
+      modules.add(CoreSecurityModules.getDistributedModule(cConf));
+    } else {
+      modules.add(new AuthenticationContextModules().getNoOpModule());
+    }
+
     // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
     MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
 
@@ -274,6 +270,14 @@ public class DistributedProgramContainerModule extends AbstractModule {
         bind(OwnerAdmin.class).to(NoOpOwnerAdmin.class);
       }
     });
+
+    AuthenticationContextModules authModules = new AuthenticationContextModules();
+    String principal = programOpts.getArguments().getOption(ProgramOptionConstants.PRINCIPAL);
+    if (principal == null) {
+      modules.add(authModules.getProgramContainerModule(cConf));
+    } else {
+      modules.add(authModules.getProgramContainerModule(cConf, principal));
+    }
   }
 
   private static String generateClientId(ProgramRunId programRunId, String instanceId) {

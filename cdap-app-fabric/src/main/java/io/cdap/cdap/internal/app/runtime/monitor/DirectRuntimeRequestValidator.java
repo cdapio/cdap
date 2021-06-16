@@ -32,6 +32,10 @@ import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
@@ -52,12 +56,17 @@ public final class DirectRuntimeRequestValidator implements RuntimeRequestValida
   private final TransactionRunner txRunner;
   private final ProgramRunRecordFetcher runRecordFetcher;
   private final LoadingCache<ProgramRunId, Boolean> programRunsCache;
+  private final AccessEnforcer accessEnforcer;
+  private final AuthenticationContext authenticationContext;
 
   @Inject
   DirectRuntimeRequestValidator(CConfiguration cConf, TransactionRunner txRunner,
-                                ProgramRunRecordFetcher runRecordFetcher) {
+                                ProgramRunRecordFetcher runRecordFetcher,
+                                AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext) {
     this.txRunner = txRunner;
     this.runRecordFetcher = runRecordFetcher;
+    this.accessEnforcer = accessEnforcer;
+    this.authenticationContext = authenticationContext;
 
     // Configure the cache with expiry the poll time.
     // This helps reducing the actual lookup for a burst of requests within one poll interval,
@@ -75,6 +84,7 @@ public final class DirectRuntimeRequestValidator implements RuntimeRequestValida
 
   @Override
   public void validate(ProgramRunId programRunId, HttpRequest request) throws BadRequestException {
+    accessEnforcer.enforce(programRunId, authenticationContext.getPrincipal(), StandardPermission.GET);
     boolean exists;
     try {
       exists = programRunsCache.get(programRunId);

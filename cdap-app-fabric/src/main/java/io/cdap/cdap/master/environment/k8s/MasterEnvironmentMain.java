@@ -110,7 +110,6 @@ public class MasterEnvironmentMain {
                                                + MasterEnvironmentRunnable.class);
         }
 
-        //TODO: CDAP-17754 Use proper authentication context with internal token from configuration
         RemoteClientFactory remoteClientFactory = new RemoteClientFactory(
           masterEnv.getDiscoveryServiceClientSupplier().get(), new WorkerAuthenticationContext(), cConf);
         MasterEnvironmentRunnableContext runnableContext =
