@@ -21,37 +21,49 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.security.ApplicationPermission;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.authorization.RemoteAccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 
 import java.io.IOException;
 
 /**
- * Test {@link RemoteAccessEnforcer} with cache enabled.
+ * Test {@link RemoteAccessEnforcer} with cache disabled.
  */
-public class RemotePrivilegesCacheTest extends RemotePrivilegesTestBase {
+public class RemotePermissionsNoCacheTest extends RemotePermissionsTestBase {
 
   @BeforeClass
   public static void beforeClass() throws IOException, InterruptedException {
-    cConf.setInt(Constants.Security.Authorization.CACHE_MAX_ENTRIES, 10000);
-    RemotePrivilegesTestBase.setup();
+    cConf.setInt(Constants.Security.Authorization.CACHE_MAX_ENTRIES, 0);
+    RemotePermissionsTestBase.setup();
   }
 
   @Override
   public void testAccessEnforcer() throws Exception {
     super.testAccessEnforcer();
 
-    // The super class revokes all privileges after test is done. Since cache is enabled, enforce should still work.
-    accessEnforcer.enforce(APP, ALICE, StandardPermission.UPDATE);
-    accessEnforcer.enforce(PROGRAM, ALICE, ApplicationPermission.EXECUTE);
+    // The super class revokes all privileges after test is done. Since cache is disabled, all enforce should fail.
+    try {
+      accessEnforcer.enforce(APP, ALICE, StandardPermission.UPDATE);
+      Assert.fail("Enforce should have failed since cache is disabled");
+    } catch (UnauthorizedException e) {
+      // Expected
+    }
+
+    try {
+      accessEnforcer.enforce(PROGRAM, ALICE, ApplicationPermission.EXECUTE);
+      Assert.fail("Enforce should have failed since cache is disabled");
+    } catch (UnauthorizedException e) {
+      // Expected
+    }
   }
 
   @Override
   public void testVisibility() throws Exception {
     super.testVisibility();
 
-    // The super class revokes all privileges after test is done. Since cache is enabled, visibility should still work.
-    Assert.assertEquals(ImmutableSet.of(NS, APP, PROGRAM),
+    // The super class revokes all privileges after test is done. Since cache is disabled, nothing should be visible.
+    Assert.assertEquals(ImmutableSet.of(),
                         accessEnforcer.isVisible(ImmutableSet.of(NS, APP, PROGRAM), ALICE));
   }
 }
