@@ -124,8 +124,10 @@ public interface PluginConfigurer {
    * @return map of evaluated macros
    * @throws InvalidMacroException indicates that there is an invalid macro
    */
-  Map<String, String> evaluateMacros(Map<String, String> properties,
-                                     MacroEvaluator evaluator, MacroParserOptions options) throws InvalidMacroException;
+  default Map<String, String> evaluateMacros(
+    Map<String, String> properties, MacroEvaluator evaluator, MacroParserOptions options) throws InvalidMacroException {
+    throw new UnsupportedOperationException("Evaluating macros is not supported.");
+  }
 
   /**
    * Creates a new instance of {@link ClassLoader} that contains this program classloader, all the plugins

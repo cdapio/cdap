@@ -106,7 +106,9 @@ public interface ApplicationConfigurer extends PluginConfigurer, DatasetConfigur
    *
    * @param metadata the metadata to emit
    */
-  void emitMetadata(Metadata metadata);
+  default void emitMetadata(Metadata metadata) {
+    throw new UnsupportedOperationException("Emitting metadata for applications is not supported.");
+  }
 
   /**
    * Get a TriggerFactory to get triggers.
