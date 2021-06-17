@@ -87,4 +87,13 @@ public final class SecurityRequestContext {
   public static Principal toPrincipal() {
     return new Principal(userId.get(), Principal.PrincipalType.USER, userCredential.get());
   }
+
+  /**
+   * Clears security state for this thread
+   */
+  public static void reset() {
+    userId.remove();
+    userIP.remove();
+    userCredential.remove();
+  }
 }
