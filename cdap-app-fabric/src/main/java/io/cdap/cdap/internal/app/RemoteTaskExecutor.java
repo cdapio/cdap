@@ -25,6 +25,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
@@ -48,10 +49,10 @@ public class RemoteTaskExecutor {
   private final RemoteClient remoteClient;
   private final RetryStrategy retryStrategy;
 
-  public RemoteTaskExecutor(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient) {
-    this.remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.TASK_WORKER,
-                                         new DefaultHttpRequestConfig(false),
-                                         Constants.Gateway.INTERNAL_API_VERSION_3);
+  public RemoteTaskExecutor(CConfiguration cConf, RemoteClientFactory remoteClientFactory) {
+    this.remoteClient = remoteClientFactory.createRemoteClient(Constants.Service.TASK_WORKER,
+                                                               new DefaultHttpRequestConfig(false),
+                                                               Constants.Gateway.INTERNAL_API_VERSION_3);
     this.retryStrategy = RetryStrategies.fromConfiguration(cConf, Constants.Service.TASK_WORKER + ".");
   }
 

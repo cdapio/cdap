@@ -30,6 +30,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import io.cdap.cdap.gateway.handlers.ArtifactHttpHandlerInternal;
@@ -67,10 +68,10 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
   private final LocationFactory locationFactory;
 
   @Inject
-  public RemoteArtifactRepositoryReader(DiscoveryServiceClient discoveryClient,
-                                        LocationFactory locationFactory) {
-    this.remoteClient = new RemoteClient(
-      discoveryClient, Constants.Service.APP_FABRIC_HTTP,
+  public RemoteArtifactRepositoryReader(LocationFactory locationFactory,
+                                        RemoteClientFactory remoteClientFactory) {
+    this.remoteClient = remoteClientFactory.createRemoteClient(
+      Constants.Service.APP_FABRIC_HTTP,
       new DefaultHttpRequestConfig(false), Constants.Gateway.INTERNAL_API_VERSION_3);
     this.locationFactory = locationFactory;
   }

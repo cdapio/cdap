@@ -22,6 +22,7 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
@@ -42,11 +43,11 @@ public class RemoteProgramRunRecordFetcher implements ProgramRunRecordFetcher {
   private final RemoteClient remoteClient;
 
   @Inject
-  public RemoteProgramRunRecordFetcher(DiscoveryServiceClient discoveryClient) {
-    this.remoteClient = new RemoteClient(discoveryClient,
-                                         Constants.Service.APP_FABRIC_HTTP,
-                                         new DefaultHttpRequestConfig(false),
-                                         Constants.Gateway.INTERNAL_API_VERSION_3);
+  public RemoteProgramRunRecordFetcher(RemoteClientFactory remoteClientFactory) {
+    this.remoteClient = remoteClientFactory.createRemoteClient(
+      Constants.Service.APP_FABRIC_HTTP,
+      new DefaultHttpRequestConfig(false),
+      Constants.Gateway.INTERNAL_API_VERSION_3);
   }
 
   /**

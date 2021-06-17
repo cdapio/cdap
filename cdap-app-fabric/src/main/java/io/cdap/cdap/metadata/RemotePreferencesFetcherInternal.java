@@ -23,6 +23,7 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.proto.PreferencesDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.EntityId;
@@ -48,9 +49,9 @@ public class RemotePreferencesFetcherInternal implements PreferencesFetcher {
   private final RemoteClient remoteClient;
 
   @Inject
-  public RemotePreferencesFetcherInternal(DiscoveryServiceClient discoveryClient) {
-    this.remoteClient = new RemoteClient(
-      discoveryClient, Constants.Service.APP_FABRIC_HTTP,
+  public RemotePreferencesFetcherInternal(RemoteClientFactory remoteClientFactory) {
+    this.remoteClient = remoteClientFactory.createRemoteClient(
+      Constants.Service.APP_FABRIC_HTTP,
       new DefaultHttpRequestConfig(false), Constants.Gateway.INTERNAL_API_VERSION_3);
   }
 

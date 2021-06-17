@@ -27,6 +27,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.data2.dataset2.ModuleConflictException;
 import io.cdap.cdap.proto.DatasetInstanceConfiguration;
 import io.cdap.cdap.proto.DatasetMeta;
@@ -80,10 +81,12 @@ public class DatasetServiceClient {
   private final AuthenticationContext authenticationContext;
   private final String masterShortUserName;
 
-  DatasetServiceClient(final DiscoveryServiceClient discoveryClient, NamespaceId namespaceId,
-                       CConfiguration cConf, AuthenticationContext authenticationContext) {
-    this.remoteClient = new RemoteClient(
-      discoveryClient, Constants.Service.DATASET_MANAGER, new DefaultHttpRequestConfig(false),
+  DatasetServiceClient(NamespaceId namespaceId,
+                       CConfiguration cConf,
+                       AuthenticationContext authenticationContext,
+                       RemoteClientFactory remoteClientFactory) {
+    this.remoteClient = remoteClientFactory.createRemoteClient(
+      Constants.Service.DATASET_MANAGER, new DefaultHttpRequestConfig(false),
       String.format("%s/namespaces/%s/data", Constants.Gateway.API_VERSION_3, namespaceId.getNamespace()));
     this.namespaceId = namespaceId;
     this.securityEnabled = cConf.getBoolean(Constants.Security.ENABLED);

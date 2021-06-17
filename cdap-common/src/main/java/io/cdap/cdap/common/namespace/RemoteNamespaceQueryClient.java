@@ -21,6 +21,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpRequest;
@@ -40,10 +41,12 @@ public class RemoteNamespaceQueryClient extends AbstractNamespaceQueryClient {
   private final AuthenticationContext authenticationContext;
 
   @Inject
-  RemoteNamespaceQueryClient(final DiscoveryServiceClient discoveryClient, CConfiguration cConf,
-                             AuthenticationContext authenticationContext) {
-    this.remoteClient = new RemoteClient(discoveryClient, Constants.Service.APP_FABRIC_HTTP,
-                                         new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);
+  RemoteNamespaceQueryClient(CConfiguration cConf,
+                             AuthenticationContext authenticationContext,
+                             RemoteClientFactory remoteClientFactory) {
+    this.remoteClient = remoteClientFactory.createRemoteClient(
+      Constants.Service.APP_FABRIC_HTTP,
+      new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);
     this.authenticationContext = authenticationContext;
   }
 

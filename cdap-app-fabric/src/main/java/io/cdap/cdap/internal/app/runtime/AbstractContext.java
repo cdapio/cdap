@@ -67,6 +67,7 @@ import io.cdap.cdap.app.services.AbstractServiceDiscoverer;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.lang.CombineClassLoader;
 import io.cdap.cdap.common.logging.LoggingContext;
@@ -111,7 +112,6 @@ import org.apache.tephra.TransactionConflictException;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -151,7 +151,6 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final Map<String, String> runtimeArguments;
   private final Metrics userMetrics;
   private final MetricsContext programMetrics;
-  private final DiscoveryServiceClient discoveryServiceClient;
   private final PluginInstantiator pluginInstantiator;
   private final PluginContext pluginContext;
   private final Admin admin;
@@ -165,6 +164,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final Set<Operation> fieldLineageOperations;
   private final LoggingContext loggingContext;
   private final FieldLineageWriter fieldLineageWriter;
+  private final RemoteClientFactory remoteClientFactory;
   private volatile ClassLoader programInvocationClassLoader;
   protected final DynamicDatasetCache datasetCache;
   protected final RetryStrategy retryStrategy;
@@ -174,22 +174,23 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
    */
   protected AbstractContext(Program program, ProgramOptions programOptions, CConfiguration cConf,
                             Set<String> datasets, DatasetFramework dsFramework, TransactionSystemClient txClient,
-                            DiscoveryServiceClient discoveryServiceClient, boolean multiThreaded,
+                            boolean multiThreaded,
                             @Nullable MetricsCollectionService metricsService, Map<String, String> metricsTags,
                             SecureStore secureStore, SecureStoreManager secureStoreManager,
                             MessagingService messagingService,
                             @Nullable PluginInstantiator pluginInstantiator,
                             MetadataReader metadataReader, MetadataPublisher metadataPublisher,
-                            NamespaceQueryAdmin namespaceQueryAdmin, FieldLineageWriter fieldLineageWriter) {
+                            NamespaceQueryAdmin namespaceQueryAdmin, FieldLineageWriter fieldLineageWriter,
+                            RemoteClientFactory remoteClientFactory) {
     super(program.getId());
 
     this.artifactId = ProgramRunners.getArtifactId(programOptions);
     this.program = program;
     this.programOptions = programOptions;
     this.cConf = cConf;
+    this.remoteClientFactory = remoteClientFactory;
     this.programRunId = program.getId().run(ProgramRunners.getRunId(programOptions));
     this.triggeringScheduleInfo = getTriggeringScheduleInfo(programOptions);
-    this.discoveryServiceClient = discoveryServiceClient;
 
     Map<String, String> runtimeArgs = new HashMap<>(programOptions.getUserArguments().asMap());
     this.logicalStartTime = ProgramRunners.updateLogicalStartTime(runtimeArgs);
@@ -452,8 +453,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   }
 
   @Override
-  public DiscoveryServiceClient getDiscoveryServiceClient() {
-    return discoveryServiceClient;
+  public RemoteClientFactory getRemoteClientFactory() {
+    return remoteClientFactory;
   }
 
   @Override

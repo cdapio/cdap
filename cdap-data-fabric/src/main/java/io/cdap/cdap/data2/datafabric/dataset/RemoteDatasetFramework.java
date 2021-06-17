@@ -35,6 +35,7 @@ import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
@@ -55,7 +56,6 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.internal.ApplicationBundler;
 import org.slf4j.Logger;
@@ -85,14 +85,15 @@ public class RemoteDatasetFramework implements DatasetFramework {
   private final DatasetDefinitionRegistryFactory registryFactory;
 
   @Inject
-  public RemoteDatasetFramework(final CConfiguration cConf, final DiscoveryServiceClient discoveryClient,
+  public RemoteDatasetFramework(final CConfiguration cConf,
                                 DatasetDefinitionRegistryFactory registryFactory,
-                                final AuthenticationContext authenticationContext) {
+                                final AuthenticationContext authenticationContext,
+                                RemoteClientFactory remoteClientFactory) {
     this.cConf = cConf;
     this.clientCache = CacheBuilder.newBuilder().build(new CacheLoader<NamespaceId, DatasetServiceClient>() {
       @Override
       public DatasetServiceClient load(NamespaceId namespace) throws Exception {
-        return new DatasetServiceClient(discoveryClient, namespace, cConf, authenticationContext);
+        return new DatasetServiceClient(namespace, cConf, authenticationContext, remoteClientFactory);
       }
     });
     this.registryFactory = registryFactory;

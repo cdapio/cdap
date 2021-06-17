@@ -21,10 +21,12 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.net.HttpHeaders;
 import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
@@ -52,20 +54,22 @@ public class RemoteClient {
 
   public static final String RUNTIME_SERVICE_ROUTING_BASE_URI = "cdap.runtime.service.routing.base.uri";
 
+  private final AuthenticationContext authenticationContext;
   private final EndpointStrategy endpointStrategy;
   private final HttpRequestConfig httpRequestConfig;
   private final String discoverableServiceName;
   private final String basePath;
   private volatile RemoteAuthenticator authenticator;
 
-  public RemoteClient(DiscoveryServiceClient discoveryClient, String discoverableServiceName,
-                      HttpRequestConfig httpRequestConfig, String basePath) {
-    this(discoveryClient, discoverableServiceName, httpRequestConfig, basePath, null);
+  RemoteClient(AuthenticationContext authenticationContext, DiscoveryServiceClient discoveryClient,
+               String discoverableServiceName, HttpRequestConfig httpRequestConfig, String basePath) {
+    this(authenticationContext, discoveryClient, discoverableServiceName, httpRequestConfig, basePath, null);
   }
 
-  public RemoteClient(DiscoveryServiceClient discoveryClient, String discoverableServiceName,
-                      HttpRequestConfig httpRequestConfig, String basePath,
-                      @Nullable RemoteAuthenticator authenticator) {
+  RemoteClient(AuthenticationContext authenticationContext, DiscoveryServiceClient discoveryClient,
+               String discoverableServiceName, HttpRequestConfig httpRequestConfig, String basePath,
+               @Nullable RemoteAuthenticator authenticator) {
+    this.authenticationContext = authenticationContext;
     this.discoverableServiceName = discoverableServiceName;
     this.httpRequestConfig = httpRequestConfig;
     this.endpointStrategy = new RandomEndpointStrategy(() -> discoveryClient.discover(discoverableServiceName));
@@ -99,21 +103,26 @@ public class RemoteClient {
   public HttpResponse execute(HttpRequest request) throws IOException, UnauthorizedException {
     HttpRequest httpRequest = request;
     URL rewrittenURL = rewriteURL(request.getURL());
+    Multimap<String, String> headers = request.getHeaders();
+    headers = headers == null ? HashMultimap.create() : HashMultimap.create(headers);
 
-      // Add Authorization header and use a rewritten URL if needed
-      RemoteAuthenticator authenticator = getAuthenticator();
-      if (authenticator != null || !rewrittenURL.equals(request.getURL())) {
-        Multimap<String, String> headers = request.getHeaders();
-        if (authenticator != null) {
-          headers = headers == null ? HashMultimap.create() : HashMultimap.create(headers);
-          if (headers.keySet().stream().noneMatch(HttpHeaders.AUTHORIZATION::equalsIgnoreCase)) {
-            headers.put(HttpHeaders.AUTHORIZATION,
-                        String.format("%s %s", authenticator.getType(), authenticator.getCredentials()));
-          }
-        }
-        httpRequest = new HttpRequest(request.getMethod(), rewrittenURL, headers,
-                                      request.getBody(), request.getBodyLength());
+    // Add Authorization header and use a rewritten URL if needed
+    RemoteAuthenticator authenticator = getAuthenticator();
+    if (authenticator != null) {
+      if (headers.keySet().stream().noneMatch(HttpHeaders.AUTHORIZATION::equalsIgnoreCase)) {
+        headers.put(HttpHeaders.AUTHORIZATION,
+                    String.format("%s %s", authenticator.getType(), authenticator.getCredentials()));
       }
+    }
+
+    String internalCredentials = authenticationContext.getPrincipal().getCredential();
+    if (internalCredentials != null) {
+      //TODO CDAP-17772 - add credentials type
+      headers.put(Constants.Security.Headers.RUNTIME_TOKEN, internalCredentials);
+    }
+
+    httpRequest = new HttpRequest(request.getMethod(), rewrittenURL, headers,
+                      request.getBody(), request.getBodyLength());
 
     try {
       HttpResponse response = HttpRequests.execute(httpRequest, httpRequestConfig);
@@ -149,6 +158,13 @@ public class RemoteClient {
       urlConn.setRequestProperty(HttpHeaders.AUTHORIZATION,
                                  String.format("%s %s", authenticator.getType(), authenticator.getCredentials()));
     }
+
+    String internalCredentials = authenticationContext.getPrincipal().getCredential();
+    if (internalCredentials != null) {
+      //TODO CDAP-17772 - add credentials type
+      urlConn.setRequestProperty(Constants.Security.Headers.RUNTIME_TOKEN, internalCredentials);
+    }
+
     return urlConn;
   }
 

@@ -34,6 +34,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
@@ -72,7 +73,8 @@ import java.util.concurrent.TimeUnit;
 public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
   private static final Logger LOG = LoggerFactory.getLogger(RemotePluginFinder.class);
   private static final Gson GSON = new Gson();
-  private static final Type PLUGIN_INFO_LIST_TYPE = new TypeToken<List<PluginInfo>>() { }.getType();
+  private static final Type PLUGIN_INFO_LIST_TYPE = new TypeToken<List<PluginInfo>>() {
+  }.getType();
 
   private final RemoteClient remoteClient;
   private final RemoteClient remoteClientInternal;
@@ -82,15 +84,18 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
   private final RetryStrategy retryStrategy;
 
   @Inject
-  RemotePluginFinder(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient,
+  RemotePluginFinder(CConfiguration cConf,
                      AuthenticationContext authenticationContext,
-                     LocationFactory locationFactory) {
-    this.remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
-                                         new DefaultHttpRequestConfig(false),
-                                         String.format("%s", Constants.Gateway.API_VERSION_3));
-    this.remoteClientInternal = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
-                                                 new DefaultHttpRequestConfig(false),
-                                                 String.format("%s", Constants.Gateway.INTERNAL_API_VERSION_3));
+                     LocationFactory locationFactory,
+                     RemoteClientFactory remoteClientFactory) {
+    this.remoteClient = remoteClientFactory.createRemoteClient(
+      Constants.Service.APP_FABRIC_HTTP,
+      new DefaultHttpRequestConfig(false),
+      String.format("%s", Constants.Gateway.API_VERSION_3));
+    this.remoteClientInternal = remoteClientFactory.createRemoteClient(
+      Constants.Service.APP_FABRIC_HTTP,
+      new DefaultHttpRequestConfig(false),
+      String.format("%s", Constants.Gateway.INTERNAL_API_VERSION_3));
     this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
     this.authenticationContext = authenticationContext;
     this.locationFactory = locationFactory;
@@ -145,12 +150,12 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
   /**
    * Gets a list of {@link PluginInfo} from the artifact extension endpoint.
    *
-   * @param namespaceId namespace of the call happening in
+   * @param namespaceId      namespace of the call happening in
    * @param parentArtifactId the parent artifact id
-   * @param pluginType the plugin type to look for
-   * @param pluginName the plugin name to look for
+   * @param pluginType       the plugin type to look for
+   * @param pluginName       the plugin name to look for
    * @return a list of {@link PluginInfo}
-   * @throws IOException if it failed to get the information
+   * @throws IOException              if it failed to get the information
    * @throws PluginNotExistsException if the given plugin type and name doesn't exist
    */
   private List<PluginInfo> getPlugins(NamespaceId namespaceId,

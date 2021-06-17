@@ -33,6 +33,7 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
@@ -58,6 +59,7 @@ public class RuntimeServiceMain extends AbstractServiceMain<EnvironmentOptions> 
   protected List<Module> getServiceModules(MasterEnvironment masterEnv,
                                            EnvironmentOptions options, CConfiguration cConf) {
     return Arrays.asList(
+      new AuthenticationContextModules().getMasterModule(),
       new DFSLocationModule(),
       new MessagingClientModule(),
       new SystemDatasetRuntimeModule().getStandaloneModules(),

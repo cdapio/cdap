@@ -27,6 +27,7 @@ import io.cdap.cdap.api.metrics.NoopMetricsContext;
 import io.cdap.cdap.common.HttpExceptionHandler;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.logging.appender.LogMessage;
 import io.cdap.cdap.logging.appender.remote.RemoteLogAppender;
@@ -38,6 +39,7 @@ import io.cdap.cdap.logging.pipeline.LogProcessorPipelineContext;
 import io.cdap.cdap.logging.pipeline.MockAppender;
 import io.cdap.cdap.logging.pipeline.logbuffer.LogBufferPipelineConfig;
 import io.cdap.cdap.logging.pipeline.logbuffer.LogBufferProcessorPipeline;
+import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
@@ -103,7 +105,9 @@ public class LogBufferHandlerTest {
   private RemoteLogAppender getRemoteAppender(CConfiguration cConf, NettyHttpService httpService) {
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     discoveryService.register(new Discoverable(Constants.Service.LOG_BUFFER_SERVICE, httpService.getBindAddress()));
-    return new RemoteLogAppender(cConf, discoveryService);
+    RemoteClientFactory remoteClientFactory = new RemoteClientFactory(
+      discoveryService, new AuthenticationTestContext());
+    return new RemoteLogAppender(cConf, remoteClientFactory);
   }
 
   private LogBufferProcessorPipeline getLogPipeline(LoggerContext loggerContext) {

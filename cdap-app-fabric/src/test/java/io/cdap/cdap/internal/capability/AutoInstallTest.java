@@ -25,6 +25,7 @@ import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.capability.autoinstall.HubPackage;
 import io.cdap.cdap.internal.capability.autoinstall.Spec;
@@ -68,9 +69,10 @@ public class AutoInstallTest {
     cConf.set(Constants.AppFabric.TEMP_DIR, "appfabric");
     cConf.setInt(Constants.Capability.AUTO_INSTALL_THREADS, 5);
     ArtifactRepository artifactRepository = PowerMockito.mock(ArtifactRepository.class);
+    RemoteClientFactory remoteClientFactory = new RemoteClientFactory(null, null);
     CapabilityApplier capabilityApplier = new CapabilityApplier(null, null,
                                                                 null, null, null,
-                                                                artifactRepository, null, cConf);
+                                                                artifactRepository, cConf, remoteClientFactory);
     CapabilityApplier ca = Mockito.spy(capabilityApplier);
     PowerMockito.mockStatic(HttpClients.class);
     PowerMockito.mockStatic(Files.class);

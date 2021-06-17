@@ -20,6 +20,8 @@ package io.cdap.cdap.master.environment;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
+import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
@@ -63,7 +65,9 @@ public class DefaultMasterEnvironmentRunnableContextTest {
   public static void setup() throws Exception {
     DiscoveryService discoveryService = new InMemoryDiscoveryService();
     LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
-    context = new DefaultMasterEnvironmentRunnableContext((DiscoveryServiceClient) discoveryService, locationFactory);
+    RemoteClientFactory remoteClientFactory = new RemoteClientFactory(
+      (DiscoveryServiceClient) discoveryService, new AuthenticationTestContext());
+    context = new DefaultMasterEnvironmentRunnableContext(locationFactory, remoteClientFactory);
 
     httpService = NettyHttpService.builder(Constants.Service.APP_FABRIC_HTTP)
       .setHttpHandlers(new MockHttpHandler())

@@ -36,6 +36,7 @@ import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.lang.InstantiatorFactory;
 import io.cdap.cdap.common.lang.PropertyFieldSetter;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
@@ -95,6 +96,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final FieldLineageWriter fieldLineageWriter;
   private final MetadataPublisher metadataPublisher;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final RemoteClientFactory remoteClientFactory;
 
   @Inject
   public MapReduceProgramRunner(Injector injector, CConfiguration cConf, Configuration hConf,
@@ -106,7 +108,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                 SecureStore secureStore, SecureStoreManager secureStoreManager,
                                 MessagingService messagingService, MetadataReader metadataReader,
                                 MetadataPublisher metadataPublisher, FieldLineageWriter fieldLineageWriter,
-                                NamespaceQueryAdmin namespaceQueryAdmin) {
+                                NamespaceQueryAdmin namespaceQueryAdmin, RemoteClientFactory remoteClientFactory) {
     super(cConf);
     this.injector = injector;
     this.cConf = cConf;
@@ -123,6 +125,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.metadataPublisher = metadataPublisher;
     this.fieldLineageWriter = fieldLineageWriter;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.remoteClientFactory = remoteClientFactory;
   }
 
   @Override
@@ -173,7 +176,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                   metricsCollectionService, txSystemClient, programDatasetFramework,
                                   getPluginArchive(options), pluginInstantiator, secureStore, secureStoreManager,
                                   messagingService, metadataReader, metadataPublisher, namespaceQueryAdmin,
-                                  fieldLineageWriter);
+                                  fieldLineageWriter, remoteClientFactory);
       closeables.add(context);
 
       Reflections.visit(mapReduce, mapReduce.getClass(),

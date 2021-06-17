@@ -37,6 +37,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.security.AuthEnforceUtil;
 import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
 import io.cdap.cdap.proto.element.EntityType;
@@ -130,10 +131,11 @@ public class RemoteAccessEnforcer extends AbstractAccessEnforcer {
   private final LoadingCache<VisibilityKey, Boolean> visibilityCache;
 
   @Inject
-  public RemoteAccessEnforcer(CConfiguration cConf, final DiscoveryServiceClient discoveryClient) {
+  public RemoteAccessEnforcer(CConfiguration cConf, RemoteClientFactory remoteClientFactory) {
     super(cConf);
-    this.remoteClient = new RemoteClient(discoveryClient, Constants.Service.APP_FABRIC_HTTP,
-                                         new DefaultHttpRequestConfig(false), "/v1/execute/");
+    this.remoteClient = remoteClientFactory.createRemoteClient(Constants.Service.APP_FABRIC_HTTP,
+                                                               new DefaultHttpRequestConfig(false),
+                                                               "/v1/execute/");
     int cacheTTLSecs = cConf.getInt(Constants.Security.Authorization.CACHE_TTL_SECS);
     int cacheMaxEntries = cConf.getInt(Constants.Security.Authorization.CACHE_MAX_ENTRIES);
     // Cache can be disabled by setting the number of entries to <= 0

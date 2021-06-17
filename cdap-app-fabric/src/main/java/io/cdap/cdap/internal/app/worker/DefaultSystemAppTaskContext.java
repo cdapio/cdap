@@ -30,6 +30,7 @@ import io.cdap.cdap.app.services.AbstractServiceDiscoverer;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
@@ -42,7 +43,6 @@ import io.cdap.cdap.internal.app.runtime.plugin.MacroParser;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.proto.id.NamespaceId;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,7 +63,6 @@ public class DefaultSystemAppTaskContext extends AbstractServiceDiscoverer imple
   private final PreferencesFetcher preferencesFetcher;
   private final CConfiguration cConf;
   private final PluginFinder pluginFinder;
-  private final DiscoveryServiceClient discoveryServiceClient;
   private final SecureStore secureStore;
   private final String serviceName;
   private final RetryStrategy retryStrategy;
@@ -71,19 +70,21 @@ public class DefaultSystemAppTaskContext extends AbstractServiceDiscoverer imple
   private final PluginInstantiator instantiator;
   private final File pluginsDir;
   private final io.cdap.cdap.proto.id.ArtifactId protoArtifactId;
+  private final RemoteClientFactory remoteClientFactory;
 
   DefaultSystemAppTaskContext(CConfiguration cConf, PreferencesFetcher preferencesFetcher, PluginFinder pluginFinder,
-                              DiscoveryServiceClient discoveryServiceClient, SecureStore secureStore,
+                              SecureStore secureStore,
                               String artifactNameSpace, ArtifactId artifactId, ClassLoader artifactClassLoader,
-                              ArtifactManagerFactory artifactManagerFactory, String serviceName) {
+                              ArtifactManagerFactory artifactManagerFactory, String serviceName,
+                              RemoteClientFactory remoteClientFactory) {
     super(artifactNameSpace);
     this.cConf = cConf;
     this.serviceName = serviceName;
     this.retryStrategy = RetryStrategies.fromConfiguration(cConf, Constants.Retry.SERVICE_PREFIX);
     this.preferencesFetcher = preferencesFetcher;
     this.pluginFinder = pluginFinder;
-    this.discoveryServiceClient = discoveryServiceClient;
     this.secureStore = secureStore;
+    this.remoteClientFactory = remoteClientFactory;
     this.artifactManager = artifactManagerFactory.create(new NamespaceId(artifactNameSpace), retryStrategy);
     this.pluginsDir = createTempFolder();
     this.instantiator = new PluginInstantiator(cConf, artifactClassLoader, pluginsDir);
@@ -140,8 +141,8 @@ public class DefaultSystemAppTaskContext extends AbstractServiceDiscoverer imple
   }
 
   @Override
-  protected DiscoveryServiceClient getDiscoveryServiceClient() {
-    return discoveryServiceClient;
+  protected RemoteClientFactory getRemoteClientFactory() {
+    return remoteClientFactory;
   }
 
   @Override
