@@ -42,7 +42,6 @@ import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.authorization.RemoteAccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.PermissionManager;
-import io.cdap.cdap.security.spi.authorization.PrivilegesManager;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.After;
@@ -59,11 +58,11 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Tests for remote implementations of {@link AccessEnforcer} and {@link PrivilegesManager}.
+ * Tests for remote implementations of {@link AccessEnforcer} and {@link PermissionManager}.
  * These are in app-fabric, because we need to start app-fabric in these tests.
  */
 @SuppressWarnings("WeakerAccess")
-public abstract class RemotePrivilegesTestBase {
+public abstract class RemotePermissionsTestBase {
   @ClassRule
   public static final TemporaryFolder TEMPORARY_FOLDER = new TemporaryFolder();
 
@@ -107,9 +106,9 @@ public abstract class RemotePrivilegesTestBase {
   }
 
   @Test
-  public void testPrivilegesManager() throws Exception {
-    // In this test, grants and revokes happen via PrivilegesManager, privilege listing and enforcement happens via
-    // Authorizer. Also, since grants and revokes go directly to master and don't need a proxy, the
+  public void testPermissionManager() throws Exception {
+    // In this test, grants and revokes happen via PermissionManager, privilege listing and enforcement happens via
+    // AccessEnforcer. Also, since grants and revokes go directly to master and don't need a proxy, the
     // RemoteSystemOperationsService does not need to be started in this release.
     permissionManager.grant(Authorizable.fromEntityId(NS), ALICE, EnumSet.allOf(StandardPermission.class));
     permissionManager.grant(Authorizable.fromEntityId(APP), ALICE, Collections.singleton(StandardPermission.UPDATE));
@@ -127,9 +126,9 @@ public abstract class RemotePrivilegesTestBase {
     permissionManager.revoke(Authorizable.fromEntityId(NS), ALICE, EnumSet.allOf(StandardPermission.class));
     permissionManager.revoke(Authorizable.fromEntityId(NS, EntityType.PROFILE), ALICE,
                             Collections.singleton(StandardPermission.LIST));
-    Set<GrantedPermission> privileges = permissionManager.listGrants(ALICE);
-    Assert.assertTrue(String.format("Expected all of alice's privileges to be revoked, but found %s", privileges),
-                      privileges.isEmpty());
+    Set<GrantedPermission> permissions = permissionManager.listGrants(ALICE);
+    Assert.assertTrue(String.format("Expected all of alice's permissions to be revoked, but found %s", permissions),
+                      permissions.isEmpty());
   }
 
   @Test
@@ -168,13 +167,13 @@ public abstract class RemotePrivilegesTestBase {
     DatasetId ds1 = NS.dataset("ds1");
     DatasetId ds2 = NS.dataset("ds2");
 
-    // Grant privileges on non-numbered entities to ALICE
+    // Grant permissions on non-numbered entities to ALICE
     permissionManager.grant(Authorizable.fromEntityId(PROGRAM), ALICE,
                             Collections.singleton(ApplicationPermission.EXECUTE));
     permissionManager.grant(Authorizable.fromEntityId(ds), ALICE,
                             EnumSet.of(StandardPermission.GET, StandardPermission.UPDATE));
 
-    // Grant privileges on entities ending with 2 to BOB
+    // Grant permissions on entities ending with 2 to BOB
     permissionManager.grant(Authorizable.fromEntityId(program2), BOB,
                             Collections.singleton(StandardPermission.UPDATE));
     permissionManager.grant(Authorizable.fromEntityId(ds2), BOB,

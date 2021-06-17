@@ -40,14 +40,11 @@ import io.cdap.cdap.internal.app.runtime.DefaultAdmin;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.authorization.AuthorizationContextFactory;
-import io.cdap.cdap.security.authorization.AuthorizerInstantiator;
 import io.cdap.cdap.security.authorization.DefaultAuthorizationContext;
 import io.cdap.cdap.security.authorization.DelegatingPermissionManager;
-import io.cdap.cdap.security.authorization.DelegatingPrivilegeManager;
+import io.cdap.cdap.security.spi.authorization.AccessController;
 import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
-import io.cdap.cdap.security.spi.authorization.Authorizer;
 import io.cdap.cdap.security.spi.authorization.PermissionManager;
-import io.cdap.cdap.security.spi.authorization.PrivilegesManager;
 import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionSystemClient;
 
@@ -59,16 +56,16 @@ import java.util.Properties;
  *
  * This module is part of the injector created in StandaloneMain and MasterServiceMain, which makes it available to
  * services. The requirements for this module are:
- * 1. This module is used for creating and exposing {@link AuthorizerInstantiator}.
- * 2. The {@link AuthorizerInstantiator} needs a {@link DefaultAuthorizationContext}.
+ * 1. This module is used for creating and exposing {@link AccessControllerInstantiator}.
+ * 2. The {@link AccessControllerInstantiator} needs a {@link DefaultAuthorizationContext}.
  * 3. The {@link DefaultAuthorizationContext} needs a {@link DatasetContext}, a {@link Admin} and a
  * {@link Transactional}.
  *
  * These requirements are fulfilled by:
  * 1. Constructing a {@link Singleton} {@link MultiThreadDatasetCache} by injecting a {@link DatasetFramework}, a
  * {@link TransactionSystemClient} and a {@link MetricsCollectionService}. This {@link MultiThreadDatasetCache} is
- * created for datasets in the {@link NamespaceId#SYSTEM}, since the datasets that {@link Authorizer} extensions need
- * are created in the system namespace.
+ * created for datasets in the {@link NamespaceId#SYSTEM}, since the datasets that {@link AccessController} extensions
+ * need are created in the system namespace.
  * 2. Binding the {@link DatasetContext} to the {@link MultiThreadDatasetCache} created above.
  * 3. Using the {@link MultiThreadDatasetCache} to create a {@link TransactionContext} for providing the
  * {@link Transactional}.
@@ -77,8 +74,8 @@ import java.util.Properties;
  * 5. Using the bound {@link DatasetContext}, {@link Admin} and {@link Transactional} to provide the injections for
  * {@link DefaultAuthorizationContext}, which is provided using a {@link Guice} {@link FactoryModuleBuilder} to
  * construct a {@link AuthorizationContextFactory}.
- * 6. Only exposing a {@link Singleton} binding to {@link AuthorizerInstantiator} from this module. The
- * {@link AuthorizerInstantiator} can just {@link Inject} the {@link AuthorizationContextFactory} and call
+ * 6. Only exposing a {@link Singleton} binding to {@link AccessControllerInstantiator} from this module. The
+ * {@link AccessControllerInstantiator} can just {@link Inject} the {@link AuthorizationContextFactory} and call
  * {@link AuthorizationContextFactory#create(Properties)} using an {@link Assisted} {@link Properties} object.
  */
 public class AuthorizationModule extends PrivateModule {
@@ -95,13 +92,9 @@ public class AuthorizationModule extends PrivateModule {
         .build(AuthorizationContextFactory.class)
     );
 
-    bind(AuthorizerInstantiator.class).in(Scopes.SINGLETON);
-    expose(AuthorizerInstantiator.class);
     bind(AccessControllerInstantiator.class).in(Scopes.SINGLETON);
     expose(AccessControllerInstantiator.class);
 
-    bind(PrivilegesManager.class).to(DelegatingPrivilegeManager.class);
-    expose(PrivilegesManager.class);
     bind(PermissionManager.class).to(DelegatingPermissionManager.class);
     expose(PermissionManager.class);
   }

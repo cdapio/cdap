@@ -22,17 +22,16 @@ import com.google.inject.TypeLiteral;
 import io.cdap.cdap.common.internal.remote.MethodArgument;
 import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
 import io.cdap.cdap.proto.id.EntityId;
-import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.AuthorizationPrivilege;
+import io.cdap.cdap.proto.security.GrantedPermission;
 import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.PermissionAdapterFactory;
 import io.cdap.cdap.proto.security.Principal;
-import io.cdap.cdap.proto.security.Privilege;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.proto.security.VisibilityRequest;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
-import io.cdap.cdap.security.spi.authorization.PrivilegesManager;
+import io.cdap.cdap.security.spi.authorization.PermissionManager;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -43,8 +42,6 @@ import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -56,21 +53,18 @@ import javax.ws.rs.Path;
 @Path(AbstractRemoteSystemOpsHandler.VERSION + "/execute")
 public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
   private static final Logger LOG = LoggerFactory.getLogger(RemotePrivilegesHandler.class);
-  private static final Type SET_OF_ACTIONS = new TypeLiteral<Set<Action>>() { }.getType();
+  private static final Type SET_OF_PERMISSIONS = new TypeLiteral<Set<? extends Permission>>() { }.getType();
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
     .registerTypeAdapterFactory(new PermissionAdapterFactory())
     .create();
 
-  private final PrivilegesManager privilegesManager;
-  private final AuthorizationEnforcer authorizationEnforcer;
+  private final PermissionManager permissionManager;
   private final AccessEnforcer accessEnforcer;
 
   @Inject
-  RemotePrivilegesHandler(PrivilegesManager privilegesManager, AuthorizationEnforcer authorizationEnforcer,
-                          AccessEnforcer accessEnforcer) {
-    this.privilegesManager = privilegesManager;
-    this.authorizationEnforcer = authorizationEnforcer;
+  RemotePrivilegesHandler(PermissionManager permissionManager, AccessEnforcer accessEnforcer) {
+    this.permissionManager = permissionManager;
     this.accessEnforcer = accessEnforcer;
   }
 
@@ -81,11 +75,6 @@ public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
                                                                   AuthorizationPrivilege.class);
     LOG.debug("Enforcing for {}", authorizationPrivilege);
     Set<Permission> permissions = authorizationPrivilege.getPermissions();
-    if (authorizationPrivilege.getActions() != null) {
-      permissions = Stream.of(permissions, authorizationPrivilege.getActions())
-        .flatMap(set -> set.stream())
-        .collect(Collectors.toSet());
-    }
     if (authorizationPrivilege.getChildEntityType() != null) {
       //It's expected that we'll always have one, but let's handle generic case
       for (Permission permission: permissions) {
@@ -100,16 +89,6 @@ public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
   }
 
   @POST
-  @Path("/isSingleVisible")
-  public void isSingleVisible(FullHttpRequest request, HttpResponder responder) throws Exception {
-    AuthorizationPrivilege authorizationPrivilege = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
-                                                                  AuthorizationPrivilege.class);
-    LOG.debug("Enforcing visibility for {}", authorizationPrivilege);
-    authorizationEnforcer.isVisible(authorizationPrivilege.getEntity(), authorizationPrivilege.getPrincipal());
-    responder.sendStatus(HttpResponseStatus.OK);
-  }
-
-  @POST
   @Path("/isVisible")
   public void isVisible(FullHttpRequest request, HttpResponder responder) throws Exception {
     VisibilityRequest visibilityRequest = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
@@ -117,7 +96,7 @@ public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
     Principal principal = visibilityRequest.getPrincipal();
     Set<EntityId> entityIds = visibilityRequest.getEntityIds();
     LOG.trace("Checking visibility for principal {} on entities {}", principal, entityIds);
-    Set<? extends EntityId> visiableEntities = authorizationEnforcer.isVisible(entityIds, principal);
+    Set<? extends EntityId> visiableEntities = accessEnforcer.isVisible(entityIds, principal);
     LOG.debug("Returning entities visible for principal {} as {}", principal, visiableEntities);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(visiableEntities));
   }
@@ -127,10 +106,10 @@ public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
   public void listPrivileges(FullHttpRequest request, HttpResponder responder) throws Exception {
     Iterator<MethodArgument> arguments = parseArguments(request);
     Principal principal = deserializeNext(arguments);
-    LOG.trace("Listing privileges for principal {}", principal);
-    Set<Privilege> privileges = privilegesManager.listPrivileges(principal);
-    LOG.debug("Returning privileges for principal {} as {}", principal, privileges);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(privileges));
+    LOG.trace("Listing grantedPermissions for principal {}", principal);
+    Set<GrantedPermission> grantedPermissions = permissionManager.listGrants(principal);
+    LOG.debug("Returning grantedPermissions for principal {} as {}", principal, grantedPermissions);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(grantedPermissions));
   }
 
   @POST
@@ -139,10 +118,10 @@ public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
     Iterator<MethodArgument> arguments = parseArguments(request);
     EntityId entityId = deserializeNext(arguments);
     Principal principal = deserializeNext(arguments);
-    Set<Action> actions = deserializeNext(arguments, SET_OF_ACTIONS);
-    LOG.trace("Granting {} on {} to {}", actions, entityId, principal);
-    privilegesManager.grant(Authorizable.fromEntityId(entityId), principal, actions);
-    LOG.info("Granted {} on {} to {} successfully", actions, entityId, principal);
+    Set<? extends Permission> permissions = deserializeNext(arguments, SET_OF_PERMISSIONS);
+    LOG.trace("Granting {} on {} to {}", permissions, entityId, principal);
+    permissionManager.grant(Authorizable.fromEntityId(entityId), principal, permissions);
+    LOG.info("Granted {} on {} to {} successfully", permissions, entityId, principal);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -152,10 +131,10 @@ public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
     Iterator<MethodArgument> arguments = parseArguments(request);
     EntityId entityId = deserializeNext(arguments);
     Principal principal = deserializeNext(arguments);
-    Set<Action> actions = deserializeNext(arguments, SET_OF_ACTIONS);
-    LOG.trace("Revoking {} on {} from {}", actions, entityId, principal);
-    privilegesManager.revoke(Authorizable.fromEntityId(entityId), principal, actions);
-    LOG.info("Revoked {} on {} from {} successfully", actions, entityId, principal);
+    Set<? extends Permission> permissions = deserializeNext(arguments, SET_OF_PERMISSIONS);
+    LOG.trace("Revoking {} on {} from {}", permissions, entityId, principal);
+    permissionManager.revoke(Authorizable.fromEntityId(entityId), principal, permissions);
+    LOG.info("Revoked {} on {} from {} successfully", permissions, entityId, principal);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -165,7 +144,7 @@ public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
     Iterator<MethodArgument> arguments = parseArguments(request);
     EntityId entityId = deserializeNext(arguments);
     LOG.trace("Revoking all actions on {}", entityId);
-    privilegesManager.revoke(Authorizable.fromEntityId(entityId));
+    permissionManager.revoke(Authorizable.fromEntityId(entityId));
     LOG.info("Revoked all actions on {} successfully", entityId);
     responder.sendStatus(HttpResponseStatus.OK);
   }

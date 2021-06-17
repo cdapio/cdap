@@ -77,7 +77,7 @@ import io.cdap.cdap.security.impersonation.OwnerStore;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
-import io.cdap.cdap.security.spi.authorization.PrivilegesManager;
+import io.cdap.cdap.security.spi.authorization.PermissionManager;
 import io.cdap.cdap.store.DefaultOwnerStore;
 
 /**
@@ -88,7 +88,7 @@ public class PreviewRunnerModule extends PrivateModule {
   private final AccessControllerInstantiator accessControllerInstantiator;
   private final AccessEnforcer accessEnforcer;
   private final ContextAccessEnforcer contextAccessEnforcer;
-  private final PrivilegesManager privilegesManager;
+  private final PermissionManager permissionManager;
   private final PreferencesService preferencesService;
   private final ProgramRuntimeProviderLoader programRuntimeProviderLoader;
   private final ArtifactRepositoryReaderProvider artifactRepositoryReaderProvider;
@@ -101,7 +101,7 @@ public class PreviewRunnerModule extends PrivateModule {
                       AccessControllerInstantiator accessControllerInstantiator,
                       AccessEnforcer accessEnforcer,
                       ContextAccessEnforcer contextAccessEnforcer,
-                      PrivilegesManager privilegesManager, PreferencesService preferencesService,
+                      PermissionManager permissionManager, PreferencesService preferencesService,
                       ProgramRuntimeProviderLoader programRuntimeProviderLoader,
                       PluginFinderProvider pluginFinderProvider,
                       PreferencesFetcherProvider preferencesFetcherProvider,
@@ -111,7 +111,7 @@ public class PreviewRunnerModule extends PrivateModule {
     this.accessControllerInstantiator = accessControllerInstantiator;
     this.accessEnforcer = accessEnforcer;
     this.contextAccessEnforcer = contextAccessEnforcer;
-    this.privilegesManager = privilegesManager;
+    this.permissionManager = permissionManager;
     this.preferencesService = preferencesService;
     this.programRuntimeProviderLoader = programRuntimeProviderLoader;
     this.pluginFinderProvider = pluginFinderProvider;
@@ -147,8 +147,8 @@ public class PreviewRunnerModule extends PrivateModule {
     expose(ContextAccessEnforcer.class);
     bind(AccessControllerInstantiator.class).toInstance(accessControllerInstantiator);
     expose(AccessControllerInstantiator.class);
-    bind(PrivilegesManager.class).toInstance(privilegesManager);
-    expose(PrivilegesManager.class);
+    bind(PermissionManager.class).toInstance(permissionManager);
+    expose(PermissionManager.class);
     bind(PreferencesService.class).toInstance(preferencesService);
     // bind explore client to mock.
     bind(ExploreClient.class).to(MockExploreClient.class);
