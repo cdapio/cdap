@@ -224,7 +224,7 @@ public class KubeTwillContext implements ExtendedTwillContext, Closeable {
     }
 
     // Find the ReplicaSet, Deployment, or StatefulSet owner
-    Set<String> supportedKind = ImmutableSet.of("ReplicaSet", "Deployment", "StatefulSet");
+    Set<String> supportedKind = ImmutableSet.of("ReplicaSet", "Deployment", "StatefulSet", "Job");
     V1OwnerReference ownerRef = ownerReferences.stream()
       .filter(ref -> supportedKind.contains(ref.getKind()))
       .findFirst()

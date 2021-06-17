@@ -32,6 +32,7 @@ import io.cdap.cdap.master.spi.twill.StatefulTwillPreparer;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.apis.AppsV1Api;
+import io.kubernetes.client.apis.BatchV1Api;
 import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.models.V1Container;
 import io.kubernetes.client.models.V1ContainerBuilder;
@@ -41,6 +42,8 @@ import io.kubernetes.client.models.V1DownwardAPIVolumeFile;
 import io.kubernetes.client.models.V1DownwardAPIVolumeSource;
 import io.kubernetes.client.models.V1EmptyDirVolumeSource;
 import io.kubernetes.client.models.V1EnvVar;
+import io.kubernetes.client.models.V1Job;
+import io.kubernetes.client.models.V1JobBuilder;
 import io.kubernetes.client.models.V1LabelSelector;
 import io.kubernetes.client.models.V1ObjectFieldSelector;
 import io.kubernetes.client.models.V1ObjectMeta;
@@ -476,14 +479,26 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       StatefulRunnable statefulRunnable = statefulRunnables.get(mainRuntimeSpec.getName());
       Type resourceType = statefulRunnable == null ? V1Deployment.class : V1StatefulSet.class;
 
+
+      if (extraLabels.containsKey("cdap.container")) {
+        LOG.info("### Got key cdap.container with value {}", extraLabels.get("cdap.container"));
+        String value = extraLabels.get("cdap.container");
+        if (value.equalsIgnoreCase("DataPipelineWorkflow")) {
+          resourceType = V1Job.class;
+          LOG.info("### Resource type is Job");
+        }
+      }
+
       V1ObjectMeta metadata = createResourceMetadata(resourceType, mainRuntimeSpec.getName(),
                                                      timeoutUnit.toMillis(timeout));
       if (V1Deployment.class.equals(resourceType)) {
         metadata = createDeployment(metadata, twillSpec.getRunnables(),
                                     runtimeConfigLocation);
-      } else {
+      } else if (V1StatefulSet.class.equals(resourceType)) {
         metadata = createStatefulSet(metadata, twillSpec.getRunnables(),
                                      runtimeConfigLocation, statefulRunnable);
+      } else {
+        metadata = createJob(metadata, twillSpec.getRunnables(), runtimeConfigLocation);
       }
 
       return controllerFactory.create(resourceType, metadata, timeout, timeoutUnit);
@@ -495,6 +510,38 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       }
       throw new RuntimeException("Unable to create Kubernetes resource while attempting to start program.", e);
     }
+  }
+
+  private V1ObjectMeta createJob(V1ObjectMeta metadata, Map<String, RuntimeSpecification> runtimeSpecs,
+                                 Location runtimeConfigLocation)
+    throws ApiException {
+    BatchV1Api appsApi = new BatchV1Api(apiClient);
+
+    V1Job job = buildJob(metadata, runtimeSpecs, runtimeConfigLocation);
+
+    job = appsApi.createNamespacedJob(kubeNamespace, job, "true", null, null);
+    LOG.info("Created Deployment {} in Kubernetes", metadata.getName());
+    return job.getMetadata();
+  }
+
+  /**
+   * Return a {@link V1Deployment} object object for the {@link TwillRunnable} represented by the
+   * given {@link RuntimeSpecification}
+   */
+  private V1Job buildJob(V1ObjectMeta metadata, Map<String, RuntimeSpecification> runtimeSpecs,
+                         Location runtimeConfigLocation) {
+    //int replicas = getMainRuntimeSpecification(runtimeSpecs).getResourceSpecification().getInstances();
+    return new V1JobBuilder()
+      .withKind("Job")
+      .withMetadata(metadata)
+      .withNewSpec()
+      .withSelector(new V1LabelSelector().matchLabels(metadata.getLabels()))
+      .withNewTemplate()
+      .withMetadata(metadata)
+      .withSpec(createPodSpec(runtimeConfigLocation, runtimeSpecs))
+      .endTemplate()
+      .endSpec()
+      .build();
   }
 
   /**
