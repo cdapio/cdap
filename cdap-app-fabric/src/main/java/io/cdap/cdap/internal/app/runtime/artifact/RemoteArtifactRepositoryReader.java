@@ -34,6 +34,7 @@ import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import io.cdap.cdap.gateway.handlers.ArtifactHttpHandlerInternal;
+import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerClient;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -41,7 +42,6 @@ import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -53,6 +53,7 @@ import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Implementation for fetching artifact metadata from remote {@link ArtifactHttpHandlerInternal}
@@ -66,14 +67,16 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
 
   private final RemoteClient remoteClient;
   private final LocationFactory locationFactory;
+  private final ArtifactLocalizerClient artifactLocalizerClient;
 
   @Inject
   public RemoteArtifactRepositoryReader(LocationFactory locationFactory,
+                                        @Nullable ArtifactLocalizerClient artifactLocalizerClient,
                                         RemoteClientFactory remoteClientFactory) {
-    this.remoteClient = remoteClientFactory.createRemoteClient(
-      Constants.Service.APP_FABRIC_HTTP,
+    this.remoteClient = remoteClientFactory.createRemoteClient(Constants.Service.APP_FABRIC_HTTP,
       new DefaultHttpRequestConfig(false), Constants.Gateway.INTERNAL_API_VERSION_3);
     this.locationFactory = locationFactory;
+    this.artifactLocalizerClient = artifactLocalizerClient;
   }
 
   /**
@@ -92,10 +95,18 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
     httpResponse = execute(requestBuilder.build());
     ArtifactDetail detail = GSON.fromJson(httpResponse.getResponseBodyAsString(), ARTIFACT_DETAIL_TYPE);
-    Location artifactLocation =
-      Locations.getLocationFromAbsolutePath(locationFactory, detail.getDescriptor().getLocationURI().getPath());
+
+    // If the artifactLocalizerClient is available, use that to localize the artifact and fetch the location
+    Location artifactLocation;
+    if (artifactLocalizerClient != null) {
+      artifactLocation = Locations
+        .toLocation(artifactLocalizerClient.getArtifactLocation(artifactId.toEntityId()));
+    } else {
+      artifactLocation = Locations
+        .getLocationFromAbsolutePath(locationFactory, detail.getDescriptor().getLocationURI().getPath());
+    }
     return new ArtifactDetail(new ArtifactDescriptor(detail.getDescriptor().getArtifactId(), artifactLocation),
-                            detail.getMeta());
+                              detail.getMeta());
   }
 
   /**

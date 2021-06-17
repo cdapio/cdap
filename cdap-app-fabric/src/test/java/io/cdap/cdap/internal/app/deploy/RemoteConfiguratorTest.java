@@ -49,6 +49,8 @@ import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
 import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
 import io.cdap.cdap.internal.app.worker.ConfiguratorTask;
 import io.cdap.cdap.internal.app.worker.TaskWorkerHttpHandlerInternal;
+import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizer;
+import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerHttpHandlerInternal;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
@@ -107,17 +109,20 @@ public class RemoteConfiguratorTest {
     namespaceAdmin.create(NamespaceMeta.SYSTEM);
     namespaceAdmin.create(NamespaceMeta.DEFAULT);
 
+    remoteClientFactory = new RemoteClientFactory(discoveryService, new AuthenticationTestContext());
     httpService = new CommonNettyHttpServiceBuilder(cConf, "test")
       .setHttpHandlers(
-        new TaskWorkerHttpHandlerInternal(cConf, className -> { }),
-        new ArtifactHttpHandlerInternal(new TestArtifactRepository(cConf), namespaceAdmin)
+        new TaskWorkerHttpHandlerInternal(cConf, className -> {
+        }),
+        new ArtifactHttpHandlerInternal(new TestArtifactRepository(cConf), namespaceAdmin),
+        new ArtifactLocalizerHttpHandlerInternal(new ArtifactLocalizer(cConf, remoteClientFactory))
       )
+      .setPort(cConf.getInt(Constants.ArtifactLocalizer.PORT))
       .build();
     httpService.start();
 
     discoveryService.register(URIScheme.createDiscoverable(Constants.Service.TASK_WORKER, httpService));
     discoveryService.register(URIScheme.createDiscoverable(Constants.Service.APP_FABRIC_HTTP, httpService));
-    remoteClientFactory = new RemoteClientFactory(discoveryService, new AuthenticationTestContext());
   }
 
   @AfterClass
@@ -164,7 +169,7 @@ public class RemoteConfiguratorTest {
     Assert.assertEquals(expectedSpec.getDatasets(), specification.getDatasets());
   }
 
-  @Test (expected = ExecutionException.class)
+  @Test(expected = ExecutionException.class)
   public void testMissingArtifact() throws Exception {
     LocationFactory locationFactory = new LocalLocationFactory(TEMP_FOLDER.newFolder());
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, AllProgramsApp.class);
@@ -182,7 +187,7 @@ public class RemoteConfiguratorTest {
     configurator.config().get(10, TimeUnit.SECONDS);
   }
 
-  @Test (expected = ExecutionException.class)
+  @Test(expected = ExecutionException.class)
   public void testBadAppConfig() throws Exception {
     LocationFactory locationFactory = new LocalLocationFactory(TEMP_FOLDER.newFolder());
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, ConfigTestApp.class);
