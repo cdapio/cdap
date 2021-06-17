@@ -31,6 +31,7 @@ import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import io.cdap.cdap.master.spi.twill.SecureTwillPreparer;
+import io.cdap.cdap.master.spi.twill.SecurityContext;
 import io.cdap.cdap.master.spi.twill.StatefulDisk;
 import io.cdap.cdap.master.spi.twill.StatefulTwillPreparer;
 import io.cdap.cdap.messaging.MessagingService;
@@ -181,8 +182,10 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
           if (twillPreparer instanceof SecureTwillPreparer) {
             String twillUserIdentity = cConf.get(Constants.Twill.Security.IDENTITY_USER);
             if (twillUserIdentity != null) {
+              SecurityContext securityContext = new SecurityContext.Builder()
+                .withIdentity(twillUserIdentity).build();
               twillPreparer = ((SecureTwillPreparer) twillPreparer)
-                .withIdentity(PreviewRunnerTwillRunnable.class.getSimpleName(), twillUserIdentity);
+                .withSecurityContext(PreviewRunnerTwillRunnable.class.getSimpleName(), securityContext);
             }
           }
 

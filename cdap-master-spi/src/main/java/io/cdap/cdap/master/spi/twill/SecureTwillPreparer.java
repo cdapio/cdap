@@ -25,16 +25,6 @@ import org.apache.twill.api.TwillRunnable;
  */
 public interface SecureTwillPreparer extends TwillPreparer {
   /**
-   * Runs the given runnable as a certain identity.
-   * In this case, the concept of identity is up to the preparer to define.
-   *
-   * @param runnableName name of the {@link TwillRunnable}
-   * @param identity the identity to run as
-   * @return this {@link TwillPreparer}
-   */
-  SecureTwillPreparer withIdentity(String runnableName, String identity);
-
-  /**
    * Runs the given runnable with the specified secret disks.
    *
    * @param runnableName name of the {@link TwillRunnable}
@@ -42,4 +32,14 @@ public interface SecureTwillPreparer extends TwillPreparer {
    * @return this {@link TwillPreparer}
    */
   SecureTwillPreparer withSecretDisk(String runnableName, SecretDisk... secretDisks);
+
+  /**
+   * Runs the given runnable with provided {@link SecurityContext}
+   * @param runnableName name of the {@link TwillRunnable}
+   * @param securityContext the security context to be used
+   * @return this {@link TwillPreparer}
+   */
+  SecureTwillPreparer withSecurityContext(String runnableName,
+                                          SecurityContext securityContext);
+
 }

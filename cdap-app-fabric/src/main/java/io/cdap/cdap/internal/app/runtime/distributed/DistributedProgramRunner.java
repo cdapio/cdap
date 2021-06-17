@@ -56,6 +56,7 @@ import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.master.spi.twill.SecretDisk;
 import io.cdap.cdap.master.spi.twill.SecureTwillPreparer;
+import io.cdap.cdap.master.spi.twill.SecurityContext;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.store.SecureStoreUtils;
@@ -266,7 +267,9 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
           if (twillPreparer instanceof SecureTwillPreparer) {
             String twillSystemIdentity = cConf.get(Constants.Twill.Security.IDENTITY_SYSTEM);
             if (twillSystemIdentity != null) {
-              twillPreparer = ((SecureTwillPreparer) twillPreparer).withIdentity(runnable, twillSystemIdentity);
+              SecurityContext securityContext = new SecurityContext.Builder()
+                .withIdentity(twillSystemIdentity).build();
+              twillPreparer = ((SecureTwillPreparer) twillPreparer).withSecurityContext(runnable, securityContext);
             }
             String securityName = cConf.get(Constants.Twill.Security.SECRET_DISK_NAME);
             String securityPath = cConf.get(Constants.Twill.Security.SECRET_DISK_PATH);

@@ -24,6 +24,7 @@ import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerTwillRunnable;
 import io.cdap.cdap.master.spi.twill.DependentTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecureTwillPreparer;
+import io.cdap.cdap.master.spi.twill.SecurityContext;
 import io.cdap.cdap.master.spi.twill.StatefulDisk;
 import io.cdap.cdap.master.spi.twill.StatefulTwillPreparer;
 import org.apache.hadoop.conf.Configuration;
@@ -50,6 +51,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class TaskWorkerServiceLauncher extends AbstractScheduledService {
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerServiceLauncher.class);
+  private static final String STATEFUL_DISK_NAME = "task-worker-data";
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -168,16 +170,15 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
             int diskSize = cConf.getInt(Constants.TaskWorker.CONTAINER_DISK_SIZE_GB);
             twillPreparer = ((StatefulTwillPreparer) twillPreparer)
               .withStatefulRunnable(TaskWorkerTwillRunnable.class.getSimpleName(), false,
-                                    new StatefulDisk("task-worker-data", diskSize,
-                                                     cConf.get(Constants.CFG_LOCAL_DATA_DIR)));
+                                    new StatefulDisk(STATEFUL_DISK_NAME, diskSize,
+                                                     cConf.get(Constants.CFG_LOCAL_DATA_DIR)))
+              .withReadonlyDisk(TaskWorkerTwillRunnable.class.getSimpleName(), STATEFUL_DISK_NAME);
           }
 
           if (twillPreparer instanceof SecureTwillPreparer) {
-            String twillUserIdentity = cConf.get(Constants.Twill.Security.IDENTITY_USER);
-            if (twillUserIdentity != null) {
-              twillPreparer = ((SecureTwillPreparer) twillPreparer)
-                .withIdentity(TaskWorkerTwillRunnable.class.getSimpleName(), twillUserIdentity);
-            }
+            SecurityContext securityContext = createSecurityContext();
+            twillPreparer = ((SecureTwillPreparer) twillPreparer)
+              .withSecurityContext(TaskWorkerTwillRunnable.class.getSimpleName(), securityContext);
           }
 
           activeController = twillPreparer.start(5, TimeUnit.MINUTES);
@@ -193,6 +194,30 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
       }
     }
     this.twillController = activeController;
+  }
+
+  private SecurityContext createSecurityContext() {
+    SecurityContext.Builder builder = new SecurityContext.Builder();
+    String twillUserIdentity = cConf.get(Constants.Twill.Security.IDENTITY_USER);
+    if (twillUserIdentity != null) {
+      builder.withIdentity(twillUserIdentity);
+    }
+
+    try {
+      Long userId = cConf.getLong(Constants.TaskWorker.CONTAINER_RUN_AS_USER);
+      builder.withUserId(userId);
+    } catch (NullPointerException e) {
+      //no-op if configuration property does not exist
+    }
+
+    try {
+      Long groupId = cConf.getLong(Constants.TaskWorker.CONTAINER_RUN_AS_GROUP);
+      builder.withGroupId(groupId);
+    } catch (NullPointerException e) {
+      //no-op if configuration property does not exist
+    }
+
+    return builder.build();
   }
 
   private void deleteDir(Path dir) {
