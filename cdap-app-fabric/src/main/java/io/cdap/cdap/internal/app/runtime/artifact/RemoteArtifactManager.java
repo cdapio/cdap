@@ -19,12 +19,12 @@ package io.cdap.cdap.internal.app.runtime.artifact;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import com.google.inject.assistedinject.AssistedInject;
 import io.cdap.cdap.api.artifact.ArtifactInfo;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
@@ -32,8 +32,10 @@ import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerClient;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
+import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
@@ -60,22 +62,33 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
   private static final Type ARTIFACT_INFO_LIST_TYPE = new TypeToken<List<ArtifactInfo>>() { }.getType();
+
   private final LocationFactory locationFactory;
   private final AuthenticationContext authenticationContext;
   private final NamespaceId namespaceId;
   private final RetryStrategy retryStrategy;
   private final boolean authorizationEnabled;
   private final RemoteClient remoteClientInternal;
+  private final ArtifactLocalizerClient artifactLocalizerClient;
 
-  @Inject
+  @AssistedInject
   RemoteArtifactManager(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient,
                         LocationFactory locationFactory, AuthenticationContext authenticationContext,
                         @Assisted NamespaceId namespaceId, @Assisted RetryStrategy retryStrategy) {
+    this(cConf, discoveryServiceClient, locationFactory, authenticationContext, namespaceId, retryStrategy, null);
+  }
+
+  @AssistedInject
+  RemoteArtifactManager(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient,
+                        LocationFactory locationFactory, AuthenticationContext authenticationContext,
+                        @Assisted NamespaceId namespaceId, @Assisted RetryStrategy retryStrategy,
+                        @Assisted @Nullable ArtifactLocalizerClient artifactLocalizerClient) {
     super(cConf);
     this.locationFactory = locationFactory;
     this.authenticationContext = authenticationContext;
     this.namespaceId = namespaceId;
     this.retryStrategy = retryStrategy;
+    this.artifactLocalizerClient = artifactLocalizerClient;
     this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
     this.remoteClientInternal = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
                                                  new DefaultHttpRequestConfig(false),
@@ -150,6 +163,16 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
       namespace = artifactNamespace;
     } else {
       namespace = namespaceId.getNamespace();
+    }
+
+    // If ArtifactLocalizerClient is set, use it to get the cached location of artifact
+    if (artifactLocalizerClient != null) {
+      ArtifactId artifactId = new ArtifactId(namespace, artifactInfo.getName(), artifactInfo.getVersion());
+      try {
+        return Locations.toLocation(artifactLocalizerClient.getArtifactLocation(artifactId));
+      } catch (ArtifactNotFoundException e) {
+        throw new IOException(String.format("Artifact %s not found", artifactId), e);
+      }
     }
 
     HttpRequest.Builder requestBuilder =

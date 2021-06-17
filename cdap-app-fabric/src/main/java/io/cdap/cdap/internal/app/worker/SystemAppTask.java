@@ -21,34 +21,40 @@ import com.google.gson.Gson;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.api.service.worker.SystemAppTaskContext;
-import io.cdap.cdap.app.guice.DistributedArtifactManagerModule;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.id.Id;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
+import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
+import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
+import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactManager;
+import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerClient;
 import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.metadata.PreferencesFetcher;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -78,13 +84,15 @@ public class SystemAppTask implements RunnableTask {
     Id.Artifact artifactId = Id.Artifact
       .from(Id.Namespace.from(systemAppNamespace), systemAppArtifactId.getName(),
             systemAppArtifactId.getVersion());
-    ArtifactDetail artifactDetail = artifactRepositoryReader.getArtifact(artifactId);
-    streamArtifactIfRequired(artifactId, artifactDetail.getDescriptor().getLocation(), artifactRepository);
+    //ArtifactDetail artifactDetail = artifactRepositoryReader.getArtifact(artifactId);
+    File artifactLocation = injector.getInstance(ArtifactLocalizerClient.class)
+      .getArtifactLocation(Artifacts.toProtoArtifactId(new NamespaceId(systemAppNamespace), systemAppArtifactId));
+    //streamArtifactIfRequired(artifactId, artifactDetail.getDescriptor().getLocation(), artifactRepository);
 
     EntityImpersonator classLoaderImpersonator = new EntityImpersonator(artifactId.toEntityId(), impersonator);
     try (CloseableClassLoader artifactClassLoader =
-           artifactRepository.createArtifactClassLoader(artifactDetail.getDescriptor().getLocation(),
-                                                        classLoaderImpersonator);
+           artifactRepository
+             .createArtifactClassLoader(Locations.toLocation(artifactLocation), classLoaderImpersonator);
          SystemAppTaskContext systemAppTaskContext = buildTaskSystemAppContext(injector, systemAppNamespace,
                                                                                systemAppArtifactId,
                                                                                artifactClassLoader)) {
@@ -108,7 +116,9 @@ public class SystemAppTask implements RunnableTask {
     return Guice.createInjector(
       new ConfigModule(cConf),
       new RemoteLogAppenderModule(),
-      new DistributedArtifactManagerModule(),
+      new FactoryModuleBuilder()
+        .implement(ArtifactManager.class, RemoteArtifactManager.class)
+        .build(ArtifactManagerFactory.class),
       new MessagingClientModule(),
       new LocalLocationModule(),
       new SecureStoreClientModule(),
@@ -122,9 +132,10 @@ public class SystemAppTask implements RunnableTask {
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     SecureStore secureStore = injector.getInstance(SecureStore.class);
     ArtifactManagerFactory artifactManagerFactory = injector.getInstance(ArtifactManagerFactory.class);
+    ArtifactLocalizerClient localizerClient = injector.getInstance(ArtifactLocalizerClient.class);
     return new DefaultSystemAppTaskContext(cConf, preferencesFetcher, pluginFinder, discoveryServiceClient,
                                            secureStore, systemAppNamespace, artifactId, artifactClassLoader,
-                                           artifactManagerFactory, Constants.Service.TASK_WORKER);
+                                           artifactManagerFactory, Constants.Service.TASK_WORKER, localizerClient);
   }
 
   private void streamArtifactIfRequired(Id.Artifact artifactId, Location artifactLocation,

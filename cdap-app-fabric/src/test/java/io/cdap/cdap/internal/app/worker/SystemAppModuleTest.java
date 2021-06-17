@@ -24,12 +24,15 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.guice.ZKDiscoveryModule;
+import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
+import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerClient;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.metadata.PreferencesFetcher;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import org.apache.hadoop.conf.Configuration;
@@ -59,6 +62,10 @@ public class SystemAppModuleTest {
     injector.getInstance(PluginFinder.class);
     injector.getInstance(DiscoveryServiceClient.class);
     injector.getInstance(SecureStore.class);
-    injector.getInstance(ArtifactManagerFactory.class);
+    ArtifactManagerFactory instance = injector.getInstance(ArtifactManagerFactory.class);
+    //should be possible to use both constructors of RemoteArtifactManager
+    instance.create(NamespaceId.DEFAULT, RetryStrategies.noRetry());
+    instance.create(NamespaceId.DEFAULT, RetryStrategies.noRetry(),
+                    injector.getInstance(ArtifactLocalizerClient.class));
   }
 }

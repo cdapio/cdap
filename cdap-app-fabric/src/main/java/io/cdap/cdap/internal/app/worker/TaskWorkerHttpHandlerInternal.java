@@ -84,7 +84,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     this.runnableTaskLauncher = new RunnableTaskLauncher(cConf);
     this.metadataServiceEndpoint = cConf.get(Constants.TaskWorker.METADATA_SERVICE_END_POINT);
     this.stopper = s -> {
-      stopper.accept(s);
+      //stopper.accept(s);
       inflightRequests.decrementAndGet();
     };
   }

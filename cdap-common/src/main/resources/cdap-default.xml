@@ -3643,7 +3643,7 @@
   <!-- Retry configuration for task worker -->
   <property>
     <name>task.worker.retry.policy.base.delay.ms</name>
-    <value>500</value>
+    <value>0</value>
     <description>
       The base delay between retries in milliseconds
     </description>
@@ -3651,15 +3651,16 @@
 
   <property>
     <name>task.worker.retry.policy.max.delay.ms</name>
-    <value>3000</value>
+    <value>10</value>
     <description>
       The maximum delay between retries in milliseconds
     </description>
   </property>
 
+  <!-- Set to Integer max value, so the retry attempts end based on task.worker.retry.policy.max.time.secs -->
   <property>
     <name>task.worker.retry.policy.max.retries</name>
-    <value>10</value>
+    <value>2147483647</value>
     <description>
       The maximum number of retries to attempt before aborting
     </description>
@@ -3667,7 +3668,7 @@
 
   <property>
     <name>task.worker.retry.policy.max.time.secs</name>
-    <value>600</value>
+    <value>60</value>
     <description>
       The maximum elapsed time in seconds before retries are aborted
     </description>
@@ -4273,7 +4274,7 @@
   <!-- Task Worker Configuration  -->
   <property>
     <name>task.worker.pool.enable</name>
-    <value>false</value>
+    <value>true</value>
     <description>
       If true, task worker pool will be created with twill application
     </description>

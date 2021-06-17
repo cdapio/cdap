@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.runtime.artifact;
 
 import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerClient;
 import io.cdap.cdap.proto.id.NamespaceId;
 
 /**
@@ -29,9 +30,21 @@ public interface ArtifactManagerFactory {
   /**
    * Returns an implementation of {@link ArtifactManager} that operates on the given {@link NamespaceId}.
    *
-   * @param namespaceId the namespace that the {@link ArtifactManager} will be operating on
+   * @param namespaceId   the namespace that the {@link ArtifactManager} will be operating on
    * @param retryStrategy the {@link RetryStrategy} to use for dealing with retryable failures
    * @return a new instance of {@link ArtifactManager}.
    */
   ArtifactManager create(NamespaceId namespaceId, RetryStrategy retryStrategy);
+
+  /**
+   * Returns an implementation of {@link ArtifactManager} that operates on the given {@link NamespaceId}, uses the
+   * provided {@link RetryStrategy} and uses the given {@link ArtifactLocalizerClient} to fetch artifact location.
+   * Use this only if a {@link ArtifactLocalizerClient} is required to copy artifacts from a remote location.
+   * @param namespaceId {@link NamespaceId} for the artifacts
+   * @param retryStrategy {@link RetryStrategy} for ArtifactManager
+   * @param artifactLocalizerClient {@link ArtifactLocalizerClient} for getting cached location of artifacts
+   * @return
+   */
+  ArtifactManager create(NamespaceId namespaceId, RetryStrategy retryStrategy,
+                         ArtifactLocalizerClient artifactLocalizerClient);
 }

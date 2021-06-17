@@ -40,6 +40,7 @@ import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.MacroParser;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerClient;
 import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.proto.id.NamespaceId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -75,7 +76,8 @@ public class DefaultSystemAppTaskContext extends AbstractServiceDiscoverer imple
   DefaultSystemAppTaskContext(CConfiguration cConf, PreferencesFetcher preferencesFetcher, PluginFinder pluginFinder,
                               DiscoveryServiceClient discoveryServiceClient, SecureStore secureStore,
                               String artifactNameSpace, ArtifactId artifactId, ClassLoader artifactClassLoader,
-                              ArtifactManagerFactory artifactManagerFactory, String serviceName) {
+                              ArtifactManagerFactory artifactManagerFactory, String serviceName,
+                              ArtifactLocalizerClient artifactLocalizerClient) {
     super(artifactNameSpace);
     this.cConf = cConf;
     this.serviceName = serviceName;
@@ -84,7 +86,8 @@ public class DefaultSystemAppTaskContext extends AbstractServiceDiscoverer imple
     this.pluginFinder = pluginFinder;
     this.discoveryServiceClient = discoveryServiceClient;
     this.secureStore = secureStore;
-    this.artifactManager = artifactManagerFactory.create(new NamespaceId(artifactNameSpace), retryStrategy);
+    this.artifactManager = artifactManagerFactory
+      .create(new NamespaceId(artifactNameSpace), retryStrategy, artifactLocalizerClient);
     this.pluginsDir = createTempFolder();
     this.instantiator = new PluginInstantiator(cConf, artifactClassLoader, pluginsDir);
     this.protoArtifactId = Artifacts.toProtoArtifactId(new NamespaceId(artifactNameSpace), artifactId);
