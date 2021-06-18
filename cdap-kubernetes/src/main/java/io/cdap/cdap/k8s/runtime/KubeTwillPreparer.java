@@ -30,6 +30,7 @@ import io.cdap.cdap.master.spi.twill.SecureTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecurityContext;
 import io.cdap.cdap.master.spi.twill.StatefulDisk;
 import io.cdap.cdap.master.spi.twill.StatefulTwillPreparer;
+<<<<<<< HEAD
 import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
@@ -59,6 +60,38 @@ import io.kubernetes.client.openapi.models.V1StatefulSet;
 import io.kubernetes.client.openapi.models.V1StatefulSetBuilder;
 import io.kubernetes.client.openapi.models.V1Volume;
 import io.kubernetes.client.openapi.models.V1VolumeMount;
+=======
+import io.kubernetes.client.ApiClient;
+import io.kubernetes.client.ApiException;
+import io.kubernetes.client.apis.AppsV1Api;
+import io.kubernetes.client.apis.BatchV1Api;
+import io.kubernetes.client.custom.Quantity;
+import io.kubernetes.client.models.V1Container;
+import io.kubernetes.client.models.V1ContainerBuilder;
+import io.kubernetes.client.models.V1Deployment;
+import io.kubernetes.client.models.V1DeploymentBuilder;
+import io.kubernetes.client.models.V1DownwardAPIVolumeFile;
+import io.kubernetes.client.models.V1DownwardAPIVolumeSource;
+import io.kubernetes.client.models.V1EmptyDirVolumeSource;
+import io.kubernetes.client.models.V1EnvVar;
+import io.kubernetes.client.models.V1Job;
+import io.kubernetes.client.models.V1JobBuilder;
+import io.kubernetes.client.models.V1LabelSelector;
+import io.kubernetes.client.models.V1ObjectFieldSelector;
+import io.kubernetes.client.models.V1ObjectMeta;
+import io.kubernetes.client.models.V1ObjectMetaBuilder;
+import io.kubernetes.client.models.V1PersistentVolumeClaim;
+import io.kubernetes.client.models.V1PersistentVolumeClaimBuilder;
+import io.kubernetes.client.models.V1PodSpec;
+import io.kubernetes.client.models.V1PodSpecBuilder;
+import io.kubernetes.client.models.V1ResourceRequirements;
+import io.kubernetes.client.models.V1ResourceRequirementsBuilder;
+import io.kubernetes.client.models.V1SecretVolumeSource;
+import io.kubernetes.client.models.V1StatefulSet;
+import io.kubernetes.client.models.V1StatefulSetBuilder;
+import io.kubernetes.client.models.V1Volume;
+import io.kubernetes.client.models.V1VolumeMount;
+>>>>>>> a7ca923b2d8 (poc - change Deployments to Jobs.)
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.Configs;
 import org.apache.twill.api.LocalFile;
@@ -506,16 +539,21 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
 
       RuntimeSpecification mainRuntimeSpec = getMainRuntimeSpecification(twillSpec.getRunnables());
       StatefulRunnable statefulRunnable = statefulRunnables.get(mainRuntimeSpec.getName());
-      Type resourceType = statefulRunnable == null ? V1Deployment.class : V1StatefulSet.class;
+      // huge hack, just for trying it out
+      String twillClassName = mainRuntimeSpec.getRunnableSpecification().getClassName();
+      LOG.error("ashau - twill runnable classname = {}", twillClassName);
+      Type resourceType = statefulRunnable != null ? V1StatefulSet.class :
+        twillClassName.contains("Service") ? V1Deployment.class : V1Job.class;
 
       V1ObjectMeta metadata = createResourceMetadata(resourceType, mainRuntimeSpec.getName(),
                                                      timeoutUnit.toMillis(timeout));
-      if (V1Deployment.class.equals(resourceType)) {
-        metadata = createDeployment(metadata, twillSpec.getRunnables(),
-                                    runtimeConfigLocation);
+      if (V1Job.class.equals(resourceType)) {
+        LOG.error("ashau - creating job");
+        metadata = createJob(metadata, twillSpec.getRunnables(), runtimeConfigLocation);
+      } else if (V1Deployment.class.equals(resourceType)) {
+        metadata = createDeployment(metadata, twillSpec.getRunnables(), runtimeConfigLocation);
       } else {
-        metadata = createStatefulSet(metadata, twillSpec.getRunnables(),
-                                     runtimeConfigLocation, statefulRunnable);
+        metadata = createStatefulSet(metadata, twillSpec.getRunnables(), runtimeConfigLocation, statefulRunnable);
       }
 
       return controllerFactory.create(resourceType, metadata, timeout, timeoutUnit);
@@ -586,6 +624,44 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     return cleansed.length() > maxLength ? cleansed.substring(0, maxLength) : cleansed;
   }
 
+
+  /**
+   * Deploys a {@link V1Job} to for runnable execution in Kubernetes.
+   */
+  private V1ObjectMeta createJob(V1ObjectMeta metadata,
+                                 Map<String, RuntimeSpecification> runtimeSpecs,
+                                 Location runtimeConfigLocation) throws ApiException {
+    BatchV1Api batchApi = new BatchV1Api(apiClient.setDebugging(true));
+
+    int instances = getMainRuntimeSpecification(runtimeSpecs).getResourceSpecification().getInstances();
+    V1Job job = new V1JobBuilder()
+      .withMetadata(metadata)
+      .withNewSpec()
+        // https://kubernetes.io/docs/concepts/workloads/controllers/job/#pod-selector says
+        // selector shouldn't be done in most cases -- look more into why
+        // job submission fails if we set these, but without this, not sure if AppResourceWatcherThread.createJobWatcher
+        // will work properly. Programs stay in starting state forever
+        //.withSelector(new V1LabelSelector().matchLabels(metadata.getLabels()))
+        .withParallelism(1)
+        .withCompletions(1)
+        .withNewTemplate()
+          .withMetadata(metadata)
+          .withSpec(createPodSpec(runtimeConfigLocation, "Never", runtimeSpecs))
+        .endTemplate()
+      .endSpec()
+      .build();
+
+
+    try {
+      job = batchApi.createNamespacedJob(kubeNamespace, job, "true", null, null);
+      LOG.info("Created Job {} in Kubernetes", metadata.getName());
+      return job.getMetadata();
+    } catch (ApiException e) {
+      LOG.error("Failed to create job. Response code = {}, body = {}", e.getCode(), e.getResponseBody());
+      throw e;
+    }
+  }
+
   /**
    * Deploys a {@link V1Deployment} to for runnable exeuction in Kubernetes.
    */
@@ -631,7 +707,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
         .withReplicas(replicas)
         .withNewTemplate()
           .withMetadata(metadata)
-          .withSpec(createPodSpec(runtimeConfigLocation, runtimeSpecs))
+          .withSpec(createPodSpec(runtimeConfigLocation, "Always", runtimeSpecs))
         .endTemplate()
       .endSpec()
       .build();
@@ -655,7 +731,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
         .addAllToVolumeClaimTemplates(disks.stream().map(this::createPVC).collect(Collectors.toList()))
         .withNewTemplate()
           .withMetadata(metadata)
-          .withSpec(createPodSpec(runtimeConfigLocation, runtimeSpecs,
+          .withSpec(createPodSpec(runtimeConfigLocation, "Always", runtimeSpecs,
                                   disks.stream().map(this::createDiskMount).toArray(V1VolumeMount[]::new)))
         .endTemplate()
       .endSpec()
@@ -805,7 +881,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    * @param runtimeSpecs the specifiction for the {@link TwillRunnable} and its resources requirements
    * @return a {@link V1PodSpec}
    */
-  private V1PodSpec createPodSpec(Location runtimeConfigLocation,
+  private V1PodSpec createPodSpec(Location runtimeConfigLocation, String restartPolicy,
                                   Map<String, RuntimeSpecification> runtimeSpecs, V1VolumeMount... extraMounts) {
     String workDir = "/workDir-" + twillRunId.getId();
 
@@ -864,6 +940,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
                                           mainRuntimeSpec.getName()))
       .withContainers(createContainers(runtimeSpecs, workDir, volumeMounts))
       .withSecurityContext(podInfo.getSecurityContext())
+      .withRestartPolicy(restartPolicy)
       .build();
   }
 

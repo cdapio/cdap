@@ -18,11 +18,21 @@ package io.cdap.cdap.k8s.runtime;
 
 import io.cdap.cdap.k8s.common.AbstractWatcherThread;
 import io.cdap.cdap.k8s.common.ResourceChangeListener;
+<<<<<<< HEAD
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.AppsV1Api;
 import io.kubernetes.client.openapi.models.V1Deployment;
 import io.kubernetes.client.openapi.models.V1StatefulSet;
+=======
+import io.kubernetes.client.ApiClient;
+import io.kubernetes.client.ApiException;
+import io.kubernetes.client.apis.AppsV1Api;
+import io.kubernetes.client.apis.BatchV1Api;
+import io.kubernetes.client.models.V1Deployment;
+import io.kubernetes.client.models.V1Job;
+import io.kubernetes.client.models.V1StatefulSet;
+>>>>>>> a7ca923b2d8 (poc - change Deployments to Jobs.)
 import io.kubernetes.client.util.Config;
 import okhttp3.Call;
 import org.apache.twill.common.Cancellable;
@@ -39,6 +49,21 @@ import javax.annotation.Nullable;
  * @param <T> type of Kubernetes resource for which state changes to be monitored
  */
 abstract class AppResourceWatcherThread<T> extends AbstractWatcherThread<T> {
+
+
+  /**
+   * Creates a {@link AppResourceWatcherThread} for watching {@link V1Job} events.
+   */
+  static AppResourceWatcherThread<V1Deployment> createJobWatcher(String namespace, String selector) {
+    return new AppResourceWatcherThread<V1Deployment>("kube-deployment-watch", namespace, selector) {
+      @Override
+      protected Call createCall(String namespace, @Nullable String labelSelector) throws IOException, ApiException {
+        // jobs in KubeTwillPreparer don't set labels
+        return getBatchApi().listNamespacedJobCall(namespace, null, null, null, null,
+                                                   null, null, null, true, null, null);
+      }
+    };
+  }
 
   /**
    * Creates a {@link AppResourceWatcherThread} for watching {@link V1Deployment} events.
@@ -69,6 +94,7 @@ abstract class AppResourceWatcherThread<T> extends AbstractWatcherThread<T> {
   private final String selector;
   private final Queue<ResourceChangeListener<T>> listeners;
   private volatile AppsV1Api appsApi;
+  private volatile BatchV1Api batchApi;
 
   private AppResourceWatcherThread(String threadName, String namespace, String selector) {
     super(threadName, namespace);
@@ -109,6 +135,28 @@ abstract class AppResourceWatcherThread<T> extends AbstractWatcherThread<T> {
   @Override
   protected ApiClient getApiClient() throws IOException {
     return getAppsApi().getApiClient();
+  }
+
+  BatchV1Api getBatchApi() throws IOException {
+    BatchV1Api api = batchApi;
+    if (api != null) {
+      return api;
+    }
+
+    synchronized (this) {
+      api = batchApi;
+      if (api != null) {
+        return api;
+      }
+
+      ApiClient client = Config.defaultClient().setDebugging(true);
+
+      // Set a reasonable timeout for the watch.
+      client.getHttpClient().setReadTimeout(5, TimeUnit.MINUTES);
+
+      batchApi = new BatchV1Api(client);
+      return batchApi;
+    }
   }
 
   /**

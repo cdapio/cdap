@@ -125,7 +125,8 @@ public class KubeTwillLauncher implements MasterEnvironmentRunnable {
         }
       } finally {
         // Delete the pod itself to avoid pod goes into CrashLoopBackoff
-        deletePod(podInfo);
+        // shouldn't delete the pod for jobs -- need to find a way to configure whether this should be done or not
+        //deletePod(podInfo);
       }
     }
   }
@@ -142,6 +143,7 @@ public class KubeTwillLauncher implements MasterEnvironmentRunnable {
 
   private void deletePod(PodInfo podInfo) {
     try {
+      LOG.error("ashau - deleting pod {}", podInfo.getName());
       ApiClient apiClient = Config.defaultClient();
       CoreV1Api api = new CoreV1Api(apiClient);
       V1DeleteOptions delOptions = new V1DeleteOptions().preconditions(new V1Preconditions().uid(podInfo.getUid()));
