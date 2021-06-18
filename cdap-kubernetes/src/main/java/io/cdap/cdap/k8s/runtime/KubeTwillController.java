@@ -21,9 +21,11 @@ import io.kubernetes.client.ApiCallback;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.apis.AppsV1Api;
+import io.kubernetes.client.apis.BatchV1Api;
 import io.kubernetes.client.apis.CoreV1Api;
 import io.kubernetes.client.models.V1DeleteOptions;
 import io.kubernetes.client.models.V1Deployment;
+import io.kubernetes.client.models.V1Job;
 import io.kubernetes.client.models.V1ObjectMeta;
 import io.kubernetes.client.models.V1Preconditions;
 import io.kubernetes.client.models.V1StatefulSet;
@@ -387,6 +389,9 @@ class KubeTwillController implements ExtendedTwillController {
    * @return a {@link CompletionStage} that will complete when the delete operation completed
    */
   private CompletionStage<String> deleteResource() {
+    if (V1Job.class.equals(resourceType)) {
+      return deleteJob();
+    }
     if (V1Deployment.class.equals(resourceType)) {
       return deleteDeployment();
     }
@@ -398,11 +403,50 @@ class KubeTwillController implements ExtendedTwillController {
   }
 
   /**
+   * Deletes the job controlled by this controller asynchronously.
+   *
+   * @return a {@link CompletionStage} that will complete when the delete operation completed
+   */
+  private CompletionStage<String> deleteJob() {
+    LOG.error("ashau - deleting job {}", meta.getName());
+    LOG.debug("Deleting Job {}", meta.getName());
+
+    BatchV1Api batchApi = new BatchV1Api(apiClient);
+
+    // callback for the delete deployment call
+    CompletableFuture<String> resultFuture = new CompletableFuture<>();
+    try {
+      String name = meta.getName();
+      batchApi.deleteNamespacedJobAsync(name, kubeNamespace, null, new V1DeleteOptions(),
+                                        null, null, null, null, new ApiCallbackAdapter<V1Status>() {
+          @Override
+          public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
+            // Ignore the failure if the deployment is already deleted
+            if (statusCode == 404) {
+              resultFuture.complete(name);
+            } else {
+              completeExceptionally(resultFuture, e);
+            }
+          }
+
+          @Override
+          public void onSuccess(V1Status v1Status, int statusCode, Map<String, List<String>> responseHeaders) {
+            resultFuture.complete(name);
+          }
+        });
+    } catch (ApiException e) {
+      completeExceptionally(resultFuture, e);
+    }
+    return resultFuture;
+  }
+
+  /**
    * Deletes the deployment controlled by this controller asynchronously.
    *
    * @return a {@link CompletionStage} that will complete when the delete operation completed
    */
   private CompletionStage<String> deleteDeployment() {
+    LOG.error("ashau - deleting deployment {}", meta.getName());
     LOG.debug("Deleting Deployment {}", meta.getName());
 
     AppsV1Api appsApi = new AppsV1Api(apiClient);

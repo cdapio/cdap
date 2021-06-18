@@ -24,6 +24,7 @@ import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.models.V1Deployment;
+import io.kubernetes.client.models.V1Job;
 import io.kubernetes.client.models.V1ObjectMeta;
 import io.kubernetes.client.models.V1StatefulSet;
 import io.kubernetes.client.util.Config;
@@ -122,7 +123,8 @@ public class KubeTwillRunnerService implements TwillRunnerService {
     String selector = String.format("%s=%s,%s", RUNNER_LABEL, RUNNER_LABEL_VAL, RUN_ID_LABEL);
     this.resourceWatchers = ImmutableMap.of(
       V1Deployment.class, AppResourceWatcherThread.createDeploymentWatcher(kubeNamespace, selector),
-      V1StatefulSet.class, AppResourceWatcherThread.createStatefulSetWatcher(kubeNamespace, selector)
+      V1StatefulSet.class, AppResourceWatcherThread.createStatefulSetWatcher(kubeNamespace, selector),
+      V1Job.class, AppResourceWatcherThread.createJobWatcher(kubeNamespace, selector)
     );
     this.liveInfos = new ConcurrentSkipListMap<>();
     this.liveInfoLock = new ReentrantLock();
@@ -198,7 +200,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
   @Override
   public void start() {
     try {
-      apiClient = Config.defaultClient();
+      apiClient = Config.defaultClient().setDebugging(true);
       monitorScheduler = Executors.newSingleThreadScheduledExecutor(
         Threads.createDaemonThreadFactory("kube-monitor-executor"));
       resourceWatchers.values().forEach(watcher -> {

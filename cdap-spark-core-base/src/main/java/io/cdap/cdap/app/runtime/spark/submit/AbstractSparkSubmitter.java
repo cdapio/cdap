@@ -161,6 +161,8 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
   private void submit(SparkRuntimeContext runtimeContext, String[] args) {
     ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(runtimeContext.getProgramInvocationClassLoader());
     try {
+      LOG.error("ashau - Calling SparkSubmit for {} {}: {}",
+                runtimeContext.getProgram().getId(), runtimeContext.getRunId(), Arrays.toString(args));
       LOG.debug("Calling SparkSubmit for {} {}: {}",
                 runtimeContext.getProgram().getId(), runtimeContext.getRunId(), Arrays.toString(args));
       // Explicitly set the SPARK_SUBMIT property as it is no longer set on the System properties by the SparkSubmit
