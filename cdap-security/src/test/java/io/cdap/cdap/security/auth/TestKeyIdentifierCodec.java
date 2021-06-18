@@ -24,7 +24,7 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.io.Codec;
-import io.cdap.cdap.security.guice.FileBasedSecurityModule;
+import io.cdap.cdap.security.guice.FileBasedCoreSecurityModule;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -45,7 +45,7 @@ public class TestKeyIdentifierCodec {
 
   @BeforeClass
   public static void setup() throws Exception {
-    Injector injector = Guice.createInjector(new IOModule() , new ConfigModule(), new FileBasedSecurityModule(),
+    Injector injector = Guice.createInjector(new IOModule() , new ConfigModule(), new FileBasedCoreSecurityModule(),
                                              new InMemoryDiscoveryModule());
     CConfiguration conf = injector.getInstance(CConfiguration.class);
     keyIdentifierCodec = injector.getInstance(KeyIdentifierCodec.class);

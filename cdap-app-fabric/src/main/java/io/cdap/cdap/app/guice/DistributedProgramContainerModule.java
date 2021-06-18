@@ -66,6 +66,7 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.guice.CoreSecurityModules;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
@@ -117,9 +118,14 @@ public class DistributedProgramContainerModule extends AbstractModule {
     String principal = programOpts.getArguments().getOption(ProgramOptionConstants.PRINCIPAL);
 
     AuthenticationContextModules authModules = new AuthenticationContextModules();
-    modules.add(principal == null
-                  ? authModules.getProgramContainerModule()
-                  : authModules.getProgramContainerModule(principal));
+    if (cConf.getBoolean(Constants.Security.ENFORCE_INTERNAL_AUTH)) {
+      modules.add(authModules.getInternalAuthMasterModule(cConf));
+      modules.add(CoreSecurityModules.getDistributedModule(cConf));
+    } else if (principal == null) {
+      modules.add(authModules.getProgramContainerModule());
+    } else {
+      modules.add(authModules.getProgramContainerModule(principal));
+    }
 
     install(Modules.override(modules).with(new AbstractModule() {
       @Override

@@ -25,6 +25,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.logging.AuditLogEntry;
 import io.cdap.cdap.common.utils.Networks;
+import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.auth.CipherException;
 import io.cdap.cdap.security.auth.TinkCipher;
 import io.cdap.cdap.security.auth.UserIdentityExtractionResponse;
@@ -118,12 +119,13 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
       // User identity extraction succeeded, so set some header properties and allow the call through
       request.headers().remove(HttpHeaderNames.AUTHORIZATION);
 
-      String credential = getUserCredential(userIdentityPair);
+      Credential credential = getUserCredential(userIdentityPair);
 
       // For backwards compatibility, we continue propagating credentials by default. This may change in the future.
       if (cConf.getBoolean(Constants.Security.Authentication.PROPAGATE_USER_CREDENTIAL, true) &&
         credential != null) {
-        request.headers().set(HttpHeaderNames.AUTHORIZATION, "CDAP-verified " + credential);
+        request.headers().set(Constants.Security.Headers.RUNTIME_TOKEN,
+                              String.format("%s %s", credential.getType().getQualifiedName(), credential.getValue()));
       }
       request.headers().set(Constants.Security.Headers.USER_ID,
                             userIdentityPair.getUserIdentity().getUsername());
@@ -231,13 +233,14 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
    * Get user credential from {@link UserIdentityPair} and return it in encrypted form if enabled.
    */
   @Nullable
-  private String getUserCredential(UserIdentityPair userIdentityPair) throws CipherException {
+  private Credential getUserCredential(UserIdentityPair userIdentityPair) throws CipherException {
     String userCredential = userIdentityPair.getUserCredential();
     if (userCredential == null ||
       !sConf.getBoolean(Constants.Security.Authentication.USER_CREDENTIAL_ENCRYPTION_ENABLED, false)) {
-      return userCredential;
+      return new Credential(userCredential, Credential.CredentialType.EXTERNAL);
     }
-    return new TinkCipher(sConf).encryptStringToBase64(userCredential, null);
+    String encryptedCredential = new TinkCipher(sConf).encryptStringToBase64(userCredential, null);
+    return new Credential(encryptedCredential, Credential.CredentialType.EXTERNAL_ENCRYPTED);
   }
 
   private void addAuthServerUrls(Iterable<Discoverable> discoverables, String protocol, int port, JsonArray result) {

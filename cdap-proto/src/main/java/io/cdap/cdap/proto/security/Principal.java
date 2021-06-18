@@ -39,7 +39,7 @@ public class Principal {
   private final String name;
   private final PrincipalType type;
   private final String kerberosPrincipal;
-  private final String credential;
+  private final Credential credential;
   // This needs to be transient because we don't want this to be populated during deserialization since that
   // value will not be provided by the client.
   private transient int hashCode;
@@ -48,11 +48,12 @@ public class Principal {
     this(name, type, null, null);
   }
 
-  public Principal(String name, PrincipalType type, @Nullable String credentials) {
+  public Principal(String name, PrincipalType type, @Nullable Credential credentials) {
     this(name, type, null, credentials);
   }
 
-  public Principal(String name, PrincipalType type, @Nullable String kerberosPrincipal, @Nullable String credential) {
+  public Principal(String name, PrincipalType type, @Nullable String kerberosPrincipal,
+                   @Nullable Credential credential) {
     this.name = name;
     this.type = type;
     this.kerberosPrincipal = kerberosPrincipal;
@@ -74,6 +75,14 @@ public class Principal {
 
   @Nullable
   public String getCredential() {
+    if (credential == null) {
+      return null;
+    }
+    return credential.getValue();
+  }
+
+  @Nullable
+  public Credential getFullCredential() {
     return credential;
   }
 
@@ -110,7 +119,7 @@ public class Principal {
       "name='" + name + '\'' +
       ", type=" + type +
       ", kerberosPrincipal=" + kerberosPrincipal +
-      ", credentialLength=" + (credential == null ? "NULL" : String.valueOf(credential.length())) +
+      ", credential=" + credential +
       '}';
   }
 }

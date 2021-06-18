@@ -4157,6 +4157,16 @@
     </description>
   </property>
 
+  <!-- Internal Security -->
+
+  <property>
+    <name>security.internal.enforce.auth</name>
+    <value>false</value>
+    <description>
+      A security-hardening measure which enforces authenticated communication between internal system services.
+    </description>
+  </property>
+
   <!-- UI Configuration -->
 
   <property>

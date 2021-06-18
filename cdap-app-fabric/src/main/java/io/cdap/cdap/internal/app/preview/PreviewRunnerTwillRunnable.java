@@ -219,7 +219,7 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
     modules.add(new PreviewRunnerManagerModule().getDistributedModules());
     modules.add(new DataSetServiceModules().getStandaloneModules());
     modules.add(new DataSetsModules().getStandaloneModules());
-    modules.add(new AppFabricServiceRuntimeModule().getStandaloneModules());
+    modules.add(new AppFabricServiceRuntimeModule(cConf).getPreviewRunnerModules());
     modules.add(new ProgramRunnerRuntimeModule().getStandaloneModules());
     modules.add(new MetricsStoreModule());
     modules.add(new MessagingClientModule());

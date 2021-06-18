@@ -28,7 +28,8 @@ import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.common.runtime.DaemonMain;
-import io.cdap.cdap.security.guice.SecurityModules;
+import io.cdap.cdap.security.guice.CoreSecurityModules;
+import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.server.ExternalAuthenticationServer;
 import org.apache.twill.internal.Services;
@@ -55,7 +56,8 @@ public class AuthenticationServerMain extends DaemonMain {
                                              new IOModule(),
                                              new ZKClientModule(),
                                              new ZKDiscoveryModule(),
-                                             new SecurityModules().getDistributedModules());
+                                             new CoreSecurityModules().getDistributedModules(),
+                                             new ExternalAuthenticationModule());
     configuration = injector.getInstance(CConfiguration.class);
 
     if (SecurityUtil.isManagedSecurity(configuration)) {

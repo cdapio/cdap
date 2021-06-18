@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,23 +16,25 @@
 
 package io.cdap.cdap.security.auth.context;
 
+import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import org.apache.hadoop.security.UserGroupInformation;
 
 /**
- * An {@link AuthenticationContext} for use in program containers. The authentication details in this context are
- * determined based on the {@link UserGroupInformation} of the user running the program.
+ * Authentication context for workers.
  */
-class ProgramContainerAuthenticationContext implements AuthenticationContext {
-  private final Principal principal;
-
-  ProgramContainerAuthenticationContext(Principal principal) {
-    this.principal = principal;
-  }
-
+public class WorkerAuthenticationContext implements AuthenticationContext {
+  private static final String WORKER_USER_ID = "worker";
+  private static final String PLACEHOLDER_CREDENTIAL = "placeholder";
+  /**
+   * Currently only returns a hardcoded set of user ID and credentials to get around the required auth limitation.
+   * TODO CDAP-17772: Implement proper authentication context for workers.
+   *
+   * @return A placeholder principal for workers.
+   */
   @Override
   public Principal getPrincipal() {
-    return principal;
+    return new Principal(WORKER_USER_ID, Principal.PrincipalType.USER,
+                         new Credential(PLACEHOLDER_CREDENTIAL, Credential.CredentialType.INTERNAL));
   }
 }

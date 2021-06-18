@@ -35,13 +35,11 @@ import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -62,23 +60,17 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
   private static final Type ARTIFACT_INFO_LIST_TYPE = new TypeToken<List<ArtifactInfo>>() {
   }.getType();
   private final LocationFactory locationFactory;
-  private final AuthenticationContext authenticationContext;
   private final NamespaceId namespaceId;
   private final RetryStrategy retryStrategy;
-  private final boolean authorizationEnabled;
   private final RemoteClient remoteClientInternal;
 
   @Inject
-  RemoteArtifactManager(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient,
-                        LocationFactory locationFactory, AuthenticationContext authenticationContext,
-                        @Assisted NamespaceId namespaceId, @Assisted RetryStrategy retryStrategy,
-                        RemoteClientFactory remoteClientFactory) {
+  RemoteArtifactManager(CConfiguration cConf, LocationFactory locationFactory, @Assisted NamespaceId namespaceId,
+                        @Assisted RetryStrategy retryStrategy, RemoteClientFactory remoteClientFactory) {
     super(cConf);
     this.locationFactory = locationFactory;
-    this.authenticationContext = authenticationContext;
     this.namespaceId = namespaceId;
     this.retryStrategy = retryStrategy;
-    this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
     this.remoteClientInternal = remoteClientFactory.createRemoteClient(
       Constants.Service.APP_FABRIC_HTTP,
       new DefaultHttpRequestConfig(false),
@@ -115,10 +107,6 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
         HttpRequest.Builder requestBuilder =
           remoteClientInternal.requestBuilder(HttpMethod.GET,
                                               String.format("namespaces/%s/artifacts", namespace));
-        // add header if auth is enabled
-        if (authorizationEnabled) {
-          requestBuilder.addHeader(Constants.Security.Headers.USER_ID, authenticationContext.getPrincipal().getName());
-        }
         return getArtifactsList(requestBuilder.build());
       }, retryStrategy);
     } catch (UnauthorizedException | IOException e) {
@@ -159,10 +147,6 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
       remoteClientInternal.requestBuilder(
         HttpMethod.GET, String.format("namespaces/%s/artifacts/%s/versions/%s/location",
                                       namespace, artifactInfo.getName(), artifactInfo.getVersion()));
-    // add header if auth is enabled
-    if (authorizationEnabled) {
-      requestBuilder.addHeader(Constants.Security.Headers.USER_ID, authenticationContext.getPrincipal().getName());
-    }
 
     HttpResponse httpResponse = remoteClientInternal.execute(requestBuilder.build());
 

@@ -42,6 +42,7 @@ import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.TwillContext;
@@ -79,6 +80,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
 
     modules.add(new ConfigModule(cConf, hConf));
     modules.add(new IOModule());
+    modules.add(new AuthenticationContextModules().getInternalAuthWorkerModule(cConf));
 
     // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
     MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();

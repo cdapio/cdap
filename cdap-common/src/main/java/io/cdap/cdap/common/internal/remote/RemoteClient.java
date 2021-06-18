@@ -26,6 +26,8 @@ import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.proto.security.Credential;
+import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
@@ -44,6 +46,7 @@ import java.net.URI;
 import java.net.URL;
 import java.util.EnumSet;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import javax.annotation.Nullable;
 import javax.net.ssl.HttpsURLConnection;
 
@@ -90,6 +93,28 @@ public class RemoteClient {
     return HttpRequest.builder(method, resolve(resource));
   }
 
+  private void setAuthHeader(BiConsumer<String, String> headerSetter, String header, String credentialType,
+                                        String credentialValue) {
+    headerSetter.accept(header, String.format("%s %s", credentialType, credentialValue));
+  }
+
+  private void applyAuthenticationContext(BiConsumer<String, String> headerSetter) {
+    Principal principal = authenticationContext.getPrincipal();
+    String userID = null;
+    Credential internalCredentials = null;
+    if (principal != null) {
+      userID = principal.getName();
+      internalCredentials = principal.getFullCredential();
+    }
+    if (internalCredentials != null) {
+      setAuthHeader(headerSetter, Constants.Security.Headers.RUNTIME_TOKEN,
+                    internalCredentials.getType().getQualifiedName(), internalCredentials.getValue());
+    }
+    if (userID != null) {
+      headerSetter.accept(Constants.Security.Headers.USER_ID, userID);
+    }
+  }
+
   /**
    * Perform the request, returning the response. If there was a ConnectException while making the request,
    * a ServiceUnavailableException is thrown.
@@ -108,18 +133,11 @@ public class RemoteClient {
 
     // Add Authorization header and use a rewritten URL if needed
     RemoteAuthenticator authenticator = getAuthenticator();
-    if (authenticator != null) {
-      if (headers.keySet().stream().noneMatch(HttpHeaders.AUTHORIZATION::equalsIgnoreCase)) {
-        headers.put(HttpHeaders.AUTHORIZATION,
-                    String.format("%s %s", authenticator.getType(), authenticator.getCredentials()));
-      }
+    if (authenticator != null && headers.keySet().stream().noneMatch(HttpHeaders.AUTHORIZATION::equalsIgnoreCase)) {
+      setAuthHeader(headers::put, HttpHeaders.AUTHORIZATION, authenticator.getType(), authenticator.getCredentials());
     }
 
-    String internalCredentials = authenticationContext.getPrincipal().getCredential();
-    if (internalCredentials != null) {
-      //TODO CDAP-17772 - add credentials type
-      headers.put(Constants.Security.Headers.RUNTIME_TOKEN, internalCredentials);
-    }
+    applyAuthenticationContext(headers::put);
 
     httpRequest = new HttpRequest(request.getMethod(), rewrittenURL, headers,
                       request.getBody(), request.getBodyLength());
@@ -155,15 +173,11 @@ public class RemoteClient {
     urlConn.setDoInput(true);
     RemoteAuthenticator authenticator = getAuthenticator();
     if (authenticator != null) {
-      urlConn.setRequestProperty(HttpHeaders.AUTHORIZATION,
-                                 String.format("%s %s", authenticator.getType(), authenticator.getCredentials()));
+      setAuthHeader(urlConn::setRequestProperty, HttpHeaders.AUTHORIZATION, authenticator.getType(),
+                    authenticator.getCredentials());
     }
 
-    String internalCredentials = authenticationContext.getPrincipal().getCredential();
-    if (internalCredentials != null) {
-      //TODO CDAP-17772 - add credentials type
-      urlConn.setRequestProperty(Constants.Security.Headers.RUNTIME_TOKEN, internalCredentials);
-    }
+    applyAuthenticationContext(urlConn::setRequestProperty);
 
     return urlConn;
   }

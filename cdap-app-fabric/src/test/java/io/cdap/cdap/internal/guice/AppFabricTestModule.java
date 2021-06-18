@@ -89,7 +89,7 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new ConfigModule(cConf, hConf, sConf));
     install(new IOModule());
     install(new InMemoryDiscoveryModule());
-    install(new AppFabricServiceRuntimeModule().getInMemoryModules());
+    install(new AppFabricServiceRuntimeModule(cConf).getInMemoryModules());
     install(new MonitorHandlerModule(false));
     install(new ProgramRunnerRuntimeModule().getInMemoryModules());
     install(new NonCustomLocationUnitTestModule());

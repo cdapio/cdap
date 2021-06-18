@@ -16,13 +16,13 @@
 package io.cdap.cdap.common.http;
 
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.HttpContent;
-import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -37,9 +37,15 @@ import org.slf4j.LoggerFactory;
 public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
   private static final Logger LOG = LoggerFactory.getLogger(AuthenticationChannelHandler.class);
 
+  private final boolean enforceAuthenticatedRequests;
+
   private String currentUserId;
-  private String currentUserCredential;
+  private Credential currentUserCredential;
   private String currentUserIP;
+
+  public AuthenticationChannelHandler(boolean enforceAuthenticatedRequests) {
+    this.enforceAuthenticatedRequests = enforceAuthenticatedRequests;
+  }
 
   /**
    * Decode the AccessTokenIdentifier passed as a header and set it in a ThreadLocal.
@@ -52,23 +58,51 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
       // TODO: authenticate the user using user id - CDAP-688
       HttpRequest request = (HttpRequest) msg;
       currentUserId = request.headers().get(Constants.Security.Headers.USER_ID);
+      if (enforceAuthenticatedRequests && currentUserId == null) {
+
+        throw new IllegalArgumentException(String.format("Missing user ID header for request from IP %s",
+                                                         ctx.channel().remoteAddress().toString()));
+      }
       currentUserIP = request.headers().get(Constants.Security.Headers.USER_IP);
-      String authHeader = request.headers().get(HttpHeaderNames.AUTHORIZATION);
+      String authHeader = request.headers().get(Constants.Security.Headers.RUNTIME_TOKEN);
       LOG.trace("Got user ID '{}', user IP '{}', and authorization header length '{}'", currentUserId, currentUserIP,
                 authHeader == null ? "NULL" : String.valueOf(authHeader.length()));
       if (authHeader != null) {
         int idx = authHeader.trim().indexOf(' ');
         if (idx < 0) {
-          LOG.warn("Invalid Authorization header format for {}@{}", currentUserId, currentUserIP);
+          LOG.error("Invalid Authorization header format for {}@{}", currentUserId, currentUserIP);
+          if (enforceAuthenticatedRequests) {
+            throw new IllegalArgumentException("Invalid Authorization header format");
+          }
         } else {
-          currentUserCredential = authHeader.substring(idx + 1).trim();
-          SecurityRequestContext.setUserCredential(currentUserCredential);
+          String credentialTypeStr = authHeader.substring(0, idx);
+          try {
+            Credential.CredentialType credentialType = Credential.CredentialType.fromQualifiedName(credentialTypeStr);
+            String credentialValue = authHeader.substring(idx + 1).trim();
+            currentUserCredential = new Credential(credentialValue, credentialType);
+            SecurityRequestContext.setUserCredential(currentUserCredential);
+          } catch (IllegalArgumentException e) {
+            LOG.error("Invalid credential type in Authorization header: {}", credentialTypeStr);
+            throw e;
+          }
         }
+      } else if (enforceAuthenticatedRequests) {
+        throw new IllegalArgumentException(String.format("Missing Authorization header for request from IP %s",
+                                                         ctx.channel().remoteAddress().toString()));
       }
 
       SecurityRequestContext.setUserId(currentUserId);
       SecurityRequestContext.setUserIP(currentUserIP);
     } else if (msg instanceof HttpContent) {
+      // TODO: If this is intended to handle chunking, there might be a race condition here which may need investigation
+      if (enforceAuthenticatedRequests) {
+        if (currentUserId == null) {
+          throw new IllegalArgumentException("Missing user ID for HTTP content request");
+        }
+        if (currentUserCredential == null) {
+          throw new IllegalArgumentException("Missing user credential for HTTP content request");
+        }
+      }
       SecurityRequestContext.setUserId(currentUserId);
       SecurityRequestContext.setUserCredential(currentUserCredential);
       SecurityRequestContext.setUserIP(currentUserIP);

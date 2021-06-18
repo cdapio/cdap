@@ -27,6 +27,7 @@ import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
+import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.auth.CipherException;
@@ -42,8 +43,13 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
+<<<<<<< HEAD
  * An implementation of {@link io.cdap.cdap.security.spi.authorization.AccessEnforcer} that runs on the master.
  * It calls the access controller directly to enforce authorization policies.
+=======
+ * An implementation of {@link io.cdap.cdap.security.spi.authorization.AccessEnforcer} that runs on the master. It calls
+ * the authorizer directly to enforce authorization policies.
+>>>>>>> c6191a08900 ([CDAP-17772] Add initial support for internal token generation and auth context propagation)
  */
 @Singleton
 public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
@@ -70,24 +76,25 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
   @Override
   public void enforce(EntityId entity, Principal principal, Set<? extends Permission> permissions)
     throws AccessException {
-    if (!isSecurityAuthorizationEnabled()) {
-      return;
-    }
     doEnforce(entity, principal, permissions);
   }
 
   @Override
   public void enforceOnParent(EntityType entityType, EntityId parentId, Principal principal, Permission permission)
     throws AccessException {
-    if (!isSecurityAuthorizationEnabled()) {
-      return;
-    }
     doEnforce(entityType, parentId, principal, permission);
   }
 
   @Override
   public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal)
     throws AccessException {
+    // TODO CDAP-17772: Temporary short-circuit, implement internal access enforcement
+    if (principal.getFullCredential() != null && principal.getFullCredential().getType()
+      .equals(Credential.CredentialType.INTERNAL)) {
+      LOG.trace("Internal Principal enforce({}, {})", entityIds, principal);
+      return entityIds;
+    }
+
     if (!isSecurityAuthorizationEnabled()) {
       return entityIds;
     }
@@ -124,6 +131,15 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
 
   private void doEnforce(EntityId entity, Principal principal, Set<? extends Permission> permissions)
     throws AccessException {
+    // TODO CDAP-17772: Temporary short-circuit, implement internal access enforcement
+    if (principal.getFullCredential() != null && principal.getFullCredential().getType()
+      .equals(Credential.CredentialType.INTERNAL)) {
+      LOG.trace("Internal Principal enforce({}, {}, {})", entity, principal, permissions);
+      return;
+    }
+    if (!isSecurityAuthorizationEnabled()) {
+      return;
+    }
     // bypass the check when the principal is the master user and the entity is in the system namespace
     if (isAccessingSystemNSAsMasterUser(entity, principal) || isEnforcingOnSamePrincipalId(entity, principal)) {
       return;
@@ -148,6 +164,17 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
 
   private void doEnforce(EntityType entityType, EntityId parentId, Principal principal, Permission permission)
     throws AccessException {
+    // TODO CDAP-17772: Temporary short-circuit, implement internal access enforcement
+    if (principal.getFullCredential() != null && principal.getFullCredential().getType()
+      .equals(Credential.CredentialType.INTERNAL)) {
+      LOG.trace("Internal Principal enforceOnParent({}, {}, {})", parentId, principal, permission);
+      return;
+    }
+
+    if (!isSecurityAuthorizationEnabled()) {
+      return;
+    }
+
     // bypass the check when the principal is the master user and the entity is in the system namespace
     if (isAccessingSystemNSAsMasterUser(parentId, principal) || isEnforcingOnSamePrincipalId(parentId, principal)) {
       return;
@@ -170,22 +197,27 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
     }
   }
 
-  private Principal getUserPrinciple(Principal principle) throws AccessException {
-    if (principle.getCredential() == null ||
+  private Principal getUserPrinciple(Principal principal) throws AccessException {
+    if (principal.getFullCredential() == null ||
       !sConf.getBoolean(Constants.Security.Authentication.USER_CREDENTIAL_ENCRYPTION_ENABLED, false)) {
-      return principle;
+      return principal;
+    }
+
+    Credential userCredential = principal.getFullCredential();
+    if (userCredential == null || !userCredential.getType().equals(Credential.CredentialType.EXTERNAL_ENCRYPTED)) {
+      return principal;
     }
 
     // When user credential encryption is enabled, credential should be encrypted upon arrival
     // at router and decrypted right here before calling auth extension.
     try {
-      String plainCredential = new String(new TinkCipher(sConf).decryptFromBase64(principle.getCredential(),
+      String plainCredential = new String(new TinkCipher(sConf).decryptFromBase64(userCredential.getValue(),
                                                                                   null),
                                           StandardCharsets.UTF_8);
-      return new Principal(principle.getName(),
-                           principle.getType(),
-                           principle.getKerberosPrincipal(),
-                           plainCredential);
+      return new Principal(principal.getName(),
+                           principal.getType(),
+                           principal.getKerberosPrincipal(),
+                           new Credential(plainCredential, Credential.CredentialType.EXTERNAL));
     } catch (CipherException e) {
       throw new AccessException("Failed to decrypt credential in principle: " + e.getMessage(), e);
     }

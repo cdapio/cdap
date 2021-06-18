@@ -93,8 +93,9 @@ import io.cdap.cdap.operations.OperationalStatsService;
 import io.cdap.cdap.operations.guice.OperationalStatsModule;
 import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.guice.CoreSecurityModules;
+import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
-import io.cdap.cdap.security.guice.SecurityModules;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.server.ExternalAuthenticationServer;
 import io.cdap.cdap.security.store.SecureStoreService;
@@ -523,7 +524,8 @@ public class StandaloneMain {
       new LocalLogAppenderModule(),
       new LogReaderRuntimeModules().getStandaloneModules(),
       new RouterModules().getStandaloneModules(),
-      new SecurityModules().getStandaloneModules(),
+      new CoreSecurityModules().getStandaloneModules(),
+      new ExternalAuthenticationModule(),
       new SecureStoreServerModule(),
       new ExploreRuntimeModule().getStandaloneModules(),
       new ExploreClientModule(),
@@ -536,7 +538,7 @@ public class StandaloneMain {
       new PreviewManagerModule(false),
       new PreviewRunnerManagerModule().getStandaloneModules(),
       new MessagingServerRuntimeModule().getStandaloneModules(),
-      new AppFabricServiceRuntimeModule().getStandaloneModules(),
+      new AppFabricServiceRuntimeModule(cConf).getStandaloneModules(),
       new MonitorHandlerModule(false),
       new RuntimeServerModule(),
       new OperationalStatsModule(),
