@@ -16,12 +16,14 @@
 
 package io.cdap.cdap.internal.app.runtime.artifact;
 
+import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.id.Id;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -34,8 +36,8 @@ interface ArtifactInspector {
    *
    * @param artifactId the id of the artifact to inspect
    * @param artifactFile the artifact file
-   * @param parentClassLoader the parent classloader to use when inspecting plugins contained in the artifact.
-   * For example, a ProgramClassLoader created from the artifact the input artifact extends
+   * @param parentClassloader
+   * @param parentArtifacts
    * @param additionalPlugins Additional plugin classes
    * @return metadata about the classes contained in the artifact
    * @throws IOException if there was an exception opening the jar file
@@ -43,7 +45,8 @@ interface ArtifactInspector {
    * actually an Application.
    */
   ArtifactClassesWithMetadata inspectArtifact(Id.Artifact artifactId, File artifactFile,
-                                              @Nullable ClassLoader parentClassLoader,
+                                              @Nullable ClassLoader parentClassloader,
+                                              @Nullable List<ArtifactDetail> parentArtifacts,
                                               Set<PluginClass> additionalPlugins)
     throws IOException, InvalidArtifactException;
 }

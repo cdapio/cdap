@@ -91,7 +91,7 @@ public class DefaultArtifactInspectorTest {
            classLoaderFactory.createClassLoader(
              ImmutableList.of(artifactLocation).iterator(),
              new EntityImpersonator(artifactId.toEntityId(), new DefaultImpersonator(CConfiguration.create(), null)))) {
-      artifactInspector.inspectArtifact(artifactId, appFile, artifactClassLoader, Collections.emptySet());
+      artifactInspector.inspectArtifact(artifactId, appFile, null, null, Collections.emptySet());
     }
   }
 
@@ -144,8 +144,8 @@ public class DefaultArtifactInspectorTest {
              ImmutableList.of(artifactLocation).iterator(),
              new EntityImpersonator(artifactId.toEntityId(), new DefaultImpersonator(CConfiguration.create(), null)))) {
 
-      ArtifactClasses classes = artifactInspector.inspectArtifact(artifactId, appFile, artifactClassLoader,
-                                                                  Collections.emptySet()).getArtifactClasses();
+      ArtifactClasses classes = artifactInspector.inspectArtifact(artifactId, appFile, null,
+                                                                  null, Collections.emptySet()).getArtifactClasses();
 
       // check app classes
       Set<ApplicationClass> expectedApps = ImmutableSet.of(new ApplicationClass(
@@ -189,8 +189,8 @@ public class DefaultArtifactInspectorTest {
            classLoaderFactory.createClassLoader(
              ImmutableList.of(artifactLocation).iterator(),
              new EntityImpersonator(artifactId.toEntityId(), new DefaultImpersonator(CConfiguration.create(), null)))) {
-      ArtifactClasses classes = artifactInspector.inspectArtifact(artifactId, artifactFile, artifactClassLoader,
-                                                                  Collections.emptySet()).getArtifactClasses();
+      ArtifactClasses classes = artifactInspector.inspectArtifact(artifactId, artifactFile, null,
+                                                                  null, Collections.emptySet()).getArtifactClasses();
       Set<PluginClass> plugins = classes.getPlugins();
 
       Map<String, PluginPropertyField> expectedFields = ImmutableMap.of(
@@ -227,7 +227,7 @@ public class DefaultArtifactInspectorTest {
           .setDescription("").setClassName("non-existing-class")
           .setConfigFieldName("pluginConf").setProperties(ImmutableMap.of()).build();
       // Inspects the jar and ensures that additional plugin classes can be loaded from the artifact jar
-      artifactInspector.inspectArtifact(artifactId, artifactFile, artifactClassLoader, ImmutableSet.of(pluginClass));
+      artifactInspector.inspectArtifact(artifactId, artifactFile, null, null, ImmutableSet.of(pluginClass));
     }
   }
 

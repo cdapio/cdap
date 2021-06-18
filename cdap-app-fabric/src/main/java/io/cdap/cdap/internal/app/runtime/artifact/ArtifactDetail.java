@@ -22,10 +22,12 @@ import java.util.Objects;
  * Details about an artifact, including info about the artifact itself and metadata about the contents of the artifact.
  */
 public class ArtifactDetail {
+  private final String namespace;
   private final ArtifactDescriptor descriptor;
   private final ArtifactMeta meta;
 
-  public ArtifactDetail(ArtifactDescriptor descriptor, ArtifactMeta meta) {
+  public ArtifactDetail(String namespace, ArtifactDescriptor descriptor, ArtifactMeta meta) {
+    this.namespace = namespace;
     this.descriptor = descriptor;
     this.meta = meta;
   }
@@ -36,6 +38,10 @@ public class ArtifactDetail {
 
   public ArtifactMeta getMeta() {
     return meta;
+  }
+
+  public String getNamespace() {
+    return namespace;
   }
 
   @Override

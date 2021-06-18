@@ -93,7 +93,8 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
     
     Location artifactLocation = Locations
         .getLocationFromAbsolutePath(locationFactory, detail.getDescriptor().getLocationURI().getPath());
-    return new ArtifactDetail(new ArtifactDescriptor(detail.getDescriptor().getArtifactId(), artifactLocation),
+    return new ArtifactDetail(artifactId.getNamespace().getId(),
+                              new ArtifactDescriptor(detail.getDescriptor().getArtifactId(), artifactLocation),
                               detail.getMeta());
   }
 
@@ -154,7 +155,8 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
     for (ArtifactDetail detail : details) {
       Location artifactLocation = locationFactory.create(detail.getDescriptor().getLocationURI());
       detailList.add(
-        new ArtifactDetail(new ArtifactDescriptor(detail.getDescriptor().getArtifactId(), artifactLocation),
+        new ArtifactDetail(range.getNamespace(),
+                           new ArtifactDescriptor(detail.getDescriptor().getArtifactId(), artifactLocation),
                            detail.getMeta()));
     }
     return detailList;

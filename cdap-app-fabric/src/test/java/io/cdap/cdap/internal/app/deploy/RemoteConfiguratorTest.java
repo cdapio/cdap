@@ -49,8 +49,6 @@ import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
 import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
 import io.cdap.cdap.internal.app.worker.ConfiguratorTask;
 import io.cdap.cdap.internal.app.worker.TaskWorkerHttpHandlerInternal;
-import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizer;
-import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerHttpHandlerInternal;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
@@ -113,8 +111,7 @@ public class RemoteConfiguratorTest {
     httpService = new CommonNettyHttpServiceBuilder(cConf, "test")
       .setHttpHandlers(
         new TaskWorkerHttpHandlerInternal(cConf, className -> { }),
-        new ArtifactHttpHandlerInternal(new TestArtifactRepository(cConf), namespaceAdmin),
-        new ArtifactLocalizerHttpHandlerInternal(new ArtifactLocalizer(cConf, remoteClientFactory))
+        new ArtifactHttpHandlerInternal(new TestArtifactRepository(cConf), namespaceAdmin)
       )
       .setPort(cConf.getInt(Constants.ArtifactLocalizer.PORT))
       .build();
@@ -141,7 +138,8 @@ public class RemoteConfiguratorTest {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, AllProgramsApp.class);
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact(AllProgramsApp.class.getSimpleName(), "1.0.0");
 
-    artifacts.put(artifactId, new ArtifactDetail(new ArtifactDescriptor(artifactId.toApiArtifactId(), appJar),
+    artifacts.put(artifactId, new ArtifactDetail(NamespaceId.DEFAULT.getEntityName(),
+                                                 new ArtifactDescriptor(artifactId.toApiArtifactId(), appJar),
                                                  new ArtifactMeta(ArtifactClasses.builder().build())));
 
     AppDeploymentInfo info = new AppDeploymentInfo(artifactId, appJar, NamespaceId.DEFAULT,
@@ -192,7 +190,8 @@ public class RemoteConfiguratorTest {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, ConfigTestApp.class);
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact(ConfigTestApp.class.getSimpleName(), "1.0.0");
 
-    artifacts.put(artifactId, new ArtifactDetail(new ArtifactDescriptor(artifactId.toApiArtifactId(), appJar),
+    artifacts.put(artifactId, new ArtifactDetail(NamespaceId.DEFAULT.getEntityName(),
+                                                 new ArtifactDescriptor(artifactId.toApiArtifactId(), appJar),
                                                  new ArtifactMeta(ArtifactClasses.builder().build())));
 
     AppDeploymentInfo info = new AppDeploymentInfo(artifactId, appJar, NamespaceId.DEFAULT,
@@ -250,7 +249,8 @@ public class RemoteConfiguratorTest {
   private static final class TestArtifactRepository extends DefaultArtifactRepository {
 
     TestArtifactRepository(CConfiguration cConf) {
-      super(cConf, null, null, null, null, null);
+      super(cConf, null, null, null, null,
+            null, null, null);
     }
 
     @Override

@@ -48,6 +48,7 @@ import io.cdap.cdap.common.conf.ArtifactConfigReader;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.data2.metadata.system.ArtifactSystemMetadataWriter;
@@ -64,7 +65,9 @@ import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import org.apache.twill.common.Threads;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,11 +109,16 @@ public class DefaultArtifactRepository implements ArtifactRepository {
                                    ArtifactRepositoryReader artifactRepositoryReader,
                                    MetadataServiceClient metadataServiceClient,
                                    ProgramRunnerFactory programRunnerFactory,
-                                   Impersonator impersonator) {
+                                   Impersonator impersonator, LocationFactory locationFactory,
+                                   RemoteClientFactory remoteClientFactory) {
     this.artifactStore = artifactStore;
     this.artifactRepositoryReader = artifactRepositoryReader;
     this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, programRunnerFactory);
-    this.artifactInspector = new DefaultArtifactInspector(cConf, artifactClassLoaderFactory);
+    if (cConf.getBoolean(Constants.TaskWorker.POOL_ENABLE, false)) {
+      this.artifactInspector = new RemoteArtifactInspector(cConf, locationFactory, remoteClientFactory);
+    } else {
+      this.artifactInspector = new DefaultArtifactInspector(cConf, artifactClassLoaderFactory);
+    }
     this.systemArtifactDirs = new HashSet<>();
     String systemArtifactsDir = cConf.get(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR);
     if (!Strings.isNullOrEmpty(systemArtifactsDir)) {
@@ -133,6 +141,78 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     this.configReader = new ArtifactConfigReader();
     this.metadataServiceClient = metadataServiceClient;
     this.impersonator = impersonator;
+  }
+
+  /**
+   * Validates the parents of an artifact. Checks that each artifact only appears with a single version range.
+   *
+   * @param parents the set of parent ranges to validate
+   * @throws InvalidArtifactException if there is more than one version range for an artifact
+   */
+  @VisibleForTesting
+  static void validateParentSet(Id.Artifact artifactId, Set<ArtifactRange> parents) throws InvalidArtifactException {
+    boolean isInvalid = false;
+    StringBuilder errMsg = new StringBuilder("Invalid parents field.");
+
+    // check for multiple version ranges for the same artifact.
+    // ex: "parents": [ "etlbatch[1.0.0,2.0.0)", "etlbatch[3.0.0,4.0.0)" ]
+    Set<String> parentNames = new HashSet<>();
+    // keep track of dupes so that we don't have repeat error messages if there are more than 2 ranges for a name
+    Set<String> dupes = new HashSet<>();
+    for (ArtifactRange parent : parents) {
+      String parentName = parent.getName();
+      if (!parentNames.add(parentName) && !dupes.contains(parentName)) {
+        errMsg.append(" Only one version range for parent '");
+        errMsg.append(parentName);
+        errMsg.append("' can be present.");
+        dupes.add(parentName);
+        isInvalid = true;
+      }
+      if (artifactId.getName().equals(parentName) &&
+        artifactId.getNamespace().toEntityId().getNamespace().equals(parent.getNamespace())) {
+        throw new InvalidArtifactException(String.format(
+          "Invalid parent '%s' for artifact '%s'. An artifact cannot extend itself.", parent, artifactId));
+      }
+    }
+
+    // final err message should look something like:
+    // "Invalid parents. Only one version range for parent 'etlbatch' can be present."
+    if (isInvalid) {
+      throw new InvalidArtifactException(errMsg.toString());
+    }
+  }
+
+  /**
+   * Validates the set of plugins for an artifact. Checks that the pair of plugin type and name are unique among
+   * all plugins in an artifact.
+   *
+   * @param plugins the set of plugins to validate
+   * @throws InvalidArtifactException if there is more than one class with the same type and name
+   */
+  @VisibleForTesting
+  static void validatePluginSet(Set<PluginClass> plugins) throws InvalidArtifactException {
+    boolean isInvalid = false;
+    StringBuilder errMsg = new StringBuilder("Invalid plugins field.");
+    Set<ImmutablePair<String, String>> existingPlugins = new HashSet<>();
+    Set<ImmutablePair<String, String>> dupes = new HashSet<>();
+    for (PluginClass plugin : plugins) {
+      ImmutablePair<String, String> typeAndName = ImmutablePair.of(plugin.getType(), plugin.getName());
+      if (!existingPlugins.add(typeAndName) && !dupes.contains(typeAndName)) {
+        errMsg.append(" Only one plugin with type '");
+        errMsg.append(typeAndName.getFirst());
+        errMsg.append("' and name '");
+        errMsg.append(typeAndName.getSecond());
+        errMsg.append("' can be present.");
+        dupes.add(typeAndName);
+        isInvalid = true;
+      }
+    }
+
+    // final err message should look something like:
+    // "Invalid plugins. Only one plugin with type 'source' and name 'table' can be present."
+    if (isInvalid) {
+      throw new InvalidArtifactException(errMsg.toString());
+    }
   }
 
   @Override
@@ -275,14 +355,19 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     CloseableClassLoader parentClassLoader = null;
     EntityImpersonator entityImpersonator = new EntityImpersonator(artifactId.toEntityId(),
                                                                    impersonator);
+    List<ArtifactDetail> parentArtifactDetails = new ArrayList<>();
     if (!parentArtifacts.isEmpty()) {
       validateParentSet(artifactId, parentArtifacts);
-      parentClassLoader = createParentClassLoader(artifactId, parentArtifacts, entityImpersonator);
+      LOG.error("wyzhang: Default Artifact Repository: create parent class loader");
+      parentArtifactDetails = getParentArtifactDetails(artifactId, parentArtifacts, entityImpersonator);
+      parentClassLoader = createParentClassLoader(parentArtifactDetails, entityImpersonator);
     }
     try {
       additionalPlugins = additionalPlugins == null ? Collections.emptySet() : additionalPlugins;
       ArtifactClassesWithMetadata artifactClassesWithMetadata = inspectArtifact(artifactId, artifactFile,
-                                                                                additionalPlugins, parentClassLoader);
+                                                                                parentClassLoader,
+                                                                                parentArtifactDetails,
+                                                                                additionalPlugins);
       ArtifactMeta meta = new ArtifactMeta(artifactClassesWithMetadata.getArtifactClasses(), parentArtifacts,
                                            properties);
       ArtifactDetail artifactDetail = artifactStore.write(artifactId, meta, artifactFile, entityImpersonator);
@@ -536,12 +621,13 @@ public class DefaultArtifactRepository implements ArtifactRepository {
   }
 
   private ArtifactClassesWithMetadata inspectArtifact(Id.Artifact artifactId, File artifactFile,
-                                                      Set<PluginClass> additionalPlugins,
-                                                      @Nullable ClassLoader parentClassLoader)
+                                                      @Nullable CloseableClassLoader parentClassLoader,
+                                                      @Nullable List<ArtifactDetail> parentArtifacts,
+                                                      Set<PluginClass> additionalPlugins)
     throws IOException, InvalidArtifactException {
     ArtifactClassesWithMetadata artifact = artifactInspector.inspectArtifact(artifactId, artifactFile,
                                                                              parentClassLoader,
-                                                                             additionalPlugins);
+                                                                             null, additionalPlugins);
     validatePluginSet(artifact.getArtifactClasses().getPlugins());
     if (additionalPlugins == null || additionalPlugins.isEmpty()) {
       return artifact;
@@ -590,11 +676,11 @@ public class DefaultArtifactRepository implements ArtifactRepository {
    * @param parentArtifacts the ranges of parents to create the classloader from
    * @return a classloader based off a parent artifact
    * @throws ArtifactRangeNotFoundException if none of the parents could be found
-   * @throws InvalidArtifactException if one of the parents also has parents
-   * @throws IOException if there was some error reading from the store
+   * @throws InvalidArtifactException       if one of the parents also has parents
+   * @throws IOException                    if there was some error reading from the store
    */
-  private CloseableClassLoader createParentClassLoader(Id.Artifact artifactId, Set<ArtifactRange> parentArtifacts,
-                                                       EntityImpersonator entityImpersonator)
+  private List<ArtifactDetail> getParentArtifactDetails(Id.Artifact artifactId, Set<ArtifactRange> parentArtifacts,
+                                                        EntityImpersonator entityImpersonator)
     throws ArtifactRangeNotFoundException, IOException, InvalidArtifactException {
 
     List<ArtifactDetail> parents = new ArrayList<>();
@@ -607,8 +693,8 @@ public class DefaultArtifactRepository implements ArtifactRepository {
                                                              artifactId, Joiner.on('/').join(parentArtifacts)));
     }
 
-    Location parentLocation = null;
-    Location grandparentLocation = null;
+    ArtifactDetail parentArtifact = null;
+    ArtifactDetail grandparentArtifact = null;
 
     // check if any of the parents also have grandparents, which is not allowed. This is to simplify things
     // so that we don't have to chain a bunch of classloaders, and also to keep it simple for users to avoid
@@ -638,24 +724,41 @@ public class DefaultArtifactRepository implements ArtifactRepository {
           }
 
           // assumes any grandparent will do
-          if (parentLocation == null && grandparentLocation == null) {
-            grandparentLocation = grandparent.getDescriptor().getLocation();
+          if (parent == null && grandparent == null) {
+            grandparentArtifact = grandparent;
           }
         }
       }
 
       // assumes any parent will do
-      if (parentLocation == null) {
-        parentLocation = parent.getDescriptor().getLocation();
+      if (parentArtifact == null) {
+        parentArtifact = parent;
       }
     }
 
-    List<Location> parentLocations = new ArrayList<>();
-    parentLocations.add(parentLocation);
-    if (grandparentLocation != null) {
-      parentLocations.add(grandparentLocation);
+    List<ArtifactDetail> ancestorsArtifacts = new ArrayList<>();
+    ancestorsArtifacts.add(parentArtifact);
+    if (grandparentArtifact != null) {
+      ancestorsArtifacts.add(grandparentArtifact);
     }
-    return artifactClassLoaderFactory.createClassLoader(parentLocations.iterator(), entityImpersonator);
+    return ancestorsArtifacts;
+  }
+
+  /**
+   * Create a parent classloader using an artifact from one of the artifacts in the specified parents.
+   *
+   * @param artifactId the id of the artifact to create the parent classloader for
+   * @param parentArtifacts the ranges of parents to create the classloader from
+   * @return a classloader based off a parent artifact
+   * @throws ArtifactRangeNotFoundException if none of the parents could be found
+   * @throws InvalidArtifactException       if one of the parents also has parents
+   * @throws IOException                    if there was some error reading from the store
+   */
+  private CloseableClassLoader createParentClassLoader(List<ArtifactDetail> parentArtifactDetails,
+                                                       EntityImpersonator entityImpersonator) throws IOException {
+    return artifactClassLoaderFactory.createClassLoader(
+      parentArtifactDetails.stream().map(artifactDetail -> artifactDetail.getDescriptor().getLocation()).iterator(),
+      entityImpersonator);
   }
 
   private void addAppSummaries(List<ApplicationClassSummary> summaries, NamespaceId namespace) {
@@ -666,78 +769,6 @@ public class DefaultArtifactRepository implements ArtifactRepository {
       for (ApplicationClass appClass : classInfo.getValue()) {
         summaries.add(new ApplicationClassSummary(artifactSummary, appClass.getClassName()));
       }
-    }
-  }
-
-  /**
-   * Validates the parents of an artifact. Checks that each artifact only appears with a single version range.
-   *
-   * @param parents the set of parent ranges to validate
-   * @throws InvalidArtifactException if there is more than one version range for an artifact
-   */
-  @VisibleForTesting
-  static void validateParentSet(Id.Artifact artifactId, Set<ArtifactRange> parents) throws InvalidArtifactException {
-    boolean isInvalid = false;
-    StringBuilder errMsg = new StringBuilder("Invalid parents field.");
-
-    // check for multiple version ranges for the same artifact.
-    // ex: "parents": [ "etlbatch[1.0.0,2.0.0)", "etlbatch[3.0.0,4.0.0)" ]
-    Set<String> parentNames = new HashSet<>();
-    // keep track of dupes so that we don't have repeat error messages if there are more than 2 ranges for a name
-    Set<String> dupes = new HashSet<>();
-    for (ArtifactRange parent : parents) {
-      String parentName = parent.getName();
-      if (!parentNames.add(parentName) && !dupes.contains(parentName)) {
-        errMsg.append(" Only one version range for parent '");
-        errMsg.append(parentName);
-        errMsg.append("' can be present.");
-        dupes.add(parentName);
-        isInvalid = true;
-      }
-      if (artifactId.getName().equals(parentName) &&
-        artifactId.getNamespace().toEntityId().getNamespace().equals(parent.getNamespace())) {
-        throw new InvalidArtifactException(String.format(
-          "Invalid parent '%s' for artifact '%s'. An artifact cannot extend itself.", parent, artifactId));
-      }
-    }
-
-    // final err message should look something like:
-    // "Invalid parents. Only one version range for parent 'etlbatch' can be present."
-    if (isInvalid) {
-      throw new InvalidArtifactException(errMsg.toString());
-    }
-  }
-
-  /**
-   * Validates the set of plugins for an artifact. Checks that the pair of plugin type and name are unique among
-   * all plugins in an artifact.
-   *
-   * @param plugins the set of plugins to validate
-   * @throws InvalidArtifactException if there is more than one class with the same type and name
-   */
-  @VisibleForTesting
-  static void validatePluginSet(Set<PluginClass> plugins) throws InvalidArtifactException {
-    boolean isInvalid = false;
-    StringBuilder errMsg = new StringBuilder("Invalid plugins field.");
-    Set<ImmutablePair<String, String>> existingPlugins = new HashSet<>();
-    Set<ImmutablePair<String, String>> dupes = new HashSet<>();
-    for (PluginClass plugin : plugins) {
-      ImmutablePair<String, String> typeAndName = ImmutablePair.of(plugin.getType(), plugin.getName());
-      if (!existingPlugins.add(typeAndName) && !dupes.contains(typeAndName)) {
-        errMsg.append(" Only one plugin with type '");
-        errMsg.append(typeAndName.getFirst());
-        errMsg.append("' and name '");
-        errMsg.append(typeAndName.getSecond());
-        errMsg.append("' can be present.");
-        dupes.add(typeAndName);
-        isInvalid = true;
-      }
-    }
-
-    // final err message should look something like:
-    // "Invalid plugins. Only one plugin with type 'source' and name 'table' can be present."
-    if (isInvalid) {
-      throw new InvalidArtifactException(errMsg.toString());
     }
   }
 

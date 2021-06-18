@@ -206,7 +206,8 @@ public class AbstractProgramRuntimeServiceTest {
       protected ArtifactDetail getArtifactDetail(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
         io.cdap.cdap.api.artifact.ArtifactId id = new io.cdap.cdap.api.artifact.ArtifactId(
           "dummy", new ArtifactVersion("1.0"), ArtifactScope.USER);
-        return new ArtifactDetail(new ArtifactDescriptor(id, Locations.toLocation(TEMP_FOLDER.newFile())),
+        return new ArtifactDetail(NamespaceId.DEFAULT.getEntityName(),
+                                  new ArtifactDescriptor(id, Locations.toLocation(TEMP_FOLDER.newFile())),
                                   new ArtifactMeta(ArtifactClasses.builder().build()));
       }
     };
@@ -446,7 +447,8 @@ public class AbstractProgramRuntimeServiceTest {
     protected ArtifactDetail getArtifactDetail(ArtifactId artifactId) throws IOException {
       io.cdap.cdap.api.artifact.ArtifactId id = new io.cdap.cdap.api.artifact.ArtifactId(
         "dummy", new ArtifactVersion("1.0"), ArtifactScope.USER);
-      return new ArtifactDetail(new ArtifactDescriptor(id, Locations.toLocation(TEMP_FOLDER.newFile())),
+      return new ArtifactDetail(NamespaceId.DEFAULT.getNamespace(),
+                                new ArtifactDescriptor(id, Locations.toLocation(TEMP_FOLDER.newFile())),
                                 new ArtifactMeta(ArtifactClasses.builder().build()));
     }
   }

@@ -51,9 +51,9 @@ public class TaskWorkerService extends AbstractIdleService {
   private InetSocketAddress bindAddress;
 
   @Inject
-  TaskWorkerService(CConfiguration cConf,
-                    SConfiguration sConf,
-                    DiscoveryService discoveryService) {
+  public TaskWorkerService(CConfiguration cConf,
+                           SConfiguration sConf,
+                           DiscoveryService discoveryService) {
     this.cConf = cConf;
     this.sConf = sConf;
     this.discoveryService = discoveryService;

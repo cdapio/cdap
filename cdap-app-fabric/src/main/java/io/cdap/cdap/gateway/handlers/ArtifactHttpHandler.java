@@ -637,6 +637,9 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                                   @HeaderParam(EXTENDS_HEADER) final String parentArtifactsStr,
                                   @HeaderParam(PLUGINS_HEADER) String pluginClasses)
     throws NamespaceNotFoundException, BadRequestException {
+    LOG.error("wyzhang: Artifact HttpHandler req {}", request);
+
+    LOG.error("wyzhang: Artifact HttpHandler extends_header: {}", parentArtifactsStr);
 
     final NamespaceId namespace = validateAndGetNamespace(namespaceId);
 
@@ -675,6 +678,9 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
               getBundleVersion(uploadedFile) : artifactVersion;
             ArtifactId artifactId = validateAndGetArtifactId(namespace, artifactName, version);
 
+            for (ArtifactRange range : parentArtifacts) {
+              LOG.error("wyzhang: ArtifactHttpHandler range = {}", range.toString());
+            }
             // add the artifact to the repo
             artifactRepository.addArtifact(Id.Artifact.fromEntityId(artifactId),
                                            uploadedFile, parentArtifacts, additionalPluginClasses);

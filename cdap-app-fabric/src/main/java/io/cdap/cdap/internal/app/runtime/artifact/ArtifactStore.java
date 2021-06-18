@@ -325,7 +325,8 @@ public class ArtifactStore {
                                                artifactKey.namespace.equals(NamespaceId.SYSTEM.getNamespace()) ?
                                                  ArtifactScope.SYSTEM : ArtifactScope.USER);
         Location artifactLocation = Locations.getLocationFromAbsolutePath(locationFactory, data.getLocationPath());
-        return new ArtifactDetail(new ArtifactDescriptor(artifactId, artifactLocation), filteredArtifactMeta);
+        return new ArtifactDetail(artifactKey.name, new ArtifactDescriptor(artifactId, artifactLocation),
+                                  filteredArtifactMeta);
       })
       .collect(collector);
   }
@@ -387,7 +388,8 @@ public class ArtifactStore {
       Location artifactLocation = impersonator.doAs(artifactId.getNamespace().toEntityId(), () ->
         Locations.getLocationFromAbsolutePath(locationFactory, artifactData.getLocationPath()));
       ArtifactMeta artifactMeta = filterPlugins(artifactData.meta);
-      return new ArtifactDetail(new ArtifactDescriptor(artifactId.toArtifactId(), artifactLocation), artifactMeta);
+      return new ArtifactDetail(artifactId.getNamespace().getId(),
+                                new ArtifactDescriptor(artifactId.toArtifactId(), artifactLocation), artifactMeta);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -723,7 +725,8 @@ public class ArtifactStore {
         writeMeta(context, artifactId, data);
       });
 
-      return new ArtifactDetail(new ArtifactDescriptor(artifactId.toArtifactId(), destination), artifactMeta);
+      return new ArtifactDetail(artifactId.getNamespace().getId(),
+                                new ArtifactDescriptor(artifactId.toArtifactId(), destination), artifactMeta);
     } catch (TransactionException e) {
       destination.delete();
       // TODO: CDAP-14672 define TransactionConflictException for the SPI

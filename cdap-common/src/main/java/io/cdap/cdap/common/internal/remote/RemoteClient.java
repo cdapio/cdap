@@ -61,8 +61,8 @@ public class RemoteClient {
   private final String basePath;
   private volatile RemoteAuthenticator authenticator;
 
-  RemoteClient(AuthenticationContext authenticationContext, DiscoveryServiceClient discoveryClient,
-               String discoverableServiceName, HttpRequestConfig httpRequestConfig, String basePath) {
+  public RemoteClient(AuthenticationContext authenticationContext, DiscoveryServiceClient discoveryClient,
+                      String discoverableServiceName, HttpRequestConfig httpRequestConfig, String basePath) {
     this(authenticationContext, discoveryClient, discoverableServiceName, httpRequestConfig, basePath, null);
   }
 

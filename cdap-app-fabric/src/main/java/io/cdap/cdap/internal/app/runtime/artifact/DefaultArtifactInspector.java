@@ -119,19 +119,20 @@ final class DefaultArtifactInspector implements ArtifactInspector {
    *
    * @param artifactId the id of the artifact to inspect
    * @param artifactFile the artifact file
-   * @param parentClassLoader the parent classloader to use when inspecting plugins contained in the artifact.
-   * For example, a ProgramClassLoader created from the artifact the input artifact extends
+   * @param parentClassLoader
+   * @param parentArtifacts
    * @param additionalPlugins Additional plugin classes
    * @return metadata about the classes contained in the artifact
    * @throws IOException if there was an exception opening the jar file
    * @throws InvalidArtifactException if the artifact is invalid. For example, if the application main class is not
    * actually an Application.
    */
-  @Override
   public ArtifactClassesWithMetadata inspectArtifact(Id.Artifact artifactId, File artifactFile,
                                                      @Nullable ClassLoader parentClassLoader,
+                                                     @Nullable List<ArtifactDetail> parentArtifacts,
                                                      Set<PluginClass> additionalPlugins)
     throws IOException, InvalidArtifactException {
+
     Path tmpDir = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                             cConf.get(Constants.AppFabric.TEMP_DIR)).toAbsolutePath();
     Files.createDirectories(tmpDir);
