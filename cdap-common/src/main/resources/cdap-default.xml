@@ -4447,4 +4447,12 @@
       The number of boss threads for the artifact localizer.
     </description>
   </property>
+
+  <property>
+    <name>task.worker.local.data.dir</name>
+    <value>/tmp</value>
+    <description>
+      The local data directory for the task worker container.
+    </description>
+  </property>
 </configuration>
