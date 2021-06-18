@@ -82,7 +82,11 @@ public class SparkPreparer extends AbstractSparkPreparer {
     throws TransactionFailureException, InstantiationException, IOException {
     stageOperations = new HashMap<>();
     stagePartitions = new HashMap<>();
-    File configFile = File.createTempFile("HydratorSpark", ".config");
+    File tmpDir = new File(System.getProperty("java.io.tmpdir"));
+    if (!tmpDir.exists()) {
+      tmpDir.mkdirs();
+    }
+    File configFile = Files.createTempFile("HydratorSpark", ".config").toFile();
 
     List<Finisher> finishers = super.prepare(phaseSpec);
     finishers.add(new Finisher() {
