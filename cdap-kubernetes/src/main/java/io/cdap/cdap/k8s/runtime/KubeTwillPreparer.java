@@ -522,7 +522,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
 
     job = appsApi.createNamespacedJob(kubeNamespace, job, "true", null, null);
     LOG.info("### Created Job {} in Kubernetes", metadata.getName());
-    apiClient.setDebugging(false);
+    //apiClient.setDebugging(false);
     return job.getMetadata();
   }
 

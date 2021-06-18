@@ -21,9 +21,11 @@ import io.kubernetes.client.ApiCallback;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.apis.AppsV1Api;
+import io.kubernetes.client.apis.BatchV1Api;
 import io.kubernetes.client.apis.CoreV1Api;
 import io.kubernetes.client.models.V1DeleteOptions;
 import io.kubernetes.client.models.V1Deployment;
+import io.kubernetes.client.models.V1Job;
 import io.kubernetes.client.models.V1ObjectMeta;
 import io.kubernetes.client.models.V1Preconditions;
 import io.kubernetes.client.models.V1StatefulSet;
@@ -393,8 +395,32 @@ class KubeTwillController implements ExtendedTwillController {
     if (V1StatefulSet.class.equals(resourceType)) {
       return deleteStatefulSet();
     }
+    if (V1Job.class.equals(resourceType)) {
+      return deleteJob();
+    }
     // This shouldn't happen
     throw new UnsupportedOperationException("Cannot delete resource of type " + resourceType);
+  }
+
+  /**
+   * Deletes the deployment controlled by this controller asynchronously.
+   *
+   * @return a {@link CompletionStage} that will complete when the delete operation completed
+   */
+  private CompletionStage<String> deleteJob() {
+    LOG.debug("Deleting job {}", meta.getName());
+
+    BatchV1Api appsApi = new BatchV1Api(apiClient);
+
+    // callback for the delete deployment call
+    CompletableFuture<String> resultFuture = new CompletableFuture<>();
+    try {
+      String name = meta.getName();
+      appsApi.deleteNamespacedJob(name, kubeNamespace, null, new V1DeleteOptions(), null, 0, false, null);
+    } catch (ApiException e) {
+      completeExceptionally(resultFuture, e);
+    }
+    return resultFuture;
   }
 
   /**

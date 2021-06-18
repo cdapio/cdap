@@ -357,6 +357,9 @@ public class KubeTwillRunnerService implements TwillRunnerService {
    */
   private boolean isAllReplicasReady(Object resource) {
     try {
+      if (resource.getClass().equals(V1Job.class)) {
+        return true;
+      }
       Method getStatus = resource.getClass().getDeclaredMethod("getStatus");
       Object statusObj = getStatus.invoke(resource);
 
