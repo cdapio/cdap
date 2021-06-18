@@ -31,7 +31,6 @@ import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.auth.CipherException;
 import io.cdap.cdap.security.auth.TinkCipher;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,8 +42,8 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- * An implementation of {@link AuthorizationEnforcer} that runs on the master. It calls the authorizer directly to
- * enforce authorization policies.
+ * An implementation of {@link io.cdap.cdap.security.spi.authorization.AccessEnforcer} that runs on the master.
+ * It calls the access controller directly to enforce authorization policies.
  */
 @Singleton
 public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
@@ -66,14 +65,6 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
     String masterUserName = AuthorizationUtil.getEffectiveMasterUser(cConf);
     this.masterUser = masterUserName == null ? null : new Principal(masterUserName, Principal.PrincipalType.USER);
     this.logTimeTakenAsWarn = cConf.getInt(Constants.Security.Authorization.EXTENSION_OPERATION_TIME_WARN_THRESHOLD);
-  }
-
-  @Override
-  public void enforce(EntityId entity, Principal principal, Permission permission) throws AccessException {
-    if (!isSecurityAuthorizationEnabled()) {
-      return;
-    }
-    doEnforce(entity, principal, Collections.singleton(permission));
   }
 
   @Override

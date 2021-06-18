@@ -298,17 +298,6 @@ public class RemoteAccessEnforcer extends AbstractAccessEnforcer {
     });
   }
 
-  private AccessException propagateAccessException(Throwable e) throws AccessException {
-    if (e.getCause() != null && e instanceof ExecutionException) {
-      propagateAccessException(e.getCause());
-    }
-    Throwables.propagateIfPossible(e, AccessException.class);
-    if (e instanceof IOException) {
-      return new AccessIOException(e);
-    }
-    return new AccessException(e);
-  }
-
   private static class VisibilityKey {
     private final Principal principal;
     private final EntityId entityId;

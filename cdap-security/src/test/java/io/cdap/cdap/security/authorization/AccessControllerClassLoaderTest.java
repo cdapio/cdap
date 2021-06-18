@@ -21,6 +21,7 @@ import com.google.gson.Gson;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.common.lang.ClassPathResources;
 import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.security.spi.authorization.AccessController;
 import io.cdap.cdap.security.spi.authorization.Authorizer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.hadoop.conf.Configuration;
@@ -58,6 +59,7 @@ public class AccessControllerClassLoaderTest {
     parent.loadClass(Principal.class.getName());
     // classes from cdap-security-spi should be available
     parent.loadClass(Authorizer.class.getName());
+    parent.loadClass(AccessController.class.getName());
     parent.loadClass(UnauthorizedException.class.getName());
     // classes from hadoop should be available
     parent.loadClass(Configuration.class.getName());
