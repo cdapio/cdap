@@ -16,13 +16,11 @@ package io.cdap.cdap.internal.app.worker;
 
 import com.google.inject.Inject;
 import io.cdap.cdap.common.ArtifactNotFoundException;
-import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.internal.app.runtime.artifact.RemotePluginFinder;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerClient;
 import io.cdap.cdap.proto.id.ArtifactId;
-import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -38,12 +36,10 @@ public class RemoteWorkerPluginFinder extends RemotePluginFinder {
   private final ArtifactLocalizerClient artifactLocalizerClient;
 
   @Inject
-  RemoteWorkerPluginFinder(CConfiguration cConf,
-                           AuthenticationContext authenticationContext,
-                           LocationFactory locationFactory,
+  RemoteWorkerPluginFinder(LocationFactory locationFactory,
                            RemoteClientFactory remoteClientFactory,
                            ArtifactLocalizerClient artifactLocalizerClient) {
-    super(cConf, authenticationContext, locationFactory, remoteClientFactory);
+    super(locationFactory, remoteClientFactory);
     this.artifactLocalizerClient = artifactLocalizerClient;
   }
 

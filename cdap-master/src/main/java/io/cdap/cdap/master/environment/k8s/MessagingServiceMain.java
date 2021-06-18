@@ -17,11 +17,14 @@
 package io.cdap.cdap.master.environment.k8s;
 
 import com.google.common.util.concurrent.Service;
+import com.google.inject.Binding;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Module;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.DFSLocationModule;
+import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.namespace.guice.NamespaceQueryAdminModule;
@@ -31,8 +34,11 @@ import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.messaging.server.MessagingHttpService;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.guice.CoreSecurityModules;
+import org.apache.twill.zookeeper.ZKClientService;
 
 import java.util.Arrays;
 import java.util.List;
@@ -57,7 +63,9 @@ public class MessagingServiceMain extends AbstractServiceMain<EnvironmentOptions
     return Arrays.asList(
       new NamespaceQueryAdminModule(),
       new AuthorizationEnforcementModule().getDistributedModules(),
-      new AuthenticationContextModules().getMasterModule(),
+      new AuthenticationContextModules().getInternalAuthMasterModule(cConf),
+      CoreSecurityModules.getDistributedModule(cConf),
+      ZKClientModule.getZKClientModuleIfRequired(cConf),
       new MessagingServerRuntimeModule().getStandaloneModules(),
       new DFSLocationModule()
     );
@@ -73,6 +81,11 @@ public class MessagingServiceMain extends AbstractServiceMain<EnvironmentOptions
       services.add((Service) messagingService);
     }
     services.add(injector.getInstance(MessagingHttpService.class));
+    Binding<ZKClientService> zkBinding = injector.getExistingBinding(Key.get(ZKClientService.class));
+    if (zkBinding != null) {
+      services.add(zkBinding.getProvider().get());
+    }
+    services.add(injector.getInstance(TokenManager.class));
   }
 
   @Nullable

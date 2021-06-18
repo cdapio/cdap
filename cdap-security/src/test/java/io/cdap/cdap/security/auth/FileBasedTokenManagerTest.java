@@ -29,7 +29,7 @@ import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.common.utils.Tasks;
-import io.cdap.cdap.security.guice.FileBasedSecurityModule;
+import io.cdap.cdap.security.guice.FileBasedCoreSecurityModule;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -58,7 +58,7 @@ public class FileBasedTokenManagerTest extends TestTokenManager {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     Injector injector = Guice.createInjector(new IOModule(),
                                              new ConfigModule(cConf),
-                                             new FileBasedSecurityModule(),
+                                             new FileBasedCoreSecurityModule(),
                                              new InMemoryDiscoveryModule());
     TokenManager tokenManager = injector.getInstance(TokenManager.class);
     tokenManager.startAndWait();
@@ -78,14 +78,14 @@ public class FileBasedTokenManagerTest extends TestTokenManager {
     TokenManager tokenManager = Guice.createInjector(
       new IOModule(),
       new ConfigModule(cConf),
-      new FileBasedSecurityModule(),
+      new FileBasedCoreSecurityModule(),
       new InMemoryDiscoveryModule()).getInstance(TokenManager.class);
     tokenManager.startAndWait();
 
     TokenManager tokenManager2 = Guice.createInjector(
       new IOModule(),
       new ConfigModule(cConf),
-      new FileBasedSecurityModule(),
+      new FileBasedCoreSecurityModule(),
       new InMemoryDiscoveryModule()).getInstance(TokenManager.class);
     tokenManager2.startAndWait();
 
@@ -114,7 +114,7 @@ public class FileBasedTokenManagerTest extends TestTokenManager {
     Injector injector = Guice.createInjector(
       new IOModule(),
       new ConfigModule(cConf),
-      new FileBasedSecurityModule(),
+      new FileBasedCoreSecurityModule(),
       new InMemoryDiscoveryModule()
     );
 

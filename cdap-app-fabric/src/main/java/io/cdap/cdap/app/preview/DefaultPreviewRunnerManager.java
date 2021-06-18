@@ -169,7 +169,7 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
     return Guice.createInjector(
       new ConfigModule(previewCConf, previewHConf, previewSConf),
       new IOModule(),
-      new AuthenticationContextModules().getMasterModule(),
+      new AuthenticationContextModules().getInternalAuthWorkerModule(previewCConf),
       new PreviewSecureStoreModule(secureStore),
       new PreviewDiscoveryRuntimeModule(discoveryService),
       new LocalLocationModule(),

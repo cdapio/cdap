@@ -33,6 +33,7 @@ import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.Authorizable;
+import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
@@ -51,6 +52,7 @@ import org.junit.rules.ExpectedException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.Base64;
 import java.util.Collections;
@@ -210,9 +212,9 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
     SConfiguration sConfCopy = enableCredentialEncryption();
     TinkCipher cipher = new TinkCipher(sConfCopy);
 
-    Principal userWithCredEncrypted = new Principal(
-      "userFoo", Principal.PrincipalType.USER, null,
-      cipher.encryptToBase64("credential".getBytes(), null));
+    String cred = cipher.encryptToBase64("credential".getBytes(StandardCharsets.UTF_8), null);
+    Principal userWithCredEncrypted = new Principal("userFoo", Principal.PrincipalType.USER, null,
+                                                    new Credential(cred, Credential.CredentialType.EXTERNAL_ENCRYPTED));
 
     try (AccessControllerInstantiator accessControllerInstantiator =
            new AccessControllerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
@@ -240,8 +242,9 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
 
     String badCipherCred = Base64.getEncoder().encodeToString("invalid encrypted credential".getBytes());
 
-    Principal userWithCredEncrypted = new Principal("userFoo", Principal.PrincipalType.USER,
-                                                    null, badCipherCred);
+    Principal userWithCredEncrypted = new Principal("userFoo", Principal.PrincipalType.USER, null,
+                                                    new Credential(badCipherCred,
+                                                                   Credential.CredentialType.EXTERNAL_ENCRYPTED));
 
     try (AccessControllerInstantiator accessControllerInstantiator =
            new AccessControllerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
@@ -262,9 +265,9 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
     SConfiguration sConfCopy = enableCredentialEncryption();
     TinkCipher cipher = new TinkCipher(sConfCopy);
 
-    Principal userWithCredEncrypted = new Principal(
-      "userFoo", Principal.PrincipalType.USER, null,
-      cipher.encryptToBase64("credential".getBytes(), null));
+    String cred = cipher.encryptToBase64("credential".getBytes(StandardCharsets.UTF_8), null);
+    Principal userWithCredEncrypted = new Principal("userFoo", Principal.PrincipalType.USER, null,
+                                                    new Credential(cred, Credential.CredentialType.EXTERNAL_ENCRYPTED));
 
     try (AccessControllerInstantiator accessControllerInstantiator =
            new AccessControllerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {

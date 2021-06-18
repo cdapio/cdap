@@ -28,7 +28,8 @@ import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.common.runtime.DaemonMain;
-import io.cdap.cdap.security.guice.SecurityModules;
+import io.cdap.cdap.security.guice.CoreSecurityModules;
+import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import org.apache.twill.internal.Services;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -134,7 +135,8 @@ public class RouterMain extends DaemonMain {
       new ZKClientModule(),
       new ZKDiscoveryModule(),
       new RouterModules().getDistributedModules(),
-      new SecurityModules().getDistributedModules(),
+      CoreSecurityModules.getDistributedModule(cConf),
+      new ExternalAuthenticationModule(),
       new IOModule()
     );
   }

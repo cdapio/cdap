@@ -31,8 +31,8 @@ import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.common.utils.Tasks;
-import io.cdap.cdap.security.guice.SecurityModule;
-import io.cdap.cdap.security.guice.SecurityModules;
+import io.cdap.cdap.security.guice.CoreSecurityModule;
+import io.cdap.cdap.security.guice.CoreSecurityModules;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
@@ -79,9 +79,9 @@ public class DistributedKeyManagerTest extends TestTokenManager {
     modules.add(new ConfigModule(cConf1, testUtil.getConfiguration()));
     modules.add(new IOModule());
 
-    SecurityModule securityModule = SecurityModules.getDistributedModule(cConf1);
-    modules.add(securityModule);
-    if (securityModule.requiresZKClient()) {
+    CoreSecurityModule coreSecurityModule = CoreSecurityModules.getDistributedModule(cConf1);
+    modules.add(coreSecurityModule);
+    if (coreSecurityModule.requiresZKClient()) {
       modules.add(new ZKClientModule());
       modules.add(new ZKDiscoveryModule());
     }
@@ -91,9 +91,9 @@ public class DistributedKeyManagerTest extends TestTokenManager {
     modules.add(new ConfigModule(cConf2, testUtil.getConfiguration()));
     modules.add(new IOModule());
 
-    securityModule = SecurityModules.getDistributedModule(cConf2);
-    modules.add(securityModule);
-    if (securityModule.requiresZKClient()) {
+    coreSecurityModule = CoreSecurityModules.getDistributedModule(cConf2);
+    modules.add(coreSecurityModule);
+    if (coreSecurityModule.requiresZKClient()) {
       modules.add(new ZKClientModule());
       modules.add(new ZKDiscoveryModule());
     }
