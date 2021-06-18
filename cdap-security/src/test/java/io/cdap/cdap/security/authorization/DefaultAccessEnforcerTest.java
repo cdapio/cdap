@@ -101,7 +101,7 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
     try (AccessControllerInstantiator accessControllerInstantiator =
            new AccessControllerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
       DefaultAccessEnforcer accessEnforcer =
-        new DefaultAccessEnforcer(cConfCopy, SCONF, accessControllerInstantiator);
+        new DefaultAccessEnforcer(cConfCopy, SCONF, accessControllerInstantiator, new TinkCipher(SCONF));
       accessControllerInstantiator.get().grant(Authorizable.fromEntityId(NS), ALICE,
                                                ImmutableSet.of(StandardPermission.UPDATE));
       accessEnforcer.enforce(NS, ALICE, StandardPermission.UPDATE);
@@ -120,7 +120,8 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
            new AccessControllerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
       AccessController accessController = accessControllerInstantiator.get();
       DefaultAccessEnforcer authEnforcementService =
-        new DefaultAccessEnforcer(CCONF, SCONF, accessControllerInstantiator);
+        new DefaultAccessEnforcer(CCONF, SCONF, accessControllerInstantiator,
+                                  new TinkCipher(SCONF));
       // update privileges for alice. Currently alice has not been granted any privileges.
       assertAuthorizationFailure(authEnforcementService, NS, ALICE, StandardPermission.UPDATE);
 
@@ -187,7 +188,7 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
       accessController.grant(Authorizable.fromEntityId(ds23), ALICE, Collections.singleton(StandardPermission.UPDATE));
       accessController.grant(Authorizable.fromEntityId(ds22), BOB, Collections.singleton(StandardPermission.UPDATE));
       DefaultAccessEnforcer authEnforcementService =
-        new DefaultAccessEnforcer(CCONF, SCONF, accessControllerInstantiator);
+        new DefaultAccessEnforcer(CCONF, SCONF, accessControllerInstantiator, new TinkCipher(SCONF));
       Assert.assertEquals(namespaces.size(), authEnforcementService.isVisible(namespaces, ALICE).size());
       // bob should also be able to list two namespaces since he has privileges on the dataset in both namespaces
       Assert.assertEquals(namespaces.size(), authEnforcementService.isVisible(namespaces, BOB).size());
@@ -212,12 +213,13 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
 
     Principal userWithCredEncrypted = new Principal(
       "userFoo", Principal.PrincipalType.USER, null,
-      cipher.encryptToBase64("credential".getBytes(), null));
+      cipher.encryptToBase64("credential".getBytes()));
 
     try (AccessControllerInstantiator accessControllerInstantiator =
            new AccessControllerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
       AccessController accessController = accessControllerInstantiator.get();
-      DefaultAccessEnforcer accessEnforcer = new DefaultAccessEnforcer(CCONF, sConfCopy, accessControllerInstantiator);
+      DefaultAccessEnforcer accessEnforcer = new DefaultAccessEnforcer(CCONF, sConfCopy, accessControllerInstantiator,
+                                                                       new TinkCipher(sConfCopy));
 
       assertAuthorizationFailure(accessEnforcer, NS, userWithCredEncrypted, StandardPermission.UPDATE);
 
@@ -250,8 +252,8 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
       accessController.grant(Authorizable.fromEntityId(NS), userWithCredEncrypted,
                              ImmutableSet.of(StandardPermission.GET, StandardPermission.GET));
 
-      DefaultAccessEnforcer accessEnforcer = new DefaultAccessEnforcer(CCONF, sConfCopy, accessControllerInstantiator);
-
+      DefaultAccessEnforcer accessEnforcer = new DefaultAccessEnforcer(CCONF, sConfCopy, accessControllerInstantiator,
+                                                                       new TinkCipher(sConfCopy));
       accessEnforcer.enforce(NS, userWithCredEncrypted, StandardPermission.GET);
     }
   }
@@ -264,13 +266,13 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
 
     Principal userWithCredEncrypted = new Principal(
       "userFoo", Principal.PrincipalType.USER, null,
-      cipher.encryptToBase64("credential".getBytes(), null));
+      cipher.encryptToBase64("credential".getBytes()));
 
     try (AccessControllerInstantiator accessControllerInstantiator =
            new AccessControllerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
       AccessController accessController = accessControllerInstantiator.get();
-      DefaultAccessEnforcer accessEnforcer = new DefaultAccessEnforcer(CCONF, sConfCopy, accessControllerInstantiator);
-
+      DefaultAccessEnforcer accessEnforcer = new DefaultAccessEnforcer(CCONF, sConfCopy, accessControllerInstantiator,
+                                                                       new TinkCipher(sConfCopy));
       Set<NamespaceId> namespaces = ImmutableSet.of(NS);
 
       Assert.assertEquals(0, accessEnforcer.isVisible(namespaces, userWithCredEncrypted).size());
@@ -290,7 +292,7 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
     try (AccessControllerInstantiator accessControllerInstantiator =
            new AccessControllerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
       DefaultAccessEnforcer accessEnforcer =
-        new DefaultAccessEnforcer(cConfCopy, SCONF, accessControllerInstantiator);
+        new DefaultAccessEnforcer(cConfCopy, SCONF, accessControllerInstantiator, new TinkCipher(SCONF));
       NamespaceId ns1 = new NamespaceId("ns1");
       accessEnforcer.enforce(NamespaceId.SYSTEM, systemUser, EnumSet.allOf(StandardPermission.class));
       accessEnforcer.enforce(NamespaceId.SYSTEM, systemUser, StandardPermission.GET);
@@ -304,7 +306,7 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
     try (AccessControllerInstantiator accessControllerInstantiator =
            new AccessControllerInstantiator(cConf, AUTH_CONTEXT_FACTORY)) {
       DefaultAccessEnforcer authEnforcementService =
-        new DefaultAccessEnforcer(cConf, SCONF, accessControllerInstantiator);
+        new DefaultAccessEnforcer(cConf, SCONF, accessControllerInstantiator, new TinkCipher(SCONF));
       DatasetId ds = NS.dataset("ds");
       // All enforcement operations should succeed, since authorization is disabled
       accessControllerInstantiator.get().grant(Authorizable.fromEntityId(ds), BOB,

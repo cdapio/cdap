@@ -24,6 +24,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
+import io.cdap.cdap.security.auth.TinkCipher;
 import io.cdap.cdap.security.auth.UserIdentityExtractor;
 import io.cdap.cdap.security.guice.SecurityModules;
 import org.apache.commons.net.DefaultSocketFactory;
@@ -86,7 +87,8 @@ public class NettyRouterHttpTest extends NettyRouterTestBase {
         new NettyRouter(cConf, sConfiguration, InetAddresses.forString(hostname),
                         new RouterServiceLookup(cConf, (DiscoveryServiceClient) discoveryService,
                                                 new RouterPathLookup()),
-                        new SuccessTokenValidator(), userIdentityExtractor, discoveryServiceClient);
+                        new SuccessTokenValidator(), userIdentityExtractor, discoveryServiceClient,
+                        new TinkCipher(sConfiguration));
       router.startAndWait();
     }
 

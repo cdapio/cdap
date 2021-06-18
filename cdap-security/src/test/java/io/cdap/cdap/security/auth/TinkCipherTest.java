@@ -25,51 +25,74 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class TinkCipherTest {
+  protected static final Logger LOG = LoggerFactory.getLogger(TestTokenManager.class);
+
   @Test
-  public void testEncryptionAndDecryption() throws CipherException, IOException, GeneralSecurityException {
-    SConfiguration sConf = SConfiguration.create();
-    sConf.set(Constants.Security.Authentication.USER_CREDENTIAL_ENCRYPTION_KEYSET, generateKeySet());
-
-    TinkCipher cipher = new TinkCipher(sConf);
-
-    byte[] plainData = generateRandomBytes(2 * 1024);
-    byte[] associatedData = generateRandomBytes(64);
-    byte[] cipherData = cipher.encrypt(plainData, associatedData);
-    byte[] decryptedData = cipher.decrypt(cipherData, associatedData);
-    Assert.assertArrayEquals(plainData, decryptedData);
-
-    String cipherDataBase64Encoded = cipher.encryptToBase64(plainData, associatedData);
-    decryptedData = cipher.decryptFromBase64(cipherDataBase64Encoded, associatedData);
-    Assert.assertArrayEquals(plainData, decryptedData);
+  public void testSimpleEncryptionAndDecryption() throws CipherException, IOException, GeneralSecurityException {
+    int totalIterations = 10;
+    testEncryptionAndDecryption(totalIterations);
   }
 
-  @Test(expected = CipherException.class)
+  @Test(expected = IllegalStateException.class)
   public void testInitException() throws CipherException {
     SConfiguration sConf = SConfiguration.create();
     sConf.set(Constants.Security.Authentication.USER_CREDENTIAL_ENCRYPTION_KEYSET, "invalid keyset");
-
     TinkCipher cipher = new TinkCipher(sConf);
   }
 
-  @Test(expected = CipherException.class)
-  public void testDecryptExceptionTagMismatch() throws CipherException, IOException, GeneralSecurityException {
+  @Test
+  public void testDecryptExceptionCorruptionWithConcurrency() throws InterruptedException, ExecutionException {
+    int numberOfThreads = 10;
+    int iterationsPerThread = 100;
+    ExecutorService executorService = Executors.newFixedThreadPool(numberOfThreads);
+    CountDownLatch latch = new CountDownLatch(numberOfThreads);
+    AtomicInteger exceptionCount = new AtomicInteger(0);
+    for (int i = 0; i < numberOfThreads; i++) {
+      executorService.submit(() -> {
+        try {
+          testEncryptionAndDecryption(iterationsPerThread);
+        } catch (Exception e) {
+          exceptionCount.getAndAdd(1);
+        } finally {
+          latch.countDown();
+        }
+      });
+    }
+    latch.await();
+    Assert.assertEquals(0, exceptionCount.get());
+  }
+
+  private void testEncryptionAndDecryption(int totalIterations)
+    throws CipherException, IOException, GeneralSecurityException {
     SConfiguration sConf = SConfiguration.create();
     sConf.set(Constants.Security.Authentication.USER_CREDENTIAL_ENCRYPTION_KEYSET, generateKeySet());
 
-    TinkCipher cipher = new TinkCipher(sConf);
+    for (int iterCount = 0; iterCount < totalIterations; iterCount++) {
+      TinkCipher cipher = new TinkCipher(sConf);
 
-    byte[] plainData = generateRandomBytes(128);
-    byte[] associatedData = generateRandomBytes(64);
-    byte[] cipherData = cipher.encrypt(plainData, associatedData);
-    byte[] invalidAssociatedData = generateRandomBytes(64);
-    byte[] decryptedData = cipher.decrypt(cipherData, invalidAssociatedData);
+      byte[] plainData = generateRandomBytes(2 * 1024);
+      byte[] cipherData = cipher.encrypt(plainData);
+      byte[] decryptedData = cipher.decrypt(cipherData);
+      Assert.assertArrayEquals(plainData, decryptedData);
+
+      String cipherDataBase64Encoded = cipher.encryptToBase64(plainData);
+      decryptedData = cipher.decryptFromBase64(cipherDataBase64Encoded);
+      Assert.assertArrayEquals(plainData, decryptedData);
+    }
   }
 
   @Test(expected = CipherException.class)
@@ -81,10 +104,10 @@ public class TinkCipherTest {
 
     byte[] plainData = generateRandomBytes(128);
     byte[] associatedData = generateRandomBytes(64);
-    byte[] cipherData = cipher.encrypt(plainData, associatedData);
+    byte[] cipherData = cipher.encrypt(plainData);
     // Intentionally corrupt the cipher data.
     cipherData[0] = 0;
-    byte[] decryptedData = cipher.decrypt(cipherData, associatedData);
+    byte[] decryptedData = cipher.decrypt(cipherData);
   }
 
   private String generateKeySet() throws IOException, GeneralSecurityException {

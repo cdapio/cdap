@@ -29,6 +29,7 @@ import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.security.auth.AuthenticationMode;
+import io.cdap.cdap.security.auth.TinkCipher;
 import io.cdap.cdap.security.auth.TokenValidator;
 import io.cdap.cdap.security.auth.UserIdentityExtractor;
 import io.cdap.cdap.security.guice.SecurityModules;
@@ -134,7 +135,8 @@ public class AuthServerAnnounceTest {
         new NettyRouter(cConf, sConfiguration, InetAddresses.forString(hostname),
                         new RouterServiceLookup(cConf, (DiscoveryServiceClient) discoveryService,
                                                 new RouterPathLookup()),
-                        validator, userIdentityExtractor, discoveryServiceClient);
+                        validator, userIdentityExtractor, discoveryServiceClient,
+                        new TinkCipher(sConfiguration));
       router.startAndWait();
     }
 

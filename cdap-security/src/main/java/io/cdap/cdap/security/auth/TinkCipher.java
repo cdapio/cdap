@@ -24,16 +24,14 @@ import com.google.crypto.tink.aead.AeadConfig;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.Base64;
-import javax.annotation.Nullable;
 
 /**
  * Tink cipher that allows encrypting and decrypting data using keyset stored in {@link SConfiguration}
  */
-public class TinkCipher {
+public class TinkCipher implements Cipher {
   /**
    * Wraps a keyset with some additional parameters and metadata.
    */
@@ -44,12 +42,7 @@ public class TinkCipher {
    */
   private final Aead aead;
 
-  /**
-   * Default associated data to use if none is specified
-   */
-  private static final byte[] DEFAULT_ASSOCIATED_DATA = "DefaultAssociatedData".getBytes(StandardCharsets.UTF_8);
-
-  public TinkCipher(SConfiguration sConf) throws CipherException {
+  public TinkCipher(SConfiguration sConf) {
     try {
       // Init Tink with AEAD primitive
       AeadConfig.register();
@@ -59,10 +52,8 @@ public class TinkCipher {
       this.keysetHandle = CleartextKeysetHandle.read(JsonKeysetReader.withString(jsonKeyset));
 
       this.aead = keysetHandle.getPrimitive(Aead.class);
-    } catch (GeneralSecurityException e) {
-      throw new CipherException("Failed to init Tink cipher: " + e.getMessage(), e);
-    } catch (IOException e) {
-      throw new CipherException("Failed to load Tink keyset: " + e.getMessage(), e);
+    } catch (Exception e) {
+      throw new IllegalStateException("Failed to create TinkCipher: " + e.getMessage(), e);
     }
   }
 
@@ -70,16 +61,12 @@ public class TinkCipher {
    * Encrypt the data.
    *
    * @param plainData data to be encrypted
-   * @param associatedData used for integrity checking during decryption.
    * @return encrypted data
    * @throws CipherException if encryption fails
    */
-  public byte[] encrypt(byte[] plainData, @Nullable byte[] associatedData) throws CipherException {
+  public byte[] encrypt(byte[] plainData) throws CipherException {
     try {
-      if (associatedData == null) {
-        associatedData = DEFAULT_ASSOCIATED_DATA;
-      }
-      return aead.encrypt(plainData, associatedData);
+      return aead.encrypt(plainData, null);
     } catch (GeneralSecurityException e) {
       throw new CipherException("Failed to encrypt: " + e.getMessage(), e);
     }
@@ -89,40 +76,34 @@ public class TinkCipher {
    * Encrypt the string and return encrypted data in base64 encoded form.
    *
    * @param plainData data to be encrypted
-   * @param associatedData used for integrity checking during decryption.
    * @return encrypted data in base64 encoded form
    * @throws CipherException if encryption fails
    */
-  public String encryptStringToBase64(String plainData, @Nullable byte[] associatedData) throws CipherException {
-    return Base64.getEncoder().encodeToString(encrypt(plainData.getBytes(), associatedData));
+  public String encryptStringToBase64(String plainData) throws CipherException {
+    return Base64.getEncoder().encodeToString(encrypt(plainData.getBytes()));
   }
 
   /**
    * Encrypt the data and return encrypted data in base64 encoded form.
    *
    * @param plainData data to be encrypted
-   * @param associatedData used for integrity checking during decryption.
    * @return encrypted data in base64 encoded form
    * @throws CipherException if encryption fails
    */
-  public String encryptToBase64(byte[] plainData, @Nullable byte[] associatedData) throws CipherException {
-    return Base64.getEncoder().encodeToString(encrypt(plainData, associatedData));
+  public String encryptToBase64(byte[] plainData) throws CipherException {
+    return Base64.getEncoder().encodeToString(encrypt(plainData));
   }
 
   /**
    * Decrypt the cipher data.
    *
    * @param cipherData data to be decrypted
-   * @param associatedData used for integrity checking, must be the same as that used during encryption.
    * @return decrypted data
    * @throws CipherException if decryption fails
    */
-  public byte[] decrypt(byte[] cipherData, @Nullable byte[] associatedData) throws CipherException {
+  public byte[] decrypt(byte[] cipherData) throws CipherException {
     try {
-      if (associatedData == null) {
-        associatedData = DEFAULT_ASSOCIATED_DATA;
-      }
-      return aead.decrypt(cipherData, associatedData);
+      return aead.decrypt(cipherData, null);
     } catch (GeneralSecurityException e) {
       throw new CipherException("Failed to decrypt: " + e.getMessage(), e);
     }
@@ -132,24 +113,22 @@ public class TinkCipher {
    * Decrypt the cipher data that was base64 encoded.
    *
    * @param cipherData data in base64 encoded form that needs to be decrypted
-   * @param associatedData used for integrity checking, must be the same as that used during encryption.
    * @return decrypted data
    * @throws CipherException if decryption fails
    */
-  public byte[] decryptFromBase64(String cipherData, byte[] associatedData) throws CipherException {
-    return decrypt(Base64.getDecoder().decode(cipherData), associatedData);
+  public byte[] decryptFromBase64(String cipherData) throws CipherException {
+    return decrypt(Base64.getDecoder().decode(cipherData));
   }
 
   /**
    * Decrypt the cipher data that was encrypted and base-encoded from a string.
    *
    * @param cipherData data in base64 encoded form that needs to be decrypted
-   * @param associatedData used for integrity checking, must be the same as that used during encryption.
    * @return decrypted data
    * @throws CipherException if decryption fails
    */
-  public String decryptStringFromBase64(String cipherData, byte[] associatedData) throws CipherException {
-    return new String(decrypt(Base64.getDecoder().decode(cipherData), associatedData), StandardCharsets.UTF_8);
+  public String decryptStringFromBase64(String cipherData) throws CipherException {
+    return new String(decrypt(Base64.getDecoder().decode(cipherData)), StandardCharsets.UTF_8);
   }
 }
 

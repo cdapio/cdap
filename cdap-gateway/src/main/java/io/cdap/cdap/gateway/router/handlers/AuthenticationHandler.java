@@ -25,8 +25,8 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.logging.AuditLogEntry;
 import io.cdap.cdap.common.utils.Networks;
+import io.cdap.cdap.security.auth.Cipher;
 import io.cdap.cdap.security.auth.CipherException;
-import io.cdap.cdap.security.auth.TinkCipher;
 import io.cdap.cdap.security.auth.UserIdentityExtractionResponse;
 import io.cdap.cdap.security.auth.UserIdentityExtractionState;
 import io.cdap.cdap.security.auth.UserIdentityExtractor;
@@ -84,10 +84,12 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
   private final List<String> authServerURLs;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final UserIdentityExtractor userIdentityExtractor;
+  private final Cipher cipher;
 
   public AuthenticationHandler(CConfiguration cConf, SConfiguration sConf,
                                DiscoveryServiceClient discoveryServiceClient,
-                               UserIdentityExtractor userIdentityExtractor) {
+                               UserIdentityExtractor userIdentityExtractor,
+                               Cipher cipher) {
     this.cConf = cConf;
     this.sConf = sConf;
     this.realm = cConf.get(Constants.Security.CFG_REALM);
@@ -96,6 +98,7 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
     this.authServerURLs = getConfiguredAuthServerURLs(cConf);
     this.discoveryServiceClient = discoveryServiceClient;
     this.userIdentityExtractor = userIdentityExtractor;
+    this.cipher = cipher;
   }
 
   @Override
@@ -237,7 +240,7 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
       !sConf.getBoolean(Constants.Security.Authentication.USER_CREDENTIAL_ENCRYPTION_ENABLED, false)) {
       return userCredential;
     }
-    return new TinkCipher(sConf).encryptStringToBase64(userCredential, null);
+    return cipher.encryptStringToBase64(userCredential);
   }
 
   private void addAuthServerUrls(Iterable<Discoverable> discoverables, String protocol, int port, JsonArray result) {

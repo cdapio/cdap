@@ -27,6 +27,7 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
+import io.cdap.cdap.security.auth.TinkCipher;
 import io.cdap.cdap.security.auth.UserIdentityExtractor;
 import io.cdap.cdap.security.guice.SecurityModules;
 import io.cdap.http.AbstractHttpHandler;
@@ -76,7 +77,8 @@ public class RoutingToDataSetsTest {
     cConf.setInt(Constants.Router.ROUTER_PORT, port);
     nettyRouter = new NettyRouter(cConf, sConf, InetAddresses.forString("127.0.0.1"),
                                   new RouterServiceLookup(cConf, discoveryServiceClient, new RouterPathLookup()),
-                                  new SuccessTokenValidator(), userIdentityExtractor, discoveryServiceClient);
+                                  new SuccessTokenValidator(), userIdentityExtractor, discoveryServiceClient,
+                                  new TinkCipher(sConf));
     nettyRouter.startAndWait();
 
     // Starting mock DataSet service

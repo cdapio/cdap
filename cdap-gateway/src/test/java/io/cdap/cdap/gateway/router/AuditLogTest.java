@@ -30,6 +30,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;
+import io.cdap.cdap.security.auth.TinkCipher;
 import io.cdap.cdap.security.auth.TokenValidator;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
@@ -98,7 +99,8 @@ public class AuditLogTest {
 
     TokenValidator successValidator = new SuccessTokenValidator();
     router = new NettyRouter(cConf, sConf, InetAddress.getLoopbackAddress(), serviceLookup, successValidator,
-                             new MockAccessTokenIdentityExtractor(successValidator), discoveryService);
+                             new MockAccessTokenIdentityExtractor(successValidator), discoveryService,
+                             new TinkCipher(sConf));
     router.startAndWait();
 
     httpService = NettyHttpService.builder("test").setHttpHandlers(new TestHandler()).build();

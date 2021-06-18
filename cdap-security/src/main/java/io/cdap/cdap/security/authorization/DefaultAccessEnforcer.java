@@ -29,12 +29,11 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.security.auth.Cipher;
 import io.cdap.cdap.security.auth.CipherException;
-import io.cdap.cdap.security.auth.TinkCipher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -55,16 +54,19 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
   @Nullable
   private final Principal masterUser;
   private final int logTimeTakenAsWarn;
+  private final Cipher cipher;
 
   @Inject
   DefaultAccessEnforcer(CConfiguration cConf, SConfiguration sConf,
-                        AccessControllerInstantiator accessControllerInstantiator) {
+                        AccessControllerInstantiator accessControllerInstantiator,
+                        Cipher cipher) {
     super(cConf);
     this.sConf = sConf;
     this.accessControllerInstantiator = accessControllerInstantiator;
     String masterUserName = AuthorizationUtil.getEffectiveMasterUser(cConf);
     this.masterUser = masterUserName == null ? null : new Principal(masterUserName, Principal.PrincipalType.USER);
     this.logTimeTakenAsWarn = cConf.getInt(Constants.Security.Authorization.EXTENSION_OPERATION_TIME_WARN_THRESHOLD);
+    this.cipher = cipher;
   }
 
   @Override
@@ -179,9 +181,8 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
     // When user credential encryption is enabled, credential should be encrypted upon arrival
     // at router and decrypted right here before calling auth extension.
     try {
-      String plainCredential = new String(new TinkCipher(sConf).decryptFromBase64(principle.getCredential(),
-                                                                                  null),
-                                          StandardCharsets.UTF_8);
+      String plainCredential = cipher.decryptStringFromBase64(principle.getCredential());
+
       return new Principal(principle.getName(),
                            principle.getType(),
                            principle.getKerberosPrincipal(),
