@@ -139,6 +139,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final NamespacePathLocator namespacePathLocator;
   private final ApplicationLifecycleService applicationLifecycleService;
   private final File tmpDir;
+  private final JsonArray jtabl = new JsonArray();
 
   @Inject
   AppLifecycleHttpHandler(CConfiguration configuration,
@@ -253,6 +254,49 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(apps));
   }
 
+  /**
+   * Sample Message
+   */
+  @GET
+  @Path("/msg")
+  public void getMessage(HttpRequest request, HttpResponder responder,
+                         @PathParam("namespace-id") String namespaceId) throws Exception {
+    String mesg = "Hello, This is the Message";
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(mesg));
+  }
+
+  /**
+   * Prints out contents of the Table
+   */
+  @GET
+  @Path("/tbl")
+  public void getTabl(HttpRequest request, HttpResponder responder,
+                      @PathParam("namespace-id") String namespaceId) throws Exception {
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(this.jtabl));
+  }
+
+  /**
+   * Appends JSON objects to the Table
+   */
+  @POST
+  @Path("/tbl/add")
+  public void addTablObj(FullHttpRequest request, HttpResponder responder,
+                         @PathParam("namespace-id") String namespaceId) throws Exception {
+    JsonArray array = DECODE_GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), JsonArray.class);
+    if (array == null) {
+      throw new BadRequestException("Request body is invalid json, please check that it is a json array.");
+    }
+    for (JsonElement obj : array) {
+      jtabl.add(obj);
+    }
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(this.jtabl));
+  }
+  @POST
+  @Path("/tbl/append")
+  public void appTablObj(FullHttpRequest request, HttpResponder responder,
+                         @PathParam("namespace-id") String namespaceId) throws Exception {
+    
+  }
   /**
    * Returns the info associated with the application.
    */
