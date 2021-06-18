@@ -479,11 +479,11 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       StatefulRunnable statefulRunnable = statefulRunnables.get(mainRuntimeSpec.getName());
       Type resourceType = statefulRunnable == null ? V1Deployment.class : V1StatefulSet.class;
 
-
-      if (extraLabels.containsKey("cdap.container")) {
-        LOG.info("### Got key cdap.container with value {}", extraLabels.get("cdap.container"));
-        String value = extraLabels.get("cdap.container");
-        if (value.equalsIgnoreCase("DataPipelineWorkflow")) {
+      LOG.info("### this is vinisha code.");
+      if (extraLabels.containsKey("cdap.twill.app")) {
+        LOG.info("### Got key cdap.twill.app with value {}", extraLabels.get("cdap.twill.app"));
+        String value = extraLabels.get("cdap.twill.app");
+        if (value.contains("workflow")) {
           resourceType = V1Job.class;
           LOG.info("### Resource type is Job");
         }
@@ -515,12 +515,14 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private V1ObjectMeta createJob(V1ObjectMeta metadata, Map<String, RuntimeSpecification> runtimeSpecs,
                                  Location runtimeConfigLocation)
     throws ApiException {
+    apiClient.setDebugging(true);
     BatchV1Api appsApi = new BatchV1Api(apiClient);
 
     V1Job job = buildJob(metadata, runtimeSpecs, runtimeConfigLocation);
 
     job = appsApi.createNamespacedJob(kubeNamespace, job, "true", null, null);
-    LOG.info("Created Deployment {} in Kubernetes", metadata.getName());
+    LOG.info("### Created Job {} in Kubernetes", metadata.getName());
+    apiClient.setDebugging(false);
     return job.getMetadata();
   }
 
@@ -530,15 +532,14 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    */
   private V1Job buildJob(V1ObjectMeta metadata, Map<String, RuntimeSpecification> runtimeSpecs,
                          Location runtimeConfigLocation) {
-    //int replicas = getMainRuntimeSpecification(runtimeSpecs).getResourceSpecification().getInstances();
     return new V1JobBuilder()
-      .withKind("Job")
       .withMetadata(metadata)
       .withNewSpec()
+      .withManualSelector(true)
       .withSelector(new V1LabelSelector().matchLabels(metadata.getLabels()))
       .withNewTemplate()
       .withMetadata(metadata)
-      .withSpec(createPodSpec(runtimeConfigLocation, runtimeSpecs))
+      .withSpec(createJobPodSpec(runtimeConfigLocation, runtimeSpecs))
       .endTemplate()
       .endSpec()
       .build();
@@ -866,7 +867,75 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       serviceAccountName = podInfo.getServiceAccountName();
     }
     return podSpecBuilder
-      .withServiceAccountName(serviceAccountName)
+      .withRuntimeClassName(podInfo.getRuntimeClassName())
+      .addAllToVolumes(podInfo.getVolumes())
+      .addAllToVolumes(secretVolumes)
+      .addToVolumes(podInfoVolume,
+                    new V1Volume().name("workdir").emptyDir(new V1EmptyDirVolumeSource()))
+      .withInitContainers(createContainer("file-localizer", podInfo.getContainerImage(), workDir,
+                                          initContainerResourceRequirements, volumeMounts, initContainerEnvirons,
+                                          FileLocalizer.class,
+                                          runtimeConfigLocation.toURI().toString(),
+                                          mainRuntimeSpec.getName()))
+      .withContainers(createContainers(runtimeSpecs, workDir, volumeMounts))
+      .withSecurityContext(podInfo.getSecurityContext())
+      .build();
+  }
+
+  /**
+   * Creates a {@link V1PodSpec} for specifying pod information for running the given runnable.
+   *
+   * @param runtimeConfigLocation the {@link Location} containing the runtime config archive
+   * @param runtimeSpecs the specifiction for the {@link TwillRunnable} and its resources requirements
+   * @return a {@link V1PodSpec}
+   */
+  private V1PodSpec createJobPodSpec(Location runtimeConfigLocation,
+                                  Map<String, RuntimeSpecification> runtimeSpecs, V1VolumeMount... extraMounts) {
+    String workDir = "/workDir-" + twillRunId.getId();
+
+    V1Volume podInfoVolume = createPodInfoVolume(podInfo);
+
+    RuntimeSpecification mainRuntimeSpec = getMainRuntimeSpecification(runtimeSpecs);
+    String runnableName = mainRuntimeSpec.getName();
+    V1ResourceRequirements initContainerResourceRequirements =
+      createResourceRequirements(mainRuntimeSpec.getResourceSpecification());
+
+    // Add volume mounts to the container. Add those from the current pod for mount cdap and hadoop conf.
+    List<V1VolumeMount> volumeMounts = new ArrayList<>(podInfo.getContainerVolumeMounts());
+    volumeMounts.add(new V1VolumeMount().name(podInfoVolume.getName())
+                       .mountPath(podInfo.getPodInfoDir()).readOnly(true));
+    // Add the working directory the file localization by the init container
+    volumeMounts.add(new V1VolumeMount().name("workdir").mountPath(workDir));
+    volumeMounts.addAll(Arrays.asList(extraMounts));
+
+    // Add secret disks as secret volume mounts
+    List<V1Volume> secretVolumes = new ArrayList<>();
+    if (secretDiskRunnables.containsKey(runnableName)) {
+      for (SecretDisk secretDisk : secretDiskRunnables.get(runnableName).getSecretDisks()) {
+        String secretName = secretDisk.getName();
+        String mountPath = secretDisk.getPath();
+        secretVolumes.add(new V1Volume().name(secretName).secret(new V1SecretVolumeSource()
+                                                                   .secretName(secretName)));
+        volumeMounts.add(new V1VolumeMount().name(secretName).mountPath(mountPath).readOnly(true));
+      }
+    }
+
+    // Setup the container environment. Inherit everything from the current pod.
+    Map<String, String> initContainerEnvirons = podInfo.getContainerEnvironments().stream()
+      .collect(Collectors.toMap(V1EnvVar::getName, V1EnvVar::getValue));
+    // Add all environments of the the main runnable for the init container.
+    if (environments.get(mainRuntimeSpec.getName()) != null) {
+      initContainerEnvirons.putAll(environments.get(mainRuntimeSpec.getName()));
+    }
+    V1PodSpecBuilder podSpecBuilder = new V1PodSpecBuilder();
+    if (schedulerQueue != null) {
+      podSpecBuilder = podSpecBuilder.withPriorityClassName(schedulerQueue);
+    }
+    if (serviceAccountName == null) {
+      serviceAccountName = podInfo.getServiceAccountName();
+    }
+    return podSpecBuilder
+      .withRestartPolicy("Never")
       .withRuntimeClassName(podInfo.getRuntimeClassName())
       .addAllToVolumes(podInfo.getVolumes())
       .addAllToVolumes(secretVolumes)

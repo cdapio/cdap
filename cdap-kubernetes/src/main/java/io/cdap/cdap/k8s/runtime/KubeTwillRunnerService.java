@@ -123,7 +123,8 @@ public class KubeTwillRunnerService implements TwillRunnerService {
     String selector = String.format("%s=%s,%s", RUNNER_LABEL, RUNNER_LABEL_VAL, RUN_ID_LABEL);
     this.resourceWatchers = ImmutableMap.of(
       V1Deployment.class, AppResourceWatcherThread.createDeploymentWatcher(kubeNamespace, selector),
-      V1StatefulSet.class, AppResourceWatcherThread.createStatefulSetWatcher(kubeNamespace, selector));
+      V1StatefulSet.class, AppResourceWatcherThread.createStatefulSetWatcher(kubeNamespace, selector),
+      V1Job.class, AppResourceWatcherThread.createJobWatcher(kubeNamespace, selector));
     this.liveInfos = new ConcurrentSkipListMap<>();
     this.liveInfoLock = new ReentrantLock();
   }
