@@ -32,6 +32,7 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.HashMap;
 
 /**
  * ArtifactLocalizerClient is used by tasks that extend {@link io.cdap.cdap.api.service.worker.RunnableTask} to fetch,
@@ -41,6 +42,8 @@ public class ArtifactLocalizerClient {
 
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactLocalizerClient.class);
   private final String sidecarBaseURL;
+  private HashMap<ArtifactId, File> artifactCache = new HashMap<>();
+  private HashMap<ArtifactId, File> unpackedArtifactCache = new HashMap<>();
 
   @Inject
   ArtifactLocalizerClient(CConfiguration cConf) {
@@ -59,7 +62,15 @@ public class ArtifactLocalizerClient {
    * @throws IOException if there was an exception while fetching or caching the artifact
    */
   public File getArtifactLocation(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
-    return sendRequest(artifactId, false);
+    if (artifactCache.containsKey(artifactId)) {
+      File file = artifactCache.get(artifactId);
+      LOG.debug("Path for {} was already fetched during this session, returning path from in-memory cache: {}",
+                artifactId, file.getPath());
+      return file;
+    }
+    File file = sendRequest(artifactId, false);
+    artifactCache.put(artifactId, file);
+    return file;
   }
 
   /**
@@ -72,7 +83,14 @@ public class ArtifactLocalizerClient {
    * @throws IOException if there was an exception while fetching, caching or unpacking the artifact
    */
   public File getUnpackedArtifactLocation(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
-    return sendRequest(artifactId, true);
+    if (unpackedArtifactCache.containsKey(artifactId)) {
+      File file = unpackedArtifactCache.get(artifactId);
+      LOG.debug("Unpacked path for {} was already fetched during this session, returning path from in-memory cache: {}",
+                artifactId, file.getPath());
+    }
+    File file = sendRequest(artifactId, true);
+    unpackedArtifactCache.put(artifactId, file);
+    return file;
   }
 
   private File sendRequest(ArtifactId artifactId, boolean unpack) throws IOException, ArtifactNotFoundException {
