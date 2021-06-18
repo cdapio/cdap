@@ -17,6 +17,8 @@
 package io.cdap.cdap.api.service;
 
 import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.annotation.TransactionControl;
+import io.cdap.cdap.api.annotation.TransactionPolicy;
 import io.cdap.cdap.api.service.http.HttpServiceHandler;
 import io.cdap.cdap.internal.api.AbstractPluginConfigurable;
 
@@ -28,10 +30,12 @@ import java.util.Arrays;
  * The default no-op constructor must be implemented.
  *
  * @param <T> type of service configurer
+ * @param <V> type of service context
  */
-public abstract class AbstractService<T extends ServiceConfigurer> extends AbstractPluginConfigurable<T>
-  implements Service<T> {
+public abstract class AbstractService<T extends ServiceConfigurer, V extends ServiceContext>
+  extends AbstractPluginConfigurable<T> implements Service<T, V> {
   private T configurer;
+  private V context;
 
   @Override
   public final void configure(T serviceConfigurer) {
@@ -99,4 +103,14 @@ public abstract class AbstractService<T extends ServiceConfigurer> extends Abstr
    * Implements this method to configure this Service.
    */
   protected abstract void configure();
+
+  protected V getContext() {
+    return context;
+  }
+
+  @Override
+  @TransactionPolicy(TransactionControl.EXPLICIT)
+  public void initialize(V context) throws Exception {
+    this.context = context;
+  }
 }

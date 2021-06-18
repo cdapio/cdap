@@ -16,25 +16,24 @@
 
 package io.cdap.cdap.api.service.http;
 
-import io.cdap.cdap.api.NamespaceSummary;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.security.AccessException;
+import io.cdap.cdap.api.service.SystemNamespaceAdmin;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 /**
  * A System HttpServiceContext that exposes capabilities beyond those available to service contexts for user services.
  */
 @Beta
-public interface SystemHttpServiceContext extends HttpServiceContext, TransactionRunner {
+public interface SystemHttpServiceContext extends HttpServiceContext, TransactionRunner, SystemNamespaceAdmin {
 
   /**
    * Evaluates lookup macros and the 'secure' macro function using provided macro evaluator.
@@ -106,9 +105,4 @@ public interface SystemHttpServiceContext extends HttpServiceContext, Transactio
    * @return
    */
   boolean isRemoteTaskEnabled();
-
-  /**
-   * List all the namespaces
-   */
-  List<NamespaceSummary> listNamespaces() throws Exception;
 }
