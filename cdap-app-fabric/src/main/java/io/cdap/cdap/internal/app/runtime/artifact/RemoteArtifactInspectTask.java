@@ -30,6 +30,7 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -138,6 +139,7 @@ public class RemoteArtifactInspectTask implements RunnableTask {
       }
     });
     modules.add(new MessagingClientModule());
+    modules.add(new AuthenticationContextModules().getMasterModule());
     modules.add(new AbstractModule() {
       @Override
       protected void configure() {
