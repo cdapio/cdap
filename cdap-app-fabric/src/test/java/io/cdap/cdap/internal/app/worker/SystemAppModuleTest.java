@@ -18,18 +18,22 @@ package io.cdap.cdap.internal.app.worker;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
+import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.security.store.SecureStore;
-import io.cdap.cdap.app.guice.DistributedArtifactManagerModule;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.guice.ZKDiscoveryModule;
+import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
+import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactManager;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.metadata.PreferencesFetcher;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import org.apache.hadoop.conf.Configuration;
@@ -48,7 +52,9 @@ public class SystemAppModuleTest {
       new ZKDiscoveryModule(),
       new ConfigModule(new Configuration()),
       new MessagingClientModule(),
-      new DistributedArtifactManagerModule(),
+      new FactoryModuleBuilder()
+        .implement(ArtifactManager.class, RemoteArtifactManager.class)
+        .build(ArtifactManagerFactory.class),
       new LocalLocationModule(),
       new SecureStoreClientModule(),
       new SystemAppModule());
@@ -59,6 +65,7 @@ public class SystemAppModuleTest {
     injector.getInstance(PluginFinder.class);
     injector.getInstance(DiscoveryServiceClient.class);
     injector.getInstance(SecureStore.class);
-    injector.getInstance(ArtifactManagerFactory.class);
+    ArtifactManagerFactory instance = injector.getInstance(ArtifactManagerFactory.class);
+    instance.create(NamespaceId.DEFAULT, RetryStrategies.noRetry());
   }
 }
