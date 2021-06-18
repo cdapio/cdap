@@ -56,17 +56,10 @@ public class RemoteArtifactInspectTask implements RunnableTask {
     new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
 
   private final CConfiguration cConf;
-  private final AuthenticationContext authenticationContext;
-  private final ArtifactLocalizerClient artifactLocalizerClient;
-
 
   @Inject
-  public RemoteArtifactInspectTask(CConfiguration cConf,
-                                   AuthenticationContext authenticationContext,
-                                   ArtifactLocalizerClient artifactLocalizerClient) {
+  public RemoteArtifactInspectTask(CConfiguration cConf) {
     this.cConf = cConf;
-    this.authenticationContext = authenticationContext;
-    this.artifactLocalizerClient = artifactLocalizerClient;
   }
 
   @Override
@@ -88,6 +81,7 @@ public class RemoteArtifactInspectTask implements RunnableTask {
 
     CloseableClassLoader parentClassLoader = null;
 
+    ArtifactLocalizerClient artifactLocalizerClient = injector.getInstance(ArtifactLocalizerClient.class);
     List<ArtifactDetail> parentArtifacts = req.getParentArtifacts();
     for (ArtifactDetail parentArtifact : parentArtifacts) {
       File unpacked = artifactLocalizerClient.getUnpackedArtifactLocation(
@@ -99,7 +93,7 @@ public class RemoteArtifactInspectTask implements RunnableTask {
 
     ArtifactClassesWithMetadata metadata = null;
     try {
-      File artifactFile = download(req.getArtifactURI());
+      File artifactFile = download(req.getArtifactURI(), injector.getInstance(AuthenticationContext.class));
       metadata = inspector.inspectArtifact(artifactId,
                                            artifactFile, parentClassLoader,
                                            null, req.getAdditionalPlugins());
@@ -111,7 +105,7 @@ public class RemoteArtifactInspectTask implements RunnableTask {
     context.writeResult(GSON.toJson(metadata).getBytes(StandardCharsets.UTF_8));
   }
 
-  private File download(URI uri) throws IOException {
+  private File download(URI uri, AuthenticationContext authenticationContext) throws IOException {
     LOG.warn("wyzhang: RemoteArtifactInspectTask download uri {}", uri);
 
     MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
