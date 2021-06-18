@@ -382,6 +382,7 @@ public final class Constants {
     /**
      * Task worker container configurations
      */
+    public static final String LOCAL_DATA_DIR = "task.worker.local.data.dir";
     public static final String CONTAINER_DISK_SIZE_GB = "task.worker.container.disk.size.gb";
     public static final String CONTAINER_MEMORY_MB = "task.worker.container.memory.mb";
     public static final String CONTAINER_CORES = "task.worker.container.num.cores";
