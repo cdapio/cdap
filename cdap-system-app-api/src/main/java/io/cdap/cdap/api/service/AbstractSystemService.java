@@ -24,7 +24,7 @@ import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
  * system namespace.
  */
 @Beta
-public abstract class AbstractSystemService extends AbstractService<SystemServiceConfigurer> {
+public abstract class AbstractSystemService extends AbstractService<SystemServiceConfigurer, SystemServiceContext> {
 
   /**
    * Create a system table that conforms to the given table specification when the

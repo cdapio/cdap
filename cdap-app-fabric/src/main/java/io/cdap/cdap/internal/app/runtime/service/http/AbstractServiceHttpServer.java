@@ -22,12 +22,15 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import io.cdap.cdap.api.annotation.TransactionControl;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.service.http.HttpServiceHandler;
+import io.cdap.cdap.api.worker.Worker;
+import io.cdap.cdap.api.worker.WorkerContext;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.service.ServiceDiscoverable;
+import io.cdap.cdap.data2.transaction.Transactions;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.services.ServiceHttpServer;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -96,6 +99,16 @@ public abstract class AbstractServiceHttpServer<T> extends AbstractIdleService {
 
   protected abstract List<? extends AbstractDelegatorContext<T>> createDelegatorContexts() throws Exception;
 
+  // this method will run before the netty http service starts
+  protected void initializeService() throws Exception {
+    // no-op
+  }
+
+  // this method will run before the netty http service stops
+  protected void destroyService() throws Exception {
+    // no-op
+  }
+
   /**
    * Creates a {@link NettyHttpService} from the given host, and list of {@link AbstractDelegatorContext}s
    *
@@ -158,6 +171,8 @@ public abstract class AbstractServiceHttpServer<T> extends AbstractIdleService {
     delegatorContexts.addAll(createDelegatorContexts());
     service = createNettyHttpService(delegatorContexts);
 
+    initializeService();
+
     LOG.debug("Starting HTTP server for Service {}", program.getId());
     ProgramId programId = program.getId();
     service.start();
@@ -183,6 +198,7 @@ public abstract class AbstractServiceHttpServer<T> extends AbstractIdleService {
 
   @Override
   protected void shutDown() throws Exception {
+    destroyService();
     cancelDiscovery.cancel();
     try {
       service.stop();

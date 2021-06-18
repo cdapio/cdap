@@ -28,6 +28,9 @@ import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
+import io.cdap.cdap.api.service.AbstractSystemService;
+import io.cdap.cdap.api.service.Service;
+import io.cdap.cdap.api.service.ServiceContext;
 import io.cdap.cdap.api.service.ServiceSpecification;
 import io.cdap.cdap.api.service.http.AbstractSystemHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceContext;
@@ -52,6 +55,8 @@ import io.cdap.cdap.internal.app.runtime.MetricsFieldSetter;
 import io.cdap.cdap.internal.app.runtime.ThrowingRunnable;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import io.cdap.cdap.internal.app.runtime.service.BasicServiceContext;
+import io.cdap.cdap.internal.app.runtime.service.BasicSystemServiceContext;
 import io.cdap.cdap.internal.app.runtime.service.http.AbstractDelegatorContext;
 import io.cdap.cdap.internal.app.runtime.service.http.AbstractServiceHttpServer;
 import io.cdap.cdap.internal.app.runtime.service.http.BasicHttpServiceContext;
@@ -79,11 +84,15 @@ import javax.annotation.Nullable;
 public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHandler> {
 
   private final ServiceSpecification serviceSpecification;
-  private final BasicHttpServiceContext context;
+  private final BasicServiceContext serviceContext;
+  private final BasicHttpServiceContext httpServiceContext;
   private final CConfiguration cConf;
   private final AtomicInteger instanceCount;
   private final BasicHttpServiceContextFactory contextFactory;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final Program program;
+
+  private Service service;
 
   public ServiceHttpServer(String host, Program program, ProgramOptions programOptions,
                            CConfiguration cConf, ServiceSpecification spec,
@@ -109,8 +118,61 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                                                messagingService, artifactManager, metadataReader, metadataPublisher,
                                                pluginFinder, fieldLineageWriter, transactionRunner,
                                                preferencesFetcher, remoteClientFactory, contextAccessEnforcer);
-    this.context = contextFactory.create(null, null);
+
+    Class<?> serviceClass = null;
+    try {
+      serviceClass = program.getClassLoader().loadClass(serviceSpecification.getClassName());
+    } catch (ClassNotFoundException e) {
+      // this should not happen, the service should never be able to get deployed
+    }
+
+    if (serviceClass != null && AbstractSystemService.class.isAssignableFrom(serviceClass)) {
+      this.serviceContext = new BasicSystemServiceContext(spec, program, programOptions, instanceId,
+                                                          this.instanceCount, cConf, metricsCollectionService,
+                                                          datasetFramework, txClient, pluginInstantiator,
+                                                          secureStore, secureStoreManager, messagingService,
+                                                          metadataReader, metadataPublisher, namespaceQueryAdmin,
+                                                          fieldLineageWriter, transactionRunner, remoteClientFactory,
+                                                          artifactManager);
+    } else {
+      this.serviceContext = new BasicServiceContext(spec, program, programOptions, instanceId, this.instanceCount,
+                                                    cConf, metricsCollectionService, datasetFramework, txClient,
+                                                    pluginInstantiator,
+                                                    secureStore, secureStoreManager, messagingService, metadataReader,
+                                                    metadataPublisher, namespaceQueryAdmin, fieldLineageWriter,
+                                                    remoteClientFactory, artifactManager);
+    }
+    this.httpServiceContext = contextFactory.create(null, null);
     this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.program = program;
+  }
+
+  @Override
+  protected void initializeService() throws Exception {
+    super.initializeService();
+    // Instantiate service instance
+    Class<?> serviceClass = program.getClassLoader().loadClass(serviceSpecification.getClassName());
+    @SuppressWarnings("unchecked")
+    TypeToken<Service> serviceType = (TypeToken<Service>) TypeToken.of(serviceClass);
+    service = new InstantiatorFactory(false).get(serviceType).create();
+    // Initialize service
+    // Service is always using Explicit transaction
+    TransactionControl txControl = Transactions.getTransactionControl(TransactionControl.EXPLICIT, Service.class,
+                                                                      service, "initialize", ServiceContext.class);
+    serviceContext.initializeProgram(service, txControl, false);
+  }
+
+  @Override
+  protected void destroyService() throws Exception {
+    super.destroyService();
+    if (service == null) {
+      return;
+    }
+    // Service is always using Explicit transaction
+    TransactionControl txControl = Transactions.getTransactionControl(TransactionControl.EXPLICIT,
+                                                                      Service.class, service, "destroy");
+    serviceContext.destroyProgram(service, txControl, false);
+    serviceContext.close();
   }
 
   @Override
@@ -124,7 +186,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
       @SuppressWarnings("unchecked")
       TypeToken<HttpServiceHandler> type = TypeToken.of((Class<HttpServiceHandler>) handlerClass);
 
-      MetricsContext metrics = context.getProgramMetrics().childContext(
+      MetricsContext metrics = httpServiceContext.getProgramMetrics().childContext(
         BasicHttpServiceContext.createMetricsTags(handlerSpec, getInstanceId()));
       delegatorContexts.add(new HandlerDelegatorContext(type, instantiatorFactory, handlerSpec,
                                                         contextFactory, metrics));
@@ -140,7 +202,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
 
   @Override
   protected LoggingContext getLoggingContext() {
-    return context.getLoggingContext();
+    return httpServiceContext.getLoggingContext();
   }
 
   /**
@@ -210,7 +272,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                                     HttpServiceHandlerSpecification spec,
                                     BasicHttpServiceContextFactory contextFactory,
                                     MetricsContext handlerMetricsContext) {
-      super(handlerType, instantiatorFactory, context.getProgramMetrics(), handlerMetricsContext);
+      super(handlerType, instantiatorFactory, httpServiceContext.getProgramMetrics(), handlerMetricsContext);
       this.spec = spec;
       this.contextFactory = contextFactory;
     }
