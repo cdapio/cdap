@@ -42,6 +42,7 @@ import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.TwillContext;
@@ -99,6 +100,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
         }
       });
       modules.add(new RemoteLogAppenderModule());
+      modules.add(new AuthenticationContextModules().getMasterModule());
     }
 
     return Guice.createInjector(modules);
@@ -111,6 +113,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
     try {
       doInitialize(context);
     } catch (Exception e) {
+      LOG.error("Encountered error while initializing TaskWorkerTwillRunnable", e);
       Throwables.propagateIfPossible(e);
       throw new RuntimeException(e);
     }
