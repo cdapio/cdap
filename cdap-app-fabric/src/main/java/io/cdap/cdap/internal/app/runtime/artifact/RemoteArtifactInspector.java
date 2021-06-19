@@ -103,8 +103,6 @@ public class RemoteArtifactInspector implements ArtifactInspector {
     } catch (Exception e) {
       throw new IOException("Failed to inspect artifact : " + e.getMessage(), e);
     }
-
-    return null;
   }
 
   /**
