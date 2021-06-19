@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.worker.sidecar;
 import com.google.common.io.Files;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
@@ -48,6 +49,7 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
 
   private ArtifactLocalizerService localizerService;
   private CConfiguration cConf;
+  private SConfiguration sConf;
 
   private CConfiguration createCConf(int port) {
     CConfiguration cConf = CConfiguration.create();
@@ -63,7 +65,13 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
     return cConf;
   }
 
+  private SConfiguration createSConf() {
+    return SConfiguration.create();
+  }
+
   private ArtifactLocalizerService setupArtifactLocalizerService(int port) throws IOException {
+    sConf = createSConf();
+
     cConf = createCConf(port);
 
     DiscoveryServiceClient discoveryClient = getInjector().getInstance(DiscoveryServiceClient.class);
@@ -73,7 +81,7 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
     RemoteClientFactory remoteClientFactory = new RemoteClientFactory(discoveryClient,
                                                                       new AuthenticationTestContext());
     ArtifactLocalizerService artifactLocalizerService =
-      new ArtifactLocalizerService(cConf, new ArtifactLocalizer(cConf, remoteClientFactory));
+      new ArtifactLocalizerService(cConf, sConf, new ArtifactLocalizer(cConf, remoteClientFactory));
     // start the service
     artifactLocalizerService.startAndWait();
 
