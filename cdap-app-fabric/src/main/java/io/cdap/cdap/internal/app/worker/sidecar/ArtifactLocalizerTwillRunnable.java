@@ -159,9 +159,7 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
   }
 
   private void doInitialize() throws Exception {
-    CConfiguration cConf = CConfiguration.create();
-    cConf.clear();
-    cConf.addResource(new File(getArgument("cConf")).toURI().toURL());
+    CConfiguration cConf = CConfiguration.create(new File(getArgument("cConf")).toURI().toURL());
 
     Configuration hConf = new Configuration();
     hConf.clear();
