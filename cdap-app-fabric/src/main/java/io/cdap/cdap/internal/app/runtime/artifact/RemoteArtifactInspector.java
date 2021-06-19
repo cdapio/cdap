@@ -99,8 +99,7 @@ public class RemoteArtifactInspector implements ArtifactInspector {
       if (e.getCause().getRemoteExceptionClassName().equals(IOException.class.getName())) {
         throw new IOException(e.getMessage(), e);
       }
-
-      LOG.error("wyzhang: remote artifact inspection exception : {}", e.getCause().getRemoteExceptionClassName());
+      throw new IOException(e.getMessage(), e);
     } catch (Exception e) {
       throw new IOException("Failed to inspect artifact : " + e.getMessage(), e);
     }
