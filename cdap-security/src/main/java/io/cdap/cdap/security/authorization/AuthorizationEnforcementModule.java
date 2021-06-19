@@ -20,6 +20,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
 import io.cdap.cdap.common.runtime.RuntimeModule;
+import io.cdap.cdap.security.auth.Cipher;
+import io.cdap.cdap.security.auth.TinkCipher;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 
@@ -33,6 +35,7 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
+        bind(Cipher.class).to(TinkCipher.class);
         bind(AccessEnforcer.class).to(DefaultAccessEnforcer.class).in(Scopes.SINGLETON);
         bind(ContextAccessEnforcer.class).to(DefaultContextAccessEnforcer.class).in(Scopes.SINGLETON);
       }
@@ -44,6 +47,7 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
+        bind(Cipher.class).to(TinkCipher.class);
         bind(AccessEnforcer.class).to(DefaultAccessEnforcer.class).in(Scopes.SINGLETON);
         bind(ContextAccessEnforcer.class).to(DefaultContextAccessEnforcer.class).in(Scopes.SINGLETON);
       }
@@ -59,6 +63,7 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
+        bind(Cipher.class).to(TinkCipher.class);
         bind(AccessEnforcer.class).to(RemoteAccessEnforcer.class).in(Scopes.SINGLETON);
         bind(ContextAccessEnforcer.class).to(DefaultContextAccessEnforcer.class).in(Scopes.SINGLETON);
       }
@@ -72,6 +77,7 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
+        bind(Cipher.class).to(TinkCipher.class);
         bind(AccessEnforcer.class).to(DefaultAccessEnforcer.class).in(Scopes.SINGLETON);
         bind(ContextAccessEnforcer.class).to(DefaultContextAccessEnforcer.class).in(Scopes.SINGLETON);
       }

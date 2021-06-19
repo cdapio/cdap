@@ -27,6 +27,7 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.Base64;
+import javax.inject.Inject;
 
 /**
  * Tink cipher that allows encrypting and decrypting data using keyset stored in {@link SConfiguration}
@@ -42,6 +43,7 @@ public class TinkCipher implements Cipher {
    */
   private final Aead aead;
 
+  @Inject
   public TinkCipher(SConfiguration sConf) {
     try {
       // Init Tink with AEAD primitive
