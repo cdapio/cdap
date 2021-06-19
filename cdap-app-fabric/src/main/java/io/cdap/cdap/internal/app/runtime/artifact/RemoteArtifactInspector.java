@@ -92,7 +92,7 @@ public class RemoteArtifactInspector implements ArtifactInspector {
       return GSON.fromJson(new String(result, StandardCharsets.UTF_8),
                            ArtifactClassesWithMetadata.class);
     } catch (RemoteExecutionException e) {
-      LOG.error("wyzhang: {}", e);
+      LOG.error("wyzhang:", e);
       if (e.getCause().getRemoteExceptionClassName().equals(InvalidArtifactException.class.getName())) {
         throw new InvalidArtifactException(e.getMessage(), e);
       }

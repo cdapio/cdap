@@ -625,10 +625,12 @@ public class DefaultArtifactRepository implements ArtifactRepository {
                                                       @Nullable List<ArtifactDetail> parentArtifacts,
                                                       Set<PluginClass> additionalPlugins)
     throws IOException, InvalidArtifactException {
+    LOG.error("wyzhang: DefaultArtifactRepository before artifactInspector.inspectArtifact");
     ArtifactClassesWithMetadata artifact = artifactInspector.inspectArtifact(artifactId, artifactFile,
                                                                              parentClassLoader,
                                                                              parentArtifacts,
                                                                              additionalPlugins);
+    LOG.error("wyzhang: DefaultArtifactRepository after artifactInspector.inspectArtifact");
     validatePluginSet(artifact.getArtifactClasses().getPlugins());
     if (additionalPlugins == null || additionalPlugins.isEmpty()) {
       return artifact;
