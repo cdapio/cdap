@@ -627,7 +627,8 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     throws IOException, InvalidArtifactException {
     ArtifactClassesWithMetadata artifact = artifactInspector.inspectArtifact(artifactId, artifactFile,
                                                                              parentClassLoader,
-                                                                             null, additionalPlugins);
+                                                                             parentArtifacts,
+                                                                             additionalPlugins);
     validatePluginSet(artifact.getArtifactClasses().getPlugins());
     if (additionalPlugins == null || additionalPlugins.isEmpty()) {
       return artifact;
