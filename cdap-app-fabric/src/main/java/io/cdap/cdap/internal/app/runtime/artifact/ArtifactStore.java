@@ -325,7 +325,7 @@ public class ArtifactStore {
                                                artifactKey.namespace.equals(NamespaceId.SYSTEM.getNamespace()) ?
                                                  ArtifactScope.SYSTEM : ArtifactScope.USER);
         Location artifactLocation = Locations.getLocationFromAbsolutePath(locationFactory, data.getLocationPath());
-        return new ArtifactDetail(artifactKey.name, new ArtifactDescriptor(artifactId, artifactLocation),
+        return new ArtifactDetail(artifactKey.namespace, new ArtifactDescriptor(artifactId, artifactLocation),
                                   filteredArtifactMeta);
       })
       .collect(collector);
