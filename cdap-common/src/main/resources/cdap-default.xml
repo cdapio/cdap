@@ -4321,7 +4321,7 @@
 
   <property>
     <name>task.worker.container.kill.after.execution</name>
-    <value>true</value>
+    <value>false</value>
     <description>
       If true, kill the task worker container after it executes a request.
     </description>
