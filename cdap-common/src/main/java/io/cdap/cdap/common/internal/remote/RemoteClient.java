@@ -21,6 +21,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.net.HttpHeaders;
 import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
@@ -62,18 +63,21 @@ public class RemoteClient {
   private final HttpRequestConfig httpRequestConfig;
   private final String discoverableServiceName;
   private final String basePath;
+  private final CConfiguration cConf;
   private volatile RemoteAuthenticator authenticator;
 
   RemoteClient(AuthenticationContext authenticationContext, DiscoveryServiceClient discoveryClient,
-               String discoverableServiceName, HttpRequestConfig httpRequestConfig, String basePath) {
-    this(authenticationContext, discoveryClient, discoverableServiceName, httpRequestConfig, basePath, null);
+               CConfiguration cConf, String discoverableServiceName, HttpRequestConfig httpRequestConfig,
+               String basePath) {
+    this(authenticationContext, discoveryClient, cConf, discoverableServiceName, httpRequestConfig, basePath, null);
   }
 
   RemoteClient(AuthenticationContext authenticationContext, DiscoveryServiceClient discoveryClient,
-               String discoverableServiceName, HttpRequestConfig httpRequestConfig, String basePath,
-               @Nullable RemoteAuthenticator authenticator) {
+               CConfiguration cConf, String discoverableServiceName, HttpRequestConfig httpRequestConfig,
+               String basePath, @Nullable RemoteAuthenticator authenticator) {
     this.authenticationContext = authenticationContext;
     this.discoverableServiceName = discoverableServiceName;
+    this.cConf = cConf;
     this.httpRequestConfig = httpRequestConfig;
     this.endpointStrategy = new RandomEndpointStrategy(() -> discoveryClient.discover(discoverableServiceName));
     String cleanBasePath = basePath.startsWith("/") ? basePath.substring(1) : basePath;
@@ -137,7 +141,9 @@ public class RemoteClient {
       setAuthHeader(headers::put, HttpHeaders.AUTHORIZATION, authenticator.getType(), authenticator.getCredentials());
     }
 
-    applyAuthenticationContext(headers::put);
+    if (cConf.getBoolean(Constants.Security.ENFORCE_INTERNAL_AUTH)) {
+      applyAuthenticationContext(headers::put);
+    }
 
     httpRequest = new HttpRequest(request.getMethod(), rewrittenURL, headers,
                       request.getBody(), request.getBodyLength());
@@ -177,7 +183,9 @@ public class RemoteClient {
                     authenticator.getCredentials());
     }
 
-    applyAuthenticationContext(urlConn::setRequestProperty);
+    if (cConf.getBoolean(Constants.Security.ENFORCE_INTERNAL_AUTH)) {
+      applyAuthenticationContext(urlConn::setRequestProperty);
+    }
 
     return urlConn;
   }

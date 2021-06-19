@@ -280,7 +280,7 @@ public abstract class AppFabricTestBase {
     metadataSubscriberService.startAndWait();
     locationFactory = getInjector().getInstance(LocationFactory.class);
     datasetClient = new DatasetClient(getClientConfig(discoveryClient, Constants.Service.DATASET_MANAGER));
-    remoteClientFactory = new RemoteClientFactory(discoveryClient, new AuthenticationTestContext());
+    remoteClientFactory = new RemoteClientFactory(discoveryClient, new AuthenticationTestContext(), cConf);
     metadataClient = new MetadataClient(getClientConfig(discoveryClient, Constants.Service.METADATA_SERVICE));
     metadataServiceClient = new DefaultMetadataServiceClient(remoteClientFactory);
     metricStore = injector.getInstance(MetricStore.class);

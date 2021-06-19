@@ -17,6 +17,7 @@
 package io.cdap.cdap.common.internal.remote;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.common.http.HttpRequestConfig;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -30,16 +31,19 @@ public class RemoteClientFactory {
 
   private final DiscoveryServiceClient discoveryClient;
   private final AuthenticationContext authenticationContext;
+  private final CConfiguration cConf;
 
   @Inject @VisibleForTesting
-  public RemoteClientFactory(DiscoveryServiceClient discoveryClient, AuthenticationContext authenticationContext) {
+  public RemoteClientFactory(DiscoveryServiceClient discoveryClient, AuthenticationContext authenticationContext,
+                             CConfiguration cConf) {
     this.discoveryClient = discoveryClient;
     this.authenticationContext = authenticationContext;
+    this.cConf = cConf;
   }
 
   public RemoteClient createRemoteClient(String discoverableServiceName,
                                          HttpRequestConfig httpRequestConfig, String basePath) {
-    return new RemoteClient(authenticationContext, discoveryClient, discoverableServiceName, httpRequestConfig,
+    return new RemoteClient(authenticationContext, discoveryClient, cConf, discoverableServiceName, httpRequestConfig,
                             basePath);
   }
 }

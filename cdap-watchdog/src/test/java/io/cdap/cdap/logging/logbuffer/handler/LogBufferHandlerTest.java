@@ -106,7 +106,7 @@ public class LogBufferHandlerTest {
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     discoveryService.register(new Discoverable(Constants.Service.LOG_BUFFER_SERVICE, httpService.getBindAddress()));
     RemoteClientFactory remoteClientFactory = new RemoteClientFactory(
-      discoveryService, new AuthenticationTestContext());
+      discoveryService, new AuthenticationTestContext(), cConf);
     return new RemoteLogAppender(cConf, remoteClientFactory);
   }
 
