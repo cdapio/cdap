@@ -165,7 +165,7 @@ public class UGIProviderTest {
       discoveryService.register(new Discoverable(Constants.Service.APP_FABRIC_HTTP, httpService.getBindAddress()));
 
       RemoteClientFactory remoteClientFactory = new RemoteClientFactory(discoveryService,
-                                                                        new AuthenticationTestContext());
+                                                                        new AuthenticationTestContext(), cConf);
       RemoteUGIProvider ugiProvider = new RemoteUGIProvider(cConf, locationFactory,
                                                             ownerAdmin,
                                                             remoteClientFactory);
