@@ -271,8 +271,8 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
                 .withIdentity(twillSystemIdentity).build();
               twillPreparer = ((SecureTwillPreparer) twillPreparer).withSecurityContext(runnable, securityContext);
             }
-            String securityName = cConf.get(Constants.Twill.Security.SECRET_DISK_NAME);
-            String securityPath = cConf.get(Constants.Twill.Security.SECRET_DISK_PATH);
+            String securityName = cConf.get(Constants.Twill.Security.MASTER_SECRET_DISK_NAME);
+            String securityPath = cConf.get(Constants.Twill.Security.MASTER_SECRET_DISK_PATH);
             twillPreparer = ((SecureTwillPreparer) twillPreparer)
               .withSecretDisk(runnable, new SecretDisk(securityName, securityPath));
           }
