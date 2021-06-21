@@ -31,8 +31,8 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
-import io.cdap.cdap.security.guice.SecurityModule;
-import io.cdap.cdap.security.guice.SecurityModules;
+import io.cdap.cdap.security.guice.CoreSecurityModules;
+import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.server.ExternalAuthenticationServer;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -60,14 +60,10 @@ public class AuthenticationServiceMain extends AbstractServiceMain<EnvironmentOp
 
     List<Module> modules = new ArrayList<>();
     modules.add(new MessagingClientModule());
-    modules.add(new AuthenticationContextModules().getMasterModule());
-
-    SecurityModule securityModule = SecurityModules.getDistributedModule(cConf);
-    modules.add(securityModule);
-    if (securityModule.requiresZKClient()) {
-      modules.add(new ZKClientModule());
-    }
-
+    modules.add(CoreSecurityModules.getDistributedModule(cConf));
+    modules.add(new AuthenticationContextModules().getInternalAuthMasterModule(cConf));
+    modules.add(new ExternalAuthenticationModule());
+    modules.add(ZKClientModule.getZKClientModuleIfRequired(cConf));
     return modules;
   }
 

@@ -23,7 +23,7 @@ import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.common.utils.ImmutablePair;
-import io.cdap.cdap.security.guice.SecurityModules;
+import io.cdap.cdap.security.guice.CoreSecurityModules;
 
 /**
  * Tests for InMemoryTokenManager that ensure that keys are maintained in memory and can be used to create
@@ -33,7 +33,7 @@ public class TestInMemoryTokenManager extends TestTokenManager {
 
   @Override
   protected ImmutablePair<TokenManager, Codec<AccessToken>> getTokenManagerAndCodec() {
-    Injector injector = Guice.createInjector(new IOModule(), new SecurityModules().getInMemoryModules(),
+    Injector injector = Guice.createInjector(new IOModule(), new CoreSecurityModules().getStandaloneModules(),
                                              new ConfigModule(), new InMemoryDiscoveryModule());
     TokenManager tokenManager = injector.getInstance(TokenManager.class);
     tokenManager.startAndWait();

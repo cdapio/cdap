@@ -28,7 +28,7 @@ import io.cdap.cdap.security.auth.KeyManager;
  * Guice bindings for InMemoryKeyManagers. This extends {@code SecurityModule} to provide
  * an instance of {@code InMemoryKeyManager}.
  */
-final class InMemorySecurityModule extends SecurityModule {
+final class InMemoryCoreSecurityModule extends CoreSecurityModule {
 
   @Override
   protected void bindKeyManager(Binder binder) {

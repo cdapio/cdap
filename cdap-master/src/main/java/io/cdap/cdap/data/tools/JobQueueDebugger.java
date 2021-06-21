@@ -329,7 +329,7 @@ public class JobQueueDebugger extends AbstractIdleService {
       new ExploreClientModule(),
       new DataFabricModules().getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
-      new AppFabricServiceRuntimeModule().getDistributedModules(),
+      new AppFabricServiceRuntimeModule(cConf).getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new SystemDatasetRuntimeModule().getDistributedModules(),
       new KafkaLogAppenderModule(),

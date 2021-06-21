@@ -109,7 +109,7 @@ public class RemoteConfiguratorTest {
     namespaceAdmin.create(NamespaceMeta.SYSTEM);
     namespaceAdmin.create(NamespaceMeta.DEFAULT);
 
-    remoteClientFactory = new RemoteClientFactory(discoveryService, new AuthenticationTestContext());
+    remoteClientFactory = new RemoteClientFactory(discoveryService, new AuthenticationTestContext(), cConf);
     httpService = new CommonNettyHttpServiceBuilder(cConf, "test")
       .setHttpHandlers(
         new TaskWorkerHttpHandlerInternal(cConf, className -> { }),

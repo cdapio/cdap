@@ -45,7 +45,9 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
           // This is needed before we use a InheritableThreadLocal in SecurityRequestContext
           // to remember the user id.
           EventExecutor executor = pipeline.context("dispatcher").executor();
-          pipeline.addBefore(executor, "dispatcher", "authenticator", new AuthenticationChannelHandler());
+          pipeline.addBefore(executor, "dispatcher", "authenticator",
+                             new AuthenticationChannelHandler(cConf.getBoolean(Constants.Security
+                                                                                 .ENFORCE_INTERNAL_AUTH)));
         }
       };
     }

@@ -275,7 +275,7 @@ public class TestBase {
       new IOModule(),
       new LocalLocationModule(),
       new InMemoryDiscoveryModule(),
-      new AppFabricServiceRuntimeModule().getInMemoryModules(),
+      new AppFabricServiceRuntimeModule(cConf).getInMemoryModules(),
       new MonitorHandlerModule(false),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),

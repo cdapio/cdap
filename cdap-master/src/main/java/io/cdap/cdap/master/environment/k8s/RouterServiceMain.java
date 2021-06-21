@@ -33,14 +33,15 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
-import io.cdap.cdap.security.guice.SecurityModule;
-import io.cdap.cdap.security.guice.SecurityModules;
-import io.cdap.cdap.security.impersonation.SecurityUtil;
+import io.cdap.cdap.security.guice.CoreSecurityModules;
+import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
 import org.apache.twill.zookeeper.ZKClientService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -48,6 +49,7 @@ import javax.annotation.Nullable;
  * The main class to run router service.
  */
 public class RouterServiceMain extends AbstractServiceMain<EnvironmentOptions> {
+  private static final Logger LOG = LoggerFactory.getLogger(RouterServiceMain.class);
 
   /**
    * Main entry point
@@ -61,7 +63,6 @@ public class RouterServiceMain extends AbstractServiceMain<EnvironmentOptions> {
                                            EnvironmentOptions options, CConfiguration cConf) {
     List<Module> modules = new ArrayList<>();
 
-    modules.add(new AuthenticationContextModules().getMasterModule());
     modules.add(new MessagingClientModule());
     modules.add(new RouterModules().getDistributedModules());
     modules.add(new DFSLocationModule());
@@ -71,17 +72,11 @@ public class RouterServiceMain extends AbstractServiceMain<EnvironmentOptions> {
   }
 
   private List<Module> getSecurityModules(CConfiguration cConf) {
-    if (!SecurityUtil.isManagedSecurity(cConf)) {
-      return Collections.singletonList(new SecurityModules().getStandaloneModules());
-    }
-
     List<Module> modules = new ArrayList<>();
-    SecurityModule securityModule = SecurityModules.getDistributedModule(cConf);
-    modules.add(securityModule);
-    if (securityModule.requiresZKClient()) {
-      modules.add(new ZKClientModule());
-    }
-
+    modules.add(new AuthenticationContextModules().getInternalAuthMasterModule(cConf));
+    modules.add(CoreSecurityModules.getDistributedModule(cConf));
+    modules.add(new ExternalAuthenticationModule());
+    modules.add(ZKClientModule.getZKClientModuleIfRequired(cConf));
     return modules;
   }
 
@@ -95,6 +90,7 @@ public class RouterServiceMain extends AbstractServiceMain<EnvironmentOptions> {
       services.add(zkBinding.getProvider().get());
     }
     services.add(injector.getInstance(NettyRouter.class));
+    services.add(injector.getInstance(TokenManager.class));
   }
 
   @Nullable

@@ -71,7 +71,7 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
     String tempFolderPath = tmpFolder.newFolder().getPath();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tempFolderPath);
     RemoteClientFactory remoteClientFactory = new RemoteClientFactory(discoveryClient,
-                                                                      new AuthenticationTestContext());
+                                                                      new AuthenticationTestContext(), cConf);
     ArtifactLocalizerService artifactLocalizerService =
       new ArtifactLocalizerService(cConf, new ArtifactLocalizer(cConf, remoteClientFactory));
     // start the service

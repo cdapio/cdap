@@ -27,7 +27,8 @@ import io.cdap.cdap.common.security.KeyStores;
 import io.cdap.cdap.common.security.KeyStoresTest;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.security.auth.UserIdentityExtractor;
-import io.cdap.cdap.security.guice.SecurityModules;
+import io.cdap.cdap.security.guice.CoreSecurityModules;
+import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
 import io.cdap.common.http.HttpRequests;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import org.apache.http.conn.ClientConnectionManager;
@@ -164,7 +165,8 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
 
     @Override
     protected void startUp() {
-      Injector injector = Guice.createInjector(new SecurityModules().getInMemoryModules(),
+      Injector injector = Guice.createInjector(new CoreSecurityModules().getInMemoryModules(),
+                                               new ExternalAuthenticationModule(),
                                                new InMemoryDiscoveryModule(),
                                                new AppFabricTestModule(cConf));
       DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);

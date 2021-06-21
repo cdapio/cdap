@@ -21,7 +21,9 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
+import com.google.inject.Binding;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
@@ -31,6 +33,7 @@ import io.cdap.cdap.api.logging.AppenderContext;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.LocalLocationModule;
+import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.data.runtime.DataSetsModules;
@@ -49,11 +52,14 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.guice.CoreSecurityModules;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.http.HttpHandler;
+import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.ILoggerFactory;
 import org.slf4j.LoggerFactory;
 
@@ -79,7 +85,9 @@ public class LogsServiceMain extends AbstractServiceMain<EnvironmentOptions> {
                                            EnvironmentOptions options, CConfiguration cConf) {
     return Arrays.asList(
       new AuthorizationEnforcementModule().getDistributedModules(),
-      new AuthenticationContextModules().getMasterModule(),
+      new AuthenticationContextModules().getInternalAuthMasterModule(cConf),
+      CoreSecurityModules.getDistributedModule(cConf),
+      ZKClientModule.getZKClientModuleIfRequired(cConf),
       new MessagingClientModule(),
       getDataFabricModule(),
       // Always use local table implementations, which use LevelDB.
@@ -127,6 +135,13 @@ public class LogsServiceMain extends AbstractServiceMain<EnvironmentOptions> {
     services.add(injector.getInstance(LogQueryService.class));
     // log saver status service
     services.add(injector.getInstance(LogSaverStatusService.class));
+    // ZK client service
+    Binding<ZKClientService> zkBinding = injector.getExistingBinding(Key.get(ZKClientService.class));
+    if (zkBinding != null) {
+      services.add(zkBinding.getProvider().get());
+    }
+    // internal identity generation
+    services.add(injector.getInstance(TokenManager.class));
   }
 
   @Nullable

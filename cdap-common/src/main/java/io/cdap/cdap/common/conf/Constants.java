@@ -1104,6 +1104,9 @@ public final class Constants {
     /** Key to specify the kerberos principal of the entity owner **/
     public static final String PRINCIPAL = "principal";
 
+    /** Requires all intra-cluster communications to be authenticated. */
+    public static final String ENFORCE_INTERNAL_AUTH = "security.internal.enforce.auth";
+
     /**
      * App Fabric
      */

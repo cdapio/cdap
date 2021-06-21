@@ -149,6 +149,13 @@ import java.util.List;
 public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   public static final String NOAUTH_ARTIFACT_REPO = "noAuthArtifactRepo";
 
+  private final CConfiguration cConf;
+
+  @Inject
+  public AppFabricServiceRuntimeModule(CConfiguration cConf) {
+    this.cConf = cConf;
+  }
+
   @Override
   public Module getInMemoryModules() {
     return Modules.combine(new AppFabricServiceModule(),
@@ -249,7 +256,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                            new NamespaceAdminModule().getDistributedModules(),
                            new ConfigStoreModule(),
                            new EntityVerifierModule(),
-                           new AuthenticationContextModules().getMasterModule(),
+                           new AuthenticationContextModules().getInternalAuthMasterModule(cConf),
                            new ProvisionerModule(),
                            BootstrapModules.getFileBasedModule(),
                            new AbstractModule() {
@@ -277,6 +284,26 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                servicesNamesBinder.addBinding().toInstance(Constants.Service.SECURE_STORE_SERVICE);
                              }
                            });
+  }
+
+  /**
+   * Returns modules to be used for preview runners.
+   *
+   * @return Module which contains bindings for preview runners
+   */
+  public Module getPreviewRunnerModules() {
+    return Modules.override(getStandaloneModules()).with(new AuthenticationContextModules()
+                                                           .getInternalAuthWorkerModule(cConf));
+  }
+
+  /**
+   * Returns modules to be used for preview master.
+   *
+   * @return Module which contains bindings for preview master
+   */
+  public Module getPreviewMasterModules() {
+    return Modules.override(getStandaloneModules()).with(new AuthenticationContextModules()
+                                                           .getInternalAuthMasterModule(cConf));
   }
 
   /**

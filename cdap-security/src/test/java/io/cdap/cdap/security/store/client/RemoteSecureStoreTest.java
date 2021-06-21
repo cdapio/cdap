@@ -84,7 +84,7 @@ public class RemoteSecureStoreTest {
                                                          httpService.getBindAddress()));
 
     RemoteClientFactory remoteClientFactory = new RemoteClientFactory(
-      discoveryService, new AuthenticationTestContext());
+      discoveryService, new AuthenticationTestContext(), conf);
     remoteSecureStore = new RemoteSecureStore(remoteClientFactory);
   }
 

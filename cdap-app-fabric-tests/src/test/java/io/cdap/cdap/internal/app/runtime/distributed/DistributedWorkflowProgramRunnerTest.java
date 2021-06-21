@@ -283,7 +283,7 @@ public class DistributedWorkflowProgramRunnerTest {
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getMasterModule(),
       new TwillModule(),
-      new AppFabricServiceRuntimeModule().getDistributedModules(),
+      new AppFabricServiceRuntimeModule(cConf).getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new SecureStoreServerModule(),
       new OperationalStatsModule(),

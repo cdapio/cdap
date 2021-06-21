@@ -18,22 +18,17 @@ package io.cdap.cdap.security.guice;
 
 import com.google.inject.Binder;
 import com.google.inject.Scopes;
-import io.cdap.cdap.security.auth.DistributedKeyManager;
+import io.cdap.cdap.security.auth.FileBasedKeyManager;
 import io.cdap.cdap.security.auth.KeyManager;
 
 /**
- * Configures dependency injection with all security class implementations required to run in a distributed
- * environment.
+ * Guice bindings for FileBasedKeyManagers. This extends {@code SecurityModule} to provide
+ * an instance of {@code FileBasedKeyManager}.
  */
-final class DistributedSecurityModule extends SecurityModule {
-
-  @Override
-  public boolean requiresZKClient() {
-    return true;
-  }
+public class FileBasedCoreSecurityModule extends CoreSecurityModule {
 
   @Override
   protected void bindKeyManager(Binder binder) {
-    binder.bind(KeyManager.class).to(DistributedKeyManager.class).in(Scopes.SINGLETON);
+    binder.bind(KeyManager.class).to(FileBasedKeyManager.class).in(Scopes.SINGLETON);
   }
 }

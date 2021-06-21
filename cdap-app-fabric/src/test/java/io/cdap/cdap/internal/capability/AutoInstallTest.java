@@ -69,7 +69,7 @@ public class AutoInstallTest {
     cConf.set(Constants.AppFabric.TEMP_DIR, "appfabric");
     cConf.setInt(Constants.Capability.AUTO_INSTALL_THREADS, 5);
     ArtifactRepository artifactRepository = PowerMockito.mock(ArtifactRepository.class);
-    RemoteClientFactory remoteClientFactory = new RemoteClientFactory(null, null);
+    RemoteClientFactory remoteClientFactory = new RemoteClientFactory(null, null, cConf);
     CapabilityApplier capabilityApplier = new CapabilityApplier(null, null,
                                                                 null, null, null,
                                                                 artifactRepository, cConf, remoteClientFactory);

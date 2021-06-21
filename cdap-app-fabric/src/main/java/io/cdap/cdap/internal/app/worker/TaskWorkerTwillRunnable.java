@@ -80,6 +80,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
 
     modules.add(new ConfigModule(cConf, hConf));
     modules.add(new IOModule());
+    modules.add(new AuthenticationContextModules().getInternalAuthWorkerModule(cConf));
 
     // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
     MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
