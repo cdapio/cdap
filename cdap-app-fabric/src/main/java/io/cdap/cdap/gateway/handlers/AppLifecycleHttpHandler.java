@@ -17,6 +17,7 @@
 package io.cdap.cdap.gateway.handlers;
 
 
+import com.clearspring.analytics.util.Lists;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
@@ -33,6 +34,9 @@ import com.google.inject.Singleton;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.api.dataset.table.Get;
+import io.cdap.cdap.api.dataset.table.Row;
+import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
@@ -292,10 +296,25 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(this.jtabl));
   }
   @POST
-  @Path("/tbl/append")
+  @Path("/tbl/edit/{index}")
   public void appTablObj(FullHttpRequest request, HttpResponder responder,
-                         @PathParam("namespace-id") String namespaceId) throws Exception {
-    
+                         @PathParam("namespace-id") String namespaceId,
+                         @PathParam("index") String index) throws Exception {
+    Table t = null;
+    List<Get> gets = Lists.newArrayList();
+    JsonArray arr = DECODE_GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), JsonArray.class);
+    if (arr == null) {
+      throw new BadRequestException("Invalid Body");
+    }
+    for (int x = 0; x + 1 < arr.size(); x += 2) {
+      gets.add(new Get(arr.get(x).toString()).add(arr.get(x + 1).toString()));
+    }
+    StringBuilder output = new StringBuilder("{\n");
+    for (Get g : gets) {
+        output.append(g.getRow().toString() + " : " + g.getColumns().toString() + ",\n");
+    }
+    output.append("\n}");
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(output.toString()));
   }
   /**
    * Returns the info associated with the application.
