@@ -71,6 +71,7 @@ import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.metrics.guice.MetricsStoreModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.guice.CoreSecurityModules;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionSystemClient;
@@ -228,6 +229,7 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
     modules.add(new MetadataReaderWriterModules().getStandaloneModules());
     modules.add(new DFSLocationModule());
     modules.add(new MetadataServiceModule());
+    modules.add(new CoreSecurityModules().getInMemoryModules());
     modules.add(new AuthorizationModule());
     modules.add(new AuthorizationEnforcementModule().getMasterModule());
     modules.add(Modules.override(

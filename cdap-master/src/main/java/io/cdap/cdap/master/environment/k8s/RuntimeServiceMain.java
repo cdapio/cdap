@@ -38,6 +38,7 @@ import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.CoreSecurityModules;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
@@ -71,6 +72,7 @@ public class RuntimeServiceMain extends AbstractServiceMain<EnvironmentOptions> 
       getDataFabricModule(),
       new RuntimeServerModule(),
       new AuthenticationContextModules().getInternalAuthMasterModule(cConf),
+      new AuthorizationEnforcementModule().getDistributedModules(),
       CoreSecurityModules.getDistributedModule(cConf),
       ZKClientModule.getZKClientModuleIfRequired(cConf)
     );

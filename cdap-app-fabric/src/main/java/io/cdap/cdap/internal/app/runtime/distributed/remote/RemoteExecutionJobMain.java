@@ -139,7 +139,7 @@ public class RemoteExecutionJobMain {
       new DFSLocationModule(),
       new InMemoryDiscoveryModule(),
       new TwillModule(),
-      new AuthenticationContextModules().getProgramContainerModule(),
+      new AuthenticationContextModules().getProgramContainerModule(cConf),
       new AbstractModule() {
         @Override
         protected void configure() {

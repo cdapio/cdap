@@ -972,6 +972,8 @@ public final class Constants {
     public static final String MONITOR_TYPE_PREFIX = "app.program.runtime.monitor.type.";
     public static final String MONITOR_URL_AUTHENTICATOR_CLASS_PREFIX =
       "app.program.runtime.monitor.url.authenticator.class.";
+    public static final String MONITOR_AUDIT_LOG_ENABLED = "app.program.runtime.monitor.audit.log.enabled";
+    public static final String MONITOR_AUDIT_LOGGER_NAME = "http-access";
 
     // Prefix for that configuration key for storing discovery endpoint in the format of "host:port"
     public static final String DISCOVERY_SERVICE_PREFIX = "app.program.runtime.discovery.service.";
@@ -1142,6 +1144,13 @@ public final class Constants {
       /** Keyset used for user credential encryption. Set in cdap-security.xml */
       public static final String USER_CREDENTIAL_ENCRYPTION_KEYSET =
         "security.authentication.user.credentials.encryption.keyset";
+      /** {@link CConfiguration} property to pass runtime token from driver to distributed jobs */
+      public static final String RUNTIME_TOKEN =
+        "security.authentication.runtime.token";
+      /** File name to use to pass {@link Constants.Security.Headers#RUNTIME_TOKEN} to execution job */
+      public static final String RUNTIME_TOKEN_FILE = "cdap.runtime.token";
+      /** Identity used for runtime monitor */
+      public static final String RUNTIME_IDENTITY = "runtime";
     }
 
     /**
