@@ -17,7 +17,6 @@
 package io.cdap.cdap.gateway.handlers;
 
 
-import com.clearspring.analytics.util.Lists;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
@@ -34,9 +33,6 @@ import com.google.inject.Singleton;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
-import io.cdap.cdap.api.dataset.table.Get;
-import io.cdap.cdap.api.dataset.table.Row;
-import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
@@ -65,6 +61,7 @@ import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.artifact.WriteConflictException;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
+import io.cdap.cdap.internal.app.store.TablStore;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.ApplicationUpdateDetail;
@@ -76,6 +73,9 @@ import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.spi.data.transaction.TransactionException;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TxRunnable;
 import io.cdap.http.BodyConsumer;
 import io.cdap.http.ChunkResponder;
 import io.cdap.http.HttpResponder;
@@ -144,6 +144,12 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final ApplicationLifecycleService applicationLifecycleService;
   private final File tmpDir;
   private final JsonArray jtabl = new JsonArray();
+  private TablStore table = new TablStore(new TransactionRunner() {
+    @Override
+    public void run(TxRunnable runnable) throws TransactionException {
+
+    }
+  });
 
   @Inject
   AppLifecycleHttpHandler(CConfiguration configuration,
@@ -276,7 +282,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/tbl")
   public void getTabl(HttpRequest request, HttpResponder responder,
                       @PathParam("namespace-id") String namespaceId) throws Exception {
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(this.jtabl));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(this.table.jsonStr()));
   }
 
   /**
@@ -295,26 +301,25 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(this.jtabl));
   }
+
+  /**
+   * adds fields to "content" of the table
+   */
   @POST
-  @Path("/tbl/edit/{index}")
+  @Path("/tbl/edit")
   public void appTablObj(FullHttpRequest request, HttpResponder responder,
-                         @PathParam("namespace-id") String namespaceId,
-                         @PathParam("index") String index) throws Exception {
-    Table t = null;
-    List<Get> gets = Lists.newArrayList();
-    JsonArray arr = DECODE_GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), JsonArray.class);
-    if (arr == null) {
-      throw new BadRequestException("Invalid Body");
+                         @PathParam("namespace-id") String namespaceId) throws Exception {
+    JsonArray array = DECODE_GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), JsonArray.class);
+    if (array == null) {
+      throw new BadRequestException("Request body is invalid json, please check that it is a json array.");
     }
-    for (int x = 0; x + 1 < arr.size(); x += 2) {
-      gets.add(new Get(arr.get(x).toString()).add(arr.get(x + 1).toString()));
+    StringBuilder cont = new StringBuilder();
+    for (JsonElement obj : array) {
+      cont.append(obj.toString() + "\n");
     }
-    StringBuilder output = new StringBuilder("{\n");
-    for (Get g : gets) {
-        output.append(g.getRow().toString() + " : " + g.getColumns().toString() + ",\n");
-    }
-    output.append("\n}");
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(output.toString()));
+    this.table.addOrUpdateTabl(namespaceId, cont.toString());
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(cont));
+
   }
   /**
    * Returns the info associated with the application.
