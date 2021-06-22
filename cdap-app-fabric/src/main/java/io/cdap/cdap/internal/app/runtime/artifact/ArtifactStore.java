@@ -325,7 +325,8 @@ public class ArtifactStore {
                                                artifactKey.namespace.equals(NamespaceId.SYSTEM.getNamespace()) ?
                                                  ArtifactScope.SYSTEM : ArtifactScope.USER);
         Location artifactLocation = Locations.getLocationFromAbsolutePath(locationFactory, data.getLocationPath());
-        return new ArtifactDetail(new ArtifactDescriptor(artifactId, artifactLocation), filteredArtifactMeta);
+        return new ArtifactDetail(new ArtifactDescriptor(artifactKey.namespace, artifactId, artifactLocation),
+                                  filteredArtifactMeta);
       })
       .collect(collector);
   }
@@ -387,7 +388,8 @@ public class ArtifactStore {
       Location artifactLocation = impersonator.doAs(artifactId.getNamespace().toEntityId(), () ->
         Locations.getLocationFromAbsolutePath(locationFactory, artifactData.getLocationPath()));
       ArtifactMeta artifactMeta = filterPlugins(artifactData.meta);
-      return new ArtifactDetail(new ArtifactDescriptor(artifactId.toArtifactId(), artifactLocation), artifactMeta);
+      return new ArtifactDetail(new ArtifactDescriptor(artifactId.getNamespace().getId(),
+                                                       artifactId.toArtifactId(), artifactLocation), artifactMeta);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -723,7 +725,8 @@ public class ArtifactStore {
         writeMeta(context, artifactId, data);
       });
 
-      return new ArtifactDetail(new ArtifactDescriptor(artifactId.toArtifactId(), destination), artifactMeta);
+      return new ArtifactDetail(new ArtifactDescriptor(artifactId.getNamespace().getId(),
+                                                       artifactId.toArtifactId(), destination), artifactMeta);
     } catch (TransactionException e) {
       destination.delete();
       // TODO: CDAP-14672 define TransactionConflictException for the SPI
@@ -841,6 +844,7 @@ public class ArtifactStore {
                        row.getString(StoreDefinition.ArtifactStore.ARTIFACT_VER_FIELD));
     AppData appData = GSON.fromJson(row.getString(StoreDefinition.ArtifactStore.APP_DATA_FIELD), AppData.class);
     ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(
+      artifactId.getNamespace().getId(),
       artifactId.toArtifactId(),
       Locations.getLocationFromAbsolutePath(locationFactory, appData.getArtifactLocationPath()));
     return new AbstractMap.SimpleEntry<>(artifactDescriptor, appData.appClass);
@@ -1001,7 +1005,8 @@ public class ArtifactStore {
 
     if (!plugins.isEmpty()) {
       Location location = Locations.getLocationFromAbsolutePath(locationFactory, artifactData.getLocationPath());
-      ArtifactDescriptor descriptor = new ArtifactDescriptor(artifactId.toArtifactId(), location);
+      ArtifactDescriptor descriptor = new ArtifactDescriptor(artifactId.getNamespace().getId(),
+                                                             artifactId.toArtifactId(), location);
       result.put(descriptor, plugins);
     }
     return result;
@@ -1092,9 +1097,9 @@ public class ArtifactStore {
     PluginData pluginData = GSON.fromJson(row.getString(StoreDefinition.ArtifactStore.PLUGIN_DATA_FIELD),
                                           PluginData.class);
     return ImmutablePair.of(new ArtifactDescriptor(
+      artifactId.getNamespace().getId(),
       artifactId.toArtifactId(),
       Locations.getLocationFromAbsolutePath(locationFactory, pluginData.getArtifactLocationPath())), pluginData);
-
   }
 
   private Range createArtifactScanRange(NamespaceId namespace) {
