@@ -66,15 +66,6 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerHttpHandlerInternal.class);
   private static final Gson GSON = new GsonBuilder().registerTypeAdapter(BasicThrowable.class,
                                                                          new BasicThrowableCodec()).create();
-  /**
-   * Prefix of temporary file.
-   */
-  private static final String PREFIX = "task_worker";
-  /**
-   * Extension of temporary file.
-   */
-  private static final String EXT = ".tmp";
-
   private final RunnableTaskLauncher runnableTaskLauncher;
   private final Consumer<String> stopper;
   private final AtomicInteger inflightRequests = new AtomicInteger(0);
