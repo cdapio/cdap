@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
+import com.google.common.base.Throwables;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.hash.Hashing;
 import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.Service;
@@ -60,6 +64,10 @@ import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.Node;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
+import io.cdap.cdap.security.auth.AccessToken;
+import io.cdap.cdap.security.auth.AccessTokenCodec;
+import io.cdap.cdap.security.auth.TokenManager;
+import io.cdap.cdap.security.auth.UserIdentity;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import org.apache.hadoop.conf.Configuration;
@@ -95,8 +103,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -104,6 +114,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -125,6 +136,8 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
 
   private static final Logger LOG = LoggerFactory.getLogger(RemoteExecutionTwillRunnerService.class);
   private static final Gson GSON = new Gson();
+  //We can have really long jobs, so the tokens would be long-lived
+  private static final long DEFAULT_EXPIRATION = TimeUnit.DAYS.toMillis(365);
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -136,6 +149,8 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
   private final RuntimeServiceSocksProxyAuthenticator serviceSocksProxyAuthenticator;
   private final Map<ProgramRunId, RemoteExecutionTwillController> controllers;
   private final Lock controllersLock;
+  private final AccessTokenCodec accessTokenCodec;
+  private final TokenManager tokenManager;
 
   private LocationCache locationCache;
   private Path cachePath;
@@ -147,13 +162,17 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
                                     LocationFactory locationFactory,
                                     ProvisioningService provisioningService,
                                     ProgramStateWriter programStateWriter,
-                                    TransactionRunner transactionRunner) {
+                                    TransactionRunner transactionRunner,
+                                    AccessTokenCodec accessTokenCodec,
+                                    TokenManager tokenManager) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
     this.provisioningService = provisioningService;
     this.programStateWriter = programStateWriter;
     this.txRunner = transactionRunner;
+    this.accessTokenCodec = accessTokenCodec;
+    this.tokenManager = tokenManager;
     this.controllers = new ConcurrentHashMap<>();
     this.controllersLock = new ReentrantLock();
     this.serviceSocksProxyAuthenticator = new RuntimeServiceSocksProxyAuthenticator();
@@ -321,17 +340,20 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
                                        ProgramOptions programOpts, TwillSpecification twillSpec,
                                        LocationCache locationCache, TwillControllerFactory controllerFactory) {
 
-    Location serviceProxySecretLocation = null;
+    Location keysDirLocation = getKeysDirLocation(programOpts, locationFactory);
+    Map<String, Location> secretFiles = new HashMap<>();
     if (SystemArguments.getRuntimeMonitorType(cConf, programOpts) == RuntimeMonitorType.SSH) {
-      serviceProxySecretLocation = generateAndSaveServiceProxySecret(programRunId,
-                                                                     getKeysDirLocation(programOpts, locationFactory));
+      secretFiles.put(Constants.RuntimeMonitor.SERVICE_PROXY_PASSWORD_FILE,
+                      generateAndSaveServiceProxySecret(programRunId, keysDirLocation));
     }
+    secretFiles.put(Constants.Security.Authentication.RUNTIME_TOKEN_FILE,
+                    generateAndSaveRuntimeToken(programRunId, keysDirLocation));
 
     RuntimeJobManager jobManager = provisioningService.getRuntimeJobManager(programRunId, programOpts).orElse(null);
     // Use RuntimeJobManager to launch the remote process if it is supported
     if (jobManager != null) {
       return new RuntimeJobTwillPreparer(cConf, hConf, twillSpec, programRunId, programOpts,
-                                         serviceProxySecretLocation,
+                                         secretFiles,
                                          locationCache, locationFactory,
                                          controllerFactory,
                                          () -> provisioningService.getRuntimeJobManager(programRunId, programOpts)
@@ -341,7 +363,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
     // Use SSH if there is no RuntimeJobManager
     ClusterKeyInfo clusterKeyInfo = new ClusterKeyInfo(cConf, programOpts, locationFactory);
     return new RemoteExecutionTwillPreparer(cConf, hConf, clusterKeyInfo.getCluster(), clusterKeyInfo.getSSHConfig(),
-                                            serviceProxySecretLocation,
+                                            secretFiles,
                                             twillSpec, programRunId, programOpts,
                                             locationCache, locationFactory, controllerFactory);
   }
@@ -355,6 +377,28 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
       serviceSocksProxy.startAndWait();
     }
     return serviceSocksProxy.getBindAddress().getPort();
+  }
+
+  /**
+   * Generates a runtime token to talk back from the execution cluster to CDAP instance.
+   */
+  private Location generateAndSaveRuntimeToken(ProgramRunId programRunId, Location keysDir) {
+    try {
+      long currentTimestamp = System.currentTimeMillis();
+      //TODO: Use a better identity & expiration
+      UserIdentity identity = new UserIdentity(Constants.Security.Authentication.RUNTIME_IDENTITY,
+                                               Collections.emptyList(), currentTimestamp,
+                                               currentTimestamp + DEFAULT_EXPIRATION);
+      AccessToken accessToken = tokenManager.signIdentifier(identity);
+      byte[] encodedAccessToken = Base64.getEncoder().encode(accessTokenCodec.encode(accessToken));
+      Location location = keysDir.append(Constants.Security.Authentication.RUNTIME_TOKEN_FILE);
+      try (OutputStream os = location.getOutputStream()) {
+        os.write(encodedAccessToken);
+      }
+      return location;
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to generate runtime token for " + programRunId, e);
+    }
   }
 
   /**

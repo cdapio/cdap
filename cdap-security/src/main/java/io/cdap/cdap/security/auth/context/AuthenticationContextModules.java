@@ -23,12 +23,17 @@ import com.google.inject.PrivateModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RemoteAuthenticator;
+import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import org.apache.hadoop.security.UserGroupInformation;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Exposes the right {@link AuthenticationContext} via an {@link AbstractModule} based on the context in which
@@ -55,14 +60,14 @@ public class AuthenticationContextModules {
    * determined based on the {@link UserGroupInformation} of the user running the program. The provided
    * kerberos principal information is also included in the {@link Principal}.
    */
-  public Module getProgramContainerModule(final String principal) {
+  public Module getProgramContainerModule(CConfiguration cConf, final String principal) {
     return new AbstractModule() {
       @Override
       protected void configure() {
         String username = getUsername();
         bind(AuthenticationContext.class)
-          .toInstance(new ProgramContainerAuthenticationContext(new Principal(username, Principal.PrincipalType.USER,
-                                                                              principal, null)));
+          .toInstance(new ProgramContainerAuthenticationContext(
+            new Principal(username, Principal.PrincipalType.USER, principal, loadRemoteCredentials(cConf))));
       }
     };
   }
@@ -71,16 +76,31 @@ public class AuthenticationContextModules {
    * An {@link AuthenticationContext} for use in program containers. The authentication details in this context are
    * determined based on the {@link UserGroupInformation} of the user running the program.
    */
-  public Module getProgramContainerModule() {
+  public Module getProgramContainerModule(CConfiguration cConf) {
     return new AbstractModule() {
       @Override
       protected void configure() {
         String username = getUsername();
         bind(AuthenticationContext.class)
           .toInstance(new ProgramContainerAuthenticationContext(new Principal(username,
-                                                                              Principal.PrincipalType.USER)));
+                                                                              Principal.PrincipalType.USER,
+                                                                              loadRemoteCredentials(cConf))));
       }
     };
+  }
+
+  private Credential loadRemoteCredentials(CConfiguration cConf) {
+    Path secretFile = Paths.get(Constants.Security.Authentication.RUNTIME_TOKEN_FILE);
+    if (Files.exists(secretFile)) {
+      try {
+        String token = new String(Files.readAllBytes(secretFile), StandardCharsets.UTF_8);
+        return new Credential(token, Credential.CredentialType.INTERNAL);
+      } catch (IOException e) {
+        throw new IllegalStateException("Can't read runtime token file", e);
+      }
+    }
+    String token = cConf.get(Constants.Security.Authentication.RUNTIME_TOKEN);
+    return token == null ? null : new Credential(token, Credential.CredentialType.INTERNAL);
   }
 
   private String getUsername() {

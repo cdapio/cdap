@@ -85,17 +85,17 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
 
   private final Cluster cluster;
   private final SSHConfig sshConfig;
-  private final Location serviceProxySecretLocation;
+  private final Map<String, Location> secretFiles;
 
   RemoteExecutionTwillPreparer(CConfiguration cConf, Configuration hConf,
-                               Cluster cluster, SSHConfig sshConfig, @Nullable Location serviceProxySecretLocation,
+                               Cluster cluster, SSHConfig sshConfig, Map<String, Location> secretFiles,
                                TwillSpecification twillSpec, ProgramRunId programRunId, ProgramOptions programOptions,
                                LocationCache locationCache, LocationFactory locationFactory,
                                TwillControllerFactory controllerFactory) {
     super(cConf, hConf, twillSpec, programRunId, programOptions, locationCache, locationFactory, controllerFactory);
     this.cluster = cluster;
     this.sshConfig = sshConfig;
-    this.serviceProxySecretLocation = serviceProxySecretLocation;
+    this.secretFiles = secretFiles;
   }
 
   @Override
@@ -126,8 +126,8 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
       // Upload files
       localizeFiles(session, localFiles, targetPath, runtimeSpec);
 
-      // Upload service socks proxy secret
-      localizeServiceProxySecret(session, targetPath);
+      // Upload secrets (service socks proxy, runtime token)
+      localizeSecrets(session, targetPath);
 
       // Currently we only support one TwillRunnable
       String runnableName = runtimeSpec.getName();
@@ -387,14 +387,13 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
   /**
    * Localize key store files to the remote host.
    */
-  private void localizeServiceProxySecret(SSHSession session, String targetPath) throws Exception {
-    if (serviceProxySecretLocation == null) {
-      return;
-    }
-    try (InputStream is = serviceProxySecretLocation.getInputStream()) {
-      //noinspection OctalInteger
-      session.copy(is, targetPath, io.cdap.cdap.common.conf.Constants.RuntimeMonitor.SERVICE_PROXY_PASSWORD_FILE,
-                   serviceProxySecretLocation.length(), 0600, null, null);
+  private void localizeSecrets(SSHSession session, String targetPath) throws Exception {
+    for (Map.Entry<String, Location> secretFile : secretFiles.entrySet()) {
+      try (InputStream is = secretFile.getValue().getInputStream()) {
+        //noinspection OctalInteger
+        session.copy(is, targetPath, secretFile.getKey(),
+                     secretFile.getValue().length(), 0600, null, null);
+      }
     }
   }
 }

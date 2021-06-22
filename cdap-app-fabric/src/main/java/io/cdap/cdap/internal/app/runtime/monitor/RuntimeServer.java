@@ -29,6 +29,8 @@ import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
 import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.security.auth.CipherException;
+import io.cdap.cdap.security.auth.TinkCipher;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
@@ -60,7 +62,6 @@ public class RuntimeServer extends AbstractIdleService {
                 DiscoveryService discoveryService, MetricsCollectionService metricsCollectionService) {
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.RUNTIME)
       .setHttpHandlers(handlers)
-      .setExceptionHandler(new HttpExceptionHandler())
       .setHandlerHooks(Collections.singleton(new MetricsReporterHook(metricsCollectionService,
                                                                      Constants.Service.RUNTIME)))
       .setChannelPipelineModifier(new ChannelPipelineModifier() {
@@ -68,8 +69,9 @@ public class RuntimeServer extends AbstractIdleService {
         public void modify(ChannelPipeline pipeline) {
           pipeline.addAfter("compressor", "decompressor", new HttpContentDecompressor());
           if (cConf.getBoolean(Constants.Security.ENABLED, false)) {
-            EventExecutor executor = pipeline.context("dispatcher").executor();
-            pipeline.addBefore(executor, "dispatcher", "identity-handler", new RuntimeIdentityHandler());
+            EventExecutor executor = pipeline.context(CommonNettyHttpServiceBuilder.AUTHENTICATOR_NAME).executor();
+            pipeline.addBefore(executor, CommonNettyHttpServiceBuilder.AUTHENTICATOR_NAME, "identity-handler",
+                               new RuntimeIdentityHandler(cConf));
           }
         }
       })

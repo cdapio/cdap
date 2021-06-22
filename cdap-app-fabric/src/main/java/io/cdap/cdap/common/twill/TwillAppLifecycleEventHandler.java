@@ -35,6 +35,7 @@ import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.EventHandlerContext;
@@ -146,6 +147,7 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
           modules.add(new KafkaClientModule());
           break;
         case ISOLATED:
+          modules.add(new AuthenticationContextModules().getProgramContainerModule(cConf));
           modules.add(new RemoteExecutionDiscoveryModule());
           modules.add(new AbstractModule() {
             @Override
