@@ -69,6 +69,7 @@ public final class StoreDefinition {
     FieldLineageStore.createTables(tableAdmin, overWrite);
     LogFileMetaStore.createTables(tableAdmin, overWrite);
     CapabilitiesStore.createTable(tableAdmin, overWrite);
+    TablStore.createTables(tableAdmin, overWrite);
   }
 
   public static void createAllTables(StructuredTableAdmin tableAdmin, StructuredTableRegistry registry)
@@ -536,6 +537,32 @@ public final class StoreDefinition {
     }
   }
 
+  /**
+   * Table schema for a experimental table
+   */
+  public static final class TablStore {
+    public static final StructuredTableId TABL_STORE_TABLE =
+        new StructuredTableId("tabl_store");
+
+    public static final String NAMESPACE_FIELD = "namespace";
+    public static final String CONTENT = "content";
+    public static final String TIME_FIELD = "time";
+
+    public static final StructuredTableSpecification TABL_STORE_SPEC =
+        new StructuredTableSpecification.Builder()
+          .withId(TABL_STORE_TABLE)
+          .withFields(Fields.stringType(CONTENT),
+                      Fields.longType(TIME_FIELD))
+          .withPrimaryKeys(NAMESPACE_FIELD)
+          .build();
+
+    public static void createTables(StructuredTableAdmin tableAdmin,
+        boolean overWrite) throws IOException, TableAlreadyExistsException {
+      if (overWrite || tableAdmin.getSpecification(TABL_STORE_TABLE) == null) {
+        tableAdmin.create(TABL_STORE_SPEC);
+      }
+    }
+  }
   /**
    * Table schema for profile store.
    */
