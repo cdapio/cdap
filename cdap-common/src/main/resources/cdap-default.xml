@@ -265,18 +265,42 @@
   </property>
 
   <property>
-    <name>twill.security.secret.disk.name</name>
+    <name>twill.security.master.secret.disk.name</name>
     <value>cdap-security</value>
     <description>
-      The name of the Twill security disk mount which contains cdap-security.xml.
+      The name of the Twill security disk mount which contains cdap-security.xml for master services.
     </description>
   </property>
 
   <property>
-    <name>twill.security.secret.disk.path</name>
+    <name>twill.security.master.secret.disk.path</name>
     <value>/etc/cdap/security</value>
     <description>
-      The absolute directory of the Twill security disk mount which contains cdap-security.xml.
+      The absolute directory of the Twill security disk mount which contains cdap-security.xml for master services.
+    </description>
+  </property>
+
+  <property>
+    <name>twill.security.worker.mount.secret</name>
+    <value>false</value>
+    <description>
+      Whether to mount a secret disk in worker runnables.
+    </description>
+  </property>
+
+  <property>
+    <name>twill.security.worker.secret.disk.name</name>
+    <value>cdap-security</value>
+    <description>
+      The name of the Twill security disk mount which contains cdap-security.xml for worker runnables.
+    </description>
+  </property>
+
+  <property>
+    <name>twill.security.worker.secret.disk.path</name>
+    <value>/etc/cdap/security</value>
+    <description>
+      The absolute directory of the Twill security disk mount which contains cdap-security.xml for worker runnables.
     </description>
   </property>
 

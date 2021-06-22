@@ -1641,14 +1641,29 @@ public final class Constants {
       public static final String IDENTITY_SYSTEM = "twill.security.identity.system";
 
       /**
-       * The secret name for the cdap-security.xml disk mount.
+       * The secret name for the cdap-security.xml disk mount for master services.
        */
-      public static final String SECRET_DISK_NAME = "twill.security.secret.disk.name";
+      public static final String MASTER_SECRET_DISK_NAME = "twill.security.master.secret.disk.name";
 
       /**
-       * The secret path for the cdap-security.xml disk mount.
+       * The secret path for the cdap-security.xml disk mount for master services.
        */
-      public static final String SECRET_DISK_PATH = "twill.security.secret.disk.path";
+      public static final String MASTER_SECRET_DISK_PATH = "twill.security.master.secret.disk.path";
+
+      /**
+       * Whether to mount a secret disk for worker runnables
+       */
+      public static final String WORKER_MOUNT_SECRET = "twill.security.worker.mount.secret";
+
+      /**
+       * The secret name for the cdap-security.xml disk mount for worker services including preview and task workers.
+       */
+      public static final String WORKER_SECRET_DISK_NAME = "twill.security.master.secret.disk.name";
+
+      /**
+       * The secret path for the cdap-security.xml disk mount for worker services including preview and task workers.
+       */
+      public static final String WORKER_SECRET_DISK_PATH = "twill.security.master.secret.disk.path";
     }
   }
 }

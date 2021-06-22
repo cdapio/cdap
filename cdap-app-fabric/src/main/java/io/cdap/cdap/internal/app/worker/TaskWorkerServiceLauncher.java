@@ -23,6 +23,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerTwillRunnable;
 import io.cdap.cdap.master.spi.twill.DependentTwillPreparer;
+import io.cdap.cdap.master.spi.twill.SecretDisk;
 import io.cdap.cdap.master.spi.twill.SecureTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecurityContext;
 import io.cdap.cdap.master.spi.twill.StatefulDisk;
@@ -183,6 +184,12 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
             SecurityContext securityContext = createSecurityContext();
             twillPreparer = ((SecureTwillPreparer) twillPreparer)
               .withSecurityContext(TaskWorkerTwillRunnable.class.getSimpleName(), securityContext);
+            if (cConf.getBoolean(Constants.Twill.Security.WORKER_MOUNT_SECRET)) {
+              String secretName = cConf.get(Constants.Twill.Security.WORKER_SECRET_DISK_NAME);
+              String secretPath = cConf.get(Constants.Twill.Security.WORKER_SECRET_DISK_PATH);
+              twillPreparer = ((SecureTwillPreparer) twillPreparer)
+                .withSecretDisk(TaskWorkerTwillRunnable.class.getSimpleName(), new SecretDisk(secretName, secretPath));
+            }
           }
 
           activeController = twillPreparer.start(5, TimeUnit.MINUTES);
