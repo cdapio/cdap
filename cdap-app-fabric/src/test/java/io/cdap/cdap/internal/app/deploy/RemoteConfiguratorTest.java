@@ -75,6 +75,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -141,7 +142,8 @@ public class RemoteConfiguratorTest {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, AllProgramsApp.class);
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact(AllProgramsApp.class.getSimpleName(), "1.0.0");
 
-    artifacts.put(artifactId, new ArtifactDetail(new ArtifactDescriptor(artifactId.toApiArtifactId(), appJar),
+    artifacts.put(artifactId, new ArtifactDetail(new ArtifactDescriptor(artifactId.getNamespace(),
+                                                                        artifactId.toApiArtifactId(), appJar),
                                                  new ArtifactMeta(ArtifactClasses.builder().build())));
 
     AppDeploymentInfo info = new AppDeploymentInfo(artifactId, appJar, NamespaceId.DEFAULT,
@@ -192,7 +194,8 @@ public class RemoteConfiguratorTest {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, ConfigTestApp.class);
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact(ConfigTestApp.class.getSimpleName(), "1.0.0");
 
-    artifacts.put(artifactId, new ArtifactDetail(new ArtifactDescriptor(artifactId.toApiArtifactId(), appJar),
+    artifacts.put(artifactId, new ArtifactDetail(new ArtifactDescriptor(artifactId.getNamespace(),
+                                                                        artifactId.toApiArtifactId(), appJar),
                                                  new ArtifactMeta(ArtifactClasses.builder().build())));
 
     AppDeploymentInfo info = new AppDeploymentInfo(artifactId, appJar, NamespaceId.DEFAULT,
