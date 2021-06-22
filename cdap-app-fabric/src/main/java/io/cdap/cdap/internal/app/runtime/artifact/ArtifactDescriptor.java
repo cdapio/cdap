@@ -20,12 +20,14 @@ import io.cdap.cdap.api.artifact.ArtifactId;
 import org.apache.twill.filesystem.Location;
 
 import java.net.URI;
+import java.util.Objects;
 
 /**
  * Uniquely describes an artifact. Artifact descriptors are ordered by scope,
  * then by name, and finally by version.
  */
 public final class ArtifactDescriptor implements Comparable<ArtifactDescriptor> {
+  private final String namespace;
   private final ArtifactId artifactId;
 
   /**
@@ -37,14 +39,20 @@ public final class ArtifactDescriptor implements Comparable<ArtifactDescriptor> 
   private final transient Location location;
   private final URI locationURI;
 
-  public ArtifactDescriptor(ArtifactId artifactId, Location location) {
+  public ArtifactDescriptor(String namespace, ArtifactId artifactId, Location location) {
+    this.namespace = namespace;
     this.artifactId = artifactId;
     this.location = location;
     this.locationURI = location.toURI();
   }
 
+  public String getNamespace() {
+    return namespace;
+  }
+
   /**
    * get artifact Id
+   *
    * @return {@link ArtifactId}
    */
   public ArtifactId getArtifactId() {
@@ -53,6 +61,7 @@ public final class ArtifactDescriptor implements Comparable<ArtifactDescriptor> 
 
   /**
    * get location of artifact
+   *
    * @return {@link Location} of artifact
    */
   public Location getLocation() {
@@ -66,7 +75,8 @@ public final class ArtifactDescriptor implements Comparable<ArtifactDescriptor> 
   @Override
   public String toString() {
     return "ArtifactDescriptor{" +
-      "artifactId=" + artifactId +
+      " artifactId=" + artifactId +
+      ", namespace=" + namespace +
       ", locationURI=" + locationURI +
       ", location=" + location +
       '}';
@@ -87,11 +97,15 @@ public final class ArtifactDescriptor implements Comparable<ArtifactDescriptor> 
 
   @Override
   public int hashCode() {
-    return artifactId.hashCode();
+    return Objects.hash(namespace, artifactId);
   }
 
   @Override
   public int compareTo(ArtifactDescriptor other) {
+    int code = getNamespace().compareTo(other.getNamespace());
+    if (code != 0) {
+      return code;
+    }
     return getArtifactId().compareTo(other.getArtifactId());
   }
 }
