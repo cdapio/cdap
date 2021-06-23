@@ -184,6 +184,7 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
             SecurityContext securityContext = createSecurityContext();
             twillPreparer = ((SecureTwillPreparer) twillPreparer)
               .withSecurityContext(TaskWorkerTwillRunnable.class.getSimpleName(), securityContext);
+            // TODO CDAP-18095: Refactor to be secure-by-default in the future or fail-fast if it is not mounted.
             if (cConf.getBoolean(Constants.Twill.Security.WORKER_MOUNT_SECRET)) {
               String secretName = cConf.get(Constants.Twill.Security.WORKER_SECRET_DISK_NAME);
               String secretPath = cConf.get(Constants.Twill.Security.WORKER_SECRET_DISK_PATH);
