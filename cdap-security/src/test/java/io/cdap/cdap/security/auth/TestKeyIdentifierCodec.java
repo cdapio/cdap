@@ -28,9 +28,13 @@ import io.cdap.cdap.security.guice.FileBasedCoreSecurityModule;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.Random;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 
 import static org.junit.Assert.assertEquals;
 
@@ -38,6 +42,8 @@ import static org.junit.Assert.assertEquals;
  * Test serialization and deserialization of KeyIdentifiers.
  */
 public class TestKeyIdentifierCodec {
+  private static final long HOUR_MILLIS = 60 * 1000;
+
   private static Codec<KeyIdentifier> keyIdentifierCodec;
   private static int keyLength;
   private static String keyAlgo;
@@ -66,6 +72,25 @@ public class TestKeyIdentifierCodec {
     KeyIdentifier decodedKeyIdentifier = keyIdentifierCodec.decode(encoded);
 
     assertEquals(keyIdentifier, decodedKeyIdentifier);
+  }
+
+  @Test
+  public void testKeyIdentifierJSONDeserialization() throws Exception {
+    String algorithm = "AES";
+    int keyId = 15;
+    long expiration = System.currentTimeMillis() + HOUR_MILLIS;
+    byte[] secretKeyBytes = new byte[32];
+    SecureRandom secureRandom = new SecureRandom();
+    secureRandom.nextBytes(secretKeyBytes);
+    SecretKeySpec keySpec = new SecretKeySpec(secretKeyBytes, algorithm);
+    KeyIdentifier expectedKeyIdentifier = new KeyIdentifier(keySpec, keyId, expiration);
+
+    String jsonKeyIdentifier = String.format("{\"encodedKey\": \"%s\", \"algorithm\": \"%s\", " +
+                                               "\"keyId\": %d, \"expiration\": %d}",
+                                             Base64.getEncoder().encodeToString(secretKeyBytes), algorithm, keyId,
+                                             expiration);
+    KeyIdentifier decodedKeyIdentifier = keyIdentifierCodec.decode(jsonKeyIdentifier.getBytes(StandardCharsets.UTF_8));
+    assertEquals(expectedKeyIdentifier, decodedKeyIdentifier);
   }
 
 }

@@ -40,14 +40,19 @@ import java.util.Map;
  */
 public class AccessToken implements Signed<UserIdentity> {
   static final class Schemas {
-    private static final int VERSION = 1;
+    private static final int VERSION = 2;
     private static final Map<Integer, Schema> schemas = Maps.newHashMap();
     static {
       schemas.put(1,
-          Schema.recordOf("AccessToken",
-              Schema.Field.of("identifier", UserIdentity.Schemas.getSchemaVersion(1)),
-              Schema.Field.of("keyId", Schema.of(Schema.Type.INT)),
-              Schema.Field.of("digest", Schema.of(Schema.Type.BYTES))));
+                  Schema.recordOf("AccessToken",
+                                  Schema.Field.of("identifier", UserIdentity.Schemas.getSchemaVersion(1)),
+                                  Schema.Field.of("keyId", Schema.of(Schema.Type.INT)),
+                                  Schema.Field.of("digest", Schema.of(Schema.Type.BYTES))));
+      schemas.put(2,
+                  Schema.recordOf("AccessToken",
+                                  Schema.Field.of("identifier", UserIdentity.Schemas.getSchemaVersion(2)),
+                                  Schema.Field.of("keyId", Schema.of(Schema.Type.INT)),
+                                  Schema.Field.of("digest", Schema.of(Schema.Type.BYTES))));
     }
 
 

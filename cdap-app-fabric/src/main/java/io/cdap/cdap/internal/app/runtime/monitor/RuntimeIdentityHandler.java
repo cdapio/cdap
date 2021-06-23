@@ -20,6 +20,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.AuditLogEntry;
 import io.cdap.cdap.common.utils.Networks;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -32,8 +33,6 @@ import org.slf4j.LoggerFactory;
 
 import java.net.HttpURLConnection;
 
-import static io.cdap.cdap.proto.security.Credential.CREDENTIAL_TYPE_INTERNAL;
-
 /**
  * A {@link ChannelInboundHandler} for properly propagating runtime identity to calls to other system services.
  */
@@ -45,7 +44,7 @@ public class RuntimeIdentityHandler extends ChannelInboundHandlerAdapter {
   private final boolean auditLogEnabled;
 
   public RuntimeIdentityHandler(CConfiguration cConf) {
-    this.enforceAuthenticatedRequests = cConf.getBoolean(Constants.Security.ENFORCE_INTERNAL_AUTH);
+    this.enforceAuthenticatedRequests = SecurityUtil.isInternalAuthEnabled(cConf);
     this.auditLogEnabled = cConf.getBoolean(Constants.RuntimeMonitor.MONITOR_AUDIT_LOG_ENABLED);
   }
 

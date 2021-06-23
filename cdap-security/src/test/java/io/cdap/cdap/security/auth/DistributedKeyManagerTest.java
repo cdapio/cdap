@@ -122,8 +122,9 @@ public class DistributedKeyManagerTest extends TestTokenManager {
     tokenManager2.startAndWait();
 
     long now = System.currentTimeMillis();
-    UserIdentity ident1 = new UserIdentity("testuser", Lists.newArrayList("users", "admins"),
-                                           now, now + 60 * 60 * 1000);
+    UserIdentity ident1 = new UserIdentity("testuser", UserIdentity.IdentifierType.EXTERNAL,
+                                           Lists.newArrayList("users", "admins"), now,
+                                           now + 60 * 60 * 1000);
     AccessToken token1 = tokenManager1.signIdentifier(ident1);
     // make sure the second token manager has the secret key required to validate the signature
     tokenManager2.waitForKey(tokenManager1.getCurrentKey().getKeyId(), 2000, TimeUnit.MILLISECONDS);

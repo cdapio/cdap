@@ -126,7 +126,8 @@ public class NettyRouter extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    if (SecurityUtil.isManagedSecurity(cConf)) {
+    // If internal authorization enforcement is enabled, we avoid re-initialization of the token manager.
+    if (SecurityUtil.isManagedSecurity(cConf) && !SecurityUtil.isInternalAuthEnabled(cConf)) {
       tokenValidator.startAndWait();
     }
     ChannelGroup channelGroup = new DefaultChannelGroup(ImmediateEventExecutor.INSTANCE);
@@ -139,7 +140,8 @@ public class NettyRouter extends AbstractIdleService {
     LOG.info("Stopping Netty Router...");
 
     serverCancellable.cancel();
-    if (SecurityUtil.isManagedSecurity(cConf)) {
+    // If internal authorization enforcement is enabled, we avoid duplicate cleanup of the token manager.
+    if (SecurityUtil.isManagedSecurity(cConf) && !SecurityUtil.isInternalAuthEnabled(cConf)) {
       tokenValidator.stopAndWait();
     }
 

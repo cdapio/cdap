@@ -57,6 +57,7 @@ import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.common.io.Locations;
@@ -280,7 +281,8 @@ public abstract class AppFabricTestBase {
     metadataSubscriberService.startAndWait();
     locationFactory = getInjector().getInstance(LocationFactory.class);
     datasetClient = new DatasetClient(getClientConfig(discoveryClient, Constants.Service.DATASET_MANAGER));
-    remoteClientFactory = new RemoteClientFactory(discoveryClient, new AuthenticationTestContext(), cConf);
+    remoteClientFactory = new RemoteClientFactory(discoveryClient,
+                                                  new DefaultInternalAuthenticator(new AuthenticationTestContext()));
     metadataClient = new MetadataClient(getClientConfig(discoveryClient, Constants.Service.METADATA_SERVICE));
     metadataServiceClient = new DefaultMetadataServiceClient(remoteClientFactory);
     metricStore = injector.getInstance(MetricStore.class);

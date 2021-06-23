@@ -64,8 +64,8 @@ public class ProxyUserIdentityExtractor implements UserIdentityExtractor {
                                                 "No user identity found");
     }
 
-    UserIdentity userIdentityObj = new UserIdentity(userIdentity, new LinkedHashSet<>(),
-                                                    now, now + EXPIRATION_SECS);
+    UserIdentity identity = new UserIdentity(userIdentity, UserIdentity.IdentifierType.EXTERNAL,
+                                               new LinkedHashSet<>(), now, now + EXPIRATION_SECS);
 
     // Parse the access token from authorization header. The header will be in "Bearer" form.
     String auth = request.headers().get(HttpHeaderNames.AUTHORIZATION);
@@ -75,10 +75,10 @@ public class ProxyUserIdentityExtractor implements UserIdentityExtractor {
     if (auth != null) {
       int idx = auth.trim().indexOf(' ');
       if (idx < 0) {
-        return new UserIdentityExtractionResponse(new UserIdentityPair(null, userIdentityObj));
+        return new UserIdentityExtractionResponse(new UserIdentityPair(null, identity));
       }
       userCredential = auth.substring(idx + 1).trim();
     }
-    return new UserIdentityExtractionResponse(new UserIdentityPair(userCredential, userIdentityObj));
+    return new UserIdentityExtractionResponse(new UserIdentityPair(userCredential, identity));
   }
 }
