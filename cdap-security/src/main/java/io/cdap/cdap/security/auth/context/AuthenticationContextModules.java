@@ -26,8 +26,12 @@ import com.google.inject.Provider;
 import com.google.inject.TypeLiteral;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
+import io.cdap.cdap.common.internal.remote.InternalAuthenticator;
+import io.cdap.cdap.common.internal.remote.NoOpInternalAuthenticator;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -43,7 +47,6 @@ import java.nio.file.Paths;
  * it is being invoked.
  */
 public class AuthenticationContextModules {
-
   /**
    * An {@link AuthenticationContext} for HTTP requests in Master. The authentication details in this context are
    * derived from a combination of {@link SecurityRequestContext} and the {@link SystemAuthenticationContext}.
@@ -58,7 +61,9 @@ public class AuthenticationContextModules {
         bind(new TypeLiteral<Class<? extends AuthenticationContext>>() { })
           .toInstance(SystemAuthenticationContext.class);
         bind(AuthenticationContext.class).toProvider(MasterAuthenticationContextProvider.class);
+        bind(InternalAuthenticator.class).toProvider(InternalAuthenticatorProvider.class);
         expose(AuthenticationContext.class);
+        expose(InternalAuthenticator.class);
       }
     };
   }
@@ -76,7 +81,10 @@ public class AuthenticationContextModules {
         bind(new TypeLiteral<Class<? extends AuthenticationContext>>() { })
           .toInstance(WorkerAuthenticationContext.class);
         bind(AuthenticationContext.class).toProvider(MasterAuthenticationContextProvider.class);
+        bind(InternalAuthenticator.class).toProvider(InternalAuthenticatorProvider.class);
         expose(AuthenticationContext.class);
+        expose(InternalAuthenticator.class);
+
       }
     };
   }
@@ -94,6 +102,7 @@ public class AuthenticationContextModules {
         bind(AuthenticationContext.class)
           .toInstance(new ProgramContainerAuthenticationContext(
             new Principal(username, Principal.PrincipalType.USER, principal, loadRemoteCredentials(cConf))));
+        bind(InternalAuthenticator.class).toProvider(InternalAuthenticatorProvider.class);
       }
     };
   }
@@ -111,6 +120,7 @@ public class AuthenticationContextModules {
           .toInstance(new ProgramContainerAuthenticationContext(new Principal(username,
                                                                               Principal.PrincipalType.USER,
                                                                               loadRemoteCredentials(cConf))));
+        bind(InternalAuthenticator.class).toProvider(InternalAuthenticatorProvider.class);
       }
     };
   }
@@ -149,8 +159,32 @@ public class AuthenticationContextModules {
       @Override
       protected void configure() {
         bind(AuthenticationContext.class).to(AuthenticationTestContext.class);
+        bind(InternalAuthenticator.class).toProvider(InternalAuthenticatorProvider.class);
       }
     };
+  }
+
+  /**
+   * A {@link Provider} for {@link InternalAuthenticator} for use in the
+   * {@link io.cdap.cdap.common.internal.remote.RemoteClient}.
+   */
+  private static final class InternalAuthenticatorProvider implements Provider<InternalAuthenticator> {
+    private final CConfiguration cConf;
+    private final Injector injector;
+
+    @Inject
+    InternalAuthenticatorProvider(CConfiguration cConf, Injector injector) {
+      this.cConf = cConf;
+      this.injector = injector;
+    }
+
+    @Override
+    public InternalAuthenticator get() {
+      if (SecurityUtil.isInternalAuthEnabled(cConf)) {
+        return new DefaultInternalAuthenticator(injector.getInstance(AuthenticationContext.class));
+      }
+      return new NoOpInternalAuthenticator();
+    }
   }
 
   /**
@@ -173,7 +207,7 @@ public class AuthenticationContextModules {
 
     @Override
     public AuthenticationContext get() {
-      if (cConf.getBoolean(Constants.Security.ENFORCE_INTERNAL_AUTH)) {
+      if (SecurityUtil.isInternalAuthEnabled(cConf)) {
         return injector.getInstance(internalAuthContextClass);
       }
       return injector.getInstance(MasterAuthenticationContext.class);

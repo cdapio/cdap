@@ -25,6 +25,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.URIScheme;
+import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
 import io.cdap.cdap.common.security.HttpsEnabler;
@@ -83,8 +84,8 @@ public class RemoteSecureStoreTest {
     discoveryService.register(URIScheme.HTTPS.createDiscoverable(Constants.Service.SECURE_STORE_SERVICE,
                                                          httpService.getBindAddress()));
 
-    RemoteClientFactory remoteClientFactory = new RemoteClientFactory(
-      discoveryService, new AuthenticationTestContext(), conf);
+    RemoteClientFactory remoteClientFactory =
+      new RemoteClientFactory(discoveryService, new DefaultInternalAuthenticator(new AuthenticationTestContext()));
     remoteSecureStore = new RemoteSecureStore(remoteClientFactory);
   }
 

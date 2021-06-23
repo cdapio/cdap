@@ -27,6 +27,7 @@ import io.cdap.cdap.api.metrics.NoopMetricsContext;
 import io.cdap.cdap.common.HttpExceptionHandler;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.logging.appender.LogMessage;
@@ -105,8 +106,8 @@ public class LogBufferHandlerTest {
   private RemoteLogAppender getRemoteAppender(CConfiguration cConf, NettyHttpService httpService) {
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     discoveryService.register(new Discoverable(Constants.Service.LOG_BUFFER_SERVICE, httpService.getBindAddress()));
-    RemoteClientFactory remoteClientFactory = new RemoteClientFactory(
-      discoveryService, new AuthenticationTestContext(), cConf);
+    RemoteClientFactory remoteClientFactory =
+      new RemoteClientFactory(discoveryService, new DefaultInternalAuthenticator(new AuthenticationTestContext()));
     return new RemoteLogAppender(cConf, remoteClientFactory);
   }
 

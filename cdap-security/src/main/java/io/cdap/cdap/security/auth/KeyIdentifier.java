@@ -29,7 +29,7 @@ import javax.crypto.spec.SecretKeySpec;
  * Represents a secret key to use for message signing, plus a unique random number identifying it.
  */
 public final class KeyIdentifier {
-  private SecretKey key;
+  private transient SecretKey key;
   private final byte[] encodedKey;
   private final String algorithm;
   private final int keyId;
@@ -78,6 +78,9 @@ public final class KeyIdentifier {
     return keyId;
   }
 
+  /**
+   * Returns the expiration timestamp in milliseconds.
+   */
   public long getExpiration() {
     return expiration;
   }

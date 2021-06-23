@@ -17,8 +17,6 @@
 package io.cdap.cdap.common.internal.remote;
 
 import com.google.common.annotations.VisibleForTesting;
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.common.http.HttpRequestConfig;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
@@ -28,25 +26,21 @@ import javax.inject.Inject;
  * A factory to create {@link RemoteClient}.
  */
 public class RemoteClientFactory {
-
   public static final HttpRequestConfig NO_VERIFY_HTTP_REQUEST_CONFIG = new HttpRequestConfig(15000,
                                                                                               15000,
                                                                                               false);
   private final DiscoveryServiceClient discoveryClient;
-  private final AuthenticationContext authenticationContext;
-  private final CConfiguration cConf;
+  private final InternalAuthenticator internalAuthenticator;
 
   @Inject @VisibleForTesting
-  public RemoteClientFactory(DiscoveryServiceClient discoveryClient, AuthenticationContext authenticationContext,
-                             CConfiguration cConf) {
+  public RemoteClientFactory(DiscoveryServiceClient discoveryClient, InternalAuthenticator internalAuthenticator) {
     this.discoveryClient = discoveryClient;
-    this.authenticationContext = authenticationContext;
-    this.cConf = cConf;
+    this.internalAuthenticator = internalAuthenticator;
   }
 
-  public RemoteClient createRemoteClient(String discoverableServiceName,
-                                         HttpRequestConfig httpRequestConfig, String basePath) {
-    return new RemoteClient(authenticationContext, discoveryClient, cConf, discoverableServiceName, httpRequestConfig,
-                            basePath);
+  public RemoteClient createRemoteClient(String discoverableServiceName, HttpRequestConfig httpRequestConfig,
+                                         String basePath) {
+    return new RemoteClient(internalAuthenticator, discoveryClient, discoverableServiceName,
+                            httpRequestConfig, basePath);
   }
 }

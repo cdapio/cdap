@@ -49,7 +49,7 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
           EventExecutor executor = pipeline.context("dispatcher").executor();
           pipeline.addBefore(executor, "dispatcher", AUTHENTICATOR_NAME,
                              new AuthenticationChannelHandler(cConf.getBoolean(Constants.Security
-                                                                                 .ENFORCE_INTERNAL_AUTH)));
+                                                                                 .INTERNAL_AUTH_ENABLED)));
         }
       };
     }

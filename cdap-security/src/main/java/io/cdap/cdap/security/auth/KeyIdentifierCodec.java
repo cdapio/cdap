@@ -17,6 +17,13 @@
 package io.cdap.cdap.security.auth;
 
 import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.common.io.BinaryDecoder;
@@ -32,6 +39,9 @@ import io.cdap.cdap.internal.io.DatumWriterFactory;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 /**
  * Utility to encode and decode keys that are shared between keyManagers.
@@ -41,11 +51,21 @@ public class KeyIdentifierCodec implements Codec<KeyIdentifier> {
 
   private final DatumReaderFactory readerFactory;
   private final DatumWriterFactory writerFactory;
+  private final Gson gson;
+
+  private static class ByteArrayBase64Deserializer implements JsonDeserializer<byte[]> {
+    @Override
+    public byte[] deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+      throws JsonParseException {
+      return Base64.getDecoder().decode(json.getAsString());
+    }
+  }
 
   @Inject
   public KeyIdentifierCodec(DatumReaderFactory readerFactory, DatumWriterFactory writerFactory) {
     this.readerFactory = readerFactory;
     this.writerFactory = writerFactory;
+    this.gson = new GsonBuilder().registerTypeAdapter(byte[].class, new ByteArrayBase64Deserializer()).create();
   }
 
   @Override
@@ -67,11 +87,21 @@ public class KeyIdentifierCodec implements Codec<KeyIdentifier> {
 
     DatumReader<KeyIdentifier> reader = readerFactory.create(KEY_IDENTIFIER_TYPE,
                                                              KeyIdentifier.Schemas.getCurrentSchema());
-    int readVersion = decoder.readInt();
-    Schema readSchema = KeyIdentifier.Schemas.getSchemaVersion(readVersion);
-    if (readSchema == null) {
-      throw new IOException("Unknown schema version for KeyIdentifier: " + readVersion);
+    try {
+      int readVersion = decoder.readInt();
+      Schema readSchema = KeyIdentifier.Schemas.getSchemaVersion(readVersion);
+      if (readSchema == null) {
+        throw new IOException("Unknown schema version for KeyIdentifier: " + readVersion);
+      }
+      return reader.read(decoder, readSchema);
+    } catch (IOException e) {
+      // As a fallback, try deserializing from JSON format.
+      try {
+        return gson.fromJson(new String(data, StandardCharsets.UTF_8), KeyIdentifier.class);
+      } catch (JsonSyntaxException jse) {
+        // For backwards compatibility, throw an IOException with the initial exception wrapped.
+        throw new IOException("Failed to deserialize KeyIdentifier", e);
+      }
     }
-    return reader.read(decoder, readSchema);
   }
 }

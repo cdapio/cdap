@@ -21,7 +21,7 @@ import com.google.gson.Gson;
 import io.cdap.cdap.api.ServiceDiscoverer;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.app.services.AbstractServiceDiscoverer;
-import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.service.ServiceDiscoverable;
 import io.cdap.cdap.proto.ProgramType;
@@ -73,7 +73,7 @@ public class OAuthMacroEvaluatorTest {
                                                        Constants.STUDIO_SERVICE_NAME);
     discoveryService.register(new Discoverable(discoveryName, httpService.getBindAddress()));
     RemoteClientFactory remoteClientFactory = new RemoteClientFactory(
-      discoveryService, new AuthenticationTestContext(), CConfiguration.create());
+      discoveryService, new DefaultInternalAuthenticator(new AuthenticationTestContext()));
     serviceDiscoverer = new AbstractServiceDiscoverer(NamespaceId.DEFAULT.app("testapp").spark("testspark")) {
       @Override
       protected RemoteClientFactory getRemoteClientFactory() {

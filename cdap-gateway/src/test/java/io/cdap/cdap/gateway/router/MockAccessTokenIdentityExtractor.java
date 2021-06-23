@@ -60,8 +60,8 @@ public class MockAccessTokenIdentityExtractor implements UserIdentityExtractor {
                                             String.format("Failed to validate access token with reason: %s", state));
     }
     UserIdentityPair pair = new UserIdentityPair(accessToken,
-                                                 new UserIdentity("dummy", new LinkedHashSet<String>(),
-                                                                  System.currentTimeMillis(),
+                                                 new UserIdentity("dummy", UserIdentity.IdentifierType.EXTERNAL,
+                                                                  new LinkedHashSet<>(), System.currentTimeMillis(),
                                                                   System.currentTimeMillis() + 100000));
     return new UserIdentityExtractionResponse(pair);
   }
