@@ -35,6 +35,8 @@ import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -57,6 +59,15 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
   private static final String BUCKET = "bucket";
   // Keys for looking up system properties
   private static final String LABELS_PROPERTY = "labels";
+  public static final String LABEL_VERSON = "cdap-version";
+  public static final String LABEL_PROFILE = "cdap-profile";
+  public static final String LABEL_REUSE_KEY = "cdap-reuse-key";
+  public static final String LABEL_REUSE_UNTIL = "cdap-reuse-until";
+  /**
+   * In reuse scenario we can't find "our" cluster by cluster name, so let's put it into the label
+   * @see {@link DataprocProvisioner#getAllocatedClusterName(ProvisionerContext)}
+   */
+  public static final String LABEL_RUN_KEY = "cdap-run-key";
 
   private final ProvisionerSpecification spec;
   private ProvisionerSystemContext systemContext;
@@ -109,12 +120,13 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
   }
 
   /**
-   * Gets the cluster name for the given context
+   * Gets the default cluster name for the given context. See {@link #getAllocatedClusterName} to get
+   * the name of actually allocated cluster (if any).
    *
    * @param context the context
    * @return a string that is a valid cluster name
    */
-  protected abstract String getClusterName(ProvisionerContext context);
+  protected abstract String getClusterName(ProvisionerContext context) throws Exception;
 
   /**
    * Performs the delete cluster action.
@@ -152,13 +164,13 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
     if (!conf.isRuntimeJobManagerEnabled()) {
       return Optional.empty();
     }
-    String clusterName = getClusterName(context);
-    String projectId = conf.getProjectId();
-    String region = conf.getRegion();
-    String bucket = properties.get(BUCKET);
-
-    Map<String, String> systemLabels = getSystemLabels();
     try {
+      String clusterName = getClusterName(context);
+      String projectId = conf.getProjectId();
+      String region = conf.getRegion();
+      String bucket = properties.get(BUCKET);
+
+      Map<String, String> systemLabels = getSystemLabels();
       return Optional.of(
         new DataprocRuntimeJobManager(new DataprocClusterInfo(context, clusterName, conf.getDataprocCredentials(),
                                                               DataprocClient.DATAPROC_GOOGLEAPIS_COM_443,
@@ -223,9 +235,7 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
     ProvisionerSystemContext systemContext = getSystemContext();
 
     // dataproc only allows label values to be lowercase letters, numbers, or dashes
-    String cdapVersion = systemContext.getCDAPVersion().toLowerCase();
-    cdapVersion = cdapVersion.replaceAll("\\.", "_");
-    labels.put("cdap-version", cdapVersion);
+    labels.put(LABEL_VERSON, getVersionLabel());
 
     String extraLabelsStr = systemContext.getProperties().get(LABELS_PROPERTY);
     // labels are expected to be in format:
@@ -235,6 +245,12 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
     }
 
     return Collections.unmodifiableMap(labels);
+  }
+
+  protected String getVersionLabel() {
+    String cdapVersion = systemContext.getCDAPVersion().toLowerCase();
+    cdapVersion = cdapVersion.replaceAll("\\.", "_");
+    return cdapVersion;
   }
 
   /**
