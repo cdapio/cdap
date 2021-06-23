@@ -160,6 +160,9 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
   private void doInitialize(TwillContext context) throws Exception {
     CConfiguration cConf = CConfiguration.create(new File(getArgument("cConf")).toURI().toURL());
 
+    // Overwrite the app fabric temp directory with the task worker temp directory
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, cConf.get(Constants.TaskWorker.LOCAL_DATA_DIR));
+
     Configuration hConf = new Configuration();
     hConf.clear();
     hConf.addResource(new File(getArgument("hConf")).toURI().toURL());
