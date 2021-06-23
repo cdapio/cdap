@@ -59,7 +59,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-
 /**
  * Unit test for {@link TaskWorkerService}.
  */
@@ -197,37 +196,6 @@ public class TaskWorkerServiceTest {
     Assert.assertTrue(taskWorkerService.state() == Service.State.TERMINATED);
   }
 
-
-  @Test
-  public void testRunTaskWithQueryParameters() throws IOException {
-    TaskWorkerService taskWorkerService = setupTaskWorkerService(10001);
-    InetSocketAddress addr = taskWorkerService.getBindAddress();
-    URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
-
-    // Create a tmp file and upload it to task worker which will read the content and return the content back.
-    String content = "this is file content";
-    File tmpFile = new File(tmpFolder.newFolder() + "/testRunTaskWithQueryParameters.txt");
-    FileWriter writer = new FileWriter(tmpFile.getPath());
-    writer.write(content);
-    writer.close();
-
-    // Submit task to worker.
-    String className = FileReaderRunnableTask.class.getName();
-    String param = String.valueOf(Duration.ofMillis(1).toMillis());
-    String path = String.format("%s/worker/task?className=%s&param=%s",
-                                Constants.Gateway.INTERNAL_API_VERSION_3,
-                                className, param);
-    HttpRequest request = HttpRequest.post(uri.resolve(path).toURL())
-      .withBody((ContentProvider<? extends InputStream>) (() -> new FileInputStream(tmpFile))).build();
-    HttpResponse response = HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
-
-    Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-    Assert.assertEquals(content, response.getResponseBodyAsString());
-
-    waitForTaskWorkerToFinish(taskWorkerService);
-    Assert.assertTrue(taskWorkerService.state() == Service.State.TERMINATED);
-  }
-
   public static class TestRunnableClass implements RunnableTask {
     @Override
     public void run(RunnableTaskContext context) throws Exception {
@@ -235,15 +203,6 @@ public class TaskWorkerServiceTest {
         Thread.sleep(Integer.valueOf(context.getParam()));
       }
       context.writeResult(context.getParam().getBytes());
-    }
-  }
-
-  public static class FileReaderRunnableTask implements RunnableTask {
-    @Override
-    public void run(RunnableTaskContext context) throws Exception {
-      URI uri = context.getFileURI();
-      String content = new String(Files.readAllBytes(new File(uri).toPath()));
-      context.writeResult(content.getBytes());
     }
   }
 }
