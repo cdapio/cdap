@@ -19,6 +19,7 @@ package io.cdap.cdap.security.authorization;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -32,6 +33,8 @@ import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.auth.CipherException;
 import io.cdap.cdap.security.auth.TinkCipher;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,16 +46,12 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
-<<<<<<< HEAD
  * An implementation of {@link io.cdap.cdap.security.spi.authorization.AccessEnforcer} that runs on the master.
  * It calls the access controller directly to enforce authorization policies.
-=======
- * An implementation of {@link io.cdap.cdap.security.spi.authorization.AccessEnforcer} that runs on the master. It calls
- * the authorizer directly to enforce authorization policies.
->>>>>>> c6191a08900 ([CDAP-17772] Add initial support for internal token generation and auth context propagation)
  */
 @Singleton
 public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
+  public static final String INTERNAL_ACCESS_ENFORCER = "internal";
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultAccessEnforcer.class);
 
@@ -61,38 +60,100 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
   @Nullable
   private final Principal masterUser;
   private final int logTimeTakenAsWarn;
+  private final AccessEnforcer internalAccessEnforcer;
+  private final boolean internalAuthEnabled;
 
   @Inject
   DefaultAccessEnforcer(CConfiguration cConf, SConfiguration sConf,
-                        AccessControllerInstantiator accessControllerInstantiator) {
+                        AccessControllerInstantiator accessControllerInstantiator,
+                        @Named(INTERNAL_ACCESS_ENFORCER) AccessEnforcer internalAccessEnforcer) {
     super(cConf);
     this.sConf = sConf;
     this.accessControllerInstantiator = accessControllerInstantiator;
     String masterUserName = AuthorizationUtil.getEffectiveMasterUser(cConf);
     this.masterUser = masterUserName == null ? null : new Principal(masterUserName, Principal.PrincipalType.USER);
     this.logTimeTakenAsWarn = cConf.getInt(Constants.Security.Authorization.EXTENSION_OPERATION_TIME_WARN_THRESHOLD);
+    this.internalAccessEnforcer = internalAccessEnforcer;
+    this.internalAuthEnabled = SecurityUtil.isInternalAuthEnabled(cConf);
   }
 
   @Override
   public void enforce(EntityId entity, Principal principal, Set<? extends Permission> permissions)
     throws AccessException {
-    doEnforce(entity, principal, permissions);
+    if (internalAuthEnabled && principal.getFullCredential() != null && principal.getFullCredential().getType()
+      == Credential.CredentialType.INTERNAL) {
+      LOG.trace("Internal Principal enforce({}, {}, {})", entity, principal, permissions);
+      internalAccessEnforcer.enforce(entity, principal, permissions);
+      return;
+    }
+    if (!isSecurityAuthorizationEnabled()) {
+      return;
+    }
+    // bypass the check when the principal is the master user and the entity is in the system namespace
+    if (isAccessingSystemNSAsMasterUser(entity, principal) || isEnforcingOnSamePrincipalId(entity, principal)) {
+      return;
+    }
+
+    principal = getUserPrinciple(principal);
+
+    LOG.trace("Enforcing permissions {} on {} for principal {}.", permissions, entity, principal);
+    long startTime = System.nanoTime();
+    try {
+      accessControllerInstantiator.get().enforce(entity, principal, permissions);
+    } finally {
+      long timeTaken = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
+      String logLine = "Enforced permissions {} on {} for principal {}. Time spent in enforcement was {} ms.";
+      if (timeTaken > logTimeTakenAsWarn) {
+        LOG.warn(logLine, permissions, entity, principal, timeTaken);
+      } else {
+        LOG.trace(logLine, permissions, entity, principal, timeTaken);
+      }
+    }
   }
 
   @Override
   public void enforceOnParent(EntityType entityType, EntityId parentId, Principal principal, Permission permission)
     throws AccessException {
-    doEnforce(entityType, parentId, principal, permission);
+    if (internalAuthEnabled && principal.getFullCredential() != null && principal.getFullCredential().getType()
+      == Credential.CredentialType.INTERNAL) {
+      LOG.trace("Internal Principal enforceOnParent({}, {}, {})", parentId, principal, permission);
+      internalAccessEnforcer.enforceOnParent(entityType, parentId, principal, permission);
+      return;
+    }
+
+    if (!isSecurityAuthorizationEnabled()) {
+      return;
+    }
+
+    // bypass the check when the principal is the master user and the entity is in the system namespace
+    if (isAccessingSystemNSAsMasterUser(parentId, principal) || isEnforcingOnSamePrincipalId(parentId, principal)) {
+      return;
+    }
+
+    principal = getUserPrinciple(principal);
+
+    LOG.trace("Enforcing permission {} on {} in {} for principal {}.", permission, entityType, parentId, principal);
+    long startTime = System.nanoTime();
+    try {
+      accessControllerInstantiator.get().enforceOnParent(entityType, parentId, principal, permission);
+    } finally {
+      long timeTaken = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
+      String logLine = "Enforced permission {} on {} in {} for principal {}. Time spent in enforcement was {} ms.";
+      if (timeTaken > logTimeTakenAsWarn) {
+        LOG.warn(logLine, permission, entityType, parentId, principal, timeTaken);
+      } else {
+        LOG.trace(logLine, permission, entityType, parentId, principal, timeTaken);
+      }
+    }
   }
 
   @Override
   public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal)
     throws AccessException {
-    // TODO CDAP-17772: Temporary short-circuit, implement internal access enforcement
-    if (principal.getFullCredential() != null && principal.getFullCredential().getType()
-      .equals(Credential.CredentialType.INTERNAL)) {
+    if (internalAuthEnabled && principal.getFullCredential() != null && principal.getFullCredential().getType()
+      == Credential.CredentialType.INTERNAL) {
       LOG.trace("Internal Principal enforce({}, {})", entityIds, principal);
-      return entityIds;
+      return internalAccessEnforcer.isVisible(entityIds, principal);
     }
 
     if (!isSecurityAuthorizationEnabled()) {
@@ -127,74 +188,6 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
     visibleEntities.addAll(moreVisibleEntities);
     LOG.trace("Getting {} as visible entities", visibleEntities);
     return Collections.unmodifiableSet(visibleEntities);
-  }
-
-  private void doEnforce(EntityId entity, Principal principal, Set<? extends Permission> permissions)
-    throws AccessException {
-    // TODO CDAP-17772: Temporary short-circuit, implement internal access enforcement
-    if (principal.getFullCredential() != null && principal.getFullCredential().getType()
-      .equals(Credential.CredentialType.INTERNAL)) {
-      LOG.trace("Internal Principal enforce({}, {}, {})", entity, principal, permissions);
-      return;
-    }
-    if (!isSecurityAuthorizationEnabled()) {
-      return;
-    }
-    // bypass the check when the principal is the master user and the entity is in the system namespace
-    if (isAccessingSystemNSAsMasterUser(entity, principal) || isEnforcingOnSamePrincipalId(entity, principal)) {
-      return;
-    }
-
-    principal = getUserPrinciple(principal);
-
-    LOG.trace("Enforcing permissions {} on {} for principal {}.", permissions, entity, principal);
-    long startTime = System.nanoTime();
-    try {
-      accessControllerInstantiator.get().enforce(entity, principal, permissions);
-    } finally {
-      long timeTaken = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
-      String logLine = "Enforced permissions {} on {} for principal {}. Time spent in enforcement was {} ms.";
-      if (timeTaken > logTimeTakenAsWarn) {
-        LOG.warn(logLine, permissions, entity, principal, timeTaken);
-      } else {
-        LOG.trace(logLine, permissions, entity, principal, timeTaken);
-      }
-    }
-  }
-
-  private void doEnforce(EntityType entityType, EntityId parentId, Principal principal, Permission permission)
-    throws AccessException {
-    // TODO CDAP-17772: Temporary short-circuit, implement internal access enforcement
-    if (principal.getFullCredential() != null && principal.getFullCredential().getType()
-      .equals(Credential.CredentialType.INTERNAL)) {
-      LOG.trace("Internal Principal enforceOnParent({}, {}, {})", parentId, principal, permission);
-      return;
-    }
-
-    if (!isSecurityAuthorizationEnabled()) {
-      return;
-    }
-
-    // bypass the check when the principal is the master user and the entity is in the system namespace
-    if (isAccessingSystemNSAsMasterUser(parentId, principal) || isEnforcingOnSamePrincipalId(parentId, principal)) {
-      return;
-    }
-
-    principal = getUserPrinciple(principal);
-
-    LOG.trace("Enforcing permission {} on {} in {} for principal {}.", permission, entityType, parentId, principal);
-    long startTime = System.nanoTime();
-    try {
-      accessControllerInstantiator.get().enforceOnParent(entityType, parentId, principal, permission);
-    } finally {
-      long timeTaken = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
-      String logLine = "Enforced permission {} on {} in {} for principal {}. Time spent in enforcement was {} ms.";
-      if (timeTaken > logTimeTakenAsWarn) {
-        LOG.warn(logLine, permission, entityType, parentId, principal, timeTaken);
-      } else {
-        LOG.trace(logLine, permission, entityType, parentId, principal, timeTaken);
-      }
-    }
   }
 
   private Principal getUserPrinciple(Principal principal) throws AccessException {

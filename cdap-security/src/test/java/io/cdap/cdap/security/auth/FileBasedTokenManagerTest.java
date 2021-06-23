@@ -94,7 +94,8 @@ public class FileBasedTokenManagerTest extends TestTokenManager {
     String user = "testuser";
     long now = System.currentTimeMillis();
     List<String> groups = Lists.newArrayList("users", "admins");
-    UserIdentity identifier = new UserIdentity(user, groups, now, now + TOKEN_DURATION);
+    UserIdentity identifier = new UserIdentity(user, UserIdentity.IdentifierType.EXTERNAL, groups, now,
+                                               now + TOKEN_DURATION);
 
     AccessToken token = tokenManager.signIdentifier(identifier);
 

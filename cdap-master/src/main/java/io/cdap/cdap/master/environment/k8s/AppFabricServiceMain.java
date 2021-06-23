@@ -62,6 +62,7 @@ import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.store.SecureStoreService;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.TwillRunnerService;
@@ -140,7 +141,7 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
     if (zkBinding != null) {
       services.add(zkBinding.getProvider().get());
     }
-    services.add(injector.getInstance(TokenManager.class));
+
 
     // Start both the remote TwillRunnerService and regular TwillRunnerService
     TwillRunnerService remoteTwillRunner = injector.getInstance(Key.get(TwillRunnerService.class,
@@ -154,7 +155,10 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
     if (cConf.getBoolean(Constants.TaskWorker.POOL_ENABLE)) {
       services.add(injector.getInstance(TaskWorkerServiceLauncher.class));
-    } 
+    }
+    if (SecurityUtil.isInternalAuthEnabled(cConf)) {
+      services.add(injector.getInstance(TokenManager.class));
+    }
 
     // Optionally adds the master environment task
     masterEnv.getTask().ifPresent(task -> services.add(new MasterTaskExecutorService(task, masterEnvContext)));

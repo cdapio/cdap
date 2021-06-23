@@ -20,6 +20,7 @@ import com.google.inject.Module;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.runtime.RuntimeModule;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import joptsimple.internal.Strings;
 import org.apache.twill.zookeeper.ZKClient;
 
@@ -54,7 +55,7 @@ public class CoreSecurityRuntimeModule extends RuntimeModule {
   public static CoreSecurityModule getDistributedModule(CConfiguration cConf) {
     // If security is not needed, we don't need a distributed security module.
     // It is merely for satisfying the binding dependencies only.
-    if (!cConf.getBoolean(Constants.Security.ENABLED) && !cConf.getBoolean(Constants.Security.ENFORCE_INTERNAL_AUTH)) {
+    if (!cConf.getBoolean(Constants.Security.ENABLED) && !SecurityUtil.isInternalAuthEnabled(cConf)) {
       return new InMemoryCoreSecurityModule();
     }
 

@@ -20,6 +20,7 @@ import com.google.common.io.Files;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.service.RetryStrategyType;
@@ -70,8 +71,8 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
 
     String tempFolderPath = tmpFolder.newFolder().getPath();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tempFolderPath);
-    RemoteClientFactory remoteClientFactory = new RemoteClientFactory(discoveryClient,
-                                                                      new AuthenticationTestContext(), cConf);
+    RemoteClientFactory remoteClientFactory =
+      new RemoteClientFactory(discoveryClient, new DefaultInternalAuthenticator(new AuthenticationTestContext()));
     ArtifactLocalizerService artifactLocalizerService =
       new ArtifactLocalizerService(cConf, new ArtifactLocalizer(cConf, remoteClientFactory));
     // start the service

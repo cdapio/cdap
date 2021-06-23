@@ -39,6 +39,7 @@ import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.RequirementsCodec;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerClient;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
@@ -73,7 +74,8 @@ public class ConfiguratorTask implements RunnableTask {
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new LocalLocationModule(),
-      new ConfiguratorTaskModule()
+      new ConfiguratorTaskModule(),
+      new AuthenticationContextModules().getMasterWorkerModule()
     );
     ConfigResponse result = injector.getInstance(ConfiguratorTaskRunner.class).configure(deploymentInfo);
     context.writeResult(GSON.toJson(result).getBytes(StandardCharsets.UTF_8));

@@ -52,6 +52,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import org.apache.twill.api.Configs;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.TwillRunnerService;
@@ -146,11 +147,13 @@ public class PreviewServiceMain extends AbstractServiceMain<EnvironmentOptions> 
     if (zkBinding != null) {
       services.add(zkBinding.getProvider().get());
     }
-    services.add(injector.getInstance(TokenManager.class));
 
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
     if (cConf.getInt(Constants.Preview.CONTAINER_COUNT) <= 0) {
       services.add(injector.getInstance(PreviewRunnerManager.class));
+    }
+    if (SecurityUtil.isInternalAuthEnabled(cConf)) {
+      services.add(injector.getInstance(TokenManager.class));
     }
   }
 
