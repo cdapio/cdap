@@ -26,6 +26,7 @@ import org.apache.twill.filesystem.LocationFactory;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.locks.Lock;
 import javax.annotation.Nullable;
 
 /**
@@ -113,4 +114,10 @@ public interface ProvisionerContext {
    * @return a {@link CompletionStage} that carries result of the task execution
    */
   <T> CompletionStage<T> execute(Callable<T> callable);
+
+  /**
+   * @return provisioner profile name.
+   */
+  @Nullable
+  String getProfileName();
 }

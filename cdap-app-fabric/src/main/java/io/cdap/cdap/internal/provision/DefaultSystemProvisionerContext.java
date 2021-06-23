@@ -24,7 +24,10 @@ import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSystemContext;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Context for initializing a provisioner.
@@ -35,12 +38,14 @@ public class DefaultSystemProvisionerContext implements ProvisionerSystemContext
   private final CConfiguration cConf;
   private final AtomicReference<Map<String, String>> properties;
   private final String cdapVersion;
+  private final Map<String, Lock> locks;
 
   DefaultSystemProvisionerContext(CConfiguration cConf, String provisionerName) {
     this.prefix = String.format("%s%s.", Constants.Provisioner.SYSTEM_PROPERTY_PREFIX, provisionerName);
     this.cConf = CConfiguration.copy(cConf);
     this.properties = new AtomicReference<>(Collections.emptyMap());
     this.cdapVersion = ProjectInfo.getVersion().toString();
+    this.locks = new ConcurrentHashMap<>();
 
     reloadProperties();
   }
@@ -59,5 +64,10 @@ public class DefaultSystemProvisionerContext implements ProvisionerSystemContext
   @Override
   public String getCDAPVersion() {
     return cdapVersion;
+  }
+
+  @Override
+  public Lock getLock(String name) {
+    return locks.computeIfAbsent(name, n -> new ReentrantLock());
   }
 }
