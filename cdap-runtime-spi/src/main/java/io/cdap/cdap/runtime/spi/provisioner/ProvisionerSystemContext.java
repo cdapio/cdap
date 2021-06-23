@@ -18,6 +18,7 @@
 package io.cdap.cdap.runtime.spi.provisioner;
 
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Context for system level provisioner information. System level information cannot be seen or modified by end
@@ -46,4 +47,12 @@ public interface ProvisionerSystemContext {
    * Returns the CDAP version
    */
   String getCDAPVersion();
+
+  /**
+   * Creates or retrieves a lock specific to this provisioner. Multiple locks can be created by passing
+   * different names.
+   * @param name lock name used as a key to identify lock requested
+   * @return a new or existing lock instance that can be used to coordinate multiple instances of same provisioner
+   */
+  Lock getLock(String name);
 }

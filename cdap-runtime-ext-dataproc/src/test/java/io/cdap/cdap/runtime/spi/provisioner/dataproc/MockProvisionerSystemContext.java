@@ -20,12 +20,18 @@ import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSystemContext;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class MockProvisionerSystemContext implements ProvisionerSystemContext {
   Map<String, String> properties;
+  private final Map<String, Lock> locks;
+  private String cdapVersion;
 
   public MockProvisionerSystemContext() {
     properties = new HashMap<>();
+    locks = new ConcurrentHashMap<>();
   }
 
   @Override
@@ -46,7 +52,16 @@ public class MockProvisionerSystemContext implements ProvisionerSystemContext {
   }
 
   @Override
+  public Lock getLock(String name) {
+    return locks.computeIfAbsent(name, n -> new ReentrantLock());
+  }
+
+  @Override
   public String getCDAPVersion() {
-    return null;
+    return cdapVersion;
+  }
+
+  public void setCDAPVersion(String cdapVersion) {
+    this.cdapVersion = cdapVersion;
   }
 }
