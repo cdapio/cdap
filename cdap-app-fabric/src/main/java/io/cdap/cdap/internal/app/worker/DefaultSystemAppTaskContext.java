@@ -73,10 +73,9 @@ public class DefaultSystemAppTaskContext extends AbstractServiceDiscoverer imple
   private final RemoteClientFactory remoteClientFactory;
 
   DefaultSystemAppTaskContext(CConfiguration cConf, PreferencesFetcher preferencesFetcher, PluginFinder pluginFinder,
-                              SecureStore secureStore,
-                              String artifactNameSpace, ArtifactId artifactId, ClassLoader artifactClassLoader,
-                              ArtifactManagerFactory artifactManagerFactory, String serviceName,
-                              RemoteClientFactory remoteClientFactory) {
+                              SecureStore secureStore, String artifactNameSpace, ArtifactId artifactId,
+                              ClassLoader artifactClassLoader, ArtifactManagerFactory artifactManagerFactory,
+                              String serviceName, RemoteClientFactory remoteClientFactory) {
     super(artifactNameSpace);
     this.cConf = cConf;
     this.serviceName = serviceName;
@@ -87,7 +86,7 @@ public class DefaultSystemAppTaskContext extends AbstractServiceDiscoverer imple
     this.remoteClientFactory = remoteClientFactory;
     this.artifactManager = artifactManagerFactory.create(new NamespaceId(artifactNameSpace), retryStrategy);
     this.pluginsDir = createTempFolder();
-    this.instantiator = new PluginInstantiator(cConf, artifactClassLoader, pluginsDir);
+    this.instantiator = new PluginInstantiator(cConf, artifactClassLoader, pluginsDir, true);
     this.protoArtifactId = Artifacts.toProtoArtifactId(new NamespaceId(artifactNameSpace), artifactId);
   }
 
