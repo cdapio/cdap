@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.gateway.handlers;
 
-
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
@@ -61,7 +60,7 @@ import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.artifact.WriteConflictException;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
-import io.cdap.cdap.internal.app.store.TablStore;
+import io.cdap.cdap.internal.app.store.TableStore;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.ApplicationUpdateDetail;
@@ -142,7 +141,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final ApplicationLifecycleService applicationLifecycleService;
   private final File tmpDir;
   private final JsonArray jtabl = new JsonArray();
-  private final TablStore table;
+  private final TableStore table;
 
   @Inject
   AppLifecycleHttpHandler(CConfiguration configuration,
@@ -150,7 +149,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                           NamespaceQueryAdmin namespaceQueryAdmin,
                           NamespacePathLocator namespacePathLocator,
                           ApplicationLifecycleService applicationLifecycleService,
-                          TablStore table) {
+                          TableStore table) {
     this.configuration = configuration;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.runtimeService = runtimeService;
@@ -301,18 +300,19 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * adds fields to "content" of the table
    */
   @POST
-  @Path("/tbl/edit")
+  @Path("/tbl/edit/{update}")
   public void appTablObj(FullHttpRequest request, HttpResponder responder,
-                         @PathParam("namespace-id") String namespaceId) throws Exception {
+                         @PathParam("namespace-id") String namespaceId,
+                         @PathParam("update") final Boolean update) throws Exception {
     JsonArray array = DECODE_GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), JsonArray.class);
     if (array == null) {
       throw new BadRequestException("Request body is invalid json, please check that it is a json array.");
     }
     StringBuilder cont = new StringBuilder();
     for (JsonElement obj : array) {
-      cont.append(obj.toString() + "\n");
+      cont.append(obj.toString() + "\n     ");
     }
-    this.table.addOrUpdateTabl(namespaceId, cont.toString());
+    this.table.addOrUpdateTabl(namespaceId, cont.toString(), update);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(this.table.jsonStr()));
 
   }
