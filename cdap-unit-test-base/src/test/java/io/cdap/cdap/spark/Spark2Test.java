@@ -271,12 +271,6 @@ public class Spark2Test extends TestBase {
 
   @Test
   public void testPySpark() throws Exception {
-    if (SparkCompatReader.getCurrentSparkCompat() == SparkCompat.SPARK3_2_12) {
-      //For spark 3 we need python 2.7 or higher
-      ComparableVersion pythonVersion = getPythonVersion();
-      assumeTrue("Wrong python2 version " + pythonVersion + ", need 2.7 or up",
-                 pythonVersion.compareTo(new ComparableVersion("2.7")) >= 0);
-    }
     ApplicationManager appManager = deploy(NamespaceId.DEFAULT, Spark2TestApp.class);
 
     // Write some data to a local file
