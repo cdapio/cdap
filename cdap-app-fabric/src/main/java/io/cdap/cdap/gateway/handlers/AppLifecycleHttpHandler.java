@@ -73,9 +73,7 @@ import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import io.cdap.cdap.spi.data.transaction.TransactionException;
-import io.cdap.cdap.spi.data.transaction.TransactionRunner;
-import io.cdap.cdap.spi.data.transaction.TxRunnable;
+import io.cdap.cdap.store.StoreDefinition;
 import io.cdap.http.BodyConsumer;
 import io.cdap.http.ChunkResponder;
 import io.cdap.http.HttpResponder;
@@ -144,19 +142,15 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final ApplicationLifecycleService applicationLifecycleService;
   private final File tmpDir;
   private final JsonArray jtabl = new JsonArray();
-  private TablStore table = new TablStore(new TransactionRunner() {
-    @Override
-    public void run(TxRunnable runnable) throws TransactionException {
-
-    }
-  });
+  private final TablStore table;
 
   @Inject
   AppLifecycleHttpHandler(CConfiguration configuration,
                           ProgramRuntimeService runtimeService,
                           NamespaceQueryAdmin namespaceQueryAdmin,
                           NamespacePathLocator namespacePathLocator,
-                          ApplicationLifecycleService applicationLifecycleService) {
+                          ApplicationLifecycleService applicationLifecycleService,
+                          TablStore table) {
     this.configuration = configuration;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.runtimeService = runtimeService;
@@ -164,6 +158,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.applicationLifecycleService = applicationLifecycleService;
     this.tmpDir = new File(new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR)),
                            configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    this.table = table;
   }
 
   /**
@@ -318,7 +313,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       cont.append(obj.toString() + "\n");
     }
     this.table.addOrUpdateTabl(namespaceId, cont.toString());
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(cont));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(this.table.jsonStr()));
 
   }
   /**

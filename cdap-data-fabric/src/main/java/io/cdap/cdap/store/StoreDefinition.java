@@ -551,7 +551,8 @@ public final class StoreDefinition {
     public static final StructuredTableSpecification TABL_STORE_SPEC =
         new StructuredTableSpecification.Builder()
           .withId(TABL_STORE_TABLE)
-          .withFields(Fields.stringType(CONTENT),
+          .withFields(Fields.stringType(NAMESPACE_FIELD),
+                      Fields.stringType(CONTENT),
                       Fields.longType(TIME_FIELD))
           .withPrimaryKeys(NAMESPACE_FIELD)
           .build();

@@ -35,6 +35,7 @@ public class TablStore {
   @Inject
   public TablStore(TransactionRunner transactionRunner) {
     this.transactionRunner = transactionRunner;
+    this.out = "{\n sample: val \n}";
   }
 
   /**
@@ -52,14 +53,14 @@ public class TablStore {
       fields.add(Fields.stringField(StoreDefinition.TablStore.CONTENT, content));
       fields.add(Fields.longField(StoreDefinition.TablStore.TIME_FIELD, System.currentTimeMillis()));
       tablTable.upsert(fields);
-      this.out = tablTable.toString();
+      this.out = fields.toString();
     }, IOException.class);
   }
 
   /**
    * returns the Json representation of the Table
    */
-  public String jsonStr() {
+  public String jsonStr() throws IOException {
     return out;
   }
 
