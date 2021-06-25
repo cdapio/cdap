@@ -24,6 +24,7 @@ import com.google.inject.assistedinject.Assisted;
 import io.cdap.cdap.api.artifact.ArtifactInfo;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
@@ -32,8 +33,10 @@ import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerClient;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
+import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
@@ -46,6 +49,7 @@ import org.apache.twill.filesystem.LocationFactory;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
@@ -63,14 +67,17 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
   private final NamespaceId namespaceId;
   private final RetryStrategy retryStrategy;
   private final RemoteClient remoteClientInternal;
+  private final Optional<ArtifactLocalizerClient> optionalArtifactLocalizerClient;
 
   @Inject
   RemoteArtifactManager(CConfiguration cConf, LocationFactory locationFactory, @Assisted NamespaceId namespaceId,
-                        @Assisted RetryStrategy retryStrategy, RemoteClientFactory remoteClientFactory) {
+                        @Assisted RetryStrategy retryStrategy, RemoteClientFactory remoteClientFactory,
+                        Optional<ArtifactLocalizerClient> optionalArtifactLocalizerClient) {
     super(cConf);
     this.locationFactory = locationFactory;
     this.namespaceId = namespaceId;
     this.retryStrategy = retryStrategy;
+    this.optionalArtifactLocalizerClient = optionalArtifactLocalizerClient;
     this.remoteClientInternal = remoteClientFactory.createRemoteClient(
       Constants.Service.APP_FABRIC_HTTP,
       new DefaultHttpRequestConfig(false),
@@ -141,6 +148,16 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
       namespace = artifactNamespace;
     } else {
       namespace = namespaceId.getNamespace();
+    }
+
+    // If ArtifactLocalizerClient is set, use it to get the cached location of artifact
+    if (optionalArtifactLocalizerClient.isPresent()) {
+      ArtifactId artifactId = new ArtifactId(namespace, artifactInfo.getName(), artifactInfo.getVersion());
+      try {
+        return Locations.toLocation(optionalArtifactLocalizerClient.get().getArtifactLocation(artifactId));
+      } catch (ArtifactNotFoundException e) {
+        throw new IOException(String.format("Artifact %s not found", artifactId), e);
+      }
     }
 
     HttpRequest.Builder requestBuilder =
