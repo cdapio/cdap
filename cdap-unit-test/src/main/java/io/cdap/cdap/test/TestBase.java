@@ -122,6 +122,7 @@ import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.runtime.spi.SparkCompat;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
@@ -142,6 +143,7 @@ import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.spark.package$;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.inmemory.InMemoryTxSystemClient;
@@ -543,6 +545,9 @@ public class TestBase {
     // Speed up test
     cConf.setLong(Constants.Scheduler.EVENT_POLL_DELAY_MILLIS, 100L);
     cConf.setLong(Constants.AppFabric.STATUS_EVENT_POLL_DELAY_MILLIS, 100L);
+
+    // Set spark compat
+    cConf.set(Constants.AppFabric.SPARK_COMPAT, getCurrentSparkCompat().getCompat());
 
     return cConf;
   }
@@ -1134,5 +1139,17 @@ public class TestBase {
     previewCConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_NOSQL);
 
     return previewCConf;
+  }
+
+  public static SparkCompat getCurrentSparkCompat() {
+    String sparkVersion = package$.MODULE$.SPARK_VERSION();
+    switch (sparkVersion.charAt(0)) {
+      case '3':
+        return SparkCompat.SPARK3_2_12;
+      case '2':
+        return SparkCompat.SPARK2_2_11;
+      default:
+        throw new IllegalStateException("Spark version " + sparkVersion + " is not known");
+    }
   }
 }
