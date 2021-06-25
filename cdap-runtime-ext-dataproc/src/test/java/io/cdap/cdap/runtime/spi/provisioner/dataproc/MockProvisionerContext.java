@@ -37,7 +37,11 @@ import javax.annotation.Nullable;
 public class MockProvisionerContext implements ProvisionerContext {
 
   private final Map<String, String> properties;
-  private final ProgramRunInfo programRunInfo;
+  private ProgramRunInfo programRunInfo;
+  private SparkCompat sparkCompat;
+  private VersionInfo appCDAPVersionInfo;
+  private String cdapVersion;
+  private String profileName;
 
   public MockProvisionerContext() {
     this(null);
@@ -56,6 +60,10 @@ public class MockProvisionerContext implements ProvisionerContext {
   @Override
   public ProgramRunInfo getProgramRunInfo() {
     return programRunInfo;
+  }
+
+  public void setProgramRunInfo(ProgramRunInfo programRunInfo) {
+    this.programRunInfo = programRunInfo;
   }
 
   @Override
@@ -79,12 +87,20 @@ public class MockProvisionerContext implements ProvisionerContext {
 
   @Override
   public SparkCompat getSparkCompat() {
-    return null;
+    return sparkCompat;
+  }
+
+  public void setSparkCompat(SparkCompat sparkCompat) {
+    this.sparkCompat = sparkCompat;
   }
 
   @Override
   public String getCDAPVersion() {
-    return null;
+    return cdapVersion;
+  }
+
+  public void setCdapVersion(String cdapVersion) {
+    this.cdapVersion = cdapVersion;
   }
 
   @Override
@@ -94,7 +110,11 @@ public class MockProvisionerContext implements ProvisionerContext {
 
   @Override @Nullable
   public VersionInfo getAppCDAPVersionInfo() {
-    return null;
+    return appCDAPVersionInfo;
+  }
+
+  public void setAppCDAPVersionInfo(VersionInfo appCDAPVersionInfo) {
+    this.appCDAPVersionInfo = appCDAPVersionInfo;
   }
 
   @Override
@@ -105,6 +125,15 @@ public class MockProvisionerContext implements ProvisionerContext {
   @Override
   public RuntimeMonitorType getRuntimeMonitorType() {
     return null;
+  }
+
+  @Override
+  public String getProfileName() {
+    return profileName;
+  }
+
+  public void setProfileName(String profileName) {
+    this.profileName = profileName;
   }
 
   @Override

@@ -20,25 +20,76 @@ import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.runtime.spi.MockVersionInfo;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.SparkCompat;
-import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
+import io.cdap.cdap.runtime.spi.provisioner.Cluster;
+import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.Spy;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-
-import static org.mockito.Mockito.when;
+import java.util.stream.Stream;
 
 /**
  * Tests for Dataproc provisioner
  */
+@RunWith(MockitoJUnitRunner.class)
 public class DataprocProvisionerTest {
+  private static final String RESOURCE_MAX_PERCENT_KEY =
+    "capacity-scheduler:yarn.scheduler.capacity.maximum-am-resource-percent";
+  private static final String RESOURCE_MAX_PERCENT_VAL = "0.5";
+  private static final String CLUSTER_META_DATA = "metadata-key1|metadata-val1;metadata-key2|metadata-val2";
+  private static final String SERVICE_ACCOUNT = "service-account-1";
+  private static final String tokTOKEN_ENDPOINTnEndpoint = "end-point1";
+
+  @Mock
+  private DataprocClient dataprocClient;
+  @Mock
+  private Cluster cluster, cluster2;
+  @Spy
+  private DataprocProvisioner provisioner = new DataprocProvisioner();
+  @Captor
+  private ArgumentCaptor<Map<String, String>> addedLabelsCaptor;
+
+  MockProvisionerContext context = new MockProvisionerContext();
+
+  @Before
+  public void init() throws IOException, GeneralSecurityException {
+    Mockito.doReturn(dataprocClient).when(provisioner).getClient(Mockito.any());
+    MockProvisionerSystemContext provisionerSystemContext = new MockProvisionerSystemContext();
+
+    //default system properties defined by DataprocProvisioner
+    provisionerSystemContext.addProperty(DataprocConf.NETWORK, "old-network");
+    provisionerSystemContext.addProperty(DataprocConf.STACKDRIVER_LOGGING_ENABLED, "true");
+    provisionerSystemContext
+      .addProperty(DataprocConf.CLUSTER_META_DATA, CLUSTER_META_DATA);
+    provisionerSystemContext.addProperty(DataprocConf.SERVICE_ACCOUNT, SERVICE_ACCOUNT);
+    provisionerSystemContext.addProperty(DataprocConf.TOKEN_ENDPOINT_KEY, tokTOKEN_ENDPOINTnEndpoint);
+
+    //default system properties defined by AbstractDataprocProvisioner
+    provisionerSystemContext.addProperty(RESOURCE_MAX_PERCENT_KEY, RESOURCE_MAX_PERCENT_VAL);
+    provisionerSystemContext.addProperty(DataprocConf.RUNTIME_JOB_MANAGER, "job_manager");
+
+    //non-default system properties
+    provisionerSystemContext.addProperty("non-system-default-key", "any-value");
+    provisionerSystemContext.setCDAPVersion("6.4");
+
+    provisioner.initialize(provisionerSystemContext);
+  }
 
   @Test
-  public void testClusterName() {
+  public void testRunKey() throws Exception {
     // test basic
     ProgramRunInfo programRunInfo = new ProgramRunInfo.Builder()
       .setNamespace("ns")
@@ -49,7 +100,7 @@ public class DataprocProvisionerTest {
       .setRun(UUID.randomUUID().toString())
       .build();
     Assert.assertEquals("cdap-app-" + programRunInfo.getRun(),
-                        new DataprocProvisioner().getClusterName(new MockProvisionerContext(programRunInfo)));
+                        new DataprocProvisioner().getRunKey(new MockProvisionerContext(programRunInfo)));
 
     // test lowercasing, stripping of invalid characters, and truncation
     programRunInfo = new ProgramRunInfo.Builder()
@@ -61,7 +112,7 @@ public class DataprocProvisionerTest {
       .setRun(UUID.randomUUID().toString())
       .build();
     Assert.assertEquals("cdap-myapplcat-" + programRunInfo.getRun(),
-                        new DataprocProvisioner().getClusterName(new MockProvisionerContext(programRunInfo)));
+                        new DataprocProvisioner().getRunKey(new MockProvisionerContext(programRunInfo)));
   }
 
   @Test
@@ -135,43 +186,17 @@ public class DataprocProvisionerTest {
 
   @Test
   public void testCreateContextProperties() {
-    MockProvisionerSystemContext provisionerSystemContext = new MockProvisionerSystemContext();
-    String resourceMaxPercentKey = "capacity-scheduler:yarn.scheduler.capacity.maximum-am-resource-percent";
-    String resourceMaxPercentVal = "0.5";
-    String clusterMetaData = "metadata-key1|metadata-val1;metadata-key2|metadata-val2";
-    String serviceAccount = "service-account-1";
-    String tokenEndpoint = "end-point1";
-
-    //default system properties defined by DataprocProvisioner
-    provisionerSystemContext.addProperty(DataprocConf.NETWORK, "old-network");
-    provisionerSystemContext.addProperty(DataprocConf.STACKDRIVER_LOGGING_ENABLED, "true");
-    provisionerSystemContext
-      .addProperty(DataprocConf.CLUSTER_MEATA_DATA, clusterMetaData);
-    provisionerSystemContext.addProperty(DataprocConf.SERVICE_ACCOUNT, serviceAccount);
-    provisionerSystemContext.addProperty(DataprocConf.TOKEN_ENDPOINT_KEY, tokenEndpoint);
-
-    //default system properties defined by AbstractDataprocProvisioner
-    provisionerSystemContext.addProperty(resourceMaxPercentKey, resourceMaxPercentVal);
-    provisionerSystemContext.addProperty(DataprocConf.RUNTIME_JOB_MANAGER, "job_manager");
-
-    //non-default system properties
-    provisionerSystemContext.addProperty("non-system-default-key", "any-value");
-
-    DataprocProvisioner provisioner = new DataprocProvisioner();
-    provisioner.initialize(provisionerSystemContext);
-
-    MockProvisionerContext provisionerContext = new MockProvisionerContext();
     final String network = "test-network";
-    provisionerContext.addProperty(DataprocConf.NETWORK, network);
+    context.addProperty(DataprocConf.NETWORK, network);
 
-    Map<String, String> properties = provisioner.createContextProperties(provisionerContext);
+    Map<String, String> properties = provisioner.createContextProperties(context);
 
     Assert.assertEquals(network, properties.get(DataprocConf.NETWORK));
     Assert.assertEquals("true", properties.get(DataprocConf.STACKDRIVER_LOGGING_ENABLED));
-    Assert.assertEquals(resourceMaxPercentVal, properties.get(resourceMaxPercentKey));
-    Assert.assertEquals(clusterMetaData, properties.get(DataprocConf.CLUSTER_MEATA_DATA));
-    Assert.assertEquals(serviceAccount, properties.get(DataprocConf.SERVICE_ACCOUNT));
-    Assert.assertEquals(tokenEndpoint, properties.get(DataprocConf.TOKEN_ENDPOINT_KEY));
+    Assert.assertEquals(RESOURCE_MAX_PERCENT_VAL, properties.get(RESOURCE_MAX_PERCENT_KEY));
+    Assert.assertEquals(CLUSTER_META_DATA, properties.get(DataprocConf.CLUSTER_META_DATA));
+    Assert.assertEquals(SERVICE_ACCOUNT, properties.get(DataprocConf.SERVICE_ACCOUNT));
+    Assert.assertEquals(tokTOKEN_ENDPOINTnEndpoint, properties.get(DataprocConf.TOKEN_ENDPOINT_KEY));
     Assert.assertEquals("job_manager", properties.get(DataprocConf.RUNTIME_JOB_MANAGER));
     Assert.assertNull(properties.get("non-system-default-key"));
   }
@@ -203,29 +228,93 @@ public class DataprocProvisionerTest {
       "zone", "region1-a",
       DataprocConf.IMAGE_VERSION, "explicit"
     ));
-    ProvisionerContext context = Mockito.mock(ProvisionerContext.class);
-    DataprocProvisioner provisioner = new DataprocProvisioner();
 
-    when(context.getSparkCompat()).thenReturn(SparkCompat.SPARK3_2_12);
+    context.setSparkCompat(SparkCompat.SPARK3_2_12);
     Assert.assertEquals("2.0", provisioner.getImageVersion(context, defaultConf));
     Assert.assertEquals("explicit", provisioner.getImageVersion(context, explicitVersionConf));
 
-    when(context.getSparkCompat()).thenReturn(SparkCompat.SPARK2_2_11);
+    context.setSparkCompat(SparkCompat.SPARK2_2_11);
     Assert.assertEquals("1.3", provisioner.getImageVersion(context, defaultConf));
     Assert.assertEquals("explicit", provisioner.getImageVersion(context, explicitVersionConf));
 
-    when(context.getAppCDAPVersionInfo()).thenReturn(new MockVersionInfo("6.5"));
+    context.setAppCDAPVersionInfo(new MockVersionInfo("6.5"));
     Assert.assertEquals("2.0", provisioner.getImageVersion(context, defaultConf));
     Assert.assertEquals("explicit", provisioner.getImageVersion(context, explicitVersionConf));
 
-    when(context.getAppCDAPVersionInfo()).thenReturn(new MockVersionInfo("6.4"));
+    context.setAppCDAPVersionInfo(new MockVersionInfo("6.4"));
     Assert.assertEquals("1.3", provisioner.getImageVersion(context, defaultConf));
     Assert.assertEquals("explicit", provisioner.getImageVersion(context, explicitVersionConf));
 
     //Doublecheck we still get 2.0 for Spark 3 even with CDAP 6.4
-    when(context.getSparkCompat()).thenReturn(SparkCompat.SPARK3_2_12);
+    context.setSparkCompat(SparkCompat.SPARK3_2_12);
     Assert.assertEquals("2.0", provisioner.getImageVersion(context, defaultConf));
 
+  }
+
+  @Test
+  public void testClusterReuseOnCreate() throws Exception {
+    context.addProperty("accountKey", "testKey");
+    context.addProperty(DataprocConf.PROJECT_ID_KEY, "testProject");
+    context.addProperty("region", "testRegion");
+    context.addProperty(DataprocConf.CLUSTER_REUSE_ENABLED, "true");
+    context.addProperty("idleTTL", "5");
+    context.addProperty(DataprocConf.SKIP_DELETE, "true");
+    context.setProfileName("testProfile");
+    ProgramRunInfo programRunInfo = new ProgramRunInfo.Builder()
+      .setNamespace("ns")
+      .setApplication("app")
+      .setVersion("1.0")
+      .setProgramType("workflow")
+      .setProgram("program")
+      .setRun("runId")
+      .build();
+    context.setProgramRunInfo(programRunInfo);
+
+    //A. Check with existing client, probably after a retry
+    Mockito.when(dataprocClient.getClusters(
+      null,
+      Collections.singletonMap(AbstractDataprocProvisioner.LABEL_RUN_KEY, "cdap-app-runId")))
+      .thenAnswer(i -> Stream.of(cluster));
+    Mockito.when(cluster.getStatus()).thenReturn(ClusterStatus.RUNNING);
+    Assert.assertEquals(cluster, provisioner.createCluster(context));
+
+    //B. With preallocated cluster in "bad" state new allocation should happen
+    DataprocConf conf = DataprocConf.create(provisioner.createContextProperties(context));
+    Mockito.when(cluster.getStatus()).thenReturn(ClusterStatus.FAILED);
+    Mockito.when(cluster2.getName()).thenReturn("cluster2");
+    Mockito.when(dataprocClient.getClusters(Mockito.eq(ClusterStatus.RUNNING), Mockito.eq(ImmutableMap.of(
+      AbstractDataprocProvisioner.LABEL_VERSON, "6_4",
+      AbstractDataprocProvisioner.LABEL_REUSE_UNTIL, "*",
+      AbstractDataprocProvisioner.LABEL_REUSE_KEY, conf.getClusterReuseKey(),
+      AbstractDataprocProvisioner.LABEL_PROFILE, "testProfile"
+    )), Mockito.any()))
+      .thenAnswer(i -> Stream.of(cluster2));
+    Assert.assertEquals(cluster2, provisioner.createCluster(context));
+
+    Mockito.verify(dataprocClient).updateClusterLabels(
+      "cluster2",
+      Collections.singletonMap(AbstractDataprocProvisioner.LABEL_RUN_KEY, "cdap-app-runId"),
+      Collections.singleton(AbstractDataprocProvisioner.LABEL_REUSE_UNTIL));
+  }
+
+  @Test
+  public void testClusterMarkedForReuseOnDelete() throws Exception {
+    context.addProperty("accountKey", "testKey");
+    context.addProperty(DataprocConf.PROJECT_ID_KEY, "testProject");
+    context.addProperty("region", "testRegion");
+    context.addProperty(DataprocConf.CLUSTER_REUSE_ENABLED, "true");
+    context.addProperty("idleTTL", "5");
+    context.addProperty(DataprocConf.SKIP_DELETE, "true");
+    DataprocConf conf = DataprocConf.create(provisioner.createContextProperties(context));
+    Mockito.when(cluster.getName()).thenReturn("testClusterName");
+    provisioner.doDeleteCluster(context, cluster, conf);
+
+    Mockito.verify(dataprocClient).updateClusterLabels(
+      Mockito.eq("testClusterName"),
+      addedLabelsCaptor.capture(),
+      Mockito.eq(Collections.singleton(AbstractDataprocProvisioner.LABEL_RUN_KEY)));
+    Assert.assertEquals(Collections.singleton(AbstractDataprocProvisioner.LABEL_REUSE_UNTIL),
+                        addedLabelsCaptor.getValue().keySet());
   }
 
 }

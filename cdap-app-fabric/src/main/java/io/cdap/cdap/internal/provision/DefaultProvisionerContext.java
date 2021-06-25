@@ -38,6 +38,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import javax.annotation.Nullable;
 
 /**
@@ -57,13 +59,14 @@ public class DefaultProvisionerContext implements ProvisionerContext {
   private final RuntimeMonitorType runtimeMonitorType;
   private final MetricsCollectionService metricsCollectionService;
   private final String provisionerName;
+  private final String profileName;
   private final Executor executor;
 
   DefaultProvisionerContext(ProgramRunId programRunId, String provisionerName, Map<String, String> properties,
                             SparkCompat sparkCompat, @Nullable SSHContext sshContext,
                             @Nullable VersionInfo appCDAPVersion, LocationFactory locationFactory,
                             RuntimeMonitorType runtimeMonitorType, MetricsCollectionService metricsCollectionService,
-                            Executor executor) {
+                            @Nullable String profileName, Executor executor) {
     this.programRun = new ProgramRun(programRunId.getNamespace(), programRunId.getApplication(),
                                      programRunId.getProgram(), programRunId.getRun());
     this.programRunInfo = new ProgramRunInfo.Builder()
@@ -79,6 +82,7 @@ public class DefaultProvisionerContext implements ProvisionerContext {
     this.sparkCompat = sparkCompat;
     this.appCDAPVersion = appCDAPVersion;
     this.locationFactory = locationFactory;
+    this.profileName = profileName;
     this.cdapVersion = ProjectInfo.getVersion();
     this.runtimeMonitorType = runtimeMonitorType;
     this.metricsCollectionService = metricsCollectionService;
@@ -130,6 +134,11 @@ public class DefaultProvisionerContext implements ProvisionerContext {
   @Override
   public RuntimeMonitorType getRuntimeMonitorType() {
     return runtimeMonitorType;
+  }
+
+  @Override
+  public String getProfileName() {
+    return profileName;
   }
 
   @Override
