@@ -463,6 +463,31 @@
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
+        <!-- dependencies on system apps to be built before standalone -->
+        <dependency>
+          <groupId>io.cdap.cdap</groupId>
+          <artifactId>cdap-data-pipeline2_2.11</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>io.cdap.cdap</groupId>
+          <artifactId>cdap-data-pipeline3_2.12</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>io.cdap.cdap</groupId>
+          <artifactId>cdap-data-streams2_2.11</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>io.cdap.cdap</groupId>
+          <artifactId>cdap-data-streams3_2.12</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
       </dependencies>
 
       <build>
