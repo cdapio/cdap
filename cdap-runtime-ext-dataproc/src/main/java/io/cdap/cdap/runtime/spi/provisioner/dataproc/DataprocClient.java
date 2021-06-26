@@ -84,13 +84,16 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 
 /**
  * Wrapper around the dataproc client that adheres to our configuration settings.
  */
-final class DataprocClient implements AutoCloseable {
+class DataprocClient implements AutoCloseable {
 
   private static final Logger LOG = LoggerFactory.getLogger(DataprocClient.class);
   private static final List<IPRange> PRIVATE_IP_RANGES = DataprocUtils.parseIPRanges(Arrays.asList("10.0.0.0/8",
@@ -533,7 +536,20 @@ final class DataprocClient implements AutoCloseable {
    */
   void updateClusterLabels(String clusterName,
                            Map<String, String> labels) throws RetryableProvisionException, InterruptedException {
-    if (labels.isEmpty()) {
+    updateClusterLabels(clusterName, labels, Collections.emptyList());
+  }
+
+  /**
+   * Updates labelsToSet on the given Dataproc cluster.
+   *
+   * @param clusterName name of the cluster
+   * @param labelsToSet Key/Value pairs to set on the Dataproc cluster.
+   * @param labelsToRemove collection of labels to remove from the Dataproc cluster.
+   */
+  void updateClusterLabels(String clusterName,
+                           Map<String, String> labelsToSet,
+                           Collection<String> labelsToRemove) throws RetryableProvisionException, InterruptedException {
+    if (labelsToSet.isEmpty() && labelsToRemove.isEmpty()) {
       return;
     }
     try {
@@ -542,12 +558,16 @@ final class DataprocClient implements AutoCloseable {
         .orElseThrow(() -> new DataprocRuntimeException("Dataproc cluster " + clusterName +
                                                           " does not exist or not in running state"));
       Map<String, String> existingLabels = cluster.getLabelsMap();
-      // If the labels to set are already exist, no need to update the cluster labels.
-      if (labels.entrySet().stream().allMatch(e -> Objects.equals(e.getValue(), existingLabels.get(e.getKey())))) {
+      // If the labels to set are already exist and labels to remove are not set,
+      // no need to update the cluster labelsToSet.
+      if (labelsToSet.entrySet().stream().allMatch(e -> Objects.equals(e.getValue(), existingLabels.get(e.getKey()))) &&
+          labelsToRemove.stream().noneMatch(existingLabels::containsKey)
+      ) {
         return;
       }
-      Map<String, String> labelsToSet = new HashMap<>(existingLabels);
-      labelsToSet.putAll(labels);
+      Map<String, String> newLabels = new HashMap<>(existingLabels);
+      newLabels.keySet().removeAll(labelsToRemove);
+      newLabels.putAll(labelsToSet);
 
       FieldMask updateMask = FieldMask.newBuilder().addPaths("labels").build();
       OperationFuture<Cluster, ClusterOperationMetadata> operationFuture =
@@ -556,14 +576,14 @@ final class DataprocClient implements AutoCloseable {
                                     .setProjectId(conf.getProjectId())
                                     .setRegion(conf.getRegion())
                                     .setClusterName(clusterName)
-                                    .setCluster(cluster.toBuilder().putAllLabels(labelsToSet))
+                                    .setCluster(cluster.toBuilder().clearLabels().putAllLabels(newLabels))
                                     .setUpdateMask(updateMask)
                                     .build());
 
       ClusterOperationMetadata metadata = operationFuture.getMetadata().get();
       int numWarnings = metadata.getWarningsCount();
       if (numWarnings > 0) {
-        LOG.warn("Encountered {} warning{} while setting labels on cluster:\n{}",
+        LOG.warn("Encountered {} warning {} while setting labels on cluster:\n{}",
                  numWarnings, numWarnings > 1 ? "s" : "", String.join("\n", metadata.getWarningsList()));
       }
     } catch (ExecutionException e) {
@@ -684,6 +704,31 @@ final class DataprocClient implements AutoCloseable {
     }
 
     Cluster cluster = clusterOptional.get();
+    return Optional.of(getCluster(cluster));
+  }
+
+  /**
+   * Converts dataproc cluster object into provisioner one. This version does not throw checked exceptions and
+   * can be used as a {@link java.util.function.Function}.
+   * @param cluster dataproc cluster object
+   * @return provisioner cluster object
+   * @throws DataprocRuntimeException if there was an error
+   */
+  private io.cdap.cdap.runtime.spi.provisioner.Cluster getClusterUnchecked(Cluster cluster) {
+    try {
+      return getCluster(cluster);
+    } catch (IOException e) {
+      throw new DataprocRuntimeException(e);
+    }
+  }
+
+  /**
+   * Converts dataproc cluster object into provisioner one.
+   * @param cluster dataproc cluster object
+   * @return provisioner cluster object
+   * @throws IOException if there was an error
+   */
+  private io.cdap.cdap.runtime.spi.provisioner.Cluster getCluster(Cluster cluster) throws IOException {
     String zone = getZone(cluster.getConfig().getGceClusterConfig().getZoneUri());
 
     List<Node> nodes = new ArrayList<>();
@@ -693,8 +738,9 @@ final class DataprocClient implements AutoCloseable {
     for (String workerName : cluster.getConfig().getWorkerConfig().getInstanceNamesList()) {
       nodes.add(getNode(compute, Node.Type.WORKER, zone, workerName));
     }
-    return Optional.of(new io.cdap.cdap.runtime.spi.provisioner.Cluster(
-      cluster.getClusterName(), convertStatus(cluster.getStatus()), nodes, Collections.emptyMap()));
+    io.cdap.cdap.runtime.spi.provisioner.Cluster c = new io.cdap.cdap.runtime.spi.provisioner.Cluster(
+      cluster.getClusterName(), convertStatus(cluster.getStatus()), nodes, Collections.emptyMap());
+    return c;
   }
 
   private Optional<Cluster> getDataprocCluster(String name) throws RetryableProvisionException {
@@ -713,6 +759,48 @@ final class DataprocClient implements AutoCloseable {
       }
       // otherwise, it's not a retryable failure
       throw e;
+    }
+  }
+
+  /**
+   *
+   * @param status if not null, return only clusters in the specified state
+   * @param labels labels map to use as filters. A value can be "*" to indicate that label must be present
+   *               with any value.
+   * @return iterable list of clusters that conform to the filter
+   * @throws RetryableProvisionException if there was a non 4xx error code returned
+   */
+  public Stream<io.cdap.cdap.runtime.spi.provisioner.Cluster> getClusters(
+    @Nullable io.cdap.cdap.runtime.spi.provisioner.ClusterStatus status,
+    Map<String, String> labels) throws RetryableProvisionException {
+    return getClusters(status, labels, c -> true);
+  }
+
+  /**
+   *
+   * @param status if not null, return only clusters in the specified state
+   * @param labels labels map to use as filters. A value can be "*" to indicate that label must be present
+   *               with any value.
+   * @param postFilter additional filter to apply before converting into provisioner cluster
+   * @return iterable list of clusters that conform to the filter
+   * @throws RetryableProvisionException if there was a non 4xx error code returned
+   */
+  public Stream<io.cdap.cdap.runtime.spi.provisioner.Cluster> getClusters(
+    @Nullable io.cdap.cdap.runtime.spi.provisioner.ClusterStatus status,
+    Map<String, String> labels,
+    Predicate<Cluster> postFilter) throws RetryableProvisionException {
+
+    try {
+      String filter = Stream.concat(
+        Optional.ofNullable(status).map(s -> Stream.of(String.format("status.state=%s", s))).orElse(Stream.empty()),
+        labels.entrySet().stream().map(e -> String.format("labels.%s=%s", e.getKey(), e.getValue())))
+        .collect(Collectors.joining(" AND "));
+      return StreamSupport.stream(
+        client.listClusters(conf.getProjectId(), conf.getRegion(), filter).iterateAll().spliterator(), false)
+        .filter(postFilter)
+        .map(this::getClusterUnchecked);
+    } catch (ApiException e) {
+      throw handleApiException(e);
     }
   }
 

@@ -25,7 +25,10 @@ import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -58,7 +61,7 @@ final class DataprocConf {
   static final String RUNTIME_JOB_MANAGER = "runtime.job.manager";
   // The property name for the GCE cluster meta data
   // It can be overridden by profile runtime arguments (system.profile.properties.clusterMetaData)
-  static final String CLUSTER_MEATA_DATA = "clusterMetaData";
+  static final String CLUSTER_META_DATA = "clusterMetaData";
   static final String CLUSTER_LABELS = "clusterLabels";
   // The property name for the serviceAccount that is passed to Dataproc when creating the Dataproc Cluster
   // Dataproc will pass it to GCE when creating the GCE cluster.
@@ -71,6 +74,13 @@ final class DataprocConf {
   static final String SECURE_BOOT_ENABLED = "secureBootEnabled";
   static final String VTPM_ENABLED = "vTpmEnabled";
   static final String INTEGRITY_MONITORING_ENABLED = "integrityMonitoringEnabled";
+  // Controls cluster reuse
+  static final String CLUSTER_REUSE_ENABLED = "clusterReuseEnabled";
+  // If cluster reuse is enabled, defines how much idle time should be left for cluster to be considered reusable
+  // E.g. with cluster idle timeout of 5 minutes and threshold of 3 minutes, cluster will be reusable for
+  // 2 minutes (5-3) after last job completion
+  static final String CLUSTER_REUSE_THRESHOLD_MINUTES = "clusterReuseThresholdMinutes";
+  static final int CLUSTER_REUSE_THRESHOLD_MINUTES_DEFAULT = 3;
 
   private final String accountKey;
   private final String region;
@@ -129,6 +139,10 @@ final class DataprocConf {
 
   private final String tokenEndpoint;
 
+  private final boolean clusterReuseEnabled;
+  private final long clusterReuseThresholdMinutes;
+  private final String clusterReuseKey;
+
   DataprocConf(DataprocConf conf, String network, String subnet) {
     this(conf.accountKey, conf.region, conf.zone, conf.projectId, conf.networkHostProjectID, network, subnet,
          conf.masterNumNodes, conf.masterCPUs, conf.masterMemoryMB, conf.masterDiskGB, conf.masterDiskType,
@@ -140,7 +154,8 @@ final class DataprocConf {
          conf.componentGatewayEnabled, conf.skipDelete, conf.publicKey, conf.imageVersion, conf.customImageUri,
          conf.clusterMetaData, conf.clusterLabels, conf.networkTags, conf.initActions, conf.runtimeJobManagerEnabled,
          conf.clusterProperties, conf.autoScalingPolicy, conf.idleTTLMinutes, conf.tokenEndpoint,
-         conf.secureBootEnabled, conf.vTpmEnabled, conf.integrityMonitoringEnabled);
+         conf.secureBootEnabled, conf.vTpmEnabled, conf.integrityMonitoringEnabled, conf.clusterReuseEnabled,
+         conf.clusterReuseThresholdMinutes, conf.clusterReuseKey);
   }
 
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
@@ -160,11 +175,15 @@ final class DataprocConf {
                        @Nullable String initActions, boolean runtimeJobManagerEnabled,
                        Map<String, String> clusterProperties, @Nullable String autoScalingPolicy, int idleTTLMinutes,
                        @Nullable String tokenEndpoint, boolean secureBootEnabled, boolean vTpmEnabled,
-                       boolean integrityMonitoringEnabled) {
+                       boolean integrityMonitoringEnabled, boolean clusterReuseEnabled,
+                       long clusterReuseThresholdMinutes, @Nullable String clusterReuseKey) {
     this.accountKey = accountKey;
     this.region = region;
     this.zone = zone;
     this.projectId = projectId;
+    this.clusterReuseEnabled = clusterReuseEnabled;
+    this.clusterReuseThresholdMinutes = clusterReuseThresholdMinutes;
+    this.clusterReuseKey = clusterReuseKey;
     this.networkHostProjectID = Strings.isNullOrEmpty(networkHostProjectId) ? projectId : networkHostProjectId;
     this.network = network;
     this.subnet = subnet;
@@ -397,6 +416,23 @@ final class DataprocConf {
     return integrityMonitoringEnabled;
   }
 
+  public boolean isClusterReuseEnabled() {
+    return clusterReuseEnabled;
+  }
+
+  public long getClusterReuseThresholdMinutes() {
+    return clusterReuseThresholdMinutes;
+  }
+
+  /**
+   * @return a key that should be used along with the profile name to filter clusters with the same configuration.
+   * Always returns a value if cluster reuse is enabled, returns null otherwise.
+   */
+  @Nullable
+  public String getClusterReuseKey() {
+    return clusterReuseKey;
+  }
+
   /**
    * @return GoogleCredential for use with Compute
    * @throws IOException if there was an error reading the account key
@@ -560,7 +596,7 @@ final class DataprocConf {
     String gcpCmekBucket = getString(properties, "gcsBucket");
 
     Map<String, String> clusterMetaData = Collections.unmodifiableMap(
-      DataprocUtils.parseKeyValueConfig(getString(properties, CLUSTER_MEATA_DATA), ";", "\\|"));
+      DataprocUtils.parseKeyValueConfig(getString(properties, CLUSTER_META_DATA), ";", "\\|"));
 
     Map<String, String> clusterLabels = Collections.unmodifiableMap(
       DataprocUtils.parseKeyValueConfig(getString(properties, CLUSTER_LABELS), ";", "\\|"));
@@ -586,6 +622,27 @@ final class DataprocConf {
     boolean integrityMonitoringEnabled = Boolean.parseBoolean(
       properties.getOrDefault(INTEGRITY_MONITORING_ENABLED, "false"));
 
+    boolean clusterReuseEnabled = Boolean.parseBoolean(
+      properties.getOrDefault(CLUSTER_REUSE_ENABLED, "false"));
+    int clusterReuseThresholdMinutes = getInt(properties, CLUSTER_REUSE_THRESHOLD_MINUTES,
+                                              CLUSTER_REUSE_THRESHOLD_MINUTES_DEFAULT);
+    String clusterReuseKey = null;
+    if (clusterReuseEnabled) {
+      try {
+        MessageDigest digest = MessageDigest.getInstance("SHA-1");
+        digest.update(properties.entrySet()
+                        .stream()
+                        .sorted(Map.Entry.comparingByKey())
+                        .map(e -> e.getKey() + "=" + e.getValue())
+                        .collect(Collectors.joining(","))
+                        .getBytes(StandardCharsets.UTF_8)
+        );
+        clusterReuseKey = String.format("%040x", new BigInteger(1, digest.digest()));
+      } catch (NoSuchAlgorithmException e) {
+        throw new IllegalStateException("SHA-1 algorithm is not available for cluster reuse", e);
+      }
+    }
+
     return new DataprocConf(accountKey, region, zone, projectId, networkHostProjectID, network, subnet,
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
                             masterDiskType, masterMachineType,
@@ -597,7 +654,8 @@ final class DataprocConf {
                             componentGatewayEnabled, skipDelete,
                             publicKey, imageVersion, customImageUri, clusterMetaData, clusterLabels, networkTags,
                             initActions, runtimeJobManagerEnabled, clusterProps, autoScalingPolicy, idleTTL,
-                            tokenEndpoint, secureBootEnabled, vTpmEnabled, integrityMonitoringEnabled);
+                            tokenEndpoint, secureBootEnabled, vTpmEnabled, integrityMonitoringEnabled,
+                            clusterReuseEnabled, clusterReuseThresholdMinutes, clusterReuseKey);
   }
 
   // the UI never sends nulls, it only sends empty strings.
