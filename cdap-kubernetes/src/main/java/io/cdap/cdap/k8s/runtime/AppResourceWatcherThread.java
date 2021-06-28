@@ -18,21 +18,13 @@ package io.cdap.cdap.k8s.runtime;
 
 import io.cdap.cdap.k8s.common.AbstractWatcherThread;
 import io.cdap.cdap.k8s.common.ResourceChangeListener;
-<<<<<<< HEAD
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.AppsV1Api;
+import io.kubernetes.client.openapi.apis.BatchV1Api;
 import io.kubernetes.client.openapi.models.V1Deployment;
+import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1StatefulSet;
-=======
-import io.kubernetes.client.ApiClient;
-import io.kubernetes.client.ApiException;
-import io.kubernetes.client.apis.AppsV1Api;
-import io.kubernetes.client.apis.BatchV1Api;
-import io.kubernetes.client.models.V1Deployment;
-import io.kubernetes.client.models.V1Job;
-import io.kubernetes.client.models.V1StatefulSet;
->>>>>>> a7ca923b2d8 (poc - change Deployments to Jobs.)
 import io.kubernetes.client.util.Config;
 import okhttp3.Call;
 import org.apache.twill.common.Cancellable;
@@ -60,7 +52,7 @@ abstract class AppResourceWatcherThread<T> extends AbstractWatcherThread<T> {
       protected Call createCall(String namespace, @Nullable String labelSelector) throws IOException, ApiException {
         // jobs in KubeTwillPreparer don't set labels
         return getBatchApi().listNamespacedJobCall(namespace, null, null, null, null,
-                                                   null, null, null, true, null, null);
+                                                   null, null, null, null, null, null, null);
       }
     };
   }
@@ -152,7 +144,7 @@ abstract class AppResourceWatcherThread<T> extends AbstractWatcherThread<T> {
       ApiClient client = Config.defaultClient().setDebugging(true);
 
       // Set a reasonable timeout for the watch.
-      client.getHttpClient().setReadTimeout(5, TimeUnit.MINUTES);
+      client.getHttpClient();
 
       batchApi = new BatchV1Api(client);
       return batchApi;

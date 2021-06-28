@@ -17,33 +17,19 @@
 package io.cdap.cdap.k8s.runtime;
 
 import io.cdap.cdap.master.spi.twill.ExtendedTwillController;
-<<<<<<< HEAD
 import io.kubernetes.client.openapi.ApiCallback;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.AppsV1Api;
+import io.kubernetes.client.openapi.apis.BatchV1Api;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1DeleteOptions;
 import io.kubernetes.client.openapi.models.V1Deployment;
+import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1Preconditions;
 import io.kubernetes.client.openapi.models.V1StatefulSet;
 import io.kubernetes.client.openapi.models.V1Status;
-=======
-import io.kubernetes.client.ApiCallback;
-import io.kubernetes.client.ApiClient;
-import io.kubernetes.client.ApiException;
-import io.kubernetes.client.apis.AppsV1Api;
-import io.kubernetes.client.apis.BatchV1Api;
-import io.kubernetes.client.apis.CoreV1Api;
-import io.kubernetes.client.models.V1DeleteOptions;
-import io.kubernetes.client.models.V1Deployment;
-import io.kubernetes.client.models.V1Job;
-import io.kubernetes.client.models.V1ObjectMeta;
-import io.kubernetes.client.models.V1Preconditions;
-import io.kubernetes.client.models.V1StatefulSet;
-import io.kubernetes.client.models.V1Status;
->>>>>>> a7ca923b2d8 (poc - change Deployments to Jobs.)
 import org.apache.twill.api.Command;
 import org.apache.twill.api.ResourceReport;
 import org.apache.twill.api.RunId;
@@ -429,8 +415,9 @@ class KubeTwillController implements ExtendedTwillController {
     CompletableFuture<String> resultFuture = new CompletableFuture<>();
     try {
       String name = meta.getName();
-      batchApi.deleteNamespacedJobAsync(name, kubeNamespace, null, new V1DeleteOptions(),
-                                        null, null, null, null, new ApiCallbackAdapter<V1Status>() {
+      V1DeleteOptions v1DeleteOptions = new V1DeleteOptions();
+      batchApi.deleteNamespacedJobAsync(name, kubeNamespace, null, null, null, null, null,
+                                        v1DeleteOptions, new ApiCallbackAdapter<V1Status>() {
           @Override
           public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
             // Ignore the failure if the deployment is already deleted
