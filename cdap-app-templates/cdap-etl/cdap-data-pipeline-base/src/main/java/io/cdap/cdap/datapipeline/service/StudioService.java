@@ -41,4 +41,5 @@ public class StudioService extends AbstractSystemService {
     createTable(OAuthStore.TABLE_SPEC);
     createTable(ConnectionStore.CONNECTION_TABLE_SPEC);
   }
+
 }

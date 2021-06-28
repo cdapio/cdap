@@ -38,6 +38,15 @@
   </properties>
 
   <dependencies>
+    <!-- Spark3 uses okio 1.14 and okhttp 3.12.12 (through Hadoop), but master-spi doesn't filter it out for some reason
+      -->
+    <!--dependency>
+      <groupId>com.squareup.okio</groupId>
+      <artifactId>okio</artifactId>
+      <version>1.14.0</version>
+    </dependency-->
+
+
     <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-master-spi</artifactId>

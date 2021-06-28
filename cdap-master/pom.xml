@@ -503,7 +503,8 @@
               </execution>
 
               <!-- Copy cdap-kms. -->
-              <execution>
+              <!-- why copy kms into master??? -->
+              <!--execution>
                 <id>copy-cdap-kms</id>
                 <phase>process-resources</phase>
                 <goals>
@@ -522,7 +523,7 @@
                     </resource>
                   </resources>
                 </configuration>
-              </execution>
+              </execution-->
 
               <!-- Copy runtime extensions. Currently only has Spark -->
               <execution>

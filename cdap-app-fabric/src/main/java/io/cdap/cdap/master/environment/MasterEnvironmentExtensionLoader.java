@@ -51,12 +51,14 @@ public class MasterEnvironmentExtensionLoader extends AbstractExtensionLoader<St
     return new FilterClassLoader.Filter() {
       @Override
       public boolean acceptResource(String resource) {
-        return getAllowedResources().contains(resource);
+        return getAllowedResources().contains(resource) &&
+          !resource.contains("okio") && !resource.contains("okhttp");
       }
 
       @Override
       public boolean acceptPackage(String packageName) {
-        return getAllowedPackages().contains(packageName);
+        return getAllowedPackages().contains(packageName) &&
+          !packageName.contains("okio") && !packageName.contains("okhttp");
       }
     };
   }
