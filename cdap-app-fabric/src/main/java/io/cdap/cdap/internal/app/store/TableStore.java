@@ -66,27 +66,30 @@ public class TableStore {
       fields.add(Fields.stringField(StoreDefinition.TableStore.CONTENT, content));
       fields.add(Fields.stringField(StoreDefinition.TableStore.TIME, fTime));
       tablTable.upsert(fields);
+
       String[] temp = content.split("\n     ");
-      if (update) {
+      if (update && !content.equals("")) {
         for (String str : temp) {
           contnt.add(str);
         }
       }
       StringBuilder output = new StringBuilder();
-      output.append("           Table \n");
-      output.append("____________________________\n");
-      output.append("   namespace: {\n      " + namespace + "\n}\n");
-      output.append("   data: {");
+      output.append("|           Table           |\n");
+      output.append("|__________________________|\n");
+      output.append("|   namespace: {           |\n      |" + namespace + "|\n| }");
+      output.append("                          |\n");
+      output.append("|   data: {                 |");
       if (update) {
         for (String s : contnt) {
-          output.append("\n     " + s);
+          output.append("\n|     " + s + "       |");
         }
       } else {
-        output.append("\n     " + content);
+        output.append("\n|     " + content + "        |");
       }
-      output.append("\n}\n");
-      output.append("   time created: {\n     " + fTime + "}\n");
-      output.append("}");
+      output.append("\n| }                         |\n");
+      output.append("|   time created: {           |\n|     " + fTime + "}      |\n");
+      output.append("| }                       |");
+      output.append("|__________________________|");
       this.out = output.toString();
     }, IOException.class);
   }
@@ -98,4 +101,14 @@ public class TableStore {
     return out;
   }
 
+  /**
+   * Returns the lists of Contents in Table
+   */
+  public ArrayList<String> getContent() {
+    return contnt;
+  }
+  public void remove(String s) throws IOException {
+    contnt.remove(s);
+    addOrUpdateTabl("default", "", true);
+  }
 }

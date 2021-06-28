@@ -88,6 +88,7 @@ import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileReader;
@@ -95,6 +96,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -115,6 +118,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
+
 
 /**
  * {@link io.cdap.http.HttpHandler} for managing application lifecycle.
@@ -259,6 +263,91 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
+   * Test using REST API
+   */
+  @GET
+  @Path("/git/orgs/{org}/repos")
+  public void getOrgInfo(HttpRequest request, HttpResponder responder,
+                         @PathParam("org") String org) throws Exception {
+    URL obj = new URL("https://api.github.com/orgs/" + org + "/repos");
+    HttpURLConnection conn = (HttpURLConnection) obj.openConnection();
+    conn.setRequestMethod("GET");
+    int responseCode = conn.getResponseCode();
+    StringBuilder output = new StringBuilder("failed");
+    StringBuilder header = new StringBuilder();
+    if (responseCode == HttpURLConnection.HTTP_OK) {
+      BufferedReader in  = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+      String inp;
+      output = new StringBuilder();
+      header.append("Organization : " + org + "\n\n");
+
+      while ((inp = in.readLine()) != null) {
+        output.append(inp + "\n");
+      }
+      in.close();
+    }
+    header.append(output.toString());
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(header.toString()));
+  }
+
+  @GET
+  @Path("/repos/{owner}/{repo}")
+  public void getRepoInfo(HttpRequest request, HttpResponder responder,
+                          @PathParam("owner") String owner, @PathParam("repo") String repo)
+                                                                            throws Exception {
+    URL obj = new URL("https://api.github.com/repos/" + owner + "/" + repo);
+    HttpURLConnection conn = (HttpURLConnection) obj.openConnection();
+    conn.setRequestMethod("GET");
+    int responseCode = conn.getResponseCode();
+    StringBuilder output = new StringBuilder("failed");
+    StringBuilder header = new StringBuilder();
+    ArrayList<String> info = new ArrayList<>();
+    if (responseCode == HttpURLConnection.HTTP_OK) {
+      BufferedReader in  = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+      String inp;
+      output = new StringBuilder();
+      info.add("Owner : " + owner);
+      info.add("Repo Name : " + repo);
+      header.append("Owner : " + owner + "\n\n");
+      while ((inp = in.readLine()) != null) {
+        output.append(inp);
+      }
+      String[] parameters = output.toString().split(",");
+      output = new StringBuilder();
+      Boolean urlCheck = false;
+      for (String s : info) {
+        output.append(s + "\n");
+      }
+      for (String s : parameters) {
+        //Find description
+        if (s.contains("description")) {
+          output.append("Description : " + s.substring("xxxdescription:".length(), s.length() - 1) + "\n");
+        }
+        //Find default branch
+        if (s.contains("default_branch")) {
+          output.append("Default Branch : " + s.substring("xxxdefault_branch:".length(),
+              s.length() - 1) + "\n");
+        }
+        //Find username
+        if (s.contains("login")) {
+          output.append("Username : " + s.substring("xxxowner:{login:xx".length(), s.length() - 1) + "\n");
+        }
+        if (s.contains("html_url") && !urlCheck) {
+          urlCheck = true;
+        } else if (s.contains("html_url") && urlCheck) {
+          output.append("URL : " + s.substring("xxxhtml_url:".length(), s.length() - 1) + "\n");
+        }
+        header.append(s + "\n");
+      }
+
+      in.close();
+    }
+
+    //header.append(output.toString());
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(output.toString()));
+
+  }
+  /**
    * Sample Message
    */
   @GET
@@ -315,6 +404,22 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.table.addOrUpdateTabl(namespaceId, cont.toString(), update);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(this.table.jsonStr()));
 
+  }
+
+  @POST
+  @Path("/tbl/remove")
+  public void removeTbl(FullHttpRequest request, HttpResponder responder,
+                        @PathParam("namespace-id") String namespaceId) throws Exception {
+    JsonArray array = DECODE_GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), JsonArray.class);
+    if (array == null) {
+      throw new BadRequestException("Request body is invalid json, please check that it is a json array.");
+    }
+    for (JsonElement obj : array) {
+      if (this.table.getContent().contains(obj.toString())) {
+        this.table.remove(obj.toString());
+      }
+    }
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(this.table.jsonStr()));
   }
   /**
    * Returns the info associated with the application.
