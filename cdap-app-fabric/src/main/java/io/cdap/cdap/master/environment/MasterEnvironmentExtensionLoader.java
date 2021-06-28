@@ -64,7 +64,7 @@ public class MasterEnvironmentExtensionLoader extends AbstractExtensionLoader<St
   /**
    * Returns the set of resources that are visible to extensions.
    */
-  private Set<String> getAllowedResources() {
+  public Set<String> getAllowedResources() {
     Set<String> resources = this.allowedResources;
     if (resources != null) {
       return resources;

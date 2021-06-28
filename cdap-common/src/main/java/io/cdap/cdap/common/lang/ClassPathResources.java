@@ -100,7 +100,11 @@ public final class ClassPathResources {
   public static Set<String> getBootstrapClassPaths() {
     // Get the bootstrap classpath. This is for exclusion while tracing class dependencies.
     Set<String> bootstrapPaths = new HashSet<>();
-    for (String classpath : Splitter.on(File.pathSeparatorChar).split(System.getProperty("sun.boot.class.path"))) {
+    String bootClassPath = System.getProperty("sun.boot.class.path");
+    if (bootClassPath == null) {
+      return Collections.emptySet();
+    }
+    for (String classpath : Splitter.on(File.pathSeparatorChar).split(bootClassPath)) {
       File file = new File(classpath);
       bootstrapPaths.add(file.getAbsolutePath());
       try {

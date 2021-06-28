@@ -22,6 +22,7 @@ import io.kubernetes.client.openapi.models.V1OwnerReference;
 import io.kubernetes.client.openapi.models.V1PodSecurityContext;
 import io.kubernetes.client.openapi.models.V1Volume;
 import io.kubernetes.client.openapi.models.V1VolumeMount;
+import okio.BufferedSource;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -73,6 +74,8 @@ public final class PodInfo {
     this.containerVolumeMounts = Collections.unmodifiableList(new ArrayList<>(containerVolumeMounts));
     this.containerEnvironments = Collections.unmodifiableList(new ArrayList<>(containerEnvironments));
     this.securityContext = securityContext;
+    BufferedSource s;
+    s.readUtf8LineStrict()
   }
 
   public String getName() {

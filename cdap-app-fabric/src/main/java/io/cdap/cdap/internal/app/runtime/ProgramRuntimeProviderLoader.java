@@ -23,9 +23,14 @@ import com.google.inject.Singleton;
 import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.lang.ClassPathResources;
+import io.cdap.cdap.common.lang.FilterClassLoader;
 import io.cdap.cdap.extension.AbstractExtensionLoader;
+import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.proto.ProgramType;
 
+import java.io.IOException;
+import java.util.HashSet;
 import java.util.ServiceLoader;
 import java.util.Set;
 
@@ -36,6 +41,7 @@ import java.util.Set;
 @Singleton
 public class ProgramRuntimeProviderLoader extends AbstractExtensionLoader<ProgramType, ProgramRuntimeProvider> {
   private final CConfiguration cConf;
+
 
   @VisibleForTesting
   @Inject
@@ -58,4 +64,23 @@ public class ProgramRuntimeProviderLoader extends AbstractExtensionLoader<Progra
     }
     return types.build();
   }
+
+
+
+  @Override
+  protected FilterClassLoader.Filter getExtensionParentClassLoaderFilter() {
+    // Only permit cdap-master-spi dependencies
+    return new FilterClassLoader.Filter() {
+      @Override
+      public boolean acceptResource(String resource) {
+        return !resource.contains("okhttp") && !resource.contains("okio");
+      }
+
+      @Override
+      public boolean acceptPackage(String packageName) {
+        return !packageName.contains("okhttp") && !packageName.contains("okio");
+      }
+    };
+  }
+
 }

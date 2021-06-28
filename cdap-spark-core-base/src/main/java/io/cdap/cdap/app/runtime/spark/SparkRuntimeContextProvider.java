@@ -179,8 +179,10 @@ public final class SparkRuntimeContextProvider {
       ProgramOptions programOptions = contextConfig.getProgramOptions();
 
       // Should be yarn only and only for executor node, not the driver node.
+      /*
       Preconditions.checkState(!contextConfig.isLocal(programOptions),
                                "SparkContextProvider.getSparkContext should only be called in Spark executor process.");
+       */
 
       ClusterMode clusterMode = ProgramRunners.getClusterMode(programOptions);
 

@@ -31,7 +31,6 @@ import java.util.concurrent.CountDownLatch
   */
 object SparkMainWrapper {
 
-  private val LOG = LoggerFactory.getLogger(SparkMainWrapper.getClass)
 
   @volatile
   private var completion : SparkProgramCompletion = null
@@ -75,7 +74,6 @@ object SparkMainWrapper {
       // Load the user Spark class
       val userSparkClass = sparkClassLoader.getProgramClassLoader.loadClass(
         runtimeContext.getSparkSpecification.getMainClassName)
-      LOG.info("Launching user spark class {}", userSparkClass)
 
       userSparkClass match {
         // SparkMain

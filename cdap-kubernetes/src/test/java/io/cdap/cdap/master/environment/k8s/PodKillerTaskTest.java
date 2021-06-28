@@ -24,6 +24,7 @@ import org.junit.Test;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Unit test for {@link PodKillerTask}. The test is disabled by default since it requires a running

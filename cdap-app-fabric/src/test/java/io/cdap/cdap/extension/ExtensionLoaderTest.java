@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.extension;
 
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.master.environment.MasterEnvironmentExtensionLoader;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;

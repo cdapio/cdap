@@ -525,7 +525,11 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
 
       RuntimeSpecification mainRuntimeSpec = getMainRuntimeSpecification(twillSpec.getRunnables());
       StatefulRunnable statefulRunnable = statefulRunnables.get(mainRuntimeSpec.getName());
-      Type resourceType = statefulRunnable == null ? V1Deployment.class : V1StatefulSet.class;
+
+      String twillClassName = mainRuntimeSpec.getRunnableSpecification().getClassName();
+      LOG.error("ashau - twill runnable classname = {}", twillClassName);
+      Type resourceType = statefulRunnable != null ? V1StatefulSet.class :
+          twillClassName.contains("Service") ? V1Deployment.class : V1Job.class;
 
       if (runnableConfigs.size() == 1) {
         Map.Entry<String, Map<String, String>> runnableConfig = runnableConfigs.entrySet().stream().findFirst().get();
