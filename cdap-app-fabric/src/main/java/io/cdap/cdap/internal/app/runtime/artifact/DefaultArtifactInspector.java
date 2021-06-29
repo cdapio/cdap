@@ -198,14 +198,14 @@ final class DefaultArtifactInspector implements ArtifactInspector {
     }
 
     try {
-      Object appMain = artifactClassLoader.loadClass(mainClassName).newInstance();
-      if (!(appMain instanceof Application)) {
+      Class<?> mainClass = artifactClassLoader.loadClass(mainClassName);
+      if (!(Application.class.isAssignableFrom(mainClass))) {
         // we don't want to error here, just don't record an application class.
         // possible for 3rd party plugin artifacts to have the main class set
         return builder;
       }
 
-      Application app = (Application) appMain;
+      Application app = (Application) mainClass.newInstance();
 
       java.lang.reflect.Type configType;
       // if the user parameterized their application, like 'xyz extends Application<T>',
