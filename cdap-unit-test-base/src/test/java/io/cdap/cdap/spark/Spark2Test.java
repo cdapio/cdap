@@ -92,6 +92,7 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
@@ -271,6 +272,17 @@ public class Spark2Test extends TestBase {
 
   @Test
   public void testPySpark() throws Exception {
+    if (TestBase.getCurrentSparkCompat() == SparkCompat.SPARK3_2_12) {
+      //For spark 3 we need python 3, otherwise skip test
+      try {
+        Process python = new ProcessBuilder("python3", "-V").start();
+        int resultCode = python.waitFor();
+        assumeTrue("Python3 returned error, result code: " + resultCode,
+                   resultCode == 0);
+      } catch (IOException e) {
+        assumeNoException("Python3 can't be started", e);
+      }
+    }
     ApplicationManager appManager = deploy(NamespaceId.DEFAULT, Spark2TestApp.class);
 
     // Write some data to a local file
@@ -318,17 +330,6 @@ public class Spark2Test extends TestBase {
 
     Tasks.waitFor(100L, () ->  getMetricsManager().getTotalMetric(tags, "user.body"),
                   5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-  }
-
-  private ComparableVersion getPythonVersion() throws IOException, InterruptedException {
-    Process python = new ProcessBuilder("python", "-V")
-      .start();
-    String versionStr = IOUtils.toString(python.getErrorStream(), "UTF-8").trim();
-    if (versionStr.isEmpty()) {
-      versionStr = IOUtils.toString(python.getInputStream(), "UTF-8").trim();
-    }
-    Assert.assertEquals(0, python.waitFor());
-    return new ComparableVersion(versionStr.replaceAll("^[Pp]ython ?", ""));
   }
 
   private void prepareInputData(DataSetManager<ObjectStore<String>> manager) {
