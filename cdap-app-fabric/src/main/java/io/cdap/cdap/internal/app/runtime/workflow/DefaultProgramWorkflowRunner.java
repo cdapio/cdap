@@ -47,6 +47,7 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
+import org.mortbay.log.Log;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -95,6 +96,7 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
 
   @Override
   public Runnable create(String name) {
+    Log.info("### in DefaultProgramWorkflowRunner with program type {}", programType);
     ProgramRunner programRunner = programRunnerFactory.create(programType);
     try {
       ProgramId programId = workflowProgram.getId().getParent().program(programType, name);
@@ -114,6 +116,7 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
    * @return a {@link Runnable} for this {@link Program}
    */
   private Runnable getProgramRunnable(String name, final ProgramRunner programRunner, final Program program) {
+    Log.info("### GEt runnable");
     Map<String, String> systemArgumentsMap = new HashMap<>(workflowProgramOptions.getArguments().asMap());
 
     // Generate the new RunId here for the program running under Workflow
@@ -134,14 +137,12 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
                                                        workflowProgramOptions.getUserArguments().asMap()))
     );
 
-    return new Runnable() {
-      @Override
-      public void run() {
-        try {
-          runAndWait(programRunner, program, options);
-        } catch (Exception e) {
-          throw Throwables.propagate(e);
-        }
+    return () -> {
+      try {
+        Log.info("### In runAndWait");
+        runAndWait(programRunner, program, options);
+      } catch (Exception e) {
+        throw Throwables.propagate(e);
       }
     };
   }
@@ -153,6 +154,7 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
     RunId runId = ProgramRunners.getRunId(options);
     String twillRunId = options.getArguments().getOption(ProgramOptionConstants.TWILL_RUN_ID);
     ProgramDescriptor programDescriptor = new ProgramDescriptor(program.getId(), program.getApplicationSpecification());
+    Log.info("### calling start on program state writer {}", programStateWriter.getClass());
     programStateWriter.start(program.getId().run(runId), options, twillRunId, programDescriptor);
 
     ProgramController controller;

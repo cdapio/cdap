@@ -333,6 +333,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
             throw new UnsupportedOperationException("Operation not allowed.");
           }
 
+          LOG.info("### ");
           Runnable programRunner = programWorkflowRunner.create(programName);
           LOG.info("Starting {} Program '{}' in workflow", prettyProgramType, programName);
           programRunner.run();
@@ -412,6 +413,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                        workflowRunId.getRun(), node.getNodeId(),
                                                        (BasicWorkflowToken) token,
                                                        workflowContext.fieldLineageConsolidationEnabled());
+
     ProgramOptions actionOptions =
       new SimpleProgramOptions(programOptions.getProgramId(),
                                programOptions.getArguments(),
@@ -433,7 +435,9 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                              new WorkflowNodeStateDetail(node.getNodeId(), NodeStatus.RUNNING));
     Throwable failureCause = null;
     try {
+      LOG.info("### executing custom action");
       customActionExecutor.execute();
+      LOG.info("### executed custom action");
     } catch (Throwable t) {
       failureCause = t;
       throw t;
@@ -468,10 +472,13 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     ((BasicWorkflowToken) token).setCurrentNode(node.getNodeId());
     switch (nodeType) {
       case ACTION:
+        LOG.info("### Node type is action");
         WorkflowActionNode actionNode = (WorkflowActionNode) node;
         if (SchedulableProgramType.CUSTOM_ACTION == actionNode.getProgram().getProgramType()) {
+          LOG.info("### SchedulableProgramType.CUSTOM_ACTION");
           executeCustomAction(actionNode, instantiator, classLoader, token);
         } else {
+          LOG.info("### Calling executeAction");
           executeAction(actionNode, token);
         }
         break;
@@ -623,6 +630,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     LOG.info("Starting workflow execution for '{}' with Run id '{}'", workflowSpec.getName(), workflowRunId.getRun());
     LOG.trace("Workflow specification is {}", workflowSpec);
     workflowContext.setState(new ProgramState(ProgramStatus.RUNNING, null));
+    LOG.info("### Set workflow context state to running");
     executeAll(workflowSpec.getNodes().iterator(), program.getApplicationSpecification(),
                new InstantiatorFactory(false), program.getClassLoader(), basicWorkflowToken);
     if (runningThread != null) {

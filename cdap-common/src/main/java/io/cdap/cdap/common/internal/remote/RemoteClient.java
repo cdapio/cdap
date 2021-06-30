@@ -83,6 +83,7 @@ public class RemoteClient {
     String cleanBasePath = basePath.startsWith("/") ? basePath.substring(1) : basePath;
     this.basePath = cleanBasePath.endsWith("/") ? cleanBasePath : cleanBasePath + "/";
     this.authenticator = authenticator;
+    Discoverable pick = endpointStrategy.pick(1L, TimeUnit.SECONDS);
   }
 
   /**
@@ -147,7 +148,6 @@ public class RemoteClient {
 
     httpRequest = new HttpRequest(request.getMethod(), rewrittenURL, headers,
                       request.getBody(), request.getBodyLength());
-
     try {
       HttpResponse response = HttpRequests.execute(httpRequest, httpRequestConfig);
       switch (response.getResponseCode()) {

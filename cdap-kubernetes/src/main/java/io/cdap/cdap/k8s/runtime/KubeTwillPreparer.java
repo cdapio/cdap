@@ -16,11 +16,14 @@
 
 package io.cdap.cdap.k8s.runtime;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Resources;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import io.cdap.cdap.master.environment.k8s.KubeMasterEnvironment;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
@@ -33,6 +36,7 @@ import io.cdap.cdap.master.spi.twill.StatefulTwillPreparer;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.apis.AppsV1Api;
+import io.kubernetes.client.apis.BatchV1Api;
 import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.models.V1Container;
 import io.kubernetes.client.models.V1ContainerBuilder;
@@ -42,6 +46,8 @@ import io.kubernetes.client.models.V1DownwardAPIVolumeFile;
 import io.kubernetes.client.models.V1DownwardAPIVolumeSource;
 import io.kubernetes.client.models.V1EmptyDirVolumeSource;
 import io.kubernetes.client.models.V1EnvVar;
+import io.kubernetes.client.models.V1Job;
+import io.kubernetes.client.models.V1JobBuilder;
 import io.kubernetes.client.models.V1LabelSelector;
 import io.kubernetes.client.models.V1ObjectFieldSelector;
 import io.kubernetes.client.models.V1ObjectMeta;
@@ -110,7 +116,11 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.annotation.Nullable;
 
 /**
  * Kubernetes version of a TwillRunner.
@@ -132,6 +142,9 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private static final String CPU_MULTIPLIER = "master.environment.k8s.container.cpu.multiplier";
   private static final String MEMORY_MULTIPLIER = "master.environment.k8s.container.memory.multiplier";
   private static final String DEFAULT_MULTIPLIER = "1.0";
+
+  // Pattern to split a Twill App name into [type].[namespaceId].[appName].[programName]
+  private static final Pattern APP_NAME_PATTERN = Pattern.compile("^(\\S+)\\.(\\S+)\\.(\\S+)\\.(\\S+)$");
 
   private final MasterEnvironmentContext masterEnvContext;
   private final ApiClient apiClient;
@@ -507,9 +520,23 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       StatefulRunnable statefulRunnable = statefulRunnables.get(mainRuntimeSpec.getName());
       Type resourceType = statefulRunnable == null ? V1Deployment.class : V1StatefulSet.class;
 
+      LOG.info("### Twill application name {}.", twillSpec.getName());
+      String programType = getProgramTypeFromAppName(twillSpec.getName());
+      if (!Strings.isNullOrEmpty(programType)) {
+        // This means CDAP programs are being submitted to kubernetes.
+        LOG.info("### Twill program type: {}", programType);
+        // TODO: get number of instances for worker for setting parallelism
+        if (programType.equalsIgnoreCase("workflow")) {
+          resourceType = V1Job.class;
+        }
+      }
+
       V1ObjectMeta metadata = createResourceMetadata(resourceType, mainRuntimeSpec.getName(),
                                                      timeoutUnit.toMillis(timeout));
-      if (V1Deployment.class.equals(resourceType)) {
+      if (V1Job.class.equals(resourceType)) {
+        LOG.info("### creating job");
+        metadata = createJob(metadata, twillSpec.getRunnables(), runtimeConfigLocation);
+      } else if (V1Deployment.class.equals(resourceType)) {
         metadata = createDeployment(metadata, twillSpec.getRunnables(),
                                     runtimeConfigLocation);
       } else {
@@ -586,7 +613,45 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   }
 
   /**
-   * Deploys a {@link V1Deployment} to for runnable exeuction in Kubernetes.
+   * Deploys a {@link V1Job} to for runnable execution in Kubernetes.
+   */
+  private V1ObjectMeta createJob(V1ObjectMeta metadata, Map<String, RuntimeSpecification> runtimeSpecs,
+                                 Location runtimeConfigLocation) throws ApiException {
+    BatchV1Api batchApi = new BatchV1Api(apiClient);
+    V1Job job = new V1JobBuilder()
+      .withMetadata(metadata)
+      .withNewSpec()
+      // https://kubernetes.io/docs/concepts/workloads/controllers/job/#pod-selector says
+      // selector shouldn't be done in most cases -- look more into why
+      // job submission fails if we set these, but without this, not sure if AppResourceWatcherThread.createJobWatcher
+      // will work properly. Programs stay in starting state forever
+      // with making manual selector to true, we get `Job invalid: `selector` not auto-generated` error. Make sure
+      // the manual selector can uniquely identify the job.
+      .withManualSelector(true)
+      .withSelector(new V1LabelSelector().matchLabels(metadata.getLabels()))
+      .withParallelism(1)
+      .withCompletions(1)
+      .withNewTemplate()
+      .withMetadata(metadata)
+      .withSpec(createPodSpec(runtimeConfigLocation, runtimeSpecs, "Never",
+                              Collections.singletonList(KubeMasterEnvironment.DISABLE_POD_DELETION)))
+      .endTemplate()
+      .endSpec()
+      .build();
+
+
+    try {
+      job = batchApi.createNamespacedJob(kubeNamespace, job, "true", null, null);
+      LOG.debug("Created Job {} in Kubernetes", metadata.getName());
+      return job.getMetadata();
+    } catch (ApiException e) {
+      LOG.error("Failed to create job. Response code = {}, body = {}", e.getCode(), e.getResponseBody());
+      throw e;
+    }
+  }
+
+  /**
+   * Deploys a {@link V1Deployment} to for runnable execution in Kubernetes.
    */
   private V1ObjectMeta createDeployment(V1ObjectMeta metadata,
                                         Map<String, RuntimeSpecification> runtimeSpecs,
@@ -601,7 +666,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   }
 
   /**
-   * Deploys a {@link V1StatefulSet} to for runnable exeuction in Kubernetes.
+   * Deploys a {@link V1StatefulSet} to for runnable execution in Kubernetes.
    */
   private V1ObjectMeta createStatefulSet(V1ObjectMeta metadata,
                                          Map<String, RuntimeSpecification> runtimeSpecs,
@@ -706,6 +771,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
 
     try (Writer writer = Files.newBufferedWriter(targetFile, StandardCharsets.UTF_8)) {
       TwillRuntimeSpecificationAdapter.create().toJson(twillRuntimeSpec, writer);
+      LOG.info("### written twill spec: {}", TwillRuntimeSpecificationAdapter.create().toJson(twillRuntimeSpec));
     }
   }
 
@@ -722,6 +788,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
                 gson.toJsonTree(runnableArgs, new TypeToken<Map<String, List<String>>>() { }.getType()));
     try (Writer writer = Files.newBufferedWriter(targetFile, StandardCharsets.UTF_8)) {
       gson.toJson(jsonObj, writer);
+      LOG.info("### Writing runtime arguments {}", gson.toJson(jsonObj));
     }
   }
 
@@ -801,11 +868,26 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    * Creates a {@link V1PodSpec} for specifying pod information for running the given runnable.
    *
    * @param runtimeConfigLocation the {@link Location} containing the runtime config archive
-   * @param runtimeSpecs the specifiction for the {@link TwillRunnable} and its resources requirements
+   * @param runtimeSpecs the specification for the {@link TwillRunnable} and its resources requirements
+   * @param extraMounts volumes to be mounted
    * @return a {@link V1PodSpec}
    */
-  private V1PodSpec createPodSpec(Location runtimeConfigLocation,
-                                  Map<String, RuntimeSpecification> runtimeSpecs, V1VolumeMount... extraMounts) {
+  private V1PodSpec createPodSpec(Location runtimeConfigLocation, Map<String, RuntimeSpecification> runtimeSpecs,
+                                  V1VolumeMount... extraMounts) {
+    return createPodSpec(runtimeConfigLocation, runtimeSpecs, "Always", new ArrayList<>(), extraMounts);
+  }
+
+  /**
+   * Creates a {@link V1PodSpec} for specifying pod information for running the given runnable.
+   *
+   * @param runtimeConfigLocation the {@link Location} containing the runtime config archive
+   * @param runtimeSpecs the specification for the {@link TwillRunnable} and its resources requirements
+   * @param extraMounts volumes to be mounted
+   * @param restartPolicy restart policy for the pod
+   * @return a {@link V1PodSpec}
+   */
+  private V1PodSpec createPodSpec(Location runtimeConfigLocation, Map<String, RuntimeSpecification> runtimeSpecs,
+                                  String restartPolicy, List<String> args, V1VolumeMount... extraMounts) {
     String workDir = "/workDir-" + twillRunId.getId();
 
     V1Volume podInfoVolume = createPodInfoVolume(podInfo);
@@ -861,13 +943,14 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
                                           FileLocalizer.class,
                                           runtimeConfigLocation.toURI().toString(),
                                           mainRuntimeSpec.getName()))
-      .withContainers(createContainers(runtimeSpecs, workDir, volumeMounts))
+      .withContainers(createContainers(runtimeSpecs, workDir, volumeMounts, args))
       .withSecurityContext(podInfo.getSecurityContext())
+      .withRestartPolicy(restartPolicy)
       .build();
   }
 
   private List<V1Container> createContainers(Map<String, RuntimeSpecification> runtimeSpecs, String workDir,
-                                             List<V1VolumeMount> volumeMounts) {
+                                             List<V1VolumeMount> volumeMounts, List<String> args) {
     // Setup the container environment. Inherit everything from the current pod.
     Map<String, String> environs = podInfo.getContainerEnvironments().stream()
       .collect(Collectors.toMap(V1EnvVar::getName, V1EnvVar::getValue));
@@ -879,7 +962,8 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     containers.add(createContainer(mainRuntimeSpec.getName(), podInfo.getContainerImage(), workDir,
                                    createResourceRequirements(mainRuntimeSpec.getResourceSpecification()),
                                    volumeMounts, environs, KubeTwillLauncher.class,
-                                   mainRuntimeSpec.getName()));
+                                   Stream.concat(Stream.of(mainRuntimeSpec.getName()), args.stream())
+                                     .toArray(String[]::new)));
 
     for (String name : this.dependentRunnableNames) {
       RuntimeSpecification spec = runtimeSpecs.get(name);
@@ -888,7 +972,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       containers.add(createContainer(name, podInfo.getContainerImage(), workDir,
                                      createResourceRequirements(spec.getResourceSpecification()),
                                      volumeMounts, environs, KubeTwillLauncher.class,
-                                     name));
+                                     Stream.concat(Stream.of(name), args.stream()).toArray(String[]::new)));
     }
 
     return containers;
@@ -1049,5 +1133,28 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     List<SecretDisk> getSecretDisks() {
       return secretDisks;
     }
+  }
+
+  /**
+   * Given a Twill app name, returns the id of the program that was used to construct this Twill app name.
+   * @return {@code null} if mustMatch is false, and if the specified Twill app name does
+   * not match the {@link #APP_NAME_PATTERN}.
+   * For instance, for the Constants.Service.MASTER_SERVICES Twill app, it will return null.
+   *
+   * @throws IllegalArgumentException if the given app name does not match the {@link #APP_NAME_PATTERN}
+   *                                  and mustMatch is true.
+   */
+  @Nullable
+  public static String getProgramTypeFromAppName(String twillAppName) {
+    Matcher matcher = APP_NAME_PATTERN.matcher(twillAppName);
+    if (!matcher.matches()) {
+      return null;
+    }
+    // this exception shouldn't happen (unless someone changes the pattern), because the pattern has 4 groups
+    Preconditions.checkArgument(4 == matcher.groupCount(),
+                                "Expected matcher for '%s' to have 4 groups, but it had %s groups.",
+                                twillAppName, matcher.groupCount());
+
+    return matcher.group(1).toLowerCase();
   }
 }

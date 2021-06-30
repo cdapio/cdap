@@ -70,37 +70,37 @@ public class StateChangeListener extends AbstractListener {
 
   @Override
   public void alive() {
-    LOG.trace("Program {} is alive.", programRunId);
+    LOG.info("### Program {} is alive.", programRunId);
     programStateWriter.running(programRunId, getTwillRunId());
   }
 
   @Override
   public void completed() {
-    LOG.trace("Program {} completed successfully.", programRunId);
+    LOG.info("### Program {} completed successfully.", programRunId);
     programStateWriter.completed(programRunId);
   }
 
   @Override
   public void killed() {
-    LOG.trace("Program {} killed.", programRunId);
+    LOG.info("### Program {} killed.", programRunId);
     programStateWriter.killed(programRunId);
   }
 
   @Override
   public void suspended() {
-    LOG.trace("Suspending Program {} .", programRunId);
+    LOG.info("### Suspending Program {} .", programRunId);
     programStateWriter.suspend(programRunId);
   }
 
   @Override
   public void resuming() {
-    LOG.trace("Resuming Program {}.", programRunId);
+    LOG.info("### Resuming Program {}.", programRunId);
     programStateWriter.resume(programRunId);
   }
 
   @Override
   public void error(Throwable cause) {
-    LOG.trace("Program {} stopped with error: {}", programRunId, cause);
+    LOG.info("### Program {} stopped with error: {}", programRunId, cause);
     programStateWriter.error(programRunId, cause);
   }
 

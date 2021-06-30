@@ -64,6 +64,7 @@ import java.util.stream.Collectors;
 public class KubeMasterEnvironment implements MasterEnvironment {
 
   private static final Logger LOG = LoggerFactory.getLogger(KubeMasterEnvironment.class);
+  public static final String DISABLE_POD_DELETION = "disablePodDeletion";
 
   // Contains the list of configuration / secret names coming from the Pod information, which are
   // needed to propagate to deployments created via the KubeTwillRunnerService

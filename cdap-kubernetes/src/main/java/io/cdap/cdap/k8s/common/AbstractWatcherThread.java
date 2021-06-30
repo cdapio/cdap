@@ -120,7 +120,7 @@ public abstract class AbstractWatcherThread<T> extends Thread implements AutoClo
 
   @Override
   public final void run() {
-    LOG.info("Start watching for changes in kubernetes resource type {}", resourceType);
+    LOG.info("Start watching for changes in kubernetes resource type {} and selector {}", resourceType, getSelector());
 
     int failureCount = 0;
     while (!stopped) {
@@ -129,6 +129,7 @@ public abstract class AbstractWatcherThread<T> extends Thread implements AutoClo
 
         // The watch can only be null if the watcher thread is stopping
         if (watch == null) {
+          LOG.info("#### watch is null");
           break;
         }
 
@@ -136,27 +137,40 @@ public abstract class AbstractWatcherThread<T> extends Thread implements AutoClo
         failureCount = 0;
 
         // The hasNext() will block until there are new data or watch is closed
+        LOG.info("### before while {}", resourceType);
+        LOG.info("### Calling watch hasnext on resrouce type {}", resourceType);
+        try {
+          boolean b = watch.hasNext();
+          LOG.info("### has next? {}", b);
+        } catch (Exception e) {
+          LOG.error("### Exception while calling has next on resource {}", resourceType);
+        }
         while (!stopped && watch.hasNext()) {
+          LOG.info("#### watch 1, {}", resourceType);
           Watch.Response<T> response = watch.next();
-
+          LOG.info("#### watch 2, {}", resourceType);
           switch (response.type) {
             case ADDED:
+              LOG.info("#### watch resource added, {}", resourceType);
               resourceAdded(response.object);
               break;
             case MODIFIED:
+              LOG.info("#### watch resource modified, {}", resourceType);
               resourceModified(response.object);
               break;
             case DELETED: {
+              LOG.info("#### watch resource delete, {}", resourceType);
               resourceDeleted(response.object);
               break;
             }
             default:
-              LOG.trace("Ignore watch type {}", response.type);
+              LOG.warn("Ignore watch type {}, {}", response.type, resourceType);
           }
         }
       } catch (Exception e) {
         // Ignore the exception if it is during stopping of the thread, which is expected to happen
         if (stopped) {
+          LOG.info("#### Stopped in the watcher thread, {}", resourceType);
           break;
         }
 
@@ -165,7 +179,7 @@ public abstract class AbstractWatcherThread<T> extends Thread implements AutoClo
         if (cause instanceof IOException || e instanceof IllegalStateException) {
           // Log at lower level if it is caused by IOException or IllegalStateException, which will happen
           // if connection to the API server is lost or the watch is closed
-          LOG.trace("Exception raised when watching for changes in resource of type {}", resourceType, e);
+          LOG.warn("Exception raised when watching for changes in resource of type {}", resourceType, e);
         } else {
           LOG.warn("Exception raised when watching for changes in resource of type {}", resourceType, e);
         }
@@ -221,10 +235,15 @@ public abstract class AbstractWatcherThread<T> extends Thread implements AutoClo
       // There is only single thread (the run thread) that will call this method,
       // hence if the watch was null outside of this sync block, it will stay as null here.
       String labelSelector = getSelector();
-      LOG.trace("Creating watch with label selector {}", labelSelector);
+      LOG.info("### Creating watch with label selector {}, resource {}", labelSelector, resourceType);
       Call call = createCall(namespace, labelSelector);
-
-      this.watch = watch = Watch.createWatch(getApiClient(), call, watchResponseType);
+      LOG.info("### After createCall label selector {}, resource {}", labelSelector, resourceType);
+      try {
+        LOG.info("### Before Watch.createWatch for resource {}", resourceType);
+        this.watch = watch = Watch.createWatch(getApiClient(), call, watchResponseType);
+      } catch (Exception e) {
+        LOG.warn("### Error while creating watch for resource {}", resourceType, e);
+      }
       return watch;
     }
   }

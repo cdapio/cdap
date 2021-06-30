@@ -21,13 +21,18 @@ import io.kubernetes.client.ApiCallback;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.apis.AppsV1Api;
+import io.kubernetes.client.apis.BatchV1Api;
 import io.kubernetes.client.apis.CoreV1Api;
 import io.kubernetes.client.models.V1DeleteOptions;
 import io.kubernetes.client.models.V1Deployment;
+import io.kubernetes.client.models.V1Job;
 import io.kubernetes.client.models.V1ObjectMeta;
+import io.kubernetes.client.models.V1Pod;
+import io.kubernetes.client.models.V1PodList;
 import io.kubernetes.client.models.V1Preconditions;
 import io.kubernetes.client.models.V1StatefulSet;
 import io.kubernetes.client.models.V1Status;
+import io.kubernetes.client.util.Config;
 import org.apache.twill.api.Command;
 import org.apache.twill.api.ResourceReport;
 import org.apache.twill.api.RunId;
@@ -39,6 +44,7 @@ import org.apache.twill.discovery.ServiceDiscovered;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.List;
@@ -228,6 +234,7 @@ class KubeTwillController implements ExtendedTwillController {
 
   @Override
   public Future<? extends ServiceController> terminate() {
+    LOG.info("### Call terminate on resource type {}", resourceType);
     if (completion.isDone()) {
       return completion;
     }
@@ -239,6 +246,7 @@ class KubeTwillController implements ExtendedTwillController {
       if (t != null) {
         resultFuture.completeExceptionally(t);
       } else {
+        LOG.info("### kube resource deletion is complete {}", resourceType);
         resultFuture.complete(KubeTwillController.this);
       }
     });
@@ -250,16 +258,19 @@ class KubeTwillController implements ExtendedTwillController {
 
   @Override
   public void kill() {
+    LOG.info("### Call kill on resource type {}", resourceType);
     terminate();
   }
 
   @Override
   public void onRunning(Runnable runnable, Executor executor) {
+    LOG.info("### Program is running {}", runnable.getClass());
     executor.execute(runnable);
   }
 
   @Override
   public void onTerminated(Runnable runnable, Executor executor) {
+    LOG.info("### Program is in onTerminated {}", runnable.getClass());
     completion.whenCompleteAsync((controller, throwable) -> runnable.run(), executor);
   }
 
@@ -393,6 +404,9 @@ class KubeTwillController implements ExtendedTwillController {
     if (V1StatefulSet.class.equals(resourceType)) {
       return deleteStatefulSet();
     }
+    if (V1Job.class.equals(resourceType)) {
+      return deleteJob();
+    }
     // This shouldn't happen
     throw new UnsupportedOperationException("Cannot delete resource of type " + resourceType);
   }
@@ -485,7 +499,68 @@ class KubeTwillController implements ExtendedTwillController {
     return resultFuture;
   }
 
+  /**
+   * Deletes the job controlled by this controller asynchronously.
+   *
+   * @return a {@link CompletionStage} that will complete when the delete operation completed
+   */
+  private CompletionStage<String> deleteJob() {
+    LOG.info("### Deleting job {}", meta.getName());
+
+    apiClient.setDebugging(true);
+    BatchV1Api batchApi = new BatchV1Api(apiClient);
+
+    LOG.info("### Deleting job 1");
+    // callback for the delete job call
+    CompletableFuture<String> resultFuture = new CompletableFuture<>();
+    String name = meta.getName();
+    try {
+      LOG.info("### Deleting the job synchronously");
+      //TODO: CDAP-17965 noticed similar behavior while deleting job
+      batchApi.deleteNamespacedJob(name, kubeNamespace, null, new V1DeleteOptions(), null, null, null, null);
+    } catch (ApiException e) {
+      LOG.info("### Ignoring exception while deleting job", e);
+ //     completeExceptionally(resultFuture, e);
+    } catch (Exception e) {
+      LOG.info("### Ignoring exception while deleting job", e);
+//      LOG.info("### Deleting pod for the job");
+//      try {
+//        deletePod(name);
+//      } catch (ApiException | IOException apiException) {
+//        LOG.info("### Ignoring exception while deleting pod", apiException);
+//      }
+    }
+    resultFuture.complete("success");
+    LOG.info("### Deleting job 4");
+    return resultFuture;
+  }
+
+  private void deletePod(String name) throws ApiException, IOException {
+    LOG.info("### deleting pod for job {}", name);
+
+    ApiClient apiClient = Config.defaultClient();
+    CoreV1Api api = new CoreV1Api(apiClient);
+    V1PodList podList = api.listNamespacedPod(kubeNamespace, null, null, null, "job-name=" + name, null,
+                                              null, null, null);
+    for (V1Pod pod : podList.getItems()) {
+      V1ObjectMeta metadata = pod.getMetadata();
+      try {
+        LOG.info("### deleting pod {}", metadata.getName());
+        V1DeleteOptions delOptions = new V1DeleteOptions()
+          .preconditions(new V1Preconditions().uid(metadata.getUid()));
+        api.deleteNamespacedPod(metadata.getName(), metadata.getNamespace(), null, delOptions, null, null, null, null);
+      } catch (Exception e) {
+        LOG.warn("### Failed to delete pod {} with uid {}", metadata.getName(), metadata.getUid(), e);
+        throw e;
+      }
+    }
+  }
+
   private <T> void completeExceptionally(CompletableFuture<T> future, ApiException e) {
     future.completeExceptionally(new Exception(e.getResponseBody(), e));
+  }
+
+  private <T> void completeExceptionally(CompletableFuture<T> future, Exception e) {
+    future.completeExceptionally(e);
   }
 }

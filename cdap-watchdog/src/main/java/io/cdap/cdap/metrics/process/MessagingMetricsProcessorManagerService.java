@@ -103,16 +103,22 @@ public class MessagingMetricsProcessorManagerService extends AbstractIdleService
   protected void startUp() throws Exception {
     MetricStoreMetricsWriter metricsWriter = new MetricStoreMetricsWriter(metricStore);
     DefaultMetricsWriterContext context = new DefaultMetricsWriterContext(metricsContext,
-      cConf, metricsWriter.getID());
+                                                                          cConf, metricsWriter.getID());
     metricsWriter.initialize(context);
     this.metricsWriters.add(metricsWriter);
 
-    for (Map.Entry<String, MetricsWriter> metricsWriterEntry : metricsWriterProvider.loadMetricsWriters().entrySet()) {
+    for (Map.Entry<String, MetricsWriter> metricsWriterEntry : metricsWriterProvider.loadMetricsWriters()
+      .entrySet()) {
       MetricsWriter writer = metricsWriterEntry.getValue();
-      this.metricsWriters.add(writer);
       DefaultMetricsWriterContext metricsWriterContext = new DefaultMetricsWriterContext(metricsContext,
-        cConf, writer.getID());
-      writer.initialize(metricsWriterContext);
+                                                                                         cConf, writer.getID());
+      try {
+        writer.initialize(metricsWriterContext);
+      } catch (Exception e) {
+        //TODO: do not commit catch exception
+        continue;
+      }
+      this.metricsWriters.add(writer);
     }
 
     for (MetricsWriter metricsExtension : this.metricsWriters) {

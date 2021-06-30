@@ -31,7 +31,6 @@ import java.util.Map;
  * Pod information.
  */
 public final class PodInfo {
-
   private final String name;
   private final String podInfoDir;
   private final String labelsFile;

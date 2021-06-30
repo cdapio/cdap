@@ -167,6 +167,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
    * @throws Exception if failed to initialize
    */
   private void doInitialize(File programOptionFile) throws Exception {
+
     controllerFuture = new CompletableFuture<>();
     programCompletion = new CompletableFuture<>();
 
@@ -184,6 +185,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     LoggingContextAccessor.setLoggingContext(LoggingContextHelper.getLoggingContextWithRunId(programRunId,
                                                                                              systemArgs.asMap()));
     ClusterMode clusterMode = ProgramRunners.getClusterMode(programOptions);
+    LOG.info("### cluster mode in twill runnable {}", clusterMode);
 
     // Loads configurations
     Configuration hConf = new Configuration();
@@ -390,6 +392,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
     @SuppressWarnings("unchecked")
     Class<T> programRunnerClass = (Class<T>) programRunnerType;
+    LOG.info("##### Program runner: {}", programRunnerClass);
     return injector.getInstance(programRunnerClass);
   }
 

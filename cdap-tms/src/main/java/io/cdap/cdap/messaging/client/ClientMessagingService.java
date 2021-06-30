@@ -63,6 +63,8 @@ import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.tephra.TransactionCodec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -93,6 +95,7 @@ import javax.annotation.Nullable;
  * NOTE: This class shouldn't expose to end user (e.g. cdap-client module).
  */
 public final class ClientMessagingService implements MessagingService {
+  private static final Logger LOG = LoggerFactory.getLogger(ClientMessagingService.class);
 
   private static final HttpRequestConfig HTTP_REQUEST_CONFIG = new DefaultHttpRequestConfig(false);
   private static final TransactionCodec TRANSACTION_CODEC = new TransactionCodec();

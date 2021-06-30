@@ -22,10 +22,14 @@ import io.cdap.cdap.k8s.common.ResourceChangeListener;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.apis.AppsV1Api;
+import io.kubernetes.client.apis.BatchV1Api;
 import io.kubernetes.client.models.V1Deployment;
+import io.kubernetes.client.models.V1Job;
 import io.kubernetes.client.models.V1StatefulSet;
 import io.kubernetes.client.util.Config;
 import org.apache.twill.common.Cancellable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Queue;
@@ -39,6 +43,7 @@ import javax.annotation.Nullable;
  * @param <T> type of Kubernetes resource for which state changes to be monitored
  */
 abstract class AppResourceWatcherThread<T> extends AbstractWatcherThread<T> {
+  private static final Logger LOG = LoggerFactory.getLogger(AppResourceWatcherThread.class);
 
   /**
    * Creates a {@link AppResourceWatcherThread} for watching {@link V1Deployment} events.
@@ -66,9 +71,32 @@ abstract class AppResourceWatcherThread<T> extends AbstractWatcherThread<T> {
     };
   }
 
+  /**
+   * Creates a {@link AppResourceWatcherThread} for watching {@link V1Job} events.
+   */
+  static AppResourceWatcherThread<V1Job> createJobWatcher(String namespace, String selector) {
+    return new AppResourceWatcherThread<V1Job>("kube-job-watch", namespace, selector) {
+      Call call;
+      @Override
+      protected Call createCall(String namespace, @Nullable String labelSelector) throws IOException, ApiException {
+        // jobs in KubeTwillPreparer don't set labels
+        try {
+          LOG.info("### Calling Job list on namespace {}, Label selector for the job {}", namespace, labelSelector);
+          call = getBatchApi().listNamespacedJobCall(namespace, null, null, null, labelSelector,
+                                                          null, null, null, true, null, null);
+        } catch (Exception e) {
+          LOG.warn("### Error while returning call for job", e);
+        }
+        LOG.info("### returning call for job list");
+        return call;
+      }
+    };
+  }
+
   private final String selector;
   private final Queue<ResourceChangeListener<T>> listeners;
   private volatile AppsV1Api appsApi;
+  private volatile BatchV1Api batchApi;
 
   private AppResourceWatcherThread(String threadName, String namespace, String selector) {
     super(threadName, namespace);
@@ -134,6 +162,33 @@ abstract class AppResourceWatcherThread<T> extends AbstractWatcherThread<T> {
       client.getHttpClient().setReadTimeout(5, TimeUnit.MINUTES);
 
       appsApi = api = new AppsV1Api(client);
+      return api;
+    }
+  }
+
+  /**
+   * Returns a {@link BatchV1Api} instance for interacting with the API server.
+   *
+   * @throws IOException if exception was raised during creation of {@link BatchV1Api}
+   */
+  BatchV1Api getBatchApi() throws IOException {
+    BatchV1Api api = batchApi;
+    if (api != null) {
+      return api;
+    }
+
+    synchronized (this) {
+      api = batchApi;
+      if (api != null) {
+        return api;
+      }
+
+      ApiClient client = Config.defaultClient().setDebugging(true);
+
+      // Set a reasonable timeout for the watch.
+      client.getHttpClient().setReadTimeout(5, TimeUnit.MINUTES);
+
+      batchApi = api = new BatchV1Api(client);
       return api;
     }
   }

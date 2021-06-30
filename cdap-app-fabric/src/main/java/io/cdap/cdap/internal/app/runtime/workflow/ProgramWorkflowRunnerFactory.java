@@ -82,7 +82,7 @@ final class ProgramWorkflowRunnerFactory {
                                                 workflowSpec, token, nodeId, nodeStates, ProgramType.SPARK,
                                                 programStateWriter);
       default:
-        LOG.debug("No workflow program runner found for this program");
+        LOG.info("No workflow program runner found for this program");
     }
     return null;  // if no workflow program runner was found for this program
   }

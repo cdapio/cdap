@@ -45,6 +45,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -76,6 +77,7 @@ public class KubeTwillLauncher implements MasterEnvironmentRunnable {
     if (args.length < 1) {
       throw new IllegalArgumentException("Requires runnable name in the argument");
     }
+
     String runnableName = args[0];
     Path runtimeConfigDir = Paths.get(Constants.Files.RUNTIME_CONFIG_JAR);
     Path argumentsPath = runtimeConfigDir.resolve(Constants.Files.ARGUMENTS);
@@ -107,6 +109,7 @@ public class KubeTwillLauncher implements MasterEnvironmentRunnable {
       }
 
       twillRunnable = (TwillRunnable) Instances.newInstance(runnableClass);
+      LOG.info("### In k8s launcher for runnable {}", twillRunnable);
 
       try (KubeTwillContext twillContext = new KubeTwillContext(runtimeSpec, runId,
                                                                 RunIds.fromString(runId.getId() + "-0"),
@@ -124,14 +127,18 @@ public class KubeTwillLauncher implements MasterEnvironmentRunnable {
           runnable.destroy();
         }
       } finally {
-        // Delete the pod itself to avoid pod goes into CrashLoopBackoff
-        deletePod(podInfo);
+        // delete the pod when pod deletion is enabled. When k8s job is submitted, pod deletion is disabled.
+        if (Arrays.stream(args).noneMatch(str -> str.equalsIgnoreCase(KubeMasterEnvironment.DISABLE_POD_DELETION))) {
+          // Delete the pod itself to avoid pod goes into CrashLoopBackoff
+          deletePod(podInfo);
+        }
       }
     }
   }
 
   @Override
   public void stop() {
+    LOG.info("### stop on the job is called");
     stopped = true;
     TwillRunnable runnable = this.twillRunnable;
     if (runnable != null) {
@@ -141,6 +148,7 @@ public class KubeTwillLauncher implements MasterEnvironmentRunnable {
 
 
   private void deletePod(PodInfo podInfo) {
+    LOG.info("### deleting pod {}", podInfo.getName());
     try {
       ApiClient apiClient = Config.defaultClient();
       CoreV1Api api = new CoreV1Api(apiClient);

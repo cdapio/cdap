@@ -350,7 +350,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
         } finally {
           ClassLoaders.setContextClassLoader(oldClassLoader);
         }
-
+        LOG.info("### In distributed program runner");
         return createProgramController(programRunId, addCleanupListener(twillController, program, tempDir));
       };
 

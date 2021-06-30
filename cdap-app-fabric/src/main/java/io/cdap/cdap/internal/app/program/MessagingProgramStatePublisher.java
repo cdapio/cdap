@@ -73,7 +73,7 @@ public class MessagingProgramStatePublisher implements ProgramStatePublisher {
         messagingService.publish(StoreRequestBuilder.of(topicId)
                                    .addPayload(GSON.toJson(programStatusNotification))
                                    .build());
-        LOG.trace("Published program status notification: {}", programStatusNotification);
+        LOG.info("### Published program status notification: {}", programStatusNotification);
         done = true;
       } catch (IOException | AccessException e) {
         throw Throwables.propagate(e);
