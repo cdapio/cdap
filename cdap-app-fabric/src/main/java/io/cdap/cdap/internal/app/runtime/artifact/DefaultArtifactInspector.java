@@ -56,6 +56,8 @@ import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
 import io.cdap.cdap.metadata.MetadataValidator;
 import io.cdap.cdap.proto.id.PluginId;
+import io.cdap.cdap.security.impersonation.EntityImpersonator;
+import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import org.apache.twill.filesystem.Location;
 import org.objectweb.asm.AnnotationVisitor;
@@ -106,12 +108,15 @@ final class DefaultArtifactInspector implements ArtifactInspector {
   private final ArtifactClassLoaderFactory artifactClassLoaderFactory;
   private final ReflectionSchemaGenerator schemaGenerator;
   private final MetadataValidator metadataValidator;
+  private final Impersonator impersonator;
 
-  DefaultArtifactInspector(CConfiguration cConf, ArtifactClassLoaderFactory artifactClassLoaderFactory) {
+  DefaultArtifactInspector(CConfiguration cConf, ArtifactClassLoaderFactory artifactClassLoaderFactory,
+                           Impersonator impersonator) {
     this.cConf = cConf;
     this.artifactClassLoaderFactory = artifactClassLoaderFactory;
     this.schemaGenerator = new ReflectionSchemaGenerator(false);
     this.metadataValidator = new MetadataValidator(cConf);
+    this.impersonator = impersonator;
   }
 
   /**
@@ -119,17 +124,16 @@ final class DefaultArtifactInspector implements ArtifactInspector {
    *
    * @param artifactId the id of the artifact to inspect
    * @param artifactFile the artifact file
-   * @param parentClassLoader the parent classloader to use when inspecting plugins contained in the artifact.
-   * For example, a ProgramClassLoader created from the artifact the input artifact extends
+   * @param parentDescriptor {@link ArtifactDescriptor} of parent and grandparent (if any) artifacts.
    * @param additionalPlugins Additional plugin classes
    * @return metadata about the classes contained in the artifact
-   * @throws IOException if there was an exception opening the jar file
+   * @throws IOException              if there was an exception opening the jar file
    * @throws InvalidArtifactException if the artifact is invalid. For example, if the application main class is not
-   * actually an Application.
+   *                                  actually an Application.
    */
   @Override
   public ArtifactClassesWithMetadata inspectArtifact(Id.Artifact artifactId, File artifactFile,
-                                                     @Nullable ClassLoader parentClassLoader,
+                                                     List<ArtifactDescriptor> parentDescriptor,
                                                      Set<PluginClass> additionalPlugins)
     throws IOException, InvalidArtifactException {
     Path tmpDir = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
@@ -137,12 +141,16 @@ final class DefaultArtifactInspector implements ArtifactInspector {
     Files.createDirectories(tmpDir);
     Location artifactLocation = Locations.toLocation(artifactFile);
 
+    EntityImpersonator entityImpersonator = new EntityImpersonator(artifactId.toEntityId(),
+                                                                   impersonator);
+
     Path stageDir = Files.createTempDirectory(tmpDir, artifactFile.getName());
     try {
       File unpackedDir = BundleJarUtil.prepareClassLoaderFolder(
         artifactLocation,
         Files.createTempDirectory(stageDir, "unpacked-").toFile());
       try (
+        CloseableClassLoader parentClassLoader = createParentClassLoader(parentDescriptor, entityImpersonator);
         CloseableClassLoader artifactClassLoader = artifactClassLoaderFactory.createClassLoader(unpackedDir);
         PluginInstantiator pluginInstantiator =
           new PluginInstantiator(cConf, parentClassLoader == null ? artifactClassLoader : parentClassLoader,
@@ -165,6 +173,28 @@ final class DefaultArtifactInspector implements ArtifactInspector {
         LOG.warn("Exception raised while deleting directory {}", stageDir, e);
       }
     }
+  }
+
+  /**
+   * Create a parent classloader (potentially multi-level classloader) based on the list of parent artifacts provided.
+   * The multi-level classloader will be constructed based the order of artifacts in the list (e.g. lower level
+   * classloader from artifacts in the front of the list and high leveler classloader from those towards the end)
+   *
+   * @param parentArtifacts list of parent artifacts to create the classloader from
+   * @throws IOException if there was some error reading from the store
+   */
+  @Nullable
+  private CloseableClassLoader createParentClassLoader(List<ArtifactDescriptor> parentArtifacts,
+                                                       EntityImpersonator entityImpersonator)
+    throws IOException {
+    List<Location> parentLocations = new ArrayList<>();
+    for (ArtifactDescriptor descriptor : parentArtifacts) {
+      parentLocations.add(descriptor.getLocation());
+    }
+    if (parentLocations.isEmpty()) {
+      return null;
+    }
+    return artifactClassLoaderFactory.createClassLoader(parentLocations.iterator(), entityImpersonator);
   }
 
   private ArtifactClasses.Builder inspectApplications(Id.Artifact artifactId,

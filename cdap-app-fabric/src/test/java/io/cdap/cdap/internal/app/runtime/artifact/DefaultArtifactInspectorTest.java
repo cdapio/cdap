@@ -21,7 +21,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.artifact.ArtifactClasses;
-import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.api.plugin.PluginClass;
@@ -41,7 +40,6 @@ import io.cdap.cdap.internal.app.runtime.artifact.app.inspection.InspectionApp;
 import io.cdap.cdap.internal.app.runtime.artifact.plugin.nested.NestedConfigPlugin;
 import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
 import io.cdap.cdap.security.impersonation.DefaultImpersonator;
-import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
@@ -53,7 +51,9 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.Manifest;
@@ -74,7 +74,8 @@ public class DefaultArtifactInspectorTest {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
 
     classLoaderFactory = new ArtifactClassLoaderFactory(cConf, new DummyProgramRunnerFactory());
-    artifactInspector = new DefaultArtifactInspector(cConf, classLoaderFactory);
+    artifactInspector = new DefaultArtifactInspector(cConf, classLoaderFactory,
+                                                     new DefaultImpersonator(cConf, null));
   }
 
   @Test(expected = InvalidArtifactException.class)
@@ -87,12 +88,10 @@ public class DefaultArtifactInspectorTest {
 
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "InvalidConfigApp", "1.0.0");
     Location artifactLocation = Locations.toLocation(appFile);
-    try (CloseableClassLoader artifactClassLoader =
-           classLoaderFactory.createClassLoader(
-             ImmutableList.of(artifactLocation).iterator(),
-             new EntityImpersonator(artifactId.toEntityId(), new DefaultImpersonator(CConfiguration.create(), null)))) {
-      artifactInspector.inspectArtifact(artifactId, appFile, artifactClassLoader, Collections.emptySet());
-    }
+    List<ArtifactDescriptor> parentDescriptor = new ArrayList<>();
+    parentDescriptor.add(new ArtifactDescriptor(artifactId.getNamespace().getId(),
+                                                artifactId.toArtifactId(), artifactLocation));
+    artifactInspector.inspectArtifact(artifactId, appFile, parentDescriptor, Collections.emptySet());
   }
 
   @Test
@@ -139,42 +138,39 @@ public class DefaultArtifactInspectorTest {
     File appFile = getAppFile();
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "InspectionApp", "1.0.0");
     Location artifactLocation = Locations.toLocation(appFile);
-    try (CloseableClassLoader artifactClassLoader =
-           classLoaderFactory.createClassLoader(
-             ImmutableList.of(artifactLocation).iterator(),
-             new EntityImpersonator(artifactId.toEntityId(), new DefaultImpersonator(CConfiguration.create(), null)))) {
+    List<ArtifactDescriptor> parentDescriptor = new ArrayList<>();
+    parentDescriptor.add(new ArtifactDescriptor(artifactId.getNamespace().getId(),
+                                                artifactId.toArtifactId(), artifactLocation));
+    ArtifactClasses classes = artifactInspector.inspectArtifact(artifactId, appFile, parentDescriptor,
+                                                                Collections.emptySet()).getArtifactClasses();
 
-      ArtifactClasses classes = artifactInspector.inspectArtifact(artifactId, appFile, artifactClassLoader,
-                                                                  Collections.emptySet()).getArtifactClasses();
+    // check app classes
+    Set<ApplicationClass> expectedApps = ImmutableSet.of(new ApplicationClass(
+      InspectionApp.class.getName(), "", new ReflectionSchemaGenerator(false).generate(InspectionApp.AConfig.class),
+      new Requirements(Collections.emptySet(), Collections.singleton("cdc"))));
+    Assert.assertEquals(expectedApps, classes.getApps());
 
-      // check app classes
-      Set<ApplicationClass> expectedApps = ImmutableSet.of(new ApplicationClass(
-        InspectionApp.class.getName(), "", new ReflectionSchemaGenerator(false).generate(InspectionApp.AConfig.class),
-        new Requirements(Collections.emptySet(), Collections.singleton("cdc"))));
-      Assert.assertEquals(expectedApps, classes.getApps());
+    // check plugin classes
+    PluginClass expectedPlugin =
+      PluginClass.builder().setName(InspectionApp.PLUGIN_NAME).setType(InspectionApp.PLUGIN_TYPE)
+        .setDescription(InspectionApp.PLUGIN_DESCRIPTION).setClassName(InspectionApp.AppPlugin.class.getName())
+        .setConfigFieldName("pluginConf").setProperties(ImmutableMap.of(
+        "y", new PluginPropertyField("y", "", "double", true, true),
+        "isSomething", new PluginPropertyField("isSomething", "", "boolean", true, false))).build();
 
-      // check plugin classes
-      PluginClass expectedPlugin =
-        PluginClass.builder().setName(InspectionApp.PLUGIN_NAME).setType(InspectionApp.PLUGIN_TYPE)
-          .setDescription(InspectionApp.PLUGIN_DESCRIPTION).setClassName(InspectionApp.AppPlugin.class.getName())
-          .setConfigFieldName("pluginConf").setProperties(ImmutableMap.of(
-          "y", new PluginPropertyField("y", "", "double", true, true),
-          "isSomething", new PluginPropertyField("isSomething", "", "boolean", true, false))).build();
-
-      PluginClass multipleRequirementPlugin = PluginClass.builder()
-        .setName(InspectionApp.MULTIPLE_REQUIREMENTS_PLUGIN)
-        .setType(InspectionApp.PLUGIN_TYPE)
-        .setCategory(InspectionApp.PLUGIN_CATEGORY)
-        .setClassName(InspectionApp.MultipleRequirementsPlugin.class.getName())
-        .setConfigFieldName("pluginConf")
-        .setProperties(ImmutableMap.of(
-          "y", new PluginPropertyField("y", "", "double", true, true),
-          "isSomething", new PluginPropertyField("isSomething", "", "boolean", true, false)))
-        .setRequirements(new Requirements(ImmutableSet.of(Table.TYPE, KeyValueTable.TYPE)))
-        .setDescription(InspectionApp.PLUGIN_DESCRIPTION)
-        .build();
-      Assert.assertTrue(classes.getPlugins().containsAll(ImmutableSet.of(expectedPlugin, multipleRequirementPlugin)));
-    }
+    PluginClass multipleRequirementPlugin = PluginClass.builder()
+      .setName(InspectionApp.MULTIPLE_REQUIREMENTS_PLUGIN)
+      .setType(InspectionApp.PLUGIN_TYPE)
+      .setCategory(InspectionApp.PLUGIN_CATEGORY)
+      .setClassName(InspectionApp.MultipleRequirementsPlugin.class.getName())
+      .setConfigFieldName("pluginConf")
+      .setProperties(ImmutableMap.of(
+        "y", new PluginPropertyField("y", "", "double", true, true),
+        "isSomething", new PluginPropertyField("isSomething", "", "boolean", true, false)))
+      .setRequirements(new Requirements(ImmutableSet.of(Table.TYPE, KeyValueTable.TYPE)))
+      .setDescription(InspectionApp.PLUGIN_DESCRIPTION)
+      .build();
+    Assert.assertTrue(classes.getPlugins().containsAll(ImmutableSet.of(expectedPlugin, multipleRequirementPlugin)));
   }
 
   @Test
@@ -185,29 +181,27 @@ public class DefaultArtifactInspectorTest {
                                   manifest);
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "NestedPlugin", "1.0.0");
     Location artifactLocation = Locations.toLocation(artifactFile);
-    try (CloseableClassLoader artifactClassLoader =
-           classLoaderFactory.createClassLoader(
-             ImmutableList.of(artifactLocation).iterator(),
-             new EntityImpersonator(artifactId.toEntityId(), new DefaultImpersonator(CConfiguration.create(), null)))) {
-      ArtifactClasses classes = artifactInspector.inspectArtifact(artifactId, artifactFile, artifactClassLoader,
-                                                                  Collections.emptySet()).getArtifactClasses();
-      Set<PluginClass> plugins = classes.getPlugins();
+    List<ArtifactDescriptor> parentDescriptor = new ArrayList<>();
+    parentDescriptor.add(new ArtifactDescriptor(artifactId.getNamespace().getId(),
+                                                artifactId.toArtifactId(), artifactLocation));
+    ArtifactClasses classes = artifactInspector.inspectArtifact(artifactId, artifactFile, parentDescriptor,
+                                                                Collections.emptySet()).getArtifactClasses();
+    Set<PluginClass> plugins = classes.getPlugins();
 
-      Map<String, PluginPropertyField> expectedFields = ImmutableMap.of(
-        "X", new PluginPropertyField("X", "", "int", true, false),
-        "Nested", new PluginPropertyField("Nested", "", "nestedconfig", true, true, false,
-                                          ImmutableSet.of("Nested1", "Nested2")),
-        "Nested1", new PluginPropertyField("Nested1", "", "string", true, true),
-        "Nested2", new PluginPropertyField("Nested2", "", "string", true, true)
-      );
+    Map<String, PluginPropertyField> expectedFields = ImmutableMap.of(
+      "X", new PluginPropertyField("X", "", "int", true, false),
+      "Nested", new PluginPropertyField("Nested", "", "nestedconfig", true, true, false,
+                                        ImmutableSet.of("Nested1", "Nested2")),
+      "Nested1", new PluginPropertyField("Nested1", "", "string", true, true),
+      "Nested2", new PluginPropertyField("Nested2", "", "string", true, true)
+    );
 
-      PluginClass expected = PluginClass.builder()
-        .setName("nested").setType("dummy").setDescription("Nested config")
-        .setClassName(NestedConfigPlugin.class.getName()).setConfigFieldName("config")
-        .setProperties(expectedFields).build();
+    PluginClass expected = PluginClass.builder()
+      .setName("nested").setType("dummy").setDescription("Nested config")
+      .setClassName(NestedConfigPlugin.class.getName()).setConfigFieldName("config")
+      .setProperties(expectedFields).build();
 
-      Assert.assertEquals(Collections.singleton(expected), plugins);
-    }
+    Assert.assertEquals(Collections.singleton(expected), plugins);
   }
 
   @Test(expected = InvalidArtifactException.class)
@@ -216,19 +210,17 @@ public class DefaultArtifactInspectorTest {
                                   new Manifest());
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "InspectionApp", "1.0.0");
     Location artifactLocation = Locations.toLocation(artifactFile);
-    try (CloseableClassLoader artifactClassLoader =
-           classLoaderFactory.createClassLoader(
-             ImmutableList.of(artifactLocation).iterator(),
-             new EntityImpersonator(artifactId.toEntityId(), new DefaultImpersonator(CConfiguration.create(), null)))) {
-
+    List<ArtifactDescriptor> parentDescriptor = new ArrayList<>();
+    parentDescriptor.add(new ArtifactDescriptor(artifactId.getNamespace().getId(),
+                                                artifactId.toArtifactId(), artifactLocation));
       // PluginClass contains a non existing classname that is not present in the artifact jar being used
       PluginClass pluginClass =
         PluginClass.builder().setName("plugin_name").setType("plugin_type")
           .setDescription("").setClassName("non-existing-class")
           .setConfigFieldName("pluginConf").setProperties(ImmutableMap.of()).build();
       // Inspects the jar and ensures that additional plugin classes can be loaded from the artifact jar
-      artifactInspector.inspectArtifact(artifactId, artifactFile, artifactClassLoader, ImmutableSet.of(pluginClass));
-    }
+      artifactInspector.inspectArtifact(artifactId, artifactFile, parentDescriptor,
+                                        ImmutableSet.of(pluginClass));
   }
 
   @Test
