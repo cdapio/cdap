@@ -149,13 +149,14 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private final TwillSpecification twillSpec;
   private final String resourcePrefix;
   private final Map<String, String> extraLabels;
+  private final Map<String, SecretDiskRunnable> secretDiskRunnables;
+  private final Map<String, V1SecurityContext> containerSecurityContexts;
+  private final Map<String, Set<String>> readonlyDisks;
+
   private String schedulerQueue;
   private String mainRunnableName;
   private Set<String> dependentRunnableNames;
   private String serviceAccountName;
-  private final Map<String, SecretDiskRunnable> secretDiskRunnables;
-  private final HashMap<String, V1SecurityContext> containerSecurityContexts;
-  private final Map<String, Set<String>> readonlyDisks;
 
   KubeTwillPreparer(MasterEnvironmentContext masterEnvContext, ApiClient apiClient, String kubeNamespace,
                     PodInfo podInfo, TwillSpecification spec, RunId twillRunId, Location appLocation,

@@ -18,15 +18,16 @@ package io.cdap.cdap.security.guice;
 
 import com.google.inject.Module;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.guice.ZKClientModule;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.runtime.RuntimeModule;
+import joptsimple.internal.Strings;
 import org.apache.twill.zookeeper.ZKClient;
 
 /**
  * Security guice modules
  */
 //TODO: we need to have separate implementations for inMemoryModule and standaloneModule
-public class CoreSecurityModules extends RuntimeModule {
+public class CoreSecurityRuntimeModule extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
@@ -51,10 +52,15 @@ public class CoreSecurityModules extends RuntimeModule {
    * Returns {@code true} if a {@link ZKClient} binding is needed for the distributed module.
    */
   public static CoreSecurityModule getDistributedModule(CConfiguration cConf) {
-    // If the file based path is not set explicitly, use ZK.
+    // If security is not needed, we don't need a distributed security module.
+    // It is merely for satisfying the binding dependencies only.
+    if (!cConf.getBoolean(Constants.Security.ENABLED) && !cConf.getBoolean(Constants.Security.ENFORCE_INTERNAL_AUTH)) {
+      return new InMemoryCoreSecurityModule();
+    }
+
     // If ZK is set explicitly, always use ZK.
     // This is the backward compatible behavior.
-    if (ZKClientModule.requiresZKClient(cConf)) {
+    if (!Strings.isNullOrEmpty(cConf.get(Constants.Zookeeper.QUORUM))) {
       return new DistributedCoreSecurityModule();
     }
     return new FileBasedCoreSecurityModule();

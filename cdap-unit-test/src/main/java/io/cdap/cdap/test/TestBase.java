@@ -125,6 +125,7 @@ import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.runtime.spi.SparkCompat;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.scheduler.Scheduler;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.authorization.InvalidAccessControllerException;
@@ -279,6 +280,7 @@ public class TestBase {
       new InMemoryDiscoveryModule(),
       new AppFabricServiceRuntimeModule(cConf).getInMemoryModules(),
       new MonitorHandlerModule(false),
+      new AuthenticationContextModules().getMasterModule(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new ProgramRunnerRuntimeModule().getInMemoryModules(),

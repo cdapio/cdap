@@ -26,7 +26,7 @@ import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.security.auth.TokenValidator;
 import io.cdap.cdap.security.auth.UserIdentityExtractor;
-import io.cdap.cdap.security.guice.CoreSecurityModules;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -56,7 +56,7 @@ class RouterResource extends ExternalResource {
   @Override
   protected void before() {
     CConfiguration cConf = CConfiguration.create();
-    Injector injector = Guice.createInjector(new CoreSecurityModules().getStandaloneModules(),
+    Injector injector = Guice.createInjector(new CoreSecurityRuntimeModule().getStandaloneModules(),
                                              new ExternalAuthenticationModule(),
                                              new InMemoryDiscoveryModule(),
                                              new AppFabricTestModule(cConf));
