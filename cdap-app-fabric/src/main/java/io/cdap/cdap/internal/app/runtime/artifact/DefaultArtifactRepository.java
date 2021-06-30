@@ -26,7 +26,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
-import com.google.common.io.Closeables;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.artifact.ArtifactClasses;
@@ -110,7 +109,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     this.artifactStore = artifactStore;
     this.artifactRepositoryReader = artifactRepositoryReader;
     this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, programRunnerFactory);
-    this.artifactInspector = new DefaultArtifactInspector(cConf, artifactClassLoaderFactory);
+    this.artifactInspector = new DefaultArtifactInspector(cConf, artifactClassLoaderFactory, impersonator);
     this.systemArtifactDirs = new HashSet<>();
     String systemArtifactsDir = cConf.get(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR);
     if (!Strings.isNullOrEmpty(systemArtifactsDir)) {
@@ -275,30 +274,29 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     CloseableClassLoader parentClassLoader = null;
     EntityImpersonator entityImpersonator = new EntityImpersonator(artifactId.toEntityId(),
                                                                    impersonator);
+    List<ArtifactDescriptor> parentDescriptors = new ArrayList<>();
     if (!parentArtifacts.isEmpty()) {
       validateParentSet(artifactId, parentArtifacts);
-      parentClassLoader = createParentClassLoader(artifactId, parentArtifacts, entityImpersonator);
+      parentDescriptors = getParentArtifactDescriptors(artifactId, parentArtifacts);
     }
-    try {
-      additionalPlugins = additionalPlugins == null ? Collections.emptySet() : additionalPlugins;
-      ArtifactClassesWithMetadata artifactClassesWithMetadata = inspectArtifact(artifactId, artifactFile,
-                                                                                additionalPlugins, parentClassLoader);
-      ArtifactMeta meta = new ArtifactMeta(artifactClassesWithMetadata.getArtifactClasses(), parentArtifacts,
-                                           properties);
-      ArtifactDetail artifactDetail = artifactStore.write(artifactId, meta, artifactFile, entityImpersonator);
-      ArtifactDescriptor descriptor = artifactDetail.getDescriptor();
-      // info hides some fields that are available in detail, such as the location of the artifact
-      ArtifactInfo artifactInfo = new ArtifactInfo(descriptor.getArtifactId(), artifactDetail.getMeta().getClasses(),
-                                                   artifactDetail.getMeta().getProperties());
-      // add system metadata for artifacts
-      writeSystemMetadata(artifactId.toEntityId(), artifactInfo);
 
-      // add plugin metadata, these metadata can be in any scope depending on the artifact scope
-      metadataServiceClient.batch(artifactClassesWithMetadata.getMutations());
-      return artifactDetail;
-    } finally {
-      Closeables.closeQuietly(parentClassLoader);
-    }
+    additionalPlugins = additionalPlugins == null ? Collections.emptySet() : additionalPlugins;
+    ArtifactClassesWithMetadata artifactClassesWithMetadata = inspectArtifact(artifactId, artifactFile,
+                                                                              parentDescriptors,
+                                                                              additionalPlugins);
+    ArtifactMeta meta = new ArtifactMeta(artifactClassesWithMetadata.getArtifactClasses(), parentArtifacts,
+                                         properties);
+    ArtifactDetail artifactDetail = artifactStore.write(artifactId, meta, artifactFile, entityImpersonator);
+    ArtifactDescriptor descriptor = artifactDetail.getDescriptor();
+    // info hides some fields that are available in detail, such as the location of the artifact
+    ArtifactInfo artifactInfo = new ArtifactInfo(descriptor.getArtifactId(), artifactDetail.getMeta().getClasses(),
+                                                 artifactDetail.getMeta().getProperties());
+    // add system metadata for artifacts
+    writeSystemMetadata(artifactId.toEntityId(), artifactInfo);
+
+    // add plugin metadata, these metadata can be in any scope depending on the artifact scope
+    metadataServiceClient.batch(artifactClassesWithMetadata.getMutations());
+    return artifactDetail;
   }
 
   @Override
@@ -536,11 +534,11 @@ public class DefaultArtifactRepository implements ArtifactRepository {
   }
 
   private ArtifactClassesWithMetadata inspectArtifact(Id.Artifact artifactId, File artifactFile,
-                                                      Set<PluginClass> additionalPlugins,
-                                                      @Nullable ClassLoader parentClassLoader)
+                                                      List<ArtifactDescriptor> parentDescriptors,
+                                                      Set<PluginClass> additionalPlugins)
     throws IOException, InvalidArtifactException {
     ArtifactClassesWithMetadata artifact = artifactInspector.inspectArtifact(artifactId, artifactFile,
-                                                                             parentClassLoader,
+                                                                             parentDescriptors,
                                                                              additionalPlugins);
     validatePluginSet(artifact.getArtifactClasses().getPlugins());
     if (additionalPlugins == null || additionalPlugins.isEmpty()) {
@@ -584,19 +582,17 @@ public class DefaultArtifactRepository implements ArtifactRepository {
   }
 
   /**
-   * Create a parent classloader using an artifact from one of the artifacts in the specified parents.
+   * Get {@link ArtifactDescriptor} of parent and grandparent (if any) artifacts for the given artifact.
    *
-   * @param artifactId the id of the artifact to create the parent classloader for
-   * @param parentArtifacts the ranges of parents to create the classloader from
-   * @return a classloader based off a parent artifact
+   * @param artifactId the id of the artifact for which to find its parent and grandparent {@link ArtifactDescriptor}
+   * @param parentArtifacts the ranges of parents to find
+   * @return {@link ArtifactDescriptor} of parent and grandparent (if any) artifacts, in that specific order
    * @throws ArtifactRangeNotFoundException if none of the parents could be found
-   * @throws InvalidArtifactException if one of the parents also has parents
-   * @throws IOException if there was some error reading from the store
+   * @throws InvalidArtifactException       if one of the parents also has parents
    */
-  private CloseableClassLoader createParentClassLoader(Id.Artifact artifactId, Set<ArtifactRange> parentArtifacts,
-                                                       EntityImpersonator entityImpersonator)
-    throws ArtifactRangeNotFoundException, IOException, InvalidArtifactException {
-
+  private List<ArtifactDescriptor> getParentArtifactDescriptors(Id.Artifact artifactId,
+                                                                Set<ArtifactRange> parentArtifacts)
+    throws ArtifactRangeNotFoundException, InvalidArtifactException {
     List<ArtifactDetail> parents = new ArrayList<>();
     for (ArtifactRange parentRange : parentArtifacts) {
       parents.addAll(artifactStore.getArtifacts(parentRange, Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED));
@@ -607,8 +603,8 @@ public class DefaultArtifactRepository implements ArtifactRepository {
                                                              artifactId, Joiner.on('/').join(parentArtifacts)));
     }
 
-    Location parentLocation = null;
-    Location grandparentLocation = null;
+    ArtifactDescriptor parentArtifact = null;
+    ArtifactDescriptor grandparentArtifact = null;
 
     // check if any of the parents also have grandparents, which is not allowed. This is to simplify things
     // so that we don't have to chain a bunch of classloaders, and also to keep it simple for users to avoid
@@ -638,22 +634,40 @@ public class DefaultArtifactRepository implements ArtifactRepository {
           }
 
           // assumes any grandparent will do
-          if (parentLocation == null && grandparentLocation == null) {
-            grandparentLocation = grandparent.getDescriptor().getLocation();
+          if (parentArtifact == null && grandparentArtifact == null) {
+            grandparentArtifact = grandparent.getDescriptor();
           }
         }
       }
 
       // assumes any parent will do
-      if (parentLocation == null) {
-        parentLocation = parent.getDescriptor().getLocation();
+      if (parentArtifact == null) {
+        parentArtifact = parent.getDescriptor();
       }
     }
 
+    List<ArtifactDescriptor> parentArtifactList = new ArrayList<>();
+    parentArtifactList.add(parentArtifact);
+    if (grandparentArtifact != null) {
+      parentArtifactList.add(grandparentArtifact);
+    }
+    return parentArtifactList;
+  }
+
+  /**
+   * Create a parent classloader (potentially multi-level classloader) based on the list of parent artifacts provided.
+   * The multi-level classloader will be constructed based the order of artifacts in the list (e.g. lower level
+   * classloader from artifacts in the front of the list and high leveler classloader from those towards the end)
+   *
+   * @param parentArtifacts list of parent artifacts to create the classloader from
+   * @throws IOException if there was some error reading from the store
+   */
+  private CloseableClassLoader createParentClassLoader(List<ArtifactDescriptor> parentArtifacts,
+                                                       EntityImpersonator entityImpersonator)
+    throws IOException {
     List<Location> parentLocations = new ArrayList<>();
-    parentLocations.add(parentLocation);
-    if (grandparentLocation != null) {
-      parentLocations.add(grandparentLocation);
+    for (ArtifactDescriptor descriptor : parentArtifacts) {
+      parentLocations.add(descriptor.getLocation());
     }
     return artifactClassLoaderFactory.createClassLoader(parentLocations.iterator(), entityImpersonator);
   }
