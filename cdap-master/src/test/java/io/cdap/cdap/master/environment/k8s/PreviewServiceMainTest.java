@@ -61,7 +61,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.jar.Manifest;
 
 /**
- * Unit test for {@link AppFabricServiceMain}.
+ * Unit test for {@link PreviewServiceMain}.
  */
 public class PreviewServiceMainTest extends MasterServiceMainTestBase {
   private static final Gson GSON = new Gson();

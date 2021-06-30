@@ -15,13 +15,10 @@
  */
 package io.cdap.cdap.common.guice;
 
-import com.google.common.base.Preconditions;
 import com.google.inject.AbstractModule;
-import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.CConfigurationUtil;
 import io.cdap.cdap.common.conf.Constants;
 import org.apache.twill.zookeeper.RetryStrategies;
 import org.apache.twill.zookeeper.ZKClient;
@@ -49,13 +46,10 @@ public class ZKClientModule extends AbstractModule {
   @Provides
   @Singleton
   private ZKClientService provideZKClientService(CConfiguration cConf) {
-    String zookeeper = cConf.get(Constants.Zookeeper.QUORUM);
-    Preconditions.checkNotNull(zookeeper, "Missing ZooKeeper configuration '%s'", Constants.Zookeeper.QUORUM);
-
     return ZKClientServices.delegate(
       ZKClients.reWatchOnExpire(
         ZKClients.retryOnFailure(
-          ZKClientService.Builder.of(cConf.get(Constants.Zookeeper.QUORUM))
+          ZKClientService.Builder.of(Constants.Zookeeper.getZKQuorum(cConf))
             .setSessionTimeout(cConf.getInt(Constants.Zookeeper.CFG_SESSION_TIMEOUT_MILLIS,
                                             Constants.Zookeeper.DEFAULT_SESSION_TIMEOUT_MILLIS))
             .build(),
@@ -63,31 +57,5 @@ public class ZKClientModule extends AbstractModule {
         )
       )
     );
-  }
-
-  /**
-   * Helper function which returns true if ZKClientModule is necessary.
-   * @param cConf The cluster configuration
-   * @return whether to use ZK or not
-   */
-  public static boolean requiresZKClient(CConfiguration cConf) {
-    return !CConfigurationUtil.isOverridden(cConf, Constants.Security.CFG_FILE_BASED_KEYFILE_PATH)
-      || CConfigurationUtil.isOverridden(cConf, Constants.Zookeeper.QUORUM);
-  }
-
-  /**
-   * Returns a ZKClientModule if necessary, otherwise returns an empty module.
-   *
-   * @param cConf The cluster configuration
-   * @return A ZKClientModule if necessary or an empty module otherwise
-   */
-  public static Module getZKClientModuleIfRequired(CConfiguration cConf) {
-    if (requiresZKClient(cConf)) {
-      return new ZKClientModule();
-    }
-    return new AbstractModule() {
-      @Override
-      protected void configure() { }
-    };
   }
 }

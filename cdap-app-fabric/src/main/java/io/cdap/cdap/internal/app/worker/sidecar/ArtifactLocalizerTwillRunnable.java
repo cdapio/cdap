@@ -43,7 +43,10 @@ import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.guice.CoreSecurityModule;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.TwillContext;
@@ -72,6 +75,7 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
 
   private ArtifactLocalizerService artifactLocalizerService;
   private LogAppenderInitializer logAppenderInitializer;
+  private TokenManager tokenManager;
 
   public ArtifactLocalizerTwillRunnable(String cConfFileName, String hConfFileName) {
     super(ImmutableMap.of("cConf", cConfFileName, "hConf", hConfFileName));
@@ -81,8 +85,12 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
   static Injector createInjector(CConfiguration cConf, Configuration hConf) {
     List<Module> modules = new ArrayList<>();
 
+    CoreSecurityModule coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf);
+
     modules.add(new ConfigModule(cConf, hConf));
     modules.add(new IOModule());
+    modules.add(new AuthenticationContextModules().getMasterModule());
+    modules.add(coreSecurityModule);
 
     // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
     MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
@@ -104,7 +112,10 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
       });
       modules.add(new RemoteLogAppenderModule());
       modules.add(new LocalLocationModule());
-      modules.add(new AuthenticationContextModules().getMasterModule());
+
+      if (coreSecurityModule.requiresZKClient()) {
+        modules.add(new ZKClientModule());
+      }
     }
 
     return Guice.createInjector(modules);
@@ -155,7 +166,11 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
 
   @Override
   public void destroy() {
-    logAppenderInitializer.close();
+    try {
+      tokenManager.stopAndWait();
+    } finally {
+      logAppenderInitializer.close();
+    }
   }
 
   private void doInitialize() throws Exception {
@@ -177,6 +192,10 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
                                                               Constants.Logging.COMPONENT_NAME,
                                                               Constants.Service.ARTIFACT_LOCALIZER);
     LoggingContextAccessor.setLoggingContext(loggingContext);
+
+    tokenManager = injector.getInstance(TokenManager.class);
+    tokenManager.startAndWait();
+
     artifactLocalizerService = injector.getInstance(ArtifactLocalizerService.class);
   }
 }

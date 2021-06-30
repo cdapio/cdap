@@ -18,11 +18,14 @@ package io.cdap.cdap.security.auth.context;
 
 import com.google.common.base.Throwables;
 import com.google.inject.AbstractModule;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
+import com.google.inject.Provider;
+import com.google.inject.TypeLiteral;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.internal.remote.RemoteAuthenticator;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
@@ -40,17 +43,40 @@ import java.nio.file.Paths;
  * it is being invoked.
  */
 public class AuthenticationContextModules {
+
   /**
    * An {@link AuthenticationContext} for HTTP requests in Master. The authentication details in this context are
-   * derived from {@link SecurityRequestContext}.
+   * derived from a combination of {@link SecurityRequestContext} and the {@link SystemAuthenticationContext}.
    *
    * @see SecurityRequestContext
+   * @see SystemAuthenticationContext
    */
   public Module getMasterModule() {
-    return new AbstractModule() {
+    return new PrivateModule() {
       @Override
       protected void configure() {
-        bind(AuthenticationContext.class).to(MasterAuthenticationContext.class);
+        bind(new TypeLiteral<Class<? extends AuthenticationContext>>() { })
+          .toInstance(SystemAuthenticationContext.class);
+        bind(AuthenticationContext.class).toProvider(MasterAuthenticationContextProvider.class);
+        expose(AuthenticationContext.class);
+      }
+    };
+  }
+
+  /**
+   * Returns a Guice module that provides {@link AuthenticationContext} for workers such as preview and task workers.
+   * The authentication details in this context are derived from the {@link WorkerAuthenticationContext}.
+   *
+   * @see WorkerAuthenticationContext
+   */
+  public Module getMasterWorkerModule() {
+    return new PrivateModule() {
+      @Override
+      protected void configure() {
+        bind(new TypeLiteral<Class<? extends AuthenticationContext>>() { })
+          .toInstance(WorkerAuthenticationContext.class);
+        bind(AuthenticationContext.class).toProvider(MasterAuthenticationContextProvider.class);
+        expose(AuthenticationContext.class);
       }
     };
   }
@@ -113,7 +139,8 @@ public class AuthenticationContextModules {
 
   /**
    * An {@link AuthenticationContext} for use in tests that do not need authentication/authorization. The
-   * authentication details in this context are determined based on the {@link System#props user.name} system property.
+   * authentication details in this context are determined based on the {@code user.name}
+   * from the {@link System#getProperties()}.
    *
    * @return A module with internal authentication bindings for testing.
    */
@@ -127,47 +154,29 @@ public class AuthenticationContextModules {
   }
 
   /**
-   * An {@link AuthenticationContext} and {@link RemoteAuthenticator} for HTTP requests which use internal
-   * authentication. The authentication details in this context are derived from a combination of
-   * {@link SecurityRequestContext} and the {@link SystemAuthenticationContext}.
-   *
-   * @see SecurityRequestContext
-   * @see SystemAuthenticationContext
-   *
-   * @param cConf The configuration for the cluster
-   * @return A module with bindings for internal authentication for master services.
+   * A {@link Provider} for {@link AuthenticationContext} based on CDAP configuration for the master service processes
+   * and the runtime processes to use.
    */
-  public Module getInternalAuthMasterModule(CConfiguration cConf) {
-    if (!cConf.getBoolean(Constants.Security.ENFORCE_INTERNAL_AUTH)) {
-      return getMasterModule();
-    }
-    return new PrivateModule() {
-      @Override
-      protected void configure() {
-        bind(AuthenticationContext.class).to(SystemAuthenticationContext.class);
-        expose(AuthenticationContext.class);
-      }
-    };
-  }
+  private static final class MasterAuthenticationContextProvider implements Provider<AuthenticationContext> {
 
-  /**
-   * Authentication module for workers such as preview and task workers. The authentication details in this context are
-   * derived from the {@link WorkerAuthenticationContext}.
-   *
-   * @see WorkerAuthenticationContext
-   *
-   * @param cConf The configuration for the cluster
-   * @return A module with bindings for internal authentication for worker services.
-   */
-  public Module getInternalAuthWorkerModule(CConfiguration cConf) {
-    if (!cConf.getBoolean(Constants.Security.ENFORCE_INTERNAL_AUTH)) {
-      return getMasterModule();
+    private final CConfiguration cConf;
+    private final Injector injector;
+    private final Class<? extends AuthenticationContext> internalAuthContextClass;
+
+    @Inject
+    MasterAuthenticationContextProvider(CConfiguration cConf, Injector injector,
+                                        Class<? extends AuthenticationContext> internalAuthContextClass) {
+      this.cConf = cConf;
+      this.injector = injector;
+      this.internalAuthContextClass = internalAuthContextClass;
     }
-    return new AbstractModule() {
-      @Override
-      protected void configure() {
-        bind(AuthenticationContext.class).to(WorkerAuthenticationContext.class);
+
+    @Override
+    public AuthenticationContext get() {
+      if (cConf.getBoolean(Constants.Security.ENFORCE_INTERNAL_AUTH)) {
+        return injector.getInstance(internalAuthContextClass);
       }
-    };
+      return injector.getInstance(MasterAuthenticationContext.class);
+    }
   }
 }

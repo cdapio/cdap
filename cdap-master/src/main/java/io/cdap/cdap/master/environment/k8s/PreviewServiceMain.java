@@ -36,7 +36,6 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
-import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
@@ -52,7 +51,6 @@ import io.cdap.cdap.metrics.guice.MetricsStoreModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
-import io.cdap.cdap.security.guice.CoreSecurityModules;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import org.apache.twill.api.Configs;
 import org.apache.twill.api.TwillRunner;
@@ -101,13 +99,10 @@ public class PreviewServiceMain extends AbstractServiceMain<EnvironmentOptions> 
   @Override
   protected List<Module> getServiceModules(MasterEnvironment masterEnv,
                                            EnvironmentOptions options, CConfiguration cConf) {
-    List<Module> modules = new ArrayList<>();
-    modules.addAll(Arrays.asList(
+    List<Module> modules = new ArrayList<>(Arrays.asList(
       new DataSetServiceModules().getStandaloneModules(),
       new DataSetsModules().getStandaloneModules(),
-      new AppFabricServiceRuntimeModule(cConf).getPreviewMasterModules(),
-      CoreSecurityModules.getDistributedModule(cConf),
-      ZKClientModule.getZKClientModuleIfRequired(cConf),
+      new AppFabricServiceRuntimeModule(cConf).getStandaloneModules(),
       new ProgramRunnerRuntimeModule().getStandaloneModules(),
       new MetricsStoreModule(),
       new MessagingClientModule(),
