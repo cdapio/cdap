@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
+import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.runtime.spi.MockVersionInfo;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
@@ -38,6 +39,7 @@ import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -249,6 +251,38 @@ public class DataprocProvisionerTest {
     context.setSparkCompat(SparkCompat.SPARK3_2_12);
     Assert.assertEquals("2.0", provisioner.getImageVersion(context, defaultConf));
 
+  }
+
+  @Test
+  public void testClusterCreateNoReuse() throws Exception {
+    context.addProperty("accountKey", "testKey");
+    context.addProperty(DataprocConf.PROJECT_ID_KEY, "testProject");
+    context.addProperty("region", "testRegion");
+    context.addProperty("idleTTL", "5");
+    context.addProperty(DataprocConf.SKIP_DELETE, "true");
+    context.setProfileName("testProfile");
+    ProgramRunInfo programRunInfo = new ProgramRunInfo.Builder()
+      .setNamespace("ns")
+      .setApplication("app")
+      .setVersion("1.0")
+      .setProgramType("workflow")
+      .setProgram("program")
+      .setRun("runId")
+      .build();
+    context.setProgramRunInfo(programRunInfo);
+    context.setSparkCompat(SparkCompat.SPARK2_2_11);
+
+    Mockito.when(dataprocClient.getCluster("cdap-app-runId")).thenReturn(Optional.empty());
+    Mockito.when(dataprocClient.createCluster(Mockito.eq("cdap-app-runId"),
+                                              Mockito.eq("1.3"),
+                                              addedLabelsCaptor.capture(),
+                                              Mockito.eq(false)))
+      .thenReturn(ClusterOperationMetadata.getDefaultInstance());
+    Cluster expectedCluster = new Cluster(
+      "cdap-app-runId", ClusterStatus.CREATING, Collections.emptyList(), Collections.emptyMap());
+    Assert.assertEquals(expectedCluster, provisioner.createCluster(context));
+    Assert.assertEquals(Collections.singletonMap("cdap-version", "6_4"),
+                        addedLabelsCaptor.getValue());
   }
 
   @Test
