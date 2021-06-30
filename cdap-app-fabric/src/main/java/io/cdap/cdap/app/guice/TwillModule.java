@@ -70,7 +70,7 @@ public class TwillModule extends PrivateModule {
 
     @Override
     public TwillRunnerService get() {
-      String zkConnectStr = cConf.get(Constants.Zookeeper.QUORUM) + cConf.get(Constants.CFG_TWILL_ZK_NAMESPACE);
+      String zkConnectStr = Constants.Zookeeper.getZKQuorum(cConf) + cConf.get(Constants.CFG_TWILL_ZK_NAMESPACE);
 
       // Copy the yarn config and setup twill configs
       YarnConfiguration yarnConfig = new YarnConfiguration(yarnConf);

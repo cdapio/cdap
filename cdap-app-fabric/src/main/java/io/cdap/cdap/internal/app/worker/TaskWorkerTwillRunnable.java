@@ -43,6 +43,8 @@ import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.guice.CoreSecurityModule;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.TwillContext;
@@ -78,9 +80,12 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
   static Injector createInjector(CConfiguration cConf, Configuration hConf) {
     List<Module> modules = new ArrayList<>();
 
+    CoreSecurityModule coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf);
+
     modules.add(new ConfigModule(cConf, hConf));
     modules.add(new IOModule());
-    modules.add(new AuthenticationContextModules().getInternalAuthWorkerModule(cConf));
+    modules.add(new AuthenticationContextModules().getMasterWorkerModule());
+    modules.add(coreSecurityModule);
 
     // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
     MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
@@ -101,7 +106,10 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
         }
       });
       modules.add(new RemoteLogAppenderModule());
-      modules.add(new AuthenticationContextModules().getMasterModule());
+
+      if (coreSecurityModule.requiresZKClient()) {
+        modules.add(new ZKClientModule());
+      }
     }
 
     return Guice.createInjector(modules);

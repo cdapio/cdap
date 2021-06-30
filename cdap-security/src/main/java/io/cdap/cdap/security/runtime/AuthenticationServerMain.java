@@ -28,7 +28,7 @@ import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.common.runtime.DaemonMain;
-import io.cdap.cdap.security.guice.CoreSecurityModules;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.server.ExternalAuthenticationServer;
@@ -56,7 +56,7 @@ public class AuthenticationServerMain extends DaemonMain {
                                              new IOModule(),
                                              new ZKClientModule(),
                                              new ZKDiscoveryModule(),
-                                             new CoreSecurityModules().getDistributedModules(),
+                                             new CoreSecurityRuntimeModule().getDistributedModules(),
                                              new ExternalAuthenticationModule());
     configuration = injector.getInstance(CConfiguration.class);
 
@@ -83,7 +83,7 @@ public class AuthenticationServerMain extends DaemonMain {
                                                                           "ZooKeeper client. Please verify that the " +
                                                                           "ZooKeeper quorum settings are correct in " +
                                                                           "cdap-site.xml. Currently configured as: %s",
-                                                                        configuration.get(Constants.Zookeeper.QUORUM)));
+                                                                        zkClientService.getConnectString()));
         authServer.startAndWait();
       } catch (Exception e) {
         Throwable rootCause = Throwables.getRootCause(e);

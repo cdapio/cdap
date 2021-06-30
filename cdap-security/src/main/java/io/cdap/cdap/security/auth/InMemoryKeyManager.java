@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.security.auth;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 
 import java.io.IOException;
@@ -27,9 +28,9 @@ public class InMemoryKeyManager extends MapBackedKeyManager {
 
   /**
    * Create an InMemoryKeyManager that stores keys in memory only.
-   * @param conf
    */
-  public InMemoryKeyManager(CConfiguration conf) {
+  @Inject
+  InMemoryKeyManager(CConfiguration conf) {
     super(conf);
   }
 

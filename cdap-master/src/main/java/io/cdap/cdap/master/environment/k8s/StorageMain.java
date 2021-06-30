@@ -20,6 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Module;
 import com.google.inject.Scopes;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -35,7 +36,8 @@ import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
-import io.cdap.cdap.security.guice.CoreSecurityModules;
+import io.cdap.cdap.security.guice.CoreSecurityModule;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.NoOpAccessController;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
@@ -48,6 +50,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * The main class for creating store definition. It can be used as a initialization step for each container.
@@ -64,7 +69,8 @@ public class StorageMain {
   void createStorage(CConfiguration cConf) throws IOException {
     LOG.info("Creating storages");
 
-    Injector injector = Guice.createInjector(
+    CoreSecurityModule coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf);
+    List<Module> modules = new ArrayList<>(Arrays.asList(
       new ConfigModule(cConf),
       new SystemDatasetRuntimeModule().getStandaloneModules(),
       // We actually only need the MetadataStore createIndex.
@@ -74,9 +80,8 @@ public class StorageMain {
       new StorageModule(),
       new DFSLocationModule(),
       new IOModule(),
-      new AuthenticationContextModules().getInternalAuthMasterModule(cConf),
-      CoreSecurityModules.getDistributedModule(cConf),
-      ZKClientModule.getZKClientModuleIfRequired(cConf),
+      coreSecurityModule,
+      new AuthenticationContextModules().getMasterModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -87,7 +92,13 @@ public class StorageMain {
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
         }
       }
-    );
+    ));
+
+    if (coreSecurityModule.requiresZKClient()) {
+      modules.add(new ZKClientModule());
+    }
+
+    Injector injector = Guice.createInjector(modules);
 
     // Create stores definitions
     StructuredTableRegistry tableRegistry = injector.getInstance(StructuredTableRegistry.class);

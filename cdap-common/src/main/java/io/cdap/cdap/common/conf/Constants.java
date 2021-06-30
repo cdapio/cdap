@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.common.conf;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.BindingAnnotation;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -153,6 +154,19 @@ public final class Constants {
 
     // System property name to control the InMemoryZKServer to bind to localhost only or not
     public static final String TWILL_ZK_SERVER_LOCALHOST = "twill.zk.server.localhost";
+
+    /**
+     * Convenient method to get ZK quorum string from the configuration with proper default value.
+     */
+    public static String getZKQuorum(CConfiguration cConf) {
+      String quorum = cConf.get(QUORUM);
+      if (!Strings.isNullOrEmpty(quorum)) {
+        return quorum;
+      }
+      quorum = "127.0.0.1:2181";
+      String root = cConf.get(ROOT_NAMESPACE);
+      return Strings.isNullOrEmpty(root) ? quorum : quorum + "/" + root;
+    }
   }
 
   /**

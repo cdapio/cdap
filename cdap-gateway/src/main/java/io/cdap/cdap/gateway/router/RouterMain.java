@@ -28,7 +28,7 @@ import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.common.runtime.DaemonMain;
-import io.cdap.cdap.security.guice.CoreSecurityModules;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import org.apache.twill.internal.Services;
@@ -82,13 +82,6 @@ public class RouterMain extends DaemonMain {
         }
       }
 
-      // Initialize ZK client
-      String zookeeper = cConf.get(Constants.Zookeeper.QUORUM);
-      if (zookeeper == null) {
-        LOG.error("No ZooKeeper quorum provided.");
-        System.exit(1);
-      }
-
       Injector injector = createGuiceInjector(cConf);
       zkClientService = injector.getInstance(ZKClientService.class);
 
@@ -112,7 +105,7 @@ public class RouterMain extends DaemonMain {
                                                                     "ZooKeeper client. Please verify that the " +
                                                                     "ZooKeeper quorum settings are correct in " +
                                                                     "cdap-site.xml. Currently configured as: %s",
-                                                                    cConf.get(Constants.Zookeeper.QUORUM)));
+                                                                    zkClientService.getConnectString()));
     router.startAndWait();
     LOG.info("Router started.");
   }
@@ -135,7 +128,7 @@ public class RouterMain extends DaemonMain {
       new ZKClientModule(),
       new ZKDiscoveryModule(),
       new RouterModules().getDistributedModules(),
-      CoreSecurityModules.getDistributedModule(cConf),
+      CoreSecurityRuntimeModule.getDistributedModule(cConf),
       new ExternalAuthenticationModule(),
       new IOModule()
     );

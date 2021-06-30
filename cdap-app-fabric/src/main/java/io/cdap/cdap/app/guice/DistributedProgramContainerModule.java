@@ -66,7 +66,8 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
-import io.cdap.cdap.security.guice.CoreSecurityModules;
+import io.cdap.cdap.security.guice.CoreSecurityModule;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
@@ -229,9 +230,11 @@ public class DistributedProgramContainerModule extends AbstractModule {
   }
 
   private void addOnPremiseModules(List<Module> modules) {
+    CoreSecurityModule coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf);
+
     if (cConf.getBoolean(Constants.Security.ENFORCE_INTERNAL_AUTH)) {
-      modules.add(new AuthenticationContextModules().getInternalAuthMasterModule(cConf));
-      modules.add(CoreSecurityModules.getDistributedModule(cConf));
+      modules.add(new AuthenticationContextModules().getMasterModule());
+      modules.add(coreSecurityModule);
     } else {
       modules.add(new AuthenticationContextModules().getNoOpModule());
     }
@@ -245,6 +248,10 @@ public class DistributedProgramContainerModule extends AbstractModule {
       modules.add(new KafkaClientModule());
       modules.add(new KafkaLogAppenderModule());
       return;
+    }
+
+    if (coreSecurityModule.requiresZKClient()) {
+      modules.add(new ZKClientModule());
     }
 
     modules.add(new AbstractModule() {

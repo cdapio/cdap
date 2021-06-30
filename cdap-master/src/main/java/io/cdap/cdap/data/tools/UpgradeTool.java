@@ -73,7 +73,7 @@ import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.messaging.store.hbase.HBaseTableFactory;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
-import io.cdap.cdap.security.guice.CoreSecurityModules;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
@@ -201,7 +201,7 @@ public class UpgradeTool {
       new SystemDatasetRuntimeModule().getDistributedModules(),
       new KafkaClientModule(),
       new IOModule(),
-      new CoreSecurityModules().getDistributedModule(cConf),
+      CoreSecurityRuntimeModule.getDistributedModule(cConf),
       new AuthenticationContextModules().getMasterModule(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getMasterModule(),
@@ -265,7 +265,7 @@ public class UpgradeTool {
                           TimeUnit.MILLISECONDS,
                           String.format("Connection timed out while trying to start ZooKeeper client. Please " +
                                           "verify that the ZooKeeper quorum settings are correct in cdap-site.xml. " +
-                                          "Currently configured as: %s", cConf.get(Constants.Zookeeper.QUORUM)));
+                                          "Currently configured as: %s", zkClientService.getConnectString()));
     LOG.info("Starting Transaction Service...");
     txService.startAndWait();
     LOG.info("Initializing Dataset Framework...");

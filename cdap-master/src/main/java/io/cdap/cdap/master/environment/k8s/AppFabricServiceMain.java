@@ -33,7 +33,6 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
-import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.service.RetryOnStartFailureService;
@@ -62,7 +61,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
-import io.cdap.cdap.security.guice.CoreSecurityModules;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.store.SecureStoreService;
 import org.apache.twill.api.TwillRunner;
@@ -107,8 +105,6 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
           bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
         }
       }),
-      CoreSecurityModules.getDistributedModule(cConf),
-      ZKClientModule.getZKClientModuleIfRequired(cConf),
       new ProgramRunnerRuntimeModule().getDistributedModules(true),
       new MonitorHandlerModule(false),
       new SecureStoreServerModule(),

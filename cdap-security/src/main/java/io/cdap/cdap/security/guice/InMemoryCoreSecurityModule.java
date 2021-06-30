@@ -17,10 +17,7 @@
 package io.cdap.cdap.security.guice;
 
 import com.google.inject.Binder;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.inject.Scopes;
-import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.security.auth.InMemoryKeyManager;
 import io.cdap.cdap.security.auth.KeyManager;
 
@@ -32,20 +29,6 @@ final class InMemoryCoreSecurityModule extends CoreSecurityModule {
 
   @Override
   protected void bindKeyManager(Binder binder) {
-    binder.bind(KeyManager.class).toProvider(InMemoryKeyManagerProvider.class).in(Scopes.SINGLETON);
-  }
-
-  private static final class InMemoryKeyManagerProvider implements Provider<KeyManager> {
-    private final CConfiguration cConf;
-
-    @Inject
-    InMemoryKeyManagerProvider(CConfiguration conf) {
-      this.cConf = conf;
-    }
-
-    @Override
-    public KeyManager get() {
-      return new InMemoryKeyManager(cConf);
-    }
+    binder.bind(KeyManager.class).to(InMemoryKeyManager.class).in(Scopes.SINGLETON);
   }
 }

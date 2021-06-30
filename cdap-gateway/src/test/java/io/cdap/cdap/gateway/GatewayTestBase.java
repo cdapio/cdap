@@ -49,7 +49,7 @@ import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.security.guice.CoreSecurityModules;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
@@ -161,7 +161,7 @@ public abstract class GatewayTestBase {
                                       ("localhost", 0).getAddress());
           }
         },
-        new CoreSecurityModules().getInMemoryModules(),
+        new CoreSecurityRuntimeModule().getInMemoryModules(),
         new ExternalAuthenticationModule(),
         new AppFabricTestModule(conf)
       ).with(new AbstractModule() {
