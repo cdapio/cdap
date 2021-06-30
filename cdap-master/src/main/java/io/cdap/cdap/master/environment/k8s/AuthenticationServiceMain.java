@@ -23,15 +23,12 @@ import com.google.inject.Key;
 import com.google.inject.Module;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
-import io.cdap.cdap.security.guice.CoreSecurityModules;
 import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.server.ExternalAuthenticationServer;
@@ -60,10 +57,7 @@ public class AuthenticationServiceMain extends AbstractServiceMain<EnvironmentOp
 
     List<Module> modules = new ArrayList<>();
     modules.add(new MessagingClientModule());
-    modules.add(CoreSecurityModules.getDistributedModule(cConf));
-    modules.add(new AuthenticationContextModules().getInternalAuthMasterModule(cConf));
     modules.add(new ExternalAuthenticationModule());
-    modules.add(ZKClientModule.getZKClientModuleIfRequired(cConf));
     return modules;
   }
 

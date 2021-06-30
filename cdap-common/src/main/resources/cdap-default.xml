@@ -348,7 +348,7 @@
 
   <property>
     <name>zookeeper.quorum</name>
-    <value>127.0.0.1:2181/${root.namespace}</value>
+    <value/>
     <description>
       ZooKeeper quorum string; specifies the ZooKeeper host:port; substitute
       the quorum (FQDN1:2181,FQDN2:2181,...) for the components shown here

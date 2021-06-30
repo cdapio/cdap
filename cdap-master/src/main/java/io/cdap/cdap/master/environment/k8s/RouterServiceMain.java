@@ -24,7 +24,6 @@ import com.google.inject.Module;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.DFSLocationModule;
-import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.gateway.router.NettyRouter;
@@ -34,8 +33,6 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.TokenManager;
-import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
-import io.cdap.cdap.security.guice.CoreSecurityModules;
 import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
@@ -66,17 +63,8 @@ public class RouterServiceMain extends AbstractServiceMain<EnvironmentOptions> {
     modules.add(new MessagingClientModule());
     modules.add(new RouterModules().getDistributedModules());
     modules.add(new DFSLocationModule());
-    modules.addAll(getSecurityModules(cConf));
-
-    return modules;
-  }
-
-  private List<Module> getSecurityModules(CConfiguration cConf) {
-    List<Module> modules = new ArrayList<>();
-    modules.add(new AuthenticationContextModules().getInternalAuthMasterModule(cConf));
-    modules.add(CoreSecurityModules.getDistributedModule(cConf));
     modules.add(new ExternalAuthenticationModule());
-    modules.add(ZKClientModule.getZKClientModuleIfRequired(cConf));
+
     return modules;
   }
 

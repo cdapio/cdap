@@ -91,9 +91,10 @@ import io.cdap.cdap.metrics.process.loader.MetricsWriterModule;
 import io.cdap.cdap.metrics.query.MetricsQueryService;
 import io.cdap.cdap.operations.OperationalStatsService;
 import io.cdap.cdap.operations.guice.OperationalStatsModule;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
-import io.cdap.cdap.security.guice.CoreSecurityModules;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
@@ -524,7 +525,7 @@ public class StandaloneMain {
       new LocalLogAppenderModule(),
       new LogReaderRuntimeModules().getStandaloneModules(),
       new RouterModules().getStandaloneModules(),
-      new CoreSecurityModules().getStandaloneModules(),
+      new CoreSecurityRuntimeModule().getStandaloneModules(),
       new ExternalAuthenticationModule(),
       new SecureStoreServerModule(),
       new ExploreRuntimeModule().getStandaloneModules(),
@@ -532,6 +533,7 @@ public class StandaloneMain {
       new MetadataServiceModule(),
       new MetadataReaderWriterModules().getStandaloneModules(),
       new AuditModule(),
+      new AuthenticationContextModules().getMasterModule(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getStandaloneModules(),
       new PreviewConfigModule(cConf, new Configuration(), SConfiguration.create()),

@@ -44,6 +44,7 @@ import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metadata.MetadataServiceModule;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.metrics.guice.MetricsHandlerModule;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import org.apache.hadoop.conf.Configuration;
@@ -101,6 +102,7 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new ExploreClientModule());
     install(new ConfigStoreModule());
     install(new MetadataServiceModule());
+    install(new AuthenticationContextModules().getMasterModule());
     install(new AuthorizationModule());
     install(new AuthorizationEnforcementModule().getStandaloneModules());
     install(new SecureStoreServerModule());
