@@ -18,6 +18,7 @@ package io.cdap.cdap.runtime.spi.provisioner;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -33,7 +34,8 @@ public class Cluster {
   public Cluster(String name, ClusterStatus status, Collection<Node> nodes, Map<String, String> properties) {
     this.name = name;
     this.status = status;
-    this.nodes = Collections.unmodifiableCollection(nodes);
+    this.nodes = nodes instanceof List ? Collections.unmodifiableList((List<Node>) nodes) :
+      Collections.unmodifiableCollection(nodes);
     this.properties = properties;
   }
 

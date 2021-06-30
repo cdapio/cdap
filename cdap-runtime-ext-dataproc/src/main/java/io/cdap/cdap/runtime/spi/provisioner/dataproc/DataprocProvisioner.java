@@ -169,6 +169,9 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
   }
 
   private Map<? extends String, ? extends String> getReuseLabels(ProvisionerContext context, DataprocConf conf) {
+    if (!isReuseSupported(conf)) {
+      return Collections.emptyMap();
+    }
     Map<String, String> reuseLabels = new HashMap<>();
     String normalProfileName = getNormalizedProfileName(context);
     if (normalProfileName != null) {
