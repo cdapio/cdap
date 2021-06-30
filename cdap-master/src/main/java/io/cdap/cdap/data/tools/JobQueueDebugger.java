@@ -65,8 +65,9 @@ import io.cdap.cdap.messaging.data.MessageId;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.metrics.guice.MetricsStoreModule;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
-import io.cdap.cdap.security.guice.CoreSecurityModules;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -337,7 +338,8 @@ public class JobQueueDebugger extends AbstractIdleService {
       new MetricsClientRuntimeModule().getDistributedModules(),
       new MetricsStoreModule(),
       new KafkaClientModule(),
-      new CoreSecurityModules().getDistributedModule(cConf),
+      CoreSecurityRuntimeModule.getDistributedModule(cConf),
+      new AuthenticationContextModules().getMasterModule(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getMasterModule(),
       new SecureStoreServerModule(),

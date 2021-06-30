@@ -58,6 +58,7 @@ import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.appender.loader.LogAppenderLoaderService;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.security.auth.TokenManager;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.Command;
@@ -439,8 +440,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
   private void addOnPremiseServices(Injector injector, ProgramOptions programOptions,
                                     MetricsCollectionService metricsCollectionService, Collection<Service> services) {
-    for (Class<? extends Service> cls : Arrays.asList(ZKClientService.class,
-                                                      KafkaClientService.class, BrokerService.class)) {
+    for (Class<? extends Service> cls : Arrays.asList(ZKClientService.class, KafkaClientService.class,
+                                                      BrokerService.class, TokenManager.class)) {
       Binding<? extends Service> binding = injector.getExistingBinding(Key.get(cls));
       if (binding != null) {
         services.add(binding.getProvider().get());

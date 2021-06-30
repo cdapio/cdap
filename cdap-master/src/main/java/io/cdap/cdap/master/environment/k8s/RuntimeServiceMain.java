@@ -26,7 +26,6 @@ import io.cdap.cdap.app.guice.RuntimeServerModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.DFSLocationModule;
-import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
@@ -37,9 +36,7 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.TokenManager;
-import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
-import io.cdap.cdap.security.guice.CoreSecurityModules;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
@@ -71,10 +68,7 @@ public class RuntimeServiceMain extends AbstractServiceMain<EnvironmentOptions> 
       new SystemDatasetRuntimeModule().getStandaloneModules(),
       getDataFabricModule(),
       new RuntimeServerModule(),
-      new AuthenticationContextModules().getInternalAuthMasterModule(cConf),
-      new AuthorizationEnforcementModule().getDistributedModules(),
-      CoreSecurityModules.getDistributedModule(cConf),
-      ZKClientModule.getZKClientModuleIfRequired(cConf)
+      new AuthorizationEnforcementModule().getDistributedModules()
     );
   }
 

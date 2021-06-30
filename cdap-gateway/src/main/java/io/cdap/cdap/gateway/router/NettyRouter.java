@@ -89,9 +89,9 @@ public class NettyRouter extends AbstractIdleService {
   private final TokenValidator tokenValidator;
   private final UserIdentityExtractor userIdentityExtractor;
   private final boolean sslEnabled;
-  private InetSocketAddress boundAddress;
+  private final DiscoveryServiceClient discoveryServiceClient;
 
-  private DiscoveryServiceClient discoveryServiceClient;
+  private InetSocketAddress boundAddress;
   private Cancellable serverCancellable;
 
   @Inject

@@ -35,7 +35,7 @@ import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.security.auth.AccessToken;
 import io.cdap.cdap.security.auth.AccessTokenCodec;
-import io.cdap.cdap.security.guice.CoreSecurityModules;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -115,7 +115,7 @@ public abstract class ExternalAuthenticationServerTestBase {
         }
       });
     Injector injector = Guice.createInjector(new IOModule(), externalAuthenticationModule,
-                                             new CoreSecurityModules().getInMemoryModules(),
+                                             new CoreSecurityRuntimeModule().getInMemoryModules(),
                                              new ConfigModule(getConfiguration(configuration),
                                                               HBaseConfiguration.create(), sConfiguration),
                                              new InMemoryDiscoveryModule());

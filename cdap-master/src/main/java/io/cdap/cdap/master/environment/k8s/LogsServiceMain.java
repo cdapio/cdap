@@ -33,7 +33,6 @@ import io.cdap.cdap.api.logging.AppenderContext;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.LocalLocationModule;
-import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.data.runtime.DataSetsModules;
@@ -53,9 +52,7 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.TokenManager;
-import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
-import io.cdap.cdap.security.guice.CoreSecurityModules;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.http.HttpHandler;
@@ -85,9 +82,6 @@ public class LogsServiceMain extends AbstractServiceMain<EnvironmentOptions> {
                                            EnvironmentOptions options, CConfiguration cConf) {
     return Arrays.asList(
       new AuthorizationEnforcementModule().getDistributedModules(),
-      new AuthenticationContextModules().getInternalAuthMasterModule(cConf),
-      CoreSecurityModules.getDistributedModule(cConf),
-      ZKClientModule.getZKClientModuleIfRequired(cConf),
       new MessagingClientModule(),
       getDataFabricModule(),
       // Always use local table implementations, which use LevelDB.

@@ -118,7 +118,6 @@ import io.cdap.cdap.pipeline.PipelineFactory;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.securestore.spi.SecretStore;
-import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
 import io.cdap.cdap.security.impersonation.DefaultUGIProvider;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
@@ -163,7 +162,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                            new NamespaceAdminModule().getInMemoryModules(),
                            new ConfigStoreModule(),
                            new EntityVerifierModule(),
-                           new AuthenticationContextModules().getMasterModule(),
                            BootstrapModules.getInMemoryModule(),
                            new AbstractModule() {
                              @Override
@@ -203,7 +201,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                            new NamespaceAdminModule().getStandaloneModules(),
                            new ConfigStoreModule(),
                            new EntityVerifierModule(),
-                           new AuthenticationContextModules().getMasterModule(),
                            new ProvisionerModule(),
                            BootstrapModules.getFileBasedModule(),
                            new AbstractModule() {
@@ -256,7 +253,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                            new NamespaceAdminModule().getDistributedModules(),
                            new ConfigStoreModule(),
                            new EntityVerifierModule(),
-                           new AuthenticationContextModules().getInternalAuthMasterModule(cConf),
                            new ProvisionerModule(),
                            BootstrapModules.getFileBasedModule(),
                            new AbstractModule() {
@@ -284,26 +280,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                servicesNamesBinder.addBinding().toInstance(Constants.Service.SECURE_STORE_SERVICE);
                              }
                            });
-  }
-
-  /**
-   * Returns modules to be used for preview runners.
-   *
-   * @return Module which contains bindings for preview runners
-   */
-  public Module getPreviewRunnerModules() {
-    return Modules.override(getStandaloneModules()).with(new AuthenticationContextModules()
-                                                           .getInternalAuthWorkerModule(cConf));
-  }
-
-  /**
-   * Returns modules to be used for preview master.
-   *
-   * @return Module which contains bindings for preview master
-   */
-  public Module getPreviewMasterModules() {
-    return Modules.override(getStandaloneModules()).with(new AuthenticationContextModules()
-                                                           .getInternalAuthMasterModule(cConf));
   }
 
   /**

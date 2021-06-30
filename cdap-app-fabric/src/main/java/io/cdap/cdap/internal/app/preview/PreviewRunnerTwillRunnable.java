@@ -70,8 +70,9 @@ import io.cdap.cdap.metadata.MetadataServiceModule;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.metrics.guice.MetricsStoreModule;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
-import io.cdap.cdap.security.guice.CoreSecurityModules;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionSystemClient;
@@ -220,7 +221,7 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
     modules.add(new PreviewRunnerManagerModule().getDistributedModules());
     modules.add(new DataSetServiceModules().getStandaloneModules());
     modules.add(new DataSetsModules().getStandaloneModules());
-    modules.add(new AppFabricServiceRuntimeModule(cConf).getPreviewRunnerModules());
+    modules.add(new AppFabricServiceRuntimeModule(cConf).getStandaloneModules());
     modules.add(new ProgramRunnerRuntimeModule().getStandaloneModules());
     modules.add(new MetricsStoreModule());
     modules.add(new MessagingClientModule());
@@ -229,7 +230,8 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
     modules.add(new MetadataReaderWriterModules().getStandaloneModules());
     modules.add(new DFSLocationModule());
     modules.add(new MetadataServiceModule());
-    modules.add(new CoreSecurityModules().getInMemoryModules());
+    modules.add(new CoreSecurityRuntimeModule().getInMemoryModules());
+    modules.add(new AuthenticationContextModules().getMasterWorkerModule());
     modules.add(new AuthorizationModule());
     modules.add(new AuthorizationEnforcementModule().getMasterModule());
     modules.add(Modules.override(
