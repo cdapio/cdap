@@ -165,7 +165,9 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
       conn, new ConnectionCreationRequest(
         "", new PluginInfo(
         FileConnector.NAME, Connector.PLUGIN_TYPE, null, Collections.emptyMap(),
-        new ArtifactSelectorConfig("system", APP_ARTIFACT_ID.getArtifact(), APP_ARTIFACT_ID.getVersion()))));
+        // in set up we add "-mocks" as the suffix for the artifact id
+        new ArtifactSelectorConfig("system", APP_ARTIFACT_ID.getArtifact() + "-mocks",
+                                   APP_ARTIFACT_ID.getVersion()))));
 
     // get all 10 results back
     BrowseDetail browseDetail = browseConnection(conn, directory.getCanonicalPath(), 10);
@@ -196,7 +198,7 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
       records.add(StructuredRecord.builder(schema).set("offset", i * 2L).set("body", "1").build());
     }
     ArtifactSelectorConfig artifact = new ArtifactSelectorConfig(APP_ARTIFACT_ID.getNamespace(),
-                                                                 APP_ARTIFACT_ID.getArtifact(),
+                                                                 APP_ARTIFACT_ID.getArtifact() + "-mocks",
                                                                  APP_ARTIFACT_ID.getVersion());
     Map<String, String> properties = ImmutableMap.of("path", entities.get(1).getPath(),
                                                      "useConnection", "true",
