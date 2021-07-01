@@ -62,7 +62,7 @@ import java.util.stream.Collectors;
  * Implementation of {@link MasterEnvironment} to provide the environment for running in Kubernetes.
  */
 public class KubeMasterEnvironment implements MasterEnvironment {
-
+  public static final String DISABLE_POD_DELETION = "disablePodDeletion";
   private static final Logger LOG = LoggerFactory.getLogger(KubeMasterEnvironment.class);
 
   // Contains the list of configuration / secret names coming from the Pod information, which are

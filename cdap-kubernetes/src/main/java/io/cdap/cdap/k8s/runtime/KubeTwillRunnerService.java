@@ -25,6 +25,7 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.kubernetes.client.common.KubernetesObject;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.models.V1Deployment;
+import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1StatefulSet;
 import io.kubernetes.client.util.Config;
@@ -121,7 +122,8 @@ public class KubeTwillRunnerService implements TwillRunnerService {
     String selector = String.format("%s=%s,%s", RUNNER_LABEL, RUNNER_LABEL_VAL, RUN_ID_LABEL);
     this.resourceWatchers = ImmutableMap.of(
       V1Deployment.class, AppResourceWatcherThread.createDeploymentWatcher(kubeNamespace, selector),
-      V1StatefulSet.class, AppResourceWatcherThread.createStatefulSetWatcher(kubeNamespace, selector)
+      V1StatefulSet.class, AppResourceWatcherThread.createStatefulSetWatcher(kubeNamespace, selector),
+      V1Job.class, AppResourceWatcherThread.createJobWatcher(kubeNamespace, selector)
     );
     this.liveInfos = new ConcurrentSkipListMap<>();
     this.liveInfoLock = new ReentrantLock();
@@ -223,11 +225,12 @@ public class KubeTwillRunnerService implements TwillRunnerService {
    * @param timeoutUnit the start timeout unit
    * @param controller the controller top monitor
    * @param <T> the type of the resource to watch
+   * @param resourceType resource type being controlled by controller
    * @return the controller
    */
   private <T> KubeTwillController monitorController(KubeLiveInfo liveInfo, long timeout,
                                                     TimeUnit timeoutUnit, KubeTwillController controller,
-                                                    AppResourceWatcherThread<T> watcher) {
+                                                    AppResourceWatcherThread<T> watcher, Type resourceType) {
     String runId = controller.getRunId().getId();
 
     LOG.debug("Monitoring application {} with run {} starts in {} {}",
@@ -260,15 +263,35 @@ public class KubeTwillRunnerService implements TwillRunnerService {
           return;
         }
 
-        if (isAllReplicasReady(resource)) {
-          LOG.debug("Application {} with run {} is available in Kubernetes", liveInfo.getApplicationName(), runId);
-          // Cancel the scheduled termination
-          terminationFuture.cancel(false);
-          // Cancel the watch
-          try {
-            Uninterruptibles.getUninterruptibly(cancellableFuture).cancel();
-          } catch (ExecutionException e) {
-            // This never happen
+        if (resourceType.equals(V1Job.class)) {
+          // If job has status active we consider it as ready
+          if (isJobReady(resource)) {
+            LOG.debug("Application {} with run {} is available in Kubernetes", liveInfo.getApplicationName(), runId);
+            // Cancel the scheduled termination
+            terminationFuture.cancel(false);
+          }
+          // If job is in terminal state - success/failure - we consider it as complete.
+          if (isJobComplete(resource)) {
+            // Cancel the watch
+            try {
+              Uninterruptibles.getUninterruptibly(cancellableFuture).cancel();
+            } catch (ExecutionException e) {
+              // This will never happen
+            }
+            // terminate the job controller
+            controller.terminate();
+          }
+        } else {
+          if (isAllReplicasReady(resource)) {
+            LOG.debug("Application {} with run {} is available in Kubernetes", liveInfo.getApplicationName(), runId);
+            // Cancel the scheduled termination
+            terminationFuture.cancel(false);
+            // Cancel the watch
+            try {
+              Uninterruptibles.getUninterruptibly(cancellableFuture).cancel();
+            } catch (ExecutionException e) {
+              // This will never happen
+            }
           }
         }
       }
@@ -279,9 +302,9 @@ public class KubeTwillRunnerService implements TwillRunnerService {
         if (metadata == null) {
           return;
         }
-
+        
         // If the run is deleted, terminate the controller right away and cancel the scheduled termination
-        if (runId.equals(metadata.getLabels().get(RUN_ID_LABEL))) {
+        if (!resourceType.equals(V1Job.class) && runId.equals(metadata.getLabels().get(RUN_ID_LABEL))) {
           // Cancel the scheduled termination
           terminationFuture.cancel(false);
           controller.terminate();
@@ -289,7 +312,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
           try {
             Uninterruptibles.getUninterruptibly(cancellableFuture).cancel();
           } catch (ExecutionException e) {
-            // This never happen
+            // This will never happen
           }
         }
       }
@@ -313,12 +336,14 @@ public class KubeTwillRunnerService implements TwillRunnerService {
         liveInfoLock.unlock();
       }
 
-      try {
-        Uninterruptibles.getUninterruptibly(controller.terminate());
-        LOG.debug("Controller for application {} of run {} is terminated", liveInfo.getApplicationName(), runId);
-      } catch (ExecutionException e) {
-        LOG.error("Controller for application {} of run {} is terminated due to failure",
-                  liveInfo.getApplicationName(), runId, e.getCause());
+      if (!resourceType.equals(V1Job.class)) {
+        try {
+          Uninterruptibles.getUninterruptibly(controller.terminate());
+          LOG.debug("Controller for application {} of run {} is terminated", liveInfo.getApplicationName(), runId);
+        } catch (ExecutionException e) {
+          LOG.error("Controller for application {} of run {} is terminated due to failure",
+                    liveInfo.getApplicationName(), runId, e.getCause());
+        }
       }
     }, Threads.SAME_THREAD_EXECUTOR);
 
@@ -330,7 +355,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
    *
    * @param name name of the twill application
    * @param runId the runId
-   * @return the applicaiton {@link Location}
+   * @return the application {@link Location}
    */
   private Location getApplicationLocation(String name, RunId runId) {
     return masterEnvContext.getLocationFactory().create(String.format("twill/%s/%s", name, runId.getId()));
@@ -367,6 +392,45 @@ public class KubeTwillRunnerService implements TwillRunnerService {
 
     } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassCastException e) {
       LOG.warn("Failed to get number of replicas and ready replicas from the resource {}", resource, e);
+      return false;
+    }
+  }
+
+  /**
+   * Checks if job is ready.
+   */
+  private boolean isJobReady(Object resource) {
+    try {
+      Method getStatus = resource.getClass().getDeclaredMethod("getStatus");
+      Object statusObj = getStatus.invoke(resource);
+
+      Method getActive = statusObj.getClass().getDeclaredMethod("getActive");
+      Integer active = (Integer) getActive.invoke(statusObj);
+
+      return active != null;
+    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassCastException e) {
+      LOG.warn("Failed to get status from the resource {}", resource, e);
+      return false;
+    }
+  }
+
+  /**
+   * Checks if job is complete. Job completion can be in success or failed state.
+   */
+  private boolean isJobComplete(Object resource) {
+    try {
+      Method getStatus = resource.getClass().getDeclaredMethod("getStatus");
+      Object statusObj = getStatus.invoke(resource);
+
+      Method getFailed = statusObj.getClass().getDeclaredMethod("getFailed");
+      Integer failed = (Integer) getFailed.invoke(statusObj);
+
+      Method getSucceeded = statusObj.getClass().getDeclaredMethod("getSucceeded");
+      Integer succeeded = (Integer) getSucceeded.invoke(statusObj);
+
+      return failed != null || succeeded != null;
+    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassCastException e) {
+      LOG.warn("Failed to get status from the resource {}", resource, e);
       return false;
     }
   }
@@ -430,7 +494,9 @@ public class KubeTwillRunnerService implements TwillRunnerService {
         KubeLiveInfo liveInfo = liveInfos.get(appName);
         if (liveInfo != null) {
           RunId runId = RunIds.fromString(metadata.getLabels().get(RUN_ID_LABEL));
-          Optional.ofNullable(liveInfo.getController(runId)).ifPresent(KubeTwillController::terminate);
+          if (!liveInfo.resourceType.equals(V1Job.class)) {
+            Optional.ofNullable(liveInfo.getController(runId)).ifPresent(KubeTwillController::terminate);
+          }
         }
       } finally {
         liveInfoLock.unlock();
@@ -503,7 +569,8 @@ public class KubeTwillRunnerService implements TwillRunnerService {
         return existing;
       }
       // If it is newly added controller, monitor it.
-      return monitorController(this, timeout, timeoutUnit, controller, resourceWatchers.get(resourceType));
+      return monitorController(this, timeout, timeoutUnit, controller, resourceWatchers.get(resourceType),
+                               resourceType);
     }
 
     /**

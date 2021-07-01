@@ -21,13 +21,17 @@ import io.kubernetes.client.openapi.ApiCallback;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.AppsV1Api;
+import io.kubernetes.client.openapi.apis.BatchV1Api;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1DeleteOptions;
 import io.kubernetes.client.openapi.models.V1Deployment;
+import io.kubernetes.client.openapi.models.V1Job;
+import io.kubernetes.client.openapi.models.V1JobStatus;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1Preconditions;
 import io.kubernetes.client.openapi.models.V1StatefulSet;
 import io.kubernetes.client.openapi.models.V1Status;
+import io.kubernetes.client.util.Config;
 import org.apache.twill.api.Command;
 import org.apache.twill.api.ResourceReport;
 import org.apache.twill.api.RunId;
@@ -229,20 +233,7 @@ class KubeTwillController implements ExtendedTwillController {
       return completion;
     }
 
-    CompletableFuture<KubeTwillController> resultFuture = new CompletableFuture<>();
-
-    // delete the resource
-    deleteResource().whenComplete((name, t) -> {
-      if (t != null) {
-        resultFuture.completeExceptionally(t);
-      } else {
-        resultFuture.complete(KubeTwillController.this);
-      }
-    });
-    // If the deletion was successful, reflect the status into the completion future
-    // If the deletion was failed, don't change the completion state so that caller can retry
-    resultFuture.thenAccept(completion::complete);
-    return resultFuture;
+    return resourceType.equals(V1Job.class) ? cleanupJob() : cleanupResources();
   }
 
   @Override
@@ -484,7 +475,118 @@ class KubeTwillController implements ExtendedTwillController {
     return resultFuture;
   }
 
+  /**
+   * Deletes the job controlled by this controller asynchronously.
+   *
+   */
+  private void deleteJob() {
+    apiClient.setDebugging(true);
+    BatchV1Api batchApi = new BatchV1Api(apiClient);
+
+    String name = meta.getName();
+    try {
+      batchApi.deleteNamespacedJobAsync(name, kubeNamespace, null, null, null, null, null,
+                                        new V1DeleteOptions(), new ApiCallbackAdapter<V1Status>() {
+          @Override
+          public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
+            // Ignore the failure if the job is already deleted
+            if (statusCode == 404) {
+              LOG.warn("Failed to delete job {}. Job not found.", name, e);
+            }
+          }
+
+          @Override
+          public void onSuccess(V1Status v1Status, int statusCode, Map<String, List<String>> responseHeaders) {
+            deletePods(name);
+          }
+        });
+    } catch (ApiException e) {
+      LOG.warn("Error while cleaning up resources for job {}.", name, e);
+    }
+  }
+
+  private void deletePods(String jobName) {
+    try {
+      ApiClient apiClient = Config.defaultClient();
+      CoreV1Api api = new CoreV1Api(apiClient);
+      api.deleteCollectionNamespacedPodAsync(kubeNamespace, null, null, null, null, null, getLabelSelector(),
+                                             null, null, null, null, null, null, null, new ApiCallbackAdapter<>());
+    } catch (Exception e) {
+      LOG.warn("Failed to delete pod(s) for job {}", jobName, e);
+    }
+  }
+
+  /**
+   * Cleans up the resources for deployment and stateful set and returns the future.
+   */
+  private CompletableFuture<KubeTwillController> cleanupResources() {
+    CompletableFuture<KubeTwillController> resultFuture;
+    CompletionStage<String> completionStage;
+    resultFuture = new CompletableFuture<>();
+    // delete the resource
+    completionStage = deleteResource();
+    completionStage.whenComplete((name, t) -> {
+      if (t != null) {
+        resultFuture.completeExceptionally(t);
+      } else {
+        resultFuture.complete(KubeTwillController.this);
+      }
+    });
+    // If the deletion was successful, reflect the status into the completion future
+    // If the deletion was failed, don't change the completion state so that caller can retry
+    resultFuture.thenAccept(completion::complete);
+    return resultFuture;
+  }
+
+  /**
+   * Cleans up the job and returns future with correct job status.
+   */
+  private CompletableFuture<KubeTwillController> cleanupJob() {
+    // get job status
+    CompletionStage<String> completionStage = getJobCompletionStatus();
+    // delete job and corresponding pods
+    deleteJob();
+    completionStage.whenComplete((name, t) -> {
+      if (t != null) {
+        completion.completeExceptionally(t);
+      } else {
+        completion.complete(KubeTwillController.this);
+      }
+    });
+    return completion;
+  }
+
+  /**
+   * Returns job completion status.
+   */
+  private CompletionStage<String> getJobCompletionStatus() {
+    apiClient.setDebugging(true);
+    BatchV1Api batchApi = new BatchV1Api(apiClient);
+
+    // callback for the delete job call
+    CompletableFuture<String> resultFuture = new CompletableFuture<>();
+    String name = meta.getName();
+    try {
+      V1Job v1Job = batchApi.readNamespacedJob(name, kubeNamespace, null, null, null);
+      V1JobStatus status = v1Job.getStatus();
+
+      // If job has failed, mark future as failed. Else mark it as succeeded.
+      if (status != null && status.getFailed() != null) {
+        completeExceptionally(resultFuture, new RuntimeException(String.format("Job %s has failed status.", name)));
+      } else {
+        resultFuture.complete(name);
+      }
+    } catch (ApiException e) {
+      completeExceptionally(resultFuture, e);
+    }
+    return resultFuture;
+  }
+
   private <T> void completeExceptionally(CompletableFuture<T> future, ApiException e) {
     future.completeExceptionally(new Exception(e.getResponseBody(), e));
+  }
+
+  private <T> void completeExceptionally(CompletableFuture<T> future, Exception e) {
+    future.completeExceptionally(e);
   }
 }

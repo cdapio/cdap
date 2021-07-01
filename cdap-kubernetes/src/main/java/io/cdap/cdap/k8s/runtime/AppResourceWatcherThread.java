@@ -18,10 +18,14 @@ package io.cdap.cdap.k8s.runtime;
 
 import io.cdap.cdap.k8s.common.AbstractWatcherThread;
 import io.cdap.cdap.k8s.common.ResourceChangeListener;
+import io.kubernetes.client.common.KubernetesObject;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.AppsV1Api;
+import io.kubernetes.client.openapi.apis.BatchV1Api;
+import io.kubernetes.client.openapi.apis.CustomObjectsApi;
 import io.kubernetes.client.openapi.models.V1Deployment;
+import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1StatefulSet;
 import io.kubernetes.client.util.Config;
 import okhttp3.Call;
@@ -44,24 +48,34 @@ abstract class AppResourceWatcherThread<T> extends AbstractWatcherThread<T> {
    * Creates a {@link AppResourceWatcherThread} for watching {@link V1Deployment} events.
    */
   static AppResourceWatcherThread<V1Deployment> createDeploymentWatcher(String namespace, String selector) {
-    return new AppResourceWatcherThread<V1Deployment>("kube-deployment-watch", namespace, selector) {
-      @Override
-      protected Call createCall(String namespace, @Nullable String labelSelector) throws IOException, ApiException {
-        return getAppsApi().listNamespacedDeploymentCall(namespace, null, null, null, null, labelSelector,
-                                                         null, null, null, null, true, null);
-      }
-    };
+    return createWatcher("apps", "v1", namespace, "deployments", selector);
   }
 
   /**
    * Creates a {@link AppResourceWatcherThread} for watching {@link V1StatefulSet} events.
    */
   static AppResourceWatcherThread<V1StatefulSet> createStatefulSetWatcher(String namespace, String selector) {
-    return new AppResourceWatcherThread<V1StatefulSet>("kube-statefulset-watch", namespace, selector) {
+    return createWatcher("apps", "v1", namespace, "statefulsets", selector);
+  }
+
+  /**
+   * Creates a {@link AppResourceWatcherThread} for watching {@link V1Job} events.
+   */
+  static AppResourceWatcherThread<V1Job> createJobWatcher(String namespace, String selector) {
+    return createWatcher("batch", "v1", namespace, "jobs", selector);
+  }
+
+  private static <T extends KubernetesObject> AppResourceWatcherThread<T> createWatcher(String group,
+                                                                                        String version,
+                                                                                        String namespace,
+                                                                                        String plural,
+                                                                                        String selector) {
+    return new AppResourceWatcherThread<T>("kube-" + plural + "-watch", namespace, selector) {
       @Override
       protected Call createCall(String namespace, @Nullable String labelSelector) throws IOException, ApiException {
-        return getAppsApi().listNamespacedStatefulSetCall(namespace, null, null, null, null, labelSelector,
-                                                          null, null, null, null, true, null);
+        CustomObjectsApi api = new CustomObjectsApi(getApiClient());
+        return api.listNamespacedCustomObjectCall(group, version, namespace, plural, null, null, null,
+                                                  labelSelector, null, null, null, true, null);
       }
     };
   }
@@ -69,6 +83,7 @@ abstract class AppResourceWatcherThread<T> extends AbstractWatcherThread<T> {
   private final String selector;
   private final Queue<ResourceChangeListener<T>> listeners;
   private volatile AppsV1Api appsApi;
+  private volatile BatchV1Api batchApi;
 
   private AppResourceWatcherThread(String threadName, String namespace, String selector) {
     super(threadName, namespace);
@@ -134,6 +149,33 @@ abstract class AppResourceWatcherThread<T> extends AbstractWatcherThread<T> {
       client.setReadTimeout((int) TimeUnit.MINUTES.toMillis(5));
 
       appsApi = api = new AppsV1Api(client);
+      return api;
+    }
+  }
+
+  /**
+   * Returns a {@link BatchV1Api} instance for interacting with the API server.
+   *
+   * @throws IOException if exception was raised during creation of {@link BatchV1Api}
+   */
+  BatchV1Api getBatchApi() throws IOException {
+    BatchV1Api api = batchApi;
+    if (api != null) {
+      return api;
+    }
+
+    synchronized (this) {
+      api = batchApi;
+      if (api != null) {
+        return api;
+      }
+
+      ApiClient client = Config.defaultClient();
+
+      // Set a reasonable timeout for the watch.
+      client.setReadTimeout((int) TimeUnit.MINUTES.toMillis(5));
+
+      batchApi = api = new BatchV1Api(client);
       return api;
     }
   }

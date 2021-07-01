@@ -45,6 +45,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -124,8 +125,11 @@ public class KubeTwillLauncher implements MasterEnvironmentRunnable {
           runnable.destroy();
         }
       } finally {
-        // Delete the pod itself to avoid pod goes into CrashLoopBackoff
-        deletePod(podInfo);
+        // Delete the pod when pod deletion is enabled. When k8s job is submitted, pod deletion is disabled.
+        if (Arrays.stream(args).noneMatch(str -> str.equalsIgnoreCase(KubeMasterEnvironment.DISABLE_POD_DELETION))) {
+          // Delete the pod itself to avoid pod goes into CrashLoopBackoff
+          deletePod(podInfo);
+        }
       }
     }
   }
