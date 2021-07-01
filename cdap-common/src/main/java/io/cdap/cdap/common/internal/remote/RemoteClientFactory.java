@@ -29,6 +29,9 @@ import javax.inject.Inject;
  */
 public class RemoteClientFactory {
 
+  public static final HttpRequestConfig NO_VERIFY_HTTP_REQUEST_CONFIG = new HttpRequestConfig(15000,
+                                                                                              15000,
+                                                                                              false);
   private final DiscoveryServiceClient discoveryClient;
   private final AuthenticationContext authenticationContext;
   private final CConfiguration cConf;

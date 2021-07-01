@@ -32,13 +32,18 @@ import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 /**
  * Provides ComputeEngineCredentials either locally if no endpoint is provided, or remotely if endpoint is provided.
- *
  */
 public final class ComputeEngineCredentials extends GoogleCredentials {
   private static final Logger LOG = LoggerFactory.getLogger(ComputeEngineCredentials.class);
@@ -56,6 +61,7 @@ public final class ComputeEngineCredentials extends GoogleCredentials {
   private static final int NUMBER_OF_RETRIES = 10;
   private static final int MIN_WAIT_TIME_MILLISECOND = 500;
   private static final int MAX_WAIT_TIME_MILLISECOND = 10000;
+  private static final SecureRandom SECURE_RANDOM = new SecureRandom();
   private final String endPoint;
 
   private ComputeEngineCredentials(@Nullable String endPoint) {
@@ -123,9 +129,40 @@ public final class ComputeEngineCredentials extends GoogleCredentials {
     throw new IOException(exception.getMessage(), exception);
   }
 
+  private void disableVerifySSL(HttpsURLConnection connection) throws IOException {
+    try {
+      SSLContext sslContextWithNoVerify = SSLContext.getInstance("SSL");
+      TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
+        public X509Certificate[] getAcceptedIssuers() {
+          return null;
+        }
+
+        @Override
+        public void checkClientTrusted(X509Certificate[] arg0, String arg1) {
+          // No-op
+        }
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] arg0, String arg1) {
+          // No-op
+        }
+      }};
+      sslContextWithNoVerify.init(null, trustAllCerts, SECURE_RANDOM);
+      connection.setSSLSocketFactory(sslContextWithNoVerify.getSocketFactory());
+      connection.setHostnameVerifier((s, sslSession) -> true);
+    } catch (Exception e) {
+      LOG.error("Unable to initialize SSL context", e);
+      throw new IOException(e.getMessage());
+    }
+  }
+
   private AccessToken fetchAccessToken(String endPoint) throws IOException {
     URL url = new URL(endPoint);
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+    if (connection instanceof HttpsURLConnection) {
+      // TODO (CDAP-18047) enable ssl verification
+      disableVerifySSL(((HttpsURLConnection) connection));
+    }
     connection.connect();
     try (Reader reader = new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8)) {
       if (connection.getResponseCode() != HttpResponseStatus.OK.code()) {

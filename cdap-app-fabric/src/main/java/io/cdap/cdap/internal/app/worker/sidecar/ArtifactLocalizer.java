@@ -98,9 +98,10 @@ public class ArtifactLocalizer {
 
   @Inject
   public ArtifactLocalizer(CConfiguration cConf, RemoteClientFactory remoteClientFactory) {
+  // TODO (CDAP-18047) verify SSL cert should be enabled.
     this.remoteClient = remoteClientFactory.createRemoteClient(Constants.Service.APP_FABRIC_HTTP,
-                                         HttpRequestConfig.DEFAULT,
-                                         Constants.Gateway.INTERNAL_API_VERSION_3);
+                                                               RemoteClientFactory.NO_VERIFY_HTTP_REQUEST_CONFIG,
+                                                               Constants.Gateway.INTERNAL_API_VERSION_3);
     this.retryStrategy = RetryStrategies.fromConfiguration(cConf, Constants.Service.TASK_WORKER + ".");
     this.dataDir = cConf.get(Constants.CFG_LOCAL_DATA_DIR);
   }
