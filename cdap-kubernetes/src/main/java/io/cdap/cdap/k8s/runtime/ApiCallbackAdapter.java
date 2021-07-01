@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.k8s.runtime;
 
-import io.kubernetes.client.ApiCallback;
-import io.kubernetes.client.ApiException;
+import io.kubernetes.client.openapi.ApiCallback;
+import io.kubernetes.client.openapi.ApiException;
 
 import java.util.List;
 import java.util.Map;

@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.k8s.runtime;
 
-import io.kubernetes.client.models.V1ObjectMeta;
+import io.kubernetes.client.openapi.models.V1ObjectMeta;
 
 import java.lang.reflect.Type;
 import java.util.concurrent.TimeUnit;
