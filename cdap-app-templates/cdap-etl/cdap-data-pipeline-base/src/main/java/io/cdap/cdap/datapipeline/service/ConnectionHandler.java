@@ -17,11 +17,14 @@
 
 package io.cdap.cdap.datapipeline.service;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.plugin.InvalidPluginConfigException;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.plugin.PluginProperties;
@@ -42,6 +45,12 @@ import io.cdap.cdap.etl.api.connector.ConnectorSpecRequest;
 import io.cdap.cdap.etl.api.connector.DirectConnector;
 import io.cdap.cdap.etl.api.connector.SampleRequest;
 import io.cdap.cdap.etl.api.validation.ValidationException;
+import io.cdap.cdap.etl.common.ArtifactSelectorProvider;
+import io.cdap.cdap.etl.common.BasicArguments;
+import io.cdap.cdap.etl.common.ConnectionMacroEvaluator;
+import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
+import io.cdap.cdap.etl.common.OAuthMacroEvaluator;
+import io.cdap.cdap.etl.common.SecureStoreMacroEvaluator;
 import io.cdap.cdap.etl.proto.connection.Connection;
 import io.cdap.cdap.etl.proto.connection.ConnectionBadRequestException;
 import io.cdap.cdap.etl.proto.connection.ConnectionCreationRequest;
@@ -53,12 +62,15 @@ import io.cdap.cdap.etl.proto.connection.SampleResponse;
 import io.cdap.cdap.etl.proto.connection.SampleResponseCodec;
 import io.cdap.cdap.etl.proto.connection.SpecGenerationRequest;
 import io.cdap.cdap.etl.proto.validation.SimpleFailureCollector;
+import io.cdap.cdap.etl.spec.TrackedPluginSelector;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.id.NamespaceId;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -190,7 +202,8 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
       ConnectorConfigurer connectorConfigurer = new DefaultConnectorConfigurer(pluginConfigurer);
       SimpleFailureCollector failureCollector = new SimpleFailureCollector();
       ConnectorContext connectorContext = new DefaultConnectorContext(failureCollector, pluginConfigurer);
-      try (Connector connector = getConnector(pluginConfigurer, creationRequest.getPlugin())) {
+      try (Connector connector = getConnector(pluginConfigurer, creationRequest.getPlugin(),
+                                              namespaceSummary.getName())) {
         connector.configure(connectorConfigurer);
         try {
           connector.test(connectorContext);
@@ -238,7 +251,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
       ConnectorContext connectorContext = new DefaultConnectorContext(new SimpleFailureCollector(), pluginConfigurer);
       Connection conn = store.getConnection(new ConnectionId(namespaceSummary, connection));
 
-      try (Connector connector = getConnector(pluginConfigurer, conn.getPlugin())) {
+      try (Connector connector = getConnector(pluginConfigurer, conn.getPlugin(), namespaceSummary.getName())) {
         connector.configure(connectorConfigurer);
         responder.sendJson(connector.browse(connectorContext, browseRequest));
       }
@@ -284,7 +297,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
       Connection conn = store.getConnection(new ConnectionId(namespaceSummary, connection));
 
       PluginInfo plugin = conn.getPlugin();
-      try (Connector connector = getConnector(pluginConfigurer, plugin)) {
+      try (Connector connector = getConnector(pluginConfigurer, plugin, namespaceSummary.getName())) {
         connector.configure(connectorConfigurer);
         ConnectorSpecRequest specRequest = ConnectorSpecRequest.builder().setPath(sampleRequest.getPath())
                                              .setConnection(connection)
@@ -347,7 +360,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
       ConnectorContext connectorContext = new DefaultConnectorContext(new SimpleFailureCollector(), pluginConfigurer);
       Connection conn = store.getConnection(new ConnectionId(namespaceSummary, connection));
 
-      try (Connector connector = getConnector(pluginConfigurer, conn.getPlugin())) {
+      try (Connector connector = getConnector(pluginConfigurer, conn.getPlugin(), namespaceSummary.getName())) {
         connector.configure(connectorConfigurer);
         ConnectorSpecRequest connectorSpecRequest = ConnectorSpecRequest.builder().setPath(specRequest.getPath())
                                                       .setConnection(connection)
@@ -366,12 +379,28 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
     return new ConnectorDetail(relatedPlugins);
   }
 
-  private Connector getConnector(PluginConfigurer configurer, PluginInfo pluginInfo) {
-    Connector connector;
+  private Connector getConnector(PluginConfigurer configurer, PluginInfo pluginInfo,
+                                 String namespace) throws IOException {
 
+    Map<String, String> arguments = getContext().getPreferencesForNamespace(namespace, true);
+    Map<String, MacroEvaluator> evaluators = ImmutableMap.of(
+      SecureStoreMacroEvaluator.FUNCTION_NAME, new SecureStoreMacroEvaluator(namespace, getContext()),
+      OAuthMacroEvaluator.FUNCTION_NAME, new OAuthMacroEvaluator(getContext())
+    );
+    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(arguments), evaluators);
+    Map<String, String> evaluatedProperties = getContext().evaluateMacros(
+      namespace, pluginInfo.getProperties(), macroEvaluator, MacroParserOptions.builder()
+                                                               .skipInvalidMacros()
+                                                               .setEscaping(false)
+                                                               .setFunctionWhitelist(evaluators.keySet())
+                                                               .build());
+    Connector connector;
     try {
+      TrackedPluginSelector pluginSelector = new TrackedPluginSelector(
+        new ArtifactSelectorProvider().getPluginSelector(pluginInfo.getArtifact()));
       connector = configurer.usePlugin(pluginInfo.getType(), pluginInfo.getName(), UUID.randomUUID().toString(),
-                                       PluginProperties.builder().addAll(pluginInfo.getProperties()).build());
+                                       PluginProperties.builder().addAll(evaluatedProperties).build(),
+                                       pluginSelector);
     } catch (InvalidPluginConfigException e) {
       throw new ConnectionBadRequestException(
         String.format("Unable to instantiate connector plugin: %s", e.getMessage()), e);
