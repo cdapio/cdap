@@ -16,20 +16,20 @@
 
 package io.cdap.cdap.k8s.discovery;
 
-import com.squareup.okhttp.Call;
 import io.cdap.cdap.k8s.common.AbstractWatcherThread;
 import io.cdap.cdap.master.spi.discovery.DefaultServiceDiscovered;
-import io.kubernetes.client.ApiClient;
-import io.kubernetes.client.ApiException;
-import io.kubernetes.client.apis.CoreV1Api;
-import io.kubernetes.client.models.V1ObjectMeta;
-import io.kubernetes.client.models.V1OwnerReference;
-import io.kubernetes.client.models.V1Service;
-import io.kubernetes.client.models.V1ServiceBuilder;
-import io.kubernetes.client.models.V1ServiceList;
-import io.kubernetes.client.models.V1ServicePort;
-import io.kubernetes.client.models.V1ServiceSpec;
+import io.kubernetes.client.openapi.ApiClient;
+import io.kubernetes.client.openapi.ApiException;
+import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.openapi.models.V1ObjectMeta;
+import io.kubernetes.client.openapi.models.V1OwnerReference;
+import io.kubernetes.client.openapi.models.V1Service;
+import io.kubernetes.client.openapi.models.V1ServiceBuilder;
+import io.kubernetes.client.openapi.models.V1ServiceList;
+import io.kubernetes.client.openapi.models.V1ServicePort;
+import io.kubernetes.client.openapi.models.V1ServiceSpec;
 import io.kubernetes.client.util.Config;
+import okhttp3.Call;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -203,7 +203,7 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
       ApiClient client = Config.defaultClient();
 
       // Set a reasonable timeout for the watch.
-      client.getHttpClient().setReadTimeout(5, TimeUnit.MINUTES);
+      client.setReadTimeout((int) TimeUnit.MINUTES.toMillis(5));
 
       coreApi = api = new CoreV1Api(client);
       return api;
@@ -221,9 +221,9 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
    */
   private Optional<V1Service> getV1Service(CoreV1Api api,
                                            String serviceName, String discoveryName) throws ApiException {
-    V1ServiceList serviceList = api.listNamespacedService(namespace, null, null, null,
+    V1ServiceList serviceList = api.listNamespacedService(namespace, null, null, null, null,
                                                           "cdap.service=" + namePrefix + discoveryName, 1,
-                                                          null, null, null);
+                                                          null, null, null, null);
     // Find the service with the given name
     return serviceList.getItems().stream()
       .filter(service -> serviceName.equals(service.getMetadata().getName()))
@@ -386,8 +386,8 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
 
     @Override
     protected Call createCall(String namespace, @Nullable String labelSelector) throws IOException, ApiException {
-      return getCoreApi().listNamespacedServiceCall(namespace, null, null, null, labelSelector,
-                                                    null, null, null, true, null, null);
+      return getCoreApi().listNamespacedServiceCall(namespace, null, null, null, null, labelSelector,
+                                                    null, null, null, null, true, null);
     }
 
     @Override

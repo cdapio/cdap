@@ -17,17 +17,17 @@
 package io.cdap.cdap.k8s.runtime;
 
 import io.cdap.cdap.master.spi.twill.ExtendedTwillController;
-import io.kubernetes.client.ApiCallback;
-import io.kubernetes.client.ApiClient;
-import io.kubernetes.client.ApiException;
-import io.kubernetes.client.apis.AppsV1Api;
-import io.kubernetes.client.apis.CoreV1Api;
-import io.kubernetes.client.models.V1DeleteOptions;
-import io.kubernetes.client.models.V1Deployment;
-import io.kubernetes.client.models.V1ObjectMeta;
-import io.kubernetes.client.models.V1Preconditions;
-import io.kubernetes.client.models.V1StatefulSet;
-import io.kubernetes.client.models.V1Status;
+import io.kubernetes.client.openapi.ApiCallback;
+import io.kubernetes.client.openapi.ApiClient;
+import io.kubernetes.client.openapi.ApiException;
+import io.kubernetes.client.openapi.apis.AppsV1Api;
+import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.openapi.models.V1DeleteOptions;
+import io.kubernetes.client.openapi.models.V1Deployment;
+import io.kubernetes.client.openapi.models.V1ObjectMeta;
+import io.kubernetes.client.openapi.models.V1Preconditions;
+import io.kubernetes.client.openapi.models.V1StatefulSet;
+import io.kubernetes.client.openapi.models.V1Status;
 import org.apache.twill.api.Command;
 import org.apache.twill.api.ResourceReport;
 import org.apache.twill.api.RunId;
@@ -112,8 +112,9 @@ class KubeTwillController implements ExtendedTwillController {
     CoreV1Api api = new CoreV1Api(apiClient);
 
     try {
-      api.deleteCollectionNamespacedPodAsync(kubeNamespace, null, null, null, getLabelSelector(), null, null,
-                                             null, null, createCallbackFutureAdapter(resultFuture, r -> runnable));
+      api.deleteCollectionNamespacedPodAsync(kubeNamespace, null, null, null, null, null, getLabelSelector(),
+                                             null, null, null, null, null, null, null,
+                                             createCallbackFutureAdapter(resultFuture, r -> runnable));
     } catch (ApiException e) {
       completeExceptionally(resultFuture, e);
     }
@@ -166,14 +167,12 @@ class KubeTwillController implements ExtendedTwillController {
     String podName = String.format("%s-%d", meta.getName(), instanceId);
 
     try {
-      // TODO: CDAP-18000 Make this async call when CDAP-18000 is fixed
-      api.deleteNamespacedPod(podName, kubeNamespace, null, deleteOptions, null, null, null, null);
+      api.deleteNamespacedPodAsync(podName, kubeNamespace, null, null, null, null, null, deleteOptions,
+                                   createCallbackFutureAdapter(resultFuture, r -> runnable));
     } catch (ApiException e) {
       completeExceptionally(resultFuture, e);
-    } catch (Exception ex) {
-      // TODO: CDAP-18000 Ignore any exception apart from ApiException till we upgrade the kubernetes client library
-      LOG.trace("Ignoring exception while deleting pod {}", podName, ex);
     }
+
     resultFuture.complete("success");
     return resultFuture;
   }
@@ -353,7 +352,8 @@ class KubeTwillController implements ExtendedTwillController {
         .collect(Collectors.joining(",", "(", ")"));
 
     try {
-      api.deleteCollectionNamespacedPodAsync(kubeNamespace, null, null, null, labelSelector, null, null, null,
+      api.deleteCollectionNamespacedPodAsync(kubeNamespace, null, null, null, null, null,
+                                             labelSelector, null, null, null, null, null, null,
                                              null, createCallbackFutureAdapter(resultFuture, r -> runnable));
     } catch (ApiException e) {
       completeExceptionally(resultFuture, e);
@@ -411,8 +411,8 @@ class KubeTwillController implements ExtendedTwillController {
     CompletableFuture<String> resultFuture = new CompletableFuture<>();
     try {
       String name = meta.getName();
-      appsApi.deleteNamespacedDeploymentAsync(name, kubeNamespace, null, new V1DeleteOptions(),
-                                              null, null, null, null, new ApiCallbackAdapter<V1Status>() {
+      appsApi.deleteNamespacedDeploymentAsync(name, kubeNamespace, null, null, null, null, null,
+                                              new V1DeleteOptions(), new ApiCallbackAdapter<V1Status>() {
           @Override
           public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
             // Ignore the failure if the deployment is already deleted
@@ -449,8 +449,8 @@ class KubeTwillController implements ExtendedTwillController {
     CompletableFuture<String> resultFuture = new CompletableFuture<>();
     try {
       String name = meta.getName();
-      appsApi.deleteNamespacedStatefulSetAsync(name, kubeNamespace, null, new V1DeleteOptions(),
-                                               null, null, null, null, new ApiCallbackAdapter<V1Status>() {
+      appsApi.deleteNamespacedStatefulSetAsync(name, kubeNamespace, null, null, null, null, null, null,
+                                               new ApiCallbackAdapter<V1Status>() {
           @Override
           public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
             // Ignore if the stateful set is already deleted
@@ -471,7 +471,8 @@ class KubeTwillController implements ExtendedTwillController {
             LOG.debug("Deleting PVCs for StatefulSet {}", meta.getName());
             try {
               coreApi.deleteCollectionNamespacedPersistentVolumeClaimAsync(
-                kubeNamespace, null, null, null, getLabelSelector(), null, null, null, false,
+                kubeNamespace, null, null, null, null, null, getLabelSelector(),
+                null, null, null, null, null, null, null,
                 createCallbackFutureAdapter(resultFuture, r -> name));
             } catch (ApiException e) {
               completeExceptionally(resultFuture, e);

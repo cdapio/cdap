@@ -29,7 +29,9 @@
   <packaging>jar</packaging>
 
   <properties>
-    <k8s.version>6.0.1</k8s.version>
+    <k8s.version>12.0.1</k8s.version>
+    <!-- Needs to bump the okhttp version for fixing https://github.com/square/okhttp/issues/4029 that hangs on exit -->
+    <okhttp.version>4.9.1</okhttp.version>
     <!-- Needs to define the gson and guava versions to override the one from dependency management in cdap pom.xml -->
     <gson.version>2.6.2</gson.version>
     <guava.version>25.1-jre</guava.version>
@@ -58,9 +60,23 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+    <dependency>
       <groupId>io.kubernetes</groupId>
       <artifactId>client-java</artifactId>
       <version>${k8s.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.squareup.okhttp3</groupId>
+      <artifactId>okhttp</artifactId>
+      <version>${okhttp.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.squareup.okhttp3</groupId>
+      <artifactId>logging-interceptor</artifactId>
+      <version>${okhttp.version}</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
