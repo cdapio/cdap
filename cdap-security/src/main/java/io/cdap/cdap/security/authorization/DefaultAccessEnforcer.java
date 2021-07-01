@@ -43,13 +43,8 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
-<<<<<<< HEAD
  * An implementation of {@link io.cdap.cdap.security.spi.authorization.AccessEnforcer} that runs on the master.
  * It calls the access controller directly to enforce authorization policies.
-=======
- * An implementation of {@link io.cdap.cdap.security.spi.authorization.AccessEnforcer} that runs on the master. It calls
- * the authorizer directly to enforce authorization policies.
->>>>>>> c6191a08900 ([CDAP-17772] Add initial support for internal token generation and auth context propagation)
  */
 @Singleton
 public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
