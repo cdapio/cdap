@@ -99,8 +99,11 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
     this.nsStore = nsStore;
   }
 
+  /**
+   * Returns user repository information
+   */
   @GET
-  @Path("git/repo/{owner}/{repo}")
+  @Path("git/repo/info")
   public void getRepoInfo(HttpRequest request, HttpResponder responder) throws Exception {
     //check if repo info exists
     if (userRepo.toString().equals("{}")) {
@@ -110,6 +113,9 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
+  /**
+   * Saves and validates repository information from user
+   */
   @PUT
   @Path("git/repo/add")
   public void addRepoInfo(FullHttpRequest request, HttpResponder responder) throws Exception {
@@ -120,16 +126,24 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
       JsonObject jObj = DECODE_GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), JsonObject.class);
       //check that the Json has the necessary fields
       if (jObj.has("owner") && jObj.has("repoName")) {
-        String owner = jObj.getAsJsonObject("owner").toString();
-        String repo = jObj.getAsJsonObject("repoName").toString();
-        URL url = new URL("https://api.github.com/repos/" + owner + "/" + repo);
+        String owner = jObj.getAsJsonPrimitive("owner").toString();
+        String repo = jObj.getAsJsonPrimitive("repoName").toString();
+        //connect to GitHub
+        String htmlUrl =  "https://api.github.com/repos/" + owner.substring(1, owner.length() - 1) + "/"
+            + repo.substring(1, repo.length() - 1);
+        URL url = new URL(htmlUrl);
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
         con.setRequestMethod("GET");
+        //test that the GitHub repository information is valid
         if (con.getResponseCode() == HttpURLConnection.HTTP_OK) {
           userRepo = DECODE_GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), JsonObject.class);
+          responder.sendJson(HttpResponseStatus.OK, GSON.toJson("Repository Info has been saved. "));
+        } else {
+          responder.sendJson(HttpResponseStatus.BAD_REQUEST, "This repository does not exist.");
         }
+      } else {
+        responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Enter fields correctly.");
       }
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson("Repository Info has been saved"));
     }
   }
   /*@GET
