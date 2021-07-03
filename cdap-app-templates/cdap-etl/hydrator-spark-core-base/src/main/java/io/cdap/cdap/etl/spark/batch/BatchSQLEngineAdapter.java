@@ -24,6 +24,7 @@ import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.etl.api.StageMetrics;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngine;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngineException;
+import io.cdap.cdap.etl.api.engine.sql.SQLEngineOutput;
 import io.cdap.cdap.etl.api.engine.sql.SparkSQLEngine;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDataset;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLPullDataset;
@@ -34,6 +35,7 @@ import io.cdap.cdap.etl.api.engine.sql.request.SQLJoinDefinition;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLJoinRequest;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPullRequest;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPushRequest;
+import io.cdap.cdap.etl.api.engine.sql.request.SQLWriteRequest;
 import io.cdap.cdap.etl.api.join.JoinDefinition;
 import io.cdap.cdap.etl.api.join.JoinStage;
 import io.cdap.cdap.etl.common.Constants;
@@ -556,5 +558,21 @@ public class BatchSQLEngineAdapter<T> implements Closeable {
                                           String metricName,
                                           long numRecords) {
     stageMetrics.countLong(metricName, numRecords);
+  }
+
+  public boolean write(String datasetName, SQLEngineOutput sqlEngineOutput) {
+    SQLEngineJobKey execJobKey = new SQLEngineJobKey(datasetName, SQLEngineJobType.EXECUTE);
+
+    if (jobs.containsKey(execJobKey)) {
+      LOG.debug("Waiting for dataset {} to be ready", datasetName);
+      jobs.get(execJobKey).waitFor();
+      LOG.debug("Attempting write for dataset {} into {}", datasetName, sqlEngineOutput);
+      boolean wrote = sqlEngine.write(new SQLWriteRequest(datasetName, sqlEngineOutput));
+      LOG.debug("Write dataset {} into {} was {}", datasetName, sqlEngineOutput, wrote ? "completed" : "refused");
+      return wrote;
+    } else {
+      LOG.warn("Could not find join result job for {}, skipping direct write", datasetName);
+      return false;
+    }
   }
 }
