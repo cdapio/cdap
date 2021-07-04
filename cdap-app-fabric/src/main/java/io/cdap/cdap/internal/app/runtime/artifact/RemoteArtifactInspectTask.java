@@ -95,6 +95,7 @@ public class RemoteArtifactInspectTask implements RunnableTask {
     ArtifactClassesWithMetadata metadata = null;
     try {
       File artifactFile = download(req.getArtifactURI(), injector.getInstance(AuthenticationContext.class));
+      LOG.warn("wyzhang: RemoteArtifactInspectTask downloaded from {} to {}", req.getArtifactURI(), artifactFile.getAbsolutePath());
       metadata = inspector.inspectArtifact(artifactId,
                                            artifactFile,
                                            parentArtifacts,
