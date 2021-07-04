@@ -117,6 +117,7 @@ final class ArtifactClassLoaderFactory {
    */
   CloseableClassLoader createClassLoader(final Location artifactLocation,
                                                  EntityImpersonator entityImpersonator) throws IOException {
+    LOG.warn("wyzhang: ArtifactClassLoaderFactory::createClassLoader(Location) artifactLocation = {}", artifactLocation);
     try {
       final File unpackDir = entityImpersonator.impersonate(new Callable<File>() {
         @Override
@@ -161,6 +162,7 @@ final class ArtifactClassLoaderFactory {
     }
 
     final Location artifactLocation = artifactLocations.next();
+    LOG.warn("wyzhang: ArtifactClassLoaderFactory::createCLassLoader(Iterator<Location>) artifactLocation = {}", artifactLocation);
     if (!artifactLocations.hasNext()) {
       return createClassLoader(artifactLocation, entityImpersonator);
     }
