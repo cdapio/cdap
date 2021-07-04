@@ -28,6 +28,7 @@ import com.google.inject.Module;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
@@ -82,6 +83,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
 
     CoreSecurityModule coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf);
 
+    modules.add(new DFSLocationModule());
     modules.add(new ConfigModule(cConf, hConf));
     modules.add(new IOModule());
     modules.add(new AuthenticationContextModules().getMasterWorkerModule());

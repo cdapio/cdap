@@ -9,8 +9,6 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.MapBinder;
-import io.cdap.cdap.api.artifact.ArtifactId;
-import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
@@ -22,6 +20,7 @@ import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerClient;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
@@ -35,6 +34,8 @@ import io.cdap.cdap.security.impersonation.DefaultImpersonator;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,10 +58,13 @@ public class RemoteArtifactInspectTask implements RunnableTask {
     new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
 
   private final CConfiguration cConf;
+  private final LocationFactory locationFactory;
 
   @Inject
-  public RemoteArtifactInspectTask(CConfiguration cConf) {
+  public RemoteArtifactInspectTask(CConfiguration cConf,
+                                   LocationFactory locationFactory) {
     this.cConf = cConf;
+    this.locationFactory = locationFactory;
   }
 
   @Override
@@ -81,30 +85,39 @@ public class RemoteArtifactInspectTask implements RunnableTask {
 
     LOG.warn("wyzhang: RemoteArtifactInspectTask req {}", req);
 
-    CloseableClassLoader parentClassLoader = null;
-
-    ArtifactLocalizerClient artifactLocalizerClient = injector.getInstance(ArtifactLocalizerClient.class);
     List<ArtifactDescriptor> parentArtifacts = req.getParentArtifacts();
+
+    List<ArtifactDescriptor> updatedParentArtifacts = new ArrayList<>();
+
+    // Localize parent artifacts
+    ArtifactLocalizerClient artifactLocalizerClient = injector.getInstance(ArtifactLocalizerClient.class);
     for (ArtifactDescriptor parentArtifact : parentArtifacts) {
       File unpacked = artifactLocalizerClient.getUnpackedArtifactLocation(
         Artifacts.toProtoArtifactId(new NamespaceId(parentArtifact.getNamespace()), parentArtifact.getArtifactId()));
-      LOG.warn("wyzhang: RemoteArtifactInspectTask unpacked location {}", unpacked.getAbsolutePath());
-      parentClassLoader = factory.createClassLoader(unpacked);
+
+      Location location = Locations.getLocationFromAbsolutePath(locationFactory,
+                                                                parentArtifact.getLocationURI().getPath());
+
+      LOG.warn("wyzhang: RemoteArtifactInspectTask parent artifact {} unpacked to location {}",
+               parentArtifact.getArtifactId(), location);
+      updatedParentArtifacts.add(new ArtifactDescriptor(parentArtifact.getNamespace(),
+                                                        parentArtifact.getArtifactId(),
+                                                        location));
+    }
+    for (ArtifactDescriptor d : updatedParentArtifacts) {
+      LOG.warn("wyzhang: RemoteArtifactInspectTask updated ArtifactDescriptor {}", d);
     }
 
     ArtifactClassesWithMetadata metadata = null;
-    try {
-      File artifactFile = download(req.getArtifactURI(), injector.getInstance(AuthenticationContext.class));
-      LOG.warn("wyzhang: RemoteArtifactInspectTask downloaded from {} to {}", req.getArtifactURI(), artifactFile.getAbsolutePath());
-      metadata = inspector.inspectArtifact(artifactId,
-                                           artifactFile,
-                                           parentArtifacts,
-                                           req.getAdditionalPlugins());
-    } finally {
-      if (parentClassLoader != null) {
-        parentClassLoader.close();
-      }
-    }
+
+    File artifactFile = download(req.getArtifactURI(), injector.getInstance(AuthenticationContext.class));
+    LOG.warn("wyzhang: RemoteArtifactInspectTask downloaded from {} to {}",
+             req.getArtifactURI(), artifactFile.getAbsolutePath());
+    metadata = inspector.inspectArtifact(artifactId,
+                                         artifactFile,
+                                         updatedParentArtifacts,
+                                         req.getAdditionalPlugins());
+
     context.writeResult(GSON.toJson(metadata).getBytes(StandardCharsets.UTF_8));
   }
 
