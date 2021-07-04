@@ -101,7 +101,9 @@ public class ConfiguratorTest {
                                                                         null,
                                                                         null,
                                                                         new DummyProgramRunnerFactory(),
-                                                                        new DefaultImpersonator(cConf, null));
+                                                                        new DefaultImpersonator(cConf, null),
+                                                                        null,
+                                                                        null);
     ArtifactRepository artifactRepo = new AuthorizationArtifactRepository(baseArtifactRepo,
                                                                           authEnforcer, authenticationContext);
     PluginFinder pluginFinder = new LocalPluginFinder(artifactRepo);
@@ -142,7 +144,9 @@ public class ConfiguratorTest {
                                                                         null,
                                                                         null,
                                                                         new DummyProgramRunnerFactory(),
-                                                                        new DefaultImpersonator(cConf, null));
+                                                                        new DefaultImpersonator(cConf, null),
+                                                                        null,
+                                                                        null);
     ArtifactRepository artifactRepo = new AuthorizationArtifactRepository(baseArtifactRepo,
                                                                           authEnforcer, authenticationContext);
     PluginFinder pluginFinder = new LocalPluginFinder(artifactRepo);

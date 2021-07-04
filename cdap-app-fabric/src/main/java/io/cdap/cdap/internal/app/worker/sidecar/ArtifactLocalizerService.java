@@ -21,7 +21,9 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
+import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.http.NettyHttpService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +44,7 @@ public class ArtifactLocalizerService extends AbstractIdleService {
 
   @Inject
   ArtifactLocalizerService(CConfiguration cConf,
+                           SConfiguration sConf,
                            ArtifactLocalizer artifactLocalizer) {
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TASK_WORKER)
       .setHost(InetAddress.getLoopbackAddress().getHostName())
@@ -49,6 +52,10 @@ public class ArtifactLocalizerService extends AbstractIdleService {
       .setBossThreadPoolSize(cConf.getInt(Constants.ArtifactLocalizer.BOSS_THREADS))
       .setWorkerThreadPoolSize(cConf.getInt(Constants.ArtifactLocalizer.WORKER_THREADS))
       .setHttpHandlers(new ArtifactLocalizerHttpHandlerInternal(artifactLocalizer));
+
+    if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
+      new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
+    }
 
     httpService = builder.build();
   }

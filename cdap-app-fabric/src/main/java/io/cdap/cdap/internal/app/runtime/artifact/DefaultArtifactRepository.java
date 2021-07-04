@@ -47,6 +47,7 @@ import io.cdap.cdap.common.conf.ArtifactConfigReader;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.data2.metadata.system.ArtifactSystemMetadataWriter;
@@ -63,7 +64,9 @@ import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import org.apache.twill.common.Threads;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -105,11 +108,16 @@ public class DefaultArtifactRepository implements ArtifactRepository {
                                    ArtifactRepositoryReader artifactRepositoryReader,
                                    MetadataServiceClient metadataServiceClient,
                                    ProgramRunnerFactory programRunnerFactory,
-                                   Impersonator impersonator) {
+                                   Impersonator impersonator, LocationFactory locationFactory,
+                                   RemoteClientFactory remoteClientFactory) {
     this.artifactStore = artifactStore;
     this.artifactRepositoryReader = artifactRepositoryReader;
     this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, programRunnerFactory);
-    this.artifactInspector = new DefaultArtifactInspector(cConf, artifactClassLoaderFactory, impersonator);
+    if (cConf.getBoolean(Constants.TaskWorker.POOL_ENABLE, false)) {
+      this.artifactInspector = new RemoteArtifactInspector(cConf, locationFactory, remoteClientFactory);
+    } else {
+      this.artifactInspector = new DefaultArtifactInspector(cConf, artifactClassLoaderFactory, impersonator);
+    }
     this.systemArtifactDirs = new HashSet<>();
     String systemArtifactsDir = cConf.get(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR);
     if (!Strings.isNullOrEmpty(systemArtifactsDir)) {
@@ -537,9 +545,11 @@ public class DefaultArtifactRepository implements ArtifactRepository {
                                                       List<ArtifactDescriptor> parentDescriptors,
                                                       Set<PluginClass> additionalPlugins)
     throws IOException, InvalidArtifactException {
+    LOG.error("wyzhang: DefaultArtifactRepository before artifactInspector.inspectArtifact");
     ArtifactClassesWithMetadata artifact = artifactInspector.inspectArtifact(artifactId, artifactFile,
                                                                              parentDescriptors,
                                                                              additionalPlugins);
+    LOG.error("wyzhang: DefaultArtifactRepository after artifactInspector.inspectArtifact");
     validatePluginSet(artifact.getArtifactClasses().getPlugins());
     if (additionalPlugins == null || additionalPlugins.isEmpty()) {
       return artifact;

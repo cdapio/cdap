@@ -66,9 +66,9 @@ public class RemoteClient {
   private final CConfiguration cConf;
   private volatile RemoteAuthenticator authenticator;
 
-  RemoteClient(AuthenticationContext authenticationContext, DiscoveryServiceClient discoveryClient,
-               CConfiguration cConf, String discoverableServiceName, HttpRequestConfig httpRequestConfig,
-               String basePath) {
+  public RemoteClient(AuthenticationContext authenticationContext, DiscoveryServiceClient discoveryClient,
+                      CConfiguration cConf, String discoverableServiceName, HttpRequestConfig httpRequestConfig,
+                      String basePath) {
     this(authenticationContext, discoveryClient, cConf, discoverableServiceName, httpRequestConfig, basePath, null);
   }
 

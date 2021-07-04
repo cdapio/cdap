@@ -253,7 +253,8 @@ public class RemoteConfiguratorTest {
   private static final class TestArtifactRepository extends DefaultArtifactRepository {
 
     TestArtifactRepository(CConfiguration cConf) {
-      super(cConf, null, null, null, null, null);
+      super(cConf, null, null, null,
+            null, null, null, null);
     }
 
     @Override

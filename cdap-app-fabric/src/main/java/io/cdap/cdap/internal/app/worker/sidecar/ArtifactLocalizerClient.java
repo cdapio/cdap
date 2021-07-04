@@ -76,6 +76,7 @@ public class ArtifactLocalizerClient {
   }
 
   private File sendRequest(ArtifactId artifactId, boolean unpack) throws IOException, ArtifactNotFoundException {
+    LOG.warn("wyzhang: ArtifactLocalizerClient send request for {}", artifactId);
     String urlPath = String
       .format("/artifact/namespaces/%s/artifacts/%s/versions/%s?unpack=%b", artifactId.getNamespace(),
               artifactId.getArtifact(),
@@ -87,7 +88,7 @@ public class ArtifactLocalizerClient {
       throw new IOException(e);
     }
 
-    LOG.debug("Sending request to {}", url);
+    LOG.warn("wyzhang: Sending request to {}", url);
     HttpRequest httpRequest = HttpRequest.builder(HttpMethod.GET, url).build();
     HttpResponse httpResponse = HttpRequests.execute(httpRequest);
 
@@ -100,7 +101,7 @@ public class ArtifactLocalizerClient {
     }
 
     String path = httpResponse.getResponseBodyAsString();
-    LOG.debug("ArtifactLocalizer request returned path {}", path);
+    LOG.warn("wyzhang: ArtifactLocalizer request returned path {}", path);
 
     return new File(path);
   }
