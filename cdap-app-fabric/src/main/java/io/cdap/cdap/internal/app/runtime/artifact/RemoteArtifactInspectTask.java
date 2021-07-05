@@ -18,6 +18,7 @@ import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.Locations;
@@ -58,13 +59,10 @@ public class RemoteArtifactInspectTask implements RunnableTask {
     new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
 
   private final CConfiguration cConf;
-  private final LocationFactory locationFactory;
 
   @Inject
-  public RemoteArtifactInspectTask(CConfiguration cConf,
-                                   LocationFactory locationFactory) {
+  public RemoteArtifactInspectTask(CConfiguration cConf) {
     this.cConf = cConf;
-    this.locationFactory = locationFactory;
   }
 
   @Override
@@ -91,6 +89,7 @@ public class RemoteArtifactInspectTask implements RunnableTask {
 
     // Localize parent artifacts
     ArtifactLocalizerClient artifactLocalizerClient = injector.getInstance(ArtifactLocalizerClient.class);
+    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     for (ArtifactDescriptor parentArtifact : parentArtifacts) {
       File unpacked = artifactLocalizerClient.getUnpackedArtifactLocation(
         Artifacts.toProtoArtifactId(new NamespaceId(parentArtifact.getNamespace()), parentArtifact.getArtifactId()));
@@ -149,6 +148,7 @@ public class RemoteArtifactInspectTask implements RunnableTask {
           .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
       }
     });
+    modules.add(new DFSLocationModule());
     modules.add(new MessagingClientModule());
     modules.add(new AuthenticationContextModules().getMasterModule());
     modules.add(new AbstractModule() {
