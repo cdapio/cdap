@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.artifact;
 
+import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.id.Id;

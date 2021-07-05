@@ -175,6 +175,26 @@ final class DefaultArtifactInspector implements ArtifactInspector {
     }
   }
 
+  public ArtifactClassesWithMetadata inspectArtifact(Id.Artifact artifactId, File artifactFile, File unpackedDir,
+                                                     @Nullable CloseableClassLoader parentClassLoader,
+                                                     Set<PluginClass> additionalPlugins, File tmpDir)
+    throws IOException, InvalidArtifactException {
+    Location artifactLocation = Locations.toLocation(artifactFile);
+    try (
+      CloseableClassLoader artifactClassLoader = artifactClassLoaderFactory.createClassLoader(unpackedDir);
+      PluginInstantiator pluginInstantiator =
+        new PluginInstantiator(cConf, parentClassLoader == null ? artifactClassLoader : parentClassLoader,
+                               tmpDir, false)) {
+      pluginInstantiator.addArtifact(artifactLocation, artifactId.toArtifactId());
+      ArtifactClasses.Builder builder = inspectApplications(artifactId, ArtifactClasses.builder(),
+                                                            artifactLocation, artifactClassLoader);
+      List<MetadataMutation> mutations = new ArrayList<>();
+      inspectPlugins(builder, artifactFile, artifactId.toEntityId(), pluginInstantiator,
+                     additionalPlugins, mutations);
+      return new ArtifactClassesWithMetadata(builder.build(), mutations);
+    }
+  }
+
   /**
    * Create a parent classloader (potentially multi-level classloader) based on the list of parent artifacts provided.
    * The multi-level classloader will be constructed based the order of artifacts in the list (e.g. lower level

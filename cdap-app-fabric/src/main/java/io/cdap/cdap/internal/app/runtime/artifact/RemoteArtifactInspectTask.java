@@ -9,6 +9,7 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.MapBinder;
+import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
@@ -21,7 +22,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
 import io.cdap.cdap.common.id.Id;
-import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerClient;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
@@ -35,8 +36,6 @@ import io.cdap.cdap.security.impersonation.DefaultImpersonator;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +45,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -67,57 +67,65 @@ public class RemoteArtifactInspectTask implements RunnableTask {
 
   @Override
   public void run(RunnableTaskContext context) throws Exception {
-    LOG.warn("wyzhang: RemoteArtifactInspectTask run start");
+    LOG.warn("wyzhang: RemoteArtifactInspectTask: run start");
 
     Injector injector = createInjector();
 
     ProgramRunnerFactory programRunnerFactory = injector.getInstance(ProgramRunnerFactory.class);
     ArtifactClassLoaderFactory factory = new ArtifactClassLoaderFactory(cConf, programRunnerFactory);
-    ArtifactInspector inspector = new DefaultArtifactInspector(cConf, factory,
-                                                               new DefaultImpersonator(cConf, null));
+    DefaultArtifactInspector inspector = new DefaultArtifactInspector(cConf, factory,
+                                                                      new DefaultImpersonator(cConf, null));
 
     Id.Artifact artifactId = new Id.Artifact(Id.Namespace.from(context.getNamespace()),
                                              context.getArtifactId().getName(),
                                              context.getArtifactId().getVersion());
     RemoteArtifactInspectTaskRequest req = GSON.fromJson(context.getParam(), RemoteArtifactInspectTaskRequest.class);
 
-    LOG.warn("wyzhang: RemoteArtifactInspectTask req {}", req);
+    LOG.warn("wyzhang: RemoteArtifactInspectTask: req {}", req);
 
-    List<ArtifactDescriptor> parentArtifacts = req.getParentArtifacts();
-
-    List<ArtifactDescriptor> updatedParentArtifacts = new ArrayList<>();
-
-    // Localize parent artifacts
+    // Localize and unpacked parent artifacts
+    LOG.warn("wyzhang: RemoteArtifactInspectTask: Localize and unpacked parent artifacts");
+    List<File> unpackedParents = new ArrayList<>();
     ArtifactLocalizerClient artifactLocalizerClient = injector.getInstance(ArtifactLocalizerClient.class);
-    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
-    for (ArtifactDescriptor parentArtifact : parentArtifacts) {
+    for (ArtifactDescriptor parentArtifact : req.getParentArtifacts()) {
       File unpacked = artifactLocalizerClient.getUnpackedArtifactLocation(
         Artifacts.toProtoArtifactId(new NamespaceId(parentArtifact.getNamespace()), parentArtifact.getArtifactId()));
-
-      Location location = Locations.getLocationFromAbsolutePath(locationFactory,
-                                                                parentArtifact.getLocationURI().getPath());
-
-      LOG.warn("wyzhang: RemoteArtifactInspectTask parent artifact {} unpacked to location {}",
-               parentArtifact.getArtifactId(), location);
-      updatedParentArtifacts.add(new ArtifactDescriptor(parentArtifact.getNamespace(),
-                                                        parentArtifact.getArtifactId(),
-                                                        location));
-    }
-    for (ArtifactDescriptor d : updatedParentArtifacts) {
-      LOG.warn("wyzhang: RemoteArtifactInspectTask updated ArtifactDescriptor {}", d);
+      unpackedParents.add(unpacked);
     }
 
-    ArtifactClassesWithMetadata metadata = null;
+    // Create parent classloader
+    LOG.warn("wyzhang: RemoteArtifactInspectTask: Create parent classloader");
+    CloseableClassLoader parentClassLoader = null;
+    if (!unpackedParents.isEmpty()) {
+      parentClassLoader = factory.createClassLoader(unpackedParents.iterator());
+    }
 
+    // Localize and unpacked the artifact to inspect
     File artifactFile = download(req.getArtifactURI(), injector.getInstance(AuthenticationContext.class));
-    LOG.warn("wyzhang: RemoteArtifactInspectTask downloaded from {} to {}",
+    LOG.warn("wyzhang: RemoteArtifactInspectTask: downloaded from {} to {}",
              req.getArtifactURI(), artifactFile.getAbsolutePath());
+    File unpackedDir = Files.createTempDirectory("artifact-").toFile();
+    BundleJarUtil.prepareClassLoaderFolder(artifactFile, unpackedDir);
+
+    // Inspect
+    ArtifactClassesWithMetadata metadata = null;
+    File tmpDir = Files.createTempDirectory("artifact-tmp-").toFile();
+    LOG.warn("wyzhang: RemoteArtifactInspectTask: start inspect: artifactId = {}", artifactId);
+    LOG.warn("wyzhang: RemoteArtifactInspectTask: start inspect: artifactFile = {}", artifactId);
+    LOG.warn("wyzhang: RemoteArtifactInspectTask: start inspect: unpackedDir = {}", artifactId);
+    LOG.warn("wyzhang: RemoteArtifactInspectTask: start inspect: parentClassLoader = {}", artifactId);
+    LOG.warn("wyzhang: RemoteArtifactInspectTask: start inspect: additional plugins = {}", artifactId);
+    LOG.warn("wyzhang: RemoteArtifactInspectTask: start inspect: tmpDir = {}", tmpDir);
     metadata = inspector.inspectArtifact(artifactId,
                                          artifactFile,
-                                         updatedParentArtifacts,
-                                         req.getAdditionalPlugins());
+                                         unpackedDir,
+                                         parentClassLoader,
+                                         req.getAdditionalPlugins(),
+                                         tmpDir);
 
     context.writeResult(GSON.toJson(metadata).getBytes(StandardCharsets.UTF_8));
+
+    LOG.warn("wyzhang: RemoteArtifactInspectTask: run end");
   }
 
   private File download(URI uri, AuthenticationContext authenticationContext) throws IOException {

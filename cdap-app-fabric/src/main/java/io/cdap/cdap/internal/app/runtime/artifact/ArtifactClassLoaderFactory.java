@@ -195,4 +195,29 @@ final class ArtifactClassLoaderFactory {
       throw Throwables.propagate(e);
     }
   }
+
+  CloseableClassLoader createClassLoader(final Iterator<File> unpackedDirs) {
+    if (!unpackedDirs.hasNext()) {
+      throw new IllegalArgumentException("Cannot create a classloader without an artifact.");
+    }
+
+    final File unpackedDir = unpackedDirs.next();
+    LOG.warn("wyzhang: ArtifactClassLoaderFactory::createCLassLoader(Iterator<Location>) unpackedDir = {}",
+             unpackedDir);
+    if (!unpackedDirs.hasNext()) {
+      return createClassLoader(unpackedDirs);
+    }
+
+    try {
+      final CloseableClassLoader parentClassLoader = createClassLoader(unpackedDirs);
+      return new CloseableClassLoader(new DirectoryClassLoader(unpackedDir, parentClassLoader, "lib"), new Closeable() {
+        @Override
+        public void close() throws IOException {
+          Closeables.closeQuietly(parentClassLoader);
+        }
+      });
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
 }
