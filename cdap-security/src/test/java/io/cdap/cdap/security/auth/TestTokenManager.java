@@ -49,7 +49,7 @@ public abstract class TestTokenManager {
     long now = System.currentTimeMillis();
     String user = "testuser";
     List<String> groups = Lists.newArrayList("users", "admins");
-    UserIdentity ident1 = new UserIdentity(user, groups,
+    UserIdentity ident1 = new UserIdentity(user, UserIdentity.IdentifierType.EXTERNAL, groups,
                                            now, now + TOKEN_DURATION);
     AccessToken token1 = tokenManager.signIdentifier(ident1);
     LOG.info("Signed token is: " + Bytes.toStringBinary(tokenCodec.encode(token1)));
@@ -57,7 +57,8 @@ public abstract class TestTokenManager {
     tokenManager.validateSecret(token1);
 
     // test token expiration
-    UserIdentity expiredIdent = new UserIdentity(user, groups, now - 1000, now - 1);
+    UserIdentity expiredIdent = new UserIdentity(user, UserIdentity.IdentifierType.EXTERNAL, groups, now - 1000,
+                                                 now - 1);
     AccessToken expiredToken = tokenManager.signIdentifier(expiredIdent);
     try {
       tokenManager.validateSecret(expiredToken);
@@ -98,7 +99,7 @@ public abstract class TestTokenManager {
     long now = System.currentTimeMillis();
     String user = "testuser";
     List<String> groups = Lists.newArrayList("users", "admins");
-    UserIdentity ident1 = new UserIdentity(user, groups,
+    UserIdentity ident1 = new UserIdentity(user, UserIdentity.IdentifierType.EXTERNAL, groups,
                                            now, now + TOKEN_DURATION);
     AccessToken token1 = tokenManager.signIdentifier(ident1);
     byte[] tokenBytes = tokenCodec.encode(token1);

@@ -21,15 +21,10 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.net.HttpHeaders;
 import io.cdap.cdap.common.ServiceUnavailableException;
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.security.HttpsEnabler;
-import io.cdap.cdap.proto.security.Credential;
-import io.cdap.cdap.proto.security.Principal;
-import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
@@ -58,26 +53,24 @@ public class RemoteClient {
 
   public static final String RUNTIME_SERVICE_ROUTING_BASE_URI = "cdap.runtime.service.routing.base.uri";
 
-  private final AuthenticationContext authenticationContext;
+  private final InternalAuthenticator internalAuthenticator;
   private final EndpointStrategy endpointStrategy;
   private final HttpRequestConfig httpRequestConfig;
   private final String discoverableServiceName;
   private final String basePath;
-  private final CConfiguration cConf;
   private volatile RemoteAuthenticator authenticator;
 
-  RemoteClient(AuthenticationContext authenticationContext, DiscoveryServiceClient discoveryClient,
-               CConfiguration cConf, String discoverableServiceName, HttpRequestConfig httpRequestConfig,
-               String basePath) {
-    this(authenticationContext, discoveryClient, cConf, discoverableServiceName, httpRequestConfig, basePath, null);
+  RemoteClient(InternalAuthenticator internalAuthenticator, DiscoveryServiceClient discoveryClient,
+               String discoverableServiceName, HttpRequestConfig httpRequestConfig, String basePath) {
+    this(internalAuthenticator, discoveryClient, discoverableServiceName, httpRequestConfig, basePath,
+         null);
   }
 
-  RemoteClient(AuthenticationContext authenticationContext, DiscoveryServiceClient discoveryClient,
-               CConfiguration cConf, String discoverableServiceName, HttpRequestConfig httpRequestConfig,
-               String basePath, @Nullable RemoteAuthenticator authenticator) {
-    this.authenticationContext = authenticationContext;
+  RemoteClient(InternalAuthenticator internalAuthenticator,
+               DiscoveryServiceClient discoveryClient, String discoverableServiceName,
+               HttpRequestConfig httpRequestConfig, String basePath, @Nullable RemoteAuthenticator authenticator) {
+    this.internalAuthenticator = internalAuthenticator;
     this.discoverableServiceName = discoverableServiceName;
-    this.cConf = cConf;
     this.httpRequestConfig = httpRequestConfig;
     this.endpointStrategy = new RandomEndpointStrategy(() -> discoveryClient.discover(discoverableServiceName));
     String cleanBasePath = basePath.startsWith("/") ? basePath.substring(1) : basePath;
@@ -102,23 +95,6 @@ public class RemoteClient {
     headerSetter.accept(header, String.format("%s %s", credentialType, credentialValue));
   }
 
-  private void applyAuthenticationContext(BiConsumer<String, String> headerSetter) {
-    Principal principal = authenticationContext.getPrincipal();
-    String userID = null;
-    Credential internalCredentials = null;
-    if (principal != null) {
-      userID = principal.getName();
-      internalCredentials = principal.getFullCredential();
-    }
-    if (internalCredentials != null) {
-      setAuthHeader(headerSetter, Constants.Security.Headers.RUNTIME_TOKEN,
-                    internalCredentials.getType().getQualifiedName(), internalCredentials.getValue());
-    }
-    if (userID != null) {
-      headerSetter.accept(Constants.Security.Headers.USER_ID, userID);
-    }
-  }
-
   /**
    * Perform the request, returning the response. If there was a ConnectException while making the request,
    * a ServiceUnavailableException is thrown.
@@ -141,9 +117,7 @@ public class RemoteClient {
       setAuthHeader(headers::put, HttpHeaders.AUTHORIZATION, authenticator.getType(), authenticator.getCredentials());
     }
 
-    if (cConf.getBoolean(Constants.Security.ENFORCE_INTERNAL_AUTH)) {
-      applyAuthenticationContext(headers::put);
-    }
+    internalAuthenticator.applyInternalAuthenticationHeaders(headers::put);
 
     httpRequest = new HttpRequest(request.getMethod(), rewrittenURL, headers,
                       request.getBody(), request.getBodyLength());
@@ -183,9 +157,7 @@ public class RemoteClient {
                     authenticator.getCredentials());
     }
 
-    if (cConf.getBoolean(Constants.Security.ENFORCE_INTERNAL_AUTH)) {
-      applyAuthenticationContext(urlConn::setRequestProperty);
-    }
+    internalAuthenticator.applyInternalAuthenticationHeaders(urlConn::setRequestProperty);
 
     return urlConn;
   }

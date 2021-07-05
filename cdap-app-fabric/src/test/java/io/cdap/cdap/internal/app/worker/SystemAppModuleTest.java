@@ -34,6 +34,7 @@ import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactManager;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import org.apache.hadoop.conf.Configuration;
@@ -57,6 +58,7 @@ public class SystemAppModuleTest {
         .build(ArtifactManagerFactory.class),
       new LocalLocationModule(),
       new SecureStoreClientModule(),
+      new AuthenticationContextModules().getNoOpModule(),
       new SystemAppModule());
     injector.getInstance(ArtifactRepositoryReader.class);
     injector.getInstance(ArtifactRepository.class);

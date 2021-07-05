@@ -33,6 +33,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
@@ -75,7 +76,6 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -110,7 +110,8 @@ public class RemoteConfiguratorTest {
     namespaceAdmin.create(NamespaceMeta.SYSTEM);
     namespaceAdmin.create(NamespaceMeta.DEFAULT);
 
-    remoteClientFactory = new RemoteClientFactory(discoveryService, new AuthenticationTestContext(), cConf);
+    remoteClientFactory = new RemoteClientFactory(discoveryService,
+                                                  new DefaultInternalAuthenticator(new AuthenticationTestContext()));
     httpService = new CommonNettyHttpServiceBuilder(cConf, "test")
       .setHttpHandlers(
         new TaskWorkerHttpHandlerInternal(cConf, className -> { }),

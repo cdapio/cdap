@@ -148,6 +148,15 @@ public final class SecurityUtil {
                        AuthenticationMode.MANAGED).equals(AuthenticationMode.MANAGED);
   }
 
+  /**
+   * Checks if internal authenticated communication should be enforced.
+   *
+   * @return {@code true} if internal auth is enabled.
+   */
+  public static boolean isInternalAuthEnabled(CConfiguration cConf) {
+    return cConf.getBoolean(Constants.Security.INTERNAL_AUTH_ENABLED);
+  }
+
   public static String getMasterPrincipal(CConfiguration cConf) {
     String principal = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
     if (principal == null) {

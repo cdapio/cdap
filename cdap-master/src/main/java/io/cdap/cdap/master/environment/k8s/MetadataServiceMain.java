@@ -51,6 +51,7 @@ import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.spi.authorization.NoOpAccessController;
 import io.cdap.cdap.security.spi.authorization.PermissionManager;
@@ -117,7 +118,10 @@ public class MetadataServiceMain extends AbstractServiceMain<EnvironmentOptions>
     if (zkBinding != null) {
       services.add(zkBinding.getProvider().get());
     }
-    services.add(injector.getInstance(TokenManager.class));
+    CConfiguration cConf = injector.getInstance(CConfiguration.class);
+    if (SecurityUtil.isInternalAuthEnabled(cConf)) {
+      services.add(injector.getInstance(TokenManager.class));
+    }
 
     // Add a service just for closing MetadataStorage to release resource.
     // MetadataStorage is binded as Singleton, so ok to get the instance and close it.

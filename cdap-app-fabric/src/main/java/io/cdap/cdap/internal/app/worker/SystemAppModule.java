@@ -38,10 +38,8 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.metadata.RemotePreferencesFetcherInternal;
 import io.cdap.cdap.proto.ProgramType;
-import io.cdap.cdap.security.auth.context.MasterAuthenticationContext;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
-import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
@@ -65,7 +63,6 @@ public class SystemAppModule extends AbstractModule {
     bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
 
     bind(UGIProvider.class).to(CurrentUGIProvider.class).in(Scopes.SINGLETON);
-    bind(AuthenticationContext.class).to(MasterAuthenticationContext.class);
 
     bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class).in(Scopes.SINGLETON);
     bind(ArtifactRepository.class).to(RemoteArtifactRepository.class);

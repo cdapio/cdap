@@ -73,6 +73,7 @@ import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
 import io.cdap.cdap.security.impersonation.NoOpOwnerAdmin;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.noop.NoopMetadataStorage;
@@ -232,7 +233,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
   private void addOnPremiseModules(List<Module> modules) {
     CoreSecurityModule coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf);
 
-    if (cConf.getBoolean(Constants.Security.ENFORCE_INTERNAL_AUTH)) {
+    if (SecurityUtil.isInternalAuthEnabled(cConf)) {
       modules.add(new AuthenticationContextModules().getMasterModule());
       modules.add(coreSecurityModule);
     } else {

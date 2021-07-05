@@ -34,6 +34,7 @@ import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,7 +79,10 @@ public class RouterServiceMain extends AbstractServiceMain<EnvironmentOptions> {
       services.add(zkBinding.getProvider().get());
     }
     services.add(injector.getInstance(NettyRouter.class));
-    services.add(injector.getInstance(TokenManager.class));
+    CConfiguration cConf = injector.getInstance(CConfiguration.class);
+    if (SecurityUtil.isInternalAuthEnabled(cConf)) {
+      services.add(injector.getInstance(TokenManager.class));
+    }
   }
 
   @Nullable

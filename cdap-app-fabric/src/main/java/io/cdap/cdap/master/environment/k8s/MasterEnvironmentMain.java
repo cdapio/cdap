@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.common.app.MainClassLoader;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
 import io.cdap.cdap.common.options.OptionsParser;
@@ -111,7 +112,8 @@ public class MasterEnvironmentMain {
         }
 
         RemoteClientFactory remoteClientFactory = new RemoteClientFactory(
-          masterEnv.getDiscoveryServiceClientSupplier().get(), new WorkerAuthenticationContext(), cConf);
+          masterEnv.getDiscoveryServiceClientSupplier().get(),
+          new DefaultInternalAuthenticator(new WorkerAuthenticationContext()));
         MasterEnvironmentRunnableContext runnableContext =
           new DefaultMasterEnvironmentRunnableContext(context.getLocationFactory(), remoteClientFactory);
         @SuppressWarnings("unchecked")
