@@ -196,7 +196,7 @@ final class ArtifactClassLoaderFactory {
     }
   }
 
-  CloseableClassLoader createClassLoader(final Iterator<File> unpackedDirs) {
+  CloseableClassLoader createClassLoader(final Iterator<File> unpackedDirs) throws IOException {
     if (!unpackedDirs.hasNext()) {
       throw new IllegalArgumentException("Cannot create a classloader without an artifact.");
     }
@@ -205,7 +205,7 @@ final class ArtifactClassLoaderFactory {
     LOG.warn("wyzhang: ArtifactClassLoaderFactory::createCLassLoader(Iterator<Location>) unpackedDir = {}",
              unpackedDir);
     if (!unpackedDirs.hasNext()) {
-      return createClassLoader(unpackedDirs);
+      return createClassLoader(unpackedDir);
     }
 
     try {
