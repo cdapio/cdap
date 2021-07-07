@@ -29,8 +29,11 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.app.preview.PreviewManager;
+import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.api.connector.BrowseDetail;
 import io.cdap.cdap.etl.api.connector.BrowseEntity;
@@ -54,7 +57,9 @@ import io.cdap.cdap.etl.proto.v2.ETLStage;
 import io.cdap.cdap.etl.spark.Compat;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.artifact.preview.PreviewConfig;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -88,6 +93,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -314,10 +320,6 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
                               .addConnection("source", "sink")
                               .build();
 
-    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
-    ApplicationId appId = NamespaceId.DEFAULT.app("testApp" + engine);
-    ApplicationManager appManager = deployApplication(appId, appRequest);
-
     Schema schema = Schema.recordOf("x", Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
     StructuredRecord samuel = StructuredRecord.builder(schema).set("name", "samuel").build();
     StructuredRecord dwayne = StructuredRecord.builder(schema).set("name", "dwayne").build();
@@ -327,6 +329,28 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     DataSetManager<Table> sourceTable = getDataset(srcTableName);
     MockSource.writeInput(sourceTable, ImmutableList.of(samuel, dwayne));
 
+    // verify preview can run successfully using connections
+    PreviewManager previewManager = getPreviewManager();
+    PreviewConfig previewConfig = new PreviewConfig(SmartWorkflow.NAME, ProgramType.WORKFLOW,
+                                                    Collections.<String, String>emptyMap(), 10);
+    // Start the preview and get the corresponding PreviewRunner.
+    ApplicationId previewId = previewManager.start(NamespaceId.DEFAULT,
+                                                   new AppRequest<>(APP_ARTIFACT, config, previewConfig));
+
+    // Wait for the preview status go into COMPLETED.
+    Tasks.waitFor(PreviewStatus.Status.COMPLETED, new Callable<PreviewStatus.Status>() {
+      @Override
+      public PreviewStatus.Status call() throws Exception {
+        PreviewStatus status = previewManager.getStatus(previewId);
+        return status == null ? null : status.getStatus();
+      }
+    }, 5, TimeUnit.MINUTES);
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
+    ApplicationId appId = NamespaceId.DEFAULT.app("testApp" + engine);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    // start the actual pipeline run
     WorkflowManager manager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     manager.startAndWaitForGoodRun(ProgramRunStatus.COMPLETED, 3, TimeUnit.MINUTES);
 
