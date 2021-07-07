@@ -489,7 +489,7 @@ public class BatchSQLEngineAdapter<T> implements Closeable {
     if (stageStatisticsCollector != null) {
       stageStatisticsCollector.incrementInputRecordCount(dataset.getNumRows());
     }
-    stageMetrics.count(Constants.Metrics.RECORDS_IN, (int) dataset.getNumRows());
+    countStageMetrics(stageMetrics, Constants.Metrics.RECORDS_IN, dataset.getNumRows());
   }
 
   /**
@@ -506,6 +506,22 @@ public class BatchSQLEngineAdapter<T> implements Closeable {
     if (stageStatisticsCollector != null) {
       stageStatisticsCollector.incrementOutputRecordCount(dataset.getNumRows());
     }
-    stageMetrics.count(Constants.Metrics.RECORDS_OUT, (int) dataset.getNumRows());
+    countStageMetrics(stageMetrics, Constants.Metrics.RECORDS_OUT, dataset.getNumRows());
+  }
+
+  /**
+   * Count records using a Stage Metrics instance for a supplied metric and number of records.
+   *
+   * Since the Stage Metrics instance only takes integers as counts, this will split the count operation into
+   * multiple operations is the number of records to count exceeds INTEGER.MAX_VALUE
+   *
+   * @param stageMetrics Metrics instance
+   * @param metricName   Metric name to count
+   * @param numRecords   Number of records to add to the count for the supplied metric.
+   */
+  protected static void countStageMetrics(StageMetrics stageMetrics,
+                                          String metricName,
+                                          long numRecords) {
+    stageMetrics.countLong(metricName, numRecords);
   }
 }
