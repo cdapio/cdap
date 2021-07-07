@@ -105,7 +105,7 @@ import io.cdap.cdap.store.DefaultOwnerStore;
 import io.cdap.cdap.store.StoreDefinition;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionSystemClient;
-import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -129,7 +129,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   private final CConfiguration previewCConf;
   private final Configuration previewHConf;
   private final SConfiguration previewSConf;
-  private final DiscoveryService discoveryService;
+  private final DiscoveryServiceClient discoveryServiceClient;
   private final DatasetFramework datasetFramework;
   private final TransactionSystemClient transactionSystemClient;
   private final LevelDBTableService previewLevelDBTableService;
@@ -145,7 +145,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   private LogAppender logAppender;
 
   @Inject
-  DefaultPreviewManager(DiscoveryService discoveryService,
+  DefaultPreviewManager(DiscoveryServiceClient discoveryServiceClient,
                         @Named(DataSetsModules.BASE_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
                         TransactionSystemClient transactionSystemClient,
                         AccessControllerInstantiator accessControllerInstantiator,
@@ -164,7 +164,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     this.previewHConf = previewHConf;
     this.previewSConf = previewSConf;
     this.datasetFramework = datasetFramework;
-    this.discoveryService = discoveryService;
+    this.discoveryServiceClient = discoveryServiceClient;
     this.transactionSystemClient = transactionSystemClient;
     this.accessEnforcer = accessEnforcer;
     this.accessControllerInstantiator = accessControllerInstantiator;
@@ -296,7 +296,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
       new PreviewDataModules().getDataSetsModule(datasetFramework),
       new AuthenticationContextModules().getMasterModule(),
       new LocalLocationModule(),
-      new PreviewDiscoveryRuntimeModule(discoveryService),
+      new PreviewDiscoveryRuntimeModule(discoveryServiceClient),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new DataSetServiceModules().getStandaloneModules(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
