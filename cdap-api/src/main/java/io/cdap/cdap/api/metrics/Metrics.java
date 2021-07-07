@@ -31,6 +31,19 @@ public interface Metrics {
   void count(String metricName, int delta);
 
   /**
+   * Increases the value of the specific metric by delta.
+   * @param metricName Name of the counter. Use alphanumeric characters in metric names.
+   * @param delta The value to increase by.
+   */
+  default void countLong(String metricName, long delta) {
+    if (delta < Integer.MIN_VALUE || delta > Integer.MAX_VALUE) {
+      throw new IllegalArgumentException("Invalid delta value for metrics count: " + delta);
+    }
+
+    this.count(metricName, (int) delta);
+  }
+
+  /**
    * Sets the specific metric to the provided value.
    * @param metricName Name of the counter. Use alphanumeric characters in metric names.
    * @param value The value to be set.
