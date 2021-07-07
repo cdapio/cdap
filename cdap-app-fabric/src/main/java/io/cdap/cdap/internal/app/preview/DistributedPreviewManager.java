@@ -46,7 +46,7 @@ import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.common.Threads;
-import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,7 +75,8 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
   private TwillController controller;
 
   @Inject
-  DistributedPreviewManager(CConfiguration cConf, Configuration hConf, DiscoveryService discoveryService,
+  DistributedPreviewManager(CConfiguration cConf, Configuration hConf,
+                            DiscoveryServiceClient discoveryServiceClient,
                             @Named(DataSetsModules.BASE_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
                             TransactionSystemClient transactionSystemClient,
                             AccessControllerInstantiator accessControllerInstantiator,
@@ -90,10 +91,10 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
                             MetricsCollectionService metricsCollectionService,
                             PreviewDataCleanupService previewDataCleanupService,
                             TwillRunner twillRunner) {
-    super(discoveryService, datasetFramework, transactionSystemClient, accessControllerInstantiator,
-          accessEnforcer, authenticationContext, previewLevelDBTableService, previewCConf, previewHConf, previewSConf,
-          previewRequestQueue, previewStore, previewRunStopper, messagingService, previewDataCleanupService,
-          metricsCollectionService);
+    super(discoveryServiceClient, datasetFramework, transactionSystemClient,
+          accessControllerInstantiator, accessEnforcer, authenticationContext, previewLevelDBTableService,
+          previewCConf, previewHConf, previewSConf, previewRequestQueue, previewStore, previewRunStopper,
+          messagingService, previewDataCleanupService, metricsCollectionService);
 
     this.cConf = cConf;
     this.hConf = hConf;
