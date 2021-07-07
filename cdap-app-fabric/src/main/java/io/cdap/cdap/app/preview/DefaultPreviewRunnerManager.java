@@ -60,7 +60,7 @@ import io.cdap.cdap.security.guice.preview.PreviewSecureStoreModule;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.common.Threads;
-import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,7 +80,7 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
   private final Configuration previewHConf;
   private final SConfiguration previewSConf;
   private final int maxConcurrentPreviews;
-  private final DiscoveryService discoveryService;
+  private final DiscoveryServiceClient discoveryServiceClient;
   private final DatasetFramework datasetFramework;
   private final SecureStore secureStore;
   private final TransactionSystemClient transactionSystemClient;
@@ -94,7 +94,8 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
   DefaultPreviewRunnerManager(@Named(PreviewConfigModule.PREVIEW_CCONF) CConfiguration previewCConf,
                               @Named(PreviewConfigModule.PREVIEW_HCONF) Configuration previewHConf,
                               @Named(PreviewConfigModule.PREVIEW_SCONF) SConfiguration previewSConf,
-                              SecureStore secureStore, DiscoveryService discoveryService,
+                              SecureStore secureStore,
+                              DiscoveryServiceClient discoveryServiceClient,
                               @Named(DataSetsModules.BASE_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
                               TransactionSystemClient transactionSystemClient,
                               PreviewRunnerModule previewRunnerModule,
@@ -105,7 +106,7 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
     this.previewSConf = previewSConf;
     this.datasetFramework = datasetFramework;
     this.secureStore = secureStore;
-    this.discoveryService = discoveryService;
+    this.discoveryServiceClient = discoveryServiceClient;
     this.transactionSystemClient = transactionSystemClient;
     this.maxConcurrentPreviews = previewCConf.getInt(Constants.Preview.POLLER_COUNT);
     this.previewRunnerServices = ConcurrentHashMap.newKeySet();
@@ -173,7 +174,7 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
       new CoreSecurityRuntimeModule().getInMemoryModules(),
       new AuthenticationContextModules().getMasterWorkerModule(),
       new PreviewSecureStoreModule(secureStore),
-      new PreviewDiscoveryRuntimeModule(discoveryService),
+      new PreviewDiscoveryRuntimeModule(discoveryServiceClient),
       new LocalLocationModule(),
       new ConfigStoreModule(),
       previewRunnerModule,
