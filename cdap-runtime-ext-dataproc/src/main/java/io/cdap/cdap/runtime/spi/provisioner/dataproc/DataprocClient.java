@@ -520,11 +520,29 @@ class DataprocClient implements AutoCloseable {
         client.createClusterAsync(conf.getProjectId(), conf.getRegion(), cluster);
       return operationFuture.getMetadata().get();
     } catch (ExecutionException e) {
+      cleanUpClusterAfterCreationFailure(name);
       Throwable cause = e.getCause();
       if (cause instanceof ApiException) {
         throw handleApiException((ApiException) cause);
       }
       throw new DataprocRuntimeException(cause);
+    }
+  }
+
+  private void cleanUpClusterAfterCreationFailure(String name) {
+    if (conf.isSkipDelete()) {
+      //Don't delete even failed one when skip delete is set
+      return;
+    }
+    try {
+      Optional<Cluster> cluster = getDataprocCluster(name)
+        .filter(c -> c.getStatus().getState() == ClusterStatus.State.ERROR);
+      if (cluster.isPresent()) {
+        deleteCluster(name);
+      }
+    } catch (Exception e) {
+      LOG.warn("Can't remove Dataproc Cluster " + name + ". " +
+                 "Attempted deletion because state was ERROR after creation", e);
     }
   }
 
