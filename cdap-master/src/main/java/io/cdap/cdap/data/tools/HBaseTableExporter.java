@@ -120,7 +120,7 @@ public class HBaseTableExporter {
       new KafkaLogAppenderModule(),
       new ExploreClientModule(),
       new AuthorizationModule(),
-      new AuthorizationEnforcementModule().getMasterModule(),
+      new AuthorizationEnforcementModule().getStandaloneModules(),
       new AuthenticationContextModules().getMasterModule(),
       new NamespaceQueryAdminModule(),
       new SecureStoreServerModule(),

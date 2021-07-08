@@ -122,7 +122,8 @@ public class GrantAccessToken {
     long issueTime = System.currentTimeMillis();
     long expireTime = issueTime + tokenValidity;
     // Create and sign a new AccessTokenIdentifier to generate the AccessToken.
-    UserIdentity tokenIdentifier = new UserIdentity(username, userGroups, issueTime, expireTime);
+    UserIdentity tokenIdentifier = new UserIdentity(username, UserIdentity.IdentifierType.EXTERNAL, userGroups,
+                                                    issueTime, expireTime);
     AccessToken token = tokenManager.signIdentifier(tokenIdentifier);
     LOG.debug("Issued token for user {}", username);
 

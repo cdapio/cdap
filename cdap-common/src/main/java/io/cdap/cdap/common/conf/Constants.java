@@ -1122,7 +1122,7 @@ public final class Constants {
     public static final String PRINCIPAL = "principal";
 
     /** Requires all intra-cluster communications to be authenticated. */
-    public static final String ENFORCE_INTERNAL_AUTH = "security.internal.enforce.auth";
+    public static final String INTERNAL_AUTH_ENABLED = "security.internal.auth.enabled";
 
     /**
      * App Fabric
@@ -1673,12 +1673,12 @@ public final class Constants {
       /**
        * The secret name for the cdap-security.xml disk mount for worker services including preview and task workers.
        */
-      public static final String WORKER_SECRET_DISK_NAME = "twill.security.master.secret.disk.name";
+      public static final String WORKER_SECRET_DISK_NAME = "twill.security.worker.secret.disk.name";
 
       /**
        * The secret path for the cdap-security.xml disk mount for worker services including preview and task workers.
        */
-      public static final String WORKER_SECRET_DISK_PATH = "twill.security.master.secret.disk.path";
+      public static final String WORKER_SECRET_DISK_PATH = "twill.security.worker.secret.disk.path";
     }
   }
 }

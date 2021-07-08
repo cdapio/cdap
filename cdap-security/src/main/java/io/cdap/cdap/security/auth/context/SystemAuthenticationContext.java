@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.security.auth.context;
 
+import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Principal;
@@ -25,6 +26,7 @@ import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.auth.UserIdentity;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
+import org.apache.hadoop.security.UserGroupInformation;
 
 import java.io.IOException;
 import java.util.Base64;
@@ -58,15 +60,21 @@ public class SystemAuthenticationContext implements AuthenticationContext {
 
     // Use internal identity if user ID is null.
     // If user ID is null, the service is not handling a user request, so we assume it is an internal request.
+    try {
+      userId = UserGroupInformation.getCurrentUser().getShortUserName();
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
     long currentTimestamp = System.currentTimeMillis();
-    UserIdentity identity = new UserIdentity(SYSTEM_IDENTITY, Collections.emptyList(), currentTimestamp,
+    UserIdentity identity = new UserIdentity(userId, UserIdentity.IdentifierType.INTERNAL,
+                                             Collections.emptyList(), currentTimestamp,
                                              currentTimestamp + DEFAULT_EXPIRATION);
     AccessToken accessToken = tokenManager.signIdentifier(identity);
     String encodedAccessToken;
     try {
       encodedAccessToken = Base64.getEncoder().encodeToString(accessTokenCodec.encode(accessToken));
       Credential credential = new Credential(encodedAccessToken, Credential.CredentialType.INTERNAL);
-      return new Principal(SYSTEM_IDENTITY, Principal.PrincipalType.USER, credential);
+      return new Principal(userId, Principal.PrincipalType.USER, credential);
     } catch (IOException e) {
       throw new RuntimeException("Unexpected failure while creating internal system identity", e);
     }

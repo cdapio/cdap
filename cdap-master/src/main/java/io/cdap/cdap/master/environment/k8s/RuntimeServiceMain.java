@@ -37,6 +37,7 @@ import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
@@ -106,7 +107,10 @@ public class RuntimeServiceMain extends AbstractServiceMain<EnvironmentOptions> 
     if (zkBinding != null) {
       services.add(zkBinding.getProvider().get());
     }
-    services.add(injector.getInstance(TokenManager.class));
+    CConfiguration cConf = injector.getInstance(CConfiguration.class);
+    if (SecurityUtil.isInternalAuthEnabled(cConf)) {
+      services.add(injector.getInstance(TokenManager.class));
+    }
   }
 
   @Nullable

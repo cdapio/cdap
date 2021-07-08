@@ -54,6 +54,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.http.HttpHandler;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -135,7 +136,10 @@ public class LogsServiceMain extends AbstractServiceMain<EnvironmentOptions> {
       services.add(zkBinding.getProvider().get());
     }
     // internal identity generation
-    services.add(injector.getInstance(TokenManager.class));
+    CConfiguration cConf = injector.getInstance(CConfiguration.class);
+    if (SecurityUtil.isInternalAuthEnabled(cConf)) {
+      services.add(injector.getInstance(TokenManager.class));
+    }
   }
 
   @Nullable

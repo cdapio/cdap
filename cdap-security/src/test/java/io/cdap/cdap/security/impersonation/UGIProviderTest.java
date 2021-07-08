@@ -22,6 +22,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
 import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
@@ -164,8 +165,8 @@ public class UGIProviderTest {
       InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
       discoveryService.register(new Discoverable(Constants.Service.APP_FABRIC_HTTP, httpService.getBindAddress()));
 
-      RemoteClientFactory remoteClientFactory = new RemoteClientFactory(discoveryService,
-                                                                        new AuthenticationTestContext(), cConf);
+      RemoteClientFactory remoteClientFactory =
+        new RemoteClientFactory(discoveryService, new DefaultInternalAuthenticator(new AuthenticationTestContext()));
       RemoteUGIProvider ugiProvider = new RemoteUGIProvider(cConf, locationFactory,
                                                             ownerAdmin,
                                                             remoteClientFactory);

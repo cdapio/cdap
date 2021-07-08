@@ -386,7 +386,7 @@ public final class Schema implements Serializable {
    * @param enumClass Enum values.
    * @return A {@link Schema} of {@link Type#ENUM ENUM} type.
    */
-  public static Schema enumWith(Class<Enum<?>> enumClass) {
+  public static Schema enumWith(Class<? extends Enum<?>> enumClass) {
     Enum<?>[] enumConstants = enumClass.getEnumConstants();
     String[] names = new String[enumConstants.length];
     for (int i = 0; i < enumConstants.length; i++) {
