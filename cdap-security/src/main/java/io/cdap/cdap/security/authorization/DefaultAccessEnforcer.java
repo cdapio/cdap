@@ -90,7 +90,8 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
       return;
     }
     // bypass the check when the principal is the master user and the entity is in the system namespace
-    if (isAccessingSystemNSAsMasterUser(entity, principal) || isEnforcingOnSamePrincipalId(entity, principal)) {
+    if (isAccessingSystemNSAsMasterUser(entity, principal) || isEnforcingOnSamePrincipalId(entity, principal)
+      || isRootUGIPrincipalHack(principal)) {
       return;
     }
 
@@ -126,7 +127,8 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
     }
 
     // bypass the check when the principal is the master user and the entity is in the system namespace
-    if (isAccessingSystemNSAsMasterUser(parentId, principal) || isEnforcingOnSamePrincipalId(parentId, principal)) {
+    if (isAccessingSystemNSAsMasterUser(parentId, principal) || isEnforcingOnSamePrincipalId(parentId, principal)
+      || isRootUGIPrincipalHack(principal)) {
       return;
     }
 
@@ -163,7 +165,8 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
     Set<EntityId> visibleEntities = new HashSet<>();
     // filter out entity id which is in system namespace and principal is the master user
     for (EntityId entityId : entityIds) {
-      if (isAccessingSystemNSAsMasterUser(entityId, principal) || isEnforcingOnSamePrincipalId(entityId, principal)) {
+      if (isAccessingSystemNSAsMasterUser(entityId, principal) || isEnforcingOnSamePrincipalId(entityId, principal)
+        || isRootUGIPrincipalHack(principal)) {
         visibleEntities.add(entityId);
       }
     }
@@ -225,5 +228,11 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
   private boolean isEnforcingOnSamePrincipalId(EntityId entityId, Principal principal) {
     return entityId.getEntityType().equals(EntityType.KERBEROSPRINCIPAL) &&
       principal.getName().equals(entityId.getEntityName());
+  }
+
+  // HACK workaround for CDAP-18172
+  private boolean isRootUGIPrincipalHack(Principal principal) {
+    // We assume that the principal UGI for the system service apps are "root"
+    return principal != null && principal.getName() != null && principal.getName().equals("root");
   }
 }
