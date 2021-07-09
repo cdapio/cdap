@@ -64,6 +64,7 @@ import io.cdap.cdap.security.auth.AccessToken;
 import io.cdap.cdap.security.auth.AccessTokenCodec;
 import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.auth.UserIdentity;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import org.apache.hadoop.conf.Configuration;
@@ -341,8 +342,10 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
       secretFiles.put(Constants.RuntimeMonitor.SERVICE_PROXY_PASSWORD_FILE,
                       generateAndSaveServiceProxySecret(programRunId, keysDirLocation));
     }
-    secretFiles.put(Constants.Security.Authentication.RUNTIME_TOKEN_FILE,
-                    generateAndSaveRuntimeToken(programRunId, keysDirLocation));
+    if (SecurityUtil.isInternalAuthEnabled(cConf)) {
+      secretFiles.put(Constants.Security.Authentication.RUNTIME_TOKEN_FILE,
+                      generateAndSaveRuntimeToken(programRunId, keysDirLocation));
+    }
 
     RuntimeJobManager jobManager = provisioningService.getRuntimeJobManager(programRunId, programOpts).orElse(null);
     // Use RuntimeJobManager to launch the remote process if it is supported
