@@ -1,0 +1,7 @@
+{
+  "label": "Bypass CMEK check capability",
+  "status": "ENABLED",
+  "capability": "bypass_cmek_check",
+  "applications": [],
+  "programs": []
+}
