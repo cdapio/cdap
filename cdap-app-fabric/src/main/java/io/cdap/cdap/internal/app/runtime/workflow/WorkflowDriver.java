@@ -75,6 +75,7 @@ import io.cdap.cdap.internal.app.runtime.DataSetFieldSetter;
 import io.cdap.cdap.internal.app.runtime.MetricsFieldSetter;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.customaction.BasicCustomActionContext;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.dataset.DatasetCreationSpec;
@@ -147,6 +148,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final FieldLineageWriter fieldLineageWriter;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final RemoteClientFactory remoteClientFactory;
+  private final PluginFinder pluginFinder;
 
   private volatile Thread runningThread;
   private boolean suspended;
@@ -161,7 +163,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                  SecureStoreManager secureStoreManager, MessagingService messagingService,
                  ProgramStateWriter programStateWriter, MetadataReader metadataReader,
                  MetadataPublisher metadataPublisher, FieldLineageWriter fieldLineageWriter,
-                 NamespaceQueryAdmin namespaceQueryAdmin, RemoteClientFactory remoteClientFactory) {
+                 NamespaceQueryAdmin namespaceQueryAdmin, RemoteClientFactory remoteClientFactory,
+                 PluginFinder pluginFinder) {
     this.program = program;
     this.programOptions = options;
     this.workflowSpec = workflowSpec;
@@ -186,7 +189,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                     discoveryServiceClient, nodeStates, pluginInstantiator,
                                                     secureStore, secureStoreManager, messagingService, null,
                                                     metadataReader, metadataPublisher, namespaceQueryAdmin,
-                                                    fieldLineageWriter, remoteClientFactory);
+                                                    fieldLineageWriter, remoteClientFactory, pluginFinder);
     this.pluginInstantiator = pluginInstantiator;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
@@ -196,6 +199,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.fieldLineageWriter = fieldLineageWriter;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.remoteClientFactory = remoteClientFactory;
+    this.pluginFinder = pluginFinder;
   }
 
   @Override
@@ -498,7 +502,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                                   messagingService, node.getConditionSpecification(),
                                                                   metadataReader, metadataPublisher,
                                                                   namespaceQueryAdmin, fieldLineageWriter,
-                                                                  remoteClientFactory);
+                                                                  remoteClientFactory, pluginFinder);
     final Iterator<WorkflowNode> iterator;
     Class<?> clz = classLoader.loadClass(node.getPredicateClassName());
     Predicate<WorkflowContext> predicate = instantiator.get(

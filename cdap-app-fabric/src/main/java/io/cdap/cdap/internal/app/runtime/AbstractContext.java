@@ -91,6 +91,7 @@ import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.data2.transaction.RetryingShortTransactionSystemClient;
 import io.cdap.cdap.data2.transaction.Transactions;
 import io.cdap.cdap.internal.app.preview.DataTracerFactoryProvider;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginClassLoaders;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.schedule.TriggeringScheduleInfoAdapter;
@@ -168,7 +169,6 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private volatile ClassLoader programInvocationClassLoader;
   protected final DynamicDatasetCache datasetCache;
   protected final RetryStrategy retryStrategy;
-
   /**
    * Constructs a context. To have plugin support, the {@code pluginInstantiator} must not be null.
    */
@@ -181,7 +181,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                             @Nullable PluginInstantiator pluginInstantiator,
                             MetadataReader metadataReader, MetadataPublisher metadataPublisher,
                             NamespaceQueryAdmin namespaceQueryAdmin, FieldLineageWriter fieldLineageWriter,
-                            RemoteClientFactory remoteClientFactory) {
+                            RemoteClientFactory remoteClientFactory, PluginFinder pluginFinder) {
     super(program.getId());
 
     this.artifactId = ProgramRunners.getArtifactId(programOptions);
@@ -215,18 +215,20 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
       new SystemDatasetInstantiator(dsFramework, program.getClassLoader(), Collections.singletonList(program.getId()));
 
     TransactionSystemClient retryingTxClient = new RetryingShortTransactionSystemClient(txClient, retryStrategy);
-    this.datasetCache = multiThreaded
-      ? new MultiThreadDatasetCache(instantiator, retryingTxClient, program.getId().getNamespaceId(),
-                                    runtimeArgs, programMetrics, staticDatasets, messagingContext)
-      : new SingleThreadDatasetCache(instantiator, retryingTxClient, program.getId().getNamespaceId(),
-                                     runtimeArgs, programMetrics, staticDatasets);
+    this.datasetCache =
+      multiThreaded
+        ? new MultiThreadDatasetCache(instantiator, retryingTxClient, program.getId().getNamespaceId(),
+                                      runtimeArgs, programMetrics, staticDatasets, messagingContext)
+        : new SingleThreadDatasetCache(instantiator, retryingTxClient, program.getId().getNamespaceId(),
+                                       runtimeArgs, programMetrics, staticDatasets);
     if (!multiThreaded) {
       datasetCache.addExtraTransactionAware(messagingContext);
     }
 
     this.pluginInstantiator = pluginInstantiator;
     this.pluginContext = new DefaultPluginContext(pluginInstantiator, program.getId(),
-                                                  program.getApplicationSpecification().getPlugins());
+                                                  program.getApplicationSpecification().getPlugins(), artifactId,
+                                                  pluginFinder);
 
     KerberosPrincipalId principalId = ProgramRunners.getApplicationPrincipal(programOptions);
     this.admin = new DefaultAdmin(dsFramework, program.getId().getNamespaceId(), secureStoreManager,
@@ -239,6 +241,24 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.fieldLineageOperations = new HashSet<>();
     this.loggingContext = LoggingContextHelper.getLoggingContextWithRunId(program.getId().run(getRunId()),
                                                                           programOptions.getArguments().asMap());
+  }
+
+  /**
+   * Constructs a context. To have plugin support, the {@code pluginInstantiator} must not be null.
+   */
+  protected AbstractContext(Program program, ProgramOptions programOptions, CConfiguration cConf,
+                            Set<String> datasets, DatasetFramework dsFramework, TransactionSystemClient txClient,
+                            boolean multiThreaded,
+                            @Nullable MetricsCollectionService metricsService, Map<String, String> metricsTags,
+                            SecureStore secureStore, SecureStoreManager secureStoreManager,
+                            MessagingService messagingService,
+                            @Nullable PluginInstantiator pluginInstantiator,
+                            MetadataReader metadataReader, MetadataPublisher metadataPublisher,
+                            NamespaceQueryAdmin namespaceQueryAdmin, FieldLineageWriter fieldLineageWriter,
+                            RemoteClientFactory remoteClientFactory) {
+    this(program, programOptions, cConf, datasets, dsFramework, txClient, multiThreaded, metricsService, metricsTags,
+         secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher,
+         namespaceQueryAdmin, fieldLineageWriter, remoteClientFactory, null);
   }
 
   private MetricsCollectionService getMetricsService(CConfiguration cConf, MetricsCollectionService metricsService,
@@ -472,6 +492,13 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     return pluginContext.loadPluginClass(pluginId);
   }
 
+  @Nullable
+  @Override
+  public <T> Class<T> loadClass(String pluginType, String pluginName, String pluginId,
+                         PluginProperties properties) throws IOException, ClassNotFoundException {
+    return pluginContext.loadClass(pluginType, pluginName, pluginId, properties);
+  }
+
   @Override
   public <T> T newPluginInstance(String pluginId) throws InstantiationException {
     return pluginContext.newPluginInstance(pluginId);
@@ -600,6 +627,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
         try {
           //noinspection unchecked
           program.initialize((T) AbstractContext.this);
+          this.programInvocationClassLoader = createProgramInvocationClassLoader();
         } catch (Error e) {
           // Need to wrap Error. Otherwise, listeners of this Guava Service may not be called if the
           // initialization of the user program is missing dependencies (CDAP-2543).

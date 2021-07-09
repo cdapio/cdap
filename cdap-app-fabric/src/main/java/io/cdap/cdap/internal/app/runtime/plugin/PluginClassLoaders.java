@@ -60,9 +60,12 @@ public final class PluginClassLoaders {
     try {
       // Gather all explicitly used plugin class names. It is needed for external plugin case.
       Multimap<Plugin, String> artifactPluginClasses = getArtifactPluginClasses(plugins);
+      Map<Plugin, PluginClassLoader> loaders = pluginInstantiator.getPluginClassLoaders();
+      loaders.forEach((plugin, classLoader) ->
+                        artifactPluginClasses.put(plugin, plugin.getPluginClass().getClassName()));
 
       List<ClassLoader> pluginClassLoaders = new ArrayList<>();
-      for (Plugin plugin : plugins.values()) {
+      for (Plugin plugin : loaders.keySet()) {
         ClassLoader pluginClassLoader = pluginInstantiator.getPluginClassLoader(plugin);
         if (pluginClassLoader instanceof PluginClassLoader) {
 

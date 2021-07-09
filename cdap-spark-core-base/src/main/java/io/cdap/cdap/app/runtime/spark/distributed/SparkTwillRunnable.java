@@ -22,7 +22,6 @@ import com.google.inject.Module;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.guice.DistributedArtifactManagerModule;
-import io.cdap.cdap.app.guice.UnsupportedPluginFinder;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
@@ -30,6 +29,7 @@ import io.cdap.cdap.app.runtime.spark.SparkProgramRuntimeProvider;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
+import io.cdap.cdap.internal.app.runtime.artifact.RemotePluginFinder;
 import io.cdap.cdap.internal.app.runtime.distributed.AbstractProgramTwillRunnable;
 import io.cdap.cdap.internal.app.spark.SparkCompatReader;
 import io.cdap.cdap.proto.ProgramType;
@@ -68,7 +68,7 @@ public class SparkTwillRunnable extends AbstractProgramTwillRunnable<ProgramRunn
       : Modules.combine(module, new AbstractModule() {
       @Override
       protected void configure() {
-        bind(PluginFinder.class).to(UnsupportedPluginFinder.class);
+        bind(PluginFinder.class).to(RemotePluginFinder.class);
       }
     });
   }

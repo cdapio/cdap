@@ -293,6 +293,13 @@ final class BasicSparkClientContext implements SparkClientContext {
     return sparkRuntimeContext.openConnection(namespaceId, applicationId, serviceId, methodPath);
   }
 
+  @Nullable
+  @Override
+  public <T> Class<T> loadClass(String pluginType, String pluginName, String pluginId,
+                         PluginProperties properties) throws IOException, ClassNotFoundException {
+    return sparkRuntimeContext.loadClass(pluginType, pluginName, pluginId, properties);
+  }
+
   @Override
   public PluginProperties getPluginProperties(String pluginId) {
     return sparkRuntimeContext.getPluginProperties(pluginId);
@@ -477,5 +484,9 @@ final class BasicSparkClientContext implements SparkClientContext {
   @Override
   public void removeTags(MetadataEntity metadataEntity, String... tags) {
     sparkRuntimeContext.removeTags(metadataEntity, tags);
+  }
+
+  public SparkRuntimeContext getSparkRuntimeContext() {
+    return sparkRuntimeContext;
   }
 }

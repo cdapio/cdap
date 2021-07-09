@@ -568,7 +568,7 @@ public class ArtifactRepositoryTest {
           String pluginId = "5";
           PluginContext pluginContext = new DefaultPluginContext(instantiator,
                                                                  NamespaceId.DEFAULT.app("abc").worker("w"),
-                                                                 ImmutableMap.of(pluginId, pluginInfo));
+                                                                 ImmutableMap.of(pluginId, pluginInfo), null, null);
           PluginProperties resolvedProperties = pluginContext.getPluginProperties(pluginId, testMacroEvaluator);
           Map<String, String> expected = new HashMap<>();
           expected.put("class.name", TEST_EMPTY_CLASS);

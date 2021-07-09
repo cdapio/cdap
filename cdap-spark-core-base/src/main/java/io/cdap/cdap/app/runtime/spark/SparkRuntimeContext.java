@@ -95,7 +95,7 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
     super(program, programOptions, cConf, getSparkSpecification(program).getDatasets(), datasetFramework, txClient,
           true, metricsCollectionService, createMetricsTags(workflowProgramInfo),
           secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher,
-          namespaceQueryAdmin, fieldLineageWriter, remoteClientFactory);
+          namespaceQueryAdmin, fieldLineageWriter, remoteClientFactory, pluginFinder);
     this.cConf = cConf;
     this.hConf = hConf;
     this.hostname = hostname;

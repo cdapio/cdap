@@ -24,6 +24,7 @@ import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataReader;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.api.metadata.MetadataWriter;
+import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.StageContext;
@@ -118,6 +119,11 @@ public abstract class AbstractStageContext implements StageContext {
       Throwables.propagateIfInstanceOf(e, InstantiationException.class);
       throw Throwables.propagate(e);
     }
+  }
+
+  @Override
+  public PluginContext getPluginContext() {
+    return pipelineRuntime.getPluginContext();
   }
 
   @Override

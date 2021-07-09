@@ -33,6 +33,7 @@ import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
+import io.cdap.cdap.internal.app.runtime.artifact.RemotePluginFinder;
 import io.cdap.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
 import io.cdap.cdap.proto.ProgramType;
@@ -64,7 +65,7 @@ public final class WorkflowTwillRunnable extends AbstractProgramTwillRunnable<Wo
       modules.add(new AbstractModule() {
         @Override
         protected void configure() {
-          bind(PluginFinder.class).to(UnsupportedPluginFinder.class);
+          bind(PluginFinder.class).to(RemotePluginFinder.class);
         }
       });
     }

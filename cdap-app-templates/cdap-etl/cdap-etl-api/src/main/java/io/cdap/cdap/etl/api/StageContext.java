@@ -23,6 +23,7 @@ import io.cdap.cdap.api.metadata.MetadataReader;
 import io.cdap.cdap.api.metadata.MetadataWriter;
 import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
+import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.etl.api.lineage.field.LineageRecorder;
 
@@ -128,6 +129,10 @@ public interface StageContext extends ServiceDiscoverer, MetadataReader, Metadat
    */
   @Nullable
   Schema getInputSchema();
+
+  default PluginContext getPluginContext() {
+    throw new UnsupportedOperationException("");
+  }
 
   /**
    * Return the input schemas for the stage. The map key is the stage name and the map value is the schema from

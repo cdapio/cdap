@@ -68,6 +68,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -77,6 +78,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -101,7 +103,7 @@ public class PluginInstantiator implements Closeable {
     .put("string", String.class)
     .build();
 
-  private final LoadingCache<ClassLoaderKey, PluginClassLoader> classLoaders;
+  private final LoadingCache<ClassLoaderKey, ClassLoaderValue> classLoaders;
   private final InstantiatorFactory instantiatorFactory;
   private final File tmpDir;
   private final File pluginDir;
@@ -151,7 +153,7 @@ public class PluginInstantiator implements Closeable {
    */
   public PluginClassLoader getArtifactClassLoader(ArtifactId artifactId) throws IOException {
     try {
-      return classLoaders.get(new ClassLoaderKey(artifactId));
+      return classLoaders.get(new ClassLoaderKey(artifactId)).classLoader;
     } catch (ExecutionException e) {
       Throwables.propagateIfInstanceOf(e.getCause(), IOException.class);
       throw Throwables.propagate(e.getCause());
@@ -167,9 +169,14 @@ public class PluginInstantiator implements Closeable {
    * @see PluginClassLoader
    */
   public ClassLoader getPluginClassLoader(Plugin plugin) throws IOException {
-    return getPluginClassLoader(plugin.getArtifactId(), plugin.getParents());
+    return getPluginClassLoader(plugin.getArtifactId(), plugin.getParents(), plugin);
   }
 
+  public Map<Plugin, PluginClassLoader> getPluginClassLoaders() throws IOException {
+    return classLoaders.asMap().values().stream()
+             .filter(val -> val.plugin != null).collect(Collectors.toMap(
+               ClassLoaderValue::getPlugin, ClassLoaderValue::getClassLoader));
+  }
   /**
    * Returns a {@link ClassLoader} for the given plugin.
    *
@@ -182,7 +189,17 @@ public class PluginInstantiator implements Closeable {
   public PluginClassLoader getPluginClassLoader(ArtifactId artifactId,
                                                 List<ArtifactId> pluginParents) throws IOException {
     try {
-      return classLoaders.get(new ClassLoaderKey(artifactId, pluginParents));
+      return classLoaders.get(new ClassLoaderKey(artifactId, pluginParents)).classLoader;
+    } catch (ExecutionException e) {
+      Throwables.propagateIfInstanceOf(e.getCause(), IOException.class);
+      throw Throwables.propagate(e.getCause());
+    }
+  }
+
+  public PluginClassLoader getPluginClassLoader(ArtifactId artifactId,
+                                                List<ArtifactId> pluginParents, Plugin plugin) throws IOException {
+    try {
+      return classLoaders.get(new ClassLoaderKey(pluginParents, artifactId, plugin)).classLoader;
     } catch (ExecutionException e) {
       Throwables.propagateIfInstanceOf(e.getCause(), IOException.class);
       throw Throwables.propagate(e.getCause());
@@ -410,14 +427,26 @@ public class PluginInstantiator implements Closeable {
   private static class ClassLoaderKey {
     private final List<ArtifactId> parents;
     private final ArtifactId artifact;
+    @Nullable
+    private final Plugin pluginClass;
 
     ClassLoaderKey(ArtifactId artifact) {
       this(artifact, Collections.emptyList());
     }
 
     ClassLoaderKey(ArtifactId artifact, List<ArtifactId> parents) {
+      this(parents, artifact, null);
+    }
+
+    ClassLoaderKey(List<ArtifactId> parents, ArtifactId artifact, @Nullable Plugin pluginClass) {
       this.parents = parents;
       this.artifact = artifact;
+      this.pluginClass = pluginClass;
+    }
+
+    @Nullable
+    public Plugin getPluginClass() {
+      return pluginClass;
     }
 
     @Override
@@ -441,19 +470,43 @@ public class PluginInstantiator implements Closeable {
   }
 
   /**
+   * Key for the classloader cache.
+   */
+  private static class ClassLoaderValue {
+    private final PluginClassLoader classLoader;
+    private final Plugin plugin;
+
+    ClassLoaderValue(PluginClassLoader classLoader, @Nullable Plugin plugin) {
+      this.classLoader = classLoader;
+      this.plugin = plugin;
+    }
+
+    public PluginClassLoader getClassLoader() {
+      return classLoader;
+    }
+
+    @Nullable
+    public Plugin getPlugin() {
+      return plugin;
+    }
+  }
+
+  /**
    * A CacheLoader for creating plugin ClassLoader.
    */
-  private final class ClassLoaderCacheLoader extends CacheLoader<ClassLoaderKey, PluginClassLoader> {
+  private final class ClassLoaderCacheLoader extends CacheLoader<ClassLoaderKey, ClassLoaderValue> {
 
     @Override
-    public PluginClassLoader load(ClassLoaderKey key) throws Exception {
+    public ClassLoaderValue load(ClassLoaderKey key) throws Exception {
       File unpackedDir = DirUtils.createTempDir(tmpDir);
       File artifact = new File(pluginDir, Artifacts.getFileName(key.artifact));
       BundleJarUtil.prepareClassLoaderFolder(Locations.toLocation(artifact), unpackedDir);
 
       Iterator<ArtifactId> parentIter = key.parents.iterator();
       if (!parentIter.hasNext()) {
-        return new PluginClassLoader(key.artifact, unpackedDir, artifact.getAbsolutePath(), parentClassLoader);
+        PluginClassLoader pluginClassLoader = 
+          new PluginClassLoader(key.artifact, unpackedDir, artifact.getAbsolutePath(), parentClassLoader);
+        return new ClassLoaderValue(pluginClassLoader, key.getPluginClass());
       }
 
       List<ArtifactId> parentsOfParent = new ArrayList<>(key.parents.size() - 1);
@@ -478,18 +531,20 @@ public class PluginInstantiator implements Closeable {
       PluginClassLoader parentPluginCL = getPluginClassLoader(parentArtifact, parentsOfParent);
       ClassLoader parentCL =
         new CombineClassLoader(parentPluginCL.getParent(), parentPluginCL.getExportPackagesClassLoader());
-      return new PluginClassLoader(key.artifact, unpackedDir, artifact.getAbsolutePath(), parentCL);
+      PluginClassLoader pluginClassLoader =
+        new PluginClassLoader(key.artifact, unpackedDir, artifact.getAbsolutePath(), parentCL);
+      return new ClassLoaderValue(pluginClassLoader, key.getPluginClass());
     }
   }
 
   /**
    * A RemovalListener for closing plugin ClassLoader.
    */
-  private static final class ClassLoaderRemovalListener implements RemovalListener<ClassLoaderKey, PluginClassLoader> {
+  private static final class ClassLoaderRemovalListener implements RemovalListener<ClassLoaderKey, ClassLoaderValue> {
 
     @Override
-    public void onRemoval(RemovalNotification<ClassLoaderKey, PluginClassLoader> notification) {
-      Closeables.closeQuietly(notification.getValue());
+    public void onRemoval(RemovalNotification<ClassLoaderKey, ClassLoaderValue> notification) {
+      Closeables.closeQuietly(notification.getValue().classLoader);
     }
   }
 

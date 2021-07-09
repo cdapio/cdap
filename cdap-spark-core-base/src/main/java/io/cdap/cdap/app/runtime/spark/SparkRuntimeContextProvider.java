@@ -59,6 +59,7 @@ import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
+import io.cdap.cdap.internal.app.runtime.artifact.RemotePluginFinder;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitors;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
@@ -349,7 +350,7 @@ public final class SparkRuntimeContextProvider {
     modules.add(clusterMode == ClusterMode.ON_PREMISE ? new DistributedArtifactManagerModule() : new AbstractModule() {
       @Override
       protected void configure() {
-        bind(PluginFinder.class).to(UnsupportedPluginFinder.class);
+        bind(PluginFinder.class).to(RemotePluginFinder.class);
       }
     });
     return Guice.createInjector(modules);

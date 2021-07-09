@@ -38,6 +38,7 @@ import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.internal.app.runtime.AbstractContext;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.messaging.MessagingService;
 import org.apache.tephra.TransactionSystemClient;
@@ -70,13 +71,13 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
                        MessagingService messagingService, @Nullable ConditionSpecification conditionSpecification,
                        MetadataReader metadataReader, MetadataPublisher metadataPublisher,
                        NamespaceQueryAdmin namespaceQueryAdmin, FieldLineageWriter fieldLineageWriter,
-                       RemoteClientFactory remoteClientFactory) {
+                       RemoteClientFactory remoteClientFactory, PluginFinder pluginFinder) {
     super(program, programOptions, cConf, new HashSet<>(),
           datasetFramework, txClient, false,
           metricsCollectionService, Collections.singletonMap(Constants.Metrics.Tag.WORKFLOW_RUN_ID,
                                                              ProgramRunners.getRunId(programOptions).getId()),
           secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher,
-          namespaceQueryAdmin, fieldLineageWriter, remoteClientFactory);
+          namespaceQueryAdmin, fieldLineageWriter, remoteClientFactory, pluginFinder);
     this.workflowSpec = workflowSpec;
     this.conditionSpecification = conditionSpecification;
     this.token = token;

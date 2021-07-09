@@ -20,11 +20,33 @@ import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 
+import java.io.IOException;
+import javax.annotation.Nullable;
+
 /**
  * Provides access to plugin context when a program is executing.
  */
 @Beta
 public interface PluginContext {
+
+  /**
+   * Adds a Plugin usage to the Application and create a new instance.
+   * The Plugin will be accessible at execution time via the {@link PluginContext}.
+   *
+   * @param pluginType plugin type name
+   * @param pluginName plugin name
+   * @param pluginId an unique identifier for this usage. The same id is used to get the plugin at execution time.
+   * @param properties properties for the plugin. The same set of properties will be used to instantiate the plugin
+   *                   instance at execution time
+   * @param <T> type of the plugin class
+   * @return A new instance of the plugin class or {@code null} if no plugin was found
+   * @throws InvalidPluginConfigException if the plugin config could not be created from the given properties
+   */
+  @Nullable
+  default <T> Class<T> loadClass(String pluginType, String pluginName, String pluginId,
+                          PluginProperties properties) throws IOException, ClassNotFoundException {
+    throw new UnsupportedOperationException("");
+  }
 
   /**
    * Gets the {@link PluginProperties} associated with the given plugin id.
