@@ -126,6 +126,16 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
       if (jObj.has("owner") && jObj.has("repoName")) {
         String owner = jObj.getAsJsonPrimitive("owner").toString();
         String repo = jObj.getAsJsonPrimitive("repoName").toString();
+        String defaultBranch = jObj.getAsJsonPrimitive("default_branch").toString().replace("\"", "");
+        String gitUrl = jObj.getAsJsonPrimitive("url").toString().replace("\"", "");
+        if (jObj.has("username") && jObj.has("password")) {
+          String username = jObj.getAsJsonPrimitive("username").toString().replace("\"", "");
+          String password = jObj.getAsJsonPrimitive("password").toString().replace("\"", "");
+        } else if (jObj.has("authorization")) {
+          String auth = jObj.getAsJsonPrimitive("authorization").toString().replace("\"", "");
+        } else {
+          responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Please enter identification.");
+        }
         //connect to GitHub
         String htmlUrl =  "https://api.github.com/repos/" + owner.substring(1, owner.length() - 1) + "/"
             + repo.substring(1, repo.length() - 1);
@@ -160,6 +170,16 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
       if (jObj.has("owner") && jObj.has("repoName")) {
         String owner = jObj.getAsJsonPrimitive("owner").toString();
         String repo = jObj.getAsJsonPrimitive("repoName").toString();
+        String defaultBranch = jObj.getAsJsonPrimitive("default_branch").toString().replace("\"", "");
+        String gitUrl = jObj.getAsJsonPrimitive("url").toString().replace("\"", "");
+        if (jObj.has("username") && jObj.has("password")) {
+          String username = jObj.getAsJsonPrimitive("username").toString().replace("\"", "");
+          String password = jObj.getAsJsonPrimitive("password").toString().replace("\"", "");
+        } else if (jObj.has("authorization")) {
+          String auth = jObj.getAsJsonPrimitive("authorization").toString().replace("\"", "");
+        } else {
+          responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Please enter identification.");
+        }
         //connect to GitHub
         String htmlUrl =  "https://api.github.com/repos/" + owner.substring(1, owner.length() - 1) + "/"
             + repo.substring(1, repo.length() - 1);
@@ -193,6 +213,71 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
       userRepo = new JsonObject();
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson("Repository info has been deleted."));
     }
+  }
+
+  @PUT
+  @Path("/git/repo/add/github")
+  public void addGithubInfo(FullHttpRequest request, HttpResponder responder) throws Exception {
+
+    JsonObject jObj = DECODE_GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), JsonObject.class);
+    String gPath = jObj.getAsJsonPrimitive("Path").toString().replace("\"", "");
+    String pipeline = jObj.getAsJsonPrimitive("Pipeline").toString().replace("\"", "");
+    String owner = userRepo.getAsJsonPrimitive("owner").toString().replace("\"", "");
+    String repo = userRepo.getAsJsonPrimitive("repoName").toString().replace("\"", "");
+    URL url = new URL("https://api.github.com/repos/" + owner + "/" + repo + "/contents/" + gPath);
+    HttpURLConnection con  = (HttpURLConnection) url.openConnection();
+    con.setRequestMethod("PUT");
+    con.setDoOutput(true);
+
+    if (jObj.has("Authorization")) {
+      String token = jObj.getAsJsonPrimitive("Authorization").toString().replace("\"", "");
+      con.setRequestProperty("Authorization", "token " + token);
+    } else if (jObj.has("Username") && jObj.has("Password")) {
+      String username = jObj.getAsJsonPrimitive("Username").toString().replace("\"", "");
+      String password = jObj.getAsJsonPrimitive("Password").toString().replace("\"", "");
+      String authString = "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes());
+      con.setRequestProperty("Authorization", authString);
+    } else {
+      responder.sendJson(HttpResponseStatus.BAD_REQUEST, GSON.toJson("Incorrect Format."));
+    }
+    String encodedPipeline = Base64.getEncoder().encodeToString(pipeline.getBytes());
+    byte[] info = encodedPipeline.getBytes(
+        StandardCharsets.UTF_8);
+    DataOutputStream wout = new DataOutputStream(con.getOutputStream());
+    wout.write(info);
+    wout.flush();
+    wout.close();
+    int responseCode = con.getResponseCode();
+    responder.sendJson(HttpResponseStatus.OK, responseCode + " " + pipeline);
+  }
+
+  @GET
+  @Path("/git/repo/get/github")
+  public void getGFileInfo(FullHttpRequest request, HttpResponder responder) throws Exception {
+    JsonObject jObj = DECODE_GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), JsonObject.class);
+    String owner = userRepo.getAsJsonPrimitive("owner").toString().replace("\"", "");
+    String repo = userRepo.getAsJsonPrimitive("repoName").toString().replace("\"", "");
+    String path = jObj.getAsJsonPrimitive("path").toString().replace("\"", "");
+
+    URL url = new URL("https://api.github.com/repos/" + owner + "/" + repo + "/contents/" + path);
+    HttpURLConnection con  = (HttpURLConnection) url.openConnection();
+    con.setRequestMethod("GET");
+    con.setDoOutput(true);
+
+    if (jObj.has("Authorization")) {
+      String token = jObj.getAsJsonPrimitive("Authorization").toString().replace("\"", "");
+      con.setRequestProperty("Authorization", "token " + token);
+    } else if (jObj.has("Username") && jObj.has("Password")) {
+      String username = jObj.getAsJsonPrimitive("Username").toString().replace("\"", "");
+      String password = jObj.getAsJsonPrimitive("Password").toString().replace("\"", "");
+      String authString = "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes());
+      con.setRequestProperty("Authorization", authString);
+    } else {
+      responder.sendJson(HttpResponseStatus.BAD_REQUEST, GSON.toJson("Incorrect Format."));
+    }
+
+    int responseCode = con.getResponseCode();
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(jObj + " " + responseCode));
   }
   //Instance Level Properties
   @Path("/preferences")
