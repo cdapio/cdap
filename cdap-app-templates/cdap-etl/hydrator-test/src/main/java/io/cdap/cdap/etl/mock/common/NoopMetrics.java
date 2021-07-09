@@ -35,6 +35,11 @@ public class NoopMetrics implements StageMetrics {
   }
 
   @Override
+  public void countLong(String s, long l) {
+    // no-op
+  }
+
+  @Override
   public void gauge(String s, long l) {
     // no-op
   }

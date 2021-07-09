@@ -39,6 +39,11 @@ public class MockStageMetrics implements StageMetrics {
   }
 
   @Override
+  public void countLong(String s, long l) {
+    mockMetrics.countLong(stageName + "." + s, l);
+  }
+
+  @Override
   public void gauge(String s, long l) {
     mockMetrics.gauge(stageName + "." + s, l);
   }
@@ -63,7 +68,7 @@ public class MockStageMetrics implements StageMetrics {
     mockMetrics.gauge(s, l);
   }
 
-  public int getPipelineCount(String s) {
+  public long getPipelineCount(String s) {
     return mockMetrics.getCount(s);
   }
 
@@ -71,7 +76,7 @@ public class MockStageMetrics implements StageMetrics {
     return mockMetrics.getGauge(s);
   }
 
-  public int getCount(String s) {
+  public long getCount(String s) {
     return mockMetrics.getCount(stageName + "." + s);
   }
 

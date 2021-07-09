@@ -122,6 +122,11 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
   }
 
   @Override
+  public void countLong(String metricName, long delta) {
+    getMetrics().countLong(metricName, delta);
+  }
+
+  @Override
   public void gauge(String metricName, long value) {
     getMetrics().gauge(metricName, value);
   }
