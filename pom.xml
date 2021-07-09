@@ -2160,8 +2160,8 @@
         <package.rpm.arch>all</package.rpm.arch>
         <package.dirs>opt etc</package.dirs>
         <package.config.dirs>--config-files etc/cdap --config-files etc/logrotate.d --config-files etc/security</package.config.dirs>
-        <dependency.groupId.exclusions>org.apache.hadoop,org.apache.hbase,org.apache.hive,\
-          org.datanucleus,asm,org.apache.spark,slf4j-log4j12,commons-logging</dependency.groupId.exclusions>
+        <dependency.groupId.exclusions>org.apache.hadoop,org.apache.hbase,org.apache.hive,com.google.protobuf,\
+          org.datanucleus,asm,org.apache.spark,slf4j-log4j12,commons-logging,com.google.crypto.tink</dependency.groupId.exclusions>
       </properties>
       <build>
         <pluginManagement>
