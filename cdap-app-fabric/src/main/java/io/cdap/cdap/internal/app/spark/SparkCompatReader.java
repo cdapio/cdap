@@ -49,8 +49,11 @@ public class SparkCompatReader {
     // use the value in the system property (expected in distributed)
     // otherwise, check the conf for the spark compat version (expected in standalone and unit tests)
     String compatStr = System.getProperty(Constants.AppFabric.SPARK_COMPAT);
+    LOG.trace("CompatStr from system property: {}", compatStr);
     compatStr = compatStr == null ? System.getenv(Constants.SPARK_COMPAT_ENV) : compatStr;
+    LOG.trace("CompatStr from system property or env: {}", compatStr);
     compatStr = compatStr == null ? cConf.get(Constants.AppFabric.SPARK_COMPAT) : compatStr;
+    LOG.trace("CompatStr from system property, env or cConf: {}", compatStr);
 
     if (compatStr == null) {
       return SparkCompat.SPARK2_2_11;
