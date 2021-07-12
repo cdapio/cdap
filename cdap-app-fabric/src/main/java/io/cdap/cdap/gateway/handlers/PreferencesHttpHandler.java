@@ -46,6 +46,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Map;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -107,29 +108,44 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
     } else {
       JsonObject jObj = DECODE_GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), JsonObject.class);
       //check that the Json has the necessary fields
-      if (jObj.has("owner") && jObj.has("repoName")) {
-        String owner = jObj.getAsJsonPrimitive("owner").toString();
-        String repo = jObj.getAsJsonPrimitive("repoName").toString();
+      if (jObj.has("nickname") && jObj.has("url") && jObj.has("default_branch") && jObj.has("path")) {
+        String nickname = jObj.getAsJsonPrimitive("nickname").toString().replace("\"", "");
         String defaultBranch = jObj.getAsJsonPrimitive("default_branch").toString().replace("\"", "");
-        String gitUrl = jObj.getAsJsonPrimitive("url").toString().replace("\"", "");
-        if (jObj.has("username") && jObj.has("password")) {
-          String username = jObj.getAsJsonPrimitive("username").toString().replace("\"", "");
-          String password = jObj.getAsJsonPrimitive("password").toString().replace("\"", "");
-        } else if (jObj.has("authorization")) {
-          String auth = jObj.getAsJsonPrimitive("authorization").toString().replace("\"", "");
-        } else {
-          responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Please enter identification.");
-        }
+        String path = jObj.getAsJsonPrimitive("path").toString().replace("\"", "");
+
+        String giturl = jObj.getAsJsonPrimitive("url").toString().replace("\"", "");
+        String[] sshUrl = giturl.split(":");
+        int parse = sshUrl[1].indexOf("/");
+        String owner = sshUrl[1].substring(0, parse);
+        String name = sshUrl[1].substring(parse + 1, sshUrl[1].lastIndexOf("."));
         //connect to GitHub
-        String htmlUrl =  "https://api.github.com/repos/" + owner.substring(1, owner.length() - 1) + "/"
-            + repo.substring(1, repo.length() - 1);
+        String htmlUrl =  "https://api.github.com/repos/" + owner + "/"
+            + name;
         URL url = new URL(htmlUrl);
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
         con.setRequestMethod("GET");
+
+        if (jObj.has("username") && jObj.has("password")) {
+          String username = jObj.getAsJsonPrimitive("username").toString().replace("\"", "");
+          String password = jObj.getAsJsonPrimitive("password").toString().replace("\"", "");
+          String authString = "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes());
+          con.setRequestProperty("Authorization", authString);
+        } else if (jObj.has("authorization")) {
+          String token = jObj.getAsJsonPrimitive("authorization").toString().replace("\"", "");
+          con.setRequestProperty("Authorization", "token " + token);
+        } else {
+          responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Please enter identification.");
+        }
+
         //test that the GitHub repository information is valid
         if (con.getResponseCode() == HttpURLConnection.HTTP_OK) {
-          userRepo = DECODE_GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), JsonObject.class);
-          responder.sendJson(HttpResponseStatus.OK, GSON.toJson("Repository Info has been saved. "));
+          userRepo.addProperty("nickname", nickname);
+          userRepo.addProperty("url", giturl);
+          userRepo.addProperty("default_branch", defaultBranch);
+          userRepo.addProperty("path", path);
+          userRepo.addProperty("owner", owner);
+          userRepo.addProperty("name", name);
+          responder.sendJson(HttpResponseStatus.OK, GSON.toJson("Repository Info has been saved."));
         } else {
           responder.sendJson(HttpResponseStatus.BAD_REQUEST, "This repository does not exist.");
         }
@@ -151,31 +167,45 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
           GSON.toJson("Use PUT to enter repository info first."));
     } else {
       JsonObject jObj = DECODE_GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), JsonObject.class);
-      if (jObj.has("owner") && jObj.has("repoName")) {
-        String owner = jObj.getAsJsonPrimitive("owner").toString();
-        String repo = jObj.getAsJsonPrimitive("repoName").toString();
+      //check that the Json has the necessary fields
+      if (jObj.has("nickname") && jObj.has("url") && jObj.has("default_branch") && jObj.has("path")) {
+        String nickname = jObj.getAsJsonPrimitive("nickname").toString().replace("\"", "");
         String defaultBranch = jObj.getAsJsonPrimitive("default_branch").toString().replace("\"", "");
-        String gitUrl = jObj.getAsJsonPrimitive("url").toString().replace("\"", "");
-        if (jObj.has("username") && jObj.has("password")) {
-          String username = jObj.getAsJsonPrimitive("username").toString().replace("\"", "");
-          String password = jObj.getAsJsonPrimitive("password").toString().replace("\"", "");
-        } else if (jObj.has("authorization")) {
-          String auth = jObj.getAsJsonPrimitive("authorization").toString().replace("\"", "");
-        } else {
-          responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Please enter identification.");
-        }
+        String path = jObj.getAsJsonPrimitive("path").toString().replace("\"", "");
+
+        String giturl = jObj.getAsJsonPrimitive("url").toString().replace("\"", "");
+        String[] sshUrl = giturl.split(":");
+        int parse = sshUrl[1].indexOf("/");
+        String owner = sshUrl[1].substring(0, parse);
+        String name = sshUrl[1].substring(parse + 1, sshUrl[1].lastIndexOf("."));
         //connect to GitHub
-        String htmlUrl =  "https://api.github.com/repos/" + owner.substring(1, owner.length() - 1) + "/"
-            + repo.substring(1, repo.length() - 1);
+        String htmlUrl =  "https://api.github.com/repos/" + owner + "/"
+            + name;
         URL url = new URL(htmlUrl);
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
         con.setRequestMethod("GET");
+
+        if (jObj.has("username") && jObj.has("password")) {
+          String username = jObj.getAsJsonPrimitive("username").toString().replace("\"", "");
+          String password = jObj.getAsJsonPrimitive("password").toString().replace("\"", "");
+          String authString = "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes());
+          con.setRequestProperty("Authorization", authString);
+        } else if (jObj.has("authorization")) {
+          String token = jObj.getAsJsonPrimitive("authorization").toString().replace("\"", "");
+          con.setRequestProperty("Authorization", "token " + token);
+        } else {
+          responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Please enter identification.");
+        }
         //test that the GitHub repository information is valid
         if (con.getResponseCode() == HttpURLConnection.HTTP_OK) {
-          userRepo = DECODE_GSON
-              .fromJson(request.content().toString(StandardCharsets.UTF_8), JsonObject.class);
-          responder
-              .sendJson(HttpResponseStatus.OK, GSON.toJson("Repository Info has been updated."));
+          userRepo = new JsonObject();
+          userRepo.addProperty("nickname", nickname);
+          userRepo.addProperty("url", giturl);
+          userRepo.addProperty("default_branch", defaultBranch);
+          userRepo.addProperty("path", path);
+          userRepo.addProperty("owner", owner);
+          userRepo.addProperty("name", name);
+          responder.sendJson(HttpResponseStatus.OK, GSON.toJson("Repository Info has been updated."));
         } else {
           responder.sendJson(HttpResponseStatus.BAD_REQUEST, "This repository does not exist.");
         }
