@@ -49,12 +49,13 @@ public final class PodInfo {
   private final List<V1VolumeMount> containerVolumeMounts;
   private final List<V1EnvVar> containerEnvironments;
   private final V1PodSecurityContext securityContext;
+  private final String imagePullPolicy;
 
   public PodInfo(String name, String podInfoDir, String labelsFile, String nameFile, String uid, String uidFile,
                  String namespace, Map<String, String> labels, List<V1OwnerReference> ownerReferences,
                  String serviceAccountName, String runtimeClassName, List<V1Volume> volumes, String containerLabelName,
                  String containerImage, List<V1VolumeMount> containerVolumeMounts,
-                 List<V1EnvVar> containerEnvironments, V1PodSecurityContext securityContext) {
+                 List<V1EnvVar> containerEnvironments, V1PodSecurityContext securityContext, String imagePullPolicy) {
     this.name = name;
     this.podInfoDir = podInfoDir;
     this.labelsFile = labelsFile;
@@ -72,6 +73,7 @@ public final class PodInfo {
     this.containerVolumeMounts = Collections.unmodifiableList(new ArrayList<>(containerVolumeMounts));
     this.containerEnvironments = Collections.unmodifiableList(new ArrayList<>(containerEnvironments));
     this.securityContext = securityContext;
+    this.imagePullPolicy = imagePullPolicy;
   }
 
   public String getName() {
@@ -143,5 +145,9 @@ public final class PodInfo {
 
   public V1PodSecurityContext getSecurityContext() {
     return securityContext;
+  }
+
+  public String getImagePullPolicy() {
+    return imagePullPolicy;
   }
 }
