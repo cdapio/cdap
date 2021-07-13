@@ -142,6 +142,7 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
 
       switch (clusterMode) {
         case ON_PREMISE:
+          modules.add(new AuthenticationContextModules().getProgramContainerModule(cConf));
           modules.add(new ZKClientModule());
           modules.add(new ZKDiscoveryModule());
           modules.add(new KafkaClientModule());
