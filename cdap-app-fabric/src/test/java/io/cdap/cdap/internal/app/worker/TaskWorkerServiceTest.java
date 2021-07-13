@@ -27,7 +27,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.proto.BasicThrowable;
-import io.cdap.common.ContentProvider;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
@@ -42,23 +41,17 @@ import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.nio.file.Files;
-import java.time.Duration;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
 
 /**
  * Unit test for {@link TaskWorkerService}.
@@ -70,21 +63,20 @@ public class TaskWorkerServiceTest {
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerServiceTest.class);
   private static final Gson GSON = new Gson();
 
-  private CConfiguration createCConf(int port) {
+  private CConfiguration createCConf() {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.TaskWorker.ADDRESS, "localhost");
-    cConf.setInt(Constants.TaskWorker.PORT, port);
+    cConf.setInt(Constants.TaskWorker.PORT, 0);
     cConf.setBoolean(Constants.Security.SSL.INTERNAL_ENABLED, false);
     return cConf;
   }
 
   private SConfiguration createSConf() {
-    SConfiguration sConf = SConfiguration.create();
-    return sConf;
+    return SConfiguration.create();
   }
 
-  private TaskWorkerService setupTaskWorkerService(int port) {
-    CConfiguration cConf = createCConf(port);
+  private TaskWorkerService setupTaskWorkerService() {
+    CConfiguration cConf = createCConf();
     SConfiguration sConf = createSConf();
 
     TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, sConf, new InMemoryDiscoveryService());
@@ -117,7 +109,7 @@ public class TaskWorkerServiceTest {
 
   @Test
   public void testStartAndStopWithValidRequest() throws IOException {
-    TaskWorkerService taskWorkerService = setupTaskWorkerService(10001);
+    TaskWorkerService taskWorkerService = setupTaskWorkerService();
     InetSocketAddress addr = taskWorkerService.getBindAddress();
     URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
 
@@ -132,12 +124,12 @@ public class TaskWorkerServiceTest {
     waitForTaskWorkerToFinish(taskWorkerService);
     Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
     Assert.assertEquals(want, response.getResponseBodyAsString());
-    Assert.assertTrue(taskWorkerService.state() == Service.State.TERMINATED);
+    Assert.assertEquals(Service.State.TERMINATED, taskWorkerService.state());
   }
 
   @Test
   public void testStartAndStopWithInvalidRequest() throws Exception {
-    TaskWorkerService taskWorkerService = setupTaskWorkerService(10002);
+    TaskWorkerService taskWorkerService = setupTaskWorkerService();
     InetSocketAddress addr = taskWorkerService.getBindAddress();
     URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
 
@@ -152,13 +144,14 @@ public class TaskWorkerServiceTest {
     BasicThrowable basicThrowable;
     basicThrowable = GSON.fromJson(response.getResponseBodyAsString(), BasicThrowable.class);
     Assert.assertTrue(basicThrowable.getClassName().contains("java.lang.ClassNotFoundException"));
+    Assert.assertNotNull(basicThrowable.getMessage());
     Assert.assertTrue(basicThrowable.getMessage().contains("NoClass"));
     Assert.assertNotEquals(basicThrowable.getStackTraces().length, 0);
   }
 
   @Test
   public void testConcurrentRequests() throws Exception {
-    TaskWorkerService taskWorkerService = setupTaskWorkerService(10003);
+    TaskWorkerService taskWorkerService = setupTaskWorkerService();
     InetSocketAddress addr = taskWorkerService.getBindAddress();
     URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
 
@@ -171,13 +164,10 @@ public class TaskWorkerServiceTest {
 
     for (int i = 0; i < concurrentRequests; i++) {
       calls.add(
-        () -> {
-          HttpResponse response = HttpRequests.execute(
-            HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
-              .withBody(reqBody).build(),
-            new DefaultHttpRequestConfig(false));
-          return response;
-        }
+        () -> HttpRequests.execute(
+          HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
+            .withBody(reqBody).build(),
+          new DefaultHttpRequestConfig(false))
       );
     }
 
@@ -194,56 +184,16 @@ public class TaskWorkerServiceTest {
     waitForTaskWorkerToFinish(taskWorkerService);
     Assert.assertEquals(1, okResponse);
     Assert.assertEquals(concurrentRequests, okResponse + conflictResponse);
-    Assert.assertTrue(taskWorkerService.state() == Service.State.TERMINATED);
-  }
-
-
-  @Test
-  public void testRunTaskWithQueryParameters() throws IOException {
-    TaskWorkerService taskWorkerService = setupTaskWorkerService(10001);
-    InetSocketAddress addr = taskWorkerService.getBindAddress();
-    URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
-
-    // Create a tmp file and upload it to task worker which will read the content and return the content back.
-    String content = "this is file content";
-    File tmpFile = new File(tmpFolder.newFolder() + "/testRunTaskWithQueryParameters.txt");
-    FileWriter writer = new FileWriter(tmpFile.getPath());
-    writer.write(content);
-    writer.close();
-
-    // Submit task to worker.
-    String className = FileReaderRunnableTask.class.getName();
-    String param = String.valueOf(Duration.ofMillis(1).toMillis());
-    String path = String.format("%s/worker/task?className=%s&param=%s",
-                                Constants.Gateway.INTERNAL_API_VERSION_3,
-                                className, param);
-    HttpRequest request = HttpRequest.post(uri.resolve(path).toURL())
-      .withBody((ContentProvider<? extends InputStream>) (() -> new FileInputStream(tmpFile))).build();
-    HttpResponse response = HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
-
-    Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-    Assert.assertEquals(content, response.getResponseBodyAsString());
-
-    waitForTaskWorkerToFinish(taskWorkerService);
-    Assert.assertTrue(taskWorkerService.state() == Service.State.TERMINATED);
+    Assert.assertEquals(Service.State.TERMINATED, taskWorkerService.state());
   }
 
   public static class TestRunnableClass implements RunnableTask {
     @Override
     public void run(RunnableTaskContext context) throws Exception {
       if (!context.getParam().equals("")) {
-        Thread.sleep(Integer.valueOf(context.getParam()));
+        Thread.sleep(Integer.parseInt(context.getParam()));
       }
-      context.writeResult(context.getParam().getBytes());
-    }
-  }
-
-  public static class FileReaderRunnableTask implements RunnableTask {
-    @Override
-    public void run(RunnableTaskContext context) throws Exception {
-      URI uri = context.getFileURI();
-      String content = new String(Files.readAllBytes(new File(uri).toPath()));
-      context.writeResult(content.getBytes());
+      context.writeResult(context.getParam().getBytes(StandardCharsets.UTF_8));
     }
   }
 }
