@@ -41,7 +41,13 @@ public interface StageMetrics extends Metrics {
    * @param delta The value to increase by.
    */
   @Override
-  void countLong(String metricName, long delta);
+  default void countLong(String metricName, long delta) {
+    if (delta < Integer.MIN_VALUE || delta > Integer.MAX_VALUE) {
+      throw new IllegalArgumentException("Invalid delta value for metrics count: " + delta);
+    }
+
+    this.count(metricName, (int) delta);
+  }
 
   /**
    * Sets the specific metric to the provided value. Metrics name will be prefixed by the
