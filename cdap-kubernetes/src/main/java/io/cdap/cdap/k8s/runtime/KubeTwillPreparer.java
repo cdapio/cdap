@@ -857,9 +857,9 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       .addAllToVolumes(secretVolumes)
       .addToVolumes(podInfoVolume,
                     new V1Volume().name("workdir").emptyDir(new V1EmptyDirVolumeSource()))
-      .withInitContainers(createContainer("file-localizer", podInfo.getContainerImage(), workDir,
-                                          initContainerResourceRequirements, volumeMounts, initContainerEnvirons,
-                                          FileLocalizer.class,
+      .withInitContainers(createContainer("file-localizer", podInfo.getContainerImage(),
+                                          podInfo.getImagePullPolicy(), workDir, initContainerResourceRequirements,
+                                          volumeMounts, initContainerEnvirons, FileLocalizer.class,
                                           runtimeConfigLocation.toURI().toString(),
                                           mainRuntimeSpec.getName()))
       .withContainers(createContainers(runtimeSpecs, workDir, volumeMounts))
@@ -877,8 +877,8 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     RuntimeSpecification mainRuntimeSpec = getMainRuntimeSpecification(runtimeSpecs);
     environs.putAll(environments.get(mainRuntimeSpec.getName()));
 
-    containers.add(createContainer(mainRuntimeSpec.getName(), podInfo.getContainerImage(), workDir,
-                                   createResourceRequirements(mainRuntimeSpec.getResourceSpecification()),
+    containers.add(createContainer(mainRuntimeSpec.getName(), podInfo.getContainerImage(), podInfo.getImagePullPolicy(),
+                                   workDir, createResourceRequirements(mainRuntimeSpec.getResourceSpecification()),
                                    volumeMounts, environs, KubeTwillLauncher.class,
                                    mainRuntimeSpec.getName()));
 
@@ -886,7 +886,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       RuntimeSpecification spec = runtimeSpecs.get(name);
       // Add all environments for the runnable
       environs.putAll(environments.get(name));
-      containers.add(createContainer(name, podInfo.getContainerImage(), workDir,
+      containers.add(createContainer(name, podInfo.getContainerImage(), podInfo.getImagePullPolicy(), workDir,
                                      createResourceRequirements(spec.getResourceSpecification()),
                                      volumeMounts, environs, KubeTwillLauncher.class,
                                      name));
@@ -905,7 +905,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   /**
    * Creates a {@link V1Container} specification for running a {@link MasterEnvironmentRunnable} in a container.
    */
-  private V1Container createContainer(String name, String containerImage, String workDir,
+  private V1Container createContainer(String name, String containerImage, String imagePullPolicy, String workDir,
                                       V1ResourceRequirements resourceRequirements,
                                       List<V1VolumeMount> volumeMounts,
                                       Map<String, String> environments,
@@ -948,6 +948,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       .withImage(containerImage)
       .withWorkingDir(workDir)
       .withResources(resourceRequirements)
+      .withImagePullPolicy(imagePullPolicy)
       .addAllToVolumeMounts(containerVolumeMounts)
       .addAllToEnv(containerEnvironments)
       .addToArgs(masterEnvContext.getRunnableArguments(runnableClass, args))
