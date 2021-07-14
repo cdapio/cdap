@@ -57,10 +57,13 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import javax.annotation.Nullable;
 import javax.ws.rs.DefaultValue;
@@ -128,13 +131,22 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
       .add(HttpHeaderNames.LAST_MODIFIED, newModifiedDate.format(DateTimeFormatter.RFC_1123_DATE_TIME));
 
     String lastModified = request.headers().get(HttpHeaderNames.IF_MODIFIED_SINCE);
-    if (!Strings.isNullOrEmpty(lastModified) &&
-      newModifiedDate.equals(ZonedDateTime.parse(lastModified, DateTimeFormatter.RFC_1123_DATE_TIME))) {
+    if (areDatesEqual(lastModified, newModifiedDate)) {
       responder.sendStatus(HttpResponseStatus.NOT_MODIFIED, headers);
       return;
     }
-
     responder.sendContent(HttpResponseStatus.OK, new LocationBodyProducer(location), headers);
+  }
+
+  private boolean areDatesEqual(String lastModifiedDate, ZonedDateTime newModifiedDate) {
+    if (Strings.isNullOrEmpty(lastModifiedDate) || newModifiedDate == null) {
+      return false;
+    }
+    //We truncate milliseconds from timestamps when comparing them.
+    //Reason: newModifiedDate may contain millisecond while lastModifiedDate may not.
+    Comparator<ZonedDateTime> comparator = Comparator.comparing(zdt -> zdt.truncatedTo(ChronoUnit.SECONDS));
+    return comparator.compare(newModifiedDate, ZonedDateTime
+      .of(LocalDateTime.parse(lastModifiedDate, DateTimeFormatter.RFC_1123_DATE_TIME), ZoneId.of("GMT"))) == 0;
   }
 
   @GET
