@@ -108,11 +108,15 @@ public class MessagingMetricsProcessorManagerService extends AbstractIdleService
     this.metricsWriters.add(metricsWriter);
 
     for (Map.Entry<String, MetricsWriter> metricsWriterEntry : metricsWriterProvider.loadMetricsWriters().entrySet()) {
-      MetricsWriter writer = metricsWriterEntry.getValue();
-      this.metricsWriters.add(writer);
-      DefaultMetricsWriterContext metricsWriterContext = new DefaultMetricsWriterContext(metricsContext,
-        cConf, writer.getID());
-      writer.initialize(metricsWriterContext);
+      try {
+        MetricsWriter writer = metricsWriterEntry.getValue();
+        DefaultMetricsWriterContext metricsWriterContext = new DefaultMetricsWriterContext(metricsContext,
+                                                                                           cConf, writer.getID());
+        writer.initialize(metricsWriterContext);
+        this.metricsWriters.add(writer);
+      } catch (Exception e) {
+        // ignore
+      }
     }
 
     for (MetricsWriter metricsExtension : this.metricsWriters) {

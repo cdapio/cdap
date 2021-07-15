@@ -31,7 +31,6 @@ import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1Preconditions;
 import io.kubernetes.client.openapi.models.V1StatefulSet;
 import io.kubernetes.client.openapi.models.V1Status;
-import io.kubernetes.client.util.Config;
 import org.apache.twill.api.Command;
 import org.apache.twill.api.ResourceReport;
 import org.apache.twill.api.RunId;
@@ -476,47 +475,6 @@ class KubeTwillController implements ExtendedTwillController {
   }
 
   /**
-   * Deletes the job controlled by this controller asynchronously.
-   *
-   */
-  private void deleteJob() {
-    apiClient.setDebugging(true);
-    BatchV1Api batchApi = new BatchV1Api(apiClient);
-
-    String name = meta.getName();
-    try {
-      batchApi.deleteNamespacedJobAsync(name, kubeNamespace, null, null, null, null, null,
-                                        new V1DeleteOptions(), new ApiCallbackAdapter<V1Status>() {
-          @Override
-          public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
-            // Ignore the failure if the job is already deleted
-            if (statusCode == 404) {
-              LOG.warn("Failed to delete job {}. Job not found.", name, e);
-            }
-          }
-
-          @Override
-          public void onSuccess(V1Status v1Status, int statusCode, Map<String, List<String>> responseHeaders) {
-            deletePods(name);
-          }
-        });
-    } catch (ApiException e) {
-      LOG.warn("Error while cleaning up resources for job {}.", name, e);
-    }
-  }
-
-  private void deletePods(String jobName) {
-    try {
-      ApiClient apiClient = Config.defaultClient();
-      CoreV1Api api = new CoreV1Api(apiClient);
-      api.deleteCollectionNamespacedPodAsync(kubeNamespace, null, null, null, null, null, getLabelSelector(),
-                                             null, null, null, null, null, null, null, new ApiCallbackAdapter<>());
-    } catch (Exception e) {
-      LOG.warn("Failed to delete pod(s) for job {}", jobName, e);
-    }
-  }
-
-  /**
    * Cleans up the resources for deployment and stateful set and returns the future.
    */
   private CompletableFuture<KubeTwillController> cleanupResources() {
@@ -544,8 +502,6 @@ class KubeTwillController implements ExtendedTwillController {
   private CompletableFuture<KubeTwillController> cleanupJob() {
     // get job status
     CompletionStage<String> completionStage = getJobCompletionStatus();
-    // delete job and corresponding pods
-    deleteJob();
     completionStage.whenComplete((name, t) -> {
       if (t != null) {
         completion.completeExceptionally(t);
@@ -560,24 +516,37 @@ class KubeTwillController implements ExtendedTwillController {
    * Returns job completion status.
    */
   private CompletionStage<String> getJobCompletionStatus() {
-    apiClient.setDebugging(true);
-    BatchV1Api batchApi = new BatchV1Api(apiClient);
-
-    // callback for the delete job call
+    BatchV1Api batchApi = new BatchV1Api(apiClient.setDebugging(true));
     CompletableFuture<String> resultFuture = new CompletableFuture<>();
     String name = meta.getName();
-    try {
-      V1Job v1Job = batchApi.readNamespacedJob(name, kubeNamespace, null, null, null);
-      V1JobStatus status = v1Job.getStatus();
+    // In case we fail to get job status due to some transient issue, retry 5 times. There is no need to retry too
+    // long otherwise corresponding program may appear to be stuck in running state.
+    // If we keep getting failure, complete future exceptionally. Though most of the times, retries is not expected
+    // to be performed.
+    int retryCount = 5;
+    while (retryCount != 0) {
+      try {
+        LOG.info("### Getting job status {}", name);
+        V1Job v1Job = batchApi.readNamespacedJob(name, kubeNamespace, null, null, null);
+        V1JobStatus status = v1Job.getStatus();
 
-      // If job has failed, mark future as failed. Else mark it as succeeded.
-      if (status != null && status.getFailed() != null) {
-        completeExceptionally(resultFuture, new RuntimeException(String.format("Job %s has failed status.", name)));
-      } else {
-        resultFuture.complete(name);
+        // If job has failed, mark future as failed. Else mark it as succeeded.
+        if (status != null && status.getFailed() != null) {
+          LOG.info("### job has failed {}", name);
+          completeExceptionally(resultFuture, new RuntimeException(String.format("Job %s has failed status.", name)));
+        } else {
+          LOG.info("### job completed normally {}", name);
+          resultFuture.complete(name);
+        }
+        retryCount = 0;
+      } catch (ApiException e) {
+        retryCount--;
+        if (retryCount == 0) {
+          // If we fail to get the job status 5 times, we mark the future as failed.
+          LOG.info("### retrying after receiving exception {}", name, e);
+          completeExceptionally(resultFuture, e);
+        }
       }
-    } catch (ApiException e) {
-      completeExceptionally(resultFuture, e);
     }
     return resultFuture;
   }
