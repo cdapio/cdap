@@ -16,9 +16,6 @@
 
 package io.cdap.cdap.k8s.runtime;
 
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Resources;
 import com.google.gson.Gson;
@@ -34,6 +31,7 @@ import io.cdap.cdap.master.spi.twill.SecureTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecurityContext;
 import io.cdap.cdap.master.spi.twill.StatefulDisk;
 import io.cdap.cdap.master.spi.twill.StatefulTwillPreparer;
+import io.cdap.cdap.master.spi.twill.TwillConstants;
 import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
@@ -117,11 +115,8 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
 
 /**
  * Kubernetes version of a TwillRunner.
@@ -143,12 +138,10 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private static final String CPU_MULTIPLIER = "master.environment.k8s.container.cpu.multiplier";
   private static final String MEMORY_MULTIPLIER = "master.environment.k8s.container.memory.multiplier";
   private static final String DEFAULT_MULTIPLIER = "1.0";
-  // Pattern to split a Twill App name into [type].[namespaceId].[appName].[programName]
-  private static final Pattern APP_NAME_PATTERN = Pattern.compile("^(\\S+)\\.(\\S+)\\.(\\S+)\\.(\\S+)$");
-  private static final Set<String> SUPPORTED_PROGRAM_TYPES = ImmutableSet.of("workflow");
 
   private final MasterEnvironmentContext masterEnvContext;
   private final ApiClient apiClient;
+  private final BatchV1Api batchV1Api;
   private final String kubeNamespace;
   private final PodInfo podInfo;
   private final List<String> arguments;
@@ -166,6 +159,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private final Map<String, SecretDiskRunnable> secretDiskRunnables;
   private final Map<String, V1SecurityContext> containerSecurityContexts;
   private final Map<String, Set<String>> readonlyDisks;
+  private final Map<String, Map<String, String>> runnableConfigs;
 
   private String schedulerQueue;
   private String mainRunnableName;
@@ -178,6 +172,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
                     KubeTwillControllerFactory controllerFactory) {
     this.masterEnvContext = masterEnvContext;
     this.apiClient = apiClient;
+    this.batchV1Api = new BatchV1Api(apiClient);
     this.kubeNamespace = kubeNamespace;
     this.podInfo = podInfo;
     this.runnables = spec.getRunnables().keySet();
@@ -197,6 +192,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     this.secretDiskRunnables = new HashMap<>();
     this.containerSecurityContexts = new HashMap<>();
     this.readonlyDisks = new HashMap<>();
+    this.runnableConfigs = runnables.stream().collect(Collectors.toMap(r -> r, r -> new HashMap<>()));
   }
 
   @Override
@@ -290,7 +286,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
 
   @Override
   public SecureTwillPreparer withSecurityContext(String runnableName,
-                                                          SecurityContext securityContext) {
+                                                 SecurityContext securityContext) {
     if (securityContext.getIdentity() != null) {
       setIdentity(runnableName, securityContext.getIdentity());
     }
@@ -310,13 +306,22 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
 
   @Override
   public TwillPreparer withConfiguration(Map<String, String> config) {
-    // no-op
+    for (String runnableName : runnables) {
+      withEnv(runnableName, config);
+    }
     return this;
   }
 
   @Override
   public TwillPreparer withConfiguration(String runnableName, Map<String, String> config) {
-    // no-op
+    Map<String, String> configMap = runnableConfigs.get(runnableName);
+    if (configMap == null) {
+      throw new IllegalArgumentException("Runnable " + runnableName + " not found");
+    }
+
+    if (config != null) {
+      configMap.putAll(config);
+    }
     return this;
   }
 
@@ -522,9 +527,9 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       StatefulRunnable statefulRunnable = statefulRunnables.get(mainRuntimeSpec.getName());
       Type resourceType = statefulRunnable == null ? V1Deployment.class : V1StatefulSet.class;
 
-      String programType = getProgramTypeFromAppName(twillSpec.getName());
-      if (!Strings.isNullOrEmpty(programType)) {
-        if (SUPPORTED_PROGRAM_TYPES.stream().anyMatch(type -> type.equalsIgnoreCase(programType))) {
+      if (runnableConfigs.size() == 1) {
+        Map.Entry<String, Map<String, String>> runnableConfig = runnableConfigs.entrySet().stream().findFirst().get();
+        if (runnableConfig.getValue().containsKey(TwillConstants.PROGRAM_RUNTIME_ENV)) {
           resourceType = V1Job.class;
         }
       }
@@ -628,33 +633,26 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    */
   private V1ObjectMeta createJob(V1ObjectMeta metadata, Map<String, RuntimeSpecification> runtimeSpecs,
                                  Location runtimeConfigLocation) throws ApiException {
-    BatchV1Api batchApi = new BatchV1Api(apiClient);
     V1Job job = new V1JobBuilder()
       .withMetadata(metadata)
       .withNewSpec()
-      .withManualSelector(true)
-      .withSelector(new V1LabelSelector().matchLabels(metadata.getLabels()))
-      // TODO:CDAP-18125 Change parallelism based on worker instances
-      .withParallelism(1)
-      .withCompletions(1)
-      .withBackoffLimit(0)
-      .withNewTemplate()
-      .withMetadata(metadata)
-      .withSpec(createPodSpec(runtimeConfigLocation, runtimeSpecs, "Never",
-                              Collections.singletonList(KubeMasterEnvironment.DISABLE_POD_DELETION)))
-      .endTemplate()
+        .withManualSelector(true)
+        .withSelector(new V1LabelSelector().matchLabels(metadata.getLabels()))
+        // TODO:CDAP-18125 Change parallelism based on worker instances
+        .withParallelism(1)
+        .withCompletions(1)
+        .withBackoffLimit(0)
+        .withNewTemplate()
+          .withMetadata(metadata)
+          .withSpec(createPodSpec(runtimeConfigLocation, runtimeSpecs, "Never",
+                                  Collections.singletonList(KubeMasterEnvironment.DISABLE_POD_DELETION)))
+        .endTemplate()
       .endSpec()
       .build();
 
-
-    try {
-      job = batchApi.createNamespacedJob(kubeNamespace, job, "true", null, null);
-      LOG.trace("Created Job {} in Kubernetes.", metadata.getName());
-      return job.getMetadata();
-    } catch (ApiException e) {
-      LOG.error("Failed to create job. Response code = {}, body = {}", e.getCode(), e.getResponseBody());
-      throw e;
-    }
+    batchV1Api.createNamespacedJob(kubeNamespace, job, "true", null, null);
+    LOG.trace("Created Job {} in Kubernetes.", metadata.getName());
+    return job.getMetadata();
   }
 
   /**
@@ -917,7 +915,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
         String secretName = secretDisk.getName();
         String mountPath = secretDisk.getPath();
         secretVolumes.add(new V1Volume().name(secretName).secret(new V1SecretVolumeSource()
-                                                                        .secretName(secretName)));
+                                                                   .secretName(secretName)));
         volumeMounts.add(new V1VolumeMount().name(secretName).mountPath(mountPath).readOnly(true));
       }
     }
@@ -1138,25 +1136,5 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     List<SecretDisk> getSecretDisks() {
       return secretDisks;
     }
-  }
-
-  /**
-   * Given a Twill app name, returns the program type.
-   *
-   * @throws IllegalArgumentException if the given app name does not match the {@link #APP_NAME_PATTERN}
-   *                                  and mustMatch is true.
-   */
-  @Nullable
-  public static String getProgramTypeFromAppName(String twillAppName) {
-    Matcher matcher = APP_NAME_PATTERN.matcher(twillAppName);
-    if (!matcher.matches()) {
-      return null;
-    }
-    // this exception shouldn't happen (unless someone changes the pattern), because the pattern has 4 groups
-    Preconditions.checkArgument(4 == matcher.groupCount(),
-                                "Expected matcher for '%s' to have 4 groups, but it had %s groups.",
-                                twillAppName, matcher.groupCount());
-
-    return matcher.group(1).toLowerCase();
   }
 }

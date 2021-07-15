@@ -127,7 +127,9 @@ public class KubeTwillLauncher implements MasterEnvironmentRunnable {
       } finally {
         // Delete the pod when pod deletion is enabled. When k8s job is submitted, pod deletion is disabled.
         if (Arrays.stream(args).noneMatch(str -> str.equalsIgnoreCase(KubeMasterEnvironment.DISABLE_POD_DELETION))) {
-          // Delete the pod itself to avoid pod goes into CrashLoopBackoff
+          // Delete the pod itself to avoid pod goes into CrashLoopBackoff. This is added for preview pods.
+          // When pod is exited, exponential backoff happens. So pod restart time keep increasing.
+          // Deleting pod does not trigger exponential backoff.
           deletePod(podInfo);
         }
       }
