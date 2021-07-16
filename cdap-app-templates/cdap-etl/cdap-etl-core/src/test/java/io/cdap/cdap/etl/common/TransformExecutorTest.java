@@ -98,10 +98,10 @@ public class TransformExecutorTest {
 
     assertResults(transformResponse.getMapTransformIdToErrorEmitter(), ImmutableMap.of("transform2", 3));
 
-    Assert.assertEquals(3, mockMetrics.getCount("transform1.records.out"));
-    Assert.assertEquals(0, mockMetrics.getCount("transform2.records.out"));
-    Assert.assertEquals(3, mockMetrics.getCount("sink1.records.out"));
-    Assert.assertEquals(0, mockMetrics.getCount("sink2.records.out"));
+    Assert.assertEquals(3L, mockMetrics.getCount("transform1.records.out"));
+    Assert.assertEquals(0L, mockMetrics.getCount("transform2.records.out"));
+    Assert.assertEquals(3L, mockMetrics.getCount("sink1.records.out"));
+    Assert.assertEquals(0L, mockMetrics.getCount("sink2.records.out"));
     executor.resetEmitter();
     mockMetrics.clearMetrics();
 
@@ -112,10 +112,10 @@ public class TransformExecutorTest {
 
     assertResults(transformResponse.getMapTransformIdToErrorEmitter(), ImmutableMap.of("transform2", 2));
 
-    Assert.assertEquals(3, mockMetrics.getCount("transform1.records.out"));
-    Assert.assertEquals(1, mockMetrics.getCount("transform2.records.out"));
-    Assert.assertEquals(3, mockMetrics.getCount("sink1.records.out"));
-    Assert.assertEquals(1, mockMetrics.getCount("sink2.records.out"));
+    Assert.assertEquals(3L, mockMetrics.getCount("transform1.records.out"));
+    Assert.assertEquals(1L, mockMetrics.getCount("transform2.records.out"));
+    Assert.assertEquals(3L, mockMetrics.getCount("sink1.records.out"));
+    Assert.assertEquals(1L, mockMetrics.getCount("sink2.records.out"));
     executor.resetEmitter();
     mockMetrics.clearMetrics();
 
@@ -124,10 +124,10 @@ public class TransformExecutorTest {
     assertResults(transformResponse.getSinksResults(), ImmutableMap.of("sink1", 3, "sink2", 2));
 
     assertResults(transformResponse.getMapTransformIdToErrorEmitter(), ImmutableMap.of("transform2", 1));
-    Assert.assertEquals(3, mockMetrics.getCount("transform1.records.out"));
-    Assert.assertEquals(2, mockMetrics.getCount("transform2.records.out"));
-    Assert.assertEquals(3, mockMetrics.getCount("sink1.records.out"));
-    Assert.assertEquals(2, mockMetrics.getCount("sink2.records.out"));
+    Assert.assertEquals(3L, mockMetrics.getCount("transform1.records.out"));
+    Assert.assertEquals(2L, mockMetrics.getCount("transform2.records.out"));
+    Assert.assertEquals(3L, mockMetrics.getCount("sink1.records.out"));
+    Assert.assertEquals(2L, mockMetrics.getCount("sink2.records.out"));
     executor.resetEmitter();
     mockMetrics.clearMetrics();
 
@@ -136,10 +136,10 @@ public class TransformExecutorTest {
     assertResults(transformResponse.getSinksResults(), ImmutableMap.of("sink1", 3, "sink2", 3));
 
     assertResults(transformResponse.getMapTransformIdToErrorEmitter(), new HashMap<String, Integer>());
-    Assert.assertEquals(3, mockMetrics.getCount("transform1.records.out"));
-    Assert.assertEquals(3, mockMetrics.getCount("transform2.records.out"));
-    Assert.assertEquals(3, mockMetrics.getCount("sink1.records.out"));
-    Assert.assertEquals(3, mockMetrics.getCount("sink2.records.out"));
+    Assert.assertEquals(3L, mockMetrics.getCount("transform1.records.out"));
+    Assert.assertEquals(3L, mockMetrics.getCount("transform2.records.out"));
+    Assert.assertEquals(3L, mockMetrics.getCount("sink1.records.out"));
+    Assert.assertEquals(3L, mockMetrics.getCount("sink2.records.out"));
     executor.resetEmitter();
     mockMetrics.clearMetrics();
   }
@@ -207,18 +207,18 @@ public class TransformExecutorTest {
     TransformResponse transformResponse = executor.runOneIteration(200);
     assertResults(transformResponse.getSinksResults(), ImmutableMap.of("sink1", 3, "sink2", 2, "sink3", 3));
     assertResults(transformResponse.getMapTransformIdToErrorEmitter(), ImmutableMap.of("filter2", 1, "limiter1", 2));
-    Assert.assertEquals(3, mockMetrics.getCount("filter1.records.in"));
-    Assert.assertEquals(3, mockMetrics.getCount("filter1.records.out"));
+    Assert.assertEquals(3L, mockMetrics.getCount("filter1.records.in"));
+    Assert.assertEquals(3L, mockMetrics.getCount("filter1.records.out"));
 
-    Assert.assertEquals(3, mockMetrics.getCount("filter2.records.in"));
-    Assert.assertEquals(2, mockMetrics.getCount("filter2.records.out"));
+    Assert.assertEquals(3L, mockMetrics.getCount("filter2.records.in"));
+    Assert.assertEquals(2L, mockMetrics.getCount("filter2.records.out"));
 
-    Assert.assertEquals(5, mockMetrics.getCount("limiter1.records.in"));
-    Assert.assertEquals(3, mockMetrics.getCount("limiter1.records.out"));
+    Assert.assertEquals(5L, mockMetrics.getCount("limiter1.records.in"));
+    Assert.assertEquals(3L, mockMetrics.getCount("limiter1.records.out"));
 
-    Assert.assertEquals(3, mockMetrics.getCount("sink1.records.out"));
-    Assert.assertEquals(2, mockMetrics.getCount("sink2.records.out"));
-    Assert.assertEquals(3, mockMetrics.getCount("sink3.records.out"));
+    Assert.assertEquals(3L, mockMetrics.getCount("sink1.records.out"));
+    Assert.assertEquals(2L, mockMetrics.getCount("sink2.records.out"));
+    Assert.assertEquals(3L, mockMetrics.getCount("sink3.records.out"));
   }
 
   @Test
@@ -278,18 +278,18 @@ public class TransformExecutorTest {
     TransformResponse transformResponse = executor.runOneIteration(20000d);
     assertResults(transformResponse.getSinksResults(), ImmutableMap.of("sink1", 3, "sink2", 2, "sink3", 3));
     assertResults(transformResponse.getMapTransformIdToErrorEmitter(), ImmutableMap.of("filter2", 1, "limiter1", 2));
-    Assert.assertEquals(3, mockMetrics.getCount("filter1.records.in"));
-    Assert.assertEquals(3, mockMetrics.getCount("filter1.records.out"));
+    Assert.assertEquals(3L, mockMetrics.getCount("filter1.records.in"));
+    Assert.assertEquals(3L, mockMetrics.getCount("filter1.records.out"));
 
-    Assert.assertEquals(3, mockMetrics.getCount("filter2.records.in"));
-    Assert.assertEquals(2, mockMetrics.getCount("filter2.records.out"));
+    Assert.assertEquals(3L, mockMetrics.getCount("filter2.records.in"));
+    Assert.assertEquals(2L, mockMetrics.getCount("filter2.records.out"));
 
-    Assert.assertEquals(5, mockMetrics.getCount("limiter1.records.in"));
-    Assert.assertEquals(3, mockMetrics.getCount("limiter1.records.out"));
+    Assert.assertEquals(5L, mockMetrics.getCount("limiter1.records.in"));
+    Assert.assertEquals(3L, mockMetrics.getCount("limiter1.records.out"));
 
-    Assert.assertEquals(3, mockMetrics.getCount("sink1.records.out"));
-    Assert.assertEquals(2, mockMetrics.getCount("sink2.records.out"));
-    Assert.assertEquals(3, mockMetrics.getCount("sink3.records.out"));
+    Assert.assertEquals(3L, mockMetrics.getCount("sink1.records.out"));
+    Assert.assertEquals(2L, mockMetrics.getCount("sink2.records.out"));
+    Assert.assertEquals(3L, mockMetrics.getCount("sink3.records.out"));
   }
 
   private <T> void assertResults(Map<String, Collection<T>> results, Map<String, Integer> expectedListsSize) {

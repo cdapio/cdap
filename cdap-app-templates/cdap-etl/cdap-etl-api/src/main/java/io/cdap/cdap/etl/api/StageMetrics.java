@@ -34,6 +34,22 @@ public interface StageMetrics extends Metrics {
   void count(String metricName, int delta);
 
   /**
+   * Increases the value of the specific metric by delta. Metrics name will be prefixed by the
+   * stage id, hence it will be aggregated for the current stage.
+   *
+   * @param metricName Name of the counter. Use alphanumeric characters in metric names.
+   * @param delta The value to increase by.
+   */
+  @Override
+  default void countLong(String metricName, long delta) {
+    if (delta < Integer.MIN_VALUE || delta > Integer.MAX_VALUE) {
+      throw new IllegalArgumentException("Invalid delta value for metrics count: " + delta);
+    }
+
+    this.count(metricName, (int) delta);
+  }
+
+  /**
    * Sets the specific metric to the provided value. Metrics name will be prefixed by the
    * stage id, hence it will be aggregated for the current stage.
    *

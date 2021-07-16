@@ -50,6 +50,11 @@ public class ProgramUserMetrics implements Metrics {
   }
 
   @Override
+  public void countLong(String metricName, long delta) {
+    metricsContext.increment(metricName, delta);
+  }
+
+  @Override
   public void gauge(String metricName, long value) {
     metricsContext.gauge(metricName, value);
   }

@@ -61,6 +61,17 @@ public class DefaultStageMetrics implements StageMetrics, Externalizable {
   }
 
   @Override
+  public void countLong(final String metricName, final long delta) {
+    caller.callUnchecked(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        metrics.countLong(prefix + metricName, delta);
+        return null;
+      }
+    });
+  }
+
+  @Override
   public void gauge(final String metricName, final long value) {
     caller.callUnchecked(new Callable<Void>() {
       @Override
