@@ -80,8 +80,8 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
   @Override
   public void enforce(EntityId entity, Principal principal, Set<? extends Permission> permissions)
     throws AccessException {
-    if (internalAuthEnabled && principal.getFullCredential() != null && principal.getFullCredential().getType()
-      == Credential.CredentialType.INTERNAL) {
+    if (internalAuthEnabled && principal.getFullCredential() != null
+      && principal.getFullCredential().getType() == Credential.CredentialType.INTERNAL) {
       LOG.trace("Internal Principal enforce({}, {}, {})", entity, principal, permissions);
       internalAccessEnforcer.enforce(entity, principal, permissions);
       return;
@@ -114,8 +114,8 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
   @Override
   public void enforceOnParent(EntityType entityType, EntityId parentId, Principal principal, Permission permission)
     throws AccessException {
-    if (internalAuthEnabled && principal.getFullCredential() != null && principal.getFullCredential().getType()
-      == Credential.CredentialType.INTERNAL) {
+    if (internalAuthEnabled && principal.getFullCredential() != null
+      && principal.getFullCredential().getType() == Credential.CredentialType.INTERNAL) {
       LOG.trace("Internal Principal enforceOnParent({}, {}, {})", parentId, principal, permission);
       internalAccessEnforcer.enforceOnParent(entityType, parentId, principal, permission);
       return;
@@ -150,8 +150,8 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
   @Override
   public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal)
     throws AccessException {
-    if (internalAuthEnabled && principal.getFullCredential() != null && principal.getFullCredential().getType()
-      == Credential.CredentialType.INTERNAL) {
+    if (internalAuthEnabled && principal.getFullCredential() != null
+      && principal.getFullCredential().getType() == Credential.CredentialType.INTERNAL) {
       LOG.trace("Internal Principal enforce({}, {})", entityIds, principal);
       return internalAccessEnforcer.isVisible(entityIds, principal);
     }
@@ -191,8 +191,8 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
   }
 
   private Principal getUserPrinciple(Principal principal) throws AccessException {
-    if (principal.getFullCredential() == null ||
-      !sConf.getBoolean(Constants.Security.Authentication.USER_CREDENTIAL_ENCRYPTION_ENABLED, false)) {
+    if (principal.getFullCredential() == null
+      || !sConf.getBoolean(Constants.Security.Authentication.USER_CREDENTIAL_ENCRYPTION_ENABLED, false)) {
       return principal;
     }
 
