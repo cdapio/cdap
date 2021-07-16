@@ -69,11 +69,44 @@ public final class StoreDefinition {
     FieldLineageStore.createTables(tableAdmin, overWrite);
     LogFileMetaStore.createTables(tableAdmin, overWrite);
     CapabilitiesStore.createTable(tableAdmin, overWrite);
+    GitHubStore.createTable(tableAdmin, overWrite);
   }
 
   public static void createAllTables(StructuredTableAdmin tableAdmin, StructuredTableRegistry registry)
     throws IOException, TableAlreadyExistsException {
     createAllTables(tableAdmin, registry, false);
+  }
+
+  public static final class GitHubStore {
+    public static final StructuredTableId GITHUB_REPOS = new StructuredTableId("GitHubRepos");
+
+    public static final String NICKNAME_FIELD = "nickname";
+    public static final String URL_FIELD = "url";
+    public static final String DEFAULT_BRANCH_FIELD = "defaultBranch";
+    public static final String AUTH_METHOD_FIELD = "authMethod";
+    public static final String USERNAME_FIELD = "username";
+    public static final String PASSWORD_FIELD = "password";
+    public static final String AUTHORIZATION_TOKEN_FIELD = "authToken";
+
+    public static final StructuredTableSpecification GITHUB_TABLE_SPEC =
+        new StructuredTableSpecification.Builder()
+          .withId(GITHUB_REPOS)
+          .withFields(Fields.stringType(NICKNAME_FIELD),
+                      Fields.stringType(URL_FIELD),
+                      Fields.stringType(DEFAULT_BRANCH_FIELD),
+                      Fields.stringType(AUTH_METHOD_FIELD),
+                      Fields.stringType(USERNAME_FIELD),
+                      Fields.stringType(PASSWORD_FIELD),
+                      Fields.stringType(AUTHORIZATION_TOKEN_FIELD))
+          .withPrimaryKeys(NICKNAME_FIELD)
+          .build();
+
+    public static void createTable(StructuredTableAdmin tableAdmin,
+                                   boolean overWrite) throws IOException, TableAlreadyExistsException {
+      if (overWrite || tableAdmin.getSpecification(GITHUB_REPOS) == null) {
+        tableAdmin.create(GITHUB_TABLE_SPEC);
+      }
+    }
   }
 
   /**
