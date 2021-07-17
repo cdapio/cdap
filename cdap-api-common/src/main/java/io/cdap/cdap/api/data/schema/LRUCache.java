@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,11 +14,12 @@
  * the License.
  */
 
-package io.cdap.cdap.api.data.format;
+package io.cdap.cdap.api.data.schema;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 
@@ -72,6 +73,30 @@ final class LRUCache<K, V> {
       entries.remove(orderedKeys.remove().getKey());
     }
     return oldValue == null ? value : oldValue;
+  }
+
+  /**
+   * Computes and puts a value for a given key in the cache if the key is absent in the cache.
+   *
+   * @param key the key for lookup in the cache
+   * @param valueSupplier the supplier of value to put in the cache
+   * @return either the existing value or the new value
+   */
+  synchronized V computeIfAbsent(K key, Supplier<V> valueSupplier) {
+    V oldValue = entries.get(key);
+    V returnValue;
+    if (oldValue != null) {
+      orderedKeys.removeIf(k -> k.getKey().equals(key));
+      returnValue = oldValue;
+    } else {
+      returnValue = valueSupplier.get();
+      entries.put(key, returnValue);
+    }
+    orderedKeys.add(new TimedKey<>(key));
+    if (orderedKeys.size() > maxSize) {
+      entries.remove(orderedKeys.remove().getKey());
+    }
+    return returnValue;
   }
 
   /**
