@@ -22,6 +22,7 @@ import io.cdap.cdap.internal.io.SQLSchemaParser;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 
 import java.io.IOException;
+import java.io.ObjectStreamException;
 import java.io.Reader;
 import java.io.Serializable;
 import java.io.StringWriter;
@@ -226,6 +227,23 @@ public final class Schema implements Serializable {
   }
 
   /**
+   * Simple serialized form of schema that allow to use {@link SchemaCache}
+   */
+  private static class SerializedForm implements Serializable {
+    private final String schemaCacheStr;
+    private final String json;
+
+    private SerializedForm(String schemaCacheStr, String json) {
+      this.schemaCacheStr = schemaCacheStr;
+      this.json = json;
+    }
+
+    Object readResolve() throws ObjectStreamException {
+      return SchemaCache.fromJson(schemaCacheStr, json);
+    }
+  }
+
+  /**
    * Parse the given JSON representation, as returned by {@link #toString()} into a Schema object.
    *
    * @param schemaJson the json representation of the schema
@@ -245,6 +263,15 @@ public final class Schema implements Serializable {
    */
   public static Schema parseJson(Reader reader) throws IOException {
     return SCHEMA_TYPE_ADAPTER.fromJson(reader);
+  }
+
+  /**
+   * Java serialization method that allows to replace object written with a substitute.
+   * Later {@link SerializedForm#readResolve()} will do a schema resolution on deserialization.
+   * @see Serializable for details on writeReplace/readResolve contract.
+   */
+  private Object writeReplace() throws ObjectStreamException {
+    return new SerializedForm(getSchemaHash().toString(), toString());
   }
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2020-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.api.data.format;
+package io.cdap.cdap.api.data.schema;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -29,6 +29,16 @@ public class LRUCacheTest {
     LRUCache<String, Integer> cache = new LRUCache<>(1);
     Assert.assertEquals(Integer.valueOf(1), cache.putIfAbsent("key1", 1));
     Assert.assertEquals(Integer.valueOf(2), cache.putIfAbsent("key2", 2));
+
+    Assert.assertNull(cache.get("key1"));
+    Assert.assertEquals(Integer.valueOf(2), cache.get("key2"));
+  }
+
+  @Test
+  public void testCacheCompute() {
+    LRUCache<String, Integer> cache = new LRUCache<>(1);
+    Assert.assertEquals(Integer.valueOf(1), cache.computeIfAbsent("key1", () -> 1));
+    Assert.assertEquals(Integer.valueOf(2), cache.computeIfAbsent("key2", () -> 2));
 
     Assert.assertNull(cache.get("key1"));
     Assert.assertEquals(Integer.valueOf(2), cache.get("key2"));
