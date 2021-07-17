@@ -22,11 +22,13 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.data.schema.SchemaCache;
 import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
 import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import org.apache.avro.LogicalType;
 import org.apache.avro.LogicalTypes;
+import org.apache.commons.lang.SerializationUtils;
 import org.codehaus.jackson.node.IntNode;
 import org.codehaus.jackson.node.TextNode;
 import org.junit.Assert;
@@ -658,6 +660,12 @@ public class SchemaTest {
 
   private org.apache.avro.Schema convertSchema(Schema cdapSchema) {
     return new org.apache.avro.Schema.Parser().parse(cdapSchema.toString());
+  }
+
+  @Test
+  public void testCachedJavaSerialization() throws UnsupportedTypeException {
+    Schema s1 = SchemaCache.intern(new ReflectionSchemaGenerator().generate(Node.class));
+    Assert.assertSame(s1, SerializationUtils.clone(s1));
   }
 
   private void verifyThrowsException(String toParse) {

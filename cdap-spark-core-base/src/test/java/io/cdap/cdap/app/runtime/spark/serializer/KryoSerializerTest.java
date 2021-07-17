@@ -246,6 +246,11 @@ public class KryoSerializerTest {
     // The StructuredRecord.equals is broken, Json it and compare for now
     Assert.assertEquals(StructuredRecordStringConverter.toJsonString(record),
                         StructuredRecordStringConverter.toJsonString(newRecord));
+
+    // Verify that schema is deserialized only once and then cached
+    input = new Input(bos.toByteArray());
+    StructuredRecord newRecord2 = kryo.readObject(input, StructuredRecord.class);
+    Assert.assertSame(newRecord.getSchema(), newRecord2.getSchema());
   }
 
   @Test
