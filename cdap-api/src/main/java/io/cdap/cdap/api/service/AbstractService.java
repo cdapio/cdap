@@ -23,6 +23,7 @@ import io.cdap.cdap.api.service.http.HttpServiceHandler;
 import io.cdap.cdap.internal.api.AbstractPluginConfigurable;
 
 import java.util.Arrays;
+import java.util.Map;
 
 /**
  * An abstract implementation of {@link Service}. Users may extend this to write a {@link Service}.
@@ -89,6 +90,16 @@ public abstract class AbstractService<T extends ServiceConfigurer, V extends Ser
    */
   protected void setResources(Resources resources) {
     configurer.setResources(resources);
+  }
+
+  /**
+   * Sets a set of properties that will be available through the {@link ServiceSpecification#getProperties()}
+   * at runtime.
+   *
+   * @param properties the properties to set
+   */
+  protected void setProperties(Map<String, String> properties) {
+    configurer.setProperties(properties);
   }
 
   /**

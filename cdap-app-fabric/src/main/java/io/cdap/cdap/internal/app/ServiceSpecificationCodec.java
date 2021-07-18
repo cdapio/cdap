@@ -72,8 +72,9 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
                                                                     HttpServiceHandlerSpecification.class);
     Resources resources = context.deserialize(jsonObj.get("resources"), Resources.class);
     int instances = jsonObj.get("instances").getAsInt();
+    Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
 
-    return new ServiceSpecification(className, name, description, handlers, resources, instances, plugins);
+    return new ServiceSpecification(className, name, description, handlers, resources, instances, plugins, properties);
   }
 
   @Override
@@ -86,6 +87,7 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
     object.add("handlers", serializeMap(spec.getHandlers(), context, HttpServiceHandlerSpecification.class));
     object.add("resources", context.serialize(spec.getResources(), Resources.class));
     object.addProperty("instances", spec.getInstances());
+    object.add("properties", serializeMap(spec.getProperties(), context, String.class));
     return object;
   }
 

@@ -59,7 +59,7 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
 
     // if this is for the system services and not an actual pipeline
     if (config.isService()) {
-      addService(new StudioService());
+      addService(new StudioService(config.getConnectionConfig()));
       setDescription("Data Pipeline System Services.");
       return;
     }

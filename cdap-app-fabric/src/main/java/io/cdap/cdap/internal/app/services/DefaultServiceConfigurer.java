@@ -40,6 +40,7 @@ import io.cdap.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -59,6 +60,7 @@ public class DefaultServiceConfigurer extends AbstractConfigurer implements Syst
   private List<HttpServiceHandler> handlers;
   private Resources resources;
   private int instances;
+  private Map<String, String> properties;
 
   /**
    * Create an instance of {@link DefaultServiceConfigurer}
@@ -101,6 +103,11 @@ public class DefaultServiceConfigurer extends AbstractConfigurer implements Syst
   }
 
   @Override
+  public void setProperties(Map<String, String> properties) {
+    this.properties = new HashMap<>(properties);
+  }
+
+  @Override
   public void setResources(Resources resources) {
     Preconditions.checkArgument(resources != null, "Resources cannot be null.");
     this.resources = resources;
@@ -108,7 +115,8 @@ public class DefaultServiceConfigurer extends AbstractConfigurer implements Syst
 
   public ServiceSpecification createSpecification() {
     Map<String, HttpServiceHandlerSpecification> handleSpecs = createHandlerSpecs(handlers);
-    return new ServiceSpecification(className, name, description, handleSpecs, resources, instances, getPlugins());
+    return new ServiceSpecification(className, name, description, handleSpecs, resources, instances, getPlugins(),
+                                    properties);
   }
 
   /**
