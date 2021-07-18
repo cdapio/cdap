@@ -45,6 +45,8 @@ public final class ETLBatchConfig extends ETLConfig {
   // for backwards compatibility
   private final List<ETLStage> actions;
   private final Boolean service;
+  // config for connections
+  private final ConnectionConfig connectionConfig;
   // support for SQL Engines
   private final Boolean pushdownEnabled;
   private final ETLTransformationPushdown transformationPushdown;
@@ -63,6 +65,7 @@ public final class ETLBatchConfig extends ETLConfig {
                          @Nullable Integer maxConcurrentRuns,
                          Map<String, String> engineProperties,
                          Boolean service,
+                         @Nullable ConnectionConfig connectionConfig,
                          List<Object> comments,
                          @Nullable Boolean pushdownEnabled,
                          @Nullable ETLTransformationPushdown transformationPushdown) {
@@ -75,6 +78,7 @@ public final class ETLBatchConfig extends ETLConfig {
     // field only exists for backwards compatibility -- used by convertOldConfig()
     this.actions = null;
     this.service = service;
+    this.connectionConfig = connectionConfig;
     // fields related to SQL Engines
     this.pushdownEnabled = pushdownEnabled;
     this.transformationPushdown = transformationPushdown;
@@ -85,6 +89,11 @@ public final class ETLBatchConfig extends ETLConfig {
       return false;
     }
     return service;
+  }
+
+  @Nullable
+  public ConnectionConfig getConnectionConfig() {
+    return connectionConfig;
   }
 
   /**
@@ -149,7 +158,7 @@ public final class ETLBatchConfig extends ETLConfig {
     }
     return new ETLBatchConfig(upgradedStages, connections, postActions, resources, stageLoggingEnabled,
                               processTimingEnabled, engine, schedule, driverResources, clientResources,
-                              numOfRecordsPreview, maxConcurrentRuns, properties, service, comments,
+                              numOfRecordsPreview, maxConcurrentRuns, properties, service, connectionConfig, comments,
                               pushdownEnabled, transformationPushdown);
   }
 
@@ -208,15 +217,6 @@ public final class ETLBatchConfig extends ETLConfig {
    */
   public static Builder builder() {
     return new Builder();
-  }
-
-  /**
-   * @return the config used for the system service and not a pipeline.
-   */
-  public static ETLBatchConfig forSystemService() {
-    return new ETLBatchConfig(Collections.emptySet(), Collections.emptySet(), Collections.emptyList(),
-                              null, false, false, null, null, null, null, 0, null, Collections.emptyMap(), true,
-                              Collections.emptyList(), false, null);
   }
 
   /**
@@ -292,7 +292,7 @@ public final class ETLBatchConfig extends ETLConfig {
     public ETLBatchConfig build() {
       return new ETLBatchConfig(stages, connections, endingActions, resources, stageLoggingEnabled,
                                 processTimingEnabled, engine, schedule, driverResources, clientResources,
-                                numOfRecordsPreview, maxConcurrentRuns, properties, false, comments,
+                                numOfRecordsPreview, maxConcurrentRuns, properties, false, null, comments,
                                 pushdownEnabled, transformationPushdown);
     }
   }

@@ -21,6 +21,8 @@ import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.service.http.HttpServiceHandler;
 
+import java.util.Map;
+
 /**
  * Interface for configurers used to create custom Services.
  */
@@ -55,4 +57,14 @@ public interface ServiceConfigurer extends PluginConfigurer, DatasetConfigurer {
    * @param instances Number of instances, must be > 0.
    */
   void setInstances(int instances);
+
+  /**
+   * Sets a set of properties that will be available through the {@link ServiceSpecification#getProperties()}
+   * at runtime.
+   *
+   * @param properties the properties to set
+   */
+  default void setProperties(Map<String, String> properties) {
+    throw new UnsupportedOperationException("Setting properties on service is not supported");
+  }
 }
