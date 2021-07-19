@@ -64,16 +64,15 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
 
   @Inject
   PreferencesHttpHandler(AccessEnforcer accessEnforcer,
-      AuthenticationContext authenticationContext,
-      PreferencesService preferencesService,
-      Store store, NamespaceStore nsStore) {
+                         AuthenticationContext authenticationContext,
+                         PreferencesService preferencesService,
+                         Store store, NamespaceStore nsStore) {
     this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
     this.preferencesService = preferencesService;
     this.store = store;
     this.nsStore = nsStore;
   }
-
 
   //Instance Level Properties
   @Path("/preferences")
