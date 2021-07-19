@@ -526,7 +526,7 @@ class KubeTwillController implements ExtendedTwillController {
     int retryCount = 5;
     while (retryCount != 0) {
       try {
-        LOG.info("### Getting job status {}", name);
+        LOG.info("### Getting job status {}. This is latest code", name);
         V1Job v1Job = batchApi.readNamespacedJob(name, kubeNamespace, null, null, null);
         V1JobStatus status = v1Job.getStatus();
 

@@ -130,10 +130,6 @@ public class KubeTwillRunnerService implements TwillRunnerService {
     );
     this.liveInfos = new ConcurrentSkipListMap<>();
     this.liveInfoLock = new ReentrantLock();
-//    KubeJobCleaner cleaner = new KubeJobCleaner(apiClient, kubeNamespace, selector, jobCleanBatchSize);
-//    scheduledExecutorService =
-//      Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("job-cleaner"));
-//    scheduledExecutorService.scheduleAtFixedRate(cleaner, 10, jobCleanupIntervalMins, TimeUnit.MINUTES);
   }
 
   @Override
@@ -222,7 +218,6 @@ public class KubeTwillRunnerService implements TwillRunnerService {
   public void stop() {
     resourceWatchers.values().forEach(AbstractWatcherThread::close);
     monitorScheduler.shutdownNow();
-    //scheduledExecutorService.shutdownNow();
   }
 
   /**
@@ -515,7 +510,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
       } catch (IOException e) {
         throw new RuntimeException("Failed to delete location for " + appName + "-" + runId + " at " + appLocation, e);
       }
-    }, command -> new Thread(command, "resource-cleanup-" + appName).start());
+    }, command -> new Thread(command, "app-cleanup-" + appName).start());
     return controller;
   }
 
