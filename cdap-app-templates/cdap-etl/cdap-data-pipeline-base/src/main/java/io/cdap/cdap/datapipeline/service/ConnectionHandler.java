@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.macro.MacroEvaluator;
@@ -47,10 +48,10 @@ import io.cdap.cdap.etl.api.connector.SampleRequest;
 import io.cdap.cdap.etl.api.validation.ValidationException;
 import io.cdap.cdap.etl.common.ArtifactSelectorProvider;
 import io.cdap.cdap.etl.common.BasicArguments;
-import io.cdap.cdap.etl.common.ConnectionMacroEvaluator;
 import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
 import io.cdap.cdap.etl.common.OAuthMacroEvaluator;
 import io.cdap.cdap.etl.common.SecureStoreMacroEvaluator;
+import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 import io.cdap.cdap.etl.proto.connection.Connection;
 import io.cdap.cdap.etl.proto.connection.ConnectionBadRequestException;
 import io.cdap.cdap.etl.proto.connection.ConnectionCreationRequest;
@@ -70,7 +71,6 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -202,8 +202,10 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
       ConnectorConfigurer connectorConfigurer = new DefaultConnectorConfigurer(pluginConfigurer);
       SimpleFailureCollector failureCollector = new SimpleFailureCollector();
       ConnectorContext connectorContext = new DefaultConnectorContext(failureCollector, pluginConfigurer);
+      TrackedPluginSelector pluginSelector = new TrackedPluginSelector(
+        new ArtifactSelectorProvider().getPluginSelector(creationRequest.getPlugin().getArtifact()));
       try (Connector connector = getConnector(pluginConfigurer, creationRequest.getPlugin(),
-                                              namespaceSummary.getName())) {
+                                              namespaceSummary.getName(), pluginSelector)) {
         connector.configure(connectorConfigurer);
         try {
           connector.test(connectorContext);
@@ -251,7 +253,10 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
       ConnectorContext connectorContext = new DefaultConnectorContext(new SimpleFailureCollector(), pluginConfigurer);
       Connection conn = store.getConnection(new ConnectionId(namespaceSummary, connection));
 
-      try (Connector connector = getConnector(pluginConfigurer, conn.getPlugin(), namespaceSummary.getName())) {
+      TrackedPluginSelector pluginSelector = new TrackedPluginSelector(
+        new ArtifactSelectorProvider().getPluginSelector(conn.getPlugin().getArtifact()));
+      try (Connector connector = getConnector(pluginConfigurer, conn.getPlugin(), namespaceSummary.getName(),
+                                              pluginSelector)) {
         connector.configure(connectorConfigurer);
         responder.sendJson(connector.browse(connectorContext, browseRequest));
       }
@@ -297,13 +302,16 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
       Connection conn = store.getConnection(new ConnectionId(namespaceSummary, connection));
 
       PluginInfo plugin = conn.getPlugin();
-      try (Connector connector = getConnector(pluginConfigurer, plugin, namespaceSummary.getName())) {
+      // use tracked selector to get exact plugin version that gets selected since the passed version can be null
+      TrackedPluginSelector pluginSelector = new TrackedPluginSelector(
+        new ArtifactSelectorProvider().getPluginSelector(plugin.getArtifact()));
+      try (Connector connector = getConnector(pluginConfigurer, plugin, namespaceSummary.getName(), pluginSelector)) {
         connector.configure(connectorConfigurer);
         ConnectorSpecRequest specRequest = ConnectorSpecRequest.builder().setPath(sampleRequest.getPath())
                                              .setConnection(connection)
                                              .setProperties(sampleRequest.getProperties()).build();
         ConnectorSpec spec = connector.generateSpec(connectorContext, specRequest);
-        ConnectorDetail detail = getConnectorDetail(plugin, spec);
+        ConnectorDetail detail = getConnectorDetail(pluginSelector.getSelectedArtifact(), spec);
 
         if (connector instanceof DirectConnector) {
           DirectConnector directConnector = (DirectConnector) connector;
@@ -360,27 +368,34 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
       ConnectorContext connectorContext = new DefaultConnectorContext(new SimpleFailureCollector(), pluginConfigurer);
       Connection conn = store.getConnection(new ConnectionId(namespaceSummary, connection));
 
-      try (Connector connector = getConnector(pluginConfigurer, conn.getPlugin(), namespaceSummary.getName())) {
+      // use tracked selector to get exact plugin version that gets selected since the passed version can be null
+      TrackedPluginSelector pluginSelector = new TrackedPluginSelector(
+        new ArtifactSelectorProvider().getPluginSelector(conn.getPlugin().getArtifact()));
+      try (Connector connector = getConnector(pluginConfigurer, conn.getPlugin(), namespaceSummary.getName(),
+                                              pluginSelector)) {
         connector.configure(connectorConfigurer);
         ConnectorSpecRequest connectorSpecRequest = ConnectorSpecRequest.builder().setPath(specRequest.getPath())
                                                       .setConnection(connection)
                                                       .setProperties(specRequest.getProperties()).build();
         ConnectorSpec spec = connector.generateSpec(connectorContext, connectorSpecRequest);
-        responder.sendString(GSON.toJson(getConnectorDetail(conn.getPlugin(), spec)));
+        responder.sendString(GSON.toJson(getConnectorDetail(pluginSelector.getSelectedArtifact(), spec)));
       }
     });
   }
 
-  private ConnectorDetail getConnectorDetail(PluginInfo plugin, ConnectorSpec spec) {
+  private ConnectorDetail getConnectorDetail(ArtifactId artifactId, ConnectorSpec spec) {
+    ArtifactSelectorConfig artifact = new ArtifactSelectorConfig(artifactId.getScope().name(),
+                                                                 artifactId.getName(),
+                                                                 artifactId.getVersion().getVersion());
     Set<PluginDetail> relatedPlugins = new HashSet<>();
     spec.getRelatedPlugins().forEach(pluginSpec -> relatedPlugins.add(
-      new PluginDetail(pluginSpec.getName(), pluginSpec.getType(), pluginSpec.getProperties(), plugin.getArtifact(),
+      new PluginDetail(pluginSpec.getName(), pluginSpec.getType(), pluginSpec.getProperties(), artifact,
                        spec.getSchema())));
     return new ConnectorDetail(relatedPlugins);
   }
 
   private Connector getConnector(PluginConfigurer configurer, PluginInfo pluginInfo,
-                                 String namespace) throws IOException {
+                                 String namespace, TrackedPluginSelector pluginSelector) throws IOException {
 
     Map<String, String> arguments = getContext().getPreferencesForNamespace(namespace, true);
     Map<String, MacroEvaluator> evaluators = ImmutableMap.of(
@@ -396,8 +411,6 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
                                                                .build());
     Connector connector;
     try {
-      TrackedPluginSelector pluginSelector = new TrackedPluginSelector(
-        new ArtifactSelectorProvider().getPluginSelector(pluginInfo.getArtifact()));
       connector = configurer.usePlugin(pluginInfo.getType(), pluginInfo.getName(), UUID.randomUUID().toString(),
                                        PluginProperties.builder().addAll(evaluatedProperties).build(),
                                        pluginSelector);
