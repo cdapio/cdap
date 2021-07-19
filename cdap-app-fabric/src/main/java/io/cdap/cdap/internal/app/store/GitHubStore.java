@@ -66,9 +66,6 @@ public class GitHubStore {
     }, IOException.class);
   }
 
-
-
-
   public GitHubRepo getRepo(String nickname) throws IOException {
     return TransactionRunners.run(transactionRunner, context -> {
       StructuredTable table = context.getTable(StoreDefinition.GitHubStore.GITHUB_REPOS);

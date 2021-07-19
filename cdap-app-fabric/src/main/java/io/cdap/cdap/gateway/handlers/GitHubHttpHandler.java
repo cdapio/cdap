@@ -32,6 +32,7 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -49,7 +50,7 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
     this.gitStore = gitStore;
   }
 
-  @Path("repos/githt")
+  @Path("repos/github")
   @GET
   public void getRepos(HttpRequest request, HttpResponder responder) throws Exception {
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(gitStore.getRepos()));
@@ -61,35 +62,31 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("repos/github/{repo}")
   @GET
   public void getRepoInfo(HttpRequest request, HttpResponder responder,
-                          @PathParam("repo") String repo) throws Exception {
+                          @NotNull @PathParam("repo") String repo) throws Exception {
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(gitStore.getRepo(repo)));
   }
 
   @Path("repos/github/{repo}")
   @PUT
   public void addRepoInfo(FullHttpRequest request, HttpResponder responder,
-                          @PathParam("repo") String repo) throws Exception {
+                          @NotNull @PathParam("repo") String repo) throws Exception {
 
-    GitHubRepo githubRequest = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8)
-        , GitHubRepo.class);
-
-    String htmlUrl =  parseUrl(githubRequest.getUrl());
-
-    String authString  = "invalid";
-    if (githubRequest.getAuthMethod().equals("username and password")) {
-      authString = "Basic " + Base64.getEncoder().encodeToString(
-            (githubRequest.getUsername() + ":" + githubRequest.getPassword()).getBytes());
-    } else if (githubRequest.getAuthMethod().equals("authorization token")) {
-      authString = "token " + githubRequest.getAuthToken();
-    }
-    //test that the GitHub repository information is valid
-    if (checkGitConnection(htmlUrl, authString)) {
-      String defaultBranch = githubRequest.getDefaultBranch();
-      gitStore.addOrUpdateRepo(repo, githubRequest.getUrl(), githubRequest.getDefaultBranch(),
+    try {
+      GitHubRepo githubRequest = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8)
+          , GitHubRepo.class);
+      if (githubRequest.validateFields()) {
+        gitStore.addOrUpdateRepo(repo, githubRequest.getUrl(), githubRequest.getDefaultBranch(),
             githubRequest.getAuthMethod(), githubRequest.getUsername(),
-          githubRequest.getPassword(), githubRequest.getAuthToken());
-      responder.sendStatus(HttpResponseStatus.OK);
+            githubRequest.getPassword(), githubRequest.getAuthToken());
+        responder.sendStatus(HttpResponseStatus.OK);
+      } else {
+        responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Please enter all fields.");
       }
+    } catch (Exception ex) {
+      responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Please enter fields correctly.");
+    }
+
+
   }
 
   /**
@@ -98,9 +95,38 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("repos/github/{repo}")
   @DELETE
   public void deleteRepoInfo(HttpRequest request, HttpResponder responder,
-                              @PathParam("repo") String repo) throws Exception {
+                              @NotNull @PathParam("repo") String repo) throws Exception {
     gitStore.deleteRepo(repo);
     responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  @Path("repos/github/{repo}/testconnection")
+  @GET
+  public void testRepoConnection(HttpRequest request, HttpResponder responder,
+                                  @NotNull @PathParam("repo") String repo) throws Exception {
+    GitHubRepo test = gitStore.getRepo(repo);
+    URL url = new URL(parseUrl(test.getUrl()));
+    HttpURLConnection con = (HttpURLConnection) url.openConnection();
+    con.setRequestMethod("GET");
+
+    String authString  = "invalid";
+    if (test.getAuthMethod().equals("username and password")) {
+      authString = "Basic " + Base64.getEncoder().encodeToString(
+          (test.getUsername() + ":" + test.getPassword()).getBytes());
+    } else if (test.getAuthMethod().equals("authorization token")) {
+      authString = "token " + test.getAuthToken();
+    }
+    con.setRequestProperty("Authorization", authString);
+
+    if (con.getResponseCode() == HttpURLConnection.HTTP_OK) {
+      responder.sendStatus(HttpResponseStatus.OK);
+    } else if (con.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
+      responder.sendStatus(HttpResponseStatus.CONFLICT);
+    } else if (con.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } else {
+      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+    }
   }
 
   public String parseUrl(String url) throws Exception {
@@ -114,13 +140,5 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
     //Put it all together
     return "https://api.github.com/repos" + owner + "/"
         + name;
-  }
-
-  public boolean checkGitConnection(String htmlUrl, String authString) throws Exception {
-    URL url = new URL(htmlUrl);
-    HttpURLConnection con = (HttpURLConnection) url.openConnection();
-    con.setRequestMethod("GET");
-    con.setRequestProperty("Authorization", authString);
-    return con.getResponseCode() == HttpURLConnection.HTTP_OK;
   }
 }

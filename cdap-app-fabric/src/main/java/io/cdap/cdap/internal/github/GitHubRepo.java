@@ -64,6 +64,19 @@ public class GitHubRepo {
     return this.password;
   }
 
+  public boolean validateFields() {
+    if (!(this.defaultBranch.isEmpty() && this.url.isEmpty() && this.authMethod.isEmpty())) {
+      if (this.authMethod.equals("username and password")) {
+        return !(this.username.isEmpty() && this.password.isEmpty());
+      } else if (this.authMethod.equals("authorization token")) {
+        return !this.authToken.isEmpty();
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
+  }
   @Override
   public String toString() {
     return "{\n" +
