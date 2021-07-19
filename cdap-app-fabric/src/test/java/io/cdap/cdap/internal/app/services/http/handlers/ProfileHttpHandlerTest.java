@@ -74,6 +74,13 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
   public static final Principal READ_ONLY_SYSTEM_USER =
     new Principal(READ_ONLY_SYSTEM_USER_NAME, Principal.PrincipalType.USER);
   public static final Principal READ_WRITE_USER = new Principal(READ_WRITE_USER_NAME, Principal.PrincipalType.USER);
+  public static final Principal CREATE_PROFILE_USER = new Principal("createProfileUser",
+                                                                    Principal.PrincipalType.USER);
+  public static final Principal UPDATE_PROFILE_USER = new Principal("updateProfileUser",
+                                                                    Principal.PrincipalType.USER);
+  public static final Principal DELETE_PROFILE_USER = new Principal("deleteProfileUser",
+                                                                    Principal.PrincipalType.USER);
+  public static final String PERMISSIONS_TEST_PROFILE = "permissionsTestProfile";
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -105,6 +112,19 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
                             ImmutableSet.of(StandardPermission.LIST));
     permissionManager.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT.profile("p1")), READ_ONLY_USER,
                             EnumSet.of(StandardPermission.GET));
+
+    permissionManager.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT.profile(PERMISSIONS_TEST_PROFILE)),
+                            CREATE_PROFILE_USER, EnumSet.of(StandardPermission.CREATE));
+    permissionManager.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT.profile(PERMISSIONS_TEST_PROFILE)),
+                            UPDATE_PROFILE_USER, EnumSet.of(StandardPermission.UPDATE));
+    permissionManager.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT.profile(PERMISSIONS_TEST_PROFILE)),
+                            DELETE_PROFILE_USER, EnumSet.of(StandardPermission.DELETE));
+    permissionManager.grant(Authorizable.fromEntityId(NamespaceId.SYSTEM.profile(PERMISSIONS_TEST_PROFILE)),
+                            CREATE_PROFILE_USER, EnumSet.of(StandardPermission.CREATE));
+    permissionManager.grant(Authorizable.fromEntityId(NamespaceId.SYSTEM.profile(PERMISSIONS_TEST_PROFILE)),
+                            UPDATE_PROFILE_USER, EnumSet.of(StandardPermission.UPDATE));
+    permissionManager.grant(Authorizable.fromEntityId(NamespaceId.SYSTEM.profile(PERMISSIONS_TEST_PROFILE)),
+                            DELETE_PROFILE_USER, EnumSet.of(StandardPermission.DELETE));
   }
 
   @Test
@@ -354,5 +374,42 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
     disableSystemProfile(ProfileId.NATIVE.getProfile(), 405);
     putSystemProfile(ProfileId.NATIVE.getProfile(), Profile.NATIVE, 405);
     deleteSystemProfile(ProfileId.NATIVE.getProfile(), 405);
+  }
+
+  @Test
+  public void testPutPermissionChecks() throws Exception {
+    Profile profile = new Profile(PERMISSIONS_TEST_PROFILE, "label", "default permissions testing profile",
+                                         new ProvisionerInfo(MockProvisioner.NAME, Collections.emptyList()));
+    ProfileId profileId = NamespaceId.DEFAULT.profile(PERMISSIONS_TEST_PROFILE);
+    ProfileId systemProfileId = NamespaceId.SYSTEM.profile(PERMISSIONS_TEST_PROFILE);
+    // Verify the UPDATE user does not have permissions to create a profile
+    doAs(UPDATE_PROFILE_USER.getName(), () -> {
+      putProfile(profileId, profile, 403);
+      putSystemProfile(profile.getName(), profile, 403);
+    });
+
+    // Verify that the CREATE user can create both profiles
+    doAs(CREATE_PROFILE_USER.getName(), () -> {
+      putProfile(profileId, profile, 200);
+      putSystemProfile(profile.getName(), profile, 200);
+    });
+
+    // Verify that the UPDATE user can modify the profiles after they have been created
+    doAs(UPDATE_PROFILE_USER.getName(), () -> {
+      putProfile(profileId, profile, 200);
+      putSystemProfile(profile.getName(), profile, 200);
+      // Disable the profiles in preparation for deletion.
+      disableProfile(profileId, 200);
+      disableSystemProfile(profile.getName(), 200);
+      // Verify deletion failure
+      deleteProfile(profileId, 403);
+      deleteSystemProfile(profile.getName(), 403);
+    });
+
+    // Delete profiles
+    doAs(DELETE_PROFILE_USER.getName(), () -> {
+      deleteProfile(profileId, 200);
+      deleteSystemProfile(profile.getName(), 200);
+    });
   }
 }
