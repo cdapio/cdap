@@ -64,15 +64,16 @@ public class GitHubRepo {
     return this.password;
   }
 
+  @Override
   public String toString() {
     return "{\n" +
         "  nickname: " + this.nickname + " {\n" +
-        "              url: " + this.url + "\n" +
-        "              default_branch: " + this.defaultBranch + "\n" +
-        "              auth_method: " + this.authMethod + "\n" +
-        "              username: " + this.url + "\n" +
-        "              password: " + this.url + "\n" +
-        "              authorization token: " + this.url + "\n" + "   }" +
+        "                       url: " + this.url + "\n" +
+        "                       default_branch: " + this.defaultBranch + "\n" +
+        "                       auth_method: " + this.authMethod + "\n" +
+        "                       username: " + this.username + "\n" +
+        "                       password: " + this.password + "\n" +
+        "                       authorization token: " + this.authToken + "\n" + "   }" +
         "\n}";
   }
 }

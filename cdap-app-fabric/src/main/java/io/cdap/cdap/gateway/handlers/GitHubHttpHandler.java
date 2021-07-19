@@ -41,7 +41,7 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.API_VERSION_3)
 public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Gson GSON = new Gson();
-  private GitHubStore gitStore;
+  private final GitHubStore gitStore;
 
 
   @Inject
