@@ -23,6 +23,7 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.data.schema.SchemaCache;
 import io.cdap.cdap.format.io.StructuredRecordDatumReader;
 import io.cdap.cdap.format.io.StructuredRecordDatumWriter;
 
@@ -38,8 +39,11 @@ public class StructuredRecordSerializer extends Serializer<StructuredRecord> {
 
   @Override
   public void write(Kryo kryo, Output output, StructuredRecord record) {
-    // First write out the schema
-    kryo.writeObject(output, record.getSchema());
+    // First write out the schema as two fields: hash and json representation
+    // Later with the cache we may skip deserializing JSON if schema is present in cache
+    kryo.writeObject(output, record.getSchema().getSchemaHash().toString());
+    kryo.writeObject(output, record.getSchema().toString());
+
     // Then write out the data
     try {
       DATUM_WRITER.encode(record, new KryoEncoder(output));
@@ -51,7 +55,9 @@ public class StructuredRecordSerializer extends Serializer<StructuredRecord> {
   @Override
   public StructuredRecord read(Kryo kryo, Input input, Class<StructuredRecord> type) {
     // Read the schema
-    Schema schema = kryo.readObject(input, Schema.class);
+    String schemaHashStr = kryo.readObject(input, String.class);
+    String schemaJson = kryo.readObject(input, String.class);
+    Schema schema = SchemaCache.fromJson(schemaHashStr, schemaJson);
     try {
       return DATUM_READER.read(new KryoDecoder(input), schema);
     } catch (IOException e) {
