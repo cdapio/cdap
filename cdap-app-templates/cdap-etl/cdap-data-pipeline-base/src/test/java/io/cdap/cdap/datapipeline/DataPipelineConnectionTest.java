@@ -203,7 +203,7 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     for (int i = 0; i < 100; i++) {
       records.add(StructuredRecord.builder(schema).set("offset", i * 2L).set("body", "1").build());
     }
-    ArtifactSelectorConfig artifact = new ArtifactSelectorConfig(APP_ARTIFACT_ID.getNamespace(),
+    ArtifactSelectorConfig artifact = new ArtifactSelectorConfig("SYSTEM",
                                                                  APP_ARTIFACT_ID.getArtifact() + "-mocks",
                                                                  APP_ARTIFACT_ID.getVersion());
     Map<String, String> properties = ImmutableMap.of("path", entities.get(1).getPath(),
