@@ -159,7 +159,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
                                                  creationRequest.getPlugin().getName(),
                                                  creationRequest.getDescription(), false, false,
                                                  now, now, creationRequest.getPlugin());
-      store.saveConnection(connectionId, connectionInfo, creationRequest.overWrite());
+      store.saveConnection(connectionId, connectionInfo, false);
       responder.sendStatus(HttpURLConnection.HTTP_OK);
     });
   }

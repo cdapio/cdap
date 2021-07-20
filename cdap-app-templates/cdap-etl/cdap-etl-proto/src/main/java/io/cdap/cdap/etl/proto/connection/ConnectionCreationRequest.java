@@ -24,18 +24,10 @@ import java.util.Objects;
  */
 public class ConnectionCreationRequest {
   private final String description;
-  // flag indicating whether the creation request should overwrite an existing connection with same connection id
-  // but different connection name, i.e, a b and a.b both convert to id a_b
-  private final boolean overWrite;
   private final PluginInfo plugin;
 
   public ConnectionCreationRequest(String description, PluginInfo plugin) {
-    this(description, plugin, false);
-  }
-
-  public ConnectionCreationRequest(String description, PluginInfo plugin, boolean overWrite) {
     this.description = description;
-    this.overWrite = overWrite;
     this.plugin = plugin;
   }
 
@@ -45,10 +37,6 @@ public class ConnectionCreationRequest {
 
   public PluginInfo getPlugin() {
     return plugin;
-  }
-
-  public boolean overWrite() {
-    return overWrite;
   }
 
   @Override
@@ -62,13 +50,12 @@ public class ConnectionCreationRequest {
     }
 
     ConnectionCreationRequest that = (ConnectionCreationRequest) o;
-    return overWrite == that.overWrite &&
-      Objects.equals(description, that.description) &&
-      Objects.equals(plugin, that.plugin);
+    return Objects.equals(description, that.description) &&
+             Objects.equals(plugin, that.plugin);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(description, overWrite, plugin);
+    return Objects.hash(description, plugin);
   }
 }
