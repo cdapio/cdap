@@ -22,6 +22,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.store.GitHubStore;
 import io.cdap.cdap.internal.github.GitHubRepo;
+import io.cdap.cdap.internal.github.GitHubRequest;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;
@@ -63,7 +64,12 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   public void getRepoInfo(HttpRequest request, HttpResponder responder,
                           @NotNull @PathParam("repo") String repo) throws Exception {
+    try {
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(gitStore.getRepo(repo)));
+    } catch (Exception ex) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    }
+
   }
 
   @Path("repos/github/{repo}")
@@ -72,18 +78,18 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
                           @NotNull @PathParam("repo") String repo) throws Exception {
 
     try {
-      GitHubRepo githubRequest = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8)
-          , GitHubRepo.class);
+      GitHubRequest githubRequest = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8)
+          , GitHubRequest.class);
       if (githubRequest.validateFields()) {
+        String authString = createAuthString(githubRequest);
         gitStore.addOrUpdateRepo(repo, githubRequest.getUrl(), githubRequest.getDefaultBranch(),
-            githubRequest.getAuthMethod(), githubRequest.getUsername(),
-            githubRequest.getPassword(), githubRequest.getAuthToken());
+            authString);
         responder.sendStatus(HttpResponseStatus.OK);
       } else {
         responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Please enter all fields.");
       }
     } catch (Exception ex) {
-      responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Please enter fields correctly.");
+      responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Please enter fields formatted correctly.");
     }
 
 
@@ -109,14 +115,7 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
     HttpURLConnection con = (HttpURLConnection) url.openConnection();
     con.setRequestMethod("GET");
 
-    String authString  = "invalid";
-    if (test.getAuthMethod().equals("username and password")) {
-      authString = "Basic " + Base64.getEncoder().encodeToString(
-          (test.getUsername() + ":" + test.getPassword()).getBytes());
-    } else if (test.getAuthMethod().equals("authorization token")) {
-      authString = "token " + test.getAuthToken();
-    }
-    con.setRequestProperty("Authorization", authString);
+    con.setRequestProperty("Authorization", test.getAuthString());
 
     if (con.getResponseCode() == HttpURLConnection.HTTP_OK) {
       responder.sendStatus(HttpResponseStatus.OK);
@@ -140,5 +139,16 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
     //Put it all together
     return "https://api.github.com/repos" + owner + "/"
         + name;
+  }
+
+  public String createAuthString(GitHubRequest request) {
+    if (request.getAuthMethod().equals("username and password")) {
+      return "Basic " + Base64.getEncoder().encodeToString(
+          (request.getUsername() + ":" + request.getPassword()).getBytes());
+    } else if (request.getAuthMethod().equals("authorization token")) {
+      return "token " + request.getAuthToken();
+    } else {
+      return "invalid";
+    }
   }
 }

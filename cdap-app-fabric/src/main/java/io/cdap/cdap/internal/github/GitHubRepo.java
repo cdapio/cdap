@@ -20,20 +20,14 @@ public class GitHubRepo {
   private String nickname;
   private String url;
   private String defaultBranch;
-  private String authMethod;
-  private String authToken;
-  private String username;
-  private String password;
+  private String authString;
 
   public GitHubRepo(String nickname, String url, String defaultBranch,
-      String authMethod, String username, String password, String authToken) {
+      String authString) {
     this.nickname = nickname;
     this.url = url;
     this.defaultBranch = defaultBranch;
-    this.authMethod = authMethod;
-    this.username = username;
-    this.password = password;
-    this.authToken = authToken;
+    this.authString = authString;
   }
 
   public String getNickname() {
@@ -48,34 +42,13 @@ public class GitHubRepo {
     return this.defaultBranch;
   }
 
-  public String getAuthMethod() {
-    return this.authMethod;
-  }
-
-  public String getAuthToken() {
-    return this.authToken;
-  }
-
-  public String getUsername() {
-    return this.username;
-  }
-
-  public String getPassword() {
-    return this.password;
+  public String getAuthString() {
+    return this.authString;
   }
 
   public boolean validateFields() {
-    if (!(this.defaultBranch.isEmpty() && this.url.isEmpty() && this.authMethod.isEmpty())) {
-      if (this.authMethod.equals("username and password")) {
-        return !(this.username.isEmpty() && this.password.isEmpty());
-      } else if (this.authMethod.equals("authorization token")) {
-        return !this.authToken.isEmpty();
-      } else {
-        return false;
-      }
-    } else {
-      return false;
-    }
+    return !(this.nickname.isEmpty() || this.url.isEmpty() || this.defaultBranch.isEmpty()
+        || this.authString.isEmpty());
   }
   @Override
   public String toString() {
@@ -83,10 +56,7 @@ public class GitHubRepo {
         "  nickname: " + this.nickname + " {\n" +
         "                       url: " + this.url + "\n" +
         "                       default_branch: " + this.defaultBranch + "\n" +
-        "                       auth_method: " + this.authMethod + "\n" +
-        "                       username: " + this.username + "\n" +
-        "                       password: " + this.password + "\n" +
-        "                       authorization token: " + this.authToken + "\n" + "   }" +
+        "                       auth_string: " + this.authString + "\n" + "   }" +
         "\n}";
   }
 }

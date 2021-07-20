@@ -43,17 +43,14 @@ public class GitHubStore {
   }
 
   public void addOrUpdateRepo(String nickname, String url, String defaultBranch,
-           String authMethod, String username, String password, String authToken) throws IOException {
+           String authString) throws IOException {
     TransactionRunners.run(transactionRunner, context ->  {
-      StructuredTable table = context.getTable(StoreDefinition.GitHubStore.GITHUB_REPOS);
+      StructuredTable table = context.getTable(StoreDefinition.GitHubStore.GIT_REPOS);
       Collection<Field<?>> fields = new ArrayList<>();
       fields.add(Fields.stringField(StoreDefinition.GitHubStore.NICKNAME_FIELD, nickname));
       fields.add(Fields.stringField(StoreDefinition.GitHubStore.URL_FIELD, url));
       fields.add(Fields.stringField(StoreDefinition.GitHubStore.DEFAULT_BRANCH_FIELD, defaultBranch));
-      fields.add(Fields.stringField(StoreDefinition.GitHubStore.AUTH_METHOD_FIELD, authMethod));
-      fields.add(Fields.stringField(StoreDefinition.GitHubStore.USERNAME_FIELD, username));
-      fields.add(Fields.stringField(StoreDefinition.GitHubStore.PASSWORD_FIELD, password));
-      fields.add(Fields.stringField(StoreDefinition.GitHubStore.AUTHORIZATION_TOKEN_FIELD, authToken));
+      fields.add(Fields.stringField(StoreDefinition.GitHubStore.AUTH_STRING_FIELD, authString));
       table.upsert(fields);
     }, IOException.class);
 
@@ -61,41 +58,35 @@ public class GitHubStore {
 
   public void deleteRepo(String nickname) throws IOException {
     TransactionRunners.run(transactionRunner, context -> {
-      StructuredTable table = context.getTable(StoreDefinition.GitHubStore.GITHUB_REPOS);
+      StructuredTable table = context.getTable(StoreDefinition.GitHubStore.GIT_REPOS);
       table.delete(Collections.singleton(Fields.stringField(StoreDefinition.GitHubStore.NICKNAME_FIELD, nickname)));
     }, IOException.class);
   }
 
   public GitHubRepo getRepo(String nickname) throws IOException {
     return TransactionRunners.run(transactionRunner, context -> {
-      StructuredTable table = context.getTable(StoreDefinition.GitHubStore.GITHUB_REPOS);
+      StructuredTable table = context.getTable(StoreDefinition.GitHubStore.GIT_REPOS);
       Optional<StructuredRow> out = table.read(Collections.singleton(
           Fields.stringField(StoreDefinition.GitHubStore.NICKNAME_FIELD, nickname)));
       String nName = out.get().getString(StoreDefinition.GitHubStore.NICKNAME_FIELD);
       String url = out.get().getString(StoreDefinition.GitHubStore.URL_FIELD);
       String defBranch = out.get().getString(StoreDefinition.GitHubStore.DEFAULT_BRANCH_FIELD);
-      String aMethod = out.get().getString(StoreDefinition.GitHubStore.AUTH_METHOD_FIELD);
-      String usrName = out.get().getString(StoreDefinition.GitHubStore.USERNAME_FIELD);
-      String passWord = out.get().getString(StoreDefinition.GitHubStore.PASSWORD_FIELD);
-      String authToken = out.get().getString(StoreDefinition.GitHubStore.AUTHORIZATION_TOKEN_FIELD);
-      return new GitHubRepo(nName, url, defBranch, aMethod, usrName, passWord, authToken);
+      String aString = out.get().getString(StoreDefinition.GitHubStore.AUTH_STRING_FIELD);
+      return new GitHubRepo(nName, url, defBranch, aString);
     }, IOException.class);
   }
 
   public List<GitHubRepo> getRepos() throws IOException {
     return TransactionRunners.run(transactionRunner, context -> {
-      StructuredTable table = context.getTable(StoreDefinition.GitHubStore.GITHUB_REPOS);
+      StructuredTable table = context.getTable(StoreDefinition.GitHubStore.GIT_REPOS);
       List<GitHubRepo> repos = new ArrayList<>();
       CloseableIterator<StructuredRow> repoIterator = table.scan(Range.all(), Integer.MAX_VALUE);
       repoIterator.forEachRemaining(structuredRow -> {
         String nName = structuredRow.getString(StoreDefinition.GitHubStore.NICKNAME_FIELD);
         String url = structuredRow.getString(StoreDefinition.GitHubStore.URL_FIELD);
         String defBranch = structuredRow.getString(StoreDefinition.GitHubStore.DEFAULT_BRANCH_FIELD);
-        String aMethod = structuredRow.getString(StoreDefinition.GitHubStore.AUTH_METHOD_FIELD);
-        String usrName = structuredRow.getString(StoreDefinition.GitHubStore.USERNAME_FIELD);
-        String passWord = structuredRow.getString(StoreDefinition.GitHubStore.PASSWORD_FIELD);
-        String authToken = structuredRow.getString(StoreDefinition.GitHubStore.AUTHORIZATION_TOKEN_FIELD);
-        repos.add(new GitHubRepo(nName, url, defBranch, aMethod, usrName, passWord, authToken));
+        String aString = structuredRow.getString(StoreDefinition.GitHubStore.AUTH_STRING_FIELD);
+        repos.add(new GitHubRepo(nName, url, defBranch, aString));
       });
       return repos;
     }, IOException.class);
