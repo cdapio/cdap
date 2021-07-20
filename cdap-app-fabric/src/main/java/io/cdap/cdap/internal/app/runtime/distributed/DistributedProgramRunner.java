@@ -264,12 +264,8 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
           }
           twillPreparer.setLogLevels(runnable, transformLogLevels(runnableDefinition.getLogLevels()));
           twillPreparer.withConfiguration(runnable, runnableDefinition.getTwillRunnableConfigs());
-          if (clusterMode == ClusterMode.ON_PREMISE && program.getType() == ProgramType.WORKFLOW) {
-            // set TwillConstants#PROGRAM_RUNTIME_ENV configuration on twill preparer. This configuration will be
-            // used when cdap programs are launched on k8s env.
-            twillPreparer.withConfiguration(runnable,
-                                            Collections.singletonMap(TwillConstants.PROGRAM_RUNTIME_ENV, "master"));
-          }
+          // set runtime configuration on twill preparer so that programs can pass configs to twill preparer
+          twillPreparer.withConfiguration(runnable, launchConfig.getExtraRuntimeArgs());
 
           // Add cdap-security.xml if using secrets, and set the runnable identity.
           if (twillPreparer instanceof SecureTwillPreparer) {

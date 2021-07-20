@@ -441,34 +441,34 @@ class KubeTwillController implements ExtendedTwillController {
       String name = meta.getName();
       appsApi.deleteNamespacedStatefulSetAsync(name, kubeNamespace, null, null, null, null, null, null,
                                                new ApiCallbackAdapter<V1Status>() {
-                                                 @Override
-                                                 public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
-                                                   // Ignore if the stateful set is already deleted
-                                                   if (statusCode == 404) {
-                                                     deletePVCs();
-                                                   } else {
-                                                     completeExceptionally(resultFuture, e);
-                                                   }
-                                                 }
+          @Override
+          public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
+            // Ignore if the stateful set is already deleted
+            if (statusCode == 404) {
+              deletePVCs();
+            } else {
+              completeExceptionally(resultFuture, e);
+            }
+          }
 
-                                                 @Override
-                                                 public void onSuccess(V1Status v1Status, int statusCode, Map<String, List<String>> responseHeaders) {
-                                                   deletePVCs();
-                                                 }
+          @Override
+          public void onSuccess(V1Status v1Status, int statusCode, Map<String, List<String>> responseHeaders) {
+            deletePVCs();
+          }
 
-                                                 // Delete the PVCs used by the stateful set
-                                                 private void deletePVCs() {
-                                                   LOG.debug("Deleting PVCs for StatefulSet {}", meta.getName());
-                                                   try {
-                                                     coreApi.deleteCollectionNamespacedPersistentVolumeClaimAsync(
-                                                       kubeNamespace, null, null, null, null, null, getLabelSelector(),
-                                                       null, null, null, null, null, null, null,
-                                                       createCallbackFutureAdapter(resultFuture, r -> name));
-                                                   } catch (ApiException e) {
-                                                     completeExceptionally(resultFuture, e);
-                                                   }
-                                                 }
-                                               });
+          // Delete the PVCs used by the stateful set
+          private void deletePVCs() {
+            LOG.debug("Deleting PVCs for StatefulSet {}", meta.getName());
+            try {
+              coreApi.deleteCollectionNamespacedPersistentVolumeClaimAsync(
+                kubeNamespace, null, null, null, null, null, getLabelSelector(),
+                null, null, null, null, null, null, null,
+                createCallbackFutureAdapter(resultFuture, r -> name));
+            } catch (ApiException e) {
+              completeExceptionally(resultFuture, e);
+            }
+          }
+        });
 
     } catch (ApiException e) {
       completeExceptionally(resultFuture, e);
