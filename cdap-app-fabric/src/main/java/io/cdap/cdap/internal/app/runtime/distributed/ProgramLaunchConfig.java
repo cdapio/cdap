@@ -44,6 +44,7 @@ public final class ProgramLaunchConfig {
   private final Map<String, LocalizeResource> extraResources = new HashMap<>();
   private final List<String> extraClasspath = new ArrayList<>();
   private final Map<String, String> extraEnv = new HashMap<>();
+  private final Map<String, String> extraRuntimeArgs = new HashMap<>();
   private final Map<String, RunnableDefinition> runnables = new HashMap<>();
   private final List<Set<String>> launchOrder = new ArrayList<>();
   private final Set<Class<?>> extraDependencies = new HashSet<>();
@@ -76,6 +77,11 @@ public final class ProgramLaunchConfig {
 
   public ProgramLaunchConfig addExtraEnv(Map<String, String> env) {
     extraEnv.putAll(env);
+    return this;
+  }
+
+  public ProgramLaunchConfig addExtraRuntimeArgs(Map<String, String> runtimeArgs) {
+    extraRuntimeArgs.putAll(runtimeArgs);
     return this;
   }
 
@@ -155,6 +161,10 @@ public final class ProgramLaunchConfig {
   public ProgramLaunchConfig clearRunnables() {
     runnables.clear();
     return this;
+  }
+
+  public Map<String, String> getExtraRuntimeArgs() {
+    return extraRuntimeArgs;
   }
 
   /**

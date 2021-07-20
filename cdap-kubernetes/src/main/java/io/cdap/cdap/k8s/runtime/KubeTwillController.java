@@ -69,6 +69,7 @@ class KubeTwillController implements ExtendedTwillController {
   private final String kubeNamespace;
   private final RunId runId;
   private final CompletableFuture<KubeTwillController> completion;
+  private boolean isStopped;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final ApiClient apiClient;
   private final BatchV1Api batchV1Api;
@@ -302,6 +303,11 @@ class KubeTwillController implements ExtendedTwillController {
     }
     try {
       awaitTerminated();
+      // If isStopped is true, this means the kubernetes submitted job was not found. This could happen if the job
+      // was submitted and then deleted before getting status/before issuing delete.
+      if (isStopped) {
+        return TerminationStatus.KILLED;
+      }
       return TerminationStatus.SUCCEEDED;
     } catch (ExecutionException e) {
       return TerminationStatus.FAILED;
@@ -441,34 +447,34 @@ class KubeTwillController implements ExtendedTwillController {
       String name = meta.getName();
       appsApi.deleteNamespacedStatefulSetAsync(name, kubeNamespace, null, null, null, null, null, null,
                                                new ApiCallbackAdapter<V1Status>() {
-                                                 @Override
-                                                 public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
-                                                   // Ignore if the stateful set is already deleted
-                                                   if (statusCode == 404) {
-                                                     deletePVCs();
-                                                   } else {
-                                                     completeExceptionally(resultFuture, e);
-                                                   }
-                                                 }
+          @Override
+          public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
+            // Ignore if the stateful set is already deleted
+            if (statusCode == 404) {
+              deletePVCs();
+            } else {
+              completeExceptionally(resultFuture, e);
+            }
+          }
 
-                                                 @Override
-                                                 public void onSuccess(V1Status v1Status, int statusCode, Map<String, List<String>> responseHeaders) {
-                                                   deletePVCs();
-                                                 }
+          @Override
+          public void onSuccess(V1Status v1Status, int statusCode, Map<String, List<String>> responseHeaders) {
+            deletePVCs();
+          }
 
-                                                 // Delete the PVCs used by the stateful set
-                                                 private void deletePVCs() {
-                                                   LOG.debug("Deleting PVCs for StatefulSet {}", meta.getName());
-                                                   try {
-                                                     coreApi.deleteCollectionNamespacedPersistentVolumeClaimAsync(
-                                                       kubeNamespace, null, null, null, null, null, getLabelSelector(),
-                                                       null, null, null, null, null, null, null,
-                                                       createCallbackFutureAdapter(resultFuture, r -> name));
-                                                   } catch (ApiException e) {
-                                                     completeExceptionally(resultFuture, e);
-                                                   }
-                                                 }
-                                               });
+          // Delete the PVCs used by the stateful set
+          private void deletePVCs() {
+            LOG.debug("Deleting PVCs for StatefulSet {}", meta.getName());
+            try {
+              coreApi.deleteCollectionNamespacedPersistentVolumeClaimAsync(
+                kubeNamespace, null, null, null, null, null, getLabelSelector(),
+                null, null, null, null, null, null, null,
+                createCallbackFutureAdapter(resultFuture, r -> name));
+            } catch (ApiException e) {
+              completeExceptionally(resultFuture, e);
+            }
+          }
+        });
 
     } catch (ApiException e) {
       completeExceptionally(resultFuture, e);
@@ -515,53 +521,41 @@ class KubeTwillController implements ExtendedTwillController {
   }
 
   /**
-   * Returns job completion status.
+   * Returns job completion status and attempts to delete the job.
    */
   private CompletionStage<String> getJobCompletionStatus() {
     CompletableFuture<String> resultFuture = new CompletableFuture<>();
     String name = meta.getName();
-    // In case we fail to get job status due to some transient issue, retry 5 times. There is no need to retry for too
-    // long otherwise corresponding program may appear to be stuck while retrying to get job status.
-    // If we exhaust retries, complete future exceptionally. Though in normal scenario, retries is not expected
-    // to be performed.
-    int retryCount = 5;
-    do {
-      try {
-        V1Job v1Job = batchV1Api.readNamespacedJob(name, kubeNamespace, null, null, null);
-        V1JobStatus status = v1Job.getStatus();
+    try {
+      V1Job v1Job = batchV1Api.readNamespacedJob(name, kubeNamespace, null, null, null);
+      V1JobStatus status = v1Job.getStatus();
 
-        // If job has failed, mark future as failed. Else mark it as succeeded.
-        if (status != null && status.getFailed() != null) {
-          resultFuture.completeExceptionally(new RuntimeException(String.format("Job %s has failed status.", name)));
-        } else {
-          resultFuture.complete(name);
-        }
-        retryCount = 0;
-
-        // Also attempt to delete the job once status is available
-        deleteJob(meta).whenComplete((jName, t) -> {
-          if (t != null) {
-            LOG.warn("Failed to delete job {}. Attempt will be retried", jName);
-          } else {
-            LOG.trace("Successfully deleted job {}", jName);
-          }
-        });
-      } catch (ApiException e) {
-        if (e.getCode() == 404) {
-          LOG.warn("Failed to get job status because job {} was not found.", name, e);
-          // There is no need to retry if job itself is not present. Mark the job as failed.
-          retryCount = 0;
-          completeExceptionally(resultFuture, e);
-        } else {
-          retryCount--;
-          if (retryCount <= 0) {
-            // If we fail to get the job status 5 times, we mark the future as failed.
-            LOG.error("Failed to get status for job {}.", name, e);
-            completeExceptionally(resultFuture, e);
-          }
-        }
+      // If job has failed, mark future as failed. Else mark it as succeeded.
+      if (status != null && status.getFailed() != null) {
+        resultFuture.completeExceptionally(new RuntimeException(String.format("Job %s has failed status.", name)));
+      } else {
+        resultFuture.complete(name);
       }
-    } while (retryCount > 0);
+
+      // Also attempt to delete the job once status is available
+      deleteJob(meta).whenComplete((jName, t) -> {
+        if (t != null) {
+          LOG.warn("Failed to delete job {}. Attempt will be retried", jName);
+        } else {
+          LOG.trace("Successfully deleted job {}", jName);
+        }
+      });
+    } catch (ApiException e) {
+      if (e.getCode() == 404) {
+        // If isStopped is true, this means the kubernetes submitted job was not found. This could happen if the job
+        // was submitted and then deleted before getting status/before issuing delete.
+        isStopped = true;
+        resultFuture.complete(name);
+      } else {
+        LOG.error("Failed to get status for job {}.", name, e);
+        completeExceptionally(resultFuture, e);
+      }
+    }
 
     return resultFuture;
   }
@@ -580,8 +574,11 @@ class KubeTwillController implements ExtendedTwillController {
                                           v1DeleteOptions, new ApiCallbackAdapter<V1Status>() {
           @Override
           public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
-            // Ignore the failure if the job is already deleted
             if (statusCode == 404) {
+              // If isStopped is true, this means the kubernetes submitted job was not found.
+              // This could happen if the job was submitted and then deleted before getting status/before issuing
+              // delete.
+              isStopped = true;
               resultFuture.complete(name);
             } else {
               resultFuture.completeExceptionally(e);

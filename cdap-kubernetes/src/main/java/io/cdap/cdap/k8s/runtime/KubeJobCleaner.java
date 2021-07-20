@@ -46,9 +46,9 @@ class KubeJobCleaner implements Runnable {
 
   @Override
   public void run() {
-    LOG.info("Starting an iteration of kubernetes job cleanup.");
     String continuationToken = null;
     int retryCount = 10;
+    int jobDeletionCount = 0;
     do {
       try {
         // Attempt to delete completed jobs. K8s current implementation only supports status.successful field selector
@@ -69,6 +69,7 @@ class KubeJobCleaner implements Runnable {
               // Rely on k8s garbage collector to delete dependent pods in background while job resource is deleted
               // immediately - https://kubernetes.io/docs/concepts/workloads/controllers/garbage-collection
               batchV1Api.deleteNamespacedJob(jobName, kubeNamespace, null, null, null, null, null, v1DeleteOptions);
+              jobDeletionCount++;
             } catch (ApiException e) {
               if (e.getCode() == 404) {
                 // Ignore if status code is 404, this could happen in case there is some race condition while issuing
@@ -89,6 +90,6 @@ class KubeJobCleaner implements Runnable {
       }
     } while (retryCount != 0 && continuationToken != null);
 
-    LOG.info("Completed an iteration of kubernetes job cleanup.");
+    LOG.trace("Completed an iteration of job clean by removing {} number of jobs.", jobDeletionCount);
   }
 }
