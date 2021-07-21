@@ -50,9 +50,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import static java.net.HttpURLConnection.HTTP_FORBIDDEN;
-import static java.net.HttpURLConnection.HTTP_OK;
-
 /**
  * Unit tests for profile http handler
  */
@@ -129,12 +126,12 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testSystemProfiles() throws Exception {
-    Assert.assertEquals(Collections.singletonList(Profile.NATIVE), listSystemProfiles(200));
+    Assert.assertEquals(Collections.singletonList(Profile.NATIVE), listSystemProfiles(HttpURLConnection.HTTP_OK));
 
     Profile p1 = new Profile("p1", "label", "desc", EntityScope.SYSTEM,
                              new ProvisionerInfo(MockProvisioner.NAME, PROPERTY_SUMMARIES));
-    putSystemProfile(p1.getName(), p1, 200);
-    Optional<Profile> p1Optional = getSystemProfile(p1.getName(), 200);
+    putSystemProfile(p1.getName(), p1, HttpURLConnection.HTTP_OK);
+    Optional<Profile> p1Optional = getSystemProfile(p1.getName(), HttpURLConnection.HTTP_OK);
     Assert.assertTrue(p1Optional.isPresent());
     Assert.assertEquals(p1, p1Optional.get());
 
@@ -142,27 +139,27 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
     Set<Profile> expected = new HashSet<>();
     expected.add(Profile.NATIVE);
     expected.add(p1);
-    Set<Profile> actual = new HashSet<>(listSystemProfiles(200));
+    Set<Profile> actual = new HashSet<>(listSystemProfiles(HttpURLConnection.HTTP_OK));
     Assert.assertEquals(expected, actual);
     // check that they're both visible to namespaces
-    Assert.assertEquals(expected, new HashSet<>(listProfiles(NamespaceId.DEFAULT, true, 200)));
+    Assert.assertEquals(expected, new HashSet<>(listProfiles(NamespaceId.DEFAULT, true, HttpURLConnection.HTTP_OK)));
 
     // check we can add a profile with the same name in a namespace
     Profile p2 = new Profile(p1.getName(), p1.getLabel(), p1.getDescription(), EntityScope.USER,
                              p1.getProvisioner());
     ProfileId p2Id = NamespaceId.DEFAULT.profile(p2.getName());
-    putProfile(p2Id, p2, 200);
+    putProfile(p2Id, p2, HttpURLConnection.HTTP_OK);
     // check that all are visible to the namespace
     expected.add(p2);
-    Assert.assertEquals(expected, new HashSet<>(listProfiles(NamespaceId.DEFAULT, true, 200)));
+    Assert.assertEquals(expected, new HashSet<>(listProfiles(NamespaceId.DEFAULT, true, HttpURLConnection.HTTP_OK)));
     // check that namespaced profile is not visible in system list
     expected.remove(p2);
-    Assert.assertEquals(expected, new HashSet<>(listSystemProfiles(200)));
+    Assert.assertEquals(expected, new HashSet<>(listSystemProfiles(HttpURLConnection.HTTP_OK)));
 
-    disableProfile(p2Id, 200);
-    deleteProfile(p2Id, 200);
-    disableSystemProfile(p1.getName(), 200);
-    deleteSystemProfile(p1.getName(), 200);
+    disableProfile(p2Id, HttpURLConnection.HTTP_OK);
+    deleteProfile(p2Id, HttpURLConnection.HTTP_OK);
+    disableSystemProfile(p1.getName(), HttpURLConnection.HTTP_OK);
+    deleteSystemProfile(p1.getName(), HttpURLConnection.HTTP_OK);
 
     doAs(READ_WRITE_USER_NAME, () -> {
       listSystemProfiles(HttpURLConnection.HTTP_OK);
@@ -177,63 +174,63 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
     doAs(READ_ONLY_SYSTEM_USER_NAME, () -> {
       listSystemProfiles(HttpURLConnection.HTTP_OK);
       listProfiles(NamespaceId.DEFAULT, true, HttpURLConnection.HTTP_OK);
-      putSystemProfile(p1.getName(), p1, HTTP_FORBIDDEN);
+      putSystemProfile(p1.getName(), p1, HttpURLConnection.HTTP_FORBIDDEN);
       getSystemProfile(Profile.NATIVE.getName(), HttpURLConnection.HTTP_OK);
-      disableSystemProfile(p1.getName(), HTTP_FORBIDDEN);
-      enableSystemProfile(p1.getName(), HTTP_FORBIDDEN);
-      deleteSystemProfile(p1.getName(), HTTP_FORBIDDEN);
+      disableSystemProfile(p1.getName(), HttpURLConnection.HTTP_FORBIDDEN);
+      enableSystemProfile(p1.getName(), HttpURLConnection.HTTP_FORBIDDEN);
+      deleteSystemProfile(p1.getName(), HttpURLConnection.HTTP_FORBIDDEN);
     });
     doAs(READ_ONLY_USER_NAME, () -> {
-      listSystemProfiles(HTTP_FORBIDDEN);
-      listProfiles(NamespaceId.DEFAULT, true, HTTP_FORBIDDEN);
+      listSystemProfiles(HttpURLConnection.HTTP_FORBIDDEN);
+      listProfiles(NamespaceId.DEFAULT, true, HttpURLConnection.HTTP_FORBIDDEN);
       listProfiles(NamespaceId.DEFAULT, false, HttpURLConnection.HTTP_OK);
-      getSystemProfile(Profile.NATIVE.getName(), HTTP_FORBIDDEN);
-      putSystemProfile(p1.getName(), p1, HTTP_FORBIDDEN);
-      disableSystemProfile(p1.getName(), HTTP_FORBIDDEN);
-      enableSystemProfile(p1.getName(), HTTP_FORBIDDEN);
-      deleteSystemProfile(p1.getName(), HTTP_FORBIDDEN);
+      getSystemProfile(Profile.NATIVE.getName(), HttpURLConnection.HTTP_FORBIDDEN);
+      putSystemProfile(p1.getName(), p1, HttpURLConnection.HTTP_FORBIDDEN);
+      disableSystemProfile(p1.getName(), HttpURLConnection.HTTP_FORBIDDEN);
+      enableSystemProfile(p1.getName(), HttpURLConnection.HTTP_FORBIDDEN);
+      deleteSystemProfile(p1.getName(), HttpURLConnection.HTTP_FORBIDDEN);
     });
   }
 
   @Test
   public void testSystemNamespaceProfilesNotAllowed() throws Exception {
-    listProfiles(NamespaceId.SYSTEM, false, 405);
-    getProfile(NamespaceId.SYSTEM.profile("abc"), 405);
-    disableProfile(NamespaceId.SYSTEM.profile("abc"), 405);
-    enableProfile(NamespaceId.SYSTEM.profile("abc"), 405);
+    listProfiles(NamespaceId.SYSTEM, false, HttpURLConnection.HTTP_BAD_METHOD);
+    getProfile(NamespaceId.SYSTEM.profile("abc"), HttpURLConnection.HTTP_BAD_METHOD);
+    disableProfile(NamespaceId.SYSTEM.profile("abc"), HttpURLConnection.HTTP_BAD_METHOD);
+    enableProfile(NamespaceId.SYSTEM.profile("abc"), HttpURLConnection.HTTP_BAD_METHOD);
 
     Profile profile = new Profile("abc", "label", "desc", new ProvisionerInfo("xyz", Collections.emptyList()));
-    putProfile(NamespaceId.SYSTEM.profile("abc"), profile, 405);
+    putProfile(NamespaceId.SYSTEM.profile("abc"), profile, HttpURLConnection.HTTP_BAD_METHOD);
   }
 
   @Test
   public void testListAndGetProfiles() throws Exception {
     // no profile should be there in default namespace
-    List<Profile> profiles = listProfiles(NamespaceId.DEFAULT, false, 200);
+    List<Profile> profiles = listProfiles(NamespaceId.DEFAULT, false, HttpURLConnection.HTTP_OK);
     Assert.assertEquals(Collections.emptyList(), profiles);
 
     // try to list all profiles including system namespace before putting a new one, there should only exist a default
     // profile
-    profiles = listProfiles(NamespaceId.DEFAULT, true, 200);
+    profiles = listProfiles(NamespaceId.DEFAULT, true, HttpURLConnection.HTTP_OK);
     Assert.assertEquals(Collections.singletonList(Profile.NATIVE), profiles);
 
     // test get single profile endpoint
     ProfileId profileId = NamespaceId.DEFAULT.profile("p1");
     Profile expected = new Profile("p1", "label", "my profile for testing",
                                    new ProvisionerInfo(MockProvisioner.NAME, PROPERTY_SUMMARIES));
-    putProfile(profileId, expected, 200);
-    Profile actual = getProfile(profileId, 200).get();
+    putProfile(profileId, expected, HttpURLConnection.HTTP_OK);
+    Profile actual = getProfile(profileId, HttpURLConnection.HTTP_OK).get();
     Assert.assertEquals(expected, actual);
 
     // get a nonexisting profile should get a not found code
-    getProfile(NamespaceId.DEFAULT.profile("nonExisting"), 404);
+    getProfile(NamespaceId.DEFAULT.profile("nonExisting"), HttpURLConnection.HTTP_NOT_FOUND);
     doAs(READ_ONLY_USER_NAME, () -> {
       listProfiles(NamespaceId.DEFAULT, false, HttpURLConnection.HTTP_OK);
       getProfile(profileId, HttpURLConnection.HTTP_OK);
     });
     doAs(NO_ACCESS_USER_NAME, () -> {
-      listProfiles(NamespaceId.DEFAULT, false, HTTP_FORBIDDEN);
-      getProfile(profileId, HTTP_FORBIDDEN);
+      listProfiles(NamespaceId.DEFAULT, false, HttpURLConnection.HTTP_FORBIDDEN);
+      getProfile(profileId, HttpURLConnection.HTTP_FORBIDDEN);
     });
   }
 
@@ -242,57 +239,58 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
     Profile invalidProfile = new Profile("MyProfile", "label", "my profile for testing",
                                          new ProvisionerInfo("nonExisting", PROPERTY_SUMMARIES));
     // adding a profile with non-existing provisioner should get a 400
-    putProfile(NamespaceId.DEFAULT.profile(invalidProfile.getName()), invalidProfile, 400);
+    putProfile(NamespaceId.DEFAULT.profile(invalidProfile.getName()), invalidProfile,
+               HttpURLConnection.HTTP_BAD_REQUEST);
 
     // put a profile with the mock provisioner
     Profile expected = new Profile("MyProfile", "label", "my profile for testing",
                                    new ProvisionerInfo(MockProvisioner.NAME, PROPERTY_SUMMARIES));
     ProfileId expectedProfileId = NamespaceId.DEFAULT.profile(expected.getName());
-    putProfile(expectedProfileId, expected, 200);
+    putProfile(expectedProfileId, expected, HttpURLConnection.HTTP_OK);
 
     // get the profile
-    Profile actual = getProfile(expectedProfileId, 200).get();
+    Profile actual = getProfile(expectedProfileId, HttpURLConnection.HTTP_OK).get();
     Assert.assertEquals(expected, actual);
 
     // list all profiles, should get 2 profiles
-    List<Profile> profiles = listProfiles(NamespaceId.DEFAULT, true, 200);
+    List<Profile> profiles = listProfiles(NamespaceId.DEFAULT, true, HttpURLConnection.HTTP_OK);
     Set<Profile> expectedList = ImmutableSet.of(Profile.NATIVE, expected);
     Assert.assertEquals(expectedList.size(), profiles.size());
     Assert.assertEquals(expectedList, new HashSet<>(profiles));
 
     // adding the same profile should still succeed
-    putProfile(expectedProfileId, expected, 200);
+    putProfile(expectedProfileId, expected, HttpURLConnection.HTTP_OK);
 
     // get non-existing profile should get a 404
-    deleteProfile(NamespaceId.DEFAULT.profile("nonExisting"), 404);
+    deleteProfile(NamespaceId.DEFAULT.profile("nonExisting"), HttpURLConnection.HTTP_NOT_FOUND);
 
     // delete the profile should fail first time since it is by default enabled
-    deleteProfile(expectedProfileId, 409);
+    deleteProfile(expectedProfileId, HttpURLConnection.HTTP_CONFLICT);
 
     // disable the profile then delete should work
-    disableProfile(expectedProfileId, 200);
-    deleteProfile(expectedProfileId, 200);
+    disableProfile(expectedProfileId, HttpURLConnection.HTTP_OK);
+    deleteProfile(expectedProfileId, HttpURLConnection.HTTP_OK);
 
-    Assert.assertEquals(Collections.emptyList(), listProfiles(NamespaceId.DEFAULT, false, 200));
+    Assert.assertEquals(Collections.emptyList(), listProfiles(NamespaceId.DEFAULT, false, HttpURLConnection.HTTP_OK));
 
     // if given some unrelated json, it should return a 400 instead of 500
     ProvisionerSpecification spec = new MockProvisioner().getSpec();
     ProvisionerDetail test = new ProvisionerDetail(spec.getName(), spec.getLabel(), spec.getDescription(),
                                                    new ArrayList<>(), null, false);
-    putProfile(NamespaceId.DEFAULT.profile(test.getName()), test, 400);
+    putProfile(NamespaceId.DEFAULT.profile(test.getName()), test, HttpURLConnection.HTTP_BAD_REQUEST);
 
     doAs(READ_ONLY_USER_NAME, () -> {
-      putProfile(expectedProfileId, expected, HTTP_FORBIDDEN);
-      disableProfile(expectedProfileId, HTTP_FORBIDDEN);
-      enableProfile(expectedProfileId, HTTP_FORBIDDEN);
-      deleteProfile(expectedProfileId, HTTP_FORBIDDEN);
+      putProfile(expectedProfileId, expected, HttpURLConnection.HTTP_FORBIDDEN);
+      disableProfile(expectedProfileId, HttpURLConnection.HTTP_FORBIDDEN);
+      enableProfile(expectedProfileId, HttpURLConnection.HTTP_FORBIDDEN);
+      deleteProfile(expectedProfileId, HttpURLConnection.HTTP_FORBIDDEN);
     });
     doAs(READ_WRITE_USER_NAME, () -> {
-      putProfile(expectedProfileId, expected, HTTP_OK);
-      disableProfile(expectedProfileId, HTTP_OK);
-      enableProfile(expectedProfileId, HTTP_OK);
-      disableProfile(expectedProfileId, HTTP_OK);
-      deleteProfile(expectedProfileId, HTTP_OK);
+      putProfile(expectedProfileId, expected, HttpURLConnection.HTTP_OK);
+      disableProfile(expectedProfileId, HttpURLConnection.HTTP_OK);
+      enableProfile(expectedProfileId, HttpURLConnection.HTTP_OK);
+      disableProfile(expectedProfileId, HttpURLConnection.HTTP_OK);
+      deleteProfile(expectedProfileId, HttpURLConnection.HTTP_OK);
     });
   }
 
@@ -303,35 +301,35 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
     ProfileId profileId = NamespaceId.DEFAULT.profile(expected.getName());
 
     // enable and disable a non-existing profile should give a 404
-    enableProfile(profileId, 404);
-    disableProfile(profileId, 404);
+    enableProfile(profileId, HttpURLConnection.HTTP_NOT_FOUND);
+    disableProfile(profileId, HttpURLConnection.HTTP_NOT_FOUND);
 
     // put the profile
-    putProfile(profileId, expected, 200);
+    putProfile(profileId, expected, HttpURLConnection.HTTP_OK);
 
     // by default the status should be enabled
-    Assert.assertEquals(ProfileStatus.ENABLED, getProfileStatus(profileId, 200).get());
+    Assert.assertEquals(ProfileStatus.ENABLED, getProfileStatus(profileId, HttpURLConnection.HTTP_OK).get());
 
     // enable it again should give a 409
-    enableProfile(profileId, 409);
+    enableProfile(profileId, HttpURLConnection.HTTP_CONFLICT);
 
     // disable should work
-    disableProfile(profileId, 200);
-    Assert.assertEquals(ProfileStatus.DISABLED, getProfileStatus(profileId, 200).get());
+    disableProfile(profileId, HttpURLConnection.HTTP_OK);
+    Assert.assertEquals(ProfileStatus.DISABLED, getProfileStatus(profileId, HttpURLConnection.HTTP_OK).get());
 
     // disable again should give a 409
-    disableProfile(profileId, 409);
+    disableProfile(profileId, HttpURLConnection.HTTP_CONFLICT);
 
     // enable should work
-    enableProfile(profileId, 200);
-    Assert.assertEquals(ProfileStatus.ENABLED, getProfileStatus(profileId, 200).get());
+    enableProfile(profileId, HttpURLConnection.HTTP_OK);
+    Assert.assertEquals(ProfileStatus.ENABLED, getProfileStatus(profileId, HttpURLConnection.HTTP_OK).get());
 
     // now delete should not work since we have the profile enabled
-    deleteProfile(profileId, 409);
+    deleteProfile(profileId, HttpURLConnection.HTTP_CONFLICT);
 
     // disable and delete
-    disableProfile(profileId, 200);
-    deleteProfile(profileId, 200);
+    disableProfile(profileId, HttpURLConnection.HTTP_OK);
+    deleteProfile(profileId, HttpURLConnection.HTTP_OK);
   }
 
   @Test
@@ -341,39 +339,40 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
     listWithNull.add(null);
     Profile profile = new Profile("ProfileWithNull", "label", "should succeed",
       new ProvisionerInfo(MockProvisioner.NAME, listWithNull));
-    putProfile(NamespaceId.DEFAULT.profile(profile.getName()), profile, 200);
+    putProfile(NamespaceId.DEFAULT.profile(profile.getName()), profile, HttpURLConnection.HTTP_OK);
 
     // Get the profile, it should not contain the null value, the property should be an empty list
-    Profile actual = getProfile(NamespaceId.DEFAULT.profile(profile.getName()), 200).get();
+    Profile actual = getProfile(NamespaceId.DEFAULT.profile(profile.getName()), HttpURLConnection.HTTP_OK).get();
     Assert.assertNotNull(actual);
     Assert.assertEquals(Collections.EMPTY_SET, actual.getProvisioner().getProperties());
 
-    disableProfile(NamespaceId.DEFAULT.profile(profile.getName()), 200);
-    deleteProfile(NamespaceId.DEFAULT.profile(profile.getName()), 200);
+    disableProfile(NamespaceId.DEFAULT.profile(profile.getName()), HttpURLConnection.HTTP_OK);
+    deleteProfile(NamespaceId.DEFAULT.profile(profile.getName()), HttpURLConnection.HTTP_OK);
 
     // provide a profile with mixed properties with null, it should still succeed
     List<ProvisionerPropertyValue> listMixed = new ArrayList<>(PROPERTY_SUMMARIES);
     listMixed.addAll(listWithNull);
     profile = new Profile("ProfileMixed", "label", "should succeed",
       new ProvisionerInfo(MockProvisioner.NAME, listMixed));
-    putProfile(NamespaceId.DEFAULT.profile(profile.getName()), profile, 200);
+    putProfile(NamespaceId.DEFAULT.profile(profile.getName()), profile, HttpURLConnection.HTTP_OK);
 
     // Get the profile, it should not contain the null value, the property should be all non-null properties in the list
-    actual = getProfile(NamespaceId.DEFAULT.profile(profile.getName()), 200).get();
+    actual = getProfile(NamespaceId.DEFAULT.profile(profile.getName()), HttpURLConnection.HTTP_OK).get();
     Assert.assertNotNull(actual);
     Assert.assertEquals(PROPERTY_SUMMARIES, actual.getProvisioner().getProperties());
-    disableProfile(NamespaceId.DEFAULT.profile(profile.getName()), 200);
-    deleteProfile(NamespaceId.DEFAULT.profile(profile.getName()), 200);
+    disableProfile(NamespaceId.DEFAULT.profile(profile.getName()), HttpURLConnection.HTTP_OK);
+    deleteProfile(NamespaceId.DEFAULT.profile(profile.getName()), HttpURLConnection.HTTP_OK);
   }
 
   @Test
   public void testNativeProfileImmutable() throws Exception {
     // verify native profile exists
-    Assert.assertEquals(Profile.NATIVE, getSystemProfile(ProfileId.NATIVE.getProfile(), 200).get());
+    Assert.assertEquals(Profile.NATIVE, getSystemProfile(ProfileId.NATIVE.getProfile(),
+                                                         HttpURLConnection.HTTP_OK).get());
     // disable, update, or delete should throw a 405
-    disableSystemProfile(ProfileId.NATIVE.getProfile(), 405);
-    putSystemProfile(ProfileId.NATIVE.getProfile(), Profile.NATIVE, 405);
-    deleteSystemProfile(ProfileId.NATIVE.getProfile(), 405);
+    disableSystemProfile(ProfileId.NATIVE.getProfile(), HttpURLConnection.HTTP_BAD_METHOD);
+    putSystemProfile(ProfileId.NATIVE.getProfile(), Profile.NATIVE, HttpURLConnection.HTTP_BAD_METHOD);
+    deleteSystemProfile(ProfileId.NATIVE.getProfile(), HttpURLConnection.HTTP_BAD_METHOD);
   }
 
   @Test
@@ -381,35 +380,40 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
     Profile profile = new Profile(PERMISSIONS_TEST_PROFILE, "label", "default permissions testing profile",
                                          new ProvisionerInfo(MockProvisioner.NAME, Collections.emptyList()));
     ProfileId profileId = NamespaceId.DEFAULT.profile(PERMISSIONS_TEST_PROFILE);
-    ProfileId systemProfileId = NamespaceId.SYSTEM.profile(PERMISSIONS_TEST_PROFILE);
     // Verify the UPDATE user does not have permissions to create a profile
     doAs(UPDATE_PROFILE_USER.getName(), () -> {
-      putProfile(profileId, profile, 403);
-      putSystemProfile(profile.getName(), profile, 403);
+      putProfile(profileId, profile, HttpURLConnection.HTTP_FORBIDDEN);
+      putSystemProfile(profile.getName(), profile, HttpURLConnection.HTTP_FORBIDDEN);
     });
 
     // Verify that the CREATE user can create both profiles
     doAs(CREATE_PROFILE_USER.getName(), () -> {
-      putProfile(profileId, profile, 200);
-      putSystemProfile(profile.getName(), profile, 200);
+      putProfile(profileId, profile, HttpURLConnection.HTTP_OK);
+      putSystemProfile(profile.getName(), profile, HttpURLConnection.HTTP_OK);
     });
 
     // Verify that the UPDATE user can modify the profiles after they have been created
     doAs(UPDATE_PROFILE_USER.getName(), () -> {
-      putProfile(profileId, profile, 200);
-      putSystemProfile(profile.getName(), profile, 200);
+      putProfile(profileId, profile, HttpURLConnection.HTTP_OK);
+      putSystemProfile(profile.getName(), profile, HttpURLConnection.HTTP_OK);
       // Disable the profiles in preparation for deletion.
-      disableProfile(profileId, 200);
-      disableSystemProfile(profile.getName(), 200);
+      disableProfile(profileId, HttpURLConnection.HTTP_OK);
+      disableSystemProfile(profile.getName(), HttpURLConnection.HTTP_OK);
       // Verify deletion failure
-      deleteProfile(profileId, 403);
-      deleteSystemProfile(profile.getName(), 403);
+      deleteProfile(profileId, HttpURLConnection.HTTP_FORBIDDEN);
+      deleteSystemProfile(profile.getName(), HttpURLConnection.HTTP_FORBIDDEN);
+    });
+
+    // Verify that the CREATE user cannot update profiles after they have been created
+    doAs(CREATE_PROFILE_USER.getName(), () -> {
+      putProfile(profileId, profile, HttpURLConnection.HTTP_FORBIDDEN);
+      putSystemProfile(profile.getName(), profile, HttpURLConnection.HTTP_FORBIDDEN);
     });
 
     // Delete profiles
     doAs(DELETE_PROFILE_USER.getName(), () -> {
-      deleteProfile(profileId, 200);
-      deleteSystemProfile(profile.getName(), 200);
+      deleteProfile(profileId, HttpURLConnection.HTTP_OK);
+      deleteSystemProfile(profile.getName(), HttpURLConnection.HTTP_OK);
     });
   }
 }
