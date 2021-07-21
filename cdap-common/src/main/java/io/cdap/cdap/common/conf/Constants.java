@@ -407,6 +407,8 @@ public final class Constants {
     public static final String CONTAINER_KILL_AFTER_EXECUTION = "task.worker.container.kill.after.execution";
     public static final String CONTAINER_RUN_AS_USER = "task.worker.container.run.as.user";
     public static final String CONTAINER_RUN_AS_GROUP = "task.worker.container.run.as.group";
+    public static final String CONTAINER_DISK_READONLY = "task.worker.container.disk.readonly";
+
     /**
      * Task worker http handler configuration
      */

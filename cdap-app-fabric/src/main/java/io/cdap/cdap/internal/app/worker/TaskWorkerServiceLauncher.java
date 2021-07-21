@@ -176,8 +176,12 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
             twillPreparer = ((StatefulTwillPreparer) twillPreparer)
               .withStatefulRunnable(TaskWorkerTwillRunnable.class.getSimpleName(), false,
                                     new StatefulDisk(STATEFUL_DISK_NAME, diskSize,
-                                                     cConf.get(Constants.CFG_LOCAL_DATA_DIR)))
-              .withReadonlyDisk(TaskWorkerTwillRunnable.class.getSimpleName(), STATEFUL_DISK_NAME);
+                                                     cConf.get(Constants.CFG_LOCAL_DATA_DIR)));
+            
+            if (cConf.getBoolean(Constants.TaskWorker.CONTAINER_DISK_READONLY)) {
+              twillPreparer = ((StatefulTwillPreparer) twillPreparer)
+                .withReadonlyDisk(TaskWorkerTwillRunnable.class.getSimpleName(), STATEFUL_DISK_NAME);
+            }
           }
 
           if (twillPreparer instanceof SecureTwillPreparer) {
