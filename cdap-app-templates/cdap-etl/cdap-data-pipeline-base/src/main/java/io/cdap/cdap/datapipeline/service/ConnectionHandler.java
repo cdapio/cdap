@@ -21,6 +21,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import io.cdap.cdap.api.annotation.TransactionControl;
+import io.cdap.cdap.api.annotation.TransactionPolicy;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
@@ -104,6 +106,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
    * Returns the list of connections in the given namespace
    */
   @GET
+  @TransactionPolicy(value = TransactionControl.EXPLICIT)
   @Path(API_VERSION + "/contexts/{context}/connections")
   public void listConnections(HttpServiceRequest request, HttpServiceResponder responder,
                               @PathParam("context") String namespace) {
@@ -121,6 +124,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
    * Returns the specific connection information in the given namespace
    */
   @GET
+  @TransactionPolicy(value = TransactionControl.EXPLICIT)
   @Path(API_VERSION + "/contexts/{context}/connections/{connection}")
   public void getConnection(HttpServiceRequest request, HttpServiceResponder responder,
                             @PathParam("context") String namespace,
@@ -139,6 +143,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
    * Creates a connection in the given namespace
    */
   @PUT
+  @TransactionPolicy(value = TransactionControl.EXPLICIT)
   @Path(API_VERSION + "/contexts/{context}/connections/{connection}")
   public void createConnection(HttpServiceRequest request, HttpServiceResponder responder,
                                @PathParam("context") String namespace,
@@ -159,7 +164,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
                                                  creationRequest.getPlugin().getName(),
                                                  creationRequest.getDescription(), false, false,
                                                  now, now, creationRequest.getPlugin());
-      store.saveConnection(connectionId, connectionInfo, creationRequest.overWrite());
+      store.saveConnection(connectionId, connectionInfo, false);
       responder.sendStatus(HttpURLConnection.HTTP_OK);
     });
   }
@@ -168,6 +173,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
    * Delete a connection in the given namespace
    */
   @DELETE
+  @TransactionPolicy(value = TransactionControl.EXPLICIT)
   @Path(API_VERSION + "/contexts/{context}/connections/{connection}")
   public void deleteConnection(HttpServiceRequest request, HttpServiceResponder responder,
                                @PathParam("context") String namespace,
@@ -185,6 +191,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
   }
 
   @POST
+  @TransactionPolicy(value = TransactionControl.EXPLICIT)
   @Path(API_VERSION + "/contexts/{context}/connections/test")
   public void testConnection(HttpServiceRequest request, HttpServiceResponder responder,
                              @PathParam("context") String namespace) {
@@ -224,6 +231,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
    * Browse the connection on a given path.
    */
   @POST
+  @TransactionPolicy(value = TransactionControl.EXPLICIT)
   @Path(API_VERSION + "/contexts/{context}/connections/{connection}/browse")
   public void browse(HttpServiceRequest request, HttpServiceResponder responder,
                      @PathParam("context") String namespace,
@@ -267,6 +275,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
    * Retrive sample result for the connection
    */
   @POST
+  @TransactionPolicy(value = TransactionControl.EXPLICIT)
   @Path(API_VERSION + "/contexts/{context}/connections/{connection}/sample")
   public void sample(HttpServiceRequest request, HttpServiceResponder responder,
                      @PathParam("context") String namespace,
@@ -339,6 +348,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
    * Retrieve the spec for the connector, which can be used in a source/sink
    */
   @POST
+  @TransactionPolicy(value = TransactionControl.EXPLICIT)
   @Path(API_VERSION + "/contexts/{context}/connections/{connection}/specification")
   public void spec(HttpServiceRequest request, HttpServiceResponder responder,
                    @PathParam("context") String namespace,
