@@ -17,6 +17,7 @@
 package io.cdap.cdap.gateway.handlers;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
@@ -28,6 +29,7 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
+import java.io.DataOutputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
@@ -36,6 +38,7 @@ import java.util.Base64;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -84,12 +87,12 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
         String authString = createAuthString(githubRequest);
         gitStore.addOrUpdateRepo(repo, githubRequest.getUrl(), githubRequest.getDefaultBranch(),
             authString);
-        responder.sendStatus(HttpResponseStatus.OK);
+        responder.sendString(HttpResponseStatus.OK, "Repository Information Saved.");
       } else {
-        responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Please enter all fields.");
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Please enter all fields.");
       }
     } catch (Exception ex) {
-      responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Please enter fields formatted correctly.");
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Please enter fields formatted correctly.");
     }
 
 
