@@ -26,14 +26,14 @@ public class GitHubRequest {
   private String password;
 
   public GitHubRequest(String nickname, String url, String defaultBranch,
-      String authMethod, String username, String password, String authToken) {
+      String username, String password, String authToken, String authMethod) {
     this.nickname = nickname;
     this.url = url;
     this.defaultBranch = defaultBranch;
-    this.authMethod = authMethod;
     this.username = username;
     this.password = password;
     this.authToken = authToken;
+    this.authMethod = authMethod;
   }
 
   public String getNickname() {
