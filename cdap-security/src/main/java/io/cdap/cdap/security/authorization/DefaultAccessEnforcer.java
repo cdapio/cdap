@@ -39,8 +39,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -52,6 +54,20 @@ import javax.annotation.Nullable;
 @Singleton
 public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
   public static final String INTERNAL_ACCESS_ENFORCER = "internal";
+
+  // Root principal used by the system services. This is only true because they run as the "root" user.
+  private static final String SYSTEM_PRINCIPAL_ROOT = "root";
+  // CDAP principal used by the system services. This is used when pod privilege reduction is enabled.
+  private static final String SYSTEM_PRINCIPAL_CDAP = "cdap";
+  // Runtime principal attached to all requests which come through the runtime server.
+  private static final String SYSTEM_PRINCIPAL_RUNTIME = "runtime";
+  // Yarn principal which handles edge cases in dataset-related services which directly pass
+  // the username pulled from the UGI in the cluster into an authentication context and send it to system services.
+  private static final String SYSTEM_PRINCIPAL_YARN = "yarn";
+  private static final List<String> SYSTEM_PRINCIPALS = Arrays.asList(SYSTEM_PRINCIPAL_ROOT,
+                                                                      SYSTEM_PRINCIPAL_CDAP,
+                                                                      SYSTEM_PRINCIPAL_RUNTIME,
+                                                                      SYSTEM_PRINCIPAL_YARN);
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultAccessEnforcer.class);
 
@@ -90,7 +106,8 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
       return;
     }
     // bypass the check when the principal is the master user and the entity is in the system namespace
-    if (isAccessingSystemNSAsMasterUser(entity, principal) || isEnforcingOnSamePrincipalId(entity, principal)) {
+    if (isInternalPrincipal(principal) || isAccessingSystemNSAsMasterUser(entity, principal)
+      || isEnforcingOnSamePrincipalId(entity, principal)) {
       return;
     }
 
@@ -126,7 +143,8 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
     }
 
     // bypass the check when the principal is the master user and the entity is in the system namespace
-    if (isAccessingSystemNSAsMasterUser(parentId, principal) || isEnforcingOnSamePrincipalId(parentId, principal)) {
+    if (isInternalPrincipal(principal) || isAccessingSystemNSAsMasterUser(parentId, principal)
+      || isEnforcingOnSamePrincipalId(parentId, principal)) {
       return;
     }
 
@@ -156,7 +174,7 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
       return internalAccessEnforcer.isVisible(entityIds, principal);
     }
 
-    if (!isSecurityAuthorizationEnabled()) {
+    if (!isSecurityAuthorizationEnabled() || isInternalPrincipal(principal)) {
       return entityIds;
     }
 
@@ -225,5 +243,17 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
   private boolean isEnforcingOnSamePrincipalId(EntityId entityId, Principal principal) {
     return entityId.getEntityType().equals(EntityType.KERBEROSPRINCIPAL) &&
       principal.getName().equals(entityId.getEntityName());
+  }
+
+  // This is a backwards compatibility measure to prevent internal system principals from being checked by the
+  // authorization extension.
+  // TODO: CDAP-18273 Remove once internal identities is properly supported.
+  private boolean isInternalPrincipal(Principal principal) {
+    // Add exceptions for system service identities.
+    if (SYSTEM_PRINCIPALS.contains(principal.getName())) {
+      LOG.trace("Found system principal. Automatically granting...");
+      return true;
+    }
+    return false;
   }
 }
