@@ -4201,6 +4201,15 @@
     </description>
   </property>
 
+  <property>
+    <name>security.runtime.identity.compatibility.enabled</name>
+    <value>true</value>
+    <description>
+      A backwards-compatibility setting which does not add the runtime identity handler to the runtime service. This
+      setting is enabled by default for backwards compatibility but should not be used for new secure deployments.
+    </description>
+  </property>
+
   <!-- UI Configuration -->
 
   <property>
