@@ -16,8 +16,14 @@
 
 package io.cdap.cdap.extension;
 
+import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import io.cdap.cdap.master.environment.MasterEnvironmentExtensionLoader;
+import io.cdap.cdap.master.environment.MasterEnvironments;
+import io.cdap.cdap.master.spi.environment.MasterEnvironment;
+import io.cdap.cdap.proto.ProgramType;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -47,6 +53,18 @@ public class ExtensionLoaderTest {
     Assert.assertEquals("hello", helloExtension.echo());
     // getting the extension that throws an error while loading should not propagate the exception
     Assert.assertNull(loader.get("error"));
+  }
+
+  @Test
+  public void testMasterLoading() {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set("app.program.runtime.extensions.dir",
+        "/usr/local/google/home/ashau/dev/cdap/cdap-master/target/"
+            + "stage-packaging/opt/cdap/master/ext/runtimes/");
+    ProgramRuntimeProviderLoader loader = new ProgramRuntimeProviderLoader(cConf);
+    ProgramRuntimeProvider provider = loader.get(ProgramType.SPARK);
+    int x = 0;
+    x++;
   }
 
   private static final class ExtensionLoader extends AbstractExtensionLoader<String, Extension> {

@@ -74,8 +74,6 @@ public final class PodInfo {
     this.containerVolumeMounts = Collections.unmodifiableList(new ArrayList<>(containerVolumeMounts));
     this.containerEnvironments = Collections.unmodifiableList(new ArrayList<>(containerEnvironments));
     this.securityContext = securityContext;
-    BufferedSource s;
-    s.readUtf8LineStrict()
   }
 
   public String getName() {

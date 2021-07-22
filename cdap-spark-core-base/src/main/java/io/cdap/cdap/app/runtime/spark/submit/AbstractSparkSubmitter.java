@@ -37,6 +37,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -73,8 +75,8 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
 
   @Override
   public final <V> ListenableFuture<V> submit(final SparkRuntimeContext runtimeContext,
-                                              Map<String, String> configs, List<LocalizeResource> resources,
-                                              URI jobFile, final V result) {
+      Map<String, String> configs, List<LocalizeResource> resources,
+      URI jobFile, final V result) {
     final SparkSpecification spec = runtimeContext.getSparkSpecification();
 
     final List<String> args = createSubmitArguments(runtimeContext, configs, resources, jobFile);
@@ -82,9 +84,9 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     // Spark submit is called from this executor
     // Use an executor to simplify logic that is needed to interrupt the running thread on stopping
     final ExecutorService executor = Executors.newSingleThreadExecutor(
-      new ThreadFactoryBuilder()
-        .setNameFormat("spark-submitter-" + spec.getName() + "-" + runtimeContext.getRunId())
-        .build());
+        new ThreadFactoryBuilder()
+            .setNameFormat("spark-submitter-" + spec.getName() + "-" + runtimeContext.getRunId())
+            .build());
 
     // Latch for the Spark job completion
     final CountDownLatch completion = new CountDownLatch(1);
@@ -192,7 +194,7 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
                 runtimeContext.getProgram().getId(), runtimeContext.getRunId(), Arrays.toString(args));
        */
       LOG.debug("Calling SparkSubmit for {} {}: {}",
-                runtimeContext.getProgram().getId(), runtimeContext.getRunId(), Arrays.toString(args));
+          runtimeContext.getProgram().getId(), runtimeContext.getRunId(), Arrays.toString(args));
       // Explicitly set the SPARK_SUBMIT property as it is no longer set on the System properties by the SparkSubmit
       // after the class rewrite. This property only control logging of a warning when submitting the Spark job,
       // hence it's harmless to just leave it there.
@@ -208,20 +210,41 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
        local:///opt/spark/examples/jars/spark-examples_2.12-3.1.2.jar
        */
       String[] dummyArgs = new String[] {
-        "--master", "k8s://https://34.72.68.10",
-        "--deploy-mode", "cluster",
-        "--name", "spark-pi",
-        "--class", "org.apache.spark.examples.SparkPi",
-        "--conf", "spark.executor.instances=3",
-        "--conf", "spark.kubernetes.container.image=gcr.io/ashau-dev0/spark:latest",
-        "--conf", "spark.kubernetes.authenticate.driver.serviceAccountName=spark",
-        "--conf", "spark.kubernetes.file.upload.path=gs://ashau-cdap-k8s-test/spark",
-        "--files", args[args.length - 3],
-        "local:///opt/spark/examples/jars/spark-examples_2.12-3.1.2.jar"
+          "--master", "k8s://https://34.72.68.10",
+          "--deploy-mode", "cluster",
+          "--name", "spark-pi",
+          "--class", "org.apache.spark.examples.SparkPi",
+          "--conf", "spark.executor.instances=3",
+          "--conf", "spark.kubernetes.container.image=gcr.io/ashau-dev0/spark:latest",
+          "--conf", "spark.kubernetes.authenticate.driver.serviceAccountName=spark",
+          "--conf", "spark.kubernetes.file.upload.path=gs://ashau-cdap-k8s-test/spark",
+          "--files", args[args.length - 3],
+          "local:///opt/spark/examples/jars/spark-examples_2.12-3.1.2.jar"
       };
       LOG.error("ashau - Calling SparkSubmit for {} {}: {}",
-                runtimeContext.getProgram().getId(), runtimeContext.getRunId(), Arrays.toString(args));
+          runtimeContext.getProgram().getId(), runtimeContext.getRunId(), Arrays.toString(args));
       //SparkSubmit.main(dummyArgs);
+
+      ClassLoader cl = this.getClass().getClassLoader();
+      LOG.error("ashau - classloader = {}", cl);
+      if (cl instanceof URLClassLoader) {
+        URLClassLoader urlCL = (URLClassLoader) cl;
+        for (URL url : urlCL.getURLs()) {
+          LOG.error("ashau --  url = {}", url);
+        }
+      }
+      try {
+        Class<?> clz = cl.loadClass("okio.BufferedSource");
+        LOG.error("ashau - BufferedSource loader = {}", clz);
+        if (clz.getClassLoader() instanceof URLClassLoader) {
+          URLClassLoader urlCL = (URLClassLoader) clz.getClassLoader();
+          for (URL url : urlCL.getURLs()) {
+            LOG.error("ashau --  BufferedSource url = {}", url);
+          }
+        }
+      } catch (ClassNotFoundException e) {
+        LOG.error("ashau - unable to load BufferedSource", e);
+      }
       SparkSubmit.main(args);
       LOG.debug("SparkSubmit returned for {} {}", runtimeContext.getProgram().getId(), runtimeContext.getRunId());
     } finally {
@@ -239,7 +262,7 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
    * @return a list of arguments
    */
   private List<String> createSubmitArguments(SparkRuntimeContext runtimeContext, Map<String, String> configs,
-                                             List<LocalizeResource> resources, URI jobFile) {
+      List<LocalizeResource> resources, URI jobFile) {
     SparkSpecification spec = runtimeContext.getSparkSpecification();
 
     ImmutableList.Builder<String> builder = ImmutableList.builder();
@@ -252,9 +275,9 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     getSubmitConf().forEach(confAdder);
 
     String archives = Joiner.on(',')
-      .join(Iterables.transform(Iterables.filter(resources, ARCHIVE_FILTER), RESOURCE_TO_PATH));
+        .join(Iterables.transform(Iterables.filter(resources, ARCHIVE_FILTER), RESOURCE_TO_PATH));
     String files = Joiner.on(',')
-      .join(Iterables.transform(Iterables.filter(resources, Predicates.not(ARCHIVE_FILTER)), RESOURCE_TO_PATH));
+        .join(Iterables.transform(Iterables.filter(resources, Predicates.not(ARCHIVE_FILTER)), RESOURCE_TO_PATH));
 
     if (!archives.isEmpty()) {
       builder.add("--archives").add(archives);
