@@ -1128,6 +1128,10 @@ public final class Constants {
     /** Requires all intra-cluster communications to be authenticated. */
     public static final String INTERNAL_AUTH_ENABLED = "security.internal.auth.enabled";
 
+    /** This is a backwards compatibility measure which disables the usage of the RuntimeIdentityHandler. */
+    public static final String RUNTIME_IDENTITY_COMPATIBILITY_ENABLED =
+      "security.runtime.identity.compatibility.enabled";
+
     /**
      * App Fabric
      */
