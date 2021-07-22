@@ -46,6 +46,7 @@ import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import io.cdap.cdap.security.impersonation.Impersonator;
@@ -114,6 +115,7 @@ public class SystemAppTask implements RunnableTask {
       new MessagingClientModule(),
       new LocalLocationModule(),
       new SecureStoreClientModule(),
+      new AuthenticationContextModules().getMasterModule(),
       new SystemAppModule());
   }
 
