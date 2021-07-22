@@ -20,7 +20,6 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
-import io.cdap.cdap.common.HttpExceptionHandler;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
@@ -29,8 +28,7 @@ import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
 import io.cdap.cdap.common.security.HttpsEnabler;
-import io.cdap.cdap.security.auth.CipherException;
-import io.cdap.cdap.security.auth.TinkCipher;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
@@ -68,7 +66,8 @@ public class RuntimeServer extends AbstractIdleService {
         @Override
         public void modify(ChannelPipeline pipeline) {
           pipeline.addAfter("compressor", "decompressor", new HttpContentDecompressor());
-          if (cConf.getBoolean(Constants.Security.ENABLED, false)) {
+          if (cConf.getBoolean(Constants.Security.ENABLED, false)
+            && SecurityUtil.isInternalAuthEnabled(cConf)) {
             EventExecutor executor = pipeline.context(CommonNettyHttpServiceBuilder.AUTHENTICATOR_NAME).executor();
             pipeline.addBefore(executor, CommonNettyHttpServiceBuilder.AUTHENTICATOR_NAME, "identity-handler",
                                new RuntimeIdentityHandler(cConf));
