@@ -55,16 +55,21 @@ object SparkMainWrapper {
 
     // Initialize the Spark runtime.
     try {
+      System.err.println("ashau - initializing spark main wrapper...")
       completion = SparkRuntimeUtils.initSparkMain()
+      System.err.println("ashau - initialized spark main wrapper...")
     } finally {
       readyLatch.countDown()
     }
 
     try {
+
+      System.err.println("ashau - getting stuff from SparkClassLoader...")
       val sparkClassLoader = SparkClassLoader.findFromContext()
       val runtimeContext = sparkClassLoader.getRuntimeContext
       val executionContext = sparkClassLoader.getSparkExecutionContext(false)
       val serializableExecutionContext = new SerializableSparkExecutionContext(executionContext)
+      System.err.println("ashau - got stuff from SparkClassLoader...")
 
       // Check one more time before calling user main, as the user might already stopped the program.
       if (stopped) {

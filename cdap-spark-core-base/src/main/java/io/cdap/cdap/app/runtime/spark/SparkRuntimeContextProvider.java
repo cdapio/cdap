@@ -206,12 +206,14 @@ public final class SparkRuntimeContextProvider {
 
       Deque<Service> coreServices = new LinkedList<>();
 
+      /*
       if (clusterMode == ClusterMode.ON_PREMISE) {
         // Add ZK for discovery and Kafka
         coreServices.add(injector.getInstance(ZKClientService.class));
         // Add the Kafka client for logs collection
         coreServices.add(injector.getInstance(KafkaClientService.class));
       }
+       */
 
       coreServices.add(metricsCollectionService);
       coreServices.add(serviceAnnouncer);
