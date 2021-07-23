@@ -57,6 +57,8 @@ import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.master.spi.twill.SecretDisk;
 import io.cdap.cdap.master.spi.twill.SecureTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecurityContext;
+import io.cdap.cdap.master.spi.twill.TwillConstants;
+import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.store.SecureStoreUtils;
@@ -262,6 +264,8 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
           }
           twillPreparer.setLogLevels(runnable, transformLogLevels(runnableDefinition.getLogLevels()));
           twillPreparer.withConfiguration(runnable, runnableDefinition.getTwillRunnableConfigs());
+          // set runtime configuration on twill preparer so that programs can pass configs to twill preparer
+          twillPreparer.withConfiguration(runnable, launchConfig.getExtraRuntimeArgs());
 
           // Add cdap-security.xml if using secrets, and set the runnable identity.
           if (twillPreparer instanceof SecureTwillPreparer) {

@@ -44,6 +44,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.master.spi.twill.TwillConstants;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
@@ -63,6 +64,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -152,6 +154,9 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
                                                                 Programs.create(cConf, program, programId, runner),
                                                                 programOptions, cConf, hConf, tempDir);
           acceptors.add(launchConfig.getClassAcceptor());
+          if (clusterMode == ClusterMode.ON_PREMISE) {
+            launchConfig.addExtraRuntimeArgs(Collections.singletonMap(TwillConstants.PROGRAM_RUNTIME_ENV, "onpremise"));
+          }
         }
       } finally {
         if (runner instanceof Closeable) {
