@@ -68,11 +68,15 @@ public class GitHubStore {
       StructuredTable table = context.getTable(StoreDefinition.GitHubStore.GIT_REPOS);
       Optional<StructuredRow> out = table.read(Collections.singleton(
           Fields.stringField(StoreDefinition.GitHubStore.NICKNAME_FIELD, nickname)));
-      String nName = out.get().getString(StoreDefinition.GitHubStore.NICKNAME_FIELD);
-      String url = out.get().getString(StoreDefinition.GitHubStore.URL_FIELD);
-      String defBranch = out.get().getString(StoreDefinition.GitHubStore.DEFAULT_BRANCH_FIELD);
-      String aString = out.get().getString(StoreDefinition.GitHubStore.AUTH_STRING_FIELD);
-      return new GitHubRepo(nName, url, defBranch, aString);
+      if (out.isPresent()) {
+        String nName = out.get().getString(StoreDefinition.GitHubStore.NICKNAME_FIELD);
+        String url = out.get().getString(StoreDefinition.GitHubStore.URL_FIELD);
+        String defBranch = out.get().getString(StoreDefinition.GitHubStore.DEFAULT_BRANCH_FIELD);
+        String aString = out.get().getString(StoreDefinition.GitHubStore.AUTH_STRING_FIELD);
+        return new GitHubRepo(nName, url, defBranch, aString);
+      } else {
+        return null;
+      }
     }, IOException.class);
   }
 

@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.github;
 
+import org.elasticsearch.common.Strings;
+
 public class GitHubRepo {
   private String nickname;
   private String url;
@@ -46,9 +48,24 @@ public class GitHubRepo {
     return this.authString;
   }
 
-  public boolean validateFields() {
-    return !(this.nickname.isEmpty() || this.url.isEmpty() || this.defaultBranch.isEmpty()
-        || this.authString.isEmpty());
+  public boolean validNickname() {
+    return !Strings.isNullOrEmpty(this.nickname);
+  }
+
+  public boolean validUrl() {
+    return !Strings.isNullOrEmpty(this.url);
+  }
+
+  public boolean validDefaultBranch() {
+    return !Strings.isNullOrEmpty(this.defaultBranch);
+  }
+
+  public boolean validAuthString() {
+    return !Strings.isNullOrEmpty(this.authString);
+  }
+
+  public boolean validateAllFields() {
+    return validNickname() && validUrl() && validDefaultBranch() && validAuthString();
   }
   @Override
   public String toString() {

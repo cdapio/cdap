@@ -22,7 +22,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.store.GitHubStore;
 import io.cdap.cdap.internal.github.GitHubRepo;
-import io.cdap.cdap.internal.github.GitHubRequest;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;
@@ -32,10 +31,10 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -64,12 +63,11 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   public void getRepoInfo(HttpRequest request, HttpResponder responder,
                           @NotNull @PathParam("repo") String repo) throws Exception {
-    try {
+    if (gitStore.getRepo(repo) != null) {
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(gitStore.getRepo(repo)));
-    } catch (Exception ex) {
+    } else {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     }
-
   }
 
   @Path("repos/github/{repo}")
@@ -78,18 +76,33 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
                           @NotNull @PathParam("repo") String repo) throws Exception {
 
     try {
-      GitHubRequest githubRequest = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8)
-          , GitHubRequest.class);
-      if (githubRequest.validateFields()) {
-        String authString = createAuthString(githubRequest);
+      GitHubRepo githubRequest = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8)
+          , GitHubRepo.class);
+
+      if (githubRequest.validateAllFields()) {
+        String authString = "token " + githubRequest.getAuthString();
         gitStore.addOrUpdateRepo(repo, githubRequest.getUrl(), githubRequest.getDefaultBranch(),
             authString);
         responder.sendString(HttpResponseStatus.OK, "Repository Information Saved.");
       } else {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Please enter all fields.");
+        String errorString = "Please enter a ";
+        if (!githubRequest.validNickname()) {
+          errorString += "nickname, ";
+        }
+        if (!githubRequest.validUrl()) {
+          errorString += "url, ";
+        }
+        if (!githubRequest.validDefaultBranch()) {
+          errorString += "default branch, ";
+        }
+        if (!githubRequest.validAuthString()) {
+          errorString += "authorization token, ";
+        }
+        responder.sendString(HttpResponseStatus.BAD_REQUEST,
+            errorString.substring(0, errorString.length() - 2));
       }
     } catch (Exception ex) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Please enter fields formatted correctly.");
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Please enter fields formatted correctly.");
     }
 
 
@@ -102,12 +115,16 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
   @DELETE
   public void deleteRepoInfo(HttpRequest request, HttpResponder responder,
                               @NotNull @PathParam("repo") String repo) throws Exception {
-    gitStore.deleteRepo(repo);
-    responder.sendStatus(HttpResponseStatus.OK);
+    if (gitStore.getRepo(repo) != null) {
+      gitStore.deleteRepo(repo);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } else {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    }
   }
 
   @Path("repos/github/{repo}/testconnection")
-  @GET
+  @POST
   public void testRepoConnection(HttpRequest request, HttpResponder responder,
                                   @NotNull @PathParam("repo") String repo) throws Exception {
     GitHubRepo test = gitStore.getRepo(repo);
@@ -119,12 +136,8 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
 
     if (con.getResponseCode() == HttpURLConnection.HTTP_OK) {
       responder.sendString(HttpResponseStatus.OK, "Connection Successful.");
-    } else if (con.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
-      responder.sendStatus(HttpResponseStatus.CONFLICT);
-    } else if (con.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
-      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Repository is not connectable.");
     }
   }
 
@@ -139,16 +152,5 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
     //Put it all together
     return "https://api.github.com/repos" + owner + "/"
         + name;
-  }
-
-  public String createAuthString(GitHubRequest request) {
-    if (request.getAuthMethod().equals("username and password")) {
-      return "Basic " + Base64.getEncoder().encodeToString(
-          (request.getUsername() + ":" + request.getPassword()).getBytes());
-    } else if (request.getAuthMethod().equals("authorization token")) {
-      return "token " + request.getAuthToken();
-    } else {
-      return "invalid";
-    }
   }
 }
