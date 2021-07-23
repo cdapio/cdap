@@ -24,10 +24,12 @@ import io.cdap.cdap.common.lang.CombineClassLoader;
 import io.cdap.cdap.internal.app.runtime.ProgramClassLoader;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginClassLoaders;
 import org.apache.spark.SparkConf;
+import scala.Tuple2;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * ClassLoader being used in Spark execution context. It is used in driver as well as in executor node.
@@ -104,7 +106,11 @@ public class SparkClassLoader extends CombineClassLoader {
           "SparkExecutionContext can only be used in Spark driver process.");
     }
 
+    System.err.println("ashau - printing spark conf...");
     SparkConf sparkConf = new SparkConf();
+    for (Tuple2<String, String> entry : sparkConf.getAll()) {
+      System.err.println(String.format("ashau - spark conf %s = %s", entry._1(), entry._2()));
+    }
     File resourcesDir = new File(sparkConf.get("spark.local.dir", System.getProperty("user.dir")));
     sparkExecutionContext = new DefaultSparkExecutionContext(
       this, SparkRuntimeUtils.getLocalizedResources(resourcesDir, sparkConf));

@@ -64,13 +64,20 @@ import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
+import io.cdap.cdap.master.environment.MasterEnvironments;
+import io.cdap.cdap.master.spi.environment.MasterEnvironment;
+import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.FileUtil;
+import org.apache.hadoop.util.RunJar;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
+import org.apache.spark.SparkConf;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.common.Cancellable;
@@ -95,12 +102,16 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.ProxySelector;
+import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -125,7 +136,9 @@ public final class SparkRuntimeContextProvider {
    * Returns the current {@link SparkRuntimeContext}.
    */
   public static SparkRuntimeContext get() {
+    System.err.println("ashau - getting SparkRuntimeContext");
     if (sparkRuntimeContext != null) {
+      System.err.println("ashau - already exists, returning");
       return sparkRuntimeContext;
     }
 
@@ -135,6 +148,7 @@ public final class SparkRuntimeContextProvider {
     // For interactive Spark, it uses ExecutorClassLoader, which doesn't follow normal classloader hierarchy.
     // Since the presence of ExecutorClassLoader is optional in Spark, use reflection to gain access to the parentLoader
     if (EXECUTOR_CLASSLOADER_NAME.equals(runtimeClassLoader.getClass().getName())) {
+      System.err.println("ashau - in executor classloader");
       try {
         Method getParentLoader = runtimeClassLoader.getClass().getDeclaredMethod("parentLoader");
         if (!getParentLoader.isAccessible()) {
@@ -149,6 +163,7 @@ public final class SparkRuntimeContextProvider {
     }
 
     SparkClassLoader sparkClassLoader = ClassLoaders.find(runtimeClassLoader, SparkClassLoader.class);
+    System.err.println("ashau - sparkClassLoader = " + sparkClassLoader);
 
     if (sparkClassLoader != null) {
       // Shouldn't set the sparkContext field. It is because in Standalone, the SparkContext instance will be different
@@ -167,35 +182,68 @@ public final class SparkRuntimeContextProvider {
    * It has assumption on file location that are localized by the SparkRuntimeService.
    */
   private static synchronized SparkRuntimeContext createIfNotExists() {
+    System.err.println("ashau - getting spark runtime context");
     if (sparkRuntimeContext != null) {
+      System.err.println("ashau - already exists, returning");
       return sparkRuntimeContext;
     }
 
     try {
+      if (!new File(CCONF_FILE_NAME).exists()) {
+        System.err.println("ashau - localizing resources");
+        localizeResources();
+      }
       CConfiguration cConf = createCConf();
+      System.err.println("ashau - created cconf");
       Configuration hConf = createHConf();
+      System.err.println("ashau - created hconf");
 
       SparkRuntimeContextConfig contextConfig = new SparkRuntimeContextConfig(hConf);
       ProgramOptions programOptions = contextConfig.getProgramOptions();
+      System.err.println("ashau - got program options");
 
       // Should be yarn only and only for executor node, not the driver node.
+      boolean isDriver = contextConfig.isLocal(programOptions);
+      System.err.println("ashau - is Driver = " + isDriver);
       /*
-      Preconditions.checkState(!contextConfig.isLocal(programOptions),
+      Preconditions.checkState(!isDriver,
                                "SparkContextProvider.getSparkContext should only be called in Spark executor process.");
        */
 
       ClusterMode clusterMode = ProgramRunners.getClusterMode(programOptions);
+      System.err.println("ashau - cluster mode = " + clusterMode);
+
+      // inserted k8s creation
+      MasterEnvironment masterEnv = MasterEnvironments.create(cConf, "k8s");
+      System.err.println("ashau - masterEnv = " + masterEnv);
+      if (masterEnv != null) {
+        MasterEnvironmentContext context = MasterEnvironments.createContext(cConf, hConf, masterEnv.getName());
+        masterEnv.initialize(context);
+        MasterEnvironments.setMasterEnvironment(masterEnv);
+        // in k8s, localization of files and archives is handled by the executor itself and not yarn
+        // but at this point, the executor has not yet localized hconf, cconf, etc. so we have to do it ourselves
+        localizeResources();
+      }
 
       // Create the program
+      System.err.println("creating Program");
       Program program = createProgram(cConf, contextConfig);
+      System.err.println("created Program");
       ProgramRunId programRunId = program.getId().run(ProgramRunners.getRunId(programOptions));
 
+
+      System.err.println("creating injector");
       Injector injector = createInjector(cConf, hConf, contextConfig.getProgramId(), programOptions);
+      System.err.println("created injector");
 
+      /*
+      System.err.println("getting log appender");
       LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
+      System.err.println("initializing log appender");
       logAppenderInitializer.initialize();
+      System.err.println("initialized log appender");
       SystemArguments.setLogLevel(programOptions.getUserArguments(), logAppenderInitializer);
-
+       */
       ProxySelector oldProxySelector = ProxySelector.getDefault();
       if (clusterMode == ClusterMode.ISOLATED) {
         RuntimeMonitors.setupMonitoring(injector, programOptions);
@@ -206,16 +254,19 @@ public final class SparkRuntimeContextProvider {
 
       Deque<Service> coreServices = new LinkedList<>();
 
+      /*
       if (clusterMode == ClusterMode.ON_PREMISE) {
         // Add ZK for discovery and Kafka
         coreServices.add(injector.getInstance(ZKClientService.class));
         // Add the Kafka client for logs collection
         coreServices.add(injector.getInstance(KafkaClientService.class));
       }
+       */
 
       coreServices.add(metricsCollectionService);
       coreServices.add(serviceAnnouncer);
 
+      System.err.println("starting core services");
       for (Service coreService : coreServices) {
         coreService.startAndWait();
       }
@@ -226,7 +277,7 @@ public final class SparkRuntimeContextProvider {
           return;
         }
         // Close to flush out all important logs
-        logAppenderInitializer.close();
+        //logAppenderInitializer.close();
 
         // Stop all services. Reverse the order.
         for (Service service : (Iterable<Service>) coreServices::descendingIterator) {
@@ -242,6 +293,7 @@ public final class SparkRuntimeContextProvider {
       };
 
       // Constructor the DatasetFramework
+      System.err.println("constructing dataset framework");
       DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
       WorkflowProgramInfo workflowInfo = contextConfig.getWorkflowProgramInfo();
       DatasetFramework programDatasetFramework = workflowInfo == null ?
@@ -254,6 +306,7 @@ public final class SparkRuntimeContextProvider {
       }
 
       PluginInstantiator pluginInstantiator = createPluginInstantiator(cConf, contextConfig, program.getClassLoader());
+      System.err.println("created plugin instantiator");
 
       // Create the context object
       sparkRuntimeContext = new SparkRuntimeContext(
@@ -280,10 +333,60 @@ public final class SparkRuntimeContextProvider {
         injector.getInstance(FieldLineageWriter.class),
         injector.getInstance(RemoteClientFactory.class),
         closeable);
+      System.err.println("created runtime context");
       LoggingContextAccessor.setLoggingContext(sparkRuntimeContext.getLoggingContext());
       return sparkRuntimeContext;
     } catch (Exception e) {
+      System.err.println("error creating runtime context");
+      e.printStackTrace(System.err);
       throw Throwables.propagate(e);
+    }
+  }
+
+  /*
+   */
+  private static void localizeResources() throws IOException {
+    SparkConf sparkConf = new SparkConf();
+    if (sparkConf.get("spark.files", "abc").equals("abc")) {
+      System.err.println("spark.files is not set.");
+      return;
+    }
+    String fileStr = sparkConf.get("spark.files");
+    List<URI> files = fileStr == null ? Collections.emptyList() :
+      Arrays.stream(fileStr.split(",")).map(f -> URI.create(f)).collect(Collectors.toList());
+    String archivesStr = sparkConf.get("spark.archives");
+    List<URI> archives = archivesStr == null ? Collections.emptyList() :
+      Arrays.stream(archivesStr.split(",")).map(f -> URI.create(f)).collect(Collectors.toList());
+    org.apache.hadoop.fs.Path targetDir = new org.apache.hadoop.fs.Path("file:" + new File(".").getAbsolutePath());
+    Configuration hadoopConf = new Configuration();
+    for (URI file : files) {
+      FileSystem fs = FileSystem.get(file, hadoopConf);
+      org.apache.hadoop.fs.Path sourceFile = new org.apache.hadoop.fs.Path(file);
+      org.apache.hadoop.fs.Path destFile = new org.apache.hadoop.fs.Path(targetDir, sourceFile.getName());
+      if (!fs.exists(destFile)) {
+        System.err.println("Pulling file " + sourceFile.toUri() + " to " + destFile.toUri());
+        fs.copyToLocalFile(sourceFile, destFile);
+      }
+    }
+    for (URI archive : archives) {
+      FileSystem fs = FileSystem.get(archive, hadoopConf);
+      org.apache.hadoop.fs.Path sourceFile = new org.apache.hadoop.fs.Path(archive);
+      org.apache.hadoop.fs.Path destFile = new org.apache.hadoop.fs.Path(targetDir, "tmp-" + sourceFile.getName());
+      if (fs.exists(destFile)) {
+        continue;
+      }
+      fs.copyToLocalFile(sourceFile, destFile);
+      String name = sourceFile.getName().toLowerCase();
+
+      File dstArchive = new File(name);
+      if (!dstArchive.exists()) {
+        System.err.println("unpacking archive to " + dstArchive.getAbsolutePath());
+        if (name.endsWith(".jar")) {
+          RunJar.unJar(new File("tmp-" + name), new File(name), RunJar.MATCH_ANY);
+        } else if (name.endsWith(".zip")) {
+          FileUtil.unZip(new File("tmp-" + name), new File(name));
+        }
+      }
     }
   }
 

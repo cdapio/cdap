@@ -25,23 +25,41 @@ import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.lang.FilterClassLoader;
 import io.cdap.cdap.common.logging.StandardOutErrorRedirector;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.FileUtil;
+import org.apache.hadoop.fs.LocatedFileStatus;
+import org.apache.hadoop.fs.RemoteIterator;
+import org.apache.hadoop.util.RunJar;
+import org.apache.hadoop.yarn.util.FSDownload;
+import org.apache.spark.SparkConf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
+import scala.Tuple2;
 
 import java.io.Closeable;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * This class launches Spark YARN containers with classes loaded through the {@link SparkContainerClassLoader}.
@@ -63,6 +81,86 @@ public final class SparkContainerLauncher {
     }
   };
 
+  public static void main(String[] args) throws Exception {
+    Configuration hadoopConf = new Configuration();
+    Properties properties = new Properties();
+    String delegateClass = "org.apache.spark.deploy.SparkSubmit";
+    List<String> delegateArgs = new ArrayList<>();
+    for (int i = 0; i < args.length; i++) {
+      if ("--properties-file".equals(args[i])) {
+        System.err.println("ashau - reading properties file from " + args[i + 1]);
+        try (InputStream input = new FileInputStream(args[i + 1])) {
+          properties.load(input);
+          properties.load(input);
+        }
+      } else if ("--delegate-class".equals(args[i])) {
+        delegateClass = args[i + 1];
+        i++;
+        continue;
+      }
+      delegateArgs.add(args[i]);
+    }
+    for (String property : properties.stringPropertyNames()) {
+      hadoopConf.set(property, properties.getProperty(property));
+    }
+    SparkConf sparkConf = new SparkConf();
+    System.err.println("ashau - printing spark conf");
+    for (Tuple2<String, String> entry : sparkConf.getAll()) {
+      System.err.println("ashau - " + entry._1() + " = " + entry._2());
+    }
+
+    File cconfDir = new File("/etc/cdap/conf");
+    if (!cconfDir.exists()) {
+      System.err.println("/etc/cdap/conf does not exist!");
+    } else {
+      System.err.println("ashau - printing contents of /etc/cdap/conf");
+      for (File file : cconfDir.listFiles()) {
+        System.err.println("ashau - " + file.getName());
+      }
+    }
+
+    /*
+    File workDir = new File(".");
+    System.err.println("ashau - listing files in workdir " + workDir.getAbsolutePath());
+    for (File file : workDir.listFiles()) {
+      System.err.println("ashau - file in workdir = " + file.getAbsolutePath());
+    }
+    String fileStr = properties.getProperty("spark.files");
+    List<URI> files = fileStr == null ? Collections.emptyList() :
+      Arrays.stream(fileStr.split(",")).map(f -> URI.create(f)).collect(Collectors.toList());
+    String archivesStr = properties.getProperty("spark.archives");
+    List<URI> archives = archivesStr == null ? Collections.emptyList() :
+      Arrays.stream(archivesStr.split(",")).map(f -> URI.create(f)).collect(Collectors.toList());
+     */
+    org.apache.hadoop.fs.Path targetDir = new org.apache.hadoop.fs.Path("file:" + new File(".").getAbsolutePath());
+    org.apache.hadoop.fs.Path filesPath = new org.apache.hadoop.fs.Path("gs://ashau-cdap-k8s-test/hack/files/");
+    FileSystem fs = FileSystem.get(filesPath.toUri(), hadoopConf);
+    RemoteIterator<LocatedFileStatus> files = fs.listFiles(filesPath, false);
+    while (files.hasNext()) {
+      org.apache.hadoop.fs.Path sourceFile = files.next().getPath();
+      org.apache.hadoop.fs.Path destFile = new org.apache.hadoop.fs.Path(targetDir, sourceFile.getName());
+      System.err.println("Pulling file " + sourceFile.toUri() + " to " + destFile.toUri());
+      fs.copyToLocalFile(sourceFile, destFile);
+    }
+    org.apache.hadoop.fs.Path archivesPath = new org.apache.hadoop.fs.Path("gs://ashau-cdap-k8s-test/hack/archives/");
+    RemoteIterator<LocatedFileStatus> archives = fs.listFiles(archivesPath, false);
+    while (archives.hasNext()) {
+      org.apache.hadoop.fs.Path sourceFile = archives.next().getPath();
+      org.apache.hadoop.fs.Path destFile = new org.apache.hadoop.fs.Path(targetDir, "tmp-" + sourceFile.getName());
+      fs.copyToLocalFile(sourceFile, destFile);
+      String name = sourceFile.getName().toLowerCase();
+
+      File dstArchive = new File(name);
+      System.err.println("unpacking archive to " + dstArchive.getAbsolutePath());
+      if (name.endsWith(".jar")) {
+        RunJar.unJar(new File("tmp-" + name), new File(name), RunJar.MATCH_ANY);
+      } else if (name.endsWith(".zip")) {
+        FileUtil.unZip(new File("tmp-" + name), new File(name));
+      }
+    }
+    launch(delegateClass, delegateArgs.toArray(new String[delegateArgs.size()]));
+  }
+
   /**
    * Launches the given main class. The main class will be loaded through the {@link SparkContainerClassLoader}.
    *
@@ -71,6 +169,7 @@ public final class SparkContainerLauncher {
    */
   @SuppressWarnings("unused")
   public static void launch(String mainClassName, String[] args) throws Exception {
+    System.err.println("ashau - in SparkContainerLaunch.launch()");
     Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
     ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
     Set<URL> urls = ClassLoaders.getClassLoaderURLs(systemClassLoader, new LinkedHashSet<URL>());
@@ -78,17 +177,28 @@ public final class SparkContainerLauncher {
     // Remove the URL that contains the given main classname to avoid infinite recursion.
     // This is needed because we generate a class with the same main classname in order to intercept the main()
     // method call from the container launch script.
-    urls.remove(getURLByClass(systemClassLoader, mainClassName));
+    // ashau - not true in k8s. This would remove cdap-spark-core
+    //URL mainURL = getURLByClass(systemClassLoader, mainClassName);
+    //System.err.println("ashau - removing url " + mainURL);
+    //urls.remove(mainURL);
 
     // Remove the first scala from the set of classpath. This ensure the one from Spark is used for spark
+    System.err.println("ashau - removing scala from classpath");
     removeNonSparkJar(systemClassLoader, "scala.language", urls);
     // Remove the first jar containing LZBlockInputStream from the set of classpath.
     // The one from Kafka is not compatible with Spark
+    System.err.println("ashau - removing LZBlockInputStream from classpath");
     removeNonSparkJar(systemClassLoader, "net.jpountz.lz4.LZ4BlockInputStream", urls);
+
+    System.err.println("ashau - classloader urls:");
+    for (URL url : urls) {
+      System.err.println("ashau --- " + url);
+    }
 
     // First create a FilterClassLoader that only loads JVM and kafka classes from the system classloader
     // This is to isolate the scala library from children
     ClassLoader parentClassLoader = new FilterClassLoader(systemClassLoader, KAFKA_FILTER);
+    System.err.println("ashau - created parent classloader");
 
     boolean rewriteCheckpointTempFileName = Boolean.parseBoolean(
       System.getProperty(SparkRuntimeUtils.STREAMING_CHECKPOINT_REWRITE_ENABLED, "false"));
@@ -98,13 +208,16 @@ public final class SparkContainerLauncher {
     // Spark classes are in the system classloader which we want to rewrite.
     ClassLoader classLoader = new SparkContainerClassLoader(urls.toArray(new URL[0]), parentClassLoader,
                                                             rewriteCheckpointTempFileName);
+    System.err.println("ashau - created container classloader");
 
     // Sets the context classloader and launch the actual Spark main class.
     Thread.currentThread().setContextClassLoader(classLoader);
 
     // Create SLF4J logger from the context classloader. It has to be created from that classloader in order
     // for logs in this class to be in the same context as the one used in Spark.
+    /*
     Object logger = createLogger(classLoader);
+    System.err.println("ashau - created logger");
 
     // Install the JUL to SLF4J Bridge
     try {
@@ -113,17 +226,31 @@ public final class SparkContainerLauncher {
         .invoke(null);
     } catch (Exception e) {
       // Log the error and continue
+      System.err.println("Failed to invoke SLF4JBridgeHandler.install() required for jul-to-slf4j bridge");
+      e.printStackTrace(System.err);
       log(logger, "warn", "Failed to invoke SLF4JBridgeHandler.install() required for jul-to-slf4j bridge", e);
     }
+     */
+    Object logger = null;
 
     // Get the SparkRuntimeContext to initialize all necessary services and logging context
     // Need to do it using the SparkRunnerClassLoader through reflection.
-    Object sparkRuntimeContext = classLoader.loadClass(SparkRuntimeContextProvider.class.getName())
-      .getMethod("get").invoke(null);
+    System.err.println("ashau - creating runtime context");
+    Object sparkRuntimeContext;
+    try {
+      sparkRuntimeContext = classLoader.loadClass(SparkRuntimeContextProvider.class.getName())
+        .getMethod("get").invoke(null);
+    } catch (Throwable t) {
+      System.err.println("ashau - failed to get spark runtime context");
+      t.printStackTrace(System.err);
+      throw t;
+    }
+    System.err.println("ashau - created runtime context");
 
     if (sparkRuntimeContext instanceof Closeable) {
       System.setSecurityManager(new SparkRuntimeSecurityManager((Closeable) sparkRuntimeContext));
     }
+    System.err.println("ashau - set security manager");
 
     try {
       // For non-PySpark, do the logs redirection. Otherwise the log redirect is done
@@ -142,10 +269,13 @@ public final class SparkContainerLauncher {
         System.setProperty("spark.executorEnv.CDAP_LOG_DIR", "<LOG_DIR>");
       }
 
+      org.apache.log4j.Logger.getRootLogger().setLevel(org.apache.log4j.Level.OFF);
       // Optionally starts Py4j Gateway server in the executor container
       Runnable stopGatewayServer = startGatewayServerIfNeeded(classLoader, logger);
       try {
         log(logger, "info", "Launch main class {}.main({})", mainClassName, Arrays.toString(args));
+        System.err.println(String.format("ashau - launch main class %s.main(%s)",
+                                         mainClassName, Arrays.toString(args)));
         classLoader.loadClass(mainClassName).getMethod("main", String[].class).invoke(null, new Object[]{args});
         log(logger, "info", "Main method returned {}", mainClassName);
       } finally {
@@ -155,6 +285,8 @@ public final class SparkContainerLauncher {
       // LOG the exception since this exception will be propagated back to JVM
       // and kill the main thread (hence the JVM process).
       // If we don't log it here as ERROR, it will be logged by UncaughtExceptionHandler as DEBUG level
+      System.err.println("ashau - error calling main method.");
+      t.printStackTrace(System.err);
       log(logger, "error", "Exception raised when calling {}.main(String[]) method", mainClassName, t);
       throw t;
     } finally {
@@ -261,6 +393,9 @@ public final class SparkContainerLauncher {
   }
 
   private static void log(Object logger, String level, String message, Object...args) {
+    if (logger == null) {
+      return;
+    }
     try {
       logger.getClass().getMethod(level, String.class, Object[].class).invoke(logger, message, args);
     } catch (Exception e) {

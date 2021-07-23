@@ -32,6 +32,8 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -110,6 +112,29 @@ public class DistributedSparkSubmitter extends AbstractSparkSubmitter {
     config.put("fs.gs.path.encoding", "uri-path");
     config.put("fs.gs.working.dir", "/");
     config.put("fs.gs.impl.disable.cache", "true");
+    config.put("spark.kubernetes.executor.deleteOnTermination", "false");
+
+    try {
+      File templateFile = new File("podTemplate");
+      String podTemplateBase = ""
+        + "spec:\n"
+        + "  volumes:\n"
+        + "  - configMap:\n"
+        + "      name: cdap-cdap-cconf\n"
+        + "    name: cdap-cconf\n"
+        + "  containers:\n"
+        + "  - args:\n"
+        + "    volumeMounts:\n"
+        + "    - mountPath: /etc/cdap/conf\n"
+        + "      name: cdap-cconf";
+      try (FileWriter writer = new FileWriter(templateFile)) {
+        writer.write(podTemplateBase);
+      }
+      config.put("spark.kubernetes.driver.podTemplateFile", templateFile.getAbsolutePath());
+    } catch (Exception e) {
+      System.err.println("ashau - error writing pod template file");
+      e.printStackTrace(System.err);
+    }
 
     return config;
   }

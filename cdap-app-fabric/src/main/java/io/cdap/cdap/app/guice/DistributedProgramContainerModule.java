@@ -79,8 +79,12 @@ import io.cdap.cdap.spi.metadata.noop.NoopMetadataStorage;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.ServiceAnnouncer;
+import org.apache.twill.common.Cancellable;
+import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -91,7 +95,6 @@ import javax.annotation.Nullable;
  * is used in both client/driver containers and task containers.
  */
 public class DistributedProgramContainerModule extends AbstractModule {
-
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final ProgramRunId programRunId;
@@ -137,6 +140,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
     ClusterMode clusterMode = systemArgs.hasOption(ProgramOptionConstants.CLUSTER_MODE)
       ? ClusterMode.valueOf(systemArgs.getOption(ProgramOptionConstants.CLUSTER_MODE))
       : ClusterMode.ON_PREMISE;
+    System.err.println("ashau - cluster mode = " + clusterMode);
 
     List<Module> modules = new ArrayList<>();
 
@@ -196,10 +200,12 @@ public class DistributedProgramContainerModule extends AbstractModule {
    */
   private void addDataFabricModules(List<Module> modules) {
     if (cConf.getBoolean(Constants.Transaction.TX_ENABLED)) {
+      System.err.println("ashau - adding tx enabled data fabric modules");
       String instanceId = programOpts.getArguments().getOption(ProgramOptionConstants.INSTANCE_ID);
       modules.add(new DataFabricModules(generateClientId(programRunId, instanceId)).getDistributedModules());
       modules.add(new SystemDatasetRuntimeModule().getDistributedModules());
     } else {
+      System.err.println("ashau - adding tx disabled data fabric modules");
       modules.add(new DataSetServiceModules().getStandaloneModules());
       modules.add(Modules.override(new DataFabricModules().getInMemoryModules()).with(new AbstractModule() {
         @Override
@@ -211,6 +217,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
     }
 
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
+      System.err.println("ashau - adding explore modules");
       modules.add(new AbstractModule() {
         @Override
         protected void configure() {
@@ -230,50 +237,71 @@ public class DistributedProgramContainerModule extends AbstractModule {
   }
 
   private void addOnPremiseModules(List<Module> modules) {
+    System.err.println("ashau - adding on-prem modules");
     CoreSecurityModule coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf);
 
     if (cConf.getBoolean(Constants.Security.ENFORCE_INTERNAL_AUTH)) {
+      System.err.println("ashau - adding enforce internal auth modules");
       modules.add(new AuthenticationContextModules().getMasterModule());
       modules.add(coreSecurityModule);
     } else {
+      System.err.println("ashau - not adding enforce internal auth modules");
       modules.add(new AuthenticationContextModules().getNoOpModule());
     }
 
     // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
     MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
 
+    /*
     if (masterEnv == null) {
+      System.err.println("ashau - adding ZK/Kafka modules for Hadoop stack");
       modules.add(new ZKClientModule());
       modules.add(new ZKDiscoveryModule());
       modules.add(new KafkaClientModule());
       modules.add(new KafkaLogAppenderModule());
       return;
-    }
+    }*/
 
     if (coreSecurityModule.requiresZKClient()) {
+      System.err.println("ashau - adding ZK module");
       modules.add(new ZKClientModule());
     }
 
-    modules.add(new AbstractModule() {
-      @Override
-      protected void configure() {
-        bind(DiscoveryService.class)
-          .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
-        bind(DiscoveryServiceClient.class)
-          .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
+    if (masterEnv != null) {
+      modules.add(new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(DiscoveryService.class)
+              .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
+          bind(DiscoveryServiceClient.class)
+              .toProvider(
+                  new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
 
-        bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
-      }
-    });
+          System.err.println("ashau - binding OwnerAdmin to default");
+          bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+        }
+      });
+    } else {
+      modules.add(new RemoteExecutionDiscoveryModule());
+      modules.add(new AbstractModule() {
+        @Override
+        protected void configure() {
+          System.err.println("ashau - binding OwnerAdmin to default");
+          bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+        }
+      });
+    }
     modules.add(new RemoteLogAppenderModule());
   }
 
   private void addIsolatedModules(List<Module> modules) {
+    System.err.println("ashau - adding isolated modules");
     modules.add(new RemoteExecutionDiscoveryModule());
     modules.add(new TMSLogAppenderModule());
     modules.add(new AbstractModule() {
       @Override
       protected void configure() {
+        System.err.println("ashau - binding OwnerAdmin to no-op");
         bind(OwnerAdmin.class).to(NoOpOwnerAdmin.class);
       }
     });
@@ -281,8 +309,10 @@ public class DistributedProgramContainerModule extends AbstractModule {
     AuthenticationContextModules authModules = new AuthenticationContextModules();
     String principal = programOpts.getArguments().getOption(ProgramOptionConstants.PRINCIPAL);
     if (principal == null) {
+      System.err.println("ashau - adding program container module WITHOUT principal");
       modules.add(authModules.getProgramContainerModule(cConf));
     } else {
+      System.err.println("ashau - adding program container module WITH principal");
       modules.add(authModules.getProgramContainerModule(cConf, principal));
     }
   }

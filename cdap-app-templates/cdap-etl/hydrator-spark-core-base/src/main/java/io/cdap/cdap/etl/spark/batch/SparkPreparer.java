@@ -82,7 +82,8 @@ public class SparkPreparer extends AbstractSparkPreparer {
     throws TransactionFailureException, InstantiationException, IOException {
     stageOperations = new HashMap<>();
     stagePartitions = new HashMap<>();
-    File configFile = File.createTempFile("HydratorSpark", ".config");
+    // hack... create temp dir? or do we need to fix at all? fails in sandbox maybe?
+    File configFile = new File("HydratorSpark.config");
 
     List<Finisher> finishers = super.prepare(phaseSpec);
     finishers.add(new Finisher() {

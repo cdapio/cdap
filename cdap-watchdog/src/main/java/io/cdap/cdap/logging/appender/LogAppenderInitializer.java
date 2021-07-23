@@ -85,6 +85,8 @@ public class LogAppenderInitializer implements Closeable {
   }
 
   public void initialize() {
+    System.err.println("ashau - initializing root logger");
+    new Exception().printStackTrace(System.err);
     initialize(Logger.ROOT_LOGGER_NAME);
   }
 

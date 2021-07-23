@@ -115,21 +115,24 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
     // Load the pod labels from the configured path. It should be setup by the CDAP operator
     podInfo = createPodInfo(conf);
-    Map<String, String> podLabels = podInfo.getLabels();
+    Map<String, String> podLabels = podInfo == null ? new HashMap<>() : podInfo.getLabels();
 
-    String namespace = podInfo.getNamespace();
+    //String namespace = podInfo.getNamespace();
+    String namespace = conf.getOrDefault(NAMESPACE_KEY, DEFAULT_NAMESPACE);
 
     // Get the instance label to setup prefix for K8s services
     String instanceLabel = conf.getOrDefault(INSTANCE_LABEL, DEFAULT_INSTANCE_LABEL);
     String instanceName = podLabels.get(instanceLabel);
     if (instanceName == null) {
-      throw new IllegalStateException("Missing instance label '" + instanceLabel + "' from pod labels.");
+      instanceName = "cdap";
+      //throw new IllegalStateException("Missing instance label '" + instanceLabel + "' from pod labels.");
     }
 
     // Services are publish to K8s with a prefix
     String resourcePrefix = "cdap-" + instanceName + "-";
-    discoveryService = new KubeDiscoveryService(namespace, "cdap-" + instanceName + "-", podLabels,
-                                                podInfo.getOwnerReferences());
+    discoveryService = new KubeDiscoveryService(
+      namespace, "cdap-" + instanceName + "-", podLabels,
+      podInfo == null ? Collections.emptyList() : podInfo.getOwnerReferences());
 
     // Optionally creates the pod killer task
     String podKillerSelector = conf.get(POD_KILLER_SELECTOR);
@@ -216,7 +219,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
     File podInfoDir = new File(conf.getOrDefault(POD_INFO_DIR, DEFAULT_POD_INFO_DIR));
     if (!podInfoDir.isDirectory()) {
-      throw new IllegalArgumentException(String.format("%s is not a directory.", podInfoDir.getAbsolutePath()));
+      return null;
+      //throw new IllegalArgumentException(String.format("%s is not a directory.", podInfoDir.getAbsolutePath()));
     }
 
     // Load the pod labels from the configured path. It should be setup by the CDAP operator

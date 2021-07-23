@@ -51,6 +51,7 @@ private[deploy] class JavaMainApplication(klass: Class[_]) extends SparkApplicat
     val sysProps = conf.getAll.toMap
     sysProps.foreach { case (k, v) =>
       SparkRuntimeEnv.setProperty(k, v)
+      sys.props(k) = v
     }
 
     mainMethod.invoke(null, args)

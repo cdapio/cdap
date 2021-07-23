@@ -30,8 +30,12 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.api.spark.SparkSpecification;
 import io.cdap.cdap.app.runtime.spark.SparkMainWrapper;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeContext;
+import io.cdap.cdap.app.runtime.spark.distributed.SparkContainerLauncher;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.spark.deploy.SparkSubmit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -224,31 +228,38 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
       LOG.error("ashau - Calling SparkSubmit for {} {}: {}",
           runtimeContext.getProgram().getId(), runtimeContext.getRunId(), Arrays.toString(args));
       //SparkSubmit.main(dummyArgs);
-
-      ClassLoader cl = this.getClass().getClassLoader();
-      LOG.error("ashau - classloader = {}", cl);
-      if (cl instanceof URLClassLoader) {
-        URLClassLoader urlCL = (URLClassLoader) cl;
-        for (URL url : urlCL.getURLs()) {
-          LOG.error("ashau --  url = {}", url);
-        }
-      }
-      try {
-        Class<?> clz = cl.loadClass("okio.BufferedSource");
-        LOG.error("ashau - BufferedSource loader = {}", clz);
-        if (clz.getClassLoader() instanceof URLClassLoader) {
-          URLClassLoader urlCL = (URLClassLoader) clz.getClassLoader();
-          for (URL url : urlCL.getURLs()) {
-            LOG.error("ashau --  BufferedSource url = {}", url);
-          }
-        }
-      } catch (ClassNotFoundException e) {
-        LOG.error("ashau - unable to load BufferedSource", e);
-      }
       SparkSubmit.main(args);
       LOG.debug("SparkSubmit returned for {} {}", runtimeContext.getProgram().getId(), runtimeContext.getRunId());
     } finally {
       ClassLoaders.setContextClassLoader(oldClassLoader);
+    }
+  }
+
+  private void pushFilesAndArchives(String files, String archives) throws Exception {
+    Path basePath = new Path("gs://ashau-cdap-k8s-test");
+    FileSystem fs = FileSystem.get(basePath.toUri(), new Configuration());
+    for (String file : files.split(",")) {
+      System.err.println("ashau - file = " + file);
+      int idx = file.indexOf("#");
+      if (idx > 0) {
+        file = file.substring(0, idx);
+      }
+      Path src = new Path(file);
+      Path dst = new Path("gs://ashau-cdap-k8s-test/hack/files/" + src.getName());
+      if (fs.exists(dst)) {
+        fs.delete(dst);
+      }
+      System.err.println("ashau - pushing file " + src.toUri() + " to " + dst.toUri());
+      fs.copyFromLocalFile(src, dst);
+    }
+    for (String archive : archives.split(",")) {
+      Path src = new Path(archive);
+      Path dst = new Path("gs://ashau-cdap-k8s-test/hack/archives/" + src.getName());
+      if (fs.exists(dst)) {
+        fs.delete(dst);
+      }
+      System.err.println("ashau - pushing archive " + src.toUri() + " to " + dst.toUri());
+      fs.copyFromLocalFile(src, dst);
     }
   }
 
@@ -284,6 +295,12 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     }
     if (!files.isEmpty()) {
       builder.add("--files").add(files);
+    }
+    try {
+      pushFilesAndArchives(files, archives);
+    } catch (Exception e) {
+      System.err.println("ashau - failed to push files and archives");
+      e.printStackTrace(System.err);
     }
     // temporary for debugging
     builder.add("--verbose");
