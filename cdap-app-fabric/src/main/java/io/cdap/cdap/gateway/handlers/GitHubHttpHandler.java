@@ -17,6 +17,7 @@
 package io.cdap.cdap.gateway.handlers;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
@@ -27,10 +28,13 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -139,6 +143,46 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
     } else {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Repository is not connectable.");
     }
+  }
+
+  @GET
+  @Path("repos/github/upload/{repo}/{branch}/{path}")
+  public void checkInRepo(HttpRequest request, HttpResponder responder,
+      @NotNull @PathParam("repo") String repo, @NotNull @PathParam("branch") String branch,
+                                    @NotNull @PathParam("path") String path) throws Exception {
+    GitHubRepo gitHubRepo = gitStore.getRepo(repo);
+    URL url = new URL(parseUrl(gitHubRepo.getUrl()) + "/contents/" + path + "?ref=" + branch);
+    HttpURLConnection con = (HttpURLConnection) url.openConnection();
+    con.setRequestMethod("GET");
+    con.setRequestProperty("Authorization", gitHubRepo.getAuthString());
+
+    BufferedReader reader = new BufferedReader(new InputStreamReader(con.getInputStream()));
+    String input;
+    StringBuilder response = new StringBuilder();
+    while ((input = reader.readLine()) != null) {
+      response.append(input);
+    }
+    String encodedContent = GSON.fromJson(response.toString(), JsonObject.class).
+        getAsJsonPrimitive("content").toString().
+        replace("\"", "");
+
+    String[] contentLines = encodedContent.split("\\\\n");
+    StringBuilder content = new StringBuilder();
+
+    for (String s : contentLines) {
+      content.append(new String(Base64.getDecoder().decode(s.getBytes(StandardCharsets.UTF_8)), "UTF-8"));
+    }
+
+    reader.close();
+
+    if (con.getResponseCode() == HttpURLConnection.HTTP_OK) {
+      responder.sendString(HttpResponseStatus.OK, content.toString());
+    } else {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "File not found, check filepath + branch.");
+    }
+
+
+
   }
 
   public String parseUrl(String url) throws Exception {
