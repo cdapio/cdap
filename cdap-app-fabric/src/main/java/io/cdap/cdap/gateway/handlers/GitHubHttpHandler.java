@@ -24,11 +24,13 @@ import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.store.GitHubStore;
 import io.cdap.cdap.internal.github.GitHubRepo;
 import io.cdap.http.HttpResponder;
+import io.netty.handler.codec.http.FullHttpMessage;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -146,7 +148,7 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   @GET
-  @Path("repos/github/upload/{repo}/{branch}/{path}")
+  @Path("repos/github/checkin/{repo}/{branch}/{path}")
   public void checkInRepo(HttpRequest request, HttpResponder responder,
       @NotNull @PathParam("repo") String repo, @NotNull @PathParam("branch") String branch,
                                     @NotNull @PathParam("path") String path) throws Exception {
@@ -157,11 +159,69 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
     con.setRequestProperty("Authorization", gitHubRepo.getAuthString());
 
     BufferedReader reader = new BufferedReader(new InputStreamReader(con.getInputStream()));
+
+    if (con.getResponseCode() == HttpURLConnection.HTTP_OK) {
+      responder.sendString(HttpResponseStatus.OK, retrieveContent(reader));
+    } else {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "File not found, check filepath + branch.");
+    }
+    reader.close();
+  }
+
+  @PUT
+  @Path("repos/github/checkout/{repo}/{branch}/{path}")
+  public void checkOutRepo(FullHttpRequest request, HttpResponder responder,
+      @NotNull @PathParam("repo") String repo, @NotNull @PathParam("branch") String branch,
+                                    @NotNull @PathParam("path") String path) throws Exception {
+    GitHubRepo gitHubRepo = gitStore.getRepo(repo);
+    URL url = new URL(parseUrl(gitHubRepo.getUrl()) + "/contents/" + path + "?ref=" + branch);
+    HttpURLConnection con = (HttpURLConnection) url.openConnection();
+
+    con.setRequestMethod("PUT");
+    con.setDoOutput(true);
+    con.setRequestProperty("Authorization", gitHubRepo.getAuthString());
+
+    JsonObject pipelineInput = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), JsonObject.class);
+
+    JsonObject pipelineOutput  = new JsonObject();
+
+    String message = pipelineInput.getAsJsonPrimitive("message").toString()
+        .replace("\"", "");
+    pipelineOutput.addProperty("message", message);
+
+    String rawContent = pipelineInput.getAsJsonPrimitive("content").toString()
+        .replace("\"", "");
+    pipelineOutput.addProperty("content", Base64.getEncoder().encodeToString(rawContent.getBytes(
+        StandardCharsets.UTF_8)));
+
+    DataOutputStream outputStream = new DataOutputStream(con.getOutputStream());
+    outputStream.write(pipelineOutput.toString().getBytes(StandardCharsets.UTF_8));
+    outputStream.flush();
+    outputStream.close();
+
+    responder.sendString(HttpResponseStatus.OK, con.getResponseCode() + "\n" + pipelineOutput.toString());
+  }
+
+  public String parseUrl(String url) throws Exception {
+    //Parsing SSH git url which has the format -> https://github.com/{owner or org}/{repository name}
+    URI parser = new URI(url);
+    String path = parser.getPath();
+    int parse = path.indexOf("/");
+    //parse the owner and repo name
+    String owner = path.substring(0, parse);
+    String name = path.substring(parse + 1);
+    //Put it all together
+    return "https://api.github.com/repos" + owner + "/"
+        + name;
+  }
+
+  public String retrieveContent(BufferedReader reader) throws Exception {
     String input;
     StringBuilder response = new StringBuilder();
     while ((input = reader.readLine()) != null) {
       response.append(input);
     }
+    //get the actual content or JSON pipeline
     String encodedContent = GSON.fromJson(response.toString(), JsonObject.class).
         getAsJsonPrimitive("content").toString().
         replace("\"", "");
@@ -173,28 +233,6 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
       content.append(new String(Base64.getDecoder().decode(s.getBytes(StandardCharsets.UTF_8)), "UTF-8"));
     }
 
-    reader.close();
-
-    if (con.getResponseCode() == HttpURLConnection.HTTP_OK) {
-      responder.sendString(HttpResponseStatus.OK, content.toString());
-    } else {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "File not found, check filepath + branch.");
-    }
-
-
-
-  }
-
-  public String parseUrl(String url) throws Exception {
-    //Parsing SSH git url which has the format -> git@github.com:/{owner or org}/{repository name}.git
-    URI parser = new URI(url);
-    String path = parser.getPath();
-    int parse = path.indexOf("/");
-    //parse the owner and repo name
-    String owner = path.substring(0, parse);
-    String name = path.substring(parse + 1);
-    //Put it all together
-    return "https://api.github.com/repos" + owner + "/"
-        + name;
+    return content.toString();
   }
 }
