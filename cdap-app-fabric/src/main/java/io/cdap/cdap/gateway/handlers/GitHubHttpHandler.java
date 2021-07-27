@@ -86,10 +86,20 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
           , GitHubRepo.class);
 
       if (githubRequest.validateAllFields()) {
-        String authString = "token " + githubRequest.getAuthString();
-        gitStore.addOrUpdateRepo(repo, githubRequest.getUrl(), githubRequest.getDefaultBranch(),
-            authString);
-        responder.sendString(HttpResponseStatus.OK, "Repository Information Saved.");
+        //test the repo's connection to ensure it exists.
+        if (testRepoConnection(githubRequest) == HttpURLConnection.HTTP_OK) {
+          String authString = "token " + githubRequest.getAuthString();
+          gitStore.addOrUpdateRepo(repo, githubRequest.getUrl(), githubRequest.getDefaultBranch(),
+              authString);
+          responder.sendString(HttpResponseStatus.OK, "Repository Information Saved.");
+        } else if (testRepoConnection(githubRequest) == HttpURLConnection.HTTP_MOVED_PERM) {
+          responder.sendString(HttpResponseStatus.MOVED_PERMANENTLY, "Repository has been moved.");
+        } else if (testRepoConnection(githubRequest) == HttpURLConnection.HTTP_FORBIDDEN) {
+          responder.sendString(HttpResponseStatus.FORBIDDEN, "You do not have access to this repository.");
+        } else {
+          responder.sendString(HttpResponseStatus.NOT_FOUND, "Repository was not found.");
+        }
+        //If the user leaves fields blank, throw back which fields are missing
       } else {
         String errorString = "Please enter a ";
         if (!githubRequest.validNickname()) {
@@ -129,29 +139,19 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  @Path("repos/github/{repo}/testconnection")
   @POST
-  public void testRepoConnection(HttpRequest request, HttpResponder responder,
-                                  @NotNull @PathParam("repo") String repo) throws Exception {
-    GitHubRepo test = gitStore.getRepo(repo);
-    URL url = new URL(parseUrl(test.getUrl()));
-    HttpURLConnection con = (HttpURLConnection) url.openConnection();
-    con.setRequestMethod("GET");
+  @Path("repos/github/checkin/{repo}")
+  public void checkInRepo(FullHttpRequest request, HttpResponder responder,
+      @NotNull @PathParam("repo") String repo) throws Exception {
 
-    con.setRequestProperty("Authorization", test.getAuthString());
+    JsonObject jObj = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), JsonObject.class);
 
-    if (con.getResponseCode() == HttpURLConnection.HTTP_OK) {
-      responder.sendString(HttpResponseStatus.OK, "Connection Successful.");
-    } else {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Repository is not connectable.");
-    }
-  }
+    String branch = jObj.getAsJsonPrimitive("branch").toString().
+        replace("\"", "");
 
-  @GET
-  @Path("repos/github/checkin/{repo}/{branch}/{path}")
-  public void checkInRepo(HttpRequest request, HttpResponder responder,
-      @NotNull @PathParam("repo") String repo, @NotNull @PathParam("branch") String branch,
-                                    @NotNull @PathParam("path") String path) throws Exception {
+    String path = jObj.getAsJsonPrimitive("path").toString().
+        replace("\"", "");
+
     GitHubRepo gitHubRepo = gitStore.getRepo(repo);
     URL url = new URL(parseUrl(gitHubRepo.getUrl()) + "/contents/" + path + "?ref=" + branch);
     HttpURLConnection con = (HttpURLConnection) url.openConnection();
@@ -169,10 +169,18 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   @PUT
-  @Path("repos/github/checkout/{repo}/{branch}/{path}")
+  @Path("repos/github/checkout/{repo}")
   public void checkOutRepo(FullHttpRequest request, HttpResponder responder,
-      @NotNull @PathParam("repo") String repo, @NotNull @PathParam("branch") String branch,
-                                    @NotNull @PathParam("path") String path) throws Exception {
+      @NotNull @PathParam("repo") String repo) throws Exception {
+
+    JsonObject jObj = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), JsonObject.class);
+
+    String branch = jObj.getAsJsonPrimitive("branch").toString().
+        replace("\"", "");
+
+    String path = jObj.getAsJsonPrimitive("path").toString().
+        replace("\"", "");
+
     GitHubRepo gitHubRepo = gitStore.getRepo(repo);
     URL url = new URL(parseUrl(gitHubRepo.getUrl()) + "/contents/" + path + "?ref=" + branch);
     HttpURLConnection con = (HttpURLConnection) url.openConnection();
@@ -234,5 +242,15 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     return content.toString();
+  }
+
+  public int testRepoConnection(GitHubRepo repo) throws Exception {
+    URL url = new URL(parseUrl(repo.getUrl()));
+    HttpURLConnection con = (HttpURLConnection) url.openConnection();
+    con.setRequestMethod("GET");
+
+    con.setRequestProperty("Authorization", repo.getAuthString());
+
+    return con.getResponseCode();
   }
 }
