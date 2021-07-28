@@ -624,6 +624,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    * @throws IOException if failed to package the jar
    */
   private Iterable<String> buildDependencyJar(File targetFile) throws IOException, URISyntaxException {
+    LOG.debug("buildDependencyJar " + targetFile, new Throwable());
     Set<String> classpath = new TreeSet<>();
     try (JarOutputStream jarOut = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(targetFile)))) {
       jarOut.setLevel(Deflater.NO_COMPRESSION);
@@ -638,6 +639,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
           for (File file : DirUtils.listFiles(libDir, "jar")) {
             if (classpath.add(file.getName())) {
+              LOG.debug("Adding {} to the jar", file);
               jarOut.putNextEntry(new JarEntry(file.getName()));
               Files.copy(file, jarOut);
               jarOut.closeEntry();

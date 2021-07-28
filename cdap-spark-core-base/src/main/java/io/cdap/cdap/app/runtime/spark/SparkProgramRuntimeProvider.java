@@ -301,6 +301,7 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
     if (classLoaderUrls == null) {
       classLoaderUrls = getSparkClassloaderURLs(getClass().getClassLoader());
     }
+    LOG.info("createClassLoader called for " + filterScalaClasses + ", " + rewriteCheckpointTempName, new Throwable());
 
     return new SparkRunnerClassLoader(classLoaderUrls,
                                       runnerParentClassLoader,

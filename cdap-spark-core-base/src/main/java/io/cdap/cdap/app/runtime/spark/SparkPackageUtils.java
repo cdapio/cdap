@@ -306,6 +306,7 @@ public final class SparkPackageUtils {
    */
   private static Set<File> getSparkLibraryJars(@Nullable String sparkLibrary, String sparkHome) {
     // There should be a jars directory under SPARK_HOME.
+    LOG.info("getSparkLibraryJars called for " + sparkLibrary + ", " + sparkHome, new Throwable());
     File jarsDir = sparkLibrary == null ? new File(sparkHome, "jars") : new File(sparkLibrary);
     Preconditions.checkState(jarsDir.isDirectory(), "Expected %s to be a directory for Spark", jarsDir);
 
