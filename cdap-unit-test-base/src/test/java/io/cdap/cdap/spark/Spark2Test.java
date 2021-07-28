@@ -272,7 +272,7 @@ public class Spark2Test extends TestBase {
 
   @Test
   public void testPySpark() throws Exception {
-    if (TestBase.getCurrentSparkCompat() == SparkCompat.SPARK3_2_12) {
+    if (SparkCompatReader.getCurrentSparkCompat() == SparkCompat.SPARK3_2_12) {
       //For spark 3 we need python 3, otherwise skip test
       try {
         Process python = new ProcessBuilder("python3", "-V").start();

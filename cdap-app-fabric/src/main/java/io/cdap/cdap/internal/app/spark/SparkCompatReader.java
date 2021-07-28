@@ -60,7 +60,12 @@ public class SparkCompatReader {
     }
     if (compatStr == null) {
       LOG.trace("Default spark compat {}", SparkCompat.SPARK2_2_11);
-      return SparkCompat.SPARK2_2_11;
+      try {
+        return getCurrentSparkCompat();
+      } catch (Throwable e) {
+        LOG.info("Can't detect spark version({}), using default {}", e, SparkCompat.SPARK2_2_11);
+        return SparkCompat.SPARK2_2_11;
+      }
     }
 
     for (SparkCompat sparkCompat : SparkCompat.values()) {
@@ -76,5 +81,18 @@ public class SparkCompatReader {
 
     throw new IllegalArgumentException(
       String.format("Invalid SparkCompat version '%s'. Must be one of %s", compatStr, allowedCompatStrings));
+  }
+
+  @VisibleForTesting
+  public static SparkCompat getCurrentSparkCompat() {
+    String sparkVersion = package$.MODULE$.SPARK_VERSION();
+    switch (sparkVersion.charAt(0)) {
+      case '3':
+        return SparkCompat.SPARK3_2_12;
+      case '2':
+        return SparkCompat.SPARK2_2_11;
+      default:
+        throw new IllegalStateException("Spark version " + sparkVersion + " is not known");
+    }
   }
 }

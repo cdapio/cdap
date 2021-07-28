@@ -77,16 +77,20 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
   private static final Logger LOG = LoggerFactory.getLogger(DistributedSparkProgramRunner.class);
 
   private final LocationFactory locationFactory;
+  /**
+   * Spark that will be bundled in {@link ClusterMode#ON_PREMISE} mode. In {@link ClusterMode#ISOLATED} provided
+   * spark would be used
+   */
   private final SparkCompat sparkCompat;
 
   @Inject
   @VisibleForTesting
-  public DistributedSparkProgramRunner(SparkCompat sparkComat, CConfiguration cConf, YarnConfiguration hConf,
+  public DistributedSparkProgramRunner(SparkCompat sparkCompat, CConfiguration cConf, YarnConfiguration hConf,
                                        Impersonator impersonator, LocationFactory locationFactory,
                                        ClusterMode clusterMode,
                                        @Constants.AppFabric.ProgramRunner TwillRunner twillRunner) {
     super(cConf, hConf, impersonator, clusterMode, twillRunner);
-    this.sparkCompat = sparkComat;
+    this.sparkCompat = sparkCompat;
     this.locationFactory = locationFactory;
   }
 
@@ -143,12 +147,6 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
                              clientArgs, spec.getClientResources(), 0);
 
     Map<String, String> extraEnv = new HashMap<>();
-    extraEnv.put(Constants.SPARK_COMPAT_ENV, sparkCompat.getCompat());
-
-    if (sparkCompat.getCompat().equals(SparkCompat.SPARK2_2_11.getCompat())) {
-      // No need to rewrite YARN client
-      cConf.setBoolean(Constants.AppFabric.SPARK_YARN_CLIENT_REWRITE, false);
-    }
 
     // In isolated mode, we don't need to localize spark/mr framework from app-fabric.
     // We only need to setup localization to (yarn) container when this program runner

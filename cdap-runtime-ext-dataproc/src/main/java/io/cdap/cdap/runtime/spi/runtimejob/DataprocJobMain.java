@@ -47,7 +47,6 @@ import java.util.zip.ZipInputStream;
 public class DataprocJobMain {
 
   public static final String RUNTIME_JOB_CLASS = "runtimeJobClass";
-  public static final String SPARK_COMPAT = "sparkCompat";
   public static final String ARCHIVE = "archive";
   public static final String PROPERTY_PREFIX = "prop";
 
@@ -65,9 +64,6 @@ public class DataprocJobMain {
     if (!arguments.containsKey(RUNTIME_JOB_CLASS)) {
       throw new RuntimeException("Missing --" + RUNTIME_JOB_CLASS + " argument for the RuntimeJob classname");
     }
-    if (!arguments.containsKey(SPARK_COMPAT)) {
-      throw new RuntimeException("Missing --" + SPARK_COMPAT + " argument for the spark compat version");
-    }
 
     Thread.setDefaultUncaughtExceptionHandler((t, e) -> LOG.error("Uncaught exception from thread {}", t, e));
 
@@ -82,7 +78,6 @@ public class DataprocJobMain {
     expandArchives(arguments.getOrDefault(ARCHIVE, Collections.emptySet()));
 
     String runtimeJobClassName = arguments.get(RUNTIME_JOB_CLASS).iterator().next();
-    String sparkCompat = arguments.get(SPARK_COMPAT).iterator().next();
 
     ClassLoader cl = DataprocJobMain.class.getClassLoader();
     if (!(cl instanceof URLClassLoader)) {
@@ -111,9 +106,9 @@ public class DataprocJobMain {
 
       try {
         // call initialize() method on dataprocEnvClass
-        Method initializeMethod = dataprocEnvClass.getMethod("initialize", String.class);
-        LOG.info("Invoking initialize() on {} with {}", dataprocEnvClassName, sparkCompat);
-        initializeMethod.invoke(newDataprocEnvInstance, sparkCompat);
+        Method initializeMethod = dataprocEnvClass.getMethod("initialize");
+        LOG.info("Invoking initialize() on {}", dataprocEnvClassName);
+        initializeMethod.invoke(newDataprocEnvInstance);
 
         // call run() method on runtimeJobClass
         Class<?> runEnvCls = newCL.loadClass(RuntimeJobEnvironment.class.getName());

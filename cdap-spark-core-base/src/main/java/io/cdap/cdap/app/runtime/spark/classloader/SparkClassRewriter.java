@@ -147,14 +147,12 @@ public class SparkClassRewriter implements ClassRewriter {
     "io/cdap/cdap/app/runtime/spark/serializer/Unmodifiable%sSerializer";
 
   private final Function<String, InputStream> resourceLookup;
-  private final boolean rewriteYarnClient;
   private final boolean rewriteCheckpointTempFileName;
   private final boolean distributed;
 
-  public SparkClassRewriter(Function<String, InputStream> resourceLookup, boolean rewriteYarnClient,
+  public SparkClassRewriter(Function<String, InputStream> resourceLookup,
                             boolean rewriteCheckpointTempFileName) {
     this.resourceLookup = resourceLookup;
-    this.rewriteYarnClient = rewriteYarnClient;
     this.rewriteCheckpointTempFileName = rewriteCheckpointTempFileName;
     this.distributed = Boolean.parseBoolean(System.getenv("SPARK_YARN_MODE"));
   }
@@ -193,10 +191,6 @@ public class SparkClassRewriter implements ClassRewriter {
     }
     if (className.equals(SPARK_PYTHON_WORKER_MONITOR_THREAD_TYPE.getClassName())) {
       return rewritePythonWorkerMonitorThread(input);
-    }
-    if (rewriteYarnClient && className.equals(SPARK_YARN_CLIENT_TYPE.getClassName())) {
-      // Rewrite YarnClient for workaround SPARK-13441.
-      return rewriteClient(input);
     }
     if (className.equals(SPARK_DSTREAM_GRAPH_TYPE.getClassName())) {
       // Rewrite DStreamGraph to set TaskSupport on parallel array usage to avoid Thread leak
@@ -1189,103 +1183,6 @@ public class SparkClassRewriter implements ClassRewriter {
       LOG.warn("Failed to determine ActorSystem dispatcher() return type.", e);
       return null;
     }
-  }
-
-  /**
-   * Defines the org.apache.spark.deploy.yarn.Client class with rewriting of the createConfArchive method to
-   * workaround the SPARK-13441 bug.
-   */
-  @Nullable
-  private byte[] rewriteClient(InputStream byteCodeStream) throws IOException {
-    // We only need to rewrite if listing either HADOOP_CONF_DIR or YARN_CONF_DIR return null.
-    boolean needRewrite = false;
-    for (String env : ImmutableList.of("HADOOP_CONF_DIR", "YARN_CONF_DIR")) {
-      String value = System.getenv(env);
-      if (value != null) {
-        File path = new File(value);
-        if (path.isDirectory() && path.listFiles() == null) {
-          needRewrite = true;
-          break;
-        }
-      }
-    }
-
-    // If rewrite is not needed
-    if (!needRewrite) {
-      return null;
-    }
-
-    ClassReader cr = new ClassReader(byteCodeStream);
-    ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-    cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
-      @Override
-      public MethodVisitor visitMethod(final int access, final String name,
-                                       final String desc, String signature, String[] exceptions) {
-        MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
-
-        // Only rewrite the createConfArchive method
-        if (!"createConfArchive".equals(name)) {
-          return mv;
-        }
-
-        Type fileType = Type.getType(File.class);
-        Type stringType = Type.getType(String.class);
-
-        // Check if it's a recognizable return type.
-        // Spark 1.5+ return type is File
-        boolean isReturnFile = Type.getReturnType(desc).equals(fileType);
-        Type optionType = Type.getObjectType("scala/Option");
-        if (!isReturnFile) {
-          // Spark 1.4 return type is Option<File>
-          if (!Type.getReturnType(desc).equals(optionType)) {
-            // Unknown type. Not going to modify the code.
-            return mv;
-          }
-        }
-
-        // Generate this for Spark 1.5+
-        // return SparkRuntimeUtils.createConfArchive(this.sparkConf, SPARK_CONF_FILE, LOCALIZED_CONF_DIR,
-        //                                            File.createTempFile(LOCALIZED_CONF_DIR, ".zip"));
-        // Generate this for Spark 1.4
-        // return Option.apply(SparkRuntimeUtils.createConfArchive(this.sparkConf, SPARK_CONF_FILE, LOCALIZED_CONF_DIR,
-        //                                                         File.createTempFile(LOCALIZED_CONF_DIR, ".zip")));
-        GeneratorAdapter mg = new GeneratorAdapter(mv, access, name, desc);
-
-        // Push the four parameters for the SparkRuntimeUtils.createConfArchive method
-        // load this.sparkConf to the stack
-        mg.loadThis();
-        mg.getField(Type.getObjectType("org/apache/spark/deploy/yarn/Client"), "sparkConf", SPARK_CONF_TYPE);
-        mg.visitLdcInsn(SPARK_CONF_FILE);
-        mg.visitLdcInsn(LOCALIZED_CONF_DIR);
-
-        // Call the File.createTempFile(LOCALIZED_CONF_DIR, ".zip") to generate the forth parameter
-        mg.visitLdcInsn(LOCALIZED_CONF_DIR);
-        mg.visitLdcInsn(".zip");
-        mg.invokeStatic(fileType, new Method("createTempFile", fileType, new Type[] { stringType, stringType }));
-
-        // call SparkRuntimeUtils.createConfArchive, return a File and leave it in stack
-        mg.invokeStatic(SPARK_RUNTIME_UTILS_TYPE,
-                        new Method("createConfArchive", fileType,
-                                   new Type[] { SPARK_CONF_TYPE, stringType, stringType, fileType }));
-        if (isReturnFile) {
-          // Spark 1.5+ return type is File, hence just return the File from the stack
-          mg.returnValue();
-          mg.endMethod();
-        } else {
-          // Spark 1.4 return type is Option<File>
-          // return Option.apply(<file from stack>);
-          // where the file is actually just popped from the stack
-          mg.invokeStatic(optionType, new Method("apply", optionType, new Type[] { Type.getType(Object.class) }));
-          mg.checkCast(optionType);
-          mg.returnValue();
-          mg.endMethod();
-        }
-
-        return null;
-      }
-    }, ClassReader.EXPAND_FRAMES);
-
-    return cw.toByteArray();
   }
 
   /**

@@ -40,7 +40,7 @@ public class SparkContainerClassLoader extends MainClassLoader {
    */
   public SparkContainerClassLoader(URL[] urls, ClassLoader parent, boolean rewriteCheckpointTempFileName) {
     super(urls, parent);
-    this.sparkClassRewriter = new SparkClassRewriter(name -> ClassLoaders.openResource(this, name), false,
+    this.sparkClassRewriter = new SparkClassRewriter(name -> ClassLoaders.openResource(this, name),
                                                      rewriteCheckpointTempFileName);
   }
 

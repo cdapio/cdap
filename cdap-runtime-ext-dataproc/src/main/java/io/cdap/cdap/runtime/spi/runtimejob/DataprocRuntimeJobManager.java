@@ -353,10 +353,9 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     ProgramRunInfo runInfo = runtimeJobInfo.getProgramRunInfo();
     String runId = runInfo.getRun();
 
-    // The DataprocJobMain argument is <class-name> <spark-compat> <list of archive files...>
+    // The DataprocJobMain argument is <class-name> <list of archive files...>
     List<String> arguments = new ArrayList<>();
     arguments.add("--" + DataprocJobMain.RUNTIME_JOB_CLASS + "=" + runtimeJobInfo.getRuntimeJobClassname());
-    arguments.add("--" + DataprocJobMain.SPARK_COMPAT + "=" + provisionerContext.getSparkCompat().getCompat());
     localFiles.stream()
       .filter(LocalFile::isArchive)
       .map(f -> "--" + DataprocJobMain.ARCHIVE + "=" + f.getName())

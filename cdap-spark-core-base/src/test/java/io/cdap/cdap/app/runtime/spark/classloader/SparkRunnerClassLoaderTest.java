@@ -49,7 +49,7 @@ public class SparkRunnerClassLoaderTest {
       final URL[] urlArray = urls.toArray(new URL[urls.size()]);
 
       SparkRunnerClassLoader firstCL = new SparkRunnerClassLoader(urlArray,
-                                                                  getClass().getClassLoader(), false, false);
+                                                                  getClass().getClassLoader(), false);
       // Load a class from the first CL.
       firstCL.loadClass("org.apache.spark.SparkContext");
 
@@ -61,7 +61,6 @@ public class SparkRunnerClassLoaderTest {
         public void run() {
           SparkRunnerClassLoader secondCL = new SparkRunnerClassLoader(urlArray,
                                                                        getClass().getClassLoader(),
-                                                                       false,
                                                                        false);
           try {
             latch.countDown();
@@ -102,7 +101,6 @@ public class SparkRunnerClassLoaderTest {
 
         SparkRunnerClassLoader classLoader = new SparkRunnerClassLoader(urlArray,
                                                                         getClass().getClassLoader(),
-                                                                        false,
                                                                         false);
 
         // Load the same class concurrently from two threads.
@@ -134,7 +132,7 @@ public class SparkRunnerClassLoaderTest {
     List<URL> urls = ClassLoaders.getClassLoaderURLs(getClass().getClassLoader(), new ArrayList<URL>());
     URL[] urlArray = urls.toArray(new URL[urls.size()]);
 
-    SparkRunnerClassLoader cl = new SparkRunnerClassLoader(urlArray, getClass().getClassLoader(), false, false);
+    SparkRunnerClassLoader cl = new SparkRunnerClassLoader(urlArray, getClass().getClassLoader(), false);
     InputStream is = cl.getResourceAsStream("org/apache/spark/SparkContext.class");
     Assert.assertNotNull(is);
 

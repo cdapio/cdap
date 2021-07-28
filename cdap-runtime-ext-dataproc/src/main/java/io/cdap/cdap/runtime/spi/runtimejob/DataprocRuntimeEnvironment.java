@@ -62,10 +62,9 @@ public class DataprocRuntimeEnvironment implements RuntimeJobEnvironment {
   /**
    * This method initializes the dataproc runtime environment.
    *
-   * @param sparkCompat spark compat version supported by dataproc cluster
    * @throws Exception any exception while initializing the environment.
    */
-  public void initialize(String sparkCompat) throws Exception {
+  public void initialize() throws Exception {
     addConsoleAppender();
     System.setProperty(TWILL_ZK_SERVER_LOCALHOST, "false");
     zkServer = InMemoryZKServer.builder().build();
@@ -78,7 +77,7 @@ public class DataprocRuntimeEnvironment implements RuntimeJobEnvironment {
     locationFactory = new FileContextLocationFactory(conf);
     yarnTwillRunnerService = new YarnTwillRunnerService(conf, connectionStr, locationFactory);
     yarnTwillRunnerService.start();
-    properties = ImmutableMap.of(ZK_QUORUM, connectionStr, APP_SPARK_COMPAT, sparkCompat);
+    properties = ImmutableMap.of(ZK_QUORUM, connectionStr);
   }
 
   @Override
