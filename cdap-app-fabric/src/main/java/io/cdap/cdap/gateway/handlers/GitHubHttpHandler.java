@@ -139,46 +139,80 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
+  @Path("repos/github/{repo}/testconnection")
+  @POST
+  public void testRepoConnection(HttpRequest request, HttpResponder responder,
+      @NotNull @PathParam("repo") String repo) throws Exception {
+    GitHubRepo test = gitStore.getRepo(repo);
+    URL url = new URL(parseUrl(test.getUrl()));
+    HttpURLConnection con = (HttpURLConnection) url.openConnection();
+    con.setRequestMethod("GET");
+    con.setRequestProperty("Authorization", test.getAuthString());
+    if (con.getResponseCode() == HttpURLConnection.HTTP_OK) {
+      responder.sendString(HttpResponseStatus.OK, "Connection Successful.");
+    } else if (con.getResponseCode() == HttpURLConnection.HTTP_MOVED_PERM) {
+      responder.sendString(HttpResponseStatus.MOVED_PERMANENTLY, "Repository has been moved.");
+    } else if (con.getResponseCode() == HttpURLConnection.HTTP_FORBIDDEN) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN, "You do not have access to this repository.");
+    } else {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Repository was not found.");
+    }
+  }
+
   @POST
   @Path("repos/github/checkin/{repo}")
   public void checkInRepo(FullHttpRequest request, HttpResponder responder,
       @NotNull @PathParam("repo") String repo) throws Exception {
 
-    JsonObject jObj = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), JsonObject.class);
+    try {
+      JsonObject jObj = GSON
+          .fromJson(request.content().toString(StandardCharsets.UTF_8), JsonObject.class);
 
-    String branch = jObj.getAsJsonPrimitive("branch").toString().
-        replace("\"", "");
+      String branch = gitStore.getRepo(repo).getDefaultBranch();
+      if (jObj.has("branch")) {
+        branch = jObj.getAsJsonPrimitive("branch").toString().
+            replace("\"", "");
+      }
 
-    String path = jObj.getAsJsonPrimitive("path").toString().
-        replace("\"", "");
+      String path = jObj.getAsJsonPrimitive("path").toString().
+          replace("\"", "");
 
-    GitHubRepo gitHubRepo = gitStore.getRepo(repo);
-    URL url = new URL(parseUrl(gitHubRepo.getUrl()) + "/contents/" + path + "?ref=" + branch);
-    HttpURLConnection con = (HttpURLConnection) url.openConnection();
-    con.setRequestMethod("GET");
-    con.setRequestProperty("Authorization", gitHubRepo.getAuthString());
+      GitHubRepo gitHubRepo = gitStore.getRepo(repo);
+      URL url = new URL(parseUrl(gitHubRepo.getUrl()) + "/contents/" + path + "?ref=" + branch);
+      HttpURLConnection con = (HttpURLConnection) url.openConnection();
+      con.setRequestMethod("GET");
+      con.setRequestProperty("Authorization", gitHubRepo.getAuthString());
 
-    BufferedReader reader = new BufferedReader(new InputStreamReader(con.getInputStream()));
+      BufferedReader reader = new BufferedReader(new InputStreamReader(con.getInputStream()));
 
-    if (con.getResponseCode() == HttpURLConnection.HTTP_OK) {
-      responder.sendString(HttpResponseStatus.OK, retrieveContent(reader));
-    } else {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "File not found, check filepath + branch.");
+      if (con.getResponseCode() == HttpURLConnection.HTTP_OK) {
+        responder.sendString(HttpResponseStatus.OK, retrieveContent(reader));
+      } else if (con.getResponseCode() == HttpURLConnection.HTTP_FORBIDDEN) {
+        responder.sendString(HttpResponseStatus.FORBIDDEN, "You do not have access to this file");
+      } else {
+        responder
+            .sendString(HttpResponseStatus.NOT_FOUND, "File not found, check filepath + branch.");
+      }
+      reader.close();
+    } catch (Exception ex) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Verify that file exists.");
     }
-    reader.close();
   }
 
-  @PUT
+  @POST
   @Path("repos/github/checkout/{repo}")
   public void checkOutRepo(FullHttpRequest request, HttpResponder responder,
       @NotNull @PathParam("repo") String repo) throws Exception {
 
-    JsonObject jObj = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), JsonObject.class);
+    JsonObject pipelineInput = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), JsonObject.class);
 
-    String branch = jObj.getAsJsonPrimitive("branch").toString().
-        replace("\"", "");
+    String branch = gitStore.getRepo(repo).getDefaultBranch();
+    if (pipelineInput.has("branch")) {
+      branch = pipelineInput.getAsJsonPrimitive("branch").toString().
+          replace("\"", "");
+    }
 
-    String path = jObj.getAsJsonPrimitive("path").toString().
+    String path = pipelineInput.getAsJsonPrimitive("path").toString().
         replace("\"", "");
 
     GitHubRepo gitHubRepo = gitStore.getRepo(repo);
@@ -189,9 +223,8 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
     con.setDoOutput(true);
     con.setRequestProperty("Authorization", gitHubRepo.getAuthString());
 
-    JsonObject pipelineInput = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), JsonObject.class);
-
     JsonObject pipelineOutput  = new JsonObject();
+
 
     String message = pipelineInput.getAsJsonPrimitive("message").toString()
         .replace("\"", "");
@@ -202,12 +235,29 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
     pipelineOutput.addProperty("content", Base64.getEncoder().encodeToString(rawContent.getBytes(
         StandardCharsets.UTF_8)));
 
+    if (pipelineInput.has("sha")) {
+      String sha = pipelineInput.getAsJsonPrimitive("sha").toString()
+          .replace("\"", "");
+      pipelineOutput.addProperty("sha", sha);
+    }
+
     DataOutputStream outputStream = new DataOutputStream(con.getOutputStream());
     outputStream.write(pipelineOutput.toString().getBytes(StandardCharsets.UTF_8));
     outputStream.flush();
     outputStream.close();
 
-    responder.sendString(HttpResponseStatus.OK, con.getResponseCode() + "\n" + pipelineOutput.toString());
+    if (con.getResponseCode() == HttpURLConnection.HTTP_CREATED) {
+      responder.sendString(HttpResponseStatus.OK, "Checkout successful.");
+    } else if (con.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
+      responder.sendString(HttpResponseStatus.CONFLICT, "This file already exists, "
+          + "provide a sha in order to update it");
+    } else if (con.getResponseCode() == 422) {
+      responder.sendString(HttpResponseStatus.UNAUTHORIZED,
+          "Please check your authorization key and file path");
+    } else {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, con.getResponseCode() + " file destination not found");
+    }
+
   }
 
   public String parseUrl(String url) throws Exception {
