@@ -90,6 +90,13 @@ public class AutoJoinerTest extends HydratorTestBase {
     Schema.Field.of("region", Schema.of(Schema.Type.STRING)),
     Schema.Field.of("user_id", Schema.of(Schema.Type.INT)),
     Schema.Field.of("interest", Schema.of(Schema.Type.STRING)));
+
+  private static final Schema AGE_SCHEMA = Schema.recordOf(
+    "age",
+    Schema.Field.of("region", Schema.of(Schema.Type.STRING)),
+    Schema.Field.of("user_id", Schema.of(Schema.Type.INT)),
+    Schema.Field.of("age", Schema.of(Schema.Type.INT)));
+
   private static final StructuredRecord USER_ALICE = StructuredRecord.builder(USER_SCHEMA)
     .set("region", "us")
     .set("user_id", 0)
@@ -777,11 +784,11 @@ public class AutoJoinerTest extends HydratorTestBase {
                    .set("interests_interest", "gaming").build());
 
     testTripleAutoJoin(Collections.singletonList("purchases"), Arrays.asList("purchases", "interests"),
-                       expected, Engine.SPARK);
+                       expected, Engine.SPARK, Arrays.asList("purchases", "users", "interests"));
   }
 
   @Test
-  public void testTripleAutoLeftRequiredJoin() throws Exception {
+  public void testTripleAutoSingleRequiredJoin() throws Exception {
     Schema expectedSchema = Schema.recordOf(
       "purchases.users.interests",
       Schema.Field.of("purchases_region", Schema.of(Schema.Type.STRING)),
@@ -823,59 +830,21 @@ public class AutoJoinerTest extends HydratorTestBase {
                    .set("interests_user_id", 2)
                    .set("interests_interest", "gaming").build());
 
-    testTripleAutoJoin(Collections.singletonList("purchases"), expected, Engine.SPARK);
-    testTripleAutoJoin(Collections.singletonList("purchases"), expected, Engine.MAPREDUCE);
-  }
+    //First required : all left joins
+    testTripleAutoJoin(Collections.singletonList("purchases"), expected, Engine.SPARK,
+                       Arrays.asList("purchases", "users", "interests"));
+    testTripleAutoJoin(Collections.singletonList("purchases"), expected, Engine.MAPREDUCE, Collections.emptyList());
 
-  @Test
-  public void testTripleAutoMiddleRequiredJoin() throws Exception {
-    Schema expectedSchema = Schema.recordOf(
-      "purchases.users.interests",
-      Schema.Field.of("purchases_region", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
-      Schema.Field.of("purchases_purchase_id", Schema.nullableOf(Schema.of(Schema.Type.INT))),
-      Schema.Field.of("purchases_user_id", Schema.nullableOf(Schema.of(Schema.Type.INT))),
-      Schema.Field.of("users_region", Schema.of(Schema.Type.STRING)),
-      Schema.Field.of("users_user_id", Schema.of(Schema.Type.INT)),
-      Schema.Field.of("users_name", Schema.of(Schema.Type.STRING)),
-      Schema.Field.of("interests_region", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
-      Schema.Field.of("interests_user_id", Schema.nullableOf(Schema.of(Schema.Type.INT))),
-      Schema.Field.of("interests_interest", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
+    //Middle Required : right join + left join.
+    testTripleAutoJoin(Collections.singletonList("purchases"), expected, Engine.SPARK,
+                       Arrays.asList("users", "purchases", "interests"));
+    testTripleAutoJoin(Collections.singletonList("purchases"), expected, Engine.MAPREDUCE,
+                       Arrays.asList("users", "purchases", "interests"));
 
-    Set<StructuredRecord> expected = new HashSet<>();
-    expected.add(StructuredRecord.builder(expectedSchema)
-                   .set("purchases_region", "us")
-                   .set("purchases_purchase_id", 123)
-                   .set("purchases_user_id", 0)
-                   .set("users_region", "us")
-                   .set("users_user_id", 0)
-                   .set("users_name", "alice")
-                   .set("interests_region", "us")
-                   .set("interests_user_id", 0)
-                   .set("interests_interest", "food").build());
-    expected.add(StructuredRecord.builder(expectedSchema)
-                   .set("purchases_region", "us")
-                   .set("purchases_purchase_id", 123)
-                   .set("purchases_user_id", 0)
-                   .set("users_region", "us")
-                   .set("users_user_id", 0)
-                   .set("users_name", "alice")
-                   .set("interests_region", "us")
-                   .set("interests_user_id", 0)
-                   .set("interests_interest", "sports").build());
-    expected.add(StructuredRecord.builder(expectedSchema)
-                   .set("users_region", "eu")
-                   .set("users_user_id", 0)
-                   .set("users_name", "alyce").build());
-    expected.add(StructuredRecord.builder(expectedSchema)
-                   .set("users_region", "us")
-                   .set("users_user_id", 1)
-                   .set("users_name", "bob")
-                   .set("interests_region", "us")
-                   .set("interests_user_id", 1)
-                   .set("interests_interest", "gardening").build());
+    //Last Required : outer + left join with coalesce from first 2
+    testTripleAutoJoin(Collections.singletonList("purchases"), expected, Engine.SPARK,
+                       Arrays.asList("users", "interests", "purchases"));
 
-    testTripleAutoJoin(Collections.singletonList("users"), expected, Engine.SPARK);
-    testTripleAutoJoin(Collections.singletonList("users"), expected, Engine.MAPREDUCE);
   }
 
   @Test
@@ -921,17 +890,93 @@ public class AutoJoinerTest extends HydratorTestBase {
                    .set("interests_user_id", 1)
                    .set("interests_interest", "gardening").build());
 
-    testTripleAutoJoin(Arrays.asList("users", "interests"), expected, Engine.SPARK);
-    testTripleAutoJoin(Arrays.asList("users", "interests"), expected, Engine.MAPREDUCE);
+    testTripleAutoJoin(Arrays.asList("users", "interests"), expected, Engine.SPARK, Collections.emptyList());
+    testTripleAutoJoin(Arrays.asList("users", "interests"), expected, Engine.MAPREDUCE, Collections.emptyList());
+  }
+
+  @Test
+  public void testTripleAutoNoneRequiredJoin() throws Exception {
+    /*
+    In this case, all the JOINS will be full outer joins
+    i.e.
+    Purchases (outer) Users (outer) Interests
+    */
+
+    Schema expectedSchema = Schema.recordOf(
+      "purchases.users.interests",
+      Schema.Field.of("purchases_region", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("purchases_purchase_id", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+      Schema.Field.of("purchases_user_id", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+      Schema.Field.of("users_region", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("users_user_id", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+      Schema.Field.of("users_name", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("interests_region", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("interests_user_id", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+      Schema.Field.of("interests_interest", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
+
+    Set<StructuredRecord> expected = new HashSet<>();
+    expected.add(StructuredRecord.builder(expectedSchema)
+                   .set("purchases_region", "us")
+                   .set("purchases_purchase_id", 456)
+                   .set("purchases_user_id", 2)
+                   .set("interests_region", "us")
+                   .set("interests_user_id", 2)
+                   .set("interests_interest", "gaming").build());
+    expected.add(StructuredRecord.builder(expectedSchema)
+                   .set("users_region", "eu")
+                   .set("users_user_id", 0)
+                   .set("users_name", "alyce").build());
+    expected.add(StructuredRecord.builder(expectedSchema)
+                   .set("purchases_region", "us")
+                   .set("purchases_purchase_id", 123)
+                   .set("purchases_user_id", 0)
+                   .set("users_region", "us")
+                   .set("users_user_id", 0)
+                   .set("users_name", "alice")
+                   .set("interests_region", "us")
+                   .set("interests_user_id", 0)
+                   .set("interests_interest", "food").build());
+    expected.add(StructuredRecord.builder(expectedSchema)
+                   .set("purchases_region", "us")
+                   .set("purchases_purchase_id", 123)
+                   .set("purchases_user_id", 0)
+                   .set("users_region", "us")
+                   .set("users_user_id", 0)
+                   .set("users_name", "alice")
+                   .set("interests_region", "us")
+                   .set("interests_user_id", 0)
+                   .set("interests_interest", "sports").build());
+    expected.add(StructuredRecord.builder(expectedSchema)
+                   .set("users_region", "us")
+                   .set("users_user_id", 1)
+                   .set("users_name", "bob")
+                   .set("interests_region", "us")
+                   .set("interests_user_id", 1)
+                   .set("interests_interest", "gardening").build());
+
+    /*
+    The output should not be affected by order of joins
+     */
+    testTripleAutoJoin(Collections.emptyList(), expected, Engine.SPARK,
+                       Arrays.asList("purchases", "users", "interests"));
+    testTripleAutoJoin(Collections.emptyList(), expected, Engine.SPARK,
+                       Arrays.asList("purchases", "interests", "users"));
+    testTripleAutoJoin(Collections.emptyList(), expected, Engine.SPARK,
+                       Arrays.asList("users", "purchases", "interests"));
   }
 
   private void testTripleAutoJoin(List<String> required, Set<StructuredRecord> expected,
-                                  Engine engine) throws Exception {
-    testTripleAutoJoin(required, Collections.emptyList(), expected, engine);
+                                  Engine engine, List<String> tablesInOrderToJoin) throws Exception {
+    //Default order :
+    if (tablesInOrderToJoin == null || tablesInOrderToJoin.isEmpty()) {
+      tablesInOrderToJoin = Arrays.asList("purchases", "users", "interests");
+    }
+
+    testTripleAutoJoin(required, Collections.emptyList(), expected, engine, tablesInOrderToJoin);
   }
 
-  private void testTripleAutoJoin(List<String> required, List<String> broadcast,
-                                  Set<StructuredRecord> expected, Engine engine) throws Exception {
+  private void testTripleAutoJoin(List<String> required, List<String> broadcast, Set<StructuredRecord> expected,
+                                  Engine engine, List<String> tablesInOrderToJoin) throws Exception {
     /*
          users ------|
                      |
@@ -950,7 +995,7 @@ public class AutoJoinerTest extends HydratorTestBase {
       .addStage(new ETLStage("users", MockSource.getPlugin(userInput, USER_SCHEMA)))
       .addStage(new ETLStage("purchases", MockSource.getPlugin(purchaseInput, PURCHASE_SCHEMA)))
       .addStage(new ETLStage("interests", MockSource.getPlugin(interestInput, INTEREST_SCHEMA)))
-      .addStage(new ETLStage("join", MockAutoJoiner.getPlugin(Arrays.asList("purchases", "users", "interests"),
+      .addStage(new ETLStage("join", MockAutoJoiner.getPlugin(tablesInOrderToJoin,
                                                               Arrays.asList("region", "user_id"),
                                                               required, broadcast,
                                                               Collections.emptyList(), true)))
@@ -1013,7 +1058,28 @@ public class AutoJoinerTest extends HydratorTestBase {
     DataSetManager<Table> outputManager = getDataset(output);
     List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);
 
-    Assert.assertEquals(expected, new HashSet<>(outputRecords));
+    Set<StructuredRecord> actual = new HashSet<>();
+    Schema expectedSchema = expected.iterator().hasNext() ? expected.iterator().next().getSchema() : null;
+
+    if (expectedSchema == null || expected.iterator().next().getSchema() == outputRecords.get(0).getSchema()) {
+      actual = new HashSet<>(outputRecords);
+    } else {
+      //reorder the output columns of the join result (actual) to match the column order of expected
+      for (StructuredRecord sr : outputRecords) {
+        actual.add(StructuredRecord.builder(expectedSchema)
+                     .set("purchases_region", sr.get("purchases_region"))
+                     .set("purchases_purchase_id",  sr.get("purchases_purchase_id"))
+                     .set("purchases_user_id",  sr.get("purchases_user_id"))
+                     .set("users_region",  sr.get("users_region"))
+                     .set("users_user_id",  sr.get("users_user_id"))
+                     .set("users_name",  sr.get("users_name"))
+                     .set("interests_region",  sr.get("interests_region"))
+                     .set("interests_user_id",  sr.get("interests_user_id"))
+                     .set("interests_interest",  sr.get("interests_interest")).build());
+      }
+    }
+
+    Assert.assertEquals(expected, actual);
 
     validateMetric(9, appId, "join.records.in");
     validateMetric(expected.size(), appId, "join.records.out");
@@ -1638,4 +1704,183 @@ public class AutoJoinerTest extends HydratorTestBase {
     Assert.assertEquals("Wrong metric value for " + metric,
                         expected, getMetricsManager().getTotalMetric(tags, "user." + metric));
   }
+
+
+  @Test
+  public void testQuadAutoOneRequiredJoin() throws Exception {
+    Schema expectedSchema = Schema.recordOf(
+      "ages.purchases.users.interests",
+      Schema.Field.of("ages_region", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("ages_user_id", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("ages_age", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("purchases_region", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("purchases_purchase_id", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+      Schema.Field.of("purchases_user_id", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+      Schema.Field.of("users_region", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("users_user_id", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+      Schema.Field.of("users_name", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("interests_region", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("interests_user_id", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+      Schema.Field.of("interests_interest", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
+
+    Set<StructuredRecord> expected = new HashSet<>();
+    expected.add(StructuredRecord.builder(expectedSchema)
+                   .set("ages_region", "us")
+                   .set("ages_user_id", 10)
+                   .set("ages_age", 20).build());
+    expected.add(StructuredRecord.builder(expectedSchema)
+                   .set("ages_region", "us")
+                   .set("ages_user_id", 1)
+                   .set("ages_age", 30)
+                   .set("purchases_region", null)
+                   .set("purchases_purchase_id", null)
+                   .set("purchases_user_id", null)
+                   .set("users_region", "us")
+                   .set("users_user_id", 1)
+                   .set("users_name", "bob")
+                   .set("interests_region", "us")
+                   .set("interests_user_id", 1)
+                   .set("interests_interest", "gardening").build());
+    //First is required : all left joins
+    testQuadAutoJoin(Collections.singletonList("ages"), Collections.emptyList(), expected, Engine.SPARK,
+                       Arrays.asList("ages", "purchases", "users", "interests"));
+
+    //Last is required : outer + outer + outer + right
+    testQuadAutoJoin(Collections.singletonList("ages"), Collections.emptyList(), expected, Engine.SPARK,
+                       Arrays.asList("purchases", "interests", "users", "ages"));
+  }
+
+  private void testQuadAutoJoin(List<String> required, List<String> broadcast, Set<StructuredRecord> expected,
+                                  Engine engine, List<String> tablesInOrderToJoin) throws Exception {
+    /*
+         users ------|
+                     |
+         purchases --|--> join --> sink
+                     |
+         interests --|
+                     |
+         age --------|
+
+         joinOn: users.region = purchases.region = interests.region = age.region and
+                 users.user_id = purchases.user_id = interests.user_id = age.user_id
+     */
+    String userInput = UUID.randomUUID().toString();
+    String purchaseInput = UUID.randomUUID().toString();
+    String interestInput = UUID.randomUUID().toString();
+    String ageInput = UUID.randomUUID().toString();
+    String output = UUID.randomUUID().toString();
+    ETLBatchConfig config = ETLBatchConfig.builder()
+      .addStage(new ETLStage("users", MockSource.getPlugin(userInput, USER_SCHEMA)))
+      .addStage(new ETLStage("purchases", MockSource.getPlugin(purchaseInput, PURCHASE_SCHEMA)))
+      .addStage(new ETLStage("interests", MockSource.getPlugin(interestInput, INTEREST_SCHEMA)))
+      .addStage(new ETLStage("ages", MockSource.getPlugin(ageInput, AGE_SCHEMA)))
+      .addStage(new ETLStage("join", MockAutoJoiner.getPlugin(tablesInOrderToJoin,
+                                                              Arrays.asList("region", "user_id"),
+                                                              required, broadcast,
+                                                              Collections.emptyList(), true)))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(output)))
+      .addConnection("users", "join")
+      .addConnection("purchases", "join")
+      .addConnection("interests", "join")
+      .addConnection("ages", "join")
+      .addConnection("join", "sink")
+      .setEngine(engine)
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
+    ApplicationId appId = NamespaceId.DEFAULT.app(UUID.randomUUID().toString());
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    // write input data
+    List<StructuredRecord> userData = Arrays.asList(USER_ALICE, USER_ALYCE, USER_BOB);
+    DataSetManager<Table> inputManager = getDataset(userInput);
+    MockSource.writeInput(inputManager, userData);
+
+    List<StructuredRecord> purchaseData = new ArrayList<>();
+    purchaseData.add(StructuredRecord.builder(PURCHASE_SCHEMA)
+                       .set("region", "us")
+                       .set("user_id", 0)
+                       .set("purchase_id", 123).build());
+    purchaseData.add(StructuredRecord.builder(PURCHASE_SCHEMA)
+                       .set("region", "us")
+                       .set("user_id", 2)
+                       .set("purchase_id", 456).build());
+    inputManager = getDataset(purchaseInput);
+    MockSource.writeInput(inputManager, purchaseData);
+
+    List<StructuredRecord> interestData = new ArrayList<>();
+    interestData.add(StructuredRecord.builder(INTEREST_SCHEMA)
+                       .set("region", "us")
+                       .set("user_id", 0)
+                       .set("interest", "food")
+                       .build());
+    interestData.add(StructuredRecord.builder(INTEREST_SCHEMA)
+                       .set("region", "us")
+                       .set("user_id", 0)
+                       .set("interest", "sports")
+                       .build());
+    interestData.add(StructuredRecord.builder(INTEREST_SCHEMA)
+                       .set("region", "us")
+                       .set("user_id", 1)
+                       .set("interest", "gardening")
+                       .build());
+    interestData.add(StructuredRecord.builder(INTEREST_SCHEMA)
+                       .set("region", "us")
+                       .set("user_id", 2)
+                       .set("interest", "gaming")
+                       .build());
+    inputManager = getDataset(interestInput);
+    MockSource.writeInput(inputManager, interestData);
+
+    List<StructuredRecord> ageData = new ArrayList<>();
+    ageData.add(StructuredRecord.builder(AGE_SCHEMA)
+                       .set("region", "us")
+                       .set("user_id", 10)
+                       .set("age", 20)
+                       .build());
+    ageData.add(StructuredRecord.builder(AGE_SCHEMA)
+                       .set("region", "us")
+                       .set("user_id", 1)
+                       .set("age", 30)
+                       .build());
+    inputManager = getDataset(ageInput);
+    MockSource.writeInput(inputManager, ageData);
+
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.startAndWaitForGoodRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+
+    DataSetManager<Table> outputManager = getDataset(output);
+    List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);
+
+    Set<StructuredRecord> actual = new HashSet<>();
+    Schema expectedSchema = expected.iterator().hasNext() ? expected.iterator().next().getSchema() : null;
+
+    if (expectedSchema == null || expected.iterator().next().getSchema() == outputRecords.get(0).getSchema()) {
+      actual = new HashSet<>(outputRecords);
+    } else {
+      //reorder the output columns of the join result (actual) to match the column order of expected
+      for (StructuredRecord sr : outputRecords) {
+        actual.add(StructuredRecord.builder(expectedSchema)
+                     .set("ages_region", sr.get("ages_region"))
+                     .set("ages_age",  sr.get("ages_age"))
+                     .set("ages_user_id",  sr.get("ages_user_id"))
+                     .set("purchases_region", sr.get("purchases_region"))
+                     .set("purchases_purchase_id",  sr.get("purchases_purchase_id"))
+                     .set("purchases_user_id",  sr.get("purchases_user_id"))
+                     .set("users_region",  sr.get("users_region"))
+                     .set("users_user_id",  sr.get("users_user_id"))
+                     .set("users_name",  sr.get("users_name"))
+                     .set("interests_region",  sr.get("interests_region"))
+                     .set("interests_user_id",  sr.get("interests_user_id"))
+                     .set("interests_interest",  sr.get("interests_interest")).build());
+      }
+    }
+
+    Assert.assertEquals(expected, actual);
+
+    validateMetric(11, appId, "join.records.in");
+    validateMetric(expected.size(), appId, "join.records.out");
+  }
+
 }
