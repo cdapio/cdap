@@ -4364,6 +4364,14 @@
   </property>
 
   <property>
+    <name>task.worker.container.disk.readonly</name>
+    <value>true</value>
+    <description>
+      If true, disk volume will be mount as readonly.
+    </description>
+  </property>
+
+  <property>
     <name>task.worker.container.kill.after.execution</name>
     <value>true</value>
     <description>
