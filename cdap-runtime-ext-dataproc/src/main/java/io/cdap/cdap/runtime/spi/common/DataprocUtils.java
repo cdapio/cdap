@@ -25,6 +25,7 @@ import com.google.cloud.storage.StorageBatch;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
+import io.cdap.cdap.runtime.spi.SparkCompat;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerMetrics;
 import org.slf4j.Logger;
@@ -282,6 +283,15 @@ public final class DataprocUtils {
         connection.disconnect();
       }
     }
+  }
+
+  /**
+   * Tells which spark does a given dataproc image run
+   * @param imageVersion dataproc image version
+   * @return SparkCompat for that version
+   */
+  public static SparkCompat getSparkCompat(String imageVersion) {
+    return imageVersion.startsWith("1") ? SparkCompat.SPARK2_2_11 : SparkCompat.SPARK3_2_12;
   }
 
   private DataprocUtils() {

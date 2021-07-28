@@ -52,6 +52,7 @@ public class SparkCompatReader {
     compatStr = compatStr == null ? System.getenv(Constants.SPARK_COMPAT_ENV) : compatStr;
     compatStr = compatStr == null ? cConf.get(Constants.AppFabric.SPARK_COMPAT) : compatStr;
 
+    LOG.debug("Looking for spark compat", new Throwable());
     if (compatStr == null) {
       return SparkCompat.SPARK2_2_11;
     }

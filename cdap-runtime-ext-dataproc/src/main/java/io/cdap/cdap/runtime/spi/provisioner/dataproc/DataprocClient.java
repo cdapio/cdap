@@ -61,6 +61,7 @@ import com.google.protobuf.FieldMask;
 import com.google.rpc.Status;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.common.IPRange;
+import io.cdap.cdap.runtime.spi.provisioner.ClusterProperties;
 import io.cdap.cdap.runtime.spi.provisioner.Node;
 import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
@@ -756,8 +757,11 @@ class DataprocClient implements AutoCloseable {
     for (String workerName : cluster.getConfig().getWorkerConfig().getInstanceNamesList()) {
       nodes.add(getNode(compute, Node.Type.WORKER, zone, workerName));
     }
+    String imageVersion = cluster.getConfig().getSoftwareConfig().getImageVersion();
+    Map<String, String> properties = Collections.singletonMap(
+      ClusterProperties.SPARK_COMPAT, DataprocUtils.getSparkCompat(imageVersion).getCompat());
     io.cdap.cdap.runtime.spi.provisioner.Cluster c = new io.cdap.cdap.runtime.spi.provisioner.Cluster(
-      cluster.getClusterName(), convertStatus(cluster.getStatus()), nodes, Collections.emptyMap());
+      cluster.getClusterName(), convertStatus(cluster.getStatus()), nodes, properties);
     return c;
   }
 

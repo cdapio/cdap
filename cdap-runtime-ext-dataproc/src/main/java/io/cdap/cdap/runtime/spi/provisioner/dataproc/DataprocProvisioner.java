@@ -23,6 +23,7 @@ import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
+import io.cdap.cdap.runtime.spi.provisioner.ClusterProperties;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
 import io.cdap.cdap.runtime.spi.provisioner.PollingStrategies;
 import io.cdap.cdap.runtime.spi.provisioner.PollingStrategy;
@@ -160,7 +161,9 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       }
       DataprocUtils.emitMetric(context, conf.getRegion(),
                                "provisioner.createCluster.response.count");
-      return new Cluster(clusterName, ClusterStatus.CREATING, Collections.emptyList(), Collections.emptyMap());
+      Map<String, String> properties = Collections.singletonMap(
+        ClusterProperties.SPARK_COMPAT, DataprocUtils.getSparkCompat(imageVersion).getCompat());
+      return new Cluster(clusterName, ClusterStatus.CREATING, Collections.emptyList(), properties);
     } catch (Exception e) {
       DataprocUtils.emitMetric(context, conf.getRegion(),
                                "provisioner.createCluster.response.count", e);

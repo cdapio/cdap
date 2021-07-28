@@ -31,6 +31,12 @@ public final class ClusterProperties {
    */
   public static final String KERBEROS_KEYTAB = "kerberos.keytab";
 
+  /**
+   * Property key for the spark compat for spark available in cluster
+   * @see io.cdap.cdap.runtime.spi.SparkCompat
+   */
+  public static final String SPARK_COMPAT = "spark.compat";
+
   private ClusterProperties() {
     // prevent instantiation
   }
