@@ -78,7 +78,7 @@ public class KubeTwillContext implements ExtendedTwillContext, Closeable {
 
   public KubeTwillContext(RuntimeSpecification runtimeSpec, RunId appRunId, RunId runId,
                           String[] appArguments, String[] arguments,
-                          KubeMasterEnvironment masterEnv) throws IOException {
+                          KubeMasterEnvironment masterEnv, int instanceId, int instanceCount) throws IOException {
     this.runtimeSpec = runtimeSpec;
     this.appRunId = appRunId;
     this.runId = runId;
@@ -89,7 +89,6 @@ public class KubeTwillContext implements ExtendedTwillContext, Closeable {
 
     PodInfo podInfo = masterEnv.getPodInfo();
 
-    int instanceId = 0;
     // For stateful set, the instance ID is the suffix number. Otherwise, we don't support instance id for now.
     if (podInfo.getOwnerReferences().stream().anyMatch(r -> "StatefulSet".equals(r.getKind()))) {
       int idx = podInfo.getName().lastIndexOf('-');
@@ -99,8 +98,13 @@ public class KubeTwillContext implements ExtendedTwillContext, Closeable {
         LOG.warn("Failed to parse instance id from pod name {}", podInfo.getName(), e);
       }
     }
+
     this.instanceId = instanceId;
     this.instancesFuture = new CompletableFuture<>();
+    if (podInfo.getOwnerReferences().stream().anyMatch(r -> "Job".equals(r.getKind()))) {
+      instancesFuture.complete(new AtomicInteger(instanceCount));
+    }
+
     this.instanceWatcherCancellable = startInstanceWatcher(podInfo, instancesFuture);
     this.uid = new String(Files.readAllBytes(Paths.get(podInfo.getPodInfoDir(), podInfo.getUidFile())),
                           StandardCharsets.UTF_8);

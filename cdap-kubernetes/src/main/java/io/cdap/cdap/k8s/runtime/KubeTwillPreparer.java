@@ -134,10 +134,12 @@ import java.util.stream.Stream;
  */
 class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer, SecureTwillPreparer {
   private static final Logger LOG = LoggerFactory.getLogger(KubeTwillPreparer.class);
+  private static final Gson GSON = new Gson();
 
   private static final String CPU_MULTIPLIER = "master.environment.k8s.container.cpu.multiplier";
   private static final String MEMORY_MULTIPLIER = "master.environment.k8s.container.memory.multiplier";
   private static final String DEFAULT_MULTIPLIER = "1.0";
+  private static final String JOB_INSTANCES = "job-instances";
 
   private final MasterEnvironmentContext masterEnvContext;
   private final ApiClient apiClient;
@@ -526,18 +528,22 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       RuntimeSpecification mainRuntimeSpec = getMainRuntimeSpecification(twillSpec.getRunnables());
       StatefulRunnable statefulRunnable = statefulRunnables.get(mainRuntimeSpec.getName());
       Type resourceType = statefulRunnable == null ? V1Deployment.class : V1StatefulSet.class;
+      int parallelism = 1;
 
       if (runnableConfigs.size() == 1) {
         Map.Entry<String, Map<String, String>> runnableConfig = runnableConfigs.entrySet().stream().findFirst().get();
         if (runnableConfig.getValue().containsKey(TwillConstants.PROGRAM_RUNTIME_ENV)) {
           resourceType = V1Job.class;
         }
+        if (runnableConfig.getValue().containsKey(TwillConstants.PROGRAM_RUNTIME_ENV_PARALLELISM)) {
+          parallelism = Integer.parseInt(runnableConfig.getValue().get(TwillConstants.PROGRAM_RUNTIME_ENV_PARALLELISM));
+        }
       }
 
       V1ObjectMeta metadata = createResourceMetadata(resourceType, mainRuntimeSpec.getName(),
                                                      timeoutUnit.toMillis(timeout));
       if (V1Job.class.equals(resourceType)) {
-        metadata = createJob(metadata, twillSpec.getRunnables(), runtimeConfigLocation);
+        metadata = createJob(metadata, twillSpec.getRunnables(), runtimeConfigLocation, parallelism);
       } else if (V1Deployment.class.equals(resourceType)) {
         metadata = createDeployment(metadata, twillSpec.getRunnables(),
                                     runtimeConfigLocation);
@@ -632,15 +638,20 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    * Deploys a {@link V1Job} to for runnable execution in Kubernetes.
    */
   private V1ObjectMeta createJob(V1ObjectMeta metadata, Map<String, RuntimeSpecification> runtimeSpecs,
-                                 Location runtimeConfigLocation) throws ApiException {
+                                 Location runtimeConfigLocation, int parallelism) throws ApiException {
+    // Update metadata to make sure when parallelism > 1, pods can synchronize on getting correct instance ids in
+    // KubeTwillContext. This is done by adding a boolean array of size parallelism into job annotation. Each pod
+    // then issues a PUT call to reserve an index in the boolean array. PUT call on kubernetes resource can be used
+    // to apply compare and swap operation.
+    // This index is considered to be instance Id for that particular pod.
+    updateJobMetadata(metadata, parallelism);
     V1Job job = new V1JobBuilder()
       .withMetadata(metadata)
       .withNewSpec()
         .withManualSelector(true)
         .withSelector(new V1LabelSelector().matchLabels(metadata.getLabels()))
-        // TODO:CDAP-18125 Change parallelism based on worker instances
-        .withParallelism(1)
-        .withCompletions(1)
+        .withParallelism(parallelism)
+        .withCompletions(parallelism)
         .withBackoffLimit(0)
         .withNewTemplate()
           .withMetadata(metadata)
@@ -653,6 +664,21 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     batchV1Api.createNamespacedJob(kubeNamespace, job, "true", null, null);
     LOG.trace("Created Job {} in Kubernetes.", metadata.getName());
     return job.getMetadata();
+  }
+
+  /**
+   * Updates job metadata. If parallelism is 1, no need to update job metadata as it is used for detecting instance
+   * ids by pods in case of multiple pods are associated with kubernetes job.
+   */
+  private void updateJobMetadata(V1ObjectMeta metadata, int parallelism) {
+    if (parallelism == 1) {
+      return;
+    }
+    boolean[] instances = new boolean[parallelism];
+    Arrays.fill(instances, false);
+    Map<String, String> annotations = metadata.getAnnotations();
+    annotations.put(JOB_INSTANCES, GSON.toJson(instances));
+    metadata.setAnnotations(annotations);
   }
 
   /**
