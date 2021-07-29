@@ -1082,9 +1082,9 @@ public final class Schema implements Serializable {
         return schema;
       case RECORD:
         Schema knownSchema = knownRecordSchemas.get(schema.getRecordName());
-        if (knownSchema != null) {
-          return knownSchema;
-        }
+        // if (knownSchema != null) {
+        //   return knownSchema;
+        // }
         if (schema.fields != null) {
           knownRecordSchemas.put(schema.getRecordName(), schema);
           for (Field field : schema.fields) {

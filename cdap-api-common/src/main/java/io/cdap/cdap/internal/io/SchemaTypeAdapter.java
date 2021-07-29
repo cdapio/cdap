@@ -367,9 +367,9 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
     }
 
     // If it is a record that refers to a previously defined record, just emit the name of it
-    if (schema.getType() == Schema.Type.RECORD && knownRecords.contains(schema.getRecordName())) {
-      return writer.value(schema.getRecordName());
-    }
+    // if (schema.getType() == Schema.Type.RECORD && knownRecords.contains(schema.getRecordName())) {
+    //   return writer.value(schema.getRecordName());
+    // }
     // Complex types, represented as an object with "type" property carrying the type name
     writer.beginObject().name(TYPE).value(schema.getType().name().toLowerCase());
     switch (schema.getType()) {
