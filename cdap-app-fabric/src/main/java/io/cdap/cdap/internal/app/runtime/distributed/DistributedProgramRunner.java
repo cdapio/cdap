@@ -63,6 +63,7 @@ import io.cdap.cdap.security.store.SecureStoreUtils;
 import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
+import org.apache.hadoop.yarn.client.api.YarnClient;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.tephra.TxConstants;
 import org.apache.twill.api.Configs;
@@ -104,7 +105,6 @@ import java.util.jar.JarOutputStream;
 import java.util.stream.Collectors;
 import java.util.zip.ZipOutputStream;
 import javax.annotation.Nullable;
-
 
 /**
  * Defines the base framework for starting {@link Program} in the cluster.
@@ -740,6 +740,11 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
       if (SecureStoreUtils.isKMSBacked(cConf) && SecureStoreUtils.isKMSCapable()) {
         dependencies.add(SecureStoreUtils.getKMSSecureStore());
       }
+    }
+
+    // When it is running in Hadoop, we need to add YarnClient to dependency since we will be submitting job to YARN.
+    if (clusterMode == ClusterMode.ON_PREMISE || cConf.getBoolean(Constants.AppFabric.PROGRAM_REMOTE_RUNNER, false)) {
+      dependencies.add(YarnClient.class);
     }
 
     return dependencies;
