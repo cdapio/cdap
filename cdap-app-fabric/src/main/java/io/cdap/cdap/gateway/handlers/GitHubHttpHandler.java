@@ -19,10 +19,13 @@ package io.cdap.cdap.gateway.handlers;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
+import io.cdap.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.api.security.store.SecureStoreManager;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.store.GitHubStore;
 import io.cdap.cdap.internal.github.GitHubRepo;
+import io.cdap.cdap.proto.id.SecureKeyId;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpMessage;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -37,6 +40,8 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Collections;
+import java.util.HashMap;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -50,10 +55,16 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Gson GSON = new Gson();
   private final GitHubStore gitStore;
 
+  private final SecureStore secureStore;
+  private final SecureStoreManager secureStoreManager;
+
 
   @Inject
-  GitHubHttpHandler(GitHubStore gitStore) {
+  GitHubHttpHandler(GitHubStore gitStore, SecureStore secureStore,
+      SecureStoreManager secureStoreManager) {
     this.gitStore = gitStore;
+    this.secureStore = secureStore;
+    this.secureStoreManager = secureStoreManager;
   }
 
   @Path("repos/github")
@@ -81,20 +92,24 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
   public void addRepoInfo(FullHttpRequest request, HttpResponder responder,
                           @NotNull @PathParam("repo") String repo) throws Exception {
 
-    try {
       GitHubRepo githubRequest = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8)
           , GitHubRepo.class);
 
       if (githubRequest.validateAllFields()) {
         //test the repo's connection to ensure it exists.
-        if (testRepoConnection(githubRequest) == HttpURLConnection.HTTP_OK) {
+        int responseCode = testRepoConnection(githubRequest.getUrl(),
+            "token " + githubRequest.getAuthString());
+        if (responseCode == HttpURLConnection.HTTP_OK) {
           String authString = "token " + githubRequest.getAuthString();
+          SecureKeyId authKeyId = new SecureKeyId("system", repo + "_auth_token");
+          secureStoreManager.put("system", repo + "_auth_token", authString,
+              repo + "Authorization Token", new HashMap<String, String>());
           gitStore.addOrUpdateRepo(repo, githubRequest.getUrl(), githubRequest.getDefaultBranch(),
-              authString);
+              repo + "_auth_token");
           responder.sendString(HttpResponseStatus.OK, "Repository Information Saved.");
-        } else if (testRepoConnection(githubRequest) == HttpURLConnection.HTTP_MOVED_PERM) {
+        } else if (responseCode == HttpURLConnection.HTTP_MOVED_PERM) {
           responder.sendString(HttpResponseStatus.MOVED_PERMANENTLY, "Repository has been moved.");
-        } else if (testRepoConnection(githubRequest) == HttpURLConnection.HTTP_FORBIDDEN) {
+        } else if (responseCode == HttpURLConnection.HTTP_FORBIDDEN) {
           responder.sendString(HttpResponseStatus.FORBIDDEN, "You do not have access to this repository.");
         } else {
           responder.sendString(HttpResponseStatus.NOT_FOUND, "Repository was not found.");
@@ -117,11 +132,6 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
         responder.sendString(HttpResponseStatus.BAD_REQUEST,
             errorString.substring(0, errorString.length() - 2));
       }
-    } catch (Exception ex) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Please enter fields formatted correctly.");
-    }
-
-
   }
 
   /**
@@ -133,6 +143,7 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
                               @NotNull @PathParam("repo") String repo) throws Exception {
     if (gitStore.getRepo(repo) != null) {
       gitStore.deleteRepo(repo);
+      secureStoreManager.delete("system", repo + "_auth_token");
       responder.sendStatus(HttpResponseStatus.OK);
     } else {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -144,15 +155,13 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
   public void testRepoConnection(HttpRequest request, HttpResponder responder,
       @NotNull @PathParam("repo") String repo) throws Exception {
     GitHubRepo test = gitStore.getRepo(repo);
-    URL url = new URL(parseUrl(test.getUrl()));
-    HttpURLConnection con = (HttpURLConnection) url.openConnection();
-    con.setRequestMethod("GET");
-    con.setRequestProperty("Authorization", test.getAuthString());
-    if (con.getResponseCode() == HttpURLConnection.HTTP_OK) {
+    int responseCode = testRepoConnection(test.getUrl(), secureStore.get("system",
+        repo + "_auth_token").get().toString());
+    if (responseCode == HttpURLConnection.HTTP_OK) {
       responder.sendString(HttpResponseStatus.OK, "Connection Successful.");
-    } else if (con.getResponseCode() == HttpURLConnection.HTTP_MOVED_PERM) {
+    } else if (responseCode == HttpURLConnection.HTTP_MOVED_PERM) {
       responder.sendString(HttpResponseStatus.MOVED_PERMANENTLY, "Repository has been moved.");
-    } else if (con.getResponseCode() == HttpURLConnection.HTTP_FORBIDDEN) {
+    } else if (responseCode == HttpURLConnection.HTTP_FORBIDDEN) {
       responder.sendString(HttpResponseStatus.FORBIDDEN, "You do not have access to this repository.");
     } else {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Repository was not found.");
@@ -181,7 +190,8 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
       URL url = new URL(parseUrl(gitHubRepo.getUrl()) + "/contents/" + path + "?ref=" + branch);
       HttpURLConnection con = (HttpURLConnection) url.openConnection();
       con.setRequestMethod("GET");
-      con.setRequestProperty("Authorization", gitHubRepo.getAuthString());
+      String authString = secureStore.get("system", repo + "_auth_token").get().toString();
+      con.setRequestProperty("Authorization", authString);
 
       BufferedReader reader = new BufferedReader(new InputStreamReader(con.getInputStream()));
 
@@ -221,7 +231,8 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
 
     con.setRequestMethod("PUT");
     con.setDoOutput(true);
-    con.setRequestProperty("Authorization", gitHubRepo.getAuthString());
+    String authString = secureStore.get("system", repo + "_auth_token").get().toString();
+    con.setRequestProperty("Authorization", authString);
 
     JsonObject pipelineOutput  = new JsonObject();
 
@@ -294,12 +305,11 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
     return content.toString();
   }
 
-  public int testRepoConnection(GitHubRepo repo) throws Exception {
-    URL url = new URL(parseUrl(repo.getUrl()));
+  public int testRepoConnection(String htmlUrl, String authString) throws Exception {
+    URL url = new URL(parseUrl(htmlUrl));
     HttpURLConnection con = (HttpURLConnection) url.openConnection();
     con.setRequestMethod("GET");
-
-    con.setRequestProperty("Authorization", repo.getAuthString());
+    con.setRequestProperty("Authorization", authString);
 
     return con.getResponseCode();
   }
