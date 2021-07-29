@@ -18,9 +18,10 @@
 package org.apache.spark.deploy
 
 import java.lang.reflect.Modifier
-
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeEnv
 import org.apache.spark.SparkConf
+
+import scala.collection.mutable
 
 /**
   * Entry point for a Spark application. Implementations must provide a no-argument constructor.
@@ -48,7 +49,8 @@ private[deploy] class JavaMainApplication(klass: Class[_]) extends SparkApplicat
       throw new IllegalStateException("The main method in the given main class must be static")
     }
 
-    val sysProps = conf.getAll.toMap
+    //Explicit cast to prevent scala 2.11/2.12 binary compat issues
+    val sysProps: mutable.WrappedArray[(String, String)] = mutable.WrappedArray.make(conf.getAll)
     sysProps.foreach { case (k, v) =>
       SparkRuntimeEnv.setProperty(k, v)
     }
