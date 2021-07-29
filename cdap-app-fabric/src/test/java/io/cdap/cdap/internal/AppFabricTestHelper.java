@@ -67,7 +67,6 @@ import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.internal.app.services.ProgramNotificationSubscriberService;
@@ -344,7 +343,7 @@ public class AppFabricTestHelper {
     Program program = null;
     for (ProgramDescriptor programDescriptor : app.getPrograms()) {
       if (programDescriptor.getSpecification().getClassName().equals(programClassName)) {
-        runner = runnerFactory.create(programDescriptor.getProgramId().getType());
+        runner = runnerFactory.create(programOptions, options);
         program = createProgram(programDescriptor, app.getArtifactLocation(), runner, folderSupplier);
         break;
       }

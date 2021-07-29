@@ -95,7 +95,7 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
 
   @Override
   public Runnable create(String name) {
-    ProgramRunner programRunner = programRunnerFactory.create(programType);
+    ProgramRunner programRunner = programRunnerFactory.create(workflowProgramOptions, cConf);
     try {
       ProgramId programId = workflowProgram.getId().getParent().program(programType, name);
       Program program = Programs.create(cConf, workflowProgram, programId, programRunner);

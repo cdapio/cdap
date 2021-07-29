@@ -189,7 +189,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
     ProgramStateWriter programStateWriter = injector.getInstance(ProgramStateWriter.class);
     CompletableFuture<ProgramController.State> programCompletion = new CompletableFuture<>();
     try {
-      ProgramRunner programRunner = injector.getInstance(ProgramRunnerFactory.class).create(programId.getType());
+      ProgramRunner programRunner = injector.getInstance(ProgramRunnerFactory.class).create(programOpts, cConf);
 
       // Create and run the program. The program files should be present in current working directory.
       try (Program program = createProgram(cConf, programRunner, programDescriptor, programOpts)) {

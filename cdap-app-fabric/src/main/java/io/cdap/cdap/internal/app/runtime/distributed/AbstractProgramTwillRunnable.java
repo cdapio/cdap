@@ -218,7 +218,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     coreServices = createCoreServices(injector, programOptions);
 
     // Create the ProgramRunner
-    programRunner = createProgramRunner(injector);
+    programRunner = createProgramRunner(injector, programOptions);
 
     // Create the Program instance
     Location programJarLocation =
@@ -378,7 +378,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   /**
    * Creates a {@link ProgramRunner} for the running the program in this class.
    */
-  protected T createProgramRunner(Injector injector) {
+  protected T createProgramRunner(Injector injector, ProgramOptions programOptions) {
     Type type = TypeToken.of(getClass()).getSupertype(AbstractProgramTwillRunnable.class).getType();
     // Must be ParameterizedType
     Preconditions.checkState(type instanceof ParameterizedType,

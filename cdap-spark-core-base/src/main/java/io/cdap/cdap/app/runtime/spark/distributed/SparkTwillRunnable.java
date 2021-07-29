@@ -47,7 +47,7 @@ public class SparkTwillRunnable extends AbstractProgramTwillRunnable<ProgramRunn
   }
 
   @Override
-  protected ProgramRunner createProgramRunner(Injector injector) {
+  protected ProgramRunner createProgramRunner(Injector injector, ProgramOptions programOptions) {
     // Inside the TwillRunanble, we use the "Local" SparkRunner, since we need to actually submit the job.
     // The actual execution mode of the job is governed by the framework configuration,
     // which is in the hConf we shipped from DistributedSparkProgramRunner

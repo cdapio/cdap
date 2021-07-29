@@ -61,7 +61,6 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import org.apache.twill.api.ResourceReport;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
@@ -155,7 +154,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     ProgramRunner runner = (clusterMode == ClusterMode.ON_PREMISE
       ? programRunnerFactory
       : Optional.ofNullable(remoteProgramRunnerFactory).orElseThrow(UnsupportedOperationException::new)
-    ).create(programId.getType());
+    ).create(options, cConf);
 
 
     File tempDir = createTempDirectory(programId, runId);
@@ -605,9 +604,9 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     ProgramRunnerFactory factory = runId.equals(controller.getRunId())
       ? remoteProgramRunnerFactory : programRunnerFactory;
 
-    ProgramRunner programRunner;
+    ProgramControllerCreator programControllerCreator;
     try {
-      programRunner = factory.create(programId.getType());
+      programControllerCreator = factory.createProgramControllerCreator(programId.getType());
     } catch (IllegalArgumentException e) {
       // This shouldn't happen. If it happen, it means CDAP was incorrectly install such that some of the program
       // type is not support (maybe due to version mismatch in upgrade).
@@ -617,17 +616,8 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       return null;
     }
 
-    if (!(programRunner instanceof ProgramControllerCreator)) {
-      // This is also unexpected. If it happen, it means the CDAP core or the runtime provider extension was wrongly
-      // implemented
-      ResourceReport resourceReport = controller.getResourceReport();
-      LOG.error("Unable to create ProgramController for program {} for twill application {}. It is likely caused by " +
-                  "invalid CDAP program runtime extension.",
-                programId, resourceReport == null ? "'unknown twill application'" : resourceReport.getApplicationId());
-      return null;
-    }
-
-    return ((ProgramControllerCreator) programRunner).createProgramController(programId.run(runId), controller);
+    return ((ProgramControllerCreator) programControllerCreator).createProgramController(
+      programId.run(runId), controller);
   }
 
   /**

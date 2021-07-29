@@ -16,16 +16,17 @@
 
 package io.cdap.cdap.internal.app.spark;
 
-import com.google.common.annotations.VisibleForTesting;
+import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.runtime.spi.SparkCompat;
-import org.apache.spark.package$;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Determines the SparkCompat version.
@@ -46,9 +47,26 @@ public class SparkCompatReader {
    * @throws IllegalArgumentException if SparkCompat was set to an invalid value
    */
   public static SparkCompat get(CConfiguration cConf) {
-    // use the value in the system property (expected in distributed)
+    return get(cConf, null);
+  }
+
+  /**
+   * Read {@link SparkCompat} from the system properties, environment, or the {@link CConfiguration}.
+   * Tries to detect or falls back to {@link SparkCompat#SPARK2_2_11} if it is not defined in any place.
+   *
+   * @param cConf the {@link CConfiguration} for CDAP
+   * @param programOptions for the specific run
+   * @return the configured {@link SparkCompat}
+   * @throws IllegalArgumentException if SparkCompat was set to an invalid value
+   */
+  public static SparkCompat get(CConfiguration cConf, @Nullable ProgramOptions programOptions) {
+    // use the value from remote cluster if known
+    // otherwise use the value in the system property (expected in distributed)
     // otherwise, check the conf for the spark compat version (expected in standalone and unit tests)
-    String compatStr = System.getProperty(Constants.AppFabric.SPARK_COMPAT);
+    String compatStr = programOptions == null ? null : programOptions.getArguments().getOption(
+      ProgramOptionConstants.CLUSTER_SPARK_COMPAT
+    );
+    compatStr = compatStr == null ? System.getProperty(Constants.AppFabric.SPARK_COMPAT) : compatStr;
     compatStr = compatStr == null ? System.getenv(Constants.SPARK_COMPAT_ENV) : compatStr;
     compatStr = compatStr == null ? cConf.get(Constants.AppFabric.SPARK_COMPAT) : compatStr;
 

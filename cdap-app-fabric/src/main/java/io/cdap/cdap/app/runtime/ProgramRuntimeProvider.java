@@ -63,9 +63,9 @@ public interface ProgramRuntimeProvider {
    * Return whether the specified program type is supported. If not,
    * {@link #createProgramRunner(ProgramType, Mode, Injector)} will not be called.
    *
-   * @param programType the {@link ProgramType} to check support for
+   * @param programOptions program options to check support for
    * @param cConf the CDAP configuration
    * @return whether the specified program type is supported
    */
-  boolean isSupported(ProgramType programType, CConfiguration cConf);
+  boolean isSupported(ProgramOptions programOptions, CConfiguration cConf);
 }

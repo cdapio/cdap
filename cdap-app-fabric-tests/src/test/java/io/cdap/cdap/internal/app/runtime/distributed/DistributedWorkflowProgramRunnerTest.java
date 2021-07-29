@@ -227,7 +227,7 @@ public class DistributedWorkflowProgramRunnerTest {
   private ProgramLaunchConfig setupWorkflowRuntime(String workflowName,
                                                    Map<String, String> runtimeArgs) throws IOException {
     // Create the distributed workflow program runner
-    ProgramRunner programRunner = programRunnerFactory.create(ProgramType.WORKFLOW);
+    ProgramRunner programRunner = programRunnerFactory.create(programOptions, options);
     Assert.assertTrue(programRunner instanceof DistributedWorkflowProgramRunner);
     DistributedWorkflowProgramRunner workflowRunner = (DistributedWorkflowProgramRunner) programRunner;
 

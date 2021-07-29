@@ -71,21 +71,21 @@ final class ArtifactClassLoaderFactory {
    * @throws IOException if there was an error copying or unpacking the artifact
    */
   CloseableClassLoader createClassLoader(File unpackDir) throws IOException {
-    ProgramRunner programRunner = null;
+    ProgramClassLoaderProvider programClassLoaderProvider = null;
     try {
       // Try to create a ProgramClassLoader from the Spark runtime system if it is available.
       // It is needed because we don't know what program types that an artifact might have.
       // TODO: CDAP-5613. We shouldn't always expose the Spark classes.
-      programRunner = programRunnerFactory.create(ProgramType.SPARK);
+      programClassLoaderProvider = programRunnerFactory.createProgramClassLoaderProvider(ProgramType.SPARK);
     } catch (Exception e) {
       // If Spark is not supported, exception is expected. We'll use the default filter.
       LOG.trace("Spark is not supported. Not using ProgramClassLoader from Spark", e);
     }
 
     ProgramClassLoader programClassLoader = null;
-    if (programRunner instanceof ProgramClassLoaderProvider) {
+    if (programClassLoaderProvider != null) {
       programClassLoader = new ProgramClassLoader(
-        cConf, unpackDir, ((ProgramClassLoaderProvider) programRunner).createProgramClassLoaderParent());
+        cConf, unpackDir, (programClassLoaderProvider).createProgramClassLoaderParent());
     }
     if (programClassLoader == null) {
       programClassLoader = new ProgramClassLoader(cConf, unpackDir,
@@ -93,13 +93,13 @@ final class ArtifactClassLoaderFactory {
     }
 
     final ClassLoader finalProgramClassLoader = programClassLoader;
-    final ProgramRunner finalProgramRunner = programRunner;
+    final ProgramClassLoaderProvider finalClassLoaderProvider = programClassLoaderProvider;
     return new CloseableClassLoader(programClassLoader, new Closeable() {
       @Override
       public void close() {
         Closeables.closeQuietly((Closeable) finalProgramClassLoader);
-        if (finalProgramRunner instanceof Closeable) {
-          Closeables.closeQuietly((Closeable) finalProgramRunner);
+        if (finalClassLoaderProvider instanceof Closeable) {
+          Closeables.closeQuietly((Closeable) finalClassLoaderProvider);
         }
       }
     });

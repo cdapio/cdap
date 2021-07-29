@@ -130,6 +130,11 @@ public final class ProgramOptionConstants {
   public static final String CLUSTER_MODE = "clusterMode";
 
   /**
+   * Option for the Spark Compat detected for cluster
+   */
+  public static final String CLUSTER_SPARK_COMPAT = "clusterSparkCompat";
+
+  /**
    * Option for requirements of various plugins present in the program
    */
   public static final String PLUGIN_REQUIREMENTS = "pluginRequirements";

@@ -20,6 +20,7 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Provider;
 import com.google.inject.name.Named;
+import io.cdap.cdap.api.Predicate;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.runtime.ProgramClassLoaderProvider;
 import io.cdap.cdap.app.runtime.ProgramController;
@@ -29,6 +30,7 @@ import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.internal.app.program.StateChangeListener;
 import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import io.cdap.cdap.proto.ProgramType;
@@ -40,6 +42,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -77,14 +80,34 @@ public final class DefaultProgramRunnerFactory implements ProgramRunnerFactory {
   }
 
   @Override
-  public ProgramRunner create(ProgramType programType) {
-    ProgramRuntimeProvider provider = runtimeProviderLoader.get(programType);
-    ProgramRunner runner;
+  public ProgramControllerCreator createProgramControllerCreator(ProgramType programType) {
+    return null;
+  }
 
-    if (provider != null) {
-      LOG.trace("Using runtime provider {} for program type {}", provider, programType);
-      runner = provider.createProgramRunner(programType, mode, injector);
-    } else {
+  @Override
+  public ProgramClassLoaderProvider createProgramClassLoaderProvider(ProgramType programType) {
+    return null;
+  }
+
+  @Override
+  public ProgramRunner create(ProgramOptions programOptions, CConfiguration cConf) {
+    ProgramType programType = programOptions.getProgramId().getType();
+    return doCreate(programType, provider -> provider.isSupported(programOptions, cConf));
+  }
+
+  public ProgramRunner doCreate(ProgramType programType, Predicate<ProgramRuntimeProvider> filter) {
+    List<ProgramRuntimeProvider> providers = runtimeProviderLoader.getAll(programType);
+    ProgramRunner runner = null;
+
+    for (ProgramRuntimeProvider provider : providers) {
+      if (filter.apply(provider)) {
+        LOG.trace("Using runtime provider {} for program type {}", provider, programType);
+        runner = provider.createProgramRunner(programType, mode, injector);
+        break;
+      }
+    }
+
+    if (runner == null) {
       Provider<ProgramRunner> defaultProvider = defaultRunnerProviders.get(programType);
       if (defaultProvider == null) {
         throw new IllegalArgumentException("Unsupported program type: " + programType);

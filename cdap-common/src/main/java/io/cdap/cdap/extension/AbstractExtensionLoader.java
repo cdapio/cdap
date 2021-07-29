@@ -81,7 +81,7 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
   private final Class<EXTENSION> extensionClass;
   // A ServiceLoader that loads extension implementation from the CDAP system classloader.
   private final ServiceLoader<EXTENSION> systemExtensionLoader;
-  private final LoadingCache<EXTENSION_TYPE, AtomicReference<EXTENSION>> extensionsCache;
+  private final LoadingCache<EXTENSION_TYPE, List<EXTENSION>> extensionsCache;
   private final LoadingCache<File, ServiceLoader<EXTENSION>> serviceLoaderCache;
   private Map<EXTENSION_TYPE, EXTENSION> allExtensions;
 
@@ -101,15 +101,26 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
   }
 
   /**
-   * Returns the extension for the specified object if one is found, otherwise returns {@code null}.
+   * Returns the first extension for the specified type if one is found, otherwise returns {@code null}.
    */
   @Nullable
   public EXTENSION get(EXTENSION_TYPE type) {
-    return extensionsCache.getUnchecked(type).get();
+    List<EXTENSION> extensions = extensionsCache.getUnchecked(type);
+    if (extensions.size() > 1) {
+      LOG.trace("Got many extensions for type {}: {}, returning first", type, extensions);
+    }
+    return extensions.isEmpty() ? null : extensions.get(0);
   }
 
   /**
-   * Returns all the extensions from the extension directory.
+   * @return all extensions for the specified type
+   */
+  public List<EXTENSION> getAll(EXTENSION_TYPE type) {
+    return extensionsCache.getUnchecked(type);
+  }
+
+  /**
+   * Returns all first extensions from the extension directory.
    *
    * @return map of extension type to the first extension that supports the extension type
    */
@@ -135,7 +146,7 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
         }
         // Try to find a provider that can support the given program type.
         try {
-          putEntriesIfAbsent(result, getAllExtensions(serviceLoaderCache.getUnchecked(moduleDir)));
+          putFirstEntriesIfAbsent(result, getAllExtensions(serviceLoaderCache.getUnchecked(moduleDir)));
         } catch (Exception e) {
           LOG.warn("Exception raised when loading an extension from {}. Extension ignored.", moduleDir, e);
         }
@@ -143,7 +154,7 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
     }
 
     // Also put everything from system classloader
-    putEntriesIfAbsent(result, getAllExtensions(systemExtensionLoader));
+    putFirstEntriesIfAbsent(result, getAllExtensions(systemExtensionLoader));
 
     allExtensions = result;
     return allExtensions;
@@ -179,25 +190,25 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
     };
   }
 
-  private void putEntriesIfAbsent(Map<EXTENSION_TYPE, EXTENSION> result, Map<EXTENSION_TYPE, EXTENSION> entries) {
-    for (Map.Entry<EXTENSION_TYPE, EXTENSION> entry : entries.entrySet()) {
-      if (!result.containsKey(entry.getKey())) {
-        result.put(entry.getKey(), entry.getValue());
+  private void putFirstEntriesIfAbsent(Map<EXTENSION_TYPE, EXTENSION> result,
+                                       Map<EXTENSION_TYPE, List<EXTENSION>> entries) {
+    for (Map.Entry<EXTENSION_TYPE, List<EXTENSION>> entry : entries.entrySet()) {
+      if (!result.containsKey(entry.getKey()) && !entry.getValue().isEmpty()) {
+        result.put(entry.getKey(), entry.getValue().get(0));
       }
     }
   }
 
-  private LoadingCache<EXTENSION_TYPE, AtomicReference<EXTENSION>> createExtensionsCache() {
-    return CacheBuilder.newBuilder().build(new CacheLoader<EXTENSION_TYPE, AtomicReference<EXTENSION>>() {
+  private LoadingCache<EXTENSION_TYPE, List<EXTENSION>> createExtensionsCache() {
+    return CacheBuilder.newBuilder().build(new CacheLoader<EXTENSION_TYPE, List<EXTENSION>>() {
       @Override
-      public AtomicReference<EXTENSION> load(EXTENSION_TYPE extensionType) throws Exception {
-        EXTENSION extension = null;
+      public List<EXTENSION> load(EXTENSION_TYPE extensionType) throws Exception {
         try {
-          extension = findExtension(extensionType);
+          return Collections.unmodifiableList(findExtensions(extensionType));
         } catch (Throwable t) {
           LOG.warn("Failed to load extension for type {}.", extensionType);
+          return Collections.emptyList();
         }
-        return new AtomicReference<>(extension);
       }
     });
   }
@@ -206,7 +217,8 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
    * Finds the first extension from the given {@link ServiceLoader} that supports the specified key.
    */
   @Nullable
-  private EXTENSION findExtension(EXTENSION_TYPE type) {
+  private List<EXTENSION> findExtensions(EXTENSION_TYPE type) {
+    List<EXTENSION> result = new ArrayList<>();
     for (String dir : extDirs) {
       File extDir = new File(dir);
       if (!extDir.isDirectory()) {
@@ -221,22 +233,23 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
           continue;
         }
         // Try to find a provider that can support the given program type.
-        EXTENSION extension = getAllExtensions(serviceLoaderCache.getUnchecked(moduleDir)).get(type);
-        if (extension != null) {
-          return extension;
-        }
+        result.addAll(getAllExtensions(serviceLoaderCache.getUnchecked(moduleDir))
+                        .getOrDefault(type, Collections.emptyList()));
       }
     }
     // For unit tests, try to load the extensions from the system classloader. This is because in unit tests,
     // extensions are part of the test dependency, hence in the unit-test ClassLoader.
-    return getAllExtensions(systemExtensionLoader).get(type);
+    if (result.isEmpty()) {
+      result.addAll(getAllExtensions(systemExtensionLoader).get(type));
+    }
+    return result;
   }
 
   /**
    * Returns all the extensions in the extensions directory using the specified {@link ServiceLoader}.
    */
-  private Map<EXTENSION_TYPE, EXTENSION> getAllExtensions(ServiceLoader<EXTENSION> serviceLoader) {
-    Map<EXTENSION_TYPE, EXTENSION> extensions = new HashMap<>();
+  private Map<EXTENSION_TYPE, List<EXTENSION>> getAllExtensions(ServiceLoader<EXTENSION> serviceLoader) {
+    Map<EXTENSION_TYPE, List<EXTENSION>> extensions = new HashMap<>();
     Iterator<EXTENSION> iterator = serviceLoader.iterator();
     // Cannot use for each loop here, because we want to catch exceptions during iterator.next().
     //noinspection WhileLoopReplaceableByForEach
@@ -247,7 +260,7 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
           if (extensions.containsKey(type)) {
             LOG.info("Ignoring extension {} for type {}", extension, type);
           } else {
-            extensions.put(type, extension);
+            extensions.computeIfAbsent(type, (t) -> new ArrayList<EXTENSION>()).add(extension);
           }
         }
       } catch (Throwable t) {

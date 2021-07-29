@@ -61,6 +61,7 @@ import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.reporting.ProgramHeartbeatTable;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
+import io.cdap.cdap.runtime.spi.provisioner.ClusterProperties;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
@@ -537,6 +538,10 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         systemArgs.put(ProgramOptionConstants.USER_ID, properties.get(ProgramOptionConstants.USER_ID));
         systemArgs.put(ProgramOptionConstants.CLUSTER, properties.get(ProgramOptionConstants.CLUSTER));
         systemArgs.put(ProgramOptionConstants.SECURE_KEYS_DIR, properties.get(ProgramOptionConstants.SECURE_KEYS_DIR));
+        if (cluster.getProperties().containsKey(ClusterProperties.SPARK_COMPAT)) {
+          systemArgs.put(ProgramOptionConstants.CLUSTER_SPARK_COMPAT,
+                         cluster.getProperties().get(ClusterProperties.SPARK_COMPAT));
+        }
 
         ProgramOptions newProgramOptions = new SimpleProgramOptions(programOptions.getProgramId(),
                                                                     new BasicArguments(systemArgs),

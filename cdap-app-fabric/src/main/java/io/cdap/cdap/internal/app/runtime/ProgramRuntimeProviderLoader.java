@@ -26,6 +26,8 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.extension.AbstractExtensionLoader;
 import io.cdap.cdap.proto.ProgramType;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.ServiceLoader;
 import java.util.Set;
 
@@ -49,13 +51,7 @@ public class ProgramRuntimeProviderLoader extends AbstractExtensionLoader<Progra
     // See if the provide supports the required program type
     ProgramRuntimeProvider.SupportedProgramType supportedTypes =
       programRuntimeProvider.getClass().getAnnotation(ProgramRuntimeProvider.SupportedProgramType.class);
-    ImmutableSet.Builder<ProgramType> types = ImmutableSet.builder();
 
-    for (ProgramType programType : supportedTypes.value()) {
-      if (programRuntimeProvider.isSupported(programType, cConf)) {
-        types.add(programType);
-      }
-    }
-    return types.build();
+    return new HashSet<>(Arrays.asList(supportedTypes.value()));
   }
 }

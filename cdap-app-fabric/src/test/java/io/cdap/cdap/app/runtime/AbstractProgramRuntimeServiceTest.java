@@ -82,18 +82,18 @@ public class AbstractProgramRuntimeServiceTest {
     Set<String> threadNames = ConcurrentHashMap.newKeySet();
 
     // Creates a runner factory that block start until a signal is received
-    ProgramRunnerFactory runnerFactory = programType -> (program, options) -> {
+    ProgramRunnerFactory runnerFactory = createProgramRunnerFactory((program, options) -> {
       threadNames.add(Thread.currentThread().getName());
       proceed.acquireUninterruptibly();
 
-      ProgramId programId = program.getId();
+      ProgramId programId = program.getParent();
 
       Service service = new FastService();
       ProgramController controller = new ProgramControllerServiceAdapter(service,
                                                                          programId.run(RunIds.generate()));
       service.start();
       return controller;
-    };
+    });
 
     Program program = createDummyProgram();
     ProgramDescriptor descriptor = new ProgramDescriptor(program.getId(), null,
@@ -259,6 +259,15 @@ public class AbstractProgramRuntimeServiceTest {
     }
   }
 
+  private DummyProgramRunnerFactory createProgramRunnerFactory(ProgramControllerCreator programControllerCreator) {
+    return new DummyProgramRunnerFactory() {
+      @Override
+      public ProgramControllerCreator createProgramControllerCreator(ProgramType programType) {
+        return programControllerCreator;
+      }
+    };
+  }
+
   private ProgramRunnerFactory createProgramRunnerFactory() {
     return createProgramRunnerFactory(new HashMap<>());
   }
@@ -270,8 +279,8 @@ public class AbstractProgramRuntimeServiceTest {
    * @param argumentsMap the map to be populated with the user arguments for each run.
    */
   private ProgramRunnerFactory createProgramRunnerFactory(final Map<ProgramId, Arguments> argumentsMap) {
-    return programType -> (program, options) -> {
-      ProgramId programId = program.getId();
+    return createProgramRunnerFactory((program, options) -> {
+      ProgramId programId = program.getParent();
       argumentsMap.put(programId, options.getUserArguments());
 
       Service service = new FastService();
@@ -279,7 +288,7 @@ public class AbstractProgramRuntimeServiceTest {
                                                                          programId.run(RunIds.generate()));
       service.start();
       return controller;
-    };
+    });
   }
 
   private Program createDummyProgram() throws IOException {

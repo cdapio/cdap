@@ -28,6 +28,7 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.ProvisionException;
 import com.google.inject.spi.InstanceBinding;
+import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
 import io.cdap.cdap.app.runtime.spark.classloader.SparkRunnerClassLoader;
@@ -46,7 +47,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.net.URL;
 import java.nio.file.Paths;
@@ -136,9 +136,9 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
   }
 
   @Override
-  public boolean isSupported(ProgramType programType, CConfiguration cConf) {
+  public boolean isSupported(ProgramOptions programOptions, CConfiguration cConf) {
     // TODO: Need to check if it actually has the corresponding spark version available
-    SparkCompat runtimeSparkCompat = SparkCompatReader.get(cConf);
+    SparkCompat runtimeSparkCompat = SparkCompatReader.get(cConf, programOptions);
     if (runtimeSparkCompat == providerSparkCompat) {
       LOG.debug("using sparkCompat {}", providerSparkCompat);
       return true;

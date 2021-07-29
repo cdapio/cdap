@@ -16,7 +16,10 @@
 
 package io.cdap.cdap.app.runtime;
 
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.proto.ProgramType;
+
+import javax.annotation.Nullable;
 
 /**
  * A dummy implementation of {@link ProgramRunnerFactory} that doesn't support any program type.
@@ -24,7 +27,18 @@ import io.cdap.cdap.proto.ProgramType;
  */
 public class DummyProgramRunnerFactory implements ProgramRunnerFactory {
   @Override
-  public ProgramRunner create(ProgramType programType) {
-    throw new IllegalArgumentException("Program type not supported: " + programType);
+  public ProgramRunner create(ProgramOptions programOptions, CConfiguration cConf) {
+    throw new IllegalArgumentException("Program is not supported: " + programOptions.getProgramId());
+  }
+
+  @Override
+  public ProgramControllerCreator createProgramControllerCreator(ProgramType programType) {
+    throw new IllegalArgumentException("Program type is not supported: " + programType);
+  }
+
+  @Nullable
+  @Override
+  public ProgramClassLoaderProvider createProgramClassLoaderProvider(ProgramType programType) {
+    throw new IllegalArgumentException("Program type is not supported: " + programType);
   }
 }
