@@ -287,7 +287,7 @@ class CapabilityApplier {
 
   private void deployAllSystemApps(String capability, List<SystemApplication> applications)  {
     if (applications.isEmpty()) {
-      LOG.debug("Capability {} do not have apps associated with it", capability);
+      //skip logging here to prevent flooding the logs
       return;
     }
     try {
