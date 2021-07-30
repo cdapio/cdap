@@ -387,7 +387,8 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
   }
 
   @VisibleForTesting
-  protected DataprocClient getClient(DataprocConf conf) throws IOException, GeneralSecurityException {
+  protected DataprocClient getClient(DataprocConf conf) throws IOException, GeneralSecurityException,
+    RetryableProvisionException {
     return DataprocClient.fromConf(conf);
   }
 
