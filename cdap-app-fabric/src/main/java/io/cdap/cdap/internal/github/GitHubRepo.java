@@ -70,11 +70,11 @@ public class GitHubRepo {
   @Override
   public String toString() {
     return "{\n" +
-        "  nickname: " + this.nickname + " {\n" +
-        "                       url: " + this.url + "\n" +
-        "                       default_branch: " + this.defaultBranch + "\n" +
-        "                       auth_string: " + this.authString + "\n" + "   }" +
-        "\n}";
+        "          nickname: " + this.nickname + "\n" +
+        "          url: " + this.url + "\n" +
+        "          default_branch: " + this.defaultBranch + "\n" +
+        "          auth_string: " + this.authString + "\n" +
+        "}";
   }
 }
 

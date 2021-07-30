@@ -155,8 +155,8 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
   public void testRepoConnection(HttpRequest request, HttpResponder responder,
       @NotNull @PathParam("repo") String repo) throws Exception {
     GitHubRepo test = gitStore.getRepo(repo);
-    int responseCode = testRepoConnection(test.getUrl(), secureStore.get("system",
-        repo + "_auth_token").get().toString());
+    int responseCode = testRepoConnection(test.getUrl(), new String(secureStore.get("system",
+        repo + "_auth_token").get(), StandardCharsets.UTF_8));
     if (responseCode == HttpURLConnection.HTTP_OK) {
       responder.sendString(HttpResponseStatus.OK, "Connection Successful.");
     } else if (responseCode == HttpURLConnection.HTTP_MOVED_PERM) {
@@ -169,7 +169,7 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   @POST
-  @Path("repos/github/checkin/{repo}")
+  @Path("repos/github/import/{repo}")
   public void checkInRepo(FullHttpRequest request, HttpResponder responder,
       @NotNull @PathParam("repo") String repo) throws Exception {
 
@@ -190,7 +190,8 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
       URL url = new URL(parseUrl(gitHubRepo.getUrl()) + "/contents/" + path + "?ref=" + branch);
       HttpURLConnection con = (HttpURLConnection) url.openConnection();
       con.setRequestMethod("GET");
-      String authString = secureStore.get("system", repo + "_auth_token").get().toString();
+      String authString = new String(secureStore.get("system", repo + "_auth_token")
+          .get(), StandardCharsets.UTF_8);
       con.setRequestProperty("Authorization", authString);
 
       BufferedReader reader = new BufferedReader(new InputStreamReader(con.getInputStream()));
@@ -210,7 +211,7 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   @POST
-  @Path("repos/github/checkout/{repo}")
+  @Path("repos/github/export/{repo}")
   public void checkOutRepo(FullHttpRequest request, HttpResponder responder,
       @NotNull @PathParam("repo") String repo) throws Exception {
 
@@ -225,30 +226,34 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
     String path = pipelineInput.getAsJsonPrimitive("path").toString().
         replace("\"", "");
 
+    String message = pipelineInput.getAsJsonPrimitive("message").toString()
+        .replace("\"", "");
+
+    String rawContent = pipelineInput.getAsJsonPrimitive("content").toString()
+        .replace("\"", "");
+    String branchSha = "";
+    if (!branchExists(branch, gitStore.getRepo(repo))) {
+      createBranch(branch, gitStore.getRepo(repo));
+      branchSha = getBranchSha(branch, gitStore.getRepo(repo));
+    }
     GitHubRepo gitHubRepo = gitStore.getRepo(repo);
     URL url = new URL(parseUrl(gitHubRepo.getUrl()) + "/contents/" + path + "?ref=" + branch);
     HttpURLConnection con = (HttpURLConnection) url.openConnection();
 
     con.setRequestMethod("PUT");
     con.setDoOutput(true);
-    String authString = secureStore.get("system", repo + "_auth_token").get().toString();
+    String authString = new String(secureStore.get("system", repo + "_auth_token")
+        .get(), StandardCharsets.UTF_8);
     con.setRequestProperty("Authorization", authString);
 
-    JsonObject pipelineOutput  = new JsonObject();
+    JsonObject pipelineOutput = new JsonObject();
 
-
-    String message = pipelineInput.getAsJsonPrimitive("message").toString()
-        .replace("\"", "");
     pipelineOutput.addProperty("message", message);
-
-    String rawContent = pipelineInput.getAsJsonPrimitive("content").toString()
-        .replace("\"", "");
     pipelineOutput.addProperty("content", Base64.getEncoder().encodeToString(rawContent.getBytes(
-        StandardCharsets.UTF_8)));
+          StandardCharsets.UTF_8)));
 
-    if (pipelineInput.has("sha")) {
-      String sha = pipelineInput.getAsJsonPrimitive("sha").toString()
-          .replace("\"", "");
+    String sha = getFileSha(path, branch, gitHubRepo);
+    if (!sha.equals("not found")) {
       pipelineOutput.addProperty("sha", sha);
     }
 
@@ -257,18 +262,20 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
     outputStream.flush();
     outputStream.close();
 
-    if (con.getResponseCode() == HttpURLConnection.HTTP_CREATED) {
+    if (con.getResponseCode() == HttpURLConnection.HTTP_CREATED ||
+        con.getResponseCode() == HttpURLConnection.HTTP_OK) {
       responder.sendString(HttpResponseStatus.OK, "Checkout successful.");
     } else if (con.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
       responder.sendString(HttpResponseStatus.CONFLICT, "This file already exists, "
           + "provide a sha in order to update it");
     } else if (con.getResponseCode() == 422) {
       responder.sendString(HttpResponseStatus.UNAUTHORIZED,
-          "Please check your authorization key and file path");
+          "Please check your authorization key and file path " + branchSha);
     } else {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, con.getResponseCode() + " file destination not found");
-    }
+      responder.sendString(HttpResponseStatus.NOT_FOUND, con.getResponseCode() +
+          " file destination not found " + sha + " " + authString);
 
+    }
   }
 
   public String parseUrl(String url) throws Exception {
@@ -312,5 +319,84 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
     con.setRequestProperty("Authorization", authString);
 
     return con.getResponseCode();
+  }
+
+  public boolean branchExists(String branch, GitHubRepo repo) throws Exception {
+    URL url = new URL(parseUrl(repo.getUrl()) + "/git/refs/heads/" + branch);
+    HttpURLConnection con = (HttpURLConnection) url.openConnection();
+    con.setRequestMethod("GET");
+
+    String authString = new String(secureStore.get("system",
+        repo.getNickname() + "_auth_token").get(), StandardCharsets.UTF_8);
+    con.setRequestProperty("Authorization", authString);
+
+    return con.getResponseCode() == HttpURLConnection.HTTP_OK;
+  }
+
+  public void createBranch(String branch, GitHubRepo repo) throws Exception {
+
+    String sha = getBranchSha(repo.getDefaultBranch(), repo);
+
+    URL url = new URL(parseUrl(repo.getUrl()) + "/git/refs");
+    HttpURLConnection con = (HttpURLConnection) url.openConnection();
+    con.setRequestMethod("POST");
+    con.setDoOutput(true);
+    String authString = new String(secureStore.get("system",
+        repo.getNickname() + "_auth_token").get(), StandardCharsets.UTF_8);
+    con.setRequestProperty("Authorization", authString);
+
+    JsonObject body = new JsonObject();
+    body.addProperty("ref", "refs/heads/" + branch);
+    body.addProperty("sha", sha);
+
+    DataOutputStream outputStream = new DataOutputStream(con.getOutputStream());
+    outputStream.write(body.toString().getBytes(StandardCharsets.UTF_8));
+    outputStream.flush();
+    outputStream.close();
+  }
+
+  public String getBranchSha(String branch, GitHubRepo repo) throws Exception {
+    URL defaultUrl = new URL(parseUrl(repo.getUrl()) + "/git/refs/heads/" + branch);
+    HttpURLConnection defCon = (HttpURLConnection) defaultUrl.openConnection();
+    defCon.setRequestMethod("GET");
+
+    String authString = new String(secureStore.get("system",
+        repo.getNickname() + "_auth_token").get(), StandardCharsets.UTF_8);
+    defCon.setRequestProperty("Authorization", authString);
+
+    BufferedReader reader = new BufferedReader(new InputStreamReader(defCon.getInputStream()));
+
+    String input;
+    StringBuilder response = new StringBuilder();
+    while ((input = reader.readLine()) != null) {
+      response.append(input);
+    }
+    return GSON.fromJson(response.toString(), JsonObject.class).getAsJsonObject("object").
+        getAsJsonPrimitive("sha").toString().replace("\"", "");
+  }
+
+  public String getFileSha(String path, String branch, GitHubRepo repo) throws Exception {
+    URL url = new URL(parseUrl(repo.getUrl()) + "/contents/" + path + "?ref=" + branch);
+    HttpURLConnection con = (HttpURLConnection) url.openConnection();
+    con.setRequestMethod("GET");
+
+    String authString = new String(secureStore.get("system",
+        repo.getNickname() + "_auth_token").get(), StandardCharsets.UTF_8);
+    con.setRequestProperty("Authorization", authString);
+
+    if (con.getResponseCode() == HttpURLConnection.HTTP_OK) {
+      BufferedReader reader = new BufferedReader(new InputStreamReader(con.getInputStream()));
+
+      String input;
+      StringBuilder response = new StringBuilder();
+      while ((input = reader.readLine()) != null) {
+        response.append(input);
+      }
+      return GSON.fromJson(response.toString(), JsonObject.class).getAsJsonPrimitive("sha")
+          .toString().replace("\"", "");
+    } else {
+      return "not found";
+    }
+
   }
 }
