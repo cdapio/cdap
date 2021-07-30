@@ -23,6 +23,7 @@ import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.SparkCompat;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
+import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -67,7 +68,7 @@ public class DataprocProvisionerTest {
   MockProvisionerContext context = new MockProvisionerContext();
 
   @Before
-  public void init() throws IOException, GeneralSecurityException {
+  public void init() throws IOException, GeneralSecurityException, RetryableProvisionException {
     Mockito.doReturn(dataprocClient).when(provisioner).getClient(Mockito.any());
     MockProvisionerSystemContext provisionerSystemContext = new MockProvisionerSystemContext();
 
