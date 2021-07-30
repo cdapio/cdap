@@ -101,11 +101,13 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       RunnableTaskRequest runnableTaskRequest =
         GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), RunnableTaskRequest.class);
       className = runnableTaskRequest.getClassName();
+      long start = System.currentTimeMillis();
       byte[] response = runnableTaskLauncher.launchRunnableTask(runnableTaskRequest, null);
-
       responder.sendContent(HttpResponseStatus.OK,
                             new RunnableTaskBodyProducer(response, stopper, className),
                             new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM));
+      long dur = System.currentTimeMillis() - start;
+      LOG.error(">>>>> launcher took: " + dur);
     } catch (ClassNotFoundException | ClassCastException ex) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);
       stopper.accept(className);
