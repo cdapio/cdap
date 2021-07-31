@@ -63,12 +63,14 @@ import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
+import org.apache.commons.io.IOUtils;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -77,6 +79,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.concurrent.ExecutionException;
@@ -507,15 +510,15 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     try {
       Id.Artifact artifactId = systemArtifactInfo.getArtifactId();
 
-      // if it's not a snapshot and it already exists, don't bother trying to add it since artifacts are immutable
-      if (!artifactId.getVersion().isSnapshot()) {
-        try {
-          artifactStore.getArtifact(artifactId);
-          LOG.info("Artifact {} already exists, will not try loading it again.", artifactId);
+      // Check if it already exists
+      try {
+        ArtifactDetail currentArtifactDetail = artifactStore.getArtifact(artifactId);
+        if (!shouldUpdateSytemArtifact(currentArtifactDetail, systemArtifactInfo)) {
+          LOG.info("Artifact {} already exists and it did not change, will not try loading it again.", artifactId);
           return;
-        } catch (ArtifactNotFoundException e) {
-          // this is fine, means it doesn't exist yet and we should add it
         }
+      } catch (ArtifactNotFoundException e) {
+        // this is fine, means it doesn't exist yet and we should add it
       }
 
       addArtifact(artifactId,
@@ -532,6 +535,38 @@ public class DefaultArtifactRepository implements ArtifactRepository {
       LOG.warn("Could not add system artifact '{}' because it is invalid.", fileName, e);
     } catch (UnauthorizedException e) {
       LOG.warn("Could not add system artifact '{}' because of an authorization error.", fileName, e);
+    }
+  }
+
+  private boolean shouldUpdateSytemArtifact(ArtifactDetail currentArtifactDetail,
+                                            SystemArtifactInfo systemArtifactInfo) {
+    if (!currentArtifactDetail.getDescriptor().getArtifactId().getVersion().isSnapshot()) {
+      // if it's not a snapshot, don't bother trying to update it since artifacts are immutable
+      return false;
+    }
+    // For snapshots check if it's different. Artifact update is disruptive, so we spend some cycles
+    // to check if it's really needed
+    Set<ArtifactRange> parents = systemArtifactInfo.getConfig().getParents();
+    if (!Objects.equals(parents, currentArtifactDetail.getMeta().getUsableBy())) {
+      return true;
+    }
+    if (!Objects.equals(systemArtifactInfo.getConfig().getProperties(),
+                       currentArtifactDetail.getMeta().getProperties())) {
+      return true;
+    }
+    Set<PluginClass> additionalPlugins = systemArtifactInfo.getConfig().getPlugins();
+    if (additionalPlugins != null && !currentArtifactDetail.getMeta().getClasses().getPlugins().containsAll(
+      additionalPlugins)) {
+      return true;
+    }
+    try (
+      InputStream stream1 = currentArtifactDetail.getDescriptor().getLocation().getInputStream();
+      InputStream stream2 = new FileInputStream(systemArtifactInfo.getArtifactFile())
+      ) {
+      return !IOUtils.contentEquals(stream1, stream2);
+    } catch (IOException e) {
+      // In case of any IO problems, jsut update it
+      return true;
     }
   }
 
