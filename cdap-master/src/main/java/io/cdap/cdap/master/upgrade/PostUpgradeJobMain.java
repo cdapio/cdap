@@ -22,6 +22,8 @@ import io.cdap.cdap.client.ScheduleClient;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
@@ -29,6 +31,7 @@ import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 
 import java.io.IOException;
 import java.util.List;
@@ -54,16 +57,29 @@ public class PostUpgradeJobMain {
         String.format("Invalid number of arguments to %s. Needed 3, found %d",
                       PostUpgradeJobMain.class.getSimpleName(), args.length));
     }
+    // TODO(CDAP-18299): Refactor to use internal service discovery mechanism instead of making calls via the router.
     ConnectionConfig connectionConfig = ConnectionConfig.builder()
       .setHostname(args[0])
       .setPort(Integer.parseInt(args[1]))
       .setSSLEnabled(false)
       .build();
-    ClientConfig clientConfig =
+    ClientConfig.Builder clientConfigBuilder =
       ClientConfig.builder()
         .setDefaultReadTimeout(DEFAULT_READ_TIMEOUT_MILLIS)
-        .setConnectionConfig(connectionConfig)
-        .build();
+        .setConnectionConfig(connectionConfig);
+
+    // If used in proxy mode, attach a user ID header to upgrade jobs.
+    CConfiguration cConf = CConfiguration.create();
+    if (SecurityUtil.isProxySecurity(cConf)) {
+      String proxyUserID = cConf.get(Constants.Security.Authentication.PROXY_USER_ID_HEADER);
+      if (proxyUserID == null) {
+        throw new RuntimeException("Invalid proxy user ID header");
+      }
+      clientConfigBuilder.addAdditionalHeader(proxyUserID, UpgradeUserIDProvider.getUserID());
+    }
+
+    ClientConfig clientConfig = clientConfigBuilder.build();
+
     RetryStrategy retryStrategy =
       RetryStrategies.timeLimit(30, TimeUnit.SECONDS,
                                 RetryStrategies.exponentialDelay(10, 500, TimeUnit.MILLISECONDS));

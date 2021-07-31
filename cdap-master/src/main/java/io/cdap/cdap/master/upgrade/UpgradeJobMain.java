@@ -24,10 +24,11 @@ import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
-import io.cdap.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramStatus;
@@ -36,6 +37,7 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.proto.id.WorkflowId;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,16 +63,29 @@ public class UpgradeJobMain {
       throw new RuntimeException(
         String.format("Invalid number of arguments to UpgradeJobMain. Needed 2, found %d", args.length));
     }
+    // TODO(CDAP-18299): Refactor to use internal service discovery mechanism instead of making calls via the router.
     ConnectionConfig connectionConfig = ConnectionConfig.builder()
       .setHostname(args[0])
       .setPort(Integer.parseInt(args[1]))
       .setSSLEnabled(false)
       .build();
-    ClientConfig clientConfig =
+    ClientConfig.Builder clientConfigBuilder =
       ClientConfig.builder()
         .setDefaultReadTimeout(DEFAULT_READ_TIMEOUT_MILLIS)
-        .setConnectionConfig(connectionConfig)
-        .build();
+        .setConnectionConfig(connectionConfig);
+
+    // If used in proxy mode, attach a user ID header to upgrade jobs.
+    CConfiguration cConf = CConfiguration.create();
+    if (SecurityUtil.isProxySecurity(cConf)) {
+      String proxyUserID = cConf.get(Constants.Security.Authentication.PROXY_USER_ID_HEADER);
+      if (proxyUserID == null) {
+        throw new RuntimeException("Invalid proxy user ID header");
+      }
+      clientConfigBuilder.addAdditionalHeader(proxyUserID, UpgradeUserIDProvider.getUserID());
+    }
+
+    ClientConfig clientConfig = clientConfigBuilder.build();
+
     RetryStrategy retryStrategy =
       RetryStrategies.timeLimit(120, TimeUnit.SECONDS,
                                 RetryStrategies.exponentialDelay(500, 5000, TimeUnit.MILLISECONDS));

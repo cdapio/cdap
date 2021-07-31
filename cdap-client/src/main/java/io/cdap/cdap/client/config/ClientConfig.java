@@ -18,6 +18,7 @@ package io.cdap.cdap.client.config;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.client.exception.DisconnectedException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -26,6 +27,8 @@ import io.cdap.common.http.HttpRequestConfig;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -56,12 +59,14 @@ public class ClientConfig {
   private int unavailableRetryLimit;
   private String apiVersion;
   private Supplier<AccessToken> accessToken;
+  private Map<String, String> additionalHeaders;
 
   private ClientConfig(@Nullable ConnectionConfig connectionConfig,
                        boolean verifySSLCert, int unavailableRetryLimit,
                        String apiVersion, Supplier<AccessToken> accessToken,
                        int defaultReadTimeout, int defaultConnectTimeout,
-                       int uploadReadTimeout, int uploadConnectTimeout) {
+                       int uploadReadTimeout, int uploadConnectTimeout,
+                       Map<String, String> additionalHeaders) {
     this.connectionConfig = connectionConfig;
     this.verifySSLCert = verifySSLCert;
     this.apiVersion = apiVersion;
@@ -71,6 +76,7 @@ public class ClientConfig {
     this.defaultConnectTimeout = defaultConnectTimeout;
     this.uploadReadTimeout = uploadReadTimeout;
     this.uploadConnectTimeout = uploadConnectTimeout;
+    this.additionalHeaders = additionalHeaders;
   }
 
   public static ClientConfig getDefault() {
@@ -158,6 +164,10 @@ public class ClientConfig {
 
   public int getUploadConnectTimeout() {
     return uploadConnectTimeout;
+  }
+
+  public Map<String, String> getAdditionalHeaders() {
+    return additionalHeaders;
   }
 
   public void setConnectionConfig(@Nullable ConnectionConfig connectionConfig) {
@@ -255,6 +265,7 @@ public class ClientConfig {
     private int defaultConnectTimeout = DEFAULT_CONNECT_TIMEOUT;
 
     private int unavailableRetryLimit = DEFAULT_SERVICE_UNAVAILABLE_RETRY_LIMIT;
+    private Map<String, String> additionalHeaders = new HashMap<>();
 
     public Builder() { }
 
@@ -320,11 +331,16 @@ public class ClientConfig {
       return this;
     }
 
+    public Builder addAdditionalHeader(String header, String value) {
+      this.additionalHeaders.put(header, value);
+      return this;
+    }
+
     public ClientConfig build() {
       return new ClientConfig(connectionConfig, verifySSLCert,
                               unavailableRetryLimit, apiVersion, accessToken,
                               defaultReadTimeout, defaultConnectTimeout,
-                              uploadReadTimeout, uploadConnectTimeout);
+                              uploadReadTimeout, uploadConnectTimeout, ImmutableMap.copyOf(additionalHeaders));
     }
   }
 
