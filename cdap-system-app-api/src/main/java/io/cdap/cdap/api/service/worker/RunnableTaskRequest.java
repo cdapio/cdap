@@ -32,7 +32,7 @@ public class RunnableTaskRequest {
   @Nullable
   private final String namespace;
 
-  private RunnableTaskRequest(String className, String param,
+  private RunnableTaskRequest(String className, @Nullable String param,
                               @Nullable ArtifactId artifactId, @Nullable String namespace) {
     this.className = className;
     this.param = param;
@@ -44,6 +44,7 @@ public class RunnableTaskRequest {
     return className;
   }
 
+  @Nullable
   public String getParam() {
     return param;
   }
@@ -61,7 +62,9 @@ public class RunnableTaskRequest {
   @Override
   public String toString() {
     String requestString = "RunnableTaskRequest{className=%s, param=%s, artifactId=%s, namespace=%s}";
-    return String.format(requestString, className, param, artifactId, namespace);
+    return String.format(requestString, className,
+                         param == null ? null : param.length() > 500 ? param.substring(500) : param,
+                         artifactId, namespace);
   }
 
   public static Builder getBuilder(String taskClassName) {

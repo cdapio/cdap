@@ -41,7 +41,6 @@ import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.lang.CombineClassLoader;
 import io.cdap.cdap.common.utils.DirUtils;
-import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -60,12 +59,9 @@ import java.lang.reflect.Type;
 
 /**
  * In Memory Configurator doesn't spawn a external process, but does this in memory.
- *
- * @see SandboxConfigurator
  */
 public final class InMemoryConfigurator implements Configurator {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryConfigurator.class);
-  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
 
   private final CConfiguration cConf;
   private final String applicationName;
@@ -215,9 +211,6 @@ public final class InMemoryConfigurator implements Configurator {
     }
     ApplicationSpecification specification = configurer.createSpecification(applicationName, applicationVersion);
     AppSpecInfo appSpecInfo = new AppSpecInfo(specification, configurer.getSystemTables(), configurer.getMetadata());
-
-    // Convert the specification to JSON.
-    // We write the Application specification to output file in JSON format.
-    return new DefaultConfigResponse(0, GSON.toJson(appSpecInfo));
+    return new DefaultConfigResponse(0, appSpecInfo);
   }
 }

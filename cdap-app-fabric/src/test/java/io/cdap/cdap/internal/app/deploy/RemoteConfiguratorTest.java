@@ -60,7 +60,10 @@ import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
+import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
+import io.netty.channel.ChannelPipeline;
+import io.netty.handler.codec.http.HttpContentDecompressor;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -95,15 +98,15 @@ public class RemoteConfiguratorTest {
 
   private static CConfiguration cConf;
   private static NettyHttpService httpService;
-  private static InMemoryDiscoveryService discoveryService;
   private static RemoteClientFactory remoteClientFactory;
 
   @BeforeClass
   public static void init() throws Exception {
     cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
+    cConf.setBoolean(Constants.TaskWorker.CONTAINER_KILL_AFTER_EXECUTION, false);
 
-    discoveryService = new InMemoryDiscoveryService();
+    InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     MasterEnvironments.setMasterEnvironment(new TestMasterEnvironment(discoveryService));
 
     NamespaceAdmin namespaceAdmin = new InMemoryNamespaceAdmin();
@@ -119,6 +122,12 @@ public class RemoteConfiguratorTest {
         new ArtifactLocalizerHttpHandlerInternal(new ArtifactLocalizer(cConf, remoteClientFactory))
       )
       .setPort(cConf.getInt(Constants.ArtifactLocalizer.PORT))
+      .setChannelPipelineModifier(new ChannelPipelineModifier() {
+        @Override
+        public void modify(ChannelPipeline pipeline) {
+          pipeline.addAfter("compressor", "decompressor", new HttpContentDecompressor());
+        }
+      })
       .build();
     httpService.start();
 
@@ -158,8 +167,10 @@ public class RemoteConfiguratorTest {
     ConfigResponse response = result.get(10, TimeUnit.SECONDS);
     Assert.assertNotNull(response);
 
-    // Deserialize the JSON spec back into Application object.
-    AppSpecInfo appSpecInfo = GSON.fromJson(response.getResponse(), AppSpecInfo.class);
+    AppSpecInfo appSpecInfo = response.getAppSpecInfo();
+    if (appSpecInfo == null) {
+      throw new IllegalStateException("Failed to deploy application");
+    }
     ApplicationSpecification specification = appSpecInfo.getAppSpec();
     Assert.assertNotNull(specification);
     Assert.assertEquals(AllProgramsApp.NAME, specification.getName()); // Simple checks.

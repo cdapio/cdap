@@ -27,11 +27,9 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.File;
-import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
 
 /**
  * Internal {@link HttpHandler} for Artifact Localizer.
@@ -51,12 +49,10 @@ public class ArtifactLocalizerHttpHandlerInternal extends AbstractHttpHandler {
   public void artifact(HttpRequest request, HttpResponder responder,
                        @PathParam("namespace-id") String namespaceId,
                        @PathParam("artifact-name") String artifactName,
-                       @PathParam("artifact-version") String artifactVersion,
-                       @QueryParam("unpack") @DefaultValue("false") boolean unpack) throws Exception {
+                       @PathParam("artifact-version") String artifactVersion) throws Exception {
 
     ArtifactId artifactId = new ArtifactId(namespaceId, artifactName, artifactVersion);
-    File artifactPath = unpack ? artifactLocalizer.getAndUnpackArtifact(artifactId) :
-      artifactLocalizer.getArtifact(artifactId);
+    File artifactPath = artifactLocalizer.getAndUnpackArtifact(artifactId);
     responder.sendString(HttpResponseStatus.OK, artifactPath.toString());
   }
 }

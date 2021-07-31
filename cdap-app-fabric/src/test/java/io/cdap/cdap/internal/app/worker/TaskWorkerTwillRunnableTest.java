@@ -18,6 +18,11 @@ package io.cdap.cdap.internal.app.worker;
 
 import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
+import io.cdap.cdap.internal.app.runtime.distributed.MockMasterEnvironment;
+import io.cdap.cdap.master.environment.MasterEnvironments;
+import io.cdap.cdap.proto.id.NamespaceId;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Test;
 
@@ -28,7 +33,9 @@ public class TaskWorkerTwillRunnableTest {
 
   @Test
   public void testInjector() {
+    MasterEnvironments.setMasterEnvironment(new MockMasterEnvironment());
     Injector injector = TaskWorkerTwillRunnable.createInjector(CConfiguration.create(), new Configuration());
+    injector.getInstance(ArtifactManagerFactory.class).create(NamespaceId.SYSTEM, RetryStrategies.noRetry());
   }
 }
 

@@ -44,8 +44,8 @@ public class RemoteWorkerPluginFinder extends RemotePluginFinder {
   }
 
   @Override
-  public Location getArtifactLocation(ArtifactId artifactId)
+  protected Location getArtifactLocation(ArtifactId artifactId)
     throws IOException, ArtifactNotFoundException, UnauthorizedException {
-    return Locations.toLocation(artifactLocalizerClient.getArtifactLocation(artifactId));
+    return Locations.toLocation(artifactLocalizerClient.getUnpackedArtifactLocation(artifactId));
   }
 }

@@ -98,14 +98,16 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
   @GET
   @Path("/namespaces/{namespace-id}/artifacts")
   public void listArtifacts(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId) {
+                            @PathParam("namespace-id") String namespace) {
     try {
-      List<ArtifactInfo> artifactInfoList = new ArrayList<>();
-      artifactInfoList.addAll(artifactRepository.getArtifactsInfo(new NamespaceId(namespaceId)));
-      artifactInfoList.addAll(artifactRepository.getArtifactsInfo(NamespaceId.SYSTEM));
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(artifactInfoList, ARTIFACT_INFO_LIST_TYPE));
+      NamespaceId namespaceId = new NamespaceId(namespace);
+      List<ArtifactInfo> result = new ArrayList<>(artifactRepository.getArtifactsInfo(namespaceId));
+      if (!NamespaceId.SYSTEM.equals(namespaceId)) {
+        result.addAll(artifactRepository.getArtifactsInfo(NamespaceId.SYSTEM));
+      }
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(result, ARTIFACT_INFO_LIST_TYPE));
     } catch (Exception e) {
-      LOG.warn("Exception reading artifact metadata for namespace {} from the store.", namespaceId, e);
+      LOG.warn("Exception reading artifact metadata for namespace {} from the store.", namespace, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error reading artifact metadata from the store.");
     }
   }

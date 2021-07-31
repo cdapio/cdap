@@ -24,11 +24,10 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.lang.DirectoryClassLoader;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.lang.jar.ClassLoaderFolder;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.twill.filesystem.Location;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.File;
@@ -42,8 +41,6 @@ import javax.annotation.Nullable;
  */
 public abstract class AbstractArtifactManager implements ArtifactManager {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractArtifactManager.class);
-
   private final File tmpDir;
   private final ClassLoader bootstrapClassLoader;
 
@@ -55,7 +52,7 @@ public abstract class AbstractArtifactManager implements ArtifactManager {
   }
 
   /**
-   * Returns the {@link Location} of the give artifact.
+   * Returns the {@link Location} of the give artifact for artifact ClassLoader creation.
    *
    * @param artifactInfo information of the artifact
    * @param namespace artifact namespace, or null if the program namespace should not be used
@@ -87,34 +84,30 @@ public abstract class AbstractArtifactManager implements ArtifactManager {
   public CloseableClassLoader createClassLoader(@Nullable String namespace, ArtifactInfo artifactInfo,
                                                 @Nullable ClassLoader parentClassLoader)
     throws IOException, UnauthorizedException {
-    File unpackedDir = DirUtils.createTempDir(tmpDir);
-    BundleJarUtil.prepareClassLoaderFolder(getArtifactLocation(artifactInfo, namespace), unpackedDir);
+    ClassLoaderFolder folder = BundleJarUtil.prepareClassLoaderFolder(getArtifactLocation(artifactInfo, namespace),
+                                                                      () -> DirUtils.createTempDir(tmpDir));
     DirectoryClassLoader directoryClassLoader =
-      new DirectoryClassLoader(unpackedDir,
+      new DirectoryClassLoader(folder.getDir(),
                                parentClassLoader == null ? bootstrapClassLoader : parentClassLoader, "lib");
-    return new CloseableClassLoader(directoryClassLoader, new ClassLoaderCleanup(directoryClassLoader, unpackedDir));
+    return new CloseableClassLoader(directoryClassLoader, new ClassLoaderCleanup(directoryClassLoader, folder));
   }
 
   /**
    * Helper class to cleanup temporary directory created for artifact classloader.
    */
   private static final class ClassLoaderCleanup implements Closeable {
-    private final File directory;
     private final DirectoryClassLoader directoryClassLoader;
+    private final ClassLoaderFolder folder;
 
-    private ClassLoaderCleanup(DirectoryClassLoader directoryClassLoader, File directory) {
+    private ClassLoaderCleanup(DirectoryClassLoader directoryClassLoader, ClassLoaderFolder folder) {
       this.directoryClassLoader = directoryClassLoader;
-      this.directory = directory;
+      this.folder = folder;
     }
 
     @Override
     public void close() throws IOException {
-      try {
-        Closeables.closeQuietly(directoryClassLoader);
-        DirUtils.deleteDirectoryContents(directory);
-      } catch (IOException e) {
-        LOG.warn("Failed to delete directory {}", directory, e);
-      }
+      Closeables.closeQuietly(directoryClassLoader);
+      Closeables.closeQuietly(folder);
     }
   }
 }

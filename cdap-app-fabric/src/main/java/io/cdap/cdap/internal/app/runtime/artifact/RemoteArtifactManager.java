@@ -58,16 +58,17 @@ import javax.annotation.Nullable;
  * and returning artifact info.
  */
 public final class RemoteArtifactManager extends AbstractArtifactManager {
+
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
-  private static final Type ARTIFACT_INFO_LIST_TYPE = new TypeToken<List<ArtifactInfo>>() {
-  }.getType();
+  private static final Type ARTIFACT_INFO_LIST_TYPE = new TypeToken<List<ArtifactInfo>>() { }.getType();
+
   private final LocationFactory locationFactory;
   private final NamespaceId namespaceId;
   private final RetryStrategy retryStrategy;
   private final RemoteClient remoteClientInternal;
-  private final Optional<ArtifactLocalizerClient> optionalArtifactLocalizerClient;
+  private final ArtifactLocalizerClient artifactLocalizerClient;
 
   @Inject
   RemoteArtifactManager(CConfiguration cConf, LocationFactory locationFactory, @Assisted NamespaceId namespaceId,
@@ -77,7 +78,7 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
     this.locationFactory = locationFactory;
     this.namespaceId = namespaceId;
     this.retryStrategy = retryStrategy;
-    this.optionalArtifactLocalizerClient = optionalArtifactLocalizerClient;
+    this.artifactLocalizerClient = optionalArtifactLocalizerClient.orElse(null);
     this.remoteClientInternal = remoteClientFactory.createRemoteClient(
       Constants.Service.APP_FABRIC_HTTP,
       new DefaultHttpRequestConfig(false),
@@ -139,8 +140,8 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
 
   @Override
   protected Location getArtifactLocation(ArtifactInfo artifactInfo,
-                                         @Nullable String artifactNamespace)
-    throws IOException, UnauthorizedException {
+                                         @Nullable String artifactNamespace) throws IOException, UnauthorizedException {
+
     String namespace;
     if (ArtifactScope.SYSTEM.equals(artifactInfo.getScope())) {
       namespace = NamespaceId.SYSTEM.getNamespace();
@@ -150,11 +151,13 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
       namespace = namespaceId.getNamespace();
     }
 
-    // If ArtifactLocalizerClient is set, use it to get the cached location of artifact
-    if (optionalArtifactLocalizerClient.isPresent()) {
+    // If ArtifactLocalizerClient is set, use it to get the cached location of artifact.
+    if (artifactLocalizerClient != null) {
       ArtifactId artifactId = new ArtifactId(namespace, artifactInfo.getName(), artifactInfo.getVersion());
       try {
-        return Locations.toLocation(optionalArtifactLocalizerClient.get().getArtifactLocation(artifactId));
+        // Always request for the unpacked version since the artifaction location is used for creation of
+        // artifact ClassLoader only.
+        return Locations.toLocation(artifactLocalizerClient.getUnpackedArtifactLocation(artifactId));
       } catch (ArtifactNotFoundException e) {
         throw new IOException(String.format("Artifact %s not found", artifactId), e);
       }

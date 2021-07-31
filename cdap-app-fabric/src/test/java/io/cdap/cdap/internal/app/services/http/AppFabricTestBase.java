@@ -61,7 +61,6 @@ import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.common.io.Locations;
-import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.test.PluginJarHelper;
@@ -319,8 +318,7 @@ public abstract class AppFabricTestBase {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.Service.MASTER_SERVICES_BIND_ADDRESS, InetAddress.getLoopbackAddress().getHostAddress());
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
-    cConf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
-    cConf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
+    cConf.set(Constants.AppFabric.OUTPUT_DIR, tmpFolder.newFolder("output").getAbsolutePath());
     cConf.setInt(Constants.Capability.AUTO_INSTALL_THREADS, 5);
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
     String updateSchedules = System.getProperty(Constants.AppFabric.APP_UPDATE_SCHEDULES);
@@ -566,8 +564,6 @@ public abstract class AppFabricTestBase {
     manifest.getMainAttributes().put(ManifestFields.BUNDLE_VERSION, artifactVersion);
 
     File artifactJar = buildAppArtifact(application, application.getSimpleName(), manifest);
-    File expandDir = tmpFolder.newFolder();
-    BundleJarUtil.prepareClassLoaderFolder(Locations.toLocation(artifactJar), expandDir);
 
     String versionedApiPath = getVersionedAPIPath("apps/", apiVersion, namespace);
     HttpRequest.Builder builder = HttpRequest.post(getEndPoint(versionedApiPath).toURL())

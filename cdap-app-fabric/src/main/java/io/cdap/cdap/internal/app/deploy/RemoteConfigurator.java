@@ -28,6 +28,7 @@ import io.cdap.cdap.app.deploy.ConfigResponse;
 import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
+import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.RemoteTaskExecutor;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.runtime.artifact.ApplicationClassCodec;
@@ -42,7 +43,7 @@ import java.nio.charset.StandardCharsets;
  */
 public class RemoteConfigurator implements Configurator {
 
-  private static final Gson GSON = new GsonBuilder()
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .registerTypeAdapter(ApplicationClass.class, new ApplicationClassCodec())
     .registerTypeAdapter(Requirements.class, new RequirementsCodec())

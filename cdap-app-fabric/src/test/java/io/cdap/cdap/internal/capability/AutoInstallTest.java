@@ -32,12 +32,16 @@ import io.cdap.cdap.internal.capability.autoinstall.HubPackage;
 import io.cdap.cdap.internal.capability.autoinstall.Spec;
 import io.cdap.cdap.proto.artifact.ArtifactRanges;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
+import org.junit.runners.BlockJUnit4ClassRunner;
 import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.modules.junit4.PowerMockRunnerDelegate;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -58,16 +62,20 @@ import static org.mockito.Matchers.anyString;
  * Tests for Auto install
  */
 @RunWith(PowerMockRunner.class)
+@PowerMockRunnerDelegate(BlockJUnit4ClassRunner.class)
 @PrepareForTest({Files.class, HubPackage.class, HttpClients.class})
 public class AutoInstallTest {
+
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+
   private static final Gson GSON = new Gson();
 
   @Test
   public void testAutoInstallPlugins() throws Exception {
     // Setup mocks
     CConfiguration cConf = CConfiguration.create();
-    cConf.set(Constants.CFG_LOCAL_DATA_DIR, "/tmp");
-    cConf.set(Constants.AppFabric.TEMP_DIR, "appfabric");
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     cConf.setInt(Constants.Capability.AUTO_INSTALL_THREADS, 5);
     ArtifactRepository artifactRepository = PowerMockito.mock(ArtifactRepository.class);
     RemoteClientFactory remoteClientFactory = new RemoteClientFactory(null,
@@ -82,7 +90,7 @@ public class AutoInstallTest {
     PowerMockito.mockStatic(Paths.class);
     PowerMockito.mockStatic(java.nio.file.Files.class);
 
-    File mockFile = new File("/tmp/mock");
+    File mockFile = TEMP_FOLDER.newFile();
     Mockito.when(File.createTempFile(anyString(), anyString(), any()))
       .thenReturn(mockFile);
     Path mockPath = PowerMockito.mock(Path.class);

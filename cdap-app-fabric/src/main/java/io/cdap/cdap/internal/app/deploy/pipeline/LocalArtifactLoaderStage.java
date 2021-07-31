@@ -18,8 +18,6 @@ package io.cdap.cdap.internal.app.deploy.pipeline;
 
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.metadata.Metadata;
 import io.cdap.cdap.api.metadata.MetadataEntity;
@@ -28,7 +26,6 @@ import io.cdap.cdap.app.deploy.ConfigResponse;
 import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
 import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.metadata.MetadataValidator;
@@ -51,8 +48,6 @@ import java.util.concurrent.TimeUnit;
  * </p>
  */
 public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
-
-  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
 
   private final Store store;
   private final AccessEnforcer accessEnforcer;
@@ -95,7 +90,11 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
     if (response.getExitCode() != 0) {
       throw new IllegalArgumentException("Failed to configure application: " + deploymentInfo);
     }
-    AppSpecInfo appSpecInfo = GSON.fromJson(response.getResponse(), AppSpecInfo.class);
+    AppSpecInfo appSpecInfo = response.getAppSpecInfo();
+    if (appSpecInfo == null) {
+      throw new IllegalArgumentException("Failed to configure application: " + deploymentInfo);
+    }
+
     ApplicationSpecification specification = appSpecInfo.getAppSpec();
     ApplicationId applicationId;
     if (appVersion == null) {

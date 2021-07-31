@@ -4324,6 +4324,14 @@
   </property>
 
   <property>
+    <name>task.worker.compression.enabled</name>
+    <value>true</value>
+    <description>
+      If true, enable compression for the network payloads with task workers.
+    </description>
+  </property>
+
+  <property>
     <name>task.worker.pool.check.interval</name>
     <value>5</value>
     <description>
@@ -4376,6 +4384,14 @@
     <value>true</value>
     <description>
       If true, kill the task worker container after it executes a request.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.preload.artifacts</name>
+    <value></value>
+    <description>
+      A command separated list of system artifacts to be preloaded into each task worker
     </description>
   </property>
 

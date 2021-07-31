@@ -28,6 +28,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.DirectoryClassLoader;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.lang.jar.ClassLoaderFolder;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.proto.DatasetModuleMeta;
 import org.apache.twill.filesystem.Location;
@@ -133,11 +134,11 @@ public class DirectoryClassLoaderProvider implements DatasetClassLoaderProvider 
         return key.parentClassLoader;
       }
       Location jarLocation = Locations.getLocationFromAbsolutePath(locationFactory, key.uri.getPath());
-      File unpackedDir = DirUtils.createTempDir(tmpDir);
-      BundleJarUtil.prepareClassLoaderFolder(jarLocation, unpackedDir);
-      LOG.trace("unpacking dataset jar from {} to {}.", key.uri.toString(), unpackedDir.getAbsolutePath());
+      ClassLoaderFolder classLoaderFolder = BundleJarUtil.prepareClassLoaderFolder(
+        jarLocation, () -> DirUtils.createTempDir(tmpDir));
+      LOG.trace("Unpacked dataset jar from {} to {}.", key.uri, classLoaderFolder.getDir());
 
-      return new DirectoryClassLoader(unpackedDir, key.parentClassLoader, "lib");
+      return new DirectoryClassLoader(classLoaderFolder.getDir(), key.parentClassLoader, "lib");
     }
   }
 }
