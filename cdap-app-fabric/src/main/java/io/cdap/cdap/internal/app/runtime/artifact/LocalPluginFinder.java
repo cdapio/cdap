@@ -23,11 +23,9 @@ import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginSelector;
 import io.cdap.cdap.common.ArtifactNotFoundException;
-import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
 import java.util.Map;
@@ -35,7 +33,7 @@ import java.util.Map;
 /**
  * Implementation of {@link PluginFinder} that uses {@link ArtifactRepository} directly.
  */
-public class LocalPluginFinder implements PluginFinder, ArtifactFinder {
+public class LocalPluginFinder implements PluginFinder {
 
   private final ArtifactRepository artifactRepository;
 
@@ -57,17 +55,6 @@ public class LocalPluginFinder implements PluginFinder, ArtifactFinder {
       return artifactRepository.findPlugin(pluginNamespaceId, parentRange, pluginType, pluginName, selector);
     } catch (IOException | ArtifactNotFoundException e) {
       // If there is error accessing artifact store or if the parent artifact is missing, just propagate
-      throw Throwables.propagate(e);
-    }
-  }
-
-  @Override
-  public Location getArtifactLocation(ArtifactId artifactId) throws ArtifactNotFoundException, IOException {
-    try {
-      return artifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId)).getDescriptor().getLocation();
-    } catch (ArtifactNotFoundException | IOException e) {
-      throw e;
-    } catch (Exception e) {
       throw Throwables.propagate(e);
     }
   }

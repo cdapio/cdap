@@ -50,6 +50,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.lang.jar.ClassLoaderFolder;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginClassLoader;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -139,11 +140,11 @@ final class DefaultArtifactInspector implements ArtifactInspector {
 
     Path stageDir = Files.createTempDirectory(tmpDir, artifactFile.getName());
     try {
-      File unpackedDir = BundleJarUtil.prepareClassLoaderFolder(
-        artifactLocation,
-        Files.createTempDirectory(stageDir, "unpacked-").toFile());
       try (
-        CloseableClassLoader artifactClassLoader = artifactClassLoaderFactory.createClassLoader(unpackedDir);
+        ClassLoaderFolder clFolder = BundleJarUtil.prepareClassLoaderFolder(
+          artifactLocation,
+          () -> Files.createTempDirectory(stageDir, "unpacked-").toFile());
+        CloseableClassLoader artifactClassLoader = artifactClassLoaderFactory.createClassLoader(clFolder.getDir());
         PluginInstantiator pluginInstantiator =
           new PluginInstantiator(cConf, parentClassLoader == null ? artifactClassLoader : parentClassLoader,
                                  Files.createTempDirectory(stageDir, "plugins-").toFile(),

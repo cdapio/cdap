@@ -87,6 +87,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -121,7 +122,6 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   private static final Type APPCLASS_SUMMARIES_TYPE = new TypeToken<List<ApplicationClassSummary>>() { }.getType();
   private static final Type APPCLASS_INFOS_TYPE = new TypeToken<List<ApplicationClassInfo>>() { }.getType();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
-  private static final Type ARTIFACT_INFO_LIST_TYPE = new TypeToken<List<ArtifactInfo>>() { }.getType();
   private static final Type BATCH_ARTIFACT_PROPERTIES_REQUEST =
     new TypeToken<List<ArtifactPropertiesRequest>>() { }.getType();
   private static final Type BATCH_ARTIFACT_PROPERTIES_RESPONSE =
@@ -664,7 +664,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
 
     try {
       // copy the artifact contents to local tmp directory
-      final File destination = File.createTempFile("artifact-", ".jar", tmpDir);
+      Files.createDirectories(tmpDir.toPath());
+      File destination = File.createTempFile("artifact-", ".jar", tmpDir);
 
       return new AbstractBodyConsumer(destination) {
 

@@ -21,7 +21,6 @@ import com.google.common.base.Strings;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
 import io.cdap.cdap.common.io.Locations;
-import io.cdap.cdap.common.utils.DirUtils;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -99,24 +98,17 @@ public class BundleJarUtilTest {
     BundleJarUtil.createJar(dir, destArchive);
 
     // Unpack the jar into a folder
-    File unpackedDir = TEMP_FOLDER.newFolder();
-    BundleJarUtil.prepareClassLoaderFolder(Locations.toLocation(destArchive), unpackedDir);
-    File[] unpackedFiles = unpackedDir.listFiles();
+    File unpackedDir = BundleJarUtil.prepareClassLoaderFolder(Locations.toLocation(destArchive),
+                                                              TEMP_FOLDER::newFolder).getDir();
 
-    // Create a new folder and attempt to unpack the already unpacked directory
-    File newTargetDir = TEMP_FOLDER.newFolder();
-    BundleJarUtil.prepareClassLoaderFolder(unpackedDir, newTargetDir);
+    // Unpack from the unpacked folder again. It should return the same folder
+    try (ClassLoaderFolder classLoaderFolder = BundleJarUtil.prepareClassLoaderFolder(unpackedDir,
+                                                                                      TEMP_FOLDER::newFolder)) {
+      Assert.assertEquals(unpackedDir, classLoaderFolder.getDir());
+    }
 
-    // Make sure the linking was done correctly, the two directories should be identical
-    areDirectoriesEqual(newTargetDir, unpackedDir);
-
-    // Delete the newly created directory and make sure the initial unpacked directory is unchanged
-    DirUtils.deleteDirectoryContents(newTargetDir);
-
+    // Closing the ClassLoaderFolder should have the original unpackedDir retained
     Assert.assertTrue(unpackedDir.exists());
-    File[] newUnpackedFiles = unpackedDir.listFiles();
-    Assert.assertNotNull(newUnpackedFiles);
-    Assert.assertEquals(newUnpackedFiles.length, unpackedFiles.length);
   }
 
   /**

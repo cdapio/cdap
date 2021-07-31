@@ -87,6 +87,16 @@ public class FileUtils {
     }
   }
 
+  /**
+   * Returns the file name extension. File extension is defined as suffix after the last `.` character.
+   * @param name name of the file
+   * @return the extension
+   */
+  public static String getExtension(String name) {
+    int idx = name.lastIndexOf('.');
+    return idx >= 0 ? name.substring(idx + 1) : "";
+  }
+
   private static int parsePermissionGroup(String permissions, int start) {
     return parseBit(permissions, start, 'r', 4)
       + parseBit(permissions, start + 1, 'w', 2)

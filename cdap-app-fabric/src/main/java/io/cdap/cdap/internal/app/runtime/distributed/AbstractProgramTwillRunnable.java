@@ -42,6 +42,7 @@ import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.lang.jar.ClassLoaderFolder;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -227,12 +228,12 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       new File(systemArgs.getOption(ProgramOptionConstants.APP_SPEC_FILE)), ApplicationSpecification.class);
 
     // Expand the program jar for creating classloader
-    File programJarDir = BundleJarUtil.prepareClassLoaderFolder(
-      programJarLocation, new File("expanded." + System.currentTimeMillis() + programJarLocation.getName()));
+    ClassLoaderFolder classLoaderFolder = BundleJarUtil.prepareClassLoaderFolder(
+      programJarLocation, () -> new File("expanded." + System.currentTimeMillis() + programJarLocation.getName()));
 
     program = Programs.create(cConf, programRunner,
                               new ProgramDescriptor(programOptions.getProgramId(), appSpec), programJarLocation,
-                              programJarDir);
+                              classLoaderFolder.getDir());
   }
 
   @Override

@@ -43,6 +43,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.lang.jar.ClassLoaderFolder;
 import io.cdap.cdap.common.twill.TwillAppNames;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
@@ -74,6 +75,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -206,22 +208,24 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
                                   ProgramDescriptor programDescriptor,
                                   ArtifactDetail artifactDetail, final File tempDir) throws IOException {
 
-    final Location programJarLocation = artifactDetail.getDescriptor().getLocation();
-
-    // Take a snapshot of the JAR file to avoid program mutation
-    final File unpackedDir = new File(tempDir, "unpacked");
-    unpackedDir.mkdirs();
+    Location programJarLocation = artifactDetail.getDescriptor().getLocation();
+    ClassLoaderFolder classLoaderFolder;
     try {
-      File programJar = Locations.linkOrCopy(programJarLocation, new File(tempDir, "program.jar"));
+      // If the program jar is not a directory, take a snapshot of the jar file to avoid mutation.
+      if (!programJarLocation.isDirectory()) {
+        programJarLocation = Locations.toLocation(Locations.linkOrCopy(programJarLocation,
+                                                                       new File(tempDir, "program.jar")));
+      }
       // Unpack the JAR file
-      BundleJarUtil.prepareClassLoaderFolder(programJar, unpackedDir);
+      classLoaderFolder = BundleJarUtil.prepareClassLoaderFolder(
+        programJarLocation, () -> Files.createTempDirectory(tempDir.toPath(), "unpacked").toFile());
     } catch (IOException ioe) {
       throw ioe;
     } catch (Exception e) {
       // should not happen
       throw Throwables.propagate(e);
     }
-    return Programs.create(cConf, programRunner, programDescriptor, programJarLocation, unpackedDir);
+    return Programs.create(cConf, programRunner, programDescriptor, programJarLocation, classLoaderFolder.getDir());
   }
 
   private Runnable createCleanupTask(final Object... resources) {

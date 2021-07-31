@@ -31,6 +31,7 @@ import io.cdap.cdap.common.lang.CombineClassLoader;
 import io.cdap.cdap.common.lang.Delegators;
 import io.cdap.cdap.common.lang.FilterClassLoader;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.lang.jar.ClassLoaderFolder;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.utils.DirUtils;
@@ -287,11 +288,11 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
       // It's ok to expand to a temp dir in local directory, as the YARN container will be gone.
       Location programLocation = Locations.toLocation(new File(contextConfig.getProgramJarName()));
       try {
-        File unpackDir = DirUtils.createTempDir(new File(System.getProperty("user.dir")));
-        LOG.info("Create ProgramClassLoader from {}, expand to {}", programLocation, unpackDir);
+        LOG.info("Create ProgramClassLoader from {}", programLocation);
 
-        BundleJarUtil.prepareClassLoaderFolder(programLocation, unpackDir);
-        return new ProgramClassLoader(contextConfig.getCConf(), unpackDir,
+        ClassLoaderFolder classLoaderFolder = BundleJarUtil.prepareClassLoaderFolder(
+          programLocation, () -> DirUtils.createTempDir(new File(System.getProperty("user.dir"))));
+        return new ProgramClassLoader(contextConfig.getCConf(), classLoaderFolder.getDir(),
                                       FilterClassLoader.create(contextConfig.getHConf().getClassLoader()));
       } catch (IOException e) {
         LOG.error("Failed to create ProgramClassLoader", e);

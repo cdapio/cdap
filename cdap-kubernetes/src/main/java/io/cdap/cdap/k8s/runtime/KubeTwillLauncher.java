@@ -125,6 +125,7 @@ public class KubeTwillLauncher implements MasterEnvironmentRunnable {
         }
       } finally {
         // Delete the pod itself to avoid pod goes into CrashLoopBackoff
+        // See https://github.com/kubernetes/kubernetes/issues/57291
         deletePod(podInfo);
       }
     }

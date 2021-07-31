@@ -26,6 +26,7 @@ import com.google.common.io.OutputSupplier;
 import io.cdap.cdap.common.lang.FunctionWithException;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.common.utils.FileUtils;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.hadoop.conf.Configuration;
@@ -232,6 +233,7 @@ public final class Locations {
    * @throws IOException if copying failed or file already exists
    */
   public static File linkOrCopy(Location location, File targetPath) throws IOException {
+    Files.createDirectories(targetPath.toPath().getParent());
     URI uri = location.toURI();
     if ("file".equals(uri.getScheme())) {
       try {
@@ -268,7 +270,7 @@ public final class Locations {
   public static void unpack(Location archive, File targetDir) throws IOException {
     DirUtils.mkdirs(targetDir);
 
-    String extension = com.google.common.io.Files.getFileExtension(archive.getName()).toLowerCase();
+    String extension = FileUtils.getExtension(archive.getName()).toLowerCase();
     switch (extension) {
       case "zip":
       case "jar":

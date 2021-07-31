@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,25 +14,18 @@
  * the License.
  */
 
-package io.cdap.cdap.app.deploy;
-
-import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
-
-import javax.annotation.Nullable;
+package io.cdap.cdap.common.lang;
 
 /**
- * Interface defining the response as returned by the execution of the {@link Configurator#config()} method.
+ * Represents a supplier of result. It allows exception to be thrown if failed to supply the result.
+ *
+ * @param <T> type of the result
+ * @param <E> type of the exception
  */
-public interface ConfigResponse {
+public interface ThrowingSupplier<T, E extends Exception> {
 
   /**
-   * Returns the {@link AppSpecInfo} or {@code null} if there is no response available.
+   * Supplies the result.
    */
-  @Nullable
-  AppSpecInfo getAppSpecInfo();
-
-  /**
-   * @return 0 if succeeded
-   */
-  int getExitCode();
+  T get() throws E;
 }
