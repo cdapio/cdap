@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.gateway.handlers;
 
+import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
@@ -47,6 +48,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+
 
 @Path(Constants.Gateway.API_VERSION_3)
 public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
@@ -305,6 +307,51 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendString(HttpResponseStatus.NOT_FOUND, con.getResponseCode() +
           " branch destination not found ");
     }
+  }
+
+  @POST
+  @Path("repos/github/pull/{repo}")
+  public void createPullRequest(FullHttpRequest request, HttpResponder responder,
+      @NotNull @PathParam("repo") String repo) throws Exception {
+    GitHubRepo gitHubRepo = gitStore.getRepo(repo);
+    JsonObject prInput = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), JsonObject.class);
+    String head = parseField("head", prInput);
+    String base = gitHubRepo.getDefaultBranch();
+    if (prInput.has("base") && !Strings.isNullOrEmpty(parseField("base", prInput))) {
+      base = parseField("base", prInput);
+    }
+    String title = parseField("title", prInput);
+    String body = parseField("body", prInput);
+
+    URL url = new URL(parseUrl(gitStore.getRepo(repo).getUrl()) + "/pulls");
+    HttpURLConnection con = (HttpURLConnection) url.openConnection();
+    con.setRequestMethod("POST");
+    con.setDoOutput(true);
+    String authString = new String(secureStore.get("system",
+        repo + "_auth_token").get(), StandardCharsets.UTF_8);
+    con.setRequestProperty("Authorization", authString);
+
+    JsonObject prOutput = new JsonObject();
+    prOutput.addProperty("head", head);
+    prOutput.addProperty("base", base);
+    prOutput.addProperty("title", title);
+    prOutput.addProperty("body", body);
+
+    DataOutputStream outputStream = new DataOutputStream(con.getOutputStream());
+    outputStream.write(prOutput.toString().getBytes(StandardCharsets.UTF_8));
+    outputStream.flush();
+    outputStream.close();
+
+    if (con.getResponseCode() == HttpURLConnection.HTTP_CREATED) {
+      responder.sendString(HttpResponseStatus.OK, "Pull Request created.");
+    } else if (con.getResponseCode() == 422) {
+      responder.sendString(HttpResponseStatus.UNAUTHORIZED,
+          "Please check your authorization key and parameters");
+    } else {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, con.getResponseCode() +
+          " pr destination not found ");
+    }
+
   }
 
   public String parseField(String field, JsonObject jsonObject) {
