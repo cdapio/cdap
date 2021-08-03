@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
@@ -434,17 +433,16 @@ final class DataprocConf {
   }
 
   /**
-   * @return GoogleCredential for use with Compute
+   * @return GoogleCredentials for use with Compute
    * @throws IOException if there was an error reading the account key
    */
-  GoogleCredential getComputeCredential() throws IOException {
+  GoogleCredentials getComputeCredential() throws IOException {
     if (accountKey == null) {
-      return GoogleCredential.getApplicationDefault();
+      return ComputeEngineCredentials.getOrCreate(tokenEndpoint);
     }
 
     try (InputStream is = new ByteArrayInputStream(accountKey.getBytes(StandardCharsets.UTF_8))) {
-      return GoogleCredential.fromStream(is)
-        .createScoped(Collections.singleton(CLOUD_PLATFORM_SCOPE));
+      return GoogleCredentials.fromStream(is).createScoped(Collections.singleton(CLOUD_PLATFORM_SCOPE));
     }
   }
 

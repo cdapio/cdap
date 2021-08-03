@@ -36,6 +36,7 @@ import com.google.api.services.compute.model.Instance;
 import com.google.api.services.compute.model.Network;
 import com.google.api.services.compute.model.NetworkList;
 import com.google.api.services.compute.model.NetworkPeering;
+import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.cloud.dataproc.v1.AutoscalingConfig;
 import com.google.cloud.dataproc.v1.Cluster;
 import com.google.cloud.dataproc.v1.ClusterConfig;
@@ -330,7 +331,8 @@ class DataprocClient implements AutoCloseable {
    */
   private static Compute getCompute(DataprocConf conf) throws GeneralSecurityException, IOException {
     HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-    return new Compute.Builder(httpTransport, JacksonFactory.getDefaultInstance(), conf.getComputeCredential())
+    return new Compute.Builder(httpTransport, JacksonFactory.getDefaultInstance(),
+                               new HttpCredentialsAdapter(conf.getComputeCredential()))
       .setApplicationName("cdap")
       .build();
   }
