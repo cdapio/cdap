@@ -227,7 +227,7 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
 
     String message = parseField("message", pipelineInput);
 
-    String rawContent = parseField("content", pipelineInput);
+    String rawContent = pipelineInput.getAsJsonObject("content").toString();
     GitHubRepo gitHubRepo = gitStore.getRepo(repo);
 
     URL url = new URL(parseUrl(gitHubRepo.getUrl()) + "/contents/" + path);
@@ -344,9 +344,12 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
 
     if (con.getResponseCode() == HttpURLConnection.HTTP_CREATED) {
       responder.sendString(HttpResponseStatus.OK, "Pull Request created.");
+    } else if (con.getResponseCode() == HttpURLConnection.HTTP_FORBIDDEN) {
+      responder.sendString(HttpResponseStatus.UNAUTHORIZED,
+          "Please verify your auth token.");
     } else if (con.getResponseCode() == 422) {
       responder.sendString(HttpResponseStatus.UNAUTHORIZED,
-          "Please check your authorization key and parameters");
+          "Please check your parameters");
     } else {
       responder.sendString(HttpResponseStatus.NOT_FOUND, con.getResponseCode() +
           " pr destination not found ");
