@@ -226,7 +226,7 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
     String path = parseField("path", pipelineInput);
 
     String message = parseField("message", pipelineInput);
-
+    
     String rawContent = pipelineInput.getAsJsonObject("content").toString();
     GitHubRepo gitHubRepo = gitStore.getRepo(repo);
 
@@ -358,8 +358,9 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   public String parseField(String field, JsonObject jsonObject) {
+    int len = jsonObject.getAsJsonPrimitive(field).toString().length();
     return jsonObject.getAsJsonPrimitive(field).toString()
-        .replace("\"", "");
+        .substring(1, len - 1);
   }
 
   public String parseUrl(String url) throws Exception {
