@@ -167,9 +167,12 @@ public class RESTClient {
   }
 
   private Map<String, String> getAuthHeaders(AccessToken accessToken) {
-    Map<String, String> headers = ImmutableMap.of();
+    Map<String, String> headers = clientConfig.getAdditionalHeaders();
     if (accessToken != null) {
-      headers = ImmutableMap.of(HttpHeaders.AUTHORIZATION, accessToken.getTokenType() + " " + accessToken.getValue());
+      ImmutableMap.Builder<String, String> headersBuilder = ImmutableMap.builder();
+      headersBuilder.putAll(headers);
+      headersBuilder.put(HttpHeaders.AUTHORIZATION, accessToken.getTokenType() + " " + accessToken.getValue());
+      headers = headersBuilder.build();
     }
     return headers;
   }
