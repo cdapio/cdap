@@ -25,6 +25,7 @@ import io.cdap.cdap.api.security.store.SecureStoreManager;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.store.GitHubStore;
+import io.cdap.cdap.internal.github.GitHubIO;
 import io.cdap.cdap.internal.github.GitHubRepo;
 import io.cdap.cdap.proto.id.SecureKeyId;
 import io.cdap.http.HttpResponder;
@@ -174,15 +175,15 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
       @NotNull @PathParam("repo") String repo) throws Exception {
 
     try {
-      JsonObject jObj = GSON
-          .fromJson(request.content().toString(StandardCharsets.UTF_8), JsonObject.class);
+      GitHubIO input = GSON
+          .fromJson(request.content().toString(StandardCharsets.UTF_8), GitHubIO.class);
 
       String branch = gitStore.getRepo(repo).getDefaultBranch();
-      if (jObj.has("branch")) {
-        branch = parseField("branch", jObj);
+      if (!Strings.isNullOrEmpty(input.getBranch())) {
+        branch = input.getBranch();
       }
 
-      String path = parseField("path", jObj);
+      String path = input.getPath();
 
       GitHubRepo gitHubRepo = gitStore.getRepo(repo);
       URL url = new URL(parseUrl(gitHubRepo.getUrl()) + "/contents/" + path + "?ref=" + branch);
@@ -213,24 +214,19 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
   public void checkOutRepo(FullHttpRequest request, HttpResponder responder,
       @NotNull @PathParam("repo") String repo) throws Exception {
 
-    JsonObject pipelineInput = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), JsonObject.class);
+    GitHubIO pipelineInput = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), GitHubIO.class);
 
     String branch = gitStore.getRepo(repo).getDefaultBranch();
-    if (pipelineInput.has("branch")) {
-      branch = parseField("branch", pipelineInput);
+    if (!Strings.isNullOrEmpty(pipelineInput.getBranch())) {
+      branch = pipelineInput.getBranch();
       if (!branchExists(branch, gitStore.getRepo(repo))) {
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Please specify a valid branch");
       }
     }
 
-    String path = parseField("path", pipelineInput);
-
-    String message = parseField("message", pipelineInput);
-    
-    String rawContent = pipelineInput.getAsJsonObject("content").toString();
     GitHubRepo gitHubRepo = gitStore.getRepo(repo);
 
-    URL url = new URL(parseUrl(gitHubRepo.getUrl()) + "/contents/" + path);
+    URL url = new URL(parseUrl(gitHubRepo.getUrl()) + "/contents/" + pipelineInput.getPath());
     HttpURLConnection con = (HttpURLConnection) url.openConnection();
 
     con.setRequestMethod("PUT");
@@ -241,12 +237,11 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
 
     JsonObject pipelineOutput = new JsonObject();
 
-    pipelineOutput.addProperty("message", message);
-    pipelineOutput.addProperty("content", Base64.getEncoder().encodeToString(rawContent.getBytes(
-          StandardCharsets.UTF_8)));
+    pipelineOutput.addProperty("message", pipelineInput.getCommitMessage());
+    pipelineOutput.addProperty("content", pipelineInput.getEncodedPipeline());
     pipelineOutput.addProperty("branch", branch);
 
-    String sha = getFileSha(path, branch, gitHubRepo);
+    String sha = getFileSha(pipelineInput.getPath(), branch, gitHubRepo);
     if (!sha.equals("not found")) {
         pipelineOutput.addProperty("sha", sha);
     }
@@ -264,7 +259,7 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
             + "provide a sha in order to update it");
     } else if (con.getResponseCode() == 422) {
         responder.sendString(HttpResponseStatus.UNAUTHORIZED,
-            "Please check your authorization key and file path");
+            "Please check your authorization key and file path \n" + pipelineOutput.toString());
     } else {
         responder.sendString(HttpResponseStatus.NOT_FOUND, con.getResponseCode() +
             " file destination not found ");
@@ -276,8 +271,8 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
   public void createRepoBranch(FullHttpRequest request, HttpResponder responder,
                                           @NotNull @PathParam("repo") String repo) throws Exception {
 
-    JsonObject branchInput = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), JsonObject.class);
-    String branch = parseField("branch", branchInput);
+    GitHubIO branchInput = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), GitHubIO.class);
+    String branch = branchInput.getBranch();
     String sha = getBranchSha(gitStore.getRepo(repo).getDefaultBranch(), gitStore.getRepo(repo));
 
     URL url = new URL(parseUrl(gitStore.getRepo(repo).getUrl()) + "/git/refs");
