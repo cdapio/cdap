@@ -25,6 +25,7 @@ import io.cdap.cdap.api.security.store.SecureStoreManager;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.store.GitHubStore;
+import io.cdap.cdap.internal.github.GitHubDetails;
 import io.cdap.cdap.internal.github.GitHubIO;
 import io.cdap.cdap.internal.github.GitHubRepo;
 import io.cdap.cdap.proto.id.SecureKeyId;
@@ -178,10 +179,8 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
       GitHubIO input = GSON
           .fromJson(request.content().toString(StandardCharsets.UTF_8), GitHubIO.class);
 
-      String branch = gitStore.getRepo(repo).getDefaultBranch();
-      if (!Strings.isNullOrEmpty(input.getBranch())) {
-        branch = input.getBranch();
-      }
+      String branch = !Strings.isNullOrEmpty(input.getBranch()) ?
+          input.getBranch() : gitStore.getRepo(repo).getDefaultBranch();
 
       String path = input.getPath();
 
@@ -216,12 +215,10 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
 
     GitHubIO pipelineInput = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), GitHubIO.class);
 
-    String branch = gitStore.getRepo(repo).getDefaultBranch();
-    if (!Strings.isNullOrEmpty(pipelineInput.getBranch())) {
-      branch = pipelineInput.getBranch();
-      if (!branchExists(branch, gitStore.getRepo(repo))) {
+    String branch = !Strings.isNullOrEmpty(pipelineInput.getBranch()) ?
+        pipelineInput.getBranch() : gitStore.getRepo(repo).getDefaultBranch();
+    if (!branchExists(branch, gitStore.getRepo(repo))) {
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Please specify a valid branch");
-      }
     }
 
     GitHubRepo gitHubRepo = gitStore.getRepo(repo);
@@ -309,14 +306,12 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
   public void createPullRequest(FullHttpRequest request, HttpResponder responder,
       @NotNull @PathParam("repo") String repo) throws Exception {
     GitHubRepo gitHubRepo = gitStore.getRepo(repo);
-    JsonObject prInput = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), JsonObject.class);
-    String head = parseField("head", prInput);
-    String base = gitHubRepo.getDefaultBranch();
-    if (prInput.has("base") && !Strings.isNullOrEmpty(parseField("base", prInput))) {
-      base = parseField("base", prInput);
-    }
-    String title = parseField("title", prInput);
-    String body = parseField("body", prInput);
+    GitHubDetails prInput = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), GitHubDetails.class);
+    String head = prInput.getHead();
+    String base = !Strings.isNullOrEmpty(prInput.getBase()) ?
+        prInput.getBase() : gitHubRepo.getDefaultBranch();
+    String title = prInput.getTitle();
+    String body = prInput.getBody();
 
     URL url = new URL(parseUrl(gitStore.getRepo(repo).getUrl()) + "/pulls");
     HttpURLConnection con = (HttpURLConnection) url.openConnection();
