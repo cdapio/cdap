@@ -38,6 +38,7 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import javax.annotation.Nullable;
 
 /**
@@ -454,6 +455,37 @@ public final class Schema implements Serializable {
       throw new IllegalArgumentException("Record name cannot be null.");
     }
     return new Schema(Type.RECORD, null, null, null, null, null, name, null, null, 0, 0);
+  }
+
+  /**
+   * Creates a {@link Type#RECORD RECORD} {@link Schema} with a name based its {@link Field Fields}.
+   * The ordering of the fields inside the record would be the same as the one being passed in.
+   *
+   * @param fields All the fields that the record contains.
+   * @return A {@link Schema} of {@link Type#RECORD RECORD} type.
+   */
+  public static Schema recordOf(Field...fields) {
+    return recordOf(Arrays.asList(fields));
+  }
+
+  /**
+   * Creates a {@link Type#RECORD RECORD} {@link Schema} with a name based on its {@link Field Fields}.
+   * The ordering of the fields inside the record would be the same as the {@link Iterable#iterator()} order.
+   *
+   * @param fields All the fields that the record contains.
+   * @return A {@link Schema} of {@link Type#RECORD RECORD} type.
+   */
+  public static Schema recordOf(Iterable<Field> fields) {
+    // We generate a temporary random name for the record.
+    // The name has to be different from all its child schemas, as AVRO does not allow to redefine a record
+    // The name will not be part of the final hash
+    String tempName = UUID.randomUUID().toString().replace("-", "");
+    Schema tempRecord = recordOf(tempName, fields);
+
+    // SchemaHash ignores the record name when receiving false as its second parameter.
+    SchemaHash schemaHash = new SchemaHash(tempRecord, false);
+    String hashName = schemaHash.toString();
+    return recordOf(hashName, fields);
   }
 
   /**
