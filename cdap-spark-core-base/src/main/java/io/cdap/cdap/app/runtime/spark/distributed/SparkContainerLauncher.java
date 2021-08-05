@@ -64,13 +64,33 @@ public final class SparkContainerLauncher {
   };
 
   /**
+   * Main method is used as the entrypoint to launch classes in Kubernetes images.
+   * The first argument should be the name of the class to delegate to, which must have a main method.
+   * Every other argument will be passed into the delegate main method.
+   */
+  public static void main(String[] args) throws Exception {
+    launch(args[0], args.length > 1 ? Arrays.copyOfRange(args, 1, args.length) : new String[0], false);
+  }
+
+  /**
    * Launches the given main class. The main class will be loaded through the {@link SparkContainerClassLoader}.
    *
    * @param mainClassName the main class to launch
    * @param args arguments for the main class
    */
-  @SuppressWarnings("unused")
   public static void launch(String mainClassName, String[] args) throws Exception {
+    launch(mainClassName, args, true);
+  }
+
+  /**
+   * Launches the given main class. The main class will be loaded through the {@link SparkContainerClassLoader}.
+   *
+   * @param mainClassName the main class to launch
+   * @param args arguments for the main class
+   * @param removeMainClass whether to remove the jar for the main class from the classloader
+   */
+  @SuppressWarnings("unused")
+  private static void launch(String mainClassName, String[] args, boolean removeMainClass) throws Exception {
     Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
     ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
     Set<URL> urls = ClassLoaders.getClassLoaderURLs(systemClassLoader, new LinkedHashSet<URL>());
@@ -78,7 +98,9 @@ public final class SparkContainerLauncher {
     // Remove the URL that contains the given main classname to avoid infinite recursion.
     // This is needed because we generate a class with the same main classname in order to intercept the main()
     // method call from the container launch script.
-    urls.remove(getURLByClass(systemClassLoader, mainClassName));
+    if (removeMainClass) {
+      urls.remove(getURLByClass(systemClassLoader, mainClassName));
+    }
 
     // Remove the first scala from the set of classpath. This ensure the one from Spark is used for spark
     removeNonSparkJar(systemClassLoader, "scala.language", urls);

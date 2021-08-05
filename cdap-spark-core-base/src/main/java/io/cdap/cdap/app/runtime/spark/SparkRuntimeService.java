@@ -271,12 +271,13 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
         // Localize the spark.jar archive, which contains all CDAP and dependency jars
         File sparkJar = new File(tempDir, CDAP_SPARK_JAR);
-        classpath = joiner.join(Iterables.transform(buildDependencyJar(sparkJar), new Function<String, String>() {
-          @Override
-          public String apply(String name) {
-            return Paths.get("$PWD", CDAP_SPARK_JAR, name).toString();
-          }
-        }));
+        classpath = joiner.join(Iterables.transform(
+          SparkDependencyJar.buildDependencyJar(sparkJar), new Function<String, String>() {
+            @Override
+            public String apply(String name) {
+              return Paths.get("$PWD", CDAP_SPARK_JAR, name).toString();
+            }
+          }));
         localizeResources.add(new LocalizeResource(sparkJar, true));
 
         // Localize logback if there is one. It is placed at the beginning of the classpath
