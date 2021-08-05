@@ -26,17 +26,34 @@ import java.util.Properties;
  * A dummy {@link AuthenticationContext} to be used in tests.
  */
 public class AuthenticationTestContext implements AuthenticationContext {
+  private static final String PRINCIPAL_NAME = "user.name";
+  private static final String PRINCIPAL_CREDENTIAL_TYPE = "user.credential.type";
+  private static final String PRINCIPAL_CREDENTIAL_VALUE = "user.credential.value";
+
   @Override
   public Principal getPrincipal() {
     Properties properties = System.getProperties();
-    String credentialValue = properties.getProperty("user.credential.value");
-    String credentialTypeStr = properties.getProperty("user.credential.type");
+    String credentialValue = properties.getProperty(PRINCIPAL_CREDENTIAL_VALUE);
+    String credentialTypeStr = properties.getProperty(PRINCIPAL_CREDENTIAL_TYPE);
     Credential credential = null;
     if (credentialValue != null && credentialTypeStr != null) {
       Credential.CredentialType credentialType = Credential.CredentialType
         .valueOf(credentialTypeStr);
       credential = new Credential(credentialValue, credentialType);
     }
-    return new Principal(System.getProperty("user.name"), Principal.PrincipalType.USER, credential);
+    return new Principal(System.getProperty(PRINCIPAL_NAME), Principal.PrincipalType.USER, credential);
+  }
+
+  /**
+   * Sets the principal for this test authentication context.
+   * @param principal The principal to act as
+   */
+  public static void actAsPrincipal(Principal principal) {
+    System.setProperty(PRINCIPAL_NAME, principal.getName());
+    Credential credential = principal.getFullCredential();
+    if (credential != null) {
+      System.setProperty(PRINCIPAL_CREDENTIAL_TYPE, credential.getType().name());
+      System.setProperty(PRINCIPAL_CREDENTIAL_VALUE, credential.getValue());
+    }
   }
 }

@@ -26,6 +26,10 @@ import java.util.Objects;
  * Uniquely identifies a CDAP instance.
  */
 public class InstanceId extends EntityId {
+
+  // Empty string denotes the existing instance.
+  public static final InstanceId SELF = new InstanceId("");
+
   private final String instance;
   private transient Integer hashCode;
 
