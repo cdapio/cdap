@@ -222,6 +222,7 @@ public class Authorizable {
                                  Map<EntityType, String> entityParts) {
     switch (entityType) {
       case INSTANCE:
+      case SYSTEM_SERVICE:
       case NAMESPACE:
       case KERBEROSPRINCIPAL:
         if (parts.size() != 1 && index == (parts.size() - 1)) {
