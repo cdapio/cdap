@@ -248,7 +248,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         }
 
         // Create and localize the launcher jar, which is for setting up services and classloader for spark containers
-        localizeResources.add(new LocalizeResource(createLauncherJar(tempDir)));
+        //localizeResources.add(new LocalizeResource(createLauncherJar(tempDir)));
 
         // Create metrics conf file in the current directory since
         // the same value for the "spark.metrics.conf" config needs to be used for both driver and executor processes
@@ -270,6 +270,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         Joiner joiner = Joiner.on(File.pathSeparator).skipNulls();
 
         // Localize the spark.jar archive, which contains all CDAP and dependency jars
+        /*
         File sparkJar = new File(tempDir, CDAP_SPARK_JAR);
         classpath = joiner.join(Iterables.transform(buildDependencyJar(sparkJar), new Function<String, String>() {
           @Override
@@ -278,6 +279,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
           }
         }));
         localizeResources.add(new LocalizeResource(sparkJar, true));
+        */
 
         // Localize logback if there is one. It is placed at the beginning of the classpath
         File logbackJar = ProgramRunners.createLogbackJar(new File(tempDir, "logback.xml.jar"));
@@ -542,11 +544,11 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     // classpath so adding them is not required. In non-local mode where spark driver and executors runs in a different
     // jvm we are adding these to their classpath.
     if (!localMode) {
-      String extraClassPath = Paths.get("$PWD", CDAP_LAUNCHER_JAR) + File.pathSeparator + classpath;
+      //String extraClassPath = Paths.get("$PWD", CDAP_LAUNCHER_JAR) + File.pathSeparator + classpath;
 
       // Set extraClasspath config by appending user specified extra classpath
-      prependConfig(configs, "spark.driver.extraClassPath", extraClassPath, File.pathSeparator);
-      prependConfig(configs, "spark.executor.extraClassPath", extraClassPath, File.pathSeparator);
+      //prependConfig(configs, "spark.driver.extraClassPath", extraClassPath, File.pathSeparator);
+      //prependConfig(configs, "spark.executor.extraClassPath", extraClassPath, File.pathSeparator);
 
       // Prepend the extra java opts
       prependConfig(configs, "spark.driver.extraJavaOptions", cConf.get(Constants.AppFabric.PROGRAM_JVM_OPTS), " ");

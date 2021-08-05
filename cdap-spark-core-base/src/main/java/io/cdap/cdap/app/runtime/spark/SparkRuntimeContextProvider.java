@@ -236,14 +236,12 @@ public final class SparkRuntimeContextProvider {
       Injector injector = createInjector(cConf, hConf, contextConfig.getProgramId(), programOptions);
       System.err.println("created injector");
 
-      /*
       System.err.println("getting log appender");
       LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
       System.err.println("initializing log appender");
       logAppenderInitializer.initialize();
       System.err.println("initialized log appender");
       SystemArguments.setLogLevel(programOptions.getUserArguments(), logAppenderInitializer);
-       */
       ProxySelector oldProxySelector = ProxySelector.getDefault();
       if (clusterMode == ClusterMode.ISOLATED) {
         RuntimeMonitors.setupMonitoring(injector, programOptions);

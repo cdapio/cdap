@@ -48,6 +48,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -173,6 +174,10 @@ public final class SparkContainerLauncher {
     Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
     ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
     Set<URL> urls = ClassLoaders.getClassLoaderURLs(systemClassLoader, new LinkedHashSet<URL>());
+    System.err.println("ashau - system classloader = " + systemClassLoader);
+    if (systemClassLoader instanceof URLClassLoader) {
+      System.err.println("ashau - urls = " + ((URLClassLoader) systemClassLoader).getURLs());
+    }
 
     // Remove the URL that contains the given main classname to avoid infinite recursion.
     // This is needed because we generate a class with the same main classname in order to intercept the main()
@@ -202,12 +207,23 @@ public final class SparkContainerLauncher {
 
     boolean rewriteCheckpointTempFileName = Boolean.parseBoolean(
       System.getProperty(SparkRuntimeUtils.STREAMING_CHECKPOINT_REWRITE_ENABLED, "false"));
+    System.err.println("ashau - rewrite checkpoint = " + rewriteCheckpointTempFileName);
 
     // Creates the SparkRunnerClassLoader for class rewriting and it will be used for the rest of the execution.
     // Use the extension classloader as the parent instead of the system classloader because
     // Spark classes are in the system classloader which we want to rewrite.
-    ClassLoader classLoader = new SparkContainerClassLoader(urls.toArray(new URL[0]), parentClassLoader,
-                                                            rewriteCheckpointTempFileName);
+    System.err.println("ashau - creating container classloader");
+    System.err.println("ashau - parent classloader = " + parentClassLoader);
+    System.err.println("ashau - urls.size = " + urls.size());
+    ClassLoader classLoader;
+    try {
+      classLoader = new SparkContainerClassLoader(urls.toArray(new URL[0]), parentClassLoader,
+                                                  rewriteCheckpointTempFileName);
+    } catch (Throwable t) {
+      System.err.println("ashau - error creating container classloader");
+      t.printStackTrace(System.err);
+      throw t;
+    }
     System.err.println("ashau - created container classloader");
 
     // Sets the context classloader and launch the actual Spark main class.
@@ -215,7 +231,6 @@ public final class SparkContainerLauncher {
 
     // Create SLF4J logger from the context classloader. It has to be created from that classloader in order
     // for logs in this class to be in the same context as the one used in Spark.
-    /*
     Object logger = createLogger(classLoader);
     System.err.println("ashau - created logger");
 
@@ -230,8 +245,6 @@ public final class SparkContainerLauncher {
       e.printStackTrace(System.err);
       log(logger, "warn", "Failed to invoke SLF4JBridgeHandler.install() required for jul-to-slf4j bridge", e);
     }
-     */
-    Object logger = null;
 
     // Get the SparkRuntimeContext to initialize all necessary services and logging context
     // Need to do it using the SparkRunnerClassLoader through reflection.

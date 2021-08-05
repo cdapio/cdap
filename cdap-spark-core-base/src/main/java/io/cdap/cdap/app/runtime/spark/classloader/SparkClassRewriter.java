@@ -156,7 +156,9 @@ public class SparkClassRewriter implements ClassRewriter {
     this.resourceLookup = resourceLookup;
     this.rewriteYarnClient = rewriteYarnClient;
     this.rewriteCheckpointTempFileName = rewriteCheckpointTempFileName;
+    System.err.println("ashau - spark_yarn_mode = " + System.getenv("SPARK_YARN_MODE"));
     this.distributed = Boolean.parseBoolean(System.getenv("SPARK_YARN_MODE"));
+    System.err.println("ashau - distributed = " + distributed);
   }
 
   @Nullable

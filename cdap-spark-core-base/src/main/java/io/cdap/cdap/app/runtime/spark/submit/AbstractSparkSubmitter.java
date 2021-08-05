@@ -290,12 +290,14 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     String files = Joiner.on(',')
         .join(Iterables.transform(Iterables.filter(resources, Predicates.not(ARCHIVE_FILTER)), RESOURCE_TO_PATH));
 
+    /*
     if (!archives.isEmpty()) {
       builder.add("--archives").add(archives);
     }
     if (!files.isEmpty()) {
       builder.add("--files").add(files);
     }
+    */
     try {
       pushFilesAndArchives(files, archives);
     } catch (Exception e) {
@@ -316,11 +318,13 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
       builder.add("--class").add(SparkMainWrapper.class.getName());
     }
 
+    /*
     if ("file".equals(jobFile.getScheme())) {
       builder.add(jobFile.getPath());
     } else {
       builder.add(jobFile.toString());
-    }
+    }*/
+    builder.add("local:/opt/cdap/cdap-spark-core/cdap-spark-core.jar");
 
     if (!isPySpark) {
       // Add extra arguments for easily identifying the program from command line.

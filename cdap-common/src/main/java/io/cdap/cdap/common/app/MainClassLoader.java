@@ -137,10 +137,15 @@ public class MainClassLoader extends InterceptableClassLoader {
    */
   public MainClassLoader(URL[] urls, ClassLoader parent) {
     super(urls, parent);
+    System.err.println("ashau - in MainClassLoader, creating class rewriters");
     this.guavaClassRewriter = new GuavaClassRewriter();
+    System.err.println("ashau - created guava class rewriter");
     this.datasetRewriter = new DatasetClassRewriter();
+    System.err.println("ashau - created dataset class rewriter");
     this.authEnforceRewriter = new AuthEnforceRewriter();
+    System.err.println("ashau - created auth class rewriter");
     this.resourceLookup = ClassLoaders.createClassResourceLookup(this);
+    System.err.println("ashau - created resource lookup");
     this.cache = new HashMap<>();
   }
 
