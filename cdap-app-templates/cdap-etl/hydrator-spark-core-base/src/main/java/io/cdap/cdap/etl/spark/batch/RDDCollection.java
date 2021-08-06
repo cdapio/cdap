@@ -70,6 +70,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 
+import static org.apache.spark.sql.functions.coalesce;
 import static org.apache.spark.sql.functions.floor;
 
 /**
@@ -137,6 +138,8 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
     Integer joinPartitions = joinRequest.getNumPartitions();
     boolean seenRequired = joinRequest.isLeftRequired();
     Dataset<Row> joined = left;
+    List<List<Column>> listOfListOfLeftCols = new ArrayList<>();
+
     for (JoinCollection toJoin : joinRequest.getToJoin()) {
       SparkCollection<StructuredRecord> data = (SparkCollection<StructuredRecord>) toJoin.getData();
       StructType sparkSchema = DataFrames.toDataType(toJoin.getSchema());
@@ -174,11 +177,24 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
         leftSparkSchema = leftSparkSchema.add(saltColumn, DataTypes.IntegerType, false);
       }
 
-      Iterator<Column> leftIter = leftJoinColumns.iterator();
-      Iterator<Column> rightIter = rightJoinColumns.iterator();
-      Column joinOn = eq(leftIter.next(), rightIter.next(), joinRequest.isNullSafe());
-      while (leftIter.hasNext()) {
-        joinOn = joinOn.and(eq(leftIter.next(), rightIter.next(), joinRequest.isNullSafe()));
+      Column joinOn;
+      List<Column> finalLeftJoinColumns = leftJoinColumns; //Making effectively final to use in streams
+
+      if (seenRequired) {
+        joinOn = IntStream.range(0, leftJoinColumns.size())
+          .mapToObj(i -> eq(finalLeftJoinColumns.get(i), rightJoinColumns.get(i), joinRequest.isNullSafe()))
+          .reduce((a, b) -> a.and(b)).get();
+      } else {
+        // For the case when all joins are outer. Collect left keys at each level (each iteration)
+        // coalesce these keys at each level and compare with right
+        joinOn = IntStream.range(0, leftJoinColumns.size())
+          .mapToObj(i -> {
+            collectLeftJoinOnCols(listOfListOfLeftCols, i, finalLeftJoinColumns.get(i));
+            return eq(getLeftJoinOnCoalescedColumn(finalLeftJoinColumns.get(i), i, listOfListOfLeftCols),
+                      rightJoinColumns.get(i),
+                      joinRequest.isNullSafe());
+          })
+          .reduce((a, b) -> a.and(b)).get();
       }
 
       String joinType;
@@ -246,7 +262,12 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
            in an empty output, as A.id is always null in the TMP1 dataset. In general, the principle is to join on the
            required fields and not on the optional fields when possible.
        */
-      if (toJoin.isRequired()) {
+      /*
+           Additionally if none of the datasets are required until now, which means all of the joines will outer.
+           In this case also we need to pass on the join columns as we need to compare using coalesce of all previous
+           columns with the right dataset
+       */
+      if (toJoin.isRequired() || !seenRequired) {
         leftJoinColumns = rightJoinColumns;
       }
     }
@@ -456,5 +477,19 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
     }
 
     return wrap(groupedDataset.toJavaRDD());
+  }
+
+  private void collectLeftJoinOnCols(List<List<Column>> listOfListOfColumns, int index, Column leftJoinOnCurrent) {
+    if (listOfListOfColumns.size() <= index) {
+      listOfListOfColumns.add(new ArrayList<Column>());
+    }
+    listOfListOfColumns.get(index).add(leftJoinOnCurrent);
+  }
+
+  private Column getLeftJoinOnCoalescedColumn(Column leftJoinOnCurrent, int index,
+                                              List<List<Column>> listOfListOfColumns) {
+    Column[] colArray = new Column[listOfListOfColumns.get(index).size()];
+    Column coalesedCol = coalesce(listOfListOfColumns.get(index).toArray(colArray));
+    return coalesedCol;
   }
 }
