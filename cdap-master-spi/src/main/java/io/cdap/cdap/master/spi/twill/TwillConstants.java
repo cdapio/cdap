@@ -22,4 +22,5 @@ package io.cdap.cdap.master.spi.twill;
 public class TwillConstants {
   // Configuration used to determine whether to use V1Job to launch twill runnables.
   public static final String PROGRAM_RUNTIME_ENV = "program.runtime.env";
+  public static final String PROGRAM_RUNTIME_ENV_PARALLELISM = "program.runtime.env.parallelism";
 }
