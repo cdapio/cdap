@@ -18,6 +18,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.internal.remote.InternalAuthenticator;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
@@ -41,12 +42,14 @@ public class ArtifactLocalizerClient {
 
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactLocalizerClient.class);
   private final String sidecarBaseURL;
+  private final InternalAuthenticator internalAuthenticator;
 
   @Inject
-  ArtifactLocalizerClient(CConfiguration cConf) {
+  ArtifactLocalizerClient(CConfiguration cConf, InternalAuthenticator internalAuthenticator) {
     this.sidecarBaseURL = String
       .format("http://localhost:%d/%s/worker", cConf.getInt(Constants.ArtifactLocalizer.PORT),
               Constants.Gateway.INTERNAL_API_VERSION_3_TOKEN);
+    this.internalAuthenticator = internalAuthenticator;
   }
 
   /**
@@ -88,8 +91,9 @@ public class ArtifactLocalizerClient {
     }
 
     LOG.debug("Sending request to {}", url);
-    HttpRequest httpRequest = HttpRequest.builder(HttpMethod.GET, url).build();
-    HttpResponse httpResponse = HttpRequests.execute(httpRequest);
+    HttpRequest.Builder httpRequestBuilder = HttpRequest.builder(HttpMethod.GET, url);
+    internalAuthenticator.applyInternalAuthenticationHeaders(httpRequestBuilder::addHeader);
+    HttpResponse httpResponse = HttpRequests.execute(httpRequestBuilder.build());
 
     if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
       if (httpResponse.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {

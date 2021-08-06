@@ -21,6 +21,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
+import io.cdap.cdap.common.internal.remote.InternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.service.RetryStrategyType;
@@ -52,6 +53,8 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
 
   private CConfiguration createCConf(int port) {
     CConfiguration cConf = CConfiguration.create();
+    cConf.setBoolean(Constants.Security.ENABLED, true);
+    cConf.setBoolean(Constants.Security.INTERNAL_AUTH_ENABLED, true);
     cConf.set(Constants.TaskWorker.ADDRESS, "localhost");
     cConf.setInt(Constants.TaskWorker.PORT, port);
     cConf.setBoolean(Constants.Security.SSL.INTERNAL_ENABLED, false);
@@ -92,12 +95,20 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
     this.localizerService.shutDown();
   }
 
+  private void setAuthContext() {
+    System.setProperty("user.name", "alice");
+    System.setProperty("user.credential.value", "test-credential");
+    System.setProperty("user.credential.type", "INTERNAL");
+  }
+
   @Test
   public void testUnpackArtifact() throws Exception {
 
     LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
     ArtifactRepository artifactRepository = getInjector().getInstance(ArtifactRepository.class);
-    ArtifactLocalizerClient client = new ArtifactLocalizerClient(cConf);
+    setAuthContext();
+    InternalAuthenticator internalAuthenticator = new DefaultInternalAuthenticator(new AuthenticationTestContext());
+    ArtifactLocalizerClient client = new ArtifactLocalizerClient(cConf, internalAuthenticator);
 
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "some-task", "1.0.0-SNAPSHOT");
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, TaskWorkerServiceTest.TestRunnableClass.class);
@@ -149,7 +160,9 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
 
     LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
     ArtifactRepository artifactRepository = getInjector().getInstance(ArtifactRepository.class);
-    ArtifactLocalizerClient client = new ArtifactLocalizerClient(cConf);
+    setAuthContext();
+    InternalAuthenticator internalAuthenticator = new DefaultInternalAuthenticator(new AuthenticationTestContext());
+    ArtifactLocalizerClient client = new ArtifactLocalizerClient(cConf, internalAuthenticator);
 
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "some-task", "1.0.0-SNAPSHOT");
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, TaskWorkerServiceTest.TestRunnableClass.class);
