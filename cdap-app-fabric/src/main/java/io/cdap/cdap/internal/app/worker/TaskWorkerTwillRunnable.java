@@ -157,12 +157,16 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
   @Override
   public void stop() {
     LOG.info("Stopping task worker");
-    taskWorker.stop();
+    if (taskWorker != null) {
+      taskWorker.stop();
+    }
   }
 
   @Override
   public void destroy() {
-    logAppenderInitializer.close();
+    if (logAppenderInitializer != null) {
+      logAppenderInitializer.close();
+    }
   }
 
   private void doInitialize(TwillContext context) throws Exception {

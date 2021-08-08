@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.k8s.discovery;
 
+import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.k8s.common.AbstractWatcherThread;
 import io.cdap.cdap.master.spi.discovery.DefaultServiceDiscovered;
 import io.kubernetes.client.openapi.ApiClient;
@@ -29,6 +30,8 @@ import io.kubernetes.client.openapi.models.V1ServiceList;
 import io.kubernetes.client.openapi.models.V1ServicePort;
 import io.kubernetes.client.openapi.models.V1ServiceSpec;
 import io.kubernetes.client.util.Config;
+import io.kubernetes.client.util.Watch;
+import io.kubernetes.client.util.Watchable;
 import okhttp3.Call;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
@@ -39,6 +42,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -385,14 +389,13 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
     }
 
     @Override
-    protected Call createCall(String namespace, @Nullable String labelSelector) throws IOException, ApiException {
-      return getCoreApi().listNamespacedServiceCall(namespace, null, null, null, null, labelSelector,
+    protected Watchable<V1Service> createWatchable(Type resourceType, String namespace,
+                                                   @Nullable String labelSelector) throws IOException, ApiException {
+      CoreV1Api coreApi = getCoreApi();
+      Call call = coreApi.listNamespacedServiceCall(namespace, null, null, null, null, labelSelector,
                                                     null, null, null, null, true, null);
-    }
-
-    @Override
-    protected ApiClient getApiClient() throws IOException {
-      return getCoreApi().getApiClient();
+      return Watch.createWatch(coreApi.getApiClient(), call, TypeToken.getParameterized(Watch.Response.class,
+                                                                                        resourceType).getType());
     }
 
     @Override

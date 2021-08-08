@@ -170,7 +170,8 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
     } else {
       pollerInfo = new PreviewRequestPollerInfo(context.getInstanceId(), null);
     }
-    LOG.debug("Initializing preview runner with poller info {}", pollerInfo);
+    LOG.debug("Initializing preview runner with poller info {} in total {} runners",
+              pollerInfo, context.getInstanceCount());
 
     Injector injector = createInjector(cConf, hConf, pollerInfo);
 
