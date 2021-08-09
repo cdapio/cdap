@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.k8s.runtime;
 
+import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.k8s.common.AbstractWatcherThread;
 import io.cdap.cdap.k8s.common.ResourceChangeListener;
 import io.kubernetes.client.openapi.ApiClient;
@@ -25,10 +26,13 @@ import io.kubernetes.client.openapi.models.V1Deployment;
 import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1StatefulSet;
 import io.kubernetes.client.util.Config;
+import io.kubernetes.client.util.Watch;
+import io.kubernetes.client.util.Watchable;
 import okhttp3.Call;
 import org.apache.twill.common.Cancellable;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
@@ -88,10 +92,14 @@ abstract class AppResourceWatcherThread<T> extends AbstractWatcherThread<T> {
   }
 
   @Override
-  protected Call createCall(String namespace, @Nullable String labelSelector) throws IOException, ApiException {
-    CustomObjectsApi api = new CustomObjectsApi(getApiClient());
-    return api.listNamespacedCustomObjectCall(group, version, namespace, plural, null, null, null,
-                                              labelSelector, null, null, null, true, null);
+  protected Watchable<T> createWatchable(Type resourceType, String namespace,
+                                         @Nullable String labelSelector) throws IOException, ApiException {
+    ApiClient apiClient = getApiClient();
+    CustomObjectsApi api = new CustomObjectsApi(apiClient);
+    Call call = api.listNamespacedCustomObjectCall(group, version, namespace, plural, null, null, null,
+                                                   labelSelector, null, null, null, true, null);
+    return Watch.createWatch(apiClient, call, TypeToken.getParameterized(Watch.Response.class,
+                                                                         resourceType).getType());
   }
 
   @Nullable
@@ -115,8 +123,7 @@ abstract class AppResourceWatcherThread<T> extends AbstractWatcherThread<T> {
     listeners.forEach(l -> l.resourceDeleted(resource));
   }
 
-  @Override
-  protected ApiClient getApiClient() throws IOException {
+  private ApiClient getApiClient() throws IOException {
     ApiClient client = apiClient;
     if (client != null) {
       return client;

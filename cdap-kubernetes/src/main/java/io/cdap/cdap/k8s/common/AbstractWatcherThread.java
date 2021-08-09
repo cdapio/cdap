@@ -17,12 +17,10 @@
 package io.cdap.cdap.k8s.common;
 
 import com.google.common.collect.Range;
-import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
-import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.util.Watch;
-import okhttp3.Call;
+import io.kubernetes.client.util.Watchable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,8 +51,7 @@ public abstract class AbstractWatcherThread<T> extends Thread implements AutoClo
   private final String namespace;
   private final Random random;
   private final Type resourceType;
-  private final Type watchResponseType;
-  private volatile Watch<T> watch;
+  private volatile Watchable<T> watch;
   private volatile boolean stopped;
 
   protected AbstractWatcherThread(String threadName, String namespace) {
@@ -65,28 +62,19 @@ public abstract class AbstractWatcherThread<T> extends Thread implements AutoClo
     // Resolve <T> to form the concrete type for Watch.Response<T>
     this.resourceType = TypeToken.of(getClass()).resolveType(
       AbstractWatcherThread.class.getTypeParameters()[0]).getType();
-
-    @SuppressWarnings("unchecked")
-    TypeToken<T> resourceTypeToken = (TypeToken<T>) TypeToken.of(resourceType);
-    this.watchResponseType = new TypeToken<Watch.Response<T>>() { }
-      .where(new TypeParameter<T>() { }, resourceTypeToken).getType();
   }
 
   /**
-   * Returns a {@link Call} object for the watcher to use.
+   * Returns a {@link Watchable} object to watch for changes
    *
+   * @param resourceType the type of resource to be watched
    * @param namespace namespace for the call to operate on
    * @param labelSelector the label selector to use for selecting resource to watch
    *                      or {@code null} if not to use selector
-   * @return a {@link Call} for {@link Watch} to use
+   * @return a {@link Watchable} for {@link Watch} to use
    */
-  protected abstract Call createCall(String namespace, @Nullable String labelSelector) throws IOException, ApiException;
-
-  /**
-   * Returns a {@link ApiClient} for the watcher to use.
-   * @return a {@link ApiClient}. It must be set with appropriate timeout in order for the watch to work effectively.
-   */
-  protected abstract ApiClient getApiClient() throws IOException;
+  protected abstract Watchable<T> createWatchable(Type resourceType, String namespace,
+                                                  @Nullable String labelSelector) throws IOException, ApiException;
 
   /**
    * Returns a selector string for filtering on resources to watch.
@@ -103,7 +91,7 @@ public abstract class AbstractWatcherThread<T> extends Thread implements AutoClo
    * returned by the {@link #getSelector()} method.
    */
   protected final void resetWatch() {
-    Watch<T> watch;
+    Watchable<T> watch;
     synchronized (this) {
       watch = this.watch;
       this.watch = null;
@@ -125,7 +113,7 @@ public abstract class AbstractWatcherThread<T> extends Thread implements AutoClo
     int failureCount = 0;
     while (!stopped) {
       try {
-        Watch<T> watch = getWatch();
+        Watchable<T> watch = getWatch();
 
         // The watch can only be null if the watcher thread is stopping
         if (watch == null) {
@@ -192,7 +180,7 @@ public abstract class AbstractWatcherThread<T> extends Thread implements AutoClo
   }
 
   @Override
-  public final void close() {
+  public void close() {
     LOG.debug("Stop watching for kubernetes of resource type {}", resourceType);
     stopped = true;
     resetWatch();
@@ -205,8 +193,8 @@ public abstract class AbstractWatcherThread<T> extends Thread implements AutoClo
    * @return a {@link Watch} or {@code null} if the watching thread is already terminated.
    */
   @Nullable
-  private Watch<T> getWatch() throws IOException, ApiException {
-    Watch<T> watch = this.watch;
+  private Watchable<T> getWatch() throws IOException, ApiException {
+    Watchable<T> watch = this.watch;
     if (watch != null) {
       return watch;
     }
@@ -222,9 +210,7 @@ public abstract class AbstractWatcherThread<T> extends Thread implements AutoClo
       // hence if the watch was null outside of this sync block, it will stay as null here.
       String labelSelector = getSelector();
       LOG.trace("Creating watch with label selector {}", labelSelector);
-      Call call = createCall(namespace, labelSelector);
-
-      this.watch = watch = Watch.createWatch(getApiClient(), call, watchResponseType);
+      this.watch = watch = createWatchable(resourceType, namespace, labelSelector);
       return watch;
     }
   }

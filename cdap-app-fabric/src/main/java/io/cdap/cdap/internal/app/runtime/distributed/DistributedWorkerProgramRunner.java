@@ -27,7 +27,6 @@ import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
-import io.cdap.cdap.master.spi.twill.TwillConstants;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.security.impersonation.Impersonator;
@@ -37,7 +36,6 @@ import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
 
 import java.io.File;
-import java.util.Collections;
 
 /**
  * Distributed ProgramRunner for Worker.
@@ -82,9 +80,5 @@ public class DistributedWorkerProgramRunner extends DistributedProgramRunner
     launchConfig.addRunnable(workerSpec.getName(), new WorkerTwillRunnable(workerSpec.getName()),
                              Integer.parseInt(instances), options.getUserArguments().asMap(),
                              workerSpec.getResources());
-    if (clusterMode == ClusterMode.ON_PREMISE) {
-      launchConfig.addExtraRuntimeArgs(
-        Collections.singletonMap(TwillConstants.PROGRAM_RUNTIME_ENV_PARALLELISM, instances));
-    }
   }
 }
