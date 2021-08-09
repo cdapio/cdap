@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
+import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
@@ -32,6 +33,7 @@ import io.cdap.cdap.etl.common.ConnectionMacroEvaluator;
 import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
 import io.cdap.cdap.etl.common.OAuthMacroEvaluator;
 import io.cdap.cdap.etl.common.SecureStoreMacroEvaluator;
+import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.proto.v2.validation.StageValidationRequest;
 import io.cdap.cdap.etl.proto.v2.validation.StageValidationResponse;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
@@ -103,6 +105,14 @@ public class RemoteValidationTask implements RunnableTask {
         .evaluateMacros(namespace, macroProperties, macroEvaluator, macroParserOptions);
     PluginConfigurer pluginConfigurer = systemAppContext.createPluginConfigurer(namespace);
     StageValidationResponse validationResponse = ValidationUtils.validate(validationRequest, pluginConfigurer, macroFn);
+
+    // If the validation success and if it only involves system artifacts, then we don't need to restart task runner
+    if (validationResponse.getFailures().isEmpty()) {
+      StageSpec spec = validationResponse.getSpec();
+      if (spec != null) {
+        context.setTerminateOnComplete(!ArtifactScope.SYSTEM.equals(spec.getPlugin().getArtifact().getScope()));
+      }
+    }
     context.writeResult(GSON.toJson(validationResponse).getBytes());
   }
 }

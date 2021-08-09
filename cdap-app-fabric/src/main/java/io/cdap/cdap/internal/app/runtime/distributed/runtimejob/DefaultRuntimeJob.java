@@ -52,6 +52,7 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.lang.jar.ClassLoaderFolder;
 import io.cdap.cdap.common.logging.LogSamplers;
 import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
@@ -317,18 +318,14 @@ public class DefaultRuntimeJob implements RuntimeJob {
 
   private Program createProgram(CConfiguration cConf, ProgramRunner programRunner,
                                 ProgramDescriptor programDescriptor, ProgramOptions options) throws IOException {
-    File tempDir = createTempDirectory(cConf, options.getProgramId(), options.getArguments()
-      .getOption(ProgramOptionConstants.RUN_ID));
-    File programDir = new File(tempDir, "program");
-    DirUtils.mkdirs(programDir);
-    File programJarFile = new File(programDir, "program.jar");
+
     Location programJarLocation = Locations.toLocation(
       new File(options.getArguments().getOption(ProgramOptionConstants.PROGRAM_JAR)));
-    Locations.linkOrCopy(programJarLocation, programJarFile);
-    programJarLocation = Locations.toLocation(programJarFile);
-    BundleJarUtil.prepareClassLoaderFolder(programJarLocation, programDir);
 
-    return Programs.create(cConf, programRunner, programDescriptor, programJarLocation, programDir);
+    ClassLoaderFolder classLoaderFolder = BundleJarUtil.prepareClassLoaderFolder(
+      programJarLocation, () -> createTempDirectory(cConf, options.getProgramId(),
+                                                    options.getArguments().getOption(ProgramOptionConstants.RUN_ID)));
+    return Programs.create(cConf, programRunner, programDescriptor, programJarLocation, classLoaderFolder.getDir());
   }
 
   private File createTempDirectory(CConfiguration cConf, ProgramId programId, String runId) {

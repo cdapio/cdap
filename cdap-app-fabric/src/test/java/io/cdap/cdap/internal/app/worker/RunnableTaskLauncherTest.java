@@ -27,6 +27,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -41,8 +42,8 @@ public class RunnableTaskLauncherTest {
       withParam(want).build();
 
     RunnableTaskLauncher launcher = new RunnableTaskLauncher(CConfiguration.create());
-    byte[] got = launcher.launchRunnableTask(request, null);
-    Assert.assertEquals(want, new String(got, StandardCharsets.UTF_8));
+    ByteBuffer got = launcher.launchRunnableTask(request).getResult();
+    Assert.assertEquals(want, StandardCharsets.UTF_8.decode(got).toString());
   }
 
   public static class TestRunnableTask implements RunnableTask {

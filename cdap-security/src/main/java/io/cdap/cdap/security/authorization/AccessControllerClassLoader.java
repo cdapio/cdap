@@ -102,7 +102,7 @@ public class AccessControllerClassLoader extends DirectoryClassLoader {
   AccessControllerClassLoader(File tmpDir, File accessControllerExtensionJar,
                               @Nullable String accessControllerExtraClasspath)
     throws IOException, InvalidAccessControllerException {
-    super(BundleJarUtil.prepareClassLoaderFolder(accessControllerExtensionJar, tmpDir),
+    super(BundleJarUtil.prepareClassLoaderFolder(accessControllerExtensionJar, () -> tmpDir).getDir(),
           accessControllerExtraClasspath, createParent(), "lib");
     this.tmpDir = tmpDir;
     this.extensionJar = accessControllerExtensionJar;

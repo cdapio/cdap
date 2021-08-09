@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.worker;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Singleton;
+import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -41,8 +42,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import javax.ws.rs.GET;
@@ -70,17 +73,17 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   private static final String EXT = ".tmp";
 
   private final RunnableTaskLauncher runnableTaskLauncher;
-  private final Consumer<String> stopper;
+  private final BiConsumer<Boolean, String> stopper;
   private final AtomicInteger inflightRequests = new AtomicInteger(0);
   private final String metadataServiceEndpoint;
 
   public TaskWorkerHttpHandlerInternal(CConfiguration cConf, Consumer<String> stopper) {
     this.runnableTaskLauncher = new RunnableTaskLauncher(cConf);
     this.metadataServiceEndpoint = cConf.get(Constants.TaskWorker.METADATA_SERVICE_END_POINT);
-    this.stopper = s -> {
-      if (cConf.getBoolean(Constants.TaskWorker.CONTAINER_KILL_AFTER_EXECUTION)) {
-        if (s != null) {
-          stopper.accept(s);
+    this.stopper = (terminate, className) -> {
+      if (cConf.getBoolean(Constants.TaskWorker.CONTAINER_KILL_AFTER_EXECUTION) && terminate) {
+        if (className != null) {
+          stopper.accept(className);
         }
       } else {
         inflightRequests.set(0);
@@ -101,18 +104,20 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       RunnableTaskRequest runnableTaskRequest =
         GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), RunnableTaskRequest.class);
       className = runnableTaskRequest.getClassName();
-      byte[] response = runnableTaskLauncher.launchRunnableTask(runnableTaskRequest, null);
+      RunnableTaskContext runnableTaskContext = runnableTaskLauncher.launchRunnableTask(runnableTaskRequest);
 
       responder.sendContent(HttpResponseStatus.OK,
-                            new RunnableTaskBodyProducer(response, stopper, className),
+                            new RunnableTaskBodyProducer(runnableTaskContext, stopper, className),
                             new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM));
     } catch (ClassNotFoundException | ClassCastException ex) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);
-      stopper.accept(className);
+      // Since the user class is not even loaded, no user code ran, hence it's ok to not terminate the runner
+      stopper.accept(false, className);
     } catch (Exception ex) {
       LOG.error("Failed to run task {}", request.content().toString(StandardCharsets.UTF_8), ex);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);
-      stopper.accept(className);
+      // Potentially ran user code, hence terminate the runner.
+      stopper.accept(true, className);
     }
   }
 
@@ -151,15 +156,17 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
    * so it can safely call the stopper to kill the worker pod.
    */
   private static class RunnableTaskBodyProducer extends BodyProducer {
-    private final byte[] response;
-    private final Consumer<String> stopper;
+    private final ByteBuffer response;
+    private final BiConsumer<Boolean, String> stopper;
     private final String className;
+    private final boolean terminateOnComplete;
     private boolean done = false;
 
-    RunnableTaskBodyProducer(byte[] response, Consumer<String> stopper, String className) {
-      this.response = response;
+    RunnableTaskBodyProducer(RunnableTaskContext context, BiConsumer<Boolean, String> stopper, String className) {
+      this.response = context.getResult();
       this.stopper = stopper;
       this.className = className;
+      this.terminateOnComplete = context.isTerminateOnComplete();
     }
 
     @Override
@@ -174,13 +181,13 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
 
     @Override
     public void finished() {
-      stopper.accept(className);
+      stopper.accept(terminateOnComplete, className);
     }
 
     @Override
     public void handleError(@Nullable Throwable cause) {
       LOG.error("Error when sending chunks", cause);
-      stopper.accept(className);
+      stopper.accept(terminateOnComplete, className);
     }
   }
 }

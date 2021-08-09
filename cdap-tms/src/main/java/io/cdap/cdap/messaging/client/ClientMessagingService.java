@@ -36,6 +36,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
+import io.cdap.cdap.internal.io.ExposedByteArrayOutputStream;
 import io.cdap.cdap.messaging.MessageFetcher;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.RollbackDetail;
@@ -64,7 +65,6 @@ import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.tephra.TransactionCodec;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -384,19 +384,6 @@ public final class ClientMessagingService implements MessagingService {
     }
     if (!passed) {
       throw new IllegalArgumentException("Only " + requiredContentType + " content type is support.");
-    }
-  }
-
-  /**
-   * A {@link ByteArrayOutputStream} that exposes the written raw buffer as ByteBuffer.
-   */
-  private static final class ExposedByteArrayOutputStream extends ByteArrayOutputStream {
-
-    /**
-     * Returns a {@link ByteBuffer} that represents the valid content in the buffer.
-     */
-    ByteBuffer toByteBuffer() {
-      return ByteBuffer.wrap(buf, 0, count);
     }
   }
 

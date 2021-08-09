@@ -49,6 +49,7 @@ import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.CombineClassLoader;
 import io.cdap.cdap.common.lang.InstantiatorFactory;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.lang.jar.ClassLoaderFolder;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.internal.lang.FieldVisitor;
@@ -67,6 +68,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -137,7 +140,11 @@ public class PluginInstantiator implements Closeable {
   public void addArtifact(Location artifactLocation, ArtifactId destArtifact) throws IOException {
     File destFile = new File(pluginDir, Artifacts.getFileName(destArtifact));
     if (!destFile.exists()) {
-      Locations.linkOrCopy(artifactLocation, destFile);
+      if ("file".equals(artifactLocation.toURI().getScheme()) && artifactLocation.isDirectory()) {
+        Files.createSymbolicLink(destFile.toPath(), Paths.get(artifactLocation.toURI()));
+      } else {
+        Locations.linkOrCopy(artifactLocation, destFile);
+      }
     }
   }
 
@@ -447,13 +454,14 @@ public class PluginInstantiator implements Closeable {
 
     @Override
     public PluginClassLoader load(ClassLoaderKey key) throws Exception {
-      File unpackedDir = DirUtils.createTempDir(tmpDir);
       File artifact = new File(pluginDir, Artifacts.getFileName(key.artifact));
-      BundleJarUtil.prepareClassLoaderFolder(Locations.toLocation(artifact), unpackedDir);
+      ClassLoaderFolder classLoaderFolder = BundleJarUtil.prepareClassLoaderFolder(
+        Locations.toLocation(artifact), () -> DirUtils.createTempDir(tmpDir));
 
       Iterator<ArtifactId> parentIter = key.parents.iterator();
       if (!parentIter.hasNext()) {
-        return new PluginClassLoader(key.artifact, unpackedDir, artifact.getAbsolutePath(), parentClassLoader);
+        return new PluginClassLoader(key.artifact, classLoaderFolder.getDir(),
+                                     artifact.getAbsolutePath(), parentClassLoader);
       }
 
       List<ArtifactId> parentsOfParent = new ArrayList<>(key.parents.size() - 1);
@@ -478,7 +486,7 @@ public class PluginInstantiator implements Closeable {
       PluginClassLoader parentPluginCL = getPluginClassLoader(parentArtifact, parentsOfParent);
       ClassLoader parentCL =
         new CombineClassLoader(parentPluginCL.getParent(), parentPluginCL.getExportPackagesClassLoader());
-      return new PluginClassLoader(key.artifact, unpackedDir, artifact.getAbsolutePath(), parentCL);
+      return new PluginClassLoader(key.artifact, classLoaderFolder.getDir(), artifact.getAbsolutePath(), parentCL);
     }
   }
 

@@ -887,8 +887,7 @@ public class ArtifactRepositoryTest {
   }
 
   private static ProgramClassLoader createAppClassLoader(File jarFile) throws IOException {
-    File unpackDir = DirUtils.createTempDir(TMP_FOLDER.newFolder());
-    BundleJarUtil.prepareClassLoaderFolder(jarFile, unpackDir);
+    File unpackDir = BundleJarUtil.prepareClassLoaderFolder(jarFile, TMP_FOLDER::newFolder).getDir();
     return new ProgramClassLoader(cConf, unpackDir,
                                   FilterClassLoader.create(ArtifactRepositoryTest.class.getClassLoader()));
   }

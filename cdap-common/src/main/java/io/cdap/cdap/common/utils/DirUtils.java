@@ -16,17 +16,21 @@
 
 package io.cdap.cdap.common.utils;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.io.Files;
-
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.Deque;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 
 /**
@@ -50,41 +54,44 @@ public final class DirUtils {
   }
 
   /**
-   * Wipes out content of a directory starting from a given directory.
+   * Same as calling {@link #deleteDirectoryContents(Path, boolean)} with the given directory as the {@link Path}.
+   */
+  public static void deleteDirectoryContents(File directory, boolean retain) throws IOException {
+    deleteDirectoryContents(directory.toPath(), retain);
+  }
+
+  /**
+   * Wipes out content of a directory starting from a given directory. For symlinks, only the link will get deleted,
+   * but not the link target.
    *
    * @param directory to be cleaned
    * @param retain if true, the given directory will be retained.
-   * @throws IOException
+   * @throws IOException if failed to clear the given directory.
    */
-  public static void deleteDirectoryContents(File directory, boolean retain) throws IOException {
-    if (!directory.isDirectory()) {
+  public static void deleteDirectoryContents(Path directory, boolean retain) throws IOException {
+    if (!Files.isDirectory(directory)) {
       throw new IOException("Not a directory: " + directory);
     }
 
-    // avoid using guava's Queues.newArrayDeque() since this is a utility class that can be used in all sorts of
-    // contexts, some of which may use clashing guava versions... For example, when explore launches a Hive query,
-    // it includes hive-exec.jar which bundles guava 11 in its jar...
-    Deque<File> stack = new ArrayDeque<>();
-    stack.addAll(listFiles(directory));
+    Files.walkFileTree(directory, new SimpleFileVisitor<Path>() {
 
-    while (!stack.isEmpty()) {
-      File file = stack.peekLast();
-      List<File> files = listFiles(file);
-      if (files.isEmpty()) {
-        if (!file.delete()) {
-          throw new IOException("Failed to delete file " + file);
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+        Files.deleteIfExists(file);
+        return FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+        if (exc == null) {
+          if (!directory.equals(dir) || !retain) {
+            Files.deleteIfExists(dir);
+          }
+          return FileVisitResult.CONTINUE;
         }
-        stack.pollLast();
-      } else {
-        stack.addAll(files);
+        throw exc;
       }
-    }
-
-    if (!retain) {
-      if (!directory.delete()) {
-        throw new IOException("Failed to delete directory " + directory);
-      }
-    }
+    });
   }
 
   /**
@@ -140,7 +147,7 @@ public final class DirUtils {
    * An empty list will be returned if the given file is not a directory.
    */
   public static List<String> list(File directory, String...extensions) {
-    return list(directory, ImmutableSet.copyOf(extensions));
+    return list(directory, Arrays.asList(extensions));
   }
 
   /**
@@ -148,14 +155,8 @@ public final class DirUtils {
    * An empty list will be returned if the given file is not a directory.
    */
   public static List<String> list(File directory, Iterable<String> extensions) {
-    final ImmutableSet<String> allowedExtensions = ImmutableSet.copyOf(extensions);
-
-    return list(directory, new FilenameFilter() {
-      @Override
-      public boolean accept(File dir, String name) {
-        return allowedExtensions.contains(Files.getFileExtension(name));
-      }
-    });
+    Set<String> allowedExtensions = StreamSupport.stream(extensions.spliterator(), false).collect(Collectors.toSet());
+    return list(directory, (dir, name) -> allowedExtensions.contains(FileUtils.getExtension(name)));
   }
 
   /**
@@ -187,7 +188,7 @@ public final class DirUtils {
    * An empty list will be returned if the given file is not a directory.
    */
   public static List<File> listFiles(File directory, String...extensions) {
-    return listFiles(directory, ImmutableSet.copyOf(extensions));
+    return listFiles(directory, Arrays.asList(extensions));
   }
 
   /**
@@ -195,14 +196,8 @@ public final class DirUtils {
    * An empty list will be returned if the given file is not a directory.
    */
   public static List<File> listFiles(File directory, Iterable<String> extensions) {
-    final ImmutableSet<String> allowedExtensions = ImmutableSet.copyOf(extensions);
-
-    return listFiles(directory, new FilenameFilter() {
-      @Override
-      public boolean accept(File dir, String name) {
-        return allowedExtensions.contains(Files.getFileExtension(name));
-      }
-    });
+    Set<String> allowedExtensions = StreamSupport.stream(extensions.spliterator(), false).collect(Collectors.toSet());
+    return listFiles(directory, (dir, name) -> allowedExtensions.contains(FileUtils.getExtension(name)));
   }
 
   /**
@@ -214,6 +209,6 @@ public final class DirUtils {
    * @return a new immutable list.
    */
   private static <T> List<T> listOf(@Nullable T[] elements) {
-    return elements == null ? ImmutableList.<T>of() : ImmutableList.copyOf(elements);
+    return elements == null ? Collections.emptyList() : Collections.unmodifiableList(Arrays.asList(elements));
   }
 }

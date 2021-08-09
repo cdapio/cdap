@@ -34,7 +34,9 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.internal.ServiceListenerAdapter;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -58,16 +60,19 @@ import java.util.concurrent.Future;
  */
 public class TaskWorkerServiceTest {
   @ClassRule
-  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerServiceTest.class);
   private static final Gson GSON = new Gson();
+
+  private TaskWorkerService taskWorkerService;
 
   private CConfiguration createCConf() {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.TaskWorker.ADDRESS, "localhost");
     cConf.setInt(Constants.TaskWorker.PORT, 0);
     cConf.setBoolean(Constants.Security.SSL.INTERNAL_ENABLED, false);
+    cConf.set(Constants.TaskWorker.PRELOAD_ARTIFACTS, "");
     return cConf;
   }
 
@@ -75,15 +80,24 @@ public class TaskWorkerServiceTest {
     return SConfiguration.create();
   }
 
-  private TaskWorkerService setupTaskWorkerService() {
+  @Before
+  public void beforeTest() {
     CConfiguration cConf = createCConf();
     SConfiguration sConf = createSConf();
 
-    TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, sConf, new InMemoryDiscoveryService());
+    TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, sConf, new InMemoryDiscoveryService(),
+                                                                (namespaceId, retryStrategy) -> null);
     // start the service
     taskWorkerService.startAndWait();
+    this.taskWorkerService = taskWorkerService;
+  }
 
-    return taskWorkerService;
+  @After
+  public void afterTest() {
+    if (taskWorkerService != null) {
+      taskWorkerService.stopAndWait();
+      taskWorkerService = null;
+    }
   }
 
   private void waitForTaskWorkerToFinish(TaskWorkerService taskWorker) {
@@ -109,7 +123,6 @@ public class TaskWorkerServiceTest {
 
   @Test
   public void testStartAndStopWithValidRequest() throws IOException {
-    TaskWorkerService taskWorkerService = setupTaskWorkerService();
     InetSocketAddress addr = taskWorkerService.getBindAddress();
     URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
 
@@ -129,7 +142,6 @@ public class TaskWorkerServiceTest {
 
   @Test
   public void testStartAndStopWithInvalidRequest() throws Exception {
-    TaskWorkerService taskWorkerService = setupTaskWorkerService();
     InetSocketAddress addr = taskWorkerService.getBindAddress();
     URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
 
@@ -151,7 +163,6 @@ public class TaskWorkerServiceTest {
 
   @Test
   public void testConcurrentRequests() throws Exception {
-    TaskWorkerService taskWorkerService = setupTaskWorkerService();
     InetSocketAddress addr = taskWorkerService.getBindAddress();
     URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
 

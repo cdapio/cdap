@@ -17,10 +17,10 @@
 package io.cdap.cdap.api.service.worker;
 
 import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.internal.io.ExposedByteArrayOutputStream;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.URI;
+import java.nio.ByteBuffer;
 import javax.annotation.Nullable;
 
 /**
@@ -28,9 +28,8 @@ import javax.annotation.Nullable;
  * This context is used for writing back the result of {@link RunnableTask} execution.
  */
 public class RunnableTaskContext {
-  private final ByteArrayOutputStream outputStream;
+  private final ExposedByteArrayOutputStream outputStream;
   private final String param;
-  private final URI fileURI;
   @Nullable
   private final String namespace;
   @Nullable
@@ -38,30 +37,47 @@ public class RunnableTaskContext {
   @Nullable
   private final SystemAppTaskContext systemAppTaskContext;
 
-  public RunnableTaskContext(String param, @Nullable URI fileURI, @Nullable String namespace,
+  private boolean terminateOnComplete;
+
+  public RunnableTaskContext(String param, @Nullable String namespace,
                              @Nullable ArtifactId artifactId, @Nullable SystemAppTaskContext systemAppTaskContext) {
     this.param = param;
-    this.fileURI = fileURI;
     this.namespace = namespace;
     this.artifactId = artifactId;
     this.systemAppTaskContext = systemAppTaskContext;
-    this.outputStream = new ByteArrayOutputStream();
+    this.outputStream = new ExposedByteArrayOutputStream();
+    this.terminateOnComplete = true;
   }
 
   public void writeResult(byte[] data) throws IOException {
+    if (outputStream.size() != 0) {
+      outputStream.reset();
+    }
     outputStream.write(data);
   }
 
-  public byte[] getResult() {
-    return outputStream.toByteArray();
+  /**
+   * Sets to terminate the task runner on the task completion
+   *
+   * @param terminate {@code true} to terminate the task runner, {@code false} to keep it running.
+   */
+  public void setTerminateOnComplete(boolean terminate) {
+    this.terminateOnComplete = terminate;
+  }
+
+  /**
+   * @return {@code true} if terminate the task runner after the task completed.
+   */
+  public boolean isTerminateOnComplete() {
+    return terminateOnComplete;
+  }
+
+  public ByteBuffer getResult() {
+    return outputStream.toByteBuffer();
   }
 
   public String getParam() {
     return param;
-  }
-
-  public URI getFileURI() {
-    return fileURI;
   }
 
   @Nullable
@@ -89,8 +105,6 @@ public class RunnableTaskContext {
   public static class Builder {
     private String param;
     @Nullable
-    private URI fileURI;
-    @Nullable
     private String namespace;
     @Nullable
     private ArtifactId artifactId;
@@ -103,11 +117,6 @@ public class RunnableTaskContext {
 
     public Builder withParam(String param) {
       this.param = param;
-      return this;
-    }
-
-    public Builder withFileURI(@Nullable URI fileURI) {
-      this.fileURI = fileURI;
       return this;
     }
 
@@ -128,7 +137,7 @@ public class RunnableTaskContext {
     }
 
     public RunnableTaskContext build() {
-      return new RunnableTaskContext(param, fileURI, namespace, artifactId, systemAppTaskContext);
+      return new RunnableTaskContext(param, namespace, artifactId, systemAppTaskContext);
     }
   }
 }
