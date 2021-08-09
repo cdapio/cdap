@@ -17,7 +17,7 @@
 package io.cdap.cdap.common.lang.jar;
 
 import io.cdap.cdap.common.io.Locations;
-import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.common.lang.ThrowingSupplier;
 import org.apache.twill.filesystem.Location;
 
 import java.io.BufferedInputStream;
@@ -36,7 +36,6 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.function.Predicate;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -179,65 +178,27 @@ public class BundleJarUtil {
    * load any classes or resources.
    *
    * If a directory is provided, it assumes that this directory already contains the unpacked jar contents (ie. this
-   * directory was used as the destinationFolder in a previous call to this method). In this case, the destinationFolder
-   * is linked to jarLocation and no unpacking is needed.
+   * directory was used as the destinationFolder in a previous call to this method). In this case,
+   * no unpacking is needed. The {@link ClassLoaderFolder} returned will be pointing at the provided directory.
    *
    * @param jarLocation Location containing the jar file or local directory with already unpacked jar files
-   * @param destinationFolder Directory to expand into
-   * @return The {@code destinationFolder}
+   * @param destinationSupplier Supply the directory to expand into when needed
+   * @return a {@link ClassLoaderFolder} containing the directory with the content ready for classloader creation.
    * @throws IOException If failed to expand the jar
    */
-  public static File prepareClassLoaderFolder(Location jarLocation, File destinationFolder) throws IOException {
-    // If jarLocation is a local location and its a directory assume its already unpacked
-    URI uri = jarLocation.toURI();
-    if ("file".equals(uri.getScheme()) && jarLocation.isDirectory()) {
-      linkDirectories(new File(uri), destinationFolder);
-      return destinationFolder;
-    }
-
-    unJar(jarLocation, destinationFolder, name ->
-      name.equals(JarFile.MANIFEST_NAME) || name.endsWith(".jar"));
-    // Note: We start with space to ensure this file goes first in case resources order is important
-    File artifactTempName = File.createTempFile(" artifact", ".jar", destinationFolder);
-    artifactTempName.delete();
-    Locations.linkOrCopy(jarLocation, artifactTempName);
-    return destinationFolder;
+  public static ClassLoaderFolder prepareClassLoaderFolder(Location jarLocation,
+                                                           ThrowingSupplier<File, IOException> destinationSupplier)
+    throws IOException {
+    return new ClassLoaderFolder(jarLocation, destinationSupplier);
   }
 
   /**
-   * Helper method for recursively hard-linking all files within sourceDirectory to targetDirectory. If linking fails it
-   * will copy the files as a fallback option.
-   *
-   * @param sourceDirectory The directory that contains the files to be linked
-   * @param targetDirectory The directory where we would like to place the links
-   * @throws IOException if an error occurs while linking or copying
+   * Performs the same operation as the {@link #prepareClassLoaderFolder(Location, ThrowingSupplier)} method.
    */
-  private static void linkDirectories(File sourceDirectory, File targetDirectory) throws IOException {
-    List<File> files = DirUtils.listFiles(sourceDirectory);
-    Path targetPath = targetDirectory.toPath();
-    for (File sourceFile : files) {
-      Path newTarget = targetPath.resolve(sourceFile.getName());
-      if (sourceFile.isDirectory()) {
-        Files.createDirectories(newTarget);
-        linkDirectories(sourceFile, newTarget.toFile());
-        continue;
-      }
-      Locations.linkOrCopy(Locations.toLocation(sourceFile), newTarget.toFile());
-    }
-  }
-
-  /**
-   * Takes a jar and prepares a folder to be loaded by classloader. Unpacks a manifest and any nested jars
-   * and links original jar into the destination folder, so that it would be picked up by classloader to
-   * load any classes or resources.
-   *
-   * @param jarFile jar file to unpack
-   * @param destinationFolder Directory to expand into
-   * @return The {@code destinationFolder}
-   * @throws IOException If failed to expand the jar
-   */
-  public static File prepareClassLoaderFolder(File jarFile, File destinationFolder) throws IOException {
-    return prepareClassLoaderFolder(Locations.toLocation(jarFile), destinationFolder);
+  public static ClassLoaderFolder prepareClassLoaderFolder(File jarFile,
+                                                           ThrowingSupplier<File, IOException> destinationSupplier)
+    throws IOException {
+    return prepareClassLoaderFolder(Locations.toLocation(jarFile), destinationSupplier);
   }
 
   /**

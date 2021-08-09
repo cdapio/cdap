@@ -21,7 +21,10 @@ import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import io.cdap.cdap.api.artifact.ApplicationClass;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
@@ -33,12 +36,14 @@ import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
 import io.cdap.cdap.internal.app.runtime.artifact.ApplicationClassCodec;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.RequirementsCodec;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerClient;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import org.apache.twill.filesystem.Location;
@@ -78,6 +83,19 @@ public class ConfiguratorTask implements RunnableTask {
       new AuthenticationContextModules().getMasterWorkerModule()
     );
     ConfigResponse result = injector.getInstance(ConfiguratorTaskRunner.class).configure(deploymentInfo);
+    AppSpecInfo appSpecInfo = result.getAppSpecInfo();
+
+    // If configuration succeeded and if only system artifacts are involved, no need to restart the task
+    if (result.getExitCode() == 0 && appSpecInfo != null
+        && NamespaceId.SYSTEM.equals(deploymentInfo.getArtifactId().getNamespaceId())) {
+      boolean hasUserPlugins = appSpecInfo.getAppSpec().getPlugins().values().stream()
+        .map(Plugin::getArtifactId)
+        .map(ArtifactId::getScope)
+        .anyMatch(ArtifactScope.USER::equals);
+
+      context.setTerminateOnComplete(hasUserPlugins);
+    }
+
     context.writeResult(GSON.toJson(result).getBytes(StandardCharsets.UTF_8));
   }
 

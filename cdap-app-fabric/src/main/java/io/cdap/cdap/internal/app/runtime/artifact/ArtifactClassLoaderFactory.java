@@ -27,6 +27,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.lang.DirectoryClassLoader;
 import io.cdap.cdap.common.lang.FilterClassLoader;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.lang.jar.ClassLoaderFolder;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.runtime.ProgramClassLoader;
 import io.cdap.cdap.proto.ProgramType;
@@ -37,9 +38,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.File;
-import java.io.IOException;
 import java.util.Iterator;
-import java.util.concurrent.Callable;
 
 /**
  * Given an artifact, creates a {@link CloseableClassLoader} from it. Takes care of unpacking the artifact and
@@ -68,9 +67,8 @@ final class ArtifactClassLoaderFactory {
    * @param unpackDir the directory where the artifact jar has been expanded
    * @return a closeable classloader based off the specified artifact; on closing the returned {@link ClassLoader},
    *         all temporary resources created for the classloader will be removed
-   * @throws IOException if there was an error copying or unpacking the artifact
    */
-  CloseableClassLoader createClassLoader(File unpackDir) throws IOException {
+  CloseableClassLoader createClassLoader(File unpackDir) {
     ProgramRunner programRunner = null;
     try {
       // Try to create a ProgramClassLoader from the Spark runtime system if it is available.
@@ -94,13 +92,10 @@ final class ArtifactClassLoaderFactory {
 
     final ClassLoader finalProgramClassLoader = programClassLoader;
     final ProgramRunner finalProgramRunner = programRunner;
-    return new CloseableClassLoader(programClassLoader, new Closeable() {
-      @Override
-      public void close() {
-        Closeables.closeQuietly((Closeable) finalProgramClassLoader);
-        if (finalProgramRunner instanceof Closeable) {
-          Closeables.closeQuietly((Closeable) finalProgramRunner);
-        }
+    return new CloseableClassLoader(programClassLoader, () -> {
+      Closeables.closeQuietly((Closeable) finalProgramClassLoader);
+      if (finalProgramRunner instanceof Closeable) {
+        Closeables.closeQuietly((Closeable) finalProgramRunner);
       }
     });
   }
@@ -112,32 +107,17 @@ final class ArtifactClassLoaderFactory {
    * @param artifactLocation the location of the artifact to create the classloader from
    * @return a closeable classloader based off the specified artifact; on closing the returned {@link ClassLoader},
    *         all temporary resources created for the classloader will be removed
-   * @throws IOException if there was an error copying or unpacking the artifact
    * @see #createClassLoader(File)
    */
-  CloseableClassLoader createClassLoader(final Location artifactLocation,
-                                                 EntityImpersonator entityImpersonator) throws IOException {
+  CloseableClassLoader createClassLoader(Location artifactLocation, EntityImpersonator entityImpersonator) {
     try {
-      final File unpackDir = entityImpersonator.impersonate(new Callable<File>() {
-        @Override
-        public File call() throws IOException {
-          return BundleJarUtil.prepareClassLoaderFolder(artifactLocation, DirUtils.createTempDir(tmpDir));
-        }
-      });
+      ClassLoaderFolder classLoaderFolder = entityImpersonator.impersonate(
+        () -> BundleJarUtil.prepareClassLoaderFolder(artifactLocation, () -> DirUtils.createTempDir(tmpDir)));
 
-      final CloseableClassLoader classLoader = createClassLoader(unpackDir);
-      return new CloseableClassLoader(classLoader, new Closeable() {
-        @Override
-        public void close() throws IOException {
-          try {
-            Closeables.closeQuietly(classLoader);
-            if (unpackDir.exists()) {
-              DirUtils.deleteDirectoryContents(unpackDir);
-            }
-          } catch (IOException e) {
-            LOG.warn("Failed to delete directory {}", unpackDir, e);
-          }
-        }
+      CloseableClassLoader classLoader = createClassLoader(classLoaderFolder.getDir());
+      return new CloseableClassLoader(classLoader, () -> {
+        Closeables.closeQuietly(classLoader);
+        Closeables.closeQuietly(classLoaderFolder);
       });
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -151,41 +131,28 @@ final class ArtifactClassLoaderFactory {
    * @param artifactLocations the locations of the artifact to create the classloader from
    * @return a closeable classloader based off the specified artifacts; on closing the returned {@link ClassLoader},
    *         all temporary resources created for the classloader will be removed
-   * @throws IOException if there was an error copying or unpacking the artifact
    * @see #createClassLoader(File)
    */
-  CloseableClassLoader createClassLoader(final Iterator<Location> artifactLocations,
-                                         EntityImpersonator entityImpersonator) throws IOException {
+  CloseableClassLoader createClassLoader(Iterator<Location> artifactLocations,
+                                         EntityImpersonator entityImpersonator) {
     if (!artifactLocations.hasNext()) {
       throw new IllegalArgumentException("Cannot create a classloader without an artifact.");
     }
 
-    final Location artifactLocation = artifactLocations.next();
+    Location artifactLocation = artifactLocations.next();
     if (!artifactLocations.hasNext()) {
       return createClassLoader(artifactLocation, entityImpersonator);
     }
 
     try {
-      final File unpackDir = entityImpersonator.impersonate(new Callable<File>() {
-        @Override
-        public File call() throws IOException {
-          return BundleJarUtil.prepareClassLoaderFolder(artifactLocation, DirUtils.createTempDir(tmpDir));
-        }
-      });
+      ClassLoaderFolder classLoaderFolder = entityImpersonator.impersonate(
+        () -> BundleJarUtil.prepareClassLoaderFolder(artifactLocation, () -> DirUtils.createTempDir(tmpDir)));
 
-      final CloseableClassLoader parentClassLoader = createClassLoader(artifactLocations, entityImpersonator);
-      return new CloseableClassLoader(new DirectoryClassLoader(unpackDir, parentClassLoader, "lib"), new Closeable() {
-        @Override
-        public void close() throws IOException {
-          try {
-            Closeables.closeQuietly(parentClassLoader);
-            if (unpackDir.exists()) {
-              DirUtils.deleteDirectoryContents(unpackDir);
-            }
-          } catch (IOException e) {
-            LOG.warn("Failed to delete directory {}", unpackDir, e);
-          }
-        }
+      CloseableClassLoader parentClassLoader = createClassLoader(artifactLocations, entityImpersonator);
+      return new CloseableClassLoader(new DirectoryClassLoader(classLoaderFolder.getDir(),
+                                                               parentClassLoader, "lib"), () -> {
+        Closeables.closeQuietly(parentClassLoader);
+        Closeables.closeQuietly(classLoaderFolder);
       });
     } catch (Exception e) {
       throw Throwables.propagate(e);

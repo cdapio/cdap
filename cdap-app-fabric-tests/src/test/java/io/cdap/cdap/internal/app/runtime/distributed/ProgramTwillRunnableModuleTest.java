@@ -25,7 +25,6 @@ import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.test.MockTwillContext;
-import io.cdap.cdap.common.twill.NoopTwillRunnerService;
 import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -36,24 +35,16 @@ import io.cdap.cdap.internal.app.runtime.service.ServiceProgramRunner;
 import io.cdap.cdap.internal.app.runtime.worker.WorkerProgramRunner;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
 import io.cdap.cdap.master.environment.MasterEnvironments;
-import io.cdap.cdap.master.spi.environment.MasterEnvironment;
-import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
-import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnableContext;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.ServiceAnnouncer;
-import org.apache.twill.api.TwillRunnerService;
-import org.apache.twill.discovery.DiscoveryService;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.function.Supplier;
 
 /**
  * Tests for guice modules used in various {@link AbstractProgramTwillRunnable}.
@@ -146,38 +137,4 @@ public class ProgramTwillRunnableModuleTest {
                                     new BasicArguments());
   }
 
-  /**
-   * A mock implementation of {@link MasterEnvironment} for unit testing program twill runnables.
-   */
-  private static final class MockMasterEnvironment implements MasterEnvironment {
-
-    private final InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
-
-    @Override
-    public MasterEnvironmentRunnable createRunnable(
-      MasterEnvironmentRunnableContext context,
-      Class<? extends MasterEnvironmentRunnable> runnableClass) throws Exception {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public String getName() {
-      return "mock";
-    }
-
-    @Override
-    public Supplier<DiscoveryService> getDiscoveryServiceSupplier() {
-      return () -> discoveryService;
-    }
-
-    @Override
-    public Supplier<DiscoveryServiceClient> getDiscoveryServiceClientSupplier() {
-      return () -> discoveryService;
-    }
-
-    @Override
-    public Supplier<TwillRunnerService> getTwillRunnerSupplier() {
-      return NoopTwillRunnerService::new;
-    }
-  }
 }

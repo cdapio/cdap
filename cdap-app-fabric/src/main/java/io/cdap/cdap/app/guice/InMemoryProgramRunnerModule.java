@@ -30,10 +30,8 @@ import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import io.cdap.cdap.internal.app.runtime.artifact.LocalArtifactManager;
-import io.cdap.cdap.internal.app.runtime.artifact.LocalPluginFinder;
 import io.cdap.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 import io.cdap.cdap.internal.app.runtime.service.InMemoryProgramRuntimeService;
 import io.cdap.cdap.internal.app.runtime.service.InMemoryServiceProgramRunner;
@@ -70,9 +68,6 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
               .implement(ArtifactManager.class, LocalArtifactManager.class)
               .build(ArtifactManagerFactory.class));
     expose(ArtifactManagerFactory.class);
-
-    bind(ArtifactFinder.class).to(LocalPluginFinder.class);
-    expose(ArtifactFinder.class);
 
     // Bind ProgramRunner
     MapBinder<ProgramType, ProgramRunner> runnerFactoryBinder =

@@ -392,6 +392,8 @@ public final class Constants {
     public static final String CONTAINER_COUNT = "task.worker.container.count";
     public static final String POOL_CHECK_INTERVAL = "task.worker.pool.check.interval";
     public static final String POOL_ENABLE = "task.worker.pool.enable";
+    public static final String COMPRESSION_ENABLED = "task.worker.compression.enabled";
+    public static final String PRELOAD_ARTIFACTS = "task.worker.preload.artifacts";
 
     /**
      * Task worker container configurations

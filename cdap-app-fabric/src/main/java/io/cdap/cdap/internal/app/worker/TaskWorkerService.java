@@ -18,8 +18,13 @@ package io.cdap.cdap.internal.app.worker;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
+import io.cdap.cdap.api.artifact.ApplicationClass;
+import io.cdap.cdap.api.artifact.ArtifactInfo;
+import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.service.worker.RunnableTask;
+import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
@@ -27,13 +32,21 @@ import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
+import io.netty.channel.ChannelPipeline;
+import io.netty.handler.codec.http.HttpContentDecompressor;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -42,17 +55,25 @@ import java.util.concurrent.TimeUnit;
 public class TaskWorkerService extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerService.class);
+  private static final Gson GSON = new Gson();
 
+  private final CConfiguration cConf;
   private final DiscoveryService discoveryService;
   private final NettyHttpService httpService;
+  private final ArtifactManagerFactory artifactManagerFactory;
+  private final RunnableTaskLauncher taskLauncher;
   private Cancellable cancelDiscovery;
   private InetSocketAddress bindAddress;
 
   @Inject
   TaskWorkerService(CConfiguration cConf,
                     SConfiguration sConf,
-                    DiscoveryService discoveryService) {
+                    DiscoveryService discoveryService,
+                    ArtifactManagerFactory artifactManagerFactory) {
+    this.cConf = cConf;
     this.discoveryService = discoveryService;
+    this.artifactManagerFactory = artifactManagerFactory;
+    this.taskLauncher = new RunnableTaskLauncher(cConf);
 
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TASK_WORKER)
       .setHost(cConf.get(Constants.TaskWorker.ADDRESS))
@@ -60,27 +81,80 @@ public class TaskWorkerService extends AbstractIdleService {
       .setExecThreadPoolSize(cConf.getInt(Constants.TaskWorker.EXEC_THREADS))
       .setBossThreadPoolSize(cConf.getInt(Constants.TaskWorker.BOSS_THREADS))
       .setWorkerThreadPoolSize(cConf.getInt(Constants.TaskWorker.WORKER_THREADS))
+      .setChannelPipelineModifier(new ChannelPipelineModifier() {
+        @Override
+        public void modify(ChannelPipeline pipeline) {
+          pipeline.addAfter("compressor", "decompressor", new HttpContentDecompressor());
+        }
+      })
       .setHttpHandlers(new TaskWorkerHttpHandlerInternal(cConf, this::stopService));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
     }
-    httpService = builder.build();
+    this.httpService = builder.build();
   }
 
   @Override
   protected void startUp() throws Exception {
-    LOG.info("Starting TaskWorkerService");
+    preloadArtifacts();
+
+    LOG.debug("Starting TaskWorkerService");
     httpService.start();
     bindAddress = httpService.getBindAddress();
     cancelDiscovery = discoveryService.register(
       ResolvingDiscoverable.of(URIScheme.createDiscoverable(Constants.Service.TASK_WORKER, httpService)));
-    LOG.info("Starting TaskWorkerService has completed");
+    LOG.debug("Starting TaskWorkerService has completed");
+  }
+
+  /**
+   * Preloading artifacts by running a {@link SystemAppTask} for each of the artifact.
+   */
+  private void preloadArtifacts() {
+    Set<String> artifacts = new HashSet<>(cConf.getTrimmedStringCollection(Constants.TaskWorker.PRELOAD_ARTIFACTS));
+    if (artifacts.isEmpty()) {
+      return;
+    }
+
+    try {
+      ArtifactManager artifactManager = artifactManagerFactory.create(
+        NamespaceId.SYSTEM, RetryStrategies.fromConfiguration(cConf, Constants.Service.TASK_WORKER + "."));
+
+      for (ArtifactInfo info : artifactManager.listArtifacts()) {
+        if (artifacts.contains(info.getName()) && info.getParents().isEmpty()) {
+          String className = info.getClasses().getApps().stream()
+            .findFirst()
+            .map(ApplicationClass::getClassName)
+            .orElse(null);
+
+          LOG.debug("Preloading artifact {}:{}-{}", info.getScope(), info.getName(), info.getVersion());
+
+          // Launch a dummy system app task with invalid RunnableTask (since we don't know the task class name)
+          // We'll catch the Exception and ignore it.
+          String systemAppClassName = SystemAppTask.class.getName();
+          RunnableTaskRequest taskRequest = RunnableTaskRequest.getBuilder(systemAppClassName)
+            .withParam(GSON.toJson(RunnableTaskRequest.getBuilder(className).build()))
+            .withNamespace(NamespaceId.SYSTEM.getNamespace())
+            .withArtifact(NamespaceId.SYSTEM.artifact(info.getName(), info.getVersion()).toApiArtifactId())
+            .build();
+
+          try {
+            taskLauncher.launchRunnableTask(taskRequest);
+          } catch (Exception e) {
+            // Ignored
+            LOG.trace("Expected exception", e);
+          }
+        }
+      }
+    } catch (Exception e) {
+      // It is non-fatal for the service to start, hence we just log.
+      LOG.warn("Failed to preload artifacts {}", artifacts, e);
+    }
   }
 
   @Override
   protected void shutDown() throws Exception {
-    LOG.info("Shutting down TaskWorkerService");
+    LOG.debug("Shutting down TaskWorkerService");
     httpService.stop(1, 2, TimeUnit.SECONDS);
     cancelDiscovery.cancel();
     LOG.debug("Shutting down TaskWorkerService has completed");

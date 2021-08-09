@@ -58,7 +58,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Implementation of {@link PluginFinder} that use the artifact HTTP endpoints for finding plugins.
  */
-public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
+public class RemotePluginFinder implements PluginFinder {
   private static final Gson GSON = new Gson();
   private static final Type PLUGIN_INFO_LIST_TYPE = new TypeToken<List<PluginInfo>>() {
   }.getType();
@@ -175,8 +175,7 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
   /**
    * Retrieves the {@link Location} of a given artifact.
    */
-  @Override
-  public Location getArtifactLocation(ArtifactId artifactId)
+  protected Location getArtifactLocation(ArtifactId artifactId)
     throws IOException, ArtifactNotFoundException, UnauthorizedException {
     HttpRequest.Builder requestBuilder =
       remoteClientInternal.requestBuilder(

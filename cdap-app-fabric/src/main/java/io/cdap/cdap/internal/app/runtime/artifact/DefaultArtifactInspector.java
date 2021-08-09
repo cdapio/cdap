@@ -50,6 +50,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.lang.jar.ClassLoaderFolder;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginClassLoader;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -141,29 +142,26 @@ final class DefaultArtifactInspector implements ArtifactInspector {
     Files.createDirectories(tmpDir);
     Location artifactLocation = Locations.toLocation(artifactFile);
 
-    EntityImpersonator entityImpersonator = new EntityImpersonator(artifactId.toEntityId(),
-                                                                   impersonator);
+    EntityImpersonator entityImpersonator = new EntityImpersonator(artifactId.toEntityId(), impersonator);
 
     Path stageDir = Files.createTempDirectory(tmpDir, artifactFile.getName());
-    try {
-      File unpackedDir = BundleJarUtil.prepareClassLoaderFolder(
+    try (
+      ClassLoaderFolder clFolder = BundleJarUtil.prepareClassLoaderFolder(
         artifactLocation,
-        Files.createTempDirectory(stageDir, "unpacked-").toFile());
-      try (
-        CloseableClassLoader parentClassLoader = createParentClassLoader(parentDescriptor, entityImpersonator);
-        CloseableClassLoader artifactClassLoader = artifactClassLoaderFactory.createClassLoader(unpackedDir);
-        PluginInstantiator pluginInstantiator =
-          new PluginInstantiator(cConf, parentClassLoader == null ? artifactClassLoader : parentClassLoader,
-                                 Files.createTempDirectory(stageDir, "plugins-").toFile(),
-                                 false)) {
-        pluginInstantiator.addArtifact(artifactLocation, artifactId.toArtifactId());
-        ArtifactClasses.Builder builder = inspectApplications(artifactId, ArtifactClasses.builder(),
-                                                              artifactLocation, artifactClassLoader);
-        List<MetadataMutation> mutations = new ArrayList<>();
-        inspectPlugins(builder, artifactFile, artifactId.toEntityId(), pluginInstantiator,
-                       additionalPlugins, mutations);
-        return new ArtifactClassesWithMetadata(builder.build(), mutations);
-      }
+        () -> Files.createTempDirectory(stageDir, "unpacked-").toFile());
+      CloseableClassLoader parentClassLoader = createParentClassLoader(parentDescriptor, entityImpersonator);
+      CloseableClassLoader artifactClassLoader = artifactClassLoaderFactory.createClassLoader(clFolder.getDir());
+      PluginInstantiator pluginInstantiator =
+        new PluginInstantiator(cConf, parentClassLoader == null ? artifactClassLoader : parentClassLoader,
+                               Files.createTempDirectory(stageDir, "plugins-").toFile(),
+                               false)) {
+      pluginInstantiator.addArtifact(artifactLocation, artifactId.toArtifactId());
+      ArtifactClasses.Builder builder = inspectApplications(artifactId, ArtifactClasses.builder(),
+                                                            artifactLocation, artifactClassLoader);
+      List<MetadataMutation> mutations = new ArrayList<>();
+      inspectPlugins(builder, artifactFile, artifactId.toEntityId(), pluginInstantiator,
+                     additionalPlugins, mutations);
+      return new ArtifactClassesWithMetadata(builder.build(), mutations);
     } catch (EOFException | ZipException e) {
       throw new InvalidArtifactException("Artifact " + artifactId + " is not a valid zip file.", e);
     } finally {

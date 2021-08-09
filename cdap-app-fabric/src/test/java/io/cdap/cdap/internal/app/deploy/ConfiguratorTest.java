@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.app.deploy;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.cdap.cdap.AllProgramsApp;
@@ -34,7 +33,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.test.AppJarHelper;
-import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -66,14 +64,12 @@ import java.util.concurrent.TimeUnit;
  * Tests the configurators.
  *
  * NOTE: Until we can build the JAR it's difficult to test other configurators
- * {@link io.cdap.cdap.internal.app.deploy.InMemoryConfigurator} &
- * {@link io.cdap.cdap.internal.app.deploy.SandboxConfigurator}
+ * {@link io.cdap.cdap.internal.app.deploy.InMemoryConfigurator}
  */
 public class ConfiguratorTest {
 
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
-  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
   private static CConfiguration conf;
   private static AccessEnforcer authEnforcer;
   private static AuthenticationContext authenticationContext;
@@ -118,8 +114,10 @@ public class ConfiguratorTest {
     ConfigResponse response = result.get(10, TimeUnit.SECONDS);
     Assert.assertNotNull(response);
 
-    // Deserialize the JSON spec back into Application object.
-    AppSpecInfo appSpecInfo = GSON.fromJson(response.getResponse(), AppSpecInfo.class);
+    AppSpecInfo appSpecInfo = response.getAppSpecInfo();
+    if (appSpecInfo == null) {
+      throw new IllegalStateException("Failed to deploy application");
+    }
     ApplicationSpecification specification = appSpecInfo.getAppSpec();
     Assert.assertNotNull(specification);
     Assert.assertEquals(AllProgramsApp.NAME, specification.getName()); // Simple checks.
@@ -160,7 +158,10 @@ public class ConfiguratorTest {
     ConfigResponse response = result.get(10, TimeUnit.SECONDS);
     Assert.assertNotNull(response);
 
-    AppSpecInfo appSpecInfo = GSON.fromJson(response.getResponse(), AppSpecInfo.class);
+    AppSpecInfo appSpecInfo = response.getAppSpecInfo();
+    if (appSpecInfo == null) {
+      throw new IllegalStateException("Failed to deploy application");
+    }
     ApplicationSpecification specification = appSpecInfo.getAppSpec();
     Assert.assertNotNull(specification);
     Assert.assertEquals(1, specification.getDatasets().size());
@@ -178,7 +179,11 @@ public class ConfiguratorTest {
     response = result.get(10, TimeUnit.SECONDS);
     Assert.assertNotNull(response);
 
-    specification = GSON.fromJson(response.getResponse(), AppSpecInfo.class).getAppSpec();
+    appSpecInfo = response.getAppSpecInfo();
+    if (appSpecInfo == null) {
+      throw new IllegalStateException("Failed to deploy application");
+    }
+    specification = appSpecInfo.getAppSpec();
     Assert.assertNotNull(specification);
     Assert.assertEquals(1, specification.getDatasets().size());
     Assert.assertTrue(specification.getDatasets().containsKey(ConfigTestApp.DEFAULT_TABLE));

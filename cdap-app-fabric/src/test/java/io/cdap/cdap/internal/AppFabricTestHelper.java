@@ -67,7 +67,6 @@ import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.internal.app.services.ProgramNotificationSubscriberService;
@@ -375,7 +374,7 @@ public class AppFabricTestHelper {
                                        Supplier<File> folderSupplier) throws Exception {
     CConfiguration cConf = getInjector().getInstance(CConfiguration.class);
     return Programs.create(cConf, programRunner, programDescriptor, artifactLocation,
-                           BundleJarUtil.prepareClassLoaderFolder(artifactLocation, folderSupplier.get()));
+                           BundleJarUtil.prepareClassLoaderFolder(artifactLocation, folderSupplier::get).getDir());
 
   }
 

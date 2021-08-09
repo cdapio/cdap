@@ -15,6 +15,7 @@
 package io.cdap.cdap.internal.app.worker.sidecar;
 
 import com.google.common.io.CharStreams;
+import com.google.common.net.HttpHeaders;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.retry.RetryableException;
@@ -25,6 +26,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.lang.jar.ClassLoaderFolder;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
@@ -32,8 +34,6 @@ import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.common.http.HttpMethod;
-import io.cdap.common.http.HttpRequestConfig;
-import org.jboss.resteasy.util.HttpHeaderNames;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,6 +51,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -90,7 +91,6 @@ import javax.annotation.Nullable;
 public class ArtifactLocalizer {
 
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactLocalizer.class);
-  private static final String LAST_MODIFIED_HEADER = HttpHeaderNames.LAST_MODIFIED.toLowerCase();
 
   private final RemoteClient remoteClient;
   private final RetryStrategy retryStrategy;
@@ -107,21 +107,6 @@ public class ArtifactLocalizer {
   }
 
   /**
-   * Gets the location on the local filesystem for the given artifact. This method handles fetching the artifact as well
-   * as caching it.
-   *
-   * @param artifactId The ArtifactId of the artifact to fetch
-   * @return The Local Location for this artifact
-   * @throws ArtifactNotFoundException if the given artifact does not exist
-   * @throws IOException if there was an exception while fetching or caching the artifact
-   * @throws Exception if there was an unexpected error
-   */
-  public File getArtifact(ArtifactId artifactId) throws Exception {
-    LOG.debug("Fetching artifact info for {}", artifactId);
-    return Retries.callWithRetries(() -> fetchArtifact(artifactId), retryStrategy);
-  }
-
-  /**
    * Gets the location on the local filesystem for the directory that contains the unpacked artifact. This method
    * handles fetching, caching and unpacking the artifact.
    *
@@ -132,29 +117,28 @@ public class ArtifactLocalizer {
    * @throws Exception if there was an unexpected error
    */
   public File getAndUnpackArtifact(ArtifactId artifactId) throws Exception {
-    LOG.debug("Unpacking artifact {}", artifactId);
-    File jarLocation = getArtifact(artifactId);
+    File jarLocation = Retries.callWithRetries(() -> fetchArtifact(artifactId), retryStrategy);
     File unpackDir = getUnpackLocalPath(artifactId, Long.parseLong(jarLocation.getName().split("\\.")[0]));
-    LOG.debug("Got unpack directory as {}", unpackDir);
-    if (!unpackDir.exists()) {
-      LOG.debug("Unpack directory doesn't exist, unpacking into {}", unpackDir);
+    if (unpackDir.exists()) {
+      LOG.debug("Found unpack directory as {}", unpackDir);
+      return unpackDir;
+    }
 
-      // Ensure the path leading to the unpack directory is created so we can create a temp directory
-      if (!unpackDir.getParentFile().exists() && !unpackDir.getParentFile().mkdirs()) {
-        throw new IOException(String.format("Failed to create one or more directories along the path %s",
-                                            unpackDir.getParentFile().getPath()));
-      }
-      File tempUnpackDir = DirUtils.createTempDir(unpackDir.getParentFile());
-      try {
-        BundleJarUtil.prepareClassLoaderFolder(jarLocation, tempUnpackDir);
-        Files.move(tempUnpackDir.toPath(), unpackDir.toPath(), StandardCopyOption.ATOMIC_MOVE,
-                   StandardCopyOption.REPLACE_EXISTING);
-      } finally {
-        // This directory should only exist if something went wrong with the move command above
-        if (tempUnpackDir.exists()) {
-          DirUtils.deleteDirectoryContents(tempUnpackDir);
-        }
-      }
+    LOG.debug("Unpack directory doesn't exist, unpacking into {}", unpackDir);
+
+    // Ensure the path leading to the unpack directory is created so we can create a temp directory
+    if (!DirUtils.mkdirs(unpackDir.getParentFile())) {
+      throw new IOException(String.format("Failed to create one or more directories along the path %s",
+                                          unpackDir.getParentFile().getPath()));
+    }
+
+    // It is guarantee that the jarLocation is a file, not a directory, as this is the class who cache unpacked
+    // artifact.
+    try (ClassLoaderFolder classLoaderFolder = BundleJarUtil.prepareClassLoaderFolder(
+        jarLocation, () -> DirUtils.createTempDir(unpackDir.getParentFile()))) {
+
+      Files.move(classLoaderFolder.getDir().toPath(), unpackDir.toPath(), StandardCopyOption.ATOMIC_MOVE,
+                 StandardCopyOption.REPLACE_EXISTING);
     }
     return unpackDir;
   }
@@ -192,12 +176,12 @@ public class ArtifactLocalizer {
 
         ZonedDateTime lastModifiedDate = ZonedDateTime
           .ofInstant(Instant.ofEpochMilli(lastModifiedTimestamp), ZoneId.of("GMT"));
-        urlConn.setRequestProperty(HttpHeaderNames.IF_MODIFIED_SINCE, lastModifiedDate.format(
+        urlConn.setRequestProperty(HttpHeaders.IF_MODIFIED_SINCE, lastModifiedDate.format(
           DateTimeFormatter.RFC_1123_DATE_TIME));
       }
 
       // If we get this response that means we already have the most up to date artifact
-      if (urlConn.getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
+      if (lastModifiedTimestamp != null && urlConn.getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
         LOG.debug("Call to app fabric returned NOT_MODIFIED for {} with lastModifiedTimestamp of {}", artifactId,
                   lastModifiedTimestamp);
         File artifactJarLocation = getArtifactJarLocation(artifactId, lastModifiedTimestamp);
@@ -255,21 +239,22 @@ public class ArtifactLocalizer {
    */
   private ZonedDateTime getLastModifiedHeader(HttpURLConnection urlConn) {
     Map<String, List<String>> headers = urlConn.getHeaderFields();
-    List<String> lastModifiedHeader = headers.entrySet().stream()
-      .filter(headerEntry -> LAST_MODIFIED_HEADER.equalsIgnoreCase(headerEntry.getKey()))
+    ZonedDateTime lastModified = headers.entrySet().stream()
+      .filter(headerEntry -> HttpHeaders.LAST_MODIFIED.equalsIgnoreCase(headerEntry.getKey()))
       .map(Map.Entry::getValue)
+      .flatMap(Collection::stream)
       .findFirst()
+      .map(s -> ZonedDateTime.parse(s, DateTimeFormatter.RFC_1123_DATE_TIME))
       .orElse(null);
 
-    if (lastModifiedHeader == null || lastModifiedHeader.size() != 1) {
+    if (lastModified == null) {
       // This should never happen since this endpoint should always set the header.
       // If it does happen we should retry.
       throw new RetryableException(String.format("The response from %s did not contain the %s header.",
-                                                 urlConn.getURL(), LAST_MODIFIED_HEADER));
+                                                 urlConn.getURL(), HttpHeaders.LAST_MODIFIED));
     }
 
-    return ZonedDateTime
-      .parse(headers.get(LAST_MODIFIED_HEADER).get(0), DateTimeFormatter.RFC_1123_DATE_TIME);
+    return lastModified;
   }
 
   /**

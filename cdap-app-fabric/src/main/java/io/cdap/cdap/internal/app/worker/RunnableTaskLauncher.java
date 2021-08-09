@@ -23,7 +23,7 @@ import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 
-import java.net.URI;
+import java.nio.ByteBuffer;
 
 /**
  * RunnableTaskLauncher launches a {@link RunnableTask} by loading its class and calling its run method.
@@ -35,8 +35,7 @@ public class RunnableTaskLauncher {
     this.cConf = cConf;
   }
 
-  public byte[] launchRunnableTask(RunnableTaskRequest request, URI fileURI) throws Exception {
-
+  public RunnableTaskContext launchRunnableTask(RunnableTaskRequest request) throws Exception {
     ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
     if (classLoader == null) {
       classLoader = getClass().getClassLoader();
@@ -51,17 +50,12 @@ public class RunnableTaskLauncher {
       throw new ClassCastException(String.format("%s is not a RunnableTask", request.getClassName()));
     }
     RunnableTask runnableTask = (RunnableTask) obj;
-    RunnableTaskContext runnableTaskContext = RunnableTaskContext.getBuilder().
-      withParam(request.getParam()).withFileURI(fileURI).
-      withArtifactId(request.getArtifactId()).
-      withNamespace(request.getNamespace()).
-      build();
+    RunnableTaskContext runnableTaskContext = RunnableTaskContext.getBuilder()
+      .withParam(request.getParam())
+      .withArtifactId(request.getArtifactId())
+      .withNamespace(request.getNamespace())
+      .build();
     runnableTask.run(runnableTaskContext);
-    return runnableTaskContext.getResult();
-  }
-
-  private ClassLoader getClassLoader() {
-    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-    return classLoader == null ? getClass().getClassLoader() : classLoader;
+    return runnableTaskContext;
   }
 }
