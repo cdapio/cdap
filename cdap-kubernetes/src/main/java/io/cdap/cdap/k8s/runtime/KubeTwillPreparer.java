@@ -25,13 +25,13 @@ import io.cdap.cdap.master.environment.k8s.KubeMasterEnvironment;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
+import io.cdap.cdap.master.spi.twill.Completable;
 import io.cdap.cdap.master.spi.twill.DependentTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecretDisk;
 import io.cdap.cdap.master.spi.twill.SecureTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecurityContext;
 import io.cdap.cdap.master.spi.twill.StatefulDisk;
 import io.cdap.cdap.master.spi.twill.StatefulTwillPreparer;
-import io.cdap.cdap.master.spi.twill.TwillConstants;
 import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
@@ -94,6 +94,7 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URL;
@@ -527,9 +528,15 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       StatefulRunnable statefulRunnable = statefulRunnables.get(mainRuntimeSpec.getName());
       Type resourceType = statefulRunnable == null ? V1Deployment.class : V1StatefulSet.class;
 
-      if (runnableConfigs.getOrDefault(mainRuntimeSpec.getName(),
-                                       Collections.emptyMap()).containsKey(TwillConstants.PROGRAM_RUNTIME_ENV)) {
-        resourceType = V1Job.class;
+      // Check if ContainerRuntime annotation is present on the twill runnable. If its present, that twill runnable
+      // would be submitted as kubernetes job
+      ClassLoader contextClassLoader = Optional.ofNullable(Thread.currentThread().getContextClassLoader())
+        .orElse(getClass().getClassLoader());
+      for (Annotation annotation : contextClassLoader
+        .loadClass(mainRuntimeSpec.getRunnableSpecification().getClassName()).getAnnotations()) {
+        if (annotation.annotationType().isInstance(Completable.class)) {
+          resourceType = V1Job.class;
+        }
       }
 
       V1ObjectMeta metadata = createResourceMetadata(resourceType, mainRuntimeSpec.getName(),

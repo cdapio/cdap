@@ -16,10 +16,17 @@
 
 package io.cdap.cdap.master.spi.twill;
 
+import org.apache.twill.api.TwillRunnable;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 /**
- * Constants used for twill.
+ * Annotation to denote a {@link TwillRunnable} that completes.
  */
-public class TwillConstants {
-  // Configuration used to determine whether to use V1Job to launch twill runnables.
-  public static final String PROGRAM_RUNTIME_ENV = "program.runtime.env";
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ ElementType.TYPE })
+public @interface Completable {
 }
