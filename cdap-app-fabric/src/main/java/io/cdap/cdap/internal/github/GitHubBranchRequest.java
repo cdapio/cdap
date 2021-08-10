@@ -13,40 +13,18 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package io.cdap.cdap.internal.github;
 
-import com.google.gson.JsonObject;
-
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-
-public class GitHubIO {
+/**
+ * Handles requests to create branches in a GitHub repository
+ */
+public class GitHubBranchRequest {
   String branch;
-  String path;
-  String message;
-  JsonObject content;
-  public GitHubIO(String branch, String path, String message, JsonObject content) {
+  public GitHubBranchRequest(String branch) {
     this.branch = branch;
-    this.path = path;
-    this.message = message;
-    this.content = content;
   }
 
   public String getBranch() {
-    return this.branch;
-  }
-  public String getPath() {
-    return this.path;
-  }
-  public String getCommitMessage() {
-    return this.message;
-  }
-  public JsonObject getPipeline() {
-    return this.content;
-  }
-  public String getEncodedPipeline() {
-    return Base64.getEncoder().encodeToString(content.toString().getBytes(
-        StandardCharsets.UTF_8));
+    return branch;
   }
 }
