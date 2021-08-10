@@ -145,7 +145,10 @@ public class KubeTwillLauncher implements MasterEnvironmentRunnable {
     try {
       ApiClient apiClient = Config.defaultClient();
       CoreV1Api api = new CoreV1Api(apiClient);
-      V1DeleteOptions delOptions = new V1DeleteOptions().preconditions(new V1Preconditions().uid(podInfo.getUid()));
+      V1DeleteOptions delOptions = new V1DeleteOptions()
+        .preconditions(new V1Preconditions().uid(podInfo.getUid()))
+        .gracePeriodSeconds(1L);
+
       api.deleteNamespacedPodAsync(podInfo.getName(), podInfo.getNamespace(), null, delOptions,
                                    null, null, null, null, new ApiCallbackAdapter<>());
     } catch (Exception e) {
