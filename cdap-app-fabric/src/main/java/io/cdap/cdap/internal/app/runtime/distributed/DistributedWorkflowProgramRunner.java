@@ -44,7 +44,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
-import io.cdap.cdap.master.spi.twill.TwillConstants;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
@@ -178,9 +177,6 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
                                                                     options.getUserArguments().asMap());
     launchConfig.addRunnable(spec.getName(), new WorkflowTwillRunnable(spec.getName()), 1,
                              runtimeArgs, defaultResources, 0);
-    if (clusterMode == ClusterMode.ON_PREMISE) {
-      launchConfig.addExtraRuntimeArgs(Collections.singletonMap(TwillConstants.PROGRAM_RUNTIME_ENV, "onpremise"));
-    }
   }
 
   /**
