@@ -86,6 +86,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -298,8 +300,8 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
   }
 
   private void testUsingConnections(Engine engine) throws Exception {
-    String sourceConnName = "sourceConn" + engine;
-    String sinkConnName = "sinkConn" + engine;
+    String sourceConnName = "sourceConn " + engine;
+    String sinkConnName = "sinkConn " + engine;
     String srcTableName = "src" + engine;
     String sinkTableName = "sink" + engine;
 
@@ -389,9 +391,10 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
   }
 
   private void addConnection(String connection, ConnectionCreationRequest creationRequest) throws IOException {
-    URL validatePipelineURL =
-      serviceURI.resolve(String.format("v1/contexts/%s/connections/%s", NamespaceId.DEFAULT.getNamespace(),
-                                       connection)).toURL();
+    String url = URLEncoder.encode(
+      String.format("v1/contexts/%s/connections/%s", NamespaceId.DEFAULT.getNamespace(), connection),
+      StandardCharsets.UTF_8.name());
+    URL validatePipelineURL = serviceURI.resolve(url).toURL();
     HttpRequest request = HttpRequest.builder(HttpMethod.PUT, validatePipelineURL)
                             .withBody(GSON.toJson(creationRequest))
                             .build();
@@ -400,18 +403,21 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
   }
 
   private void deleteConnection(String connection) throws IOException {
-    URL validatePipelineURL =
-      serviceURI.resolve(String.format("v1/contexts/%s/connections/%s", NamespaceId.DEFAULT.getNamespace(),
-                                       connection)).toURL();
+    String url = URLEncoder.encode(
+      String.format("v1/contexts/%s/connections/%s", NamespaceId.DEFAULT.getNamespace(),
+                    connection), StandardCharsets.UTF_8.name());
+    URL validatePipelineURL = serviceURI.resolve(url).toURL();
     HttpRequest request = HttpRequest.builder(HttpMethod.DELETE, validatePipelineURL).build();
     HttpResponse response = HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
     Assert.assertEquals(200, response.getResponseCode());
   }
 
   private BrowseDetail browseConnection(String connection, String path, int limit) throws IOException {
+    String url = URLEncoder.encode(
+      String.format("v1/contexts/%s/connections/%s/browse", NamespaceId.DEFAULT.getNamespace(),
+                    connection), StandardCharsets.UTF_8.name());
     URL validatePipelineURL =
-      serviceURI.resolve(String.format("v1/contexts/%s/connections/%s/browse?path=%s&limit=%s",
-                                       NamespaceId.DEFAULT.getNamespace(), connection, path, limit)).toURL();
+      serviceURI.resolve(String.format("%s?path=%s&limit=%s", url, path, limit)).toURL();
     HttpRequest request = HttpRequest.builder(HttpMethod.POST, validatePipelineURL)
                             .withBody(GSON.toJson(BrowseRequest.builder(path).setLimit(limit).build()))
                             .build();
@@ -421,9 +427,11 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
   }
 
   private SampleResponse sampleConnection(String connection, String path, int limit) throws IOException {
+    String url = URLEncoder.encode(
+      String.format("v1/contexts/%s/connections/%s/sample", NamespaceId.DEFAULT.getNamespace(),
+                    connection), StandardCharsets.UTF_8.name());
     URL validatePipelineURL =
-      serviceURI.resolve(String.format("v1/contexts/%s/connections/%s/sample?path=%s&limit=%s",
-                                       NamespaceId.DEFAULT.getNamespace(), connection, path, limit)).toURL();
+      serviceURI.resolve(String.format("%s?path=%s&limit=%s", url, path, limit)).toURL();
     HttpRequest request = HttpRequest.builder(HttpMethod.POST, validatePipelineURL)
                             .withBody(GSON.toJson(SampleRequest.builder(limit).setPath(path).build()))
                             .build();

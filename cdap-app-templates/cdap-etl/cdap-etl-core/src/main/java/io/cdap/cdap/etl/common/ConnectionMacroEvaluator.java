@@ -27,6 +27,8 @@ import io.cdap.cdap.proto.id.NamespaceId;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 /**
  * A {@link MacroEvaluator} for resolving the {@code ${conn(connection-name)}} macro function. It uses
@@ -60,11 +62,11 @@ public class ConnectionMacroEvaluator extends AbstractServiceRetryableMacroEvalu
       throw new InvalidMacroException("Macro '" + FUNCTION_NAME + "' should have exactly 1 arguments");
     }
 
+    String path = URLEncoder.encode(String.format("v1/contexts/%s/connections/%s",
+                                                  namespace, args[0]), StandardCharsets.UTF_8.name());
     HttpURLConnection urlConn = serviceDiscoverer.openConnection(NamespaceId.SYSTEM.getNamespace(),
                                                                  Constants.PIPELINEID,
-                                                                 Constants.STUDIO_SERVICE_NAME,
-                                                                 String.format("v1/contexts/%s/connections/%s",
-                                                                               namespace, args[0]));
+                                                                 Constants.STUDIO_SERVICE_NAME, path);
     Connection connection = gson.fromJson(validateAndRetrieveContent(SERVICE_NAME, urlConn), Connection.class);
     return gson.toJson(connection.getPlugin().getProperties());
   }
