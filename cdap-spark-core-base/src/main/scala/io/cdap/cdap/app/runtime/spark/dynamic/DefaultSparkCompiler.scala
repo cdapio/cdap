@@ -17,7 +17,6 @@
 package io.cdap.cdap.app.runtime.spark.dynamic
 
 import java.net.URL
-
 import scala.tools.nsc.Settings
 import scala.tools.nsc.interpreter.IMain
 import scala.tools.nsc.interpreter.ReplReporter
@@ -38,12 +37,22 @@ class DefaultSparkCompiler(settings: Settings,
 
       override lazy val reporter: ReplReporter = {
         new ReplReporter(this) {
+          // super.reset() refers to different classes in
+          // scala 2.12.10 (AbstractReporter) vs 2.12.14 (ReplReporter)
+          // Need to use reflection to prevent ClassDefNotFoundError
+          lazy val superResetMethod = java.lang.invoke.MethodHandles.lookup().findSpecial(
+            classOf[ReplReporter],
+            "reset",
+            java.lang.invoke.MethodType.methodType(classOf[Unit]),
+            this.getClass
+          );
+
           override def printMessage(msg: String): Unit = {
             errorReporter.report(msg)
           }
 
           override def reset(): Unit = {
-            super.reset()
+            superResetMethod.invoke(this)
             errorReporter.clear()
           }
 
