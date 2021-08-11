@@ -54,11 +54,11 @@ public class PermissionAdapterFactory extends TypeAdapter<ActionOrPermission> im
     JsonObject map = json.getAsJsonObject();
     JsonElement permissionType = map.get("type");
     if (permissionType == null) {
-      throw new JsonParseException("Expected type in Permission JSON");
+      throw new JsonParseException("Required 'type' field was not found in the Permission");
     }
     JsonElement permissionName = map.get("name");
     if (permissionName == null) {
-      throw new JsonParseException("Expected name in Permission JSON");
+      throw new JsonParseException("Required 'name' field was not found in the Permission");
     }
 
     return PermissionType.valueOf(permissionType.getAsString(), permissionName.getAsString());
