@@ -29,10 +29,10 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.plugin.InvalidPluginConfigException;
-import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
+import io.cdap.cdap.api.service.http.ServicePluginConfigurer;
 import io.cdap.cdap.api.service.http.SystemHttpServiceContext;
 import io.cdap.cdap.datapipeline.connection.ConnectionStore;
 import io.cdap.cdap.datapipeline.connection.DefaultConnectorConfigurer;
@@ -205,7 +205,8 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
       ConnectionCreationRequest creationRequest =
         GSON.fromJson(StandardCharsets.UTF_8.decode(request.getContent()).toString(), ConnectionCreationRequest.class);
 
-      PluginConfigurer pluginConfigurer = getContext().createPluginConfigurer(namespaceSummary.getName());
+      ServicePluginConfigurer pluginConfigurer =
+        getContext().createServicePluginConfigurer(namespaceSummary.getName());
       ConnectorConfigurer connectorConfigurer = new DefaultConnectorConfigurer(pluginConfigurer);
       SimpleFailureCollector failureCollector = new SimpleFailureCollector();
       ConnectorContext connectorContext = new DefaultConnectorContext(failureCollector, pluginConfigurer);
@@ -256,7 +257,8 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
         return;
       }
 
-      PluginConfigurer pluginConfigurer = getContext().createPluginConfigurer(namespaceSummary.getName());
+      ServicePluginConfigurer pluginConfigurer =
+        getContext().createServicePluginConfigurer(namespaceSummary.getName());
       ConnectorConfigurer connectorConfigurer = new DefaultConnectorConfigurer(pluginConfigurer);
       ConnectorContext connectorContext = new DefaultConnectorContext(new SimpleFailureCollector(), pluginConfigurer);
       Connection conn = store.getConnection(new ConnectionId(namespaceSummary, connection));
@@ -305,7 +307,8 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
         return;
       }
 
-      PluginConfigurer pluginConfigurer = getContext().createPluginConfigurer(namespaceSummary.getName());
+      ServicePluginConfigurer pluginConfigurer =
+        getContext().createServicePluginConfigurer(namespaceSummary.getName());
       ConnectorConfigurer connectorConfigurer = new DefaultConnectorConfigurer(pluginConfigurer);
       ConnectorContext connectorContext = new DefaultConnectorContext(new SimpleFailureCollector(), pluginConfigurer);
       Connection conn = store.getConnection(new ConnectionId(namespaceSummary, connection));
@@ -330,7 +333,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
           return;
         }
         if (connector instanceof BatchConnector) {
-          LimitingConnector limitingConnector = new LimitingConnector((BatchConnector) connector);
+          LimitingConnector limitingConnector = new LimitingConnector((BatchConnector) connector, pluginConfigurer);
           List<StructuredRecord> sample = limitingConnector.sample(connectorContext, sampleRequest);
           responder.sendString(GSON.toJson(
             new SampleResponse(detail, sample.isEmpty() ? null : sample.get(0).getSchema(), sample)));
@@ -373,7 +376,8 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
         return;
       }
 
-      PluginConfigurer pluginConfigurer = getContext().createPluginConfigurer(namespaceSummary.getName());
+      ServicePluginConfigurer pluginConfigurer =
+        getContext().createServicePluginConfigurer(namespaceSummary.getName());
       ConnectorConfigurer connectorConfigurer = new DefaultConnectorConfigurer(pluginConfigurer);
       ConnectorContext connectorContext = new DefaultConnectorContext(new SimpleFailureCollector(), pluginConfigurer);
       Connection conn = store.getConnection(new ConnectionId(namespaceSummary, connection));
@@ -404,7 +408,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
     return new ConnectorDetail(relatedPlugins);
   }
 
-  private Connector getConnector(PluginConfigurer configurer, PluginInfo pluginInfo,
+  private Connector getConnector(ServicePluginConfigurer configurer, PluginInfo pluginInfo,
                                  String namespace, TrackedPluginSelector pluginSelector) throws IOException {
 
     Map<String, String> arguments = getContext().getPreferencesForNamespace(namespace, true);
@@ -413,17 +417,16 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
       OAuthMacroEvaluator.FUNCTION_NAME, new OAuthMacroEvaluator(getContext())
     );
     MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(arguments), evaluators);
-    Map<String, String> evaluatedProperties = getContext().evaluateMacros(
-      namespace, pluginInfo.getProperties(), macroEvaluator, MacroParserOptions.builder()
-                                                               .skipInvalidMacros()
-                                                               .setEscaping(false)
-                                                               .setFunctionWhitelist(evaluators.keySet())
-                                                               .build());
+    MacroParserOptions options = MacroParserOptions.builder()
+                                 .skipInvalidMacros()
+                                 .setEscaping(false)
+                                 .setFunctionWhitelist(evaluators.keySet())
+                                 .build();
     Connector connector;
     try {
       connector = configurer.usePlugin(pluginInfo.getType(), pluginInfo.getName(), UUID.randomUUID().toString(),
-                                       PluginProperties.builder().addAll(evaluatedProperties).build(),
-                                       pluginSelector);
+                                       PluginProperties.builder().addAll(pluginInfo.getProperties()).build(),
+                                       pluginSelector, macroEvaluator, options);
     } catch (InvalidPluginConfigException e) {
       throw new ConnectionBadRequestException(
         String.format("Unable to instantiate connector plugin: %s", e.getMessage()), e);

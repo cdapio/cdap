@@ -182,7 +182,7 @@ public class DefaultSparkHttpServicePluginContext implements SparkHttpServicePlu
     } catch (IllegalArgumentException | UnsupportedOperationException e) {
       // Expected if the plugin is not in the runtime context. Keep going.
     }
-    return pluginInstantiator.substituteMacros(getExtraPlugin(pluginId), evaluator);
+    return pluginInstantiator.substituteMacros(getExtraPlugin(pluginId), evaluator, null);
   }
 
   @Override
