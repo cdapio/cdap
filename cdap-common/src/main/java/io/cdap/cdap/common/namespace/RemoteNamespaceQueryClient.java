@@ -53,3 +53,4 @@ public class RemoteNamespaceQueryClient extends AbstractNamespaceQueryClient {
     return remoteClient.resolve(resource);
   }
 }
+

@@ -148,7 +148,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
 
     try {
       Uninterruptibles.getUninterruptibly(future);
-      LOG.debug("task worker stopped");
+      LOG.debug("Task worker stopped");
     } catch (ExecutionException e) {
       LOG.warn("Task worker stopped with exception", e);
     }

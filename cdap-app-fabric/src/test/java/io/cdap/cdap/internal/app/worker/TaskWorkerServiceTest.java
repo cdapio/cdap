@@ -101,7 +101,7 @@ public class TaskWorkerServiceTest {
     }, Threads.SAME_THREAD_EXECUTOR);
     try {
       Uninterruptibles.getUninterruptibly(future);
-      LOG.debug("task worker stopped");
+      LOG.debug("Task worker stopped");
     } catch (Exception e) {
       LOG.warn("Task worker stopped with exception", e);
     }

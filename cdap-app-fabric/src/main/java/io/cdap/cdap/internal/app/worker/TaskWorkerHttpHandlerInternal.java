@@ -122,7 +122,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       HttpResponse tokenResponse = HttpRequests.execute(tokenRequest);
       responder.sendByteArray(HttpResponseStatus.OK, tokenResponse.getResponseBody(), EmptyHttpHeaders.INSTANCE);
     } catch (Exception ex) {
-      LOG.warn("failed to fetch token from metadata service", ex);
+      LOG.warn("Failed to fetch token from metadata service", ex);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);
     }
   }
