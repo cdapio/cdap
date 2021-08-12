@@ -23,7 +23,6 @@ import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
-import io.cdap.cdap.common.service.RetryStrategyType;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -32,15 +31,19 @@ import io.cdap.cdap.internal.app.worker.TaskWorkerServiceTest;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.List;
 
 /**
@@ -48,34 +51,31 @@ import java.util.List;
  */
 public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
 
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+
   private ArtifactLocalizerService localizerService;
   private CConfiguration cConf;
 
-  private CConfiguration createCConf(int port) {
+  private CConfiguration createCConf() throws IOException {
     CConfiguration cConf = CConfiguration.create();
-    cConf.set(Constants.TaskWorker.ADDRESS, "localhost");
-    cConf.setInt(Constants.TaskWorker.PORT, port);
+    cConf.set(Constants.TaskWorker.ADDRESS, InetAddress.getLoopbackAddress().getHostName());
+    cConf.setInt(Constants.TaskWorker.PORT, 0);
     cConf.setBoolean(Constants.Security.SSL.INTERNAL_ENABLED, false);
+    cConf.setInt(Constants.ArtifactLocalizer.CACHE_CLEANUP_INTERVAL_MIN, 60);
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
 
-    String prefix = "task.worker.";
-    cConf.set(prefix + Constants.Retry.TYPE, RetryStrategyType.FIXED_DELAY.toString());
-    cConf.set(prefix + Constants.Retry.MAX_RETRIES, "100");
-    cConf.set(prefix + Constants.Retry.MAX_TIME_SECS, "10");
-    cConf.set(prefix + Constants.Retry.DELAY_BASE_MS, "200");
     return cConf;
   }
 
-  private ArtifactLocalizerService setupArtifactLocalizerService(int port) throws IOException {
-    cConf = createCConf(port);
-
+  private ArtifactLocalizerService setupArtifactLocalizerService(CConfiguration cConf) {
     DiscoveryServiceClient discoveryClient = getInjector().getInstance(DiscoveryServiceClient.class);
 
-    String tempFolderPath = tmpFolder.newFolder().getPath();
-    cConf.set(Constants.CFG_LOCAL_DATA_DIR, tempFolderPath);
     RemoteClientFactory remoteClientFactory =
       new RemoteClientFactory(discoveryClient, new DefaultInternalAuthenticator(new AuthenticationTestContext()));
-    ArtifactLocalizerService artifactLocalizerService =
-      new ArtifactLocalizerService(cConf, new ArtifactLocalizer(cConf, remoteClientFactory));
+    ArtifactLocalizerService artifactLocalizerService = new ArtifactLocalizerService(
+      cConf, new ArtifactLocalizer(cConf, remoteClientFactory));
+
     // start the service
     artifactLocalizerService.startAndWait();
 
@@ -84,27 +84,29 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
 
   @Before
   public void setUp() throws Exception {
-    this.localizerService = setupArtifactLocalizerService(10001);
+    cConf = createCConf();
+    localizerService = setupArtifactLocalizerService(cConf);
     getInjector().getInstance(ArtifactRepository.class).clear(NamespaceId.DEFAULT);
   }
 
   @After
   public void tearDown() throws Exception {
-    this.localizerService.shutDown();
+    this.localizerService.stopAndWait();
   }
 
   @Test
   public void testUnpackArtifact() throws Exception {
 
-    LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
+    LocationFactory locationFactory = new LocalLocationFactory(TEMP_FOLDER.newFolder());
+
     ArtifactRepository artifactRepository = getInjector().getInstance(ArtifactRepository.class);
     ArtifactLocalizerClient client = new ArtifactLocalizerClient(cConf);
 
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "some-task", "1.0.0-SNAPSHOT");
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, TaskWorkerServiceTest.TestRunnableClass.class);
-    File appJarFile = new File(tmpFolder.newFolder(),
+    File appJarFile = new File(TEMP_FOLDER.newFolder(),
                                String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
-    File newAppJarFile = new File(tmpFolder.newFolder(),
+    File newAppJarFile = new File(TEMP_FOLDER.newFolder(),
                                   String.format("%s-%s-copy.jar", artifactId.getName(),
                                                 artifactId.getVersion().getVersion()));
     Locations.linkOrCopy(appJar, appJarFile);
@@ -129,9 +131,14 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
 
     File newUnpackDir = client.getUnpackedArtifactLocation(artifactId.toEntityId());
 
-    //Make sure the two paths arent the same and that the old one is gone
+    //Make sure the two paths arent the same and the old directory still exists
     Assert.assertNotEquals(unpackedDir, newUnpackDir);
     validateUnpackDir(newUnpackDir);
+    validateUnpackDir(unpackedDir);
+
+    // Assert that the old cache directory is deleted after we run cleanup
+    this.localizerService.forceCleanup();
+    Assert.assertFalse(unpackedDir.exists());
   }
 
   private void validateUnpackDir(File unpackedFile) {
