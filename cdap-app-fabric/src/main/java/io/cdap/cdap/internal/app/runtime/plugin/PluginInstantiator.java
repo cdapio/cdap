@@ -237,6 +237,25 @@ public class PluginInstantiator implements Closeable {
    */
   public <T> T newInstance(Plugin plugin, @Nullable MacroEvaluator macroEvaluator)
     throws IOException, ClassNotFoundException, InvalidMacroException {
+    return newInstance(plugin, macroEvaluator, null);
+  }
+
+  /**
+   * Creates a new instance of the given plugin class with all property macros substituted if a MacroEvaluator is given.
+   * At runtime, plugin property fields that are macro-enabled and contain macro syntax will remain in the macroFields
+   * set in the plugin config.
+   * @param plugin {@link Plugin}
+   * @param macroEvaluator the MacroEvaluator that performs macro substitution
+   * @param options macro parser options
+   * @param <T> Type of the plugin
+   * @return a new plugin instance with macros substituted
+   * @throws IOException if failed to expand the plugin jar to create the plugin ClassLoader
+   * @throws ClassNotFoundException if failed to load the given plugin class
+   * @throws InvalidPluginConfigException if the PluginConfig could not be created from the plugin properties
+   */
+  public <T> T newInstance(
+    Plugin plugin, @Nullable MacroEvaluator macroEvaluator,
+    @Nullable MacroParserOptions options) throws IOException, ClassNotFoundException, InvalidMacroException {
     ClassLoader classLoader = getPluginClassLoader(plugin);
     PluginClass pluginClass = plugin.getPluginClass();
     @SuppressWarnings("unchecked")
@@ -255,7 +274,7 @@ public class PluginInstantiator implements Closeable {
       Object config = instantiatorFactory.get(configFieldType).create();
 
       // perform macro substitution if an evaluator is provided, collect fields with macros only at configure time
-      PluginProperties pluginProperties = substituteMacros(plugin, macroEvaluator);
+      PluginProperties pluginProperties = substituteMacros(plugin, macroEvaluator, options);
       Set<String> macroFields = (macroEvaluator == null) ? getFieldsWithMacro(plugin) : Collections.emptySet();
 
       PluginProperties rawProperties = plugin.getProperties();
@@ -276,7 +295,8 @@ public class PluginInstantiator implements Closeable {
     }
   }
 
-  public PluginProperties substituteMacros(Plugin plugin, @Nullable MacroEvaluator macroEvaluator) {
+  public PluginProperties substituteMacros(Plugin plugin, @Nullable MacroEvaluator macroEvaluator,
+                                           @Nullable MacroParserOptions options) {
     Map<String, String> properties = new HashMap<>();
     Map<String, PluginPropertyField> pluginPropertyFieldMap = plugin.getPluginClass().getProperties();
 
@@ -299,10 +319,10 @@ public class PluginInstantiator implements Closeable {
           propertyValue = getOriginalOrDefaultValue(propertyValue, property.getKey(), field.getType(),
                                                     trackingMacroEvaluator);
         } else {
-          MacroParser macroParser = new MacroParser(macroEvaluator,
-                                                    MacroParserOptions.builder()
-                                                      .setEscaping(field.isMacroEscapingEnabled())
-                                                      .build());
+          MacroParserOptions parserOptions = options == null ? MacroParserOptions.builder()
+                                                                 .setEscaping(field.isMacroEscapingEnabled())
+                                                                 .build() : options;
+          MacroParser macroParser = new MacroParser(macroEvaluator, parserOptions);
           propertyValue = macroParser.parse(propertyValue);
         }
       }

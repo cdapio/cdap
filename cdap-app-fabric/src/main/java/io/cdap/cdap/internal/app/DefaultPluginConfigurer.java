@@ -51,9 +51,9 @@ import javax.annotation.Nullable;
  */
 public class DefaultPluginConfigurer implements PluginConfigurer {
 
+  protected final PluginInstantiator pluginInstantiator;
   private final ArtifactId artifactId;
   private final NamespaceId pluginNamespaceId;
-  private final PluginInstantiator pluginInstantiator;
   private final PluginFinder pluginFinder;
   private final Map<String, PluginWithLocation> plugins;
 
@@ -113,8 +113,8 @@ public class DefaultPluginConfigurer implements PluginConfigurer {
     return evaluated;
   }
 
-  private Plugin addPlugin(String pluginType, String pluginName, String pluginId,
-                           PluginProperties properties, PluginSelector selector) throws PluginNotExistsException {
+  Plugin addPlugin(String pluginType, String pluginName, String pluginId,
+                   PluginProperties properties, PluginSelector selector) throws PluginNotExistsException {
     PluginWithLocation existing = plugins.get(pluginId);
     if (existing != null) {
       throw new IllegalArgumentException(String.format("Plugin of type %s, name %s was already added as id %s.",

@@ -58,7 +58,7 @@ public class DefaultPluginContext implements PluginContext {
     if (pluginInstantiator == null) {
       throw new UnsupportedOperationException("Plugin is not supported");
     }
-    return pluginInstantiator.substituteMacros(plugin, evaluator);
+    return pluginInstantiator.substituteMacros(plugin, evaluator, null);
   }
 
   @Override
