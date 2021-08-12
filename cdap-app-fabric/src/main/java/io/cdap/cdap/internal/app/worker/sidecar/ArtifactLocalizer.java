@@ -31,6 +31,7 @@ import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.common.utils.FileUtils;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.common.http.HttpMethod;
@@ -71,8 +72,8 @@ import javax.annotation.Nullable;
  *
  * 1. Check if there is a locally cached version of the artifact, if so fetch the lastModified timestamp from
  * the filename.
- * 2. Send a request to the 'download artifact' endpoint in appfabric and provide the lastModified timestamp (if
- * available)
+ * 2. Send a request to the {@link io.cdap.cdap.gateway.handlers.ArtifactHttpHandlerInternal#getArtifactBytes} endpoint
+ * in appfabric and provide the lastModified timestamp (if available)
  * 3. If a lastModified timestamp was not specified, or there is a newer version of the artifact: appfabric will stream
  * the bytes for the newest version of the jar and pass the new lastModified timestamp in the response headers
  *
@@ -81,9 +82,7 @@ import javax.annotation.Nullable;
  * If the provided lastModified timestamp matches the newest version of the artifact: appfabric will return
  * NOT_MODIFIED
  *
- * 4. If a newer version was found, delete the old cached jar and unpack directory (if it exists).
- *
- * 5. Return the local path to the newest version of the artifact jar.
+ * 4. Return the local path to the newest version of the artifact jar.
  *
  * NOTE: There is no need to invalidate the cache at any point since we will always need to call appfabric to confirm
  * that the cached version is the newest version available.
@@ -186,9 +185,8 @@ public class ArtifactLocalizer {
                   lastModifiedTimestamp);
         File artifactJarLocation = getArtifactJarLocation(artifactId, lastModifiedTimestamp);
         if (!artifactJarLocation.exists()) {
-          throw new RetryableException(
-            String.format("Locally cached artifact jar for %s is missing.",
-                          artifactId));
+          throw new RetryableException(String.format("Locally cached artifact jar for %s is missing.",
+                                                     artifactId));
         }
         return artifactJarLocation;
       }
@@ -228,7 +226,7 @@ public class ArtifactLocalizer {
     // Check if we have cached jars in the artifact directory, if so return the latest modified timestamp.
     return DirUtils.listFiles(artifactDir, File::isFile).stream()
       .map(File::getName)
-      .map(this::removeFileExtension)
+      .map(FileUtils::getNameWithoutExtension)
       .map(Long::valueOf)
       .max(Long::compare)
       .orElse(null);
@@ -276,13 +274,6 @@ public class ArtifactLocalizer {
     }
     throw new IOException(
       String.format("Failed to fetch artifact %s from app-fabric due to %s", artifactId, errMsg));
-  }
-
-  /**
-   * Helper method for removing the file extension from a filename
-   */
-  private String removeFileExtension(String filename) {
-    return filename.substring(0, filename.lastIndexOf("."));
   }
 
   private Path getLocalPath(String dirName, ArtifactId artifactId) {
