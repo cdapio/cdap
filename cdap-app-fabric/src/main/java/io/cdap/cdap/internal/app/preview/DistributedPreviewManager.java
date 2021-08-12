@@ -223,7 +223,7 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
         DirUtils.deleteDirectoryContents(dir.toFile());
       }
     } catch (IOException e) {
-      LOG.warn("Failed to cleanup directory {}", dir, e);
+      LOG.warn("Failed to clean up directory {}", dir, e);
     }
   }
 }

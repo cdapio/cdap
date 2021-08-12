@@ -159,7 +159,7 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
         // artifact ClassLoader only.
         return Locations.toLocation(artifactLocalizerClient.getUnpackedArtifactLocation(artifactId));
       } catch (ArtifactNotFoundException e) {
-        throw new IOException(String.format("Artifact %s not found", artifactId), e);
+        throw new IOException(String.format("Artifact %s is not found", artifactId), e);
       }
     }
 
@@ -181,7 +181,7 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
     String path = httpResponse.getResponseBodyAsString();
     Location location = Locations.getLocationFromAbsolutePath(locationFactory, path);
     if (!location.exists()) {
-      throw new IOException(String.format("Artifact Location does not exist %s for artifact %s version %s",
+      throw new IOException(String.format("Artifact location does not exist %s for artifact %s version %s",
                                           path, artifactInfo.getName(), artifactInfo.getVersion()));
     }
     return location;
