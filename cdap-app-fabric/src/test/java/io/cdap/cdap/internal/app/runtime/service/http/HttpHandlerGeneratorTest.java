@@ -59,6 +59,7 @@ import io.cdap.cdap.api.service.http.HttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceHandlerSpecification;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
+import io.cdap.cdap.api.service.http.ServicePluginConfigurer;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.test.NoopAdmin;
 import io.cdap.cdap.internal.app.preview.NoopDataTracerFactory;
@@ -675,6 +676,16 @@ public class HttpHandlerGeneratorTest {
 
     @Override
     public PluginConfigurer createPluginConfigurer(String namespace) {
+      return null;
+    }
+
+    @Override
+    public ServicePluginConfigurer createServicePluginConfigurer() {
+      return null;
+    }
+
+    @Override
+    public ServicePluginConfigurer createServicePluginConfigurer(String namespace) {
       return null;
     }
 

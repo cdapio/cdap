@@ -27,6 +27,7 @@ import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
 import io.cdap.cdap.api.service.http.HttpServiceContext;
 import io.cdap.cdap.api.service.http.HttpServiceHandlerSpecification;
+import io.cdap.cdap.api.service.http.ServicePluginConfigurer;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -163,11 +164,21 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
 
   @Override
   public PluginConfigurer createPluginConfigurer() {
-    return createPluginConfigurer(getNamespace());
+    return createServicePluginConfigurer(getNamespace());
   }
 
   @Override
   public PluginConfigurer createPluginConfigurer(String namespace) {
+    return createServicePluginConfigurer(namespace);
+  }
+
+  @Override
+  public ServicePluginConfigurer createServicePluginConfigurer() {
+    return createServicePluginConfigurer(getNamespace());
+  }
+
+  @Override
+  public ServicePluginConfigurer createServicePluginConfigurer(String namespace) {
     File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     try {
