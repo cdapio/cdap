@@ -1151,7 +1151,7 @@ public class TestBase {
       case '2':
         return SparkCompat.SPARK2_2_11;
       default:
-        throw new IllegalStateException("Spark version " + sparkVersion + " is not known");
+        throw new IllegalStateException("Spark version " + sparkVersion + " is unknown");
     }
   }
 }
