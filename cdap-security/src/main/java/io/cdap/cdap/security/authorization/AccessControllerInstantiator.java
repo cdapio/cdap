@@ -220,7 +220,7 @@ public class AccessControllerInstantiator implements Closeable, Supplier<AccessC
       } catch (IOException ex) {
         e.addSuppressed(ex);
       }
-      throw new InvalidAccessControllerException("Failed to load access controle extension from "
+      throw new InvalidAccessControllerException("Failed to load access control extension from "
                                                    + extensionJar + ".", e);
     }
   }
