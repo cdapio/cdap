@@ -19,6 +19,7 @@ package io.cdap.cdap.datapipeline.connection;
 
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.service.http.ServicePluginConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchConnector;
 import io.cdap.cdap.etl.api.connector.BrowseDetail;
 import io.cdap.cdap.etl.api.connector.BrowseRequest;
@@ -52,20 +53,21 @@ import java.util.Map;
  */
 public class LimitingConnector implements DirectConnector {
   private final BatchConnector batchConnector;
+  private final ServicePluginConfigurer pluginConfigurer;
 
-  public LimitingConnector(BatchConnector batchConnector) {
+  public LimitingConnector(BatchConnector batchConnector, ServicePluginConfigurer pluginConfigurer) {
     this.batchConnector = batchConnector;
+    this.pluginConfigurer = pluginConfigurer;
   }
 
   @Override
   public List<StructuredRecord> sample(ConnectorContext context, SampleRequest request) throws IOException {
     InputFormatProvider inputFormatProvider = batchConnector.getInputFormatProvider(context, request);
-
     // use limiting format to read from the input format
     Map<String, String> configs =
       LimitingInputFormatProvider.getConfiguration(inputFormatProvider, request.getLimit());
     Configuration hConf = new Configuration();
-    hConf.setClassLoader(context.getPluginConfigurer().createClassLoader());
+    hConf.setClassLoader(pluginConfigurer.createClassLoader());
     configs.forEach(hConf::set);
 
     Job job = Job.getInstance(hConf);
