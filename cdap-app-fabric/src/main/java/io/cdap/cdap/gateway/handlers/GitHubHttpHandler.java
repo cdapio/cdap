@@ -117,14 +117,8 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
               repo + "Authorization Token", new HashMap<String, String>());
           gitStore.addOrUpdateRepo(repo, githubRepo.getUrl(), githubRepo.getDefaultBranch(),
               repo + keyidsuffix);
-          responder.sendString(HttpResponseStatus.OK, "Repository Information Saved.");
-        } else if (responseCode == HttpURLConnection.HTTP_MOVED_PERM) {
-          responder.sendString(HttpResponseStatus.MOVED_PERMANENTLY, "Repository has been moved.");
-        } else if (responseCode == HttpURLConnection.HTTP_FORBIDDEN) {
-          responder.sendString(HttpResponseStatus.FORBIDDEN, "You do not have access to this repository.");
-        } else {
-          responder.sendString(HttpResponseStatus.NOT_FOUND, "Repository was not found.");
         }
+        responder.sendString(getErrorCode(responseCode), getErrorResponse(responseCode));
       } else {
         ArrayList<String> errorFields = new ArrayList<>();
         if (!githubRepo.validNickname()) {
@@ -172,15 +166,7 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
     GitHubRepo test = gitStore.getRepo(repo);
     int responseCode = testRepoConnection(test, new String(secureStore.get("system",
         repo + keyidsuffix).get(), StandardCharsets.UTF_8));
-    if (responseCode == HttpURLConnection.HTTP_OK) {
-      responder.sendString(HttpResponseStatus.OK, "Connection Successful.");
-    } else if (responseCode == HttpURLConnection.HTTP_MOVED_PERM) {
-      responder.sendString(HttpResponseStatus.MOVED_PERMANENTLY, "Repository has been moved.");
-    } else if (responseCode == HttpURLConnection.HTTP_FORBIDDEN) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, "You do not have access to this repository.");
-    } else {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Repository was not found.");
-    }
+    responder.sendString(getErrorCode(responseCode), getErrorResponse(responseCode));
   }
 
   /**
@@ -210,14 +196,7 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
 
       BufferedReader reader = new BufferedReader(new InputStreamReader(con.getInputStream()));
 
-      if (con.getResponseCode() == HttpURLConnection.HTTP_OK) {
-        responder.sendString(HttpResponseStatus.OK, retrieveContent(reader));
-      } else if (con.getResponseCode() == HttpURLConnection.HTTP_FORBIDDEN) {
-        responder.sendString(HttpResponseStatus.FORBIDDEN, "You do not have access to this file");
-      } else {
-        responder
-            .sendString(HttpResponseStatus.NOT_FOUND, "File not found, check filepath + branch.");
-      }
+      responder.sendString(getErrorCode(con.getResponseCode()), getErrorResponse(con.getResponseCode()));
       reader.close();
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
@@ -271,20 +250,7 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
     outputStream.write(pipelineOutput.toString().getBytes(StandardCharsets.UTF_8));
     outputStream.flush();
     outputStream.close();
-
-    if (con.getResponseCode() == HttpURLConnection.HTTP_CREATED ||
-          con.getResponseCode() == HttpURLConnection.HTTP_OK) {
-        responder.sendString(HttpResponseStatus.OK, "File exported.");
-    } else if (con.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
-        responder.sendString(HttpResponseStatus.CONFLICT, "This file already exists, "
-            + "provide a sha in order to update it");
-    } else if (con.getResponseCode() == 422) {
-        responder.sendString(HttpResponseStatus.UNAUTHORIZED,
-            "Please check your authorization key and file path \n" + pipelineOutput.toString());
-    } else {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, con.getResponseCode() +
-            " file destination not found ");
-    }
+    responder.sendString(getErrorCode(con.getResponseCode()), getErrorResponse(con.getResponseCode()));
   }
 
   /**
@@ -317,16 +283,7 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
     outputStream.flush();
     outputStream.close();
 
-    if (con.getResponseCode() == HttpURLConnection.HTTP_CREATED ||
-        con.getResponseCode() == HttpURLConnection.HTTP_OK) {
-      responder.sendString(HttpResponseStatus.OK, "Branch created.");
-    } else if (con.getResponseCode() == 422) {
-      responder.sendString(HttpResponseStatus.UNAUTHORIZED,
-          "Please check your authorization key or whether this branch already exists");
-    } else {
-      responder.sendString(HttpResponseStatus.NOT_FOUND  , con.getResponseCode() +
-          " branch destination not found ");
-    }
+    responder.sendString(getErrorCode(con.getResponseCode()), getErrorResponse(con.getResponseCode()));
   }
 
   /**
@@ -364,18 +321,7 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
     outputStream.flush();
     outputStream.close();
 
-    if (con.getResponseCode() == HttpURLConnection.HTTP_CREATED) {
-      responder.sendString(HttpResponseStatus.OK, "Pull Request created.");
-    } else if (con.getResponseCode() == HttpURLConnection.HTTP_FORBIDDEN) {
-      responder.sendString(HttpResponseStatus.UNAUTHORIZED,
-          "Please verify your auth token.");
-    } else if (con.getResponseCode() == 422) {
-      responder.sendString(HttpResponseStatus.UNAUTHORIZED,
-          "Please check your parameters");
-    } else {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, con.getResponseCode() +
-          " pr destination not found ");
-    }
+    responder.sendString(getErrorCode(con.getResponseCode()), getErrorResponse(con.getResponseCode()));
 
   }
 
@@ -477,5 +423,37 @@ public class GitHubHttpHandler extends AbstractAppFabricHttpHandler {
       return "not found";
     }
 
+  }
+
+  private HttpResponseStatus getErrorCode(int errorCode) {
+    if (errorCode == HttpURLConnection.HTTP_CREATED || errorCode == HttpURLConnection.HTTP_OK) {
+      return HttpResponseStatus.OK;
+    } else if (errorCode == HttpURLConnection.HTTP_CONFLICT) {
+      return HttpResponseStatus.CONFLICT;
+    } else if (errorCode == HttpURLConnection.HTTP_FORBIDDEN) {
+      return HttpResponseStatus.FORBIDDEN;
+    } else if (errorCode == HttpURLConnection.HTTP_MOVED_PERM) {
+      return HttpResponseStatus.MOVED_PERMANENTLY;
+    } else if (errorCode == 422) {
+      return HttpResponseStatus.UNAUTHORIZED;
+    } else {
+      return HttpResponseStatus.NOT_FOUND;
+    }
+  }
+
+  private String getErrorResponse(int errorCode) {
+    if (errorCode == HttpURLConnection.HTTP_CREATED || errorCode == HttpURLConnection.HTTP_OK) {
+      return "Success";
+    } else if (errorCode == HttpURLConnection.HTTP_CONFLICT) {
+      return "This GitHub detail already exists";
+    } else if (errorCode == HttpURLConnection.HTTP_FORBIDDEN) {
+      return "You do not have access to this GitHub detail";
+    } else if (errorCode == HttpURLConnection.HTTP_MOVED_PERM) {
+      return "This GitHub detail has been moved";
+    } else if (errorCode == 422) {
+      return "Check your authorization token and path";
+    } else {
+      return "GitHub detail not found";
+    }
   }
 }
