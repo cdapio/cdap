@@ -406,7 +406,10 @@ public final class Constants {
     public static final String CONTAINER_MEMORY_MULTIPLIER = "task.worker.container.memory.multiplier";
     public static final String CONTAINER_HEAP_RESERVED_RATIO = "task.worker.container.java.heap.memory.ratio";
     public static final String CONTAINER_PRIORITY_CLASS_NAME = "task.worker.container.priority.class.name";
-    public static final String CONTAINER_KILL_AFTER_EXECUTION = "task.worker.container.kill.after.execution";
+    public static final String CONTAINER_KILL_AFTER_REQUEST_COUNT =
+      "task.worker.container.kill.after.request.count";
+    public static final String CONTAINER_KILL_AFTER_DURATION_SECOND =
+      "task.worker.container.kill.after.duration.second";
     public static final String CONTAINER_RUN_AS_USER = "task.worker.container.run.as.user";
     public static final String CONTAINER_RUN_AS_GROUP = "task.worker.container.run.as.group";
     public static final String CONTAINER_DISK_READONLY = "task.worker.container.disk.readonly";

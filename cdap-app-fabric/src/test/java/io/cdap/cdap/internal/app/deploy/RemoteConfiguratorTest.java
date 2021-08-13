@@ -104,7 +104,7 @@ public class RemoteConfiguratorTest {
   public static void init() throws Exception {
     cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
-    cConf.setBoolean(Constants.TaskWorker.CONTAINER_KILL_AFTER_EXECUTION, false);
+    cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
 
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     MasterEnvironments.setMasterEnvironment(new TestMasterEnvironment(discoveryService));

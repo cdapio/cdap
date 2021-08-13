@@ -38,12 +38,17 @@ import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Random;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -60,35 +65,91 @@ import javax.ws.rs.core.MediaType;
 @Singleton
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3 + "/worker")
 public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
+  /**
+   * Fraction of duration which will be used for calculating a range.
+   */
+  private static final double DURATION_FRACTION = 0.1;
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerHttpHandlerInternal.class);
   private static final Gson GSON = new GsonBuilder().registerTypeAdapter(BasicThrowable.class,
                                                                          new BasicThrowableCodec()).create();
   private final RunnableTaskLauncher runnableTaskLauncher;
   private final BiConsumer<Boolean, String> stopper;
-  private final AtomicInteger inflightRequests = new AtomicInteger(0);
+
+  private final AtomicBoolean anyInflightRequest = new AtomicBoolean(false);
+
+  /**
+   * Holds the total number of requests that have been executed by this handler that should count toward max allowed.
+   */
+  private AtomicInteger requestProcessedCount = new AtomicInteger(0);
+
   private final String metadataServiceEndpoint;
 
+  /**
+   * If true, pod will restart once an operation finish its execution.
+   */
+  private AtomicBoolean mustRestart = new AtomicBoolean(false);
+
   public TaskWorkerHttpHandlerInternal(CConfiguration cConf, Consumer<String> stopper) {
+    int killAfterRequestCount = cConf.getInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
     this.runnableTaskLauncher = new RunnableTaskLauncher(cConf);
     this.metadataServiceEndpoint = cConf.get(Constants.TaskWorker.METADATA_SERVICE_END_POINT);
     this.stopper = (terminate, className) -> {
-      if (cConf.getBoolean(Constants.TaskWorker.CONTAINER_KILL_AFTER_EXECUTION) && terminate) {
-        if (className != null) {
-          stopper.accept(className);
-        }
+      if (mustRestart.get()) {
+        stopper.accept(className);
+      }
+
+      if (!terminate || className == null || killAfterRequestCount <= 0) {
+        // No need to restart.
+        requestProcessedCount.decrementAndGet();
+        anyInflightRequest.set(false);
+        return;
+      }
+
+      if (requestProcessedCount.get() >= killAfterRequestCount) {
+        stopper.accept(className);
       } else {
-        inflightRequests.set(0);
+        anyInflightRequest.set(false);
       }
     };
+
+    enablePeriodicRestart(cConf, stopper);
+  }
+
+  /**
+   * If there is no ongoing request, worker pod gets restarted after a random duration is selected from the following
+   * range. Otherwise, worker pod can only get restarted once the ongoing request finishes.
+   * range = [Duration - DURATION_FRACTION * Duration, Duration + DURATION_FRACTION * Duration]
+   * Reason: by randomizing the duration, it is guaranteed that pods do not get restarted at the same time.
+   */
+  private void enablePeriodicRestart(CConfiguration cConf, Consumer<String> stopper) {
+    int duration = cConf.getInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, 0);
+    int lowerBound = (int) (duration - duration * DURATION_FRACTION);
+    int upperBound = (int) (duration + duration * DURATION_FRACTION);
+    if (lowerBound > 0) {
+      int waitTime = (new Random()).nextInt(upperBound - lowerBound) + lowerBound;
+      Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("task-worker-restart"))
+        .schedule(
+          () -> {
+            if (anyInflightRequest.compareAndSet(false, true)) {
+              // there is no ongoing request. pod gets restarted.
+              stopper.accept("");
+            }
+            // we restart once a request finishes.
+            // TODO: this might delay the pod restart to after executing a new request if the
+            // ongoing request is already in the stopper.
+            mustRestart.set(true);
+          }, waitTime, TimeUnit.SECONDS);
+    }
   }
 
   @POST
   @Path("/run")
   public void run(FullHttpRequest request, HttpResponder responder) {
-    if (inflightRequests.incrementAndGet() > 1) {
+    if (!anyInflightRequest.compareAndSet(false, true)) {
       responder.sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS);
       return;
     }
+    requestProcessedCount.incrementAndGet();
 
     String className = null;
     try {
