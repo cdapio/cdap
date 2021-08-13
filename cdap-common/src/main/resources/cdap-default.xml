@@ -4389,14 +4389,25 @@
   </property>
 
   <property>
-    <name>task.worker.container.kill.after.execution</name>
-    <value>true</value>
+    <name>task.worker.container.kill.after.request.count</name>
+    <value>100</value>
     <description>
-      If true, kill the task worker container after it executes a request.
+      The number of executions by the task worker before it gets killed.
+      Zero or negative values result in no pod restart.
     </description>
   </property>
 
   <property>
+    <name>task.worker.container.kill.after.duration.second</name>
+    <value>7200</value>
+    <description>
+      Duration (in seconds) to wait before killing the pod after it starts.
+      Actual duration varies randomly within a defined range.
+      Zero or negative values result in no periodic task worker restart.
+    </description>
+  </property>
+
+  <property>CommonDirectiveExecutor
     <name>task.worker.preload.artifacts</name>
     <value></value>
     <description>
