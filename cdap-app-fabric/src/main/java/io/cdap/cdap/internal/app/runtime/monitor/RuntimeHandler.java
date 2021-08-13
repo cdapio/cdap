@@ -146,7 +146,7 @@ public class RuntimeHandler extends AbstractHttpHandler {
     requestValidator.validate(programRunId, request);
 
     if (!allowedTopics.contains(topic)) {
-      throw new UnauthorizedException("Access denied accessing topic " + topic);
+      throw new UnauthorizedException("Access denied for topic " + topic);
     }
 
     TopicId topicId = NamespaceId.SYSTEM.topic(topic);

@@ -67,7 +67,7 @@ public class RuntimeIdentityHandler extends ChannelInboundHandlerAdapter {
     }
     if (enforceAuthenticatedRequests && !request.headers().contains(Constants.Security.Headers.RUNTIME_TOKEN)) {
       auditLogIfNeeded(request, ctx.channel(), HttpURLConnection.HTTP_FORBIDDEN);
-      throw new UnauthorizedException("Runtime token not found");
+      throw new UnauthorizedException("Runtime token is not found");
     }
     ctx.fireChannelRead(msg);
   }

@@ -65,7 +65,7 @@ public class FileFetcherHttpHandlerInternal extends AbstractHttpHandler {
     Location location = Locations.getLocationFromAbsolutePath(locationFactory, path);
 
     if (!location.exists()) {
-      throw new NotFoundException(String.format("Path %s not found", path));
+      throw new NotFoundException(String.format("Path %s is not found", path));
     }
     responder.sendContent(HttpResponseStatus.OK, new LocationBodyProducer(location),
                           new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM));

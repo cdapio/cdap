@@ -193,7 +193,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
   private Cluster tryReuseCluster(DataprocClient client, ProvisionerContext context, DataprocConf conf)
     throws RetryableProvisionException, IOException {
     if (!isReuseSupported(conf)) {
-      LOG.debug("Not checking custer reuse, enabled: {}, skip delete: {}, idle ttl: {}, reuse threshold: {}",
+      LOG.debug("Not checking cluster reuse, enabled: {}, skip delete: {}, idle ttl: {}, reuse threshold: {}",
                 conf.isClusterReuseEnabled(), conf.isSkipDelete(), conf.getIdleTTLMinutes(),
                 conf.getClusterReuseThresholdMinutes());
       return null;
@@ -210,14 +210,14 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
         LOG.debug("Found allocated cluster {}", cluster.getName());
         return cluster;
       } else {
-        LOG.debug("Preallocated cluster {} expired, will look for new one");
+        LOG.debug("Preallocated cluster {} has expired, will find a new one");
         //Let's remove the reuse label to ensure new cluster will be picked up by findCluster
         try {
           client.updateClusterLabels(cluster.getName(), Collections.emptyMap(), Collections.singleton(LABEL_RUN_KEY));
         } catch (Exception e) {
-          LOG.trace("Unable to remove reuse label, probably cluster died already", e);
+          LOG.trace("Unable to remove reuse label, cluster may have died already", e);
           if (!LOG.isTraceEnabled()) {
-            LOG.debug("Unable to remove reuse label, probably cluster died already");
+            LOG.debug("Unable to remove reuse label, cluster may have died already");
           }
         }
       }
