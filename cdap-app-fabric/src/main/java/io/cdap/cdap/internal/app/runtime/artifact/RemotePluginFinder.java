@@ -143,6 +143,7 @@ public class RemotePluginFinder implements PluginFinder {
                                       String pluginType,
                                       String pluginName)
     throws IOException, PluginNotExistsException, UnauthorizedException {
+    pluginName = pluginName.replace(" ", "%20");
     HttpRequest.Builder requestBuilder =
       remoteClient.requestBuilder(
         HttpMethod.GET,
