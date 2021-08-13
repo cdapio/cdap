@@ -24,6 +24,8 @@ import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.etl.proto.connection.Connection;
 import io.cdap.cdap.proto.id.NamespaceId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -35,6 +37,8 @@ import java.nio.charset.StandardCharsets;
  * the studio service for getting connection information at runtime.
  */
 public class ConnectionMacroEvaluator extends AbstractServiceRetryableMacroEvaluator {
+  private static final Logger LOG = LoggerFactory.getLogger(ConnectionMacroEvaluator.class);
+
   public static final String FUNCTION_NAME = "conn";
   private static final String SERVICE_NAME = "Connection";
 
@@ -64,11 +68,15 @@ public class ConnectionMacroEvaluator extends AbstractServiceRetryableMacroEvalu
 
     // only encode the connection name here
     String connName = URLEncoder.encode(args[0], StandardCharsets.UTF_8.name());
+    LOG.error("Yaojie - conn name: {}", connName);
+    String format = String.format("v1/contexts/%s/connections/%s",
+                                  namespace, connName);
+    LOG.error("Yaojie - url: {}", format);
+
     HttpURLConnection urlConn = serviceDiscoverer.openConnection(NamespaceId.SYSTEM.getNamespace(),
                                                                  Constants.PIPELINEID,
                                                                  Constants.STUDIO_SERVICE_NAME,
-                                                                 String.format("v1/contexts/%s/connections/%s",
-                                                                               namespace, connName));
+                                                                 format);
     Connection connection = gson.fromJson(validateAndRetrieveContent(SERVICE_NAME, urlConn), Connection.class);
     return gson.toJson(connection.getPlugin().getProperties());
   }
