@@ -62,11 +62,13 @@ public class ConnectionMacroEvaluator extends AbstractServiceRetryableMacroEvalu
       throw new InvalidMacroException("Macro '" + FUNCTION_NAME + "' should have exactly 1 arguments");
     }
 
-    String path = URLEncoder.encode(String.format("v1/contexts/%s/connections/%s",
-                                                  namespace, args[0]), StandardCharsets.UTF_8.name());
+    // only encode the connection name here
+    String connName = URLEncoder.encode(args[0], StandardCharsets.UTF_8.name());
     HttpURLConnection urlConn = serviceDiscoverer.openConnection(NamespaceId.SYSTEM.getNamespace(),
                                                                  Constants.PIPELINEID,
-                                                                 Constants.STUDIO_SERVICE_NAME, path);
+                                                                 Constants.STUDIO_SERVICE_NAME,
+                                                                 String.format("v1/contexts/%s/connections/%s",
+                                                                               namespace, connName));
     Connection connection = gson.fromJson(validateAndRetrieveContent(SERVICE_NAME, urlConn), Connection.class);
     return gson.toJson(connection.getPlugin().getProperties());
   }
