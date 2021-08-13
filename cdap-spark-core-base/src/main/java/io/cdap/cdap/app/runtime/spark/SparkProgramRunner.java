@@ -58,6 +58,7 @@ import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
+import io.cdap.cdap.master.spi.environment.SparkConfigs;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -108,6 +109,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
   private final MetadataPublisher metadataPublisher;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final RemoteClientFactory remoteClientFactory;
+  private final SparkConfigs sparkConfigs;
 
   @Inject
   SparkProgramRunner(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
@@ -118,7 +120,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                      MessagingService messagingService, ServiceAnnouncer serviceAnnouncer,
                      PluginFinder pluginFinder, MetadataReader metadataReader, MetadataPublisher metadataPublisher,
                      FieldLineageWriter fieldLineageWriter, NamespaceQueryAdmin namespaceQueryAdmin,
-                     RemoteClientFactory remoteClientFactory) {
+                     RemoteClientFactory remoteClientFactory, SparkConfigs sparkConfigs) {
     super(cConf);
     this.cConf = cConf;
     this.hConf = hConf;
@@ -138,6 +140,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
     this.metadataPublisher = metadataPublisher;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.remoteClientFactory = remoteClientFactory;
+    this.sparkConfigs = sparkConfigs;
   }
 
   @Override
@@ -208,6 +211,11 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
         ? new LocalSparkSubmitter()
         : new DistributedSparkSubmitter(hConf, locationFactory, host, runtimeContext,
                                         options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE));
+
+      if (sparkConfigs != null) {
+        LOG.info("### Spark configs is not null. This means we are able to get the configs from master env");
+
+      }
 
       Service sparkRuntimeService = new SparkRuntimeService(cConf, spark, getPluginArchive(options),
                                                             runtimeContext, submitter, locationFactory, isLocal,

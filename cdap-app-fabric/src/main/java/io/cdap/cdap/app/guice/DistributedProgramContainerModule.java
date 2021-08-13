@@ -56,6 +56,7 @@ import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
 import io.cdap.cdap.logging.guice.TMSLogAppenderModule;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
+import io.cdap.cdap.master.spi.environment.SparkConfigs;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metadata.PreferencesFetcher;
@@ -256,7 +257,8 @@ public class DistributedProgramContainerModule extends AbstractModule {
           .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
         bind(DiscoveryServiceClient.class)
           .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
-
+        // get spark confs
+        bind(SparkConfigs.class).toInstance(masterEnv.getSparkConf());
         bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
       }
     });

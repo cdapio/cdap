@@ -20,6 +20,8 @@ import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
+import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -85,4 +87,11 @@ public interface MasterEnvironment {
    * Returns a {@link Supplier} of {@link TwillRunnerService} for running programs.
    */
   Supplier<TwillRunnerService> getTwillRunnerSupplier();
+
+  /**
+   * Spark confs.
+   */
+  default SparkConfigs getSparkConf() {
+    throw new RuntimeException("Method not supported");
+  }
 }

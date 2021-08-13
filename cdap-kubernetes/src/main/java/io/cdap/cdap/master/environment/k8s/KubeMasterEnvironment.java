@@ -25,6 +25,8 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnableContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentTask;
+import io.cdap.cdap.master.spi.environment.SparkConfigs;
+import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1Container;
@@ -187,6 +189,43 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   @Override
   public Supplier<TwillRunnerService> getTwillRunnerSupplier() {
     return () -> twillRunner;
+  }
+
+  @Override
+  public SparkConfigs getSparkConf() {
+
+    // TODO: Make it through k8s api
+    String podTemplateBase = ""
+      + "spec:\n"
+      + "  volumes:\n"
+      + "  - configMap:\n"
+      + "      name: cdap-cdap-cconf\n"
+      + "    name: cdap-cconf\n"
+      + "  containers:\n"
+      + "  - args:\n"
+      + "    volumeMounts:\n"
+      + "    - mountPath: /etc/cdap/conf\n"
+      + "      name: cdap-cconf";
+
+    String masterBasePath = null;
+    // apiClient.getBasePath() returns path similar to https://34.83.57.96
+    try {
+      ApiClient apiClient = Config.defaultClient();
+      masterBasePath = apiClient.getBasePath();
+    } catch (Exception e) {
+      throw new RuntimeException("runtime exception while getting k8s base path");
+    }
+
+    Map<String, String> map = new HashMap<>();
+    // TODO: Make sure to use right one
+    map.put("spark.kubernetes.container.image", "gcr.io/ashau-dev0/spark:cdap-latest");
+    // TODO: Get from the cConf
+    map.put("spark.kubernetes.authenticate.driver.serviceAccountName","spark");
+    map.put("spark.kubernetes.container.image.pullPolicy","Always");
+    map.put("spark.kubernetes.executor.deleteOnTermination", "false");
+
+
+    return new SparkConfigs(map, masterBasePath, podTemplateBase);
   }
 
   @Override

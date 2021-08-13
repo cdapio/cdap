@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,6 @@ import io.cdap.cdap.app.runtime.spark.SparkRuntimeUtils;
 import io.cdap.cdap.app.runtime.spark.distributed.SparkExecutionService;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
-import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
@@ -40,20 +39,27 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * A {@link SparkSubmitter} to submit Spark job that runs on cluster.
+ * k8s spark submitter.
  */
-public class DistributedSparkSubmitter extends AbstractSparkSubmitter {
-
-  private static final Logger LOG = LoggerFactory.getLogger(DistributedSparkSubmitter.class);
+public class KubeSparkSubmitter {
+  private static final Logger LOG = LoggerFactory.getLogger(KubeSparkSubmitter.class);
 
   private final Configuration hConf;
   private final String schedulerQueueName;
   private final SparkExecutionService sparkExecutionService;
   private final long tokenRenewalInterval;
 
-  public DistributedSparkSubmitter(Configuration hConf, LocationFactory locationFactory,
-                                   String hostname, SparkRuntimeContext runtimeContext,
-                                   @Nullable String schedulerQueueName) {
+  /**
+   * kube spark submitter
+   * @param hConf
+   * @param locationFactory
+   * @param hostname
+   * @param runtimeContext
+   * @param schedulerQueueName
+   */
+  public KubeSparkSubmitter(Configuration hConf, LocationFactory locationFactory,
+                            String hostname, SparkRuntimeContext runtimeContext,
+                            @Nullable String schedulerQueueName) {
     this.hConf = hConf;
     this.schedulerQueueName = schedulerQueueName;
     ProgramRunId programRunId = runtimeContext.getProgram().getId().run(runtimeContext.getRunId().getId());
@@ -76,7 +82,7 @@ public class DistributedSparkSubmitter extends AbstractSparkSubmitter {
     if (tokenRenewalInterval > 0) {
       config.put("spark.yarn.token.renewal.interval", Long.toString(tokenRenewalInterval));
     }
-    config.put("spark.yarn.appMasterEnv.CDAP_LOG_DIR",  ApplicationConstants.LOG_DIR_EXPANSION_VAR);
+    config.put("spark.yarn.appMasterEnv.CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR);
     config.put("spark.executorEnv.CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR);
 
     config.put("spark.yarn.security.tokens.hbase.enabled", "false");

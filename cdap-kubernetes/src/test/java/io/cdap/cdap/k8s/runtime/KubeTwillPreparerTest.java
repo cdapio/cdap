@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.k8s.runtime;
 
+import io.kubernetes.client.openapi.ApiClient;
+import io.kubernetes.client.util.Config;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillSpecification;
@@ -34,6 +36,12 @@ public class KubeTwillPreparerTest {
   private ResourceSpecification createResourceSpecification() {
     return new DefaultResourceSpecification(1, 100,
                                             1, 1, 1);
+  }
+
+  @Test
+  public void test() throws Exception {
+    ApiClient apiClient = Config.defaultClient();
+    System.out.println(apiClient.getBasePath());
   }
 
   @Test
