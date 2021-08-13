@@ -222,6 +222,11 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                                           options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE));
       }
 
+      if (sparkConfigs != null) {
+        LOG.info("### Spark configs is not null. This means we are able to get the configs from master env");
+
+      }
+
       Service sparkRuntimeService = new SparkRuntimeService(cConf, spark, getPluginArchive(options),
                                                             runtimeContext, submitter, locationFactory, isLocal,
                                                             fieldLineageWriter);

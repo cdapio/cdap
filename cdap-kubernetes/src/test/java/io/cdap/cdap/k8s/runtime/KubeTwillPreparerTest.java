@@ -39,6 +39,12 @@ public class KubeTwillPreparerTest {
   }
 
   @Test
+  public void test() throws Exception {
+    ApiClient apiClient = Config.defaultClient();
+    System.out.println(apiClient.getBasePath());
+  }
+
+  @Test
   public void testWithDependentRunnables() throws Exception {
     TwillSpecification twillSpecification = TwillSpecification.Builder.with()
       .setName("NAME")

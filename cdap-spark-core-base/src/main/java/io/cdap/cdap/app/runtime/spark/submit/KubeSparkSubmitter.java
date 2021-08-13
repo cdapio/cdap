@@ -17,7 +17,10 @@
 package io.cdap.cdap.app.runtime.spark.submit;
 
 import com.google.common.collect.ImmutableList;
+<<<<<<< HEAD
 import io.cdap.cdap.api.spark.Spark;
+=======
+>>>>>>> 11f1c2c4886 (wip - thin impl)
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeContext;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeContextConfig;
@@ -26,7 +29,10 @@ import io.cdap.cdap.app.runtime.spark.SparkRuntimeUtils;
 import io.cdap.cdap.app.runtime.spark.distributed.SparkExecutionService;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
+<<<<<<< HEAD
 import io.cdap.cdap.master.spi.environment.SparkConfigs;
+=======
+>>>>>>> 11f1c2c4886 (wip - thin impl)
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
@@ -34,9 +40,12 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+<<<<<<< HEAD
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+=======
+>>>>>>> 11f1c2c4886 (wip - thin impl)
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -85,6 +94,7 @@ public class KubeSparkSubmitter extends AbstractSparkSubmitter {
     } catch (IOException e) {
       LOG.error("Error while writing file.", e);
     }
+
 
     return config;
   }

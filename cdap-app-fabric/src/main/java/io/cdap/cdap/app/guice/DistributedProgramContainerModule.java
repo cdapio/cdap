@@ -266,6 +266,8 @@ public class DistributedProgramContainerModule extends AbstractModule {
           .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
         bind(DiscoveryServiceClient.class)
           .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
+        // get spark confs
+        bind(SparkConfigs.class).toInstance(masterEnv.getSparkConf());
         bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
       }
     });

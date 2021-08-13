@@ -193,6 +193,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
   @Override
   public SparkConfigs getSparkConf() {
+
     // TODO: Make it through k8s api
     String podTemplateBase = ""
       + "spec:\n"
