@@ -143,6 +143,9 @@ public class RemotePluginFinder implements PluginFinder {
                                       String pluginType,
                                       String pluginName)
     throws IOException, PluginNotExistsException, UnauthorizedException {
+    // replace the space in the name
+    // TODO: CDAP-18375 improve url encoding the our remote call
+    pluginName = pluginName.replace(" ", "%20");
     HttpRequest.Builder requestBuilder =
       remoteClient.requestBuilder(
         HttpMethod.GET,
