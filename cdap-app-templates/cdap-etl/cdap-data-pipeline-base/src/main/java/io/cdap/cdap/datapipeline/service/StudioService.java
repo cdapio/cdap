@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collections;
+import javax.annotation.Nullable;
 
 /**
  * Service that handles pipeline studio operations, like validation and schema propagation.
@@ -46,7 +47,7 @@ public class StudioService extends AbstractSystemService {
 
   private ConnectionConfig connectionConfig;
 
-  public StudioService(ConnectionConfig connectionConfig) {
+  public StudioService(@Nullable ConnectionConfig connectionConfig) {
     this.connectionConfig = connectionConfig;
   }
 
@@ -56,7 +57,7 @@ public class StudioService extends AbstractSystemService {
     setDescription("Handles pipeline studio operations, like validation, connections and schema propagation.");
     addHandler(new ValidationHandler());
     addHandler(new DraftHandler());
-    addHandler(new ConnectionHandler());
+    addHandler(new ConnectionHandler(connectionConfig));
     addHandler(new OAuthHandler());
     createTable(DraftStore.TABLE_SPEC);
     createTable(OAuthStore.TABLE_SPEC);
