@@ -19,6 +19,8 @@ package io.cdap.cdap.internal.app.deploy.pipeline;
 import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.ProgramSpecification;
 import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.metadata.Metadata;
+import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.data2.metadata.system.AppSystemMetadataWriter;
 import io.cdap.cdap.data2.metadata.system.ProgramSystemMetadataWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
@@ -29,6 +31,7 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -53,9 +56,13 @@ public class MetadataWriterStage extends AbstractStage<ApplicationWithPrograms> 
     ApplicationId appId = input.getApplicationId();
     ApplicationSpecification appSpec = input.getSpecification();
     List<MetadataMutation> mutations = new ArrayList<>();
+    // get the system metadata and combine it with our own system metadata, metadata creation mutation will
+    // completely override the previous metadata in the scope, so we have to combine these together
+    Metadata systemAppMetadata = input.getMetadata().get(MetadataScope.SYSTEM);
 
     mutations.add(
-      new AppSystemMetadataWriter(metadataServiceClient, appId, appSpec, input.getApplicationClass(), creationTime)
+      new AppSystemMetadataWriter(metadataServiceClient, appId, appSpec, input.getApplicationClass(), creationTime,
+                                  systemAppMetadata)
         .getMetadataMutation());
 
     // collect system metadata for programs
@@ -66,8 +73,13 @@ public class MetadataWriterStage extends AbstractStage<ApplicationWithPrograms> 
     collectProgramSystemMetadata(appId, ProgramType.WORKFLOW, appSpec.getWorkflows().values(), mutations);
 
     // add the rest user defined metadata
-    if (input.getMetadata() != null) {
-      mutations.add(input.getMetadata());
+    Metadata userAppMetadata = input.getMetadata().get(MetadataScope.USER);
+    if (userAppMetadata != null &&
+          (!userAppMetadata.getProperties().isEmpty() || !userAppMetadata.getTags().isEmpty())) {
+      mutations.add(new MetadataMutation.Create(
+        appId.toMetadataEntity(),
+        new io.cdap.cdap.spi.metadata.Metadata(MetadataScope.USER, userAppMetadata.getTags(),
+                                               userAppMetadata.getProperties()), Collections.emptyMap()));
     }
 
     // write all metadata

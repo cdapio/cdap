@@ -28,6 +28,7 @@ import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.mapreduce.MapReduce;
 import io.cdap.cdap.api.mapreduce.MapReduceSpecification;
 import io.cdap.cdap.api.metadata.Metadata;
+import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.api.schedule.ScheduleBuilder;
 import io.cdap.cdap.api.schedule.TriggerFactory;
 import io.cdap.cdap.api.service.Service;
@@ -64,7 +65,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -91,7 +91,7 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   private final Map<StructuredTableId, StructuredTableSpecification> systemTables = new HashMap<>();
   private final TriggerFactory triggerFactory;
   private String name;
-  private Metadata appMetadata;
+  private Map<MetadataScope, Metadata> appMetadata;
   private String description;
 
   // passed app to be used to resolve default name and description
@@ -110,7 +110,7 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
     this.artifactId = artifactId;
     this.pluginFinder = pluginFinder;
     this.pluginInstantiator = pluginInstantiator;
-    this.appMetadata = new Metadata(Collections.emptyMap(), Collections.emptySet());
+    this.appMetadata = new HashMap<>();
     this.triggerFactory = new DefaultTriggerFactory(namespace.toEntityId());
   }
 
@@ -233,12 +233,13 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   }
 
   @Override
-  public void emitMetadata(Metadata metadata) {
-    Map<String, String> properties = new HashMap<>(appMetadata.getProperties());
+  public void emitMetadata(Metadata metadata, MetadataScope scope) {
+    Metadata scopeMetadata = appMetadata.computeIfAbsent(scope, s -> new Metadata(new HashMap<>(), new HashSet<>()));
+    Map<String, String> properties = new HashMap<>(scopeMetadata.getProperties());
     properties.putAll(metadata.getProperties());
-    Set<String> tags = new HashSet<>(appMetadata.getTags());
+    Set<String> tags = new HashSet<>(scopeMetadata.getTags());
     tags.addAll(metadata.getTags());
-    appMetadata = new Metadata(properties, tags);
+    appMetadata.put(scope, new Metadata(properties, tags));
   }
 
   @Override
@@ -302,7 +303,7 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
     return systemTables.values();
   }
 
-  public Metadata getMetadata() {
+  public Map<MetadataScope, Metadata> getMetadata() {
     return appMetadata;
   }
 
