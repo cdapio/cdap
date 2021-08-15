@@ -216,10 +216,19 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     ApplicationId appId = NamespaceId.DEFAULT.app(MetadataEmitApp.NAME);
 
     // check app user metadata gets emitted correctly
-    Metadata metadata = metadataStorage.read(new Read(appId.toMetadataEntity(), MetadataScope.USER));
-    Assert.assertEquals(MetadataEmitApp.METADATA.getProperties(), metadata.getProperties(MetadataScope.USER));
-    Assert.assertEquals(MetadataEmitApp.METADATA.getTags(), metadata.getTags(MetadataScope.USER));
+    Metadata userMetadata = metadataStorage.read(new Read(appId.toMetadataEntity(), MetadataScope.USER));
+    Assert.assertEquals(MetadataEmitApp.USER_METADATA.getProperties(), userMetadata.getProperties(MetadataScope.USER));
+    Assert.assertEquals(MetadataEmitApp.USER_METADATA.getTags(), userMetadata.getTags(MetadataScope.USER));
 
+    Metadata systemMetadata = metadataStorage.read(new Read(appId.toMetadataEntity(), MetadataScope.SYSTEM));
+    // here system properties will contain what emitted in the app + the ones emitted by the platform,
+    // we only compare the ones emitted by the app
+    Map<String, String> sysProperties = systemMetadata.getProperties(MetadataScope.SYSTEM);
+    MetadataEmitApp.SYS_METADATA.getProperties().forEach((key, val) -> {
+      Assert.assertEquals(val, sysProperties.get(key));
+    });
+    // check the tags contain all the tags emitted by the app
+    Assert.assertTrue(systemMetadata.getTags(MetadataScope.SYSTEM).containsAll(MetadataEmitApp.SYS_METADATA.getTags()));
     applicationLifecycleService.removeApplication(appId);
     Assert.assertTrue(metadataStorage.read(new Read(appId.toMetadataEntity())).isEmpty());
   }
