@@ -31,6 +31,7 @@ import io.cdap.cdap.api.service.worker.SystemAppTaskContext;
 import io.cdap.cdap.etl.common.BasicArguments;
 import io.cdap.cdap.etl.common.ConnectionMacroEvaluator;
 import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
+import io.cdap.cdap.etl.common.MacroParser;
 import io.cdap.cdap.etl.common.OAuthMacroEvaluator;
 import io.cdap.cdap.etl.common.SecureStoreMacroEvaluator;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
@@ -87,14 +88,19 @@ public class RemoteValidationTask implements RunnableTask {
       }
     }
 
-    Map<String, MacroEvaluator> evaluators = ImmutableMap.of(
-      SecureStoreMacroEvaluator.FUNCTION_NAME,
-      new SecureStoreMacroEvaluator(namespace, systemAppContext),
-      OAuthMacroEvaluator.FUNCTION_NAME, new OAuthMacroEvaluator(systemAppContext),
-      ConnectionMacroEvaluator.FUNCTION_NAME,
-      new ConnectionMacroEvaluator(namespace, systemAppContext)
-    );
-    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(arguments), evaluators);
+    Map<String, MacroEvaluator> commonEvaluators = ImmutableMap.of(
+      SecureStoreMacroEvaluator.FUNCTION_NAME, new SecureStoreMacroEvaluator(namespace, systemAppContext),
+      OAuthMacroEvaluator.FUNCTION_NAME, new OAuthMacroEvaluator(systemAppContext));
+    BasicArguments basicArguments = new BasicArguments(arguments);
+    Map<String, MacroEvaluator> evaluators =
+      ImmutableMap.<String, MacroEvaluator>builder().putAll(commonEvaluators).put(
+        ConnectionMacroEvaluator.FUNCTION_NAME,
+        new ConnectionMacroEvaluator(
+          namespace, systemAppContext,
+          new MacroParser(new DefaultMacroEvaluator(basicArguments, commonEvaluators),
+                          MacroParserOptions.builder().skipInvalidMacros().setEscaping(false)
+                            .setFunctionWhitelist(commonEvaluators.keySet()).build()))).build();
+    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(basicArguments, evaluators);
     MacroParserOptions macroParserOptions = MacroParserOptions.builder()
       .skipInvalidMacros()
       .setEscaping(false)

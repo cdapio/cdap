@@ -17,6 +17,7 @@
 
 package io.cdap.cdap.etl.proto.connection;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
@@ -37,7 +38,8 @@ public class SpecGenerationRequest {
   }
 
   public Map<String, String> getProperties() {
-    return properties;
+    // might be null due to gson
+    return properties == null ? Collections.emptyMap() : properties;
   }
 
   @Override

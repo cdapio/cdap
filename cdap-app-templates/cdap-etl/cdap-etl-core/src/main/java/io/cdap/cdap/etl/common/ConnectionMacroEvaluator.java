@@ -29,6 +29,8 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A {@link MacroEvaluator} for resolving the {@code ${conn(connection-name)}} macro function. It uses
@@ -41,12 +43,15 @@ public class ConnectionMacroEvaluator extends AbstractServiceRetryableMacroEvalu
   private final String namespace;
   private final ServiceDiscoverer serviceDiscoverer;
   private final Gson gson;
+  private final MacroParser macroParser;
 
-  public ConnectionMacroEvaluator(String namespace, ServiceDiscoverer serviceDiscoverer) {
+  public ConnectionMacroEvaluator(String namespace, ServiceDiscoverer serviceDiscoverer,
+                                  MacroParser macroParser) {
     super(FUNCTION_NAME);
     this.namespace = namespace;
     this.serviceDiscoverer = serviceDiscoverer;
     this.gson = new Gson();
+    this.macroParser = macroParser;
   }
 
   /**
@@ -73,6 +78,15 @@ public class ConnectionMacroEvaluator extends AbstractServiceRetryableMacroEvalu
                                                                  String.format("v1/contexts/%s/connections/%s",
                                                                                namespace, connName));
     Connection connection = gson.fromJson(validateAndRetrieveContent(SERVICE_NAME, urlConn), Connection.class);
-    return gson.toJson(connection.getPlugin().getProperties());
+    Map<String, String> properties = connection.getPlugin().getProperties();
+    Map<String, String> evaluated = new HashMap<>();
+
+    for (Map.Entry<String, String> property : properties.entrySet()) {
+      String key = property.getKey();
+      String val = property.getValue();
+      evaluated.put(key, macroParser.parse(val));
+    }
+
+    return gson.toJson(evaluated);
   }
 }

@@ -43,6 +43,7 @@ import io.cdap.cdap.etl.batch.BatchPipelineSpec;
 import io.cdap.cdap.etl.common.BasicArguments;
 import io.cdap.cdap.etl.common.ConnectionMacroEvaluator;
 import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
+import io.cdap.cdap.etl.common.MacroParser;
 import io.cdap.cdap.etl.common.OAuthMacroEvaluator;
 import io.cdap.cdap.etl.common.SecureStoreMacroEvaluator;
 import io.cdap.cdap.etl.proto.v2.spec.PipelineSpec;
@@ -159,12 +160,19 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
       }
     }
 
-    Map<String, MacroEvaluator> evaluators = ImmutableMap.of(
+    Map<String, MacroEvaluator> commonEvaluators = ImmutableMap.of(
       SecureStoreMacroEvaluator.FUNCTION_NAME, new SecureStoreMacroEvaluator(namespace, getContext()),
-      OAuthMacroEvaluator.FUNCTION_NAME, new OAuthMacroEvaluator(getContext()),
-      ConnectionMacroEvaluator.FUNCTION_NAME, new ConnectionMacroEvaluator(namespace, getContext())
-    );
-    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(arguments), evaluators);
+      OAuthMacroEvaluator.FUNCTION_NAME, new OAuthMacroEvaluator(getContext()));
+    BasicArguments basicArguments = new BasicArguments(arguments);
+    Map<String, MacroEvaluator> evaluators =
+      ImmutableMap.<String, MacroEvaluator>builder().putAll(commonEvaluators).put(
+        ConnectionMacroEvaluator.FUNCTION_NAME,
+        new ConnectionMacroEvaluator(
+          namespace, getContext(),
+          new MacroParser(new DefaultMacroEvaluator(basicArguments, commonEvaluators),
+                          MacroParserOptions.builder().skipInvalidMacros().setEscaping(false)
+                            .setFunctionWhitelist(commonEvaluators.keySet()).build()))).build();
+    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(basicArguments, evaluators);
     MacroParserOptions macroParserOptions = MacroParserOptions.builder()
       .skipInvalidMacros()
       .setEscaping(false)

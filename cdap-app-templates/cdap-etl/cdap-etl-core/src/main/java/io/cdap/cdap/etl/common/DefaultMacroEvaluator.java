@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.ServiceDiscoverer;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.etl.common.macro.LogicalStartTimeMacroEvaluator;
 
@@ -36,12 +37,19 @@ public class DefaultMacroEvaluator implements MacroEvaluator {
 
   public DefaultMacroEvaluator(BasicArguments arguments, long logicalStartTime,
                                SecureStore secureStore, ServiceDiscoverer serviceDiscoverer, String namespace) {
-    this(arguments, ImmutableMap.of(
+    Map<String, MacroEvaluator> commonEvaluators = ImmutableMap.of(
       LogicalStartTimeMacroEvaluator.FUNCTION_NAME, new LogicalStartTimeMacroEvaluator(logicalStartTime),
       SecureStoreMacroEvaluator.FUNCTION_NAME, new SecureStoreMacroEvaluator(namespace, secureStore),
-      OAuthMacroEvaluator.FUNCTION_NAME, new OAuthMacroEvaluator(serviceDiscoverer),
-      ConnectionMacroEvaluator.FUNCTION_NAME, new ConnectionMacroEvaluator(namespace, serviceDiscoverer)
-    ));
+      OAuthMacroEvaluator.FUNCTION_NAME, new OAuthMacroEvaluator(serviceDiscoverer));
+    Map<String, MacroEvaluator> evaluators =
+      ImmutableMap.<String, MacroEvaluator>builder().putAll(commonEvaluators).put(
+        ConnectionMacroEvaluator.FUNCTION_NAME,
+        new ConnectionMacroEvaluator(
+          namespace, serviceDiscoverer,
+          new MacroParser(new DefaultMacroEvaluator(arguments, commonEvaluators),
+                          MacroParserOptions.builder().setEscaping(false).build()))).build();
+    this.arguments = arguments;
+    this.macroEvaluators = evaluators;
   }
 
   public DefaultMacroEvaluator(BasicArguments arguments, Map<String, MacroEvaluator> macroEvaluators) {

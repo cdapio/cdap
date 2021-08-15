@@ -305,14 +305,19 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     String srcTableName = "src" + engine;
     String sinkTableName = "sink" + engine;
 
+    // add some bad json object to the property
     addConnection(
       sourceConnName, new ConnectionCreationRequest(
-        "", new PluginInfo("test", "dummy", null, Collections.singletonMap("tableName", srcTableName),
+        "", new PluginInfo("test", "dummy", null, ImmutableMap.of("tableName", srcTableName,
+                                                                  "key1", "${badval}"),
                            new ArtifactSelectorConfig())));
     addConnection(
       sinkConnName, new ConnectionCreationRequest(
-        "", new PluginInfo("test", "dummy", null, Collections.singletonMap("tableName", sinkTableName),
+        "", new PluginInfo("test", "dummy", null, ImmutableMap.of("tableName", sinkTableName,
+                                                                  "key1", "${badval}"),
                            new ArtifactSelectorConfig())));
+    // add json string to the runtime arguments to ensure plugin can get instantiated under such condition
+    Map<String, String> runtimeArguments = Collections.singletonMap("badval", "{\"a\" : 1}");
 
     // source -> sink
     ETLBatchConfig config = ETLBatchConfig.builder()
@@ -334,7 +339,7 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     // verify preview can run successfully using connections
     PreviewManager previewManager = getPreviewManager();
     PreviewConfig previewConfig = new PreviewConfig(SmartWorkflow.NAME, ProgramType.WORKFLOW,
-                                                    Collections.<String, String>emptyMap(), 10);
+                                                    runtimeArguments, 10);
     // Start the preview and get the corresponding PreviewRunner.
     ApplicationId previewId = previewManager.start(NamespaceId.DEFAULT,
                                                    new AppRequest<>(APP_ARTIFACT, config, previewConfig));
@@ -354,7 +359,7 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
 
     // start the actual pipeline run
     WorkflowManager manager = appManager.getWorkflowManager(SmartWorkflow.NAME);
-    manager.startAndWaitForGoodRun(ProgramRunStatus.COMPLETED, 3, TimeUnit.MINUTES);
+    manager.startAndWaitForGoodRun(runtimeArguments, ProgramRunStatus.COMPLETED, 3, TimeUnit.MINUTES);
 
     DataSetManager<Table> sinkTable = getDataset(sinkTableName);
     List<StructuredRecord> outputRecords = MockSink.readOutput(sinkTable);
@@ -379,7 +384,7 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     MockSource.writeInput(sourceTable, ImmutableList.of(newRecord1, newRecord2));
 
     // run the program again, it should use the new table to read and write
-    manager.start();
+    manager.start(runtimeArguments);
     manager.waitForRuns(ProgramRunStatus.COMPLETED, 2, 3, TimeUnit.MINUTES);
 
     sinkTable = getDataset(newSinkTableName);
