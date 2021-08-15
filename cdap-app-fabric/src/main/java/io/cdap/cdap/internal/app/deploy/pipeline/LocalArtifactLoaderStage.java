@@ -34,10 +34,9 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
-import io.cdap.cdap.spi.metadata.MetadataMutation;
 import org.apache.twill.filesystem.Location;
 
-import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -105,22 +104,19 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
     accessEnforcer.enforce(applicationId, authenticationContext.getPrincipal(), StandardPermission.CREATE);
     capabilityReader.checkAllEnabled(specification);
 
-    MetadataMutation.Create mutation = null;
-    Metadata metadata = appSpecInfo.getMetadata();
-    if (!metadata.getTags().isEmpty() || !metadata.getProperties().isEmpty()) {
-      MetadataEntity appEntity = applicationId.toMetadataEntity();
-      metadataValidator.validateProperties(appEntity, metadata.getProperties());
-      metadataValidator.validateTags(appEntity, metadata.getTags());
-      mutation = new MetadataMutation.Create(
-        appEntity,
-        new io.cdap.cdap.spi.metadata.Metadata(MetadataScope.USER, metadata.getTags(), metadata.getProperties()),
-        Collections.emptyMap());
+    Map<MetadataScope, Metadata> metadatas = appSpecInfo.getMetadata();
+    for (Map.Entry<MetadataScope, Metadata> metadataEntry : metadatas.entrySet()) {
+      Metadata metadata = metadataEntry.getValue();
+      if (!metadata.getTags().isEmpty() || !metadata.getProperties().isEmpty()) {
+        MetadataEntity appEntity = applicationId.toMetadataEntity();
+        metadataValidator.validateProperties(appEntity, metadata.getProperties());
+        metadataValidator.validateTags(appEntity, metadata.getTags());
+      }
     }
-
     emit(new ApplicationDeployable(deploymentInfo.getArtifactId(), deploymentInfo.getArtifactLocation(),
                                    applicationId, specification, store.getApplication(applicationId),
                                    ApplicationDeployScope.USER, deploymentInfo.getApplicationClass(),
                                    deploymentInfo.getOwnerPrincipal(), deploymentInfo.canUpdateSchedules(),
-                                   appSpecInfo.getSystemTables(), mutation));
+                                   appSpecInfo.getSystemTables(), metadatas));
   }
 }

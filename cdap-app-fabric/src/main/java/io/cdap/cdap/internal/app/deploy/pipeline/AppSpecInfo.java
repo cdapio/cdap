@@ -18,9 +18,11 @@ package io.cdap.cdap.internal.app.deploy.pipeline;
 
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.metadata.Metadata;
+import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * ApplicationSpecification and associated system tables. This is used because the StructuredTableSpecifications
@@ -29,10 +31,10 @@ import java.util.Collection;
 public class AppSpecInfo {
   private final ApplicationSpecification appSpec;
   private final Collection<StructuredTableSpecification> systemTables;
-  private final Metadata metadata;
+  private final Map<MetadataScope, Metadata> metadata;
 
   public AppSpecInfo(ApplicationSpecification appSpec,
-                     Collection<StructuredTableSpecification> systemTables, Metadata metadata) {
+                     Collection<StructuredTableSpecification> systemTables, Map<MetadataScope, Metadata> metadata) {
     this.appSpec = appSpec;
     this.systemTables = systemTables;
     this.metadata = metadata;
@@ -46,7 +48,7 @@ public class AppSpecInfo {
     return systemTables;
   }
 
-  public Metadata getMetadata() {
+  public Map<MetadataScope, Metadata> getMetadata() {
     return metadata;
   }
 }

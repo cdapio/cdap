@@ -266,24 +266,27 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     ApplicationManager appManager2 = deployApplication(appId2, appRequest2);
 
     // Assert metadata
-    Metadata app1Actual = getMetadataAdmin().getMetadata(appId1.toMetadataEntity(), MetadataScope.USER);
-    Metadata app1Expected = new Metadata(MetadataScope.USER, ImmutableSet.of("conn_1", "conn_3"),
-                                         Collections.emptyMap());
-    Assert.assertEquals(app1Expected, app1Actual);
+    Metadata app1Actual = getMetadataAdmin().getMetadata(appId1.toMetadataEntity(), MetadataScope.SYSTEM);
+    Set<String> app1ExpectedTags = ImmutableSet.of("_conn_1", "_conn_3");
+    // here assert actual tags contain all the tags about connections
+    Assert.assertTrue(app1Actual.getTags(MetadataScope.SYSTEM).containsAll(app1ExpectedTags));
+    // user metadata should be empty
+    Assert.assertEquals(Metadata.EMPTY, getMetadataAdmin().getMetadata(appId1.toMetadataEntity(), MetadataScope.USER));
 
-    Metadata app2Actual = getMetadataAdmin().getMetadata(appId2.toMetadataEntity(), MetadataScope.USER);
-    Metadata app2Expected = new Metadata(MetadataScope.USER,
-                                         ImmutableSet.of("conn_1", "conn_2", "conn_3", "conn_4", "conn_5"),
-                                         Collections.emptyMap());
-    Assert.assertEquals(app2Expected, app2Actual);
+    Metadata app2Actual = getMetadataAdmin().getMetadata(appId2.toMetadataEntity(), MetadataScope.SYSTEM);
+    Set<String> app2ExpectedTags = ImmutableSet.of("_conn_1", "_conn_2", "_conn_3", "_conn_4", "_conn_5");
+    // here assert actual tags contain all the tags about connections
+    Assert.assertTrue(app2Actual.getTags(MetadataScope.SYSTEM).containsAll(app2ExpectedTags));
+    // user metadata should be empty
+    Assert.assertEquals(Metadata.EMPTY, getMetadataAdmin().getMetadata(appId2.toMetadataEntity(), MetadataScope.USER));
 
     // using search query to find out the related apps
     Set<MetadataEntity> appsRelated = ImmutableSet.of(appId1.toMetadataEntity(), appId2.toMetadataEntity());
-    assertMetadataSearch(appsRelated, "tags:conn_1");
-    assertMetadataSearch(Collections.singleton(appId2.toMetadataEntity()), "tags:conn_2");
-    assertMetadataSearch(appsRelated, "tags:conn_3");
-    assertMetadataSearch(Collections.singleton(appId2.toMetadataEntity()), "tags:conn_4");
-    assertMetadataSearch(Collections.singleton(appId2.toMetadataEntity()), "tags:conn_5");
+    assertMetadataSearch(appsRelated, "tags:_conn_1");
+    assertMetadataSearch(Collections.singleton(appId2.toMetadataEntity()), "tags:_conn_2");
+    assertMetadataSearch(appsRelated, "tags:_conn_3");
+    assertMetadataSearch(Collections.singleton(appId2.toMetadataEntity()), "tags:_conn_4");
+    assertMetadataSearch(Collections.singleton(appId2.toMetadataEntity()), "tags:_conn_5");
   }
 
   private void assertMetadataSearch(Set<MetadataEntity> appsRelated, String query) throws Exception {
