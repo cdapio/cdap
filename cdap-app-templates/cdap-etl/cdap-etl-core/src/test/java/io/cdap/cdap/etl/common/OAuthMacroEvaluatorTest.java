@@ -90,8 +90,13 @@ public class OAuthMacroEvaluatorTest {
   @Test
   public void testOAuthMacro() {
     MacroEvaluator macroEvaluator = new OAuthMacroEvaluator(serviceDiscoverer);
-    String value = macroEvaluator.evaluate(OAuthMacroEvaluator.FUNCTION_NAME, PROVIDER, CREDENTIAL_ID);
-    OAuthInfo oAuthInfo = GSON.fromJson(value, OAuthInfo.class);
+    Map<String, String> oauthToken = macroEvaluator.evaluateMap(OAuthMacroEvaluator.FUNCTION_NAME,
+                                                                PROVIDER, CREDENTIAL_ID);
+    // assert contain all properties
+    Assert.assertEquals("accessToken", oauthToken.get("accessToken"));
+    Assert.assertEquals("bearer", oauthToken.get("tokenType"));
+
+    OAuthInfo oAuthInfo = GSON.fromJson(GSON.toJson(oauthToken), OAuthInfo.class);
 
     Assert.assertEquals("accessToken", oAuthInfo.accessToken);
     Assert.assertEquals("bearer", oAuthInfo.tokenType);

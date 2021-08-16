@@ -18,10 +18,14 @@ package io.cdap.cdap.internal.app.runtime.plugin;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.macro.MacroObjectType;
 import io.cdap.cdap.api.macro.MacroParserOptions;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
@@ -32,6 +36,7 @@ import javax.annotation.Nullable;
 public class MacroParser {
   private static final Pattern ARGUMENT_DELIMITER = Pattern.compile(",");
   private static final int MAX_SUBSTITUTION_DEPTH = 10;
+  private static final Gson GSON = new Gson();
 
   private final MacroEvaluator macroEvaluator;
   private final boolean escapingEnabled;
@@ -207,7 +212,22 @@ public class MacroParser {
     // if the whitelist is empty, that means no whitelist was set, so every function should be evaluated.
     if (functionsEnabled && (functionWhitelist.isEmpty() || functionWhitelist.contains(macroFunction))) {
       try {
-        return new MacroMetadata(macroEvaluator.evaluate(macroFunction, args), startIndex, endIndex, true);
+        switch (macroEvaluator.evaluateAs(macroFunction)) {
+          case STRING:
+            return new MacroMetadata(macroEvaluator.evaluate(macroFunction, args), startIndex, endIndex, true);
+          case MAP:
+            // evaluate the macro as map, and evaluate this map
+            Map<String, String> properties = macroEvaluator.evaluateMap(macroFunction, args);
+            Map<String, String> evaluated = new HashMap<>();
+            properties.forEach((key, val) -> {
+              evaluated.put(key, parse(val));
+            });
+            return new MacroMetadata(GSON.toJson(evaluated), startIndex, endIndex, true);
+          default:
+            // should not happen
+            throw new IllegalStateException("Unsupported macro object type, the supported types are string and map.");
+        }
+
       } catch (InvalidMacroException e) {
         if (!skipInvalid) {
           throw e;
