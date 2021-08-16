@@ -27,6 +27,7 @@ import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.mapreduce.MapReduce;
 import io.cdap.cdap.api.metadata.Metadata;
+import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.plugin.PluginSelector;
 import io.cdap.cdap.api.schedule.ScheduleBuilder;
@@ -104,7 +105,7 @@ public final class MockAppConfigurer implements ApplicationConfigurer {
   }
 
   @Override
-  public void emitMetadata(Metadata metadata) {
+  public void emitMetadata(Metadata metadata, MetadataScope scope) {
 
   }
 

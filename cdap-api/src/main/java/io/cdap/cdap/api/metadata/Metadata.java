@@ -18,6 +18,7 @@ package io.cdap.cdap.api.metadata;
 
 import io.cdap.cdap.api.annotation.Beta;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -27,6 +28,7 @@ import java.util.Set;
  */
 @Beta
 public class Metadata {
+  public static final Metadata EMPTY = new Metadata(Collections.emptyMap(), Collections.emptySet());
   private final Map<String, String> properties;
   private final Set<String> tags;
 
