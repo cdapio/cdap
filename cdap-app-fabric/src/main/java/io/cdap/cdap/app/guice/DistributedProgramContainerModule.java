@@ -244,6 +244,15 @@ public class DistributedProgramContainerModule extends AbstractModule {
       modules.add(new KafkaClientModule());
       modules.add(new KafkaLogAppenderModule());
       return;
+    } else {
+      System.err.println("### Master env is not null");
+      modules.add(new AbstractModule() {
+        @Override
+        protected void configure() {
+          // get spark confs
+          bind(SparkConfigs.class).toInstance(masterEnv.getSparkConf());
+        }
+      });
     }
 
     if (coreSecurityModule.requiresZKClient()) {
@@ -257,8 +266,6 @@ public class DistributedProgramContainerModule extends AbstractModule {
           .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
         bind(DiscoveryServiceClient.class)
           .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
-        // get spark confs
-        bind(SparkConfigs.class).toInstance(masterEnv.getSparkConf());
         bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
       }
     });

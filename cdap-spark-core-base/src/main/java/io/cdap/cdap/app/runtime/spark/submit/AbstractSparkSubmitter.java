@@ -32,6 +32,9 @@ import io.cdap.cdap.app.runtime.spark.SparkMainWrapper;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeContext;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.spark.deploy.SparkSubmit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -201,12 +204,22 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     String files = Joiner.on(',')
       .join(Iterables.transform(Iterables.filter(resources, Predicates.not(ARCHIVE_FILTER)), RESOURCE_TO_PATH));
 
+    /*
     if (!archives.isEmpty()) {
       builder.add("--archives").add(archives);
     }
     if (!files.isEmpty()) {
       builder.add("--files").add(files);
     }
+    */
+    try {
+      pushFilesAndArchives(files, archives);
+    } catch (Exception e) {
+      System.err.println("vinisha - failed to push files and archives");
+      e.printStackTrace(System.err);
+    }
+    // temporary for debugging
+    builder.add("--verbose");
 
     boolean isPySpark = jobFile.getPath().endsWith(".py");
     if (isPySpark) {
@@ -233,6 +246,34 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     }
 
     return builder.build();
+  }
+
+  private void pushFilesAndArchives(String files, String archives) throws Exception {
+    Path basePath = new Path("gs://spark-submitter");
+    FileSystem fs = FileSystem.get(basePath.toUri(), new Configuration());
+    for (String file : files.split(",")) {
+      System.err.println("vinisha - file = " + file);
+      int idx = file.indexOf("#");
+      if (idx > 0) {
+        file = file.substring(0, idx);
+      }
+      Path src = new Path(file);
+      Path dst = new Path("gs://spark-submitter/hack/files/" + src.getName());
+      if (fs.exists(dst)) {
+        fs.delete(dst);
+      }
+      System.err.println("vinisha - pushing file " + src.toUri() + " to " + dst.toUri());
+      fs.copyFromLocalFile(src, dst);
+    }
+    for (String archive : archives.split(",")) {
+      Path src = new Path(archive);
+      Path dst = new Path("gs://spark-submitter/hack/archives/" + src.getName());
+      if (fs.exists(dst)) {
+        fs.delete(dst);
+      }
+      System.err.println("vinisha - pushing archive " + src.toUri() + " to " + dst.toUri());
+      fs.copyFromLocalFile(src, dst);
+    }
   }
 
   /**

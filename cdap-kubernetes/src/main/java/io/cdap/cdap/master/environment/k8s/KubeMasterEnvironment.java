@@ -193,7 +193,6 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
   @Override
   public SparkConfigs getSparkConf() {
-
     // TODO: Make it through k8s api
     String podTemplateBase = ""
       + "spec:\n"
@@ -218,12 +217,11 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
     Map<String, String> map = new HashMap<>();
     // TODO: Make sure to use right one
-    map.put("spark.kubernetes.container.image", "gcr.io/ashau-dev0/spark:cdap-latest");
+    map.put("spark.kubernetes.container.image", "gcr.io/vini-gcp-project:latest");
     // TODO: Get from the cConf
-    map.put("spark.kubernetes.authenticate.driver.serviceAccountName","spark");
-    map.put("spark.kubernetes.container.image.pullPolicy","Always");
+    map.put("spark.kubernetes.authenticate.driver.serviceAccountName", "spark");
+    map.put("spark.kubernetes.container.image.pullPolicy", "Always");
     map.put("spark.kubernetes.executor.deleteOnTermination", "false");
-
 
     return new SparkConfigs(map, masterBasePath, podTemplateBase);
   }

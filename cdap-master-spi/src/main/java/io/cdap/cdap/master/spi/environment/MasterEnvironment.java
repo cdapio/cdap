@@ -20,8 +20,6 @@ import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
-import java.util.Collections;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
