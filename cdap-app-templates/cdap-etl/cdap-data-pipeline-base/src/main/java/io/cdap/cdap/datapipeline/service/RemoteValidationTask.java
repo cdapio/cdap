@@ -94,7 +94,8 @@ public class RemoteValidationTask implements RunnableTask {
       ConnectionMacroEvaluator.FUNCTION_NAME,
       new ConnectionMacroEvaluator(namespace, systemAppContext)
     );
-    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(arguments), evaluators);
+    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(arguments), evaluators,
+                                                              DefaultMacroEvaluator.MAP_FUNCTIONS);
     MacroParserOptions macroParserOptions = MacroParserOptions.builder()
       .skipInvalidMacros()
       .setEscaping(false)

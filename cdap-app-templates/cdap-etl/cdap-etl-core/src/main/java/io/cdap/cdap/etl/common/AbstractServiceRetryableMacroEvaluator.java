@@ -31,6 +31,7 @@ import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -63,6 +64,17 @@ abstract class AbstractServiceRetryableMacroEvaluator implements MacroEvaluator 
       throw new IllegalArgumentException("Invalid function name " + macroFunction
                                            + ". Expecting " + functionName);
     }
+    throw new UnsupportedOperationException(
+      String.format("This function %s can only be evaluated as map, use evaluatemap instead", macroFunction));
+  }
+
+  @Override
+  public Map<String, String> evaluateMap(String macroFunction, String... args) throws InvalidMacroException {
+    if (!functionName.equals(macroFunction)) {
+      // This shouldn't happen
+      throw new IllegalArgumentException("Invalid function name " + macroFunction
+                                           + ". Expecting " + functionName);
+    }
 
     // Make call with exponential delay on failure retry.
     long delay = RETRY_BASE_DELAY_MILLIS;
@@ -72,7 +84,7 @@ abstract class AbstractServiceRetryableMacroEvaluator implements MacroEvaluator 
     try {
       while (stopWatch.elapsedTime(TimeUnit.MILLISECONDS) < TIMEOUT_MILLIS) {
         try {
-          return evaluateMacro(macroFunction, args);
+          return evaluateMacroMap(macroFunction, args);
         } catch (RetryableException e) {
           TimeUnit.MILLISECONDS.sleep(delay);
           delay = (long) (delay * (minMultiplier + Math.random() * (maxMultiplier - minMultiplier + 1)));
@@ -87,10 +99,11 @@ abstract class AbstractServiceRetryableMacroEvaluator implements MacroEvaluator 
                                    + "' with args " + Arrays.asList(args), e);
     }
     throw new IllegalStateException("Timed out when trying to evaluate the macro function '" + functionName
-                                    + "' with args " + Arrays.asList(args));
+                                      + "' with args " + Arrays.asList(args));
   }
 
-  protected String validateAndRetrieveContent(String serviceName, HttpURLConnection urlConn) throws IOException {
+  protected String validateAndRetrieveContent(String serviceName,
+                                              HttpURLConnection urlConn) throws IOException {
     if (urlConn == null) {
       throw new RetryableException(serviceName + " service is not available");
     }
@@ -114,8 +127,8 @@ abstract class AbstractServiceRetryableMacroEvaluator implements MacroEvaluator 
     }
   }
 
-  abstract String evaluateMacro(String macroFunction,
-                                String... args) throws InvalidMacroException, IOException, RetryableException;
+  abstract Map<String, String> evaluateMacroMap(
+    String macroFunction, String... args) throws InvalidMacroException, IOException, RetryableException;
 
   /**
    * Returns the full content of the error stream for the given {@link HttpURLConnection}.
