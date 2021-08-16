@@ -114,9 +114,9 @@ public class ProvisionTask extends ProvisioningTask {
   private ProvisioningSubtask createClusterCreateSubtask() {
     return new ClusterCreateSubtask(provisioner, provisionerContext, cluster -> {
       if (!Objects.equals(provisionerContext.getCDAPVersionInfo(), provisionerContext.getAppCDAPVersionInfo())) {
-        USERLOG.info("Starting a pipeline created with a previous CDAP version. " +
+        USERLOG.info("Starting a pipeline created with a previous version. " +
                    "Please consider upgrading the pipeline to employ all the enhancements");
-        LOG.debug("Starting a pipeline created with a previous CDAP version. Pipeline version {}, CDAP version {}",
+        LOG.debug("Starting a pipeline created with a previous version. Pipeline version {}, platform version {}",
                   provisionerContext.getAppCDAPVersionInfo(), provisionerContext.getCDAPVersionInfo());
       }
       if (cluster == null) {
