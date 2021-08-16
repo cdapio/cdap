@@ -855,7 +855,7 @@
                 </goals>
                 <configuration>
                   <excludeGroupIds>
-                    ${dependency.groupId.exclusions},org.scala-lang,org.apache.kafka
+                    ${dependency.groupId.exclusions},org.scala-lang,org.apache.kafka,net.jpountz.lz4
                   </excludeGroupIds>
                 </configuration>
               </execution>
