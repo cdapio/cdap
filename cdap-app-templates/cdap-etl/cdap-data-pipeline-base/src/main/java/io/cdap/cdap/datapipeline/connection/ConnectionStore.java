@@ -133,7 +133,8 @@ public class ConnectionStore {
             oldConnection.getName(), connectionId.getNamespace(), connectionId.getConnectionId()));
         }
 
-        if (!oldConnection.getName().equals(newConnection.getName()) && !overWrite) {
+        // not allow update the connection in 6.5, overwrite is always false in 6.5
+        if (!overWrite) {
           throw new ConnectionConflictException(String.format(
             "Connection %s in namespace %s has same id %s. Please choose a different connection name.",
             oldConnection.getName(), connectionId.getNamespace(), connectionId.getConnectionId()));
