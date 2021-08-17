@@ -21,7 +21,6 @@ import com.google.common.net.HttpHeaders;
 import com.google.gson.Gson;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.api.service.worker.RemoteExecutionException;
-import io.cdap.cdap.api.service.worker.RemoteTaskException;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -101,8 +100,8 @@ public class RemoteTaskExecutor {
         }
         if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
           BasicThrowable basicThrowable = GSON
-            .fromJson(new String(httpResponse.getResponseBody()), BasicThrowable.class);
-          throw createExceptionObject(basicThrowable);
+            .fromJson(new String(getResponseBody(httpResponse)), BasicThrowable.class);
+          throw RemoteExecutionException.fromBasicThrowable(basicThrowable);
         }
         return getResponseBody(httpResponse);
       } catch (NoRouteToHostException e) {
@@ -110,17 +109,6 @@ public class RemoteTaskExecutor {
           String.format("Received exception %s for %s", e.getMessage(), runnableTaskRequest.getClassName()));
       }
     }, retryStrategy);
-  }
-
-  private Exception createExceptionObject(BasicThrowable basicThrowable) {
-    BasicThrowable cause = basicThrowable.getCause();
-    Exception causeException = cause == null ? null : createExceptionObject(cause);
-    RemoteTaskException remoteTaskException = new RemoteTaskException(basicThrowable.getClassName(),
-                                                                      basicThrowable.getMessage(), causeException);
-    remoteTaskException.setStackTrace(basicThrowable.getStackTraces());
-
-    // Wrap the remote exception as the cause so that we retain the local stacktrace of the exception.
-    return new RemoteExecutionException(remoteTaskException);
   }
 
   private ByteBuffer encodeTaskRequest(RunnableTaskRequest request) throws IOException {
