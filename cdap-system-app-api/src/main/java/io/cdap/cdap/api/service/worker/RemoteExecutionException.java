@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.api.service.worker;
 
+import io.cdap.cdap.proto.BasicThrowable;
+
 /**
  * A exception class for wrapping an {@link Exception} coming from remote task execution.
  * The main purpose of this class is to retain the local stacktrace while using the remote exception message as its
@@ -32,5 +34,21 @@ public class RemoteExecutionException extends Exception {
 
   public RemoteTaskException getCause() {
     return cause;
+  }
+
+  /**
+   * Converts a {@link BasicThrowable} to a RemoteExecutionException.
+   *
+   * @return An exception which retains the local stacktrace.
+   */
+  public static RemoteExecutionException fromBasicThrowable(BasicThrowable basicThrowable) {
+    BasicThrowable cause = basicThrowable.getCause();
+    Exception causeException = cause == null ? null : fromBasicThrowable(cause);
+    RemoteTaskException remoteTaskException = new RemoteTaskException(basicThrowable.getClassName(),
+                                                                      basicThrowable.getMessage(), causeException);
+    remoteTaskException.setStackTrace(basicThrowable.getStackTraces());
+
+    // Wrap the remote exception as the cause so that we retain the local stacktrace of the exception.
+    return new RemoteExecutionException(remoteTaskException);
   }
 }
