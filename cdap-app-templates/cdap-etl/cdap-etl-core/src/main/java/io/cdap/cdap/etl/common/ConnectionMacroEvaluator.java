@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 /**
  * A {@link MacroEvaluator} for resolving the {@code ${conn(connection-name)}} macro function. It uses
@@ -56,8 +57,8 @@ public class ConnectionMacroEvaluator extends AbstractServiceRetryableMacroEvalu
    * @return the json representation of the properties of the connection
    */
   @Override
-  String evaluateMacro(String macroFunction,
-                       String... args) throws InvalidMacroException, IOException, RetryableException {
+  Map<String, String> evaluateMacroMap(String macroFunction,
+                                       String... args) throws InvalidMacroException, IOException, RetryableException {
     if (args.length != 1) {
       throw new InvalidMacroException("Macro '" + FUNCTION_NAME + "' should have exactly 1 arguments");
     }
@@ -73,6 +74,6 @@ public class ConnectionMacroEvaluator extends AbstractServiceRetryableMacroEvalu
                                                                  String.format("v1/contexts/%s/connections/%s",
                                                                                namespace, connName));
     Connection connection = gson.fromJson(validateAndRetrieveContent(SERVICE_NAME, urlConn), Connection.class);
-    return gson.toJson(connection.getPlugin().getProperties());
+    return connection.getPlugin().getProperties();
   }
 }

@@ -64,6 +64,7 @@ import io.cdap.cdap.etl.proto.connection.PluginInfo;
 import io.cdap.cdap.etl.proto.connection.SampleResponse;
 import io.cdap.cdap.etl.proto.connection.SampleResponseCodec;
 import io.cdap.cdap.etl.proto.connection.SpecGenerationRequest;
+import io.cdap.cdap.etl.proto.v2.ConnectionConfig;
 import io.cdap.cdap.etl.proto.validation.SimpleFailureCollector;
 import io.cdap.cdap.etl.spec.TrackedPluginSelector;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
@@ -73,11 +74,13 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -94,12 +97,29 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
     new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
       .registerTypeAdapter(SampleResponse.class, new SampleResponseCodec()).setPrettyPrinting().create();
   private static final Type MAP_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type SET_STRING_TYPE = new TypeToken<Set<String>>() { }.getType();
+
+  private static final String DISABLED_TYPES = "disabledTypes";
   private ConnectionStore store;
+  private ConnectionConfig connectionConfig;
+  private Set<String> disabledTypes;
+
+  public ConnectionHandler(@Nullable ConnectionConfig connectionConfig) {
+    this.connectionConfig = connectionConfig;
+  }
+
+  @Override
+  protected void configure() {
+    Set<String> disabledTypes = connectionConfig == null ? Collections.emptySet() : connectionConfig.getDisabledTypes();
+    setProperties(Collections.singletonMap(DISABLED_TYPES, GSON.toJson(disabledTypes)));
+  }
 
   @Override
   public void initialize(SystemHttpServiceContext context) throws Exception {
     super.initialize(context);
     store = new ConnectionStore(context);
+    String disabledTypesStr = context.getSpecification().getProperty(DISABLED_TYPES);
+    this.disabledTypes = GSON.fromJson(disabledTypesStr, SET_STRING_TYPE);
   }
 
   /**
@@ -157,11 +177,16 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
 
       ConnectionCreationRequest creationRequest =
         GSON.fromJson(StandardCharsets.UTF_8.decode(request.getContent()).toString(), ConnectionCreationRequest.class);
+      String connType = creationRequest.getPlugin().getName();
+      if (disabledTypes.contains(connType)) {
+        throw new ConnectionBadRequestException(
+          String.format("Connection type %s is disabled, connection cannot be created", connType));
+      }
       ConnectionId connectionId = new ConnectionId(namespaceSummary, connection);
 
       long now = System.currentTimeMillis();
       Connection connectionInfo = new Connection(connection, connectionId.getConnectionId(),
-                                                 creationRequest.getPlugin().getName(),
+                                                 connType,
                                                  creationRequest.getDescription(), false, false,
                                                  now, now, creationRequest.getPlugin());
       store.saveConnection(connectionId, connectionInfo, false);
@@ -416,7 +441,8 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
       SecureStoreMacroEvaluator.FUNCTION_NAME, new SecureStoreMacroEvaluator(namespace, getContext()),
       OAuthMacroEvaluator.FUNCTION_NAME, new OAuthMacroEvaluator(getContext())
     );
-    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(arguments), evaluators);
+    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(arguments), evaluators,
+                                                              Collections.singleton(OAuthMacroEvaluator.FUNCTION_NAME));
     MacroParserOptions options = MacroParserOptions.builder()
                                  .skipInvalidMacros()
                                  .setEscaping(false)

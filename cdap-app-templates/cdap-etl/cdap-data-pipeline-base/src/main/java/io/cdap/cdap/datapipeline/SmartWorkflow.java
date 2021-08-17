@@ -29,6 +29,7 @@ import io.cdap.cdap.api.dataset.lib.FileSet;
 import io.cdap.cdap.api.lineage.field.Operation;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.metadata.Metadata;
+import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.api.metrics.Metrics;
 import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.api.schedule.ProgramStatusTriggerInfo;
@@ -111,6 +112,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Data Pipeline Smart Workflow.
@@ -182,7 +184,9 @@ public class SmartWorkflow extends AbstractWorkflow {
                         e.getFailures().iterator().next().getFullMessage()), e);
     }
 
-    applicationConfigurer.emitMetadata(new Metadata(Collections.emptyMap(), spec.getConnectionsUsed()));
+    // append "_" to the connection name so it will not conflict with the system tag we add
+    Set<String> connectionsUsed = spec.getConnectionsUsed().stream().map(s -> "_" + s).collect(Collectors.toSet());
+    applicationConfigurer.emitMetadata(new Metadata(Collections.emptyMap(), connectionsUsed), MetadataScope.SYSTEM);
 
     stageSpecs = new HashMap<>();
     useSpark = config.getEngine() == Engine.SPARK;

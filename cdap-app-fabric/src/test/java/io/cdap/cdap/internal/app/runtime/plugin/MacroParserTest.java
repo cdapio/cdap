@@ -18,6 +18,8 @@ package io.cdap.cdap.internal.app.runtime.plugin;
 
 
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
@@ -541,6 +543,21 @@ public class MacroParserTest {
     Assert.assertEquals("${test(${k1})}", parser.parse("${test(${k1})}"));
     Assert.assertEquals("${test(${k1${k2}})}", parser.parse("${test(${k1${k2}})}"));
     Assert.assertEquals("${test(${k1})}${t(${t1})}", parser.parse("${test(${k1})}${t(${t1})}"));
+  }
+
+  @Test
+  public void testMacroParserMapSubstitutions() {
+    Map<String, String> connectionProperties = ImmutableMap.of("k1", "v2", "k2", "${test(t1)}");
+    MacroEvaluator evaluator = new TestMacroEvaluator(
+      Collections.emptyMap(), Collections.singletonMap("t1", "{\"a\" : 1}"), false,
+      Collections.singletonMap("connection", connectionProperties));
+
+    MacroParser parser = new MacroParser(evaluator, MacroParserOptions.builder().setEscaping(false).build());
+
+    Gson gson = new Gson();
+    Map<String, String> expected = ImmutableMap.of("k1", "v2", "k2", "{\"a\" : 1}");
+    Assert.assertEquals(expected, gson.fromJson(parser.parse("${testmap(connection)}"),
+                                                new TypeToken<Map<String, String>>() { }.getType()));
   }
 
   // Testing util methods

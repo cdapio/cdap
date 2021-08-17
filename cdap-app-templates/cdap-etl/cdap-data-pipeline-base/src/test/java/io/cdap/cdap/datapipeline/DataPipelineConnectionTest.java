@@ -266,24 +266,27 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     ApplicationManager appManager2 = deployApplication(appId2, appRequest2);
 
     // Assert metadata
-    Metadata app1Actual = getMetadataAdmin().getMetadata(appId1.toMetadataEntity(), MetadataScope.USER);
-    Metadata app1Expected = new Metadata(MetadataScope.USER, ImmutableSet.of("conn_1", "conn_3"),
-                                         Collections.emptyMap());
-    Assert.assertEquals(app1Expected, app1Actual);
+    Metadata app1Actual = getMetadataAdmin().getMetadata(appId1.toMetadataEntity(), MetadataScope.SYSTEM);
+    Set<String> app1ExpectedTags = ImmutableSet.of("_conn_1", "_conn_3");
+    // here assert actual tags contain all the tags about connections
+    Assert.assertTrue(app1Actual.getTags(MetadataScope.SYSTEM).containsAll(app1ExpectedTags));
+    // user metadata should be empty
+    Assert.assertEquals(Metadata.EMPTY, getMetadataAdmin().getMetadata(appId1.toMetadataEntity(), MetadataScope.USER));
 
-    Metadata app2Actual = getMetadataAdmin().getMetadata(appId2.toMetadataEntity(), MetadataScope.USER);
-    Metadata app2Expected = new Metadata(MetadataScope.USER,
-                                         ImmutableSet.of("conn_1", "conn_2", "conn_3", "conn_4", "conn_5"),
-                                         Collections.emptyMap());
-    Assert.assertEquals(app2Expected, app2Actual);
+    Metadata app2Actual = getMetadataAdmin().getMetadata(appId2.toMetadataEntity(), MetadataScope.SYSTEM);
+    Set<String> app2ExpectedTags = ImmutableSet.of("_conn_1", "_conn_2", "_conn_3", "_conn_4", "_conn_5");
+    // here assert actual tags contain all the tags about connections
+    Assert.assertTrue(app2Actual.getTags(MetadataScope.SYSTEM).containsAll(app2ExpectedTags));
+    // user metadata should be empty
+    Assert.assertEquals(Metadata.EMPTY, getMetadataAdmin().getMetadata(appId2.toMetadataEntity(), MetadataScope.USER));
 
     // using search query to find out the related apps
     Set<MetadataEntity> appsRelated = ImmutableSet.of(appId1.toMetadataEntity(), appId2.toMetadataEntity());
-    assertMetadataSearch(appsRelated, "tags:conn_1");
-    assertMetadataSearch(Collections.singleton(appId2.toMetadataEntity()), "tags:conn_2");
-    assertMetadataSearch(appsRelated, "tags:conn_3");
-    assertMetadataSearch(Collections.singleton(appId2.toMetadataEntity()), "tags:conn_4");
-    assertMetadataSearch(Collections.singleton(appId2.toMetadataEntity()), "tags:conn_5");
+    assertMetadataSearch(appsRelated, "tags:_conn_1");
+    assertMetadataSearch(Collections.singleton(appId2.toMetadataEntity()), "tags:_conn_2");
+    assertMetadataSearch(appsRelated, "tags:_conn_3");
+    assertMetadataSearch(Collections.singleton(appId2.toMetadataEntity()), "tags:_conn_4");
+    assertMetadataSearch(Collections.singleton(appId2.toMetadataEntity()), "tags:_conn_5");
   }
 
   private void assertMetadataSearch(Set<MetadataEntity> appsRelated, String query) throws Exception {
@@ -305,14 +308,19 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     String srcTableName = "src" + engine;
     String sinkTableName = "sink" + engine;
 
+    // add some bad json object to the property
     addConnection(
       sourceConnName, new ConnectionCreationRequest(
-        "", new PluginInfo("test", "dummy", null, Collections.singletonMap("tableName", srcTableName),
+        "", new PluginInfo("test", "dummy", null, ImmutableMap.of("tableName", srcTableName,
+                                                                  "key1", "${badval}"),
                            new ArtifactSelectorConfig())));
     addConnection(
       sinkConnName, new ConnectionCreationRequest(
-        "", new PluginInfo("test", "dummy", null, Collections.singletonMap("tableName", sinkTableName),
+        "", new PluginInfo("test", "dummy", null, ImmutableMap.of("tableName", sinkTableName,
+                                                                  "key1", "${badval}"),
                            new ArtifactSelectorConfig())));
+    // add json string to the runtime arguments to ensure plugin can get instantiated under such condition
+    Map<String, String> runtimeArguments = Collections.singletonMap("badval", "{\"a\" : 1}");
 
     // source -> sink
     ETLBatchConfig config = ETLBatchConfig.builder()
@@ -334,7 +342,7 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     // verify preview can run successfully using connections
     PreviewManager previewManager = getPreviewManager();
     PreviewConfig previewConfig = new PreviewConfig(SmartWorkflow.NAME, ProgramType.WORKFLOW,
-                                                    Collections.<String, String>emptyMap(), 10);
+                                                    runtimeArguments, 10);
     // Start the preview and get the corresponding PreviewRunner.
     ApplicationId previewId = previewManager.start(NamespaceId.DEFAULT,
                                                    new AppRequest<>(APP_ARTIFACT, config, previewConfig));
@@ -354,7 +362,7 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
 
     // start the actual pipeline run
     WorkflowManager manager = appManager.getWorkflowManager(SmartWorkflow.NAME);
-    manager.startAndWaitForGoodRun(ProgramRunStatus.COMPLETED, 3, TimeUnit.MINUTES);
+    manager.startAndWaitForGoodRun(runtimeArguments, ProgramRunStatus.COMPLETED, 3, TimeUnit.MINUTES);
 
     DataSetManager<Table> sinkTable = getDataset(sinkTableName);
     List<StructuredRecord> outputRecords = MockSink.readOutput(sinkTable);
@@ -379,7 +387,7 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     MockSource.writeInput(sourceTable, ImmutableList.of(newRecord1, newRecord2));
 
     // run the program again, it should use the new table to read and write
-    manager.start();
+    manager.start(runtimeArguments);
     manager.waitForRuns(ProgramRunStatus.COMPLETED, 2, 3, TimeUnit.MINUTES);
 
     sinkTable = getDataset(newSinkTableName);
