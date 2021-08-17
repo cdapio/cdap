@@ -14,10 +14,13 @@
 
 package io.cdap.cdap.internal.app.worker.sidecar;
 
+import com.google.gson.Gson;
 import com.google.inject.Inject;
+import io.cdap.cdap.api.service.worker.RemoteExecutionException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
@@ -39,6 +42,7 @@ import java.net.URL;
  */
 public class ArtifactLocalizerClient {
 
+  private static final Gson GSON = new Gson();
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactLocalizerClient.class);
   private final String sidecarBaseURL;
 
@@ -76,8 +80,9 @@ public class ArtifactLocalizerClient {
       if (httpResponse.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
         throw new ArtifactNotFoundException(artifactId);
       }
-      String errorMsg = httpResponse.getResponseBodyAsString();
-      throw new IOException(errorMsg);
+      BasicThrowable basicThrowable = GSON
+        .fromJson(httpResponse.getResponseBodyAsString(), BasicThrowable.class);
+      throw new IOException(RemoteExecutionException.fromBasicThrowable(basicThrowable));
     }
 
     String path = httpResponse.getResponseBodyAsString();
