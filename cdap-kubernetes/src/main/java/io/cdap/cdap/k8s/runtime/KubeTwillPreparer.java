@@ -534,7 +534,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
         .orElse(getClass().getClassLoader());
       for (Annotation annotation : contextClassLoader
         .loadClass(mainRuntimeSpec.getRunnableSpecification().getClassName()).getAnnotations()) {
-        if (annotation.annotationType().isInstance(Completable.class)) {
+        if (annotation.annotationType().equals(Completable.class)) {
           resourceType = V1Job.class;
         }
       }
