@@ -441,7 +441,8 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
       SecureStoreMacroEvaluator.FUNCTION_NAME, new SecureStoreMacroEvaluator(namespace, getContext()),
       OAuthMacroEvaluator.FUNCTION_NAME, new OAuthMacroEvaluator(getContext())
     );
-    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(arguments), evaluators);
+    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(arguments), evaluators,
+                                                              Collections.singleton(OAuthMacroEvaluator.FUNCTION_NAME));
     MacroParserOptions options = MacroParserOptions.builder()
                                  .skipInvalidMacros()
                                  .setEscaping(false)

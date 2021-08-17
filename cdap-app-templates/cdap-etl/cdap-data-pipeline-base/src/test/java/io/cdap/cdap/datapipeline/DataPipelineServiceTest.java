@@ -18,6 +18,7 @@
 package io.cdap.cdap.datapipeline;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.artifact.ArtifactScope;
@@ -189,6 +190,17 @@ public class DataPipelineServiceTest extends HydratorTestBase {
     stage = new ETLStage(stageName + "conn", new ETLPlugin(MockSource.NAME, BatchSource.PLUGIN_TYPE, properties));
     requestBody = new StageValidationRequest(stage, Collections.emptyList(), false);
     actual = sendRequest(requestBody);
+    Assert.assertTrue(actual.getFailures().isEmpty());
+
+    // test the properties can still be correctly set if the connection property get evaluated to a json object
+    addConnection(
+      "testconn", new ConnectionCreationRequest("", new PluginInfo("test", "dummy", null,
+                                                                   ImmutableMap.of("tableName", "aaa",
+                                                                                   "key1", "${badval}"),
+                                                                   new ArtifactSelectorConfig())));
+    getPreferencesService().setProperties(NamespaceId.DEFAULT, Collections.singletonMap("badval", "{\"a\" : 1}"));
+    // test it can still pass validation
+    actual = sendRequest(new StageValidationRequest(stage, Collections.emptyList(), true));
     Assert.assertTrue(actual.getFailures().isEmpty());
   }
 

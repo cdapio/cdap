@@ -18,6 +18,10 @@ package io.cdap.cdap.api.macro;
 
 import io.cdap.cdap.api.annotation.Beta;
 
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+
 /**
  * Macro evaluator helps to provide macro substitution at runtime.
  *
@@ -37,7 +41,8 @@ import io.cdap.cdap.api.annotation.Beta;
 public interface MacroEvaluator {
 
   /**
-   * lookup the property and return the value corresponding to the property.
+   * Lookup the property and return the value corresponding to the property.
+   *
    * @param property name of the property to lookup
    * @return looked up value, could be null if property is not found
    * @throws InvalidMacroException if property evaluates invalid macro
@@ -46,11 +51,38 @@ public interface MacroEvaluator {
 
   /**
    * Use the macro function and call the function with provided arguments,
-   * function uses the arguments and returns the evaluated response.
+   * function uses the arguments and returns the evaluated response as a string.
+   *
    * @param macroFunction macro function that has to be called
    * @param arguments arguments that will be passed to the macro function
    * @return value returned by macro function
    * @throws InvalidMacroException if macroFunction is not supported
    */
   String evaluate(String macroFunction, String... arguments) throws InvalidMacroException;
+
+  /**
+   * Use the macro function and call the function with provided arguments,
+   * function uses the arguments and returns the evaluated response as a map.
+   * The map values can contain macros and will be evaluated. The map keys cannot contain macros.
+   *
+   * @param macroFunction macro function that has to be called
+   * @param arguments arguments that will be passed to the macro function
+   * @return value returned by macro function
+   * @throws InvalidMacroException if macroFunction is not supported
+   */
+  default Map<String, String> evaluateMap(String macroFunction, String... arguments) throws InvalidMacroException {
+    throw new UnsupportedOperationException("Evaluating as map is not supported");
+  }
+
+  /**
+   * Get the type of the macro function evaluation result.
+   * If the type is string, {@link #evaluate(String, String...)} will be called.
+   * If the type is map, {@link #evaluateMap(String, String...)} will be called.
+   *
+   * @param macroFunction macro function that has to be called
+   * @return the object type of the macro evaluation
+   */
+  default MacroObjectType evaluateAs(String macroFunction) {
+    return MacroObjectType.STRING;
+  }
 }

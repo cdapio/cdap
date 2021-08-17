@@ -164,7 +164,8 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
       OAuthMacroEvaluator.FUNCTION_NAME, new OAuthMacroEvaluator(getContext()),
       ConnectionMacroEvaluator.FUNCTION_NAME, new ConnectionMacroEvaluator(namespace, getContext())
     );
-    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(arguments), evaluators);
+    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(arguments), evaluators,
+                                                              DefaultMacroEvaluator.MAP_FUNCTIONS);
     MacroParserOptions macroParserOptions = MacroParserOptions.builder()
       .skipInvalidMacros()
       .setEscaping(false)
