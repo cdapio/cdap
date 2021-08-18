@@ -73,6 +73,7 @@ public class TaskWorkerServiceTest {
     cConf.setInt(Constants.TaskWorker.PORT, 0);
     cConf.setBoolean(Constants.Security.SSL.INTERNAL_ENABLED, false);
     cConf.set(Constants.TaskWorker.PRELOAD_ARTIFACTS, "");
+    cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 1);
     return cConf;
   }
 
@@ -119,6 +120,85 @@ public class TaskWorkerServiceTest {
     } catch (Exception e) {
       LOG.warn("Task worker stopped with exception", e);
     }
+  }
+
+  @Test
+  public void testPeriodicRestart() {
+    CConfiguration cConf = createCConf();
+    SConfiguration sConf = createSConf();
+    cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 1);
+    cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, 5);
+
+    TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, sConf, new InMemoryDiscoveryService(),
+                                                                (namespaceId, retryStrategy) -> null);
+    // start the service
+    taskWorkerService.startAndWait();
+
+    waitForTaskWorkerToFinish(taskWorkerService);
+    Assert.assertEquals(Service.State.TERMINATED, taskWorkerService.state());
+  }
+
+  @Test
+  public void testPeriodicRestartWithInflightRequest() throws IOException {
+    CConfiguration cConf = createCConf();
+    SConfiguration sConf = createSConf();
+    cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 10);
+    cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, 2);
+
+    TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, sConf, new InMemoryDiscoveryService(),
+                                                                (namespaceId, retryStrategy) -> null);
+    // start the service
+    taskWorkerService.startAndWait();
+
+    InetSocketAddress addr = taskWorkerService.getBindAddress();
+    URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
+
+    // Post valid request
+    String want = "5000";
+    RunnableTaskRequest req = RunnableTaskRequest.getBuilder(TestRunnableClass.class.getName()).withParam(want).build();
+    String reqBody = GSON.toJson(req);
+    HttpResponse response = HttpRequests.execute(
+      HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
+        .withBody(reqBody).build(),
+      new DefaultHttpRequestConfig(false));
+
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+    Assert.assertEquals(want, response.getResponseBodyAsString());
+    waitForTaskWorkerToFinish(taskWorkerService);
+    Assert.assertEquals(Service.State.TERMINATED, taskWorkerService.state());
+  }
+
+  @Test
+  public void testRestartAfterMultipleExecutions() throws IOException {
+    CConfiguration cConf = createCConf();
+    SConfiguration sConf = createSConf();
+    cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 2);
+    cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, 0);
+
+    TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, sConf, new InMemoryDiscoveryService(),
+                                                                (namespaceId, retryStrategy) -> null);
+    // start the service
+    taskWorkerService.startAndWait();
+
+    InetSocketAddress addr = taskWorkerService.getBindAddress();
+    URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
+
+    // Post valid request
+    String want = "100";
+    RunnableTaskRequest req = RunnableTaskRequest.getBuilder(TestRunnableClass.class.getName()).withParam(want).build();
+    String reqBody = GSON.toJson(req);
+    HttpResponse response = HttpRequests.execute(
+      HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
+        .withBody(reqBody).build(),
+      new DefaultHttpRequestConfig(false));
+
+    response = HttpRequests.execute(
+      HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
+        .withBody(reqBody).build(),
+      new DefaultHttpRequestConfig(false));
+
+    waitForTaskWorkerToFinish(taskWorkerService);
+    Assert.assertEquals(Service.State.TERMINATED, taskWorkerService.state());
   }
 
   @Test
