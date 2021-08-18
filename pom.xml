@@ -179,6 +179,7 @@
     <zookeeper.version>3.4.5</zookeeper.version>
     <opentable.version>0.13.1</opentable.version>
     <dbcp.version>2.6.0</dbcp.version>
+    <jacoco.version>0.8.6</jacoco.version>
 
     <cask.packages.snapshot.repo>http://cask.invalid.snapshot.repo.co</cask.packages.snapshot.repo>
     <cask.packages.release.repo>http://cask.invalid.release.repo.co</cask.packages.release.repo>
@@ -187,6 +188,9 @@
     <sonar.organization>cdap</sonar.organization>
     <sonar.projectKey>cdapio_${project.artifactId}</sonar.projectKey>
     <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+    <sonar.coverage.jacoco.xmlReportPaths>${maven.multiModuleProjectDirectory}/cdap-integration-test/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+    <!-- We need next line to ensure generated classes are analyzed -->
+    <sonar.scm.exclusions.disabled>true</sonar.scm.exclusions.disabled>
 
     <!-- Need default value when coverage is not collected -->
     <argLine/>
@@ -2910,7 +2914,7 @@
           <plugin>
             <groupId>org.jacoco</groupId>
             <artifactId>jacoco-maven-plugin</artifactId>
-            <version>0.8.6</version>
+            <version>${jacoco.version}</version>
             <executions>
               <execution>
                 <id>prepare-agent</id>
