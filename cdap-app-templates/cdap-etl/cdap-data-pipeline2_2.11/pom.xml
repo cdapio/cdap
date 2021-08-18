@@ -32,6 +32,14 @@
 
   <properties>
     <app.main.class>io.cdap.cdap.datapipeline.DataPipelineApp</app.main.class>
+    <sonar.sources>
+      ${project.build.directory}/generated-sources/cdap-data-pipeline-base/src/main/java,
+      ${project.build.directory}/generated-sources/cdap-data-pipeline-base/src/main/scala,
+    </sonar.sources>
+    <sonar.tests>
+      ${project.build.directory}/generated-test-sources/cdap-data-pipeline-base/src/test/java,
+      ${project.build.directory}/generated-test-sources/cdap-data-pipeline-base/src/test/scala,
+    </sonar.tests>
   </properties>
 
   <dependencies>
