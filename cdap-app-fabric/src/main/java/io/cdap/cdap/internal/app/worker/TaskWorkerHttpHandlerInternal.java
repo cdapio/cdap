@@ -84,19 +84,19 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   private final RunnableTaskLauncher runnableTaskLauncher;
   private final BiConsumer<Boolean, String> stopper;
 
-  private final AtomicBoolean anyInflightRequest = new AtomicBoolean(false);
+  private final AtomicBoolean hasInflightRequest = new AtomicBoolean(false);
 
   /**
    * Holds the total number of requests that have been executed by this handler that should count toward max allowed.
    */
-  private AtomicInteger requestProcessedCount = new AtomicInteger(0);
+  private final AtomicInteger requestProcessedCount = new AtomicInteger(0);
 
   private final String metadataServiceEndpoint;
 
   /**
    * If true, pod will restart once an operation finish its execution.
    */
-  private AtomicBoolean mustRestart = new AtomicBoolean(false);
+  private final AtomicBoolean mustRestart = new AtomicBoolean(false);
 
   public TaskWorkerHttpHandlerInternal(CConfiguration cConf, Consumer<String> stopper) {
     int killAfterRequestCount = cConf.getInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
@@ -105,19 +105,20 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     this.stopper = (terminate, className) -> {
       if (mustRestart.get()) {
         stopper.accept(className);
+        return;
       }
 
       if (!terminate || className == null || killAfterRequestCount <= 0) {
         // No need to restart.
         requestProcessedCount.decrementAndGet();
-        anyInflightRequest.set(false);
+        hasInflightRequest.set(false);
         return;
       }
 
       if (requestProcessedCount.get() >= killAfterRequestCount) {
         stopper.accept(className);
       } else {
-        anyInflightRequest.set(false);
+        hasInflightRequest.set(false);
       }
     };
 
@@ -139,7 +140,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("task-worker-restart"))
         .schedule(
           () -> {
-            if (anyInflightRequest.compareAndSet(false, true)) {
+            if (hasInflightRequest.compareAndSet(false, true)) {
               // there is no ongoing request. pod gets restarted.
               stopper.accept("");
             }
@@ -154,7 +155,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   @POST
   @Path("/run")
   public void run(FullHttpRequest request, HttpResponder responder) {
-    if (!anyInflightRequest.compareAndSet(false, true)) {
+    if (!hasInflightRequest.compareAndSet(false, true)) {
       responder.sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS);
       return;
     }
