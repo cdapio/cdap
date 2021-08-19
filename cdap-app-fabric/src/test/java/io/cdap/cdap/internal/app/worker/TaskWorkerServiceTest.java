@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.worker;
 
 import com.google.common.util.concurrent.Service;
-import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.Gson;
 import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
@@ -26,14 +25,13 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
-import org.apache.twill.internal.ServiceListenerAdapter;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -66,6 +64,7 @@ public class TaskWorkerServiceTest {
   private static final Gson GSON = new Gson();
 
   private TaskWorkerService taskWorkerService;
+  private CompletableFuture<Service.State> serviceCompletionFuture;
 
   private CConfiguration createCConf() {
     CConfiguration cConf = CConfiguration.create();
@@ -87,7 +86,9 @@ public class TaskWorkerServiceTest {
     SConfiguration sConf = createSConf();
 
     TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, sConf, new InMemoryDiscoveryService(),
-                                                                (namespaceId, retryStrategy) -> null);
+                                                                (namespaceId, retryStrategy) -> null,
+                                                                new NoOpMetricsCollectionService());
+    serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service
     taskWorkerService.startAndWait();
     this.taskWorkerService = taskWorkerService;
@@ -101,27 +102,6 @@ public class TaskWorkerServiceTest {
     }
   }
 
-  private void waitForTaskWorkerToFinish(TaskWorkerService taskWorker) {
-    CompletableFuture<Service.State> future = new CompletableFuture<>();
-    taskWorker.addListener(new ServiceListenerAdapter() {
-      @Override
-      public void terminated(Service.State from) {
-        future.complete(from);
-      }
-
-      @Override
-      public void failed(Service.State from, Throwable failure) {
-        future.completeExceptionally(failure);
-      }
-    }, Threads.SAME_THREAD_EXECUTOR);
-    try {
-      Uninterruptibles.getUninterruptibly(future);
-      LOG.debug("Task worker stopped");
-    } catch (Exception e) {
-      LOG.warn("Task worker stopped with exception", e);
-    }
-  }
-
   @Test
   public void testPeriodicRestart() {
     CConfiguration cConf = createCConf();
@@ -130,11 +110,13 @@ public class TaskWorkerServiceTest {
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, 5);
 
     TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, sConf, new InMemoryDiscoveryService(),
-                                                                (namespaceId, retryStrategy) -> null);
+                                                                (namespaceId, retryStrategy) -> null,
+                                                                new NoOpMetricsCollectionService());
+    serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service
     taskWorkerService.startAndWait();
 
-    waitForTaskWorkerToFinish(taskWorkerService);
+    TaskWorkerTestUtil.waitForServiceCompletion(serviceCompletionFuture);
     Assert.assertEquals(Service.State.TERMINATED, taskWorkerService.state());
   }
 
@@ -146,7 +128,9 @@ public class TaskWorkerServiceTest {
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, 2);
 
     TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, sConf, new InMemoryDiscoveryService(),
-                                                                (namespaceId, retryStrategy) -> null);
+                                                                (namespaceId, retryStrategy) -> null,
+                                                                new NoOpMetricsCollectionService());
+    serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service
     taskWorkerService.startAndWait();
 
@@ -155,7 +139,8 @@ public class TaskWorkerServiceTest {
 
     // Post valid request
     String want = "5000";
-    RunnableTaskRequest req = RunnableTaskRequest.getBuilder(TestRunnableClass.class.getName()).withParam(want).build();
+    RunnableTaskRequest req = RunnableTaskRequest.getBuilder(TestRunnableClass.class.getName()).withParam(want)
+      .build();
     String reqBody = GSON.toJson(req);
     HttpResponse response = HttpRequests.execute(
       HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
@@ -164,7 +149,7 @@ public class TaskWorkerServiceTest {
 
     Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
     Assert.assertEquals(want, response.getResponseBodyAsString());
-    waitForTaskWorkerToFinish(taskWorkerService);
+    TaskWorkerTestUtil.waitForServiceCompletion(serviceCompletionFuture);
     Assert.assertEquals(Service.State.TERMINATED, taskWorkerService.state());
   }
 
@@ -176,7 +161,9 @@ public class TaskWorkerServiceTest {
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, 0);
 
     TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, sConf, new InMemoryDiscoveryService(),
-                                                                (namespaceId, retryStrategy) -> null);
+                                                                (namespaceId, retryStrategy) -> null,
+                                                                new NoOpMetricsCollectionService());
+    serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service
     taskWorkerService.startAndWait();
 
@@ -185,7 +172,8 @@ public class TaskWorkerServiceTest {
 
     // Post valid request
     String want = "100";
-    RunnableTaskRequest req = RunnableTaskRequest.getBuilder(TestRunnableClass.class.getName()).withParam(want).build();
+    RunnableTaskRequest req = RunnableTaskRequest.getBuilder(TestRunnableClass.class.getName()).withParam(want)
+      .build();
     String reqBody = GSON.toJson(req);
     HttpResponse response = HttpRequests.execute(
       HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
@@ -197,7 +185,7 @@ public class TaskWorkerServiceTest {
         .withBody(reqBody).build(),
       new DefaultHttpRequestConfig(false));
 
-    waitForTaskWorkerToFinish(taskWorkerService);
+    TaskWorkerTestUtil.waitForServiceCompletion(serviceCompletionFuture);
     Assert.assertEquals(Service.State.TERMINATED, taskWorkerService.state());
   }
 
@@ -208,13 +196,14 @@ public class TaskWorkerServiceTest {
 
     // Post valid request
     String want = "100";
-    RunnableTaskRequest req = RunnableTaskRequest.getBuilder(TestRunnableClass.class.getName()).withParam(want).build();
+    RunnableTaskRequest req = RunnableTaskRequest.getBuilder(TestRunnableClass.class.getName()).withParam(want)
+      .build();
     String reqBody = GSON.toJson(req);
     HttpResponse response = HttpRequests.execute(
       HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
         .withBody(reqBody).build(),
       new DefaultHttpRequestConfig(false));
-    waitForTaskWorkerToFinish(taskWorkerService);
+    TaskWorkerTestUtil.waitForServiceCompletion(serviceCompletionFuture);
     Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
     Assert.assertEquals(want, response.getResponseBodyAsString());
     Assert.assertEquals(Service.State.TERMINATED, taskWorkerService.state());
@@ -272,7 +261,7 @@ public class TaskWorkerServiceTest {
         conflictResponse++;
       }
     }
-    waitForTaskWorkerToFinish(taskWorkerService);
+    TaskWorkerTestUtil.waitForServiceCompletion(serviceCompletionFuture);
     Assert.assertEquals(1, okResponse);
     Assert.assertEquals(concurrentRequests, okResponse + conflictResponse);
     Assert.assertEquals(Service.State.TERMINATED, taskWorkerService.state());

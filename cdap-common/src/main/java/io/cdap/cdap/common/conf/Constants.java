@@ -436,6 +436,7 @@ public final class Constants {
     public static final String BOSS_THREADS = "task.worker.boss.threads";
     public static final String WORKER_THREADS = "task.worker.worker.threads";
     public static final String METADATA_SERVICE_END_POINT = "task.worker.metadata.service.endpoint";
+    public static final String METRIC_PREFIX = "task.worker.";
   }
 
   /**
@@ -832,6 +833,10 @@ public final class Constants {
       public static final String PROGRAM = "prg";
       public static final String PROGRAM_TYPE = "prt";
       public static final String PROGRAM_ENTITY = "ent";
+
+      //For task worker
+      public static final String CLASS = "clz";
+      public static final String TRIES = "try";
     }
 
     /**
@@ -897,6 +902,15 @@ public final class Constants {
      */
     public static final class Preview {
       public static final String RUN_TIME_SECONDS = "preview.run.seconds";
+    }
+
+    public static final class TaskWorker {
+      public static final String REQUEST_COUNT = Constants.TaskWorker.METRIC_PREFIX + "request.count";
+      public static final String REQUEST_LATENCY_MS = Constants.TaskWorker.METRIC_PREFIX + "request.latency.millis";
+      public static final String CLIENT_REQUEST_COUNT =
+        "client." + Constants.TaskWorker.METRIC_PREFIX + "request.count";
+      public static final String CLIENT_REQUEST_LATENCY_MS =
+        "client." + Constants.TaskWorker.METRIC_PREFIX + "request.latency.millis";
     }
 
     /**
