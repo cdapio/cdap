@@ -31,6 +31,13 @@
   <name>CDAP Unit Test Framework with Spark3_2.12</name>
   <packaging>jar</packaging>
 
+  <properties>
+    <sonar.tests>
+      ${project.build.directory}/generated-test-sources/cdap-unit-test-base/src/test/java,
+      ${project.build.directory}/generated-test-sources/cdap-unit-test-base/src/test/scala,
+    </sonar.tests>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>io.cdap.cdap</groupId>

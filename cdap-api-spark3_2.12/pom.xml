@@ -30,6 +30,13 @@
   <name>CDAP Spark3 API Scala 2.12</name>
   <packaging>jar</packaging>
 
+  <properties>
+    <sonar.sources>
+      ${project.build.directory}/generated-sources/cdap-api-spark-base/src/main/java,
+      ${project.build.directory}/generated-sources/cdap-api-spark-base/src/main/scala
+    </sonar.sources>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>io.cdap.cdap</groupId>

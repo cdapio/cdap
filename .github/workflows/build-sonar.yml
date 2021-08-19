@@ -52,7 +52,7 @@ jobs:
           mvn clean verify -fae -T 2 -B -V -Dmaven.test.failure.ignore
           -Dmaven.repo.local=$HOME/.m2/repository11
           -DcloudBuild
-          -Pcoverage
+          -Pcoverage,templates
           -Dmaven.wagon.http.retryHandler.count=3
           -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
       - name: Archive build artifacts
@@ -63,6 +63,14 @@ jobs:
           path: |
             **/target/rat.txt
             **/target/surefire-reports/*
+      - name: Validate PR
+        id: validate_pr
+        # For whatever reason we get PR 69 for develop branch with both head and base as develop.
+        if: ${{ github.event.workflow_run.pull_requests[0].head.ref != github.event.workflow_run.pull_requests[0].base.ref }}
+        run: |
+          echo ":set-output pr-key=${{ github.event.workflow_run.pull_requests[0].number }}"
+          echo ":set-output pr-branch=${{ github.event.workflow_run.pull_requests[0].head.ref }}"
+          echo ":set-output pr-base=${{ github.event.workflow_run.pull_requests[0].base.ref }}"
       - name: Sonar report
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -71,12 +79,12 @@ jobs:
           mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -fae -T 2 -B -V
           -Dmaven.repo.local=$HOME/.m2/repository11
           -DcloudBuild
-          -Pcoverage
+          -Pcoverage,templates
           -Dmaven.wagon.http.retryHandler.count=3
           -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
-          -Dsonar.pullrequest.key=${{ github.event.workflow_run.pull_requests[0].number }}
-          -Dsonar.pullrequest.branch=${{ github.event.workflow_run.pull_requests[0].head.ref }}
-          -Dsonar.pullrequest.base=${{ github.event.workflow_run.pull_requests[0].base.ref }}
+          -Dsonar.pullrequest.key=${{ steps.validate_pr.outputs.pr-key }}
+          -Dsonar.pullrequest.branch=${{ steps.validate_pr.outputs.pr-branch }}
+          -Dsonar.pullrequest.base=${{ steps.validate_pr.outputs.pr-base }}
       - name: Archive build artifacts
         uses: actions/upload-artifact@v2.2.2
         if: always()

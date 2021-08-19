@@ -30,6 +30,17 @@
   <name>CDAP Spark3 Core Scala 2.12</name>
   <packaging>jar</packaging>
 
+  <properties>
+    <sonar.sources>
+      ${project.basedir}/src/main/java,
+      ${project.build.directory}/generated-sources/cdap-spark-core-base/src/main/java,
+      ${project.build.directory}/generated-sources/cdap-spark-core-base/src/main/scala,
+    </sonar.sources>
+    <sonar.tests>
+      ${project.build.directory}/generated-test-sources/cdap-spark-core-base/src/test/java,
+    </sonar.tests>
+  </properties>
+
   <dependencies>
     <!-- CAUTION. When adding new dependencies, pay attention to the scope and the copy-dependencies section -->
     <dependency>

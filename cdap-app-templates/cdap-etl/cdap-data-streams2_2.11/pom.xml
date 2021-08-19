@@ -32,6 +32,12 @@
 
   <properties>
     <app.main.class>io.cdap.cdap.datastreams.DataStreamsApp</app.main.class>
+    <sonar.sources>
+      ${project.build.directory}/generated-sources/cdap-data-streams-base/src/main/java,
+    </sonar.sources>
+    <sonar.tests>
+      ${project.build.directory}/generated-test-sources/cdap-data-streams-base/src/test/java,
+    </sonar.tests>
   </properties>
 
   <dependencies>
