@@ -52,7 +52,7 @@ jobs:
           mvn clean verify -fae -T 2 -B -V -Dmaven.test.failure.ignore
           -Dmaven.repo.local=$HOME/.m2/repository11
           -DcloudBuild
-          -Pcoverage
+          -Pcoverage,templates
           -Dmaven.wagon.http.retryHandler.count=3
           -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
       - name: Archive build artifacts
@@ -79,7 +79,7 @@ jobs:
           mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -fae -T 2 -B -V
           -Dmaven.repo.local=$HOME/.m2/repository11
           -DcloudBuild
-          -Pcoverage
+          -Pcoverage,templates
           -Dmaven.wagon.http.retryHandler.count=3
           -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
           -Dsonar.pullrequest.key=${{ steps.validate_pr.outputs.pr-key }}
