@@ -26,16 +26,18 @@ import javax.annotation.Nullable;
 public class RunnableTaskRequest {
   private final String className;
   @Nullable
-  private final String param;
+  private final RunnableTaskParam param;
   @Nullable
   private final ArtifactId artifactId;
   @Nullable
   private final String namespace;
+  @Nullable
 
   private RunnableTaskRequest(String className, @Nullable String param,
-                              @Nullable ArtifactId artifactId, @Nullable String namespace) {
+                              @Nullable ArtifactId artifactId, @Nullable String namespace,
+                              @Nullable RunnableTaskRequest embeddedTaskRequest) {
     this.className = className;
-    this.param = param;
+    this.param = new RunnableTaskParam(param, embeddedTaskRequest);
     this.artifactId = artifactId;
     this.namespace = namespace;
   }
@@ -45,7 +47,7 @@ public class RunnableTaskRequest {
   }
 
   @Nullable
-  public String getParam() {
+  public RunnableTaskParam getParam() {
     return param;
   }
 
@@ -61,9 +63,11 @@ public class RunnableTaskRequest {
 
   @Override
   public String toString() {
-    String requestString = "RunnableTaskRequest{className=%s, param=%s, artifactId=%s, namespace=%s}";
-    return String.format(requestString, className,
-                         param == null ? null : param.length() > 500 ? param.substring(500) : param,
+    String requestString =
+      "RunnableTaskRequest{className=%s, param=%s, artifactId=%s, namespace=%s}";
+    return String.format(requestString, className, param == null ? null :
+                           param.getSimpleParam().length() > 500 ?
+                             param.getSimpleParam().substring(500) : param.getSimpleParam(),
                          artifactId, namespace);
   }
 
@@ -77,18 +81,20 @@ public class RunnableTaskRequest {
   public static class Builder {
     private final String className;
     @Nullable
-    private String param;
+    private String simpleParam;
     @Nullable
     private ArtifactId artifactId;
     @Nullable
     private String namespace;
+    @Nullable
+    private RunnableTaskRequest embeddedTaskRequest;
 
     private Builder(String className) {
       this.className = className;
     }
 
     public Builder withParam(String param) {
-      this.param = param;
+      this.simpleParam = param;
       return this;
     }
 
@@ -102,8 +108,13 @@ public class RunnableTaskRequest {
       return this;
     }
 
+    public Builder withEmbeddedTaskRequest(RunnableTaskRequest embeddedTaskRequest) {
+      this.embeddedTaskRequest = embeddedTaskRequest;
+      return this;
+    }
+
     public RunnableTaskRequest build() {
-      return new RunnableTaskRequest(className, param, artifactId, namespace);
+      return new RunnableTaskRequest(className, simpleParam, artifactId, namespace, embeddedTaskRequest);
     }
   }
 }

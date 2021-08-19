@@ -108,7 +108,7 @@ public class BasicSystemHttpServiceContext extends BasicHttpServiceContext imple
     this.preferencesFetcher = preferencesFetcher;
     this.cConf = cConf;
     this.contextAccessEnforcer = contextAccessEnforcer;
-    this.remoteTaskExecutor = new RemoteTaskExecutor(cConf, remoteClientFactory);
+    this.remoteTaskExecutor = new RemoteTaskExecutor(cConf, metricsCollectionService, remoteClientFactory);
     this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
@@ -174,11 +174,10 @@ public class BasicSystemHttpServiceContext extends BasicHttpServiceContext imple
       throw new RuntimeException("Remote task worker is not enabled. Task cannot be executed.");
     }
     String systemAppClassName = SystemAppTask.class.getName();
-    String systemAppParam = GSON.toJson(runnableTaskRequest);
     RunnableTaskRequest taskRequest = RunnableTaskRequest.getBuilder(systemAppClassName)
-      .withParam(systemAppParam)
       .withNamespace(getNamespace())
       .withArtifact(getArtifactId().toApiArtifactId())
+      .withEmbeddedTaskRequest(runnableTaskRequest)
       .build();
     return remoteTaskExecutor.runTask(taskRequest);
   }

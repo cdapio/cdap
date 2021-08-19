@@ -22,6 +22,7 @@ import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.app.deploy.ConfigResponse;
@@ -53,11 +54,11 @@ public class RemoteConfigurator implements Configurator {
   private final RemoteTaskExecutor remoteTaskExecutor;
 
   @Inject
-  public RemoteConfigurator(CConfiguration cConf,
+  public RemoteConfigurator(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                             @Assisted AppDeploymentInfo deploymentInfo,
                             RemoteClientFactory remoteClientFactory) {
     this.deploymentInfo = deploymentInfo;
-    this.remoteTaskExecutor = new RemoteTaskExecutor(cConf, remoteClientFactory);
+    this.remoteTaskExecutor = new RemoteTaskExecutor(cConf, metricsCollectionService, remoteClientFactory);
   }
 
   @Override

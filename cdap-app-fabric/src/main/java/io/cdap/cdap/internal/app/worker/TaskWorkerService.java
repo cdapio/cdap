@@ -23,6 +23,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.artifact.ArtifactInfo;
 import io.cdap.cdap.api.artifact.ArtifactManager;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -64,16 +65,18 @@ public class TaskWorkerService extends AbstractIdleService {
   private final RunnableTaskLauncher taskLauncher;
   private Cancellable cancelDiscovery;
   private InetSocketAddress bindAddress;
+  private MetricsCollectionService metricsCollectionService;
 
   @Inject
   TaskWorkerService(CConfiguration cConf,
                     SConfiguration sConf,
                     DiscoveryService discoveryService,
-                    ArtifactManagerFactory artifactManagerFactory) {
+                    ArtifactManagerFactory artifactManagerFactory, MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
     this.discoveryService = discoveryService;
     this.artifactManagerFactory = artifactManagerFactory;
     this.taskLauncher = new RunnableTaskLauncher(cConf);
+    this.metricsCollectionService = metricsCollectionService;
 
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TASK_WORKER)
       .setHost(cConf.get(Constants.TaskWorker.ADDRESS))
@@ -87,7 +90,7 @@ public class TaskWorkerService extends AbstractIdleService {
           pipeline.addAfter("compressor", "decompressor", new HttpContentDecompressor());
         }
       })
-      .setHttpHandlers(new TaskWorkerHttpHandlerInternal(cConf, this::stopService));
+      .setHttpHandlers(new TaskWorkerHttpHandlerInternal(cConf, this::stopService, metricsCollectionService));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
