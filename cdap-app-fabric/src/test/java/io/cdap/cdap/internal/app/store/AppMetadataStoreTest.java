@@ -326,10 +326,10 @@ public abstract class AppMetadataStoreTest {
     TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore metadataStoreDataset = AppMetadataStore.create(context);
       // Run the scan
-      Set<Long> actual = new TreeSet<>();
-      Set<RunId> batches =
-        metadataStoreDataset.getRunningInRangeForStatus("runRecordCompleted", startTime, stopTime);
-      Iterables.addAll(actual, Iterables.transform(batches, input -> RunIds.getTime(input, TimeUnit.MILLISECONDS)));
+      Set<Long> actual = metadataStoreDataset.getRunningInRangeForStatus("runRecordCompleted", startTime, stopTime)
+        .stream()
+        .map(id -> RunIds.getTime(id, TimeUnit.MILLISECONDS))
+        .collect(Collectors.toCollection(TreeSet::new));
 
       Assert.assertEquals(expected, actual);
     });
