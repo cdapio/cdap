@@ -89,7 +89,7 @@ public class MetricsAdminSubscriberService extends AbstractMessagingPollingServi
 
   @Override
   protected MetricsAdminMessage decodeMessage(Message message) {
-    return GSON.fromJson(message.getPayloadAsString(), MetricsAdminMessage.class);
+    return message.decodePayload(r -> GSON.fromJson(r, MetricsAdminMessage.class));
   }
 
   @Nullable

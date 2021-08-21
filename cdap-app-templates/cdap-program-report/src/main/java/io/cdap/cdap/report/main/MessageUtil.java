@@ -100,7 +100,7 @@ public final class MessageUtil {
    * @return Notification
    */
   public static Notification messageToNotification(Message message) {
-   return GSON.fromJson(message.getPayloadAsString(), Notification.class);
+    return message.decodePayload(r -> GSON.fromJson(r, Notification.class));
   }
 
   /**
