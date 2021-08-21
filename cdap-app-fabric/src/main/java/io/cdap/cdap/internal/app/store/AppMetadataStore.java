@@ -1614,10 +1614,13 @@ public class AppMetadataStore {
         (runRecordMeta.getStopTs() == null || runRecordMeta.getStopTs() >= startTimeInSecs);
 
     List<Field<?>> prefix = getRunRecordStatusPrefix(statusKey);
-    return getRuns(Range.singleton(prefix), ProgramRunStatus.ALL, Integer.MAX_VALUE, null, timeFilter).values().stream()
-      .map(RunRecordDetail::getPid)
-      .map(RunIds::fromString)
-      .collect(Collectors.toSet());
+    Set<RunId> runIds = new HashSet<>();
+    try (CloseableIterator<RunRecordDetail> iterator = queryProgramRuns(Range.singleton(prefix), null, timeFilter,
+                                                                        getLimitByStatus(Integer.MAX_VALUE,
+                                                                                         ProgramRunStatus.ALL))) {
+      iterator.forEachRemaining(meta -> runIds.add(RunIds.fromString(meta.getPid())));
+    }
+    return runIds;
   }
 
   @VisibleForTesting
