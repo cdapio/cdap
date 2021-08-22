@@ -34,6 +34,8 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.data2.metadata.lineage.LineageTable;
+import io.cdap.cdap.data2.metadata.lineage.field.EndPointField;
+import io.cdap.cdap.data2.metadata.lineage.field.EndpointFieldDeserializer;
 import io.cdap.cdap.data2.metadata.lineage.field.FieldLineageInfo;
 import io.cdap.cdap.data2.metadata.lineage.field.FieldLineageTable;
 import io.cdap.cdap.data2.metadata.writer.DataAccessLineage;
@@ -158,7 +160,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
 
   @Override
   protected MetadataMessage decodeMessage(Message message) {
-    return GSON.fromJson(message.getPayloadAsString(), MetadataMessage.class);
+    return message.decodePayload(r -> GSON.fromJson(r, MetadataMessage.class));
   }
 
   @Nullable
@@ -344,7 +346,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   /**
    * The {@link MetadataMessageProcessor} for processing {@link DataAccessLineage}.
    */
-  private final class DataAccessLineageProcessor implements MetadataMessageProcessor {
+  private static final class DataAccessLineageProcessor implements MetadataMessageProcessor {
 
     DataAccessLineageProcessor() {}
 
@@ -365,7 +367,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   /**
    * The {@link MetadataMessageProcessor} for processing field lineage.
    */
-  private final class FieldLineageProcessor implements MetadataMessageProcessor {
+  private static final class FieldLineageProcessor implements MetadataMessageProcessor {
 
     FieldLineageProcessor() {}
 
@@ -379,7 +381,14 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
       ProgramRunId programRunId = (ProgramRunId) message.getEntityId();
       FieldLineageInfo info;
       try {
-        info = message.getPayload(GSON, FieldLineageInfo.class);
+        Gson gson = new GsonBuilder()
+          .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
+          .registerTypeAdapter(MetadataOperation.class, new MetadataOperationTypeAdapter())
+          .registerTypeAdapter(Operation.class, new OperationTypeAdapter())
+          .registerTypeAdapter(EndPointField.class, new EndpointFieldDeserializer())
+          .create();
+
+        info = message.getPayload(gson, FieldLineageInfo.class);
       } catch (Throwable t) {
         LOG.warn("Error while deserializing the field lineage information message received from TMS. Ignoring : {}",
                  message, t);
@@ -393,7 +402,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   /**
    * The {@link MetadataMessageProcessor} for processing {@link DatasetUsage}.
    */
-  private final class UsageProcessor implements MetadataMessageProcessor {
+  private static final class UsageProcessor implements MetadataMessageProcessor {
 
     UsageProcessor() {}
 
@@ -413,7 +422,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   /**
    * The {@link MetadataMessageProcessor} for processing workflow state updates.
    */
-  private final class WorkflowProcessor implements MetadataMessageProcessor {
+  private static final class WorkflowProcessor implements MetadataMessageProcessor {
 
     WorkflowProcessor() {}
 

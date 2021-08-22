@@ -176,7 +176,7 @@ public class PreviewDataSubscriberService extends AbstractMessagingSubscriberSer
 
   @Override
   protected PreviewMessage decodeMessage(Message message) {
-    return GSON.fromJson(message.getPayloadAsString(), PreviewMessage.class);
+    return message.decodePayload(r -> GSON.fromJson(r, PreviewMessage.class));
   }
 
   /**

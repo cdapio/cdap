@@ -323,7 +323,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
      */
     private long findProgramFinishTime(List<Message> messages) {
       for (Message message : messages) {
-        Notification notification = GSON.fromJson(message.getPayloadAsString(), Notification.class);
+        Notification notification = message.decodePayload(r -> GSON.fromJson(r, Notification.class));
         if (notification.getNotificationType() != Notification.Type.PROGRAM_STATUS) {
           continue;
         }
