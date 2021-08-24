@@ -24,6 +24,7 @@ import java.util.Map;
  * Represents environment specific spark submit configurations.
  */
 public class SparkConfig {
+  public static final String DRIVER_ENV_PREFIX = "spark.kubernetes.driverEnv.";
   private final String master;
   private final Map<String, String> configs;
 

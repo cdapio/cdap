@@ -39,6 +39,7 @@ import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.spark.submit.DistributedSparkSubmitter;
 import io.cdap.cdap.app.runtime.spark.submit.LocalSparkSubmitter;
+import io.cdap.cdap.app.runtime.spark.submit.MasterEnvironmentSparkSubmitter;
 import io.cdap.cdap.app.runtime.spark.submit.SparkSubmitter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -58,6 +59,9 @@ import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
+import io.cdap.cdap.master.environment.MasterEnvironments;
+import io.cdap.cdap.master.spi.environment.MasterEnvironment;
+import io.cdap.cdap.master.spi.environment.spark.SparkConfig;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -204,10 +208,18 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
       }
 
       boolean isLocal = SparkRuntimeContextConfig.isLocal(options);
-      SparkSubmitter submitter = isLocal
-        ? new LocalSparkSubmitter()
-        : new DistributedSparkSubmitter(hConf, locationFactory, host, runtimeContext,
-                                        options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE));
+      SparkSubmitter submitter;
+      // If MasterEnvironment is not available, use non-master env spark submitters
+      MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
+      if (masterEnv != null) {
+        SparkConfig sparkConfig = masterEnv.getSparkSubmitConfig();
+        submitter = new MasterEnvironmentSparkSubmitter(locationFactory, host, runtimeContext, sparkConfig);
+      } else {
+        submitter = isLocal
+          ? new LocalSparkSubmitter()
+          : new DistributedSparkSubmitter(hConf, locationFactory, host, runtimeContext,
+                                          options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE));
+      }
 
       Service sparkRuntimeService = new SparkRuntimeService(cConf, spark, getPluginArchive(options),
                                                             runtimeContext, submitter, locationFactory, isLocal,

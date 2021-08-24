@@ -25,15 +25,21 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnableContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentTask;
+import io.cdap.cdap.master.spi.environment.spark.SparkConfig;
+import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1Container;
+import io.kubernetes.client.openapi.models.V1ContainerBuilder;
 import io.kubernetes.client.openapi.models.V1EnvVar;
 import io.kubernetes.client.openapi.models.V1OwnerReference;
 import io.kubernetes.client.openapi.models.V1Pod;
+import io.kubernetes.client.openapi.models.V1PodSpec;
+import io.kubernetes.client.openapi.models.V1PodSpecBuilder;
 import io.kubernetes.client.openapi.models.V1Volume;
 import io.kubernetes.client.openapi.models.V1VolumeMount;
 import io.kubernetes.client.util.Config;
+import io.kubernetes.client.util.Yaml;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -42,6 +48,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -52,6 +59,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
@@ -85,6 +93,11 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String POD_LABELS_FILE = "master.environment.k8s.pod.labels.file";
   private static final String POD_KILLER_SELECTOR = "master.environment.k8s.pod.killer.selector";
   private static final String POD_KILLER_DELAY_MILLIS = "master.environment.k8s.pod.killer.delay.millis";
+  private static final String SPARK_CONFIGS_PREFIX = "spark.kubernetes";
+  private static final String SPARK_KUBERNETES_DRIVER_LABEL_PREFIX = "spark.kubernetes.driver.label.";
+  private static final String SPARK_KUBERNETES_DRIVER_POD_TEMPLATE = "spark.kubernetes.driver.podTemplateFile";
+  private static final String POD_TEMPLATE_FILE_NAME = "podTemplate-";
+  private static final String CDAP_CONF_PATH = "/etc/cdap/conf";
 
   private static final String DEFAULT_NAMESPACE = "default";
   private static final String DEFAULT_INSTANCE_LABEL = "cdap.instance";
@@ -101,6 +114,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private PodKillerTask podKillerTask;
   private KubeTwillRunnerService twillRunner;
   private PodInfo podInfo;
+  private Map<String, String> additionalSparkConfs;
 
   @Override
   public void initialize(MasterEnvironmentContext context) throws IOException, ApiException {
@@ -118,6 +132,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     Map<String, String> podLabels = podInfo.getLabels();
 
     String namespace = podInfo.getNamespace();
+    additionalSparkConfs = getSparkConfigurations(conf);
 
     // Get the instance label to setup prefix for K8s services
     String instanceLabel = conf.getOrDefault(INSTANCE_LABEL, DEFAULT_INSTANCE_LABEL);
@@ -199,6 +214,35 @@ public class KubeMasterEnvironment implements MasterEnvironment {
                                                   Class<? extends MasterEnvironmentRunnable> cls) throws Exception {
     return cls.getConstructor(MasterEnvironmentRunnableContext.class, MasterEnvironment.class)
       .newInstance(context, this);
+  }
+
+  @Override
+  public SparkConfig getSparkSubmitConfig() {
+    Map<String, String> sparkConfMap = new HashMap<>(additionalSparkConfs);
+    // Get k8s master path for spark submit
+    String master = getMasterPath();
+
+    // Create pod spec with cdap conf.
+    V1Pod v1Pod = new V1Pod();
+    v1Pod.setSpec(getPodSpecWithCConf(podInfo));
+
+    // Create spark template file. This file gets created in driver pod. We do not delete it because pod will get
+    // deleted at the end of job completion.
+    File templateFile = new File(POD_TEMPLATE_FILE_NAME + UUID.randomUUID().toString());
+    try (FileWriter writer = new FileWriter(templateFile)) {
+      writer.write(Yaml.dump(v1Pod));
+    } catch (IOException e) {
+      // should not happen
+      throw new RuntimeException("Exception while writing pod spec to temp file.", e);
+    }
+    sparkConfMap.put(SPARK_KUBERNETES_DRIVER_POD_TEMPLATE, templateFile.getAbsolutePath());
+
+    // Add spark driver pod labels. This will be same as job labels
+    for (Map.Entry<String, String> label : podInfo.getLabels().entrySet()) {
+      sparkConfMap.put(SPARK_KUBERNETES_DRIVER_LABEL_PREFIX + label.getKey(), label.getValue());
+    }
+
+    return new SparkConfig("k8s://" + master, sparkConfMap);
   }
 
   /**
@@ -290,5 +334,61 @@ public class KubeMasterEnvironment implements MasterEnvironment {
    */
   private boolean isCustomVolumePrefix(String name) {
     return CUSTOM_VOLUME_PREFIX.stream().anyMatch(name::startsWith);
+  }
+
+  private String getMasterPath() {
+    // Spark master base path
+    String master;
+    // apiClient.getBasePath() returns path similar to https://10.8.0.1:443
+    try {
+      ApiClient apiClient = Config.defaultClient();
+      master = apiClient.getBasePath();
+    } catch (Exception e) {
+      // should not happen
+      throw new RuntimeException("Exception while getting kubernetes master path", e);
+    }
+    return master;
+  }
+
+  private V1PodSpec getPodSpecWithCConf(PodInfo podInfo) {
+    List<V1Volume> volumes = podInfo.getVolumes();
+    List<V1VolumeMount> containerVolumeMounts = podInfo.getContainerVolumeMounts();
+    V1Volume cConfVolume = null;
+    V1VolumeMount cConfVolumeMount = null;
+
+    for (V1VolumeMount containerVolumeMount : containerVolumeMounts) {
+      // Only mount cdap conf to spark driver pod.
+      if (!CDAP_CONF_PATH.equals(containerVolumeMount.getMountPath())) {
+        continue;
+      }
+      for (V1Volume volume : volumes) {
+        if (volume.getName().equals(containerVolumeMount.getName())) {
+          cConfVolume = volume;
+          cConfVolumeMount = containerVolumeMount;
+          break;
+        }
+      }
+    }
+
+    V1PodSpecBuilder v1PodSpecBuilder = new V1PodSpecBuilder();
+    if (cConfVolume != null) {
+      v1PodSpecBuilder
+        .withVolumes(cConfVolume)
+        .withContainers(new V1ContainerBuilder()
+                          .withVolumeMounts(cConfVolumeMount)
+                          .build());
+    }
+
+    return v1PodSpecBuilder.build();
+  }
+
+  private Map<String, String> getSparkConfigurations(Map<String, String> cConf) {
+    Map<String, String> sparkConfs = new HashMap<>();
+    for (Map.Entry<String, String> entry : cConf.entrySet()) {
+      if (entry.getKey().startsWith(SPARK_CONFIGS_PREFIX)) {
+        sparkConfs.put(entry.getKey(), entry.getValue());
+      }
+    }
+    return sparkConfs;
   }
 }
