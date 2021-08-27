@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -242,6 +242,28 @@ public class ValidationFailure {
       return String.format("%s %s", errorMessage, correctiveAction);
     }
     return errorMessage;
+  }
+
+  /**
+   * @return stack trace if added using withStackTrace(), else empty array.
+   */
+  public StackTraceElement[] getStackTrace()  {
+    String stackTraceSerialized = "[]";
+    for (ValidationFailure.Cause cause : this.getCauses()) {
+      if (cause.getAttribute("stacktrace") != null) {
+        stackTraceSerialized = cause.getAttribute("stacktrace");
+        break;
+      }
+    }
+    StackTraceElement[] stackTrace;
+    try {
+      stackTrace = GSON.fromJson(stackTraceSerialized, StackTraceElement[].class);
+    } catch (Exception e) {
+      throw new RuntimeException(
+        String.format("Encountered error while parsing Stack trace for Validation Failure %s: %s",
+                      this.getMessage(), e.getMessage()), e);
+    }
+    return  stackTrace;
   }
 
   /**
