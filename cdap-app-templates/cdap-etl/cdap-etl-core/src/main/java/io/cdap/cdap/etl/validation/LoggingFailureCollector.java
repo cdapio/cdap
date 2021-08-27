@@ -43,6 +43,26 @@ public class LoggingFailureCollector extends DefaultFailureCollector {
     super(stageName, inputSchemas);
   }
 
+  private static String convertStackTraceToString(StackTraceElement[] stackTrace) {
+    StringBuilder stackTraceBuilder = new StringBuilder();
+    for (StackTraceElement element : stackTrace) {
+      stackTraceBuilder.append(String.format("\tat %s\n", element));
+    }
+    return stackTraceBuilder.toString();
+  }
+
+  private static void logStackTrace(ValidationFailure failure) {
+    try {
+      StackTraceElement[] stackTrace = failure.getStackTrace();
+      if (stackTrace.length > 0) {
+        LOG.error(String.format("%s: \n%s", failure.getMessage(), convertStackTraceToString(stackTrace)));
+      }
+    } catch (Exception e) {
+      LOG.error(String.format("Error while getting stack trace for failure %s: %s",
+                              failure.getMessage(), e.getMessage()));
+    }
+  }
+
   @Override
   public ValidationException getOrThrowException() throws ValidationException {
     ValidationException validationException;
@@ -61,7 +81,9 @@ public class LoggingFailureCollector extends DefaultFailureCollector {
               IntStream.range(0, failures.size())
                 .mapToObj(index -> String.format("%d. %s", index + 1, failures.get(index).getFullMessage()))
                 .collect(Collectors.joining(System.lineSeparator())));
-
+    for (ValidationFailure failure : failures) {
+      logStackTrace(failure);
+    }
     throw validationException;
   }
 }
