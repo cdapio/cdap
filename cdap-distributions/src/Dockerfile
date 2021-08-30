@@ -32,7 +32,7 @@ RUN apt-get install -y --no-install-recommends git && \
     "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$(dpkg --print-architecture).asc" > \
     /usr/local/bin/gosu.asc && \
   export GNUPGHOME="$(mktemp -d)" && \
-  gpg --keyserver ha.pool.sks-keyservers.net --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 && \
+  gpg --keyserver pgp.mit.edu --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 && \
   gpg --batch --verify /usr/local/bin/gosu.asc /usr/local/bin/gosu && \
   rm -r "$GNUPGHOME" /usr/local/bin/gosu.asc && \
   chmod +x /usr/local/bin/gosu && \
