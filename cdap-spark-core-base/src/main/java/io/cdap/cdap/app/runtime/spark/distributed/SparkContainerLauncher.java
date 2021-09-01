@@ -134,7 +134,7 @@ public final class SparkContainerLauncher {
       Arrays.stream(archivesStr.split(",")).map(f -> URI.create(f)).collect(Collectors.toList());
      */
     org.apache.hadoop.fs.Path targetDir = new org.apache.hadoop.fs.Path("file:" + new File(".").getAbsolutePath());
-    org.apache.hadoop.fs.Path filesPath = new org.apache.hadoop.fs.Path("gs://ashau-cdap-k8s-test/hack/files/");
+    org.apache.hadoop.fs.Path filesPath = new org.apache.hadoop.fs.Path("gs://spark-prototype-masoud/cdap/files/");
     FileSystem fs = FileSystem.get(filesPath.toUri(), hadoopConf);
     RemoteIterator<LocatedFileStatus> files = fs.listFiles(filesPath, false);
     while (files.hasNext()) {
@@ -143,7 +143,7 @@ public final class SparkContainerLauncher {
       System.err.println("Pulling file " + sourceFile.toUri() + " to " + destFile.toUri());
       fs.copyToLocalFile(sourceFile, destFile);
     }
-    org.apache.hadoop.fs.Path archivesPath = new org.apache.hadoop.fs.Path("gs://ashau-cdap-k8s-test/hack/archives/");
+    org.apache.hadoop.fs.Path archivesPath = new org.apache.hadoop.fs.Path("gs://spark-prototype-masoud/cdap/achives/");
     RemoteIterator<LocatedFileStatus> archives = fs.listFiles(archivesPath, false);
     while (archives.hasNext()) {
       org.apache.hadoop.fs.Path sourceFile = archives.next().getPath();

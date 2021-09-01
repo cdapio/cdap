@@ -214,14 +214,14 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
        local:///opt/spark/examples/jars/spark-examples_2.12-3.1.2.jar
        */
       String[] dummyArgs = new String[] {
-          "--master", "k8s://https://34.72.68.10",
+          "--master", "k8s://https://35.233.147.34",
           "--deploy-mode", "cluster",
           "--name", "spark-pi",
           "--class", "org.apache.spark.examples.SparkPi",
           "--conf", "spark.executor.instances=3",
-          "--conf", "spark.kubernetes.container.image=gcr.io/ashau-dev0/spark:latest",
+          "--conf", "spark.kubernetes.container.image=gcr.io/ardekani-cdf-sandbox2/cdap-spark:latest",
           "--conf", "spark.kubernetes.authenticate.driver.serviceAccountName=spark",
-          "--conf", "spark.kubernetes.file.upload.path=gs://ashau-cdap-k8s-test/spark",
+          "--conf", "spark.kubernetes.file.upload.path=gs://spark-prototype-masoud/cdap/files",
           "--files", args[args.length - 3],
           "local:///opt/spark/examples/jars/spark-examples_2.12-3.1.2.jar"
       };
@@ -236,7 +236,7 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
   }
 
   private void pushFilesAndArchives(String files, String archives) throws Exception {
-    Path basePath = new Path("gs://ashau-cdap-k8s-test");
+    Path basePath = new Path("gs://spark-prototype-masoud");
     FileSystem fs = FileSystem.get(basePath.toUri(), new Configuration());
     for (String file : files.split(",")) {
       System.err.println("ashau - file = " + file);
@@ -245,7 +245,7 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
         file = file.substring(0, idx);
       }
       Path src = new Path(file);
-      Path dst = new Path("gs://ashau-cdap-k8s-test/hack/files/" + src.getName());
+      Path dst = new Path("gs://spark-prototype-masoud/cdap/files/" + src.getName());
       if (fs.exists(dst)) {
         fs.delete(dst);
       }
@@ -254,7 +254,7 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     }
     for (String archive : archives.split(",")) {
       Path src = new Path(archive);
-      Path dst = new Path("gs://ashau-cdap-k8s-test/hack/archives/" + src.getName());
+      Path dst = new Path("gs://spark-prototype-masoud/cdap/achives/" + src.getName());
       if (fs.exists(dst)) {
         fs.delete(dst);
       }

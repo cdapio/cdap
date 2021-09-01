@@ -82,7 +82,7 @@ public class DistributedSparkSubmitter extends AbstractSparkSubmitter {
 
     //--conf spark.kubernetes.container.image=gcr.io/ashau-dev0/spark:latest
     //       --conf spark.kubernetes.authenticate.driver.serviceAccountName=spark
-    config.put("spark.kubernetes.container.image", "gcr.io/ashau-dev0/spark:cdap-latest");
+    config.put("spark.kubernetes.container.image", "gcr.io/ardekani-cdf-sandbox2/cdap-spark:latest");
     config.put("spark.kubernetes.container.image.pullPolicy", "Always");
     // this was a service account I manually created
     config.put("spark.kubernetes.authenticate.driver.serviceAccountName", "spark");
@@ -118,7 +118,7 @@ public class DistributedSparkSubmitter extends AbstractSparkSubmitter {
     argBuilder
       //.add("--master").add("yarn")
       // how to get the kubernetes ip? Passed from KubeMasterEnvironment somehow?
-      .add("--master").add("k8s://https://34.72.68.10")
+      .add("--master").add("k8s://https://35.233.147.34")
       .add("--deploy-mode").add("cluster");
   }
 

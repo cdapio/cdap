@@ -65,12 +65,12 @@ public class SparkSubmitTest {
     sparkConfs.put("spark.executorEnv.CDAP_LOG_DIR", "<LOG_DIR>");
     sparkConfs.put("spark.yarn.appMasterEnv.CDAP_LOG_DIR", "<LOG_DIR>");
 
-    sparkConfs.put("spark.kubernetes.container.image", "gcr.io/ashau-dev0/spark:latest");
-    sparkConfs.put("spark.kubernetes.file.upload.path", "gs://ashau-cdap-k8s-test/spark");
+    sparkConfs.put("spark.kubernetes.container.image", "gcr.io/ardekani-cdf-sandbox2/cdap-spark:latest");
+    sparkConfs.put("spark.kubernetes.file.upload.path", "gs://spark-prototype-masoud/cdap/files");
     sparkConfs.put("spark.kubernetes.authenticate.driver.serviceAccountName", "spark");
 
     Map<String, String> submitConfs = new HashMap<>();
-    submitConfs.put("--master", "k8s://https://34.72.68.10");
+    submitConfs.put("--master", "k8s://https://35.233.147.34");
     submitConfs.put("--deploy-mode", "cluster");
     submitConfs.put("--archives", "file:/workDir-a8b007d4-6dbf-40d4-9f0b-16417429a7f0/data/tmp/1626194665982-0/" +
       "program.jar.expanded.zip");
