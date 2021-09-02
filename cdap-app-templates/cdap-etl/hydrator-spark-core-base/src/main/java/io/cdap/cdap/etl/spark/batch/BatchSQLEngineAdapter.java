@@ -24,9 +24,12 @@ import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.etl.api.StageMetrics;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngine;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngineException;
+import io.cdap.cdap.etl.api.engine.sql.SparkSQLEngine;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDataset;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLPullDataset;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLPushDataset;
+import io.cdap.cdap.etl.api.engine.sql.dataset.SparkPullDataset;
+import io.cdap.cdap.etl.api.engine.sql.dataset.SparkPushDataset;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLJoinDefinition;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLJoinRequest;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPullRequest;
@@ -72,6 +75,7 @@ import javax.annotation.Nullable;
 public class BatchSQLEngineAdapter<T> implements Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(BatchSQLEngineAdapter.class);
 
+  private final JavaSparkContext jsc;
   private final JavaSparkExecutionContext sec;
   private final SQLEngine<?, ?, ?, ?> sqlEngine;
   private final Metrics metrics;
@@ -81,9 +85,11 @@ public class BatchSQLEngineAdapter<T> implements Closeable {
   private final Map<SQLEngineJobKey, SQLEngineJob<?>> jobs;
 
   public BatchSQLEngineAdapter(SQLEngine<?, ?, ?, ?> sqlEngine,
+                               JavaSparkContext jsc,
                                JavaSparkExecutionContext sec,
                                Map<String, StageStatisticsCollector> statsCollectors) {
     this.sqlEngine = sqlEngine;
+    this.jsc = jsc;
     this.sec = sec;
     this.metrics = sec.getMetrics();
     this.statsCollectors = statsCollectors;
@@ -160,6 +166,18 @@ public class BatchSQLEngineAdapter<T> implements Closeable {
     // Create push request
     SQLPushRequest pushRequest = new SQLPushRequest(datasetName, schema);
 
+    // If the SQL engine can handle this operation with a Spark implementation, we will use this spark implementation
+    // to consume the RDD and store records in the SQL engine.
+    if (sqlEngine instanceof SparkSQLEngine) {
+      SparkPushDataset<StructuredRecord> sparkPushDataset =
+        ((SparkSQLEngine<?, ?, ?, ?>) sqlEngine).getSparkPushProvider(jsc.sc(), pushRequest);
+
+      // Check if the implementation supports the push operation and ensure the RDD could be consumed.
+      if (sparkPushDataset != null && sparkPushDataset.consume(jsc.sc(), collection.getUnderlying())) {
+        return sparkPushDataset;
+      }
+    }
+
     //Get the push provider and wait for it to be ready to use
     SQLPushDataset<StructuredRecord, ?, ?> pushDataset = sqlEngine.getPushProvider(pushRequest);
 
@@ -221,6 +239,24 @@ public class BatchSQLEngineAdapter<T> implements Closeable {
                                   JavaSparkContext jsc) throws SQLEngineException {
     // Create pull operation for this dataset and wait until completion
     SQLPullRequest pullRequest = new SQLPullRequest(dataset);
+
+    // If the SQL engine can handle this operation with a Spark implementation, we will use this spark implementation
+    // to read records from the SQL engine and create the RDD.
+    if (sqlEngine instanceof SparkSQLEngine) {
+      SparkPullDataset<StructuredRecord> sparkPullDataset =
+        ((SparkSQLEngine<?, ?, ?, ?>) sqlEngine).getSparkPullProvider(jsc.sc(), pullRequest);
+
+      // Check if the implementation supports the pull operation using Spark.
+      if (sparkPullDataset != null) {
+        JavaRDD<T> rdd = (JavaRDD<T>) sparkPullDataset.create(jsc.sc());
+
+        // Check if the RDD could be created.
+        if (rdd != null) {
+          return rdd;
+        }
+      }
+    }
+
     SQLPullDataset<StructuredRecord, ?, ?> sqlPullDataset = sqlEngine.getPullProvider(pullRequest);
 
     // Run operation to read from the InputFormatProvider supplied by this operation.
