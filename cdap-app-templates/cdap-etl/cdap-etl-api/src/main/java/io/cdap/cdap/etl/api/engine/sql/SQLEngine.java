@@ -54,7 +54,7 @@ public interface SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT>
    * <p>
    * After created, this dataset will be considered "locked" until the output has been committed.
    *
-   * @param pushRequest the request containing information about the dataset name and schema.t
+   * @param pushRequest the request containing information about the dataset name and schema.
    * @return {@link SQLPushDataset} instance that can be used to write records to the SQL Engine.
    */
   SQLPushDataset<StructuredRecord, KEY_OUT, VALUE_OUT> getPushProvider(SQLPushRequest pushRequest)
