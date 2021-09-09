@@ -35,11 +35,11 @@ import java.nio.charset.StandardCharsets;
 /**
  * LogReader BodyProducer to encode log events, as text.
  */
-class TextChunkedLogProducer extends AbstractChunkedLogProducer {
+public class TextChunkedLogProducer extends AbstractChunkedLogProducer {
   private final PatternLayout patternLayout;
   private final boolean escape;
 
-  TextChunkedLogProducer(CloseableIterator<LogEvent> logEventIter, String logPattern, boolean escape) {
+  public TextChunkedLogProducer(CloseableIterator<LogEvent> logEventIter, String logPattern, boolean escape) {
     super(logEventIter);
     this.escape = escape;
 

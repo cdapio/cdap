@@ -69,6 +69,7 @@ import io.cdap.cdap.gateway.handlers.ProfileHttpHandler;
 import io.cdap.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import io.cdap.cdap.gateway.handlers.ProgramLifecycleHttpHandlerInternal;
 import io.cdap.cdap.gateway.handlers.ProvisionerHttpHandler;
+import io.cdap.cdap.gateway.handlers.SupportBundleHttpHandler;
 import io.cdap.cdap.gateway.handlers.TransactionHttpHandler;
 import io.cdap.cdap.gateway.handlers.UsageHandler;
 import io.cdap.cdap.gateway.handlers.VersionHandler;
