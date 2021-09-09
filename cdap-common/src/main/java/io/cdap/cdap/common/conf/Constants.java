@@ -1525,6 +1525,7 @@ public final class Constants {
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";
+  public static final String CFG_LOCAL_DATA_SUPPORT_BUNDLE_DIR = "local.data.support.bundle.dir";
   public static final String CFG_HDFS_USER = "hdfs.user";
   public static final String CFG_HDFS_NAMESPACE = "hdfs.namespace";
   public static final String CFG_HDFS_LIB_DIR = "hdfs.lib.dir";
