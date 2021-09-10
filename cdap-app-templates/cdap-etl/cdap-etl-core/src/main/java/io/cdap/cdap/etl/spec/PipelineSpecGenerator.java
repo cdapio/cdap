@@ -346,15 +346,11 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       // handle the case where plugin throws null pointer exception, this is to avoid having 'null' as error message
       collector.addFailure(String.format("Null error occurred while configuring the stage %s.", stageName), null)
         .withStacktrace(e.getStackTrace());
-      // Log the NullPointerException for debugging:
-      LOG.error(String.format("Null error occurred while configuring the stage %s.", stageName), e);
     } catch (ArrayIndexOutOfBoundsException e) {
       // handle the case where plugin throws index out of bounds exception,
       // this is to avoid having a number like '2', '8' etc as error message
       collector.addFailure(String.format("Index out of bounds error occurred while configuring the stage %s.",
                                          stageName), null).withStacktrace(e.getStackTrace());
-      // Log the ArrayIndexOutOfBoundsException for debugging:
-      LOG.error(String.format("ArrayIndexOutOfBounds error occurred while configuring the stage %s.", stageName), e);
     } catch (ConnectionBadRequestException e) {
       collector.addFailure(e.getMessage(), "Provide a valid connection name.");
     } catch (Exception e) {
