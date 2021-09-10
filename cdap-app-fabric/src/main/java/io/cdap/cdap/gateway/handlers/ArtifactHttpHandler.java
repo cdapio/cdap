@@ -340,20 +340,19 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     } catch (IOException e) {
       throw new BadRequestException("Unable to read properties from the request.", e);
     }
+    
+    if(properties == null)
+    {
+      throw new BadRequestException("Properties attribute is missing in the json or set as null, " +
+                                      "add properties: {} in json");
+    }
 
     try {
-      if (properties == null) {
-        throw new NullPointerException("Properties attribute is missing in the json or set as null, " +
-                                         "add properties: {} in json");
-      }
       artifactRepository.writeArtifactProperties(Id.Artifact.fromEntityId(artifactId), properties);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (IOException e) {
       LOG.error("Exception writing properties for artifact {}.", artifactId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error adding properties to artifact.");
-    } catch (NullPointerException e) {
-      LOG.error("Exception writing properties for artifact {}.", artifactId, e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
