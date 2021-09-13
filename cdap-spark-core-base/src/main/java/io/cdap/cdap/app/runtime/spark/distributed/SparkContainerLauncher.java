@@ -16,24 +16,58 @@
 
 package io.cdap.cdap.app.runtime.spark.distributed;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.Closeables;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
+import com.google.inject.Module;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.plugin.Plugin;
+import io.cdap.cdap.app.runtime.Arguments;
+import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeContextProvider;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeUtils;
 import io.cdap.cdap.app.runtime.spark.classloader.SparkContainerClassLoader;
 import io.cdap.cdap.app.runtime.spark.python.SparkPythonUtil;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.IOModule;
+import io.cdap.cdap.common.guice.KafkaClientModule;
+import io.cdap.cdap.common.guice.SupplierProviderBridge;
+import io.cdap.cdap.common.guice.ZKClientModule;
+import io.cdap.cdap.common.guice.ZKDiscoveryModule;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.lang.FilterClassLoader;
 import io.cdap.cdap.common.logging.StandardOutErrorRedirector;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
+import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
+import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
+import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
+import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizer;
+import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
+import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
+import io.cdap.cdap.master.environment.MasterEnvironments;
+import io.cdap.cdap.master.spi.environment.MasterEnvironment;
+import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.guice.CoreSecurityModule;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.RemoteIterator;
 import org.apache.hadoop.util.RunJar;
-import org.apache.hadoop.yarn.util.FSDownload;
 import org.apache.spark.SparkConf;
+import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
@@ -49,23 +83,25 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Properties;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * This class launches Spark YARN containers with classes loaded through the {@link SparkContainerClassLoader}.
  */
 public final class SparkContainerLauncher {
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
+    .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
+    .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
+    .create();
 
   // This logger is only for logging for this class.
   private static final Logger LOG = LoggerFactory.getLogger(SparkContainerLauncher.class);
@@ -137,29 +173,157 @@ public final class SparkContainerLauncher {
     org.apache.hadoop.fs.Path filesPath = new org.apache.hadoop.fs.Path("gs://spark-prototype-masoud/cdap/files/");
     FileSystem fs = FileSystem.get(filesPath.toUri(), hadoopConf);
     RemoteIterator<LocatedFileStatus> files = fs.listFiles(filesPath, false);
+
+    CConfiguration cConf = null;
+    Configuration hConf = new Configuration();
+
     while (files.hasNext()) {
       org.apache.hadoop.fs.Path sourceFile = files.next().getPath();
       org.apache.hadoop.fs.Path destFile = new org.apache.hadoop.fs.Path(targetDir, sourceFile.getName());
       System.err.println("Pulling file " + sourceFile.toUri() + " to " + destFile.toUri());
-      fs.copyToLocalFile(sourceFile, destFile);
-    }
-    org.apache.hadoop.fs.Path archivesPath = new org.apache.hadoop.fs.Path("gs://spark-prototype-masoud/cdap/achives/");
-    RemoteIterator<LocatedFileStatus> archives = fs.listFiles(archivesPath, false);
-    while (archives.hasNext()) {
-      org.apache.hadoop.fs.Path sourceFile = archives.next().getPath();
-      org.apache.hadoop.fs.Path destFile = new org.apache.hadoop.fs.Path(targetDir, "tmp-" + sourceFile.getName());
-      fs.copyToLocalFile(sourceFile, destFile);
-      String name = sourceFile.getName().toLowerCase();
+      if (!sourceFile.toUri().toString().toLowerCase().contains("program.jar")) {
+        fs.copyToLocalFile(sourceFile, destFile);
+      }
 
-      File dstArchive = new File(name);
-      System.err.println("unpacking archive to " + dstArchive.getAbsolutePath());
-      if (name.endsWith(".jar")) {
-        RunJar.unJar(new File("tmp-" + name), new File(name), RunJar.MATCH_ANY);
-      } else if (name.endsWith(".zip")) {
-        FileUtil.unZip(new File("tmp-" + name), new File(name));
+      if (sourceFile.getName().equals("hConf.xml")) {
+        hConf.addResource(destFile);
+      }
+      if (sourceFile.getName().equals("cConf.xml")) {
+        cConf = CConfiguration.create(new File(".").getAbsoluteFile().toPath().resolve("cConf.xml").toFile());
       }
     }
+    ApplicationSpecification spec =
+      GSON.fromJson(hConf.getRaw("cdap.spark.app.spec"), ApplicationSpecification.class);
+    FetchArtifacts fetchArtifacts = createFetchArtifacts(cConf, hConf);
+
+    //Create plugin location for storing plugin jars
+    Path pluginsLocation = new File(".").getAbsoluteFile().toPath().resolve("artifacts_archive.jar")
+      .toAbsolutePath();
+    Files.createDirectories(pluginsLocation);
+    System.err.println("Masoud - plugin Directory = " + pluginsLocation.toString());
+
+
+    for (Plugin plugin : spec.getPlugins().values()) {
+      File tempLocation = fetchArtifacts.localizeArtifact(plugin.getArtifactId());
+      String pluginName = String.format("%s-%s-%s.jar",
+                                        plugin.getArtifactId().getScope().toString(),
+                                        plugin.getArtifactId().getName(),
+                                        plugin.getArtifactId().getVersion().toString());
+      RunJar.unJar(tempLocation, pluginsLocation.resolve(pluginName).toFile(), RunJar.MATCH_ANY);
+      System.err.println("Masoud - Plugin Location = " + pluginsLocation.resolve(pluginName).toFile().toString());
+    }
+
+    Path programJarLocation = new File(".").getAbsoluteFile().toPath();
+    File tempLocation = fetchArtifacts.localizeArtifact(spec.getArtifactId());
+    RunJar.unJar(tempLocation, programJarLocation.resolve("program.jar.expanded.zip").toFile(), RunJar.MATCH_ANY);
+    Files.copy(tempLocation.toPath(), programJarLocation.resolve("program.jar"));
+    System.err.println("Masoud - Artifact moved and unjar = " + spec.getArtifactId().toString());
+    Thread.sleep(240000);
+
+//    org.apache.hadoop.fs.Path archivesPath =
+//      new org.apache.hadoop.fs.Path("gs://spark-prototype-masoud/cdap/achives/");
+//    RemoteIterator<LocatedFileStatus> archives = fs.listFiles(archivesPath, false);
+//    while (archives.hasNext()) {
+//      org.apache.hadoop.fs.Path sourceFile = archives.next().getPath();
+//      org.apache.hadoop.fs.Path destFile = new org.apache.hadoop.fs.Path(targetDir, "tmp-" + sourceFile.getName());
+//      fs.copyToLocalFile(sourceFile, destFile);
+//      String name = sourceFile.getName().toLowerCase();
+//
+//      File dstArchive = new File(name);
+//      System.err.println("unpacking archive to " + dstArchive.getAbsolutePath());
+//      if (name.endsWith(".jar")) {
+//        RunJar.unJar(new File("tmp-" + name), new File(name), RunJar.MATCH_ANY);
+//      } else if (name.endsWith(".zip")) {
+//        FileUtil.unZip(new File("tmp-" + name), new File(name));
+//      }
+//    }
     launch(delegateClass, delegateArgs.toArray(new String[delegateArgs.size()]));
+  }
+
+  @VisibleForTesting
+  static Injector createInjector(CConfiguration cConf, Configuration hConf) {
+    List<Module> modules = new ArrayList<>();
+
+    CoreSecurityModule coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf);
+
+    modules.add(new ConfigModule(cConf, hConf));
+    modules.add(new IOModule());
+    modules.add(new AuthenticationContextModules().getMasterWorkerModule());
+    modules.add(coreSecurityModule);
+
+    // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
+    MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
+
+    if (masterEnv == null) {
+      modules.add(new ZKClientModule());
+      modules.add(new ZKDiscoveryModule());
+      modules.add(new KafkaClientModule());
+      modules.add(new KafkaLogAppenderModule());
+    } else {
+      modules.add(new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(DiscoveryService.class)
+            .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
+          bind(DiscoveryServiceClient.class)
+            .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
+        }
+      });
+      modules.add(new RemoteLogAppenderModule());
+
+      if (coreSecurityModule.requiresZKClient()) {
+        modules.add(new ZKClientModule());
+      }
+    }
+
+    return Guice.createInjector(modules);
+  }
+
+  private static FetchArtifacts createFetchArtifacts(CConfiguration cConf, Configuration hConf) throws Exception {
+    MasterEnvironment masterEnv = MasterEnvironments.create(cConf, "k8s");
+    System.err.println("Masoud - masterEnv = " + masterEnv);
+    if (masterEnv != null) {
+      MasterEnvironmentContext context = MasterEnvironments.createContext(cConf, hConf, masterEnv.getName());
+      masterEnv.initialize(context);
+      MasterEnvironments.setMasterEnvironment(masterEnv);
+    }
+
+    Injector injector = createInjector(cConf, hConf);
+    FetchArtifacts fetchArtifacts = injector.getInstance(FetchArtifacts.class);
+    return fetchArtifacts;
+  }
+
+  private static class FetchArtifacts {
+
+    private final ArtifactLocalizer artifactLocalizer;
+    private final AuthenticationContext authenticationContext;
+
+    @Inject
+    FetchArtifacts(CConfiguration cConf,
+                   SConfiguration sConf,
+                   DiscoveryServiceClient discoveryServiceClient,
+                   AuthenticationContext authenticationContext) {
+      this.authenticationContext = authenticationContext;
+
+      RemoteClientFactory remoteClientFactory =
+        new RemoteClientFactory(discoveryServiceClient, authenticationContext, cConf);
+      this.artifactLocalizer = new ArtifactLocalizer(cConf, remoteClientFactory);
+    }
+
+    File localizeArtifact(ArtifactId artifactId) throws Exception {
+      String namespace = artifactId.getScope().name().toLowerCase().equals("user") ?
+        "default" : artifactId.getScope().name();
+      System.err.println("Masoud -- localizing plugin " +
+                           artifactId.toString() + " with namespace " + namespace);
+      io.cdap.cdap.proto.id.ArtifactId aId =
+        new io.cdap.cdap.proto.id.ArtifactId(namespace,
+                                             artifactId.getName(),
+                                             artifactId.getVersion().getVersion());
+      File location = artifactLocalizer.getArtifact(aId);
+      System.err.println("Masoud -- plugin " +
+                           artifactId.toString() + " localized at " + location.toString());
+      return location;
+    }
   }
 
   /**
