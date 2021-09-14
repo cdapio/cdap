@@ -58,6 +58,7 @@ import org.junit.experimental.categories.Category;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.Manifest;
@@ -302,15 +303,18 @@ public class ArtifactClientTestRun extends ClientTestBase {
 
     // test get plugins of type callable for myapp-2.0.0
     PluginSummary pluginSummary =
-      new PluginSummary("plugin1", "callable", null, Plugin1.class.getName(), pluginArtifactSummary, "p1 description");
+      new PluginSummary("plugin1", "callable", null, Plugin1.class.getName(),
+                        Collections.singletonList(Plugin1.class.getName()),
+                        pluginArtifactSummary, "p1 description");
     Assert.assertEquals(Sets.newHashSet(pluginSummary),
                         Sets.newHashSet(artifactClient.getPluginSummaries(myapp2Id, "callable")));
     // no plugins of type "runnable"
     Assert.assertTrue(artifactClient.getPluginSummaries(myapp2Id, "runnable").isEmpty());
 
     // test get plugin details for plugin1 for myapp-2.0.0
-    PluginInfo pluginInfo = new PluginInfo("plugin1", "callable", null, Plugin1.class.getName(), "conf",
-                                           pluginArtifactSummary, props, "p1 description");
+    PluginInfo pluginInfo = new PluginInfo("plugin1", "callable", null, Plugin1.class.getName(),
+                                           Collections.singletonList(Plugin1.class.getName()),
+                                           "conf", pluginArtifactSummary, props, "p1 description");
     Assert.assertEquals(Sets.newHashSet(pluginInfo),
                         Sets.newHashSet(artifactClient.getPluginInfo(myapp2Id, "callable", "plugin1")));
   }

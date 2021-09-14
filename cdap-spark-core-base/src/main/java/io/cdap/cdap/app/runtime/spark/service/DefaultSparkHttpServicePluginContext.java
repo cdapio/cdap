@@ -62,6 +62,7 @@ import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 
 /**
@@ -213,17 +214,22 @@ public class DefaultSparkHttpServicePluginContext implements SparkHttpServicePlu
   @Override
   public <T> T newPluginInstance(String pluginId,
                                  @Nullable MacroEvaluator evaluator) throws InstantiationException,
-                                                                            InvalidMacroException {
+    InvalidMacroException {
+    return newPluginInstance(pluginId, evaluator, null);
+  }
+
+  @Override
+  public <S, T> T newPluginInstance(String pluginId, MacroEvaluator evaluator, Function<S, T> pluginInitializer)
+    throws InstantiationException, InvalidMacroException {
     // Try to get it from the runtime context
     try {
-      return evaluator == null ?
-        runtimeContext.newPluginInstance(pluginId) : runtimeContext.newPluginInstance(pluginId, evaluator);
+      return runtimeContext.newPluginInstance(pluginId, evaluator, pluginInitializer);
     } catch (IllegalArgumentException | UnsupportedOperationException e) {
       // Expected if the plugin in not in the runtime context. Keep going.
     }
 
     try {
-      return pluginInstantiator.newInstance(getExtraPlugin(pluginId), evaluator);
+      return pluginInstantiator.newRuntimeInstance(getExtraPlugin(pluginId), pluginInitializer, evaluator);
     } catch (ClassNotFoundException e) {
       // Shouldn't happen, unless there is bug in file localization
       throw new IllegalArgumentException("Plugin class not found", e);

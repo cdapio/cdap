@@ -33,6 +33,7 @@ import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 
 /**
@@ -100,6 +101,17 @@ public class PipelinePluginInstantiator implements PluginContext {
     }
 
     return pluginContext.newPluginInstance(stageName, macroEvaluator);
+  }
+
+  @Override
+  public <S, T> T newPluginInstance(String stageName, MacroEvaluator evaluator, Function<S, T> pluginInitializer)
+    throws InstantiationException, InvalidMacroException {
+    S plugin = getBuiltIn(stageName);
+    if (plugin != null) {
+      return pluginInitializer.apply(plugin);
+    }
+
+    return pluginContext.newPluginInstance(stageName, evaluator, pluginInitializer);
   }
 
   @Nullable

@@ -17,6 +17,7 @@
 package io.cdap.cdap.app.runtime.spark;
 
 import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.plugin.DelegatePluginContext;
 import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.api.plugin.PluginProperties;
 
@@ -30,7 +31,7 @@ import java.io.ObjectOutput;
  * It has no-op for serialize/deserialize operation, with all operations delegated to the {@link SparkRuntimeContext}
  * of the current execution context.
  */
-public final class SparkPluginContext implements PluginContext, Externalizable {
+public final class SparkPluginContext implements DelegatePluginContext, Externalizable {
 
   private final PluginContext delegate;
 
@@ -49,28 +50,8 @@ public final class SparkPluginContext implements PluginContext, Externalizable {
   }
 
   @Override
-  public PluginProperties getPluginProperties(String pluginId) {
-    return delegate.getPluginProperties(pluginId);
-  }
-
-  @Override
-  public PluginProperties getPluginProperties(String pluginId, MacroEvaluator evaluator) {
-    return delegate.getPluginProperties(pluginId, evaluator);
-  }
-
-  @Override
-  public <T> Class<T> loadPluginClass(String pluginId) {
-    return delegate.loadPluginClass(pluginId);
-  }
-
-  @Override
-  public <T> T newPluginInstance(String pluginId) throws InstantiationException {
-    return delegate.newPluginInstance(pluginId);
-  }
-
-  @Override
-  public <T> T newPluginInstance(String pluginId, MacroEvaluator evaluator) throws InstantiationException {
-    return delegate.newPluginInstance(pluginId, evaluator);
+  public PluginContext getPluginContextDelegate() {
+    return delegate;
   }
 
   @Override

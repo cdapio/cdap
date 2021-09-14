@@ -21,6 +21,7 @@ import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginPropertyField;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -37,12 +38,14 @@ public class PluginInfo extends PluginSummary {
 
   public PluginInfo(PluginClass pluginClass, ArtifactSummary artifactSummary) {
     this(pluginClass.getName(), pluginClass.getType(), pluginClass.getCategory(), pluginClass.getClassName(),
-         pluginClass.getConfigFieldName(), artifactSummary, pluginClass.getProperties(), pluginClass.getDescription());
+         pluginClass.getRuntimeClassNames(), pluginClass.getConfigFieldName(), artifactSummary,
+         pluginClass.getProperties(), pluginClass.getDescription());
   }
 
-  public PluginInfo(String name, String type, String category, String className, @Nullable String configFieldName,
-                    ArtifactSummary artifact, Map<String, PluginPropertyField> properties, String description) {
-    super(name, type, category, className, artifact, description);
+  public PluginInfo(String name, String type, String category, String className, List<String> runtimeClassNames,
+                    @Nullable String configFieldName, ArtifactSummary artifact,
+                    Map<String, PluginPropertyField> properties, String description) {
+    super(name, type, category, className, runtimeClassNames, artifact, description);
     this.configFieldName = configFieldName;
     this.properties = properties;
   }
@@ -91,6 +94,7 @@ public class PluginInfo extends PluginSummary {
       ", type='" + getType() + '\'' +
       ", description='" + getDescription() + '\'' +
       ", className='" + getClassName() + '\'' +
+      ", runtimeСlassNames=" + getRuntimeClassNames() +
       ", artifact=" + getArtifact() +
       '}';
   }

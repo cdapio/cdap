@@ -19,12 +19,14 @@ package io.cdap.cdap.proto.artifact;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 
+import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
  * Represents an plugin info returned by
  * /artifacts/{artifact-name}/versions/{artifact-version}/extensions/{plugin-type}
+ * TODO: Check if backwards compatibility is needed here
  */
 @Beta
 public class PluginSummary {
@@ -32,14 +34,17 @@ public class PluginSummary {
   protected final String type;
   protected final String category;
   protected final String description;
+  @Deprecated
   protected final String className;
+  protected final List<String> runtimeClassNames;
   protected final ArtifactSummary artifact;
 
   public PluginSummary(String name, String type, @Nullable String category, String className,
-                       ArtifactSummary artifact, String description) {
+                       List<String> runtimeClassNames, ArtifactSummary artifact, String description) {
     this.name = name;
     this.type = type;
     this.category = category;
+    this.runtimeClassNames = runtimeClassNames;
     this.description = description;
     this.className = className;
     this.artifact = artifact;
@@ -62,8 +67,13 @@ public class PluginSummary {
     return description;
   }
 
+  @Deprecated
   public String getClassName() {
     return className;
+  }
+
+  public List<String> getRuntimeClassNames() {
+    return runtimeClassNames;
   }
 
   public ArtifactSummary getArtifact() {
@@ -86,12 +96,13 @@ public class PluginSummary {
       Objects.equals(category, that.category) &&
       Objects.equals(description, that.description) &&
       Objects.equals(className, that.className) &&
+      Objects.equals(runtimeClassNames, that.runtimeClassNames) &&
       Objects.equals(artifact, that.artifact);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, type, category, description, className, artifact);
+    return Objects.hash(name, type, category, description, className, runtimeClassNames, artifact);
   }
 
   @Override
@@ -102,6 +113,7 @@ public class PluginSummary {
       ", category='" + category + '\'' +
       ", description='" + description + '\'' +
       ", className='" + className + '\'' +
+      ", runtimeClassNames=" + runtimeClassNames +
       ", artifact=" + artifact +
       '}';
   }

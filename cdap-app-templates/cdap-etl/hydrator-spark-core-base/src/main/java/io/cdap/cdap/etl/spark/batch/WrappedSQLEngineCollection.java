@@ -135,6 +135,11 @@ public class WrappedSQLEngineCollection<T, U> implements SQLBackedCollection<U> 
   }
 
   @Override
+  public <U1> SparkCompute<U, U1> initializeCompute(StageSpec stageSpec, SparkCompute<U, U1> compute) throws Exception {
+    return unwrap().initializeCompute(stageSpec, compute);
+  }
+
+  @Override
   public <U1> SparkCollection<U1> compute(StageSpec stageSpec, SparkCompute<U, U1> compute) throws Exception {
     return unwrap().compute(stageSpec, compute);
   }

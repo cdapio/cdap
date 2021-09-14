@@ -214,12 +214,22 @@ public abstract class BaseRDDCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public <U> SparkCollection<U> compute(StageSpec stageSpec, SparkCompute<T, U> compute) throws Exception {
+  public <U> SparkCompute<T, U> initializeCompute(StageSpec stageSpec, SparkCompute<T, U> compute) throws Exception {
     String stageName = stageSpec.getName();
     PipelineRuntime pipelineRuntime = new SparkPipelineRuntime(sec);
     SparkExecutionPluginContext sparkPluginContext =
       new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, pipelineRuntime, stageSpec);
     compute.initialize(sparkPluginContext);
+    return compute;
+  }
+
+  @Override
+  public <U> SparkCollection<U> compute(StageSpec stageSpec, SparkCompute<T, U> compute) throws Exception {
+    //TODO: Do not recreate context
+    String stageName = stageSpec.getName();
+    PipelineRuntime pipelineRuntime = new SparkPipelineRuntime(sec);
+    SparkExecutionPluginContext sparkPluginContext =
+      new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, pipelineRuntime, stageSpec);
 
     JavaRDD<T> countedInput = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(),
                                                               Constants.Metrics.RECORDS_IN, null));

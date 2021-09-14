@@ -23,6 +23,7 @@ import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.metrics.Metrics;
 import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.etl.api.SplitterTransform;
+import io.cdap.cdap.etl.api.SubmitterLifecycle;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.batch.BatchAggregator;
 import io.cdap.cdap.etl.api.batch.BatchAutoJoiner;
@@ -36,7 +37,6 @@ import io.cdap.cdap.etl.api.batch.SparkSink;
 import io.cdap.cdap.etl.api.streaming.StreamingSource;
 import io.cdap.cdap.etl.batch.DefaultAggregatorContext;
 import io.cdap.cdap.etl.batch.DefaultJoinerContext;
-import io.cdap.cdap.etl.batch.PipelinePluginInstantiator;
 import io.cdap.cdap.etl.common.PhaseSpec;
 import io.cdap.cdap.etl.common.PipelineRuntime;
 import io.cdap.cdap.etl.common.submit.AggregatorContextProvider;
@@ -89,25 +89,24 @@ public abstract class AbstractSparkPreparer extends PipelinePhasePreparer {
 
   @Nullable
   @Override
-  protected SubmitterPlugin create(PipelinePluginInstantiator pluginInstantiator,
-                                   StageSpec stageSpec) throws InstantiationException {
+  protected SubmitterPlugin create(StageSpec stageSpec, SubmitterLifecycle<?> plugin) throws InstantiationException {
     String stageName = stageSpec.getName();
     if (SparkSink.PLUGIN_TYPE.equals(stageSpec.getPluginType())) {
-      BatchConfigurable<SparkPluginContext> sparkSink = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
+      BatchConfigurable<SparkPluginContext> sparkSink = (BatchConfigurable<SparkPluginContext>) plugin;
       ContextProvider<BasicSparkPluginContext> contextProvider =
         dsContext -> getSparkPluginContext(dsContext, stageSpec);
       return new SubmitterPlugin<>(stageName, transactional, sparkSink, contextProvider,
                                    ctx -> stageOperations.put(stageName, ctx.getFieldOperations()));
     }
-    if (SparkCompute.PLUGIN_TYPE.equals(stageSpec.getPluginType())) {
-      SparkCompute<?, ?> compute = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
+    if (SparkCompute.PLUGIN_TYPE.equals(stageSpec.getPluginType()) || plugin instanceof SparkCompute) {
+      SparkCompute<?, ?> compute = (SparkCompute<?, ?>) plugin;
       ContextProvider<BasicSparkPluginContext> contextProvider =
         dsContext -> getSparkPluginContext(dsContext, stageSpec);
       return new SubmitterPlugin<>(stageName, transactional, compute, contextProvider,
                                    ctx -> stageOperations.put(stageName, ctx.getFieldOperations()));
     }
     if (StreamingSource.PLUGIN_TYPE.equals(stageSpec.getPluginType())) {
-      return createStreamingSource(pluginInstantiator, stageSpec);
+      return createStreamingSource(stageSpec, (StreamingSource<?>) plugin);
     }
     return null;
   }
@@ -194,8 +193,9 @@ public abstract class AbstractSparkPreparer extends PipelinePhasePreparer {
 
   // only streaming pipeline can create streaming source
   @Nullable
-  protected SubmitterPlugin createStreamingSource(PipelinePluginInstantiator pluginInstantiator,
-                                                  StageSpec stageSpec) throws InstantiationException {
+  protected SubmitterPlugin createStreamingSource(StageSpec stageSpec, StreamingSource<?> streamingSource)
+    throws InstantiationException {
+
     return null;
   }
 }

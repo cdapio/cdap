@@ -34,6 +34,8 @@ import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.batch.PostAction;
 import io.cdap.cdap.etl.common.DefaultStageMetrics;
 
+import java.util.function.Function;
+
 /**
  * Creates pipeline plugins. Any call made on the plugins will be wrapped so that the context classloader is set
  * to the plugin's classloader, the stage name will be injected into log messages, and metrics on time spent will
@@ -78,6 +80,13 @@ public class PipelinePluginContext implements PluginContext {
   public <T> T newPluginInstance(String pluginId,
                                  MacroEvaluator evaluator) throws InstantiationException, InvalidMacroException {
     return (T) wrapPlugin(pluginId, delegate.newPluginInstance(pluginId, evaluator));
+  }
+
+  @Override
+  public <S, T> T newPluginInstance(String pluginId, MacroEvaluator evaluator, Function<S, T> pluginInitializer)
+    throws InstantiationException, InvalidMacroException {
+    //TODO: wrap pluginInitializer
+    return (T) wrapPlugin(pluginId, delegate.<S, T>newPluginInstance(pluginId, evaluator, pluginInitializer));
   }
 
   private Object wrapPlugin(String pluginId, Object plugin) {

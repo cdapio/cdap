@@ -37,7 +37,6 @@ import io.cdap.cdap.api.dataset.lib.PartitionKey;
 import io.cdap.cdap.api.dataset.lib.partitioned.PartitionKeyCodec;
 import io.cdap.cdap.api.lineage.field.LineageRecorder;
 import io.cdap.cdap.api.lineage.field.Operation;
-import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.messaging.MessageFetcher;
 import io.cdap.cdap.api.messaging.MessagePublisher;
 import io.cdap.cdap.api.messaging.MessagingContext;
@@ -51,8 +50,8 @@ import io.cdap.cdap.api.metadata.MetadataWriter;
 import io.cdap.cdap.api.metrics.Metrics;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.api.plugin.DelegatePluginContext;
 import io.cdap.cdap.api.plugin.PluginContext;
-import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.preview.DataTracer;
 import io.cdap.cdap.api.schedule.TriggeringScheduleInfo;
 import io.cdap.cdap.api.security.AccessException;
@@ -134,7 +133,7 @@ import javax.annotation.Nullable;
  */
 public abstract class AbstractContext extends AbstractServiceDiscoverer
   implements SecureStore, LineageDatasetContext, Transactional, SchedulableProgramContext, RuntimeContext,
-  PluginContext, MessagingContext, LineageRecorder, MetadataReader, MetadataWriter, Closeable {
+  DelegatePluginContext, MessagingContext, LineageRecorder, MetadataReader, MetadataWriter, Closeable {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractContext.class);
   private static final Gson GSON = TriggeringScheduleInfoAdapter.addTypeAdapters(new GsonBuilder())
@@ -458,28 +457,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   }
 
   @Override
-  public PluginProperties getPluginProperties(String pluginId) {
-    return pluginContext.getPluginProperties(pluginId);
-  }
-
-  @Override
-  public PluginProperties getPluginProperties(String pluginId, MacroEvaluator evaluator) {
-    return pluginContext.getPluginProperties(pluginId, evaluator);
-  }
-
-  @Override
-  public <T> Class<T> loadPluginClass(String pluginId) {
-    return pluginContext.loadPluginClass(pluginId);
-  }
-
-  @Override
-  public <T> T newPluginInstance(String pluginId) throws InstantiationException {
-    return pluginContext.newPluginInstance(pluginId);
-  }
-
-  @Override
-  public <T> T newPluginInstance(String pluginId, MacroEvaluator evaluator) throws InstantiationException {
-    return pluginContext.newPluginInstance(pluginId, evaluator);
+  public PluginContext getPluginContextDelegate() {
+    return pluginContext;
   }
 
   @Override

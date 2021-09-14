@@ -163,9 +163,8 @@ public class DStreamCollection<T> implements SparkCollection<T> {
     return aggregate(stageSpec, partitions, collector);
   }
 
-
   @Override
-  public <U> SparkCollection<U> compute(StageSpec stageSpec, SparkCompute<T, U> compute) throws Exception {
+  public <U> SparkCompute<T, U> initializeCompute(StageSpec stageSpec, SparkCompute<T, U> compute) throws Exception {
     SparkCompute<T, U> wrappedCompute =
       new DynamicSparkCompute<>(new DynamicDriverContext(stageSpec, sec, new NoopStageStatisticsCollector()), compute);
     Transactionals.execute(sec, new TxRunnable() {
@@ -178,7 +177,12 @@ public class DStreamCollection<T> implements SparkCollection<T> {
         wrappedCompute.initialize(sparkPluginContext);
       }
     }, Exception.class);
-    return wrap(stream.transform(new ComputeTransformFunction<>(sec, stageSpec, wrappedCompute)));
+    return wrappedCompute;
+  }
+
+  @Override
+  public <U> SparkCollection<U> compute(StageSpec stageSpec, SparkCompute<T, U> compute) throws Exception {
+    return wrap(stream.transform(new ComputeTransformFunction<>(sec, stageSpec, compute)));
   }
 
   @Override

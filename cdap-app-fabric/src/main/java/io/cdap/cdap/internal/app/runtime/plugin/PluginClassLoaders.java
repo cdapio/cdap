@@ -89,6 +89,7 @@ public final class PluginClassLoaders {
     Multimap<Plugin, String> result = HashMultimap.create();
     for (Map.Entry<String, Plugin> entry : plugins.entrySet()) {
       result.put(entry.getValue(), entry.getValue().getPluginClass().getClassName());
+      result.putAll(entry.getValue(), entry.getValue().getPluginClass().getRuntimeClassNames());
     }
     return result;
   }
