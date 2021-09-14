@@ -38,6 +38,8 @@ import io.cdap.cdap.api.metadata.Metadata;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataException;
 import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.api.plugin.DelegatePluginContext;
+import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.preview.DataTracer;
 import io.cdap.cdap.api.schedule.TriggeringScheduleInfo;
@@ -45,6 +47,7 @@ import io.cdap.cdap.api.security.store.SecureStoreData;
 import io.cdap.cdap.api.security.store.SecureStoreMetadata;
 import io.cdap.cdap.api.workflow.WorkflowInfo;
 import io.cdap.cdap.api.workflow.WorkflowToken;
+import io.cdap.cdap.internal.app.runtime.DefaultPluginContext;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
@@ -68,7 +71,8 @@ import javax.annotation.Nullable;
  * @param <KEY>   Type of output key.
  * @param <VALUE> Type of output value.
  */
-public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskContext<KEY, VALUE>, MapReduceContext {
+public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskContext<KEY, VALUE>, MapReduceContext,
+  DelegatePluginContext {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceLifecycleContext.class);
   private final BasicMapReduceTaskContext<KEY, VALUE> delegate;
@@ -152,28 +156,8 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   }
 
   @Override
-  public PluginProperties getPluginProperties(String pluginId) {
-    return delegate.getPluginProperties(pluginId);
-  }
-
-  @Override
-  public PluginProperties getPluginProperties(String pluginId, MacroEvaluator evaluator) {
-    return delegate.getPluginProperties(pluginId, evaluator);
-  }
-
-  @Override
-  public <T> Class<T> loadPluginClass(String pluginId) {
-    return delegate.loadPluginClass(pluginId);
-  }
-
-  @Override
-  public <T> T newPluginInstance(String pluginId) throws InstantiationException {
-    return delegate.newPluginInstance(pluginId);
-  }
-
-  @Override
-  public <T> T newPluginInstance(String pluginId, MacroEvaluator evaluator) throws InstantiationException {
-    return delegate.newPluginInstance(pluginId, evaluator);
+  public PluginContext getPluginContextDelegate() {
+    return delegate;
   }
 
   @Override

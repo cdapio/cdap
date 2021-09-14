@@ -24,6 +24,7 @@ import io.cdap.cdap.api.mapreduce.MapReduceContext;
 import io.cdap.cdap.api.metrics.Metrics;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.etl.api.SplitterTransform;
+import io.cdap.cdap.etl.api.SubmitterLifecycle;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.batch.BatchAggregator;
 import io.cdap.cdap.etl.api.batch.BatchAutoJoiner;
@@ -32,10 +33,10 @@ import io.cdap.cdap.etl.api.batch.BatchJoiner;
 import io.cdap.cdap.etl.api.batch.BatchReducibleAggregator;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
+import io.cdap.cdap.etl.api.batch.SparkPluginContext;
 import io.cdap.cdap.etl.batch.BatchPhaseSpec;
 import io.cdap.cdap.etl.batch.DefaultAggregatorContext;
 import io.cdap.cdap.etl.batch.DefaultJoinerContext;
-import io.cdap.cdap.etl.batch.PipelinePluginInstantiator;
 import io.cdap.cdap.etl.batch.conversion.WritableConversion;
 import io.cdap.cdap.etl.batch.conversion.WritableConversions;
 import io.cdap.cdap.etl.common.Constants;
@@ -118,7 +119,7 @@ public class MapReducePreparer extends PipelinePhasePreparer {
 
   @Nullable
   @Override
-  protected SubmitterPlugin create(PipelinePluginInstantiator pluginInstantiator, StageSpec stageSpec) {
+  protected SubmitterPlugin create(StageSpec stageSpec, SubmitterLifecycle<?> plugin) throws InstantiationException {
     return null;
   }
 

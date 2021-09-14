@@ -25,7 +25,6 @@ import io.cdap.cdap.etl.api.batch.BatchConfigurable;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
 import io.cdap.cdap.etl.api.streaming.StreamingSource;
-import io.cdap.cdap.etl.batch.PipelinePluginInstantiator;
 import io.cdap.cdap.etl.common.PipelineRuntime;
 import io.cdap.cdap.etl.common.submit.ContextProvider;
 import io.cdap.cdap.etl.common.submit.SubmitterPlugin;
@@ -63,10 +62,10 @@ public class SparkStreamingPreparer extends AbstractSparkPreparer {
   }
 
   @Override
-  protected SubmitterPlugin createStreamingSource(PipelinePluginInstantiator pluginInstantiator,
-                                                  StageSpec stageSpec) throws InstantiationException {
+  protected SubmitterPlugin createStreamingSource(StageSpec stageSpec, StreamingSource<?> streamingSource)
+    throws InstantiationException {
+
     String stageName = stageSpec.getName();
-    StreamingSource<?> streamingSource = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
     ContextProvider<DefaultStreamingSourceContext> contextProvider =
       dsContext -> new DefaultStreamingSourceContext(pipelineRuntime, stageSpec, dsContext, context);
     return new SubmitterPlugin<>(stageName, context, streamingSource, contextProvider,

@@ -80,6 +80,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -236,8 +237,29 @@ public class PluginInstantiator implements Closeable {
    * @throws InvalidPluginConfigException if the PluginConfig could not be created from the plugin properties
    */
   public <T> T newInstance(Plugin plugin, @Nullable MacroEvaluator macroEvaluator)
-    throws IOException, ClassNotFoundException, InvalidMacroException {
+    throws IOException, ClassNotFoundException {
     return newInstance(plugin, macroEvaluator, null);
+  }
+
+  /**
+   * Creates a new instance of the given plugin class with all property macros substituted if a MacroEvaluator is given.
+   * At runtime, plugin property fields that are macro-enabled and contain macro syntax will remain in the macroFields
+   * set in the plugin config.
+   * @param plugin {@link Plugin}
+   * @param macroEvaluator the MacroEvaluator that performs macro substitution
+   * @param <T> Type of the plugin
+   * @return a new plugin instance with macros substituted
+   * @throws IOException if failed to expand the plugin jar to create the plugin ClassLoader
+   * @throws ClassNotFoundException if failed to load the given plugin class
+   * @throws InvalidPluginConfigException if the PluginConfig could not be created from the plugin properties
+   */
+  public <S, T> T newRuntimeInstance(Plugin plugin, Function<S, T> pluginInitializer,
+                                     @Nullable MacroEvaluator macroEvaluator)
+    throws IOException, ClassNotFoundException, InvalidMacroException {
+    if (pluginInitializer == null) {
+      throw new IllegalArgumentException("Plugin initializer must not be null");
+    }
+    return newInstance(plugin, pluginInitializer, macroEvaluator, null);
   }
 
   /**
@@ -256,26 +278,60 @@ public class PluginInstantiator implements Closeable {
   public <T> T newInstance(
     Plugin plugin, @Nullable MacroEvaluator macroEvaluator,
     @Nullable MacroParserOptions options) throws IOException, ClassNotFoundException, InvalidMacroException {
+    return newInstance(plugin, null, macroEvaluator, options);
+  }
+
+  private <S, T> T newInstance(
+    Plugin plugin, @Nullable Function<S, T> pluginInitializer, @Nullable MacroEvaluator macroEvaluator,
+    @Nullable MacroParserOptions options) throws IOException, ClassNotFoundException, InvalidMacroException {
     ClassLoader classLoader = getPluginClassLoader(plugin);
     PluginClass pluginClass = plugin.getPluginClass();
     @SuppressWarnings("unchecked")
-    TypeToken<T> pluginType = TypeToken.of((Class<T>) classLoader.loadClass(pluginClass.getClassName()));
-
-    try {
-      String configFieldName = pluginClass.getConfigFieldName();
-      // Plugin doesn't have config. Simply return a new instance.
-      if (configFieldName == null) {
-        return instantiatorFactory.get(pluginType).create();
+    TypeToken<S> mainPluginType = TypeToken.of((Class<S>) classLoader.loadClass(pluginClass.getClassName()));
+    List<TypeToken<S>> pluginTypes;
+    if (pluginInitializer != null) {
+      pluginTypes = plugin.getPluginClass().getRuntimeClassNames().stream().map(
+        className -> {
+          try {
+            return TypeToken.of((Class<S>) classLoader.loadClass(className));
+          } catch (ClassNotFoundException | LinkageError e) {
+            LOG.debug("Skipping plugin runtime class {} due to {}", className, e);
+          } catch (Exception e) {
+            LOG.warn("Skipping plugin runtime class " + className, e);
+          }
+          return null;
+        }).filter(Objects::nonNull).collect(Collectors.toList());
+      if (pluginTypes.isEmpty()) {
+        LOG.warn("Can't find any loadable runtime implementation for {}, falling back to main class", plugin);
+        pluginTypes = Collections.singletonList(mainPluginType);
       }
+    } else {
+      pluginTypes = Collections.singletonList(mainPluginType);
+    }
 
+    String configFieldName = pluginClass.getConfigFieldName();
+    // Plugin doesn't have config. Simply return a new instance.
+    if (configFieldName == null) {
+      Function<TypeToken<S>, S> inst = pluginType -> instantiatorFactory.get(pluginType).create();
+      return newInstance(pluginTypes, inst, pluginInitializer);
+    }
+
+    // perform macro substitution if an evaluator is provided, collect fields with macros only at configure time
+    PluginProperties pluginProperties = substituteMacros(plugin, macroEvaluator, options);
+    Set<String> macroFields = (macroEvaluator == null) ? getFieldsWithMacro(plugin) : Collections.emptySet();
+
+    return newInstance(pluginTypes, pluginType ->
+      newInstanceWithConfig(plugin, pluginType, pluginProperties, macroFields), pluginInitializer);
+  }
+
+  private <T> T newInstanceWithConfig(Plugin plugin, TypeToken<T> pluginType,
+                                      PluginProperties pluginProperties, Set<String> macroFields) {
+    PluginClass pluginClass = plugin.getPluginClass();
+    try {
       // Create the config instance
-      Field field = Fields.findField(pluginType.getType(), configFieldName);
+      Field field = Fields.findField(pluginType.getType(), pluginClass.getConfigFieldName());
       TypeToken<?> configFieldType = pluginType.resolveType(field.getGenericType());
       Object config = instantiatorFactory.get(configFieldType).create();
-
-      // perform macro substitution if an evaluator is provided, collect fields with macros only at configure time
-      PluginProperties pluginProperties = substituteMacros(plugin, macroEvaluator, options);
-      Set<String> macroFields = (macroEvaluator == null) ? getFieldsWithMacro(plugin) : Collections.emptySet();
 
       PluginProperties rawProperties = plugin.getProperties();
       ConfigFieldSetter fieldSetter = new ConfigFieldSetter(pluginClass, pluginProperties, rawProperties, macroFields);
@@ -293,6 +349,32 @@ public class PluginInstantiator implements Closeable {
     } catch (IllegalAccessException e) {
       throw new InvalidPluginConfigException("Failed to set plugin config field: " + pluginClass, e);
     }
+  }
+
+  @Nullable
+  private <S, T> T newInstance(List<TypeToken<S>> pluginTypes, Function<TypeToken<S>, S> factory,
+                            @Nullable Function<S, T> pluginInitializer) {
+    Throwable throwable = null;
+    for (TypeToken<S> pluginType: pluginTypes) {
+      try {
+        S plugin = factory.apply(pluginType);
+        return pluginInitializer == null ? (T) plugin : pluginInitializer.apply(plugin);
+      } catch (Throwable e) {
+        if (e instanceof LinkageError || e instanceof ClassNotFoundException || e instanceof IllegalStateException) {
+          LOG.debug("Skipping plugin runtime class {} due to {}", pluginType, e);
+        } else {
+          LOG.warn("Skipping plugin runtime class " + pluginType, e);
+        }
+        if (throwable == null) {
+          throwable = e;
+        } else {
+          throwable.addSuppressed(e);
+        }
+      }
+    }
+    Throwables.propagate(throwable);
+    //Should never happen
+    throw new IllegalStateException("Should never happen", throwable);
   }
 
   public PluginProperties substituteMacros(Plugin plugin, @Nullable MacroEvaluator macroEvaluator,
@@ -378,7 +460,6 @@ public class PluginInstantiator implements Closeable {
     }
     return macroFields;
   }
-
 
   /**
    * Creates a new plugin instance and optionally setup the {@link PluginConfig} field.

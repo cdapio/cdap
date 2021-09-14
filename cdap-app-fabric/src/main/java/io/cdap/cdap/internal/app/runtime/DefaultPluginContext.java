@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.runtime;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.plugin.InvalidPluginConfigException;
 import io.cdap.cdap.api.plugin.Plugin;
@@ -28,6 +29,7 @@ import io.cdap.cdap.proto.id.ProgramId;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 
 /**
@@ -85,12 +87,18 @@ public class DefaultPluginContext implements PluginContext {
 
   @Override
   public <T> T newPluginInstance(String pluginId, @Nullable MacroEvaluator evaluator) throws InstantiationException {
+    return this.<T, T>newPluginInstance(pluginId, evaluator, t -> t);
+  }
+
+  @Override
+  public <S, T> T newPluginInstance(String pluginId, MacroEvaluator evaluator, Function<S, T> pluginInitializer)
+    throws InstantiationException, InvalidMacroException {
     try {
       Plugin plugin = getPlugin(pluginId);
       if (pluginInstantiator == null) {
         throw new UnsupportedOperationException("Plugin is not supported");
       }
-      return pluginInstantiator.newInstance(plugin, evaluator);
+      return pluginInstantiator.newRuntimeInstance(plugin, pluginInitializer, evaluator);
     } catch (InvalidPluginConfigException e) {
       throw e;
     } catch (ClassNotFoundException e) {

@@ -39,6 +39,7 @@ import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.data.DatasetInstantiationException;
 import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.messaging.MessageFetcher;
 import io.cdap.cdap.api.messaging.MessagePublisher;
@@ -791,6 +792,13 @@ public class HttpHandlerGeneratorTest {
 
     @Override
     public <T> T newPluginInstance(String pluginId, MacroEvaluator evaluator) throws InstantiationException {
+      return null;
+    }
+
+    @Override
+    public <S, T> T newPluginInstance(String pluginId, MacroEvaluator evaluator,
+                                      java.util.function.Function<S, T> pluginInitializer)
+      throws InstantiationException, InvalidMacroException {
       return null;
     }
 

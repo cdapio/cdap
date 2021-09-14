@@ -28,6 +28,7 @@ import io.cdap.cdap.api.common.RuntimeArguments;
 import io.cdap.cdap.api.data.DatasetInstantiationException;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.lineage.field.Operation;
+import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.messaging.MessageFetcher;
 import io.cdap.cdap.api.messaging.MessagePublisher;
@@ -36,6 +37,8 @@ import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataException;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.api.metrics.Metrics;
+import io.cdap.cdap.api.plugin.DelegatePluginContext;
+import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.preview.DataTracer;
 import io.cdap.cdap.api.schedule.TriggeringScheduleInfo;
@@ -63,12 +66,13 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 
 /**
  * A {@link SparkClientContext} only being used by a Spark program's {@link ProgramLifecycle#initialize}.
  */
-final class BasicSparkClientContext implements SparkClientContext {
+final class BasicSparkClientContext implements SparkClientContext, DelegatePluginContext {
 
   private final SparkRuntimeContext sparkRuntimeContext;
   private final Map<String, LocalizeResource> localizeResources;
@@ -294,28 +298,8 @@ final class BasicSparkClientContext implements SparkClientContext {
   }
 
   @Override
-  public PluginProperties getPluginProperties(String pluginId) {
-    return sparkRuntimeContext.getPluginProperties(pluginId);
-  }
-
-  @Override
-  public PluginProperties getPluginProperties(String pluginId, MacroEvaluator evaluator) {
-    return sparkRuntimeContext.getPluginProperties(pluginId, evaluator);
-  }
-
-  @Override
-  public <T> Class<T> loadPluginClass(String pluginId) {
-    return sparkRuntimeContext.loadPluginClass(pluginId);
-  }
-
-  @Override
-  public <T> T newPluginInstance(String pluginId) throws InstantiationException {
-    return sparkRuntimeContext.newPluginInstance(pluginId);
-  }
-
-  @Override
-  public <T> T newPluginInstance(String pluginId, MacroEvaluator evaluator) throws InstantiationException {
-    return sparkRuntimeContext.newPluginInstance(pluginId, evaluator);
+  public PluginContext getPluginContextDelegate() {
+    return sparkRuntimeContext;
   }
 
   @Override

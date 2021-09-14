@@ -19,10 +19,15 @@ package io.cdap.cdap.api.plugin;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.annotation.Plugin;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -35,6 +40,7 @@ public class PluginClass {
   private final String category;
   private final String description;
   private final String className;
+  private final List<String> runtimeClassNames;
   private final String configFieldName;
   private final Map<String, PluginPropertyField> properties;
   private final Requirements requirements;
@@ -46,6 +52,7 @@ public class PluginClass {
     this.description = "";
     this.category = null;
     this.className = null;
+    this.runtimeClassNames = null;
     this.configFieldName = null;
     this.properties = Collections.emptyMap();
     this.requirements = Requirements.EMPTY;
@@ -55,14 +62,16 @@ public class PluginClass {
     return new Builder();
   }
 
-  private PluginClass(String type, String name, @Nullable String category,
-                      String className, String configFieldName, Map<String, PluginPropertyField> properties,
+  private PluginClass(String type, String name, @Nullable String category, String className,
+                      @Nullable List<String> runtimeClassNames, String configFieldName, Map<String,
+                      PluginPropertyField> properties,
                       Requirements requirements, String description) {
     this.type = type;
     this.name = name;
     this.category = category;
     this.description = description;
     this.className = className;
+    this.runtimeClassNames = runtimeClassNames;
     this.configFieldName = configFieldName;
     this.properties = properties;
     this.requirements = requirements;
@@ -75,7 +84,8 @@ public class PluginClass {
   public PluginClass(String type, String name, String className,
                      @Nullable String configfieldName, Map<String, PluginPropertyField> properties,
                      Requirements requirements, String description) {
-    this(type, name, null, className, configfieldName, properties, requirements, description);
+    this(type, name, null, className, null,
+         configfieldName, properties, requirements, description);
   }
 
   /**
@@ -151,6 +161,13 @@ public class PluginClass {
   }
 
   /**
+   * @return an ordered list of runtime classes for this plugin.
+   */
+  public List<String> getRuntimeClassNames() {
+    //If runtimeClassNames is null, main class shouls be used in runtime
+    return runtimeClassNames != null ? runtimeClassNames : Collections.singletonList(className);
+  }
+  /**
    * Returns the name of the field that extends from {@link PluginConfig} in the plugin class.
    * If no such field, {@code null} will be returned.
    */
@@ -189,6 +206,7 @@ public class PluginClass {
       && Objects.equals(category, that.category)
       && Objects.equals(description, that.description)
       && Objects.equals(className, that.className)
+      && Objects.equals(runtimeClassNames, that.runtimeClassNames)
       && Objects.equals(configFieldName, that.configFieldName)
       && Objects.equals(properties, that.properties)
       && Objects.equals(requirements, that.requirements);
@@ -196,7 +214,8 @@ public class PluginClass {
 
   @Override
   public int hashCode() {
-    return Objects.hash(type, name, category, description, className, configFieldName, properties, requirements);
+    return Objects.hash(type, name, category, description, className, runtimeClassNames,
+                        configFieldName, properties, requirements);
   }
 
   @Override
@@ -207,6 +226,7 @@ public class PluginClass {
       ", category='" + category + '\'' +
       ", description='" + description + '\'' +
       ", className='" + className + '\'' +
+      ", runtimeClassNames=" + runtimeClassNames +
       ", configFieldName='" + configFieldName + '\'' +
       ", properties=" + properties +
       ", requirements=" + requirements +
@@ -217,17 +237,21 @@ public class PluginClass {
    * A builder to create {@link PluginClass} instance.
    */
   public static final class Builder {
+    public static final Comparator<Map.Entry<Integer, String>> ORDER_THEN_CLASSNAME_COMPARATOR =
+      Map.Entry.<Integer, String>comparingByKey().thenComparing(Map.Entry.comparingByValue());
     private String type;
     private String name;
     private String category;
     private String description;
     private String className;
+    private List<String> runtimeClassNames;
     private String configFieldName;
     private Map<String, PluginPropertyField> properties;
     private Requirements requirements;
 
     private Builder() {
       this.properties = new HashMap<>();
+      this.runtimeClassNames = new ArrayList<>();
       this.requirements = Requirements.EMPTY;
     }
 
@@ -268,6 +292,14 @@ public class PluginClass {
      */
     public Builder setClassName(String className) {
       this.className = className;
+      return this;
+    }
+
+    /**
+     * Add a classname to consider when instantiating plugin with specified order
+     */
+    public Builder setRuntimeClassNames(Collection<String> runtimeClassNames) {
+      this.runtimeClassNames = new ArrayList<>(runtimeClassNames);
       return this;
     }
 
@@ -323,7 +355,7 @@ public class PluginClass {
      * Creates a new instance of {@link PluginClass}.
      */
     public PluginClass build() {
-      PluginClass pluginClass = new PluginClass(type, name, category, className, configFieldName,
+      PluginClass pluginClass = new PluginClass(type, name, category, className, runtimeClassNames, configFieldName,
                                                 properties, requirements, description);
       pluginClass.validate();
       return pluginClass;

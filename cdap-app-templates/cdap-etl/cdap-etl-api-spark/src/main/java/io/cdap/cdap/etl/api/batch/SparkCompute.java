@@ -19,6 +19,7 @@ package io.cdap.cdap.etl.api.batch;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.etl.api.PipelineConfigurable;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
+import io.cdap.cdap.etl.api.StageLifecycle;
 import io.cdap.cdap.etl.api.SubmitterLifecycle;
 import org.apache.spark.api.java.JavaRDD;
 
@@ -32,7 +33,8 @@ import java.io.Serializable;
  */
 @Beta
 public abstract class SparkCompute<IN, OUT>
-  implements SubmitterLifecycle<SparkPluginContext>, PipelineConfigurable, Serializable {
+  implements SubmitterLifecycle<SparkPluginContext>, StageLifecycle<SparkExecutionPluginContext>, PipelineConfigurable,
+  Serializable {
   public static final String PLUGIN_TYPE = "sparkcompute";
 
   private static final long serialVersionUID = -8156450728774382658L;
@@ -65,7 +67,13 @@ public abstract class SparkCompute<IN, OUT>
    * @param context {@link SparkExecutionPluginContext} for this job
    * @throws Exception if there is an error initializing
    */
+  @Override
   public void initialize(SparkExecutionPluginContext context) throws Exception {
+    // no-op
+  }
+
+  @Override
+  public void destroy() {
     // no-op
   }
 

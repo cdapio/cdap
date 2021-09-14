@@ -177,6 +177,11 @@ public class SQLEngineCollection<T> implements SQLBackedCollection<T> {
   }
 
   @Override
+  public <U> SparkCompute<T, U> initializeCompute(StageSpec stageSpec, SparkCompute<T, U> compute) throws Exception {
+    return pull().initializeCompute(stageSpec, compute);
+  }
+
+  @Override
   public <U> SparkCollection<U> compute(StageSpec stageSpec, SparkCompute<T, U> compute) throws Exception {
     return pull().compute(stageSpec, compute);
   }

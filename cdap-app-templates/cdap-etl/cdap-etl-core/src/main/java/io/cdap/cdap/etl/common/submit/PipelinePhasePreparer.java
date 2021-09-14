@@ -24,6 +24,7 @@ import io.cdap.cdap.etl.api.AlertPublisher;
 import io.cdap.cdap.etl.api.ErrorTransform;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.SplitterTransform;
+import io.cdap.cdap.etl.api.SubmitterLifecycle;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.batch.BatchAggregator;
 import io.cdap.cdap.etl.api.batch.BatchAutoJoiner;
@@ -48,6 +49,7 @@ import io.cdap.cdap.etl.common.PipelinePhase;
 import io.cdap.cdap.etl.common.PipelineRuntime;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.validation.LoggingFailureCollector;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tephra.TransactionFailureException;
 
 import java.io.IOException;
@@ -110,8 +112,23 @@ public abstract class PipelinePhasePreparer {
         BatchConfigurable<BatchSinkContext> batchSink = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
         submitterPlugin = createSink(batchSink, stageSpec);
       } else if (Transform.PLUGIN_TYPE.equals(pluginType) || ErrorTransform.PLUGIN_TYPE.equals(pluginType)) {
-        Transform<?, ?> transform = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
-        submitterPlugin = createTransform(transform, stageSpec);
+        //TODO: Probably it's good to do prepareRun and collect any errors from it as well
+        //TODO: Should submit prepare be run on runtime implementation or design? It's running while a workflow
+        //If runtime - remember which runtime implementation agreed to prepareRun and use same implementation later
+        Object plugin = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
+        if (plugin instanceof Transform) {
+          Transform<?, ?> transform = (Transform<?, ?>) plugin;
+          submitterPlugin = createTransform(transform, stageSpec);
+        } else if (plugin instanceof SubmitterLifecycle) {
+          submitterPlugin = create(stageSpec, (SubmitterLifecycle<?>) plugin);
+          if (submitterPlugin == null) {
+            throw new IllegalStateException(String.format("%s stage '%s' is of an unsupported class '%s'.",
+                                                          StringUtils.capitalize(pluginType),
+                                                          stageSpec.getName(), plugin.getClass().getName()));
+          }
+        } else {
+          submitterPlugin = null;
+        }
       } else if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
         Object plugin = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
         if (plugin instanceof BatchAggregator) {
@@ -141,7 +158,7 @@ public abstract class PipelinePhasePreparer {
         SplitterTransform<?, ?> splitterTransform = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
         submitterPlugin = createSplitterTransform(splitterTransform, stageSpec);
       }  else {
-        submitterPlugin = create(pluginInstantiator, stageSpec);
+        submitterPlugin = create(stageSpec, pluginInstantiator.newPluginInstance(stageName, macroEvaluator));
       }
 
       if (submitterPlugin != null) {
@@ -202,7 +219,7 @@ public abstract class PipelinePhasePreparer {
 
   // for map reduce engine, spark related plugin cannot be created
   @Nullable
-  protected abstract SubmitterPlugin create(PipelinePluginInstantiator pluginInstantiator, StageSpec stageSpec)
+  protected abstract SubmitterPlugin create(StageSpec stageSpec, SubmitterLifecycle<?> plugin)
     throws InstantiationException;
 
   // for streaming pipeline, batch source cannot be created

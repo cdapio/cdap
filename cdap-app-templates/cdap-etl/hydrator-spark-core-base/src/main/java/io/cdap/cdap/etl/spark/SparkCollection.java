@@ -70,6 +70,8 @@ public interface SparkCollection<T> {
 
   <K, V> SparkPairCollection<K, V> flatMapToPair(PairFlatMapFunction<T, K, V> function);
 
+  <U> SparkCompute<T, U> initializeCompute(StageSpec stageSpec, SparkCompute<T, U> compute) throws Exception;
+
   <U> SparkCollection<U> compute(StageSpec stageSpec, SparkCompute<T, U> compute) throws Exception;
 
   Runnable createStoreTask(StageSpec stageSpec, PairFlatMapFunction<T, Object, Object> sinkFunction);
