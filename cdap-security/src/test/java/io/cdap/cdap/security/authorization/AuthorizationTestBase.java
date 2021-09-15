@@ -46,6 +46,8 @@ public class AuthorizationTestBase {
     CCONF.set(Constants.CFG_LOCAL_DATA_DIR, TEMPORARY_FOLDER.newFolder().getAbsolutePath());
     CCONF.setBoolean(Constants.Security.ENABLED, true);
     CCONF.setBoolean(Constants.Security.Authorization.ENABLED, true);
+    CCONF.setBoolean(Constants.Metrics.AUTHORIZATION_METRICS_ENABLED, true);
+    CCONF.setBoolean(Constants.Metrics.AUTHORIZATION_METRICS_TAGS_ENABLED, true);
     locationFactory = new LocalLocationFactory(TEMPORARY_FOLDER.newFolder());
   }
 }
