@@ -35,7 +35,7 @@ import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
-import io.cdap.cdap.internal.app.program.ProgramTypeMetricTag;
+import io.cdap.cdap.common.metrics.ProgramTypeMetricTag;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.ProgramRunId;

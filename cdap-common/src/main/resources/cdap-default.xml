@@ -4210,6 +4210,24 @@
     </description>
   </property>
 
+  <!-- Authorization Metrics -->
+
+  <property>
+    <name>security.authorization.metrics.enabled</name>
+    <value>false</value>
+    <description>
+      Whether to collect metrics for authorization checks.
+    </description>
+  </property>
+
+  <property>
+    <name>security.authorization.metrics.tags.enabled</name>
+    <value>false</value>
+    <description>
+      Whether to enable entity tagging for authorization metrics for metrics aggregations.
+    </description>
+  </property>
+
   <!-- UI Configuration -->
 
   <property>
