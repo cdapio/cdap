@@ -31,6 +31,7 @@ jobs:
           # Add more feature branches as needed
           for BRANCH in add-spark-interface-for-bq-pushdown-engine feature/bq_sink_pushdown feature/multiplugin
           do
+            echo Merging $BRANCH
             git cherry-pick $(git merge-base origin/develop origin/$BRANCH)..origin/$BRANCH
           done
           git push --force origin HEAD:feature/65-bq-poc
