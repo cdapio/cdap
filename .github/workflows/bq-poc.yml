@@ -32,6 +32,6 @@ jobs:
           for BRANCH in add-spark-interface-for-bq-pushdown-engine feature/bq_sink_pushdown feature/multiplugin
           do
             echo Merging $BRANCH
-            git cherry-pick --allow-empty $(git merge-base origin/develop origin/$BRANCH)..origin/$BRANCH
+            git cherry-pick --keep-redundant-commits  $(git merge-base origin/develop origin/$BRANCH)..origin/$BRANCH
           done
           git push --force origin HEAD:feature/65-bq-poc
