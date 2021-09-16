@@ -394,6 +394,54 @@ public class PipelineSpecGeneratorTest {
   }
 
   @Test
+  public void testSourceInPipelineMiddle() throws ValidationException {
+    /*
+     * source1 --> t1 --> source2 --> t2 --> sink
+     */
+    ETLBatchConfig config = ETLBatchConfig.builder()
+            .addStage(new ETLStage("source1", MOCK_SOURCE))
+            .addStage(new ETLStage("source2", MOCK_SOURCE))
+            .addStage(new ETLStage("sink", MOCK_SINK))
+            .addStage(new ETLStage("t1", MOCK_TRANSFORM_A))
+            .addStage(new ETLStage("t2", MOCK_TRANSFORM_B))
+            .addConnection("source1", "t1")
+            .addConnection("t1", "source2")
+            .addConnection("source2", "t2")
+            .addConnection("t2", "sink")
+            .build();
+    try {
+      specGenerator.generateSpec(config);
+      Assert.fail("Did not fail a pipeline with a source in the middle");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+
+    /*
+     * source1 --> condition --> source2 --> sink1
+     *                       --> t1 -> sink2
+     */
+    config = ETLBatchConfig.builder()
+            .addStage(new ETLStage("source1", MOCK_SOURCE))
+            .addStage(new ETLStage("source2", MOCK_SOURCE))
+            .addStage(new ETLStage("sink1", MOCK_SINK))
+            .addStage(new ETLStage("sink2", MOCK_SINK))
+            .addStage(new ETLStage("condition", MOCK_CONDITION))
+            .addStage(new ETLStage("t1", MOCK_TRANSFORM_A))
+            .addConnection("source1", "condition")
+            .addConnection("condition", "source2", true)
+            .addConnection("condition", "t1", false)
+            .addConnection("source2", "sink1")
+            .addConnection("t1", "sink2")
+            .build();
+    try {
+      specGenerator.generateSpec(config);
+      Assert.fail("Did not fail a pipeline with a source after a condition that had a source as input");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+
+  @Test
   public void testDifferentInputSchemasForAction() throws ValidationException {
     /*
      *           ---- transformA ---- sinkA ----

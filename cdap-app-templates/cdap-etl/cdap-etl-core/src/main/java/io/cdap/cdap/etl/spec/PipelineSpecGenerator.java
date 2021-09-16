@@ -642,6 +642,21 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       }
     }
 
+    // make sure sources are not in the middle of the pipeline after any non-condition/action stage
+    for (Map.Entry<String, ETLStage> entry : stages.entrySet()) {
+      String stageName = entry.getKey();
+      String stageType = entry.getValue().getPlugin().getType();
+      if (isSource(stageType)) {
+        Set<String> parents = dag.parentsOf(stageName);
+        Set<String> nonControlParents = Sets.difference(parents, controlStages);
+        if (nonControlParents.size() > 1) { // the stage's nonControlParents should only contain itself
+          throw new IllegalArgumentException(
+            String.format("Source stage '%s' is invalid. Sources can only be placed at the start of the pipeline.",
+                          stageName));
+        }
+      }
+    }
+
 
     validateConditionBranches(conditionStages, dag);
 
