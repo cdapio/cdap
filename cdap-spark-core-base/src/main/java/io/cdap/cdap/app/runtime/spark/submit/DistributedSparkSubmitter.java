@@ -81,6 +81,11 @@ public class DistributedSparkSubmitter extends AbstractSparkSubmitter {
     config.put("spark.yarn.security.tokens.hbase.enabled", "false");
     config.put("spark.yarn.security.tokens.hive.enabled", "false");
 
+    // Make Spark UI runs on random port. By default, Spark UI runs on port 4040 and it will do a sequential search
+    // of the next port if 4040 is already occupied. However, during the process, it unnecessarily logs big stacktrace
+    // as WARN, which pollute the logs a lot if there are concurrent Spark job running (e.g. a fork in Workflow).
+    config.put("spark.ui.port", "0");
+
     return config;
   }
 
