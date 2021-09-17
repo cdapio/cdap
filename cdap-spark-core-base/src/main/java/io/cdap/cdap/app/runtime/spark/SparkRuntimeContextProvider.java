@@ -64,6 +64,9 @@ import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
+import io.cdap.cdap.master.environment.MasterEnvironments;
+import io.cdap.cdap.master.spi.environment.MasterEnvironment;
+import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
@@ -110,7 +113,7 @@ public final class SparkRuntimeContextProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkRuntimeContextProvider.class);
 
-  // Constants defined for file names used for files localization done by the SparkRuntimeService.
+  // Constants defined for file names used for files localization done by the SparkRuntimeService/SparkContainerLauncher
   // They are needed for recreating the SparkRuntimeContext in this class.
   static final String CCONF_FILE_NAME = "cConf.xml";
   static final String HCONF_FILE_NAME = "hConf.xml";
@@ -120,6 +123,14 @@ public final class SparkRuntimeContextProvider {
   static final String EXECUTOR_CLASSLOADER_NAME = "org.apache.spark.repl.ExecutorClassLoader";
 
   private static volatile SparkRuntimeContext sparkRuntimeContext;
+  private static String masterEnvName;
+
+  /**
+   * Set the name of the master environment implementation, if one is being used.
+   */
+  public static void setMasterEnvName(String name) {
+    masterEnvName = name;
+  }
 
   /**
    * Returns the current {@link SparkRuntimeContext}.
@@ -184,6 +195,13 @@ public final class SparkRuntimeContextProvider {
 
       ClusterMode clusterMode = ProgramRunners.getClusterMode(programOptions);
 
+      if (masterEnvName != null) {
+        MasterEnvironment masterEnv = MasterEnvironments.create(cConf, masterEnvName);
+        MasterEnvironmentContext context = MasterEnvironments.createContext(cConf, hConf, masterEnv.getName());
+        masterEnv.initialize(context);
+        MasterEnvironments.setMasterEnvironment(masterEnv);
+      }
+
       // Create the program
       Program program = createProgram(cConf, contextConfig);
       ProgramRunId programRunId = program.getId().run(ProgramRunners.getRunId(programOptions));
@@ -204,7 +222,7 @@ public final class SparkRuntimeContextProvider {
 
       Deque<Service> coreServices = new LinkedList<>();
 
-      if (clusterMode == ClusterMode.ON_PREMISE) {
+      if (clusterMode == ClusterMode.ON_PREMISE && masterEnvName == null) {
         // Add ZK for discovery and Kafka
         coreServices.add(injector.getInstance(ZKClientService.class));
         // Add the Kafka client for logs collection

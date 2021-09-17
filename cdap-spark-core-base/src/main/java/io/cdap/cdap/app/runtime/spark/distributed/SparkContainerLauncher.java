@@ -42,6 +42,7 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * This class launches Spark YARN containers with classes loaded through the {@link SparkContainerClassLoader}.
@@ -69,7 +70,7 @@ public final class SparkContainerLauncher {
    * Every other argument will be passed into the delegate main method.
    */
   public static void main(String[] args) throws Exception {
-    launch(args[0], args.length > 1 ? Arrays.copyOfRange(args, 1, args.length) : new String[0], false);
+    launch(args[0], args.length > 1 ? Arrays.copyOfRange(args, 1, args.length) : new String[0], false, "k8s");
   }
 
   /**
@@ -79,7 +80,7 @@ public final class SparkContainerLauncher {
    * @param args arguments for the main class
    */
   public static void launch(String mainClassName, String[] args) throws Exception {
-    launch(mainClassName, args, true);
+    launch(mainClassName, args, true, null);
   }
 
   /**
@@ -88,8 +89,12 @@ public final class SparkContainerLauncher {
    * @param mainClassName the main class to launch
    * @param args arguments for the main class
    * @param removeMainClass whether to remove the jar for the main class from the classloader
+   * @param masterEnvName name of the MasterEnvironment used to submit the Spark job. This will be used to setup
+   *   bindings for service discovery and other CDAP capabilities. If null, the default Hadoop implementations will
+   *   be used.
    */
-  private static void launch(String mainClassName, String[] args, boolean removeMainClass) throws Exception {
+  public static void launch(String mainClassName, String[] args, boolean removeMainClass,
+                            @Nullable String masterEnvName) throws Exception {
     Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
     ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
     Set<URL> urls = ClassLoaders.getClassLoaderURLs(systemClassLoader, new LinkedHashSet<URL>());
@@ -139,8 +144,11 @@ public final class SparkContainerLauncher {
 
     // Get the SparkRuntimeContext to initialize all necessary services and logging context
     // Need to do it using the SparkRunnerClassLoader through reflection.
-    Object sparkRuntimeContext = classLoader.loadClass(SparkRuntimeContextProvider.class.getName())
-      .getMethod("get").invoke(null);
+    Class<?> sparkRuntimeContextProviderClass = classLoader.loadClass(SparkRuntimeContextProvider.class.getName());
+    if (masterEnvName != null) {
+      sparkRuntimeContextProviderClass.getMethod("setMasterEnvName", String.class).invoke(null, masterEnvName);
+    }
+    Object sparkRuntimeContext = sparkRuntimeContextProviderClass.getMethod("get").invoke(null);
 
     if (sparkRuntimeContext instanceof Closeable) {
       System.setSecurityManager(new SparkRuntimeSecurityManager((Closeable) sparkRuntimeContext));

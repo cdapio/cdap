@@ -31,7 +31,11 @@ import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1Container;
 import io.kubernetes.client.openapi.models.V1ContainerBuilder;
+import io.kubernetes.client.openapi.models.V1DownwardAPIVolumeFile;
+import io.kubernetes.client.openapi.models.V1DownwardAPIVolumeSource;
 import io.kubernetes.client.openapi.models.V1EnvVar;
+import io.kubernetes.client.openapi.models.V1ObjectFieldSelector;
+import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1OwnerReference;
 import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1PodSpec;
@@ -52,6 +56,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -115,12 +121,21 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private KubeTwillRunnerService twillRunner;
   private PodInfo podInfo;
   private Map<String, String> additionalSparkConfs;
+  private File podInfoDir;
+  private File podLabelsFile;
+  private File podNameFile;
+  private File podUidFile;
 
   @Override
   public void initialize(MasterEnvironmentContext context) throws IOException, ApiException {
     LOG.info("Initializing Kubernetes environment");
 
     Map<String, String> conf = context.getConfigurations();
+    podInfoDir = new File(conf.getOrDefault(POD_INFO_DIR, DEFAULT_POD_INFO_DIR));
+    podLabelsFile = new File(podInfoDir, conf.getOrDefault(POD_LABELS_FILE, DEFAULT_POD_LABELS_FILE));
+    podNameFile = new File(podInfoDir, conf.getOrDefault(POD_NAME_FILE, DEFAULT_POD_NAME_FILE));
+    podUidFile = new File(podInfoDir, conf.getOrDefault(POD_UID_FILE, DEFAULT_POD_UID_FILE));
+
     // We don't support scaling from inside pod. Scaling should be done via CDAP operator.
     // Currently we don't support more than one instance per system service, hence set it to "1".
     conf.put(MASTER_MAX_INSTANCES, "1");
@@ -224,7 +239,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
     // Create pod spec with cdap conf.
     V1Pod v1Pod = new V1Pod();
-    v1Pod.setSpec(getPodSpecWithCConf(podInfo));
+    v1Pod.setSpec(getSparkPodSpec(podInfo));
 
     // Create spark template file. This file gets created in driver pod. We do not delete it because pod will get
     // deleted at the end of job completion.
@@ -258,14 +273,12 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private PodInfo createPodInfo(Map<String, String> conf) throws IOException, ApiException {
     String namespace = conf.getOrDefault(NAMESPACE_KEY, DEFAULT_NAMESPACE);
 
-    File podInfoDir = new File(conf.getOrDefault(POD_INFO_DIR, DEFAULT_POD_INFO_DIR));
     if (!podInfoDir.isDirectory()) {
       throw new IllegalArgumentException(String.format("%s is not a directory.", podInfoDir.getAbsolutePath()));
     }
 
     // Load the pod labels from the configured path. It should be setup by the CDAP operator
     Map<String, String> podLabels = new HashMap<>();
-    File podLabelsFile = new File(podInfoDir, conf.getOrDefault(POD_LABELS_FILE, DEFAULT_POD_LABELS_FILE));
     try (BufferedReader reader = Files.newBufferedReader(podLabelsFile.toPath(), StandardCharsets.UTF_8)) {
       String line = reader.readLine();
       while (line != null) {
@@ -277,13 +290,11 @@ public class KubeMasterEnvironment implements MasterEnvironment {
       }
     }
 
-    File podNameFile = new File(podInfoDir, conf.getOrDefault(POD_NAME_FILE, DEFAULT_POD_NAME_FILE));
     String podName = Files.lines(podNameFile.toPath()).findFirst().orElse(null);
     if (Strings.isNullOrEmpty(podName)) {
       throw new IOException("Failed to get pod name from file " + podNameFile);
     }
 
-    File podUidFile = new File(podInfoDir, conf.getOrDefault(POD_UID_FILE, DEFAULT_POD_UID_FILE));
     String podUid = Files.lines(podUidFile.toPath()).findFirst().orElse(null);
     if (Strings.isNullOrEmpty(podUid)) {
       throw new IOException("Failed to get pod uid from file " + podUidFile);
@@ -292,7 +303,9 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     // Query pod information.
     CoreV1Api api = new CoreV1Api(Config.defaultClient());
     V1Pod pod = api.readNamespacedPod(podName, namespace, null, null, null);
-    List<V1OwnerReference> ownerReferences = pod.getMetadata().getOwnerReferences();
+    V1ObjectMeta podMeta = pod.getMetadata();
+    List<V1OwnerReference> ownerReferences = podMeta == null || podMeta.getOwnerReferences() == null ?
+      Collections.emptyList() : podMeta.getOwnerReferences();
 
     // Find the container that is having this CDAP process running inside (because a pod can have multiple containers).
     // If there is no such label, default to the first container.
@@ -350,36 +363,72 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     return master;
   }
 
-  private V1PodSpec getPodSpecWithCConf(PodInfo podInfo) {
-    List<V1Volume> volumes = podInfo.getVolumes();
-    List<V1VolumeMount> containerVolumeMounts = podInfo.getContainerVolumeMounts();
-    V1Volume cConfVolume = null;
-    V1VolumeMount cConfVolumeMount = null;
+  /**
+   * Create the pod spec to use as a template for all pods that Spark creates.
+   * The spec contains mounts for config files (cconf, logback, etc.) and for the
+   * podinfo that this class expects to see when {@link #createPodInfo} is called.
+   *
+   * @param podInfo podinfo for the pod that is submitting the Spark job
+   * @return pod template to use for all Spark pods
+   */
+  private V1PodSpec getSparkPodSpec(PodInfo podInfo) {
+    /*
+        define the podinfo volume. This uses downwardAPI, which tells k8s to store pod information in files:
 
-    for (V1VolumeMount containerVolumeMount : containerVolumeMounts) {
+        - downwardAPI:
+          defaultMode: 420
+          items:
+          - fieldRef:
+              fieldPath: metadata.labels
+            path: pod.labels.properties
+          - fieldRef:
+              fieldPath: metadata.name
+            path: pod.name
+          - fieldRef:
+              fieldPath: metadata.uid
+            path: pod.uid
+        name: podinfo
+     */
+    List<V1Volume> volumes = new ArrayList<>();
+    V1DownwardAPIVolumeFile labelsFile = new V1DownwardAPIVolumeFile()
+      .fieldRef(new V1ObjectFieldSelector().fieldPath("metadata.labels"))
+      .path(podLabelsFile.getName());
+    V1DownwardAPIVolumeFile nameFile = new V1DownwardAPIVolumeFile()
+      .fieldRef(new V1ObjectFieldSelector().fieldPath("metadata.name"))
+      .path(podNameFile.getName());
+    V1DownwardAPIVolumeFile uidFile = new V1DownwardAPIVolumeFile()
+      .fieldRef(new V1ObjectFieldSelector().fieldPath("metadata.uid"))
+      .path(podUidFile.getName());
+    V1DownwardAPIVolumeSource podinfoVolume = new V1DownwardAPIVolumeSource()
+      .defaultMode(420)
+      .items(Arrays.asList(labelsFile, nameFile, uidFile));
+    String podInfoVolumeName = "podinfo";
+    volumes.add(new V1Volume().downwardAPI(podinfoVolume).name(podInfoVolumeName));
+
+    List<V1VolumeMount> volumeMounts = new ArrayList<>();
+    volumeMounts.add(new V1VolumeMount().name(podInfoVolumeName).mountPath(podInfoDir.getAbsolutePath()));
+
+    // mount cdap conf config map
+    for (V1VolumeMount containerVolumeMount : podInfo.getContainerVolumeMounts()) {
       // Only mount cdap conf to spark driver pod.
       if (!CDAP_CONF_PATH.equals(containerVolumeMount.getMountPath())) {
         continue;
       }
-      for (V1Volume volume : volumes) {
+      for (V1Volume volume : podInfo.getVolumes()) {
         if (volume.getName().equals(containerVolumeMount.getName())) {
-          cConfVolume = volume;
-          cConfVolumeMount = containerVolumeMount;
+          volumes.add(volume);
+          volumeMounts.add(containerVolumeMount);
           break;
         }
       }
     }
 
-    V1PodSpecBuilder v1PodSpecBuilder = new V1PodSpecBuilder();
-    if (cConfVolume != null) {
-      v1PodSpecBuilder
-        .withVolumes(cConfVolume)
-        .withContainers(new V1ContainerBuilder()
-                          .withVolumeMounts(cConfVolumeMount)
-                          .build());
-    }
-
-    return v1PodSpecBuilder.build();
+    return new V1PodSpecBuilder()
+      .withVolumes(volumes)
+      .withContainers(new V1ContainerBuilder()
+                        .withVolumeMounts(volumeMounts)
+                        .build())
+      .build();
   }
 
   private Map<String, String> getSparkConfigurations(Map<String, String> cConf) {
