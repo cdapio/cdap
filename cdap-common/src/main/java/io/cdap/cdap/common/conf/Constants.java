@@ -382,6 +382,19 @@ public final class Constants {
   }
 
   /**
+   * Spark on k8s
+   */
+  public static final class Spark {
+    public static final class Driver {
+      public static final String ADDRESS = "driver.artifact.fetcher.bind.address";
+      public static final String PORT = "driver.artifact.fetcher.bind.port";
+      public static final String EXEC_THREADS = "driver.artifact.fetcher.exec.threads";
+      public static final String BOSS_THREADS = "driver.artifact.fetcher.boss.threads";
+      public static final String WORKER_THREADS = "driver.artifact.fetcher.worker.threads";
+    }
+  }
+
+  /**
    * Task worker.
    */
   public static final class TaskWorker {
