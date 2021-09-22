@@ -21,6 +21,7 @@ import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.batch.SparkSink;
+import io.cdap.cdap.etl.api.dl.DLPluginRuntimeImplementation;
 import io.cdap.cdap.etl.api.streaming.Windower;
 import io.cdap.cdap.etl.common.PhaseSpec;
 import io.cdap.cdap.etl.common.RecordInfo;
@@ -34,6 +35,7 @@ import org.apache.spark.api.java.function.PairFlatMapFunction;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 /**
@@ -70,9 +72,7 @@ public interface SparkCollection<T> {
 
   <K, V> SparkPairCollection<K, V> flatMapToPair(PairFlatMapFunction<T, K, V> function);
 
-  <U> SparkCompute<T, U> initializeCompute(StageSpec stageSpec, SparkCompute<T, U> compute) throws Exception;
-
-  <U> SparkCollection<U> compute(StageSpec stageSpec, SparkCompute<T, U> compute) throws Exception;
+  <U> SparkCollectionSupplier<U> initializeCompute(StageSpec stageSpec, SparkCompute<T, U> compute) throws Exception;
 
   Runnable createStoreTask(StageSpec stageSpec, PairFlatMapFunction<T, Object, Object> sinkFunction);
 
@@ -88,4 +88,6 @@ public interface SparkCollection<T> {
   SparkCollection<T> join(JoinRequest joinRequest);
 
   SparkCollection<T> join(JoinExpressionRequest joinRequest);
+
+  <U> SparkCollectionSupplier<U> initializeDLPlugin(StageSpec stageSpec, DLPluginRuntimeImplementation plugin);
 }

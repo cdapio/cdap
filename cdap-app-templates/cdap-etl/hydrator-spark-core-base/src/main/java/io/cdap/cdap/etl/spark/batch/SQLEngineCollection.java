@@ -20,6 +20,7 @@ import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.batch.SparkSink;
+import io.cdap.cdap.etl.api.dl.DLPluginRuntimeImplementation;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngineOutput;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDataset;
 import io.cdap.cdap.etl.api.streaming.Windower;
@@ -27,8 +28,10 @@ import io.cdap.cdap.etl.common.PhaseSpec;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import io.cdap.cdap.etl.engine.SQLEngineJob;
+import io.cdap.cdap.etl.engine.SQLEngineJobSupplier;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.SparkCollection;
+import io.cdap.cdap.etl.spark.SparkCollectionSupplier;
 import io.cdap.cdap.etl.spark.SparkPairCollection;
 import io.cdap.cdap.etl.spark.function.FunctionCache;
 import io.cdap.cdap.etl.spark.join.JoinExpressionRequest;
@@ -58,7 +61,7 @@ public class SQLEngineCollection<T> implements SQLBackedCollection<T> {
   private final SparkBatchSinkFactory sinkFactory;
   private final FunctionCache.Factory functionCacheFactory;
   private final String datasetName;
-  private final BatchSQLEngineAdapter<T> adapter;
+  private final BatchSQLEngineAdapter adapter;
   private final SQLEngineJob<SQLDataset> job;
   private SparkCollection<T> localCollection;
 
@@ -178,7 +181,8 @@ public class SQLEngineCollection<T> implements SQLBackedCollection<T> {
   }
 
   @Override
-  public <U> SparkCompute<T, U> initializeCompute(StageSpec stageSpec, SparkCompute<T, U> compute) throws Exception {
+  public <U> SparkCollectionSupplier<U> initializeCompute(StageSpec stageSpec, SparkCompute<T, U> compute)
+    throws Exception {
     return pull().initializeCompute(stageSpec, compute);
   }
 
@@ -236,5 +240,33 @@ public class SQLEngineCollection<T> implements SQLBackedCollection<T> {
     SQLEngineJob<SQLDataset> job = adapter.join(joinStageName, joinRequest.getJoinDefinition());
     return new SQLEngineCollection<>(sec, functionCacheFactory, jsc, sqlContext, datasetContext, sinkFactory,
                                      joinStageName, adapter, job);
+  }
+
+  @Override
+  public SparkCollectionSupplier<T> initializeDLPlugin(StageSpec stageSpec, DLPluginRuntimeImplementation plugin) {
+    SQLEngineJobSupplier<SQLDataset> supplier = adapter.initializeDLPlugin(datasetName, stageSpec, plugin);
+    if (supplier != null) {
+      return () -> runDLTranform(supplier, stageSpec, plugin);
+    }
+    return pull().initializeDLPlugin(stageSpec, plugin);
+  }
+
+  @Override
+  public SparkCollection runDLTranform(SQLEngineJobSupplier<SQLDataset> supplier,
+                                       StageSpec stageSpec,
+                                       DLPluginRuntimeImplementation plugin) {
+    SQLEngineJob<SQLDataset> job = supplier.start();
+    return new SQLEngineCollection<>(sec, functionCacheFactory, jsc, sqlContext, datasetContext, sinkFactory,
+                                     stageSpec.getName(), adapter, job);
+  }
+
+  @Override
+  public BatchSQLEngineAdapter getAdapter() {
+    return adapter;
+  }
+
+  @Override
+  public String getDatasetName() {
+    return datasetName;
   }
 }

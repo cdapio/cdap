@@ -42,6 +42,7 @@ import io.cdap.cdap.etl.api.batch.BatchReducibleAggregator;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.batch.SparkSink;
+import io.cdap.cdap.etl.api.dl.DLPluginRuntimeImplementation;
 import io.cdap.cdap.etl.api.join.AutoJoiner;
 import io.cdap.cdap.etl.api.join.AutoJoinerContext;
 import io.cdap.cdap.etl.api.join.JoinCondition;
@@ -272,8 +273,8 @@ public abstract class SparkPipelineRunner {
         SparkCollection<Object> currentStageData = stageData;
         Object plugin = pluginContext.newPluginInstance(stageName, macroEvaluator,
                                                         p -> initializePlugin(stageSpec, currentStageData, p));
-        if (plugin instanceof SparkCompute) {
-          SparkCollection<Object> computed = stageData.compute(stageSpec, (SparkCompute<Object, Object>) plugin);
+        if (plugin instanceof SparkCollectionSupplier) {
+          SparkCollection<Object> computed = ((SparkCollectionSupplier<Object>) plugin).compute();
           addEmitted(emittedBuilder, pipelinePhase, stageSpec, mapToRecordInfoCollection(stageName, computed),
                      groupedDag, branchers, shufflers, false, false);
         } else {
@@ -416,10 +417,12 @@ public abstract class SparkPipelineRunner {
   private Object initializePlugin(StageSpec stageSpec, SparkCollection<Object> stageData, Object plugin) {
     if (plugin instanceof SparkCompute) {
       try {
-        return stageData.initializeCompute(stageSpec, (SparkCompute<Object, Object>)plugin);
+        return stageData.initializeCompute(stageSpec, (SparkCompute<Object, Object>) plugin);
       } catch (Exception e) {
         throw Throwables.propagate(e);
       }
+    } else if (plugin instanceof DLPluginRuntimeImplementation) {
+      return stageData.initializeDLPlugin(stageSpec, (DLPluginRuntimeImplementation) plugin);
     } else {
       return plugin;
     }

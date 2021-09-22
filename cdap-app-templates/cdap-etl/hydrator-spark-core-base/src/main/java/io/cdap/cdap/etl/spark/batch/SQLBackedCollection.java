@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.etl.spark.batch;
 
+import io.cdap.cdap.etl.api.dl.DLPluginRuntimeImplementation;
+import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDataset;
+import io.cdap.cdap.etl.engine.SQLEngineJobSupplier;
+import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.SparkCollection;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
@@ -27,4 +31,11 @@ import org.apache.spark.api.java.function.PairFlatMapFunction;
  */
 public interface SQLBackedCollection<T> extends SparkCollection<T> {
   boolean tryStoreDirect(StageSpec stageSpec);
+  SparkCollection runDLTranform(SQLEngineJobSupplier<SQLDataset> supplier,
+                                StageSpec stageSpec,
+                                DLPluginRuntimeImplementation plugin);
+
+  BatchSQLEngineAdapter getAdapter();
+
+  String getDatasetName();
 }
