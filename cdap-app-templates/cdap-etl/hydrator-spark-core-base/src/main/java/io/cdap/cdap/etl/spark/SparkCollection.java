@@ -16,11 +16,9 @@
 
 package io.cdap.cdap.etl.spark;
 
-import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.cdap.api.dataset.lib.KeyValue;
-import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.batch.SparkSink;
+import io.cdap.cdap.etl.api.relational.RelationalTransform;
 import io.cdap.cdap.etl.api.streaming.Windower;
 import io.cdap.cdap.etl.common.PhaseSpec;
 import io.cdap.cdap.etl.common.RecordInfo;
@@ -33,6 +31,7 @@ import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -57,6 +56,11 @@ public interface SparkCollection<T> {
   SparkCollection<RecordInfo<Object>> transform(StageSpec stageSpec, StageStatisticsCollector collector);
 
   SparkCollection<RecordInfo<Object>> multiOutputTransform(StageSpec stageSpec, StageStatisticsCollector collector);
+
+  default <U> Optional<SparkCollection<U>> tryRelationalTransform(StageSpec stageSpec,
+                                                                  RelationalTransform transform) {
+    return Optional.empty();
+  }
 
   <U> SparkCollection<U> map(Function<T, U> function);
 

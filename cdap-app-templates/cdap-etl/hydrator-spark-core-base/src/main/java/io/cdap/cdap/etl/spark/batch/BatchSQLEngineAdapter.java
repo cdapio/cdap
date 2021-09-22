@@ -31,14 +31,21 @@ import io.cdap.cdap.etl.api.engine.sql.request.SQLJoinDefinition;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLJoinRequest;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPullRequest;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPushRequest;
+import io.cdap.cdap.etl.api.engine.sql.request.SQLRelationDefinition;
+import io.cdap.cdap.etl.api.engine.sql.request.SQLTransformDefinition;
+import io.cdap.cdap.etl.api.engine.sql.request.SQLTransformRequest;
 import io.cdap.cdap.etl.api.join.JoinDefinition;
 import io.cdap.cdap.etl.api.join.JoinStage;
+import io.cdap.cdap.etl.api.relational.Engine;
+import io.cdap.cdap.etl.api.relational.Relation;
+import io.cdap.cdap.etl.api.relational.RelationalTransform;
 import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.DefaultStageMetrics;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import io.cdap.cdap.etl.engine.SQLEngineJob;
 import io.cdap.cdap.etl.engine.SQLEngineJobKey;
 import io.cdap.cdap.etl.engine.SQLEngineJobType;
+import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.SparkCollection;
 import io.cdap.cdap.etl.spark.function.TransformFromPairFunction;
 import io.cdap.cdap.etl.spark.function.TransformToPairFunction;
@@ -52,24 +59,27 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
  * Adapter used to orchestrate interaction between the Pipeline Runner and the SQL Engine.
- *
- * @param <T> type for records supported by this BatchSQLEngineAdapter.
  */
-public class BatchSQLEngineAdapter<T> implements Closeable {
+public class BatchSQLEngineAdapter implements Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(BatchSQLEngineAdapter.class);
 
   private final JavaSparkExecutionContext sec;
@@ -178,7 +188,7 @@ public class BatchSQLEngineAdapter<T> implements Closeable {
    * @return Job representing this pull operation.
    */
   @SuppressWarnings("unchecked,raw")
-  public SQLEngineJob<JavaRDD<T>> pull(SQLEngineJob<SQLDataset> job,
+  public <T> SQLEngineJob<JavaRDD<T>> pull(SQLEngineJob<SQLDataset> job,
                                        JavaSparkContext jsc) {
     //If this job already exists, return the existing instance.
     SQLEngineJobKey jobKey = new SQLEngineJobKey(job.getDatasetName(), SQLEngineJobType.PULL);
@@ -217,7 +227,7 @@ public class BatchSQLEngineAdapter<T> implements Closeable {
    * @throws SQLEngineException if the pull process fails.
    */
   @SuppressWarnings("unchecked,raw")
-  private JavaRDD<T> pullInternal(SQLDataset dataset,
+  private <T> JavaRDD<T> pullInternal(SQLDataset dataset,
                                   JavaSparkContext jsc) throws SQLEngineException {
     // Create pull operation for this dataset and wait until completion
     SQLPullRequest pullRequest = new SQLPullRequest(dataset);
@@ -270,6 +280,24 @@ public class BatchSQLEngineAdapter<T> implements Closeable {
   }
 
   /**
+   *
+   * @return if underlying engine support relational transform
+   * @see SQLEngine#supportsRelationalTranform
+   */
+  public boolean supportsRelationalTranform() {
+    return sqlEngine.supportsRelationalTranform();
+  }
+
+  /**
+   *
+   * @return relational engine provided by SQL Engine
+   * @see SQLEngine#getRelationalEngine()
+   */
+  public Engine getSQLRelationalEngine() {
+    return sqlEngine.getRelationalEngine();
+  }
+
+  /**
    * Executes a Join operation in the SQL engine
    *
    * @param datasetName    the dataset name to use to store the result of the join operation
@@ -279,17 +307,7 @@ public class BatchSQLEngineAdapter<T> implements Closeable {
   @SuppressWarnings("unchecked,raw")
   public SQLEngineJob<SQLDataset> join(String datasetName,
                                        JoinDefinition joinDefinition) {
-    //If this job already exists, return the existing instance.
-    SQLEngineJobKey jobKey = new SQLEngineJobKey(datasetName, SQLEngineJobType.EXECUTE);
-    if (jobs.containsKey(jobKey)) {
-      return (SQLEngineJob<SQLDataset>) jobs.get(jobKey);
-    }
-
-    CompletableFuture<SQLDataset> future = new CompletableFuture<>();
-
-    Runnable joinTask = () -> {
-      try {
-        LOG.debug("Starting join for dataset '{}'", datasetName);
+    return runJob(datasetName, () -> {
         Collection<SQLDataset> inputDatasets = getJoinInputDatasets(joinDefinition);
         SQLJoinRequest joinRequest = new SQLJoinRequest(datasetName, joinDefinition, inputDatasets);
 
@@ -297,8 +315,31 @@ public class BatchSQLEngineAdapter<T> implements Closeable {
           throw new IllegalArgumentException("Unable to execute this join in the SQL engine");
         }
 
-        joinInternal(future, joinRequest);
-        LOG.debug("Completed join for dataset '{}'", datasetName);
+        return joinInternal(joinRequest);
+      });
+  }
+
+  /**
+   * Kicks off a {@link SQLEngineJobType.EXECUTE} job trat will produce a dataset
+   * @param datasetName dataset name
+   * @param jobFunction actual runnable that will do the work
+   * @param <T> type of result
+   * @return job that produces jobFunction result when finished
+   */
+  private <T> SQLEngineJob<T> runJob(String datasetName, Supplier<T> jobFunction) {
+    //If this job already exists, return the existing instance.
+    SQLEngineJobKey jobKey = new SQLEngineJobKey(datasetName, SQLEngineJobType.EXECUTE);
+    if (jobs.containsKey(jobKey)) {
+      return (SQLEngineJob<T>) jobs.get(jobKey);
+    }
+
+    CompletableFuture<T> future = new CompletableFuture<>();
+
+    Runnable joinTask = () -> {
+      try {
+        LOG.debug("Starting job for dataset '{}'", datasetName);
+        future.complete(jobFunction.get());
+        LOG.debug("Completed job for dataset '{}'", datasetName);
       } catch (Throwable t) {
         future.completeExceptionally(t);
       }
@@ -306,7 +347,7 @@ public class BatchSQLEngineAdapter<T> implements Closeable {
 
     executorService.submit(joinTask);
 
-    SQLEngineJob<SQLDataset> job = new SQLEngineJob<>(jobKey, future);
+    SQLEngineJob<T> job = new SQLEngineJob<>(jobKey, future);
     jobs.put(jobKey, job);
 
     return job;
@@ -323,35 +364,38 @@ public class BatchSQLEngineAdapter<T> implements Closeable {
     List<SQLDataset> datasets = new ArrayList<>(joinDefinition.getStages().size());
 
     for (JoinStage stage : joinDefinition.getStages()) {
-      // Wait for the previous push or execute jobs to complete
-      SQLEngineJobKey pushJobKey = new SQLEngineJobKey(stage.getStageName(), SQLEngineJobType.PUSH);
-      SQLEngineJobKey execJobKey = new SQLEngineJobKey(stage.getStageName(), SQLEngineJobType.EXECUTE);
-
-      if (jobs.containsKey(pushJobKey)) {
-        SQLEngineJob<SQLDataset> job = (SQLEngineJob<SQLDataset>) jobs.get(pushJobKey);
-        waitForJobAndHandleExceptionInternal(job);
-        datasets.add(job.waitFor());
-      } else if (jobs.containsKey(execJobKey)) {
-        SQLEngineJob<SQLDataset> job = (SQLEngineJob<SQLDataset>) jobs.get(execJobKey);
-        waitForJobAndHandleExceptionInternal(job);
-        datasets.add(job.waitFor());
-      } else {
-        throw new IllegalArgumentException("No SQL Engine job exists for stage " + stage.getStageName());
-      }
+      datasets.add(getDatasetForStage(stage.getStageName()));
     }
 
     return datasets;
   }
 
+  private SQLDataset getDatasetForStage(String stageName) {
+    // Wait for the previous push or execute jobs to complete
+    SQLEngineJobKey pushJobKey = new SQLEngineJobKey(stageName, SQLEngineJobType.PUSH);
+    SQLEngineJobKey execJobKey = new SQLEngineJobKey(stageName, SQLEngineJobType.EXECUTE);
+
+    if (jobs.containsKey(pushJobKey)) {
+      SQLEngineJob<SQLDataset> job = (SQLEngineJob<SQLDataset>) jobs.get(pushJobKey);
+      waitForJobAndHandleExceptionInternal(job);
+      return job.waitFor();
+    } else if (jobs.containsKey(execJobKey)) {
+      SQLEngineJob<SQLDataset> job = (SQLEngineJob<SQLDataset>) jobs.get(execJobKey);
+      waitForJobAndHandleExceptionInternal(job);
+      return job.waitFor();
+    } else {
+      throw new IllegalArgumentException("No SQL Engine job exists for stage " + stageName);
+    }
+  }
+
   /**
    * Join implementation. This method has blocking calls and should be executed in a separate thread.
    *
-   * @param future the future instance to use to return results.
    * @param joinRequest the Join Request
    * @throws SQLEngineException   if any of the preceding jobs fails.
+   * @return
    */
-  private void joinInternal(CompletableFuture<SQLDataset> future,
-                            SQLJoinRequest joinRequest)
+  private SQLDataset joinInternal(SQLJoinRequest joinRequest)
     throws SQLEngineException {
 
     String datasetName = joinRequest.getDatasetName();
@@ -368,7 +412,7 @@ public class BatchSQLEngineAdapter<T> implements Closeable {
 
     // Count output rows and complete future.
     countRecordsOut(joinDataset, statisticsCollector, stageMetrics);
-    future.complete(joinDataset);
+    return joinDataset;
   }
 
   /**
@@ -523,5 +567,56 @@ public class BatchSQLEngineAdapter<T> implements Closeable {
                                           String metricName,
                                           long numRecords) {
     stageMetrics.countLong(metricName, numRecords);
+  }
+
+  /**
+   * This method is called when engine is present and is willing to try performing a relational transform.
+   * @param stageSpec stage specification
+   * @param transform transform plugin
+   * @param input input collections
+   * @return resulting collection or empty optional if tranform can't be done with this engine
+   */
+  public Optional<SQLEngineJob<SQLDataset>> tryRelationalTransform(StageSpec stageSpec,
+                                                          RelationalTransform transform,
+                                                          Map<String, SparkCollection<Object>> input) {
+    Map<String, Relation> inputRelations = input.entrySet().stream().collect(Collectors.toMap(
+      Map.Entry::getKey,
+      e -> sqlEngine.getRelation(new SQLRelationDefinition(e.getKey(), stageSpec.getInputSchemas().get(e.getKey())))
+    ));
+    BasicRelationalTransformContext pluginContext = new BasicRelationalTransformContext(
+      getSQLRelationalEngine(),
+      inputRelations);
+    if (!transform.transform(pluginContext)) {
+      //Plugin was not able to do relational tranform with this engine
+      return Optional.empty();
+    }
+    if (pluginContext.getOutputRelation() == null) {
+      //Plugin said that tranformation was success but failed to set output
+      throw new IllegalStateException("Plugin " + transform + " did not produce a relational output");
+    }
+    if (!pluginContext.getOutputRelation().isValid()) {
+      //An output is set to invalid relation, probably some of transforms are not supported by an engine
+      return Optional.empty();
+    }
+    //Validate with engine
+    SQLTransformDefinition transformDefinition = new SQLTransformDefinition(
+      stageSpec.getName(), pluginContext.getOutputRelation(),
+      stageSpec.getOutputSchema(),
+      Collections.emptyMap(),
+      Collections.emptyMap()
+    );
+    if (!sqlEngine.canTransform(transformDefinition)) {
+      return Optional.empty();
+    }
+
+    return Optional.of(runJob(stageSpec.getName(), () -> {
+      Map<String, SQLDataset> inputDatasets = input.keySet().stream().collect(Collectors.toMap(
+        Function.identity(),
+        name -> getDatasetForStage(name)
+      ));
+      SQLTransformRequest sqlContext = new SQLTransformRequest(
+        inputDatasets, stageSpec.getName(), pluginContext.getOutputRelation(), stageSpec.getOutputSchema());
+      return sqlEngine.transform(sqlContext);
+    }));
   }
 }

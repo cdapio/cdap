@@ -17,6 +17,7 @@
 package io.cdap.cdap.etl.spark.batch;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -49,6 +50,7 @@ import io.cdap.cdap.etl.engine.SQLEngineJob;
 import io.cdap.cdap.etl.engine.SQLEngineUtils;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.SparkCollection;
+import io.cdap.cdap.etl.spark.SparkCollectionRelationalEngine;
 import io.cdap.cdap.etl.spark.SparkPairCollection;
 import io.cdap.cdap.etl.spark.SparkPipelineRunner;
 import io.cdap.cdap.etl.spark.SparkStageStatisticsCollector;
@@ -69,6 +71,7 @@ import java.io.BufferedReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -211,9 +214,9 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
                                                                     sec.getNamespace());
           Object instance = pluginInstantiator.newPluginInstance(sqlEngineStage,
                                                                  macroEvaluator);
-          sqlEngineAdapter = new BatchSQLEngineAdapter<Object>((SQLEngine<?, ?, ?, ?>) instance,
+          sqlEngineAdapter = new BatchSQLEngineAdapter((SQLEngine<?, ?, ?, ?>) instance,
                                                                sec,
-                                                               collectors);
+                                                       collectors);
           sqlEngineAdapter.prepareRun();
         } catch (InstantiationException ie) {
           LOG.error("Could not create plugin instance for SQLEngine class", ie);
@@ -328,5 +331,26 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
 
     // Execute in the SQL engine if there are no broadcast stages for this join.
     return !containsBroadcastStage;
+  }
+
+  /**
+   * If SQL Engine is present, supports relational transform and current stage data is already
+   * provided by SQL engine, adds SQL Engine implementation of relational engine
+   * @param stageData
+   * @return
+   */
+  @Override
+  protected Iterable<SparkCollectionRelationalEngine> getRelationalEngines(SparkCollection<Object> stageData) {
+    if (sqlEngineAdapter == null || !sqlEngineAdapter.supportsRelationalTranform()
+      || !(stageData instanceof SQLBackedCollection)) {
+      //Relational transform on SQL engine is not supported
+      return super.getRelationalEngines(stageData);
+    }
+    SQLEngineRelationalEngine relationalEngine = new SQLEngineRelationalEngine(
+      sec, functionCacheFactory, jsc, new SQLContext(jsc), datasetContext, sinkFactory, sqlEngineAdapter);
+    return Iterables.concat(
+      Collections.singletonList(relationalEngine),
+      super.getRelationalEngines(stageData)
+    );
   }
 }
