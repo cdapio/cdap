@@ -21,12 +21,14 @@ import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.api.spark.sql.DataFrames;
+import io.cdap.cdap.etl.api.dl.DLPluginRuntimeImplementation;
 import io.cdap.cdap.etl.api.join.JoinField;
 import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.SparkCollection;
+import io.cdap.cdap.etl.spark.SparkCollectionSupplier;
 import io.cdap.cdap.etl.spark.function.CountingFunction;
 import io.cdap.cdap.etl.spark.function.DatasetAggregationAccumulator;
 import io.cdap.cdap.etl.spark.function.DatasetAggregationFinalizeFunction;
@@ -491,5 +493,11 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
     Column[] colArray = new Column[listOfListOfColumns.get(index).size()];
     Column coalesedCol = coalesce(listOfListOfColumns.get(index).toArray(colArray));
     return coalesedCol;
+  }
+
+  @Override
+  public SparkCollectionSupplier<T> initializeDLPlugin(StageSpec stageSpec, DLPluginRuntimeImplementation plugin) {
+    //TODO: Use Spark SQL engine
+    throw new IllegalStateException("DL plugin is not supported for RDD");
   }
 }

@@ -17,11 +17,16 @@
 package io.cdap.cdap.etl.spark.batch;
 
 import com.google.common.base.Objects;
+import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.metrics.Metrics;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.etl.api.StageMetrics;
+import io.cdap.cdap.etl.api.dl.DLContext;
+import io.cdap.cdap.etl.api.dl.DLDataSet;
+import io.cdap.cdap.etl.api.dl.DLPluginContext;
+import io.cdap.cdap.etl.api.dl.DLPluginRuntimeImplementation;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngine;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngineException;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDataset;
@@ -31,15 +36,21 @@ import io.cdap.cdap.etl.api.engine.sql.request.SQLJoinDefinition;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLJoinRequest;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPullRequest;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPushRequest;
+import io.cdap.cdap.etl.api.engine.sql.request.SQLTransformRequest;
 import io.cdap.cdap.etl.api.join.JoinDefinition;
 import io.cdap.cdap.etl.api.join.JoinStage;
 import io.cdap.cdap.etl.common.Constants;
+import io.cdap.cdap.etl.common.DatasetContextLookupProvider;
 import io.cdap.cdap.etl.common.DefaultStageMetrics;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
+import io.cdap.cdap.etl.dl.DefaultDLPluginContext;
 import io.cdap.cdap.etl.engine.SQLEngineJob;
 import io.cdap.cdap.etl.engine.SQLEngineJobKey;
+import io.cdap.cdap.etl.engine.SQLEngineJobSupplier;
 import io.cdap.cdap.etl.engine.SQLEngineJobType;
+import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.SparkCollection;
+import io.cdap.cdap.etl.spark.SparkPipelineRuntime;
 import io.cdap.cdap.etl.spark.function.TransformFromPairFunction;
 import io.cdap.cdap.etl.spark.function.TransformToPairFunction;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -62,19 +73,20 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
  * Adapter used to orchestrate interaction between the Pipeline Runner and the SQL Engine.
- *
- * @param <T> type for records supported by this BatchSQLEngineAdapter.
  */
-public class BatchSQLEngineAdapter<T> implements Closeable {
+public class BatchSQLEngineAdapter implements Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(BatchSQLEngineAdapter.class);
 
   private final JavaSparkExecutionContext sec;
   private final SQLEngine<?, ?, ?, ?> sqlEngine;
   private final Metrics metrics;
+  private final DatasetContext datasetContext;
   private final Map<String, StageStatisticsCollector> statsCollectors;
   private final ExecutorService executorService =
     Executors.newCachedThreadPool(Threads.createDaemonThreadFactory("batch-sql-engine-adapter"));
@@ -82,10 +94,12 @@ public class BatchSQLEngineAdapter<T> implements Closeable {
 
   public BatchSQLEngineAdapter(SQLEngine<?, ?, ?, ?> sqlEngine,
                                JavaSparkExecutionContext sec,
+                               DatasetContext datasetContext,
                                Map<String, StageStatisticsCollector> statsCollectors) {
     this.sqlEngine = sqlEngine;
     this.sec = sec;
     this.metrics = sec.getMetrics();
+    this.datasetContext = datasetContext;
     this.statsCollectors = statsCollectors;
     this.jobs = new HashMap<>();
   }
@@ -178,7 +192,7 @@ public class BatchSQLEngineAdapter<T> implements Closeable {
    * @return Job representing this pull operation.
    */
   @SuppressWarnings("unchecked,raw")
-  public SQLEngineJob<JavaRDD<T>> pull(SQLEngineJob<SQLDataset> job,
+  public <T> SQLEngineJob<JavaRDD<T>> pull(SQLEngineJob<SQLDataset> job,
                                        JavaSparkContext jsc) {
     //If this job already exists, return the existing instance.
     SQLEngineJobKey jobKey = new SQLEngineJobKey(job.getDatasetName(), SQLEngineJobType.PULL);
@@ -217,7 +231,7 @@ public class BatchSQLEngineAdapter<T> implements Closeable {
    * @throws SQLEngineException if the pull process fails.
    */
   @SuppressWarnings("unchecked,raw")
-  private JavaRDD<T> pullInternal(SQLDataset dataset,
+  private <T> JavaRDD<T> pullInternal(SQLDataset dataset,
                                   JavaSparkContext jsc) throws SQLEngineException {
     // Create pull operation for this dataset and wait until completion
     SQLPullRequest pullRequest = new SQLPullRequest(dataset);
@@ -279,6 +293,19 @@ public class BatchSQLEngineAdapter<T> implements Closeable {
   @SuppressWarnings("unchecked,raw")
   public SQLEngineJob<SQLDataset> join(String datasetName,
                                        JoinDefinition joinDefinition) {
+    return runExecuteJob(datasetName, () -> {
+        Collection<SQLDataset> inputDatasets = getJoinInputDatasets(joinDefinition);
+        SQLJoinRequest joinRequest = new SQLJoinRequest(datasetName, joinDefinition, inputDatasets);
+
+        if (!sqlEngine.canJoin(joinRequest)) {
+          throw new IllegalArgumentException("Unable to execute this join in the SQL engine");
+        }
+
+        return joinInternal(joinRequest);
+      });
+  }
+
+  private SQLEngineJob<SQLDataset> runExecuteJob(String datasetName, Supplier<SQLDataset> jobFunction) {
     //If this job already exists, return the existing instance.
     SQLEngineJobKey jobKey = new SQLEngineJobKey(datasetName, SQLEngineJobType.EXECUTE);
     if (jobs.containsKey(jobKey)) {
@@ -289,16 +316,9 @@ public class BatchSQLEngineAdapter<T> implements Closeable {
 
     Runnable joinTask = () -> {
       try {
-        LOG.debug("Starting join for dataset '{}'", datasetName);
-        Collection<SQLDataset> inputDatasets = getJoinInputDatasets(joinDefinition);
-        SQLJoinRequest joinRequest = new SQLJoinRequest(datasetName, joinDefinition, inputDatasets);
-
-        if (!sqlEngine.canJoin(joinRequest)) {
-          throw new IllegalArgumentException("Unable to execute this join in the SQL engine");
-        }
-
-        joinInternal(future, joinRequest);
-        LOG.debug("Completed join for dataset '{}'", datasetName);
+        LOG.debug("Starting job for dataset '{}'", datasetName);
+        future.complete(jobFunction.get());
+        LOG.debug("Completed job for dataset '{}'", datasetName);
       } catch (Throwable t) {
         future.completeExceptionally(t);
       }
@@ -323,35 +343,38 @@ public class BatchSQLEngineAdapter<T> implements Closeable {
     List<SQLDataset> datasets = new ArrayList<>(joinDefinition.getStages().size());
 
     for (JoinStage stage : joinDefinition.getStages()) {
-      // Wait for the previous push or execute jobs to complete
-      SQLEngineJobKey pushJobKey = new SQLEngineJobKey(stage.getStageName(), SQLEngineJobType.PUSH);
-      SQLEngineJobKey execJobKey = new SQLEngineJobKey(stage.getStageName(), SQLEngineJobType.EXECUTE);
-
-      if (jobs.containsKey(pushJobKey)) {
-        SQLEngineJob<SQLDataset> job = (SQLEngineJob<SQLDataset>) jobs.get(pushJobKey);
-        waitForJobAndHandleExceptionInternal(job);
-        datasets.add(job.waitFor());
-      } else if (jobs.containsKey(execJobKey)) {
-        SQLEngineJob<SQLDataset> job = (SQLEngineJob<SQLDataset>) jobs.get(execJobKey);
-        waitForJobAndHandleExceptionInternal(job);
-        datasets.add(job.waitFor());
-      } else {
-        throw new IllegalArgumentException("No SQL Engine job exists for stage " + stage.getStageName());
-      }
+      datasets.add(getDatasetForStage(stage.getStageName()));
     }
 
     return datasets;
   }
 
+  private SQLDataset getDatasetForStage(String stageName) {
+    // Wait for the previous push or execute jobs to complete
+    SQLEngineJobKey pushJobKey = new SQLEngineJobKey(stageName, SQLEngineJobType.PUSH);
+    SQLEngineJobKey execJobKey = new SQLEngineJobKey(stageName, SQLEngineJobType.EXECUTE);
+
+    if (jobs.containsKey(pushJobKey)) {
+      SQLEngineJob<SQLDataset> job = (SQLEngineJob<SQLDataset>) jobs.get(pushJobKey);
+      waitForJobAndHandleExceptionInternal(job);
+      return job.waitFor();
+    } else if (jobs.containsKey(execJobKey)) {
+      SQLEngineJob<SQLDataset> job = (SQLEngineJob<SQLDataset>) jobs.get(execJobKey);
+      waitForJobAndHandleExceptionInternal(job);
+      return job.waitFor();
+    } else {
+      throw new IllegalArgumentException("No SQL Engine job exists for stage " + stageName);
+    }
+  }
+
   /**
    * Join implementation. This method has blocking calls and should be executed in a separate thread.
    *
-   * @param future the future instance to use to return results.
    * @param joinRequest the Join Request
    * @throws SQLEngineException   if any of the preceding jobs fails.
+   * @return
    */
-  private void joinInternal(CompletableFuture<SQLDataset> future,
-                            SQLJoinRequest joinRequest)
+  private SQLDataset joinInternal(SQLJoinRequest joinRequest)
     throws SQLEngineException {
 
     String datasetName = joinRequest.getDatasetName();
@@ -368,7 +391,7 @@ public class BatchSQLEngineAdapter<T> implements Closeable {
 
     // Count output rows and complete future.
     countRecordsOut(joinDataset, statisticsCollector, stageMetrics);
-    future.complete(joinDataset);
+    return joinDataset;
   }
 
   /**
@@ -523,5 +546,40 @@ public class BatchSQLEngineAdapter<T> implements Closeable {
                                           String metricName,
                                           long numRecords) {
     stageMetrics.countLong(metricName, numRecords);
+  }
+
+  @Nullable
+  public SQLEngineJobSupplier<SQLDataset> initializeDLPlugin(String inputDataSet, StageSpec stageSpec,
+                                                             DLPluginRuntimeImplementation plugin) {
+    if (sqlEngine.supportsDL()) {
+      try {
+        DLContext dlContext = sqlEngine.getDLContext();
+        DLPluginContext dlPluginContext = new DefaultDLPluginContext(
+          new SparkPipelineRuntime(sec),
+          stageSpec,
+          new DatasetContextLookupProvider(datasetContext),
+          dlContext);
+        plugin.initialize(dlPluginContext);
+        return () -> runDLJob(dlPluginContext, inputDataSet, stageSpec, plugin);
+      } catch (Exception e) {
+        LOG.debug("Could not initialize DL Plugin with SQL Engine");
+      }
+    }
+    return null;
+  }
+
+  private SQLEngineJob<SQLDataset> runDLJob(DLPluginContext dlPluginContext, String inputDataset, StageSpec stageSpec,
+                                            DLPluginRuntimeImplementation plugin) {
+    return runExecuteJob(stageSpec.getName(), () -> {
+      DLDataSet input = sqlEngine.getDLDataSet(getDatasetForStage(inputDataset));
+      Map<String, DLDataSet> inputMap = stageSpec.getInputStages().stream().collect(Collectors.toMap(
+        n -> n, n -> sqlEngine.getDLDataSet(getDatasetForStage(n))
+      ));
+      BatchSQLEngineArguments arguments = new BatchSQLEngineArguments(input, inputMap);
+      plugin.transform(dlPluginContext, arguments);
+      SQLTransformRequest transformRequest = new SQLTransformRequest(
+        stageSpec.getName(), stageSpec.getOutputSchema());
+      return sqlEngine.getSQLDataSet(transformRequest, arguments.getOutputDataSet());
+    });
   }
 }

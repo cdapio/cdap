@@ -202,8 +202,9 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
         // Instantiate SQL engine and prepare run.
         try {
           Object instance = pluginInstantiator.newPluginInstance(sqlEngineStage);
-          sqlEngineAdapter = new BatchSQLEngineAdapter<Object>((SQLEngine<?, ?, ?, ?>) instance,
+          sqlEngineAdapter = new BatchSQLEngineAdapter((SQLEngine<?, ?, ?, ?>) instance,
                                                                sec,
+                                                               datasetContext,
                                                                collectors);
           sqlEngineAdapter.prepareRun();
         } catch (InstantiationException ie) {

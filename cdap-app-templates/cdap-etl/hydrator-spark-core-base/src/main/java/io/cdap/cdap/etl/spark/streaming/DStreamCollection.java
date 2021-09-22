@@ -24,6 +24,7 @@ import io.cdap.cdap.etl.api.Alert;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.batch.SparkExecutionPluginContext;
 import io.cdap.cdap.etl.api.batch.SparkSink;
+import io.cdap.cdap.etl.api.dl.DLPluginRuntimeImplementation;
 import io.cdap.cdap.etl.api.streaming.Windower;
 import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.NoopStageStatisticsCollector;
@@ -33,6 +34,7 @@ import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.SparkCollection;
+import io.cdap.cdap.etl.spark.SparkCollectionSupplier;
 import io.cdap.cdap.etl.spark.SparkPairCollection;
 import io.cdap.cdap.etl.spark.SparkPipelineRuntime;
 import io.cdap.cdap.etl.spark.batch.BasicSparkExecutionPluginContext;
@@ -164,7 +166,9 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public <U> SparkCompute<T, U> initializeCompute(StageSpec stageSpec, SparkCompute<T, U> compute) throws Exception {
+  public <U> SparkCollectionSupplier<U> initializeCompute(StageSpec stageSpec, SparkCompute<T, U> compute)
+    throws Exception {
+
     SparkCompute<T, U> wrappedCompute =
       new DynamicSparkCompute<>(new DynamicDriverContext(stageSpec, sec, new NoopStageStatisticsCollector()), compute);
     Transactionals.execute(sec, new TxRunnable() {
@@ -177,12 +181,7 @@ public class DStreamCollection<T> implements SparkCollection<T> {
         wrappedCompute.initialize(sparkPluginContext);
       }
     }, Exception.class);
-    return wrappedCompute;
-  }
-
-  @Override
-  public <U> SparkCollection<U> compute(StageSpec stageSpec, SparkCompute<T, U> compute) throws Exception {
-    return wrap(stream.transform(new ComputeTransformFunction<>(sec, stageSpec, compute)));
+    return () -> wrap(stream.transform(new ComputeTransformFunction<>(sec, stageSpec, compute)));
   }
 
   @Override
@@ -241,6 +240,11 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   public SparkCollection<T> join(JoinExpressionRequest joinRequest) {
     // auto joins on arbitrary expressions are not supported in streaming, this should have been checked at deploy time
     throw new UnsupportedOperationException("auto join not supported");
+  }
+
+  @Override
+  public <U> SparkCollectionSupplier<U> initializeDLPlugin(StageSpec stageSpec, DLPluginRuntimeImplementation plugin) {
+    throw new UnsupportedOperationException("Decralative Language plugins are not supported");
   }
 
   private <U> SparkCollection<U> wrap(JavaDStream<U> stream) {
