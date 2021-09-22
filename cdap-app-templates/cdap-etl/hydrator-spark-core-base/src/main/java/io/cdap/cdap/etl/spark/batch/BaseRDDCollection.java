@@ -45,6 +45,7 @@ import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import io.cdap.cdap.etl.common.TrackedIterator;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.SparkCollection;
+import io.cdap.cdap.etl.spark.SparkCollectionSupplier;
 import io.cdap.cdap.etl.spark.SparkPairCollection;
 import io.cdap.cdap.etl.spark.SparkPipelineRuntime;
 import io.cdap.cdap.etl.spark.function.AggregatorAggregateFunction;
@@ -214,30 +215,23 @@ public abstract class BaseRDDCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public <U> SparkCompute<T, U> initializeCompute(StageSpec stageSpec, SparkCompute<T, U> compute) throws Exception {
+  public <U> SparkCollectionSupplier<U> initializeCompute(StageSpec stageSpec, SparkCompute<T, U> compute)
+    throws Exception {
+
     String stageName = stageSpec.getName();
     PipelineRuntime pipelineRuntime = new SparkPipelineRuntime(sec);
     SparkExecutionPluginContext sparkPluginContext =
       new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, pipelineRuntime, stageSpec);
     compute.initialize(sparkPluginContext);
-    return compute;
-  }
+    return () -> {
+      JavaRDD<T> countedInput = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(),
+                                                                Constants.Metrics.RECORDS_IN, null));
+      SparkConf sparkConf = jsc.getConf();
 
-  @Override
-  public <U> SparkCollection<U> compute(StageSpec stageSpec, SparkCompute<T, U> compute) throws Exception {
-    //TODO: Do not recreate context
-    String stageName = stageSpec.getName();
-    PipelineRuntime pipelineRuntime = new SparkPipelineRuntime(sec);
-    SparkExecutionPluginContext sparkPluginContext =
-      new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, pipelineRuntime, stageSpec);
-
-    JavaRDD<T> countedInput = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(),
-                                                              Constants.Metrics.RECORDS_IN, null));
-    SparkConf sparkConf = jsc.getConf();
-
-    return wrap(compute.transform(sparkPluginContext, countedInput)
-                  .map(new CountingFunction<U>(stageName, sec.getMetrics(), Constants.Metrics.RECORDS_OUT,
-                                               sec.getDataTracer(stageName))));
+      return wrap(compute.transform(sparkPluginContext, countedInput)
+                    .map(new CountingFunction<U>(stageName, sec.getMetrics(), Constants.Metrics.RECORDS_OUT,
+                                                 sec.getDataTracer(stageName))));
+    };
   }
 
   @Override

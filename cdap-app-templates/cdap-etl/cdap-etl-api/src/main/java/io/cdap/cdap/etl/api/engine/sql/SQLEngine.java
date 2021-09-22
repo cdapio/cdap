@@ -21,6 +21,8 @@ import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.etl.api.PipelineConfigurable;
 import io.cdap.cdap.etl.api.SubmitterLifecycle;
+import io.cdap.cdap.etl.api.dl.DLContext;
+import io.cdap.cdap.etl.api.dl.DLDataSet;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDataset;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLPullDataset;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLPushDataset;
@@ -28,6 +30,7 @@ import io.cdap.cdap.etl.api.engine.sql.request.SQLJoinDefinition;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLJoinRequest;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPullRequest;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPushRequest;
+import io.cdap.cdap.etl.api.engine.sql.request.SQLTransformRequest;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLWriteRequest;
 
 /**
@@ -89,6 +92,10 @@ public interface SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT>
    */
   boolean canJoin(SQLJoinDefinition joinDefinition);
 
+  default boolean supportsDL() {
+    return false;
+  };
+
   /**
    * Executes the join operation defined by the supplied join request.
    * <p>
@@ -112,4 +119,18 @@ public interface SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT>
    * @param datasetName boolean specifying if all running tasks should be stopped at this time (if any are running).
    */
   void cleanup(String datasetName) throws SQLEngineException;
+
+  default DLContext getDLContext() throws SQLEngineException {
+    throw new UnsupportedOperationException("Declarative SQL is not supported by the engine");
+  }
+
+  default DLDataSet getDLDataSet(SQLDataset sqlDataset)
+    throws SQLEngineException {
+    throw new UnsupportedOperationException("Declarative SQL is not supported by the engine");
+  }
+
+  default SQLDataset getSQLDataSet(SQLTransformRequest transformRequest, DLDataSet dlDataset)
+    throws SQLEngineException {
+    throw new UnsupportedOperationException("Declarative SQL is not supported by the engine");
+  }
 }

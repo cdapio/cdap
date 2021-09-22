@@ -18,12 +18,16 @@ package io.cdap.cdap.etl.spark.batch;
 
 import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.batch.SparkSink;
+import io.cdap.cdap.etl.api.dl.DLPluginRuntimeImplementation;
+import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDataset;
 import io.cdap.cdap.etl.api.streaming.Windower;
 import io.cdap.cdap.etl.common.PhaseSpec;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
+import io.cdap.cdap.etl.engine.SQLEngineJobSupplier;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.SparkCollection;
+import io.cdap.cdap.etl.spark.SparkCollectionSupplier;
 import io.cdap.cdap.etl.spark.SparkPairCollection;
 import io.cdap.cdap.etl.spark.join.JoinExpressionRequest;
 import io.cdap.cdap.etl.spark.join.JoinRequest;
@@ -44,12 +48,12 @@ import javax.annotation.Nullable;
  * @param <U> Type of the output collection records.
  */
 public class WrappedSQLEngineCollection<T, U> implements SQLBackedCollection<U> {
-  private final java.util.function.Function<SparkCollection<T>, SparkCollection<U>> mapper;
+  private final java.util.function.Function<SQLBackedCollection<T>, SparkCollection<U>> mapper;
   private final SQLBackedCollection<T> wrapped;
   private SparkCollection<U> unwrapped = null;
 
   public WrappedSQLEngineCollection(SQLBackedCollection<T> wrapped,
-                                    java.util.function.Function<SparkCollection<T>, SparkCollection<U>> mapper) {
+                                    java.util.function.Function<SQLBackedCollection<T>, SparkCollection<U>> mapper) {
     this.wrapped = wrapped;
     this.mapper = mapper;
   }
@@ -75,7 +79,7 @@ public class WrappedSQLEngineCollection<T, U> implements SQLBackedCollection<U> 
    * @return SQL Backed collection after re-mapping the underlying colleciton and re-adding the mapper.
    */
   private SparkCollection<U> rewrap(
-    java.util.function.Function<SparkCollection<T>, SparkCollection<T>> remapper) {
+    java.util.function.Function<SQLBackedCollection<T>, SparkCollection<T>> remapper) {
     return new WrappedSQLEngineCollection<>((SQLBackedCollection<T>) remapper.apply(wrapped), mapper);
   }
 
@@ -135,13 +139,9 @@ public class WrappedSQLEngineCollection<T, U> implements SQLBackedCollection<U> 
   }
 
   @Override
-  public <U1> SparkCompute<U, U1> initializeCompute(StageSpec stageSpec, SparkCompute<U, U1> compute) throws Exception {
+  public <U1> SparkCollectionSupplier<U1> initializeCompute(StageSpec stageSpec, SparkCompute<U, U1> compute)
+    throws Exception {
     return unwrap().initializeCompute(stageSpec, compute);
-  }
-
-  @Override
-  public <U1> SparkCollection<U1> compute(StageSpec stageSpec, SparkCompute<U, U1> compute) throws Exception {
-    return unwrap().compute(stageSpec, compute);
   }
 
   @Override
@@ -192,5 +192,28 @@ public class WrappedSQLEngineCollection<T, U> implements SQLBackedCollection<U> 
   @Override
   public SparkCollection<U> join(JoinExpressionRequest joinExpressionRequest) {
     return rewrap(c -> c.join(joinExpressionRequest));
+  }
+
+  @Override
+  public SparkCollectionSupplier<U> initializeDLPlugin(StageSpec stageSpec, DLPluginRuntimeImplementation plugin) {
+    SQLEngineJobSupplier<SQLDataset> supplier =
+      getAdapter().initializeDLPlugin(getDatasetName(), stageSpec, plugin);
+    return () -> runDLTranform(supplier, stageSpec, plugin);
+  }
+
+  @Override
+  public SparkCollection runDLTranform(SQLEngineJobSupplier<SQLDataset> supplier, StageSpec stageSpec,
+                                       DLPluginRuntimeImplementation plugin) {
+    return rewrap(c -> c.runDLTranform(supplier, stageSpec, plugin));
+  }
+
+  @Override
+  public BatchSQLEngineAdapter getAdapter() {
+    return wrapped.getAdapter();
+  }
+
+  @Override
+  public String getDatasetName() {
+    return wrapped.getDatasetName();
   }
 }
