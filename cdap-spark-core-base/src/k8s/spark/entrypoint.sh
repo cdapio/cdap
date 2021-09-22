@@ -85,7 +85,7 @@ case "$1" in
     CMD=(
       ${JAVA_HOME}/bin/java
       -cp "$CDAP_SPARK_CLASSPATH:$SPARK_CLASSPATH"
-      io.cdap.cdap.app.runtime.spark.distributed.SparkContainerLauncher
+      io.cdap.cdap.app.runtime.spark.distributed.k8s.SparkContainerDriverLauncher
       --delegate-class org.apache.spark.deploy.SparkSubmit
       #"$SPARK_HOME/bin/spark-submit"
       --conf "spark.driver.bindAddress=$SPARK_DRIVER_BIND_ADDRESS"
@@ -104,7 +104,7 @@ case "$1" in
       # replace Spark executor class with the ContainerLauncher
       # configured to launch the executor after performing classloader setup
       #org.apache.spark.executor.CoarseGrainedExecutorBackend
-      io.cdap.cdap.app.runtime.spark.distributed.SparkContainerLauncher
+      io.cdap.cdap.app.runtime.spark.distributed.k8s.SparkContainerExecutorLauncher
       --delegate-class org.apache.spark.executor.CoarseGrainedExecutorBackend
       --driver-url $SPARK_DRIVER_URL
       --executor-id $SPARK_EXECUTOR_ID
