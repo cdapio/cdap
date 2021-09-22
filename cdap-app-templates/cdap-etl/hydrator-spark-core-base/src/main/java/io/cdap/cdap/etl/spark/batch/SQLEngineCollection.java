@@ -57,7 +57,7 @@ public class SQLEngineCollection<T> implements SQLBackedCollection<T> {
   private final SparkBatchSinkFactory sinkFactory;
   private final FunctionCache.Factory functionCacheFactory;
   private final String datasetName;
-  private final BatchSQLEngineAdapter<T> adapter;
+  private final BatchSQLEngineAdapter adapter;
   private final SQLEngineJob<SQLDataset> job;
   private SparkCollection<T> localCollection;
 

@@ -53,7 +53,7 @@ public class WrappedSQLEngineCollection<T, U> implements SQLBackedCollection<U> 
     this.wrapped = wrapped;
     this.mapper = mapper;
   }
-  
+
   private SparkCollection<U> unwrap() {
     if (unwrapped == null) {
       unwrapped = mapper.apply(wrapped);
@@ -167,7 +167,7 @@ public class WrappedSQLEngineCollection<T, U> implements SQLBackedCollection<U> 
 
   @Override
   public SparkCollection<U> window(StageSpec stageSpec,
-                                               Windower windower) {
+                                   Windower windower) {
     return unwrap().window(stageSpec, windower);
   }
 

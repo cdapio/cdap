@@ -49,6 +49,7 @@ import io.cdap.cdap.etl.api.join.JoinDefinition;
 import io.cdap.cdap.etl.api.join.JoinField;
 import io.cdap.cdap.etl.api.join.JoinKey;
 import io.cdap.cdap.etl.api.join.JoinStage;
+import io.cdap.cdap.etl.api.relational.RelationalTransform;
 import io.cdap.cdap.etl.api.streaming.Windower;
 import io.cdap.cdap.etl.common.BasicArguments;
 import io.cdap.cdap.etl.common.Constants;
@@ -92,6 +93,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -263,21 +265,32 @@ public abstract class SparkPipelineRunner {
         }
 
       } else if (BatchSink.PLUGIN_TYPE.equals(pluginType) || isConnectorSink) {
-
         sinkRunnables.add(stageData.createStoreTask(stageSpec, new BatchSinkFunction(
           pluginFunctionContext, functionCacheFactory.newCache())));
+      } else if (SparkSink.PLUGIN_TYPE.equals(pluginType)) {
 
-      } else if (Transform.PLUGIN_TYPE.equals(pluginType)) {
+        SparkSink<Object> sparkSink = pluginContext.newPluginInstance(stageName, macroEvaluator);
+        sinkRunnables.add(stageData.createStoreTask(stageSpec, sparkSink));
 
-        SparkCollection<RecordInfo<Object>> combinedData = stageData.transform(stageSpec, collector);
-        emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
-                                    combinedData, groupedDag, branchers, shufflers, hasErrorOutput, hasAlertOutput);
+      } else if (AlertPublisher.PLUGIN_TYPE.equals(pluginType)) {
 
-      } else if (SplitterTransform.PLUGIN_TYPE.equals(pluginType)) {
+        // union all the alerts coming into this stage
+        SparkCollection<Alert> inputAlerts = null;
+        for (String inputStage : stageInputs) {
+          SparkCollection<Alert> inputErrorsFromStage = emittedRecords.get(inputStage).alertRecords;
+          if (inputErrorsFromStage == null) {
+            continue;
+          }
+          if (inputAlerts == null) {
+            inputAlerts = inputErrorsFromStage;
+          } else {
+            inputAlerts = inputAlerts.union(inputErrorsFromStage);
+          }
+        }
 
-        SparkCollection<RecordInfo<Object>> combinedData = stageData.multiOutputTransform(stageSpec, collector);
-        emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
-                                    combinedData, groupedDag, branchers, shufflers, hasErrorOutput, hasAlertOutput);
+        if (inputAlerts != null) {
+          inputAlerts.publishAlerts(stageSpec, collector);
+        }
 
       } else if (ErrorTransform.PLUGIN_TYPE.equals(pluginType)) {
 
@@ -300,77 +313,24 @@ public abstract class SparkPipelineRunner {
             stageSpec,
             new ErrorTransformFunction<Object, Object>(pluginFunctionContext, functionCacheFactory.newCache()));
           emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
-                                      combinedData, groupedDag, branchers, shufflers, hasErrorOutput, hasAlertOutput);
-        }
-
-      } else if (SparkCompute.PLUGIN_TYPE.equals(pluginType)) {
-
-        SparkCompute<Object, Object> sparkCompute = pluginContext.newPluginInstance(stageName, macroEvaluator);
-        SparkCollection<Object> computed = stageData.compute(stageSpec, sparkCompute);
-        addEmitted(emittedBuilder, pipelinePhase, stageSpec, mapToRecordInfoCollection(stageName, computed),
-                   groupedDag, branchers, shufflers, false, false);
-
-      } else if (SparkSink.PLUGIN_TYPE.equals(pluginType)) {
-
-        SparkSink<Object> sparkSink = pluginContext.newPluginInstance(stageName, macroEvaluator);
-        sinkRunnables.add(stageData.createStoreTask(stageSpec, sparkSink));
-
-      } else if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
-
-        Object plugin = pluginContext.newPluginInstance(stageName, macroEvaluator);
-        Integer partitions = stagePartitions.get(stageName);
-
-        if (plugin instanceof BatchReducibleAggregator) {
-          SparkCollection<RecordInfo<Object>> combinedData = stageData.reduceAggregate(stageSpec, partitions,
-                                                                                       collector);
-          emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
-                                      combinedData, groupedDag, branchers, shufflers, hasErrorOutput, hasAlertOutput);
-        } else {
-          SparkCollection<RecordInfo<Object>> combinedData = stageData.aggregate(stageSpec, partitions, collector);
-          emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
-                                      combinedData, groupedDag, branchers, shufflers, hasErrorOutput, hasAlertOutput);
-        }
-
-      } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
-
-        Integer numPartitions = stagePartitions.get(stageName);
-        Object plugin = pluginContext.newPluginInstance(stageName, macroEvaluator);
-        SparkCollection<Object> joined = handleJoin(inputDataCollections, pipelinePhase, pluginFunctionContext,
-                                                    stageSpec, functionCacheFactory, plugin,
-                                                    numPartitions, collector, shufflers);
-        addEmitted(emittedBuilder, pipelinePhase, stageSpec,
-                   mapToRecordInfoCollection(stageName, joined), groupedDag, branchers, shufflers, false, false);
-
-      } else if (Windower.PLUGIN_TYPE.equals(pluginType)) {
-
-        Windower windower = pluginContext.newPluginInstance(stageName, macroEvaluator);
-        SparkCollection<Object> windowed = stageData.window(stageSpec, windower);
-        addEmitted(emittedBuilder, pipelinePhase, stageSpec, mapToRecordInfoCollection(stageName, windowed),
-                   groupedDag, branchers, shufflers, false, false);
-
-      } else if (AlertPublisher.PLUGIN_TYPE.equals(pluginType)) {
-
-        // union all the alerts coming into this stage
-        SparkCollection<Alert> inputAlerts = null;
-        for (String inputStage : stageInputs) {
-          SparkCollection<Alert> inputErrorsFromStage = emittedRecords.get(inputStage).alertRecords;
-          if (inputErrorsFromStage == null) {
-            continue;
-          }
-          if (inputAlerts == null) {
-            inputAlerts = inputErrorsFromStage;
-          } else {
-            inputAlerts = inputAlerts.union(inputErrorsFromStage);
-          }
-        }
-
-        if (inputAlerts != null) {
-          inputAlerts.publishAlerts(stageSpec, collector);
+                            combinedData, groupedDag, branchers, shufflers, hasErrorOutput, hasAlertOutput);
         }
 
       } else {
-        throw new IllegalStateException(String.format("Stage %s is of unsupported plugin type %s.",
-                                                      stageName, pluginType));
+        Object plugin = pluginContext.newPluginInstance(stageName, macroEvaluator);
+        Optional<EmittedRecords.Builder> declarativeBuilder = tryRelationalTransform(
+          pipelinePhase, groupedDag, branchers, shufflers, stageName, stageSpec, emittedBuilder,
+          hasErrorOutput, hasAlertOutput, stageData, inputDataCollections, plugin);
+
+        if (declarativeBuilder.isPresent()) {
+          emittedBuilder = declarativeBuilder.get();
+        } else {
+          emittedBuilder = transform(
+            emittedBuilder, stagePartitions, pipelinePhase, functionCacheFactory, groupedDag, branchers, shufflers,
+            stageName, stageSpec, pluginType, hasErrorOutput, hasAlertOutput,
+            stageData, inputDataCollections, collector, pluginFunctionContext, plugin);
+        }
+
       }
 
       emittedRecords.put(stageName, emittedBuilder.build());
@@ -409,6 +369,118 @@ public abstract class SparkPipelineRunner {
     if (error != null) {
       throw Throwables.propagate(error);
     }
+  }
+
+  /**
+   * Performs tranformation or analytical function.
+   * @return updated emitted records builder
+   */
+  private EmittedRecords.Builder transform(
+    EmittedRecords.Builder emittedBuilder, Map<String, Integer> stagePartitions, PipelinePhase pipelinePhase,
+    FunctionCache.Factory functionCacheFactory,
+    CombinerDag groupedDag, Set<String> branchers, Set<String> shufflers,
+    String stageName, StageSpec stageSpec, String pluginType,
+    boolean hasErrorOutput, boolean hasAlertOutput, SparkCollection<Object> stageData,
+    Map<String, SparkCollection<Object>> inputDataCollections,
+    StageStatisticsCollector collector,
+    PluginFunctionContext pluginFunctionContext, Object plugin) throws Exception {
+
+    if (Transform.PLUGIN_TYPE.equals(pluginType)) {
+
+      SparkCollection<RecordInfo<Object>> combinedData = stageData.transform(stageSpec, collector);
+      return addEmitted(emittedBuilder, pipelinePhase, stageSpec,
+                                  combinedData, groupedDag, branchers, shufflers, hasErrorOutput, hasAlertOutput);
+
+    } else if (SplitterTransform.PLUGIN_TYPE.equals(pluginType)) {
+
+      SparkCollection<RecordInfo<Object>> combinedData = stageData.multiOutputTransform(stageSpec, collector);
+      return addEmitted(emittedBuilder, pipelinePhase, stageSpec,
+                                  combinedData, groupedDag, branchers, shufflers, hasErrorOutput, hasAlertOutput);
+
+    } else if (SparkCompute.PLUGIN_TYPE.equals(pluginType)) {
+
+      SparkCompute<Object, Object> sparkCompute = (SparkCompute<Object, Object>) plugin;
+      SparkCollection<Object> computed = stageData.compute(stageSpec, sparkCompute);
+      return addEmitted(emittedBuilder, pipelinePhase, stageSpec, mapToRecordInfoCollection(stageName, computed),
+                 groupedDag, branchers, shufflers, false, false);
+
+    } else if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
+
+      Integer partitions = stagePartitions.get(stageName);
+
+      if (plugin instanceof BatchReducibleAggregator) {
+        SparkCollection<RecordInfo<Object>> combinedData = stageData.reduceAggregate(stageSpec, partitions,
+                                                                                     collector);
+        return addEmitted(emittedBuilder, pipelinePhase, stageSpec,
+                                    combinedData, groupedDag, branchers, shufflers, hasErrorOutput, hasAlertOutput);
+      } else {
+        SparkCollection<RecordInfo<Object>> combinedData = stageData.aggregate(stageSpec, partitions, collector);
+        return addEmitted(emittedBuilder, pipelinePhase, stageSpec,
+                                    combinedData, groupedDag, branchers, shufflers, hasErrorOutput, hasAlertOutput);
+      }
+
+    } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
+
+      Integer numPartitions = stagePartitions.get(stageName);
+      SparkCollection<Object> joined = handleJoin(inputDataCollections, pipelinePhase, pluginFunctionContext,
+                                                  stageSpec, functionCacheFactory, plugin,
+                                                  numPartitions, collector, shufflers);
+      return addEmitted(emittedBuilder, pipelinePhase, stageSpec,
+                 mapToRecordInfoCollection(stageName, joined),
+                        groupedDag, branchers, shufflers, false, false);
+
+    } else if (Windower.PLUGIN_TYPE.equals(pluginType)) {
+
+      Windower windower = (Windower) plugin;
+      SparkCollection<Object> windowed = stageData.window(stageSpec, windower);
+      return addEmitted(emittedBuilder, pipelinePhase, stageSpec, mapToRecordInfoCollection(stageName, windowed),
+                 groupedDag, branchers, shufflers, false, false);
+
+    } else {
+      throw new IllegalStateException(String.format("Stage %s is of unsupported plugin type %s.",
+                                                    stageName, pluginType));
+    }
+  }
+
+  /**
+   * Tries to do transform as {@see RelationalTransform}
+   * @return updated {@link EmittedRecords.Builder} if it was transformed or empty {@link Optional} if transform
+   * can't be done in {@see RelationalTransform} way
+   */
+  private Optional<EmittedRecords.Builder> tryRelationalTransform(
+    PipelinePhase pipelinePhase, CombinerDag groupedDag, Set<String> branchers, Set<String> shufflers,
+    String stageName, StageSpec stageSpec, EmittedRecords.Builder emittedBuilder,
+    boolean hasErrorOutput, boolean hasAlertOutput, SparkCollection<Object> stageData,
+    Map<String, SparkCollection<Object>> inputDataCollections, Object plugin) {
+
+    Optional<EmittedRecords.Builder> declarativeBuilder = Optional.empty();
+
+    if (plugin instanceof RelationalTransform) {
+      RelationalTransform transform = (RelationalTransform) plugin;
+      for (SparkCollectionRelationalEngine engine : getRelationalEngines(stageData)) {
+        if (!transform.canUseEngine(engine.getRelationalEngine())) {
+          continue;
+        }
+        Optional<SparkCollection<Object>> transformedData =
+          engine.tryRelationalTransform(stageSpec, transform, inputDataCollections);
+        if (transformedData.isPresent()) {
+          return Optional.of(addEmitted(emittedBuilder, pipelinePhase, stageSpec,
+                                        mapToRecordInfoCollection(stageName, transformedData.get()),
+                                        groupedDag, branchers, shufflers, hasErrorOutput, hasAlertOutput));
+        }
+      }
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * Decides on relational engines to use for given stage
+   * @param stageData input collection
+   * @return list of engines to try
+   */
+  protected Iterable<SparkCollectionRelationalEngine> getRelationalEngines(SparkCollection<Object> stageData) {
+    //TODO CDAP-18608: Add Spark engine here
+    return Collections.emptyList();
   }
 
   private Runnable handleGroup(JavaSparkExecutionContext sec, PhaseSpec phaseSpec, Set<String> groupStages,

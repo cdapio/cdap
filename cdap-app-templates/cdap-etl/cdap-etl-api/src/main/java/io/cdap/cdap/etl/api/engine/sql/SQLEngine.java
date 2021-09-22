@@ -28,6 +28,11 @@ import io.cdap.cdap.etl.api.engine.sql.request.SQLJoinDefinition;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLJoinRequest;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPullRequest;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPushRequest;
+import io.cdap.cdap.etl.api.engine.sql.request.SQLRelationDefinition;
+import io.cdap.cdap.etl.api.engine.sql.request.SQLTransformDefinition;
+import io.cdap.cdap.etl.api.engine.sql.request.SQLTransformRequest;
+import io.cdap.cdap.etl.api.relational.Engine;
+import io.cdap.cdap.etl.api.relational.Relation;
 
 /**
  * A SQL Engine can be used to pushdown certain dataset operations.
@@ -89,6 +94,24 @@ public interface SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT>
   boolean canJoin(SQLJoinDefinition joinDefinition);
 
   /**
+   *
+   * @return if engine supports relational plugins
+   * @see io.cdap.cdap.etl.api.relational.RelationalTransform
+   */
+  default boolean supportsRelationalTranform() {
+    return false;
+  };
+
+  /**
+   * Final check if the requested transformations can be executed in the SQL Engine.
+   * @param transformDefinition SQL transformation to validate
+   * @return if transformations can be executed in the SQL Egine
+   */
+  default boolean canTransform(SQLTransformDefinition transformDefinition) {
+    return false;
+  }
+
+  /**
    * Executes the join operation defined by the supplied join request.
    * <p>
    * All datasets involved in this joinRequest must be pushed to the SQL engine by calling the
@@ -107,4 +130,34 @@ public interface SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT>
    * @param datasetName boolean specifying if all running tasks should be stopped at this time (if any are running).
    */
   void cleanup(String datasetName) throws SQLEngineException;
+
+  /**
+   *
+   * @return engine to use for relational tranform. Will be called only if {@link #supportsRelationalTranform()}
+   * is true
+   * @throws SQLEngineException
+   */
+  default Engine getRelationalEngine() {
+    throw new UnsupportedOperationException("Relational transform is not supported by the engine");
+  }
+
+  /**
+   * Prepares Relational plugin input based on provided descripton and dataset supplier.
+   * @param relationDefinition dataset name and schema
+   * @return a relation for the dataset definition
+   */
+  default Relation getRelation(SQLRelationDefinition relationDefinition) {
+    throw new UnsupportedOperationException("Relational transform is not supported by the engine");
+  }
+
+  /**
+   * Performs transformation of a single relation.
+   * @param context transformation context with transformation definition, input datasets and setter for output
+   * @return output datasets for the transform requested
+   * @throws SQLEngineException
+   */
+  default SQLDataset transform(SQLTransformRequest context)
+    throws SQLEngineException {
+    throw new UnsupportedOperationException("Relational transform is not supported by the engine");
+  }
 }
