@@ -4323,6 +4323,47 @@
     </description>
   </property>
 
+  <!-- Spark on k8s  -->
+  <property>
+    <name>driver.artifact.fetcher.bind.address</name>
+    <value>0.0.0.0</value>
+    <description>
+      The bind address for artifact fetcher service
+    </description>
+  </property>
+
+  <property>
+    <name>driver.artifact.fetcher.bind.port</name>
+    <value>11013</value>
+    <description>
+      The bind port for artifact fetcher service
+    </description>
+  </property>
+
+  <property>
+    <name>driver.artifact.fetcher.worker.threads</name>
+    <value>10</value>
+    <description>
+      The number of worker threads in the artifacts fetcher.
+    </description>
+  </property>
+
+  <property>
+    <name>driver.artifact.fetcher.exec.threads</name>
+    <value>10</value>
+    <description>
+      The number of executor threads for the artifacts fetcher.
+    </description>
+  </property>
+
+  <property>
+    <name>driver.artifact.fetcher.boss.threads</name>
+    <value>1</value>
+    <description>
+      The number of boss threads for the artifacts fetcher.
+    </description>
+  </property>
+
   <!-- Task Worker Configuration  -->
   <property>
     <name>task.worker.pool.enable</name>
