@@ -62,6 +62,8 @@ public class FieldLineageInfo {
   // Dropped fields are stored with this EPF so that will be serialized by GSON's library
   static final EndPointField NULL_EPF = new EndPointField(EndPoint.of(null), null);
 
+  private final long checksum;
+
   private final Set<Operation> operations;
 
   // Map of EndPoint representing destination to the set of fields belonging to it.
@@ -93,8 +95,6 @@ public class FieldLineageInfo {
 
   // outgoing operation map. stores the operation name as key and set of operations which uses it as input
   private transient Map<String, Set<Operation>> operationOutgoingConnections;
-
-  private long checksum;
 
   /**
    * Create an instance of a class from supplied collection of operations.
@@ -430,12 +430,8 @@ public class FieldLineageInfo {
   }
 
   private Map<EndPointField, Set<EndPointField>> computeOutgoingSummary() {
-    if (incomingSummary == null) {
-      incomingSummary = computeIncomingSummary();
-    }
-
     Map<EndPointField, Set<EndPointField>> outgoingSummary = new HashMap<>();
-    for (Map.Entry<EndPointField, Set<EndPointField>> entry : incomingSummary.entrySet()) {
+    for (Map.Entry<EndPointField, Set<EndPointField>> entry : getIncomingSummary().entrySet()) {
       Set<EndPointField> values = entry.getValue();
       for (EndPointField value : values) {
         Set<EndPointField> outgoingEndPointFields = outgoingSummary.computeIfAbsent(value, k -> new HashSet<>());

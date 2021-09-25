@@ -1283,7 +1283,7 @@ public class DataStreamsTest extends HydratorTestBase {
                messageFetcher.fetch(NamespaceId.DEFAULT.getNamespace(), topic, 5, 0)) {
           while (iter.hasNext()) {
             Message message = iter.next();
-            Alert alert = GSON.fromJson(message.getPayloadAsString(), Alert.class);
+            Alert alert = message.decodePayload(r -> GSON.fromJson(r, Alert.class));
             actualMessages.add(alert);
           }
         }
