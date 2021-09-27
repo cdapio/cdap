@@ -341,6 +341,11 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       throw new BadRequestException("Unable to read properties from the request.", e);
     }
 
+    if (properties == null) {
+      throw new BadRequestException("Missing properties from the request. Please check that the request body " +
+                                      "is a json map from string to string.");
+    }
+
     try {
       artifactRepository.writeArtifactProperties(Id.Artifact.fromEntityId(artifactId), properties);
       responder.sendStatus(HttpResponseStatus.OK);
