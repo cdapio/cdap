@@ -342,8 +342,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     }
 
     if (properties == null) {
-      throw new BadRequestException("Properties attribute is missing in the json or set as null, " +
-                                      "add properties: {} in json");
+      throw new BadRequestException("Missing properties from the request. Please check that the request body " +
+                                      "is a json map from string to string.");
     }
 
     try {
