@@ -23,6 +23,8 @@ import io.cdap.cdap.app.runtime.spark.SparkRuntimeContextConfig;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeEnv;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeUtils;
 import io.cdap.cdap.app.runtime.spark.distributed.SparkExecutionService;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import io.cdap.cdap.proto.id.ProgramRunId;
@@ -47,14 +49,16 @@ public class DistributedSparkSubmitter extends AbstractSparkSubmitter {
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedSparkSubmitter.class);
 
+  private final CConfiguration cConf;
   private final Configuration hConf;
   private final String schedulerQueueName;
   private final SparkExecutionService sparkExecutionService;
   private final long tokenRenewalInterval;
 
-  public DistributedSparkSubmitter(Configuration hConf, LocationFactory locationFactory,
+  public DistributedSparkSubmitter(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
                                    String hostname, SparkRuntimeContext runtimeContext,
                                    @Nullable String schedulerQueueName) {
+    this.cConf = cConf;
     this.hConf = hConf;
     this.schedulerQueueName = schedulerQueueName;
     ProgramRunId programRunId = runtimeContext.getProgram().getId().run(runtimeContext.getRunId().getId());
@@ -87,6 +91,7 @@ public class DistributedSparkSubmitter extends AbstractSparkSubmitter {
     // this was a service account I manually created
     config.put("spark.kubernetes.authenticate.driver.serviceAccountName", "spark");
     config.put("spark.kubernetes.executor.deleteOnTermination", "false");
+    config.put("spark.executorEnv.ARTIFACT_FECTHER_PORT", cConf.get(Constants.Spark.Driver.PORT));
 
     try {
       File templateFile = new File("podTemplate");

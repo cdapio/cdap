@@ -207,7 +207,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
       isLocal = false;
       SparkSubmitter submitter = isLocal
         ? new LocalSparkSubmitter()
-        : new DistributedSparkSubmitter(hConf, locationFactory, host, runtimeContext,
+        : new DistributedSparkSubmitter(cConf, hConf, locationFactory, host, runtimeContext,
                                         options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE));
 
 

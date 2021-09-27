@@ -37,19 +37,24 @@ import java.util.List;
 public class SparkContainerExecutorLauncher {
   private static final String DRIVER_URL_FLAG = "--driver-url";
   private static final String DELEGATE_CLASS_FLAG = "--delegate-class";
+  private static final String ARTIFACT_FETCHER_PORT_FLAG = "--artifact-fetcher-port";
   private static final String ARTIFACT_FETCHER_ENDPOINT = Constants.Gateway.INTERNAL_API_VERSION_3 + "/artifacts/fetch";
 
-  //TODO: Needs to be read from CConf
-  private static final int ARTIFACT_FETCHER_PORT = 11013;
   private static final String WORKING_DIRECTORY = "/opt/spark/work-dir/";
 
   public static void main(String[] args) throws Exception {
+    int artifactFetcherPort = -1;
+
     String delegateClass = "org.apache.spark.deploy.SparkSubmit";
     List<String> delegateArgs = new ArrayList<>();
     String driverHost = null;
     for (int i = 0; i < args.length; i++) {
       if (args[i].equals(DRIVER_URL_FLAG)) {
         driverHost = new URI(args[i + 1]).getHost();
+      } else if (args[i].equals(ARTIFACT_FETCHER_PORT_FLAG)) {
+        artifactFetcherPort = Integer.parseInt(args[i + 1]);
+        i++;
+        continue;
       } else if (args[i].equals(DELEGATE_CLASS_FLAG)) {
         delegateClass = args[i + 1];
         i++;
@@ -61,9 +66,12 @@ public class SparkContainerExecutorLauncher {
     if (driverHost == null || driverHost.length() == 0) {
       throw new IllegalArgumentException("Spark driver url is not set.");
     }
+    if (artifactFetcherPort == -1) {
+      throw new IllegalArgumentException("Spark driver artifact fetcher port is not set.");
+    }
 
     URL fetchArtifactURL =
-      new URL(String.format("http://%s:%s%s", driverHost, ARTIFACT_FETCHER_PORT, ARTIFACT_FETCHER_ENDPOINT));
+      new URL(String.format("http://%s:%s%s", driverHost, artifactFetcherPort, ARTIFACT_FETCHER_ENDPOINT));
     HttpURLConnection connection = (HttpURLConnection) fetchArtifactURL.openConnection();
     connection.connect();
 
