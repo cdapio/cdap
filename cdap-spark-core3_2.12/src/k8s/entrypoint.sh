@@ -89,8 +89,8 @@ case "$1" in
       # CDAP classpath must come before spark classpath, otherwise
       # recursive logging and task deserialization errors occur
       -cp "$CDAP_SPARK_CLASSPATH:$SPARK_CLASSPATH"
-      io.cdap.cdap.app.runtime.spark.distributed.SparkContainerLauncher
-      org.apache.spark.deploy.SparkSubmit
+      io.cdap.cdap.app.runtime.spark.distributed.k8s.SparkContainerDriverLauncher
+      --delegate-class org.apache.spark.deploy.SparkSubmit
       --conf "spark.driver.bindAddress=$SPARK_DRIVER_BIND_ADDRESS"
       --deploy-mode client
       "$@"
@@ -106,10 +106,10 @@ case "$1" in
       # CDAP classpath must come before spark classpath, otherwise
       # recursive logging and task deserialization errors occur
       -cp "$CDAP_SPARK_CLASSPATH:$SPARK_CLASSPATH"
-      # launch the ExecutorBackend with the CDAP launcher, which will
-      # setup CDAP classloading and class rewrite
-      io.cdap.cdap.app.runtime.spark.distributed.SparkContainerLauncher
-      org.apache.spark.executor.CoarseGrainedExecutorBackend
+      # replace Spark executor class with the ContainerLauncher
+      # configured to launch the executor after performing classloader setup
+      io.cdap.cdap.app.runtime.spark.distributed.k8s.SparkContainerExecutorLauncher
+      --delegate-class org.apache.spark.executor.CoarseGrainedExecutorBackend
       --driver-url $SPARK_DRIVER_URL
       --executor-id $SPARK_EXECUTOR_ID
       --cores $SPARK_EXECUTOR_CORES

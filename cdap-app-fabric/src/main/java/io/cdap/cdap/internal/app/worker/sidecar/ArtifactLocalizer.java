@@ -151,7 +151,7 @@ public class ArtifactLocalizer {
    * @throws IOException If an unexpected error occurs while writing the artifact to the filesystem
    * @throws ArtifactNotFoundException If the given artifact does not exist
    */
-  private File fetchArtifact(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
+  public File fetchArtifact(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
     Long lastModifiedTimestamp = getCurrentLastModifiedTimestamp(artifactId);
     String namespaceId = artifactId.getNamespace();
     ArtifactScope scope = ArtifactScope.USER;
