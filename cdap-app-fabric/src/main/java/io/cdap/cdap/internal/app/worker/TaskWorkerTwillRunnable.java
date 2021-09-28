@@ -25,6 +25,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
@@ -43,6 +44,7 @@ import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.guice.CoreSecurityModule;
@@ -61,6 +63,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -73,6 +76,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
 
   private TaskWorkerService taskWorker;
   private LogAppenderInitializer logAppenderInitializer;
+  private MetricsCollectionService metricsCollectionService;
 
   public TaskWorkerTwillRunnable(String cConfFileName, String hConfFileName) {
     super(ImmutableMap.of("cConf", cConfFileName, "hConf", hConfFileName));
@@ -91,6 +95,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
     modules.add(coreSecurityModule);
     modules.add(new MessagingClientModule());
     modules.add(new SystemAppModule());
+    modules.add(new MetricsClientRuntimeModule().getDistributedModules());
 
     // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
     MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
@@ -162,6 +167,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
   @Override
   public void stop() {
     LOG.info("Stopping task worker");
+    Optional.ofNullable(metricsCollectionService).map(MetricsCollectionService::stop);
     if (taskWorker != null) {
       taskWorker.stop();
     }
@@ -189,6 +195,9 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
     // Initialize logging context
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
     logAppenderInitializer.initialize();
+
+    metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+    metricsCollectionService.startAndWait();
 
     LoggingContext loggingContext = new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                                               Constants.Logging.COMPONENT_NAME,
