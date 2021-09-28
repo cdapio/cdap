@@ -31,7 +31,7 @@ public class LocalSparkSubmitter extends AbstractSparkSubmitter {
   private static final Pattern LOCAL_MASTER_PATTERN = Pattern.compile("local\\[([0-9]+|\\*)\\]");
 
   @Override
-  protected void addMaster(Map<String, String> configs, ImmutableList.Builder<String> argBuilder) {
+  protected void addMaster(Map<String, String> configs, ImmutableList.Builder<String> argBuilder) throws Exception {
     // Use at least two threads for Spark Streaming
     String masterArg = "local[2]";
 

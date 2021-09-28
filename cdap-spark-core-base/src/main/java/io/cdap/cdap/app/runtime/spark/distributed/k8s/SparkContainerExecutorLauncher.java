@@ -76,6 +76,6 @@ public class SparkContainerExecutorLauncher {
 
     BundleJarUtil.unJar(bundleJarFile.toFile(), new File(WORKING_DIRECTORY));
 
-    SparkContainerLauncher.launch(delegateClass, delegateArgs.toArray(new String[delegateArgs.size()]));
+    SparkContainerLauncher.launch(delegateClass, delegateArgs.toArray(new String[delegateArgs.size()]), false, "k8s");
   }
 }

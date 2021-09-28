@@ -21,14 +21,22 @@ import io.cdap.cdap.app.runtime.spark.SparkRuntimeContext;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeEnv;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeUtils;
 import io.cdap.cdap.app.runtime.spark.distributed.SparkExecutionService;
+import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
+import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.spark.SparkConfig;
+import io.cdap.cdap.master.spi.environment.spark.SparkLocalizeResource;
+import io.cdap.cdap.master.spi.environment.spark.SparkSubmitContext;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.twill.filesystem.LocationFactory;
 
+
 import java.net.InetSocketAddress;
+import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -39,32 +47,45 @@ import java.util.Map;
  */
 public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
   private final SparkExecutionService sparkExecutionService;
-  private final SparkConfig sparkConfig;
+  private final MasterEnvironment masterEnv;
+  private SparkConfig sparkConfig;
+  private List<LocalizeResource> resources;
 
   /**
    * Master environment spark submitter constructor.
    */
   public MasterEnvironmentSparkSubmitter(LocationFactory locationFactory, String hostname,
-                                         SparkRuntimeContext runtimeContext, SparkConfig sparkConfig) {
+                                         SparkRuntimeContext runtimeContext, MasterEnvironment masterEnv) {
     ProgramRunId programRunId = runtimeContext.getProgram().getId().run(runtimeContext.getRunId().getId());
     WorkflowProgramInfo workflowInfo = runtimeContext.getWorkflowInfo();
     BasicWorkflowToken workflowToken = workflowInfo == null ? null : workflowInfo.getWorkflowToken();
     this.sparkExecutionService = new SparkExecutionService(locationFactory, hostname, programRunId, workflowToken);
-    this.sparkConfig = sparkConfig;
+    this.masterEnv = masterEnv;
   }
 
   @Override
-  protected Map<String, String> getSubmitConf() {
+  protected URI getJobFile() throws Exception {
+    return generateOrGetSparkConfig().getSparkJobFile();
+  }
+
+  @Override
+  protected Iterable<LocalizeResource> getFiles(List<LocalizeResource> localizeResources) {
+    this.resources = Collections.unmodifiableList(new ArrayList<>(localizeResources));
+    return Collections.emptyList();
+  }
+
+  @Override
+  protected Map<String, String> generateSubmitConf() throws Exception {
     Map<String, String> config = new HashMap<>();
     config.put(SparkConfig.DRIVER_ENV_PREFIX + "CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR);
     config.put("spark.executorEnv.CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR);
-    config.putAll(sparkConfig.getConfigs());
+    config.putAll(generateOrGetSparkConfig().getConfigs());
     return config;
   }
 
   @Override
-  protected void addMaster(Map<String, String> configs, ImmutableList.Builder<String> argBuilder) {
-    argBuilder.add("--master").add(sparkConfig.getMaster()).add("--deploy-mode").add("cluster");
+  protected void addMaster(Map<String, String> configs, ImmutableList.Builder<String> argBuilder) throws Exception {
+    argBuilder.add("--master").add(generateOrGetSparkConfig().getMaster()).add("--deploy-mode").add("cluster");
   }
 
   @Override
@@ -92,5 +113,20 @@ public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
     } else {
       sparkExecutionService.shutdownNow();
     }
+  }
+
+  private SparkConfig generateOrGetSparkConfig() throws Exception {
+    if (sparkConfig == null) {
+      sparkConfig = masterEnv.generateSparkSubmitConfig(new SparkSubmitContext(getLocalizeResources(resources)));
+    }
+    return sparkConfig;
+  }
+
+  private Map<String, SparkLocalizeResource> getLocalizeResources(List<LocalizeResource> resources) {
+    Map<String, SparkLocalizeResource> map = new HashMap<>();
+    for (LocalizeResource resource : resources) {
+      map.put(FilenameUtils.getName(resource.getURI().toString()), new SparkLocalizeResource(resource.getURI()));
+    }
+    return map;
   }
 }

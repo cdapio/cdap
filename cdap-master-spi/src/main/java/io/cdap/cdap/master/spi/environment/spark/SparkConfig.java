@@ -16,9 +16,11 @@
 
 package io.cdap.cdap.master.spi.environment.spark;
 
+import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Represents environment specific spark submit configurations.
@@ -26,11 +28,13 @@ import java.util.Map;
 public class SparkConfig {
   public static final String DRIVER_ENV_PREFIX = "spark.kubernetes.driverEnv.";
   private final String master;
+  private final URI sparkJobFile;
   private final Map<String, String> configs;
 
-  public SparkConfig(String master, Map<String, String> configs) {
-    this.configs = Collections.unmodifiableMap(new HashMap<>(configs));
+  public SparkConfig(String master, URI sparkJobFile, Map<String, String> configs) {
     this.master = master;
+    this.sparkJobFile = sparkJobFile;
+    this.configs = Collections.unmodifiableMap(new HashMap<>(configs));
   }
 
   /**
@@ -39,6 +43,15 @@ public class SparkConfig {
    */
   public String getMaster() {
     return master;
+  }
+
+  /**
+   * Returns URI for spark job file. If spark job file doesnt need to come from master environment, this method
+   * should return null.
+   */
+  @Nullable
+  public URI getSparkJobFile() {
+    return sparkJobFile;
   }
 
   /**

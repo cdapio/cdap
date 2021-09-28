@@ -212,8 +212,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
       // If MasterEnvironment is not available, use non-master env spark submitters
       MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
       if (masterEnv != null) {
-        SparkConfig sparkConfig = masterEnv.getSparkSubmitConfig();
-        submitter = new MasterEnvironmentSparkSubmitter(locationFactory, host, runtimeContext, sparkConfig);
+        submitter = new MasterEnvironmentSparkSubmitter(locationFactory, host, runtimeContext, masterEnv);
       } else {
         submitter = isLocal
           ? new LocalSparkSubmitter()
@@ -223,7 +222,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
 
       Service sparkRuntimeService = new SparkRuntimeService(cConf, spark, getPluginArchive(options),
                                                             runtimeContext, submitter, locationFactory, isLocal,
-                                                            fieldLineageWriter);
+                                                            fieldLineageWriter, masterEnv);
 
       sparkRuntimeService.addListener(createRuntimeServiceListener(closeables), Threads.SAME_THREAD_EXECUTOR);
       ProgramController controller = new SparkProgramController(sparkRuntimeService, runtimeContext);
