@@ -116,6 +116,7 @@ case "$1" in
       --app-id $SPARK_APPLICATION_ID
       --hostname $SPARK_EXECUTOR_POD_IP
       --resourceProfileId $SPARK_RESOURCE_PROFILE_ID
+      --artifact-fetcher-port $ARTIFACT_FECTHER_PORT
     )
     ;;
 
