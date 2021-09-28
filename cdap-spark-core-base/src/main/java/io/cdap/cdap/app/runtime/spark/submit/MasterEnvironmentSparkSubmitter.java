@@ -22,6 +22,8 @@ import io.cdap.cdap.app.runtime.spark.SparkRuntimeEnv;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeUtils;
 import io.cdap.cdap.app.runtime.spark.distributed.SparkExecutionService;
 import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
@@ -47,19 +49,21 @@ import java.util.Map;
 public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
   private final SparkExecutionService sparkExecutionService;
   private final MasterEnvironment masterEnv;
+  private final CConfiguration cConf;
   private SparkConfig sparkConfig;
   private List<LocalizeResource> resources;
 
   /**
    * Master environment spark submitter constructor.
    */
-  public MasterEnvironmentSparkSubmitter(LocationFactory locationFactory, String hostname,
+  public MasterEnvironmentSparkSubmitter(CConfiguration cConf, LocationFactory locationFactory, String hostname,
                                          SparkRuntimeContext runtimeContext, MasterEnvironment masterEnv) {
     ProgramRunId programRunId = runtimeContext.getProgram().getId().run(runtimeContext.getRunId().getId());
     WorkflowProgramInfo workflowInfo = runtimeContext.getWorkflowInfo();
     BasicWorkflowToken workflowToken = workflowInfo == null ? null : workflowInfo.getWorkflowToken();
     this.sparkExecutionService = new SparkExecutionService(locationFactory, hostname, programRunId, workflowToken);
     this.masterEnv = masterEnv;
+    this.cConf = cConf;
   }
 
   @Override
@@ -77,6 +81,7 @@ public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
   protected Map<String, String> generateSubmitConf() throws Exception {
     Map<String, String> config = new HashMap<>();
     config.put(SparkConfig.DRIVER_ENV_PREFIX + "CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR);
+    config.put("spark.executorEnv.ARTIFACT_FECTHER_PORT", cConf.get(Constants.Spark.Driver.PORT));
     config.put("spark.executorEnv.CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR);
     config.putAll(generateOrGetSparkConfig().getConfigs());
     return config;
