@@ -32,6 +32,7 @@ import io.cdap.cdap.app.runtime.spark.SparkMainWrapper;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeContext;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
+import org.apache.parquet.Strings;
 import org.apache.spark.deploy.SparkSubmit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +48,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
+import javax.annotation.Nullable;
+import javax.validation.constraints.Null;
 
 /**
  * Provides common implementation for different {@link SparkSubmitter}.
@@ -153,6 +156,20 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
   }
 
   /**
+   * Returns iterable of archives from list of localize resources.
+   */
+  protected Iterable<LocalizeResource> getArchives(List<LocalizeResource> localizeResources) {
+    return Iterables.filter(localizeResources, ARCHIVE_FILTER);
+  }
+
+  /**
+   * Returns iterable of archives from list of localize resources.
+   */
+  protected Iterable<LocalizeResource> getFiles(List<LocalizeResource> localizeResources) {
+    return Iterables.filter(localizeResources, Predicates.not(ARCHIVE_FILTER));
+  }
+
+  /**
    * Submits the Spark job using {@link SparkSubmit}.
    *
    * @param runtimeContext context representing the Spark program
@@ -188,6 +205,8 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     SparkSpecification spec = runtimeContext.getSparkSpecification();
 
     ImmutableList.Builder<String> builder = ImmutableList.builder();
+    Iterable<LocalizeResource> archivesIterable = getArchives(resources);
+    Iterable<LocalizeResource> filesIterable = getFiles(resources);
 
     addMaster(configs, builder);
     builder.add("--conf").add("spark.app.name=" + spec.getName());
@@ -196,15 +215,13 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     configs.forEach(confAdder);
     getSubmitConf().forEach(confAdder);
 
-    String archives = Joiner.on(',')
-      .join(Iterables.transform(Iterables.filter(resources, ARCHIVE_FILTER), RESOURCE_TO_PATH));
-    String files = Joiner.on(',')
-      .join(Iterables.transform(Iterables.filter(resources, Predicates.not(ARCHIVE_FILTER)), RESOURCE_TO_PATH));
+    String archives = Joiner.on(',').join(Iterables.transform(archivesIterable, RESOURCE_TO_PATH));
+    String files = Joiner.on(',').join(Iterables.transform(filesIterable, RESOURCE_TO_PATH));
 
-    if (!archives.isEmpty()) {
+    if (!Strings.isNullOrEmpty(archives)) {
       builder.add("--archives").add(archives);
     }
-    if (!files.isEmpty()) {
+    if (!Strings.isNullOrEmpty(files)) {
       builder.add("--files").add(files);
     }
 
