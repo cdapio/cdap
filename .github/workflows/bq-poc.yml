@@ -29,7 +29,7 @@ jobs:
           git config --global user.email "vitaliit@google.com"
           git config --global user.name "Vitalii Tymchyshyn (Auto Merge)"
           # Add more feature branches as needed
-          for BRANCH in add-spark-interface-for-bq-pushdown-engine feature/bq_sink_pushdown feature/multiplugin
+          for BRANCH in add-spark-interface-for-bq-pushdown-engine feature/bq_sink_pushdown feature/multiplugin feature/dsl
           do
             echo Merging $BRANCH
             git cherry-pick --keep-redundant-commits  $(git merge-base origin/develop origin/$BRANCH)..origin/$BRANCH
