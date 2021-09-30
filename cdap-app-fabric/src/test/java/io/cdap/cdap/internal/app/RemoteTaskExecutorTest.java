@@ -75,7 +75,6 @@ public class RemoteTaskExecutorTest {
         new TaskWorkerHttpHandlerInternal(cConf, className -> {
         }, new NoOpMetricsCollectionService())
       )
-      .setPort(cConf.getInt(Constants.ArtifactLocalizer.PORT))
       .setChannelPipelineModifier(new ChannelPipelineModifier() {
         @Override
         public void modify(ChannelPipeline pipeline) {
