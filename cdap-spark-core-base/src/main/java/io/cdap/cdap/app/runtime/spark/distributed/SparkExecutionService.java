@@ -106,11 +106,19 @@ public final class SparkExecutionService extends AbstractIdleService {
    * Returns the base {@link URI} for talking to this service remotely through HTTP.
    */
   public URI getBaseURI() {
+    InetSocketAddress bindAddress = getBindAddress();
+    return URI.create(String.format("http://%s:%d", bindAddress.getHostName(), bindAddress.getPort()));
+  }
+
+  /**
+   * Returns the socket address that the service is bound to.
+   */
+  public InetSocketAddress getBindAddress() {
     InetSocketAddress bindAddress = httpServer.getBindAddress();
     if (bindAddress == null) {
       throw new IllegalStateException("SparkExecutionService hasn't been started");
     }
-    return URI.create(String.format("http://%s:%d", bindAddress.getHostName(), bindAddress.getPort()));
+    return bindAddress;
   }
 
   @Override

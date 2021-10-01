@@ -35,6 +35,7 @@ import org.apache.twill.filesystem.LocationFactory;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -89,8 +90,11 @@ public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
   @Override
   protected List<String> beforeSubmit() {
     sparkExecutionService.startAndWait();
+    InetSocketAddress socketAddress = sparkExecutionService.getBindAddress();
+    // use ip instead of hostname, as some environments (like kubernetes) don't work properly with hostname
+    String uri = String.format("http://%s:%d", socketAddress.getAddress().getHostAddress(), socketAddress.getPort());
     SparkRuntimeEnv.setProperty(SparkConfig.DRIVER_ENV_PREFIX + SparkRuntimeUtils.CDAP_SPARK_EXECUTION_SERVICE_URI,
-                                sparkExecutionService.getBaseURI().toString());
+                                uri);
     return Collections.emptyList();
   }
 
