@@ -141,7 +141,7 @@ public class SparkContainerDriverLauncher {
       new ArtifactFetcherService(cConf, createBundle(new File(WORKING_DIRECTORY).getAbsoluteFile().toPath()));
     artifactFetcherService.startAndWait();
 
-    SparkContainerLauncher.launch(delegateClass, delegateArgs.toArray(new String[delegateArgs.size()]));
+    SparkContainerLauncher.launch(delegateClass, delegateArgs.toArray(new String[delegateArgs.size()]), false, "k8s");
   }
 
 

@@ -278,13 +278,17 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     sparkConfMap.put(SPARK_KUBERNETES_DRIVER_POD_TEMPLATE, templateFile.getAbsolutePath());
     sparkConfMap.put(SPARK_KUBERNETES_EXECUTOR_POD_TEMPLATE, templateFile.getAbsolutePath());
 
-    // Add spark driver pod labels. This will be same as job labels
+    // Add spark pod labels. This will be same as job labels
     for (Map.Entry<String, String> label : podInfo.getLabels().entrySet()) {
       sparkConfMap.put(SPARK_KUBERNETES_DRIVER_LABEL_PREFIX + label.getKey(), label.getValue());
       sparkConfMap.put(SPARK_KUBERNETES_EXECUTOR_LABEL_PREFIX + label.getKey(), label.getValue());
     }
 
-    return new SparkConfig("k8s://" + master, sparkConfMap);
+    // Kube Master environment would always contain spark job jar file.
+    // https://github.com/cdapio/cdap/blob/develop/cdap-spark-core3_2.12/src/k8s/Dockerfile#L46
+    return new SparkConfig("k8s://" + master,
+                           URI.create("local:/opt/cdap/cdap-spark-core/cdap-spark-core.jar"),
+                           sparkConfMap);
   }
 
   /**

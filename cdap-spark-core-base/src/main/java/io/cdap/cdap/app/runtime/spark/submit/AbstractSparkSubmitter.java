@@ -173,9 +173,10 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
 
   /**
    * Returns job file for spark.
+   * @throws Exception if there is error getting job jar file
    */
   @Nullable
-  protected URI getJobFile() {
+  protected URI getJobFile() throws Exception {
     return null;
   }
 

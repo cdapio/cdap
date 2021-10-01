@@ -62,10 +62,8 @@ public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
   }
 
   @Override
-  protected URI getJobFile() {
-    // Master environment would always contain this file.
-    // https://github.com/cdapio/cdap/blob/develop/cdap-spark-core3_2.12/src/k8s/Dockerfile#L46
-    return URI.create("local:/opt/cdap/cdap-spark-core/cdap-spark-core.jar");
+  protected URI getJobFile() throws Exception {
+    return generateOrGetSparkConfig().getSparkJobFile();
   }
 
   @Override
