@@ -81,7 +81,7 @@ public class SparkContainerDriverLauncher {
   private static final String DEFAULT_DELEGATE_CLASS = "org.apache.spark.deploy.SparkSubmit";
   private static final String DELEGATE_CLASS_FLAG = "--delegate-class";
 
-  private static final String WORKING_DIRECTORY = "/opt/spark/work-dir/";
+  private static final String WORKING_DIRECTORY = System.getenv("SPARK_LOCAL_DIRS") + "/";
   private static final String CONFIGMAP_FILES_BASE_PATH = "/etc/cdap/localizefiles/";
   private static final String CCONF_PATH = WORKING_DIRECTORY + "cConf.xml";
   private static final String HCONF_PATH = WORKING_DIRECTORY + "hConf.xml";

@@ -27,6 +27,7 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnableContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentTask;
 import io.cdap.cdap.master.spi.environment.spark.SparkConfig;
 import io.cdap.cdap.master.spi.environment.spark.SparkLocalizeResource;
+import io.cdap.cdap.master.spi.environment.spark.SparkSubmitContext;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
@@ -110,7 +111,9 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String POD_KILLER_DELAY_MILLIS = "master.environment.k8s.pod.killer.delay.millis";
   private static final String SPARK_CONFIGS_PREFIX = "spark.kubernetes";
   private static final String SPARK_KUBERNETES_DRIVER_LABEL_PREFIX = "spark.kubernetes.driver.label.";
+  private static final String SPARK_KUBERNETES_EXECUTOR_LABEL_PREFIX = "spark.kubernetes.executor.label.";
   private static final String SPARK_KUBERNETES_DRIVER_POD_TEMPLATE = "spark.kubernetes.driver.podTemplateFile";
+  private static final String SPARK_KUBERNETES_EXECUTOR_POD_TEMPLATE = "spark.kubernetes.executor.podTemplateFile";
   private static final String POD_TEMPLATE_FILE_NAME = "podTemplate-";
   private static final String CDAP_LOCALIZE_FILES_PATH = "/etc/cdap/localizefiles";
   private static final String CDAP_CONFIG_MAP_PREFIX = "cdap-compressed-files-";
@@ -254,14 +257,14 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   }
 
   @Override
-  public SparkConfig getSparkSubmitConfig(Map<String, SparkLocalizeResource> localizeResources) {
+  public SparkConfig generateSparkSubmitConfig(SparkSubmitContext sparkSubmitContext) throws Exception {
     Map<String, String> sparkConfMap = new HashMap<>(additionalSparkConfs);
     // Get k8s master path for spark submit
     String master = getMasterPath();
 
     // Create pod spec with cdap conf.
     V1Pod v1Pod = new V1Pod();
-    v1Pod.setSpec(getSparkPodSpec(podInfo, localizeResources));
+    v1Pod.setSpec(getSparkPodSpec(podInfo, sparkSubmitContext.getLocalizeResources()));
 
     // Create spark template file. This file gets created in driver pod. We do not delete it because pod will get
     // deleted at the end of job completion.
@@ -270,13 +273,15 @@ public class KubeMasterEnvironment implements MasterEnvironment {
       writer.write(Yaml.dump(v1Pod));
     } catch (IOException e) {
       // should not happen
-      throw new RuntimeException("Exception while writing pod spec to temp file.", e);
+      throw new IOException("Exception while writing pod spec to temp file.", e);
     }
     sparkConfMap.put(SPARK_KUBERNETES_DRIVER_POD_TEMPLATE, templateFile.getAbsolutePath());
+    sparkConfMap.put(SPARK_KUBERNETES_EXECUTOR_POD_TEMPLATE, templateFile.getAbsolutePath());
 
     // Add spark driver pod labels. This will be same as job labels
     for (Map.Entry<String, String> label : podInfo.getLabels().entrySet()) {
       sparkConfMap.put(SPARK_KUBERNETES_DRIVER_LABEL_PREFIX + label.getKey(), label.getValue());
+      sparkConfMap.put(SPARK_KUBERNETES_EXECUTOR_LABEL_PREFIX + label.getKey(), label.getValue());
     }
 
     return new SparkConfig("k8s://" + master, sparkConfMap);
@@ -393,8 +398,10 @@ public class KubeMasterEnvironment implements MasterEnvironment {
    * @param podInfo podinfo for the pod that is submitting the Spark job
    * @param localizeResources localize resources needed for spark on master environment
    * @return pod template to use for all Spark pods
+   * @throws Exception if there is an error while generating pod spec
    */
-  private V1PodSpec getSparkPodSpec(PodInfo podInfo, Map<String, SparkLocalizeResource> localizeResources) {
+  private V1PodSpec getSparkPodSpec(PodInfo podInfo,
+                                    Map<String, SparkLocalizeResource> localizeResources) throws Exception {
     /*
         define the podinfo volume. This uses downwardAPI, which tells k8s to store pod information in files:
 
@@ -413,30 +420,31 @@ public class KubeMasterEnvironment implements MasterEnvironment {
         name: podinfo
      */
     V1PodSpecBuilder v1PodSpecBuilder = new V1PodSpecBuilder();
+
+    List<V1Volume> volumes = new ArrayList<>();
+    V1DownwardAPIVolumeFile labelsFile = new V1DownwardAPIVolumeFile()
+      .fieldRef(new V1ObjectFieldSelector().fieldPath("metadata.labels"))
+      .path(podLabelsFile.getName());
+    V1DownwardAPIVolumeFile nameFile = new V1DownwardAPIVolumeFile()
+      .fieldRef(new V1ObjectFieldSelector().fieldPath("metadata.name"))
+      .path(podNameFile.getName());
+    V1DownwardAPIVolumeFile uidFile = new V1DownwardAPIVolumeFile()
+      .fieldRef(new V1ObjectFieldSelector().fieldPath("metadata.uid"))
+      .path(podUidFile.getName());
+    V1DownwardAPIVolumeSource podinfoVolume = new V1DownwardAPIVolumeSource()
+      .defaultMode(420)
+      .items(Arrays.asList(labelsFile, nameFile, uidFile));
+    String podInfoVolumeName = "podinfo";
+    volumes.add(new V1Volume().downwardAPI(podinfoVolume).name(podInfoVolumeName));
+
+    List<V1VolumeMount> volumeMounts = new ArrayList<>();
+    volumeMounts.add(new V1VolumeMount().name(podInfoVolumeName).mountPath(podInfoDir.getAbsolutePath()));
+
+    // mount spark localize resources
+    V1ConfigMapBuilder configMapBuilder = new V1ConfigMapBuilder();
+    V1ConfigMapVolumeSourceBuilder configVolumeBuilder = new V1ConfigMapVolumeSourceBuilder();
+
     try {
-      List<V1Volume> volumes = new ArrayList<>();
-      V1DownwardAPIVolumeFile labelsFile = new V1DownwardAPIVolumeFile()
-        .fieldRef(new V1ObjectFieldSelector().fieldPath("metadata.labels"))
-        .path(podLabelsFile.getName());
-      V1DownwardAPIVolumeFile nameFile = new V1DownwardAPIVolumeFile()
-        .fieldRef(new V1ObjectFieldSelector().fieldPath("metadata.name"))
-        .path(podNameFile.getName());
-      V1DownwardAPIVolumeFile uidFile = new V1DownwardAPIVolumeFile()
-        .fieldRef(new V1ObjectFieldSelector().fieldPath("metadata.uid"))
-        .path(podUidFile.getName());
-      V1DownwardAPIVolumeSource podinfoVolume = new V1DownwardAPIVolumeSource()
-        .defaultMode(420)
-        .items(Arrays.asList(labelsFile, nameFile, uidFile));
-      String podInfoVolumeName = "podinfo";
-      volumes.add(new V1Volume().downwardAPI(podinfoVolume).name(podInfoVolumeName));
-
-      List<V1VolumeMount> volumeMounts = new ArrayList<>();
-      volumeMounts.add(new V1VolumeMount().name(podInfoVolumeName).mountPath(podInfoDir.getAbsolutePath()));
-
-      // mount spark localize resources
-      V1ConfigMapBuilder configMapBuilder = new V1ConfigMapBuilder();
-      V1ConfigMapVolumeSourceBuilder configVolumeBuilder = new V1ConfigMapVolumeSourceBuilder();
-
       for (Map.Entry<String, SparkLocalizeResource> resource : localizeResources.entrySet()) {
         configMapBuilder.addToBinaryData(resource.getKey(), getCompressedContents(resource.getValue().getURI()));
         configVolumeBuilder.addToItems(new V1KeyToPath().key(resource.getKey()).path(resource.getKey()));
@@ -462,10 +470,10 @@ public class KubeMasterEnvironment implements MasterEnvironment {
                           .build());
 
     } catch (ApiException e) {
-      throw new RuntimeException("Error occurred while creating pod spec. Error code="
-                                   + e.getCode() + ", Body=" + e.getResponseBody(), e);
-    } catch (Exception e) {
-      throw new RuntimeException("Error occurred while creating pod spec. " + e.getMessage(), e);
+      throw new IOException("Error occurred while creating pod spec. Error code="
+                              + e.getCode() + ", Body=" + e.getResponseBody(), e);
+    } catch (IOException e) {
+      throw new IOException("Error while creating compressed files to generate pod spec.", e);
     }
     return v1PodSpecBuilder.build();
   }

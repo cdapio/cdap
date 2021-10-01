@@ -27,14 +27,13 @@ import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.spark.SparkConfig;
 import io.cdap.cdap.master.spi.environment.spark.SparkLocalizeResource;
+import io.cdap.cdap.master.spi.environment.spark.SparkSubmitContext;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.twill.filesystem.LocationFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.nio.file.Paths;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -45,7 +44,6 @@ import java.util.Map;
  * Master environment spark submitter.
  */
 public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
-  private static final Logger LOG = LoggerFactory.getLogger(MasterEnvironmentSparkSubmitter.class);
   private final SparkExecutionService sparkExecutionService;
   private final MasterEnvironment masterEnv;
   private SparkConfig sparkConfig;
@@ -64,30 +62,37 @@ public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
   }
 
   @Override
+  protected URI getJobFile() {
+    // Master environment would always contain this file.
+    // https://github.com/cdapio/cdap/blob/develop/cdap-spark-core3_2.12/src/k8s/Dockerfile#L46
+    return URI.create("local:/opt/cdap/cdap-spark-core/cdap-spark-core.jar");
+  }
+
+  @Override
   protected Iterable<LocalizeResource> getFiles(List<LocalizeResource> localizeResources) {
     this.resources = Collections.unmodifiableList(new ArrayList<>(localizeResources));
     return Collections.emptyList();
   }
 
   @Override
-  protected Map<String, String> getSubmitConf() {
+  protected Map<String, String> generateSubmitConf() throws Exception {
     Map<String, String> config = new HashMap<>();
     config.put(SparkConfig.DRIVER_ENV_PREFIX + "CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR);
     config.put("spark.executorEnv.CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR);
-    config.putAll(getSparkConfig().getConfigs());
+    config.putAll(generateOrGetSparkConfig().getConfigs());
     return config;
   }
 
   @Override
-  protected void addMaster(Map<String, String> configs, ImmutableList.Builder<String> argBuilder) {
-    argBuilder.add("--master").add(getSparkConfig().getMaster()).add("--deploy-mode").add("cluster");
+  protected void addMaster(Map<String, String> configs, ImmutableList.Builder<String> argBuilder) throws Exception {
+    argBuilder.add("--master").add(generateOrGetSparkConfig().getMaster()).add("--deploy-mode").add("cluster");
   }
 
   @Override
   protected List<String> beforeSubmit() {
     sparkExecutionService.startAndWait();
-//    SparkRuntimeEnv.setProperty(SparkConfig.DRIVER_ENV_PREFIX + SparkRuntimeUtils.CDAP_SPARK_EXECUTION_SERVICE_URI,
-//                                sparkExecutionService.getBaseURI().toString());
+    SparkRuntimeEnv.setProperty(SparkConfig.DRIVER_ENV_PREFIX + SparkRuntimeUtils.CDAP_SPARK_EXECUTION_SERVICE_URI,
+                                sparkExecutionService.getBaseURI().toString());
     return Collections.emptyList();
   }
 
@@ -107,9 +112,9 @@ public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
     }
   }
 
-  private SparkConfig getSparkConfig() {
+  private SparkConfig generateOrGetSparkConfig() throws Exception {
     if (sparkConfig == null) {
-      sparkConfig = masterEnv.getSparkSubmitConfig(getLocalizeResources(resources));
+      sparkConfig = masterEnv.generateSparkSubmitConfig(new SparkSubmitContext(getLocalizeResources(resources)));
     }
     return sparkConfig;
   }

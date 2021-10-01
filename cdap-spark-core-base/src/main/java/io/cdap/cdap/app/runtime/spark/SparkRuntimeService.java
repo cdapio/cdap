@@ -213,7 +213,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       SparkRuntimeContextConfig contextConfig = new SparkRuntimeContextConfig(runtimeContext.getConfiguration());
 
       final List<LocalizeResource> localizeResources = new ArrayList<>();
-      URI jobFile = context.isPySpark() ? getPySparkScript(tempDir) : createJobJar(tempDir);
+      final URI jobFile = context.isPySpark() ? getPySparkScript(tempDir) : createJobJar(tempDir);
       List<File> extraPySparkFiles = new ArrayList<>();
 
       String metricsConfPath;
@@ -236,35 +236,17 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         for (File file : files) {
           localizeResources.add(new LocalizeResource(file));
         }
-        // Master environment would always contain this file.
-        // https://github.com/cdapio/cdap/blob/develop/cdap-spark-core3_2.12/src/k8s/Dockerfile#L46
-        jobFile = URI.create("local:/opt/cdap/cdap-spark-core/cdap-spark-core.jar");
 
         File metricsConf = SparkMetricsSink.writeConfig(new File(tempDir, CDAP_METRICS_PROPERTIES));
         metricsConfPath = metricsConf.getAbsolutePath();
-
       } else if (isLocal) {
         // In local mode, always copy (or link if local) user requested resources
-        List<File> files = copyUserResources(context.getLocalizeResources(), tempDir);
+        copyUserResources(context.getLocalizeResources(), tempDir);
 
         File metricsConf = SparkMetricsSink.writeConfig(new File(tempDir, CDAP_METRICS_PROPERTIES));
         metricsConfPath = metricsConf.getAbsolutePath();
 
         extractPySparkLibrary(tempDir, extraPySparkFiles);
-
-        // Add localize resources for master environment
-        if (masterEnv != null) {
-          Configuration hConf = contextConfig.set(runtimeContext, pluginArchive).getConfiguration();
-          // Only add cconf, hconf and hydrator conf for master environment
-          localizeResources.add(new LocalizeResource(saveCConf(cConfCopy, tempDir)));
-          localizeResources.add(new LocalizeResource(saveHConf(hConf, tempDir)));
-
-          // Localize all the files from user resources
-          for (File file : files) {
-            localizeResources.add(new LocalizeResource(file));
-          }
-          jobFile = URI.create("local:/opt/cdap/cdap-spark-core/cdap-spark-core.jar");
-        }
       } else {
         // Localize all user requested files in distributed mode
         distributedUserResources(context.getLocalizeResources(), localizeResources);
@@ -340,7 +322,6 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
       final Map<String, String> configs = createSubmitConfigs(tempDir, metricsConfPath, classpath,
                                                               context.getLocalizeResources(), isLocal, pyFiles);
-      final URI jobFileURI = jobFile;
       submitSpark = new Callable<ListenableFuture<RunId>>() {
         @Override
         public ListenableFuture<RunId> call() throws Exception {
@@ -349,7 +330,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
           if (!isRunning()) {
             return immediateCancelledFuture();
           }
-          return sparkSubmitter.submit(runtimeContext, configs, localizeResources, jobFileURI,
+          return sparkSubmitter.submit(runtimeContext, configs, localizeResources, jobFile,
                                        runtimeContext.getRunId());
         }
       };
@@ -469,7 +450,6 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       : defaultTxControl;
 
     runtimeContext.initializeProgram(programLifecycle, txControl, false);
-    ;
   }
 
   /**

@@ -17,12 +17,11 @@
 package io.cdap.cdap.master.spi.environment;
 
 import io.cdap.cdap.master.spi.environment.spark.SparkConfig;
-import io.cdap.cdap.master.spi.environment.spark.SparkLocalizeResource;
+import io.cdap.cdap.master.spi.environment.spark.SparkSubmitContext;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -92,9 +91,10 @@ public interface MasterEnvironment {
   /**
    * Returns a {@link SparkConfig} of this environment.
    *
-   * @param localizeResources localize resources needed for spark on master environment
+   * @param sparkSubmitContext Spark submit context for master environment
+   * @throws Exception if there is any error in generating spark submit config
    */
-  default SparkConfig getSparkSubmitConfig(Map<String, SparkLocalizeResource> localizeResources) {
+  default SparkConfig generateSparkSubmitConfig(SparkSubmitContext sparkSubmitContext) throws Exception {
     throw new UnsupportedOperationException("Method not implemented");
   }
 }
