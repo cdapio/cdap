@@ -17,6 +17,7 @@
 package io.cdap.cdap.common.service;
 
 import io.cdap.cdap.api.retry.RetriesExhaustedException;
+import io.cdap.cdap.api.retry.RetryFailedException;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.common.logging.LogSamplers;
 import io.cdap.cdap.common.logging.Loggers;
@@ -34,7 +35,7 @@ public final class Retries {
   private static final Logger LOG = LoggerFactory.getLogger(Retries.class);
 
   public static final Predicate<Throwable> ALWAYS_TRUE = t -> true;
-  private static final Predicate<Throwable> DEFAULT_PREDICATE = RetryableException.class::isInstance;
+  public static final Predicate<Throwable> DEFAULT_PREDICATE = RetryableException.class::isInstance;
 
   private Retries() {
 
@@ -59,6 +60,17 @@ public final class Retries {
    */
   public interface Runnable<T extends Throwable> {
     void run() throws T;
+  }
+
+  /**
+   * A Callable whose throwable is generic and call method takes attempt count as argument.
+   * This is helpful for capturing retry count
+   *
+   * @param <V> the type of return value
+   * @param <T> the type of throwable
+   */
+  public interface CallableWithContext<V, T extends Throwable> {
+    V call(RetryContext retryContext) throws T;
   }
 
   /**
@@ -155,7 +167,7 @@ public final class Retries {
   }
 
   /**
-   * Executes a {@link Callable}, retrying the call if it throws something retryable.
+   * Same as calling {@link #callWithRetries(CallableWithContext, RetryStrategy, Predicate)} with attempt count ignored
    *
    * @param callable the callable to run
    * @param retryStrategy the retry strategy to use if the callable fails in a retryable way
@@ -171,6 +183,27 @@ public final class Retries {
   public static <V, T extends Throwable> V callWithRetries(Callable<V, T> callable,
                                                            RetryStrategy retryStrategy,
                                                            Predicate<Throwable> isRetryable) throws T {
+    return callWithRetries((retryContext) -> callable.call(), retryStrategy, isRetryable);
+  }
+
+  /**
+   * Executes a {@link CallableWithContext}, retrying the call if it throws something retryable.
+   * Passes the attempt count to the function being called.
+   *
+   * @param callable the callable to run, that takes an integer attempt count
+   * @param retryStrategy the retry strategy to use if the callable fails in a retryable way
+   * @param isRetryable predicate to determine whether the callable failure is retryable or not
+   * @param <V> the type of return value
+   * @param <T> the type of throwable
+   * @return the return value of the callable
+   * @throws T if the callable failed in a way that is not retryable, or the retries were exhausted.
+   *   If retries were exhausted, a {@link RetriesExhaustedException} will be added as a suppressed exception.
+   *   If the call was interrupted while waiting between retries, the {@link InterruptedException} will be added
+   *   as a suppressed exception
+   */
+  public static <V, T extends Throwable> V callWithRetries(CallableWithContext<V, T> callable,
+                                                           RetryStrategy retryStrategy,
+                                                           Predicate<Throwable> isRetryable) throws T {
 
     // Skip the first error log, and at most log once per 30 seconds.
     // This helps debugging errors that persist more than 30 seconds.
@@ -182,13 +215,14 @@ public final class Retries {
     long startTime = System.currentTimeMillis();
     while (true) {
       try {
-        V v = callable.call();
+        V v = callable.call(new RetryContext.Builder().withRetryAttempt(failures + 1).build());
         if (failures > 0) {
           LOG.trace("Retry succeeded after {} retries and {} ms.", failures, System.currentTimeMillis() - startTime);
         }
         return v;
       } catch (Throwable t) {
         if (!isRetryable.test(t)) {
+          t.addSuppressed(new RetryFailedException("Retry failed. Encountered non retryable exception.", failures + 1));
           throw t;
         }
 
@@ -197,7 +231,7 @@ public final class Retries {
           String errMsg = String.format("Retries exhausted after %d failures and %d ms.",
                                         failures, System.currentTimeMillis() - startTime);
           LOG.debug(errMsg);
-          t.addSuppressed(new RetriesExhaustedException(errMsg));
+          t.addSuppressed(new RetriesExhaustedException(errMsg, failures + 1));
           throw t;
         }
 
@@ -209,6 +243,7 @@ public final class Retries {
           // if we were interrupted while waiting for the next retry, treat it like no retries were attempted
           t.addSuppressed(e);
           Thread.currentThread().interrupt();
+          t.addSuppressed(new RetryFailedException("Retry failed. Thread got interrupted.", failures + 1));
           throw t;
         }
       }

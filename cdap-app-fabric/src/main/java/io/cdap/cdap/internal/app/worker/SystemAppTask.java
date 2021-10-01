@@ -104,7 +104,7 @@ public class SystemAppTask implements RunnableTask {
          SystemAppTaskContext systemAppTaskContext = buildTaskSystemAppContext(injector, systemAppNamespace,
                                                                                systemAppArtifactId,
                                                                                artifactClassLoader)) {
-      RunnableTaskRequest taskRequest = GSON.fromJson(context.getParam(), RunnableTaskRequest.class);
+      RunnableTaskRequest taskRequest = context.getEmbeddedRequest();
       String taskClassName = taskRequest.getClassName();
       if (taskClassName == null) {
         LOG.debug("No system app task to execute");
@@ -119,8 +119,8 @@ public class SystemAppTask implements RunnableTask {
 
       LOG.debug("Launching system app task {}", taskClassName);
       RunnableTask runnableTask = (RunnableTask) injector.getInstance(clazz);
-      RunnableTaskContext runnableTaskContext = new RunnableTaskContext(taskRequest.getParam(), null, null,
-                                                                        systemAppTaskContext) {
+      RunnableTaskContext runnableTaskContext = new RunnableTaskContext(taskRequest.getParam().getSimpleParam(), null,
+                                                                        null, null, systemAppTaskContext) {
         @Override
         public void writeResult(byte[] data) throws IOException {
           context.writeResult(data);

@@ -29,7 +29,10 @@ import javax.annotation.Nullable;
  */
 public class RunnableTaskContext {
   private final ExposedByteArrayOutputStream outputStream;
+  @Nullable
   private final String param;
+  @Nullable
+  private final RunnableTaskRequest embeddedRequest;
   @Nullable
   private final String namespace;
   @Nullable
@@ -39,9 +42,11 @@ public class RunnableTaskContext {
 
   private boolean terminateOnComplete;
 
-  public RunnableTaskContext(String param, @Nullable String namespace,
-                             @Nullable ArtifactId artifactId, @Nullable SystemAppTaskContext systemAppTaskContext) {
+  public RunnableTaskContext(@Nullable String param, @Nullable RunnableTaskRequest embeddedRequest,
+                             @Nullable String namespace, @Nullable ArtifactId artifactId,
+                             @Nullable SystemAppTaskContext systemAppTaskContext) {
     this.param = param;
+    this.embeddedRequest = embeddedRequest;
     this.namespace = namespace;
     this.artifactId = artifactId;
     this.systemAppTaskContext = systemAppTaskContext;
@@ -76,8 +81,14 @@ public class RunnableTaskContext {
     return outputStream.toByteBuffer();
   }
 
+  @Nullable
   public String getParam() {
     return param;
+  }
+
+  @Nullable
+  public RunnableTaskRequest getEmbeddedRequest() {
+    return embeddedRequest;
   }
 
   @Nullable
@@ -103,7 +114,7 @@ public class RunnableTaskContext {
    * Builder for RunnableTaskContext
    */
   public static class Builder {
-    private String param;
+    private RunnableTaskParam param;
     @Nullable
     private String namespace;
     @Nullable
@@ -115,7 +126,7 @@ public class RunnableTaskContext {
 
     }
 
-    public Builder withParam(String param) {
+    public Builder withParam(RunnableTaskParam param) {
       this.param = param;
       return this;
     }
@@ -137,7 +148,8 @@ public class RunnableTaskContext {
     }
 
     public RunnableTaskContext build() {
-      return new RunnableTaskContext(param, namespace, artifactId, systemAppTaskContext);
+      return new RunnableTaskContext(param.getSimpleParam(), param.getEmbeddedTaskRequest(), namespace, artifactId,
+                                     systemAppTaskContext);
     }
   }
 }
