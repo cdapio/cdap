@@ -214,7 +214,6 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   public void destroy() {
     if (!Strings.isNullOrEmpty(configMapName)) {
       try {
-        // TODO: CDAP-18504 Create a config map cleaner thread to cleanup in case this deletion fails
         coreV1Api.deleteNamespacedConfigMap(configMapName, podInfo.getNamespace(), null, null, null, null, null, null);
       } catch (ApiException e) {
         LOG.warn("Error cleaning up configmap {}, it will be retried. {} ", configMapName, e.getResponseBody(), e);
@@ -459,7 +458,10 @@ public class KubeMasterEnvironment implements MasterEnvironment {
       coreV1Api.createNamespacedConfigMap(podInfo.getNamespace(),
                                           configMapBuilder.withMetadata(
                                             new V1ObjectMetaBuilder()
-                                              .withName(configMapName).build()).build(),
+                                              .withName(configMapName)
+                                              .withLabels(podInfo.getLabels())
+                                              .withOwnerReferences(podInfo.getOwnerReferences())
+                                              .build()).build(),
                                           null, null, null);
       this.configMapName = configMapName;
 
