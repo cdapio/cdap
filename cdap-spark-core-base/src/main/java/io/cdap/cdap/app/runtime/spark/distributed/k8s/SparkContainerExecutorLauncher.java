@@ -41,7 +41,7 @@ public class SparkContainerExecutorLauncher {
 
   //TODO: Needs to be passed/read from args
   private static final int ARTIFACT_FETCHER_PORT = 11013;
-  private static final String WORKING_DIRECTORY = System.getenv("SPARK_LOCAL_DIRS") + "/";
+  private static final String WORKING_DIRECTORY = "/opt/spark/work-dir/";
 
   public static void main(String[] args) throws Exception {
     String delegateClass = "org.apache.spark.deploy.SparkSubmit";

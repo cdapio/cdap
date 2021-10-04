@@ -50,6 +50,7 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.guice.CoreSecurityModule;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
+import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -81,7 +82,8 @@ public class SparkContainerDriverLauncher {
   private static final String DEFAULT_DELEGATE_CLASS = "org.apache.spark.deploy.SparkSubmit";
   private static final String DELEGATE_CLASS_FLAG = "--delegate-class";
 
-  private static final String WORKING_DIRECTORY = System.getenv("SPARK_LOCAL_DIRS") + "/";
+  private static final String WORKING_DIRECTORY = "/opt/spark/work-dir/";
+  private static final String SPARK_LOCAL_DIR = System.getenv("SPARK_LOCAL_DIRS") + "/";
   private static final String CONFIGMAP_FILES_BASE_PATH = "/etc/cdap/localizefiles/";
   private static final String CCONF_PATH = WORKING_DIRECTORY + "cConf.xml";
   private static final String HCONF_PATH = WORKING_DIRECTORY + "hConf.xml";
@@ -106,6 +108,8 @@ public class SparkContainerDriverLauncher {
         decompress(compressedFile.getAbsolutePath(), WORKING_DIRECTORY + compressedFile.getName());
       }
     }
+    // TODO: CDAP-18525: remove below line once this jira is fixed
+    FileUtils.copyDirectory(new File(WORKING_DIRECTORY), new File(SPARK_LOCAL_DIR));
 
     CConfiguration cConf = CConfiguration.create(new File(CCONF_PATH));
     Configuration hConf = new Configuration();

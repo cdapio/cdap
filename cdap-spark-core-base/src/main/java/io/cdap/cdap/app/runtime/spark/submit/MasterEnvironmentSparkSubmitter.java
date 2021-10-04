@@ -33,9 +33,9 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.twill.filesystem.LocationFactory;
 
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.ArrayList;
-import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;

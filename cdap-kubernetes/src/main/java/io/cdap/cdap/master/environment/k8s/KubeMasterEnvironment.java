@@ -43,6 +43,7 @@ import io.kubernetes.client.openapi.models.V1ObjectFieldSelector;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1ObjectMetaBuilder;
 import io.kubernetes.client.openapi.models.V1OwnerReference;
+import io.kubernetes.client.openapi.models.V1OwnerReferenceBuilder;
 import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1PodSpec;
 import io.kubernetes.client.openapi.models.V1PodSpecBuilder;
@@ -257,13 +258,39 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
   @Override
   public SparkConfig generateSparkSubmitConfig(SparkSubmitContext sparkSubmitContext) throws Exception {
-    Map<String, String> sparkConfMap = new HashMap<>(additionalSparkConfs);
     // Get k8s master path for spark submit
     String master = getMasterPath();
 
-    // Create pod spec with cdap conf.
+    // Create pod template with config maps and add to spark conf.
+    Map<String, String> sparkConfMap = new HashMap<>(additionalSparkConfs);
+    sparkConfMap.put(SPARK_KUBERNETES_DRIVER_POD_TEMPLATE,
+                     getPodTemplateFile(sparkSubmitContext, true).getAbsolutePath());
+    sparkConfMap.put(SPARK_KUBERNETES_EXECUTOR_POD_TEMPLATE,
+                     getPodTemplateFile(sparkSubmitContext, false).getAbsolutePath());
+
+    // Add spark pod labels. This will be same as job labels
+    populateLabels(sparkConfMap);
+
+    // Kube Master environment would always contain spark job jar file.
+    // https://github.com/cdapio/cdap/blob/develop/cdap-spark-core3_2.12/src/k8s/Dockerfile#L46
+    return new SparkConfig("k8s://" + master,
+                           URI.create("local:/opt/cdap/cdap-spark-core/cdap-spark-core.jar"),
+                           sparkConfMap);
+  }
+
+  private File getPodTemplateFile(SparkSubmitContext sparkSubmitContext, boolean isDriver) throws Exception {
     V1Pod v1Pod = new V1Pod();
-    v1Pod.setSpec(getSparkPodSpec(podInfo, sparkSubmitContext.getLocalizeResources()));
+    if (isDriver) {
+      v1Pod.setMetadata(new V1ObjectMetaBuilder()
+                          .addToOwnerReferences(new V1OwnerReferenceBuilder()
+                                                  .withBlockOwnerDeletion(true)
+//                                                .withController(true)
+                                                .withKind("Pod")
+                                                .withApiVersion("v1")
+                                                  .withUid(podInfo.getUid())
+                                                  .withName(podInfo.getName()).build()).build());
+    }
+    v1Pod.setSpec(createSparkPodSpec(podInfo, sparkSubmitContext.getLocalizeResources()));
 
     // Create spark template file. This file gets created in driver pod. We do not delete it because pod will get
     // deleted at the end of job completion.
@@ -274,20 +301,20 @@ public class KubeMasterEnvironment implements MasterEnvironment {
       // should not happen
       throw new IOException("Exception while writing pod spec to temp file.", e);
     }
-    sparkConfMap.put(SPARK_KUBERNETES_DRIVER_POD_TEMPLATE, templateFile.getAbsolutePath());
-    sparkConfMap.put(SPARK_KUBERNETES_EXECUTOR_POD_TEMPLATE, templateFile.getAbsolutePath());
+    return templateFile;
+  }
 
-    // Add spark pod labels. This will be same as job labels
+  private void populateLabels(Map<String, String> sparkConfMap) {
     for (Map.Entry<String, String> label : podInfo.getLabels().entrySet()) {
-      sparkConfMap.put(SPARK_KUBERNETES_DRIVER_LABEL_PREFIX + label.getKey(), label.getValue());
-      sparkConfMap.put(SPARK_KUBERNETES_EXECUTOR_LABEL_PREFIX + label.getKey(), label.getValue());
+      if (label.getKey().equals("cdap.container")) {
+        // Make sure correct container name label is being added for driver and executor containers
+        sparkConfMap.put(SPARK_KUBERNETES_DRIVER_LABEL_PREFIX + label.getKey(), "spark-kubernetes-driver");
+        sparkConfMap.put(SPARK_KUBERNETES_EXECUTOR_LABEL_PREFIX + label.getKey(), "spark-kubernetes-executor");
+      } else {
+        sparkConfMap.put(SPARK_KUBERNETES_DRIVER_LABEL_PREFIX + label.getKey(), label.getValue());
+        sparkConfMap.put(SPARK_KUBERNETES_EXECUTOR_LABEL_PREFIX + label.getKey(), label.getValue());
+      }
     }
-
-    // Kube Master environment would always contain spark job jar file.
-    // https://github.com/cdapio/cdap/blob/develop/cdap-spark-core3_2.12/src/k8s/Dockerfile#L46
-    return new SparkConfig("k8s://" + master,
-                           URI.create("local:/opt/cdap/cdap-spark-core/cdap-spark-core.jar"),
-                           sparkConfMap);
   }
 
   /**
@@ -403,8 +430,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
    * @return pod template to use for all Spark pods
    * @throws Exception if there is an error while generating pod spec
    */
-  private V1PodSpec getSparkPodSpec(PodInfo podInfo,
-                                    Map<String, SparkLocalizeResource> localizeResources) throws Exception {
+  private V1PodSpec createSparkPodSpec(PodInfo podInfo,
+                                       Map<String, SparkLocalizeResource> localizeResources) throws Exception {
     /*
         define the podinfo volume. This uses downwardAPI, which tells k8s to store pod information in files:
 
