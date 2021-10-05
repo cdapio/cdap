@@ -42,6 +42,7 @@ import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import io.cdap.cdap.internal.app.spark.ArtifactFetcherService;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizer;
+import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerClient;
 import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
@@ -61,10 +62,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -126,13 +130,19 @@ public class SparkContainerDriverLauncher {
     Files.createDirectories(pluginsLocation);
 
     // Fetching plugin artifacts from app-fabric
+    Set<String> localizedPlugins = new HashSet<>();
     for (Plugin plugin : spec.getPlugins().values()) {
-      File tempLocation = fetchArtifacts.localizeArtifact(plugin.getArtifactId(), programId.getNamespace());
       String pluginName = String.format("%s-%s-%s.jar",
                                         plugin.getArtifactId().getScope().toString(),
                                         plugin.getArtifactId().getName(),
                                         plugin.getArtifactId().getVersion().toString());
+      if (localizedPlugins.contains(pluginName)) {
+        // skip localizing existing artifacts
+        continue;
+      }
+      File tempLocation = fetchArtifacts.localizeArtifact(plugin.getArtifactId(), programId.getNamespace());
       BundleJarUtil.unJar(tempLocation, pluginsLocation.resolve(pluginName).toFile());
+      localizedPlugins.add(pluginName);
     }
 
     // Fetching program.jar from app-fabric and expand it
