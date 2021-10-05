@@ -44,7 +44,8 @@ public interface SparkSubmitter {
    *         the future will also be failed with the cause wrapped inside an {@link ExecutionException}
    *         when {@link ListenableFuture#get} is called. If {@link ListenableFuture#cancel(boolean)} is called,
    *         the running job will be terminated immediately.
+   * @throws Exception if there is error while submitting the spark job
    */
   <V> ListenableFuture<V> submit(SparkRuntimeContext runtimeContext, Map<String, String> configs,
-                                 List<LocalizeResource> resources, URI jobFile, V result);
+                                 List<LocalizeResource> resources, URI jobFile, V result) throws Exception;
 }

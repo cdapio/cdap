@@ -50,6 +50,7 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.guice.CoreSecurityModule;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
+import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -57,11 +58,14 @@ import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.GZIPInputStream;
 
 /**
  * Spark container launcher for launching spark drivers, and also allowing spark executors to fetch artifacts from it.
@@ -78,8 +82,9 @@ public class SparkContainerDriverLauncher {
   private static final String DEFAULT_DELEGATE_CLASS = "org.apache.spark.deploy.SparkSubmit";
   private static final String DELEGATE_CLASS_FLAG = "--delegate-class";
 
-  //TODO (CDAP-18315): following three lines need to be fixed once CDAP-18315 is resolved.
   private static final String WORKING_DIRECTORY = "/opt/spark/work-dir/";
+  private static final String SPARK_LOCAL_DIR = System.getenv("SPARK_LOCAL_DIRS") + "/";
+  private static final String CONFIGMAP_FILES_BASE_PATH = "/etc/cdap/localizefiles/";
   private static final String CCONF_PATH = WORKING_DIRECTORY + "cConf.xml";
   private static final String HCONF_PATH = WORKING_DIRECTORY + "hConf.xml";
 
@@ -96,6 +101,15 @@ public class SparkContainerDriverLauncher {
       }
       delegateArgs.add(args[i]);
     }
+
+    // Copy all the files from config map
+    for (File compressedFile : new File(CONFIGMAP_FILES_BASE_PATH).listFiles()) {
+      if (compressedFile.isFile()) {
+        decompress(compressedFile.getAbsolutePath(), WORKING_DIRECTORY + compressedFile.getName());
+      }
+    }
+    // TODO: CDAP-18525: remove below line once this jira is fixed
+    FileUtils.copyDirectory(new File(WORKING_DIRECTORY), new File(SPARK_LOCAL_DIR));
 
     CConfiguration cConf = CConfiguration.create(new File(CCONF_PATH));
     Configuration hConf = new Configuration();
@@ -131,7 +145,7 @@ public class SparkContainerDriverLauncher {
       new ArtifactFetcherService(cConf, createBundle(new File(WORKING_DIRECTORY).getAbsoluteFile().toPath()));
     artifactFetcherService.startAndWait();
 
-    SparkContainerLauncher.launch(delegateClass, delegateArgs.toArray(new String[delegateArgs.size()]));
+    SparkContainerLauncher.launch(delegateClass, delegateArgs.toArray(new String[delegateArgs.size()]), false, "k8s");
   }
 
 
@@ -205,4 +219,14 @@ public class SparkContainerDriverLauncher {
     }
   }
 
+  private static void decompress(String gzipFile, String newFile) throws IOException {
+    byte[] buffer = new byte[1024 * 500]; // use 500kb buffer
+    try (GZIPInputStream gis = new GZIPInputStream(new FileInputStream(gzipFile));
+         FileOutputStream fos = new FileOutputStream(newFile)) {
+      int length;
+      while ((length = gis.read(buffer)) > 0) {
+        fos.write(buffer, 0, length);
+      }
+    }
+  }
 }

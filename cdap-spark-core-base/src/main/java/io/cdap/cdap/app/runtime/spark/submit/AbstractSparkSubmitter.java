@@ -21,6 +21,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.AbstractFuture;
@@ -47,6 +48,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
+import javax.annotation.Nullable;
 
 /**
  * Provides common implementation for different {@link SparkSubmitter}.
@@ -74,7 +76,7 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
   @Override
   public final <V> ListenableFuture<V> submit(final SparkRuntimeContext runtimeContext,
                                               Map<String, String> configs, List<LocalizeResource> resources,
-                                              URI jobFile, final V result) {
+                                              URI jobFile, final V result) throws Exception {
     final SparkSpecification spec = runtimeContext.getSparkSpecification();
 
     final List<String> args = createSubmitArguments(runtimeContext, configs, resources, jobFile);
@@ -124,8 +126,10 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
 
   /**
    * Add the {@code --master} argument for the Spark submission.
+   * @throws Exception if there is error while getting master ip address from spark config
    */
-  protected abstract void addMaster(Map<String, String> configs, ImmutableList.Builder<String> argBuilder);
+  protected abstract void addMaster(Map<String, String> configs, ImmutableList.Builder<String> argBuilder)
+    throws Exception;
 
   /**
    * Invoked for stopping the Spark job explicitly.
@@ -147,9 +151,33 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
 
   /**
    * Returns configs that are specific to the submission context.
+   * @throws Exception if there is error while generating submit conf.
    */
-  protected Map<String, String> getSubmitConf() {
+  protected Map<String, String> generateSubmitConf() throws Exception {
     return Collections.emptyMap();
+  }
+
+  /**
+   * Returns iterable of archives from list of localize resources.
+   */
+  protected Iterable<LocalizeResource> getArchives(List<LocalizeResource> localizeResources) {
+    return Iterables.filter(localizeResources, ARCHIVE_FILTER);
+  }
+
+  /**
+   * Returns iterable of archives from list of localize resources.
+   */
+  protected Iterable<LocalizeResource> getFiles(List<LocalizeResource> localizeResources) {
+    return Iterables.filter(localizeResources, Predicates.not(ARCHIVE_FILTER));
+  }
+
+  /**
+   * Returns job file for spark.
+   * @throws Exception if there is error getting job jar file
+   */
+  @Nullable
+  protected URI getJobFile() throws Exception {
+    return null;
   }
 
   /**
@@ -182,30 +210,36 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
    * @param resources list of resources that needs to be localized to Spark containers
    * @param jobFile the job file for Spark
    * @return a list of arguments
+   * @throws Exception if there is error while creating submit arguments
    */
   private List<String> createSubmitArguments(SparkRuntimeContext runtimeContext, Map<String, String> configs,
-                                             List<LocalizeResource> resources, URI jobFile) {
+                                             List<LocalizeResource> resources, URI jobFile) throws Exception {
     SparkSpecification spec = runtimeContext.getSparkSpecification();
 
     ImmutableList.Builder<String> builder = ImmutableList.builder();
+    Iterable<LocalizeResource> archivesIterable = getArchives(resources);
+    Iterable<LocalizeResource> filesIterable = getFiles(resources);
 
     addMaster(configs, builder);
     builder.add("--conf").add("spark.app.name=" + spec.getName());
 
     BiConsumer<String, String> confAdder = (k, v) -> builder.add("--conf").add(k + "=" + v);
     configs.forEach(confAdder);
-    getSubmitConf().forEach(confAdder);
+    generateSubmitConf().forEach(confAdder);
 
-    String archives = Joiner.on(',')
-      .join(Iterables.transform(Iterables.filter(resources, ARCHIVE_FILTER), RESOURCE_TO_PATH));
-    String files = Joiner.on(',')
-      .join(Iterables.transform(Iterables.filter(resources, Predicates.not(ARCHIVE_FILTER)), RESOURCE_TO_PATH));
+    String archives = Joiner.on(',').join(Iterables.transform(archivesIterable, RESOURCE_TO_PATH));
+    String files = Joiner.on(',').join(Iterables.transform(filesIterable, RESOURCE_TO_PATH));
 
-    if (!archives.isEmpty()) {
+    if (!Strings.isNullOrEmpty(archives)) {
       builder.add("--archives").add(archives);
     }
-    if (!files.isEmpty()) {
+    if (!Strings.isNullOrEmpty(files)) {
       builder.add("--files").add(files);
+    }
+
+    URI newJobFile = getJobFile();
+    if (newJobFile != null) {
+      jobFile = newJobFile;
     }
 
     boolean isPySpark = jobFile.getPath().endsWith(".py");

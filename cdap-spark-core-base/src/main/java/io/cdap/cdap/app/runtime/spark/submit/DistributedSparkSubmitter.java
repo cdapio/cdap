@@ -67,7 +67,7 @@ public class DistributedSparkSubmitter extends AbstractSparkSubmitter {
   }
 
   @Override
-  protected Map<String, String> getSubmitConf() {
+  protected Map<String, String> generateSubmitConf() throws Exception {
     Map<String, String> config = new HashMap<>();
     if (schedulerQueueName != null && !schedulerQueueName.isEmpty()) {
       config.put("spark.yarn.queue", schedulerQueueName);

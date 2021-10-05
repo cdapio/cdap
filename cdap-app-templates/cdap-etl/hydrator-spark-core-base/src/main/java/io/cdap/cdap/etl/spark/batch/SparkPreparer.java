@@ -83,9 +83,13 @@ public class SparkPreparer extends AbstractSparkPreparer {
     stageOperations = new HashMap<>();
     stagePartitions = new HashMap<>();
 
-    File parentDirectory = new File("/tmp");
-    Files.createDirectories(parentDirectory.toPath());
-    File configFile = File.createTempFile("HydratorSpark", ".config", parentDirectory);
+    File configFile = File.createTempFile("HydratorSpark", ".config");
+    if (!configFile.getParentFile().exists()) {
+      configFile.getParentFile().mkdirs();
+    }
+    if (!configFile.exists()) {
+      configFile.createNewFile();
+    }
 
     List<Finisher> finishers = super.prepare(phaseSpec);
     finishers.add(new Finisher() {

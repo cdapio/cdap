@@ -62,6 +62,7 @@ import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import io.cdap.cdap.internal.lang.Fields;
 import io.cdap.cdap.internal.lang.Reflections;
+import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -146,10 +147,12 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
   private Callable<ListenableFuture<RunId>> submitSpark;
   private Runnable cleanupTask;
+  private final MasterEnvironment masterEnv;
 
   SparkRuntimeService(CConfiguration cConf, final Spark spark, @Nullable File pluginArchive,
                       SparkRuntimeContext runtimeContext, SparkSubmitter sparkSubmitter,
-                      LocationFactory locationFactory, boolean isLocal, FieldLineageWriter fieldLineageWriter) {
+                      LocationFactory locationFactory, boolean isLocal, FieldLineageWriter fieldLineageWriter,
+                      MasterEnvironment masterEnv) {
     this.cConf = cConf;
     this.spark = spark;
     this.runtimeContext = runtimeContext;
@@ -176,6 +179,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       }
     };
     this.fieldLineageWriter = fieldLineageWriter;
+    this.masterEnv = masterEnv;
   }
 
   @Override
@@ -221,7 +225,21 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         SparkRuntimeEnv.setProperty(key, sparkDefaultConf.getProperty(key));
       }
 
-      if (isLocal) {
+      if (masterEnv != null) {
+        // Only add cconf, hconf for master environment
+        localizeResources.add(new LocalizeResource(saveCConf(cConfCopy, tempDir)));
+        Configuration hConf = contextConfig.set(runtimeContext, pluginArchive).getConfiguration();
+        localizeResources.add(new LocalizeResource(saveHConf(hConf, tempDir)));
+
+        // Localize all the files from user resources
+        List<File> files = copyUserResources(context.getLocalizeResources(), tempDir);
+        for (File file : files) {
+          localizeResources.add(new LocalizeResource(file));
+        }
+
+        File metricsConf = SparkMetricsSink.writeConfig(new File(tempDir, CDAP_METRICS_PROPERTIES));
+        metricsConfPath = metricsConf.getAbsolutePath();
+      } else if (isLocal) {
         // In local mode, always copy (or link if local) user requested resources
         copyUserResources(context.getLocalizeResources(), tempDir);
 
@@ -312,7 +330,8 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
           if (!isRunning()) {
             return immediateCancelledFuture();
           }
-          return sparkSubmitter.submit(runtimeContext, configs, localizeResources, jobFile, runtimeContext.getRunId());
+          return sparkSubmitter.submit(runtimeContext, configs, localizeResources, jobFile,
+                                       runtimeContext.getRunId());
         }
       };
     } catch (Throwable t) {
@@ -430,7 +449,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
                                            spark, "initialize", SparkClientContext.class)
       : defaultTxControl;
 
-    runtimeContext.initializeProgram(programLifecycle, txControl, false);;
+    runtimeContext.initializeProgram(programLifecycle, txControl, false);
   }
 
   /**
@@ -583,10 +602,10 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   /**
    * Sets the Spark memory overhead setting based on the runtime arguments of the given type.
    *
-   * @param runtimeArgs the runtime arguments
-   * @param type either {@code driver} or {@code executor}
+   * @param runtimeArgs   the runtime arguments
+   * @param type          either {@code driver} or {@code executor}
    * @param containerSize the memory size in MB of the container
-   * @param configs the configuration to be updated
+   * @param configs       the configuration to be updated
    */
   private void setMemoryOverhead(Map<String, String> runtimeArgs, String type,
                                  int containerSize, Map<String, String> configs) {
@@ -648,7 +667,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    * Extracts pyspark and py4j libraries into the given temporary directory. This method is only used in local mode.
    *
    * @param tempDir temporary directory for storing the file
-   * @param result the collection for storing the result
+   * @param result  the collection for storing the result
    */
   private void extractPySparkLibrary(File tempDir, Collection<File> result) throws IOException {
     URL py4jURL = getClass().getClassLoader().getResource("pyspark/py4j-src.zip");
@@ -809,11 +828,14 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    *
    * @param resources the set of resources that need to be localized.
    * @param targetDir the target directory for the resources to copy / link to.
+   * @return list of files being localized
    */
-  private void copyUserResources(Map<String, LocalizeResource> resources, File targetDir) throws IOException {
+  private List<File> copyUserResources(Map<String, LocalizeResource> resources, File targetDir) throws IOException {
+    List<File> files = new ArrayList<>();
     for (Map.Entry<String, LocalizeResource> entry : resources.entrySet()) {
-      LocalizationUtils.localizeResource(entry.getKey(), entry.getValue(), targetDir);
+      files.add(LocalizationUtils.localizeResource(entry.getKey(), entry.getValue(), targetDir));
     }
+    return files;
   }
 
   /**
@@ -831,7 +853,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   /**
    * Creates a {@link Runnable} to be executed to cleanup resources after executing the spark program.
    *
-   * @param directory The directory to be deleted
+   * @param directory  The directory to be deleted
    * @param properties The set of system {@link Properties} prior to the job execution.
    */
   private Runnable createCleanupTask(final File directory, Properties properties) {
