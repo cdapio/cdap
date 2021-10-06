@@ -25,6 +25,7 @@ import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.api.spark.JavaSparkMain;
 import io.cdap.cdap.api.workflow.WorkflowToken;
@@ -37,7 +38,9 @@ import io.cdap.cdap.etl.api.join.JoinStage;
 import io.cdap.cdap.etl.batch.BatchPhaseSpec;
 import io.cdap.cdap.etl.batch.PipelinePluginInstantiator;
 import io.cdap.cdap.etl.batch.connector.SingleConnectorFactory;
+import io.cdap.cdap.etl.common.BasicArguments;
 import io.cdap.cdap.etl.common.Constants;
+import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.SetMultimapCodec;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
@@ -201,7 +204,13 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
 
         // Instantiate SQL engine and prepare run.
         try {
-          Object instance = pluginInstantiator.newPluginInstance(sqlEngineStage);
+          MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(sec),
+                                                                    sec.getLogicalStartTime(),
+                                                                    sec.getSecureStore(),
+                                                                    sec.getServiceDiscoverer(),
+                                                                    sec.getNamespace());
+          Object instance = pluginInstantiator.newPluginInstance(sqlEngineStage,
+                                                                 macroEvaluator);
           sqlEngineAdapter = new BatchSQLEngineAdapter<Object>((SQLEngine<?, ?, ?, ?>) instance,
                                                                sec,
                                                                collectors);
