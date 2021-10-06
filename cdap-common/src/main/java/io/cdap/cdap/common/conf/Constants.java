@@ -694,6 +694,8 @@ public final class Constants {
 
     public static final String DONT_ROUTE_SERVICE = "dont-route-to-service";
     public static final String AUDIT_LOGGER_NAME = "http-access";
+
+    public static final String CCONF_RELOAD_INTERVAL_MINUTES = "router.cconf.reload.interval.minutes";
   }
 
   /**
@@ -1723,5 +1725,31 @@ public final class Constants {
        */
       public static final String WORKER_SECRET_DISK_PATH = "twill.security.worker.secret.disk.path";
     }
+  }
+
+  /**
+   * To declare an error through configuration,
+   * Router will start responding with the declared error to every inbound request
+   */
+  public static final class ConfigDeclaredError {
+    /**
+     * A prefix to add configs related to config-declared error
+     */
+    public static final String CONFIG_DECLARED_ERROR_PROPERTY_PREFIX = "error.declared.custom.";
+
+    /**
+     * Property to enable/disable config-declared error
+     */
+    public static final String CONFIG_DECLARED_ERROR_ENABLED = "error.declared.enabled";
+
+    /**
+     * The config name to define the status code for the error
+     */
+    public static final String CFG_STATUS_CODE = "error.declared.status.code";
+
+    /**
+     * The default status code if it is not defined in the config
+     */
+    public static final int DEFAULT_STATUS_CODE = 503;
   }
 }

@@ -3751,6 +3751,14 @@
   </property>
 
   <property>
+    <name>router.cconf.reload.interval.minutes</name>
+    <value>10</value>
+    <description>
+      Interval in minutes at which CDAP Router reloads cconf, defaults to 10 minutes
+    </description>
+  </property>
+
+  <property>
     <name>router.connection.backlog</name>
     <value>20000</value>
     <description>

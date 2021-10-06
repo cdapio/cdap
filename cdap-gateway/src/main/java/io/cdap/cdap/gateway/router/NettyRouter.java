@@ -30,6 +30,7 @@ import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.common.security.KeyStores;
 import io.cdap.cdap.gateway.router.handlers.AuditLogHandler;
 import io.cdap.cdap.gateway.router.handlers.AuthenticationHandler;
+import io.cdap.cdap.gateway.router.handlers.ConfigDeclaredErrorHandler;
 import io.cdap.cdap.gateway.router.handlers.HttpRequestRouter;
 import io.cdap.cdap.gateway.router.handlers.HttpStatusRequestHandler;
 import io.cdap.cdap.security.auth.TokenValidator;
@@ -53,6 +54,7 @@ import io.netty.handler.codec.http.HttpServerExpectContinueHandler;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 import org.apache.twill.common.Cancellable;
+import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,6 +69,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -93,6 +97,8 @@ public class NettyRouter extends AbstractIdleService {
 
   private InetSocketAddress boundAddress;
   private Cancellable serverCancellable;
+
+  private ScheduledExecutorService scheduledExecutorService;
 
   @Inject
   public NettyRouter(CConfiguration cConf, SConfiguration sConf, @Named(Constants.Router.ADDRESS) InetAddress hostname,
@@ -132,10 +138,12 @@ public class NettyRouter extends AbstractIdleService {
     }
     ChannelGroup channelGroup = new DefaultChannelGroup(ImmediateEventExecutor.INSTANCE);
     serverCancellable = startServer(createServerBootstrap(channelGroup), channelGroup);
+    scheduleConfigReloadThread();
   }
 
   @Override
   protected void shutDown() {
+    stopConfigReloadThread();
     boundAddress = null;
     LOG.info("Stopping Netty Router...");
 
@@ -214,6 +222,7 @@ public class NettyRouter extends AbstractIdleService {
           if (cConf.getBoolean(Constants.Router.ROUTER_AUDIT_LOG_ENABLED)) {
             pipeline.addLast("audit-log", new AuditLogHandler());
           }
+          pipeline.addLast("config-declared-error-handler", new ConfigDeclaredErrorHandler(cConf));
           // Always let the client to continue sending the request body after the authentication passed
           pipeline.addLast("expect-continue", new HttpServerExpectContinueHandler());
           // for now there's only one hardcoded rule, but if there will be more, we may want it generic and configurable
@@ -251,5 +260,28 @@ public class NettyRouter extends AbstractIdleService {
         future.awaitUninterruptibly();
       }
     };
+  }
+
+  /**
+   * A daemon thread to reload {@link #cConf} periodically
+   */
+  private void scheduleConfigReloadThread() {
+    if (scheduledExecutorService == null || scheduledExecutorService.isShutdown()) {
+      long cConfReloadIntervalMinutes = cConf.getLong(Constants.Router.CCONF_RELOAD_INTERVAL_MINUTES);
+      scheduledExecutorService =
+        Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("router-config-reload"));
+      scheduledExecutorService.scheduleAtFixedRate(
+        () -> {
+          cConf.reloadConfiguration();
+          LOG.info("CConfiguration reloaded");
+        }, cConfReloadIntervalMinutes,
+        cConfReloadIntervalMinutes, TimeUnit.MINUTES);
+    }
+  }
+
+  private void stopConfigReloadThread() {
+    if (scheduledExecutorService != null) {
+      scheduledExecutorService.shutdownNow();
+    }
   }
 }
