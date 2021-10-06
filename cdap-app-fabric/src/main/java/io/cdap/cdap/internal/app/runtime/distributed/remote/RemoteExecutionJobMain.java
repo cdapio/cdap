@@ -38,6 +38,7 @@ import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
 import io.cdap.cdap.internal.app.runtime.distributed.runtimejob.DefaultRuntimeJob;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterProperties;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobEnvironment;
+import io.cdap.cdap.security.TokenSecureStoreRenewer;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
@@ -45,6 +46,7 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.TwillRunnerService;
+import org.apache.twill.common.Cancellable;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
@@ -57,6 +59,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The main class to setup the {@link RuntimeJobEnvironment} for remote execution.
@@ -72,6 +75,7 @@ public class RemoteExecutionJobMain {
   private InMemoryZKServer zkServer;
   private TwillRunnerService twillRunnerService;
   private LocationFactory locationFactory;
+  private Cancellable secureStoreUpdateCancellable;
 
   public static void main(String[] args) throws Exception {
     Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
@@ -171,11 +175,23 @@ public class RemoteExecutionJobMain {
     twillRunnerService = injector.getInstance(TwillRunnerService.class);
     twillRunnerService.start();
 
+    if (UserGroupInformation.isSecurityEnabled()) {
+      TokenSecureStoreRenewer secureStoreRenewer = injector.getInstance(TokenSecureStoreRenewer.class);
+      secureStoreUpdateCancellable = twillRunnerService.setSecureStoreRenewer(secureStoreRenewer, 30000L,
+                                                                              secureStoreRenewer.getUpdateInterval(),
+                                                                              30000L,
+                                                                              TimeUnit.MILLISECONDS);
+    }
+
     return new RemoteExecutionRuntimeJobEnvironment(locationFactory, twillRunnerService, properties);
   }
 
   @VisibleForTesting
   void destroy() {
+    // Stop secure store update
+    if (secureStoreUpdateCancellable != null) {
+      secureStoreUpdateCancellable.cancel();
+    }
     if (twillRunnerService != null) {
       try {
         twillRunnerService.stop();
