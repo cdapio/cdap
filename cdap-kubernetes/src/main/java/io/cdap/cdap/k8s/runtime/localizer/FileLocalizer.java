@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.k8s.runtime;
+package io.cdap.cdap.k8s.runtime.localizer;
 
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
@@ -51,11 +51,14 @@ public class FileLocalizer implements MasterEnvironmentRunnable {
   private static final Logger LOG = LoggerFactory.getLogger(FileLocalizer.class);
 
   private final MasterEnvironmentRunnableContext context;
+  private final String localLocationScheme;
   private volatile boolean stopped;
 
   public FileLocalizer(MasterEnvironmentRunnableContext context,
                        @SuppressWarnings("unused") MasterEnvironment masterEnv) {
     this.context = context;
+    LocalLocationFactory localLocationFactory = new LocalLocationFactory();
+    this.localLocationScheme = localLocationFactory.getHomeLocation().toURI().getScheme();
   }
 
   @Override
@@ -65,20 +68,12 @@ public class FileLocalizer implements MasterEnvironmentRunnable {
       throw new IllegalArgumentException("Expected to have two arguments: runtime config uri and the runnable name.");
     }
 
-    LocalLocationFactory localLocationFactory = new LocalLocationFactory();
-
     // Localize the runtime config jar
     URI uri = URI.create(args[0]);
 
     Path runtimeConfigDir;
-    if (localLocationFactory.getHomeLocation().toURI().getScheme().equals(uri.getScheme())) {
-      try (FileInputStream is = new FileInputStream(new File(uri))) {
-        runtimeConfigDir = expand(uri, is, Paths.get(Constants.Files.RUNTIME_CONFIG_JAR));
-      }
-    } else {
-      try (InputStream is = getHttpURLConnectionInputStream(fileDownloadURLPath(uri))) {
-        runtimeConfigDir = expand(uri, is, Paths.get(Constants.Files.RUNTIME_CONFIG_JAR));
-      }
+    try (InputStream is = openLocation(uri)) {
+      runtimeConfigDir = expand(uri, is, Paths.get(Constants.Files.RUNTIME_CONFIG_JAR));
     }
 
     try (Reader reader = Files.newBufferedReader(runtimeConfigDir.resolve(Constants.Files.TWILL_SPEC),
@@ -96,7 +91,7 @@ public class FileLocalizer implements MasterEnvironmentRunnable {
 
         Path targetPath = targetDir.resolve(localFile.getName());
 
-        try (InputStream is = getHttpURLConnectionInputStream(fileDownloadURLPath(localFile.getURI()))) {
+        try (InputStream is = openLocation(localFile.getURI())) {
           if (localFile.isArchive()) {
             expand(localFile.getURI(), is, targetPath);
           } else {
@@ -105,6 +100,13 @@ public class FileLocalizer implements MasterEnvironmentRunnable {
         }
       }
     }
+  }
+
+  private InputStream openLocation(URI uri) throws IOException {
+    if (localLocationScheme.equals(uri.getScheme())) {
+      return new FileInputStream(new File(uri));
+    }
+    return getHttpURLConnectionInputStream(fileDownloadURLPath(uri));
   }
 
   @Override

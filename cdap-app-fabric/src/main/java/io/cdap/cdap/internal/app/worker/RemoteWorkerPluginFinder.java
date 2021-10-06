@@ -16,6 +16,7 @@ package io.cdap.cdap.internal.app.worker;
 
 import com.google.inject.Inject;
 import io.cdap.cdap.common.ArtifactNotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.internal.app.runtime.artifact.RemotePluginFinder;
@@ -36,10 +37,10 @@ public class RemoteWorkerPluginFinder extends RemotePluginFinder {
   private final ArtifactLocalizerClient artifactLocalizerClient;
 
   @Inject
-  RemoteWorkerPluginFinder(LocationFactory locationFactory,
+  RemoteWorkerPluginFinder(CConfiguration cConf, LocationFactory locationFactory,
                            RemoteClientFactory remoteClientFactory,
                            ArtifactLocalizerClient artifactLocalizerClient) {
-    super(locationFactory, remoteClientFactory);
+    super(cConf, locationFactory, remoteClientFactory);
     this.artifactLocalizerClient = artifactLocalizerClient;
   }
 

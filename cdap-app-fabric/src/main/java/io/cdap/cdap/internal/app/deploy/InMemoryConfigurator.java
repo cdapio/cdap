@@ -37,7 +37,9 @@ import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
+import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.lang.CombineClassLoader;
 import io.cdap.cdap.common.utils.DirUtils;
@@ -47,6 +49,7 @@ import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizer;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import org.apache.twill.filesystem.Location;
@@ -80,10 +83,13 @@ public final class InMemoryConfigurator implements Configurator {
   private final ArtifactRepository artifactRepository;
   private final Location artifactLocation;
   private final Impersonator impersonator;
+  private final ArtifactLocalizer artifactLocalizer;
 
   @Inject
   public InMemoryConfigurator(CConfiguration cConf, PluginFinder pluginFinder, Impersonator impersonator,
-                              ArtifactRepository artifactRepository, @Assisted AppDeploymentInfo deploymentInfo) {
+                              ArtifactRepository artifactRepository,
+                              RemoteClientFactory remoteClientFactory,
+                              @Assisted AppDeploymentInfo deploymentInfo) {
     this.cConf = cConf;
     this.pluginFinder = pluginFinder;
     this.appNamespace = Id.Namespace.fromEntityId(deploymentInfo.getNamespaceId());
@@ -98,6 +104,7 @@ public final class InMemoryConfigurator implements Configurator {
     this.impersonator = impersonator;
     this.artifactRepository = artifactRepository;
     this.artifactLocation = deploymentInfo.getArtifactLocation();
+    this.artifactLocalizer = new ArtifactLocalizer(cConf, remoteClientFactory);
   }
 
   /**
@@ -110,6 +117,15 @@ public final class InMemoryConfigurator implements Configurator {
    */
   @Override
   public ListenableFuture<ConfigResponse> config() {
+    // hack
+    Location artifactLocation = this.artifactLocation;
+    try {
+      if (!artifactLocation.exists()) {
+        artifactLocation = Locations.toLocation(artifactLocalizer.fetchArtifact(artifactId.toEntityId()));
+      }
+    } catch (Exception e) {
+      throw new RuntimeException("Unable to localize artifact " + artifactId, e);
+    }
 
     // Create the classloader
     EntityImpersonator classLoaderImpersonator = new EntityImpersonator(artifactId.toEntityId(), impersonator);

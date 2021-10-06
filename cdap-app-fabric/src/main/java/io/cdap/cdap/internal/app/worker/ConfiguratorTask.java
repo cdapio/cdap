@@ -130,7 +130,7 @@ public class ConfiguratorTask implements RunnableTask {
       // Creates a new deployment info with the newly fetched artifact
       AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(info, artifactLocation);
       InMemoryConfigurator configurator = new InMemoryConfigurator(cConf, pluginFinder, impersonator,
-                                                                   artifactRepository, deploymentInfo);
+                                                                   artifactRepository, null, deploymentInfo);
       try {
         return configurator.config().get(120, TimeUnit.SECONDS);
       } catch (ExecutionException e) {

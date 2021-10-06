@@ -21,6 +21,7 @@ import com.google.inject.Injector;
 import com.google.inject.Provider;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import org.apache.twill.filesystem.LocationFactory;
 
 /**
  * Provider for {@link PluginFinder}.
@@ -31,11 +32,13 @@ public class PluginFinderProvider implements Provider<PluginFinder> {
 
   private final CConfiguration cConf;
   private final Injector injector;
+  private final boolean isLocalLocation;
 
   @Inject
-  PluginFinderProvider(CConfiguration cConf, Injector injector) {
+  PluginFinderProvider(CConfiguration cConf, Injector injector, LocationFactory locationFactory) {
     this.cConf = cConf;
     this.injector = injector;
+    this.isLocalLocation = "file".equals(locationFactory.getHomeLocation().toURI().getScheme());
   }
 
   @Override
@@ -47,7 +50,7 @@ public class PluginFinderProvider implements Provider<PluginFinder> {
     }
 
     storageImpl = storageImpl.toLowerCase();
-    if (storageImpl.equals(Constants.Dataset.DATA_STORAGE_NOSQL)) {
+    if (isLocalLocation || storageImpl.equals(Constants.Dataset.DATA_STORAGE_NOSQL)) {
       return injector.getInstance(RemotePluginFinder.class);
     }
     if (storageImpl.equals(Constants.Dataset.DATA_STORAGE_SQL)) {

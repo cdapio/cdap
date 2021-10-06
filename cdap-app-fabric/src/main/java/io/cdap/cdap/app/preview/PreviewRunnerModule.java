@@ -79,6 +79,7 @@ import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.PermissionManager;
 import io.cdap.cdap.store.DefaultOwnerStore;
+import org.apache.twill.filesystem.LocationFactory;
 
 /**
  * Provides bindings required to create injector for running preview.
@@ -105,7 +106,8 @@ public class PreviewRunnerModule extends PrivateModule {
                       ProgramRuntimeProviderLoader programRuntimeProviderLoader,
                       PluginFinderProvider pluginFinderProvider,
                       PreferencesFetcherProvider preferencesFetcherProvider,
-                      MessagingService messagingService) {
+                      MessagingService messagingService,
+                      LocationFactory locationFactory) {
     this.artifactRepositoryReaderProvider = readerProvider;
     this.artifactStore = artifactStore;
     this.accessControllerInstantiator = accessControllerInstantiator;
