@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.monitor;
 
+import com.google.common.base.Objects;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.common.Bytes;
@@ -125,6 +126,7 @@ public class RuntimeProgramStatusSubscriberService extends AbstractNotificationS
     // handling state transition correctly, but we omit certain fields when calling those record* methods since
     // they are not used by the runtime server.
     LOG.debug("Received program {} of status {} {}", programRunId, programRunStatus, Bytes.toString(sourceId));
+    long timeout = 0; // TODO how do I get this timeout?
     switch (programRunStatus) {
       case STARTING: {
         ProgramOptions programOptions = ProgramOptions.fromNotification(notification, GSON);
@@ -148,6 +150,11 @@ public class RuntimeProgramStatusSubscriberService extends AbstractNotificationS
         store.recordProgramSuspend(programRunId, sourceId,
                                    Optional.ofNullable(properties.get(ProgramOptionConstants.SUSPEND_TIME))
                                      .map(Long::parseLong).orElse(System.currentTimeMillis()));
+        break;
+      case STOPPING:
+        store.recordProgramStopping(programRunId, sourceId,
+                                    Optional.ofNullable(properties.get(ProgramOptionConstants.STOPPING_TIME))
+                                      .map(Long::parseLong).orElse(-1L));
         break;
       case RESUMING:
         store.recordProgramResumed(programRunId, sourceId,

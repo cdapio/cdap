@@ -67,6 +67,8 @@ public final class ProgramOptionConstants {
 
   public static final String RESUME_TIME = "resumeTime";
 
+  public static final String STOPPING_TIME = "stoppingTime";
+
   public static final String PROGRAM_NAME_IN_WORKFLOW = "programNameInWorkflow";
 
   public static final String ENABLE_FIELD_LINEAGE_CONSOLIDATION = "enableFieldLineageConsolidation";

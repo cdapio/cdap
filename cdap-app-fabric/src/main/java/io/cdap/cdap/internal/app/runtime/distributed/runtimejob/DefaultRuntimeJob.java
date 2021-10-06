@@ -196,6 +196,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
       try (Program program = createProgram(cConf, programRunner, programDescriptor, programOpts)) {
         ProgramController controller = programRunner.run(program, programOpts);
         controllerFuture.complete(controller);
+        // add logic here for timeout
 
         controller.addListener(new AbstractListener() {
           @Override
@@ -260,6 +261,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
       ProgramController controller = Uninterruptibles.getUninterruptibly(controllerFuture);
       if (!controller.getState().isDone()) {
         LOG.info("Stopping program {} explicitly", controller.getProgramRunId());
+
         controller.stop();
       }
     } catch (Exception e) {

@@ -62,6 +62,11 @@ public class NoOpProgramStateWriter implements ProgramStateWriter {
   }
 
   @Override
+  public void stopping(ProgramRunId programRunId, long timeout) {
+    // no-op
+  }
+
+  @Override
   public void reject(ProgramRunId programRunId, ProgramOptions programOptions, ProgramDescriptor programDescriptor,
                      String userId, Throwable cause) {
     // no-op

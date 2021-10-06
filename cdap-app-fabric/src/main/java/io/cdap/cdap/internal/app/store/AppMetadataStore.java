@@ -128,6 +128,7 @@ public class AppMetadataStore {
     .put(ProgramRunStatus.STARTING, TYPE_RUN_RECORD_ACTIVE)
     .put(ProgramRunStatus.RUNNING, TYPE_RUN_RECORD_ACTIVE)
     .put(ProgramRunStatus.SUSPENDED, TYPE_RUN_RECORD_ACTIVE)
+    .put(ProgramRunStatus.STOPPING, TYPE_RUN_RECORD_ACTIVE)
     .put(ProgramRunStatus.COMPLETED, TYPE_RUN_RECORD_COMPLETED)
     .put(ProgramRunStatus.KILLED, TYPE_RUN_RECORD_COMPLETED)
     .put(ProgramRunStatus.FAILED, TYPE_RUN_RECORD_COMPLETED)
@@ -914,6 +915,26 @@ public class AppMetadataStore {
     writeToStructuredTableWithPrimaryKeys(
       key, meta, getRunRecordsTable(), StoreDefinition.AppMetadataStore.RUN_RECORD_DATA);
     LOG.trace("Recorded {} for program {}", toStatus, programRunId);
+    return meta;
+  }
+
+  /**
+   * Logs stopping of a program run and sets the run status to {@link ProgramRunStatus#STOPPING}.
+   * @param programRunId run id of the program
+   * @param sourceId unique id representing the source of program run status, such as the message id of the program
+   *                 run status notification in TMS. The source id must increase as the recording time of the program
+   *                 run status increases, so that the attempt to persist program run status older than the existing
+   *                 program run status will be ignored
+   * @param timeout value of timeout. -1 if there no timeout
+   * @return {@link RunRecordDetail} that was persisted, or {@code null} if the update was ignored.
+   */
+  @Nullable
+  public RunRecordDetail recordProgramStopping(ProgramRunId programRunId, byte[] sourceId, long timeout) throws IOException {
+    RunRecordDetail meta = RunRecordDetail.builder()
+      .setStoppingTime(timeout)
+      .build();
+    writeToStructuredTableWithPrimaryKeys(
+      null, meta, getRunRecordsTable(), StoreDefinition.AppMetadataStore.RUN_RECORD_DATA);
     return meta;
   }
 

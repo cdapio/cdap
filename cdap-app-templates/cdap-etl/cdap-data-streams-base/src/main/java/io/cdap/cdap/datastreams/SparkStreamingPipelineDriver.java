@@ -176,9 +176,13 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
       // most programs will just keep running forever.
       // however, when CDAP stops the program, we get an interrupted exception.
       // at that point, we need to call stop on jssc, otherwise the program will hang and never stop.
+      LOG.info("GOING TO STOP NOW");
+      LOG.info("Stop gracefully value is {}", pipelineSpec.isStopGracefully());
       stopped = jssc.awaitTerminationOrTimeout(Long.MAX_VALUE);
+      LOG.info("CALLED AWAIT TERMINATION OR TIMEOUT, STOPPED VALUE IS {}", stopped);
     } finally {
       if (!stopped) {
+        LOG.info("Stop gracefully value is {}", pipelineSpec.isStopGracefully());
         jssc.stop(true, pipelineSpec.isStopGracefully());
       }
     }

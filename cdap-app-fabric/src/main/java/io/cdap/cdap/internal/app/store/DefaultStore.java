@@ -260,6 +260,13 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  public void setStopping(ProgramRunId id, byte[] sourceId, long stoppingTime) {
+    TransactionRunners.run(transactionRunner, context -> {
+      getAppMetadataStore(context).recordProgramStopping(id, sourceId, stoppingTime);
+    });
+  }
+
+  @Override
   @Nullable
   public WorkflowStatistics getWorkflowStatistics(WorkflowId id, long startTime,
                                                   long endTime, List<Double> percentiles) {

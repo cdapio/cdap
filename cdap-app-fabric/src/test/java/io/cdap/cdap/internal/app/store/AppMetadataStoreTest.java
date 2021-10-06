@@ -66,6 +66,7 @@ import java.util.stream.Stream;
  * Test AppMetadataStore.
  */
 public abstract class AppMetadataStoreTest {
+  // Look to add tests here
   protected static TransactionRunner transactionRunner;
   private static final List<ProgramRunStatus> STOP_STATUSES =
     ImmutableList.of(ProgramRunStatus.COMPLETED, ProgramRunStatus.FAILED, ProgramRunStatus.KILLED);

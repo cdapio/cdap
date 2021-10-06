@@ -313,6 +313,12 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         recordedRunRecord = appMetadataStore.recordProgramResumed(programRunId, messageIdBytes, resumeTime);
         writeToHeartBeatTable(recordedRunRecord, resumeTime, programHeartbeatTable);
         break;
+      case STOPPING:
+        long stoppingTime = getTimeSeconds(notification.getProperties(),
+                                         ProgramOptionConstants.STOPPING_TIME);
+        recordedRunRecord = appMetadataStore.recordProgramStopping(programRunId, messageIdBytes, stoppingTime);
+        writeToHeartBeatTable(recordedRunRecord, stoppingTime, programHeartbeatTable);
+        break;
       case COMPLETED:
       case KILLED:
       case FAILED:

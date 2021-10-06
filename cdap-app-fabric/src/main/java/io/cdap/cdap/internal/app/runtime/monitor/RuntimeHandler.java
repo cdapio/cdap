@@ -23,8 +23,11 @@ import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
+import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.ProgramType;
@@ -63,6 +66,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -84,16 +88,18 @@ public class RuntimeHandler extends AbstractHttpHandler {
   private final boolean eventLogsEnabled;
   private final Location eventLogsBaseLocation;
   private final Set<String> allowedTopics;
+  private final ProgramRunRecordFetcher programRunRecordFetcher;
 
   @Inject
   RuntimeHandler(CConfiguration cConf, MessagingService messagingService,
                  RemoteExecutionLogProcessor logProcessor, RuntimeRequestValidator requestValidator,
-                 LocationFactory locationFactory) {
+                 LocationFactory locationFactory, ProgramRunRecordFetcher programRunRecordFetcher) {
     this.requestValidator = requestValidator;
     this.logProcessor = logProcessor;
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.logsTopicPrefix = cConf.get(Constants.Logging.TMS_TOPIC_PREFIX);
     this.eventLogsEnabled = cConf.getBoolean(Constants.AppFabric.SPARK_EVENT_LOGS_ENABLED);
+    this.programRunRecordFetcher = programRunRecordFetcher;
     this.eventLogsBaseLocation = locationFactory.create(cConf.get(Constants.AppFabric.SPARK_EVENT_LOGS_DIR));
     this.allowedTopics = new HashSet<>(RuntimeMonitors.createTopicConfigs(cConf).values());
   }
@@ -228,6 +234,41 @@ public class RuntimeHandler extends AbstractHttpHandler {
         }
       }
     };
+  }
+
+  /**
+   * Add a method here that the runtime client will call
+   * should I shutdown gracefully?
+   * returns yes or no
+   * with that response runtimeclient will see if it should try to stop itself after that iteration
+   */
+  @Path("/graceful-stop")
+  @GET
+  public boolean isGracefulShutdownEnabled(HttpRequest request, HttpResponder responder,
+                                          @PathParam("namespace") String namespace,
+                                          @PathParam("app") String app,
+                                          @PathParam("version") String version,
+                                          @PathParam("program-type") String programType,
+                                          @PathParam("program") String program,
+                                          @PathParam("run") String run) throws Exception {
+    ApplicationId appId = new NamespaceId(namespace).app(app, version);
+    ProgramRunId programRunId = new ProgramRunId(appId,
+                                                 ProgramType.valueOfCategoryName(programType, BadRequestException::new),
+                                                 program, run);
+    requestValidator.validate(programRunId, request);
+
+    // add more code here to return if graceful shutdown in enabled
+    RunRecordDetail runRecordMeta = programRunRecordFetcher.getRunRecordMeta(programRunId);
+    if (runRecordMeta == null) {
+      throw new NotFoundException(programRunId);
+    }
+    long timeout = runRecordMeta.getStoppingTs();
+    if (timeout == -1) {
+      return false;
+    } else {
+      // return timeout value + true after enhancing
+      return true;
+    }
   }
 
   /**

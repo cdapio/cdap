@@ -122,6 +122,11 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
     return nextPollDelay;
   }
 
+  public long dosomething() throws BadRequestException, IOException {
+    long timeout = runtimeClient.checkIfProgramShouldBeStopped(null, null, null);
+    return timeout;
+  }
+
   @Override
   protected boolean shouldRetry(Exception e) {
     OUTAGE_LOG.warn("Failed to send runtime status. Will be retried.", e);

@@ -33,6 +33,7 @@ public enum ProgramRunStatus {
   RUNNING,
   SUSPENDED,
   RESUMING,
+  STOPPING,
   COMPLETED,
   FAILED,
   KILLED,
@@ -67,6 +68,7 @@ public enum ProgramRunStatus {
         // SUSPENDED happens if you suspend while starting. Not sure why this is allowed, seems wrong (CDAP-13551)
         return status == RUNNING || status == SUSPENDED || status == COMPLETED || status == KILLED || status == FAILED;
       case RUNNING:
+      case STOPPING:
         // SUSPENDED happens if the run was suspended
         // COMPLETED is the happy path
         // KILLED happens if the run was manually stopped

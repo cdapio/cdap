@@ -146,6 +146,9 @@ public final class DirectRuntimeRequestValidator implements RuntimeRequestValida
             store.recordProgramSuspend(programRunId, runRecord.getSourceId(),
                                        Objects.firstNonNull(runRecord.getSuspendTs(), System.currentTimeMillis()));
             break;
+          case STOPPING:
+            store.recordProgramStopping(programRunId, runRecord.getSourceId(), runRecord.getStoppingTs());
+            break;
           case COMPLETED:
           case KILLED:
           case FAILED:

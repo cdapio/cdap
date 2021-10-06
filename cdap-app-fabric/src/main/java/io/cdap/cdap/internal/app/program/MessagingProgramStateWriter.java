@@ -123,6 +123,15 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
   }
 
   @Override
+  public void stopping(ProgramRunId programRunId, long timeout) {
+    ImmutableMap<String, String> properties = ImmutableMap.<String, String>builder()
+      .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
+      .put(ProgramOptionConstants.STOPPING_TIME, String.valueOf(timeout))
+      .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.STOPPING.name()).build();
+    programStatePublisher.publish(Notification.Type.PROGRAM_STATUS, properties);
+  }
+
+  @Override
   public void resume(ProgramRunId programRunId) {
     ImmutableMap<String, String> properties = ImmutableMap.<String, String>builder()
       .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))

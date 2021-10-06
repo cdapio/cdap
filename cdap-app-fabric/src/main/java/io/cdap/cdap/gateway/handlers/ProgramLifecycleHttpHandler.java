@@ -1271,14 +1271,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/stop")
   @AuditPolicy({AuditDetail.REQUEST_BODY, AuditDetail.RESPONSE_BODY})
   public void stopPrograms(FullHttpRequest request, HttpResponder responder,
-                           @PathParam("namespace-id") String namespaceId) throws Exception {
-
+                           @PathParam("namespace-id") String namespaceId,
+                           @QueryParam("graceful") long graceful) throws Exception {
     List<BatchProgram> programs = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
 
     List<ListenableFuture<BatchProgramResult>> issuedStops = new ArrayList<>(programs.size());
     for (final BatchProgram program : programs) {
       ProgramId programId = new ProgramId(namespaceId, program.getAppId(), program.getProgramType(),
                                          program.getProgramId());
+      store.setStopping(null, null, graceful);
       try {
         List<ListenableFuture<ProgramRunId>> stops = lifecycleService.issueStop(programId, null);
         for (ListenableFuture<ProgramRunId> stop : stops) {

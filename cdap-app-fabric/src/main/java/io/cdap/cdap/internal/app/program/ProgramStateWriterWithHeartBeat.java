@@ -117,6 +117,12 @@ public class ProgramStateWriterWithHeartBeat {
     programStateWriter.resume(programRunId);
   }
 
+  public void initiateGracefulStop() {
+    long timeout = -1; // TODO where do I get this value from?
+    scheduleHeartBeatThread();
+    programStateWriter.stopping(programRunId, timeout);
+  }
+
   /**
    * If executor service isn't initialized or if its shutdown
    * create a new executor service and schedule a heartbeat thread

@@ -121,6 +121,36 @@ public class RuntimeClient {
   }
 
   /**
+   * This method should call the runtime handler method to check if it should shutdown gracefuly
+   */
+  public long checkIfProgramShouldBeStopped(ProgramRunId programRunId, TopicId topicId, Iterator<Message> messages)
+    throws IOException, BadRequestException {
+    if (!NamespaceId.SYSTEM.equals(topicId.getNamespaceId())) {
+      throw new IllegalArgumentException("Only topic in the system namespace is supported");
+    }
+    String path = String.format("%s/apps/%s/versions/%s/%s/%s/runs/%s/graceful-stop",
+                                programRunId.getNamespace(),
+                                programRunId.getApplication(),
+                                programRunId.getVersion(),
+                                programRunId.getType().getCategoryName(),
+                                programRunId.getProgram(),
+                                programRunId.getRun());
+    // Get if shutdown should be graceful
+    // based on the timeout value trigger a stop by calling dataprocRuntimeJobManager.stop()
+    HttpURLConnection urlConn = remoteClient.openConnection(HttpMethod.GET, path);
+    try {
+
+      try (OutputStream os = openOutputStream(urlConn)) {
+        writeMessages(messages, EncoderFactory.get().directBinaryEncoder(os, null));
+      }
+      throwIfError(programRunId, urlConn);
+    } finally {
+      closeURLConnection(urlConn);
+    }
+    return -1;
+  }
+
+  /**
    * Uploads Spark program event logs to the runtime service.
    *
    * @param programRunId the program run id of the program run

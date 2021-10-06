@@ -462,7 +462,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   }
 
   /**
-   * Stops the dataproc job. Returns job object if it was stopped.
+   * Stops the dataproc job.
+   * Throws an exception if job could not be stopped.
    */
   private void stopJob(String jobId) throws Exception {
     try {

@@ -84,6 +84,16 @@ public interface ProgramStateWriter {
   void resume(ProgramRunId programRunId);
 
   /**
+   * Updates the program run's status to be stopping
+   *
+   * @param programRunId the id of the program run
+   * @param timeout the timeout value for a graceful shutdown. It is -1 if
+   *                no timeout is provided which means the user intends to wait
+   *                until the program has finished on its own.
+   */
+  void stopping(ProgramRunId programRunId, long timeout);
+
+  /**
    * Updates the program run's status to be rejected
    *
    * @param programRunId the id of the program run
