@@ -32,6 +32,14 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.File;
+import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+import java.lang.management.MemoryUsage;
+import javax.management.MBeanServerConnection;
+import javax.management.remote.JMXConnector;
+import javax.management.remote.JMXConnectorFactory;
+import javax.management.remote.JMXServiceURL;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -69,6 +77,26 @@ public class ArtifactLocalizerHttpHandlerInternal extends AbstractHttpHandler {
       } else {
         responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex));
       }
+    }
+  }
+
+  @GET
+  @Path("/usage")
+  public void getServiceUsageMetrics(HttpRequest request, HttpResponder responder) {
+    String url = String.format("service:jmx:rmi:///jndi/rmi://%s:%d/jmxrmi", "localhost", 1234);
+    try {
+      JMXServiceURL serviceUrl = new JMXServiceURL(url);
+      JMXConnector jmxConnector = JMXConnectorFactory.connect(serviceUrl, null);
+      MBeanServerConnection mbeanConn = jmxConnector.getMBeanServerConnection();
+      MemoryMXBean memoryMXBean = ManagementFactory
+        .newPlatformMXBeanProxy(mbeanConn, ManagementFactory.MEMORY_MXBEAN_NAME,
+                                MemoryMXBean.class);
+      MemoryUsage heapMemoryUsage = memoryMXBean.getHeapMemoryUsage();
+      String memoryUsage = String
+        .format("Max memory is %d. Memory used is %d ", heapMemoryUsage.getMax(), heapMemoryUsage.getUsed());
+      responder.sendString(HttpResponseStatus.OK, memoryUsage);
+    } catch (IOException e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(e));
     }
   }
 

@@ -45,10 +45,17 @@ import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.net.InetSocketAddress;
+import java.rmi.registry.LocateRegistry;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import javax.management.MBeanServer;
+import javax.management.remote.JMXConnectorServer;
+import javax.management.remote.JMXConnectorServerFactory;
+import javax.management.remote.JMXServiceURL;
 
 /**
  * Launches an HTTP server for receiving and handling {@link RunnableTask}
@@ -96,6 +103,20 @@ public class TaskWorkerService extends AbstractIdleService {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
     }
     this.httpService = builder.build();
+    createJmxConnectorServer();
+  }
+
+  private void createJmxConnectorServer() {
+    try {
+      LocateRegistry.createRegistry(1234);
+      MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+      JMXServiceURL url = new JMXServiceURL(
+        "service:jmx:rmi://localhost/jndi/rmi://localhost:1234/jmxrmi");
+      JMXConnectorServer svr = JMXConnectorServerFactory.newJMXConnectorServer(url, null, mbs);
+      svr.start();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 
   @Override
