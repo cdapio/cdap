@@ -18,7 +18,7 @@ package io.cdap.cdap.internal.app.runtime.distributed;
 
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.internal.app.program.ProgramTypeMetricTag;
+import io.cdap.cdap.common.metrics.ProgramTypeMetricTag;
 import io.cdap.cdap.internal.app.runtime.AbstractResourceReporter;
 import io.cdap.cdap.proto.id.ProgramId;
 import org.apache.twill.api.TwillContext;

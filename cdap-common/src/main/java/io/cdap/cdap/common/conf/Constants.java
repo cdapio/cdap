@@ -755,6 +755,11 @@ public final class Constants {
     public static final String PROGRAM_METRICS_ENABLED = "app.program.metrics.enabled";
     public static final String STRUCTURED_TABLE_TIME_METRICS_ENABLED = "structured.table.time.metrics.enabled";
 
+    /** Whether to enable metrics tracking for authorization */
+    public static final String AUTHORIZATION_METRICS_ENABLED = "security.authorization.metrics.enabled";
+    /** Whether to enable entity tagging for metrics for aggregation purposes. */
+    public static final String AUTHORIZATION_METRICS_TAGS_ENABLED = "security.authorization.metrics.tags.enabled";
+
     /**
      * Metric's dataset related constants.
      */
@@ -918,6 +923,22 @@ public final class Constants {
      */
     public static final class MetadataStorage {
       public static final String METRICS_PREFIX = "metadata.storage.";
+    }
+
+    /**
+     * Authorization metrics
+     */
+    public static final class Authorization {
+      public static final String INTERNAL_CHECK_SUCCESS_COUNT = "authorization.internal.check.success.count";
+      public static final String INTERNAL_CHECK_FAILURE_COUNT = "authorization.internal.check.failure.count";
+      public static final String INTERNAL_VISIBILITY_CHECK_COUNT = "authorization.internal.visibility.check.count";
+      public static final String EXTENSION_CHECK_SUCCESS_COUNT = "authorization.extension.check.success.count";
+      public static final String EXTENSION_CHECK_FAILURE_COUNT = "authorization.extension.check.failure.count";
+      public static final String EXTENSION_CHECK_BYPASS_COUNT = "authorization.extension.check.bypass.count";
+      public static final String NON_INTERNAL_VISIBILITY_CHECK_COUNT =
+        "authorization.non.internal.visibility.check.count";
+      public static final String EXTENSION_CHECK_MILLIS = "authorization.extension.check.millis";
+      public static final String EXTENSION_VISIBILITY_MILLIS = "authorization.extension.visibility.millis";
     }
   }
 

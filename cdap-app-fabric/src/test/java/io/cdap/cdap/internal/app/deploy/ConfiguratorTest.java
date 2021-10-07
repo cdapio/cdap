@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.deploy;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.cdap.cdap.AllProgramsApp;
@@ -25,6 +26,7 @@ import io.cdap.cdap.ConfigTestApp;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.app.ProgramType;
 import io.cdap.cdap.api.artifact.ApplicationClass;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.deploy.ConfigResponse;
 import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.runtime.DummyProgramRunnerFactory;
@@ -32,6 +34,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
@@ -81,7 +84,14 @@ public class ConfiguratorTest {
     Injector injector = Guice.createInjector(new ConfigModule(conf),
                                              new AuthorizationTestModule(),
                                              new AuthorizationEnforcementModule().getInMemoryModules(),
-                                             new AuthenticationContextModules().getNoOpModule());
+                                             new AuthenticationContextModules().getNoOpModule(),
+                                             new AbstractModule() {
+                                               @Override
+                                               protected void configure() {
+                                                 bind(MetricsCollectionService.class)
+                                                   .to(NoOpMetricsCollectionService.class);
+                                               }
+                                             });
     authEnforcer = injector.getInstance(AccessEnforcer.class);
     authenticationContext = injector.getInstance(AuthenticationContext.class);
   }

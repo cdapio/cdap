@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.program;
+package io.cdap.cdap.common.metrics;
 
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.ProgramType;
