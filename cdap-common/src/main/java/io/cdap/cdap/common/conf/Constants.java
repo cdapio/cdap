@@ -1778,4 +1778,8 @@ public final class Constants {
       public static final String WORKER_SECRET_DISK_PATH = "twill.security.worker.secret.disk.path";
     }
   }
+
+  public static final class SupportBundle {
+    public static final String MAX_FOLDER_SIZE = "support.bundle.max.folder.size";
+  }
 }

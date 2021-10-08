@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.support.gateway.handlers;
+package io.cdap.cdap.support.handlers;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -24,11 +24,9 @@ import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.support.services.SupportBundleService;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.UUID;
 import javax.annotation.Nullable;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -39,7 +37,6 @@ import javax.ws.rs.QueryParam;
 @Path(Constants.Gateway.API_VERSION_3)
 public class SupportBundleHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(SupportBundleHttpHandler.class);
-  private static final int folderMaxNumber = 7;
   private final CConfiguration cConf;
   private final SupportBundleService supportBundleService;
 
@@ -69,16 +66,12 @@ public class SupportBundleHttpHandler extends AbstractAppFabricHttpHandler {
       @Nullable @QueryParam("run-id") String runId,
       @Nullable @QueryParam("num-run-log") Integer numOfRunLog) {
     // Generate a universal unique id for each bundle and return to the front end right away
-    UUID uuid = UUID.randomUUID();
-    responder.sendString(
-        HttpResponseStatus.OK, String.format("Support Bundle %s generated.", uuid));
     supportBundleService.generateSupportBundle(
+        responder,
         namespaceId,
         appId,
         runId,
         workflowName == null ? "DataPipelineWorkflow" : workflowName,
-        uuid.toString(),
-        folderMaxNumber,
         numOfRunLog == null ? 1 : numOfRunLog);
   }
 }

@@ -17,95 +17,120 @@
 package io.cdap.cdap.support.job;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
-import io.cdap.cdap.client.ApplicationClient;
-import io.cdap.cdap.client.MetricsClient;
-import io.cdap.cdap.client.ProgramClient;
-import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.proto.ApplicationRecord;
-import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.support.status.SupportBundleStatus;
-import io.cdap.cdap.support.task.SupportBundlePipelineInfoTask;
-import io.cdap.cdap.support.task.SupportBundlePipelineRunLogTask;
-import io.cdap.cdap.support.task.SupportBundleRuntimeInfoTask;
-import io.cdap.cdap.support.task.SupportBundleSystemLogTask;
+import io.cdap.cdap.support.status.SupportBundleStatusTask;
+import io.cdap.cdap.support.task.factory.SupportBundleTaskFactory;
+import io.cdap.cdap.support.task.SupportBundleTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class SupportBundleJob {
   private static final Logger LOG = LoggerFactory.getLogger(SupportBundleJob.class);
+  private static final int maxThreadNumber = 5;
+  private static final ExecutorService executor = Executors.newFixedThreadPool(maxThreadNumber);
   private final SupportBundleStatus supportBundleStatus;
-  private final Gson gson;
-  private final MetricsClient metricsClient;
-  private final ProgramClient programClient;
-  private final ApplicationClient applicationClient;
+  private final Gson gson = new GsonBuilder().create();
+  private final ArrayBlockingQueue<Object> queue;
+  private final List<Future> futureList;
+  private final List<SupportBundleTaskFactory> supportBundleTaskFactoryList;
+  private final List<SupportBundleTask> supportBundleTaskList;
 
   @Inject
   public SupportBundleJob(
-      Gson gson,
-      SupportBundleStatus supportBundleStatus,
-      MetricsClient metricsClient,
-      ProgramClient programClient,
-      ApplicationClient applicationClient) {
-    this.gson = gson;
+    SupportBundleStatus supportBundleStatus,
+    List<SupportBundleTaskFactory> supportBundleTaskFactoryList) {
+    int queueSize = 22;
     this.supportBundleStatus = supportBundleStatus;
-    this.metricsClient = metricsClient;
-    this.programClient = programClient;
-    this.applicationClient = applicationClient;
+    this.queue = new ArrayBlockingQueue<>(queueSize);
+    this.futureList = new ArrayList<>();
+    this.supportBundleTaskFactoryList = supportBundleTaskFactoryList;
+    this.supportBundleTaskList = new ArrayList<>();
   }
 
   public void executeTasks(
       String namespaceId,
-      String appId,
-      List<String> serviceList,
       String workflowName,
       String basePath,
       String systemLogPath,
       List<ApplicationRecord> apps,
       int numOfRunNeeded) {
-    SupportBundleSystemLogTask supportBundleSystemLogTask =
-        new SupportBundleSystemLogTask(
-            supportBundleStatus, serviceList, gson, basePath, systemLogPath, programClient);
-    supportBundleSystemLogTask.initializeCollection();
-    for (ApplicationRecord app : apps) {
-      File appFolderPath = new File(basePath, app.getName());
-      DirUtils.mkdirs(appFolderPath);
-      SupportBundlePipelineInfoTask supportBundlePipelineInfoTask =
-          new SupportBundlePipelineInfoTask(
-              supportBundleStatus,
-              namespaceId,
-              appId,
-              gson,
-              basePath,
-              appFolderPath.getPath(),
-              applicationClient,
-              programClient,
-              numOfRunNeeded,
-              workflowName,
-              metricsClient);
-      supportBundlePipelineInfoTask.initializeCollection();
-      ConcurrentHashMap<RunRecord, JsonObject> runMetricsMap = supportBundlePipelineInfoTask.collectPipelineInfo();
-      SupportBundleRuntimeInfoTask supportBundleRuntimeInfoTask =
-          new SupportBundleRuntimeInfoTask(
-              supportBundleStatus, gson, basePath, appFolderPath.getPath(), runMetricsMap);
-      supportBundleRuntimeInfoTask.initializeCollection();
-      SupportBundlePipelineRunLogTask supportBundlePipelineRunLogTask =
-          new SupportBundlePipelineRunLogTask(
-              supportBundleStatus,
-              gson,
-              basePath,
-              appFolderPath.getPath(),
-              namespaceId,
-              appId,
-              workflowName,
-              programClient,
-              runMetricsMap);
-      supportBundlePipelineRunLogTask.initializeCollection();
+    supportBundleTaskList.addAll(supportBundleTaskFactoryList.stream()
+                                   .map(factory -> factory.create(supportBundleStatus, namespaceId,
+                                                                  basePath, systemLogPath,
+                                                                  numOfRunNeeded, workflowName, apps))
+                                   .collect(Collectors.toList()));
+    for (SupportBundleTask supportBundleTask : supportBundleTaskList) {
+      executeTask(supportBundleTask);
+    }
+    completeProcessing(futureList, basePath);
+  }
+
+  public void executeTask(SupportBundleTask supportBundleTask) {
+    Future<SupportBundleStatusTask> futureService =
+      executor.submit(
+        () -> {
+          SupportBundleStatusTask task = supportBundleTask.initializeCollection();
+          return task;
+        });
+    futureList.add(futureService);
+  }
+
+  /** Execute all processing */
+  public void completeProcessing(List<Future> futureList, String basePath) {
+    for (Future future : futureList) {
+      SupportBundleStatusTask supportBundleStatusTask = null;
+      try {
+        supportBundleStatusTask = (SupportBundleStatusTask) future.get(5, TimeUnit.MINUTES);
+        supportBundleStatusTask.setFinishTimestamp(System.currentTimeMillis());
+        updateTask(supportBundleStatusTask, basePath, "FINISHED");
+      } catch (Exception e) {
+        LOG.warn(
+          String.format(
+            "The task for has failed or timeout more than five minutes "),
+          e);
+        if (supportBundleStatusTask != null) {
+          supportBundleStatusTask.setFinishTimestamp(System.currentTimeMillis());
+          updateTask(supportBundleStatusTask, basePath, "FAILED");
+        }
+      }
+    }
+    supportBundleStatus.setStatus("FINISHED");
+    supportBundleStatus.setFinishTimestamp(System.currentTimeMillis());
+    addToStatus(basePath);
+  }
+
+  /** Update status task */
+  public synchronized void updateTask(
+    SupportBundleStatusTask task, String basePath, String status) {
+    try {
+      task.setStatus(status);
+      addToStatus(basePath);
+    } catch (Exception e) {
+      LOG.warn("failed to update the status file ", e);
+    }
+  }
+
+  /** Update status file */
+  public synchronized void addToStatus(String basePath) {
+    try (FileWriter statusFile = new FileWriter(new File(basePath, "status.json"))) {
+      statusFile.write(gson.toJson(supportBundleStatus));
+      statusFile.flush();
+    } catch (Exception e) {
+      LOG.error("Can not update status file ", e);
     }
   }
 }

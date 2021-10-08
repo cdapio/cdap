@@ -14,15 +14,16 @@
  * the License.
  */
 
-package io.cdap.cdap.support.task;
+package io.cdap.cdap.support.module;
 
-import io.cdap.cdap.support.status.SupportBundleStatusTask;
+import com.google.inject.AbstractModule;
+import io.cdap.cdap.support.task.factory.SupportBundlePipelineInfoTaskFactory;
+import io.cdap.cdap.support.task.factory.SupportBundleSystemLogTaskFactory;
+import io.cdap.cdap.support.task.factory.SupportBundleTaskFactory;
 
-/** Establishes an interface for support bundle task */
-public interface SupportBundleTask {
-  /** Collect Log or pipeline info */
-  SupportBundleStatusTask initializeCollection() throws Exception;
-  SupportBundleStatusTask initializeTask(String name, String type);
-  void updateTask(SupportBundleStatusTask task, String basePath, String serviceName);
-  void addToStatus(String basePath);
+public class SupportBundleModule extends AbstractModule {
+  public void configure() {
+    bind(SupportBundleTaskFactory.class).to(SupportBundleSystemLogTaskFactory.class);
+    bind(SupportBundleTaskFactory.class).to(SupportBundlePipelineInfoTaskFactory.class);
+  }
 }

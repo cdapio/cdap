@@ -14,15 +14,21 @@
  * the License.
  */
 
-package io.cdap.cdap.support.task;
+package io.cdap.cdap.support.task.factory;
 
-import io.cdap.cdap.support.status.SupportBundleStatusTask;
+import io.cdap.cdap.proto.ApplicationRecord;
+import io.cdap.cdap.support.status.SupportBundleStatus;
+import io.cdap.cdap.support.task.SupportBundleTask;
 
-/** Establishes an interface for support bundle task */
-public interface SupportBundleTask {
-  /** Collect Log or pipeline info */
-  SupportBundleStatusTask initializeCollection() throws Exception;
-  SupportBundleStatusTask initializeTask(String name, String type);
-  void updateTask(SupportBundleStatusTask task, String basePath, String serviceName);
-  void addToStatus(String basePath);
+import java.util.List;
+
+public interface SupportBundleTaskFactory {
+  SupportBundleTask create(
+      SupportBundleStatus supportBundleStatus,
+      String namespaceId,
+      String basePath,
+      String systemLogPath,
+      int numOfRunNeeded,
+      String workflowName,
+      List<ApplicationRecord> applicationRecordList);
 }

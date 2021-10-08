@@ -4586,7 +4586,7 @@
       The interval (in minutes) that the cleanup service will delete old artifact cache files.
     </description>
   </property>
-
+  
   <!-- Default values for Config-based request-blocking -->
   <property>
     <name>router.block.request.enabled</name>
@@ -4610,6 +4610,14 @@
     <value></value>
     <description>
       The response body if request-blocking is enabled.
+    </description>
+  </property>
+
+  <property>
+    <name>support.bundle.max.folder.size</name>
+    <value>7</value>
+    <description>
+      Number of folder allows for each bundle generated.
     </description>
   </property>
 </configuration>

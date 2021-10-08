@@ -17,9 +17,13 @@
 package io.cdap.cdap.support.task;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
+import io.cdap.cdap.client.ProgramClient;
+import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.RunRecord;
+import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.support.status.SupportBundleStatus;
 import io.cdap.cdap.support.status.SupportBundleStatusTask;
 import org.slf4j.Logger;
@@ -28,138 +32,127 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /** Collects pipeline run info */
 public class SupportBundleRuntimeInfoTask implements SupportBundleTask {
-  private static final int maxThreadNumber = 5;
-  private static final ExecutorService executor = Executors.newFixedThreadPool(maxThreadNumber);
   private static final Logger LOG = LoggerFactory.getLogger(SupportBundleRuntimeInfoTask.class);
-  private static final int queueSize = 10;
+  private static final Gson gson = new GsonBuilder().create();
   private final String basePath;
-  private final String appFolderPath;
-  private final ConcurrentHashMap<String, Integer> retryServiceMap;
-  private final Gson gson;
-  private final ArrayBlockingQueue<RunRecord> runRecordDetailQueue;
   private final SupportBundleStatus supportBundleStatus;
-  private final ConcurrentHashMap<String, RunRecord> runRecordMap;
-  private final ConcurrentHashMap<RunRecord, JsonObject> runMetricsMap;
+  private final SupportBundleStatusTask subEachPipelineTask;
+  private final String namespaceId;
+  private final String appId;
+  private final ProgramClient programClient;
+  private final String workflow;
+  private final int numOfRunNeeded;
+  private final ArrayBlockingQueue<Object> queue;
+  private final ConcurrentHashMap<String, Integer> retryServiceMap;
+  private SupportBundleStatusTask subAllRunRecordsTask;
 
   @Inject
-  public SupportBundleRuntimeInfoTask(
-      SupportBundleStatus supportBundleStatus,
-      Gson gson,
-      String basePath,
-      String appFolderPath,
-      ConcurrentHashMap<RunRecord, JsonObject> runMetricsMap) {
-    this.runRecordMap = new ConcurrentHashMap<>();
-    this.supportBundleStatus = supportBundleStatus;
-    this.gson = gson;
+  public SupportBundleRuntimeInfoTask(String basePath,
+                                      SupportBundleStatus supportBundleStatus,
+                                      SupportBundleStatusTask subEachPipelineTask,
+                                      String namespaceId, String appId, ProgramClient programClient,
+                                      String workflow, int numOfRunNeeded) {
+    int queueSize = 100;
     this.basePath = basePath;
-    this.appFolderPath = appFolderPath;
-    this.runMetricsMap = runMetricsMap;
-    retryServiceMap = new ConcurrentHashMap<>();
-    runRecordDetailQueue = new ArrayBlockingQueue<>(queueSize);
+    this.supportBundleStatus = supportBundleStatus;
+    this.subEachPipelineTask = subEachPipelineTask;
+    this.namespaceId = namespaceId;
+    this.appId = appId;
+    this.programClient = programClient;
+    this.workflow = workflow;
+    this.numOfRunNeeded = numOfRunNeeded;
+    this.queue = new ArrayBlockingQueue<>(queueSize);
+    this.retryServiceMap = new ConcurrentHashMap<>();
+    this.subAllRunRecordsTask = new SupportBundleStatusTask();
   }
 
-  public void initializeCollection() {
-    List<Future> futureRunInfoList = new ArrayList<>();
-    try {
-      for (RunRecord runRecord : runMetricsMap.keySet()) {
-        runRecordDetailQueue.put(runRecord);
-      }
-      while (!runRecordDetailQueue.isEmpty()) {
-        RunRecord runRecord = runRecordDetailQueue.take();
-        String runId = runRecord.getPid();
-        runRecordMap.put(runId, runRecord);
-        SupportBundleStatusTask task =
-            initializeTask(runId + "-info", "SupportBundleRuntimeInfoTask");
-        Future<SupportBundleStatusTask> futureRunInfoService =
-            executor.submit(
-                () -> {
-                  try {
-                    updateTask(task, basePath, "IN_PROGRESS");
-                    generateRuntimeInfo(
-                        appFolderPath,
-                        runRecord.getPid(),
-                        runRecord,
-                        runMetricsMap.get(runRecord),
-                        gson);
-                    retryServiceMap.remove(runId);
-                  } catch (Exception e) {
-                    LOG.warn(
-                        String.format(
-                            "Retried three times for this run id %s to generate run info ", runId),
-                        e);
-                    queueTaskAfterFailed(runId, task);
-                  }
-                  return task;
-                });
-        if (!retryServiceMap.containsKey(runId)) {
-          futureRunInfoList.add(futureRunInfoService);
-        }
-      }
-      completeProcessing(futureRunInfoList, basePath, "runInfo");
-    } catch (InterruptedException e) {
-      LOG.warn("Can not process run info into queue ", e);
-    }
+  public SupportBundleStatusTask initializeCollection() {
+    subAllRunRecordsTask = initializeTask(appId + "-run-collection", "SupportBundleRuntimeInfoTask");
+    return subAllRunRecordsTask;
   }
+
   /** Generates pipeline run info */
   public void generateRuntimeInfo(
-      String appPath, String latestRunId, RunRecord latestRunRecord, JsonObject metrics, Gson gson)
-      throws Exception {
-    FileWriter file = new FileWriter(new File(appPath, latestRunId + ".json"));
-    JsonObject jsonObject = new JsonObject();
-    jsonObject.addProperty("status", latestRunRecord.getStatus().toString());
-    jsonObject.addProperty("start", latestRunRecord.getStartTs());
-    jsonObject.addProperty("end", latestRunRecord.getStopTs());
-    jsonObject.addProperty("profileName", latestRunRecord.getProfileId().getProfile());
-    jsonObject.addProperty("runtimeArgs", latestRunRecord.getProperties().get("runtimeArgs"));
-    jsonObject.add("metrics", metrics);
-    file.write(gson.toJson(jsonObject));
-    file.flush();
+      String appPath, ConcurrentHashMap<RunRecord, JsonObject> runMetricsMap) {
+    for (RunRecord runRecord : runMetricsMap.keySet()) {
+      if (queue.size() >= 100) {
+        break;
+      }
+      queue.offer(runRecord);
+    }
+    while (!queue.isEmpty()) {
+      try {
+        RunRecord runRecord = (RunRecord) queue.take();
+        String runId = runRecord.getPid();
+        SupportBundleStatusTask subEachRunInfoTask = new SupportBundleStatusTask();
+        subEachRunInfoTask.setName(runId + "-info");
+        subEachRunInfoTask.setType("SupportBundleRuntimeInfoTask");
+        subEachRunInfoTask.setStartTimestamp(System.currentTimeMillis());
+        subAllRunRecordsTask.getSubTasks().add(subEachRunInfoTask);
+        try {
+          FileWriter file = new FileWriter(new File(appPath, runId + ".json"));
+          JsonObject jsonObject = new JsonObject();
+          jsonObject.addProperty("status", runRecord.getStatus().toString());
+          jsonObject.addProperty("start", runRecord.getStartTs());
+          jsonObject.addProperty("end", runRecord.getStopTs());
+          jsonObject.addProperty("profileName", runRecord.getProfileId().getProfile());
+          jsonObject.addProperty("runtimeArgs", runRecord.getProperties().get("runtimeArgs"));
+          jsonObject.add("metrics", runMetricsMap.get(runRecord));
+          file.write(gson.toJson(jsonObject));
+          file.flush();
+          subEachRunInfoTask.setFinishTimestamp(System.currentTimeMillis());
+          updateTask(subEachRunInfoTask, basePath, "FINISHED");
+        } catch (Exception e) {
+          queueTaskAfterFailed(runId, subEachRunInfoTask);
+        }
+      } catch (Exception e) {
+        LOG.warn("Can not generate run info file ", e);
+      }
+    }
+
+    subAllRunRecordsTask.setFinishTimestamp(System.currentTimeMillis());
+    updateTask(subAllRunRecordsTask, basePath, "FINISHED");
+  }
+
+  public List<RunRecord> getRunRecords() {
+    String runRecordDetailProcessing = "runRecordDetailProcessing";
+    List<RunRecord> runRecordList = new ArrayList<>();
+    queue.offer(runRecordDetailProcessing);
+    while (!queue.isEmpty()) {
+      try {
+        queue.take();
+        updateTask(subAllRunRecordsTask, basePath, "IN_PROGRESS");
+        runRecordList.addAll(sortRunRecords());
+        retryServiceMap.remove(runRecordDetailProcessing);
+      } catch (Exception e) {
+        LOG.warn("Retried three times for this run record collection ", e);
+        queueTaskAfterFailed(runRecordDetailProcessing, subAllRunRecordsTask);
+      }
+    }
+    return runRecordList;
   }
 
   /** Queue the task again after exception */
-  public synchronized void queueTaskAfterFailed(String serviceName, SupportBundleStatusTask task) {
+  private synchronized void queueTaskAfterFailed(String serviceName, SupportBundleStatusTask task) {
     if (retryServiceMap.getOrDefault(serviceName, 0) >= 3) {
       updateTask(task, basePath, "FAILED");
     } else {
       try {
-        runRecordDetailQueue.put(runRecordMap.get(serviceName));
+        queue.put(serviceName);
       } catch (InterruptedException e) {
         LOG.warn("failed to queue put ", e);
       }
       retryServiceMap.put(serviceName, retryServiceMap.getOrDefault(serviceName, 0) + 1);
       task.setRetries(retryServiceMap.get(serviceName));
       updateTask(task, basePath, "QUEUED");
-    }
-  }
-
-  /** Execute all processing */
-  public void completeProcessing(List<Future> futureList, String basePath, String processName) {
-    for (Future future : futureList) {
-      SupportBundleStatusTask supportBundleStatusTask = null;
-      try {
-        supportBundleStatusTask = (SupportBundleStatusTask) future.get(5, TimeUnit.MINUTES);
-        supportBundleStatusTask.setFinishTimestamp(System.currentTimeMillis());
-        updateTask(supportBundleStatusTask, basePath, "FINISHED");
-      } catch (Exception e) {
-        LOG.warn(
-            String.format(
-                "This task for %s has failed or timeout more than five minutes ", processName),
-            e);
-        if (supportBundleStatusTask != null) {
-          supportBundleStatusTask.setFinishTimestamp(System.currentTimeMillis());
-          updateTask(supportBundleStatusTask, basePath, "FAILED");
-        }
-      }
     }
   }
 
@@ -191,7 +184,40 @@ public class SupportBundleRuntimeInfoTask implements SupportBundleTask {
     supportBundleStatusTask.setType(type);
     Long startTs = System.currentTimeMillis();
     supportBundleStatusTask.setStartTimestamp(startTs);
-    supportBundleStatus.getTasks().add(supportBundleStatusTask);
+    subEachPipelineTask.getSubTasks().add(supportBundleStatusTask);
     return supportBundleStatusTask;
+  }
+
+  private List<RunRecord> sortRunRecords() {
+    List<RunRecord> runRecordList = new ArrayList<>();
+    try {
+      ProgramId programId =
+        new ProgramId(
+          namespaceId, appId, ProgramType.valueOfCategoryName("workflows"), workflow);
+      List<RunRecord> allRunRecordList =
+        programClient.getAllProgramRuns(programId, 0, Long.MAX_VALUE, 100);
+
+      List<RunRecord> sortedRunRecordList =
+        allRunRecordList.stream()
+          .filter(run -> run.getStatus().isEndState())
+          .sorted(
+            Collections.reverseOrder(
+              (a, b) -> {
+                if (a.getStartTs() <= b.getStartTs()) {
+                  return 1;
+                }
+                return -1;
+              }))
+          .collect(Collectors.toList());
+      // Gets the last N runs info
+      for (RunRecord runRecord : sortedRunRecordList) {
+        if (runRecordList.size() < numOfRunNeeded) {
+          runRecordList.add(runRecord);
+        }
+      }
+    } catch (Exception e) {
+      LOG.warn("Failed to get program runs ", e);
+    }
+    return runRecordList;
   }
 }
