@@ -63,6 +63,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -115,6 +116,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String SPARK_KUBERNETES_EXECUTOR_LABEL_PREFIX = "spark.kubernetes.executor.label.";
   private static final String SPARK_KUBERNETES_DRIVER_POD_TEMPLATE = "spark.kubernetes.driver.podTemplateFile";
   private static final String SPARK_KUBERNETES_EXECUTOR_POD_TEMPLATE = "spark.kubernetes.executor.podTemplateFile";
+  private static final String SPARK_KUBERNETES_METRICS_PROPERTIES_CONF = "spark.metrics.conf";
   private static final String POD_TEMPLATE_FILE_NAME = "podTemplate-";
   private static final String CDAP_LOCALIZE_FILES_PATH = "/etc/cdap/localizefiles";
   private static final String CDAP_CONFIG_MAP_PREFIX = "cdap-compressed-files-";
@@ -264,9 +266,9 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     Map<String, String> sparkConfMap = new HashMap<>(additionalSparkConfs);
     // Create pod template with config maps and add to spark conf.
     sparkConfMap.put(SPARK_KUBERNETES_DRIVER_POD_TEMPLATE,
-                     getPodTemplateFile(sparkSubmitContext, true).getAbsolutePath());
-    sparkConfMap.put(SPARK_KUBERNETES_EXECUTOR_POD_TEMPLATE,
-                     getPodTemplateFile(sparkSubmitContext, false).getAbsolutePath());
+                     getDriverPodTemplate(podInfo, sparkSubmitContext).getAbsolutePath());
+    sparkConfMap.put(SPARK_KUBERNETES_EXECUTOR_POD_TEMPLATE, getExecutorPodTemplateFile().getAbsolutePath());
+    sparkConfMap.put(SPARK_KUBERNETES_METRICS_PROPERTIES_CONF, "/opt/spark/work-dir/metrics.properties");
 
     // Add spark pod labels. This will be same as job labels
     populateLabels(sparkConfMap);
@@ -381,42 +383,94 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     return master;
   }
 
-  private File getPodTemplateFile(SparkSubmitContext sparkSubmitContext, boolean isDriver) throws Exception {
-    V1Pod v1Pod = new V1Pod();
-    if (isDriver) {
-      v1Pod.setMetadata(new V1ObjectMetaBuilder()
-                          .addToOwnerReferences(new V1OwnerReferenceBuilder()
-                                                  .withBlockOwnerDeletion(true)
-                                                  .withKind("Pod")
-                                                  .withApiVersion("v1")
-                                                  .withUid(podInfo.getUid())
-                                                  .withName(podInfo.getName()).build()).build());
+  private File getDriverPodTemplate(PodInfo podInfo, SparkSubmitContext sparkSubmitContext) throws Exception {
+    V1Pod driverPod = new V1Pod();
+    // set owner references for driver pod
+    driverPod.setMetadata(new V1ObjectMetaBuilder()
+                            .addToOwnerReferences(new V1OwnerReferenceBuilder()
+                                                    .withBlockOwnerDeletion(true)
+                                                    .withKind("Pod")
+                                                    .withApiVersion("v1")
+                                                    .withUid(podInfo.getUid())
+                                                    .withName(podInfo.getName()).build()).build());
+    V1PodSpec driverPodSpec = createBasePodSpec();
+    driverPod.setSpec(driverPodSpec);
+
+    // While generating driver pod template, need to create config map that has compressed localize files
+    try {
+      V1ConfigMapBuilder configMapBuilder = new V1ConfigMapBuilder();
+      // create config map with localize resources
+      for (Map.Entry<String, SparkLocalizeResource> resource : sparkSubmitContext.getLocalizeResources().entrySet()) {
+        configMapBuilder.addToBinaryData(resource.getKey(), getContents(resource.getValue().getURI(),
+                                                                        !resource.getValue().isArchive()));
+      }
+
+      String configMapName = CDAP_CONFIG_MAP_PREFIX + UUID.randomUUID();
+      coreV1Api.createNamespacedConfigMap(podInfo.getNamespace(),
+                                          configMapBuilder.withMetadata(
+                                            new V1ObjectMetaBuilder()
+                                              .withName(configMapName)
+                                              .withLabels(podInfo.getLabels())
+                                              .withOwnerReferences(podInfo.getOwnerReferences())
+                                              .build()).build(),
+                                          null, null, null);
+      this.configMapName = configMapName;
+
+      // Add configmap as a volume to be added to the pod template
+      driverPodSpec.addVolumesItem(new V1Volume().name(configMapName)
+                                     .configMap(new V1ConfigMapVolumeSourceBuilder().withName(configMapName).build()));
+      // Add configmap as a volume mount
+      for (V1Container container : driverPodSpec.getContainers()) {
+        container.addVolumeMountsItem(new V1VolumeMount().name(configMapName)
+                                        .mountPath(CDAP_LOCALIZE_FILES_PATH).readOnly(true));
+      }
+    } catch (ApiException e) {
+      throw new IOException("Error occurred while creating pod spec. Error code = "
+                              + e.getCode() + ", Body = " + e.getResponseBody(), e);
+    } catch (IOException e) {
+      throw new IOException("Error while creating compressed files to generate pod spec.", e);
     }
-    v1Pod.setSpec(createSparkPodSpec(podInfo, sparkSubmitContext.getLocalizeResources()));
+
+    return serializePodTemplate(driverPod);
+  }
+
+  private File getExecutorPodTemplateFile() throws Exception {
+    V1Pod executorPod = new V1Pod();
+    V1PodSpec executorPodSpec = createBasePodSpec();
+    executorPod.setSpec(executorPodSpec);
+
+    // Add configmap as a volume
+    executorPodSpec.addVolumesItem(new V1Volume().name(configMapName)
+                                     .configMap(new V1ConfigMapVolumeSourceBuilder().withName(configMapName).build()));
+    // Add configmap as a volume mount
+    for (V1Container container : executorPodSpec.getContainers()) {
+      container.addVolumeMountsItem(new V1VolumeMount().name(configMapName)
+                                      .mountPath(CDAP_LOCALIZE_FILES_PATH).readOnly(true));
+    }
 
     // Create spark template file. We do not delete it because pod will get deleted at the end of job completion.
+    return serializePodTemplate(executorPod);
+  }
+
+  private File serializePodTemplate(V1Pod v1Pod) throws IOException {
     File templateFile = new File(POD_TEMPLATE_FILE_NAME + UUID.randomUUID().toString());
+    String podTemplateYaml = Yaml.dump(v1Pod);
     try (FileWriter writer = new FileWriter(templateFile)) {
-      writer.write(Yaml.dump(v1Pod));
+      writer.write(podTemplateYaml);
     } catch (IOException e) {
       // should not happen
       throw new IOException("Exception while writing pod spec to temp file.", e);
     }
+    LOG.trace("Pod template: {}", podTemplateYaml);
     return templateFile;
   }
 
   /**
-   * Create the pod spec to use as a template for all pods that Spark creates.
-   * The spec contains mounts for config files (cconf, logback, etc.) and for the
-   * podinfo that this class expects to see when {@link #createPodInfo} is called.
+   * Creates the base pod spec to use as a template for all pods that Spark creates.
    *
-   * @param podInfo podinfo for the pod that is submitting the Spark job
-   * @param localizeResources localize resources needed for spark on master environment
-   * @return pod template to use for all Spark pods
-   * @throws Exception if there is an error while generating pod spec
+   * @return pod template to use for Spark pods
    */
-  private V1PodSpec createSparkPodSpec(PodInfo podInfo,
-                                       Map<String, SparkLocalizeResource> localizeResources) throws Exception {
+  private V1PodSpec createBasePodSpec() {
     /*
         define the podinfo volume. This uses downwardAPI, which tells k8s to store pod information in files:
 
@@ -455,44 +509,11 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     List<V1VolumeMount> volumeMounts = new ArrayList<>();
     volumeMounts.add(new V1VolumeMount().name(podInfoVolumeName).mountPath(podInfoDir.getAbsolutePath()));
 
-    // mount spark localize resources
-    V1ConfigMapBuilder configMapBuilder = new V1ConfigMapBuilder();
-    V1ConfigMapVolumeSourceBuilder configVolumeBuilder = new V1ConfigMapVolumeSourceBuilder();
-
-    try {
-      for (Map.Entry<String, SparkLocalizeResource> resource : localizeResources.entrySet()) {
-        configMapBuilder.addToBinaryData(resource.getKey(), getCompressedContents(resource.getValue().getURI()));
-        configVolumeBuilder.addToItems(new V1KeyToPath().key(resource.getKey()).path(resource.getKey()));
-      }
-
-      // Create config map
-      String configMapName = CDAP_CONFIG_MAP_PREFIX + UUID.randomUUID();
-      coreV1Api.createNamespacedConfigMap(podInfo.getNamespace(),
-                                          configMapBuilder.withMetadata(
-                                            new V1ObjectMetaBuilder()
-                                              .withName(configMapName)
-                                              .withLabels(podInfo.getLabels())
-                                              .withOwnerReferences(podInfo.getOwnerReferences())
-                                              .build()).build(),
-                                          null, null, null);
-      this.configMapName = configMapName;
-
-      // Create configmap Volume and Volume mount to be added to the pod template
-      volumes.add(new V1Volume().name(configMapName).configMap(configVolumeBuilder.withName(configMapName).build()));
-      volumeMounts.add(new V1VolumeMount().name(configMapName).mountPath(CDAP_LOCALIZE_FILES_PATH).readOnly(true));
-
-      v1PodSpecBuilder
-        .withVolumes(volumes)
-        .withContainers(new V1ContainerBuilder()
-                          .withVolumeMounts(volumeMounts)
-                          .build());
-
-    } catch (ApiException e) {
-      throw new IOException("Error occurred while creating pod spec. Error code="
-                              + e.getCode() + ", Body=" + e.getResponseBody(), e);
-    } catch (IOException e) {
-      throw new IOException("Error while creating compressed files to generate pod spec.", e);
-    }
+    v1PodSpecBuilder
+      .withVolumes(volumes)
+      .withContainers(new V1ContainerBuilder()
+                        .withVolumeMounts(volumeMounts)
+                        .build());
     return v1PodSpecBuilder.build();
   }
 
@@ -509,18 +530,17 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     }
   }
 
-  private byte[] getCompressedContents(URI uri) throws IOException {
+  private byte[] getContents(URI uri, boolean shouldCompress) throws IOException {
     byte[] buffer = new byte[1024 * 500]; // use 500kb buffer
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     File file = new File(uri);
-    try (GZIPOutputStream gos = new GZIPOutputStream(baos);
+    try (OutputStream os = shouldCompress ? new GZIPOutputStream(baos) : baos;
          FileInputStream fis = new FileInputStream(file)) {
       int length;
       while ((length = fis.read(buffer)) > 0) {
-        gos.write(buffer, 0, length);
+        os.write(buffer, 0, length);
       }
     }
-
     return baos.toByteArray();
   }
 

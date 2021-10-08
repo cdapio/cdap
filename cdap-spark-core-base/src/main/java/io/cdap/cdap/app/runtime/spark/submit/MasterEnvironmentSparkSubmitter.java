@@ -75,6 +75,14 @@ public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
   @Override
   protected Iterable<LocalizeResource> getFiles(List<LocalizeResource> localizeResources) {
     this.resources = Collections.unmodifiableList(new ArrayList<>(localizeResources));
+    // files are localized through SparkSubmitContext on master environment. Hence returning empty list
+    return Collections.emptyList();
+  }
+
+  @Override
+  protected Iterable<LocalizeResource> getArchives(List<LocalizeResource> localizeResources) {
+    this.resources = Collections.unmodifiableList(new ArrayList<>(localizeResources));
+    // files are localized through SparkSubmitContext on master environment. Hence returning empty list
     return Collections.emptyList();
   }
 
@@ -130,7 +138,8 @@ public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
   private Map<String, SparkLocalizeResource> getLocalizeResources(List<LocalizeResource> resources) {
     Map<String, SparkLocalizeResource> map = new HashMap<>();
     for (LocalizeResource resource : resources) {
-      map.put(FilenameUtils.getName(resource.getURI().toString()), new SparkLocalizeResource(resource.getURI()));
+      map.put(FilenameUtils.getName(resource.getURI().toString()),
+              new SparkLocalizeResource(resource.getURI(), resource.isArchive()));
     }
     return map;
   }

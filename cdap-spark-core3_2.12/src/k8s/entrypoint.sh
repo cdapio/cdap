@@ -76,8 +76,9 @@ fi
 # SPARK_EXTRA_CLASSPATH does not work either for the same reason
 # that the ContainerLauncher is not a known Spark class
 # and gets ignored by org.apache.spark.launcher.Main
+# /etc/cdap/localizefiles will contain the logback jar and must come first in the classpath
 CDAP_SPARK_CORE_LIBS=`find /opt/cdap/cdap-spark-core/lib | sort | tr '\n' ':'`
-export CDAP_SPARK_CLASSPATH="/opt/cdap/cdap-spark-core/cdap-spark-core.jar:$CDAP_SPARK_CORE_LIBS:/etc/cdap/conf"
+export CDAP_SPARK_CLASSPATH="/etc/cdap/localizefiles/logback.xml.jar:/opt/cdap/cdap-spark-core/cdap-spark-core.jar:$CDAP_SPARK_CORE_LIBS:/etc/cdap/conf"
 
 case "$1" in
   driver)
