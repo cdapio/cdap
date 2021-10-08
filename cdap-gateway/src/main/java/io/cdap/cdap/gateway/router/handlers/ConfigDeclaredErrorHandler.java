@@ -49,14 +49,14 @@ public class ConfigDeclaredErrorHandler extends ChannelInboundHandlerAdapter {
 
   @Override
   public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-    if (!(msg instanceof HttpRequest) || !isConfigDeclaredErrorEnabled()) {
+    if (!(msg instanceof HttpRequest)
+      || !cConf.getBoolean(Constants.ConfigDeclaredError.CONFIG_DECLARED_ERROR_ENABLED)) {
       ctx.fireChannelRead(msg);
       return;
     }
 
     try {
-      int statusCode =
-        cConf.getInt(Constants.ConfigDeclaredError.CFG_STATUS_CODE, Constants.ConfigDeclaredError.DEFAULT_STATUS_CODE);
+      int statusCode = cConf.getInt(Constants.ConfigDeclaredError.CFG_STATUS_CODE);
       JsonObject jsonContent = new JsonObject();
       for (Map.Entry<String, String> cConfEntry : cConf) {
         if (cConfEntry.getKey().startsWith(Constants.ConfigDeclaredError.CONFIG_DECLARED_ERROR_PROPERTY_PREFIX)) {
@@ -77,12 +77,5 @@ public class ConfigDeclaredErrorHandler extends ChannelInboundHandlerAdapter {
     } finally {
       ReferenceCountUtil.release(msg);
     }
-  }
-
-  /**
-   * Returns true if config-declared error is enabled
-   */
-  private boolean isConfigDeclaredErrorEnabled() {
-    return cConf.getBoolean(Constants.ConfigDeclaredError.CONFIG_DECLARED_ERROR_ENABLED, false);
   }
 }

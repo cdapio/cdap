@@ -1746,10 +1746,5 @@ public final class Constants {
      * The config name to define the status code for the error
      */
     public static final String CFG_STATUS_CODE = "error.declared.status.code";
-
-    /**
-     * The default status code if it is not defined in the config
-     */
-    public static final int DEFAULT_STATUS_CODE = 503;
   }
 }
