@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.gateway.router.handlers;
 
-import com.google.gson.JsonObject;
 import io.cdap.cdap.common.conf.Configuration;
 import io.cdap.cdap.common.conf.Constants;
 import io.netty.buffer.ByteBuf;
@@ -34,40 +33,31 @@ import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.ReferenceCountUtil;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
 
 /**
  * Handler to block all the inbound requests if config-declared error is enabled in {@link #cConf}
  */
-public class ConfigDeclaredErrorHandler extends ChannelInboundHandlerAdapter {
+public class ConfigBasedRequestBlockingHandler extends ChannelInboundHandlerAdapter {
 
   private final Configuration cConf;
 
-  public ConfigDeclaredErrorHandler(Configuration cConf) {
+  public ConfigBasedRequestBlockingHandler(Configuration cConf) {
     this.cConf = cConf;
   }
 
   @Override
   public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
     if (!(msg instanceof HttpRequest)
-      || !cConf.getBoolean(Constants.ConfigDeclaredError.CONFIG_DECLARED_ERROR_ENABLED)) {
+      || !cConf.getBoolean(Constants.ConfigBasedRequestBlocking.ROUTER_BLOCK_REQUEST_ENABLED)) {
       ctx.fireChannelRead(msg);
       return;
     }
 
     try {
-      int statusCode = cConf.getInt(Constants.ConfigDeclaredError.CFG_STATUS_CODE);
-      JsonObject jsonContent = new JsonObject();
-      for (Map.Entry<String, String> cConfEntry : cConf) {
-        if (cConfEntry.getKey().startsWith(Constants.ConfigDeclaredError.CONFIG_DECLARED_ERROR_PROPERTY_PREFIX)) {
-          jsonContent.addProperty(
-            cConfEntry.getKey().substring(Constants.ConfigDeclaredError.CONFIG_DECLARED_ERROR_PROPERTY_PREFIX.length()),
-            cConfEntry.getValue()
-          );
-        }
-      }
+      int statusCode = cConf.getInt(Constants.ConfigBasedRequestBlocking.CFG_STATUS_CODE);
+      String responseMsg = cConf.get(Constants.ConfigBasedRequestBlocking.CFG_MESSAGE, "");
 
-      ByteBuf content = Unpooled.copiedBuffer(jsonContent.toString(), StandardCharsets.UTF_8);
+      ByteBuf content = Unpooled.copiedBuffer(responseMsg, StandardCharsets.UTF_8);
       HttpResponse response = new DefaultFullHttpResponse(
         HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf(statusCode), content
       );

@@ -4560,21 +4560,21 @@
     </description>
   </property>
 
-  <!-- Default values for Config-declared errors -->
+  <!-- Default values for Config-based request-blocking -->
   <property>
-    <name>error.declared.status.code</name>
-    <value>503</value>
+    <name>router.block.request.enabled</name>
+    <value>false</value>
     <description>
-      The status code if config-declared errors are enabled
+      Determines whether server should start blocking inbound requests. If true, server would start
+      responding to every request (not router health checks) with response declared in cconf.
     </description>
   </property>
 
   <property>
-    <name>error.declared.enabled</name>
-    <value>false</value>
+    <name>router.block.request.status.code</name>
+    <value>503</value>
     <description>
-      Determines whether server should start responding with config-declared errors. If true, server would start
-      responding to every user request (not router health checks) with error declared in cconf.
+      The status code if request-blocking is enabled.
     </description>
   </property>
 </configuration>

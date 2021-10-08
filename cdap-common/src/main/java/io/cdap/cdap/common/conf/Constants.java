@@ -1728,23 +1728,23 @@ public final class Constants {
   }
 
   /**
-   * To declare an error through configuration,
-   * Router will start responding with the declared error to every inbound request
+   * To block inbound requests through configuration,
+   * Router will start responding to every inbound request with the response (status and message) declared in config
    */
-  public static final class ConfigDeclaredError {
+  public static final class ConfigBasedRequestBlocking {
     /**
-     * A prefix to add configs related to config-declared error
+     * Property to start/stop blocking requests to the router. Will be blocked if enabled.
      */
-    public static final String CONFIG_DECLARED_ERROR_PROPERTY_PREFIX = "error.declared.custom.";
+    public static final String ROUTER_BLOCK_REQUEST_ENABLED = "router.block.request.enabled";
 
     /**
-     * Property to enable/disable config-declared error
+     * The config name to define the status code for the response
      */
-    public static final String CONFIG_DECLARED_ERROR_ENABLED = "error.declared.enabled";
+    public static final String CFG_STATUS_CODE = "router.block.request.status.code";
 
     /**
-     * The config name to define the status code for the error
+     * The config name to define the response body
      */
-    public static final String CFG_STATUS_CODE = "error.declared.status.code";
+    public static final String CFG_MESSAGE = "router.block.request.message";
   }
 }

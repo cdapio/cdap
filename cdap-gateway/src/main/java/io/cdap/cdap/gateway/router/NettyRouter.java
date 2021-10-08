@@ -30,7 +30,7 @@ import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.common.security.KeyStores;
 import io.cdap.cdap.gateway.router.handlers.AuditLogHandler;
 import io.cdap.cdap.gateway.router.handlers.AuthenticationHandler;
-import io.cdap.cdap.gateway.router.handlers.ConfigDeclaredErrorHandler;
+import io.cdap.cdap.gateway.router.handlers.ConfigBasedRequestBlockingHandler;
 import io.cdap.cdap.gateway.router.handlers.HttpRequestRouter;
 import io.cdap.cdap.gateway.router.handlers.HttpStatusRequestHandler;
 import io.cdap.cdap.security.auth.TokenValidator;
@@ -222,7 +222,8 @@ public class NettyRouter extends AbstractIdleService {
           if (cConf.getBoolean(Constants.Router.ROUTER_AUDIT_LOG_ENABLED)) {
             pipeline.addLast("audit-log", new AuditLogHandler());
           }
-          pipeline.addLast("config-declared-error-handler", new ConfigDeclaredErrorHandler(cConf));
+          // Will block inbound requests if config for blocking the requests is enabled
+          pipeline.addLast("config-based-request-blocking-handler", new ConfigBasedRequestBlockingHandler(cConf));
           // Always let the client to continue sending the request body after the authentication passed
           pipeline.addLast("expect-continue", new HttpServerExpectContinueHandler());
           // for now there's only one hardcoded rule, but if there will be more, we may want it generic and configurable
@@ -270,6 +271,7 @@ public class NettyRouter extends AbstractIdleService {
       long cConfReloadIntervalMinutes = cConf.getLong(Constants.Router.CCONF_RELOAD_INTERVAL_MINUTES);
       scheduledExecutorService =
         Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("router-config-reload"));
+      LOG.info("Starting CConfiguration-reload thread with period of {} minutes", cConfReloadIntervalMinutes);
       scheduledExecutorService.scheduleAtFixedRate(
         () -> {
           cConf.reloadConfiguration();
@@ -281,6 +283,7 @@ public class NettyRouter extends AbstractIdleService {
 
   private void stopConfigReloadThread() {
     if (scheduledExecutorService != null) {
+      LOG.info("Stopping CConfiguration-reload thread");
       scheduledExecutorService.shutdownNow();
     }
   }
