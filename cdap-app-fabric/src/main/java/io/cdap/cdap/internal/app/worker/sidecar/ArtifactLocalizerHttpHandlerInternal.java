@@ -83,7 +83,7 @@ public class ArtifactLocalizerHttpHandlerInternal extends AbstractHttpHandler {
   @GET
   @Path("/usage")
   public void getServiceUsageMetrics(HttpRequest request, HttpResponder responder) {
-    String url = String.format("service:jmx:rmi:///jndi/rmi://%s:%d/jmxrmi", "localhost", 1234);
+    String url = String.format("service:jmx:rmi:///jndi/rmi://%s:%d/jmxrmi", "localhost", 11022);
     try {
       JMXServiceURL serviceUrl = new JMXServiceURL(url);
       JMXConnector jmxConnector = JMXConnectorFactory.connect(serviceUrl, null);

@@ -103,7 +103,7 @@ public class TaskWorkerService extends AbstractIdleService {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
     }
     this.httpService = builder.build();
-    createJmxConnectorServer();
+    //createJmxConnectorServer();
   }
 
   private void createJmxConnectorServer() {

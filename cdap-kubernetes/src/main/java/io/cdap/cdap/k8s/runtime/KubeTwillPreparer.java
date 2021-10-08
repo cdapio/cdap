@@ -1007,6 +1007,15 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
 
     // Set the process memory is through the JAVA_HEAPMAX variable.
     environs.put("JAVA_HEAPMAX", String.format("-Xmx%dm", computeMaxHeapSize(resourceRequirements)));
+    LOG.info("Container name is {}", name);
+    if ("taskworkertwillrunnable".equalsIgnoreCase(name)) {
+      environs.put("OPTS",
+                   "-Dcom.sun.management.jmxremote=true " +
+                     "-Dcom.sun.management.jmxremote.port=11022 " +
+                     "-Dcom.sun.management.jmxremote.ssl=false " +
+                     "-Dcom.sun.management.jmxremote.authenticate=false");
+    }
+
     List<V1EnvVar> containerEnvironments = environs.entrySet().stream()
       .map(e -> new V1EnvVar().name(e.getKey()).value(e.getValue()))
       .collect(Collectors.toList());
