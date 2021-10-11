@@ -17,47 +17,30 @@
 package io.cdap.cdap.support.task.factory;
 
 import com.google.inject.Inject;
-import io.cdap.cdap.client.ApplicationClient;
-import io.cdap.cdap.client.MetricsClient;
-import io.cdap.cdap.client.ProgramClient;
-import io.cdap.cdap.proto.ApplicationRecord;
-import io.cdap.cdap.support.status.SupportBundleStatus;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.support.conf.SupportBundleConfiguration;
 import io.cdap.cdap.support.task.SupportBundlePipelineInfoTask;
 
-import java.util.List;
-
 public class SupportBundlePipelineInfoTaskFactory implements SupportBundleTaskFactory {
-  private final ProgramClient programClient;
-  private final ApplicationClient applicationClient;
-  private final MetricsClient metricsClient;
+  private final CConfiguration cConf;
 
   @Inject
-  public SupportBundlePipelineInfoTaskFactory(
-      ProgramClient programClient,
-      ApplicationClient applicationClient,
-      MetricsClient metricsClient) {
-    this.programClient = programClient;
-    this.applicationClient = applicationClient;
-    this.metricsClient = metricsClient;
+  public SupportBundlePipelineInfoTaskFactory(CConfiguration cConf) {
+    this.cConf = cConf;
   }
 
   public SupportBundlePipelineInfoTask create(
-      SupportBundleStatus supportBundleStatus,
-      String namespaceId,
-      String basePath,
-      String systemLogPath,
-      int numOfRunNeeded,
-      String workflowName,
-      List<ApplicationRecord> applicationRecordList) {
+      SupportBundleConfiguration supportBundleConfiguration) {
     return new SupportBundlePipelineInfoTask(
-        supportBundleStatus,
-        namespaceId,
-        basePath,
-        applicationClient,
-        programClient,
-        numOfRunNeeded,
-        workflowName,
-        metricsClient,
-        applicationRecordList);
+        supportBundleConfiguration.getSupportBundleStatus(),
+        supportBundleConfiguration.getNamespaceId(),
+        supportBundleConfiguration.getBasePath(),
+        supportBundleConfiguration.getApplicationClient(),
+        supportBundleConfiguration.getProgramClient(),
+        supportBundleConfiguration.getNumOfRunLogNeeded(),
+        supportBundleConfiguration.getWorkflowName(),
+        supportBundleConfiguration.getMetricsClient(),
+        supportBundleConfiguration.getApplicationRecordList(),
+        cConf);
   }
 }

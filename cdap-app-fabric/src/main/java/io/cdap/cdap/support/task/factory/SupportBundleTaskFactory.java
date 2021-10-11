@@ -16,19 +16,9 @@
 
 package io.cdap.cdap.support.task.factory;
 
-import io.cdap.cdap.proto.ApplicationRecord;
-import io.cdap.cdap.support.status.SupportBundleStatus;
+import io.cdap.cdap.support.conf.SupportBundleConfiguration;
 import io.cdap.cdap.support.task.SupportBundleTask;
 
-import java.util.List;
-
 public interface SupportBundleTaskFactory {
-  SupportBundleTask create(
-      SupportBundleStatus supportBundleStatus,
-      String namespaceId,
-      String basePath,
-      String systemLogPath,
-      int numOfRunNeeded,
-      String workflowName,
-      List<ApplicationRecord> applicationRecordList);
+  SupportBundleTask create(SupportBundleConfiguration supportBundleConfiguration);
 }

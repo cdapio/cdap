@@ -17,30 +17,24 @@
 package io.cdap.cdap.support.task.factory;
 
 import com.google.inject.Inject;
-import io.cdap.cdap.client.ProgramClient;
-import io.cdap.cdap.proto.ApplicationRecord;
-import io.cdap.cdap.support.status.SupportBundleStatus;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.support.conf.SupportBundleConfiguration;
 import io.cdap.cdap.support.task.SupportBundleSystemLogTask;
 
-import java.util.List;
-
 public class SupportBundleSystemLogTaskFactory implements SupportBundleTaskFactory {
-  private final ProgramClient programClient;
+  private final CConfiguration cConf;
 
   @Inject
-  public SupportBundleSystemLogTaskFactory(ProgramClient programClient) {
-    this.programClient = programClient;
+  public SupportBundleSystemLogTaskFactory(CConfiguration cConf) {
+    this.cConf = cConf;
   }
 
-  public SupportBundleSystemLogTask create(
-      SupportBundleStatus supportBundleStatus,
-      String namespaceId,
-      String basePath,
-      String systemLogPath,
-      int numOfRunNeeded,
-      String workflowName,
-      List<ApplicationRecord> applicationRecordList) {
+  public SupportBundleSystemLogTask create(SupportBundleConfiguration supportBundleConfiguration) {
     return new SupportBundleSystemLogTask(
-        supportBundleStatus, basePath, systemLogPath, programClient);
+        supportBundleConfiguration.getSupportBundleStatus(),
+        supportBundleConfiguration.getBasePath(),
+        supportBundleConfiguration.getSystemLogPath(),
+        supportBundleConfiguration.getProgramClient(),
+        cConf);
   }
 }

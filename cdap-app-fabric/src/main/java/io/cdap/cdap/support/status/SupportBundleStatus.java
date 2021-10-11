@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.support.status;
 
-import com.google.gson.JsonArray;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.ArrayList;
@@ -27,8 +26,7 @@ public class SupportBundleStatus {
   @SerializedName("bundle-id")
   private String bundleId;
   // status of bundle collection (IN_PROGRESS/FINISHED/FAILED)
-  @SerializedName("status")
-  private String status;
+  private TaskStatus status;
   // Failed bundle describes the failure
   @SerializedName("status-details")
   private String statusDetails;
@@ -39,17 +37,15 @@ public class SupportBundleStatus {
   @SerializedName("finish-timestamp")
   private Long finishTimestamp;
   // any parameters passed to start collection
-  @SerializedName("parameters")
-  private JsonArray parameters;
+  private SupportBundleCreationQueryParameters parameters;
   // Array of top-level tasks for the bundle, see task structure below
-  @SerializedName("tasks")
   private List<SupportBundleStatusTask> tasks = new ArrayList<>();
 
-  public String getStatus() {
+  public TaskStatus getStatus() {
     return status;
   }
 
-  public void setStatus(String status) {
+  public void setStatus(TaskStatus status) {
     this.status = status;
   }
 
@@ -77,11 +73,11 @@ public class SupportBundleStatus {
     this.finishTimestamp = finishTimestamp;
   }
 
-  public JsonArray getParameters() {
+  public SupportBundleCreationQueryParameters getParameters() {
     return parameters;
   }
 
-  public void setParameters(JsonArray parameters) {
+  public void setParameters(SupportBundleCreationQueryParameters parameters) {
     this.parameters = parameters;
   }
 

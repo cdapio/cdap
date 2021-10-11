@@ -18,12 +18,12 @@ package io.cdap.cdap.support.handlers;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import io.cdap.cdap.support.conf.SupportBundleConfiguration;
 import io.cdap.cdap.support.services.SupportBundleService;
 import io.cdap.http.HttpResponder;
-import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,13 +37,15 @@ import javax.ws.rs.QueryParam;
 @Path(Constants.Gateway.API_VERSION_3)
 public class SupportBundleHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(SupportBundleHttpHandler.class);
-  private final CConfiguration cConf;
   private final SupportBundleService supportBundleService;
+  private final SupportBundleConfiguration supportBundleConfiguration;
 
   @Inject
-  SupportBundleHttpHandler(CConfiguration cConf, SupportBundleService supportBundleService) {
-    this.cConf = cConf;
+  SupportBundleHttpHandler(
+      SupportBundleService supportBundleService,
+      SupportBundleConfiguration supportBundleConfiguration) {
     this.supportBundleService = supportBundleService;
+    this.supportBundleConfiguration = supportBundleConfiguration;
   }
 
   /**
@@ -58,7 +60,6 @@ public class SupportBundleHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/support/bundle")
   public void createSupportBundle(
-      HttpRequest request,
       HttpResponder responder,
       @Nullable @QueryParam("namespace-id") String namespaceId,
       @Nullable @QueryParam("app-id") String appId,
@@ -66,12 +67,12 @@ public class SupportBundleHttpHandler extends AbstractAppFabricHttpHandler {
       @Nullable @QueryParam("run-id") String runId,
       @Nullable @QueryParam("num-run-log") Integer numOfRunLog) {
     // Generate a universal unique id for each bundle and return to the front end right away
-    supportBundleService.generateSupportBundle(
-        responder,
-        namespaceId,
-        appId,
-        runId,
-        workflowName == null ? "DataPipelineWorkflow" : workflowName,
-        numOfRunLog == null ? 1 : numOfRunLog);
+    supportBundleConfiguration.setNamespaceId(namespaceId);
+    supportBundleConfiguration.setWorkflowName(workflowName);
+    supportBundleConfiguration.setNumOfRunLogNeeded(numOfRunLog);
+    supportBundleConfiguration.setNamespaceId(namespaceId);
+    String uuid = supportBundleService.generateSupportBundle(supportBundleConfiguration);
+    responder.sendString(
+        HttpResponseStatus.OK, String.format("Support Bundle %s generated.", uuid));
   }
 }

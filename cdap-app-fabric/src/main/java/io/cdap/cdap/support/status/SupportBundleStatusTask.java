@@ -23,16 +23,12 @@ import java.util.List;
 
 public class SupportBundleStatusTask {
   // unique task name, also defines directory task stores resulting files in
-  @SerializedName("name")
   private String name;
   // task class name
-  @SerializedName("type")
   private String type;
   // status for task (QUEUED/IN_PROGRESS/FINISHED/FAILED)
-  @SerializedName("status")
-  private String status;
+  private TaskStatus status;
   // if task was retried, number of retries, otherwise 0
-  @SerializedName("retries")
   private int retries = 0;
   // array of subtasks (if any)
   @SerializedName("sub-tasks")
@@ -61,11 +57,11 @@ public class SupportBundleStatusTask {
     this.type = type;
   }
 
-  public String getStatus() {
+  public TaskStatus getStatus() {
     return status;
   }
 
-  public void setStatus(String status) {
+  public void setStatus(TaskStatus status) {
     this.status = status;
   }
 

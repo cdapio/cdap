@@ -14,19 +14,11 @@
  * the License.
  */
 
-package io.cdap.cdap.support.task;
+package io.cdap.cdap.support.status;
 
-import io.cdap.cdap.support.status.SupportBundleStatusTask;
-import io.cdap.cdap.support.status.TaskStatus;
-
-/** Establishes an interface for support bundle task */
-public interface SupportBundleTask {
-  /** Collect Log or pipeline info */
-  SupportBundleStatusTask initializeCollection() throws Exception;
-
-  SupportBundleStatusTask initializeTask(String name, String type);
-
-  void updateTask(SupportBundleStatusTask task, String basePath, TaskStatus status);
-
-  void addToStatus(String basePath);
+public enum TaskStatus {
+  IN_PROGRESS,
+  FINISHED,
+  FAILED,
+  QUEUED
 }

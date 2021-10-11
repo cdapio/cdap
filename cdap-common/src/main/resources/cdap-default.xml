@@ -4620,4 +4620,12 @@
       Number of folder allows for each bundle generated.
     </description>
   </property>
+
+  <property>
+    <name>support.bundle.max.retry.times</name>
+    <value>3</value>
+    <description>
+      Number of retries allows for each bundle task processes.
+    </description>
+  </property>
 </configuration>

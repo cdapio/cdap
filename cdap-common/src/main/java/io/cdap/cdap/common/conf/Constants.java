@@ -1781,5 +1781,6 @@ public final class Constants {
 
   public static final class SupportBundle {
     public static final String MAX_FOLDER_SIZE = "support.bundle.max.folder.size";
+    public static final String MAX_RETRY_TIMES = "support.bundle.max.retry.times";
   }
 }

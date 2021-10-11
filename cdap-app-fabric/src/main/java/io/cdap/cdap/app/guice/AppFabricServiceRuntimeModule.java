@@ -126,7 +126,6 @@ import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
 import io.cdap.cdap.security.store.SecureStoreHandler;
 import io.cdap.cdap.support.handlers.SupportBundleHttpHandler;
-import io.cdap.cdap.support.module.SupportBundleModule;
 import io.cdap.http.HttpHandler;
 import org.quartz.SchedulerException;
 import org.quartz.core.JobRunShellFactory;
@@ -319,10 +318,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         new FactoryModuleBuilder()
           .implement(Configurator.class, RemoteConfigurator.class)
           .build(Key.get(ConfiguratorFactory.class, Names.named("remote")))
-      );
-
-      install(
-        new SupportBundleModule()
       );
 
       bind(ConfiguratorFactory.class).toProvider(ConfiguratorFactoryProvider.class);

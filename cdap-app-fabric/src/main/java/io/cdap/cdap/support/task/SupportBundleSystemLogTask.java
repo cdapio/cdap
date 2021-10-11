@@ -21,9 +21,11 @@ import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import io.cdap.cdap.client.ProgramClient;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.support.status.SupportBundleStatus;
 import io.cdap.cdap.support.status.SupportBundleStatusTask;
+import io.cdap.cdap.support.status.TaskStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,8 +33,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 
 public class SupportBundleSystemLogTask implements SupportBundleTask {
@@ -43,21 +45,23 @@ public class SupportBundleSystemLogTask implements SupportBundleTask {
   private final ProgramClient programClient;
   private final SupportBundleStatus supportBundleStatus;
   private final List<String> serviceList;
-  private final ArrayBlockingQueue<String> queue;
+  private final ConcurrentLinkedQueue<String> queue;
   private final ConcurrentHashMap<String, Integer> retryServiceMap;
+  private final int maxRetryTimes;
 
   @Inject
   public SupportBundleSystemLogTask(
       @Assisted SupportBundleStatus supportBundleStatus,
       @Assisted String basePath,
       @Assisted String systemLogPath,
-      ProgramClient programClient) {
-    int queueSize = 22;
+      @Assisted ProgramClient programClient,
+      CConfiguration cConf) {
     this.supportBundleStatus = supportBundleStatus;
     this.basePath = basePath;
     this.systemLogPath = systemLogPath;
     this.programClient = programClient;
     this.retryServiceMap = new ConcurrentHashMap<>();
+    this.maxRetryTimes = cConf.getInt(Constants.SupportBundle.MAX_RETRY_TIMES);
     this.serviceList =
         Arrays.asList(
             Constants.Service.APP_FABRIC_HTTP,
@@ -71,7 +75,7 @@ public class SupportBundleSystemLogTask implements SupportBundleTask {
             Constants.Service.RUNTIME,
             Constants.Service.TRANSACTION,
             "pipeline");
-    this.queue = new ArrayBlockingQueue<>(queueSize);
+    this.queue = new ConcurrentLinkedQueue<>();
     for (String serviceId : serviceList) {
       queue.offer(serviceId);
     }
@@ -83,46 +87,37 @@ public class SupportBundleSystemLogTask implements SupportBundleTask {
     SupportBundleStatusTask task = null;
     String serviceId = null;
     while (!queue.isEmpty()) {
-      try {
-        serviceId = queue.take();
-        task = initializeTask("systemlog-" + serviceId, "SystemLogSupportBundleTask");
-        updateTask(task, basePath, "IN_PROGRESS");
-        long currentTimeMillis = System.currentTimeMillis();
-        long fromMillis = currentTimeMillis - TimeUnit.DAYS.toMillis(1);
-        FileWriter file = new FileWriter(new File(systemLogPath, serviceId + "-system-log.txt"));
-        String systemLog =
-            programClient.getProgramSystemLog(
-                componentId, serviceId, fromMillis / 1000, currentTimeMillis / 1000);
-        file.write(systemLog);
-        file.flush();
-        retryServiceMap.remove(serviceId);
-      } catch (Exception e) {
-        LOG.warn("Can not generate system log file ", e);
-        queueTaskAfterFailed(serviceId, task);
-      }
+      serviceId = queue.poll();
+      task = initializeTask("systemlog-" + serviceId, "SystemLogSupportBundleTask");
+      updateTask(task, basePath, TaskStatus.IN_PROGRESS);
+      long currentTimeMillis = System.currentTimeMillis();
+      long fromMillis = currentTimeMillis - TimeUnit.DAYS.toMillis(1);
+      FileWriter file = new FileWriter(new File(systemLogPath, serviceId + "-system-log.txt"));
+      String systemLog =
+          programClient.getProgramSystemLog(
+              componentId, serviceId, fromMillis / 1000, currentTimeMillis / 1000);
+      file.write(systemLog);
+      file.flush();
+      retryServiceMap.remove(serviceId);
     }
     return task;
   }
 
   /** Queue the task again after exception */
   private synchronized void queueTaskAfterFailed(String serviceName, SupportBundleStatusTask task) {
-    if (retryServiceMap.getOrDefault(serviceName, 0) >= 3) {
-      updateTask(task, basePath, "FAILED");
+    if (retryServiceMap.getOrDefault(serviceName, 0) >= maxRetryTimes) {
+      updateTask(task, basePath, TaskStatus.FAILED);
     } else {
-      try {
-        queue.put(serviceName);
-      } catch (InterruptedException e) {
-        LOG.warn("failed to queue put ", e);
-      }
+      queue.offer(serviceName);
       retryServiceMap.put(serviceName, retryServiceMap.getOrDefault(serviceName, 0) + 1);
       task.setRetries(retryServiceMap.get(serviceName));
-      updateTask(task, basePath, "QUEUED");
+      updateTask(task, basePath, TaskStatus.QUEUED);
     }
   }
 
   /** Update status task */
   public synchronized void updateTask(
-      SupportBundleStatusTask task, String basePath, String status) {
+      SupportBundleStatusTask task, String basePath, TaskStatus status) {
     try {
       task.setStatus(status);
       addToStatus(basePath);
