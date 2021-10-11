@@ -28,6 +28,7 @@ import com.google.inject.Singleton;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.util.TableId;
+import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBComparator;
 import org.iq80.leveldb.Options;
@@ -54,6 +55,7 @@ public class LevelDBTableService implements AutoCloseable {
 
   private static final Logger LOG = LoggerFactory.getLogger(LevelDBTableService.class);
 
+  private boolean compressionEnabled;
   private int blockSize;
   private long cacheSize;
   private String basePath;
@@ -85,7 +87,7 @@ public class LevelDBTableService implements AutoCloseable {
   public void setConfiguration(CConfiguration config) {
     basePath = config.get(Constants.CFG_DATA_LEVELDB_DIR);
     Preconditions.checkNotNull(basePath, "No base directory configured for LevelDB.");
-
+    compressionEnabled = config.getBoolean(Constants.CFG_DATA_LEVELDB_COMPRESSION_ENABLED);
     blockSize = config.getInt(Constants.CFG_DATA_LEVELDB_BLOCKSIZE, Constants.DEFAULT_DATA_LEVELDB_BLOCKSIZE);
     cacheSize = config.getLong(Constants.CFG_DATA_LEVELDB_CACHESIZE, Constants.DEFAULT_DATA_LEVELDB_CACHESIZE);
     writeOptions = new WriteOptions().sync(
@@ -206,6 +208,7 @@ public class LevelDBTableService implements AutoCloseable {
     options.createIfMissing(false);
     options.errorIfExists(false);
     options.comparator(new KeyValueDBComparator());
+    options.compressionType(compressionEnabled ? CompressionType.SNAPPY : CompressionType.NONE);
     options.blockSize(blockSize);
     options.cacheSize(cacheSize);
 
@@ -229,6 +232,7 @@ public class LevelDBTableService implements AutoCloseable {
     options.createIfMissing(true);
     options.errorIfExists(false);
     options.comparator(new KeyValueDBComparator());
+    options.compressionType(compressionEnabled ? CompressionType.SNAPPY : CompressionType.NONE);
     options.blockSize(blockSize);
     options.cacheSize(cacheSize);
 
