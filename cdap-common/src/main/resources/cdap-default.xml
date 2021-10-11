@@ -802,6 +802,14 @@
   </property>
 
   <property>
+    <name>data.local.storage.compression.enabled</name>
+    <value>true</value>
+    <description>
+      Whether compression is enabled for data fabric when in CDAP Local Sandbox
+    </description>
+  </property>
+
+  <property>
     <name>data.local.storage.blocksize</name>
     <value>1024</value>
     <description>

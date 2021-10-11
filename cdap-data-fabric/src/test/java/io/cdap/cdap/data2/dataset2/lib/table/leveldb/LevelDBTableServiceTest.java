@@ -37,6 +37,8 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
+import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
@@ -86,7 +88,7 @@ public class LevelDBTableServiceTest {
     Assert.assertNotNull(service.getTableStats().get(tableId2));
     long table2Size = service.getTableStats().get(tableId2).getDiskSizeBytes();
 
-    writeSome(table1);
+    writeSome(service, table1, 4096, 1024, true);
     TimeUnit.SECONDS.sleep(1);
 
     long table1SizeUpdated = service.getTableStats().get(tableId1).getDiskSizeBytes();
@@ -94,8 +96,8 @@ public class LevelDBTableServiceTest {
     table1Size = table1SizeUpdated;
     Assert.assertEquals(table2Size, service.getTableStats().get(tableId2).getDiskSizeBytes());
 
-    writeSome(table1);
-    writeSome(table2);
+    writeSome(service, table1, 4096, 1024, true);
+    writeSome(service, table2, 4096, 1024, true);
     TimeUnit.SECONDS.sleep(1);
 
     Assert.assertTrue(service.getTableStats().get(tableId1).getDiskSizeBytes() > table1Size);
@@ -110,14 +112,53 @@ public class LevelDBTableServiceTest {
     Assert.assertEquals(table2Size, service.getTableStats().get(tableId2).getDiskSizeBytes());
   }
 
-  private void writeSome(String tableName) throws IOException {
+  @Test
+  public void testCompression() throws Exception {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
+
+    LevelDBTableService tableService = LevelDBTableService.getInstance();
+
+    // Write compressible data to table with compression disabled, then record on-disk size to be used later to
+    // compare with that with compression enabled.
+    cConf.setBoolean(Constants.CFG_DATA_LEVELDB_COMPRESSION_ENABLED, false);
+    tableService.setConfiguration(cConf);
+    String tableUncompressed = "cdap_default.tableUncompressed";
+    TableId tableUncompressedID = TableId.from("default", "tableUncompressed");
+    tableService.ensureTableExists(tableUncompressed);
+    // Write large enough number of rows to ensure some data are flushed to disk (e.g. > 4MB)
+    writeSome(tableService, tableUncompressed, 32768, 1024, true);
+    long uncompressedDiskSizeBytes = tableService.getTableStats().get(tableUncompressedID).getDiskSizeBytes();
+
+    // Write compressible data to table that enables compression, then record on-disk size, which should be
+    // smaller than that with compressed disabled.
+    cConf.setBoolean(Constants.CFG_DATA_LEVELDB_COMPRESSION_ENABLED, true);
+    tableService.setConfiguration(cConf);
+    String tableCompressed = "cdap_default.tableCompressed";
+    TableId tableCompressedID = TableId.from("default", "tableCompressed");
+    tableService.ensureTableExists(tableCompressed);
+    writeSome(tableService, tableCompressed, 32768, 1024, true);
+    long compressedDiskSizeBytes = tableService.getTableStats().get(tableCompressedID).getDiskSizeBytes();
+
+    // Ensure on-disk file size is smaller when compression is enabled.
+    Assert.assertTrue(uncompressedDiskSizeBytes > compressedDiskSizeBytes);
+  }
+
+  private void writeSome(LevelDBTableService service, String tableName,
+                         long numRows, int valNumBytes, boolean compressible) throws IOException {
     LevelDBTableCore table = new LevelDBTableCore(tableName, service);
     Random r = new Random();
-    byte[] key = new byte[100];
-    byte[] value = new byte[1024 * 1024];
-    for (int i = 0; i < 8; i++) {
-      r.nextBytes(key);
-      r.nextBytes(value);
+    int keyNumBytes = 64;
+    byte[] key = new byte[keyNumBytes];
+    byte[] value = new byte[valNumBytes];
+    for (long i = 0; i < numRows; i++) {
+      if (compressible) {
+        key = BigInteger.valueOf(i).toByteArray();
+        Arrays.fill(value, (byte) 0x8);
+      } else {
+        r.nextBytes(key);
+        r.nextBytes(value);
+      }
       table.put(key, Bytes.toBytes("column" + i), value, 0L);
     }
   }
