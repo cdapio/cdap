@@ -25,6 +25,7 @@ import io.cdap.cdap.master.environment.k8s.KubeMasterEnvironment;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
+import io.cdap.cdap.master.spi.twill.AutoscalerTwillPreparer;
 import io.cdap.cdap.master.spi.twill.Completable;
 import io.cdap.cdap.master.spi.twill.DependentTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecretDisk;
@@ -36,6 +37,7 @@ import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.AppsV1Api;
+import io.kubernetes.client.openapi.apis.AutoscalingV2beta2Api;
 import io.kubernetes.client.openapi.apis.BatchV1Api;
 import io.kubernetes.client.openapi.models.V1Container;
 import io.kubernetes.client.openapi.models.V1ContainerBuilder;
@@ -64,6 +66,11 @@ import io.kubernetes.client.openapi.models.V1StatefulSet;
 import io.kubernetes.client.openapi.models.V1StatefulSetBuilder;
 import io.kubernetes.client.openapi.models.V1Volume;
 import io.kubernetes.client.openapi.models.V1VolumeMount;
+import io.kubernetes.client.openapi.models.V2beta2CrossVersionObjectReference;
+import io.kubernetes.client.openapi.models.V2beta2CrossVersionObjectReferenceBuilder;
+import io.kubernetes.client.openapi.models.V2beta2HorizontalPodAutoscaler;
+import io.kubernetes.client.openapi.models.V2beta2HorizontalPodAutoscalerSpec;
+import io.kubernetes.client.openapi.models.V2beta2HorizontalPodAutoscalerSpecBuilder;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.Configs;
 import org.apache.twill.api.LocalFile;
@@ -133,7 +140,8 @@ import java.util.stream.Stream;
  * main container, and the rest will be treated as sidecar containers.
  * TODO (CDAP-18058): This assumption needs to be changed by using {@link TwillSpecification.PlacementPolicy}.
  */
-class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer, SecureTwillPreparer {
+class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer, SecureTwillPreparer,
+  AutoscalerTwillPreparer {
   private static final Logger LOG = LoggerFactory.getLogger(KubeTwillPreparer.class);
 
   private static final String CPU_MULTIPLIER = "master.environment.k8s.container.cpu.multiplier";
@@ -161,6 +169,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private final Map<String, V1SecurityContext> containerSecurityContexts;
   private final Map<String, Set<String>> readonlyDisks;
   private final Map<String, Map<String, String>> runnableConfigs;
+  private boolean enabledAutoscaler = false;
 
   private String schedulerQueue;
   private String mainRunnableName;
@@ -263,6 +272,12 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     }
 
     statefulRunnables.put(runnableName, new StatefulRunnable(orderedStart, Arrays.asList(disks)));
+    return this;
+  }
+
+  @Override
+  public KubeTwillPreparer withAutoscaler() {
+    enabledAutoscaler = true;
     return this;
   }
 
@@ -670,6 +685,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
 
     deployment = appsApi.createNamespacedDeployment(kubeNamespace, deployment, "true", null, null);
     LOG.info("Created Deployment {} in Kubernetes", metadata.getName());
+
     return deployment.getMetadata();
   }
 
@@ -686,6 +702,39 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
 
     statefulSet = appsApi.createNamespacedStatefulSet(kubeNamespace, statefulSet, "true", null, null);
     LOG.info("Created StatefulSet {} in Kubernetes", metadata.getName());
+
+    LOG.info(">>>>>>> About to enable autoscale");
+    if (enabledAutoscaler) {
+      LOG.info(">>>>>>> Enabling autoscale");
+      AutoscalingV2beta2Api api = new AutoscalingV2beta2Api(apiClient);
+      V2beta2CrossVersionObjectReference reference = new V2beta2CrossVersionObjectReferenceBuilder()
+        .withName(metadata.getName())
+        .withKind("StatefulSet")
+        .withApiVersion("apps/v1")
+        .build();
+
+      V2beta2HorizontalPodAutoscalerSpec spec = new V2beta2HorizontalPodAutoscalerSpecBuilder()
+        .withScaleTargetRef(reference)
+        .withMaxReplicas(20)
+        .withMinReplicas(1).build();
+      V2beta2HorizontalPodAutoscaler body = new V2beta2HorizontalPodAutoscaler();
+//      body.setKind("StatefulSet");
+      body.setMetadata(new V1ObjectMetaBuilder().withName(metadata.getName()).build());
+      body.setSpec(spec);
+      LOG.info(">>>>>>> BODY " + body.toString());
+      try {
+        api.createNamespacedHorizontalPodAutoscaler(
+          "default", body, "true", null, null);
+      } catch (ApiException e) {
+        LOG.error("Exception when calling AutoscalingV1Api#createNamespacedHorizontalPodAutoscaler");
+        LOG.error("Status code: " + e.getCode());
+        LOG.error("Reason: " + e.getResponseBody());
+        LOG.error("Response headers: " + e.getResponseHeaders());
+        LOG.error(e.toString());
+      }
+      LOG.info(">>>>>>> Autoscale enabled " + body.toString());
+    }
+
     return statefulSet.getMetadata();
   }
 

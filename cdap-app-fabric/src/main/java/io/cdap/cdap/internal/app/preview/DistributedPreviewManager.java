@@ -30,6 +30,7 @@ import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
+import io.cdap.cdap.master.spi.twill.AutoscalerTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecretDisk;
 import io.cdap.cdap.master.spi.twill.SecureTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecurityContext;
@@ -179,6 +180,13 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
               .withStatefulRunnable(PreviewRunnerTwillRunnable.class.getSimpleName(), false,
                                     new StatefulDisk("preview-runner-data", diskSize,
                                                      cConf.get(Constants.CFG_LOCAL_DATA_DIR)));
+          }
+
+          LOG.error(">>>>>> About to setting autoscaler");
+          if (twillPreparer instanceof AutoscalerTwillPreparer) {
+            LOG.error(">>>>>> Setting autoscaler");
+            twillPreparer = ((AutoscalerTwillPreparer) twillPreparer)
+              .withAutoscaler();
           }
 
           if (twillPreparer instanceof SecureTwillPreparer) {
