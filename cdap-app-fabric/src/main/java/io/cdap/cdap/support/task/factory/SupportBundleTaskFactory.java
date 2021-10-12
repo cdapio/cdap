@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.support.task.factory;
 
-import io.cdap.cdap.support.conf.SupportBundleConfiguration;
+import io.cdap.cdap.support.SupportBundleState;
 import io.cdap.cdap.support.task.SupportBundleTask;
 
 public interface SupportBundleTaskFactory {
-  SupportBundleTask create(SupportBundleConfiguration supportBundleConfiguration);
+  SupportBundleTask create(SupportBundleState supportBundleState);
 }

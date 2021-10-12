@@ -16,61 +16,49 @@
 
 package io.cdap.cdap.support.status;
 
-import com.google.gson.annotations.SerializedName;
+import javax.annotation.Nullable;
 
-public class SupportBundleCreationQueryParameters {
-  @SerializedName("namespace-id")
-  private String namespaceId;
+/**
+ * Support bundle configuration for gathering post api parameters
+ */
+public class SupportBundleConfiguration {
 
-  @SerializedName("app-id")
-  private String appId;
-
-  @SerializedName("workflow-name")
-  private String workflowName;
-
-  @SerializedName("run-id")
-  private String runId;
+  private final String namespaceId;
+  private final String appId;
+  private final String workflowName;
+  private final String runId;
   // num of run log customer request for each pipeline run
-  @SerializedName("num-run-log")
-  private Integer numOfRunLog;
+  private final int numOfRunLog;
+
+  public SupportBundleConfiguration(@Nullable String namespaceId,
+                                    @Nullable String appId,
+                                    @Nullable String runId,
+                                    @Nullable String workflowName,
+                                    int numOfRunLog) {
+    this.namespaceId = namespaceId;
+    this.appId = appId;
+    this.runId = runId;
+    this.workflowName = workflowName;
+    this.numOfRunLog = numOfRunLog;
+  }
 
   public String getNamespaceId() {
     return namespaceId;
-  }
-
-  public void setNamespaceId(String namespaceId) {
-    this.namespaceId = namespaceId;
   }
 
   public String getAppId() {
     return appId;
   }
 
-  public void setAppId(String appId) {
-    this.appId = appId;
-  }
-
   public String getWorkflowName() {
     return workflowName;
-  }
-
-  public void setWorkflowName(String workflowName) {
-    this.workflowName = workflowName;
   }
 
   public String getRunId() {
     return runId;
   }
 
-  public void setRunId(String runId) {
-    this.runId = runId;
-  }
-
   public Integer getNumOfRunLog() {
     return numOfRunLog;
-  }
-
-  public void setNumOfRunLog(Integer numOfRunLog) {
-    this.numOfRunLog = numOfRunLog;
   }
 }

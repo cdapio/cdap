@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.support.status;
 
-public enum TaskStatus {
+public enum CollectionState {
   IN_PROGRESS,
   FINISHED,
   FAILED,

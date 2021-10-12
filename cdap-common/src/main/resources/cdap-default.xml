@@ -4628,4 +4628,20 @@
       Number of retries allows for each bundle task processes.
     </description>
   </property>
+
+  <property>
+    <name>support.bundle.max.threads</name>
+    <value>5</value>
+    <description>
+      Number of thread allows for support bundle generation.
+    </description>
+  </property>
+
+  <property>
+    <name>support.bundle.max.thread.timeout</name>
+    <value>5</value>
+    <description>
+      Max 5 minutes allows for each thread process.
+    </description>
+  </property>
 </configuration>

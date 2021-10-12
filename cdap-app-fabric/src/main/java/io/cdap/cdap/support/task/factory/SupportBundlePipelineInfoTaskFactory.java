@@ -17,30 +17,43 @@
 package io.cdap.cdap.support.task.factory;
 
 import com.google.inject.Inject;
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.support.conf.SupportBundleConfiguration;
+import io.cdap.cdap.logging.gateway.handlers.RemoteProgramLogsFetcher;
+import io.cdap.cdap.logging.gateway.handlers.RemoteProgramRunRecordsFetcher;
+import io.cdap.cdap.metadata.RemoteApplicationDetailFetcher;
+import io.cdap.cdap.metrics.process.RemoteMetricsSystemClient;
+import io.cdap.cdap.support.SupportBundleState;
 import io.cdap.cdap.support.task.SupportBundlePipelineInfoTask;
 
 public class SupportBundlePipelineInfoTaskFactory implements SupportBundleTaskFactory {
-  private final CConfiguration cConf;
+
+  private final RemoteProgramRunRecordsFetcher remoteProgramRunRecordsFetcher;
+  private final RemoteProgramLogsFetcher remoteProgramLogsFetcher;
+  private final RemoteApplicationDetailFetcher remoteApplicationDetailFetcher;
+  private final RemoteMetricsSystemClient remoteMetricsSystemClient;
 
   @Inject
-  public SupportBundlePipelineInfoTaskFactory(CConfiguration cConf) {
-    this.cConf = cConf;
+  public SupportBundlePipelineInfoTaskFactory(
+      RemoteProgramRunRecordsFetcher remoteProgramRunRecordsFetcher,
+      RemoteProgramLogsFetcher remoteProgramLogsFetcher,
+      RemoteApplicationDetailFetcher remoteApplicationDetailFetcher,
+      RemoteMetricsSystemClient remoteMetricsSystemClient) {
+    this.remoteProgramRunRecordsFetcher = remoteProgramRunRecordsFetcher;
+    this.remoteProgramLogsFetcher = remoteProgramLogsFetcher;
+    this.remoteApplicationDetailFetcher = remoteApplicationDetailFetcher;
+    this.remoteMetricsSystemClient = remoteMetricsSystemClient;
   }
 
-  public SupportBundlePipelineInfoTask create(
-      SupportBundleConfiguration supportBundleConfiguration) {
+  public SupportBundlePipelineInfoTask create(SupportBundleState supportBundleState) {
     return new SupportBundlePipelineInfoTask(
-        supportBundleConfiguration.getSupportBundleStatus(),
-        supportBundleConfiguration.getNamespaceId(),
-        supportBundleConfiguration.getBasePath(),
-        supportBundleConfiguration.getApplicationClient(),
-        supportBundleConfiguration.getProgramClient(),
-        supportBundleConfiguration.getNumOfRunLogNeeded(),
-        supportBundleConfiguration.getWorkflowName(),
-        supportBundleConfiguration.getMetricsClient(),
-        supportBundleConfiguration.getApplicationRecordList(),
-        cConf);
+        supportBundleState.getNamespaceId(),
+        supportBundleState.getBasePath(),
+        remoteApplicationDetailFetcher,
+        remoteProgramRunRecordsFetcher,
+        remoteProgramLogsFetcher,
+        supportBundleState.getNumOfRunLogNeeded(),
+        supportBundleState.getWorkflowName(),
+        remoteMetricsSystemClient,
+        supportBundleState.getApplicationRecordList(),
+        supportBundleState.getSupportBundleJob());
   }
 }

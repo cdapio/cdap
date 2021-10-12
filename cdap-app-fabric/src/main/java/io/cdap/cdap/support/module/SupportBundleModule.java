@@ -21,6 +21,9 @@ import io.cdap.cdap.support.task.factory.SupportBundlePipelineInfoTaskFactory;
 import io.cdap.cdap.support.task.factory.SupportBundleSystemLogTaskFactory;
 import io.cdap.cdap.support.task.factory.SupportBundleTaskFactory;
 
+/**
+ * support bundle module to bind factories
+ */
 public class SupportBundleModule extends AbstractModule {
   public void configure() {
     bind(SupportBundleTaskFactory.class).to(SupportBundleSystemLogTaskFactory.class);

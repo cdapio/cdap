@@ -21,18 +21,21 @@ import com.google.gson.annotations.SerializedName;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SupportBundleStatusTask {
+/**
+ * Each individual task status when generating support bundle
+ */
+public class SupportBundleTaskStatus {
   // unique task name, also defines directory task stores resulting files in
   private String name;
   // task class name
   private String type;
   // status for task (QUEUED/IN_PROGRESS/FINISHED/FAILED)
-  private TaskStatus status;
+  private CollectionState status;
   // if task was retried, number of retries, otherwise 0
   private int retries = 0;
   // array of subtasks (if any)
   @SerializedName("sub-tasks")
-  private List<SupportBundleStatusTask> subTasks = new ArrayList<>();
+  private List<SupportBundleTaskStatus> subTasks = new ArrayList<>();
   // if task was already started, timestamp of the last start
   @SerializedName("start-timestamp")
   private Long startTimestamp;
@@ -57,11 +60,11 @@ public class SupportBundleStatusTask {
     this.type = type;
   }
 
-  public TaskStatus getStatus() {
+  public CollectionState getStatus() {
     return status;
   }
 
-  public void setStatus(TaskStatus status) {
+  public void setStatus(CollectionState status) {
     this.status = status;
   }
 
@@ -73,11 +76,11 @@ public class SupportBundleStatusTask {
     this.retries = retries;
   }
 
-  public List<SupportBundleStatusTask> getSubTasks() {
+  public List<SupportBundleTaskStatus> getSubTasks() {
     return subTasks;
   }
 
-  public void setSubTasks(List<SupportBundleStatusTask> subTasks) {
+  public void setSubTasks(List<SupportBundleTaskStatus> subTasks) {
     this.subTasks = subTasks;
   }
 

@@ -21,12 +21,15 @@ import com.google.gson.annotations.SerializedName;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Status when generating Support bundle
+ */
 public class SupportBundleStatus {
   // UUID of the bundle status object describes
   @SerializedName("bundle-id")
   private String bundleId;
   // status of bundle collection (IN_PROGRESS/FINISHED/FAILED)
-  private TaskStatus status;
+  private CollectionState status;
   // Failed bundle describes the failure
   @SerializedName("status-details")
   private String statusDetails;
@@ -37,15 +40,15 @@ public class SupportBundleStatus {
   @SerializedName("finish-timestamp")
   private Long finishTimestamp;
   // any parameters passed to start collection
-  private SupportBundleCreationQueryParameters parameters;
+  private SupportBundleConfiguration parameters;
   // Array of top-level tasks for the bundle, see task structure below
-  private List<SupportBundleStatusTask> tasks = new ArrayList<>();
+  private List<SupportBundleTaskStatus> tasks = new ArrayList<>();
 
-  public TaskStatus getStatus() {
+  public CollectionState getStatus() {
     return status;
   }
 
-  public void setStatus(TaskStatus status) {
+  public void setStatus(CollectionState status) {
     this.status = status;
   }
 
@@ -73,19 +76,19 @@ public class SupportBundleStatus {
     this.finishTimestamp = finishTimestamp;
   }
 
-  public SupportBundleCreationQueryParameters getParameters() {
+  public SupportBundleConfiguration getParameters() {
     return parameters;
   }
 
-  public void setParameters(SupportBundleCreationQueryParameters parameters) {
+  public void setParameters(SupportBundleConfiguration parameters) {
     this.parameters = parameters;
   }
 
-  public List<SupportBundleStatusTask> getTasks() {
+  public List<SupportBundleTaskStatus> getTasks() {
     return tasks;
   }
 
-  public void setTasks(List<SupportBundleStatusTask> tasks) {
+  public void setTasks(List<SupportBundleTaskStatus> tasks) {
     this.tasks = tasks;
   }
 

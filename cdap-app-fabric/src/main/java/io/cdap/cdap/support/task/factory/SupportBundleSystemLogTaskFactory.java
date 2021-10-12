@@ -17,24 +17,21 @@
 package io.cdap.cdap.support.task.factory;
 
 import com.google.inject.Inject;
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.support.conf.SupportBundleConfiguration;
+import io.cdap.cdap.logging.gateway.handlers.RemoteProgramLogsFetcher;
+import io.cdap.cdap.support.SupportBundleState;
 import io.cdap.cdap.support.task.SupportBundleSystemLogTask;
 
 public class SupportBundleSystemLogTaskFactory implements SupportBundleTaskFactory {
-  private final CConfiguration cConf;
+  private final RemoteProgramLogsFetcher remoteProgramLogsFetcher;
 
   @Inject
-  public SupportBundleSystemLogTaskFactory(CConfiguration cConf) {
-    this.cConf = cConf;
+  public SupportBundleSystemLogTaskFactory(RemoteProgramLogsFetcher remoteProgramLogsFetcher) {
+    this.remoteProgramLogsFetcher = remoteProgramLogsFetcher;
   }
 
-  public SupportBundleSystemLogTask create(SupportBundleConfiguration supportBundleConfiguration) {
+  public SupportBundleSystemLogTask create(SupportBundleState supportBundleState) {
     return new SupportBundleSystemLogTask(
-        supportBundleConfiguration.getSupportBundleStatus(),
-        supportBundleConfiguration.getBasePath(),
-        supportBundleConfiguration.getSystemLogPath(),
-        supportBundleConfiguration.getProgramClient(),
-        cConf);
+      supportBundleState.getSystemLogPath(),
+      remoteProgramLogsFetcher);
   }
 }

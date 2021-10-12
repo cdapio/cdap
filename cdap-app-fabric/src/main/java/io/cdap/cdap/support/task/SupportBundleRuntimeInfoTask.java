@@ -20,15 +20,10 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
-import io.cdap.cdap.client.ProgramClient;
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.logging.gateway.handlers.RemoteProgramRunRecordsFetcher;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.id.ProgramId;
-import io.cdap.cdap.support.status.SupportBundleStatus;
-import io.cdap.cdap.support.status.SupportBundleStatusTask;
-import io.cdap.cdap.support.status.TaskStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,72 +32,46 @@ import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-/** Collects pipeline run info */
+/**
+ * Collects pipeline run info
+ */
 public class SupportBundleRuntimeInfoTask implements SupportBundleTask {
+
   private static final Logger LOG = LoggerFactory.getLogger(SupportBundleRuntimeInfoTask.class);
   private static final Gson gson = new GsonBuilder().create();
-  private final String basePath;
-  private final SupportBundleStatus supportBundleStatus;
-  private final SupportBundleStatusTask subEachPipelineTask;
   private final String namespaceId;
   private final String appId;
-  private final ProgramClient programClient;
+  private final RemoteProgramRunRecordsFetcher remoteProgramRunRecordsFetcher;
   private final String workflow;
   private final int numOfRunNeeded;
-  private final ConcurrentLinkedQueue<Object> queue;
-  private final ConcurrentHashMap<String, Integer> retryServiceMap;
-  private final int maxRetryTimes;
-  private SupportBundleStatusTask subAllRunRecordsTask;
+  private final String appPath;
+  private Map<RunRecord, JsonObject> runMetricsMap;
 
   @Inject
-  public SupportBundleRuntimeInfoTask(
-      String basePath,
-      SupportBundleStatus supportBundleStatus,
-      SupportBundleStatusTask subEachPipelineTask,
-      String namespaceId,
-      String appId,
-      ProgramClient programClient,
-      String workflow,
-      int numOfRunNeeded,
-      CConfiguration cConf) {
-    this.basePath = basePath;
-    this.supportBundleStatus = supportBundleStatus;
-    this.subEachPipelineTask = subEachPipelineTask;
+  public SupportBundleRuntimeInfoTask(String appPath,
+                                      String namespaceId,
+                                      String appId,
+                                      RemoteProgramRunRecordsFetcher remoteProgramRunRecordsFetcher,
+                                      String workflow,
+                                      int numOfRunNeeded) {
     this.namespaceId = namespaceId;
     this.appId = appId;
-    this.programClient = programClient;
+    this.remoteProgramRunRecordsFetcher = remoteProgramRunRecordsFetcher;
     this.workflow = workflow;
     this.numOfRunNeeded = numOfRunNeeded;
-    this.queue = new ConcurrentLinkedQueue<>();
-    this.retryServiceMap = new ConcurrentHashMap<>();
-    this.subAllRunRecordsTask = new SupportBundleStatusTask();
-    this.maxRetryTimes = cConf.getInt(Constants.SupportBundle.MAX_RETRY_TIMES);
+    this.appPath = appPath;
   }
 
-  public SupportBundleStatusTask initializeCollection() {
-    subAllRunRecordsTask =
-        initializeTask(appId + "-run-collection", "SupportBundleRuntimeInfoTask");
-    return subAllRunRecordsTask;
+  public void setRunMetricsMap(Map<RunRecord, JsonObject> runMetricsMap) {
+    this.runMetricsMap = runMetricsMap;
   }
 
-  /** Generates pipeline run info */
-  public void generateRuntimeInfo(
-      String appPath, ConcurrentHashMap<RunRecord, JsonObject> runMetricsMap) {
+  public void initializeCollection() {
     for (RunRecord runRecord : runMetricsMap.keySet()) {
-      queue.offer(runRecord);
-    }
-    while (!queue.isEmpty()) {
-      RunRecord runRecord = (RunRecord) queue.poll();
       String runId = runRecord.getPid();
-      SupportBundleStatusTask subEachRunInfoTask = new SupportBundleStatusTask();
-      subEachRunInfoTask.setName(runId + "-info");
-      subEachRunInfoTask.setType("SupportBundleRuntimeInfoTask");
-      subEachRunInfoTask.setStartTimestamp(System.currentTimeMillis());
-      subAllRunRecordsTask.getSubTasks().add(subEachRunInfoTask);
       try {
         FileWriter file = new FileWriter(new File(appPath, runId + ".json"));
         JsonObject jsonObject = new JsonObject();
@@ -114,72 +83,14 @@ public class SupportBundleRuntimeInfoTask implements SupportBundleTask {
         jsonObject.add("metrics", runMetricsMap.get(runRecord));
         file.write(gson.toJson(jsonObject));
         file.flush();
-        subEachRunInfoTask.setFinishTimestamp(System.currentTimeMillis());
-        updateTask(subEachRunInfoTask, basePath, TaskStatus.FINISHED);
       } catch (Exception e) {
-        queueTaskAfterFailed(runId, subEachRunInfoTask);
+        LOG.warn("Can not write to run info file ", e);
       }
     }
-
-    subAllRunRecordsTask.setFinishTimestamp(System.currentTimeMillis());
-    updateTask(subAllRunRecordsTask, basePath, TaskStatus.FINISHED);
   }
 
   public List<RunRecord> getRunRecords() {
-    String runRecordDetailProcessing = "runRecordDetailProcessing";
-    List<RunRecord> runRecordList = new ArrayList<>();
-    queue.offer(runRecordDetailProcessing);
-    while (!queue.isEmpty()) {
-      queue.poll();
-      updateTask(subAllRunRecordsTask, basePath, TaskStatus.IN_PROGRESS);
-      runRecordList.addAll(sortRunRecords());
-      retryServiceMap.remove(runRecordDetailProcessing);
-    }
-    return runRecordList;
-  }
-
-  /** Queue the task again after exception */
-  private synchronized void queueTaskAfterFailed(String serviceName, SupportBundleStatusTask task) {
-    if (retryServiceMap.getOrDefault(serviceName, 0) >= maxRetryTimes) {
-      updateTask(task, basePath, TaskStatus.FAILED);
-    } else {
-      queue.offer(serviceName);
-      retryServiceMap.put(serviceName, retryServiceMap.getOrDefault(serviceName, 0) + 1);
-      task.setRetries(retryServiceMap.get(serviceName));
-      updateTask(task, basePath, TaskStatus.QUEUED);
-    }
-  }
-
-  /** Update status task */
-  public synchronized void updateTask(
-      SupportBundleStatusTask task, String basePath, TaskStatus status) {
-    try {
-      task.setStatus(status);
-      addToStatus(basePath);
-    } catch (Exception e) {
-      LOG.warn("failed to update the status file ", e);
-    }
-  }
-
-  /** Update status file */
-  public synchronized void addToStatus(String basePath) {
-    try (FileWriter statusFile = new FileWriter(new File(basePath, "status.json"))) {
-      statusFile.write(gson.toJson(supportBundleStatus));
-      statusFile.flush();
-    } catch (Exception e) {
-      LOG.error("Can not update status file ", e);
-    }
-  }
-
-  /** Start a new status task */
-  public SupportBundleStatusTask initializeTask(String name, String type) {
-    SupportBundleStatusTask supportBundleStatusTask = new SupportBundleStatusTask();
-    supportBundleStatusTask.setName(name);
-    supportBundleStatusTask.setType(type);
-    Long startTs = System.currentTimeMillis();
-    supportBundleStatusTask.setStartTimestamp(startTs);
-    subEachPipelineTask.getSubTasks().add(supportBundleStatusTask);
-    return supportBundleStatusTask;
+    return sortRunRecords();
   }
 
   private List<RunRecord> sortRunRecords() {
@@ -188,7 +99,7 @@ public class SupportBundleRuntimeInfoTask implements SupportBundleTask {
       ProgramId programId =
           new ProgramId(namespaceId, appId, ProgramType.valueOfCategoryName("workflows"), workflow);
       List<RunRecord> allRunRecordList =
-          programClient.getAllProgramRuns(programId, 0, Long.MAX_VALUE, 100);
+          remoteProgramRunRecordsFetcher.getProgramRuns(programId, 0, Long.MAX_VALUE, 100);
 
       List<RunRecord> sortedRunRecordList =
           allRunRecordList.stream()

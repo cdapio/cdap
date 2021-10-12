@@ -125,7 +125,7 @@ public class ProgramClient {
                                 program.getType().getCategoryName(), program.getProgram(), action);
     URL url = config.resolveNamespacedURLV3(program.getNamespaceId(), path);
     //Required to add body even if runtimeArgs is null to avoid 411 error for Http POST
-    HttpRequest.Builder request = HttpRequest.post(url).withBody(GSON.toJson(runtimeArgs));;
+    HttpRequest.Builder request = HttpRequest.post(url).withBody(GSON.toJson(runtimeArgs));
     HttpResponse response = restClient.execute(request.build(), config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
