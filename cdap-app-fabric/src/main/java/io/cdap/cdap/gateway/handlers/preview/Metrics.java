@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.gateway.handlers.preview;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,8 +29,7 @@ public class Metrics {
   public Metrics(String value) {
     Item item = new Item();
     item.value = value;
-    //TODO
-    item.timestamp = "";
+    item.timestamp = ZonedDateTime.now().toOffsetDateTime().toString();
     items = new ArrayList<>();
     items.add(item);
   }

@@ -29,6 +29,7 @@ import io.cdap.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
 import io.cdap.cdap.gateway.handlers.CommonHandlers;
 import io.cdap.cdap.gateway.handlers.preview.PreviewHttpHandler;
 import io.cdap.cdap.gateway.handlers.preview.PreviewHttpHandlerInternal;
+import io.cdap.cdap.gateway.handlers.preview.PreviewMetricsHttpHandler;
 import io.cdap.cdap.internal.app.preview.DefaultPreviewManager;
 import io.cdap.cdap.internal.app.preview.DefaultPreviewRequestQueue;
 import io.cdap.cdap.internal.app.preview.DistributedPreviewManager;
@@ -74,6 +75,7 @@ public class PreviewManagerModule extends PrivateModule {
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class);
     handlerBinder.addBinding().to(PreviewHttpHandler.class);
     handlerBinder.addBinding().to(PreviewHttpHandlerInternal.class);
+    handlerBinder.addBinding().to(PreviewMetricsHttpHandler.class);
     CommonHandlers.add(handlerBinder);
 
     bind(PreviewHttpServer.class);
