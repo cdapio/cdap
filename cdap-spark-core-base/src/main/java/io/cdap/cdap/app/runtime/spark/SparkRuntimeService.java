@@ -226,19 +226,23 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       }
 
       if (masterEnv != null) {
-        // Only add cconf, hconf for master environment
+        // Add cconf, hconf, metrics.properties, logback for master environment
         localizeResources.add(new LocalizeResource(saveCConf(cConfCopy, tempDir)));
         Configuration hConf = contextConfig.set(runtimeContext, pluginArchive).getConfiguration();
         localizeResources.add(new LocalizeResource(saveHConf(hConf, tempDir)));
+        File metricsConf = SparkMetricsSink.writeConfig(new File(tempDir, CDAP_METRICS_PROPERTIES));
+        metricsConfPath = metricsConf.getAbsolutePath();
+        localizeResources.add(new LocalizeResource(metricsConf));
+        File logbackJar = ProgramRunners.createLogbackJar(new File(tempDir, "logback.xml.jar"));
+        if (logbackJar != null) {
+          localizeResources.add(new LocalizeResource(logbackJar, true));
+        }
 
         // Localize all the files from user resources
         List<File> files = copyUserResources(context.getLocalizeResources(), tempDir);
         for (File file : files) {
           localizeResources.add(new LocalizeResource(file));
         }
-
-        File metricsConf = SparkMetricsSink.writeConfig(new File(tempDir, CDAP_METRICS_PROPERTIES));
-        metricsConfPath = metricsConf.getAbsolutePath();
       } else if (isLocal) {
         // In local mode, always copy (or link if local) user requested resources
         copyUserResources(context.getLocalizeResources(), tempDir);

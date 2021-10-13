@@ -62,6 +62,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -107,10 +108,13 @@ public class SparkContainerDriverLauncher {
     }
 
     // Copy all the files from config map
-    for (File compressedFile : new File(CONFIGMAP_FILES_BASE_PATH).listFiles()) {
-      if (compressedFile.isFile()) {
-        decompress(compressedFile.getAbsolutePath(), WORKING_DIRECTORY + compressedFile.getName());
+    for (File file : new File(CONFIGMAP_FILES_BASE_PATH).listFiles()) {
+      if (!file.isFile()) {
+        continue;
       }
+      String fileName = file.getName();
+      boolean shouldDecompress = !fileName.endsWith(".jar") && !fileName.endsWith(".zip");
+      copy(file, new File(new File(WORKING_DIRECTORY), file.getName()), shouldDecompress);
     }
     // TODO: CDAP-18525: remove below line once this jira is fixed
     FileUtils.copyDirectory(new File(WORKING_DIRECTORY), new File(SPARK_LOCAL_DIR));
@@ -229,12 +233,13 @@ public class SparkContainerDriverLauncher {
     }
   }
 
-  private static void decompress(String gzipFile, String newFile) throws IOException {
+  private static void copy(File src, File dst, boolean shouldDecompress) throws IOException {
     byte[] buffer = new byte[1024 * 500]; // use 500kb buffer
-    try (GZIPInputStream gis = new GZIPInputStream(new FileInputStream(gzipFile));
-         FileOutputStream fos = new FileOutputStream(newFile)) {
+    FileInputStream srcStream = new FileInputStream(src);
+    try (InputStream is = shouldDecompress ? new GZIPInputStream(srcStream) : srcStream;
+         FileOutputStream fos = new FileOutputStream(dst)) {
       int length;
-      while ((length = gis.read(buffer)) > 0) {
+      while ((length = is.read(buffer)) > 0) {
         fos.write(buffer, 0, length);
       }
     }

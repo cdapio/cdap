@@ -223,9 +223,9 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     addMaster(configs, builder);
     builder.add("--conf").add("spark.app.name=" + spec.getName());
 
+    configs.putAll(generateSubmitConf());
     BiConsumer<String, String> confAdder = (k, v) -> builder.add("--conf").add(k + "=" + v);
     configs.forEach(confAdder);
-    generateSubmitConf().forEach(confAdder);
 
     String archives = Joiner.on(',').join(Iterables.transform(archivesIterable, RESOURCE_TO_PATH));
     String files = Joiner.on(',').join(Iterables.transform(filesIterable, RESOURCE_TO_PATH));

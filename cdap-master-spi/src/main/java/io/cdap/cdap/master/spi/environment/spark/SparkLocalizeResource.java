@@ -24,23 +24,38 @@ import java.net.URI;
  */
 public class SparkLocalizeResource {
   private final URI uri;
+  private final boolean isArchive;
 
   public SparkLocalizeResource(File file) {
-    this(file.toURI());
+    this(file.toURI(), false);
+  }
+
+  public SparkLocalizeResource(File file, boolean isArchive) {
+    this(file.toURI(), isArchive);
   }
 
   public SparkLocalizeResource(URI uri) {
+    this(uri, false);
+  }
+
+  public SparkLocalizeResource(URI uri, boolean isArchive) {
     this.uri = uri;
+    this.isArchive = isArchive;
   }
 
   public URI getURI() {
     return uri;
   }
 
+  public boolean isArchive() {
+    return isArchive;
+  }
+
   @Override
   public String toString() {
     return "SparkLocalizeResource{" +
       "uri=" + uri +
+      ", isArchive=" + isArchive +
       '}';
   }
 }
