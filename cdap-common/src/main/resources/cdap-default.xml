@@ -4577,4 +4577,12 @@
       The status code if request-blocking is enabled.
     </description>
   </property>
+
+  <property>
+    <name>router.block.request.message</name>
+    <value></value>
+    <description>
+      The response body if request-blocking is enabled.
+    </description>
+  </property>
 </configuration>

@@ -48,14 +48,14 @@ public class ConfigBasedRequestBlockingHandler extends ChannelInboundHandlerAdap
   @Override
   public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
     if (!(msg instanceof HttpRequest)
-      || !cConf.getBoolean(Constants.ConfigBasedRequestBlocking.ROUTER_BLOCK_REQUEST_ENABLED)) {
+      || !cConf.getBoolean(Constants.Router.BLOCK_REQUEST_ENABLED)) {
       ctx.fireChannelRead(msg);
       return;
     }
 
     try {
-      int statusCode = cConf.getInt(Constants.ConfigBasedRequestBlocking.CFG_STATUS_CODE);
-      String responseMsg = cConf.get(Constants.ConfigBasedRequestBlocking.CFG_MESSAGE, "");
+      int statusCode = cConf.getInt(Constants.Router.BLOCK_REQUEST_STATUS_CODE);
+      String responseMsg = cConf.get(Constants.Router.BLOCK_REQUEST_MESSAGE, "");
 
       ByteBuf content = Unpooled.copiedBuffer(responseMsg, StandardCharsets.UTF_8);
       HttpResponse response = new DefaultFullHttpResponse(

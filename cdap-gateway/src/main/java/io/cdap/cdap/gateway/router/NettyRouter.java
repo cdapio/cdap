@@ -271,19 +271,18 @@ public class NettyRouter extends AbstractIdleService {
       long cConfReloadIntervalMinutes = cConf.getLong(Constants.Router.CCONF_RELOAD_INTERVAL_MINUTES);
       scheduledExecutorService =
         Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("router-config-reload"));
-      LOG.info("Starting CConfiguration-reload thread with period of {} minutes", cConfReloadIntervalMinutes);
+      LOG.debug("Starting CConfiguration-reload thread with period of {} minutes", cConfReloadIntervalMinutes);
       scheduledExecutorService.scheduleAtFixedRate(
         () -> {
           cConf.reloadConfiguration();
-          LOG.info("CConfiguration reloaded");
-        }, cConfReloadIntervalMinutes,
-        cConfReloadIntervalMinutes, TimeUnit.MINUTES);
+          LOG.trace("CConfiguration reloaded");
+        }, cConfReloadIntervalMinutes, cConfReloadIntervalMinutes, TimeUnit.MINUTES);
     }
   }
 
   private void stopConfigReloadThread() {
     if (scheduledExecutorService != null) {
-      LOG.info("Stopping CConfiguration-reload thread");
+      LOG.debug("Stopping CConfiguration-reload thread");
       scheduledExecutorService.shutdownNow();
     }
   }

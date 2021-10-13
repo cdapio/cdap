@@ -695,7 +695,17 @@ public final class Constants {
     public static final String DONT_ROUTE_SERVICE = "dont-route-to-service";
     public static final String AUDIT_LOGGER_NAME = "http-access";
 
+    /** Interval in minutes at which CDAP Router reloads cconf */
     public static final String CCONF_RELOAD_INTERVAL_MINUTES = "router.cconf.reload.interval.minutes";
+
+    // To block inbound requests through configuration,
+    // Router will start responding to every inbound request with the response (status and message) declared in config
+    /** Property to start/stop blocking requests to the router. Will be blocked if enabled */
+    public static final String BLOCK_REQUEST_ENABLED = "router.block.request.enabled";
+    /** The config name to define the status code for the response */
+    public static final String BLOCK_REQUEST_STATUS_CODE = "router.block.request.status.code";
+    /** The config name to define the response body */
+    public static final String BLOCK_REQUEST_MESSAGE = "router.block.request.message";
   }
 
   /**
@@ -1725,26 +1735,5 @@ public final class Constants {
        */
       public static final String WORKER_SECRET_DISK_PATH = "twill.security.worker.secret.disk.path";
     }
-  }
-
-  /**
-   * To block inbound requests through configuration,
-   * Router will start responding to every inbound request with the response (status and message) declared in config
-   */
-  public static final class ConfigBasedRequestBlocking {
-    /**
-     * Property to start/stop blocking requests to the router. Will be blocked if enabled.
-     */
-    public static final String ROUTER_BLOCK_REQUEST_ENABLED = "router.block.request.enabled";
-
-    /**
-     * The config name to define the status code for the response
-     */
-    public static final String CFG_STATUS_CODE = "router.block.request.status.code";
-
-    /**
-     * The config name to define the response body
-     */
-    public static final String CFG_MESSAGE = "router.block.request.message";
   }
 }

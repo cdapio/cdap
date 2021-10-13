@@ -41,6 +41,9 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URL;
 
+/**
+ * Tests config-based request-blocking
+ */
 public class ConfigBasedRequestBlockingTest {
 
   @ClassRule
@@ -76,30 +79,30 @@ public class ConfigBasedRequestBlockingTest {
   @Test
   public void testStatusCode() throws Exception {
     // Enable request-blocking
-    cConf.setBoolean(Constants.ConfigBasedRequestBlocking.ROUTER_BLOCK_REQUEST_ENABLED, true);
+    cConf.setBoolean(Constants.Router.BLOCK_REQUEST_ENABLED, true);
 
-    testGet(cConf.getInt(Constants.ConfigBasedRequestBlocking.CFG_STATUS_CODE), null, "/get");
+    testGet(cConf.getInt(Constants.Router.BLOCK_REQUEST_STATUS_CODE), null, "/get");
   }
 
   @Test
   public void testResponseBody() throws Exception {
     // Enable request-blocking
-    cConf.setBoolean(Constants.ConfigBasedRequestBlocking.ROUTER_BLOCK_REQUEST_ENABLED, true);
+    cConf.setBoolean(Constants.Router.BLOCK_REQUEST_ENABLED, true);
 
     // When no config is present for message, response should be empty
-    cConf.unset(Constants.ConfigBasedRequestBlocking.CFG_MESSAGE);
-    testGet(cConf.getInt(Constants.ConfigBasedRequestBlocking.CFG_STATUS_CODE), "", "/get");
+    cConf.unset(Constants.Router.BLOCK_REQUEST_MESSAGE);
+    testGet(cConf.getInt(Constants.Router.BLOCK_REQUEST_STATUS_CODE), "", "/get");
 
     // Custom message passed in config
-    cConf.set(Constants.ConfigBasedRequestBlocking.CFG_MESSAGE, "custom message");
-    testGet(cConf.getInt(Constants.ConfigBasedRequestBlocking.CFG_STATUS_CODE),
-            cConf.get(Constants.ConfigBasedRequestBlocking.CFG_MESSAGE), "/get");
+    cConf.set(Constants.Router.BLOCK_REQUEST_MESSAGE, "custom message");
+    testGet(cConf.getInt(Constants.Router.BLOCK_REQUEST_STATUS_CODE),
+            cConf.get(Constants.Router.BLOCK_REQUEST_MESSAGE), "/get");
   }
 
   @Test
   public void testRequestBlockingDisabled() throws Exception {
     // Disable request-blocking
-    cConf.setBoolean(Constants.ConfigBasedRequestBlocking.ROUTER_BLOCK_REQUEST_ENABLED, false);
+    cConf.setBoolean(Constants.Router.BLOCK_REQUEST_ENABLED, false);
 
     testGet(HttpResponseStatus.OK.code(), null, "/get");
   }
@@ -107,7 +110,7 @@ public class ConfigBasedRequestBlockingTest {
   @Test
   public void testRouterStatus() throws Exception {
     // Enable request-blocking
-    cConf.setBoolean(Constants.ConfigBasedRequestBlocking.ROUTER_BLOCK_REQUEST_ENABLED, true);
+    cConf.setBoolean(Constants.Router.BLOCK_REQUEST_ENABLED, true);
 
     testGet(HttpResponseStatus.OK.code(), null, Constants.EndPoints.STATUS);
   }
