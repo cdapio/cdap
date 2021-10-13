@@ -671,6 +671,7 @@ public final class Constants {
      */
     public static final String INTERNAL_API_VERSION_3_TOKEN = "v3Internal";
     public static final String INTERNAL_API_VERSION_3 = "/" + INTERNAL_API_VERSION_3_TOKEN;
+    public static final String INTERNAL_API_K8S_METRICS = "apis/metrics.preview.cdap.io/v1beta1";
   }
 
   /**

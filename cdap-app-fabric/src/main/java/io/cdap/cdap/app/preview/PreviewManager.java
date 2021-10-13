@@ -34,7 +34,6 @@ import javax.annotation.Nullable;
  * Interface used for managing the preview runs.
  */
 public interface PreviewManager {
-
   /**
    * Start the preview of an application config provided as an input in a given namespace.
    * @param namespace the id of the namespace in which preview to be run
@@ -93,4 +92,11 @@ public interface PreviewManager {
    * @return {@code PreviewRequest} if such request is available in the queue
    */
   Optional<PreviewRequest> poll(@Nullable byte[] pollerInfo);
+
+  /**
+   * Get the length of preview queue
+   * @return
+   */
+  int getQueueLength();
 }
+
