@@ -285,6 +285,11 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     return previewInjector.getInstance(PreviewRequestQueue.class).poll(pollerInfo);
   }
 
+  @Override
+  public int getQueueLength() {
+    return 0;
+  }
+
   /**
    * Create injector for the given application id.
    */

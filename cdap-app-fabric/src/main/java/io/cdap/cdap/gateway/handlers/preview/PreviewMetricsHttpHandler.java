@@ -48,6 +48,7 @@ public class PreviewMetricsHttpHandler extends AbstractHttpHandler {
   public PreviewMetricsHttpHandler(PreviewManager previewManager) {
     this.previewManager = previewManager;
   }
+
   @GET
   @Path("/")
   public void getTracers(HttpRequest request, HttpResponder responder) {
@@ -55,7 +56,10 @@ public class PreviewMetricsHttpHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/namespaces/default/services/cdap-a1008e-preview/queueLength")
+  @Path("/namespaces/default/services/cdap-autoscale-preview/qlen")
   public void getQueueLength(FullHttpRequest request, HttpResponder responder) {
+
+    Metrics metrics = new Metrics("2");
+    responder.sendString(HttpResponseStatus.OK, GSON.toJson(metrics));
   }
 }
