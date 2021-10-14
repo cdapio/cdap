@@ -731,7 +731,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
                        .build())
         .build();
       V2beta1HorizontalPodAutoscaler body = new V2beta1HorizontalPodAutoscaler();
-      body.setMetadata(new V1ObjectMetaBuilder().withName(metadata.getName()).build());
+      body.setMetadata(new V1ObjectMetaBuilder().withName("cdap-autoscale-preview").build());
       body.setSpec(spec);
       try {
         api.createNamespacedHorizontalPodAutoscaler(
