@@ -37,7 +37,7 @@ import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.AppsV1Api;
-import io.kubernetes.client.openapi.apis.AutoscalingV2beta1Api;
+import io.kubernetes.client.openapi.apis.AutoscalingV2beta2Api;
 import io.kubernetes.client.openapi.apis.BatchV1Api;
 import io.kubernetes.client.openapi.models.V1Container;
 import io.kubernetes.client.openapi.models.V1ContainerBuilder;
@@ -66,13 +66,18 @@ import io.kubernetes.client.openapi.models.V1StatefulSet;
 import io.kubernetes.client.openapi.models.V1StatefulSetBuilder;
 import io.kubernetes.client.openapi.models.V1Volume;
 import io.kubernetes.client.openapi.models.V1VolumeMount;
-import io.kubernetes.client.openapi.models.V2beta1CrossVersionObjectReference;
-import io.kubernetes.client.openapi.models.V2beta1CrossVersionObjectReferenceBuilder;
-import io.kubernetes.client.openapi.models.V2beta1HorizontalPodAutoscaler;
-import io.kubernetes.client.openapi.models.V2beta1HorizontalPodAutoscalerSpec;
-import io.kubernetes.client.openapi.models.V2beta1HorizontalPodAutoscalerSpecBuilder;
-import io.kubernetes.client.openapi.models.V2beta1MetricSpecBuilder;
-import io.kubernetes.client.openapi.models.V2beta1ObjectMetricSourceBuilder;
+import io.kubernetes.client.openapi.models.V2beta2CrossVersionObjectReference;
+import io.kubernetes.client.openapi.models.V2beta2CrossVersionObjectReferenceBuilder;
+import io.kubernetes.client.openapi.models.V2beta2HPAScalingPolicyBuilder;
+import io.kubernetes.client.openapi.models.V2beta2HPAScalingRulesBuilder;
+import io.kubernetes.client.openapi.models.V2beta2HorizontalPodAutoscaler;
+import io.kubernetes.client.openapi.models.V2beta2HorizontalPodAutoscalerBehaviorBuilder;
+import io.kubernetes.client.openapi.models.V2beta2HorizontalPodAutoscalerSpec;
+import io.kubernetes.client.openapi.models.V2beta2HorizontalPodAutoscalerSpecBuilder;
+import io.kubernetes.client.openapi.models.V2beta2MetricIdentifierBuilder;
+import io.kubernetes.client.openapi.models.V2beta2MetricSpecBuilder;
+import io.kubernetes.client.openapi.models.V2beta2MetricTargetBuilder;
+import io.kubernetes.client.openapi.models.V2beta2ObjectMetricSourceBuilder;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.Configs;
 import org.apache.twill.api.LocalFile;
@@ -708,29 +713,43 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     LOG.info(">>>>>>> About to enable autoscale");
     if (enabledAutoscaler) {
       LOG.info(">>>>>>> Enabling autoscale");
-      AutoscalingV2beta1Api api = new AutoscalingV2beta1Api(apiClient);
-      V2beta1CrossVersionObjectReference reference = new V2beta1CrossVersionObjectReferenceBuilder()
+      AutoscalingV2beta2Api api = new AutoscalingV2beta2Api(apiClient);
+      V2beta2CrossVersionObjectReference reference = new V2beta2CrossVersionObjectReferenceBuilder()
         .withName(metadata.getName())
         .withKind("StatefulSet")
         .withApiVersion("apps/v1")
         .build();
 
-      V2beta1HorizontalPodAutoscalerSpec spec = new V2beta1HorizontalPodAutoscalerSpecBuilder()
+      V2beta2HorizontalPodAutoscalerSpec spec = new V2beta2HorizontalPodAutoscalerSpecBuilder()
         .withScaleTargetRef(reference)
         .withMaxReplicas(20)
         .withMinReplicas(1)
-        .withMetrics(new V2beta1MetricSpecBuilder().withType("Object")
-                       .withObject(new V2beta1ObjectMetricSourceBuilder()
-                                     .withMetricName("qlen")
-                                     .withTargetValue(new Quantity("1"))
-                                     .withTarget(new V2beta1CrossVersionObjectReferenceBuilder()
-                                                   .withKind("Service")
-                                                   .withName("cdap-autoscale-preview")
+        .withMetrics(new V2beta2MetricSpecBuilder()
+                       .withType("Object")
+                       .withObject(new V2beta2ObjectMetricSourceBuilder()
+                                     .withTarget(new V2beta2MetricTargetBuilder()
+                                                   .withValue(new Quantity("1"))
                                                    .build())
+                                     .withMetric(new V2beta2MetricIdentifierBuilder()
+                                                   .withName("qlen")
+                                                   .build())
+                                     .withDescribedObject(new V2beta2CrossVersionObjectReferenceBuilder()
+                                                            .withKind("Service")
+                                                            .withName("cdap-autoscale-preview")
+                                                            .build())
                                      .build())
                        .build())
+        .withBehavior(new V2beta2HorizontalPodAutoscalerBehaviorBuilder()
+                        .withScaleDown(new V2beta2HPAScalingRulesBuilder()
+                                         .withPolicies(new V2beta2HPAScalingPolicyBuilder()
+                                                         .withType("Percent")
+                                                         .withValue(50)
+                                                         .withPeriodSeconds(120)
+                                                         .build())
+                                         .build())
+                        .build())
         .build();
-      V2beta1HorizontalPodAutoscaler body = new V2beta1HorizontalPodAutoscaler();
+      V2beta2HorizontalPodAutoscaler body = new V2beta2HorizontalPodAutoscaler();
       body.setMetadata(new V1ObjectMetaBuilder().withName("cdap-autoscale-preview").build());
       body.setSpec(spec);
       try {
