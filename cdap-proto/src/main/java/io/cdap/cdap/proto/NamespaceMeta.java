@@ -190,6 +190,11 @@ public final class NamespaceMeta {
       return this;
     }
 
+    public Builder setConfig(Map<String, String> configMap) {
+      this.configMap = configMap;
+      return this;
+    }
+
     public NamespaceMeta build() {
       // combine the keytab URI with the version if the version is not 0
       String uri = keytabURIVersion == 0 ? keytabURIWithoutVersion : keytabURIWithoutVersion + "#" + keytabURIVersion;
