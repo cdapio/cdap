@@ -36,8 +36,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Collects pipeline details
@@ -51,71 +53,100 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
   private final RemoteProgramRunRecordsFetcher remoteProgramRunRecordsFetcher;
   private final RemoteProgramLogsFetcher remoteProgramLogsFetcher;
   private final RemoteMetricsSystemClient remoteMetricsSystemClient;
-  private final String namespaceId;
+  private final List<String> namespaceList;
+  private final String uuid;
+  private final String appId;
   private final String workflowName;
   private final int numOfRunNeeded;
-  private final List<ApplicationRecord> apps;
   private final SupportBundleJob supportBundleJob;
 
   @Inject
-  public SupportBundlePipelineInfoTask(@Assisted String namespaceId, @Assisted String basePath,
+  public SupportBundlePipelineInfoTask(@Assisted String uuid,
+                                       @Assisted List<String> namespaceList,
+                                       @Assisted String appId,
+                                       @Assisted String basePath,
                                        RemoteApplicationDetailFetcher remoteApplicationDetailFetcher,
                                        RemoteProgramRunRecordsFetcher remoteProgramRunRecordsFetcher,
                                        RemoteProgramLogsFetcher remoteProgramLogsFetcher,
                                        @Assisted int numOfRunNeeded,
                                        @Assisted String workflowName,
                                        RemoteMetricsSystemClient remoteMetricsSystemClient,
-                                       @Assisted List<ApplicationRecord> apps,
                                        @Assisted SupportBundleJob supportBundleJob) {
+    this.uuid = uuid;
     this.basePath = basePath;
-    this.namespaceId = namespaceId;
+    this.namespaceList = namespaceList;
+    this.appId = appId;
     this.remoteApplicationDetailFetcher = remoteApplicationDetailFetcher;
     this.remoteProgramRunRecordsFetcher = remoteProgramRunRecordsFetcher;
     this.remoteProgramLogsFetcher = remoteProgramLogsFetcher;
     this.numOfRunNeeded = numOfRunNeeded;
     this.workflowName = workflowName;
     this.remoteMetricsSystemClient = remoteMetricsSystemClient;
-    this.apps = apps;
     this.supportBundleJob = supportBundleJob;
   }
 
   public void initializeCollection() {
-    for (ApplicationRecord app : apps) {
-      String appId = app.getName();
-      ApplicationId applicationId = new ApplicationId(namespaceId, appId);
-      File appFolderPath = new File(basePath, app.getName());
-      DirUtils.mkdirs(appFolderPath);
+    for (String namespaceId : namespaceList) {
+      List<ApplicationRecord> apps = new ArrayList<>();
       try {
-        FileWriter file = new FileWriter(new File(appFolderPath, appId + ".json"));
-        ApplicationDetail applicationDetail = remoteApplicationDetailFetcher.get(applicationId);
-        file.write(gson.toJson(applicationDetail));
-        file.flush();
+        if (appId == null) {
+          apps.addAll(
+              remoteApplicationDetailFetcher.list(namespaceId).stream()
+                  .map(applicationDetail -> new ApplicationRecord(applicationDetail))
+                  .collect(Collectors.toList()));
+        } else {
+          apps.add(
+              new ApplicationRecord(
+                  remoteApplicationDetailFetcher.get(new ApplicationId(namespaceId, appId))));
+        }
+
       } catch (Exception e) {
-        LOG.warn("Retried three times for this pipeline info generate ", e);
+        LOG.warn(String.format("Can not process the task with namespace %s ", namespaceId), e);
       }
-      SupportBundleRuntimeInfoTask supportBundleRuntimeInfoTask =
-          new SupportBundleRuntimeInfoTask(
-              appFolderPath.getPath(),
-              namespaceId,
-              appId,
-              remoteProgramRunRecordsFetcher,
-              workflowName,
-              numOfRunNeeded);
-      List<RunRecord> runRecordList = getAllRunRecordDetails(supportBundleRuntimeInfoTask);
-      SupportBundlePipelineRunLogTask supportBundlePipelineRunLogTask =
-          new SupportBundlePipelineRunLogTask(
-              appFolderPath.getPath(),
-              namespaceId,
-              appId,
-              workflowName,
-              remoteProgramLogsFetcher,
-              runRecordList,
-              remoteApplicationDetailFetcher,
-              remoteMetricsSystemClient);
-      Map<RunRecord, JsonObject> runMetricsMap = queryMetrics(supportBundlePipelineRunLogTask);
-      supportBundleRuntimeInfoTask.setRunMetricsMap(runMetricsMap);
-      supportBundleJob.executeTask(supportBundleRuntimeInfoTask, namespaceId, basePath);
-      supportBundleJob.executeTask(supportBundlePipelineRunLogTask, namespaceId, basePath);
+
+      for (ApplicationRecord app : apps) {
+        String appId = app.getName();
+        ApplicationId applicationId = new ApplicationId(namespaceId, appId);
+        File appFolderPath = new File(basePath, app.getName());
+        DirUtils.mkdirs(appFolderPath);
+        try {
+          FileWriter file = new FileWriter(new File(appFolderPath, appId + ".json"));
+          ApplicationDetail applicationDetail = remoteApplicationDetailFetcher.get(applicationId);
+          file.write(gson.toJson(applicationDetail));
+          file.flush();
+        } catch (Exception e) {
+          LOG.warn("Retried three times for this pipeline info generate ", e);
+        }
+        SupportBundleRuntimeInfoTask supportBundleRuntimeInfoTask =
+            new SupportBundleRuntimeInfoTask(
+                appFolderPath.getPath(),
+                namespaceId,
+                appId,
+                remoteProgramRunRecordsFetcher,
+                workflowName,
+                numOfRunNeeded);
+        List<RunRecord> runRecordList = getAllRunRecordDetails(supportBundleRuntimeInfoTask);
+        SupportBundlePipelineRunLogTask supportBundlePipelineRunLogTask =
+            new SupportBundlePipelineRunLogTask(
+                appFolderPath.getPath(),
+                namespaceId,
+                appId,
+                workflowName,
+                remoteProgramLogsFetcher,
+                runRecordList,
+                remoteApplicationDetailFetcher,
+                remoteMetricsSystemClient);
+        Map<RunRecord, JsonObject> runMetricsMap = queryMetrics(supportBundlePipelineRunLogTask);
+        supportBundleRuntimeInfoTask.setRunMetricsMap(runMetricsMap);
+        String runtimeInfoClassName = supportBundleRuntimeInfoTask.getClass().getName();
+        String runtimeInfoTaskName = uuid.concat(": ").concat(runtimeInfoClassName);
+        supportBundleJob.executeTask(supportBundleRuntimeInfoTask, basePath, runtimeInfoClassName,
+                                     runtimeInfoTaskName);
+        String runtimeLogClassName = supportBundlePipelineRunLogTask.getClass().getName();
+        String runtimeLogTaskName = uuid.concat(": ").concat(runtimeInfoClassName);
+        supportBundleJob.executeTask(supportBundlePipelineRunLogTask, basePath, runtimeLogClassName,
+                                     runtimeLogTaskName);
+      }
     }
   }
 

@@ -45,7 +45,9 @@ public class SupportBundlePipelineInfoTaskFactory implements SupportBundleTaskFa
 
   public SupportBundlePipelineInfoTask create(SupportBundleState supportBundleState) {
     return new SupportBundlePipelineInfoTask(
-        supportBundleState.getNamespaceId(),
+        supportBundleState.getUuid(),
+        supportBundleState.getNamespaceList(),
+        supportBundleState.getAppId(),
         supportBundleState.getBasePath(),
         remoteApplicationDetailFetcher,
         remoteProgramRunRecordsFetcher,
@@ -53,7 +55,6 @@ public class SupportBundlePipelineInfoTaskFactory implements SupportBundleTaskFa
         supportBundleState.getNumOfRunLogNeeded(),
         supportBundleState.getWorkflowName(),
         remoteMetricsSystemClient,
-        supportBundleState.getApplicationRecordList(),
         supportBundleState.getSupportBundleJob());
   }
 }

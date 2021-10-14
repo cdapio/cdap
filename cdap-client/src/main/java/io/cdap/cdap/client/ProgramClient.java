@@ -556,59 +556,6 @@ public class ProgramClient {
   }
 
   /**
-   * Gets the run logs of a program.
-   *
-   * @param program the program
-   * @param runId pipeline run id
-   * @param start start time of the time range of desired logs
-   * @param stop end time of the time range of desired logs
-   * @return the logs of the program
-   * @throws IOException if a network error occurred
-   * @throws NotFoundException if the application or program could not be found
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   */
-  public String getProgramRunLogs(ProgramId program, String runId, long start, long stop)
-    throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
-
-    String path = String.format("apps/%s/%s/%s/runs/%s/logs?start=%d&stop=%d",
-                                program.getApplication(), program.getType().getCategoryName(),
-                                program.getProgram(), runId, start, stop);
-    URL url = config.resolveNamespacedURLV3(program.getNamespaceId(), path);
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ProgramNotFoundException(program);
-    }
-
-    return new String(response.getResponseBody(), Charsets.UTF_8);
-  }
-
-  /**
-   * Gets the logs of a program.
-   *
-   * @param componentId component id
-   * @param serviceId service id
-   * @param start start time of the time range of desired logs
-   * @param stop end time of the time range of desired logs
-   * @return the log of the program
-   * @throws IOException if a network error occurred
-   * @throws NotFoundException if the application or program could not be found
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   */
-  public String getProgramSystemLog(String componentId, String serviceId, long start, long stop)
-    throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
-
-    String path = String.format("system/%s/%s/logs?start=%d&stop=%d",
-                                componentId, serviceId, start, stop);
-    URL url = config.resolveURLV3(path);
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(String.format("system log not found with service", serviceId));
-    }
-
-    return new String(response.getResponseBody(), Charsets.UTF_8);
-  }
-
-  /**
    * Gets the runtime args of a program.
    *
    * @param program the program

@@ -4614,6 +4614,14 @@
   </property>
 
   <property>
+    <name>support.bundle.local.data.dir</name>
+    <value>data</value>
+    <description>
+      Data directory for CDAP Support Bundle Local Sandbox
+    </description>
+  </property>
+
+  <property>
     <name>support.bundle.max.folder.size</name>
     <value>7</value>
     <description>

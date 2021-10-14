@@ -24,7 +24,6 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.namespace.RemoteNamespaceQueryClient;
 import io.cdap.cdap.common.utils.DirUtils;
-import io.cdap.cdap.metadata.RemoteApplicationDetailFetcher;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.support.SupportBundleState;
 import io.cdap.cdap.support.job.SupportBundleJob;
@@ -34,9 +33,11 @@ import io.cdap.cdap.support.status.SupportBundleStatus;
 import io.cdap.cdap.support.task.factory.SupportBundlePipelineInfoTaskFactory;
 import io.cdap.cdap.support.task.factory.SupportBundleSystemLogTaskFactory;
 import io.cdap.cdap.support.task.factory.SupportBundleTaskFactory;
+import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -51,7 +52,7 @@ import javax.annotation.Nullable;
 /**
  * Support bundle service to generate base path, uuid and trigger the job to execute tasks
  */
-public class SupportBundleService {
+public class SupportBundleService implements Closeable {
 
   private static final Logger LOG = LoggerFactory.getLogger(SupportBundleService.class);
   private static final Gson GSON = new GsonBuilder().create();
@@ -60,23 +61,22 @@ public class SupportBundleService {
   private final SupportBundleStatus supportBundleStatus;
   private final CConfiguration cConf;
   private final RemoteNamespaceQueryClient namespaceQueryClient;
-  private final RemoteApplicationDetailFetcher remoteApplicationDetailFetcher;
+  private final String localDir;
 
   @Inject
   public SupportBundleService(CConfiguration cConf, SupportBundleStatus supportBundleStatus,
                               SupportBundleSystemLogTaskFactory supportBundleSystemLogTaskFactory,
                               SupportBundlePipelineInfoTaskFactory supportBundlePipelineInfoTaskFactory,
-                              RemoteNamespaceQueryClient namespaceQueryClient,
-                              RemoteApplicationDetailFetcher remoteApplicationDetailFetcher) {
+                              RemoteNamespaceQueryClient namespaceQueryClient) {
     this.cConf = cConf;
     this.supportBundleStatus = supportBundleStatus;
     this.namespaceQueryClient = namespaceQueryClient;
-    this.remoteApplicationDetailFetcher = remoteApplicationDetailFetcher;
     supportBundleTaskFactoryList.add(supportBundleSystemLogTaskFactory);
     supportBundleTaskFactoryList.add(supportBundlePipelineInfoTaskFactory);
-    this.executorService = Executors.newSingleThreadExecutor();
-    String homePath = System.getProperty("user.home") + "/support/bundle";
-    this.cConf.set(Constants.CFG_LOCAL_DATA_SUPPORT_BUNDLE_DIR, homePath);
+    this.executorService = Executors.newFixedThreadPool(
+        cConf.getInt(Constants.SupportBundle.MAX_THREADS),
+        Threads.createDaemonThreadFactory("perform-support-bundle"));
+    this.localDir = this.cConf.get(Constants.CFG_SUPPORT_BUNDLE_LOCAL_DATA_DIR);
   }
 
   /**
@@ -85,13 +85,13 @@ public class SupportBundleService {
   public String generateSupportBundle(SupportBundleConfiguration supportBundleConfiguration) {
     String uuid = UUID.randomUUID().toString();
     int folderMaxNumber = cConf.getInt(Constants.SupportBundle.MAX_FOLDER_SIZE);
-    File basePath = new File(cConf.get(Constants.CFG_LOCAL_DATA_SUPPORT_BUNDLE_DIR), uuid);
+    File basePath = new File(localDir, uuid);
     SupportBundleJob supportBundleJob =
         new SupportBundleJob(
+            executorService,
             cConf,
             supportBundleStatus,
-            supportBundleTaskFactoryList,
-            remoteApplicationDetailFetcher);
+            supportBundleTaskFactoryList);
     String namespaceId = supportBundleConfiguration.getNamespaceId();
     SupportBundleState supportBundleState = new SupportBundleState(supportBundleConfiguration);
     try {
@@ -109,7 +109,7 @@ public class SupportBundleService {
 
       List<String> namespaceList = new ArrayList<>();
       // Puts all the files under the uuid path
-      File baseDirectory = new File(cConf.get(Constants.CFG_LOCAL_DATA_SUPPORT_BUNDLE_DIR));
+      File baseDirectory = new File(localDir);
       int fileCount = 1;
       DirUtils.mkdirs(baseDirectory);
       if (baseDirectory.list() != null && baseDirectory.list().length > 0) {
@@ -130,6 +130,7 @@ public class SupportBundleService {
       } else {
         namespaceList.add(namespaceId);
       }
+      supportBundleState.setUuid(uuid);
       supportBundleState.setBasePath(basePath.getPath());
       supportBundleState.setNamespaceList(namespaceList);
       supportBundleState.setSupportBundleJob(supportBundleJob);
@@ -166,6 +167,10 @@ public class SupportBundleService {
     } catch (IOException e) {
       LOG.warn(String.format("Failed to clean up directory %s", oldFilesDirectory), e);
     }
+  }
+
+  public void close() {
+    this.executorService.shutdown();
   }
 
   /**

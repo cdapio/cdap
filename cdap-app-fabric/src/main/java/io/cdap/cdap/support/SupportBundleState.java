@@ -17,7 +17,6 @@
 package io.cdap.cdap.support;
 
 import com.google.common.collect.ImmutableList;
-import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.support.job.SupportBundleJob;
 import io.cdap.cdap.support.status.SupportBundleConfiguration;
 
@@ -28,6 +27,8 @@ import javax.annotation.Nullable;
  * Support bundle state for handling all assisted parameters inside the task factories
  */
 public class SupportBundleState {
+
+  private String uuid;
   private String namespaceId;
   private String appId;
   private String runId;
@@ -36,7 +37,6 @@ public class SupportBundleState {
   private String systemLogPath;
   private Integer numOfRunLogNeeded;
   private String workflowName;
-  private List<ApplicationRecord> applicationRecordList;
   private List<String> namespaceList;
   private SupportBundleJob supportBundleJob;
 
@@ -45,6 +45,14 @@ public class SupportBundleState {
     this.runId = supportBundleConfiguration.getRunId();
     this.workflowName = supportBundleConfiguration.getWorkflowName();
     this.numOfRunLogNeeded = supportBundleConfiguration.getNumOfRunLog();
+  }
+
+  public String getUuid() {
+    return uuid;
+  }
+
+  public void setUuid(String uuid) {
+    this.uuid = uuid;
   }
 
   public String getNamespaceId() {
@@ -101,14 +109,6 @@ public class SupportBundleState {
 
   public void setWorkflowName(@Nullable String workflowName) {
     this.workflowName = workflowName;
-  }
-
-  public List<ApplicationRecord> getApplicationRecordList() {
-    return applicationRecordList;
-  }
-
-  public void setApplicationRecordList(List<ApplicationRecord> applicationRecordList) {
-    this.applicationRecordList = ImmutableList.copyOf(applicationRecordList);
   }
 
   public List<String> getNamespaceList() {

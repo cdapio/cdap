@@ -23,9 +23,6 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.SupportBundle;
 import io.cdap.cdap.common.utils.DirUtils;
-import io.cdap.cdap.metadata.RemoteApplicationDetailFetcher;
-import io.cdap.cdap.proto.ApplicationRecord;
-import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.support.SupportBundleState;
 import io.cdap.cdap.support.status.CollectionState;
 import io.cdap.cdap.support.status.SupportBundleStatus;
@@ -40,13 +37,9 @@ import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -63,36 +56,21 @@ public class SupportBundleJob {
   private final List<Future> futureList;
   private final List<SupportBundleTaskFactory> supportBundleTaskFactoryList;
   private final List<SupportBundleTask> supportBundleTaskList;
-  private final RemoteApplicationDetailFetcher remoteApplicationDetailFetcher;
-  private final Queue<String> queue;
   private final int maxRetryTimes;
-  private final Map<String, Integer> retryServiceMap;
   private final Map<Future, Long> trackTimeMap;
   private final Map<Future, SupportBundleTaskStatus> futureSupportBundleTaskMap;
   private final int maxThreadTimeout;
 
   @Inject
-  public SupportBundleJob(CConfiguration cConf, SupportBundleStatus supportBundleStatus,
-                          List<SupportBundleTaskFactory> supportBundleTaskFactoryList,
-                          RemoteApplicationDetailFetcher remoteApplicationDetailFetcher) {
+  public SupportBundleJob(ExecutorService executor, CConfiguration cConf,
+                          SupportBundleStatus supportBundleStatus,
+                          List<SupportBundleTaskFactory> supportBundleTaskFactoryList) {
     this.supportBundleStatus = supportBundleStatus;
     this.futureList = new ArrayList<>();
     this.supportBundleTaskFactoryList = supportBundleTaskFactoryList;
     this.supportBundleTaskList = new ArrayList<>();
-    this.remoteApplicationDetailFetcher = remoteApplicationDetailFetcher;
-    this.executor =
-        Executors.newFixedThreadPool(
-            cConf.getInt(Constants.SupportBundle.MAX_THREADS),
-            new ThreadFactory() {
-              public Thread newThread(Runnable r) {
-                Thread t = Executors.defaultThreadFactory().newThread(r);
-                t.setDaemon(true);
-                return t;
-              }
-            });
-    this.queue = new ConcurrentLinkedQueue<>();
+    this.executor = executor;
     this.maxRetryTimes = cConf.getInt(Constants.SupportBundle.MAX_RETRY_TIMES);
-    this.retryServiceMap = new ConcurrentHashMap<>();
     this.trackTimeMap = new ConcurrentHashMap<>();
     this.futureSupportBundleTaskMap = new ConcurrentHashMap<>();
     this.maxThreadTimeout = cConf.getInt(SupportBundle.MAX_THREAD_TIMEOUT);
@@ -102,47 +80,33 @@ public class SupportBundleJob {
    * parallel processing tasks and generate support bundle
    */
   public void generateBundle(SupportBundleState supportBundleState) {
-    List<String> namespaceList = supportBundleState.getNamespaceList();
-    String appId = supportBundleState.getAppId();
     String basePath = supportBundleState.getBasePath();
     File systemLogPath = new File(basePath, "system-log");
     DirUtils.mkdirs(systemLogPath);
     supportBundleState.setSystemLogPath(systemLogPath.getPath());
-    for (String namespaceId : namespaceList) {
-      try {
-        List<ApplicationRecord> apps = new ArrayList<>();
-        if (appId == null) {
-          apps.addAll(
-              remoteApplicationDetailFetcher.list(namespaceId).stream()
-                  .map(applicationDetail -> new ApplicationRecord(applicationDetail))
-                  .collect(Collectors.toList()));
-        } else {
-          apps.add(
-              new ApplicationRecord(
-                  remoteApplicationDetailFetcher.get(new ApplicationId(namespaceId, appId))));
-        }
-        supportBundleState.setNamespaceId(namespaceId);
-        supportBundleState.setApplicationRecordList(apps);
-        // Generates system log for user request
-        supportBundleTaskList.addAll(
-            supportBundleTaskFactoryList.stream()
-                .map(factory -> factory.create(supportBundleState))
-                .collect(Collectors.toList()));
-        for (SupportBundleTask supportBundleTask : supportBundleTaskList) {
-          executeTask(supportBundleTask, namespaceId, basePath);
-        }
-      } catch (Exception e) {
-        LOG.warn(String.format("Can not process the task with namespace %s ", namespaceId), e);
-      }
+    supportBundleTaskList.addAll(
+        supportBundleTaskFactoryList.stream()
+            .map(factory -> factory.create(supportBundleState))
+            .collect(Collectors.toList()));
+    for (SupportBundleTask supportBundleTask : supportBundleTaskList) {
+      String className = supportBundleTask.getClass().getName();
+      String taskName = supportBundleState.getUuid().concat(": ").concat(className);
+      executeTask(supportBundleTask, basePath, className, taskName);
     }
     completeProcessing(futureList, basePath);
+  }
+
+  public void executeTask(
+      SupportBundleTask supportBundleTask, String basePath, String className, String taskName) {
+    executeTask(supportBundleTask, basePath, className, taskName, 0);
   }
 
   /**
    * Execute each task to generate support bundle files
    */
-  public void executeTask(
-      SupportBundleTask supportBundleTask, String namespaceId, String basePath) {
+  private void executeTask(
+      SupportBundleTask supportBundleTask, String basePath, String className, String taskName,
+      int retryCounts) {
     for (Future future : trackTimeMap.keySet()) {
       Long currentTime = System.currentTimeMillis();
       if (currentTime - trackTimeMap.get(future) > TimeUnit.MINUTES.toMillis(maxThreadTimeout)) {
@@ -157,33 +121,27 @@ public class SupportBundleJob {
         futureSupportBundleTaskMap.remove(future);
       }
     }
-    String className = supportBundleTask.getClass().getName();
-    String taskName = className.concat(": ").concat(namespaceId);
-    queue.offer(taskName);
-    while (!queue.isEmpty()) {
-      queue.poll();
-      SupportBundleTaskStatus taskStatus = initializeTask(taskName, className);
-      Future<SupportBundleTaskStatus> futureService =
-          executor.submit(
-              () -> {
-                try {
-                  updateTask(taskStatus, basePath, CollectionState.IN_PROGRESS);
-                  supportBundleTask.initializeCollection();
-                  retryServiceMap.remove(taskName);
-                  updateTask(taskStatus, basePath, CollectionState.FINISHED);
-                } catch (Exception e) {
-                  LOG.warn(
-                      String.format("Retried three times for this supportBundleTask %s ", taskName),
-                      e);
-                  queueTaskAfterFailed(taskName, taskStatus, basePath);
-                }
-                return taskStatus;
-              });
-      Long startTs = System.currentTimeMillis();
-      trackTimeMap.put(futureService, startTs);
-      futureSupportBundleTaskMap.put(futureService, taskStatus);
-      futureList.add(futureService);
-    }
+    SupportBundleTaskStatus taskStatus = initializeTask(taskName, className);
+    Long startTs = System.currentTimeMillis();
+    Future<SupportBundleTaskStatus> futureService =
+        executor.submit(
+            () -> {
+              try {
+                updateTask(taskStatus, basePath, CollectionState.IN_PROGRESS);
+                supportBundleTask.initializeCollection();
+                updateTask(taskStatus, basePath, CollectionState.FINISHED);
+              } catch (Exception e) {
+                LOG.warn(
+                    String.format("Retried three times for this supportBundleTask %s ", taskName),
+                    e);
+                executeTaskAgainAfterFailed(supportBundleTask, className, taskName,
+                                            taskStatus, basePath, retryCounts + 1);
+              }
+              return taskStatus;
+            });
+    trackTimeMap.put(futureService, startTs);
+    futureSupportBundleTaskMap.put(futureService, taskStatus);
+    futureList.add(futureService);
   }
 
   /**
@@ -203,6 +161,7 @@ public class SupportBundleJob {
         updateTask(supportBundleTaskStatus, basePath, CollectionState.FINISHED);
       } catch (Exception e) {
         LOG.warn(String.format("The task for has failed or timeout more than five minutes "), e);
+        future.cancel(true);
         if (supportBundleTaskStatus != null) {
           supportBundleTaskStatus.setFinishTimestamp(System.currentTimeMillis());
           updateTask(supportBundleTaskStatus, basePath, CollectionState.FAILED);
@@ -258,14 +217,15 @@ public class SupportBundleJob {
   /**
    * Queue the task again after exception
    */
-  private void queueTaskAfterFailed(
-      String taskName, SupportBundleTaskStatus taskStatus, String basePath) {
-    if (retryServiceMap.getOrDefault(taskName, 0) >= maxRetryTimes) {
+  private void executeTaskAgainAfterFailed(SupportBundleTask supportBundleTask, String className,
+                                           String taskName,
+                                           SupportBundleTaskStatus taskStatus,
+                                           String basePath, int retryCounts) {
+    if (retryCounts >= maxRetryTimes) {
       updateTask(taskStatus, basePath, CollectionState.FAILED);
     } else {
-      queue.offer(taskName);
-      retryServiceMap.put(taskName, retryServiceMap.getOrDefault(taskName, 0) + 1);
-      taskStatus.setRetries(retryServiceMap.get(taskName));
+      executeTask(supportBundleTask, basePath, className, taskName, retryCounts);
+      taskStatus.setRetries(retryCounts);
       updateTask(taskStatus, basePath, CollectionState.QUEUED);
     }
   }
