@@ -18,6 +18,9 @@ jobs:
   deploy:
     runs-on: k8s-runner-build
     steps:
+    - id: gcloud
+      uses: google-github-actions/setup-gcloud@master
+
     - name: Extract branch name
       shell: bash
       run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
