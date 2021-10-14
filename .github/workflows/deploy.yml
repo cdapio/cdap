@@ -16,7 +16,7 @@ on: [push, workflow_dispatch]
 
 jobs:
   deploy:
-    runs-on: k8s-runner-build
+    runs-on: k8s-runner-cloudbuild
     steps:
     - id: gcloud
       uses: google-github-actions/setup-gcloud@master
