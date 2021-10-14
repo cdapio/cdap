@@ -3116,7 +3116,7 @@
 
   <property>
     <name>preview.bind.port</name>
-    <value>0</value>
+    <value>11030</value>
     <description>
       The port to bind the preview service to.
     </description>

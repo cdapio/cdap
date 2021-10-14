@@ -93,4 +93,10 @@ public interface PreviewManager {
    * @return {@code PreviewRequest} if such request is available in the queue
    */
   Optional<PreviewRequest> poll(@Nullable byte[] pollerInfo);
+
+  /**
+   * Get the length of preview queue
+   * @return
+   */
+  int getQueueLength();
 }

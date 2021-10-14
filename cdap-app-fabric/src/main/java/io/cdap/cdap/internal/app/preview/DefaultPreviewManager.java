@@ -196,6 +196,14 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   }
 
   @Override
+  public int getQueueLength() {
+    if (previewRequestQueue == null || previewRequestQueue.getState() == null) {
+      return 0;
+    }
+    return previewRequestQueue.getState().getNumOfPreviewWaiting();
+  }
+
+  @Override
   protected void shutDown() throws Exception {
     stopQuietly(previewDataCleanupService);
     stopQuietly(dataSubscriberService);
