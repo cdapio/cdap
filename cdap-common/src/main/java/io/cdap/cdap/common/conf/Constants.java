@@ -141,6 +141,7 @@ public final class Constants {
     public static final String PREVIEW_HTTP = "preview";
     public static final String SECURE_STORE_SERVICE = "secure.store.service";
     public static final String LOG_BUFFER_SERVICE = "log.buffer.service";
+    public static final String REMOTE_AGENT_SERVICE = "remote.agent.service";
   }
 
   /**
@@ -1786,5 +1787,21 @@ public final class Constants {
     public static final String TASK_FACTORY = "support.bundle.task.factory";
     public static final String MAX_RETRY_TIMES = "support.bundle.max.retry.times";
     public static final String MAX_THREAD_TIMEOUT = "support.bundle.max.thread.timeout";
+  }
+
+  public static final class Tether {
+    public static final String TETHER_SERVER_ENABLE = "tether.server.enabled";
+    public static final Boolean DEFAULT_TETHER_SERVER_ENABLE = false;
+    /**
+     * Interval for connecting to the server.
+     */
+    public static final String CONNECT_INTERVAL = "tether.connect.interval";
+    public static final int CONNECT_INTERVAL_DEFAULT = 10;
+
+    /**
+     * Tethering connection timeout.
+     */
+    public static final String CONNECTION_TIMEOUT = "tether.connection.timeout";
+    public static final int CONNECTION_TIMEOUT_DEFAULT = 60;
   }
 }
