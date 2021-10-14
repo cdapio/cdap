@@ -37,7 +37,7 @@ import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.AppsV1Api;
-import io.kubernetes.client.openapi.apis.AutoscalingV2beta2Api;
+import io.kubernetes.client.openapi.apis.AutoscalingV2beta1Api;
 import io.kubernetes.client.openapi.apis.BatchV1Api;
 import io.kubernetes.client.openapi.models.V1Container;
 import io.kubernetes.client.openapi.models.V1ContainerBuilder;
@@ -66,11 +66,13 @@ import io.kubernetes.client.openapi.models.V1StatefulSet;
 import io.kubernetes.client.openapi.models.V1StatefulSetBuilder;
 import io.kubernetes.client.openapi.models.V1Volume;
 import io.kubernetes.client.openapi.models.V1VolumeMount;
-import io.kubernetes.client.openapi.models.V2beta2CrossVersionObjectReference;
-import io.kubernetes.client.openapi.models.V2beta2CrossVersionObjectReferenceBuilder;
-import io.kubernetes.client.openapi.models.V2beta2HorizontalPodAutoscaler;
-import io.kubernetes.client.openapi.models.V2beta2HorizontalPodAutoscalerSpec;
-import io.kubernetes.client.openapi.models.V2beta2HorizontalPodAutoscalerSpecBuilder;
+import io.kubernetes.client.openapi.models.V2beta1CrossVersionObjectReference;
+import io.kubernetes.client.openapi.models.V2beta1CrossVersionObjectReferenceBuilder;
+import io.kubernetes.client.openapi.models.V2beta1HorizontalPodAutoscaler;
+import io.kubernetes.client.openapi.models.V2beta1HorizontalPodAutoscalerSpec;
+import io.kubernetes.client.openapi.models.V2beta1HorizontalPodAutoscalerSpecBuilder;
+import io.kubernetes.client.openapi.models.V2beta1MetricSpecBuilder;
+import io.kubernetes.client.openapi.models.V2beta1ObjectMetricSourceBuilder;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.Configs;
 import org.apache.twill.api.LocalFile;
@@ -706,22 +708,31 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     LOG.info(">>>>>>> About to enable autoscale");
     if (enabledAutoscaler) {
       LOG.info(">>>>>>> Enabling autoscale");
-      AutoscalingV2beta2Api api = new AutoscalingV2beta2Api(apiClient);
-      V2beta2CrossVersionObjectReference reference = new V2beta2CrossVersionObjectReferenceBuilder()
+      AutoscalingV2beta1Api api = new AutoscalingV2beta1Api(apiClient);
+      V2beta1CrossVersionObjectReference reference = new V2beta1CrossVersionObjectReferenceBuilder()
         .withName(metadata.getName())
         .withKind("StatefulSet")
         .withApiVersion("apps/v1")
         .build();
 
-      V2beta2HorizontalPodAutoscalerSpec spec = new V2beta2HorizontalPodAutoscalerSpecBuilder()
+      V2beta1HorizontalPodAutoscalerSpec spec = new V2beta1HorizontalPodAutoscalerSpecBuilder()
         .withScaleTargetRef(reference)
         .withMaxReplicas(20)
-        .withMinReplicas(1).build();
-      V2beta2HorizontalPodAutoscaler body = new V2beta2HorizontalPodAutoscaler();
-//      body.setKind("StatefulSet");
+        .withMinReplicas(1)
+        .withMetrics(new V2beta1MetricSpecBuilder().withType("Object")
+                       .withObject(new V2beta1ObjectMetricSourceBuilder()
+                                     .withMetricName("qlen")
+                                     .withTargetValue(new Quantity("1"))
+                                     .withTarget(new V2beta1CrossVersionObjectReferenceBuilder()
+                                                   .withKind("Service")
+                                                   .withName("cdap-autoscale-preview")
+                                                   .build())
+                                     .build())
+                       .build())
+        .build();
+      V2beta1HorizontalPodAutoscaler body = new V2beta1HorizontalPodAutoscaler();
       body.setMetadata(new V1ObjectMetaBuilder().withName(metadata.getName()).build());
       body.setSpec(spec);
-      LOG.info(">>>>>>> BODY " + body.toString());
       try {
         api.createNamespacedHorizontalPodAutoscaler(
           "default", body, "true", null, null);
