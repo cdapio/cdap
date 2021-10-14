@@ -81,9 +81,14 @@ public class MacroParserTest {
     assertContainsMacroParsing("${badFormatting", false);
   }
 
-  @Test
+  @Test(expected = InvalidMacroException.class)
   public void containsEmptyMacro() throws InvalidMacroException {
     assertContainsMacroParsing("${}", true);
+  }
+
+  @Test(expected = InvalidMacroException.class)
+  public void containsEmptyMacroInsideNestedMacro() throws InvalidMacroException {
+    assertContainsMacroParsing("${abc${}}", true);
   }
 
   @Test
@@ -102,22 +107,6 @@ public class MacroParserTest {
   @Test(expected = InvalidMacroException.class)
   public void testUndefinedMacro() throws InvalidMacroException {
     assertSubstitution("${undefined}", "", Collections.emptyMap(), Collections.emptyMap());
-  }
-
-  /**
-   * Tests if the empty string can be passed macro-substituted.
-   * Expands the following macro tree of depth 1:
-   *
-   *             ${}
-   *              |
-   *           emptyMacro
-   */
-  @Test
-  public void testEmptyMacro() throws InvalidMacroException {
-    Map<String, String> properties = ImmutableMap.<String, String>builder()
-      .put("", "emptyMacro")
-      .build();
-    assertSubstitution("${}", "emptyMacro", properties, Collections.emptyMap());
   }
 
   /**
