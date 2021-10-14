@@ -154,6 +154,14 @@ public abstract class AbstractWatcherThread<T> extends Thread implements AutoClo
               LOG.trace("Ignore watch type {}", response.type);
           }
         }
+
+        // Reset the watch so that a new one will be created in the next iteration.
+        // The watch is supposed to be a never ending iterator which blocks on the hasNext() call.
+        // In case if the while loop exited, it must either be due to stopped or internal watcher state changed
+        // such that the iterator is no longer connected to the API server.
+        // In both cases, we reset the watcher so that it won't get reused.
+        resetWatch();
+
       } catch (Exception e) {
         // Ignore the exception if it is during stopping of the thread, which is expected to happen
         if (stopped) {
