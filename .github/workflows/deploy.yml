@@ -26,6 +26,9 @@ jobs:
       run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
       id: extract_branch
 
+    - name: See service account
+      run: gcloud auth list
+
     - name: Cancel previous builds
       run: >
         gcloud builds list
