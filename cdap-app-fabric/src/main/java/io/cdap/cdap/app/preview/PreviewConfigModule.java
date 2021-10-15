@@ -86,6 +86,9 @@ public class PreviewConfigModule extends AbstractModule {
     // Don't upload event logs for preview execution
     previewCConf.setBoolean(Constants.AppFabric.SPARK_EVENT_LOGS_ENABLED, false);
 
+    // Set this property for preview runs
+    previewCConf.setBoolean(Constants.Environment.PROGRAM_SUBMISSION_MASTER_ENV_ENABLED, false);
+
     // Setup Hadoop configuration
     previewHConf = new Configuration(hConf);
     previewHConf.set(MRConfig.FRAMEWORK_NAME, MRConfig.LOCAL_FRAMEWORK_NAME);

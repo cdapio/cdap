@@ -395,6 +395,16 @@ public final class Constants {
   }
 
   /**
+   * Environment configurations.
+   */
+  public static final class Environment {
+    /**
+     * Configuration to decide if the master environment should be used for programs or not.
+     */
+    public static final String PROGRAM_SUBMISSION_MASTER_ENV_ENABLED = "program.submission.master.environment.enabled";
+  }
+
+  /**
    * Task worker.
    */
   public static final class TaskWorker {
