@@ -55,4 +55,4 @@ jobs:
 
     - name: Wait for build
       run: >
-        gcloud builds log --project cloud-data-fusion-builds --stream ${{ steps.start_build.outputs.build }}
+        gcloud beta builds log --project cloud-data-fusion-builds --stream ${{ steps.start_build.outputs.build }}
