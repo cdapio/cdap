@@ -34,7 +34,7 @@ jobs:
         AND substitutions._BRANCH_REPLACEMENT:${{ steps.extract_branch.outputs.branch }}"
         --format="value(id)"
         --ongoing
-        | xargs -n 1 gcloud builds cancel --project cloud-data-fusion-builds
+        | xargs -rn 1 gcloud builds cancel --project cloud-data-fusion-builds
 
     - name: Start build
       id: start_build
