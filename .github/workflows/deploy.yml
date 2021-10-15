@@ -21,7 +21,7 @@ jobs:
     - id: gcloud
       uses: google-github-actions/setup-gcloud@master
 
-    - id: install gcloud beta
+    - name: install gcloud beta
       run: yes | gcloud components install beta
 
     - name: Extract branch name
