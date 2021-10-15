@@ -63,7 +63,7 @@ jobs:
 
     - name: Check if build succeeded
       run: |
-        CODE=$(gcloud builds describe --project cloud-data-fusion-builds 3392040e-6642-47f9-8baa-ad1d16c2969a --format="value(status)")
+        CODE=$(gcloud builds describe --project cloud-data-fusion-builds ${{ steps.start_build.outputs.build }} --format="value(status)")
         echo $CODE
         if [[ "$CODE" != "SUCCESS" ]]
         then
