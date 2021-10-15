@@ -58,4 +58,5 @@ jobs:
 
     - name: Wait for build
       run: >
+        stdbuf -oL -eL
         gcloud beta builds log --project cloud-data-fusion-builds --stream ${{ steps.start_build.outputs.build }}
