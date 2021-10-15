@@ -22,6 +22,7 @@ import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -96,5 +97,19 @@ public interface MasterEnvironment {
    */
   default SparkConfig generateSparkSubmitConfig(SparkSubmitContext sparkSubmitContext) throws Exception {
     throw new UnsupportedOperationException("Method not implemented");
+  }
+
+  /**
+   * Called during namespace creation
+   */
+  default void onNamespaceCreation(String namespace, Map<String, String> properties) throws Exception {
+    // no-op by default
+  }
+
+  /**
+   * Called during namespace deletion
+   */
+  default void onNamespaceDeletion(String namespace, Map<String, String> properties) throws Exception {
+    // no-op by default
   }
 }

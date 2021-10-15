@@ -55,7 +55,15 @@ public class NamespaceConfig {
                          @Nullable String hbaseNamespace, @Nullable String hiveDatabase,
                          @Nullable String principal, @Nullable String groupName, @Nullable String keytabURI,
                          boolean exploreAsPrincipal) {
-    Map<String, String> configs = new HashMap<>();
+    this(schedulerQueueName, rootDirectory, hbaseNamespace, hiveDatabase, principal, groupName, keytabURI,
+            exploreAsPrincipal, new HashMap<>());
+  }
+
+  public NamespaceConfig(String schedulerQueueName, @Nullable String rootDirectory,
+                         @Nullable String hbaseNamespace, @Nullable String hiveDatabase,
+                         @Nullable String principal, @Nullable String groupName, @Nullable String keytabURI,
+                         boolean exploreAsPrincipal, Map<String, String> existingConfigs) {
+    Map<String, String> configs = new HashMap<>(existingConfigs);
     configs.put(SCHEDULER_QUEUE_NAME, schedulerQueueName);
 
     if (rootDirectory != null) {
@@ -230,7 +238,7 @@ public class NamespaceConfig {
   /**
    * Returns the raw full config map. This is for the {@link NamespaceConfigCodec} to use.
    */
-  Map<String, String> getConfigs() {
+  public Map<String, String> getConfigs() {
     return configs;
   }
 }

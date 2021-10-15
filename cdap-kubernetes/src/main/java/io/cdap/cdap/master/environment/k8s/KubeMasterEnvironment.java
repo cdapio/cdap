@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.master.environment.k8s;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.k8s.discovery.KubeDiscoveryService;
@@ -28,6 +29,7 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironmentTask;
 import io.cdap.cdap.master.spi.environment.spark.SparkConfig;
 import io.cdap.cdap.master.spi.environment.spark.SparkLocalizeResource;
 import io.cdap.cdap.master.spi.environment.spark.SparkSubmitContext;
+import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
@@ -38,6 +40,8 @@ import io.kubernetes.client.openapi.models.V1ContainerBuilder;
 import io.kubernetes.client.openapi.models.V1DownwardAPIVolumeFile;
 import io.kubernetes.client.openapi.models.V1DownwardAPIVolumeSource;
 import io.kubernetes.client.openapi.models.V1EnvVar;
+import io.kubernetes.client.openapi.models.V1Namespace;
+import io.kubernetes.client.openapi.models.V1NamespaceList;
 import io.kubernetes.client.openapi.models.V1ObjectFieldSelector;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1ObjectMetaBuilder;
@@ -46,6 +50,8 @@ import io.kubernetes.client.openapi.models.V1OwnerReferenceBuilder;
 import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1PodSpec;
 import io.kubernetes.client.openapi.models.V1PodSpecBuilder;
+import io.kubernetes.client.openapi.models.V1ResourceQuota;
+import io.kubernetes.client.openapi.models.V1ResourceQuotaSpec;
 import io.kubernetes.client.openapi.models.V1Volume;
 import io.kubernetes.client.openapi.models.V1VolumeMount;
 import io.kubernetes.client.util.Config;
@@ -63,6 +69,7 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -89,6 +96,11 @@ import java.util.zip.GZIPOutputStream;
 public class KubeMasterEnvironment implements MasterEnvironment {
   public static final String DISABLE_POD_DELETION = "disablePodDeletion";
   private static final Logger LOG = LoggerFactory.getLogger(KubeMasterEnvironment.class);
+
+  @VisibleForTesting
+  static final String NAMESPACE_PROPERTY = "k8s.namespace";
+  static final String NAMESPACE_CPU_LIMIT_PROPERTY = "k8s.namespace.cpu.limits";
+  static final String NAMESPACE_MEMORY_LIMIT_PROPERTY = "k8s.namespace.memory.limits";
 
   // Contains the list of configuration / secret names coming from the Pod information, which are
   // needed to propagate to deployments created via the KubeTwillRunnerService
@@ -119,6 +131,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String POD_TEMPLATE_FILE_NAME = "podTemplate-";
   private static final String CDAP_LOCALIZE_FILES_PATH = "/etc/cdap/localizefiles";
   private static final String CDAP_CONFIG_MAP_PREFIX = "cdap-compressed-files-";
+  private static final String NAMESPACE_CREATION_ENABLED = "master.environment.k8s.namespace.creation.enabled";
+  private static final String CDAP_NAMESPACE_LABEL = "cdap.namespace";
 
   private static final String DEFAULT_NAMESPACE = "default";
   private static final String DEFAULT_INSTANCE_LABEL = "cdap.instance";
@@ -143,6 +157,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   // In memory state for holding configmap name. Used to delete this configmap upon master environment destroy.
   private String configMapName;
   private CoreV1Api coreV1Api;
+  private boolean namespaceCreationEnabled;
 
   @Override
   public void initialize(MasterEnvironmentContext context) throws IOException, ApiException {
@@ -153,6 +168,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     podLabelsFile = new File(podInfoDir, conf.getOrDefault(POD_LABELS_FILE, DEFAULT_POD_LABELS_FILE));
     podNameFile = new File(podInfoDir, conf.getOrDefault(POD_NAME_FILE, DEFAULT_POD_NAME_FILE));
     podUidFile = new File(podInfoDir, conf.getOrDefault(POD_UID_FILE, DEFAULT_POD_UID_FILE));
+    namespaceCreationEnabled = Boolean.parseBoolean(conf.get(NAMESPACE_CREATION_ENABLED));
 
     // We don't support scaling from inside pod. Scaling should be done via CDAP operator.
     // Currently we don't support more than one instance per system service, hence set it to "1".
@@ -277,6 +293,72 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     return new SparkConfig("k8s://" + master,
                            URI.create("local:/opt/cdap/cdap-spark-core/cdap-spark-core.jar"),
                            sparkConfMap);
+  }
+
+  @Override
+  public void onNamespaceCreation(String cdapNamespace, Map<String, String> properties) throws Exception {
+    // check if namespace creation is enabled from master config
+    if (!namespaceCreationEnabled) {
+      return;
+    }
+    String namespace = properties.get(NAMESPACE_PROPERTY);
+    if (namespace == null || namespace.isEmpty()) {
+      throw new IOException(String.format("Cannot create Kubernetes namespace for %s because no name was provided",
+                            cdapNamespace));
+    }
+    try {
+      V1NamespaceList namespaceList = coreV1Api.listNamespace(null, null, null,
+              String.format("metadata.name=%s", namespace), null, 1, null, null, 10, false);
+      if (!namespaceList.getItems().isEmpty()) {
+        throw new IOException(String.format("Kubernetes namespace %s already exists", namespace));
+      }
+    } catch (ApiException e) {
+      throw new IOException("Cannot check if Kubernetes namespace already exists. Error code = "
+                            + e.getCode() + ", Body = " + e.getResponseBody(), e);
+    }
+
+    V1Namespace namespaceObject = new V1Namespace();
+    namespaceObject.setMetadata(new V1ObjectMeta().name(namespace).putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace));
+
+    String kubeCpuLimit = properties.get(NAMESPACE_CPU_LIMIT_PROPERTY);
+    String kubeMemoryLimit = properties.get(NAMESPACE_MEMORY_LIMIT_PROPERTY);
+    Map<String, Quantity> hardLimitMap = new HashMap<>();
+    if (kubeCpuLimit != null && !kubeCpuLimit.isEmpty()) {
+      hardLimitMap.put("limits.cpu", new Quantity(kubeCpuLimit));
+    }
+    if (kubeMemoryLimit != null && !kubeMemoryLimit.isEmpty()) {
+      hardLimitMap.put("limits.memory", new Quantity(kubeMemoryLimit));
+    }
+    V1ResourceQuota resourceQuota = new V1ResourceQuota();
+    resourceQuota.setMetadata(new V1ObjectMeta()
+            .name("cdap-resource-quota")
+            .putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace));
+    resourceQuota.setSpec(new V1ResourceQuotaSpec().hard(hardLimitMap));
+
+    try {
+      coreV1Api.createNamespace(namespaceObject, null, null, null);
+      LOG.info("Created Kubernetes namespace {} for namespace {}", namespace, cdapNamespace);
+      if (!hardLimitMap.isEmpty()) {
+        coreV1Api.createNamespacedResourceQuota(namespace, resourceQuota, null, null, null);
+        LOG.info("Created resource quota for Kubernetes namespace {} for namespace {}", namespace, cdapNamespace);
+      }
+    } catch (ApiException e) {
+      try {
+        deleteKubeNamespace(namespace);
+      } catch (IOException deletionException) {
+        e.addSuppressed(deletionException);
+      }
+      throw new IOException("Error occurred while creating Kubernetes namespace. Error code = "
+                            + e.getCode() + ", Body = " + e.getResponseBody(), e);
+    }
+  }
+
+  @Override
+  public void onNamespaceDeletion(String cdapNamespace, Map<String, String> properties) throws Exception {
+    String namespace = properties.get(NAMESPACE_PROPERTY);
+    if (namespaceCreationEnabled && namespace != null && !namespace.isEmpty()) {
+      deleteKubeNamespace(namespace);
+    }
   }
 
   /**
@@ -552,5 +634,34 @@ public class KubeMasterEnvironment implements MasterEnvironment {
       }
     }
     return sparkConfs;
+  }
+
+  /**
+   * Deletes Kubernetes namespace and associated resources if they exist for the given CDAP namespace
+   */
+  private void deleteKubeNamespace(String namespace) throws Exception {
+    try {
+      // PropagationPolicy is set to background cascading deletion. Kubernetes deletes the owner object immediately and
+      // the controller cleans up the dependent objects in the background.
+      coreV1Api.deleteNamespace(namespace, null, null, 0, null, "Background", null);
+      LOG.info("Deleted Kubernetes namespace and associated resources for {}", namespace);
+    } catch (ApiException e) {
+      if (e.getCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+        LOG.debug("Kubernetes namespace {} was not deleted because it was not found", namespace);
+      } else {
+        throw new IOException("Error occurred while deleting Kubernetes namespace. Error code = "
+                              + e.getCode() + ", Body = " + e.getResponseBody(), e);
+      }
+    }
+  }
+
+  @VisibleForTesting
+  void setCoreV1Api(CoreV1Api coreV1Api) {
+    this.coreV1Api = coreV1Api;
+  }
+
+  @VisibleForTesting
+  void setNamespaceCreationEnabled() {
+    this.namespaceCreationEnabled = true;
   }
 }
