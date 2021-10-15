@@ -32,11 +32,12 @@ jobs:
     - name: Cancel previous builds
       run: >
         gcloud builds list
-          --project cloud-data-fusion-builds
+          --project=cloud-data-fusion-builds
           --filter="buildTriggerId:e2d27f65-685a-457b-a66f-b686f3a1218d
             AND substitutions._BRANCH_REPLACEMENT:${{ steps.extract_branch.outputs.branch }}"
           --format="value(id)"
           --ongoing
+          --verbosity=debug
         | xargs -n 1 gcloud builds cancel --project cloud-data-fusion-builds
 
     - name: Start build
