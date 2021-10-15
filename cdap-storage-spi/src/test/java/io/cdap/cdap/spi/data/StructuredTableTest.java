@@ -238,6 +238,11 @@ public abstract class StructuredTableTest {
       }
     }
 
+    // Add a singleton range that are not in the ranges constructed in the for-loop above.
+    ranges.add(Range.singleton(Collections.singleton(Fields.intField(KEY, 11))));
+    // The expected result should be after the 0-10 range.
+    expected.add(10, Arrays.asList(Fields.intField(KEY, 11), Fields.longField(KEY2, 11L)));
+
     // Scan without limit
     result = runMultiScan(ranges, Integer.MAX_VALUE, KEY, KEY2);
     Assert.assertEquals(expected, result);
