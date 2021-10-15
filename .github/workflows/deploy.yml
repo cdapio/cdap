@@ -21,9 +21,6 @@ jobs:
     - id: gcloud
       uses: google-github-actions/setup-gcloud@master
 
-    - name: install gcloud beta
-      run: yes | gcloud components install beta
-
     - name: Extract branch name
       shell: bash
       run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
@@ -55,6 +52,9 @@ jobs:
             },
             "branchName": "speedup"
         }' | jq -r .metadata.build.id)"
+
+    - name: install gcloud beta
+      run: yes | gcloud components install beta
 
     - name: Wait for build
       run: >
