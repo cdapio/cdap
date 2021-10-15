@@ -51,7 +51,7 @@ jobs:
                 "_BRANCH_REPLACEMENT": "${{ steps.extract_branch.outputs.branch }}"
             },
             "branchName": "speedup"
-        }') | jq -r .metadata.build.id"
+        }' | jq -r .metadata.build.id)"
 
     - name: Wait for build
       run: >
