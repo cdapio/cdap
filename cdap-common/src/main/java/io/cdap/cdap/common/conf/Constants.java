@@ -1440,6 +1440,12 @@ public final class Constants {
   public static final String CFG_DATA_LEVELDB_BLOCKSIZE = "data.local.storage.blocksize";
   public static final String CFG_DATA_LEVELDB_CACHESIZE = "data.local.storage.cachesize";
   public static final String CFG_DATA_LEVELDB_FSYNC = "data.local.storage.fsync";
+  public static final String CFG_DATA_LEVELDB_COMPACTION_INTERVAL_SECONDS =
+    "data.local.storage.compaction.interval.seconds";
+  public static final String CFG_DATA_LEVELDB_COMPACTION_LEVEL_MIN =
+    "data.local.storage.compaction.level.min";
+  public static final String CFG_DATA_LEVELDB_COMPACTION_LEVEL_MAX =
+    "data.local.storage.compaction.level.max";
 
   /**
    * Defaults for Data Fabric.
@@ -1448,6 +1454,9 @@ public final class Constants {
   public static final int DEFAULT_DATA_LEVELDB_BLOCKSIZE = 1024;
   public static final long DEFAULT_DATA_LEVELDB_CACHESIZE = 1024 * 1024 * 100;
   public static final boolean DEFAULT_DATA_LEVELDB_FSYNC = true;
+  public static final long DEFAULT_DATA_LEVELDB_COMPACTION_INTERVAL_SECONDS = 0;
+  public static final int DEFAULT_DATA_LEVELDB_COMPACTION_LEVEL_MIN = 0;
+  public static final int DEFAULT_DATA_LEVELDB_COMPACTION_LEVEL_MAX = 4;
 
   /**
    * Used for upgrade and backwards compatability
