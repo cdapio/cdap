@@ -20,6 +20,7 @@ import io.cdap.cdap.api.annotation.Beta;
 
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -32,12 +33,22 @@ public final class FieldType {
    * Supported data types.
    */
   public enum Type {
-    INTEGER,
-    LONG,
-    FLOAT,
-    DOUBLE,
-    STRING,
-    BYTES
+    INTEGER(Collections.emptySet()),
+    LONG(Collections.singleton(INTEGER)),
+    FLOAT(Collections.emptySet()),
+    DOUBLE(Collections.singleton(FLOAT)),
+    STRING(Collections.emptySet()),
+    BYTES(Collections.emptySet());
+
+    private final Set<Type> compatibleTypes;
+
+    Type(Set<Type> compatibleTypes) {
+      this.compatibleTypes = Collections.unmodifiableSet(new HashSet<>(compatibleTypes));
+    }
+
+    public boolean isCompatible(Type type) {
+      return this == type || compatibleTypes.contains(type);
+    }
   }
 
   /**

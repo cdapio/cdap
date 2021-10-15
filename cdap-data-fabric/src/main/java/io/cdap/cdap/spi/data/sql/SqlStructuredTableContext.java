@@ -24,9 +24,8 @@ import io.cdap.cdap.spi.data.StructuredTableInstantiationException;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.common.MetricStructuredTable;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
-import io.cdap.cdap.spi.data.table.StructuredTableSchema;
-import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 
+import java.io.IOException;
 import java.sql.Connection;
 
 /**
@@ -47,14 +46,14 @@ public class SqlStructuredTableContext implements StructuredTableContext {
   }
 
   @Override
-  public StructuredTable getTable(
-    StructuredTableId tableId) throws StructuredTableInstantiationException, TableNotFoundException {
-    StructuredTableSpecification specification = admin.getSpecification(tableId);
-    if (specification == null) {
-      throw new TableNotFoundException(tableId);
+  public StructuredTable getTable(StructuredTableId tableId)
+    throws StructuredTableInstantiationException, TableNotFoundException {
+
+    try {
+      return new MetricStructuredTable(tableId, new PostgreSqlStructuredTable(connection, admin.getSchema(tableId)),
+                                       metricsCollector, emitTimeMetrics);
+    } catch (IOException e) {
+      throw new StructuredTableInstantiationException(tableId, "Failed to get the table schema", e);
     }
-    return new MetricStructuredTable(
-      tableId, new PostgresSqlStructuredTable(connection, new StructuredTableSchema(specification)),
-      metricsCollector, emitTimeMetrics);
   }
 }

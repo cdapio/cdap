@@ -113,7 +113,6 @@ import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.store.StoreDefinition;
@@ -251,11 +250,8 @@ public abstract class AppFabricTestBase {
     }
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
-    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
-    structuredTableRegistry.initialize();
     // Define all StructuredTable before starting any services that need StructuredTable
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
-                                    structuredTableRegistry);
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
     metadataStorage = injector.getInstance(MetadataStorage.class);
     metadataStorage.createIndex();
 

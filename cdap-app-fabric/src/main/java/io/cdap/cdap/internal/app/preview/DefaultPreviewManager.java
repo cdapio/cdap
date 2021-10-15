@@ -100,7 +100,6 @@ import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.store.DefaultOwnerStore;
 import io.cdap.cdap.store.StoreDefinition;
 import org.apache.hadoop.conf.Configuration;
@@ -180,8 +179,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   @Override
   protected void startUp() throws Exception {
     previewInjector = createPreviewInjector();
-    StoreDefinition.createAllTables(previewInjector.getInstance(StructuredTableAdmin.class),
-                                    previewInjector.getInstance(StructuredTableRegistry.class), false);
+    StoreDefinition.createAllTables(previewInjector.getInstance(StructuredTableAdmin.class));
     metricsCollectionService.start();
     logAppender = previewInjector.getInstance(LogAppender.class);
     logAppender.start();

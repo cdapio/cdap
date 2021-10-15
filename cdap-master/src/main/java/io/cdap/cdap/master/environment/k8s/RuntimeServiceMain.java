@@ -39,8 +39,6 @@ import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.TableAlreadyExistsException;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.store.StoreDefinition;
 import org.apache.twill.zookeeper.ZKClientService;
 
@@ -88,12 +86,7 @@ public class RuntimeServiceMain extends AbstractServiceMain<EnvironmentOptions> 
     services.add(new AbstractIdleService() {
       @Override
       protected void startUp() throws Exception {
-        try {
-          StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
-                                          injector.getInstance(StructuredTableRegistry.class));
-        } catch (TableAlreadyExistsException e) {
-          // ignore
-        }
+        StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
       }
 
       @Override

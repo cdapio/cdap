@@ -30,7 +30,6 @@ import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.common.app.MainClassLoader;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
@@ -57,6 +56,7 @@ import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.guice.CoreSecurityModule;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
+import io.cdap.cdap.spi.data.StorageProvider;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryService;
@@ -67,13 +67,10 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import java.io.File;
 import java.lang.reflect.Method;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
-import javax.sql.DataSource;
 
 /**
  * The abstract base class for writing various service main classes.
@@ -87,6 +84,7 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
   private final List<Service> services = new ArrayList<>();
   private final List<AutoCloseable> closeableResources = new ArrayList<>();
   private MasterEnvironment masterEnv;
+  private StorageProvider storageProvider;
   private Injector injector;
 
   /**
@@ -194,7 +192,12 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
     // Add Services
     services.add(injector.getInstance(MetricsCollectionService.class));
     addServices(injector, services, closeableResources, masterEnv, masterEnvContext, options);
-    initializeDataSourceConnection(cConf);
+
+    // Optionally get the storage provider. It is for destroy() method to close it on shutdown.
+    Binding<StorageProvider> storageBinding = injector.getExistingBinding(Key.get(StorageProvider.class));
+    if (storageBinding != null) {
+      storageProvider = storageBinding.getProvider().get();
+    }
 
     LOG.info("Service {} initialized", getClass().getName());
   }
@@ -235,6 +238,13 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
 
   @Override
   public final void destroy() {
+    if (storageProvider != null) {
+      try {
+        storageProvider.close();
+      } catch (Exception e) {
+        LOG.warn("Exception raised when closing storage provider", e);
+      }
+    }
     if (masterEnv != null) {
       masterEnv.destroy();
     }
@@ -262,22 +272,6 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
         bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class);
       }
     };
-  }
-
-  protected void initializeDataSourceConnection(CConfiguration cConf) throws SQLException {
-    if (cConf.get(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION).equals(Constants.Dataset.DATA_STORAGE_SQL)) {
-      Binding<DataSource> binding = injector.getExistingBinding(Key.get(DataSource.class));
-      if (binding == null) {
-        return;
-      }
-
-      // instantiate the data source and create a connection
-      DataSource dataSource = binding.getProvider().get();
-      try (Connection connection = dataSource.getConnection()) {
-        // Just to ping the connection and close it to populate the connection pool.
-        connection.isValid(5);
-      }
-    }
   }
 
   /**

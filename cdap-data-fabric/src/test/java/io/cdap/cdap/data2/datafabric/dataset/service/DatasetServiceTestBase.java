@@ -82,7 +82,6 @@ import io.cdap.cdap.security.impersonation.OwnerStore;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.store.StoreDefinition;
 import io.cdap.common.ContentProvider;
@@ -196,8 +195,7 @@ public abstract class DatasetServiceTestBase {
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
     StructuredTableAdmin structuredTableAdmin = injector.getInstance(StructuredTableAdmin.class);
-    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
-    StoreDefinition.createAllTables(structuredTableAdmin, structuredTableRegistry);
+    StoreDefinition.createAllTables(structuredTableAdmin);
     TransactionSystemClient txSystemClient = injector.getInstance(TransactionSystemClient.class);
     TransactionSystemClientService txSystemClientService =
       new DelegatingTransactionSystemClientService(txSystemClient);

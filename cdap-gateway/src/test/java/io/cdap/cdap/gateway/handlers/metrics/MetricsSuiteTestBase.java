@@ -54,7 +54,6 @@ import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.store.StoreDefinition;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import org.apache.http.Header;
@@ -173,9 +172,7 @@ public abstract class MetricsSuiteTestBase {
 
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
-    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
-    structuredTableRegistry.initialize();
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class), structuredTableRegistry);
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
 
     dsOpService = injector.getInstance(DatasetOpExecutorService.class);
     dsOpService.startAndWait();

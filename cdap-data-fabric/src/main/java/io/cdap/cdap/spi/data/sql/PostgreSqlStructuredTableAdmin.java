@@ -21,8 +21,10 @@ import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
+import io.cdap.cdap.spi.data.TableNotFoundException;
+import io.cdap.cdap.spi.data.common.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
+import io.cdap.cdap.spi.data.table.StructuredTableSchema;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import io.cdap.cdap.spi.data.table.field.FieldType;
 import org.slf4j.Logger;
@@ -39,25 +41,30 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import javax.sql.DataSource;
 
 /**
  * Sql structured admin to use jdbc connection to create and drop tables.
  */
-public class PostgresSqlStructuredTableAdmin implements StructuredTableAdmin {
-  private static final Logger LOG = LoggerFactory.getLogger(PostgresSqlStructuredTableAdmin.class);
+public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
+  private static final Logger LOG = LoggerFactory.getLogger(PostgreSqlStructuredTableAdmin.class);
   private final StructuredTableRegistry registry;
   private final DataSource dataSource;
 
   @Inject
-  public PostgresSqlStructuredTableAdmin(StructuredTableRegistry registry, DataSource dataSource) {
+  PostgreSqlStructuredTableAdmin(DataSource dataSource) {
+    this(new SqlStructuredTableRegistry(dataSource), dataSource);
+  }
+
+  PostgreSqlStructuredTableAdmin(StructuredTableRegistry registry, DataSource dataSource) {
     this.registry = registry;
     this.dataSource = dataSource;
   }
 
   @Override
   public void create(StructuredTableSpecification spec) throws IOException, TableAlreadyExistsException {
+    StructuredTableId tableId = spec.getTableId();
+
     try (Connection connection = dataSource.getConnection()) {
       // If the table is registered, the table and the indexes must get created. If not, we need to verify the
       // table existence, index existence and then register for the table.
@@ -66,15 +73,14 @@ public class PostgresSqlStructuredTableAdmin implements StructuredTableAdmin {
       }
 
       try (Statement statement = connection.createStatement()) {
-        if (!tableExistsInternal(connection, spec.getTableId())) {
+        if (!tableExistsInternal(connection, tableId)) {
           // Create table
           LOG.info("Creating table {}", spec);
           statement.execute(getCreateStatement(spec));
         }
 
         // Create indexes
-        for (String indexStatement : getCreateIndexStatements(spec.getTableId(),
-                                                              getNonExistIndexes(connection, spec))) {
+        for (String indexStatement : getCreateIndexStatements(tableId, getNonExistIndexes(connection, spec))) {
           LOG.debug("Create index statement: {}", indexStatement);
           statement.execute(indexStatement);
         }
@@ -82,14 +88,26 @@ public class PostgresSqlStructuredTableAdmin implements StructuredTableAdmin {
         registry.registerSpecification(spec);
       }
     } catch (SQLException e) {
-      throw new IOException(String.format("Error creating table %s", spec.getTableId()), e);
+      throw new IOException(String.format("Error creating table %s", tableId), e);
     }
   }
 
-  @Nullable
   @Override
-  public StructuredTableSpecification getSpecification(StructuredTableId tableId) {
-    return registry.getSpecification(tableId);
+  public boolean exists(StructuredTableId tableId) throws IOException {
+    try (Connection connection = dataSource.getConnection()) {
+      return tableExistsInternal(connection, tableId);
+    } catch (SQLException e) {
+      throw new IOException("Failed to check if table " + tableId + " exists", e);
+    }
+  }
+
+  @Override
+  public StructuredTableSchema getSchema(StructuredTableId tableId) throws TableNotFoundException {
+    StructuredTableSpecification spec = registry.getSpecification(tableId);
+    if (spec == null) {
+      throw new TableNotFoundException(tableId);
+    }
+    return new StructuredTableSchema(spec);
   }
 
   // TODO: CDAP-15068 - make drop table idempotent
@@ -150,7 +168,7 @@ public class PostgresSqlStructuredTableAdmin implements StructuredTableAdmin {
     // append the columns with sql type
     createStmt.append(
       specification.getFieldTypes().stream()
-        .map(f -> f.getName() + " " + getPostgresSqlType(f))
+        .map(f -> f.getName() + " " + getPostgreSQLType(f))
         .collect(Collectors.joining(","))
     );
 
@@ -172,7 +190,7 @@ public class PostgresSqlStructuredTableAdmin implements StructuredTableAdmin {
     return "DROP TABLE " + tableName + ";";
   }
 
-  private String getPostgresSqlType(FieldType field) {
+  private String getPostgreSQLType(FieldType field) {
     String sqlType;
 
     FieldType.Type type = field.getType();

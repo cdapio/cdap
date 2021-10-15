@@ -277,14 +277,14 @@ public class PreferencesTable {
       }
     }
     throw new ConflictException(String.format("Expected sequence id >= %d for %s %s in namespace %s, but found %s",
-                                              seq, type, name, namespace, String.valueOf(currentSeq)));
+                                              seq, type, name, namespace, currentSeq));
   }
 
   private PreferencesDetail get(String namespace, String type, String name) throws IOException {
     List<Field<?>> primaryKey = getPrimaryKey(namespace, type, name);
     Optional<StructuredRow> row = table.read(primaryKey);
     Map<String, String> properties = Collections.emptyMap();
-    Long seqId = new Long(0);
+    Long seqId = null;
     if (row.isPresent()) {
       String string = row.get().getString(StoreDefinition.PreferencesStore.PROPERTIES_FIELD);
       seqId = row.get().getLong(StoreDefinition.PreferencesStore.SEQUENCE_ID_FIELD);
@@ -292,7 +292,7 @@ public class PreferencesTable {
         properties = GSON.fromJson(string, MAP_TYPE);
       }
     }
-    return new PreferencesDetail(properties, seqId, false);
+    return new PreferencesDetail(properties, seqId == null ? 0L : seqId, false);
   }
 
   private List<Field<?>> toFields(String namespace, String type, Config config, long seqId) {

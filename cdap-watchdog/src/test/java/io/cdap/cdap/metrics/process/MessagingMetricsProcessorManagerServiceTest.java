@@ -37,7 +37,6 @@ import io.cdap.cdap.internal.io.SchemaGenerator;
 import io.cdap.cdap.metrics.process.loader.MetricsWriterProvider;
 import io.cdap.cdap.metrics.store.MetricDatasetFactory;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.store.StoreDefinition;
 import org.apache.tephra.TransactionManager;
 import org.junit.Assert;
@@ -61,9 +60,7 @@ public class MessagingMetricsProcessorManagerServiceTest extends MetricsProcesso
   public void persistMetricsTests() throws Exception {
 
     injector.getInstance(TransactionManager.class).startAndWait();
-    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
-    structuredTableRegistry.initialize();
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class), structuredTableRegistry);
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
     injector.getInstance(DatasetOpExecutorService.class).startAndWait();
     injector.getInstance(DatasetService.class).startAndWait();
 

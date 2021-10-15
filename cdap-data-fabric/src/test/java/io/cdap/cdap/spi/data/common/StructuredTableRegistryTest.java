@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,9 +14,11 @@
  * the License.
  */
 
-package io.cdap.cdap.spi.data.table;
+package io.cdap.cdap.spi.data.common;
 
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
+import io.cdap.cdap.spi.data.table.StructuredTableId;
+import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import io.cdap.cdap.spi.data.table.field.FieldType;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import org.junit.After;
@@ -67,7 +69,6 @@ public abstract class StructuredTableRegistryTest {
   @Test
   public void testRegistry() throws Exception {
     StructuredTableRegistry registry = getStructuredTableRegistry();
-    registry.initialize();
 
     // Assert empty
     Assert.assertTrue(registry.isEmpty());

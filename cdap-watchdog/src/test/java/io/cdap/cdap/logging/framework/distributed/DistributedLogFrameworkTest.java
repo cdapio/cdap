@@ -64,7 +64,6 @@ import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.store.StoreDefinition;
 import org.apache.tephra.TransactionManager;
@@ -118,9 +117,7 @@ public class DistributedLogFrameworkTest {
     injector.getInstance(KafkaClientService.class).startAndWait();
     injector.getInstance(BrokerService.class).startAndWait();
     injector.getInstance(TransactionManager.class).startAndWait();
-    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
-    structuredTableRegistry.initialize();
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class), structuredTableRegistry);
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
   }
 
   @After

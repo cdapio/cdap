@@ -579,6 +579,9 @@ public final class Constants {
 
     public static final String DATA_EVENT_TOPIC = "data.event.topic";
 
+    public static final String STORAGE_EXTENSION_DIR = "data.storage.extensions.dir";
+    public static final String STORAGE_EXTENSION_PROPERTY_PREFIX = "data.storage.properties.";
+
     public static final String DATA_STORAGE_IMPLEMENTATION = "data.storage.implementation";
     public static final String DATA_STORAGE_NOSQL = "nosql";
     public static final String DATA_STORAGE_SQL = "postgresql";

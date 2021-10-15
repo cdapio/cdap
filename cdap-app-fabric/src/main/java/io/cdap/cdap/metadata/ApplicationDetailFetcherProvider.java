@@ -24,8 +24,8 @@ import io.cdap.cdap.common.conf.Constants;
 
 /**
  * Provider for {@link PreferencesFetcher}.
- * Use {@link LocalPreferencesFetcherInternal} if storage implication is {@link Constants.Dataset#DATA_STORAGE_SQL}
- * Use {@link RemotePreferencesFetcherInternal} if storage implication is {@link Constants.Dataset#DATA_STORAGE_NOSQL}
+ * Use {@link RemotePreferencesFetcherInternal} if storage implication is {@link Constants.Dataset#DATA_STORAGE_NOSQL},
+ * otherwise use {@link LocalPreferencesFetcherInternal}.
  */
 public class ApplicationDetailFetcherProvider implements Provider<ApplicationDetailFetcher> {
   private final CConfiguration cConf;
@@ -48,11 +48,6 @@ public class ApplicationDetailFetcherProvider implements Provider<ApplicationDet
     if (storageImpl.equals(Constants.Dataset.DATA_STORAGE_NOSQL)) {
       return injector.getInstance(RemoteApplicationDetailFetcher.class);
     }
-    if (storageImpl.equals(Constants.Dataset.DATA_STORAGE_SQL)) {
-      return injector.getInstance(LocalApplicationDetailFetcher.class);
-    }
-    throw new UnsupportedOperationException(
-      String.format("%s is not a supported storage implementation, the supported implementations are %s and %s",
-                    storageImpl, Constants.Dataset.DATA_STORAGE_NOSQL, Constants.Dataset.DATA_STORAGE_SQL));
+    return injector.getInstance(LocalApplicationDetailFetcher.class);
   }
 }

@@ -54,7 +54,6 @@ import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import io.cdap.cdap.security.FakeSecureStore;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.StoreDefinition;
@@ -101,9 +100,10 @@ public class ProvisioningServiceTest {
     Injector injector = Guice.createInjector(new AppFabricTestModule(cConf));
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
-    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
-    structuredTableRegistry.initialize();
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class), structuredTableRegistry);
+
+    // Define all StructuredTable before starting any services that need StructuredTable
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
+
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
     messagingService = injector.getInstance(MessagingService.class);
@@ -111,13 +111,7 @@ public class ProvisioningServiceTest {
     if (messagingService instanceof Service) {
       ((Service) messagingService).startAndWait();
     }
-    try {
-      // Define all StructuredTable before starting any services that need StructuredTable
-      StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
-                                      injector.getInstance(StructuredTableRegistry.class));
-    } catch (IOException | TableAlreadyExistsException e) {
-      throw new RuntimeException("Unable to create the system tables.", e);
-    }
+
     provisioningService = injector.getInstance(ProvisioningService.class);
     provisioningService.startAndWait();
     transactionRunner = injector.getInstance(TransactionRunner.class);

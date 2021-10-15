@@ -62,8 +62,6 @@ import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.TableAlreadyExistsException;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.store.StoreDefinition;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.Transaction;
@@ -74,7 +72,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -96,9 +93,8 @@ public class ExploreDisabledTest {
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
 
-    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
-    structuredTableRegistry.initialize();
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class), structuredTableRegistry);
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
+
     dsOpExecutor = injector.getInstance(DatasetOpExecutorService.class);
     dsOpExecutor.startAndWait();
 
@@ -114,14 +110,6 @@ public class ExploreDisabledTest {
     }
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
-
-    StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
-    StructuredTableRegistry registry = injector.getInstance(StructuredTableRegistry.class);
-    try {
-      StoreDefinition.createAllTables(tableAdmin, registry);
-    } catch (IOException | TableAlreadyExistsException e) {
-      throw new RuntimeException("Failed to create the system tables", e);
-    }
 
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     NamespacePathLocator namespacePathLocator = injector.getInstance(NamespacePathLocator.class);

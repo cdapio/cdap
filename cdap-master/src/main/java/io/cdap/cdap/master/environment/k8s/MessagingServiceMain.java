@@ -93,9 +93,4 @@ public class MessagingServiceMain extends AbstractServiceMain<EnvironmentOptions
                                      Constants.Logging.COMPONENT_NAME,
                                      Constants.Service.MESSAGING_SERVICE);
   }
-
-  @Override
-  protected void initializeDataSourceConnection(CConfiguration cConf) {
-    // no-op since we use leveldb in messaging service
-  }
 }

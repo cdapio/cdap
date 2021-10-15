@@ -17,17 +17,24 @@
 package io.cdap.cdap.internal.app.runtime.schedule.store;
 
 import com.google.common.base.Joiner;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Scopes;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.LocalLocationModule;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.data.runtime.StorageModule;
+import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.sql.PostgresInstantiator;
-import io.cdap.cdap.spi.data.sql.PostgresSqlStructuredTableAdmin;
-import io.cdap.cdap.spi.data.sql.SqlStructuredTableRegistry;
-import io.cdap.cdap.spi.data.sql.SqlTransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.store.StoreDefinition;
 import org.junit.AfterClass;
@@ -36,7 +43,6 @@ import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
-import javax.sql.DataSource;
 
 /**
  *
@@ -53,17 +59,23 @@ public class SqlProgramScheduleStoreDatasetTest extends ProgramScheduleStoreData
     CConfiguration cConf = CConfiguration.create();
     // any plugin which requires transaction will be excluded
     cConf.set(Constants.REQUIREMENTS_DATASET_TYPE_EXCLUDE, Joiner.on(",").join(Table.TYPE, KeyValueTable.TYPE));
-    cConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_SQL);
 
     pg = PostgresInstantiator.createAndStart(cConf, TEMP_FOLDER.newFolder());
-    DataSource dataSource = pg.getPostgresDatabase();
-    SqlStructuredTableRegistry registry = new SqlStructuredTableRegistry(dataSource);
-    registry.initialize();
-    StructuredTableAdmin structuredTableAdmin =
-      new PostgresSqlStructuredTableAdmin(registry, dataSource);
-    transactionRunner = new SqlTransactionRunner(structuredTableAdmin, dataSource);
-    // TODO: (CDAP-14830) the creation of tables below can be removed after the storage SPI injection is done
-    StoreDefinition.createAllTables(structuredTableAdmin, registry);
+    Injector injector = Guice.createInjector(
+      new ConfigModule(cConf),
+      new LocalLocationModule(),
+      new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new StorageModule(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
+        }
+      }
+    );
+
+    transactionRunner = injector.getInstance(TransactionRunner.class);
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
   }
 
   @Override

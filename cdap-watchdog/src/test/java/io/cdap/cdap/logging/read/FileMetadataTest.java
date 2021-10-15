@@ -46,7 +46,6 @@ import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.store.StoreDefinition;
 import org.apache.hadoop.conf.Configuration;
@@ -103,9 +102,7 @@ public class FileMetadataTest {
 
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
-    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
-    structuredTableRegistry.initialize();
-    StoreDefinition.LogFileMetaStore.createTables(injector.getInstance(StructuredTableAdmin.class), false);
+    StoreDefinition.LogFileMetaStore.create(injector.getInstance(StructuredTableAdmin.class));
   }
 
   @AfterClass

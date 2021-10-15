@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.spi.data.nosql;
 
-import com.google.inject.Inject;
 import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
@@ -45,9 +44,8 @@ public class NoSqlTransactionRunner implements TransactionRunner {
   private final MetricsCollectionService metricsCollectionService;
   private final boolean emitTimeMetrics;
 
-  @Inject
-  public NoSqlTransactionRunner(NoSqlStructuredTableAdmin tableAdmin, TransactionSystemClient txClient,
-                                MetricsCollectionService metricsCollectionService, CConfiguration cConf) {
+  NoSqlTransactionRunner(NoSqlStructuredTableAdmin tableAdmin, TransactionSystemClient txClient,
+                         MetricsCollectionService metricsCollectionService, CConfiguration cConf) {
     this.tableAdmin = tableAdmin;
     this.transactional = Transactions.createTransactionalWithRetry(
       NoSQLTransactionals.createTransactional(txClient, new TableDatasetSupplier() {

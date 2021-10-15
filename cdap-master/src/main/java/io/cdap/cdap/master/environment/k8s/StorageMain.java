@@ -41,8 +41,6 @@ import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.NoOpAccessController;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.TableAlreadyExistsException;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.store.StoreDefinition;
 import org.apache.tephra.TransactionSystemClient;
@@ -101,16 +99,7 @@ public class StorageMain {
     Injector injector = Guice.createInjector(modules);
 
     // Create stores definitions
-    StructuredTableRegistry tableRegistry = injector.getInstance(StructuredTableRegistry.class);
-    StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
-
-    try {
-      StoreDefinition.createAllTables(tableAdmin, tableRegistry);
-      LOG.info("Storage definitions creation completed");
-    } catch (TableAlreadyExistsException e) {
-      // Ignore the error
-      LOG.debug("Store table already exists", e);
-    }
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
 
     // Create metadata tables
     try (MetadataStorage metadataStorage = injector.getInstance(MetadataStorage.class)) {

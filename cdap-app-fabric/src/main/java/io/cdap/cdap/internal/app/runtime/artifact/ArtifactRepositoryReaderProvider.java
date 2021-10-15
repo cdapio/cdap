@@ -24,8 +24,8 @@ import io.cdap.cdap.common.conf.Constants;
 
 /**
  * Provider for {@link ArtifactRepositoryReader}.
- * Use {@link LocalArtifactRepositoryReader} if storage implementation is {@link Constants.Dataset#DATA_STORAGE_SQL}.
- * Use {@link RemoteArtifactRepositoryReader} if storage implementation is {@link Constants.Dataset#DATA_STORAGE_NOSQL}.
+ * Use {@link RemoteArtifactRepositoryReader} if storage implementation is {@link Constants.Dataset#DATA_STORAGE_NOSQL},
+ * otherwise use {@link LocalArtifactRepositoryReader}.
  */
 public final class ArtifactRepositoryReaderProvider implements Provider<ArtifactRepositoryReader> {
 
@@ -50,12 +50,6 @@ public final class ArtifactRepositoryReaderProvider implements Provider<Artifact
     if (storageImpl.equals(Constants.Dataset.DATA_STORAGE_NOSQL)) {
       return injector.getInstance(RemoteArtifactRepositoryReader.class);
     }
-    if (storageImpl.equals(Constants.Dataset.DATA_STORAGE_SQL)) {
-      return injector.getInstance(LocalArtifactRepositoryReader.class);
-    }
-    throw new UnsupportedOperationException(
-      String.format(
-        "%s is not a supported storage implementation, the supported ones are %s and %s",
-        storageImpl, Constants.Dataset.DATA_STORAGE_NOSQL, Constants.Dataset.DATA_STORAGE_SQL));
+    return injector.getInstance(LocalArtifactRepositoryReader.class);
   }
 }

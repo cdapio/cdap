@@ -56,7 +56,6 @@ import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.spi.authorization.NoOpAccessController;
 import io.cdap.cdap.security.spi.authorization.PermissionManager;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.store.StoreDefinition;
 import org.apache.http.Header;
@@ -184,8 +183,7 @@ public abstract class GatewayTestBase {
     txService = injector.getInstance(TransactionManager.class);
     txService.startAndWait();
     // Define all StructuredTable before starting any services that need StructuredTable
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
-                                    injector.getInstance(StructuredTableRegistry.class));
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
     metadataStorage = injector.getInstance(MetadataStorage.class);
     metadataStorage.createIndex();
     metadataService = injector.getInstance(MetadataService.class);

@@ -40,7 +40,7 @@ public abstract class UserConfigStoreTest {
 
   @Before
   public void setupTest() throws Exception {
-    if (admin.getSpecification(StoreDefinition.ConfigStore.CONFIGS) == null) {
+    if (!admin.exists(StoreDefinition.ConfigStore.CONFIGS)) {
       admin.create(StoreDefinition.ConfigStore.CONFIG_TABLE_SPEC);
     }
   }
