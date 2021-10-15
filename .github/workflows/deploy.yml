@@ -26,8 +26,20 @@ jobs:
       run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
       id: extract_branch
 
-    - name: Start build
+    - name: Cancel previous builds
       run: >
+        gcloud builds list
+          --project cloud-data-fusion-builds
+          --filter="buildTriggerId:e2d27f65-685a-457b-a66f-b686f3a1218d
+            AND substitutions._BRANCH_REPLACEMENT:${{ steps.extract_branch.outputs.branch }}"
+          --format="value(id)"
+          --ongoing
+        | xargs -n 1 gcloud builds cancel --project cloud-data-fusion-builds
+
+    - name: Start build
+      id: start_build
+      run: >
+        echo "##[set-output name=build;]$(
         curl -L -X POST 'https://cloudbuild.googleapis.com/v1/projects/cloud-data-fusion-builds/triggers/e2d27f65-685a-457b-a66f-b686f3a1218d:run'
         -H "Authorization: Bearer $(gcloud auth print-access-token)"
         -H 'Content-Type: application/json' --data-raw '{
@@ -39,4 +51,8 @@ jobs:
                 "_BRANCH_REPLACEMENT": "${{ steps.extract_branch.outputs.branch }}"
             },
             "branchName": "speedup"
-        }'
+        }') | jq -r .metadata.build.id"
+
+    - name: Wait for build
+      run: >
+        gcloud builds log --project cloud-data-fusion-builds --stream ${{ steps.start_build.outputs.build }}
