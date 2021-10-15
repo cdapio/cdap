@@ -69,7 +69,6 @@ import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.store.StoreDefinition;
 import io.cdap.http.HttpHandler;
@@ -136,8 +135,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     txManager.startAndWait();
     TransactionRunner transactionRunner = injector.getInstance(TransactionRunner.class);
     StructuredTableAdmin structuredTableAdmin = injector.getInstance(StructuredTableAdmin.class);
-    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
-    StoreDefinition.createAllTables(structuredTableAdmin, structuredTableRegistry);
+    StoreDefinition.createAllTables(structuredTableAdmin);
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
     TransactionSystemClientService txSystemClientService = new DelegatingTransactionSystemClientService(txSystemClient);
 

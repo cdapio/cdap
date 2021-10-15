@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,17 +14,22 @@
  * the License.
  */
 
-package io.cdap.cdap.spi.data.sql.jdbc;
+package io.cdap.cdap.spi.data.sql;
 
-
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.lang.DirectoryClassLoader;
+import io.cdap.cdap.spi.data.StorageProvider;
+import io.cdap.cdap.spi.data.StorageProviderContext;
+import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.spi.data.sql.jdbc.JDBCDriverShim;
+import io.cdap.cdap.spi.data.sql.jdbc.MetricsDataSource;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import org.apache.commons.dbcp2.ConnectionFactory;
 import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
 import org.apache.commons.dbcp2.PoolableConnection;
@@ -35,6 +40,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
+import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -43,38 +50,63 @@ import java.util.Properties;
 import javax.sql.DataSource;
 
 /**
- * Class to instantiate the {@link DataSource} for the sql related structured table.
+ * A {@link StorageProvider} implementation for using PostgreSQL as the storage engine.
  */
-public class DataSourceProvider implements Provider<DataSource> {
-  private static final Logger LOG = LoggerFactory.getLogger(DataSourceProvider.class);
+public class PostgreSqlStorageProvider implements StorageProvider {
 
-  private final CConfiguration cConf;
-  private final SConfiguration sConf;
-  private final MetricsCollectionService metricsCollectionService;
+  private static final Logger LOG = LoggerFactory.getLogger(PostgreSqlStorageProvider.class);
 
-  private volatile DataSource dataSource;
+  private final DataSource dataSource;
+  private final StructuredTableAdmin admin;
+  private final TransactionRunner txRunner;
 
   @Inject
-  public DataSourceProvider(CConfiguration cConf, SConfiguration sConf,
+  PostgreSqlStorageProvider(CConfiguration cConf, SConfiguration sConf,
                             MetricsCollectionService metricsCollectionService) {
-    this.cConf = cConf;
-    this.sConf = sConf;
-    this.metricsCollectionService = metricsCollectionService;
+    this.dataSource = createDataSource(cConf, sConf, metricsCollectionService);
+    this.admin = new PostgreSqlStructuredTableAdmin(dataSource);
+    this.txRunner = new RetryingSqlTransactionRunner(admin, dataSource, metricsCollectionService, cConf);
   }
 
   @Override
-  public DataSource get() {
-    if (dataSource != null) {
-      return dataSource;
+  public void initialize(StorageProviderContext context) throws Exception {
+    try (Connection connection = dataSource.getConnection()) {
+      // Just to ping the connection and close it to populate the connection pool.
+      connection.isValid(5);
+    } catch (SQLException e) {
+      throw new IOException("Failed to contact database", e);
     }
-    return constructDataSource();
   }
 
-  private synchronized DataSource constructDataSource() {
-    // this is needed to prevent recreation of the DataSource if the get() method is called concurrently
-    if (dataSource != null) {
-      return dataSource;
+  @Override
+  public void close() throws Exception {
+    if (dataSource instanceof AutoCloseable) {
+      ((AutoCloseable) dataSource).close();
     }
+  }
+
+  @Override
+  public String getName() {
+    return Constants.Dataset.DATA_STORAGE_SQL;
+  }
+
+  @Override
+  public StructuredTableAdmin getStructuredTableAdmin() {
+    return admin;
+  }
+
+  @Override
+  public TransactionRunner getTransactionRunner() {
+    return txRunner;
+  }
+
+  /**
+   * Creates a {@link DataSource} for the sql implementation to use. It optionally loads an external JDBC driver
+   * to use with JDBC.
+   */
+  @VisibleForTesting
+  public static DataSource createDataSource(CConfiguration cConf, SConfiguration sConf,
+                                            MetricsCollectionService metricsCollectionService) {
     String storageImpl = cConf.get(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION);
     if (!storageImpl.equals(Constants.Dataset.DATA_STORAGE_SQL)) {
       throw new IllegalArgumentException(String.format("The storage implementation is not %s, cannot create the " +
@@ -82,14 +114,14 @@ public class DataSourceProvider implements Provider<DataSource> {
     }
 
     if (cConf.getBoolean(Constants.Dataset.DATA_STORAGE_SQL_DRIVER_EXTERNAL)) {
-      loadJDBCDriver(storageImpl);
+      loadJDBCDriver(cConf, storageImpl);
     }
 
     String jdbcUrl = cConf.get(Constants.Dataset.DATA_STORAGE_SQL_JDBC_CONNECTION_URL);
     if (jdbcUrl == null) {
       throw new IllegalArgumentException("The jdbc connection url is not specified.");
     }
-    Properties properties = retrieveJDBCConnectionProperties();
+    Properties properties = retrieveJDBCConnectionProperties(cConf, sConf);
     LOG.info("Creating the DataSource with jdbc url: {}", jdbcUrl);
 
     ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(jdbcUrl, properties);
@@ -100,11 +132,10 @@ public class DataSourceProvider implements Provider<DataSource> {
     poolableConnectionFactory.setPool(connectionPool);
     connectionPool.setMaxTotal(cConf.getInt(Constants.Dataset.DATA_STORAGE_SQL_CONNECTION_SIZE));
     PoolingDataSource<PoolableConnection> dataSource = new PoolingDataSource<>(connectionPool);
-    this.dataSource = new MetricsDataSource(dataSource, metricsCollectionService, connectionPool);
-    return this.dataSource;
+    return new MetricsDataSource(dataSource, metricsCollectionService, connectionPool);
   }
 
-  private Properties retrieveJDBCConnectionProperties() {
+  private static Properties retrieveJDBCConnectionProperties(CConfiguration cConf, SConfiguration sConf) {
     Properties properties = new Properties();
     String username = sConf.get(Constants.Dataset.DATA_STORAGE_SQL_USERNAME);
     String password = sConf.get(Constants.Dataset.DATA_STORAGE_SQL_PASSWORD);
@@ -127,7 +158,7 @@ public class DataSourceProvider implements Provider<DataSource> {
     return properties;
   }
 
-  private void loadJDBCDriver(String storageImpl) {
+  private static void loadJDBCDriver(CConfiguration cConf, String storageImpl) {
     String driverExtensionPath = cConf.get(Constants.Dataset.DATA_STORAGE_SQL_DRIVER_DIRECTORY);
     String driverName = cConf.get(Constants.Dataset.DATA_STORAGE_SQL_JDBC_DRIVER_NAME);
     if (driverExtensionPath == null || driverName == null) {

@@ -16,9 +16,13 @@
 
 package io.cdap.cdap.spi.data.nosql;
 
+import com.google.inject.Key;
+import com.google.inject.name.Names;
+import io.cdap.cdap.api.dataset.DatasetDefinition;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistryTest;
+import io.cdap.cdap.spi.data.common.StructuredTableRegistry;
+import io.cdap.cdap.spi.data.common.StructuredTableRegistryTest;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.tephra.TransactionManager;
@@ -31,13 +35,14 @@ import org.junit.ClassRule;
  */
 public class NoSqlStructuredTableRegistryTest extends StructuredTableRegistryTest {
   @ClassRule
-  public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
+  public static final DatasetFrameworkTestUtil DS_FRAMEWORK_UTIL = new DatasetFrameworkTestUtil();
 
   private static TransactionManager txManager;
 
   @Override
   protected StructuredTableRegistry getStructuredTableRegistry() {
-    return dsFrameworkUtil.getInjector().getInstance(NoSqlStructuredTableRegistry.class);
+    return new NoSqlStructuredTableRegistry(DS_FRAMEWORK_UTIL.getInjector().getInstance(
+      Key.get(DatasetDefinition.class, Names.named(Constants.Dataset.TABLE_TYPE_NO_TX))));
   }
 
   @BeforeClass

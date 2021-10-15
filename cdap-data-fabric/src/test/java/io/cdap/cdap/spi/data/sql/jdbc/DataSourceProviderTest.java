@@ -21,6 +21,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.spi.data.sql.PostgreSqlStorageProvider;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -58,8 +59,8 @@ public class DataSourceProviderTest {
 
     SConfiguration sConf = SConfiguration.create();
 
-    DataSourceProvider instantiator = new DataSourceProvider(cConf, sConf, new NoOpMetricsCollectionService());
-    DataSource dataSource = instantiator.get();
+    DataSource dataSource = PostgreSqlStorageProvider.createDataSource(cConf, sConf,
+                                                                       new NoOpMetricsCollectionService());
     Assert.assertNotNull(dataSource);
     Enumeration<Driver> drivers = DriverManager.getDrivers();
     Driver loadedDriver = null;

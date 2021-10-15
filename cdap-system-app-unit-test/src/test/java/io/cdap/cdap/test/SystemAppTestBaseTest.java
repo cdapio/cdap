@@ -52,7 +52,7 @@ public class SystemAppTestBaseTest extends SystemAppTestBase {
   public void testTableOperations() throws Exception {
     StructuredTableAdmin tableAdmin = getStructuredTableAdmin();
     StructuredTableId id = new StructuredTableId("t0");
-    Assert.assertNull(tableAdmin.getSpecification(id));
+    Assert.assertFalse(tableAdmin.exists(id));
 
     String keyCol = "key";
     String valCol = "val";

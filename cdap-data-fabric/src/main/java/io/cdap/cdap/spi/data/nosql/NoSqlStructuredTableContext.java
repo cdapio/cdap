@@ -28,7 +28,6 @@ import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.common.MetricStructuredTable;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.StructuredTableSchema;
-import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -54,23 +53,20 @@ public class NoSqlStructuredTableContext implements StructuredTableContext {
   public StructuredTable getTable(StructuredTableId tableId)
     throws StructuredTableInstantiationException, TableNotFoundException {
     try {
-      StructuredTableSpecification specification = tableAdmin.getSpecification(tableId);
-      if (specification == null) {
-        throw new TableNotFoundException(tableId);
-      }
+      StructuredTableSchema schema = tableAdmin.getSchema(tableId);
 
       Map<String, String> arguments = new HashMap<>();
-      if (specification.getIndexes().isEmpty()) {
+      if (schema.getIndexes().isEmpty()) {
         // No indexes on the table
         arguments.put(IndexedTable.INDEX_COLUMNS_CONF_KEY, "");
         arguments.put(IndexedTable.DYNAMIC_INDEXING_PREFIX, "");
       } else {
-        arguments.put(IndexedTable.INDEX_COLUMNS_CONF_KEY, Joiner.on(",").join(specification.getIndexes()));
+        arguments.put(IndexedTable.INDEX_COLUMNS_CONF_KEY, Joiner.on(",").join(schema.getIndexes()));
         arguments.put(IndexedTable.DYNAMIC_INDEXING_PREFIX, tableId.getName());
       }
       StructuredTable table =
         new NoSqlStructuredTable(datasetContext.getDataset(NoSqlStructuredTableAdmin.ENTITY_TABLE_NAME, arguments),
-                                 new StructuredTableSchema(specification));
+                                 schema);
       return new MetricStructuredTable(tableId, table, metricsCollector, emitTimeMetrics);
     } catch (DatasetInstantiationException e) {
       throw new StructuredTableInstantiationException(

@@ -58,7 +58,6 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.store.StoreDefinition;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
@@ -109,7 +108,6 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   private final ProgramNotificationSubscriberService programNotificationSubscriberService;
   private final LevelDBTableService levelDBTableService;
   private final StructuredTableAdmin structuredTableAdmin;
-  private final StructuredTableRegistry structuredTableRegistry;
   private final Path previewIdDirPath;
 
   @Inject
@@ -127,7 +125,6 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
                        ProgramNotificationSubscriberService programNotificationSubscriberService,
                        LevelDBTableService levelDBTableService,
                        StructuredTableAdmin structuredTableAdmin,
-                       StructuredTableRegistry structuredTableRegistry,
                        CConfiguration cConf) {
     this.messagingService = messagingService;
     this.dsOpExecService = dsOpExecService;
@@ -143,7 +140,6 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     this.programNotificationSubscriberService = programNotificationSubscriberService;
     this.levelDBTableService = levelDBTableService;
     this.structuredTableAdmin = structuredTableAdmin;
-    this.structuredTableRegistry = structuredTableRegistry;
     this.previewIdDirPath = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "previewid").toAbsolutePath();
   }
 
@@ -295,7 +291,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   @Override
   protected void startUp() throws Exception {
     LOG.debug("Starting preview runner service");
-    StoreDefinition.createAllTables(structuredTableAdmin, structuredTableRegistry, false);
+    StoreDefinition.createAllTables(structuredTableAdmin);
     if (messagingService instanceof Service) {
       ((Service) messagingService).startAndWait();
     }

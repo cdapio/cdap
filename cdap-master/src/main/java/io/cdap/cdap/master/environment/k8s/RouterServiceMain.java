@@ -93,9 +93,4 @@ public class RouterServiceMain extends AbstractServiceMain<EnvironmentOptions> {
         Constants.Logging.COMPONENT_NAME,
         Constants.Service.GATEWAY);
   }
-
-  @Override
-  protected void initializeDataSourceConnection(CConfiguration cConf) {
-    // no-op since we don't connect to dataset in router service
-  }
 }

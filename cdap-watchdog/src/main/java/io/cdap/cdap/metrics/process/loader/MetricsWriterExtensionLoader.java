@@ -48,16 +48,6 @@ public class MetricsWriterExtensionLoader extends AbstractExtensionLoader<String
     }
   }
 
-  private static Set<String> createPackageSets(Set<String> resources) {
-    return resources.stream()
-      .map(resource -> {
-        int idx = resource.lastIndexOf("/");
-        return idx < 0 ? "" : resource.substring(0, idx).replace('/', '.');
-      })
-      .filter(s -> !s.isEmpty())
-      .collect(Collectors.toSet());
-  }
-
   @Inject
   public MetricsWriterExtensionLoader(CConfiguration cConf) {
     super(cConf.get(Constants.Metrics.METRICS_WRITER_EXTENSIONS_DIR));

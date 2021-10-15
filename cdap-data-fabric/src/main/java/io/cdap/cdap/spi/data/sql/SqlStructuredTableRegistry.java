@@ -24,8 +24,10 @@ import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
+import io.cdap.cdap.spi.data.TableNotFoundException;
+import io.cdap.cdap.spi.data.common.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
+import io.cdap.cdap.spi.data.table.StructuredTableSchema;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
@@ -61,6 +63,7 @@ public class SqlStructuredTableRegistry implements StructuredTableRegistry {
 
   private final DataSource dataSource;
   private final TransactionRunner transactionRunner;
+  private volatile boolean initialized;
 
   @Inject
   public SqlStructuredTableRegistry(DataSource dataSource) {
@@ -68,12 +71,26 @@ public class SqlStructuredTableRegistry implements StructuredTableRegistry {
     this.transactionRunner = createTransactionRunner();
   }
 
-  @Override
-  public void initialize() throws IOException {
-    createRegistryTable();
+  private void initIfNeeded() {
+    if (initialized) {
+      return;
+    }
+    synchronized (this) {
+      if (initialized) {
+        return;
+      }
+      try {
+        createRegistryTable();
+      } catch (IOException e) {
+        throw new RuntimeException("Failed to create registry table", e);
+      }
+      initialized = true;
+    }
   }
 
+  @Override
   public void registerSpecification(StructuredTableSpecification specification) throws TableAlreadyExistsException {
+    initIfNeeded();
     TransactionRunners.run(transactionRunner, context -> {
       StructuredTable registry = context.getTable(REGISTRY);
       StructuredTableId tableId = specification.getTableId();
@@ -90,8 +107,10 @@ public class SqlStructuredTableRegistry implements StructuredTableRegistry {
     }, TableAlreadyExistsException.class);
   }
 
+  @Override
   @Nullable
   public StructuredTableSpecification getSpecification(StructuredTableId tableId) {
+    initIfNeeded();
     return TransactionRunners.run(transactionRunner, context -> {
       StructuredTable registry = context.getTable(REGISTRY);
       Optional<StructuredRow> optional =
@@ -105,17 +124,21 @@ public class SqlStructuredTableRegistry implements StructuredTableRegistry {
     });
   }
 
+  @Override
   public void removeSpecification(StructuredTableId tableId) {
+    initIfNeeded();
     TransactionRunners.run(transactionRunner, context -> {
       StructuredTable registry = context.getTable(REGISTRY);
       registry.delete(Collections.singleton(Fields.stringField(TABLE_NAME_FIELD, tableId.getName())));
     });
   }
 
+  @Override
   public boolean isEmpty() {
+    initIfNeeded();
     return TransactionRunners.run(transactionRunner, context -> {
       StructuredTable registry = context.getTable(REGISTRY);
-      try (CloseableIterator<StructuredRow> it = registry.scan(Range.all(), Integer.MAX_VALUE)) {
+      try (CloseableIterator<StructuredRow> it = registry.scan(Range.all(), 1)) {
         return !it.hasNext();
       }
     });
@@ -127,13 +150,8 @@ public class SqlStructuredTableRegistry implements StructuredTableRegistry {
     // registry will be called by PostgresSqlStructuredTableAdmin. Since we always check existence before we create
     // the registry table, we can safely return null for the getSpecification method.
     StructuredTableRegistry noOpRegistry = new StructuredTableRegistry() {
-      UnsupportedOperationException exception =
+      final UnsupportedOperationException exception =
         new UnsupportedOperationException("Not expected to be called during creation of registry!");
-
-      @Override
-      public void initialize() {
-        throw exception;
-      }
 
       @Override
       public void registerSpecification(StructuredTableSpecification specification) {
@@ -159,7 +177,7 @@ public class SqlStructuredTableRegistry implements StructuredTableRegistry {
 
     try {
       // Create the table if needed
-      PostgresSqlStructuredTableAdmin admin = new PostgresSqlStructuredTableAdmin(noOpRegistry, dataSource);
+      PostgreSqlStructuredTableAdmin admin = new PostgreSqlStructuredTableAdmin(noOpRegistry, dataSource);
       if (!admin.tableExists(REGISTRY)) {
         LOG.info("Creating SQL table {}", REGISTRY);
         admin.create(SPEC);
@@ -171,24 +189,27 @@ public class SqlStructuredTableRegistry implements StructuredTableRegistry {
   }
 
   private TransactionRunner createTransactionRunner() {
-    UnsupportedOperationException exception =
-      new UnsupportedOperationException("Unexpected DDL operation during registry usage!!");
     // Create a spec admin that only returns the spec for the registry while creating SqlTransactionRunner
     StructuredTableAdmin specAdmin =
       new StructuredTableAdmin() {
         @Override
         public void create(StructuredTableSpecification spec) {
-          throw exception;
+          throw new UnsupportedOperationException("Unexpected DDL operation during registry usage!!");
         }
 
         @Override
-        public StructuredTableSpecification getSpecification(StructuredTableId tableId) {
-          return SPEC;
+        public boolean exists(StructuredTableId tableId) {
+          throw new UnsupportedOperationException("Unexpected DDL operation during registry usage!!");
+        }
+
+        @Override
+        public StructuredTableSchema getSchema(StructuredTableId tableId) throws TableNotFoundException {
+          return new StructuredTableSchema(SPEC);
         }
 
         @Override
         public void drop(StructuredTableId tableId) {
-          throw exception;
+          throw new UnsupportedOperationException("Unexpected DDL operation during registry usage!!");
         }
       };
     // The metrics collection service might not get started at this moment,

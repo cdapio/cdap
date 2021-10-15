@@ -19,9 +19,10 @@ package io.cdap.cdap.store;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import io.cdap.cdap.spi.data.table.field.Fields;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -32,6 +33,8 @@ import java.io.IOException;
  */
 public final class StoreDefinition {
 
+  private static final Logger LOG = LoggerFactory.getLogger(StoreDefinition.class);
+
   private StoreDefinition() {
     // prevent instantiation
   }
@@ -40,40 +43,49 @@ public final class StoreDefinition {
    * Create all system tables. A boolean flag can be used to skip creating tables that already exist.
    *
    * @param tableAdmin the table admin to create the table
-   * @param registry the registry to get initialized
-   * @param overWrite true to create tables no matter the tables exist or not, false to skip tables that already exist
    */
-  public static void createAllTables(StructuredTableAdmin tableAdmin, StructuredTableRegistry registry,
-                                     boolean overWrite) throws IOException, TableAlreadyExistsException {
-    registry.initialize();
-    ArtifactStore.createTables(tableAdmin, overWrite);
-    OwnerStore.createTables(tableAdmin, overWrite);
-    NamespaceStore.createTable(tableAdmin, overWrite);
-    SecretStore.createTable(tableAdmin, overWrite);
-    WorkflowStore.createTables(tableAdmin, overWrite);
-    ConfigStore.createTable(tableAdmin, overWrite);
-    PreferencesStore.createTable(tableAdmin, overWrite);
-    ProvisionerStore.createTable(tableAdmin, overWrite);
-    AppMetadataStore.createTables(tableAdmin, overWrite);
-    ProfileStore.createTables(tableAdmin, overWrite);
-    ProgramScheduleStore.createTables(tableAdmin, overWrite);
-    DatasetInstanceStore.createTables(tableAdmin, overWrite);
-    DatasetTypeStore.createTables(tableAdmin, overWrite);
-    LineageStore.createTable(tableAdmin, overWrite);
-    JobQueueStore.createTables(tableAdmin, overWrite);
-    TimeScheduleStore.createTables(tableAdmin, overWrite);
-    RemoteRuntimeStore.createTables(tableAdmin, overWrite);
-    ProgramHeartbeatStore.createTables(tableAdmin, overWrite);
-    LogCheckpointStore.createTable(tableAdmin, overWrite);
-    UsageStore.createTables(tableAdmin, overWrite);
-    FieldLineageStore.createTables(tableAdmin, overWrite);
-    LogFileMetaStore.createTables(tableAdmin, overWrite);
-    CapabilitiesStore.createTable(tableAdmin, overWrite);
+  public static void createAllTables(StructuredTableAdmin tableAdmin) throws IOException {
+    ArtifactStore.create(tableAdmin);
+    OwnerStore.create(tableAdmin);
+    NamespaceStore.create(tableAdmin);
+    SecretStore.create(tableAdmin);
+    WorkflowStore.create(tableAdmin);
+    ConfigStore.create(tableAdmin);
+    PreferencesStore.create(tableAdmin);
+    ProvisionerStore.create(tableAdmin);
+    AppMetadataStore.create(tableAdmin);
+    ProfileStore.create(tableAdmin);
+    ProgramScheduleStore.create(tableAdmin);
+    DatasetInstanceStore.create(tableAdmin);
+    DatasetTypeStore.create(tableAdmin);
+    LineageStore.create(tableAdmin);
+    JobQueueStore.create(tableAdmin);
+    TimeScheduleStore.create(tableAdmin);
+    RemoteRuntimeStore.create(tableAdmin);
+    ProgramHeartbeatStore.create(tableAdmin);
+    LogCheckpointStore.create(tableAdmin);
+    UsageStore.create(tableAdmin);
+    FieldLineageStore.create(tableAdmin);
+    LogFileMetaStore.create(tableAdmin);
+    CapabilitiesStore.create(tableAdmin);
   }
 
-  public static void createAllTables(StructuredTableAdmin tableAdmin, StructuredTableRegistry registry)
-    throws IOException, TableAlreadyExistsException {
-    createAllTables(tableAdmin, registry, false);
+  /**
+   * Creates a table if it doesn't exists.
+   */
+  private static void createIfNotExists(StructuredTableAdmin admin,
+                                        StructuredTableSpecification spec) throws IOException {
+
+    StructuredTableId tableId = spec.getTableId();
+    try {
+      if (!admin.exists(tableId)) {
+        admin.create(spec);
+      }
+    } catch (TableAlreadyExistsException e) {
+      if (!admin.getSchema(tableId).isCompatible(spec)) {
+        throw new IllegalStateException("Table " + tableId + " already exists with an incompatible schema", e);
+      }
+    }
   }
 
   /**
@@ -93,11 +105,8 @@ public final class StoreDefinition {
         .withPrimaryKeys(NAMESPACE_FIELD)
         .build();
 
-    public static void createTable(StructuredTableAdmin tableAdmin,
-                                   boolean overWrite) throws IOException, TableAlreadyExistsException {
-      if (overWrite || tableAdmin.getSpecification(NAMESPACES) == null) {
-        tableAdmin.create(NAMESPACE_TABLE_SPEC);
-      }
+    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+      createIfNotExists(tableAdmin, NAMESPACE_TABLE_SPEC);
     }
   }
 
@@ -121,11 +130,8 @@ public final class StoreDefinition {
       .withPrimaryKeys(NAMESPACE_FIELD, TYPE_FIELD, NAME_FIELD)
       .build();
 
-    public static void createTable(StructuredTableAdmin tableAdmin,
-                                   boolean overWrite) throws IOException, TableAlreadyExistsException {
-      if (overWrite || tableAdmin.getSpecification(CONFIGS) == null) {
-        tableAdmin.create(CONFIG_TABLE_SPEC);
-      }
+    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+      createIfNotExists(tableAdmin, CONFIG_TABLE_SPEC);
     }
   }
 
@@ -151,11 +157,8 @@ public final class StoreDefinition {
       .withPrimaryKeys(NAMESPACE_FIELD, TYPE_FIELD, NAME_FIELD)
       .build();
 
-    public static void createTable(StructuredTableAdmin tableAdmin,
-                                   boolean overWrite) throws IOException, TableAlreadyExistsException {
-      if (overWrite || tableAdmin.getSpecification(PREFERENCES) == null) {
-        tableAdmin.create(PREFERENCES_TABLE_SPEC);
-      }
+    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+      createIfNotExists(tableAdmin, PREFERENCES_TABLE_SPEC);
     }
   }
 
@@ -187,11 +190,8 @@ public final class StoreDefinition {
       .withPrimaryKeys(NAMESPACE_FIELD, APPLICATION_FIELD, VERSION_FIELD, PROGRAM_FIELD, START_TIME_FIELD)
       .build();
 
-    public static void createTables(StructuredTableAdmin tableAdmin,
-                                    boolean overWrite) throws IOException, TableAlreadyExistsException {
-      if (overWrite || tableAdmin.getSpecification(WORKFLOW_STATISTICS) == null) {
-        tableAdmin.create(WORKFLOW_TABLE_SPEC);
-      }
+    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+      createIfNotExists(tableAdmin, WORKFLOW_TABLE_SPEC);
     }
   }
 
@@ -272,20 +272,11 @@ public final class StoreDefinition {
                          ARTIFACT_NAMESPACE_FIELD, ARTIFACT_NAME_FIELD, ARTIFACT_VER_FIELD)
         .build();
 
-    public static void createTables(StructuredTableAdmin tableAdmin,
-                                    boolean overWrite) throws IOException, TableAlreadyExistsException {
-      if (overWrite || tableAdmin.getSpecification(ARTIFACT_DATA_TABLE) == null) {
-        tableAdmin.create(ARTIFACT_DATA_SPEC);
-      }
-      if (overWrite || tableAdmin.getSpecification(APP_DATA_TABLE) == null) {
-        tableAdmin.create(APP_DATA_SPEC);
-      }
-      if (overWrite || tableAdmin.getSpecification(PLUGIN_DATA_TABLE) == null) {
-        tableAdmin.create(PLUGIN_DATA_SPEC);
-      }
-      if (overWrite || tableAdmin.getSpecification(UNIV_PLUGIN_DATA_TABLE) == null) {
-        tableAdmin.create(UNIV_PLUGIN_DATA_SPEC);
-      }
+    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+      createIfNotExists(tableAdmin, ARTIFACT_DATA_SPEC);
+      createIfNotExists(tableAdmin, APP_DATA_SPEC);
+      createIfNotExists(tableAdmin, PLUGIN_DATA_SPEC);
+      createIfNotExists(tableAdmin, UNIV_PLUGIN_DATA_SPEC);
     }
   }
 
@@ -304,11 +295,8 @@ public final class StoreDefinition {
                     Fields.bytesType(KEYTAB_FIELD))
         .withPrimaryKeys(PRINCIPAL_FIELD).build();
 
-    public static void createTables(StructuredTableAdmin tableAdmin,
-                                    boolean overWrite) throws IOException, TableAlreadyExistsException {
-      if (overWrite || tableAdmin.getSpecification(OWNER_TABLE) == null) {
-        tableAdmin.create(OWNER_TABLE_SPEC);
-      }
+    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+      createIfNotExists(tableAdmin, OWNER_TABLE_SPEC);
     }
   }
 
@@ -330,11 +318,8 @@ public final class StoreDefinition {
       .withPrimaryKeys(NAMESPACE_FIELD, SECRET_NAME_FIELD)
       .build();
 
-    public static void createTable(StructuredTableAdmin tableAdmin,
-                                   boolean overWrite) throws IOException, TableAlreadyExistsException {
-      if (overWrite || tableAdmin.getSpecification(SECRET_STORE_TABLE) == null) {
-        tableAdmin.create(SECRET_STORE_SPEC);
-      }
+    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+      createIfNotExists(tableAdmin, SECRET_STORE_SPEC);
     }
   }
 
@@ -366,11 +351,8 @@ public final class StoreDefinition {
                        PROGRAM_TYPE_FIELD, PROGRAM_FIELD, RUN_FIELD, KEY_TYPE)
       .build();
 
-    public static void createTable(StructuredTableAdmin tableAdmin,
-                                   boolean overWrite) throws IOException, TableAlreadyExistsException {
-      if (overWrite || tableAdmin.getSpecification(PROVISIONER_TABLE) == null) {
-        tableAdmin.create(PROVISIONER_STORE_SPEC);
-      }
+    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+      createIfNotExists(tableAdmin, PROVISIONER_STORE_SPEC);
     }
   }
   /**
@@ -484,26 +466,13 @@ public final class StoreDefinition {
         .withPrimaryKeys(SUBSCRIBER_TOPIC, SUBSCRIBER)
         .build();
 
-    public static void createTables(StructuredTableAdmin tableAdmin,
-                                    boolean overWrite) throws IOException, TableAlreadyExistsException {
-      if (overWrite || tableAdmin.getSpecification(APPLICATION_SPECIFICATIONS) == null) {
-        tableAdmin.create(APPLICATION_SPECIFICATIONS_TABLE_SPEC);
-      }
-      if (overWrite || tableAdmin.getSpecification(WORKFLOW_NODE_STATES) == null) {
-        tableAdmin.create(WORKFLOW_NODE_STATES_SPEC);
-      }
-      if (overWrite || tableAdmin.getSpecification(RUN_RECORDS) == null) {
-        tableAdmin.create(RUN_RECORDS_SPEC);
-      }
-      if (overWrite || tableAdmin.getSpecification(WORKFLOWS) == null) {
-        tableAdmin.create(WORKFLOWS_SPEC);
-      }
-      if (overWrite || tableAdmin.getSpecification(PROGRAM_COUNTS) == null) {
-        tableAdmin.create(PROGRAM_COUNTS_SPEC);
-      }
-      if (overWrite || tableAdmin.getSpecification(SUBSCRIBER_STATES) == null) {
-        tableAdmin.create(SUBSCRIBER_STATE_SPEC);
-      }
+    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+      createIfNotExists(tableAdmin, APPLICATION_SPECIFICATIONS_TABLE_SPEC);
+      createIfNotExists(tableAdmin, WORKFLOW_NODE_STATES_SPEC);
+      createIfNotExists(tableAdmin, RUN_RECORDS_SPEC);
+      createIfNotExists(tableAdmin, WORKFLOWS_SPEC);
+      createIfNotExists(tableAdmin, PROGRAM_COUNTS_SPEC);
+      createIfNotExists(tableAdmin, SUBSCRIBER_STATE_SPEC);
     }
   }
 
@@ -528,11 +497,8 @@ public final class StoreDefinition {
         .withPrimaryKeys(NAMESPACE_FIELD, DATASET_FIELD)
         .build();
 
-    public static void createTables(StructuredTableAdmin tableAdmin,
-                                    boolean overWrite) throws IOException, TableAlreadyExistsException {
-      if (overWrite || tableAdmin.getSpecification(DATASET_INSTANCES) == null) {
-        tableAdmin.create(DATASET_INSTANCES_SPEC);
-      }
+    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+      createIfNotExists(tableAdmin, DATASET_INSTANCES_SPEC);
     }
   }
 
@@ -571,14 +537,9 @@ public final class StoreDefinition {
         .withPrimaryKeys(NAMESPACE_FIELD, PROFILE_ID_FIELD, ENTITY_ID_FIELD)
         .build();
 
-    public static void createTables(StructuredTableAdmin tableAdmin,
-                                    boolean overWrite) throws IOException, TableAlreadyExistsException {
-      if (overWrite || tableAdmin.getSpecification(PROFILE_STORE_TABLE) == null) {
-        tableAdmin.create(PROFILE_STORE_SPEC);
-      }
-      if (overWrite || tableAdmin.getSpecification(PROFILE_ENTITY_STORE_TABLE) == null) {
-        tableAdmin.create(PROFILE_ENTITY_STORE_SPEC);
-      }
+    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+      createIfNotExists(tableAdmin, PROFILE_STORE_SPEC);
+      createIfNotExists(tableAdmin, PROFILE_ENTITY_STORE_SPEC);
     }
   }
 
@@ -629,14 +590,9 @@ public final class StoreDefinition {
         .withIndexes(TRIGGER_KEY)
         .build();
 
-    public static void createTables(StructuredTableAdmin tableAdmin,
-                                    boolean overWrite) throws IOException, TableAlreadyExistsException {
-      if (overWrite || tableAdmin.getSpecification(PROGRAM_SCHEDULE_TABLE) == null) {
-        tableAdmin.create(PROGRAM_SCHEDULE_STORE_SPEC);
-      }
-      if (overWrite || tableAdmin.getSpecification(PROGRAM_TRIGGER_TABLE) == null) {
-        tableAdmin.create(PROGRAM_TRIGGER_STORE_SPEC);
-      }
+    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+      createIfNotExists(tableAdmin, PROGRAM_SCHEDULE_STORE_SPEC);
+      createIfNotExists(tableAdmin, PROGRAM_TRIGGER_STORE_SPEC);
     }
   }
 
@@ -670,14 +626,9 @@ public final class StoreDefinition {
         .withPrimaryKeys(NAMESPACE_FIELD, MODULE_NAME_FIELD)
         .build();
 
-    public static void createTables(StructuredTableAdmin tableAdmin,
-                                    boolean overWrite) throws IOException, TableAlreadyExistsException {
-      if (overWrite || tableAdmin.getSpecification(DATASET_TYPES) == null) {
-        tableAdmin.create(DATASET_TYPES_SPEC);
-      }
-      if (overWrite || tableAdmin.getSpecification(MODULE_TYPES) == null) {
-        tableAdmin.create(MODULE_TYPES_SPEC);
-      }
+    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+      createIfNotExists(tableAdmin, DATASET_TYPES_SPEC);
+      createIfNotExists(tableAdmin, MODULE_TYPES_SPEC);
     }
   }
 
@@ -732,14 +683,9 @@ public final class StoreDefinition {
                        START_TIME_FIELD, NAMESPACE_FIELD, DATASET_FIELD, RUN_FIELD, ACCESS_TYPE_FIELD)
       .build();
 
-    public static void createTable(StructuredTableAdmin tableAdmin,
-                                   boolean overWrite) throws IOException, TableAlreadyExistsException {
-      if (overWrite || tableAdmin.getSpecification(DATASET_LINEAGE_TABLE) == null) {
-        tableAdmin.create(DATASET_LINEAGE_SPEC);
-      }
-      if (overWrite || tableAdmin.getSpecification(PROGRAM_LINEAGE_TABLE) == null) {
-        tableAdmin.create(PROGRAM_LINEAGE_SPEC);
-      }
+    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+      createIfNotExists(tableAdmin, DATASET_LINEAGE_SPEC);
+      createIfNotExists(tableAdmin, PROGRAM_LINEAGE_SPEC);
     }
   }
 
@@ -781,11 +727,8 @@ public final class StoreDefinition {
         .withPrimaryKeys(PARTITION_ID, SCHEDULE_ID, GENERATION_ID, ROW_TYPE)
         .build();
 
-    public static void createTables(StructuredTableAdmin tableAdmin,
-                                    boolean overWrite) throws IOException, TableAlreadyExistsException {
-      if (overWrite || tableAdmin.getSpecification(JOB_QUEUE_TABLE) == null) {
-        tableAdmin.create(JOB_QUEUE_STORE_SPEC);
-      }
+    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+      createIfNotExists(tableAdmin, JOB_QUEUE_STORE_SPEC);
     }
   }
 
@@ -809,11 +752,8 @@ public final class StoreDefinition {
         .withPrimaryKeys(TYPE_FIELD, NAME_FIELD)
         .build();
 
-    public static void createTables(StructuredTableAdmin tableAdmin,
-                                    boolean overWrite) throws IOException, TableAlreadyExistsException {
-      if (overWrite || tableAdmin.getSpecification(SCHEDULES) == null) {
-        tableAdmin.create(SCHEDULES_SPEC);
-      }
+    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+      createIfNotExists(tableAdmin, SCHEDULES_SPEC);
     }
   }
 
@@ -843,11 +783,8 @@ public final class StoreDefinition {
       .withPrimaryKeys(NAMESPACE_FIELD, APPLICATION_FIELD, VERSION_FIELD, PROGRAM_TYPE_FIELD, PROGRAM_FIELD, RUN_FIELD)
       .build();
 
-    public static void createTables(StructuredTableAdmin tableAdmin,
-                                    boolean overWrite) throws IOException, TableAlreadyExistsException {
-      if (overWrite || tableAdmin.getSpecification(RUNTIMES) == null) {
-        tableAdmin.create(RUNTIMES_SPEC);
-      }
+    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+      createIfNotExists(tableAdmin, RUNTIMES_SPEC);
     }
   }
 
@@ -879,11 +816,8 @@ public final class StoreDefinition {
           NAMESPACE_FIELD, TIMESTAMP_SECONDS_FIELD, APPLICATION_FIELD, PROGRAM_TYPE_FIELD, PROGRAM_FIELD, RUN_FIELD)
         .build();
 
-    public static void createTables(StructuredTableAdmin tableAdmin
-      , boolean overWrite) throws IOException, TableAlreadyExistsException {
-      if (overWrite || tableAdmin.getSpecification(ProgramHeartbeatStore.PROGRAM_HEARTBEATS) == null) {
-        tableAdmin.create(PROGRAM_HEARTBEATS_SPEC);
-      }
+    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+      createIfNotExists(tableAdmin, PROGRAM_HEARTBEATS_SPEC);
     }
   }
 
@@ -906,11 +840,8 @@ public final class StoreDefinition {
         .withPrimaryKeys(ROW_PREFIX_FIELD, PARTITION_FIELD)
         .build();
 
-    public static void createTable(StructuredTableAdmin tableAdmin,
-                                   boolean overWrite) throws IOException, TableAlreadyExistsException {
-      if (overWrite || tableAdmin.getSpecification(LOG_CHECKPOINT_TABLE) == null) {
-        tableAdmin.create(LOG_CHECKPOINT_TABLE_SPEC);
-      }
+    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+      createIfNotExists(tableAdmin, LOG_CHECKPOINT_TABLE_SPEC);
     }
   }
 
@@ -939,11 +870,8 @@ public final class StoreDefinition {
       .withIndexes(INDEX_FIELD)
       .build();
 
-    public static void createTables(StructuredTableAdmin tableAdmin,
-                                    boolean overWrite) throws IOException, TableAlreadyExistsException {
-      if (overWrite || tableAdmin.getSpecification(USAGES) == null) {
-        tableAdmin.create(USAGES_SPEC);
-      }
+    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+      createIfNotExists(tableAdmin, USAGES_SPEC);
     }
   }
 
@@ -1012,20 +940,11 @@ public final class StoreDefinition {
                          ENDPOINT_FIELD)
         .build();
 
-    public static void createTables(StructuredTableAdmin tableAdmin,
-                                    boolean overWrite) throws IOException, TableAlreadyExistsException {
-      if (overWrite || tableAdmin.getSpecification(ENDPOINT_CHECKSUM_TABLE) == null) {
-        tableAdmin.create(ENDPOINT_CHECKSUM_SPEC);
-      }
-      if (overWrite || tableAdmin.getSpecification(OPERATIONS_TABLE) == null) {
-        tableAdmin.create(OPERATIONS_SPEC);
-      }
-      if (overWrite || tableAdmin.getSpecification(DESTINATION_FIELDS_TABLE) == null) {
-        tableAdmin.create(DESTINATION_FIELDS_SPEC);
-      }
-      if (overWrite || tableAdmin.getSpecification(SUMMARY_FIELDS_TABLE) == null) {
-        tableAdmin.create(SUMMARY_FIELDS_SPEC);
-      }
+    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+      createIfNotExists(tableAdmin, ENDPOINT_CHECKSUM_SPEC);
+      createIfNotExists(tableAdmin, OPERATIONS_SPEC);
+      createIfNotExists(tableAdmin, DESTINATION_FIELDS_SPEC);
+      createIfNotExists(tableAdmin, SUMMARY_FIELDS_SPEC);
     }
   }
 
@@ -1049,11 +968,8 @@ public final class StoreDefinition {
                     Fields.stringType(FILE_FIELD))
         .withPrimaryKeys(LOGGING_CONTEXT_FIELD, EVENT_TIME_FIELD, CREATION_TIME_FIELD).build();
 
-    public static void createTables(StructuredTableAdmin tableAdmin,
-                                    boolean overWrite) throws IOException, TableAlreadyExistsException {
-      if (overWrite || tableAdmin.getSpecification(LOG_FILE_META) == null) {
-        tableAdmin.create(LOG_FILE_META_SPEC);
-      }
+    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+      createIfNotExists(tableAdmin, LOG_FILE_META_SPEC);
     }
   }
 
@@ -1089,14 +1005,9 @@ public final class StoreDefinition {
         .withPrimaryKeys(NAME_FIELD)
         .build();
 
-    public static void createTable(StructuredTableAdmin tableAdmin,
-                                   boolean overWrite) throws IOException, TableAlreadyExistsException {
-      if (overWrite || tableAdmin.getSpecification(CAPABILITIES) == null) {
-        tableAdmin.create(CAPABILITIES_TABLE_SPEC);
-      }
-      if (overWrite || tableAdmin.getSpecification(CAPABILITY_OPERATIONS) == null) {
-        tableAdmin.create(CAPABILITY_OPERATIONS_TABLE_SPEC);
-      }
+    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+      createIfNotExists(tableAdmin, CAPABILITIES_TABLE_SPEC);
+      createIfNotExists(tableAdmin, CAPABILITY_OPERATIONS_TABLE_SPEC);
     }
   }
 }

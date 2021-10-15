@@ -58,15 +58,15 @@ import javax.annotation.Nullable;
 /**
  * Sql structured table implementation.
  */
-public class PostgresSqlStructuredTable implements StructuredTable {
-  private static final Logger LOG = LoggerFactory.getLogger(PostgresSqlStructuredTable.class);
+public class PostgreSqlStructuredTable implements StructuredTable {
+  private static final Logger LOG = LoggerFactory.getLogger(PostgreSqlStructuredTable.class);
   private static final int SCAN_FETCH_SIZE = 100;
 
   private final Connection connection;
   private final StructuredTableSchema tableSchema;
   private final FieldValidator fieldValidator;
 
-  public PostgresSqlStructuredTable(Connection connection, StructuredTableSchema tableSchema) {
+  public PostgreSqlStructuredTable(Connection connection, StructuredTableSchema tableSchema) {
     this.connection = connection;
     this.tableSchema = tableSchema;
     this.fieldValidator = new FieldValidator(tableSchema);
@@ -582,7 +582,7 @@ public class PostgresSqlStructuredTable implements StructuredTable {
    * @throws SQLException
    */
   private int setFields(PreparedStatement statement, Iterable<? extends Field<?>> fields,
-                           int beginIndex) throws SQLException {
+                        int beginIndex) throws SQLException {
     int index = beginIndex;
     for (Field<?> keyField : fields) {
       setField(statement, keyField, index);
@@ -812,6 +812,9 @@ public class PostgresSqlStructuredTable implements StructuredTable {
     StringBuilder statement =  new StringBuilder("SELECT COUNT(*) FROM ").append(tableSchema.getTableId().getName());
     boolean whereAdded = false;
     for (Range range: ranges) {
+      fieldValidator.validatePrimaryKeys(range.getBegin(), true);
+      fieldValidator.validatePrimaryKeys(range.getEnd(), true);
+
       if (!range.getBegin().isEmpty() || !range.getEnd().isEmpty()) {
         if (!whereAdded) {
           // first WHERE condition

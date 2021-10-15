@@ -19,12 +19,12 @@ package io.cdap.cdap.spi.data.common;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import io.cdap.cdap.spi.data.sql.PostgresInstantiator;
 import io.cdap.cdap.spi.data.sql.SqlStructuredTableRegistry;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
-import org.junit.Assert;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.IOException;
 import javax.sql.DataSource;
 
 /**
@@ -34,17 +34,21 @@ public class SqlCachedStructuredTableRegistryTest extends CachedStructuredTableR
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
+  private static EmbeddedPostgres pg;
   private static StructuredTableRegistry registry;
   private static SqlStructuredTableRegistry sqlRegistry;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    EmbeddedPostgres pg = PostgresInstantiator.createAndStart(TEMP_FOLDER.newFolder());
+    pg = PostgresInstantiator.createAndStart(TEMP_FOLDER.newFolder());
     DataSource dataSource = pg.getPostgresDatabase();
-    // TODO: CDAP-14780 Use injector once JDBC driver is wired up in StorageModule
     sqlRegistry = new SqlStructuredTableRegistry(dataSource);
     registry = new CachedStructuredTableRegistry(sqlRegistry);
-    Assert.assertTrue(registry instanceof CachedStructuredTableRegistry);
+  }
+
+  @AfterClass
+  public static void finish() throws IOException {
+    pg.close();
   }
 
   @Override

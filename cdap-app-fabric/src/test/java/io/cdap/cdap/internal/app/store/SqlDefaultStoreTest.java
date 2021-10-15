@@ -30,10 +30,6 @@ import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.sql.PostgresInstantiator;
-import io.cdap.cdap.spi.data.sql.PostgresSqlStructuredTableAdmin;
-import io.cdap.cdap.spi.data.sql.SqlStructuredTableRegistry;
-import io.cdap.cdap.spi.data.sql.SqlTransactionRunner;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.store.DefaultNamespaceStore;
 import io.cdap.cdap.store.StoreDefinition;
@@ -43,7 +39,6 @@ import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
-import javax.sql.DataSource;
 
 public class SqlDefaultStoreTest extends DefaultStoreTest {
 
@@ -54,17 +49,14 @@ public class SqlDefaultStoreTest extends DefaultStoreTest {
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    Injector injector = AppFabricTestHelper.getInjector();
-    pg = PostgresInstantiator.createAndStart(injector.getInstance(CConfiguration.class), TEMP_FOLDER.newFolder());
-    DataSource dataSource = pg.getPostgresDatabase();
-    StructuredTableRegistry structuredTableRegistry = new SqlStructuredTableRegistry(dataSource);
-    structuredTableRegistry.initialize();
-    StructuredTableAdmin structuredTableAdmin =
-      new PostgresSqlStructuredTableAdmin(structuredTableRegistry, dataSource);
-    TransactionRunner transactionRunner = new SqlTransactionRunner(structuredTableAdmin, dataSource);
-    StoreDefinition.createAllTables(structuredTableAdmin, structuredTableRegistry, true);
+    CConfiguration cConf = CConfiguration.create();
+    pg = PostgresInstantiator.createAndStart(cConf, TEMP_FOLDER.newFolder());
 
+    Injector injector = AppFabricTestHelper.getInjector(cConf);
 
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
+
+    TransactionRunner transactionRunner = injector.getInstance(TransactionRunner.class);
     store = new DefaultStore(transactionRunner);
 
     nsStore = new DefaultNamespaceStore(transactionRunner);

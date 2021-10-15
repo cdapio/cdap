@@ -41,7 +41,6 @@ import io.cdap.cdap.logging.read.LogEvent;
 import io.cdap.cdap.logging.read.LogOffset;
 import io.cdap.cdap.logging.read.ReadRange;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.store.StoreDefinition;
 import io.cdap.cdap.test.SlowTests;
@@ -100,9 +99,7 @@ public class TestDistributedLogReader extends KafkaTestBase {
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
 
-    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
-    structuredTableRegistry.initialize();
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class), structuredTableRegistry);
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
 
     // Generate logs for LOGGING_CONTEXT_BOTH, that contains logs in file, both file and kafka, and only in kafka
     LoggingContextAccessor.setLoggingContext(LOGGING_CONTEXT_BOTH);

@@ -29,7 +29,6 @@ import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.StructuredTableTest;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -61,11 +60,10 @@ public class SqlStructuredTableTest extends StructuredTableTest {
       }
     );
 
-    injector.getInstance(StructuredTableRegistry.class).initialize();
     tableAdmin = injector.getInstance(StructuredTableAdmin.class);
     transactionRunner = injector.getInstance(TransactionRunner.class);
 
-    Assert.assertEquals(PostgresSqlStructuredTableAdmin.class, tableAdmin.getClass());
+    Assert.assertEquals(PostgreSqlStructuredTableAdmin.class, tableAdmin.getClass());
     Assert.assertEquals(RetryingSqlTransactionRunner.class, transactionRunner.getClass());
   }
 
