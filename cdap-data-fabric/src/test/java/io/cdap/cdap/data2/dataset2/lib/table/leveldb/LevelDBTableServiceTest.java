@@ -30,6 +30,9 @@ import io.cdap.cdap.data2.util.TableId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.authorization.AuthorizationTestModule;
+import org.iq80.leveldb.DB;
+import org.iq80.leveldb.DBIterator;
+import org.iq80.leveldb.impl.DbImpl;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -39,6 +42,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
@@ -117,31 +121,68 @@ public class LevelDBTableServiceTest {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
 
-    LevelDBTableService tableService = LevelDBTableService.getInstance();
-
     // Write compressible data to table with compression disabled, then record on-disk size to be used later to
     // compare with that with compression enabled.
+    LevelDBTableService compressedTableService = LevelDBTableService.getInstance();
     cConf.setBoolean(Constants.CFG_DATA_LEVELDB_COMPRESSION_ENABLED, false);
-    tableService.setConfiguration(cConf);
+    compressedTableService.setConfiguration(cConf);
     String tableUncompressed = "cdap_default.tableUncompressed";
     TableId tableUncompressedID = TableId.from("default", "tableUncompressed");
-    tableService.ensureTableExists(tableUncompressed);
+    compressedTableService.ensureTableExists(tableUncompressed);
     // Write large enough number of rows to ensure some data are flushed to disk (e.g. > 4MB)
-    writeSome(tableService, tableUncompressed, 32768, 1024, true);
-    long uncompressedDiskSizeBytes = tableService.getTableStats().get(tableUncompressedID).getDiskSizeBytes();
+    writeSome(compressedTableService, tableUncompressed, 32768, 1024, true);
+    long uncompressedDiskSizeBytes = compressedTableService.getTableStats().get(tableUncompressedID).getDiskSizeBytes();
 
     // Write compressible data to table that enables compression, then record on-disk size, which should be
     // smaller than that with compressed disabled.
+    LevelDBTableService uncompressedTableService = LevelDBTableService.getInstance();
     cConf.setBoolean(Constants.CFG_DATA_LEVELDB_COMPRESSION_ENABLED, true);
-    tableService.setConfiguration(cConf);
+    uncompressedTableService.setConfiguration(cConf);
     String tableCompressed = "cdap_default.tableCompressed";
     TableId tableCompressedID = TableId.from("default", "tableCompressed");
-    tableService.ensureTableExists(tableCompressed);
-    writeSome(tableService, tableCompressed, 32768, 1024, true);
-    long compressedDiskSizeBytes = tableService.getTableStats().get(tableCompressedID).getDiskSizeBytes();
+    uncompressedTableService.ensureTableExists(tableCompressed);
+    writeSome(uncompressedTableService, tableCompressed, 32768, 1024, true);
+    long compressedDiskSizeBytes = uncompressedTableService.getTableStats().get(tableCompressedID).getDiskSizeBytes();
 
     // Ensure on-disk file size is smaller when compression is enabled.
     Assert.assertTrue(uncompressedDiskSizeBytes > compressedDiskSizeBytes);
+  }
+
+  @Test
+  public void testCompactTables() throws Exception {
+    String tableName = "cdap_default.testCompactTables";
+    TableId tableId = TableId.from("default", "testCompactTables");
+    Assert.assertNull(service.getTableStats().get(tableId));
+
+    // Create an empty table and record its disk size.
+    service.ensureTableExists(tableName);
+    long emptyTableDiskSize = service.getTableStats().get(tableId).getDiskSizeBytes();
+
+    // Write some data and compact to disk.
+    DB table = service.getTable(tableName);
+    DbImpl tableImpl = (DbImpl) table;
+    writeSome(service, tableName, 8 * 1024, 1024, false);
+    tableImpl.flushMemTable();
+    service.compact(tableName);
+    LevelDBTableService.TableStats tableStats = service.getTableStats().get(tableId);
+    long tableDiskSize = tableStats.getDiskSizeBytes();
+    Assert.assertTrue(tableDiskSize > emptyTableDiskSize);
+
+    // Wipe the table by deleting all rows, followed by a compaction which should make the table empty again.
+    try (DBIterator iterator = table.iterator()) {
+      iterator.seekToFirst();
+      while (iterator.hasNext()) {
+        Map.Entry<byte[], byte[]> entry = iterator.peekNext();
+        table.delete(entry.getKey());
+        iterator.next();
+      }
+    }
+    tableImpl.flushMemTable();
+    service.compact(tableName);
+    long currentTableDiskSize = service.getTableStats().get(tableId).getDiskSizeBytes();
+
+    // Verify that the table on-disk size is the same as initial size when it is empty.
+    Assert.assertEquals(emptyTableDiskSize, currentTableDiskSize);
   }
 
   private void writeSome(LevelDBTableService service, String tableName,
