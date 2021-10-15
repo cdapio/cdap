@@ -253,6 +253,7 @@
         <stage.operations.ext.dir>${stage.opt.dir}/ext/operations</stage.operations.ext.dir>
         <stage.runtime.providers.ext.dir>${stage.opt.dir}/ext/runtimeproviders</stage.runtime.providers.ext.dir>
         <stage.securestores.ext.dir>${stage.opt.dir}/ext/securestores</stage.securestores.ext.dir>
+        <stage.storage.ext.dir>${stage.opt.dir}/ext/storageproviders</stage.storage.ext.dir>
         <stage.bootstrap.dir>${stage.opt.dir}/bootstrap</stage.bootstrap.dir>
         <stage.capability.dir>${stage.opt.dir}/capability-config</stage.capability.dir>
         <additional.artifacts.jar.pattern>**/target/*.jar</additional.artifacts.jar.pattern>
@@ -343,6 +344,12 @@
         <dependency>
           <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-data-streams3_2.12</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>io.cdap.cdap</groupId>
+          <artifactId>cdap-storage-ext-spanner</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
@@ -717,6 +724,29 @@
                   </resources>
                 </configuration>
               </execution>
+
+              <!-- Copy storage engine extensions -->
+              <execution>
+                <id>copy-storage-ext-spanner</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.storage.ext.dir}/gcp-spanner</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-storage-ext-spanner/target/libexec/
+                      </directory>
+                      <includes>
+                        <include>*.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+
             </executions>
           </plugin>
           <plugin>

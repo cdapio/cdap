@@ -2850,6 +2850,7 @@
         <module>cdap-security-spi</module>
         <module>cdap-security</module>
         <module>cdap-metadata-spi</module>
+        <module>cdap-storage-ext-spanner</module>
         <module>cdap-storage-spi</module>
         <module>cdap-system-app-api</module>
         <module>cdap-system-app-unit-test</module>
