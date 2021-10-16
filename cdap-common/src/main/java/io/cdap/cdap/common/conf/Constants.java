@@ -696,7 +696,7 @@ public final class Constants {
     public static final String AUDIT_LOGGER_NAME = "http-access";
 
     /** Interval in minutes at which CDAP Router reloads cconf */
-    public static final String CCONF_RELOAD_INTERVAL_MINUTES = "router.cconf.reload.interval.minutes";
+    public static final String CCONF_RELOAD_INTERVAL_SECONDS = "router.cconf.reload.interval.seconds";
 
     // To block inbound requests through configuration,
     // Router will start responding to every inbound request with the response (status and message) declared in config

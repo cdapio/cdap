@@ -3751,10 +3751,11 @@
   </property>
 
   <property>
-    <name>router.cconf.reload.interval.minutes</name>
-    <value>10</value>
+    <name>router.cconf.reload.interval.seconds</name>
+    <value>0</value>
     <description>
-      Interval in minutes at which CDAP Router reloads cconf, defaults to 10 minutes
+      Interval in seconds at which CDAP Router reloads cconf,
+      defaults to 0 which means no reloading should happen
     </description>
   </property>
 
