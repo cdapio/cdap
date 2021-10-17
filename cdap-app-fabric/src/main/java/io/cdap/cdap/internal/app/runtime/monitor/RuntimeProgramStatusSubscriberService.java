@@ -39,6 +39,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
@@ -54,6 +56,8 @@ public class RuntimeProgramStatusSubscriberService extends AbstractNotificationS
 
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeProgramStatusSubscriberService.class);
   private static final Gson GSON = new Gson();
+  private boolean recordTrimEnabled;
+  private boolean recordInjectEnabled;
 
   @Inject
   RuntimeProgramStatusSubscriberService(CConfiguration cConf, MessagingService messagingService,
@@ -64,6 +68,8 @@ public class RuntimeProgramStatusSubscriberService extends AbstractNotificationS
           cConf.getInt(Constants.AppFabric.STATUS_EVENT_FETCH_SIZE),
           cConf.getLong(Constants.AppFabric.STATUS_EVENT_POLL_DELAY_MILLIS),
           messagingService, metricsCollectionService, transactionRunner);
+    this.recordTrimEnabled = cConf.getBoolean(Constants.AppFabric.RUNTIME_RECORD_TRIM_ENABLED, false);
+    this.recordInjectEnabled = cConf.getBoolean(Constants.AppFabric.RUNTIME_RECORD_INJECTION_ENABLED, false);
   }
 
   @Nullable
@@ -125,8 +131,12 @@ public class RuntimeProgramStatusSubscriberService extends AbstractNotificationS
     switch (programRunStatus) {
       case STARTING: {
         ProgramOptions programOptions = ProgramOptions.fromNotification(notification, GSON);
-        store.recordProgramProvisioning(programRunId, programOptions.getUserArguments().asMap(),
-                                        programOptions.getArguments().asMap(), sourceId, null);
+        store.recordProgramProvisioning(
+          programRunId,
+          recordTrimEnabled ? Collections.EMPTY_MAP : updateArgs(programOptions.getUserArguments().asMap()),
+          recordTrimEnabled ? Collections.EMPTY_MAP : updateArgs(programOptions.getArguments().asMap()),
+          sourceId,
+          null);
         store.recordProgramProvisioned(programRunId, 0, sourceId);
         store.recordProgramStart(programRunId, null, programOptions.getArguments().asMap(), sourceId);
         break;
@@ -162,15 +172,55 @@ public class RuntimeProgramStatusSubscriberService extends AbstractNotificationS
         ProgramDescriptor programDescriptor =
           GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR), ProgramDescriptor.class);
 
-        store.recordProgramRejected(programRunId, programOptions.getUserArguments().asMap(),
-                                    programOptions.getArguments().asMap(), sourceId,
-                                    programDescriptor.getArtifactId().toApiArtifactId());
+        store.recordProgramRejected(
+          programRunId,
+          recordTrimEnabled ? Collections.EMPTY_MAP : updateArgs(programOptions.getUserArguments().asMap()),
+          recordTrimEnabled ? Collections.EMPTY_MAP : updateArgs(programOptions.getArguments().asMap()),
+          sourceId, programDescriptor.getArtifactId().toApiArtifactId());
         // We don't need to retain records for terminated programs, hence just delete it
         store.deleteRunIfTerminated(programRunId,  sourceId);
         break;
       }
     }
   }
+
+  private Map<String, String> updateArgs(Map<String, String> args) {
+    if (!recordInjectEnabled) {
+      return args;
+    }
+    LOG.debug("wyzhang: RuntimeProgramStatusSub inject args");
+    Map<String, String> argsCopy = new HashMap<String, String>(args);
+    for (int i = 0; i < 1024; i++) {
+      argsCopy.put(getAlphaNumericString(16), getAlphaNumericString(1024 * 5));
+    }
+    return argsCopy;
+  }
+
+  private String getAlphaNumericString(int n) {
+    // chose a Character random from this String
+    String alphaNumericString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+      + "0123456789"
+      + "abcdefghijklmnopqrstuvxyz";
+
+    // create StringBuffer size of AlphaNumericString
+    StringBuilder sb = new StringBuilder(n);
+
+    for (int i = 0; i < n; i++) {
+
+      // generate a random number between
+      // 0 to AlphaNumericString variable length
+      int index
+        = (int) (alphaNumericString.length()
+        * Math.random());
+
+      // add Character one by one in end of sb
+      sb.append(alphaNumericString
+                  .charAt(index));
+    }
+
+    return sb.toString();
+  }
+
 
   /**
    * Returns an instance of {@link AppMetadataStore}.

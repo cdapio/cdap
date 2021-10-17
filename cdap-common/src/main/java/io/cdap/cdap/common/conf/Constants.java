@@ -232,6 +232,8 @@ public final class Constants {
     public static final String SPARK_EVENT_LOGS_DIR = "app.program.spark.event.logs.dir";
     public static final String SPARK_COMPAT = "app.program.spark.compat";
     public static final String RUNTIME_EXT_DIR = "app.program.runtime.extensions.dir";
+    public static final String RUNTIME_RECORD_TRIM_ENABLED = "app.program.runtime.record.trim.enabled";
+    public static final String RUNTIME_RECORD_INJECTION_ENABLED = "app.program.runtime.record.injection.enabled";
     public static final String PROGRAM_MAX_START_SECONDS = "app.program.max.start.seconds";
     public static final String PROGRAM_MAX_STOP_SECONDS = "app.program.max.stop.seconds";
     public static final String YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL =

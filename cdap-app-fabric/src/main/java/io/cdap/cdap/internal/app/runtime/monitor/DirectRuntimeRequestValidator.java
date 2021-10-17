@@ -20,7 +20,6 @@ import com.google.common.base.Objects;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotFoundException;
@@ -34,7 +33,6 @@ import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -44,6 +42,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -58,6 +59,8 @@ public final class DirectRuntimeRequestValidator implements RuntimeRequestValida
   private final LoadingCache<ProgramRunId, Boolean> programRunsCache;
   private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
+  private boolean recordTrimEnabled;
+  private boolean recordInjectionEnabled;
 
   @Inject
   DirectRuntimeRequestValidator(CConfiguration cConf, TransactionRunner txRunner,
@@ -80,6 +83,8 @@ public final class DirectRuntimeRequestValidator implements RuntimeRequestValida
           return isValid(programRunId);
         }
       });
+    this.recordTrimEnabled = cConf.getBoolean(Constants.AppFabric.RUNTIME_RECORD_TRIM_ENABLED, false);
+    this.recordInjectionEnabled = cConf.getBoolean(Constants.AppFabric.RUNTIME_RECORD_INJECTION_ENABLED, false);
   }
 
   @Override
@@ -131,9 +136,13 @@ public final class DirectRuntimeRequestValidator implements RuntimeRequestValida
     try {
       TransactionRunners.run(txRunner, context -> {
         AppMetadataStore store = AppMetadataStore.create(context);
-        store.recordProgramProvisioning(programRunId, runRecord.getUserArgs(), runRecord.getSystemArgs(),
-                                        runRecord.getSourceId(), runRecord.getArtifactId());
-        store.recordProgramProvisioned(programRunId, 1, runRecord.getSourceId());
+        store.recordProgramProvisioning(
+          programRunId,
+          recordTrimEnabled ? Collections.emptyMap() : updateArgs(runRecord.getUserArgs()),
+          recordTrimEnabled ? Collections.emptyMap() : updateArgs(runRecord.getSystemArgs()),
+          runRecord.getSourceId(), runRecord.getArtifactId());
+        store.recordProgramProvisioned(programRunId,
+                                       1, runRecord.getSourceId());
         store.recordProgramStart(programRunId, null, runRecord.getSystemArgs(), runRecord.getSourceId());
         store.recordProgramRunning(programRunId,
                                    Objects.firstNonNull(runRecord.getRunTs(), System.currentTimeMillis()),
@@ -158,5 +167,41 @@ public final class DirectRuntimeRequestValidator implements RuntimeRequestValida
       // Don't throw if failed to update to the store. It doesn't affect normal operation.
       LOG.warn("Failed to update runtime store for program run {} with {}", programRunId, runRecord, e);
     }
+  }
+
+  private Map<String, String> updateArgs(Map<String, String> args) {
+    if (!recordInjectionEnabled) {
+      return args;
+    }
+    LOG.debug("wyzhang: DirectRuntimeRequestValidator inject args");
+    Map<String, String> argsCopy = new HashMap<String, String>(args);
+    for (int i = 0; i < 1024; i++) {
+      argsCopy.put(getAlphaNumericString(16), getAlphaNumericString(1024 * 5));
+    }
+    return argsCopy;
+  }
+
+  private String getAlphaNumericString(int n) {
+    // chose a Character random from this String
+    String alphaNumericString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+      + "0123456789"
+      + "abcdefghijklmnopqrstuvxyz";
+
+    // create StringBuffer size of AlphaNumericString
+    StringBuilder sb = new StringBuilder(n);
+
+    for (int i = 0; i < n; i++) {
+
+      // generate a random number between
+      // 0 to AlphaNumericString variable length
+      int index
+        = (int) (alphaNumericString.length()
+        * Math.random());
+
+      // add Character one by one in end of sb
+      sb.append(alphaNumericString
+                  .charAt(index));
+    }
+    return sb.toString();
   }
 }
