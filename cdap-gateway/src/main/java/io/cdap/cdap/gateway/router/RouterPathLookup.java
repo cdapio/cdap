@@ -19,6 +19,7 @@ package io.cdap.cdap.gateway.router;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.Service;
 import io.cdap.cdap.common.service.ServiceDiscoverable;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.http.AbstractHttpHandler;
@@ -51,6 +52,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
   public static final RouteDestination DATASET_EXECUTOR = new RouteDestination(Constants.Service.DATASET_EXECUTOR);
   public static final RouteDestination MESSAGING = new RouteDestination(Constants.Service.MESSAGING_SERVICE);
   public static final RouteDestination RUNTIME = new RouteDestination(Constants.Service.RUNTIME);
+  public static final RouteDestination SUPPORT_BUNDLE_SERVICE = new RouteDestination(Service.SUPPORT_BUNDLE_SERVICE);
   public static final RouteDestination DONT_ROUTE = new RouteDestination(Constants.Router.DONT_ROUTE_SERVICE);
 
   /**
@@ -173,6 +175,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
         case Constants.Service.METADATA_SERVICE: return METADATA_SERVICE;
         case Constants.Service.EXPLORE_HTTP_USER_SERVICE: return EXPLORE_HTTP_USER_SERVICE;
         case Constants.Service.MESSAGING_SERVICE: return MESSAGING;
+        case Service.SUPPORT_BUNDLE_SERVICE: return SUPPORT_BUNDLE_SERVICE;
         case Constants.Service.RUNTIME: return RUNTIME;
         default: return null;
       }
@@ -190,6 +193,9 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       // /v3/namespaces/{namespace-id}/data/datasets/{name}/properties
       // /v3/namespaces/{namespace-id}/data/datasets/{name}/admin/{method}
       return DATASET_MANAGER;
+    } else if (beginsWith(uriParts, "v3", "support", "bundle")) {
+      //Support Bundle Handler Path /v3/support/bundle
+      return SUPPORT_BUNDLE_SERVICE;
     } else if ((uriParts.length == 3) && uriParts[1].equals("metadata-internals")) {
       // we don't want to expose endpoints for direct metadata mutation from CDAP master
       // /v3/metadata-internals/{mutation-type}

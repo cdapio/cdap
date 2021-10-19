@@ -135,6 +135,7 @@ public final class Constants {
     public static final String SERVICE_INSTANCE_TABLE_NAME = "cdap.services.instances";
     /** Scheduler queue name to submit the master service app. */
     public static final String SCHEDULER_QUEUE = "master.services.scheduler.queue";
+    public static final String SUPPORT_BUNDLE_SERVICE = "support.bundle.service";
     public static final String METADATA_SERVICE = "metadata.service";
     public static final String MASTER_SERVICES_BIND_ADDRESS = "master.services.bind.address";
     public static final String MASTER_SERVICES_ANNOUNCE_ADDRESS = "master.services.announce.address";
@@ -1745,5 +1746,26 @@ public final class Constants {
        */
       public static final String WORKER_SECRET_DISK_PATH = "twill.security.worker.secret.disk.path";
     }
+  }
+
+  /**
+   * Constants for metadata service and metadata migrator
+   */
+  public static final class SupportBundle {
+    public static final String SERVICE_DESCRIPTION = "Service to generate support bundle operations.";
+    public static final String SERVICE_BIND_ADDRESS = "support.bundle.service.bind.address";
+    public static final String SERVICE_BIND_PORT = "support.bundle.service.bind.port";
+    public static final String SERVICE_WORKER_THREADS = "support.bundle.service.worker.threads";
+    public static final String SERVICE_EXEC_THREADS = "support.bundle.service.exec.threads";
+    public static final String SERVICE_MEMORY_MB = "support.bundle.service.memory.mb";
+    public static final String SERVICE_NUM_CORES = "support.bundle.service.num.cores";
+    public static final String HANDLERS_NAME = "support.bundle.handlers";
+    public static final String MAX_FOLDER_SIZE = "support.bundle.max.folder.size";
+    public static final String MAX_RETRY_TIMES = "support.bundle.max.retry.times";
+    public static final String MAX_THREADS = "support.bundle.max.threads";
+    public static final String MAX_THREAD_TIMEOUT = "support.bundle.max.thread.timeout";
+    public static final String MAX_RUNS_PER_NAMESPACE = "support.bundle.max.runs.per.namespace";
+    public static final String DEFAULT_WORKFLOW = "support.bundle.default.workflow";
+    public static final String SUPPORT_BUNDLE_LOCAL_DATA_DIR = "support.bundle.local.data.dir";
   }
 }

@@ -53,6 +53,7 @@ import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.MonitorHandlerModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
+import io.cdap.cdap.app.guice.SupportBundleRuntimeServiceModule;
 import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.preview.PreviewHttpServer;
 import io.cdap.cdap.app.preview.PreviewManager;
@@ -61,6 +62,7 @@ import io.cdap.cdap.app.preview.PreviewRunnerManager;
 import io.cdap.cdap.app.preview.PreviewRunnerManagerModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.SupportBundle;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
@@ -87,6 +89,7 @@ import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.explore.guice.ExploreRuntimeModule;
 import io.cdap.cdap.gateway.handlers.AuthorizationHandler;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
+import io.cdap.cdap.internal.app.services.SupportBundleInternalService;
 import io.cdap.cdap.internal.capability.CapabilityConfig;
 import io.cdap.cdap.internal.capability.CapabilityManagementService;
 import io.cdap.cdap.internal.capability.CapabilityStatus;
@@ -226,6 +229,7 @@ public class TestBase {
   private static FieldLineageAdmin fieldLineageAdmin;
   private static LineageAdmin lineageAdmin;
   private static AppFabricServer appFabricServer;
+  private static SupportBundleInternalService supportBundleInternalService;
   private static PreferencesService preferencesService;
 
   // This list is to record ApplicationManager create inside @Test method
@@ -302,6 +306,7 @@ public class TestBase {
       new PreviewConfigModule(cConf, new Configuration(), SConfiguration.create()),
       new PreviewManagerModule(false),
       new PreviewRunnerManagerModule().getInMemoryModules(),
+      new SupportBundleRuntimeServiceModule().getInMemoryModules(),
       new MockProvisionerModule(),
       new AbstractModule() {
         @Override
@@ -411,6 +416,8 @@ public class TestBase {
     if (scheduler instanceof CoreSchedulerService) {
       ((CoreSchedulerService) scheduler).waitUntilFunctional(10, TimeUnit.SECONDS);
     }
+    supportBundleInternalService = injector.getInstance(SupportBundleInternalService.class);
+    supportBundleInternalService.startAndWait();
   }
 
   /**
@@ -539,6 +546,7 @@ public class TestBase {
     cConf.set(Constants.Explore.SERVER_ADDRESS, localhost);
     cConf.set(Constants.Metadata.SERVICE_BIND_ADDRESS, localhost);
     cConf.set(Constants.Preview.ADDRESS, localhost);
+    cConf.set(SupportBundle.SERVICE_BIND_ADDRESS, localhost);
 
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
@@ -621,6 +629,7 @@ public class TestBase {
       ((Service) messagingService).stopAndWait();
     }
     appFabricServer.stopAndWait();
+    supportBundleInternalService.stopAndWait();
   }
 
   protected MetricsManager getMetricsManager() {

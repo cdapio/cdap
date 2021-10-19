@@ -69,6 +69,11 @@
       <artifactId>cdap-watchdog</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-support-bundle</artifactId>
+      <version>${project.version}</version>
+    </dependency>
     <!-- hive-exec brings old classes from commons-lang3, include it separately if needed for testing -->
     <dependency>
       <groupId>io.cdap.cdap</groupId>

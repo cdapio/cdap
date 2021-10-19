@@ -30,6 +30,7 @@ import io.cdap.cdap.security.server.ExternalAuthenticationServer;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
@@ -115,7 +116,8 @@ public class MasterServiceMainTestBase {
                     LogsServiceMain.class,
                     MetadataServiceMain.class,
                     RuntimeServiceMain.class,
-                    AppFabricServiceMain.class));
+                    AppFabricServiceMain.class,
+                    SupportBundleServiceMain.class));
 
     if (SecurityUtil.isManagedSecurity(cConf)) {
       serviceMainClasses.add(AuthenticationServiceMain.class);

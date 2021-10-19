@@ -4577,4 +4577,113 @@
       The interval (in minutes) that the cleanup service will delete old artifact cache files.
     </description>
   </property>
+
+  <!-- SupportBundle Configuration -->
+
+  <property>
+    <name>support.bundle.service.bind.address</name>
+    <value>0.0.0.0</value>
+    <description>
+      SupportBundle HTTP service bind address
+    </description>
+  </property>
+
+  <property>
+    <name>support.bundle.service.bind.port</name>
+    <value>0</value>
+    <description>
+      SupportBundle HTTP service bind port; if 0, binds to a random port
+    </description>
+  </property>
+
+  <property>
+    <name>support.bundle.local.data.dir</name>
+    <value>${local.data.dir}/support/bundle</value>
+    <description>
+      Data directory for the CDAP Support Bundle service when in CDAP Local Sandbox
+    </description>
+  </property>
+
+  <property>
+    <name>support.bundle.service.exec.threads</name>
+    <value>${http.service.exec.threads}</value>
+    <description>
+      Number of Netty service executor threads for supportBundle HTTP service
+    </description>
+  </property>
+
+  <property>
+    <name>support.bundle.service.worker.threads</name>
+    <value>${http.service.worker.threads}</value>
+    <description>
+      Number of Netty service IO worker threads for supportBundle HTTP service
+    </description>
+  </property>
+
+  <property>
+    <name>support.bundle.service.memory.mb</name>
+    <value>2048</value>
+    <description>
+      Memory in megabytes for support bundle service. This is
+      explicitly set differently than ${master.service.memory.mb}.
+    </description>
+  </property>
+
+  <property>
+    <name>support.bundle.service.num.cores</name>
+    <value>${master.service.num.cores}</value>
+    <description>
+      Number of virtual cores for the support bundle service
+    </description>
+  </property>
+
+  <property>
+    <name>support.bundle.max.folder.size</name>
+    <value>7</value>
+    <description>
+      Number of folder allows for each bundle generated.
+    </description>
+  </property>
+
+  <property>
+    <name>support.bundle.max.retry.times</name>
+    <value>3</value>
+    <description>
+      Number of retries allows for each bundle task processes.
+    </description>
+  </property>
+
+  <property>
+    <name>support.bundle.max.threads</name>
+    <value>5</value>
+    <description>
+      Number of thread allows for support bundle generation.
+    </description>
+  </property>
+
+  <property>
+    <name>support.bundle.max.thread.timeout</name>
+    <value>5</value>
+    <description>
+      Max 5 minutes allows for each thread process.
+    </description>
+  </property>
+
+  <property>
+    <name>support.bundle.default.workflow</name>
+    <value>DataPipelineWorkflow</value>
+    <description>
+      The default workflow name.
+    </description>
+  </property>
+
+  <property>
+    <name>support.bundle.max.runs.per.namespace</name>
+    <value>100</value>
+    <description>
+      Max runs for each namespace.
+    </description>
+  </property>
+
+  <!-- Metrics Configuration -->
 </configuration>
