@@ -3759,6 +3759,15 @@
   </property>
 
   <property>
+    <name>router.cconf.reload.interval.seconds</name>
+    <value>0</value>
+    <description>
+      Interval in seconds at which CDAP Router reloads cconf,
+      defaults to 0 which means no reloading should happen
+    </description>
+  </property>
+
+  <property>
     <name>router.connection.backlog</name>
     <value>20000</value>
     <description>
@@ -4575,6 +4584,32 @@
     <value>60</value>
     <description>
       The interval (in minutes) that the cleanup service will delete old artifact cache files.
+    </description>
+  </property>
+
+  <!-- Default values for Config-based request-blocking -->
+  <property>
+    <name>router.block.request.enabled</name>
+    <value>false</value>
+    <description>
+      Determines whether server should start blocking inbound requests. If true, server would start
+      responding to every request (not router health checks) with response declared in cconf.
+    </description>
+  </property>
+
+  <property>
+    <name>router.block.request.status.code</name>
+    <value>503</value>
+    <description>
+      The status code if request-blocking is enabled.
+    </description>
+  </property>
+
+  <property>
+    <name>router.block.request.message</name>
+    <value></value>
+    <description>
+      The response body if request-blocking is enabled.
     </description>
   </property>
 </configuration>
