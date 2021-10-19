@@ -109,13 +109,16 @@ public class SparkContainerDriverLauncher {
 
     // Copy all the files from config map
     for (File file : new File(CONFIGMAP_FILES_BASE_PATH).listFiles()) {
-      if (!file.isFile()) {
-        continue;
+      if (file.isFile()) {
+        String fileName = file.getName();
+        boolean shouldDecompress = fileName.endsWith(".zip");
+        if (shouldDecompress) {
+          fileName = fileName.substring(0, fileName.lastIndexOf('.'));
+        }
+        copy(file, new File(new File(WORKING_DIRECTORY), fileName), shouldDecompress);
       }
-      String fileName = file.getName();
-      boolean shouldDecompress = !fileName.endsWith(".jar") && !fileName.endsWith(".zip");
-      copy(file, new File(new File(WORKING_DIRECTORY), file.getName()), shouldDecompress);
     }
+
     // TODO: CDAP-18525: remove below line once this jira is fixed
     FileUtils.copyDirectory(new File(WORKING_DIRECTORY), new File(SPARK_LOCAL_DIR));
 
