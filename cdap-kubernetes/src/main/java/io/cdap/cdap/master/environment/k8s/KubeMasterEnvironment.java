@@ -38,7 +38,6 @@ import io.kubernetes.client.openapi.models.V1ContainerBuilder;
 import io.kubernetes.client.openapi.models.V1DownwardAPIVolumeFile;
 import io.kubernetes.client.openapi.models.V1DownwardAPIVolumeSource;
 import io.kubernetes.client.openapi.models.V1EnvVar;
-import io.kubernetes.client.openapi.models.V1KeyToPath;
 import io.kubernetes.client.openapi.models.V1ObjectFieldSelector;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1ObjectMetaBuilder;
@@ -401,8 +400,9 @@ public class KubeMasterEnvironment implements MasterEnvironment {
       V1ConfigMapBuilder configMapBuilder = new V1ConfigMapBuilder();
       // create config map with localize resources
       for (Map.Entry<String, SparkLocalizeResource> resource : sparkSubmitContext.getLocalizeResources().entrySet()) {
-        configMapBuilder.addToBinaryData(resource.getKey(), getContents(resource.getValue().getURI(),
-                                                                        !resource.getValue().isArchive()));
+        String fileName = resource.getValue().isArchive() ? resource.getKey() : resource.getKey() + ".zip";
+        configMapBuilder.addToBinaryData(fileName, getContents(resource.getValue().getURI(),
+                                                               !resource.getValue().isArchive()));
       }
 
       String configMapName = CDAP_CONFIG_MAP_PREFIX + UUID.randomUUID();
