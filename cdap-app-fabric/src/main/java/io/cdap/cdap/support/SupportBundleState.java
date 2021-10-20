@@ -27,18 +27,28 @@ import javax.annotation.Nullable;
  * Support bundle state for handling all assisted parameters inside the task factories
  */
 public class SupportBundleState {
-
+  /** unique support bundle id */
   private String uuid;
+  /** pipeline namespace id */
   private String namespaceId;
+  /** pipeline application id */
   private String appId;
+  /** pipeline run id */
   private String runId;
+  /** support bundle base path */
   private String basePath;
-
+  /** support bundle system log path */
   private String systemLogPath;
+  /** parameter request for num of run log needed from customer */
   private Integer numOfRunLogNeeded;
+  /** pipeline workflow name */
   private String workflowName;
+  /** all the namespace under the pipeline */
   private List<String> namespaceList;
+  /** support bundle job to process all the tasks */
   private SupportBundleJob supportBundleJob;
+  /** support bundle max runs fetch for each namespace */
+  private Integer maxRunsPerNamespace;
 
   public SupportBundleState(SupportBundleConfiguration supportBundleConfiguration) {
     this.appId = supportBundleConfiguration.getAppId();
@@ -125,5 +135,13 @@ public class SupportBundleState {
 
   public void setSupportBundleJob(SupportBundleJob supportBundleJob) {
     this.supportBundleJob = supportBundleJob;
+  }
+
+  public Integer getMaxRunsPerNamespace() {
+    return maxRunsPerNamespace;
+  }
+
+  public void setMaxRunsPerNamespace(Integer maxRunsPerNamespace) {
+    this.maxRunsPerNamespace = maxRunsPerNamespace;
   }
 }

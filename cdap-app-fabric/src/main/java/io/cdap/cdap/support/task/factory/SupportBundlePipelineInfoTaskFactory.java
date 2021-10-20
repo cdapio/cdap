@@ -55,6 +55,7 @@ public class SupportBundlePipelineInfoTaskFactory implements SupportBundleTaskFa
         supportBundleState.getNumOfRunLogNeeded(),
         supportBundleState.getWorkflowName(),
         remoteMetricsSystemClient,
-        supportBundleState.getSupportBundleJob());
+        supportBundleState.getSupportBundleJob(),
+        supportBundleState.getMaxRunsPerNamespace());
   }
 }

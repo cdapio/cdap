@@ -69,7 +69,6 @@ public class SupportBundleSystemLogTask implements SupportBundleTask {
           remoteProgramLogsFetcher.getProgramSystemLog(
               componentId, serviceId, fromMillis / 1000, currentTimeMillis / 1000);
       file.write(systemLog);
-      file.flush();
     }
   }
 }

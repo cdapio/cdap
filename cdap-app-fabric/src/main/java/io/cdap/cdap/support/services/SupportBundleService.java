@@ -24,6 +24,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.namespace.RemoteNamespaceQueryClient;
 import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.support.SupportBundleState;
 import io.cdap.cdap.support.job.SupportBundleJob;
@@ -41,7 +42,11 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -56,7 +61,7 @@ public class SupportBundleService implements Closeable {
 
   private static final Logger LOG = LoggerFactory.getLogger(SupportBundleService.class);
   private static final Gson GSON = new GsonBuilder().create();
-  private final List<SupportBundleTaskFactory> supportBundleTaskFactoryList = new ArrayList<>();
+  private final List<SupportBundleTaskFactory> supportBundleTaskFactoryList;
   private final ExecutorService executorService;
   private final SupportBundleStatus supportBundleStatus;
   private final CConfiguration cConf;
@@ -67,12 +72,12 @@ public class SupportBundleService implements Closeable {
   public SupportBundleService(CConfiguration cConf, SupportBundleStatus supportBundleStatus,
                               SupportBundleSystemLogTaskFactory supportBundleSystemLogTaskFactory,
                               SupportBundlePipelineInfoTaskFactory supportBundlePipelineInfoTaskFactory,
-                              RemoteNamespaceQueryClient namespaceQueryClient) {
+                              RemoteNamespaceQueryClient namespaceQueryClient,
+                              List<SupportBundleTaskFactory> supportBundleTaskFactoryList) {
     this.cConf = cConf;
     this.supportBundleStatus = supportBundleStatus;
     this.namespaceQueryClient = namespaceQueryClient;
-    supportBundleTaskFactoryList.add(supportBundleSystemLogTaskFactory);
-    supportBundleTaskFactoryList.add(supportBundlePipelineInfoTaskFactory);
+    this.supportBundleTaskFactoryList = supportBundleTaskFactoryList;
     this.executorService = Executors.newFixedThreadPool(
         cConf.getInt(Constants.SupportBundle.MAX_THREADS),
         Threads.createDaemonThreadFactory("perform-support-bundle"));
@@ -108,13 +113,18 @@ public class SupportBundleService implements Closeable {
       supportBundleStatus.setParameters(supportBundleConfiguration);
 
       List<String> namespaceList = new ArrayList<>();
+      if (namespaceId == null) {
+        namespaceList.addAll(
+            namespaceQueryClient.list().stream()
+                .map(NamespaceMeta::getName)
+                .collect(Collectors.toList()));
+      } else {
+        namespaceList.add(namespaceId);
+      }
       // Puts all the files under the uuid path
       File baseDirectory = new File(localDir);
-      int fileCount = 1;
       DirUtils.mkdirs(baseDirectory);
-      if (baseDirectory.list() != null && baseDirectory.list().length > 0) {
-        fileCount = baseDirectory.list().length;
-      }
+      int fileCount = DirUtils.list(baseDirectory).size();
 
       // We want to keep consistent number of bundle to provide to customer
       if (fileCount >= folderMaxNumber) {
@@ -122,14 +132,6 @@ public class SupportBundleService implements Closeable {
         deleteOldFolders(oldFilesDirectory);
       }
       DirUtils.mkdirs(basePath);
-      if (namespaceId == null) {
-        namespaceList.addAll(
-            namespaceQueryClient.list().stream()
-                .map(meta -> meta.getName())
-                .collect(Collectors.toList()));
-      } else {
-        namespaceList.add(namespaceId);
-      }
       supportBundleState.setUuid(uuid);
       supportBundleState.setBasePath(basePath.getPath());
       supportBundleState.setNamespaceList(namespaceList);
@@ -153,9 +155,22 @@ public class SupportBundleService implements Closeable {
    * Gets oldest folder from the root directory
    */
   private File getOldestFolder(File baseDirectory) {
-    return DirUtils.listFiles(baseDirectory).stream()
-        .reduce((f1, f2) -> f1.lastModified() < f2.lastModified() ? f1 : f2)
-        .orElse(null);
+    return Collections.min(DirUtils.listFiles(baseDirectory), (f1, f2) -> {
+      SupportBundleStatus supportBundleStatusF1 = getSingleBundleJson(baseDirectory.getPath(), f1);
+      SupportBundleStatus supportBundleStatusF2 = getSingleBundleJson(baseDirectory.getPath(), f2);
+      CollectionState f1Status = supportBundleStatusF1.getStatus();
+      CollectionState f2Status = supportBundleStatusF2.getStatus();
+      if (f1Status.equals(CollectionState.FAILED) && !f2Status.equals(CollectionState.FAILED)) {
+        return -1;
+      } else if (!f1Status.equals(CollectionState.FAILED) && f2Status.equals(
+          CollectionState.FAILED)) {
+        return 1;
+      }
+      if (f1.lastModified() <= f2.lastModified()) {
+        return -1;
+      }
+      return 1;
+    });
   }
 
   /**
@@ -165,7 +180,7 @@ public class SupportBundleService implements Closeable {
     try {
       DirUtils.deleteDirectoryContents(oldFilesDirectory);
     } catch (IOException e) {
-      LOG.warn(String.format("Failed to clean up directory %s", oldFilesDirectory), e);
+      LOG.warn("Failed to clean up directory {}", oldFilesDirectory, e);
     }
   }
 
@@ -183,5 +198,28 @@ public class SupportBundleService implements Closeable {
     } catch (Exception e) {
       LOG.error("Can not update status file ", e);
     }
+  }
+
+  /**
+   * Gets single support bundle status with uuid
+   */
+  public SupportBundleStatus getSingleBundleJson(String baseDirectory, File uuidFile) {
+    SupportBundleStatus supportBundleStatus = new SupportBundleStatus();
+    File singleSupportBundleFile = new File(baseDirectory, uuidFile.getName());
+    File statusFile = new File(singleSupportBundleFile, "status.json");
+    if (statusFile.exists()) {
+      supportBundleStatus = readStatusJson(statusFile);
+    }
+    return supportBundleStatus;
+  }
+
+  private SupportBundleStatus readStatusJson(File statusFile) {
+    SupportBundleStatus supportBundleStatus = new SupportBundleStatus();
+    try (Reader reader = Files.newBufferedReader(statusFile.toPath(), StandardCharsets.UTF_8)) {
+      supportBundleStatus = GSON.fromJson(reader, SupportBundleStatus.class);
+    } catch (Exception e) {
+      LOG.warn("Can not read status file ", e);
+    }
+    return supportBundleStatus;
   }
 }

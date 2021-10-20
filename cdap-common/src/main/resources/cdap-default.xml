@@ -4652,4 +4652,20 @@
       Max 5 minutes allows for each thread process.
     </description>
   </property>
+
+  <property>
+    <name>support.bundle.default.workflow</name>
+    <value>DataPipelineWorkflow</value>
+    <description>
+      The default workflow name.
+    </description>
+  </property>
+
+  <property>
+    <name>support.bundle.max.runs.per.namespace</name>
+    <value>100</value>
+    <description>
+      Max runs for each namespace.
+    </description>
+  </property>
 </configuration>

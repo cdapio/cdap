@@ -22,10 +22,13 @@ import javax.annotation.Nullable;
  * Support bundle configuration for gathering post api parameters
  */
 public class SupportBundleConfiguration {
-
+  /** pipeline namespace id */
   private final String namespaceId;
+  /** pipeline application id */
   private final String appId;
+  /** pipeline workflow name */
   private final String workflowName;
+  /** pipeline run id */
   private final String runId;
   // num of run log customer request for each pipeline run
   private final int numOfRunLog;

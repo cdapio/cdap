@@ -17,13 +17,17 @@
 package io.cdap.cdap.support.handlers;
 
 import com.google.inject.Inject;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.SupportBundle;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.support.services.SupportBundleService;
 import io.cdap.cdap.support.status.SupportBundleConfiguration;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import javax.ws.rs.POST;
@@ -36,15 +40,19 @@ import javax.ws.rs.QueryParam;
 @Path(Constants.Gateway.API_VERSION_3)
 public class SupportBundleHttpHandler extends AbstractAppFabricHttpHandler {
 
+  private static final Logger LOG = LoggerFactory.getLogger(SupportBundleHttpHandler.class);
+  private final CConfiguration cConf;
   private final SupportBundleService supportBundleService;
 
   @Inject
-  SupportBundleHttpHandler(SupportBundleService supportBundleService) {
+  SupportBundleHttpHandler(CConfiguration cConf,
+                           SupportBundleService supportBundleService) {
+    this.cConf = cConf;
     this.supportBundleService = supportBundleService;
   }
 
   /**
-   * Generate the Support Bundle if valid application id, workflow id, and runid are provided.
+   * Trigger the Support Bundle Generation.
    *
    * @param namespaceId  the namespace id
    * @param appId        the app id
@@ -62,12 +70,17 @@ public class SupportBundleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @Nullable @QueryParam("run-id") String runId,
                                   @Nullable @QueryParam("num-run-log") Integer numOfRunLog) {
     // Establishes the support bundle configuration
-    SupportBundleConfiguration supportBundleConfiguration =
-        new SupportBundleConfiguration(
-            namespaceId, appId, runId, workflowName == null ? "DataPipelineWorkflow" : workflowName,
-            numOfRunLog == null ? 1 : numOfRunLog);
-    // Generates support bundle and returns with uuid
-    String uuid = supportBundleService.generateSupportBundle(supportBundleConfiguration);
-    responder.sendString(HttpResponseStatus.OK, uuid);
+    try {
+      SupportBundleConfiguration supportBundleConfiguration =
+          new SupportBundleConfiguration(
+              namespaceId, appId, runId,
+              workflowName == null ? cConf.get(SupportBundle.DEFAULT_WORKFLOW) : workflowName,
+              numOfRunLog == null ? 1 : numOfRunLog);
+      // Generates support bundle and returns with uuid
+      String uuid = supportBundleService.generateSupportBundle(supportBundleConfiguration);
+      responder.sendString(HttpResponseStatus.OK, uuid);
+    } catch (Exception e) {
+      LOG.error("Can not trigger support bundle generation ", e);
+    }
   }
 }

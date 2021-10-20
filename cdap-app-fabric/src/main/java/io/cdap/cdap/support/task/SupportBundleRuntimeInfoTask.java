@@ -47,6 +47,7 @@ public class SupportBundleRuntimeInfoTask implements SupportBundleTask {
   private final RemoteProgramRunRecordsFetcher remoteProgramRunRecordsFetcher;
   private final String workflow;
   private final int numOfRunNeeded;
+  private final int maxRunsPerNamespace;
   private final String appPath;
   private Map<RunRecord, JsonObject> runMetricsMap;
 
@@ -56,13 +57,15 @@ public class SupportBundleRuntimeInfoTask implements SupportBundleTask {
                                       String appId,
                                       RemoteProgramRunRecordsFetcher remoteProgramRunRecordsFetcher,
                                       String workflow,
-                                      int numOfRunNeeded) {
+                                      int numOfRunNeeded,
+                                      int maxRunsPerNamespace) {
     this.namespaceId = namespaceId;
     this.appId = appId;
     this.remoteProgramRunRecordsFetcher = remoteProgramRunRecordsFetcher;
     this.workflow = workflow;
     this.numOfRunNeeded = numOfRunNeeded;
     this.appPath = appPath;
+    this.maxRunsPerNamespace = maxRunsPerNamespace;
   }
 
   public void setRunMetricsMap(Map<RunRecord, JsonObject> runMetricsMap) {
@@ -82,7 +85,6 @@ public class SupportBundleRuntimeInfoTask implements SupportBundleTask {
         jsonObject.addProperty("runtimeArgs", runRecord.getProperties().get("runtimeArgs"));
         jsonObject.add("metrics", runMetricsMap.get(runRecord));
         file.write(gson.toJson(jsonObject));
-        file.flush();
       } catch (Exception e) {
         LOG.warn("Can not write to run info file ", e);
       }
@@ -115,9 +117,10 @@ public class SupportBundleRuntimeInfoTask implements SupportBundleTask {
               .collect(Collectors.toList());
       // Gets the last N runs info
       for (RunRecord runRecord : sortedRunRecordList) {
-        if (runRecordList.size() < numOfRunNeeded) {
-          runRecordList.add(runRecord);
+        if (runRecordList.size() >= numOfRunNeeded || runRecordList.size() >= maxRunsPerNamespace) {
+          break;
         }
+        runRecordList.add(runRecord);
       }
     } catch (Exception e) {
       LOG.warn("Failed to get program runs ", e);

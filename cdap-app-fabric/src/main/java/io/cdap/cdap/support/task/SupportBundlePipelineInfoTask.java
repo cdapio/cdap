@@ -59,6 +59,7 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
   private final String workflowName;
   private final int numOfRunNeeded;
   private final SupportBundleJob supportBundleJob;
+  private final int maxRunsPerNamespace;
 
   @Inject
   public SupportBundlePipelineInfoTask(@Assisted String uuid,
@@ -71,7 +72,8 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
                                        @Assisted int numOfRunNeeded,
                                        @Assisted String workflowName,
                                        RemoteMetricsSystemClient remoteMetricsSystemClient,
-                                       @Assisted SupportBundleJob supportBundleJob) {
+                                       @Assisted SupportBundleJob supportBundleJob,
+                                       @Assisted int maxRunsPerNamespace) {
     this.uuid = uuid;
     this.basePath = basePath;
     this.namespaceList = namespaceList;
@@ -83,6 +85,7 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
     this.workflowName = workflowName;
     this.remoteMetricsSystemClient = remoteMetricsSystemClient;
     this.supportBundleJob = supportBundleJob;
+    this.maxRunsPerNamespace = maxRunsPerNamespace;
   }
 
   public void initializeCollection() {
@@ -101,7 +104,7 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
         }
 
       } catch (Exception e) {
-        LOG.warn(String.format("Can not process the task with namespace %s ", namespaceId), e);
+        LOG.warn("Can not process the task with namespace {} ", namespaceId, e);
       }
 
       for (ApplicationRecord app : apps) {
@@ -113,7 +116,6 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
           FileWriter file = new FileWriter(new File(appFolderPath, appId + ".json"));
           ApplicationDetail applicationDetail = remoteApplicationDetailFetcher.get(applicationId);
           file.write(gson.toJson(applicationDetail));
-          file.flush();
         } catch (Exception e) {
           LOG.warn("Retried three times for this pipeline info generate ", e);
         }
@@ -124,7 +126,8 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
                 appId,
                 remoteProgramRunRecordsFetcher,
                 workflowName,
-                numOfRunNeeded);
+                numOfRunNeeded,
+                maxRunsPerNamespace);
         List<RunRecord> runRecordList = getAllRunRecordDetails(supportBundleRuntimeInfoTask);
         SupportBundlePipelineRunLogTask supportBundlePipelineRunLogTask =
             new SupportBundlePipelineRunLogTask(

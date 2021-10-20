@@ -93,9 +93,8 @@ public class SupportBundlePipelineRunLogTask implements SupportBundleTask {
             remoteProgramLogsFetcher.getProgramRunLogs(
                 programId, runId, fromMillis / 1000, currentTimeMillis / 1000);
         file.write(runLog);
-        file.flush();
       } catch (Exception e) {
-        LOG.warn(String.format("Retried three times for this metrics with run id %s ", runId), e);
+        LOG.warn("Retried three times for this metrics with run id {} ", runId, e);
       }
     }
   }
@@ -118,7 +117,7 @@ public class SupportBundlePipelineRunLogTask implements SupportBundleTask {
                     : DateTime.now().getMillis());
         runMetricsMap.put(runRecord, metrics);
       } catch (Exception e) {
-        LOG.warn(String.format("Retried three times for this metrics with run id %s ", runId), e);
+        LOG.warn("Retried three times for this metrics with run id {} ", runId, e);
       }
     }
     return runMetricsMap;
