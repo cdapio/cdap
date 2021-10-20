@@ -18,7 +18,7 @@
 # This should be run from the CDAP base directory.
 # Before creating the image, cdap-spark-core and cdap-kubernetes must be built:
 #
-# mvn package -P dist,k8s-dist -pl cdap-spark-core3_2.12,cdap-kubernetes -am -DskipTests
+# mvn package -P dist -pl cdap-spark-core3_2.12,cdap-kubernetes -am -DskipTests
 #
 # Then build the image:
 #
