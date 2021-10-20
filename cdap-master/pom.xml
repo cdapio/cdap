@@ -812,7 +812,7 @@
     </profile>
 
     <!--
-      Profile for building master to be use in Kubernetes envirnment.
+      Profile for building master to be use in Kubernetes environment.
       This profile requires the dist profile to be enabled as well
     -->
     <profile>
