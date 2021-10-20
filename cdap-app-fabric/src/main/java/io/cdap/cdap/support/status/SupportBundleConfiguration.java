@@ -44,23 +44,23 @@ public class SupportBundleConfiguration {
     this.workflowName = workflowName;
     this.numOfRunLog = numOfRunLog;
   }
-
+  /** Get pipeline namespace id */
   public String getNamespaceId() {
     return namespaceId;
   }
-
+  /** Get pipeline application id */
   public String getAppId() {
     return appId;
   }
-
+  /** Get pipeline workflow name */
   public String getWorkflowName() {
     return workflowName;
   }
-
+  /** Get pipeline run id */
   public String getRunId() {
     return runId;
   }
-
+  /** Get num of run log needed for each run */
   public Integer getNumOfRunLog() {
     return numOfRunLog;
   }

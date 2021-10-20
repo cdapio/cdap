@@ -18,7 +18,6 @@ package io.cdap.cdap.support.job;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.SupportBundle;
@@ -118,16 +117,19 @@ public class SupportBundleJob {
     for (Future future : futureTasknameMap.keySet()) {
       String previousTaskname = futureTasknameMap.get(future);
       Long currentTime = System.currentTimeMillis();
-      if (currentTime - trackTimeMap.get(previousTaskname) > TimeUnit.MINUTES.toMillis(maxThreadTimeout)) {
-        SupportBundleTaskStatus supportBundleTaskStatus =
-            futureSupportBundleTaskMap.getOrDefault(future, null);
-        if (supportBundleTaskStatus != null) {
-          supportBundleTaskStatus.setFinishTimestamp(System.currentTimeMillis());
-          updateTask(supportBundleTaskStatus, basePath, CollectionState.FAILED);
+      if (trackTimeMap.containsKey(previousTaskname)) {
+        if (currentTime - trackTimeMap.get(previousTaskname) > TimeUnit.MINUTES.toMillis(
+            maxThreadTimeout)) {
+          SupportBundleTaskStatus supportBundleTaskStatus =
+              futureSupportBundleTaskMap.getOrDefault(future, null);
+          if (supportBundleTaskStatus != null) {
+            supportBundleTaskStatus.setFinishTimestamp(System.currentTimeMillis());
+            updateTask(supportBundleTaskStatus, basePath, CollectionState.FAILED);
+          }
+          future.cancel(true);
+          trackTimeMap.remove(previousTaskname);
+          futureSupportBundleTaskMap.remove(future);
         }
-        future.cancel(true);
-        trackTimeMap.remove(previousTaskname);
-        futureSupportBundleTaskMap.remove(future);
       }
     }
     SupportBundleTaskStatus taskStatus = initializeTask(taskName, className);

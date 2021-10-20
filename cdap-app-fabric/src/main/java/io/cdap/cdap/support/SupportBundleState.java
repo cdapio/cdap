@@ -57,90 +57,91 @@ public class SupportBundleState {
     this.numOfRunLogNeeded = supportBundleConfiguration.getNumOfRunLog();
   }
 
+  /** Get support bundle id */
   public String getUuid() {
     return uuid;
   }
-
+  /** Set support bundle id */
   public void setUuid(String uuid) {
     this.uuid = uuid;
   }
-
+  /** Get pipeline namespace id */
   public String getNamespaceId() {
     return namespaceId;
   }
-
+  /** Set pipeline namespace id */
   public void setNamespaceId(@Nullable String namespaceId) {
     this.namespaceId = namespaceId;
   }
-
+  /** Get pipeline Application id */
   public String getAppId() {
     return appId;
   }
-
+  /** Set pipeline Application id */
   public void setAppId(@Nullable String appId) {
     this.appId = appId;
   }
-
+  /** Get pipeline run id */
   public String getRunId() {
     return runId;
   }
-
+  /** Set pipeline run id */
   public void setRunId(@Nullable String runId) {
     this.runId = runId;
   }
-
+  /** Get support bundle base path */
   public String getBasePath() {
     return basePath;
   }
-
+  /** Set support bundle base path */
   public void setBasePath(@Nullable String basePath) {
     this.basePath = basePath;
   }
-
+  /** Get support bundle system log path */
   public String getSystemLogPath() {
     return systemLogPath;
   }
-
+  /** Set support bundle system log path */
   public void setSystemLogPath(@Nullable String systemLogPath) {
     this.systemLogPath = systemLogPath;
   }
-
+  /** Get number of run log needed for each pipeline run */
   public int getNumOfRunLogNeeded() {
     return numOfRunLogNeeded;
   }
-
+  /** Set number of run log needed for each pipeline run */
   public void setNumOfRunLogNeeded(int numOfRunLogNeeded) {
     this.numOfRunLogNeeded = numOfRunLogNeeded;
   }
-
+  /** Get workflow name */
   public String getWorkflowName() {
     return workflowName;
   }
-
+  /** Set workflow name */
   public void setWorkflowName(@Nullable String workflowName) {
     this.workflowName = workflowName;
   }
-
+  /** Get list of namespace */
   public List<String> getNamespaceList() {
     return namespaceList;
   }
-
+  /** Set list of namespace */
   public void setNamespaceList(List<String> namespaceList) {
     this.namespaceList = ImmutableList.copyOf(namespaceList);
   }
-
+  /** Get support bundle job */
   public SupportBundleJob getSupportBundleJob() {
     return supportBundleJob;
   }
-
+  /** Set support bundle job */
   public void setSupportBundleJob(SupportBundleJob supportBundleJob) {
     this.supportBundleJob = supportBundleJob;
   }
-
+  /** Get max runs allowed for each namespace */
   public Integer getMaxRunsPerNamespace() {
     return maxRunsPerNamespace;
   }
-
+  /** Set max runs allowed for each namespace */
   public void setMaxRunsPerNamespace(Integer maxRunsPerNamespace) {
     this.maxRunsPerNamespace = maxRunsPerNamespace;
   }
