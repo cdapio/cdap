@@ -681,6 +681,18 @@ public final class Constants {
 
     public static final String DONT_ROUTE_SERVICE = "dont-route-to-service";
     public static final String AUDIT_LOGGER_NAME = "http-access";
+
+    /** Interval in minutes at which CDAP Router reloads cconf */
+    public static final String CCONF_RELOAD_INTERVAL_SECONDS = "router.cconf.reload.interval.seconds";
+
+    // To block inbound requests through configuration,
+    // Router will start responding to every inbound request with the response (status and message) declared in config
+    /** Property to start/stop blocking requests to the router. Will be blocked if enabled */
+    public static final String BLOCK_REQUEST_ENABLED = "router.block.request.enabled";
+    /** The config name to define the status code for the response */
+    public static final String BLOCK_REQUEST_STATUS_CODE = "router.block.request.status.code";
+    /** The config name to define the response body */
+    public static final String BLOCK_REQUEST_MESSAGE = "router.block.request.message";
   }
 
   /**

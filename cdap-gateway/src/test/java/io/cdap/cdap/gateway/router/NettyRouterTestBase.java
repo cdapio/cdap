@@ -32,10 +32,13 @@ import com.ning.http.client.Request;
 import com.ning.http.client.RequestBuilder;
 import com.ning.http.client.Response;
 import com.ning.http.client.providers.netty.NettyAsyncHttpProvider;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.http.AbstractBodyConsumer;
+import io.cdap.cdap.security.auth.TokenValidator;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.BodyConsumer;
 import io.cdap.http.ChannelPipelineModifier;
@@ -69,6 +72,7 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -529,6 +533,42 @@ public abstract class NettyRouterTestBase {
         System.setProperty("sun.net.http.retryPost", oldValue);
       }
     }
+  }
+
+  @Test
+  public void testConfigReloading() throws Exception {
+    long reloadIntervalSeconds = 10;
+
+    InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
+    TokenValidator successValidator = new SuccessTokenValidator();
+
+    // Configure router with some config-reloading time set
+    CConfiguration cConfSpy1 = Mockito.spy(CConfiguration.create());
+    cConfSpy1.setLong(Constants.Router.CCONF_RELOAD_INTERVAL_SECONDS, reloadIntervalSeconds);
+    cConfSpy1.setInt(Constants.Router.ROUTER_PORT, 0);
+    NettyRouter router1 = new NettyRouter(cConfSpy1, SConfiguration.create(), InetAddress.getLoopbackAddress(),
+                                          new RouterServiceLookup(cConfSpy1, discoveryService, new RouterPathLookup()),
+                                          successValidator,
+                                          new MockAccessTokenIdentityExtractor(successValidator), discoveryService);
+    router1.startAndWait();
+
+    // Configure router with config-reloading time set to 0
+    CConfiguration cConfSpy2 = Mockito.spy(CConfiguration.create());
+    cConfSpy2.setLong(Constants.Router.CCONF_RELOAD_INTERVAL_SECONDS, 0);
+    cConfSpy2.setInt(Constants.Router.ROUTER_PORT, 0);
+    NettyRouter router2 = new NettyRouter(cConfSpy2, SConfiguration.create(), InetAddress.getLoopbackAddress(),
+                                          new RouterServiceLookup(cConfSpy2, discoveryService, new RouterPathLookup()),
+                                          successValidator,
+                                          new MockAccessTokenIdentityExtractor(successValidator), discoveryService);
+    router2.startAndWait();
+
+    // Wait sometime for cConf to reload
+    Thread.sleep(TimeUnit.MILLISECONDS.convert(reloadIntervalSeconds + 2, TimeUnit.SECONDS));
+
+    Mockito.verify(cConfSpy1, Mockito.times(1)).reloadConfiguration();
+    Mockito.verify(cConfSpy2, Mockito.never()).reloadConfiguration();
+    router1.stopAndWait();
+    router2.stopAndWait();
   }
 
   protected HttpURLConnection openURL(URL url) throws Exception {
