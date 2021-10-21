@@ -20,7 +20,6 @@ import com.google.common.base.Objects;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotFoundException;
@@ -34,7 +33,6 @@ import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -44,6 +42,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -131,7 +130,11 @@ public final class DirectRuntimeRequestValidator implements RuntimeRequestValida
     try {
       TransactionRunners.run(txRunner, context -> {
         AppMetadataStore store = AppMetadataStore.create(context);
-        store.recordProgramProvisioning(programRunId, runRecord.getUserArgs(), runRecord.getSystemArgs(),
+        // Strip off user args and trim down system args as runtime only needs the run status for validation purpose.
+        // User and system args could be large and store them in local store can lead to unnecessary storage
+        // and processing overhead.
+        store.recordProgramProvisioning(programRunId, Collections.emptyMap(),
+                                        RuntimeMonitors.trimSystemArgs(runRecord.getSystemArgs()),
                                         runRecord.getSourceId(), runRecord.getArtifactId());
         store.recordProgramProvisioned(programRunId, 1, runRecord.getSourceId());
         store.recordProgramStart(programRunId, null, runRecord.getSystemArgs(), runRecord.getSourceId());
