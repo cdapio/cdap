@@ -26,6 +26,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.services.AbstractNotificationSubscriberService;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.messaging.MessagingService;
@@ -39,6 +40,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
@@ -125,8 +128,12 @@ public class RuntimeProgramStatusSubscriberService extends AbstractNotificationS
     switch (programRunStatus) {
       case STARTING: {
         ProgramOptions programOptions = ProgramOptions.fromNotification(notification, GSON);
-        store.recordProgramProvisioning(programRunId, programOptions.getUserArguments().asMap(),
-                                        programOptions.getArguments().asMap(), sourceId, null);
+        // Strip off user args and trim down system args as runtime only needs the run status for validation purpose.
+        // User and system args could be large and store them in local store can lead to unnecessary storage
+        // and processing overhead.
+        store.recordProgramProvisioning(programRunId, Collections.emptyMap(),
+                                        RuntimeMonitors.trimSystemArgs(programOptions.getArguments().asMap()),
+                                        sourceId, null);
         store.recordProgramProvisioned(programRunId, 0, sourceId);
         store.recordProgramStart(programRunId, null, programOptions.getArguments().asMap(), sourceId);
         break;
@@ -161,10 +168,11 @@ public class RuntimeProgramStatusSubscriberService extends AbstractNotificationS
         ProgramOptions programOptions = ProgramOptions.fromNotification(notification, GSON);
         ProgramDescriptor programDescriptor =
           GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR), ProgramDescriptor.class);
-
-        store.recordProgramRejected(programRunId, programOptions.getUserArguments().asMap(),
-                                    programOptions.getArguments().asMap(), sourceId,
-                                    programDescriptor.getArtifactId().toApiArtifactId());
+        // Strip off user args and trim down system args as runtime only needs the run status for validation purpose.
+        // User and system args could be large and store them in local store can lead to unnecessary storage
+        // and processing overhead.
+        store.recordProgramRejected(programRunId, Collections.emptyMap(), Collections.emptyMap(),
+                                    sourceId, programDescriptor.getArtifactId().toApiArtifactId());
         // We don't need to retain records for terminated programs, hence just delete it
         store.deleteRunIfTerminated(programRunId,  sourceId);
         break;

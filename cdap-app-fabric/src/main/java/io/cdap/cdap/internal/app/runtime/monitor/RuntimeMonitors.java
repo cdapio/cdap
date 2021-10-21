@@ -23,8 +23,10 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RemoteAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
@@ -34,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import java.net.Authenticator;
 import java.net.ProxySelector;
 import java.net.URI;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -135,6 +138,22 @@ public final class RuntimeMonitors {
       Authenticator.setDefault(injector.getInstance(Authenticator.class));
       ProxySelector.setDefault(injector.getInstance(ProxySelector.class));
     }
+  }
+
+  /**
+   * Returns a trimmed system arg map to be used for creating {@link RunRecordDetail}
+   * This is used for removing unnecessary information in system args stored in {@link RunRecordDetail},
+   * thus minimizing its storage and processing overhead.
+   */
+  public static Map<String, String> trimSystemArgs(Map<String, String> args) {
+    Map<String, String> trimmed = new HashMap<>();
+    if (args.containsKey(SystemArguments.PROFILE_NAME)) {
+      trimmed.put(SystemArguments.PROFILE_NAME, args.get(SystemArguments.PROFILE_NAME));
+    }
+    if (args.containsKey(ProgramOptionConstants.PRINCIPAL)) {
+      trimmed.put(ProgramOptionConstants.PRINCIPAL, args.get(ProgramOptionConstants.PRINCIPAL));
+    }
+    return trimmed;
   }
 
   private RuntimeMonitors() {
