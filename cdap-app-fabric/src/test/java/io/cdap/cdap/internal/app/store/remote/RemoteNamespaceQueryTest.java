@@ -85,8 +85,7 @@ public class RemoteNamespaceQueryTest {
     AppFabricTestHelper.shutdown();
   }
 
-  private static void waitForService(DiscoveryServiceClient discoveryService, String discoverableName)
-    throws InterruptedException {
+  private static void waitForService(DiscoveryServiceClient discoveryService, String discoverableName) {
     EndpointStrategy endpointStrategy = new RandomEndpointStrategy(() -> discoveryService.discover(discoverableName));
     Preconditions.checkNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS),
                                "%s service is not up after 5 seconds", discoverableName);
@@ -120,6 +119,6 @@ public class RemoteNamespaceQueryTest {
     Assert.assertEquals(namespaceConfig, resultMeta.getConfig());
 
     namespaceAdmin.delete(namespaceId);
-    Assert.assertTrue(!queryClient.exists(namespaceId));
+    Assert.assertFalse(queryClient.exists(namespaceId));
   }
 }
