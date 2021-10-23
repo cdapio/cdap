@@ -17,6 +17,9 @@
 package io.cdap.cdap.support.module;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
+import com.google.inject.name.Names;
+import io.cdap.cdap.common.conf.Constants.SupportBundle;
 import io.cdap.cdap.support.task.factory.SupportBundlePipelineInfoTaskFactory;
 import io.cdap.cdap.support.task.factory.SupportBundleSystemLogTaskFactory;
 import io.cdap.cdap.support.task.factory.SupportBundleTaskFactory;
@@ -25,8 +28,12 @@ import io.cdap.cdap.support.task.factory.SupportBundleTaskFactory;
  * support bundle module to bind factories
  */
 public class SupportBundleModule extends AbstractModule {
-  public void configure() {
-    bind(SupportBundleTaskFactory.class).to(SupportBundleSystemLogTaskFactory.class);
-    bind(SupportBundleTaskFactory.class).to(SupportBundlePipelineInfoTaskFactory.class);
+
+  @Override
+  protected void configure() {
+    Multibinder<SupportBundleTaskFactory> supportBundleTaskFactoryMultibinder = Multibinder.newSetBinder(
+        binder(), SupportBundleTaskFactory.class, Names.named(SupportBundle.TASK_FACTORY));
+    supportBundleTaskFactoryMultibinder.addBinding().to(SupportBundleSystemLogTaskFactory.class);
+    supportBundleTaskFactoryMultibinder.addBinding().to(SupportBundlePipelineInfoTaskFactory.class);
   }
 }

@@ -1784,7 +1784,8 @@ public final class Constants {
     public static final String MAX_RETRY_TIMES = "support.bundle.max.retry.times";
     public static final String MAX_THREADS = "support.bundle.max.threads";
     public static final String MAX_THREAD_TIMEOUT = "support.bundle.max.thread.timeout";
-    public static final String MAX_RUNS_PER_NAMESPACE = "support.bundle.max.runs.per.namespace";
+    public static final String MAX_RUNS_PER_PIPELINE = "support.bundle.max.runs.per.pipeline";
     public static final String DEFAULT_WORKFLOW = "support.bundle.default.workflow";
+    public static final String TASK_FACTORY = "support.bundle.task.factory";
   }
 }

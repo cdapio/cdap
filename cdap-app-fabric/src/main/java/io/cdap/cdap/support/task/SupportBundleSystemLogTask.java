@@ -20,9 +20,12 @@ import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.logging.gateway.handlers.RemoteProgramLogsFetcher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -32,6 +35,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class SupportBundleSystemLogTask implements SupportBundleTask {
 
+  private static final Logger LOG = LoggerFactory.getLogger(SupportBundleSystemLogTask.class);
   private final String systemLogPath;
   private final RemoteProgramLogsFetcher remoteProgramLogsFetcher;
   private final List<String> serviceList;
@@ -64,11 +68,15 @@ public class SupportBundleSystemLogTask implements SupportBundleTask {
     for (String serviceId : serviceList) {
       long currentTimeMillis = System.currentTimeMillis();
       long fromMillis = currentTimeMillis - TimeUnit.DAYS.toMillis(1);
-      FileWriter file = new FileWriter(new File(systemLogPath, serviceId + "-system-log.txt"));
-      String systemLog =
-          remoteProgramLogsFetcher.getProgramSystemLog(
-              componentId, serviceId, fromMillis / 1000, currentTimeMillis / 1000);
-      file.write(systemLog);
+      try (FileWriter file = new FileWriter(new File(systemLogPath, serviceId + "-system-log.txt"))) {
+        String systemLog =
+            remoteProgramLogsFetcher.getProgramSystemLog(
+                componentId, serviceId, fromMillis / 1000, currentTimeMillis / 1000);
+        file.write(systemLog);
+      } catch (IOException e) {
+        LOG.warn("Can not write system log file with service {} ", serviceId, e);
+        throw new IOException("Can not write system log file ", e);
+      }
     }
   }
 }

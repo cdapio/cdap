@@ -4615,7 +4615,7 @@
 
   <property>
     <name>support.bundle.local.data.dir</name>
-    <value>data</value>
+    <value>${local.data.dir}/support/bundle</value>
     <description>
       Data directory for CDAP Support Bundle Local Sandbox
     </description>
@@ -4662,7 +4662,7 @@
   </property>
 
   <property>
-    <name>support.bundle.max.runs.per.namespace</name>
+    <name>support.bundle.max.runs.per.pipeline</name>
     <value>100</value>
     <description>
       Max runs for each namespace.

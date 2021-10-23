@@ -18,22 +18,31 @@ package io.cdap.cdap.support.task;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
-import io.cdap.cdap.logging.gateway.handlers.RemoteProgramRunRecordsFetcher;
-import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
+import io.cdap.cdap.api.metrics.MetricTimeSeries;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.metadata.RemoteApplicationDetailFetcher;
+import io.cdap.cdap.metrics.process.RemoteMetricsSystemClient;
+import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.RunRecord;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ApplicationId;
+import org.joda.time.DateTime;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Collects pipeline run info
@@ -44,87 +53,101 @@ public class SupportBundleRuntimeInfoTask implements SupportBundleTask {
   private static final Gson gson = new GsonBuilder().create();
   private final String namespaceId;
   private final String appId;
-  private final RemoteProgramRunRecordsFetcher remoteProgramRunRecordsFetcher;
-  private final String workflow;
-  private final int numOfRunNeeded;
-  private final int maxRunsPerNamespace;
+  private final String workflowName;
+  private final RemoteMetricsSystemClient remoteMetricsSystemClient;
   private final String appPath;
-  private Map<RunRecord, JsonObject> runMetricsMap;
+  private final List<RunRecord> runRecordList;
+  private final ApplicationDetail applicationDetail;
 
   @Inject
   public SupportBundleRuntimeInfoTask(String appPath,
                                       String namespaceId,
                                       String appId,
-                                      RemoteProgramRunRecordsFetcher remoteProgramRunRecordsFetcher,
-                                      String workflow,
-                                      int numOfRunNeeded,
-                                      int maxRunsPerNamespace) {
+                                      String workflowName,
+                                      RemoteMetricsSystemClient remoteMetricsSystemClient,
+                                      List<RunRecord> runRecordList,
+                                      ApplicationDetail applicationDetail) {
     this.namespaceId = namespaceId;
     this.appId = appId;
-    this.remoteProgramRunRecordsFetcher = remoteProgramRunRecordsFetcher;
-    this.workflow = workflow;
-    this.numOfRunNeeded = numOfRunNeeded;
+    this.workflowName = workflowName;
     this.appPath = appPath;
-    this.maxRunsPerNamespace = maxRunsPerNamespace;
+    this.remoteMetricsSystemClient = remoteMetricsSystemClient;
+    this.runRecordList = runRecordList;
+    this.applicationDetail = applicationDetail;
   }
 
-  public void setRunMetricsMap(Map<RunRecord, JsonObject> runMetricsMap) {
-    this.runMetricsMap = runMetricsMap;
-  }
-
-  public void initializeCollection() {
-    for (RunRecord runRecord : runMetricsMap.keySet()) {
+  public void initializeCollection() throws Exception {
+    for (RunRecord runRecord : runRecordList) {
       String runId = runRecord.getPid();
-      try {
-        FileWriter file = new FileWriter(new File(appPath, runId + ".json"));
+      try (FileWriter file = new FileWriter(new File(appPath, runId + ".json"))) {
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("status", runRecord.getStatus().toString());
         jsonObject.addProperty("start", runRecord.getStartTs());
         jsonObject.addProperty("end", runRecord.getStopTs());
         jsonObject.addProperty("profileName", runRecord.getProfileId().getProfile());
         jsonObject.addProperty("runtimeArgs", runRecord.getProperties().get("runtimeArgs"));
-        jsonObject.add("metrics", runMetricsMap.get(runRecord));
-        file.write(gson.toJson(jsonObject));
-      } catch (Exception e) {
-        LOG.warn("Can not write to run info file ", e);
+        JsonObject metrics =
+            queryMetrics(
+                runId,
+                applicationDetail.getConfiguration(),
+                runRecord != null ? runRecord.getStartTs() : 0,
+                runRecord != null && runRecord.getStopTs() != null
+                    ? runRecord.getStopTs()
+                    : DateTime.now().getMillis());
+        jsonObject.add("metrics", metrics);
+        gson.toJson(jsonObject, file);
+      } catch (IOException e) {
+        LOG.warn("Can not write file with run {} ", runId, e);
+        throw new IOException("Can not write run info file ", e);
+      } catch (NotFoundException e) {
+        LOG.warn("Can not find run info with run {} ", runId, e);
+        throw new NotFoundException("Can not find run info ", e.getMessage());
       }
     }
   }
 
-  public List<RunRecord> getRunRecords() {
-    return sortRunRecords();
-  }
-
-  private List<RunRecord> sortRunRecords() {
-    List<RunRecord> runRecordList = new ArrayList<>();
+  public JsonObject queryMetrics(String runId, String configuration, long startTs, long stopTs)
+      throws Exception {
+    JsonObject metrics = new JsonObject();
     try {
-      ProgramId programId =
-          new ProgramId(namespaceId, appId, ProgramType.valueOfCategoryName("workflows"), workflow);
-      List<RunRecord> allRunRecordList =
-          remoteProgramRunRecordsFetcher.getProgramRuns(programId, 0, Long.MAX_VALUE, 100);
-
-      List<RunRecord> sortedRunRecordList =
-          allRunRecordList.stream()
-              .filter(run -> run.getStatus().isEndState())
-              .sorted(
-                  Collections.reverseOrder(
-                      (a, b) -> {
-                        if (a.getStartTs() <= b.getStartTs()) {
-                          return 1;
-                        }
-                        return -1;
-                      }))
-              .collect(Collectors.toList());
-      // Gets the last N runs info
-      for (RunRecord runRecord : sortedRunRecordList) {
-        if (runRecordList.size() >= numOfRunNeeded || runRecordList.size() >= maxRunsPerNamespace) {
-          break;
-        }
-        runRecordList.add(runRecord);
+      JSONObject appConf =
+          configuration != null && configuration.length() > 0
+              ? new JSONObject(configuration)
+              : new JSONObject();
+      List<String> metricsList = new ArrayList<>();
+      JSONArray stages = appConf.has("stages") ? appConf.getJSONArray("stages") : new JSONArray();
+      for (int i = 0; i < stages.length(); i++) {
+        JSONObject stageName = stages.getJSONObject(i);
+        metricsList.add(String.format("user.%s.records.out", stageName.getString("name")));
+        metricsList.add(String.format("user.%s.records.in", stageName.getString("name")));
+        metricsList.add(String.format("user.%s.process.time.avg", stageName.getString("name")));
       }
-    } catch (Exception e) {
-      LOG.warn("Failed to get program runs ", e);
+      Map<String, String> queryTags = new HashMap<>();
+      queryTags.put("namespace", namespaceId);
+      queryTags.put("app", appId);
+      queryTags.put("run", runId);
+      queryTags.put("workflow", workflowName);
+      List<MetricTimeSeries> metricTimeSeriesList =
+          new ArrayList<>(remoteMetricsSystemClient.query((int) (startTs - 5000),
+                                                          (int) (stopTs), queryTags, metricsList));
+      for (MetricTimeSeries timeSeries : metricTimeSeriesList) {
+        if (!metrics.has(timeSeries.getMetricName())) {
+          metrics.add(timeSeries.getMetricName(), new JsonArray());
+        }
+        for (TimeValue timeValue : timeSeries.getTimeValues()) {
+          JsonObject time = new JsonObject();
+          time.addProperty("time", timeValue.getTimestamp());
+          time.addProperty("value", timeValue.getValue());
+          metrics.getAsJsonArray(timeSeries.getMetricName()).add(time);
+        }
+      }
+    } catch (IOException e) {
+      LOG.warn("Can not find metrics with run {} ", runId, e);
+      throw new IOException("Can not write run info file", e);
+    } catch (JSONException e) {
+      LOG.warn("JSON format error with run {} ", runId, e);
+      throw new JSONException(e);
     }
-    return runRecordList;
+    return metrics;
   }
 }

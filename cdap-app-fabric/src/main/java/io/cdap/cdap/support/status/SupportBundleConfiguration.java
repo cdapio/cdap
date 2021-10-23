@@ -30,19 +30,19 @@ public class SupportBundleConfiguration {
   private final String workflowName;
   /** pipeline run id */
   private final String runId;
-  // num of run log customer request for each pipeline run
-  private final int numOfRunLog;
+  // max num of run log customer request for each pipeline run
+  private final int maxRunsPerWorkflow;
 
   public SupportBundleConfiguration(@Nullable String namespaceId,
                                     @Nullable String appId,
                                     @Nullable String runId,
                                     @Nullable String workflowName,
-                                    int numOfRunLog) {
+                                    int maxRunsPerWorkflow) {
     this.namespaceId = namespaceId;
     this.appId = appId;
     this.runId = runId;
     this.workflowName = workflowName;
-    this.numOfRunLog = numOfRunLog;
+    this.maxRunsPerWorkflow = maxRunsPerWorkflow;
   }
   /** Get pipeline namespace id */
   public String getNamespaceId() {
@@ -61,7 +61,7 @@ public class SupportBundleConfiguration {
     return runId;
   }
   /** Get num of run log needed for each run */
-  public Integer getNumOfRunLog() {
-    return numOfRunLog;
+  public Integer getMaxRunsPerWorkflow() {
+    return maxRunsPerWorkflow;
   }
 }

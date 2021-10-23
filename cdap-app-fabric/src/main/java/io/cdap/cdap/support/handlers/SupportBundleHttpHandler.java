@@ -54,11 +54,11 @@ public class SupportBundleHttpHandler extends AbstractAppFabricHttpHandler {
   /**
    * Trigger the Support Bundle Generation.
    *
-   * @param namespaceId  the namespace id
-   * @param appId        the app id
-   * @param workflowName the workflow name
-   * @param runId        the runid of the workflow uuid of this support bundle
-   * @param numOfRunLog  the num of run log for each pipeline run do they prefer
+   * @param namespaceId        the namespace id
+   * @param appId              the app id
+   * @param workflowName       the workflow name
+   * @param runId              the runid of the workflow uuid of this support bundle
+   * @param maxRunsPerWorkflow the max num of run log for each workflow do they prefer
    */
   @POST
   @Path("/support/bundle")
@@ -68,19 +68,21 @@ public class SupportBundleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @Nullable @QueryParam("app-id") String appId,
                                   @Nullable @QueryParam("workflow-name") String workflowName,
                                   @Nullable @QueryParam("run-id") String runId,
-                                  @Nullable @QueryParam("num-run-log") Integer numOfRunLog) {
+                                  @Nullable @QueryParam("max-runs-per-workflow")
+                                      Integer maxRunsPerWorkflow) {
     // Establishes the support bundle configuration
     try {
       SupportBundleConfiguration supportBundleConfiguration =
           new SupportBundleConfiguration(
               namespaceId, appId, runId,
               workflowName == null ? cConf.get(SupportBundle.DEFAULT_WORKFLOW) : workflowName,
-              numOfRunLog == null ? 1 : numOfRunLog);
+              maxRunsPerWorkflow == null ? 1 : maxRunsPerWorkflow);
       // Generates support bundle and returns with uuid
       String uuid = supportBundleService.generateSupportBundle(supportBundleConfiguration);
       responder.sendString(HttpResponseStatus.OK, uuid);
     } catch (Exception e) {
       LOG.error("Can not trigger support bundle generation ", e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 }

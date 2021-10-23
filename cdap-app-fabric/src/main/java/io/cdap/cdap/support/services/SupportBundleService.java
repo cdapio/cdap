@@ -19,9 +19,11 @@ package io.cdap.cdap.support.services;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.SupportBundle;
 import io.cdap.cdap.common.namespace.RemoteNamespaceQueryClient;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.proto.NamespaceMeta;
@@ -31,8 +33,6 @@ import io.cdap.cdap.support.job.SupportBundleJob;
 import io.cdap.cdap.support.status.CollectionState;
 import io.cdap.cdap.support.status.SupportBundleConfiguration;
 import io.cdap.cdap.support.status.SupportBundleStatus;
-import io.cdap.cdap.support.task.factory.SupportBundlePipelineInfoTaskFactory;
-import io.cdap.cdap.support.task.factory.SupportBundleSystemLogTaskFactory;
 import io.cdap.cdap.support.task.factory.SupportBundleTaskFactory;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
@@ -46,8 +46,11 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -61,21 +64,18 @@ public class SupportBundleService implements Closeable {
 
   private static final Logger LOG = LoggerFactory.getLogger(SupportBundleService.class);
   private static final Gson GSON = new GsonBuilder().create();
-  private final List<SupportBundleTaskFactory> supportBundleTaskFactoryList;
+  private final Set<SupportBundleTaskFactory> supportBundleTaskFactoryList;
   private final ExecutorService executorService;
-  private final SupportBundleStatus supportBundleStatus;
   private final CConfiguration cConf;
   private final RemoteNamespaceQueryClient namespaceQueryClient;
   private final String localDir;
 
   @Inject
-  public SupportBundleService(CConfiguration cConf, SupportBundleStatus supportBundleStatus,
-                              SupportBundleSystemLogTaskFactory supportBundleSystemLogTaskFactory,
-                              SupportBundlePipelineInfoTaskFactory supportBundlePipelineInfoTaskFactory,
+  public SupportBundleService(CConfiguration cConf,
                               RemoteNamespaceQueryClient namespaceQueryClient,
-                              List<SupportBundleTaskFactory> supportBundleTaskFactoryList) {
+                              @Named(SupportBundle.TASK_FACTORY)
+                                  Set<SupportBundleTaskFactory> supportBundleTaskFactoryList) {
     this.cConf = cConf;
-    this.supportBundleStatus = supportBundleStatus;
     this.namespaceQueryClient = namespaceQueryClient;
     this.supportBundleTaskFactoryList = supportBundleTaskFactoryList;
     this.executorService = Executors.newFixedThreadPool(
@@ -87,7 +87,9 @@ public class SupportBundleService implements Closeable {
   /**
    * Generates support bundle
    */
-  public String generateSupportBundle(SupportBundleConfiguration supportBundleConfiguration) {
+  public String generateSupportBundle(SupportBundleConfiguration supportBundleConfiguration)
+      throws Exception {
+    SupportBundleStatus supportBundleStatus = new SupportBundleStatus();
     String uuid = UUID.randomUUID().toString();
     int folderMaxNumber = cConf.getInt(Constants.SupportBundle.MAX_FOLDER_SIZE);
     File basePath = new File(localDir, uuid);
@@ -99,13 +101,13 @@ public class SupportBundleService implements Closeable {
             supportBundleTaskFactoryList);
     String namespaceId = supportBundleConfiguration.getNamespaceId();
     SupportBundleState supportBundleState = new SupportBundleState(supportBundleConfiguration);
-    try {
-      if (namespaceId != null) {
-        NamespaceId namespace = new NamespaceId(namespaceId);
-        if (!namespaceQueryClient.exists(namespace)) {
-          throw new NamespaceNotFoundException(namespace);
-        }
+    if (namespaceId != null) {
+      NamespaceId namespace = new NamespaceId(namespaceId);
+      if (!namespaceQueryClient.exists(namespace)) {
+        throw new NamespaceNotFoundException(namespace);
       }
+    }
+    try {
       Long startTs = System.currentTimeMillis();
       supportBundleStatus.setBundleId(uuid);
       supportBundleStatus.setStartTimestamp(startTs);
@@ -144,7 +146,7 @@ public class SupportBundleService implements Closeable {
         supportBundleStatus.setStatusDetails(e.getMessage());
         supportBundleStatus.setFinishTimestamp(System.currentTimeMillis());
         if (supportBundleJob != null) {
-          addToStatus(basePath.getPath());
+          addToStatus(supportBundleStatus, basePath.getPath());
         }
       }
     }
@@ -155,22 +157,13 @@ public class SupportBundleService implements Closeable {
    * Gets oldest folder from the root directory
    */
   private File getOldestFolder(File baseDirectory) {
-    return Collections.min(DirUtils.listFiles(baseDirectory), (f1, f2) -> {
-      SupportBundleStatus supportBundleStatusF1 = getSingleBundleJson(baseDirectory.getPath(), f1);
-      SupportBundleStatus supportBundleStatusF2 = getSingleBundleJson(baseDirectory.getPath(), f2);
-      CollectionState f1Status = supportBundleStatusF1.getStatus();
-      CollectionState f2Status = supportBundleStatusF2.getStatus();
-      if (f1Status.equals(CollectionState.FAILED) && !f2Status.equals(CollectionState.FAILED)) {
-        return -1;
-      } else if (!f1Status.equals(CollectionState.FAILED) && f2Status.equals(
-          CollectionState.FAILED)) {
-        return 1;
-      }
-      if (f1.lastModified() <= f2.lastModified()) {
-        return -1;
-      }
-      return 1;
-    });
+    File[] uuidFiles = baseDirectory.listFiles(
+        (dir, name) -> !name.startsWith(".") && !dir.isHidden() && dir.isDirectory());
+    return Collections.min(Arrays.asList(uuidFiles),
+                           Comparator.<File, Boolean>comparing(
+                                   f1 -> getSingleBundleJson(baseDirectory.getPath(), f1).getStatus()
+                                       != CollectionState.FAILED)
+                               .thenComparing(File::lastModified));
   }
 
   /**
@@ -191,9 +184,9 @@ public class SupportBundleService implements Closeable {
   /**
    * Update status file
    */
-  private void addToStatus(String basePath) {
+  private void addToStatus(SupportBundleStatus supportBundleStatus, String basePath) {
     try (FileWriter statusFile = new FileWriter(new File(basePath, "status.json"))) {
-      statusFile.write(GSON.toJson(supportBundleStatus));
+      GSON.toJson(supportBundleStatus, statusFile);
       statusFile.flush();
     } catch (Exception e) {
       LOG.error("Can not update status file ", e);

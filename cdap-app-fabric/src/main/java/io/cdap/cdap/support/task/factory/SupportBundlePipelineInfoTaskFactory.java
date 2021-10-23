@@ -52,10 +52,10 @@ public class SupportBundlePipelineInfoTaskFactory implements SupportBundleTaskFa
         remoteApplicationDetailFetcher,
         remoteProgramRunRecordsFetcher,
         remoteProgramLogsFetcher,
-        supportBundleState.getNumOfRunLogNeeded(),
+        supportBundleState.getMaxRunsPerWorkflow(),
         supportBundleState.getWorkflowName(),
         remoteMetricsSystemClient,
         supportBundleState.getSupportBundleJob(),
-        supportBundleState.getMaxRunsPerNamespace());
+        supportBundleState.getMaxRunsPerPipeline());
   }
 }

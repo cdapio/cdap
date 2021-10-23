@@ -39,22 +39,22 @@ public class SupportBundleState {
   private String basePath;
   /** support bundle system log path */
   private String systemLogPath;
-  /** parameter request for num of run log needed from customer */
-  private Integer numOfRunLogNeeded;
+  /** parameter request for max num of run log needed from customer */
+  private Integer maxRunsPerWorkflow;
   /** pipeline workflow name */
   private String workflowName;
   /** all the namespace under the pipeline */
   private List<String> namespaceList;
   /** support bundle job to process all the tasks */
   private SupportBundleJob supportBundleJob;
-  /** support bundle max runs fetch for each namespace */
-  private Integer maxRunsPerNamespace;
+  /** support bundle max runs fetch for each pipeline */
+  private Integer maxRunsPerPipeline;
 
   public SupportBundleState(SupportBundleConfiguration supportBundleConfiguration) {
     this.appId = supportBundleConfiguration.getAppId();
     this.runId = supportBundleConfiguration.getRunId();
     this.workflowName = supportBundleConfiguration.getWorkflowName();
-    this.numOfRunLogNeeded = supportBundleConfiguration.getNumOfRunLog();
+    this.maxRunsPerWorkflow = supportBundleConfiguration.getMaxRunsPerWorkflow();
   }
 
   /** Get support bundle id */
@@ -105,13 +105,13 @@ public class SupportBundleState {
   public void setSystemLogPath(@Nullable String systemLogPath) {
     this.systemLogPath = systemLogPath;
   }
-  /** Get number of run log needed for each pipeline run */
-  public int getNumOfRunLogNeeded() {
-    return numOfRunLogNeeded;
+  /** Get max number of run log needed for each pipeline run */
+  public int getMaxRunsPerWorkflow() {
+    return maxRunsPerWorkflow;
   }
-  /** Set number of run log needed for each pipeline run */
-  public void setNumOfRunLogNeeded(int numOfRunLogNeeded) {
-    this.numOfRunLogNeeded = numOfRunLogNeeded;
+  /** Set max number of run log needed for each pipeline run */
+  public void setMaxRunsPerWorkflow(int maxRunsPerWorkflow) {
+    this.maxRunsPerWorkflow = maxRunsPerWorkflow;
   }
   /** Get workflow name */
   public String getWorkflowName() {
@@ -137,12 +137,12 @@ public class SupportBundleState {
   public void setSupportBundleJob(SupportBundleJob supportBundleJob) {
     this.supportBundleJob = supportBundleJob;
   }
-  /** Get max runs allowed for each namespace */
-  public Integer getMaxRunsPerNamespace() {
-    return maxRunsPerNamespace;
+  /** Get max runs allowed for each pipeline */
+  public Integer getMaxRunsPerPipeline() {
+    return maxRunsPerPipeline;
   }
-  /** Set max runs allowed for each namespace */
-  public void setMaxRunsPerNamespace(Integer maxRunsPerNamespace) {
-    this.maxRunsPerNamespace = maxRunsPerNamespace;
+  /** Set max runs allowed for each pipeline */
+  public void setMaxRunsPerPipeline(Integer maxRunsPerPipeline) {
+    this.maxRunsPerPipeline = maxRunsPerPipeline;
   }
 }

@@ -126,6 +126,7 @@ import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
 import io.cdap.cdap.security.store.SecureStoreHandler;
 import io.cdap.cdap.support.handlers.SupportBundleHttpHandler;
+import io.cdap.cdap.support.module.SupportBundleModule;
 import io.cdap.http.HttpHandler;
 import org.quartz.SchedulerException;
 import org.quartz.core.JobRunShellFactory;
@@ -141,6 +142,7 @@ import org.quartz.spi.JobStore;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -335,6 +337,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
       bind(CoreSchedulerService.class).in(Scopes.SINGLETON);
       bind(Scheduler.class).to(CoreSchedulerService.class);
+      install(new SupportBundleModule());
       install(new PrivateModule() {
         @Override
         protected void configure() {
@@ -400,6 +403,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       String address = cConf.get(Constants.Service.MASTER_SERVICES_BIND_ADDRESS);
       return Networks.resolve(address, new InetSocketAddress("localhost", 0).getAddress());
     }
+
+
 
     /**
      * Provides a supplier of quartz scheduler so that initialization of the scheduler can be done after guice
