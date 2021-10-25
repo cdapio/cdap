@@ -1735,6 +1735,23 @@ public final class Constants {
   }
 
   /**
+   * Constants for capability management
+   */
+  public static final class Event {
+
+    public static final String PROGRAM_STATUS_POLL_INTERVAL_SECONDS = "event.program.status.poll.interval.seconds";
+
+    public static final String PROGRAM_STATUS_FETCH_SIZE = "event.program.status.fetch.size";
+
+    public static final String INSTANCE_NAME = "event.instance.name";
+
+    public static final String PROJECT_NAME = "event.project.name";
+
+    public static final String PUBLISH_ENABLED = "event.publish.enabled";
+
+  }
+
+  /**
    * Constants for Twill.
    */
   public static final class Twill {

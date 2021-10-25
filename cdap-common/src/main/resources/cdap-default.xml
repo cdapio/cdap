@@ -4358,6 +4358,31 @@
     </description>
   </property>
 
+  <!-- event publisher -->
+  <property>
+    <name>event.program.status.poll.interval.seconds</name>
+    <value>1</value>
+    <description>
+      Interval at which program status is polled for event publishing
+    </description>
+  </property>
+
+  <property>
+    <name>event.program.status.fetch.size</name>
+    <value>100</value>
+    <description>
+      Number of program status messages fetched at a time
+    </description>
+  </property>
+
+  <property>
+    <name>event.publish.enabled</name>
+    <value>false</value>
+    <description>
+      Enable event publish in CDAP
+    </description>
+  </property>
+
   <!-- Spark on k8s  -->
   <property>
     <name>driver.artifact.fetcher.bind.address</name>
