@@ -39,6 +39,8 @@ import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.security.AuthEnforce;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.master.environment.MasterEnvironments;
+import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.proto.NamespaceConfig;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
@@ -183,6 +185,12 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
         storageProviderNamespaceAdmin.get().create(metadata);
         return null;
       });
+
+      // if needed, run master environment specific logic
+      MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
+      if (masterEnv != null) {
+        masterEnv.onNamespaceCreation(namespace.getNamespace(), metadata.getConfig().getConfigs());
+      }
     } catch (Throwable t) {
       // failed to create namespace in underlying storage so delete the namespace meta stored in the store earlier
       deleteNamespaceMeta(metadata.getNamespaceId());
@@ -275,6 +283,12 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
 
     LOG.info("Deleting namespace '{}'.", namespaceId);
     try {
+      // if needed, run master environment specific logic if it is a non-default namespace (see below for more info)
+      MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
+      if (masterEnv != null && !NamespaceId.DEFAULT.equals(namespaceId)) {
+        masterEnv.onNamespaceDeletion(namespaceId.getNamespace(), namespaceMeta.getConfig().getConfigs());
+      }
+
       resourceDeleter.get().deleteResources(namespaceMeta);
 
       // Delete the namespace itself, only if it is a non-default namespace. This is because we do not allow users to
