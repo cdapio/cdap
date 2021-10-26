@@ -37,6 +37,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -60,6 +61,15 @@ public class DataprocJobMain {
    * @throws Exception any exception while running the job
    */
   public static void main(String[] args) throws Exception {
+    LOG.error("Java version is {}", System.getProperty("java.version"));
+    LOG.error("Classpath is {}", System.getProperty("java.class.path"));
+    LOG.error("User dir is {}", System.getProperty("user.dir"));
+    LOG.error("This class is from {}",
+              DataprocJobMain.class.getClassLoader()
+                .getResource(DataprocJobMain.class.getName().replace(".", "/") + ".class"));
+
+
+
     Map<String, Collection<String>> arguments = fromPosixArray(args);
 
     if (!arguments.containsKey(RUNTIME_JOB_CLASS)) {
@@ -166,8 +176,7 @@ public class DataprocJobMain {
    * expanded.twill.jar/classes
    *
    */
-  private static URL[] getClasspath(URLClassLoader cl, List<String> jarFiles) throws IOException {
-    URL[] urls = cl.getURLs();
+  private static URL[] getClasspath(ClassLoader cl, List<String> jarFiles) throws IOException {
     List<URL> urlList = new ArrayList<>();
     for (String file : jarFiles) {
       File jarDir = new File(file);
@@ -179,7 +188,9 @@ public class DataprocJobMain {
       urlList.addAll(createClassPathURLs(jarDir));
     }
 
-    urlList.addAll(Arrays.asList(urls));
+    if (cl instanceof URLClassLoader) {
+      urlList.addAll(Arrays.asList(((URLClassLoader) cl).getURLs()));
+    }
     return urlList.toArray(new URL[0]);
   }
 
@@ -267,9 +278,19 @@ public class DataprocJobMain {
   /**
    * Creates a {@link ClassLoader} for the the job execution.
    */
-  private static ClassLoader createContainerClassLoader(URL[] classpath) {
+  private static ClassLoader createContainerClassLoader(URL[] classpath) throws IOException {
     String containerClassLoaderName = System.getProperty(Constants.TWILL_CONTAINER_CLASSLOADER);
-    URLClassLoader classLoader = new URLClassLoader(classpath, DataprocJobMain.class.getClassLoader().getParent());
+    ClassLoader parent = DataprocJobMain.class.getClassLoader().getParent();
+    parent = Optional.ofNullable(parent).map(ClassLoader::getParent).orElse(null);
+
+    List<URL> urls = new ArrayList<>(Arrays.asList(classpath));
+    addSystemClassPath(urls);
+
+    URL[] classpathURLs = urls.toArray(new URL[0]);
+    Arrays.stream(classpathURLs).forEach(url -> LOG.error("final Classpath URL: {}", url));
+
+    ClassLoader classLoader = new URLClassLoader(classpathURLs, parent);
+
     if (containerClassLoaderName == null) {
       return classLoader;
     }
@@ -279,7 +300,7 @@ public class DataprocJobMain {
       Class<? extends ClassLoader> cls = (Class<? extends ClassLoader>) classLoader.loadClass(containerClassLoaderName);
 
       // Instantiate with constructor (URL[] classpath, ClassLoader parentClassLoader)
-      return cls.getConstructor(URL[].class, ClassLoader.class).newInstance(classpath, classLoader.getParent());
+      return cls.getConstructor(URL[].class, ClassLoader.class).newInstance(classpathURLs, parent);
     } catch (ClassNotFoundException e) {
       throw new RuntimeException("Failed to load container class loader class " + containerClassLoaderName, e);
     } catch (NoSuchMethodException e) {
@@ -287,6 +308,22 @@ public class DataprocJobMain {
                                    "parameters (URL[] classpath, ClassLoader parent)", e);
     } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
       throw new RuntimeException("Failed to create container class loader of class " + containerClassLoaderName, e);
+    }
+  }
+
+  private static void addSystemClassPath(Collection<URL> urls) throws MalformedURLException {
+    for (String path : System.getProperty("java.class.path").split(File.pathSeparator)) {
+      if (path.endsWith("*")) {
+        File[] jarFiles = new File(path.substring(0, path.length() - 2))
+          .listFiles(f -> f.isFile() && f.getName().endsWith(".jar"));
+        if (jarFiles != null) {
+          for (File f : jarFiles) {
+            urls.add(f.toURI().toURL());
+          }
+        }
+      } else {
+        urls.add(new File(path).toURI().toURL());
+      }
     }
   }
 }

@@ -22,7 +22,12 @@ import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.WriteChannel;
-import com.google.cloud.dataproc.v1.GetJobRequest;
+import com.google.cloud.dataproc.v1.Batch;
+import com.google.cloud.dataproc.v1.BatchControllerClient;
+import com.google.cloud.dataproc.v1.BatchControllerSettings;
+import com.google.cloud.dataproc.v1.CreateBatchRequest;
+import com.google.cloud.dataproc.v1.EnvironmentConfig;
+import com.google.cloud.dataproc.v1.ExecutionConfig;
 import com.google.cloud.dataproc.v1.HadoopJob;
 import com.google.cloud.dataproc.v1.Job;
 import com.google.cloud.dataproc.v1.JobControllerClient;
@@ -30,7 +35,8 @@ import com.google.cloud.dataproc.v1.JobControllerSettings;
 import com.google.cloud.dataproc.v1.JobPlacement;
 import com.google.cloud.dataproc.v1.JobReference;
 import com.google.cloud.dataproc.v1.JobStatus;
-import com.google.cloud.dataproc.v1.ListJobsRequest;
+import com.google.cloud.dataproc.v1.RuntimeConfig;
+import com.google.cloud.dataproc.v1.SparkBatch;
 import com.google.cloud.dataproc.v1.SubmitJobRequest;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
@@ -40,7 +46,9 @@ import com.google.cloud.storage.StorageOptions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.BaseEncoding;
 import com.google.common.io.ByteStreams;
+import com.google.gson.Gson;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
@@ -56,10 +64,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.channels.Channels;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -76,14 +86,16 @@ import java.util.regex.Pattern;
 public class DataprocRuntimeJobManager implements RuntimeJobManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(DataprocRuntimeJobManager.class);
+  private static final Gson GSON = new Gson();
 
   // dataproc job properties
-  private static final String CDAP_RUNTIME_NAMESPACE = "cdap.runtime.namespace";
-  private static final String CDAP_RUNTIME_APPLICATION = "cdap.runtime.application";
-  private static final String CDAP_RUNTIME_VERSION = "cdap.runtime.version";
-  private static final String CDAP_RUNTIME_PROGRAM_TYPE = "cdap.runtime.program.type";
-  private static final String CDAP_RUNTIME_PROGRAM = "cdap.runtime.program";
-  private static final String CDAP_RUNTIME_RUNID = "cdap.runtime.runid";
+  private static final String CDAP_RUNTIME_NAMESPACE = "cdap-runtime-namespace";
+  private static final String CDAP_RUNTIME_APPLICATION = "cdap-runtime-application";
+  private static final String CDAP_RUNTIME_VERSION = "cdap-runtime-version";
+  private static final String CDAP_RUNTIME_PROGRAM_TYPE = "cdap-runtime-program-type";
+  private static final String CDAP_RUNTIME_PROGRAM = "cdap-runtime-program";
+  private static final String CDAP_RUNTIME_RUNID = "cdap-runtime-runid";
+
   private static final Pattern DATAPROC_JOB_ID_PATTERN = Pattern.compile("[a-zA-Z0-9_-]{0,100}$");
 
   //dataproc job labels (must match '[\p{Ll}\p{Lo}][\p{Ll}\p{Lo}\p{N}_-]{0,62}' pattern)
@@ -101,6 +113,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
 
   private volatile Storage storageClient;
   private volatile JobControllerClient jobControllerClient;
+  private volatile BatchControllerClient batchControllerClient;
 
   /**
    * Created by dataproc provisioner with properties that are needed by dataproc runtime job manager.
@@ -164,6 +177,30 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     return client;
   }
 
+  /**
+   * Returns a {@link BatchControllerClient} to interact with Dataproc Batch API.
+   */
+  private BatchControllerClient getBatchControllerClient() throws IOException {
+    BatchControllerClient client = batchControllerClient;
+    if (client != null) {
+      return client;
+    }
+
+    synchronized (this) {
+      client = batchControllerClient;
+      if (client != null) {
+        return client;
+      }
+
+      // instantiate a dataproc job controller client
+      CredentialsProvider credentialsProvider = FixedCredentialsProvider.create(credentials);
+      this.batchControllerClient = client = BatchControllerClient.create(
+        BatchControllerSettings.newBuilder().setCredentialsProvider(credentialsProvider)
+          .setEndpoint(region + endpoint).build());
+    }
+    return client;
+  }
+
   @Override
   public void launch(RuntimeJobInfo runtimeJobInfo) throws Exception {
     String bucket = DataprocUtils.getBucketName(this.bucket);
@@ -193,12 +230,21 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
         uploadedFiles.add(uploadFuture.get());
       }
 
-      // step 3: build the hadoop job request to be submitted to dataproc
-      SubmitJobRequest request = getSubmitJobRequest(runtimeJobInfo, uploadedFiles);
+//      // step 3: build the hadoop job request to be submitted to dataproc
+//      SubmitJobRequest request = getSubmitJobRequest(runtimeJobInfo, uploadedFiles);
+
+      getBatchControllerClient().createBatchCallable().call(
+        CreateBatchRequest.newBuilder()
+          .setParent("projects/" + projectId + "/locations/" + region)
+          .setBatch(createBatch(runtimeJobInfo, uploadedFiles))
+          .setBatchId(getJobId(runInfo))
+          .build());
+
+      LOG.debug("Batch submitted");
 
       // step 4: submit hadoop job to dataproc
-      Job job = getJobControllerClient().submitJob(request);
-      LOG.debug("Successfully submitted hadoop job {} to cluster {}.", job.getReference().getJobId(), clusterName);
+//      Job job = getJobControllerClient().submitJob(request);
+//      LOG.debug("Successfully submitted hadoop job {} to cluster {}.", job.getReference().getJobId(), clusterName);
       DataprocUtils.emitMetric(provisionerContext, region,
                                "provisioner.submitJob.response.count");
     } catch (Exception e) {
@@ -207,24 +253,29 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       DataprocUtils.emitMetric(provisionerContext, region,
                                "provisioner.submitJob.response.count", e);
       throw new Exception(String.format("Error while launching job %s on cluster %s",
-                                        getJobId(runInfo), clusterName), e);
+                                        getBatchId(runInfo), clusterName), e);
     } finally {
       // delete local temp directory
       deleteDirectoryContents(tempDir);
     }
   }
 
+  private String getBatchId(ProgramRunInfo info) {
+    return String.format("projects/%s/locations/%s/batches/%s", projectId, region, getJobId(info));
+  }
+
   @Override
   public Optional<RuntimeJobDetail> getDetail(ProgramRunInfo programRunInfo) throws Exception {
-    String jobId = getJobId(programRunInfo);
+    String jobId = getBatchId(programRunInfo);
 
     try {
-      Job job = getJobControllerClient().getJob(GetJobRequest.newBuilder()
-                                                  .setProjectId(projectId)
-                                                  .setRegion(region)
-                                                  .setJobId(jobId)
-                                                  .build());
-      return Optional.of(new RuntimeJobDetail(getProgramRunInfo(job), getRuntimeJobStatus(job)));
+      Batch batch = getBatchControllerClient().getBatch(jobId);
+//      Job job = getJobControllerClient().getJob(GetJobRequest.newBuilder()
+//                                                  .setProjectId(projectId)
+//                                                  .setRegion(region)
+//                                                  .setJobId(jobId)
+//                                                  .build());
+      return Optional.of(new RuntimeJobDetail(getProgramRunInfo(batch), getRuntimeJobStatus(batch)));
     } catch (ApiException e) {
       if (e.getStatusCode().getCode() != StatusCode.Code.NOT_FOUND) {
         throw new Exception(String.format("Error while getting details for job %s on cluster %s.",
@@ -250,16 +301,21 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
 
     LOG.debug("Getting a list of jobs under project {}, region {}, cluster {} with filter {}.", projectId, region,
               clusterName, jobFilter);
-    JobControllerClient.ListJobsPagedResponse listJobsPagedResponse =
-      getJobControllerClient().listJobs(
-        ListJobsRequest.newBuilder()
-          .setProjectId(projectId).setRegion(region).setClusterName(clusterName)
-          .setFilter(jobFilter).build());
+
+
+//
+//
+//
+//    JobControllerClient.ListJobsPagedResponse listJobsPagedResponse =
+//      getJobControllerClient().listJobs(
+//        ListJobsRequest.newBuilder()
+//          .setProjectId(projectId).setRegion(region).setClusterName(clusterName)
+//          .setFilter(jobFilter).build());
 
     List<RuntimeJobDetail> jobsDetail = new ArrayList<>();
-    for (Job job : listJobsPagedResponse.iterateAll()) {
-      jobsDetail.add(new RuntimeJobDetail(getProgramRunInfo(job), getRuntimeJobStatus(job)));
-    }
+//    for (Job job : listJobsPagedResponse.iterateAll()) {
+//      jobsDetail.add(new RuntimeJobDetail(getProgramRunInfo(job), getRuntimeJobStatus(job)));
+//    }
     return jobsDetail;
   }
 
@@ -274,7 +330,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       return;
     }
     // stop dataproc job
-    stopJob(getJobId(jobDetail.getRunInfo()));
+    stopJob(getBatchId(jobDetail.getRunInfo()));
   }
 
   @Override
@@ -284,10 +340,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
 
   @Override
   public void close() {
-    JobControllerClient client = this.jobControllerClient;
-    if (client != null) {
-      client.close();
-    }
+    Optional.ofNullable(this.jobControllerClient).ifPresent(JobControllerClient::close);
+    Optional.ofNullable(this.batchControllerClient).ifPresent(BatchControllerClient::close);
   }
 
   /**
@@ -344,6 +398,73 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
 
     // Default to Java URL stream implementation.
     return uri.toURL().openStream();
+  }
+
+  private String encodeLabel(String label) {
+    return BaseEncoding.base32Hex().lowerCase().omitPadding().encode(label.getBytes(StandardCharsets.UTF_8));
+  }
+
+  private String decodeLabel(String encoded) {
+    return new String(BaseEncoding.base32Hex().lowerCase().omitPadding().decode(encoded), StandardCharsets.UTF_8);
+  }
+
+  private Batch createBatch(RuntimeJobInfo runtimeJobInfo, List<LocalFile> localFiles) {
+    ProgramRunInfo runInfo = runtimeJobInfo.getProgramRunInfo();
+    String runId = runInfo.getRun();
+
+    // The DataprocJobMain argument is <class-name> <spark-compat> <list of archive files...>
+    List<String> arguments = new ArrayList<>();
+    arguments.add("--" + DataprocJobMain.RUNTIME_JOB_CLASS + "=" + runtimeJobInfo.getRuntimeJobClassname());
+    arguments.add("--" + DataprocJobMain.SPARK_COMPAT + "=" + provisionerContext.getSparkCompat().getCompat());
+    localFiles.stream()
+      .filter(LocalFile::isArchive)
+      .map(f -> "--" + DataprocJobMain.ARCHIVE + "=" + f.getName())
+      .forEach(arguments::add);
+    for (Map.Entry<String, String> entry : runtimeJobInfo.getJvmProperties().entrySet()) {
+      arguments.add("--" + DataprocJobMain.PROPERTY_PREFIX + entry.getKey() + "=\"" + entry.getValue() + "\"");
+    }
+
+    Map<String, String> labels = new HashMap<>(this.labels);
+    labels.put(CDAP_RUNTIME_NAMESPACE, encodeLabel(runInfo.getNamespace()));
+    labels.put(CDAP_RUNTIME_APPLICATION, encodeLabel(runInfo.getApplication()));
+    labels.put(CDAP_RUNTIME_VERSION, encodeLabel(runInfo.getVersion()));
+    labels.put(CDAP_RUNTIME_PROGRAM, encodeLabel(runInfo.getProgram()));
+    labels.put(CDAP_RUNTIME_PROGRAM_TYPE, encodeLabel(runInfo.getProgramType()));
+    labels.put(CDAP_RUNTIME_RUNID, encodeLabel(runId));
+
+    Map<String, String> properties = new LinkedHashMap<>();
+//    properties.put("spark.driver.userClassPathFirst", "true");
+
+    SparkBatch.Builder sparkBatchBuilder = SparkBatch.newBuilder()
+      // set main class
+      .setMainClass(DataprocJobMain.class.getName())
+      // set main class arguments
+      .addAllArgs(arguments);
+
+    for (LocalFile localFile : localFiles) {
+      // add jar file
+      URI uri = localFile.getURI();
+      if (localFile.getName().endsWith("jar")) {
+        sparkBatchBuilder.addJarFileUris(uri.toString());
+      } else {
+        sparkBatchBuilder.addFileUris(uri.toString());
+      }
+    }
+
+    return Batch.newBuilder()
+      .setName(getBatchId(runInfo))
+      .setSparkBatch(sparkBatchBuilder)
+      .setEnvironmentConfig(
+        EnvironmentConfig.newBuilder().setExecutionConfig(
+          ExecutionConfig.newBuilder()
+            .setNetworkUri(String.format("projects/%s/global/networks/default", projectId))
+            .setSubnetworkUri(String.format("projects/%s/regions/%s/subnetworks/default", projectId, region))
+        ))
+      .setRuntimeConfig(RuntimeConfig.newBuilder().putAllProperties(properties))
+      .putAllLabels(labels)
+      .putLabels(LABEL_CDAP_PROGRAM, runInfo.getProgram().toLowerCase())
+      .putLabels(LABEL_CDAP_PROGRAM_TYPE, runInfo.getProgramType().toLowerCase())
+      .build();
   }
 
   /**
@@ -423,6 +544,19 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     return builder.build();
   }
 
+  private ProgramRunInfo getProgramRunInfo(Batch batch) {
+    Map<String, String> labels = batch.getLabelsMap();
+
+    ProgramRunInfo.Builder builder = new ProgramRunInfo.Builder()
+      .setNamespace(decodeLabel(labels.get(CDAP_RUNTIME_NAMESPACE)))
+      .setApplication(decodeLabel(labels.get(CDAP_RUNTIME_APPLICATION)))
+      .setVersion(decodeLabel(labels.get(CDAP_RUNTIME_VERSION)))
+      .setProgramType(decodeLabel(labels.get(CDAP_RUNTIME_PROGRAM_TYPE)))
+      .setProgram(decodeLabel(labels.get(CDAP_RUNTIME_PROGRAM)))
+      .setRun(decodeLabel(labels.get(CDAP_RUNTIME_RUNID)));
+    return builder.build();
+  }
+
   /**
    * Returns {@link RuntimeJobStatus}.
    */
@@ -461,19 +595,74 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     return runtimeJobStatus;
   }
 
+  private RuntimeJobStatus getRuntimeJobStatus(Batch batch) {
+    Batch.State state = batch.getState();
+    RuntimeJobStatus runtimeJobStatus;
+    switch (state) {
+//      case STATE_UNSPECIFIED:
+//      case SETUP_DONE:
+//      case PENDING:
+//        runtimeJobStatus = RuntimeJobStatus.STARTING;
+//        break;
+//      case RUNNING:
+//        runtimeJobStatus = RuntimeJobStatus.RUNNING;
+//        break;
+//      case DONE:
+//        runtimeJobStatus = RuntimeJobStatus.COMPLETED;
+//        break;
+//      case CANCEL_PENDING:
+//      case CANCEL_STARTED:
+//        runtimeJobStatus = RuntimeJobStatus.STOPPING;
+//        break;
+//      case CANCELLED:
+//        runtimeJobStatus = RuntimeJobStatus.STOPPED;
+//        break;
+//      case ERROR:
+//        runtimeJobStatus = RuntimeJobStatus.FAILED;
+//        break;
+      case STATE_UNSPECIFIED:
+      case PENDING:
+        runtimeJobStatus = RuntimeJobStatus.STARTING;
+        break;
+      case RUNNING:
+        runtimeJobStatus = RuntimeJobStatus.RUNNING;
+        break;
+      case CANCELLING:
+        runtimeJobStatus = RuntimeJobStatus.STOPPING;
+        break;
+      case CANCELLED:
+        runtimeJobStatus = RuntimeJobStatus.STOPPED;
+        break;
+      case SUCCEEDED:
+        runtimeJobStatus = RuntimeJobStatus.COMPLETED;
+        break;
+      case FAILED:
+        runtimeJobStatus = RuntimeJobStatus.FAILED;
+        break;
+      default:
+        // this needed for ATTEMPT_FAILURE state which is a state for restartable job. Currently we do not launch
+        // restartable jobs
+        throw new IllegalStateException(String.format("Unsupported job state %s of the dataproc job %s.",
+                                                      state, batch.getName()));
+    }
+    return runtimeJobStatus;
+  }
+
   /**
    * Stops the dataproc job. Returns job object if it was stopped.
    */
   private void stopJob(String jobId) throws Exception {
     try {
-      jobControllerClient.cancelJob(projectId, region, jobId);
+      getBatchControllerClient().deleteBatch(jobId);
+//      jobControllerClient.cancelJob(projectId, region, jobId);
       LOG.debug("Stopped the job {} on cluster {}.", jobId, clusterName);
     } catch (ApiException e) {
       if (e.getStatusCode().getCode() != StatusCode.Code.FAILED_PRECONDITION) {
         throw new Exception(String.format("Error occurred while stopping job %s on cluster %s.",
                                           jobId, clusterName), e);
       }
-      LOG.debug("Job {} is already stopped on cluster {}.", jobId, clusterName);
+//      LOG.debug("Job {} is already stopped on cluster {}.", jobId, clusterName, e);
+      throw e;
     }
   }
 
@@ -511,8 +700,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   @VisibleForTesting
   public static String getJobId(ProgramRunInfo runInfo) {
     List<String> parts = ImmutableList.of(runInfo.getNamespace(), runInfo.getApplication(), runInfo.getProgram());
-    String joined = Joiner.on("_").join(parts);
-    joined = joined.substring(0, Math.min(joined.length(), 63));
+    String joined = Joiner.on("_").join(parts).toLowerCase();
+    joined = joined.substring(0, Math.min(joined.length(), 63 - runInfo.getRun().length() - 1));
     joined = joined + "_" + runInfo.getRun();
     if (!DATAPROC_JOB_ID_PATTERN.matcher(joined).matches()) {
       throw new IllegalArgumentException(String.format("Job ID %s is not a valid dataproc job id. ", joined));

@@ -291,6 +291,7 @@ public final class SparkRuntimeUtils {
     SparkConf sparkConf = new SparkConf();
     sparkConf.set("spark.eventLog.enabled", Boolean.toString(true));
     sparkConf.set("spark.eventLog.compress", Boolean.toString(true));
+    sparkConf.set("spark.eventLog.compression.codec", "snappy");
 
     ProgramRunId programRunId = runtimeContext.getProgramRunId();
 
