@@ -26,75 +26,85 @@ import java.util.List;
  */
 public class SupportBundleStatus {
   // UUID of the bundle status object describes
-  @SerializedName("bundle-id")
   private String bundleId;
   // status of bundle collection (IN_PROGRESS/FINISHED/FAILED)
   private CollectionState status;
   // Failed bundle describes the failure
-  @SerializedName("status-details")
   private String statusDetails;
   // when bundle collection was started
-  @SerializedName("start-timestamp")
   private Long startTimestamp;
   // FINISHED/FAILED bundles when bundle collection was completed
-  @SerializedName("finish-timestamp")
   private Long finishTimestamp;
   // any parameters passed to start collection
   private SupportBundleConfiguration parameters;
   // Array of top-level tasks for the bundle, see task structure below
   private List<SupportBundleTaskStatus> tasks = new ArrayList<>();
+
   /** Get support bundle generation status */
   public CollectionState getStatus() {
     return status;
   }
+
   /** Set support bundle generation status */
   public void setStatus(CollectionState status) {
     this.status = status;
   }
+
   /** Get support bundle generation status details */
   public String getStatusDetails() {
     return statusDetails;
   }
+
   /** Set support bundle generation status details */
   public void setStatusDetails(String statusDetails) {
     this.statusDetails = statusDetails;
   }
+
   /** Get support bundle generation start time */
   public Long getStartTimestamp() {
     return startTimestamp;
   }
+
   /** Set support bundle generation start time */
   public void setStartTimestamp(Long startTimestamp) {
     this.startTimestamp = startTimestamp;
   }
+
   /** Get support bundle generation finish time */
   public Long getFinishTimestamp() {
     return finishTimestamp;
   }
+
   /** Set support bundle generation finish time */
   public void setFinishTimestamp(Long finishTimestamp) {
     this.finishTimestamp = finishTimestamp;
   }
+
   /** Get support bundle generation request parameters */
   public SupportBundleConfiguration getParameters() {
     return parameters;
   }
+
   /** Set support bundle generation request parameters */
   public void setParameters(SupportBundleConfiguration parameters) {
     this.parameters = parameters;
   }
+
   /** Get support bundle generation tasks */
   public List<SupportBundleTaskStatus> getTasks() {
     return tasks;
   }
+
   /** Set support bundle generation tasks */
   public void setTasks(List<SupportBundleTaskStatus> tasks) {
     this.tasks = tasks;
   }
+
   /** Set support bundle generation id */
   public String getBundleId() {
     return bundleId;
   }
+
   /** Set support bundle generation id */
   public void setBundleId(String bundleId) {
     this.bundleId = bundleId;

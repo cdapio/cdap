@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -38,11 +38,9 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 
 /**
- * Fetch {@link RunRecordDetail} via internal REST API calls
+ * Fetch Program logs via internal REST API calls
  */
 public class RemoteProgramLogsFetcher implements ProgramLogsFetcher {
-
-  private static final Gson GSON = new Gson();
 
   private final RemoteClient remoteClient;
 
@@ -67,6 +65,7 @@ public class RemoteProgramLogsFetcher implements ProgramLogsFetcher {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway
    *                                  server
    */
+  @Override
   public String getProgramRunLogs(ProgramId program, String runId, long start, long stop)
       throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
 
@@ -97,6 +96,7 @@ public class RemoteProgramLogsFetcher implements ProgramLogsFetcher {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway
    *                                  server
    */
+  @Override
   public String getProgramSystemLog(String componentId, String serviceId, long start, long stop)
       throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
 

@@ -37,10 +37,6 @@ public class SupportBundleState {
   private String runId;
   /** support bundle base path */
   private String basePath;
-  /** support bundle system log path */
-  private String systemLogPath;
-  /** parameter request for max num of run log needed from customer */
-  private Integer maxRunsPerWorkflow;
   /** pipeline workflow name */
   private String workflowName;
   /** all the namespace under the pipeline */
@@ -54,93 +50,93 @@ public class SupportBundleState {
     this.appId = supportBundleConfiguration.getAppId();
     this.runId = supportBundleConfiguration.getRunId();
     this.workflowName = supportBundleConfiguration.getWorkflowName();
-    this.maxRunsPerWorkflow = supportBundleConfiguration.getMaxRunsPerWorkflow();
   }
 
   /** Get support bundle id */
   public String getUuid() {
     return uuid;
   }
+
   /** Set support bundle id */
   public void setUuid(String uuid) {
     this.uuid = uuid;
   }
+
   /** Get pipeline namespace id */
   public String getNamespaceId() {
     return namespaceId;
   }
+
   /** Set pipeline namespace id */
   public void setNamespaceId(@Nullable String namespaceId) {
     this.namespaceId = namespaceId;
   }
+
   /** Get pipeline Application id */
   public String getAppId() {
     return appId;
   }
+
   /** Set pipeline Application id */
   public void setAppId(@Nullable String appId) {
     this.appId = appId;
   }
+
   /** Get pipeline run id */
   public String getRunId() {
     return runId;
   }
+
   /** Set pipeline run id */
   public void setRunId(@Nullable String runId) {
     this.runId = runId;
   }
+
   /** Get support bundle base path */
   public String getBasePath() {
     return basePath;
   }
+
   /** Set support bundle base path */
   public void setBasePath(@Nullable String basePath) {
     this.basePath = basePath;
   }
-  /** Get support bundle system log path */
-  public String getSystemLogPath() {
-    return systemLogPath;
-  }
-  /** Set support bundle system log path */
-  public void setSystemLogPath(@Nullable String systemLogPath) {
-    this.systemLogPath = systemLogPath;
-  }
-  /** Get max number of run log needed for each pipeline run */
-  public int getMaxRunsPerWorkflow() {
-    return maxRunsPerWorkflow;
-  }
-  /** Set max number of run log needed for each pipeline run */
-  public void setMaxRunsPerWorkflow(int maxRunsPerWorkflow) {
-    this.maxRunsPerWorkflow = maxRunsPerWorkflow;
-  }
+
   /** Get workflow name */
   public String getWorkflowName() {
     return workflowName;
   }
+
   /** Set workflow name */
   public void setWorkflowName(@Nullable String workflowName) {
     this.workflowName = workflowName;
   }
+
   /** Get list of namespace */
   public List<String> getNamespaceList() {
     return namespaceList;
   }
+
   /** Set list of namespace */
   public void setNamespaceList(List<String> namespaceList) {
     this.namespaceList = ImmutableList.copyOf(namespaceList);
   }
+
   /** Get support bundle job */
   public SupportBundleJob getSupportBundleJob() {
     return supportBundleJob;
   }
+
   /** Set support bundle job */
   public void setSupportBundleJob(SupportBundleJob supportBundleJob) {
     this.supportBundleJob = supportBundleJob;
   }
+
   /** Get max runs allowed for each pipeline */
   public Integer getMaxRunsPerPipeline() {
     return maxRunsPerPipeline;
   }
+
   /** Set max runs allowed for each pipeline */
   public void setMaxRunsPerPipeline(Integer maxRunsPerPipeline) {
     this.maxRunsPerPipeline = maxRunsPerPipeline;

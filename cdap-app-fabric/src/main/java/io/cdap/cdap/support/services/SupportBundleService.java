@@ -30,6 +30,7 @@ import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.support.SupportBundleState;
 import io.cdap.cdap.support.job.SupportBundleJob;
+import io.cdap.cdap.support.lib.SupportBundleFileNames;
 import io.cdap.cdap.support.status.CollectionState;
 import io.cdap.cdap.support.status.SupportBundleConfiguration;
 import io.cdap.cdap.support.status.SupportBundleStatus;
@@ -71,34 +72,32 @@ public class SupportBundleService implements Closeable {
   private final String localDir;
 
   @Inject
-  public SupportBundleService(CConfiguration cConf,
-                              RemoteNamespaceQueryClient namespaceQueryClient,
-                              @Named(SupportBundle.TASK_FACTORY)
-                                  Set<SupportBundleTaskFactory> supportBundleTaskFactoryList) {
+  SupportBundleService(CConfiguration cConf,
+                       RemoteNamespaceQueryClient namespaceQueryClient,
+                       @Named(SupportBundle.TASK_FACTORY) Set<SupportBundleTaskFactory> supportBundleTaskFactoryList) {
     this.cConf = cConf;
     this.namespaceQueryClient = namespaceQueryClient;
     this.supportBundleTaskFactoryList = supportBundleTaskFactoryList;
     this.executorService = Executors.newFixedThreadPool(
-        cConf.getInt(Constants.SupportBundle.MAX_THREADS),
-        Threads.createDaemonThreadFactory("perform-support-bundle"));
-    this.localDir = this.cConf.get(Constants.CFG_SUPPORT_BUNDLE_LOCAL_DATA_DIR);
+      cConf.getInt(Constants.SupportBundle.MAX_THREADS),
+      Threads.createDaemonThreadFactory("perform-support-bundle"));
+    this.localDir = this.cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR);
   }
 
   /**
    * Generates support bundle
    */
-  public String generateSupportBundle(SupportBundleConfiguration supportBundleConfiguration)
-      throws Exception {
+  public String generateSupportBundle(SupportBundleConfiguration supportBundleConfiguration) throws Exception {
     SupportBundleStatus supportBundleStatus = new SupportBundleStatus();
     String uuid = UUID.randomUUID().toString();
     int folderMaxNumber = cConf.getInt(Constants.SupportBundle.MAX_FOLDER_SIZE);
     File basePath = new File(localDir, uuid);
     SupportBundleJob supportBundleJob =
-        new SupportBundleJob(
-            executorService,
-            cConf,
-            supportBundleStatus,
-            supportBundleTaskFactoryList);
+      new SupportBundleJob(
+        supportBundleTaskFactoryList,
+        executorService,
+        cConf,
+        supportBundleStatus);
     String namespaceId = supportBundleConfiguration.getNamespaceId();
     SupportBundleState supportBundleState = new SupportBundleState(supportBundleConfiguration);
     if (namespaceId != null) {
@@ -117,9 +116,9 @@ public class SupportBundleService implements Closeable {
       List<String> namespaceList = new ArrayList<>();
       if (namespaceId == null) {
         namespaceList.addAll(
-            namespaceQueryClient.list().stream()
-                .map(NamespaceMeta::getName)
-                .collect(Collectors.toList()));
+          namespaceQueryClient.list().stream()
+            .map(NamespaceMeta::getName)
+            .collect(Collectors.toList()));
       } else {
         namespaceList.add(namespaceId);
       }
@@ -141,14 +140,11 @@ public class SupportBundleService implements Closeable {
       executorService.execute(() -> supportBundleJob.generateBundle(supportBundleState));
     } catch (Exception e) {
       LOG.error("Can not generate support bundle ", e);
-      if (basePath != null) {
-        supportBundleStatus.setStatus(CollectionState.FAILED);
-        supportBundleStatus.setStatusDetails(e.getMessage());
-        supportBundleStatus.setFinishTimestamp(System.currentTimeMillis());
-        if (supportBundleJob != null) {
-          addToStatus(supportBundleStatus, basePath.getPath());
-        }
-      }
+      supportBundleStatus.setStatus(CollectionState.FAILED);
+      supportBundleStatus.setStatusDetails(e.getMessage());
+      supportBundleStatus.setFinishTimestamp(System.currentTimeMillis());
+      addToStatus(supportBundleStatus, basePath.getPath());
+      throw new Exception("Can not generate support bundle ", e);
     }
     return uuid;
   }
@@ -156,14 +152,20 @@ public class SupportBundleService implements Closeable {
   /**
    * Gets oldest folder from the root directory
    */
-  private File getOldestFolder(File baseDirectory) {
+  private File getOldestFolder(File baseDirectory) throws RuntimeException {
     File[] uuidFiles = baseDirectory.listFiles(
-        (dir, name) -> !name.startsWith(".") && !dir.isHidden() && dir.isDirectory());
+      (dir, name) -> !name.startsWith(".") && !dir.isHidden() && dir.isDirectory());
     return Collections.min(Arrays.asList(uuidFiles),
                            Comparator.<File, Boolean>comparing(
-                                   f1 -> getSingleBundleJson(baseDirectory.getPath(), f1).getStatus()
-                                       != CollectionState.FAILED)
-                               .thenComparing(File::lastModified));
+                               f1 -> {
+                                 try {
+                                   return getSingleBundleJson(f1).getStatus()
+                                     != CollectionState.FAILED;
+                                 } catch (Exception e) {
+                                   throw new RuntimeException("Can not get file status ", e);
+                                 }
+                               })
+                             .thenComparing(File::lastModified));
   }
 
   /**
@@ -173,7 +175,7 @@ public class SupportBundleService implements Closeable {
     try {
       DirUtils.deleteDirectoryContents(oldFilesDirectory);
     } catch (IOException e) {
-      LOG.warn("Failed to clean up directory {}", oldFilesDirectory, e);
+      LOG.error("Failed to clean up directory {}", oldFilesDirectory, e);
     }
   }
 
@@ -184,34 +186,37 @@ public class SupportBundleService implements Closeable {
   /**
    * Update status file
    */
-  private void addToStatus(SupportBundleStatus supportBundleStatus, String basePath) {
-    try (FileWriter statusFile = new FileWriter(new File(basePath, "status.json"))) {
+  private void addToStatus(SupportBundleStatus supportBundleStatus,
+                           String basePath) throws Exception {
+    try (FileWriter statusFile = new FileWriter(
+      new File(basePath, SupportBundleFileNames.statusFileName))) {
       GSON.toJson(supportBundleStatus, statusFile);
       statusFile.flush();
     } catch (Exception e) {
       LOG.error("Can not update status file ", e);
+      throw new Exception("Can not update status file ", e);
     }
   }
 
   /**
    * Gets single support bundle status with uuid
    */
-  public SupportBundleStatus getSingleBundleJson(String baseDirectory, File uuidFile) {
-    SupportBundleStatus supportBundleStatus = new SupportBundleStatus();
-    File singleSupportBundleFile = new File(baseDirectory, uuidFile.getName());
-    File statusFile = new File(singleSupportBundleFile, "status.json");
-    if (statusFile.exists()) {
-      supportBundleStatus = readStatusJson(statusFile);
+  public SupportBundleStatus getSingleBundleJson(File uuidFile) throws Exception {
+    File statusFile = new File(uuidFile, SupportBundleFileNames.statusFileName);
+    if (!statusFile.exists()) {
+      LOG.error("Can not find this status file {} ", uuidFile.getName());
+      throw new Exception("Can not find this status file");
     }
-    return supportBundleStatus;
+    return readStatusJson(statusFile);
   }
 
-  private SupportBundleStatus readStatusJson(File statusFile) {
+  private SupportBundleStatus readStatusJson(File statusFile) throws Exception {
     SupportBundleStatus supportBundleStatus = new SupportBundleStatus();
     try (Reader reader = Files.newBufferedReader(statusFile.toPath(), StandardCharsets.UTF_8)) {
       supportBundleStatus = GSON.fromJson(reader, SupportBundleStatus.class);
     } catch (Exception e) {
-      LOG.warn("Can not read status file ", e);
+      LOG.error("Can not read status file ", e);
+      throw new Exception("Can not read this status file ", e);
     }
     return supportBundleStatus;
   }

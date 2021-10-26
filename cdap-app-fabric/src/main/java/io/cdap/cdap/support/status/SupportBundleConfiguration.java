@@ -31,37 +31,41 @@ public class SupportBundleConfiguration {
   /** pipeline run id */
   private final String runId;
   // max num of run log customer request for each pipeline run
-  private final int maxRunsPerWorkflow;
+  private final int maxRunsPerPipeline;
 
   public SupportBundleConfiguration(@Nullable String namespaceId,
                                     @Nullable String appId,
                                     @Nullable String runId,
                                     @Nullable String workflowName,
-                                    int maxRunsPerWorkflow) {
+                                    int maxRunsPerPipeline) {
     this.namespaceId = namespaceId;
     this.appId = appId;
     this.runId = runId;
     this.workflowName = workflowName;
-    this.maxRunsPerWorkflow = maxRunsPerWorkflow;
+    this.maxRunsPerPipeline = maxRunsPerPipeline;
   }
   /** Get pipeline namespace id */
   public String getNamespaceId() {
     return namespaceId;
   }
+
   /** Get pipeline application id */
   public String getAppId() {
     return appId;
   }
+
   /** Get pipeline workflow name */
   public String getWorkflowName() {
     return workflowName;
   }
+
   /** Get pipeline run id */
   public String getRunId() {
     return runId;
   }
+
   /** Get num of run log needed for each run */
-  public Integer getMaxRunsPerWorkflow() {
-    return maxRunsPerWorkflow;
+  public Integer getMaxRunsPerPipeline() {
+    return maxRunsPerPipeline;
   }
 }

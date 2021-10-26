@@ -43,58 +43,72 @@ public class SupportBundleTaskStatus {
   // after retry and repopulated on subsequent finish
   @SerializedName("finish-timestamp")
   private Long finishTimestamp;
+
   /** Get support bundle generation task name */
   public String getName() {
     return name;
   }
+
   /** Set support bundle generation task name */
   public void setName(String name) {
     this.name = name;
   }
+
   /** Get support bundle generation task type */
   public String getType() {
     return type;
   }
+
   /** Set support bundle generation task type */
   public void setType(String type) {
     this.type = type;
   }
+
   /** Get support bundle generation task status */
   public CollectionState getStatus() {
     return status;
   }
+
   /** Set support bundle generation task status */
   public void setStatus(CollectionState status) {
     this.status = status;
   }
+
   /** Get support bundle generation task retry times */
   public int getRetries() {
     return retries;
   }
+
   /** Set support bundle generation task retry times */
   public void setRetries(int retries) {
     this.retries = retries;
   }
+
   /** Get support bundle generation subtask status */
   public List<SupportBundleTaskStatus> getSubTasks() {
     return subTasks;
   }
+
   /** Set support bundle generation subtask status */
   public void setSubTasks(List<SupportBundleTaskStatus> subTasks) {
     this.subTasks = subTasks;
   }
+
   /** Get support bundle generation task start time */
   public Long getStartTimestamp() {
     return startTimestamp;
   }
+
   /** Set support bundle generation task start time */
   public void setStartTimestamp(Long startTimestamp) {
     this.startTimestamp = startTimestamp;
   }
+
   /** Get support bundle generation task finish time */
   public Long getFinishTimestamp() {
     return finishTimestamp;
   }
+
   /** Set support bundle generation task finish time */
   public void setFinishTimestamp(Long finishTimestamp) {
     this.finishTimestamp = finishTimestamp;

@@ -24,11 +24,9 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
 import io.cdap.cdap.api.metrics.MetricTimeSeries;
 import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.metadata.RemoteApplicationDetailFetcher;
 import io.cdap.cdap.metrics.process.RemoteMetricsSystemClient;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.RunRecord;
-import io.cdap.cdap.proto.id.ApplicationId;
 import org.joda.time.DateTime;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -76,7 +74,8 @@ public class SupportBundleRuntimeInfoTask implements SupportBundleTask {
     this.applicationDetail = applicationDetail;
   }
 
-  public void initializeCollection() throws Exception {
+  @Override
+  public void collect() throws IOException, NotFoundException, JSONException {
     for (RunRecord runRecord : runRecordList) {
       String runId = runRecord.getPid();
       try (FileWriter file = new FileWriter(new File(appPath, runId + ".json"))) {
@@ -99,15 +98,15 @@ public class SupportBundleRuntimeInfoTask implements SupportBundleTask {
       } catch (IOException e) {
         LOG.warn("Can not write file with run {} ", runId, e);
         throw new IOException("Can not write run info file ", e);
-      } catch (NotFoundException e) {
-        LOG.warn("Can not find run info with run {} ", runId, e);
-        throw new NotFoundException("Can not find run info ", e.getMessage());
+      } catch (JSONException e) {
+        LOG.warn("Can not process metrics with run {} ", runId, e);
+        throw new JSONException("Can not process metrics ");
       }
     }
   }
 
   public JsonObject queryMetrics(String runId, String configuration, long startTs, long stopTs)
-      throws Exception {
+      throws IOException, JSONException {
     JsonObject metrics = new JsonObject();
     try {
       JSONObject appConf =

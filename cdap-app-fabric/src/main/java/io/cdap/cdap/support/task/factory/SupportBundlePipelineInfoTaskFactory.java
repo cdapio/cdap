@@ -24,6 +24,9 @@ import io.cdap.cdap.metrics.process.RemoteMetricsSystemClient;
 import io.cdap.cdap.support.SupportBundleState;
 import io.cdap.cdap.support.task.SupportBundlePipelineInfoTask;
 
+/**
+ * Support bundle
+ */
 public class SupportBundlePipelineInfoTaskFactory implements SupportBundleTaskFactory {
 
   private final RemoteProgramRunRecordsFetcher remoteProgramRunRecordsFetcher;
@@ -43,6 +46,7 @@ public class SupportBundlePipelineInfoTaskFactory implements SupportBundleTaskFa
     this.remoteMetricsSystemClient = remoteMetricsSystemClient;
   }
 
+  @Override
   public SupportBundlePipelineInfoTask create(SupportBundleState supportBundleState) {
     return new SupportBundlePipelineInfoTask(
         supportBundleState.getUuid(),
@@ -52,7 +56,6 @@ public class SupportBundlePipelineInfoTaskFactory implements SupportBundleTaskFa
         remoteApplicationDetailFetcher,
         remoteProgramRunRecordsFetcher,
         remoteProgramLogsFetcher,
-        supportBundleState.getMaxRunsPerWorkflow(),
         supportBundleState.getWorkflowName(),
         remoteMetricsSystemClient,
         supportBundleState.getSupportBundleJob(),

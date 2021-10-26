@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -42,10 +42,9 @@ import java.net.HttpURLConnection;
 import java.util.List;
 
 /**
- * Fetch {@link RunRecordDetail} via internal REST API calls
+ * Fetch List of {@link RunRecord} via internal REST API calls
  */
 public class RemoteProgramRunRecordsFetcher implements ProgramRunRecordsFetcher {
-  private static final Gson GSON = new Gson();
 
   private final RemoteClient remoteClient;
 
@@ -66,6 +65,7 @@ public class RemoteProgramRunRecordsFetcher implements ProgramRunRecordsFetcher 
    * @throws NotFoundException if the application or program could not be found
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
+  @Override
   public List<RunRecord> getProgramRuns(ProgramId program,
                                         long startTime, long endTime, int limit)
       throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {

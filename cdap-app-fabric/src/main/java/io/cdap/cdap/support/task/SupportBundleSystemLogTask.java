@@ -18,8 +18,11 @@ package io.cdap.cdap.support.task;
 
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.logging.gateway.handlers.RemoteProgramLogsFetcher;
+import io.cdap.cdap.support.lib.SupportBundleFileNames;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,14 +39,14 @@ import java.util.concurrent.TimeUnit;
 public class SupportBundleSystemLogTask implements SupportBundleTask {
 
   private static final Logger LOG = LoggerFactory.getLogger(SupportBundleSystemLogTask.class);
-  private final String systemLogPath;
+  private final String basePath;
   private final RemoteProgramLogsFetcher remoteProgramLogsFetcher;
   private final List<String> serviceList;
 
   @Inject
-  public SupportBundleSystemLogTask(@Assisted String systemLogPath,
+  public SupportBundleSystemLogTask(@Assisted String basePath,
                                     RemoteProgramLogsFetcher remoteProgramLogsFetcher) {
-    this.systemLogPath = systemLogPath;
+    this.basePath = basePath;
     this.remoteProgramLogsFetcher = remoteProgramLogsFetcher;
     this.serviceList =
         Arrays.asList(
@@ -63,12 +66,16 @@ public class SupportBundleSystemLogTask implements SupportBundleTask {
   /**
    * Adds system logs into file
    */
-  public void initializeCollection() throws Exception {
+  @Override
+  public void collect() throws IOException, NotFoundException {
+    File systemLogPath = new File(basePath, "system-log");
+    DirUtils.mkdirs(systemLogPath);
     String componentId = "services";
     for (String serviceId : serviceList) {
       long currentTimeMillis = System.currentTimeMillis();
       long fromMillis = currentTimeMillis - TimeUnit.DAYS.toMillis(1);
-      try (FileWriter file = new FileWriter(new File(systemLogPath, serviceId + "-system-log.txt"))) {
+      try (FileWriter file = new FileWriter(
+          new File(systemLogPath, serviceId + SupportBundleFileNames.systemLogSuffixName))) {
         String systemLog =
             remoteProgramLogsFetcher.getProgramSystemLog(
                 componentId, serviceId, fromMillis / 1000, currentTimeMillis / 1000);

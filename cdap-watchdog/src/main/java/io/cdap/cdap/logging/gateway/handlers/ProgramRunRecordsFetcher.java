@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * Interface for fetching {@link RunRecordDetail}
+ * Interface for fetching List of {@link RunRecord}
  */
 public interface ProgramRunRecordsFetcher {
   /**

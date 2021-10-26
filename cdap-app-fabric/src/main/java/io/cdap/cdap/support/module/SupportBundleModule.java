@@ -33,7 +33,7 @@ public class SupportBundleModule extends AbstractModule {
   protected void configure() {
     Multibinder<SupportBundleTaskFactory> supportBundleTaskFactoryMultibinder = Multibinder.newSetBinder(
         binder(), SupportBundleTaskFactory.class, Names.named(SupportBundle.TASK_FACTORY));
-    supportBundleTaskFactoryMultibinder.addBinding().to(SupportBundleSystemLogTaskFactory.class);
     supportBundleTaskFactoryMultibinder.addBinding().to(SupportBundlePipelineInfoTaskFactory.class);
+    supportBundleTaskFactoryMultibinder.addBinding().to(SupportBundleSystemLogTaskFactory.class);
   }
 }

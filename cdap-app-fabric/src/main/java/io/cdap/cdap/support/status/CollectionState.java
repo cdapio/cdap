@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.support.status;
 
+/**
+ * Support Bundle generation status
+ */
 public enum CollectionState {
   IN_PROGRESS,
   FINISHED,

@@ -18,21 +18,18 @@ package io.cdap.cdap.support.task;
 
 import com.google.inject.Inject;
 import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.common.conf.Constants.AppFabric;
 import io.cdap.cdap.logging.gateway.handlers.RemoteProgramLogsFetcher;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.support.lib.SupportBundleFileNames;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOError;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -61,10 +58,12 @@ public class SupportBundlePipelineRunLogTask implements SupportBundleTask {
     this.runRecordList = runRecordList;
   }
 
-  public void initializeCollection() throws Exception {
+  @Override
+  public void collect() throws IOException, NotFoundException {
     for (RunRecord runRecord : runRecordList) {
       String runId = runRecord.getPid();
-      try (FileWriter file = new FileWriter(new File(appFolderPath, runId + "-log.txt"))) {
+      try (FileWriter file = new FileWriter(
+          new File(appFolderPath, runId + SupportBundleFileNames.logSuffixName))) {
         long currentTimeMillis = System.currentTimeMillis();
         long fromMillis = currentTimeMillis - TimeUnit.DAYS.toMillis(1);
         ProgramId programId =

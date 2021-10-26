@@ -22,8 +22,8 @@ import com.google.inject.name.Named;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.SupportBundle;
-import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.support.SupportBundleState;
+import io.cdap.cdap.support.lib.SupportBundleFileNames;
 import io.cdap.cdap.support.status.CollectionState;
 import io.cdap.cdap.support.status.SupportBundleStatus;
 import io.cdap.cdap.support.status.SupportBundleTaskStatus;
@@ -34,7 +34,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -46,8 +45,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
- * Support bundle job to parallel process the support bundle tasks, store file to local storage and
- * setup timeout for executor
+ * Support bundle job to parallel process the support bundle tasks, store file to local storage and setup timeout for
+ * executor
  */
 public class SupportBundleJob {
 
@@ -63,10 +62,10 @@ public class SupportBundleJob {
   private final Map<String, Long> trackTimeMap;
   private final int maxThreadTimeout;
 
-  public SupportBundleJob(ExecutorService executor, CConfiguration cConf,
-                          SupportBundleStatus supportBundleStatus,
-                          @Named(SupportBundle.TASK_FACTORY)
-                              Set<SupportBundleTaskFactory> supportBundleTaskFactoryList) {
+  public SupportBundleJob(@Named(SupportBundle.TASK_FACTORY) Set<SupportBundleTaskFactory> supportBundleTaskFactoryList,
+                          ExecutorService executor,
+                          CConfiguration cConf,
+                          SupportBundleStatus supportBundleStatus) {
     this.supportBundleStatus = supportBundleStatus;
     this.supportBundleTaskFactoryList = supportBundleTaskFactoryList;
     this.supportBundleTaskList = new ArrayList<>();
@@ -84,14 +83,11 @@ public class SupportBundleJob {
   public void generateBundle(SupportBundleState supportBundleState) {
     try {
       String basePath = supportBundleState.getBasePath();
-      File systemLogPath = new File(basePath, "system-log");
-      DirUtils.mkdirs(systemLogPath);
       supportBundleState.setMaxRunsPerPipeline(maxRunsPerPipeline);
-      supportBundleState.setSystemLogPath(systemLogPath.getPath());
       supportBundleTaskList.addAll(
-          supportBundleTaskFactoryList.stream()
-              .map(factory -> factory.create(supportBundleState))
-              .collect(Collectors.toList()));
+        supportBundleTaskFactoryList.stream()
+          .map(factory -> factory.create(supportBundleState))
+          .collect(Collectors.toList()));
       for (SupportBundleTask supportBundleTask : supportBundleTaskList) {
         String className = supportBundleTask.getClass().getName();
         String taskName = supportBundleState.getUuid().concat(": ").concat(className);
@@ -104,7 +100,10 @@ public class SupportBundleJob {
   }
 
   public void executeTask(
-      SupportBundleTask supportBundleTask, String basePath, String className, String taskName) {
+    SupportBundleTask supportBundleTask,
+    String basePath,
+    String className,
+    String taskName) {
     SupportBundleTaskStatus taskStatus = initializeTask(taskName, className);
     executeTask(taskStatus, supportBundleTask, basePath, className, taskName, 0);
   }
@@ -113,32 +112,37 @@ public class SupportBundleJob {
    * Execute each task to generate support bundle files
    */
   private void executeTask(
-      SupportBundleTaskStatus taskStatus,
-      SupportBundleTask supportBundleTask, String basePath, String className, String taskName,
-      int retryCount) {
+    SupportBundleTaskStatus taskStatus,
+    SupportBundleTask supportBundleTask,
+    String basePath,
+    String className,
+    String taskName,
+    int retryCount) {
     Future<SupportBundleTaskStatus> futureService =
-        executor.submit(
-            () -> {
-              try {
-                trackTimeMap.put(taskName, System.currentTimeMillis());
-                updateTask(taskStatus, basePath, CollectionState.IN_PROGRESS);
-                supportBundleTask.initializeCollection();
-              } catch (Exception e) {
-                LOG.warn(
-                    "Retried three times for this supportBundleTask {} ", taskName,
-                    e);
-                executeTaskAgainAfterFailed(supportBundleTask, className, taskName,
-                                            taskStatus, basePath, retryCount + 1);
-              }
-              return taskStatus;
-            });
+      executor.submit(
+        () -> {
+          try {
+            trackTimeMap.put(taskName, System.currentTimeMillis());
+            updateTask(taskStatus, basePath, CollectionState.IN_PROGRESS);
+            supportBundleTask.collect();
+            taskStatus.setFinishTimestamp(System.currentTimeMillis());
+            updateTask(taskStatus, basePath, CollectionState.FINISHED);
+          } catch (Exception e) {
+            LOG.warn(
+              "Failed to execute task with supportBundleTask {} ", taskName,
+              e);
+            executeTaskAgainAfterFailed(supportBundleTask, className, taskName,
+                                        taskStatus, basePath, retryCount + 1);
+          }
+          return taskStatus;
+        });
     futureTasknameMap.put(futureService, taskName);
   }
 
   /**
    * Execute all processing
    */
-  public void completeProcessing(String basePath) throws Exception {
+  public void completeProcessing(String basePath) {
     for (Future future : futureTasknameMap.keySet()) {
       SupportBundleTaskStatus supportBundleTaskStatus = null;
       String previousTaskname = futureTasknameMap.get(future);
@@ -146,17 +150,13 @@ public class SupportBundleJob {
         Long currentTime = System.currentTimeMillis();
         Long futureStartTime = trackTimeMap.getOrDefault(previousTaskname, currentTime);
         Long timeLeftBeforeTimeout =
-            TimeUnit.MINUTES.toMillis(maxThreadTimeout) - (currentTime - futureStartTime);
-        if (timeLeftBeforeTimeout > 0) {
-          supportBundleTaskStatus = (SupportBundleTaskStatus) future.get(timeLeftBeforeTimeout,
-                                                                         TimeUnit.MILLISECONDS);
-          supportBundleTaskStatus.setFinishTimestamp(System.currentTimeMillis());
-          updateTask(supportBundleTaskStatus, basePath, CollectionState.FINISHED);
-        } else {
-          updateFailedTask(supportBundleTaskStatus, future, basePath);
-        }
+          TimeUnit.MINUTES.toMillis(maxThreadTimeout) - (currentTime - futureStartTime);
+        supportBundleTaskStatus = (SupportBundleTaskStatus) future.get(timeLeftBeforeTimeout,
+                                                                       TimeUnit.MILLISECONDS);
+        supportBundleTaskStatus.setFinishTimestamp(System.currentTimeMillis());
+        updateTask(supportBundleTaskStatus, basePath, CollectionState.FINISHED);
       } catch (Exception e) {
-        LOG.warn("The task for has failed or timeout more than five minutes ", e);
+        LOG.error("The task for has failed or timeout more than five minutes ", e);
         updateFailedTask(supportBundleTaskStatus, future, basePath);
       }
       trackTimeMap.remove(previousTaskname);
@@ -171,12 +171,14 @@ public class SupportBundleJob {
    * Update status task
    */
   private void updateTask(
-      SupportBundleTaskStatus taskStatus, String basePath, CollectionState status) {
+    SupportBundleTaskStatus taskStatus,
+    String basePath,
+    CollectionState status) {
     try {
       taskStatus.setStatus(status);
       addToStatus(basePath);
     } catch (Exception e) {
-      LOG.warn("failed to update the status file ", e);
+      LOG.error("failed to update the status file ", e);
     }
   }
 
@@ -184,7 +186,8 @@ public class SupportBundleJob {
    * Update status file
    */
   private void addToStatus(String basePath) {
-    try (FileWriter statusFile = new FileWriter(new File(basePath, "status.json"))) {
+    try (FileWriter statusFile = new FileWriter(
+      new File(basePath, SupportBundleFileNames.statusFileName))) {
       gson.toJson(supportBundleStatus, statusFile);
     } catch (Exception e) {
       LOG.error("Can not update status file ", e);
@@ -194,7 +197,8 @@ public class SupportBundleJob {
   /**
    * Start a new status task
    */
-  private SupportBundleTaskStatus initializeTask(String name, String type) {
+  private SupportBundleTaskStatus initializeTask(String name,
+                                                 String type) {
     SupportBundleTaskStatus supportBundleTaskStatus = new SupportBundleTaskStatus();
     supportBundleTaskStatus.setName(name);
     supportBundleTaskStatus.setType(type);
@@ -207,11 +211,14 @@ public class SupportBundleJob {
   /**
    * Queue the task again after exception
    */
-  private void executeTaskAgainAfterFailed(SupportBundleTask supportBundleTask, String className,
+  private void executeTaskAgainAfterFailed(SupportBundleTask supportBundleTask,
+                                           String className,
                                            String taskName,
                                            SupportBundleTaskStatus taskStatus,
-                                           String basePath, int retryCount) {
+                                           String basePath,
+                                           int retryCount) {
     if (retryCount >= maxRetries) {
+      LOG.error("The task has reached maximum times of retries {} ", taskName);
       updateTask(taskStatus, basePath, CollectionState.FAILED);
     } else {
       taskStatus.setRetries(retryCount);
@@ -223,9 +230,10 @@ public class SupportBundleJob {
   /**
    * Update failed status
    */
-  private void updateFailedTask(SupportBundleTaskStatus supportBundleTaskStatus, Future future,
+  private void updateFailedTask(SupportBundleTaskStatus supportBundleTaskStatus,
+                                Future future,
                                 String basePath) {
-    LOG.warn("The task for has failed or timeout more than five minutes ");
+    LOG.error("The task for has failed or timeout more than five minutes ");
     future.cancel(true);
     if (supportBundleTaskStatus != null) {
       supportBundleTaskStatus.setFinishTimestamp(System.currentTimeMillis());

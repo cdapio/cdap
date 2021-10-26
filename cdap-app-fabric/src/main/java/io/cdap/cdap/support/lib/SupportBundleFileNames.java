@@ -14,15 +14,13 @@
  * the License.
  */
 
-package io.cdap.cdap.support.task;
+package io.cdap.cdap.support.lib;
 
-import io.cdap.cdap.common.NotFoundException;
-import org.json.JSONException;
-
-import java.io.IOException;
-
-/** Establishes an interface for support bundle task */
-public interface SupportBundleTask {
-  /** Collect Log or pipeline info */
-  void collect() throws IOException, NotFoundException, JSONException;
+/**
+ *
+ */
+public class SupportBundleFileNames {
+  public static String statusFileName = "status.json";
+  public static String systemLogSuffixName = "-system-log.txt";
+  public static String logSuffixName = "-log.txt";
 }

@@ -29,9 +29,10 @@ public class SupportBundleSystemLogTaskFactory implements SupportBundleTaskFacto
     this.remoteProgramLogsFetcher = remoteProgramLogsFetcher;
   }
 
+  @Override
   public SupportBundleSystemLogTask create(SupportBundleState supportBundleState) {
     return new SupportBundleSystemLogTask(
-      supportBundleState.getSystemLogPath(),
+      supportBundleState.getBasePath(),
       remoteProgramLogsFetcher);
   }
 }

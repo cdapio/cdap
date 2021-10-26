@@ -1440,7 +1440,6 @@ public final class Constants {
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";
-  public static final String CFG_SUPPORT_BUNDLE_LOCAL_DATA_DIR = "support.bundle.local.data.dir";
   public static final String CFG_HDFS_USER = "hdfs.user";
   public static final String CFG_HDFS_NAMESPACE = "hdfs.namespace";
   public static final String CFG_HDFS_LIB_DIR = "hdfs.lib.dir";
@@ -1787,5 +1786,6 @@ public final class Constants {
     public static final String MAX_RUNS_PER_PIPELINE = "support.bundle.max.runs.per.pipeline";
     public static final String DEFAULT_WORKFLOW = "support.bundle.default.workflow";
     public static final String TASK_FACTORY = "support.bundle.task.factory";
+    public static final String LOCAL_DATA_DIR = "support.bundle.local.data.dir";
   }
 }

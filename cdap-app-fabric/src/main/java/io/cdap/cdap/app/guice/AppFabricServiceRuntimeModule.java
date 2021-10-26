@@ -404,8 +404,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       return Networks.resolve(address, new InetSocketAddress("localhost", 0).getAddress());
     }
 
-
-
     /**
      * Provides a supplier of quartz scheduler so that initialization of the scheduler can be done after guice
      * injection. It returns a singleton of Scheduler.

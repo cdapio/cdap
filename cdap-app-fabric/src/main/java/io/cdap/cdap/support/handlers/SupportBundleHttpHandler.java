@@ -58,7 +58,7 @@ public class SupportBundleHttpHandler extends AbstractAppFabricHttpHandler {
    * @param appId              the app id
    * @param workflowName       the workflow name
    * @param runId              the runid of the workflow uuid of this support bundle
-   * @param maxRunsPerWorkflow the max num of run log for each workflow do they prefer
+   * @param maxRunsPerPipeline the max num of run log for each pipeline do they prefer
    */
   @POST
   @Path("/support/bundle")
@@ -68,15 +68,15 @@ public class SupportBundleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @Nullable @QueryParam("app-id") String appId,
                                   @Nullable @QueryParam("workflow-name") String workflowName,
                                   @Nullable @QueryParam("run-id") String runId,
-                                  @Nullable @QueryParam("max-runs-per-workflow")
-                                      Integer maxRunsPerWorkflow) {
+                                  @Nullable @QueryParam("max-runs-per-pipeline")
+                                      Integer maxRunsPerPipeline) {
     // Establishes the support bundle configuration
     try {
       SupportBundleConfiguration supportBundleConfiguration =
           new SupportBundleConfiguration(
               namespaceId, appId, runId,
               workflowName == null ? cConf.get(SupportBundle.DEFAULT_WORKFLOW) : workflowName,
-              maxRunsPerWorkflow == null ? 1 : maxRunsPerWorkflow);
+              maxRunsPerPipeline == null ? 1 : maxRunsPerPipeline);
       // Generates support bundle and returns with uuid
       String uuid = supportBundleService.generateSupportBundle(supportBundleConfiguration);
       responder.sendString(HttpResponseStatus.OK, uuid);

@@ -40,7 +40,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -60,7 +60,6 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
   private final String uuid;
   private final String appId;
   private final String workflowName;
-  private final int maxRunsPerWorkflow;
   private final SupportBundleJob supportBundleJob;
   private final int maxRunsPerPipeline;
 
@@ -72,7 +71,6 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
                                        RemoteApplicationDetailFetcher remoteApplicationDetailFetcher,
                                        RemoteProgramRunRecordsFetcher remoteProgramRunRecordsFetcher,
                                        RemoteProgramLogsFetcher remoteProgramLogsFetcher,
-                                       @Assisted int maxRunsPerWorkflow,
                                        @Assisted String workflowName,
                                        RemoteMetricsSystemClient remoteMetricsSystemClient,
                                        @Assisted SupportBundleJob supportBundleJob,
@@ -84,14 +82,14 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
     this.remoteApplicationDetailFetcher = remoteApplicationDetailFetcher;
     this.remoteProgramRunRecordsFetcher = remoteProgramRunRecordsFetcher;
     this.remoteProgramLogsFetcher = remoteProgramLogsFetcher;
-    this.maxRunsPerWorkflow = maxRunsPerWorkflow;
     this.workflowName = workflowName;
     this.remoteMetricsSystemClient = remoteMetricsSystemClient;
     this.supportBundleJob = supportBundleJob;
     this.maxRunsPerPipeline = maxRunsPerPipeline;
   }
 
-  public void initializeCollection() throws Exception {
+  @Override
+  public void collect() throws IOException, NotFoundException {
     for (String namespaceId : namespaceList) {
       List<ApplicationRecord> apps = new ArrayList<>();
       if (appId == null) {
@@ -137,8 +135,9 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
           supportBundleJob.executeTask(supportBundleRuntimeInfoTask, basePath, runtimeInfoClassName,
                                        runtimeInfoTaskName);
           String runtimeLogClassName = supportBundlePipelineRunLogTask.getClass().getName();
-          String runtimeLogTaskName = uuid.concat(": ").concat(runtimeInfoClassName);
-          supportBundleJob.executeTask(supportBundlePipelineRunLogTask, basePath, runtimeLogClassName,
+          String runtimeLogTaskName = uuid.concat(": ").concat(runtimeLogClassName);
+          supportBundleJob.executeTask(supportBundlePipelineRunLogTask, basePath,
+                                       runtimeLogClassName,
                                        runtimeLogTaskName);
         } catch (IOException e) {
           LOG.warn("Can not write pipeline info file with namespace {} ", namespaceId, e);
@@ -159,19 +158,11 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
     List<RunRecord> sortedRunRecordList =
         allRunRecordList.stream()
             .filter(run -> run.getStatus().isEndState())
-            .sorted(
-                Collections.reverseOrder(
-                    (a, b) -> {
-                      if (a.getStartTs() <= b.getStartTs()) {
-                        return 1;
-                      }
-                      return -1;
-                    }))
+            .sorted(Comparator.comparing(RunRecord::getStartTs).reversed())
             .collect(Collectors.toList());
     // Gets the last N runs info
     for (RunRecord runRecord : sortedRunRecordList) {
-      if (runRecordList.size() >= maxRunsPerWorkflow
-          || runRecordList.size() >= maxRunsPerPipeline) {
+      if (runRecordList.size() >= maxRunsPerPipeline) {
         break;
       }
       runRecordList.add(runRecord);
