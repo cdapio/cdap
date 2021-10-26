@@ -99,8 +99,13 @@ public final class ClassPathResources {
    */
   public static Set<String> getBootstrapClassPaths() {
     // Get the bootstrap classpath. This is for exclusion while tracing class dependencies.
+    String bootstrapClassPath = System.getProperty("sun.boot.class.path");
+    if (bootstrapClassPath == null) {
+      return Collections.emptySet();
+    }
+
     Set<String> bootstrapPaths = new HashSet<>();
-    for (String classpath : Splitter.on(File.pathSeparatorChar).split(System.getProperty("sun.boot.class.path"))) {
+    for (String classpath : Splitter.on(File.pathSeparatorChar).split(bootstrapClassPath)) {
       File file = new File(classpath);
       bootstrapPaths.add(file.getAbsolutePath());
       try {
@@ -149,6 +154,10 @@ public final class ClassPathResources {
     Dependencies.findClassDependencies(classLoader, new ClassAcceptor() {
       @Override
       public boolean accept(String className, URL classUrl, URL classPathUrl) {
+        if ("jrt".equals(classPathUrl.getProtocol())) {
+          return false;
+        }
+
         // Ignore bootstrap classes
         if (bootstrapClassPaths.contains(classPathUrl.getFile())) {
           return false;

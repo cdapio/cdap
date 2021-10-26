@@ -61,7 +61,6 @@ import io.cdap.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
-import io.cdap.cdap.master.spi.environment.spark.SparkConfig;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -80,6 +79,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
@@ -168,6 +168,9 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
       Preconditions.checkNotNull(spec, "Missing SparkSpecification for %s", program.getName());
 
       String host = options.getArguments().getOption(ProgramOptionConstants.HOST);
+      if (host == null) {
+        host = InetAddress.getLocalHost().getCanonicalHostName();
+      }
       Preconditions.checkArgument(host != null, "No hostname is provided");
 
       // Get the WorkflowProgramInfo if it is started by Workflow

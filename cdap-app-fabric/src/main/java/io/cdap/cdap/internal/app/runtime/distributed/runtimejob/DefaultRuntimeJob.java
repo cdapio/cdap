@@ -34,7 +34,8 @@ import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.guice.DefaultProgramRunnerFactory;
-import io.cdap.cdap.app.guice.RemoteExecutionDiscoveryModule;
+import io.cdap.cdap.app.guice.DistributedProgramContainerModule;
+import io.cdap.cdap.app.guice.UnsupportedPluginFinder;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.program.Programs;
@@ -48,8 +49,6 @@ import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
-import io.cdap.cdap.common.guice.ConfigModule;
-import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.lang.jar.ClassLoaderFolder;
@@ -60,30 +59,26 @@ import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
-import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
+import io.cdap.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
-import io.cdap.cdap.internal.app.runtime.distributed.DistributedMapReduceProgramRunner;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedProgramRunner;
-import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkerProgramRunner;
-import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkflowProgramRunner;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeClientService;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitors;
 import io.cdap.cdap.internal.app.runtime.monitor.ServiceSocksProxyInfo;
 import io.cdap.cdap.internal.app.runtime.monitor.TrafficRelayServer;
+import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
 import io.cdap.cdap.internal.profile.ProfileMetricService;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.appender.loader.LogAppenderLoaderService;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
-import io.cdap.cdap.logging.guice.TMSLogAppenderModule;
 import io.cdap.cdap.messaging.MessagingService;
-import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.messaging.server.MessagingHttpService;
-import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -92,13 +87,14 @@ import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJob;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobEnvironment;
-import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.api.TwillRunner;
+import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
@@ -345,13 +341,26 @@ public class DefaultRuntimeJob implements RuntimeJob {
   List<Module> createModules(RuntimeJobEnvironment runtimeJobEnv, CConfiguration cConf, ProgramRunId programRunId,
                              ProgramOptions programOpts) {
     List<Module> modules = new ArrayList<>();
-    modules.add(new ConfigModule(cConf));
-    modules.add(new IOModule());
-    modules.add(new TMSLogAppenderModule());
-    modules.add(new RemoteExecutionDiscoveryModule());
-    modules.add(new AuthenticationContextModules().getProgramContainerModule(cConf));
-    modules.add(new MetricsClientRuntimeModule().getDistributedModules());
-    modules.add(new MessagingServerRuntimeModule().getStandaloneModules());
+//    modules.add(new ConfigModule(cConf));
+//    modules.add(new IOModule());
+//    modules.add(new TMSLogAppenderModule());
+//    modules.add(new RemoteExecutionDiscoveryModule());
+//    modules.add(new AuthenticationContextModules().getProgramContainerModule(cConf));
+//    modules.add(new MetricsClientRuntimeModule().getDistributedModules());
+    modules.add(new DistributedProgramContainerModule(cConf, new Configuration(), programRunId, programOpts,
+                new ServiceAnnouncer() {
+
+                  @Override
+                  public Cancellable announce(String serviceName, int port) {
+                    return () -> { };
+                  }
+
+                  @Override
+                  public Cancellable announce(String serviceName, int port, byte[] payload) {
+                    return () -> { };
+                  }
+                }));
+//    modules.add(new MessagingServerRuntimeModule().getStandaloneModules());
 
     modules.add(new AbstractModule() {
       @Override
@@ -359,23 +368,31 @@ public class DefaultRuntimeJob implements RuntimeJob {
         bind(ClusterMode.class).toInstance(ClusterMode.ISOLATED);
         bind(UGIProvider.class).to(CurrentUGIProvider.class).in(Scopes.SINGLETON);
 
+        bind(PluginFinder.class).to(UnsupportedPluginFinder.class);
+
         // Bindings from the environment
-        bind(TwillRunner.class).annotatedWith(Constants.AppFabric.ProgramRunner.class)
-          .toInstance(runtimeJobEnv.getTwillRunner());
-        bind(LocationFactory.class).toInstance(runtimeJobEnv.getLocationFactory());
+//        bind(TwillRunner.class).annotatedWith(Constants.AppFabric.ProgramRunner.class)
+//          .toInstance(runtimeJobEnv.getTwillRunner());
+//        bind(LocationFactory.class).toInstance(runtimeJobEnv.getLocationFactory());
 
-        MapBinder<ProgramType, ProgramRunner> defaultProgramRunnerBinder = MapBinder.newMapBinder(
-          binder(), ProgramType.class, ProgramRunner.class);
+        // Bind ProgramRunner for MR, which is used by Workflow.
+        // The ProgramRunner for Spark is provided by the DefaultProgramRunnerFactory through the extension mechanism
+        MapBinder<ProgramType, ProgramRunner> runnerFactoryBinder =
+          MapBinder.newMapBinder(binder(), ProgramType.class, ProgramRunner.class);
+        runnerFactoryBinder.addBinding(ProgramType.MAPREDUCE).to(MapReduceProgramRunner.class);
+        runnerFactoryBinder.addBinding(ProgramType.WORKFLOW).to(WorkflowProgramRunner.class);
 
-        bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.DISTRIBUTED);
+        // It uses local mode factory because for Workflow we launch the job from the Workflow container directly.
+        // The actual execution mode of the job is governed by the framework configuration
+        // For mapreduce, it's in the mapred-site.xml
+        // for spark, it's in the hConf we shipped from DistributedWorkflowProgramRunner
+        bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.LOCAL);
+        bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
+
+        bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.LOCAL);
         bind(ProgramRunnerFactory.class).annotatedWith(Constants.AppFabric.ProgramRunner.class)
           .to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
-        bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class).in(Scopes.SINGLETON);
-
-        defaultProgramRunnerBinder.addBinding(ProgramType.MAPREDUCE).to(DistributedMapReduceProgramRunner.class);
-        defaultProgramRunnerBinder.addBinding(ProgramType.WORKFLOW).to(DistributedWorkflowProgramRunner.class);
-        defaultProgramRunnerBinder.addBinding(ProgramType.WORKER).to(DistributedWorkerProgramRunner.class);
-        bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
+//        bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class).in(Scopes.SINGLETON);
 
         bind(ProgramRunId.class).toInstance(programRunId);
         bind(RuntimeMonitorType.class).toInstance(SystemArguments.getRuntimeMonitorType(cConf, programOpts));

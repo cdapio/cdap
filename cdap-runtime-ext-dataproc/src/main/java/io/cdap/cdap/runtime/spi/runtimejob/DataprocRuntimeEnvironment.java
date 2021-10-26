@@ -20,25 +20,21 @@ package io.cdap.cdap.runtime.spi.runtimejob;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
-import com.google.common.collect.ImmutableMap;
-import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.FileContextLocationFactory;
-import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.apache.twill.internal.zookeeper.InMemoryZKServer;
-import org.apache.twill.yarn.YarnTwillRunnerService;
 import org.slf4j.ILoggerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -54,7 +50,7 @@ public class DataprocRuntimeEnvironment implements RuntimeJobEnvironment {
   private static final String TWILL_ZK_SERVER_LOCALHOST = "twill.zk.server.localhost";
   private static final String ZK_QUORUM = "zookeeper.quorum";
   private static final String APP_SPARK_COMPAT = "app.program.spark.compat";
-  private InMemoryZKServer zkServer;
+//  private InMemoryZKServer zkServer;
   private TwillRunnerService yarnTwillRunnerService;
   private LocationFactory locationFactory;
   private Map<String, String> properties;
@@ -67,18 +63,22 @@ public class DataprocRuntimeEnvironment implements RuntimeJobEnvironment {
    */
   public void initialize(String sparkCompat) throws Exception {
     addConsoleAppender();
-    System.setProperty(TWILL_ZK_SERVER_LOCALHOST, "false");
-    zkServer = InMemoryZKServer.builder().build();
-    zkServer.startAndWait();
+    System.setProperty(TWILL_ZK_SERVER_LOCALHOST, "true");
+//    zkServer = InMemoryZKServer.builder().build();
+//    zkServer.startAndWait();
 
-    InetSocketAddress resolved = resolve(zkServer.getLocalAddress());
-    String connectionStr = resolved.getHostString() + ":" + resolved.getPort();
+//    LOG.error("ZK started");
 
-    YarnConfiguration conf = new YarnConfiguration();
+//    InetSocketAddress resolved = resolve(zkServer.getLocalAddress());
+//    String connectionStr = resolved.getHostString() + ":" + resolved.getPort();
+
+//    YarnConfiguration conf = new YarnConfiguration();
+    Configuration conf = new Configuration();
     locationFactory = new FileContextLocationFactory(conf);
-    yarnTwillRunnerService = new YarnTwillRunnerService(conf, connectionStr, locationFactory);
-    yarnTwillRunnerService.start();
-    properties = ImmutableMap.of(ZK_QUORUM, connectionStr, APP_SPARK_COMPAT, sparkCompat);
+//    yarnTwillRunnerService = new YarnTwillRunnerService(conf, connectionStr, locationFactory);
+//    yarnTwillRunnerService.start();
+//    properties = ImmutableMap.of(ZK_QUORUM, connectionStr, APP_SPARK_COMPAT, sparkCompat);
+    properties = new HashMap<>();
   }
 
   @Override
@@ -100,20 +100,20 @@ public class DataprocRuntimeEnvironment implements RuntimeJobEnvironment {
    * This method closes all the resources that are used for dataproc environment.
    */
   public void destroy() {
-    if (yarnTwillRunnerService != null) {
-      yarnTwillRunnerService.stop();
-    }
-    if (zkServer != null) {
-      zkServer.stopAndWait();
-    }
-    if (locationFactory != null) {
-      Location location = locationFactory.create("/");
-      try {
-        location.delete(true);
-      } catch (IOException e) {
-        LOG.warn("Failed to delete location {}", location, e);
-      }
-    }
+//    if (yarnTwillRunnerService != null) {
+//      yarnTwillRunnerService.stop();
+//    }
+//    if (zkServer != null) {
+//      zkServer.stopAndWait();
+//    }
+//    if (locationFactory != null) {
+//      Location location = locationFactory.create("/");
+//      try {
+//        location.delete(true);
+//      } catch (IOException e) {
+//        LOG.warn("Failed to delete location {}", location, e);
+//      }
+//    }
   }
 
   private static InetSocketAddress resolve(InetSocketAddress bindAddress) throws Exception {
