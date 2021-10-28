@@ -40,7 +40,7 @@ import javax.annotation.Nullable;
  * The program status trigger information to be passed to the triggered program.
  */
 public class DefaultProgramStatusTriggerInfo extends AbstractTriggerInfo
-  implements ProgramStatusTriggerInfo, Externalizable {
+  implements ProgramStatusTriggerInfo {
 
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
 
@@ -116,46 +116,5 @@ public class DefaultProgramStatusTriggerInfo extends AbstractTriggerInfo
   @Override
   public Map<String, String> getRuntimeArguments() {
     return runtimeArguments;
-  }
-
-  @Override
-  public void writeExternal(ObjectOutput out) throws IOException {
-    out.writeUTF(namespace);
-
-    // Can't use writeUTF for app spec because it could be larger than 64K
-    out.writeObject(GSON.toJson(applicationSpecification));
-
-    out.writeObject(programType);
-    out.writeUTF(program);
-    out.writeUTF(runId.getId());
-    out.writeObject(programStatus);
-    out.writeObject(workflowToken);
-
-    // Write out the map size and the entries
-    out.writeInt(runtimeArguments.size());
-    for (Map.Entry<String, String> entry : runtimeArguments.entrySet()) {
-      out.writeObject(entry.getKey());
-      out.writeObject(entry.getValue());
-    }
-  }
-
-  @Override
-  public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-    namespace = in.readUTF();
-    applicationSpecification = GSON.fromJson((String) in.readObject(), ApplicationSpecification.class);
-
-    programType = (ProgramType) in.readObject();
-    program = in.readUTF();
-    runId = RunIds.fromString(in.readUTF());
-    programStatus = (ProgramStatus) in.readObject();
-    workflowToken = (WorkflowToken) in.readObject();
-
-    Map<String, String> args = new HashMap<>();
-    int argsSize = in.readInt();
-    for (int i = 0; i < argsSize; i++) {
-      args.put((String) in.readObject(), (String) in.readObject());
-    }
-
-    runtimeArguments = Collections.unmodifiableMap(args);
   }
 }
