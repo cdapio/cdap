@@ -38,6 +38,12 @@ public class SupportBundleStatus {
   // any parameters passed to start collection
   private SupportBundleConfiguration parameters;
 
+  public SupportBundleStatus(String bundleId, SupportBundleConfiguration parameters) {
+    this.bundleId = bundleId;
+    this.parameters = parameters;
+    this.startTimestamp = System.currentTimeMillis();
+  }
+
   /** Get support bundle generation status */
   public CollectionState getStatus() {
     return status;
