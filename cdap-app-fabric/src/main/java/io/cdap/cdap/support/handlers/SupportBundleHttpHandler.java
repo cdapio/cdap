@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2021 Cask Data, Inc.
+ * Copyright © 2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package io.cdap.cdap.support.handlers;
 
 import com.google.inject.Inject;
+import io.cdap.cdap.api.common.HttpErrorStatusProvider;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.SupportBundle;
@@ -30,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
@@ -42,22 +44,22 @@ public class SupportBundleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(SupportBundleHttpHandler.class);
   private final CConfiguration cConf;
-  private final SupportBundleService supportBundleService;
+  private final SupportBundleService service;
 
   @Inject
   SupportBundleHttpHandler(CConfiguration cConf,
                            SupportBundleService supportBundleService) {
     this.cConf = cConf;
-    this.supportBundleService = supportBundleService;
+    this.service = supportBundleService;
   }
 
   /**
    * Trigger the Support Bundle Generation and async gather information about instance and write into files.
    *
-   * @param namespaceId        the namespace id
-   * @param appId              the app id
-   * @param workflowName       the workflow name
-   * @param runId              the runid of the workflow uuid of this support bundle
+   * @param namespaceId the namespace id
+   * @param appId the app id
+   * @param workflowName the workflow name
+   * @param runId the runid of the workflow uuid of this support bundle
    * @param maxRunsPerPipeline the max num of run log for each pipeline do they prefer
    */
   @POST
@@ -68,20 +70,22 @@ public class SupportBundleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @Nullable @QueryParam("app-id") String appId,
                                   @Nullable @QueryParam("workflow-name") String workflowName,
                                   @Nullable @QueryParam("run-id") String runId,
-                                  @Nullable @QueryParam("max-runs-per-pipeline") Integer maxRunsPerPipeline) {
+                                  @QueryParam("max-runs-per-pipeline") @DefaultValue("1") Integer maxRunsPerPipeline) {
     // Establishes the support bundle configuration
     try {
       SupportBundleConfiguration supportBundleConfiguration =
-          new SupportBundleConfiguration(
-              namespaceId, appId, runId,
-              workflowName == null ? cConf.get(SupportBundle.DEFAULT_WORKFLOW) : workflowName,
-              maxRunsPerPipeline == null ? 1 : maxRunsPerPipeline);
+        new SupportBundleConfiguration(
+          namespaceId, appId, runId,
+          workflowName == null ? cConf.get(SupportBundle.DEFAULT_WORKFLOW) : workflowName,
+          maxRunsPerPipeline);
       // Generates support bundle and returns with uuid
-      String uuid = supportBundleService.generateSupportBundle(supportBundleConfiguration);
+      String uuid = service.generateSupportBundle(supportBundleConfiguration);
       responder.sendString(HttpResponseStatus.OK, uuid);
     } catch (Exception e) {
       LOG.error("Can not trigger support bundle generation ", e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      if (e instanceof HttpErrorStatusProvider) {
+        responder.sendString(HttpResponseStatus.valueOf(((HttpErrorStatusProvider) e).getStatusCode()), e.getMessage());
+      }
     }
   }
 }

@@ -69,20 +69,16 @@ public class SupportBundleService implements Closeable {
                               RemoteNamespaceQueryClient namespaceQueryClient) {
     this.cConf = cConf;
     this.namespaceQueryClient = namespaceQueryClient;
-    this.executorService = Executors.newFixedThreadPool(
-    cConf.getInt(Constants.SupportBundle.MAX_THREADS),
-    Threads.createDaemonThreadFactory("perform-support-bundle"));
+    this.executorService = Executors.newFixedThreadPool(cConf.getInt(Constants.SupportBundle.MAX_THREADS),
+                                                        Threads.createDaemonThreadFactory("perform-support-bundle"));
     this.localDir = this.cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR);
   }
 
   /**
-   * Generates support bundle
+   * Generates support bundle For single bundle folder store structure: It will be
+   * local.dir.data/support/bundle/uuid/(status.json, system-log folder, pipeline-info folder)
    */
   public String generateSupportBundle(SupportBundleConfiguration supportBundleConfiguration) throws Exception {
-    SupportBundleStatus supportBundleStatus = new SupportBundleStatus();
-    String uuid = UUID.randomUUID().toString();
-    int folderMaxNumber = cConf.getInt(Constants.SupportBundle.MAX_FOLDER_SIZE);
-    File basePath = new File(localDir, uuid);
     String namespaceId = supportBundleConfiguration.getNamespaceId();
     if (namespaceId != null) {
       NamespaceId namespace = new NamespaceId(namespaceId);
@@ -90,19 +86,15 @@ public class SupportBundleService implements Closeable {
         throw new NamespaceNotFoundException(namespace);
       }
     }
+    int folderMaxNumber = cConf.getInt(Constants.SupportBundle.MAX_FOLDER_SIZE);
+    String uuid = UUID.randomUUID().toString();
+    File basePath = new File(localDir, uuid);
+    SupportBundleStatus supportBundleStatus = new SupportBundleStatus(uuid, supportBundleConfiguration);
     try {
-      Long startTs = System.currentTimeMillis();
-      supportBundleStatus.setBundleId(uuid);
-      supportBundleStatus.setStartTimestamp(startTs);
-
-      supportBundleStatus.setParameters(supportBundleConfiguration);
-
       List<String> namespaceList = new ArrayList<>();
       if (namespaceId == null) {
         namespaceList.addAll(
-        namespaceQueryClient.list().stream()
-        .map(NamespaceMeta::getName)
-        .collect(Collectors.toList()));
+          namespaceQueryClient.list().stream().map(NamespaceMeta::getName).collect(Collectors.toList()));
       } else {
         namespaceList.add(namespaceId);
       }
@@ -133,27 +125,21 @@ public class SupportBundleService implements Closeable {
    * Gets oldest folder from the root directory
    */
   private File getOldestFolder(File baseDirectory) throws RuntimeException {
-    File[] uuidFiles = baseDirectory.listFiles((dir, name) -> !name.startsWith(".")
-    && !dir.isHidden() && dir.isDirectory());
-    return Collections.min(Arrays.asList(uuidFiles),
-                           Comparator.<File, Boolean>comparing(
-                           f1 -> {
-                             try {
-                               return getSingleBundleJson(f1).getStatus()
-                               != CollectionState.FAILED;
-                             } catch (Exception e) {
-                               throw new RuntimeException("Can not get file status ", e);
-                             }
-                           })
-                           .thenComparing(File::lastModified));
+    File[] uuidFiles = baseDirectory.listFiles(
+      (dir, name) -> !name.startsWith(".") && !dir.isHidden() && dir.isDirectory());
+    return Collections.min(Arrays.asList(uuidFiles), Comparator.<File, Boolean>comparing(f1 -> {
+      try {
+        return getSingleBundleJson(f1).getStatus() != CollectionState.FAILED;
+      } catch (Exception e) {
+        throw new RuntimeException("Can not get file status ", e);
+      }
+    }).thenComparing(File::lastModified));
   }
 
   /**
    * Deletes old folders after certain number of folders exist
    */
-  private void deleteOldFolders(
-  @Nullable
-  File oldFilesDirectory) {
+  private void deleteOldFolders(@Nullable File oldFilesDirectory) {
     try {
       DirUtils.deleteDirectoryContents(oldFilesDirectory);
     } catch (IOException e) {
@@ -168,10 +154,8 @@ public class SupportBundleService implements Closeable {
   /**
    * Update status file
    */
-  private void addToStatus(SupportBundleStatus supportBundleStatus,
-                           String basePath) throws Exception {
-    try (FileWriter statusFile = new FileWriter(
-    new File(basePath, SupportBundleFileNames.statusFileName))) {
+  private void addToStatus(SupportBundleStatus supportBundleStatus, String basePath) throws Exception {
+    try (FileWriter statusFile = new FileWriter(new File(basePath, SupportBundleFileNames.statusFileName))) {
       GSON.toJson(supportBundleStatus, statusFile);
       statusFile.flush();
     } catch (Exception e) {
@@ -193,7 +177,7 @@ public class SupportBundleService implements Closeable {
   }
 
   private SupportBundleStatus readStatusJson(File statusFile) throws Exception {
-    SupportBundleStatus supportBundleStatus = new SupportBundleStatus();
+    SupportBundleStatus supportBundleStatus;
     try (Reader reader = Files.newBufferedReader(statusFile.toPath(), StandardCharsets.UTF_8)) {
       supportBundleStatus = GSON.fromJson(reader, SupportBundleStatus.class);
     } catch (Exception e) {
