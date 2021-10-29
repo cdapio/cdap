@@ -4612,4 +4612,37 @@
       The response body if request-blocking is enabled.
     </description>
   </property>
+
+  <!-- Service SupportBundle Configuration -->
+  <property>
+    <name>support.bundle.local.data.dir</name>
+    <value>${local.data.dir}/support/bundle</value>
+    <description>
+      Data directory for CDAP Support Bundle Local Sandbox
+    </description>
+  </property>
+
+  <property>
+    <name>support.bundle.max.folder.size</name>
+    <value>7</value>
+    <description>
+      Number of folder allows for each bundle generated.
+    </description>
+  </property>
+
+  <property>
+    <name>support.bundle.max.threads</name>
+    <value>5</value>
+    <description>
+      Number of thread allows for support bundle generation.
+    </description>
+  </property>
+
+  <property>
+    <name>support.bundle.default.workflow</name>
+    <value>DataPipelineWorkflow</value>
+    <description>
+      The default workflow name.
+    </description>
+  </property>
 </configuration>
