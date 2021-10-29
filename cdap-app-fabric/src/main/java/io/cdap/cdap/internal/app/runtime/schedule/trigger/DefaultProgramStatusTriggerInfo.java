@@ -88,6 +88,11 @@ public class DefaultProgramStatusTriggerInfo extends AbstractTriggerInfo
   }
 
   @Override
+  public String getApplicationName() {
+    return applicationSpecification.getName();
+  }
+
+  @Override
   public ProgramType getProgramType() {
     return programType;
   }

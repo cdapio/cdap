@@ -67,8 +67,8 @@ public class TriggeringScheduleInfoAdapterTest {
       (DefaultProgramStatusTriggerInfo) triggerInfos.get(0);
     DefaultProgramStatusTriggerInfo deserializedProgramStatusTriggerInfo =
       (DefaultProgramStatusTriggerInfo) deserializedScheduleInfo.getTriggerInfos().get(0);
-    Assert.assertEquals(expectedProgramStatusTriggerInfo.getApplicationSpecification().getName(),
-                        deserializedProgramStatusTriggerInfo.getApplicationSpecification().getName());
+    Assert.assertEquals(expectedProgramStatusTriggerInfo.getApplicationName(),
+                        deserializedProgramStatusTriggerInfo.getApplicationName());
     Assert.assertEquals(expectedProgramStatusTriggerInfo.getWorkflowToken().getAll(),
                         deserializedProgramStatusTriggerInfo.getWorkflowToken().getAll());
   }
