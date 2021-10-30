@@ -79,7 +79,7 @@ public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger impl
         Map<String, String> runtimeArgs = context.getProgramRuntimeArguments(runInfo.getProgramRunId());
         TriggerInfo triggerInfo =
           new DefaultProgramStatusTriggerInfo(programId.getNamespace(),
-                                              context.getApplicationSpecification(programId.getParent()),
+                                              programId.getParent().getApplication(),
                                               ProgramType.valueOf(programId.getType().name()), programId.getProgram(),
                                               RunIds.fromString(runInfo.getProgramRunId().getRun()),
                                               runInfo.getProgramStatus(),

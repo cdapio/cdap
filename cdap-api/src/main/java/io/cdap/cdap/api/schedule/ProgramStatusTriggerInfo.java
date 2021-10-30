@@ -36,13 +36,6 @@ public interface ProgramStatusTriggerInfo extends TriggerInfo {
   String getNamespace();
 
   /**
-   * @return The application specification of the application that contains the triggering program.
-   * @deprecated Use {@link #getApplicationName()} instead if the application name is needed.
-   */
-  @Deprecated
-  ApplicationSpecification getApplicationSpecification();
-
-  /**
    * @return The name of the application that contains the triggering program.
    */
   String getApplicationName();
