@@ -43,11 +43,13 @@ import io.cdap.cdap.api.metrics.MetricDataQuery;
 import io.cdap.cdap.api.metrics.MetricStore;
 import io.cdap.cdap.api.metrics.MetricTimeSeries;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsSystemClient;
 import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.app.program.ManifestFields;
 import io.cdap.cdap.app.store.ServiceStore;
 import io.cdap.cdap.client.DatasetClient;
 import io.cdap.cdap.client.MetadataClient;
+import io.cdap.cdap.client.MetricsClient;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.cdap.common.NotFoundException;
@@ -78,9 +80,13 @@ import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
+import io.cdap.cdap.logging.guice.LogQueryRuntimeModule;
+import io.cdap.cdap.logging.service.LogQueryService;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metadata.MetadataService;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
+import io.cdap.cdap.metrics.process.RemoteMetricsSystemClient;
+import io.cdap.cdap.metrics.query.MetricsQueryService;
 import io.cdap.cdap.proto.BatchApplicationDetail;
 import io.cdap.cdap.proto.BatchProgram;
 import io.cdap.cdap.proto.BatchProgramHistory;
@@ -215,6 +221,8 @@ public abstract class AppFabricTestBase {
   private static MetadataClient metadataClient;
   private static MetricStore metricStore;
   private static RemoteClientFactory remoteClientFactory;
+  private static LogQueryService logQueryService;
+  private static MetricsQueryService metricsQueryService;
 
   private static HttpRequestConfig httpRequestConfig;
 
@@ -233,6 +241,7 @@ public abstract class AppFabricTestBase {
         // needed because we set Kerberos to true in DefaultNamespaceAdminTest
         bind(UGIProvider.class).to(CurrentUGIProvider.class);
         bind(MetadataSubscriberService.class).in(Scopes.SINGLETON);
+        bind(MetricsSystemClient.class).to(RemoteMetricsSystemClient.class).in(Scopes.SINGLETON);
       }
     });
   }
@@ -278,6 +287,10 @@ public abstract class AppFabricTestBase {
     metadataService.startAndWait();
     metadataSubscriberService = injector.getInstance(MetadataSubscriberService.class);
     metadataSubscriberService.startAndWait();
+    logQueryService = injector.getInstance(LogQueryService.class);
+    logQueryService.startAndWait();
+    metricsQueryService = injector.getInstance(MetricsQueryService.class);
+    metricsQueryService.startAndWait();
     locationFactory = getInjector().getInstance(LocationFactory.class);
     datasetClient = new DatasetClient(getClientConfig(discoveryClient, Constants.Service.DATASET_MANAGER));
     remoteClientFactory = new RemoteClientFactory(discoveryClient,
@@ -308,6 +321,8 @@ public abstract class AppFabricTestBase {
     serviceStore.stopAndWait();
     metadataSubscriberService.stopAndWait();
     metadataService.stopAndWait();
+    logQueryService.stopAndWait();
+    metricsQueryService.stopAndWait();
     if (messagingService instanceof Service) {
       ((Service) messagingService).stopAndWait();
     }

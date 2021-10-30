@@ -54,7 +54,10 @@ import io.cdap.cdap.internal.app.worker.TaskWorkerServiceLauncher;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
+import io.cdap.cdap.metrics.guice.MetricsHandlerModule;
 import io.cdap.cdap.metrics.guice.MetricsStoreModule;
+import io.cdap.cdap.metrics.query.MetricsQueryService;
 import io.cdap.cdap.operations.OperationalStatsService;
 import io.cdap.cdap.operations.guice.OperationalStatsModule;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -110,6 +113,7 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
       new MonitorHandlerModule(false),
       new SecureStoreServerModule(),
       new OperationalStatsModule(),
+      new MetricsClientRuntimeModule().getDistributedModules(),
       getDataFabricModule(),
       new DFSLocationModule(),
       new AbstractModule() {
@@ -136,6 +140,7 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
     services.add(injector.getInstance(OperationalStatsService.class));
     services.add(injector.getInstance(SecureStoreService.class));
     services.add(injector.getInstance(DatasetOpExecutorService.class));
+    services.add(injector.getInstance(MetricsQueryService.class));
     services.add(injector.getInstance(ServiceStore.class));
     Binding<ZKClientService> zkBinding = injector.getExistingBinding(Key.get(ZKClientService.class));
     if (zkBinding != null) {
