@@ -17,7 +17,7 @@
 package io.cdap.cdap.support.handlers;
 
 import com.google.common.collect.ImmutableMap;
-import io.cdap.cdap.WorkflowApp;
+import io.cdap.cdap.AppWithServices;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.app.RunIds;
@@ -92,7 +92,7 @@ public class SupportBundleHttpHandlerTest extends AppFabricTestBase {
   }
 
   private void testLogsRunId() throws Exception {
-    deploy(WorkflowApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN,
+    deploy(AppWithServices.class, 200, Constants.Gateway.API_VERSION_3_TOKEN,
            WORKFLOW_APP.getNamespace());
     long startTime = System.currentTimeMillis();
 
@@ -101,7 +101,7 @@ public class SupportBundleHttpHandlerTest extends AppFabricTestBase {
         WORKFLOW_APP.getNamespace(),
         WORKFLOW_APP.getApplication(),
         ProgramType.WORKFLOW,
-        WorkflowApp.FunWorkflow.NAME);
+        "DataPipelineWorkflow");
     RunId workflowRunId = RunIds.generate(startTime);
     ArtifactId artifactId =
       WORKFLOW_APP.getNamespaceId().artifact("testArtifact", "1.0").toApiArtifactId();
@@ -124,7 +124,7 @@ public class SupportBundleHttpHandlerTest extends AppFabricTestBase {
     String supportBundleCreateUrl = String.format(
       "support/bundle?namespace-id=%s&app-id=%s&workflow-name=%s&run-id=%s&need-system-log=true",
       WORKFLOW_APP.getNamespaceId().getNamespace(), WORKFLOW_APP.getApplication(),
-      WorkflowApp.FunWorkflow.NAME, runs.get(0).getPid());
+      "DataPipelineWorkflow", runs.get(0).getPid());
 
     HttpResponse supportBundleCreateResponse = doPost(
       String.format("/%s/%s", Constants.Gateway.API_VERSION_3_TOKEN, supportBundleCreateUrl));

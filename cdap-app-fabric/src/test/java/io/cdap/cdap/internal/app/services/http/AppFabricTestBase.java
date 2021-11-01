@@ -31,6 +31,8 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
+import com.google.inject.multibindings.Multibinder;
+import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.ProgramStatus;
@@ -123,6 +125,9 @@ import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.store.StoreDefinition;
+import io.cdap.cdap.support.task.factory.SupportBundlePipelineInfoTaskFactory;
+import io.cdap.cdap.support.task.factory.SupportBundleSystemLogTaskFactory;
+import io.cdap.cdap.support.task.factory.SupportBundleTaskFactory;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequestConfig;
 import io.cdap.common.http.HttpRequests;
@@ -222,7 +227,6 @@ public abstract class AppFabricTestBase {
   private static MetricStore metricStore;
   private static RemoteClientFactory remoteClientFactory;
   private static LogQueryService logQueryService;
-  private static MetricsQueryService metricsQueryService;
 
   private static HttpRequestConfig httpRequestConfig;
 
@@ -241,7 +245,6 @@ public abstract class AppFabricTestBase {
         // needed because we set Kerberos to true in DefaultNamespaceAdminTest
         bind(UGIProvider.class).to(CurrentUGIProvider.class);
         bind(MetadataSubscriberService.class).in(Scopes.SINGLETON);
-        bind(MetricsSystemClient.class).to(RemoteMetricsSystemClient.class).in(Scopes.SINGLETON);
       }
     });
   }
@@ -289,8 +292,6 @@ public abstract class AppFabricTestBase {
     metadataSubscriberService.startAndWait();
     logQueryService = injector.getInstance(LogQueryService.class);
     logQueryService.startAndWait();
-    metricsQueryService = injector.getInstance(MetricsQueryService.class);
-    metricsQueryService.startAndWait();
     locationFactory = getInjector().getInstance(LocationFactory.class);
     datasetClient = new DatasetClient(getClientConfig(discoveryClient, Constants.Service.DATASET_MANAGER));
     remoteClientFactory = new RemoteClientFactory(discoveryClient,
@@ -322,7 +323,6 @@ public abstract class AppFabricTestBase {
     metadataSubscriberService.stopAndWait();
     metadataService.stopAndWait();
     logQueryService.stopAndWait();
-    metricsQueryService.stopAndWait();
     if (messagingService instanceof Service) {
       ((Service) messagingService).stopAndWait();
     }

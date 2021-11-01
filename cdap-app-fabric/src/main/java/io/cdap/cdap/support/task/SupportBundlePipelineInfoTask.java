@@ -64,17 +64,13 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
   private final int maxRunsPerPipeline;
 
   @Inject
-  public SupportBundlePipelineInfoTask(@Assisted String uuid,
-                                       @Assisted List<String> namespaceList,
-                                       @Assisted String appId,
-                                       @Assisted String basePath,
+  public SupportBundlePipelineInfoTask(@Assisted String uuid, @Assisted List<String> namespaceList,
+                                       @Assisted String appId, @Assisted String basePath,
                                        RemoteApplicationDetailFetcher remoteApplicationDetailFetcher,
                                        RemoteProgramRunRecordsFetcher remoteProgramRunRecordsFetcher,
-                                       RemoteProgramLogsFetcher remoteProgramLogsFetcher,
-                                       @Assisted String workflowName,
+                                       RemoteProgramLogsFetcher remoteProgramLogsFetcher, @Assisted String workflowName,
                                        RemoteMetricsSystemClient remoteMetricsSystemClient,
-                                       @Assisted SupportBundleJob supportBundleJob,
-                                       @Assisted int maxRunsPerPipeline) {
+                                       @Assisted SupportBundleJob supportBundleJob, @Assisted int maxRunsPerPipeline) {
     this.uuid = uuid;
     this.basePath = basePath;
     this.namespaceList = namespaceList;
@@ -93,14 +89,10 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
     for (String namespaceId : namespaceList) {
       List<ApplicationRecord> apps = new ArrayList<>();
       if (appId == null) {
-        apps.addAll(
-            remoteApplicationDetailFetcher.list(namespaceId).stream()
-                .map(applicationDetail -> new ApplicationRecord(applicationDetail))
-                .collect(Collectors.toList()));
+        apps.addAll(remoteApplicationDetailFetcher.list(namespaceId).stream().map(
+          applicationDetail -> new ApplicationRecord(applicationDetail)).collect(Collectors.toList()));
       } else {
-        apps.add(
-            new ApplicationRecord(
-                remoteApplicationDetailFetcher.get(new ApplicationId(namespaceId, appId))));
+        apps.add(new ApplicationRecord(remoteApplicationDetailFetcher.get(new ApplicationId(namespaceId, appId))));
       }
 
       for (ApplicationRecord app : apps) {
@@ -114,30 +106,18 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
 
           List<RunRecord> runRecordList = sortRunRecords(namespaceId, workflowName);
           SupportBundleRuntimeInfoTask supportBundleRuntimeInfoTask =
-              new SupportBundleRuntimeInfoTask(
-                  appFolderPath.getPath(),
-                  namespaceId,
-                  appId,
-                  workflowName,
-                  remoteMetricsSystemClient,
-                  runRecordList,
-                  applicationDetail);
+            new SupportBundleRuntimeInfoTask(appFolderPath.getPath(), namespaceId, appId, workflowName,
+                                             remoteMetricsSystemClient, runRecordList, applicationDetail);
           SupportBundlePipelineRunLogTask supportBundlePipelineRunLogTask =
-              new SupportBundlePipelineRunLogTask(
-                  appFolderPath.getPath(),
-                  namespaceId,
-                  appId,
-                  workflowName,
-                  remoteProgramLogsFetcher,
-                  runRecordList);
+            new SupportBundlePipelineRunLogTask(appFolderPath.getPath(), namespaceId, appId, workflowName,
+                                                remoteProgramLogsFetcher, runRecordList);
           String runtimeInfoClassName = supportBundleRuntimeInfoTask.getClass().getName();
           String runtimeInfoTaskName = uuid.concat(": ").concat(runtimeInfoClassName);
           supportBundleJob.executeTask(supportBundleRuntimeInfoTask, basePath, runtimeInfoClassName,
                                        runtimeInfoTaskName);
           String runtimeLogClassName = supportBundlePipelineRunLogTask.getClass().getName();
           String runtimeLogTaskName = uuid.concat(": ").concat(runtimeLogClassName);
-          supportBundleJob.executeTask(supportBundlePipelineRunLogTask, basePath,
-                                       runtimeLogClassName,
+          supportBundleJob.executeTask(supportBundlePipelineRunLogTask, basePath, runtimeLogClassName,
                                        runtimeLogTaskName);
         } catch (IOException e) {
           LOG.warn("Can not write pipeline info file with namespace {} ", namespaceId, e);
@@ -147,19 +127,13 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
     }
   }
 
-  private List<RunRecord> sortRunRecords(String namespaceId, String workflow)
-      throws NotFoundException, IOException {
+  private List<RunRecord> sortRunRecords(String namespaceId, String workflow) throws NotFoundException, IOException {
     List<RunRecord> runRecordList = new ArrayList<>();
-    ProgramId programId =
-        new ProgramId(namespaceId, appId, ProgramType.valueOfCategoryName("workflows"), workflow);
-    List<RunRecord> allRunRecordList =
-        remoteProgramRunRecordsFetcher.getProgramRuns(programId, 0, Long.MAX_VALUE, 100);
+    ProgramId programId = new ProgramId(namespaceId, appId, ProgramType.valueOfCategoryName("workflows"), workflow);
+    List<RunRecord> allRunRecordList = remoteProgramRunRecordsFetcher.getProgramRuns(programId, 0, Long.MAX_VALUE, 100);
 
-    List<RunRecord> sortedRunRecordList =
-        allRunRecordList.stream()
-            .filter(run -> run.getStatus().isEndState())
-            .sorted(Comparator.comparing(RunRecord::getStartTs).reversed())
-            .collect(Collectors.toList());
+    List<RunRecord> sortedRunRecordList = allRunRecordList.stream().filter(run -> run.getStatus().isEndState()).sorted(
+      Comparator.comparing(RunRecord::getStartTs).reversed()).collect(Collectors.toList());
     // Gets the last N runs info
     for (RunRecord runRecord : sortedRunRecordList) {
       if (runRecordList.size() >= maxRunsPerPipeline) {

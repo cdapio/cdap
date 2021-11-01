@@ -113,7 +113,6 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
       new MonitorHandlerModule(false),
       new SecureStoreServerModule(),
       new OperationalStatsModule(),
-      new MetricsClientRuntimeModule().getDistributedModules(),
       getDataFabricModule(),
       new DFSLocationModule(),
       new AbstractModule() {
@@ -140,7 +139,6 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
     services.add(injector.getInstance(OperationalStatsService.class));
     services.add(injector.getInstance(SecureStoreService.class));
     services.add(injector.getInstance(DatasetOpExecutorService.class));
-    services.add(injector.getInstance(MetricsQueryService.class));
     services.add(injector.getInstance(ServiceStore.class));
     Binding<ZKClientService> zkBinding = injector.getExistingBinding(Key.get(ZKClientService.class));
     if (zkBinding != null) {

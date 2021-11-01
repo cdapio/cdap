@@ -14,16 +14,19 @@
  * the License.
  */
 
-package io.cdap.cdap.support.job;
+package io.cdap.cdap.support.service;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
-import io.cdap.cdap.WorkflowApp;
+import io.cdap.cdap.AllProgramsApp;
+import io.cdap.cdap.AppWithServices;
+import io.cdap.cdap.AppWithWorkflow;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.SupportBundle;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
@@ -54,8 +57,9 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class SupportBundleJobTest extends AppFabricTestBase {
-  private static final ApplicationId WORKFLOW_APP = NamespaceId.DEFAULT.app("WorkflowApp");
+public class SupportBundleServiceTest extends AppFabricTestBase {
+
+  private static final NamespaceId namespaceId = NamespaceId.DEFAULT;
   private static final String RUNNING = "RUNNING";
   private static SupportBundleService supportBundleService;
   private static CConfiguration configuration;
@@ -63,95 +67,72 @@ public class SupportBundleJobTest extends AppFabricTestBase {
   private int sourceId;
 
   @BeforeClass
-  public static void setup() throws Exception {
-    configuration = CConfiguration.create();
-    Injector injector = AppFabricTestHelper.getInjector();
-    store = injector.getInstance(DefaultStore.class);
+  public static void setup() {
+    Injector injector = getInjector();
+    configuration = injector.getInstance(CConfiguration.class);
     supportBundleService = injector.getInstance(SupportBundleService.class);
-    configuration.set(Constants.SupportBundle.LOCAL_DATA_DIR,
-                      tmpFolder.newFolder().getAbsolutePath());
+    store = injector.getInstance(DefaultStore.class);
   }
 
   @Test
   public void testSupportBundleService() throws Exception {
-    deploy(WorkflowApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN,
-           WORKFLOW_APP.getNamespace());
+    deploy(AppWithWorkflow.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, namespaceId.getNamespace());
     long startTime = System.currentTimeMillis();
 
-    ProgramId workflowProgram =
-    new ProgramId(
-    WORKFLOW_APP.getNamespace(),
-    WORKFLOW_APP.getApplication(),
-    ProgramType.WORKFLOW,
-    WorkflowApp.FunWorkflow.NAME);
+    ProgramId workflowProgram = new ProgramId(namespaceId.getNamespace(), AppWithWorkflow.NAME,
+                                              ProgramType.WORKFLOW, AppWithWorkflow.SampleWorkflow.NAME);
     RunId workflowRunId = RunIds.generate(startTime);
-    ArtifactId artifactId =
-    WORKFLOW_APP.getNamespaceId().artifact("testArtifact", "1.0").toApiArtifactId();
+    ArtifactId artifactId = namespaceId.artifact("testArtifact", "1.0").toApiArtifactId();
     setStartAndRunning(workflowProgram, workflowRunId.getId(), artifactId);
-
-    // start a program
-    startProgram(workflowProgram);
-    waitState(workflowProgram, RUNNING);
 
     List<RunRecord> runs = getProgramRuns(workflowProgram, ProgramRunStatus.RUNNING);
     Assert.assertEquals(1, runs.size());
 
-    // stop the program
-    stopProgram(workflowProgram);
-
-    HttpResponse appsResponse =
-    doGet(
-    getVersionedAPIPath(
-    "apps/",
-    Constants.Gateway.API_VERSION_3_TOKEN,
-    WORKFLOW_APP.getNamespaceId().getNamespace()));
+    HttpResponse appsResponse = doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN,
+                                                          namespaceId.getNamespace()));
     Assert.assertEquals(200, appsResponse.getResponseCode());
 
-    SupportBundleConfiguration supportBundleConfiguration = new SupportBundleConfiguration(null,
-                                                                                           null,
-                                                                                           null,
-                                                                                           null, 1);
+    // workflow ran for 1 minute
+    long workflowStopTime = TimeUnit.MILLISECONDS.toSeconds(startTime) + 60;
+    store.setStop(workflowProgram.run(workflowRunId.getId()), workflowStopTime, ProgramRunStatus.COMPLETED,
+                  AppFabricTestHelper.createSourceId(++sourceId));
+
+
+    SupportBundleConfiguration supportBundleConfiguration = new SupportBundleConfiguration(
+      namespaceId.getNamespace(), AppWithWorkflow.NAME, null, AppWithWorkflow.SampleWorkflow.NAME,
+      1);
+
     String uuid = supportBundleService.generateSupportBundle(supportBundleConfiguration);
     Assert.assertNotNull(uuid);
-    String tmpFolderPath =  configuration.get(Constants.SupportBundle.LOCAL_DATA_DIR);
-    File uuidFile = new File(tmpFolderPath, uuid);
+    File tempFolder = new File(configuration.get(SupportBundle.LOCAL_DATA_DIR));
+    File uuidFile = new File(tempFolder, uuid);
+
+    TimeUnit.SECONDS.sleep(10);
     SupportBundleStatus supportBundleStatus = supportBundleService.getSingleBundleJson(uuidFile);
     List<SupportBundleTaskStatus> supportBundleTaskStatusList = supportBundleStatus.getTasks();
     Assert.assertEquals(uuid, supportBundleStatus.getBundleId());
     Assert.assertEquals(CollectionState.FINISHED, supportBundleStatus.getStatus());
-    Assert.assertEquals(uuid, supportBundleStatus.getTasks());
 
     for (SupportBundleTaskStatus supportBundleTaskStatus : supportBundleTaskStatusList) {
       Assert.assertEquals(CollectionState.FINISHED, supportBundleTaskStatus.getStatus());
     }
-
-    tmpFolder.delete();
   }
 
-  private void setStartAndRunning(ProgramId id,
-                                  String pid,
-                                  ArtifactId artifactId) {
+  private void setStartAndRunning(ProgramId id, String pid, ArtifactId artifactId) {
     setStartAndRunning(id, pid, ImmutableMap.of(), ImmutableMap.of(), artifactId);
   }
 
-  private void setStartAndRunning(ProgramId id,
-                                  String pid,
-                                  Map<String, String> runtimeArgs,
-                                  Map<String, String> systemArgs,
-                                  ArtifactId artifactId) {
+  private void setStartAndRunning(ProgramId id, String pid, Map<String, String> runtimeArgs,
+                                  Map<String, String> systemArgs, ArtifactId artifactId) {
     if (!systemArgs.containsKey(SystemArguments.PROFILE_NAME)) {
-      systemArgs =
-      ImmutableMap.<String, String>builder()
-      .putAll(systemArgs)
-      .put(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName())
-      .build();
+      systemArgs = ImmutableMap.<String, String>builder().putAll(systemArgs)
+        .put(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName()).build();
     }
     long startTime = RunIds.getTime(pid, TimeUnit.SECONDS);
-    store.setProvisioning(id.run(pid), runtimeArgs, systemArgs,
-                          AppFabricTestHelper.createSourceId(++sourceId), artifactId);
+    store.setProvisioning(id.run(pid), runtimeArgs, systemArgs, AppFabricTestHelper.createSourceId(++sourceId),
+                          artifactId);
     store.setProvisioned(id.run(pid), 0, AppFabricTestHelper.createSourceId(++sourceId));
     store.setStart(id.run(pid), null, systemArgs, AppFabricTestHelper.createSourceId(++sourceId));
-    store.setRunning(
-    id.run(pid), startTime + 1, null, AppFabricTestHelper.createSourceId(++sourceId));
+    store.setRunning(id.run(pid), startTime + 1, null, AppFabricTestHelper.createSourceId(++sourceId));
   }
 }

@@ -98,15 +98,11 @@ public class SupportBundleRuntimeInfoTask implements SupportBundleTask {
       } catch (IOException e) {
         LOG.warn("Can not write file with run {} ", runId, e);
         throw new IOException("Can not write run info file ", e);
-      } catch (JSONException e) {
-        LOG.warn("Can not process metrics with run {} ", runId, e);
-        throw new JSONException("Can not process metrics ");
       }
     }
   }
 
-  public JsonObject queryMetrics(String runId, String configuration, long startTs, long stopTs)
-      throws IOException, JSONException {
+  public JsonObject queryMetrics(String runId, String configuration, long startTs, long stopTs) {
     JsonObject metrics = new JsonObject();
     try {
       JSONObject appConf =
@@ -142,10 +138,10 @@ public class SupportBundleRuntimeInfoTask implements SupportBundleTask {
       }
     } catch (IOException e) {
       LOG.warn("Can not find metrics with run {} ", runId, e);
-      throw new IOException("Can not write run info file", e);
+      return null;
     } catch (JSONException e) {
       LOG.warn("JSON format error with run {} ", runId, e);
-      throw new JSONException(e);
+      return null;
     }
     return metrics;
   }
