@@ -19,6 +19,7 @@ package io.cdap.cdap.support.services;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -26,10 +27,13 @@ import io.cdap.cdap.common.namespace.RemoteNamespaceQueryClient;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.support.SupportBundleTaskConfiguration;
+import io.cdap.cdap.support.job.SupportBundleJob;
 import io.cdap.cdap.support.lib.SupportBundleFileNames;
 import io.cdap.cdap.support.status.CollectionState;
 import io.cdap.cdap.support.status.SupportBundleConfiguration;
 import io.cdap.cdap.support.status.SupportBundleStatus;
+import io.cdap.cdap.support.task.factory.SupportBundleTaskFactory;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,11 +49,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+
+import static io.cdap.cdap.common.conf.Constants.SupportBundle;
 
 /**
  * Support bundle service to generate base path, uuid and trigger the job to execute tasks.
@@ -58,18 +65,21 @@ public class SupportBundleService implements Closeable {
 
   private static final Logger LOG = LoggerFactory.getLogger(SupportBundleService.class);
   private static final Gson GSON = new GsonBuilder().create();
+  private static Set<SupportBundleTaskFactory> supportBundleTaskFactories;
   private final ExecutorService executorService;
   private final CConfiguration cConf;
   private final RemoteNamespaceQueryClient namespaceQueryClient;
   private final String localDir;
 
   @Inject
-  SupportBundleService(CConfiguration cConf, RemoteNamespaceQueryClient namespaceQueryClient) {
+  SupportBundleService(CConfiguration cConf, RemoteNamespaceQueryClient namespaceQueryClient,
+                       @Named(SupportBundle.TASK_FACTORY) Set<SupportBundleTaskFactory> supportBundleTaskFactories) {
     this.cConf = cConf;
     this.namespaceQueryClient = namespaceQueryClient;
     this.executorService = Executors.newFixedThreadPool(cConf.getInt(Constants.SupportBundle.MAX_THREADS),
                                                         Threads.createDaemonThreadFactory("perform-support-bundle"));
     this.localDir = this.cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR);
+    this.supportBundleTaskFactories = supportBundleTaskFactories;
   }
 
   /**
@@ -105,10 +115,17 @@ public class SupportBundleService implements Closeable {
     }
     DirUtils.mkdirs(basePath);
 
+    SupportBundleJob supportBundleJob =
+      new SupportBundleJob(supportBundleTaskFactories, executorService, cConf, supportBundleStatus);
+    SupportBundleTaskConfiguration supportBundleTaskConfiguration =
+      new SupportBundleTaskConfiguration(supportBundleConfiguration, uuid, basePath.getPath(), namespaces,
+                                         supportBundleJob);
+
     try {
       SupportBundleStatus finishBundleStatus =
         new SupportBundleStatus(supportBundleStatus, "", CollectionState.FINISHED, System.currentTimeMillis());
       addToStatus(finishBundleStatus, basePath.getPath());
+      executorService.execute(() -> supportBundleJob.generateBundle(supportBundleTaskConfiguration));
     } catch (Exception e) {
       LOG.error("Failed to finish execute tasks", e);
       SupportBundleStatus failedBundleStatus =

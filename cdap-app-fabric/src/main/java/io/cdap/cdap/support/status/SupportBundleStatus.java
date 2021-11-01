@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.support.status;
 
+import java.util.List;
+import java.util.ArrayList;
+
 /**
  * Status when generating Support bundle.
  */
@@ -30,8 +33,10 @@ public class SupportBundleStatus {
   private final long startTimestamp;
   /** FINISHED/FAILED bundles when bundle collection was completed */
   private long finishTimestamp;
-  /** any parameters passed to start collection */
+  // any parameters passed to start collection
   private final SupportBundleConfiguration parameters;
+  // Array of top-level tasks for the bundle, see task structure below
+  private List<SupportBundleTaskStatus> tasks = new ArrayList<>();
 
   public SupportBundleStatus(String bundleId, long startTimestamp, SupportBundleConfiguration parameters,
                              CollectionState status) {
@@ -95,5 +100,12 @@ public class SupportBundleStatus {
    */
   public String getBundleId() {
     return bundleId;
+  }
+
+  /**
+   * Get support bundle generation tasks
+   */
+  public List<SupportBundleTaskStatus> getTasks() {
+    return tasks;
   }
 }
