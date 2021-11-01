@@ -34,14 +34,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
@@ -58,9 +52,8 @@ public class SupportBundleJob {
   private final List<SupportBundleTask> supportBundleTaskList;
   private final int maxRetries;
   private final int maxRunsPerPipeline;
-  private final Map<Future, String> futureTasknameMap;
-  private final Map<String, Long> trackTimeMap;
   private final int maxThreadTimeout;
+  private final Queue<RunningTaskState> runningTaskStateQueue;
 
   public SupportBundleJob(@Named(SupportBundle.TASK_FACTORY) Set<SupportBundleTaskFactory> supportBundleTaskFactoryList,
                           ExecutorService executor,
@@ -72,9 +65,8 @@ public class SupportBundleJob {
     this.executor = executor;
     this.maxRetries = cConf.getInt(Constants.SupportBundle.MAX_RETRY_TIMES);
     this.maxRunsPerPipeline = cConf.getInt(SupportBundle.MAX_RUNS_PER_PIPELINE);
-    this.trackTimeMap = new ConcurrentHashMap<>();
-    this.futureTasknameMap = new ConcurrentHashMap<>();
     this.maxThreadTimeout = cConf.getInt(SupportBundle.MAX_THREAD_TIMEOUT);
+    this.runningTaskStateQueue = new ConcurrentLinkedQueue<>();
   }
 
   /**
@@ -118,11 +110,12 @@ public class SupportBundleJob {
     String className,
     String taskName,
     int retryCount) {
+    RunningTaskState runningTaskState = new RunningTaskState();
     Future<SupportBundleTaskStatus> futureService =
       executor.submit(
         () -> {
           try {
-            trackTimeMap.put(taskName, System.currentTimeMillis());
+            runningTaskState.setStartTime(System.currentTimeMillis());
             updateTask(taskStatus, basePath, CollectionState.IN_PROGRESS);
             supportBundleTask.collect();
             taskStatus.setFinishTimestamp(System.currentTimeMillis());
@@ -136,19 +129,21 @@ public class SupportBundleJob {
           }
           return taskStatus;
         });
-    futureTasknameMap.put(futureService, taskName);
+    runningTaskState.setFuture(futureService);
+    runningTaskStateQueue.offer(runningTaskState);
   }
 
   /**
    * Execute all processing
    */
   public void completeProcessing(String basePath) {
-    for (Future future : futureTasknameMap.keySet()) {
+    while (!runningTaskStateQueue.isEmpty()) {
+      RunningTaskState runningTaskState = runningTaskStateQueue.poll();
       SupportBundleTaskStatus supportBundleTaskStatus = null;
-      String previousTaskname = futureTasknameMap.get(future);
+      Future future = runningTaskState.getFuture();
       try {
         Long currentTime = System.currentTimeMillis();
-        Long futureStartTime = trackTimeMap.getOrDefault(previousTaskname, currentTime);
+        Long futureStartTime = runningTaskState.getStartTime();
         Long timeLeftBeforeTimeout =
           TimeUnit.MINUTES.toMillis(maxThreadTimeout) - (currentTime - futureStartTime);
         supportBundleTaskStatus = (SupportBundleTaskStatus) future.get(timeLeftBeforeTimeout,
@@ -159,8 +154,6 @@ public class SupportBundleJob {
         LOG.error("The task for has failed or timeout more than five minutes ", e);
         updateFailedTask(supportBundleTaskStatus, future, basePath);
       }
-      trackTimeMap.remove(previousTaskname);
-      futureTasknameMap.remove(future);
     }
     supportBundleStatus.setStatus(CollectionState.FINISHED);
     supportBundleStatus.setFinishTimestamp(System.currentTimeMillis());
