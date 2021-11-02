@@ -2868,6 +2868,7 @@
         <module>cdap-runtime-ext-dataproc</module>
         <module>cdap-runtime-ext-emr</module>
         <module>cdap-runtime-ext-remote-hadoop</module>
+        <module>cdap-runtime-ext-tether</module>
         <module>cdap-runtime-spi</module>
         <module>cdap-securestore-ext-cloudkms</module>
         <module>cdap-securestore-spi</module>

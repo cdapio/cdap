@@ -318,6 +318,12 @@
         </dependency>
         <dependency>
           <groupId>io.cdap.cdap</groupId>
+          <artifactId>cdap-runtime-ext-tether</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-securestore-ext-cloudkms</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
@@ -686,6 +692,27 @@
                     <resource>
                       <directory>
                         ${project.parent.basedir}/cdap-runtime-ext-remote-hadoop/target/libexec/
+                      </directory>
+                      <includes>
+                        <include>*.jar</include>
+                        <include>*.json</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+              <execution>
+                <id>copy-runtime-ext-tether</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.runtime.providers.ext.dir}/tether</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-runtime-ext-tether/target/libexec/
                       </directory>
                       <includes>
                         <include>*.jar</include>
