@@ -66,23 +66,22 @@ public class SupportBundleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/support/bundle")
   public void createSupportBundle(HttpRequest request,
                                   HttpResponder responder,
-                                  @Nullable @QueryParam("namespace-id") String namespaceId,
-                                  @Nullable @QueryParam("app-id") String appId,
-                                  @Nullable @QueryParam("workflow-name") String workflowName,
-                                  @Nullable @QueryParam("run-id") String runId,
-                                  @QueryParam("max-runs-per-pipeline") @DefaultValue("1") Integer maxRunsPerPipeline) {
+                                  @Nullable @QueryParam("namespaceId") String namespaceId,
+                                  @Nullable @QueryParam("appId") String appId,
+                                  @Nullable @QueryParam("workflowName") String workflowName,
+                                  @Nullable @QueryParam("runId") String runId,
+                                  @QueryParam("maxRunsPerPipeline") @DefaultValue("1") Integer maxRunsPerPipeline) {
     // Establishes the support bundle configuration
     try {
-      SupportBundleConfiguration supportBundleConfiguration =
-        new SupportBundleConfiguration(
-          namespaceId, appId, runId,
-          workflowName == null ? cConf.get(SupportBundle.DEFAULT_WORKFLOW) : workflowName,
-          maxRunsPerPipeline);
+      SupportBundleConfiguration bundleConfiguration =
+        new SupportBundleConfiguration(namespaceId, appId, runId,
+                                       workflowName == null ? cConf.get(SupportBundle.DEFAULT_WORKFLOW) : workflowName,
+                                       maxRunsPerPipeline);
       // Generates support bundle and returns with uuid
-      String uuid = service.generateSupportBundle(supportBundleConfiguration);
+      String uuid = service.generateSupportBundle(bundleConfiguration);
       responder.sendString(HttpResponseStatus.OK, uuid);
     } catch (Exception e) {
-      LOG.error("Can not trigger support bundle generation ", e);
+      LOG.error("Failed to trigger support bundle generation ", e);
       if (e instanceof HttpErrorStatusProvider) {
         responder.sendString(HttpResponseStatus.valueOf(((HttpErrorStatusProvider) e).getStatusCode()), e.getMessage());
       }
