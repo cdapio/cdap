@@ -45,10 +45,22 @@ public class SparkMetricsSink implements Sink {
 
   private final SparkMetricsReporter reporter;
 
-  public SparkMetricsSink(Properties properties, MetricRegistry registry,
-                          org.apache.spark.SecurityManager securityManager) {
+  /**
+   * Consturctor for Spark 3.2.0 to call.
+   *
+   * @see <a href="https://issues.apache.org/jira/browse/SPARK-37078">SPARK-37078</a>
+   */
+  public SparkMetricsSink(Properties properties, MetricRegistry registry) {
     reporter = new SparkMetricsReporter(registry, TimeUnit.SECONDS, TimeUnit.SECONDS, MetricFilter.ALL);
     LOG.debug("Using SparkMetricsSink for reporting metrics: {}", properties);
+  }
+
+  /**
+   * Constructor for Spark to call.
+   */
+  public SparkMetricsSink(Properties properties, MetricRegistry registry,
+                          org.apache.spark.SecurityManager securityManager) {
+    this(properties, registry);
   }
 
   @Override
