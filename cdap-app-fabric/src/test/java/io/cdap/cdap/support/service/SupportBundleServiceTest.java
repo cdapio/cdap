@@ -17,9 +17,9 @@
 package io.cdap.cdap.support.service;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Injector;
-import io.cdap.cdap.AllProgramsApp;
-import io.cdap.cdap.AppWithServices;
 import io.cdap.cdap.AppWithWorkflow;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.app.store.Store;
@@ -38,18 +38,25 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.support.lib.SupportBundleFileNames;
 import io.cdap.cdap.support.services.SupportBundleService;
 import io.cdap.cdap.support.status.CollectionState;
 import io.cdap.cdap.support.status.SupportBundleConfiguration;
 import io.cdap.cdap.support.status.SupportBundleStatus;
 import io.cdap.cdap.support.status.SupportBundleTaskStatus;
 import io.cdap.common.http.HttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.api.RunId;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -58,7 +65,8 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class SupportBundleServiceTest extends AppFabricTestBase {
-
+  private static final Logger LOG = LoggerFactory.getLogger(SupportBundleService.class);
+  private static final Gson GSON = new GsonBuilder().create();
   private static final NamespaceId namespaceId = NamespaceId.DEFAULT;
   private static final String RUNNING = "RUNNING";
   private static SupportBundleService supportBundleService;
@@ -79,17 +87,20 @@ public class SupportBundleServiceTest extends AppFabricTestBase {
     deploy(AppWithWorkflow.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, namespaceId.getNamespace());
     long startTime = System.currentTimeMillis();
 
-    ProgramId workflowProgram = new ProgramId(namespaceId.getNamespace(), AppWithWorkflow.NAME,
-                                              ProgramType.WORKFLOW, AppWithWorkflow.SampleWorkflow.NAME);
+    ProgramId workflowProgram = new ProgramId(namespaceId.getNamespace(), AppWithWorkflow.NAME, ProgramType.WORKFLOW,
+                                              AppWithWorkflow.SampleWorkflow.NAME);
+    ApplicationId applicationId = new ApplicationId(namespaceId.getNamespace(), AppWithWorkflow.NAME);
     RunId workflowRunId = RunIds.generate(startTime);
+    ProgramRunId programRunId = new ProgramRunId(namespaceId.getNamespace(), AppWithWorkflow.NAME, ProgramType.WORKFLOW,
+                                                 AppWithWorkflow.SampleWorkflow.NAME, workflowRunId.getId());
     ArtifactId artifactId = namespaceId.artifact("testArtifact", "1.0").toApiArtifactId();
     setStartAndRunning(workflowProgram, workflowRunId.getId(), artifactId);
 
     List<RunRecord> runs = getProgramRuns(workflowProgram, ProgramRunStatus.RUNNING);
     Assert.assertEquals(1, runs.size());
 
-    HttpResponse appsResponse = doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN,
-                                                          namespaceId.getNamespace()));
+    HttpResponse appsResponse =
+      doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, namespaceId.getNamespace()));
     Assert.assertEquals(200, appsResponse.getResponseCode());
 
     // workflow ran for 1 minute
@@ -98,9 +109,10 @@ public class SupportBundleServiceTest extends AppFabricTestBase {
                   AppFabricTestHelper.createSourceId(++sourceId));
 
 
-    SupportBundleConfiguration supportBundleConfiguration = new SupportBundleConfiguration(
-      namespaceId.getNamespace(), "workflows", AppWithWorkflow.NAME, null, AppWithWorkflow.SampleWorkflow.NAME,
-      1);
+    SupportBundleConfiguration supportBundleConfiguration =
+      new SupportBundleConfiguration(namespaceId.getNamespace(), AppWithWorkflow.NAME, workflowRunId.getId(),
+                                     ProgramType.valueOfCategoryName("workflows"), AppWithWorkflow.SampleWorkflow.NAME,
+                                     1);
 
     String uuid = supportBundleService.generateSupportBundle(supportBundleConfiguration);
     Assert.assertNotNull(uuid);
@@ -116,6 +128,37 @@ public class SupportBundleServiceTest extends AppFabricTestBase {
     for (SupportBundleTaskStatus supportBundleTaskStatus : supportBundleTaskStatusList) {
       Assert.assertEquals(CollectionState.FINISHED, supportBundleTaskStatus.getStatus());
     }
+  }
+
+  @Test
+  public void testDeleteOldBundle() throws Exception {
+    File tempFolder = new File(configuration.get(Constants.SupportBundle.LOCAL_DATA_DIR));
+    createNamespace("default");
+    String path = String.format("%s/support/bundle?namespace=default", Constants.Gateway.API_VERSION_3);
+    List<String> bundleIdList = new ArrayList<>();
+    for (int i = 0; i < 7; i++) {
+      HttpResponse response = doPost(path);
+      Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
+      String bundleId = response.getResponseBodyAsString();
+      bundleIdList.add(bundleId);
+    }
+
+    File bundleFile = new File(tempFolder, bundleIdList.get(4));
+    SupportBundleStatus supportBundleStatus =
+      new SupportBundleStatus(bundleIdList.get(4), System.currentTimeMillis(), null, CollectionState.FAILED);
+    try (FileWriter statusFile = new FileWriter(new File(bundleFile, SupportBundleFileNames.STATUS_FILE_NAME))) {
+      GSON.toJson(supportBundleStatus, statusFile);
+    } catch (Exception e) {
+      LOG.error("Can not update status file ", e);
+      Assert.fail();
+    }
+    //Exceed the maximum number of folder allows in bundle
+    doPost(path);
+    File[] bundleFiles =
+      tempFolder.listFiles((dir, name) -> !name.startsWith(".") && !dir.isHidden() && dir.isDirectory());
+    Assert.assertEquals(7, bundleFiles.length);
+    File expectedDeletedBundle = new File(tempFolder.getPath(), bundleIdList.get(4));
+    Assert.assertFalse(expectedDeletedBundle.exists());
   }
 
   private void setStartAndRunning(ProgramId id, String pid, ArtifactId artifactId) {

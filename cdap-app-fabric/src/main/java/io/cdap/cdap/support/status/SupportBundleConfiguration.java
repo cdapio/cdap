@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.support.status;
 
+import io.cdap.cdap.proto.ProgramType;
+
 import javax.annotation.Nullable;
 
 /**
@@ -25,15 +27,17 @@ public class SupportBundleConfiguration {
   /**
    * pipeline namespace id
    */
-  private final String namespaceId;
+  @Nullable
+  private final String namespace;
   /**
    * pipeline application id
    */
-  private final String appId;
+  @Nullable
+  private final String app;
   /**
    * pipeline program type
    */
-  private final String programType;
+  private final ProgramType programType;
   /**
    * pipeline program name
    */
@@ -41,15 +45,17 @@ public class SupportBundleConfiguration {
   /**
    * pipeline run id
    */
-  private final String runId;
-  // max num of run log customer request for each program run
+  @Nullable
+  private final String run;
+  /** max num of run log customer request for each program run */
   private final int maxRunsPerProgram;
 
-  public SupportBundleConfiguration(@Nullable String namespaceId, @Nullable String appId, @Nullable String runId,
-                                    String programType, String programName, int maxRunsPerProgram) {
-    this.namespaceId = namespaceId;
-    this.appId = appId;
-    this.runId = runId;
+  public SupportBundleConfiguration(@Nullable String namespace, @Nullable String app,
+                                    @Nullable String run, ProgramType programType, String programName,
+                                    int maxRunsPerProgram) {
+    this.namespace = namespace;
+    this.app = app;
+    this.run = run;
     this.programType = programType;
     this.programName = programName;
     this.maxRunsPerProgram = maxRunsPerProgram;
@@ -58,21 +64,29 @@ public class SupportBundleConfiguration {
   /**
    * Get pipeline namespace id
    */
-  public String getNamespaceId() {
-    return namespaceId;
+  @Nullable
+  public String getNamespace() {
+    return namespace;
   }
 
   /**
    * Get pipeline application id
    */
-  public String getAppId() {
-    return appId;
+  @Nullable
+  public String getApp() {
+    return app;
   }
 
-  public String getProgramType() {
+  /**
+   * Get instance program type
+   */
+  public ProgramType getProgramType() {
     return programType;
   }
 
+  /**
+   * Get instance program name
+   */
   public String getProgramName() {
     return programName;
   }
@@ -80,8 +94,9 @@ public class SupportBundleConfiguration {
   /**
    * Get pipeline run id
    */
-  public String getRunId() {
-    return runId;
+  @Nullable
+  public String getRun() {
+    return run;
   }
 
   /**

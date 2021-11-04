@@ -18,7 +18,7 @@ package io.cdap.cdap.support.task.factory;
 
 import com.google.inject.Inject;
 import io.cdap.cdap.logging.gateway.handlers.RemoteProgramLogsFetcher;
-import io.cdap.cdap.support.SupportBundleState;
+import io.cdap.cdap.support.SupportBundleTaskConfiguration;
 import io.cdap.cdap.support.task.SupportBundleSystemLogTask;
 
 /**
@@ -33,7 +33,7 @@ public class SupportBundleSystemLogTaskFactory implements SupportBundleTaskFacto
   }
 
   @Override
-  public SupportBundleSystemLogTask create(SupportBundleState supportBundleState) {
-    return new SupportBundleSystemLogTask(supportBundleState.getBasePath(), remoteProgramLogsFetcher);
+  public SupportBundleSystemLogTask create(SupportBundleTaskConfiguration taskConfiguration) {
+    return new SupportBundleSystemLogTask(taskConfiguration.getBasePath(), remoteProgramLogsFetcher);
   }
 }

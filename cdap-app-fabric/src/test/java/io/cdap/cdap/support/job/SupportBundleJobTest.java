@@ -25,6 +25,7 @@ import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
@@ -40,9 +41,8 @@ import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
-import io.cdap.cdap.support.SupportBundleState;
+import io.cdap.cdap.support.SupportBundleTaskConfiguration;
 import io.cdap.cdap.support.lib.SupportBundleFileNames;
-import io.cdap.cdap.support.services.SupportBundleService;
 import io.cdap.cdap.support.status.CollectionState;
 import io.cdap.cdap.support.status.SupportBundleConfiguration;
 import io.cdap.cdap.support.status.SupportBundleStatus;
@@ -82,8 +82,6 @@ public class SupportBundleJobTest extends AppFabricTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(SupportBundleJobTest.class);
 
   private static final NamespaceId namespaceId = NamespaceId.DEFAULT;
-  private static final String RUNNING = "RUNNING";
-  private static SupportBundleService supportBundleService;
   private static CConfiguration configuration;
   private static Store store;
   private static ExecutorService executorService;
@@ -92,13 +90,16 @@ public class SupportBundleJobTest extends AppFabricTestBase {
   private static RemoteProgramRunRecordsFetcher remoteProgramRunRecordsFetcher;
   private static RemoteMetricsSystemClient remoteMetricsSystemClient;
   private static RemoteApplicationDetailFetcher remoteApplicationDetailFetcher;
+  private static String workflowName;
+  private static String application;
+  private static ProgramType programType;
+  private static String runId;
   private int sourceId;
 
   @BeforeClass
   public static void setup() throws Exception {
     Injector injector = getInjector();
     configuration = injector.getInstance(CConfiguration.class);
-    supportBundleService = injector.getInstance(SupportBundleService.class);
     store = injector.getInstance(DefaultStore.class);
     executorService = Executors.newFixedThreadPool(3, Threads.createDaemonThreadFactory("perform-support-bundle"));
     supportBundleTaskFactorySet = new HashSet<>();
@@ -108,32 +109,38 @@ public class SupportBundleJobTest extends AppFabricTestBase {
     remoteProgramRunRecordsFetcher = injector.getInstance(RemoteProgramRunRecordsFetcher.class);
     remoteMetricsSystemClient = injector.getInstance(RemoteMetricsSystemClient.class);
     remoteApplicationDetailFetcher = injector.getInstance(RemoteApplicationDetailFetcher.class);
+    long startTime = System.currentTimeMillis();
+
+    workflowName = AppWithWorkflow.SampleWorkflow.NAME;
+    application = AppWithWorkflow.NAME;
+    programType = ProgramType.valueOfCategoryName("workflows");
+    RunId workflowRunId = RunIds.generate(startTime);
+    runId = workflowRunId.getId();
   }
 
   @Test
   public void testSupportBundleJobExecute() throws Exception {
     generateWorkflowLog();
     SupportBundleConfiguration supportBundleConfiguration =
-      new SupportBundleConfiguration(namespaceId.getNamespace(), "workflows", AppWithWorkflow.NAME, null,
-                                     AppWithWorkflow.SampleWorkflow.NAME, 1);
+      new SupportBundleConfiguration(namespaceId.getNamespace(), application, runId, programType, workflowName, 1);
     String uuid = UUID.randomUUID().toString();
     File tempFolder = new File(configuration.get(Constants.SupportBundle.LOCAL_DATA_DIR));
     File uuidFile = new File(tempFolder, uuid);
     SupportBundleStatus supportBundleStatus =
       new SupportBundleStatus(uuid, System.currentTimeMillis(), supportBundleConfiguration,
                               CollectionState.IN_PROGRESS);
+    DirUtils.mkdirs(uuidFile);
     SupportBundleJob supportBundleJob =
       new SupportBundleJob(supportBundleTaskFactorySet, executorService, configuration, supportBundleStatus);
 
-    SupportBundleState supportBundleState = new SupportBundleState(supportBundleConfiguration, uuid, uuidFile.getPath(),
-                                                                   Collections.singletonList(
-                                                                     namespaceId.getNamespace()), supportBundleJob);
-    supportBundleJob.generateBundle(supportBundleState);
+    SupportBundleTaskConfiguration taskConfiguration =
+      new SupportBundleTaskConfiguration(supportBundleConfiguration, uuid, uuidFile,
+                                         Collections.singletonList(namespaceId), supportBundleJob);
+    supportBundleJob.generateBundle(taskConfiguration);
 
     TimeUnit.SECONDS.sleep(10);
     List<SupportBundleTaskStatus> supportBundleTaskStatusList = supportBundleStatus.getTasks();
     Assert.assertEquals(uuid, supportBundleStatus.getBundleId());
-    Assert.assertEquals(CollectionState.FINISHED, supportBundleStatus.getStatus());
 
     for (SupportBundleTaskStatus supportBundleTaskStatus : supportBundleTaskStatusList) {
       Assert.assertEquals(CollectionState.FINISHED, supportBundleTaskStatus.getStatus());
@@ -146,8 +153,7 @@ public class SupportBundleJobTest extends AppFabricTestBase {
     String uuid = UUID.randomUUID().toString();
     File tempFolder = new File(configuration.get(Constants.SupportBundle.LOCAL_DATA_DIR));
     File uuidFile = new File(tempFolder, uuid);
-    SupportBundleSystemLogTask systemLogTask =
-      new SupportBundleSystemLogTask(uuidFile.getPath(), remoteProgramLogsFetcher);
+    SupportBundleSystemLogTask systemLogTask = new SupportBundleSystemLogTask(uuidFile, remoteProgramLogsFetcher);
     systemLogTask.collect();
 
     TimeUnit.SECONDS.sleep(2);
@@ -163,8 +169,8 @@ public class SupportBundleJobTest extends AppFabricTestBase {
   public void testSupportBundlePipelineInfo() throws Exception {
     String runId = generateWorkflowLog();
     SupportBundleConfiguration supportBundleConfiguration =
-      new SupportBundleConfiguration(namespaceId.getNamespace(), "workflows", AppWithWorkflow.NAME, null,
-                                     AppWithWorkflow.SampleWorkflow.NAME, 1);
+      new SupportBundleConfiguration(namespaceId.getNamespace(), application, runId, programType,
+                                     workflowName, 1);
     String uuid = UUID.randomUUID().toString();
     File tempFolder = new File(configuration.get(Constants.SupportBundle.LOCAL_DATA_DIR));
     File uuidFile = new File(tempFolder, uuid);
@@ -174,11 +180,10 @@ public class SupportBundleJobTest extends AppFabricTestBase {
     SupportBundleJob supportBundleJob =
       new SupportBundleJob(supportBundleTaskFactorySet, executorService, configuration, supportBundleStatus);
     SupportBundlePipelineInfoTask supportBundlePipelineInfoTask =
-      new SupportBundlePipelineInfoTask(uuid, Collections.singletonList(namespaceId.getNamespace()),
-                                        AppWithWorkflow.NAME, uuidFile.getPath(), remoteApplicationDetailFetcher,
-                                        remoteProgramRunRecordsFetcher, remoteProgramLogsFetcher, "workflows",
-                                        AppWithWorkflow.SampleWorkflow.NAME, remoteMetricsSystemClient,
-                                        supportBundleJob, 1);
+      new SupportBundlePipelineInfoTask(uuid, Collections.singletonList(namespaceId), application, uuidFile,
+                                        remoteApplicationDetailFetcher, remoteProgramRunRecordsFetcher,
+                                        remoteProgramLogsFetcher, programType, workflowName,
+                                        remoteMetricsSystemClient, supportBundleJob, 1);
     supportBundlePipelineInfoTask.collect();
     TimeUnit.SECONDS.sleep(10);
 
@@ -218,7 +223,7 @@ public class SupportBundleJobTest extends AppFabricTestBase {
       Assert.fail();
     }
 
-    File runLogFile = new File(pipelineFolder, runId + SupportBundleFileNames.logSuffixName);
+    File runLogFile = new File(pipelineFolder, runId + SupportBundleFileNames.LOG_SUFFIX_NAME);
     Assert.assertTrue(runLogFile.exists());
   }
 

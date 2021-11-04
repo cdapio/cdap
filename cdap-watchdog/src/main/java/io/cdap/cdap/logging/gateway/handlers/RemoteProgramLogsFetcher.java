@@ -16,8 +16,7 @@
 
 package io.cdap.cdap.logging.gateway.handlers;
 
-import com.google.common.base.Charsets;
-import com.google.gson.Gson;
+import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProgramNotFoundException;
@@ -26,13 +25,13 @@ import io.cdap.cdap.common.conf.Constants.Gateway;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
-import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
+import io.cdap.common.http.ObjectResponse;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -80,7 +79,7 @@ public class RemoteProgramLogsFetcher implements ProgramLogsFetcher {
       throw new ProgramNotFoundException(program);
     }
 
-    return new String(response.getResponseBody(), Charsets.UTF_8);
+    return ObjectResponse.fromJsonBody(response, new TypeToken<String>() { }).getResponseObject();
   }
 
   /**
@@ -109,7 +108,7 @@ public class RemoteProgramLogsFetcher implements ProgramLogsFetcher {
       throw new NotFoundException(String.format("system log not found with service", serviceId));
     }
 
-    return new String(response.getResponseBody(), Charsets.UTF_8);
+    return ObjectResponse.fromJsonBody(response, new TypeToken<String>() { }).getResponseObject();
   }
 
   private HttpResponse execute(HttpRequest request)

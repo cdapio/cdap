@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.support.task.factory;
 
-import io.cdap.cdap.support.SupportBundleState;
+import io.cdap.cdap.support.SupportBundleTaskConfiguration;
 import io.cdap.cdap.support.task.SupportBundleTask;
 
 /**
  * Interface Support bundle Task Factory to create all different.
  */
 public interface SupportBundleTaskFactory {
-  SupportBundleTask create(SupportBundleState supportBundleState);
+  SupportBundleTask create(SupportBundleTaskConfiguration taskConfiguration);
 }

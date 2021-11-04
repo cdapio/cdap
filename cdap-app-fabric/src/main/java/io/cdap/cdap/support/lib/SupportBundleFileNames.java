@@ -1,3 +1,4 @@
+
 /*
  * Copyright © 2021 Cask Data, Inc.
  *
@@ -20,9 +21,9 @@ package io.cdap.cdap.support.lib;
  * Support bundle constant creation file names
  */
 public final class SupportBundleFileNames {
-  public static String statusFileName = "status.json";
-  public static String systemLogSuffixName = "-system-log.txt";
-  public static String logSuffixName = "-log.txt";
+  public static final String STATUS_FILE_NAME = "status.json";
+  public static final String SYSTEMLOG_SUFFIX_NAME = "-system-log.txt";
+  public static final String LOG_SUFFIX_NAME = "-log.txt";
 
   private SupportBundleFileNames() {
 

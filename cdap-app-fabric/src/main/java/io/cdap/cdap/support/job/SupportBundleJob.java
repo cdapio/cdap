@@ -21,7 +21,7 @@ import com.google.gson.GsonBuilder;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.SupportBundle;
-import io.cdap.cdap.support.SupportBundleState;
+import io.cdap.cdap.support.SupportBundleTaskConfiguration;
 import io.cdap.cdap.support.lib.SupportBundleFileNames;
 import io.cdap.cdap.support.status.CollectionState;
 import io.cdap.cdap.support.status.SupportBundleStatus;
@@ -38,11 +38,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.Set;
-import java.util.Stack;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -50,9 +51,8 @@ import java.util.stream.Collectors;
  * executor.
  */
 public class SupportBundleJob {
-
   private static final Logger LOG = LoggerFactory.getLogger(SupportBundleJob.class);
-  private static final Gson gson = new GsonBuilder().create();
+  private static final Gson GSON = new GsonBuilder().create();
   private final ExecutorService executor;
   private final SupportBundleStatus supportBundleStatus;
   private final Set<SupportBundleTaskFactory> supportBundleTaskFactories;
@@ -75,18 +75,18 @@ public class SupportBundleJob {
   /**
    * parallel processing tasks and generate support bundle
    */
-  public void generateBundle(SupportBundleState supportBundleState) {
+  public void generateBundle(SupportBundleTaskConfiguration bundleTaskConfig) {
     try {
-      String basePath = supportBundleState.getBasePath();
-      supportBundleTasks.addAll(supportBundleTaskFactories.stream().map(factory -> factory.create(supportBundleState))
+      File basePath = bundleTaskConfig.getBasePath();
+      supportBundleTasks.addAll(supportBundleTaskFactories.stream().map(factory -> factory.create(bundleTaskConfig))
                                   .collect(Collectors.toList()));
       for (SupportBundleTask supportBundleTask : supportBundleTasks) {
         String className = supportBundleTask.getClass().getName();
-        String taskName = supportBundleState.getUuid().concat(": ").concat(className);
-        SupportBundleTaskStatus taskStatus = initializeTask(taskName, className);
-        executeTask(taskStatus, supportBundleTask, basePath, className, taskName, 0);
+        String taskName = bundleTaskConfig.getUuid().concat(": ").concat(className);
+        SupportBundleTaskStatus taskStatus = initializeTask(taskName, className, basePath.getPath());
+        executeTask(taskStatus, supportBundleTask, basePath.getPath(), className, taskName, 0);
       }
-      completeProcessing(basePath);
+      completeProcessing(basePath.getPath());
     } catch (Exception e) {
       LOG.warn("Failed to execute the tasks ", e);
     }
@@ -97,24 +97,23 @@ public class SupportBundleJob {
    */
   public void executeTask(SupportBundleTaskStatus taskStatus, SupportBundleTask supportBundleTask, String basePath,
                           String className, String taskName, int retryCount) {
-    List<Long> startTimeStore = new ArrayList<>(1);
-    Stack<SupportBundleTaskStatus> statusStack = new Stack<>();
-    statusStack.add(taskStatus);
+    AtomicLong startTimeStore = new AtomicLong(0L);
+    AtomicReference<SupportBundleTaskStatus> latestTaskStatus = new AtomicReference<>(taskStatus);
     Future<SupportBundleTaskStatus> futureService = executor.submit(() -> {
       try {
         long startTime = System.currentTimeMillis();
-        startTimeStore.add(startTime);
-        statusStack.add(updateTask(statusStack.peek(), basePath, CollectionState.IN_PROGRESS));
+        startTimeStore.set(startTime);
+        latestTaskStatus.set(updateTask(latestTaskStatus.get(), basePath, CollectionState.IN_PROGRESS));
         supportBundleTask.collect();
-        statusStack.add(updateTask(statusStack.peek(), basePath, CollectionState.FINISHED));
+        latestTaskStatus.set(updateTask(latestTaskStatus.get(), basePath, CollectionState.FINISHED));
       } catch (Exception e) {
         LOG.warn("Failed to execute task with supportBundleTask {} ", taskName, e);
-        executeTaskAgainAfterFailed(supportBundleTask, className, taskName, statusStack.peek(), basePath,
+        executeTaskAgainAfterFailed(supportBundleTask, className, taskName, latestTaskStatus.get(), basePath,
                                     retryCount + 1);
       }
-      return statusStack.peek();
+      return latestTaskStatus.get();
     });
-    RunningTaskState runningTaskState = new RunningTaskState(futureService, startTimeStore.get(0), taskStatus);
+    RunningTaskState runningTaskState = new RunningTaskState(futureService, startTimeStore, taskStatus);
     runningTaskStateQueue.offer(runningTaskState);
   }
 
@@ -127,23 +126,30 @@ public class SupportBundleJob {
       Future<SupportBundleTaskStatus> future = runningTaskState.getFuture();
       try {
         long currentTime = System.currentTimeMillis();
-        long futureStartTime = runningTaskState.getStartTime();
-        long timeLeftBeforeTimeout = TimeUnit.MINUTES.toMillis(maxThreadTimeout) - (currentTime - futureStartTime);
+        long futureStartTime = runningTaskState.getStartTime().get();
+        long maxThreadTimeoutToMill = TimeUnit.MINUTES.toMillis(maxThreadTimeout);
+        long timeLeftBeforeTimeout =
+          futureStartTime == 0L ? maxThreadTimeoutToMill : maxThreadTimeoutToMill - (currentTime - futureStartTime);
         future.get(timeLeftBeforeTimeout, TimeUnit.MILLISECONDS);
       } catch (Exception e) {
         LOG.error("The task for has failed or timeout more than five minutes ", e);
         updateFailedTask(runningTaskState.getTaskStatus(), future, basePath);
       }
     }
+    SupportBundleStatus finishBundleStatus =
+      new SupportBundleStatus(supportBundleStatus, "", CollectionState.FINISHED, System.currentTimeMillis());
+    addToStatus(finishBundleStatus, basePath);
   }
 
   /**
    * Start a new status task
    */
-  public SupportBundleTaskStatus initializeTask(String name, String type) {
+  public SupportBundleTaskStatus initializeTask(String name, String type, String basePath) {
     SupportBundleTaskStatus supportBundleTaskStatus =
-      new SupportBundleTaskStatus(name, type, System.currentTimeMillis());
+      SupportBundleTaskStatus.builder().setName(name).setType(type).setStartTimestamp(System.currentTimeMillis())
+        .build();
     supportBundleStatus.getTasks().add(supportBundleTaskStatus);
+    addToStatus(supportBundleStatus, basePath);
     return supportBundleTaskStatus;
   }
 
@@ -152,19 +158,24 @@ public class SupportBundleJob {
    */
   private SupportBundleTaskStatus updateTask(SupportBundleTaskStatus taskStatus, String basePath,
                                              CollectionState status) {
-    SupportBundleTaskStatus newTaskStatus = new SupportBundleTaskStatus(taskStatus, System.currentTimeMillis(), status);
+
+    SupportBundleTaskStatus newTaskStatus =
+      status == CollectionState.IN_PROGRESS ? SupportBundleTaskStatus.builder(taskStatus).setStatus(status)
+        .buildWithNewStatus() : SupportBundleTaskStatus.builder(taskStatus)
+        .setFinishTimestamp(System.currentTimeMillis()).setStatus(status).buildWithFinishStatus();
+
     supportBundleStatus.getTasks().remove(taskStatus);
     supportBundleStatus.getTasks().add(newTaskStatus);
-    addToStatus(basePath);
+    addToStatus(supportBundleStatus, basePath);
     return newTaskStatus;
   }
 
   /**
    * Update status file
    */
-  private void addToStatus(String basePath) {
-    try (FileWriter statusFile = new FileWriter(new File(basePath, SupportBundleFileNames.statusFileName))) {
-      gson.toJson(supportBundleStatus, statusFile);
+  private void addToStatus(SupportBundleStatus updatedBundleStatus, String basePath) {
+    try (FileWriter statusFile = new FileWriter(new File(basePath, SupportBundleFileNames.STATUS_FILE_NAME))) {
+      GSON.toJson(updatedBundleStatus, statusFile);
     } catch (IOException e) {
       LOG.error("Failed to update status file ", e);
     }
@@ -180,10 +191,11 @@ public class SupportBundleJob {
       updateTask(taskStatus, basePath, CollectionState.FAILED);
     } else {
       SupportBundleTaskStatus updatedTaskStatus =
-        new SupportBundleTaskStatus(taskStatus, retryCount, CollectionState.QUEUED);
+        SupportBundleTaskStatus.builder(taskStatus).setRetries(retryCount).setStatus(CollectionState.QUEUED)
+          .buildWithNewStatus();
       supportBundleStatus.getTasks().remove(taskStatus);
       supportBundleStatus.getTasks().add(updatedTaskStatus);
-      addToStatus(basePath);
+      addToStatus(supportBundleStatus, basePath);
       executeTask(taskStatus, supportBundleTask, basePath, className, taskName, retryCount);
     }
   }

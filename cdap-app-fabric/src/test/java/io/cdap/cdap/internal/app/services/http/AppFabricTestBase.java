@@ -45,13 +45,11 @@ import io.cdap.cdap.api.metrics.MetricDataQuery;
 import io.cdap.cdap.api.metrics.MetricStore;
 import io.cdap.cdap.api.metrics.MetricTimeSeries;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
-import io.cdap.cdap.api.metrics.MetricsSystemClient;
 import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.app.program.ManifestFields;
 import io.cdap.cdap.app.store.ServiceStore;
 import io.cdap.cdap.client.DatasetClient;
 import io.cdap.cdap.client.MetadataClient;
-import io.cdap.cdap.client.MetricsClient;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.cdap.common.NotFoundException;
@@ -73,6 +71,7 @@ import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
+import io.cdap.cdap.gateway.handlers.CommonHandlers;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
@@ -82,13 +81,10 @@ import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
-import io.cdap.cdap.logging.guice.LogQueryRuntimeModule;
 import io.cdap.cdap.logging.service.LogQueryService;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metadata.MetadataService;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
-import io.cdap.cdap.metrics.process.RemoteMetricsSystemClient;
-import io.cdap.cdap.metrics.query.MetricsQueryService;
 import io.cdap.cdap.proto.BatchApplicationDetail;
 import io.cdap.cdap.proto.BatchProgram;
 import io.cdap.cdap.proto.BatchProgramHistory;
@@ -125,13 +121,13 @@ import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.store.StoreDefinition;
-import io.cdap.cdap.support.task.factory.SupportBundlePipelineInfoTaskFactory;
-import io.cdap.cdap.support.task.factory.SupportBundleSystemLogTaskFactory;
-import io.cdap.cdap.support.task.factory.SupportBundleTaskFactory;
+import io.cdap.cdap.support.handlers.SupportBundleHttpHandler;
+import io.cdap.cdap.support.module.SupportBundleModule;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequestConfig;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
+import io.cdap.http.HttpHandler;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.tephra.TransactionManager;
@@ -243,8 +239,14 @@ public abstract class AppFabricTestBase {
       @Override
       protected void configure() {
         // needed because we set Kerberos to true in DefaultNamespaceAdminTest
+        install(new SupportBundleModule());
         bind(UGIProvider.class).to(CurrentUGIProvider.class);
         bind(MetadataSubscriberService.class).in(Scopes.SINGLETON);
+        Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
+          binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));
+
+        CommonHandlers.add(handlerBinder);
+        handlerBinder.addBinding().to(SupportBundleHttpHandler.class);
       }
     });
   }

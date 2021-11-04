@@ -39,12 +39,12 @@ import java.util.concurrent.TimeUnit;
 public class SupportBundleSystemLogTask implements SupportBundleTask {
 
   private static final Logger LOG = LoggerFactory.getLogger(SupportBundleSystemLogTask.class);
-  private final String basePath;
+  private final File basePath;
   private final RemoteProgramLogsFetcher remoteProgramLogsFetcher;
   private final List<String> serviceList;
 
   @Inject
-  public SupportBundleSystemLogTask(@Assisted String basePath, RemoteProgramLogsFetcher remoteProgramLogsFetcher) {
+  public SupportBundleSystemLogTask(@Assisted File basePath, RemoteProgramLogsFetcher remoteProgramLogsFetcher) {
     this.basePath = basePath;
     this.remoteProgramLogsFetcher = remoteProgramLogsFetcher;
     this.serviceList = Arrays.asList(Constants.Service.APP_FABRIC_HTTP, Constants.Service.DATASET_EXECUTOR,
@@ -66,10 +66,10 @@ public class SupportBundleSystemLogTask implements SupportBundleTask {
       long currentTimeMillis = System.currentTimeMillis();
       long fromMillis = currentTimeMillis - TimeUnit.DAYS.toMillis(1);
       try (FileWriter file = new FileWriter(
-        new File(systemLogPath, serviceId + SupportBundleFileNames.systemLogSuffixName))) {
+        new File(systemLogPath, serviceId + SupportBundleFileNames.SYSTEMLOG_SUFFIX_NAME))) {
         String systemLog = remoteProgramLogsFetcher.getProgramSystemLog(componentId, serviceId, fromMillis / 1000,
                                                                         currentTimeMillis / 1000);
-        file.write(systemLog);
+        file.write(systemLog == null ? "" : systemLog);
       } catch (IOException e) {
         LOG.error("Failed to write system log file with service {} ", serviceId, e);
         throw new IOException("Failed to write system log file ", e);

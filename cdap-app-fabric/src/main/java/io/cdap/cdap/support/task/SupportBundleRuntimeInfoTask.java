@@ -26,7 +26,11 @@ import io.cdap.cdap.api.metrics.MetricTimeSeries;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.metrics.process.RemoteMetricsSystemClient;
 import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.RunRecord;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
 import org.joda.time.DateTime;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -49,18 +53,19 @@ public class SupportBundleRuntimeInfoTask implements SupportBundleTask {
 
   private static final Logger LOG = LoggerFactory.getLogger(SupportBundleRuntimeInfoTask.class);
   private static final Gson gson = new GsonBuilder().create();
-  private final String namespaceId;
-  private final String appId;
-  private final String programType;
-  private final String programName;
+  private final NamespaceId namespaceId;
+  private final ApplicationId appId;
+  private final ProgramType programType;
+  private final ProgramId programName;
   private final RemoteMetricsSystemClient remoteMetricsSystemClient;
-  private final String appPath;
+  private final File appPath;
   private final List<RunRecord> runRecordList;
   private final ApplicationDetail applicationDetail;
 
   @Inject
-  public SupportBundleRuntimeInfoTask(String appPath, String namespaceId, String appId, String programType,
-                                      String programName, RemoteMetricsSystemClient remoteMetricsSystemClient,
+  public SupportBundleRuntimeInfoTask(File appPath, NamespaceId namespaceId, ApplicationId appId,
+                                      ProgramType programType, ProgramId programName,
+                                      RemoteMetricsSystemClient remoteMetricsSystemClient,
                                       List<RunRecord> runRecordList, ApplicationDetail applicationDetail) {
     this.namespaceId = namespaceId;
     this.appId = appId;
@@ -110,10 +115,10 @@ public class SupportBundleRuntimeInfoTask implements SupportBundleTask {
         metricsList.add(String.format("user.%s.process.time.avg", stageName.getString("name")));
       }
       Map<String, String> queryTags = new HashMap<>();
-      queryTags.put("namespace", namespaceId);
-      queryTags.put("app", appId);
+      queryTags.put("namespace", namespaceId.getNamespace());
+      queryTags.put("app", appId.getApplication());
       queryTags.put("run", runId);
-      queryTags.put(programType, programName);
+      queryTags.put(programType.toString(), programName.getProgram());
       List<MetricTimeSeries> metricTimeSeriesList = new ArrayList<>(
         remoteMetricsSystemClient.query((int) (startTs - 5000), (int) (stopTs), queryTags, metricsList));
       for (MetricTimeSeries timeSeries : metricTimeSeriesList) {

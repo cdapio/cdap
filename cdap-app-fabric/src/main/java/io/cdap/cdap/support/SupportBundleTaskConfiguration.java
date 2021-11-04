@@ -17,15 +17,18 @@
 package io.cdap.cdap.support;
 
 import com.google.common.collect.ImmutableList;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.support.job.SupportBundleJob;
 import io.cdap.cdap.support.status.SupportBundleConfiguration;
 
+import java.io.File;
 import java.util.List;
 
 /**
  * Support bundle state for handling all assisted parameters inside the task factories.
  */
-public class SupportBundleState {
+public class SupportBundleTaskConfiguration {
   /**
    * unique support bundle id
    */
@@ -33,27 +36,27 @@ public class SupportBundleState {
   /**
    * pipeline application id
    */
-  private final String appId;
+  private final String app;
   /**
    * pipeline run id
    */
-  private final String runId;
+  private final String run;
   /**
    * support bundle base path
    */
-  private final String basePath;
-  /**
-   * pipeline program type
-   */
-  private final String programType;
+  private final File basePath;
   /**
    * pipeline program name
    */
-  private final String programName;
+  private String programName;
+  /**
+   * pipeline program type
+   */
+  private ProgramType programType;
   /**
    * all the namespace under the pipeline
    */
-  private final List<String> namespaceList;
+  private List<NamespaceId> namespaces;
   /**
    * support bundle job to process all the tasks
    */
@@ -63,16 +66,17 @@ public class SupportBundleState {
    */
   private final Integer maxRunsPerProgram;
 
-  public SupportBundleState(SupportBundleConfiguration supportBundleConfiguration, String uuid, String basePath,
-                            List<String> namespaceList, SupportBundleJob supportBundleJob) {
-    this.appId = supportBundleConfiguration.getAppId();
-    this.runId = supportBundleConfiguration.getRunId();
+  public SupportBundleTaskConfiguration(SupportBundleConfiguration supportBundleConfiguration, String uuid,
+                                        File basePath, List<NamespaceId> namespaces,
+                                        SupportBundleJob supportBundleJob) {
+    this.app = supportBundleConfiguration.getApp();
+    this.run = supportBundleConfiguration.getRun();
     this.programType = supportBundleConfiguration.getProgramType();
     this.programName = supportBundleConfiguration.getProgramName();
     this.maxRunsPerProgram = supportBundleConfiguration.getMaxRunsPerProgram();
     this.uuid = uuid;
     this.basePath = basePath;
-    this.namespaceList = ImmutableList.copyOf(namespaceList);
+    this.namespaces = ImmutableList.copyOf(namespaces);
     this.supportBundleJob = supportBundleJob;
   }
 
@@ -86,28 +90,28 @@ public class SupportBundleState {
   /**
    * Get pipeline Application id
    */
-  public String getAppId() {
-    return appId;
+  public String getApp() {
+    return app;
   }
 
   /**
    * Get pipeline run id
    */
-  public String getRunId() {
-    return runId;
+  public String getRun() {
+    return run;
   }
 
   /**
    * Get support bundle base path
    */
-  public String getBasePath() {
+  public File getBasePath() {
     return basePath;
   }
 
   /**
    * Get support bundle program type
    */
-  public String getProgramType() {
+  public ProgramType getProgramType() {
     return programType;
   }
 
@@ -121,8 +125,8 @@ public class SupportBundleState {
   /**
    * Get list of namespace
    */
-  public List<String> getNamespaceList() {
-    return namespaceList;
+  public List<NamespaceId> getNamespaces() {
+    return namespaces;
   }
 
   /**

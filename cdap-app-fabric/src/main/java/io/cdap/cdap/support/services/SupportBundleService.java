@@ -23,12 +23,11 @@ import com.google.inject.name.Named;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.conf.Constants.SupportBundle;
 import io.cdap.cdap.common.namespace.RemoteNamespaceQueryClient;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.support.SupportBundleState;
+import io.cdap.cdap.support.SupportBundleTaskConfiguration;
 import io.cdap.cdap.support.job.SupportBundleJob;
 import io.cdap.cdap.support.lib.SupportBundleFileNames;
 import io.cdap.cdap.support.status.CollectionState;
@@ -57,6 +56,8 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
+import static io.cdap.cdap.common.conf.Constants.SupportBundle;
+
 /**
  * Support bundle service to generate base path, uuid and trigger the job to execute tasks.
  */
@@ -64,7 +65,7 @@ public class SupportBundleService implements Closeable {
 
   private static final Logger LOG = LoggerFactory.getLogger(SupportBundleService.class);
   private static final Gson GSON = new GsonBuilder().create();
-  private final Set<SupportBundleTaskFactory> supportBundleTaskFactoryList;
+  private static Set<SupportBundleTaskFactory> supportBundleTaskFactories;
   private final ExecutorService executorService;
   private final CConfiguration cConf;
   private final RemoteNamespaceQueryClient namespaceQueryClient;
@@ -72,68 +73,62 @@ public class SupportBundleService implements Closeable {
 
   @Inject
   SupportBundleService(CConfiguration cConf, RemoteNamespaceQueryClient namespaceQueryClient,
-                       @Named(SupportBundle.TASK_FACTORY) Set<SupportBundleTaskFactory> supportBundleTaskFactoryList) {
+                       @Named(SupportBundle.TASK_FACTORY) Set<SupportBundleTaskFactory> supportBundleTaskFactories) {
     this.cConf = cConf;
     this.namespaceQueryClient = namespaceQueryClient;
-    this.supportBundleTaskFactoryList = supportBundleTaskFactoryList;
     this.executorService = Executors.newFixedThreadPool(cConf.getInt(Constants.SupportBundle.MAX_THREADS),
                                                         Threads.createDaemonThreadFactory("perform-support-bundle"));
     this.localDir = this.cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR);
+    this.supportBundleTaskFactories = supportBundleTaskFactories;
   }
 
   /**
    * Generates support bundle
    */
   public String generateSupportBundle(SupportBundleConfiguration supportBundleConfiguration) throws Exception {
-    String namespaceId = supportBundleConfiguration.getNamespaceId();
-    if (namespaceId != null) {
-      NamespaceId namespace = new NamespaceId(namespaceId);
-      if (!namespaceQueryClient.exists(namespace)) {
-        throw new NamespaceNotFoundException(namespace);
-      }
-    }
-    List<String> namespaceList = new ArrayList<>();
-    if (namespaceId == null) {
-      namespaceList.addAll(
-        namespaceQueryClient.list().stream().map(NamespaceMeta::getName).collect(Collectors.toList()));
+    String namespace = supportBundleConfiguration.getNamespace();
+    validNamespace(namespace);
+    List<NamespaceId> namespaces = new ArrayList<>();
+    if (namespace == null) {
+      namespaces.addAll(
+        namespaceQueryClient.list().stream().map(NamespaceMeta::getNamespaceId).collect(Collectors.toList()));
     } else {
-      namespaceList.add(namespaceId);
+      namespaces.add(new NamespaceId(namespace));
     }
     String uuid = UUID.randomUUID().toString();
-    File basePath = new File(localDir, uuid);
+    File uuidPath = new File(localDir, uuid);
 
     SupportBundleStatus supportBundleStatus =
       new SupportBundleStatus(uuid, System.currentTimeMillis(), supportBundleConfiguration,
                               CollectionState.IN_PROGRESS);
-    SupportBundleJob supportBundleJob =
-      new SupportBundleJob(supportBundleTaskFactoryList, executorService, cConf, supportBundleStatus);
-    SupportBundleState supportBundleState =
-      new SupportBundleState(supportBundleConfiguration, uuid, basePath.getPath(), namespaceList, supportBundleJob);
-    try {
-      long startTs = System.currentTimeMillis();
-      // Puts all the files under the uuid path
-      File baseDirectory = new File(localDir);
-      DirUtils.mkdirs(baseDirectory);
-      int fileCount = DirUtils.list(baseDirectory).size();
 
-      // We want to keep consistent number of bundle to provide to customer
-      int folderMaxNumber = cConf.getInt(Constants.SupportBundle.MAX_FOLDER_SIZE);
-      if (fileCount >= folderMaxNumber) {
-        File oldFilesDirectory = getOldestFolder(baseDirectory);
-        deleteOldFolders(oldFilesDirectory);
-      }
-      DirUtils.mkdirs(basePath);
-      executorService.execute(() -> supportBundleJob.generateBundle(supportBundleState));
-      SupportBundleStatus finishBundleStatus =
-        new SupportBundleStatus(supportBundleStatus, "", CollectionState.FINISHED, System.currentTimeMillis());
-      addToStatus(finishBundleStatus, basePath.getPath());
+    // Puts all the files under the uuid path
+    File baseDirectory = new File(localDir);
+    DirUtils.mkdirs(baseDirectory);
+    int fileCount = DirUtils.list(baseDirectory).size();
+
+    // We want to keep consistent number of bundle to provide to customer
+    int folderMaxNumber = cConf.getInt(Constants.SupportBundle.MAX_FOLDER_SIZE);
+    if (fileCount >= folderMaxNumber) {
+      File oldFilesDirectory = getOldestFolder(baseDirectory);
+      deleteOldFolders(oldFilesDirectory);
+    }
+    DirUtils.mkdirs(uuidPath);
+
+    SupportBundleJob supportBundleJob =
+      new SupportBundleJob(supportBundleTaskFactories, executorService, cConf, supportBundleStatus);
+    SupportBundleTaskConfiguration supportBundleTaskConfiguration =
+      new SupportBundleTaskConfiguration(supportBundleConfiguration, uuid, uuidPath, namespaces,
+                                         supportBundleJob);
+
+    try {
+      executorService.execute(() -> supportBundleJob.generateBundle(supportBundleTaskConfiguration));
     } catch (Exception e) {
-      LOG.error("Failed to generate support bundle ", e);
+      LOG.error("Failed to finish execute tasks", e);
       SupportBundleStatus failedBundleStatus =
         new SupportBundleStatus(supportBundleStatus, e.getMessage(), CollectionState.FAILED,
                                 System.currentTimeMillis());
-      addToStatus(failedBundleStatus, basePath.getPath());
-      throw new IllegalArgumentException("Failed to generate support bundle ", e);
+      addToStatus(failedBundleStatus, uuidPath.getPath());
     }
     return uuid;
   }
@@ -141,7 +136,7 @@ public class SupportBundleService implements Closeable {
   /**
    * Gets oldest folder from the root directory
    */
-  private File getOldestFolder(File baseDirectory) throws RuntimeException {
+  private File getOldestFolder(File baseDirectory) {
     List<File> uuidFiles = DirUtils.listFiles(baseDirectory).stream()
       .filter(file -> !file.getName().startsWith(".") && !file.isHidden() && file.isDirectory())
       .collect(Collectors.toList());
@@ -157,12 +152,8 @@ public class SupportBundleService implements Closeable {
   /**
    * Deletes old folders after certain number of folders exist
    */
-  private void deleteOldFolders(@Nullable File oldFilesDirectory) {
-    try {
-      DirUtils.deleteDirectoryContents(oldFilesDirectory);
-    } catch (IOException e) {
-      LOG.error("Failed to clean up directory {}", oldFilesDirectory, e);
-    }
+  private void deleteOldFolders(@Nullable File oldFilesDirectory) throws IOException {
+    DirUtils.deleteDirectoryContents(oldFilesDirectory);
   }
 
   @Override
@@ -174,12 +165,8 @@ public class SupportBundleService implements Closeable {
    * Update status file
    */
   private void addToStatus(SupportBundleStatus supportBundleStatus, String basePath) throws IOException {
-    try (FileWriter statusFile = new FileWriter(new File(basePath, SupportBundleFileNames.statusFileName))) {
+    try (FileWriter statusFile = new FileWriter(new File(basePath, SupportBundleFileNames.STATUS_FILE_NAME))) {
       GSON.toJson(supportBundleStatus, statusFile);
-      statusFile.flush();
-    } catch (IOException e) {
-      LOG.error("Failed to update status file ", e);
-      throw new IOException("Failed to update status file ", e);
     }
   }
 
@@ -187,9 +174,8 @@ public class SupportBundleService implements Closeable {
    * Gets single support bundle status with uuid
    */
   public SupportBundleStatus getSingleBundleJson(File uuidFile) throws IllegalArgumentException, IOException {
-    File statusFile = new File(uuidFile, SupportBundleFileNames.statusFileName);
+    File statusFile = new File(uuidFile, SupportBundleFileNames.STATUS_FILE_NAME);
     if (!statusFile.exists()) {
-      LOG.error("Failed to find this status file {} ", uuidFile.getName());
       throw new IllegalArgumentException("Failed to find this status file");
     }
     return readStatusJson(statusFile);
@@ -199,10 +185,16 @@ public class SupportBundleService implements Closeable {
     SupportBundleStatus supportBundleStatus;
     try (Reader reader = Files.newBufferedReader(statusFile.toPath(), StandardCharsets.UTF_8)) {
       supportBundleStatus = GSON.fromJson(reader, SupportBundleStatus.class);
-    } catch (IOException e) {
-      LOG.error("Failed to read status file ", e);
-      throw new IOException("Failed to read this status file ", e);
     }
     return supportBundleStatus;
+  }
+
+  private void validNamespace(@Nullable String namespace) throws Exception {
+    if (namespace != null) {
+      NamespaceId namespaceId = new NamespaceId(namespace);
+      if (!namespaceQueryClient.exists(namespaceId)) {
+        throw new NamespaceNotFoundException(namespaceId);
+      }
+    }
   }
 }

@@ -21,7 +21,7 @@ import io.cdap.cdap.logging.gateway.handlers.RemoteProgramLogsFetcher;
 import io.cdap.cdap.logging.gateway.handlers.RemoteProgramRunRecordsFetcher;
 import io.cdap.cdap.metadata.RemoteApplicationDetailFetcher;
 import io.cdap.cdap.metrics.process.RemoteMetricsSystemClient;
-import io.cdap.cdap.support.SupportBundleState;
+import io.cdap.cdap.support.SupportBundleTaskConfiguration;
 import io.cdap.cdap.support.task.SupportBundlePipelineInfoTask;
 
 /**
@@ -47,13 +47,13 @@ public class SupportBundlePipelineInfoTaskFactory implements SupportBundleTaskFa
   }
 
   @Override
-  public SupportBundlePipelineInfoTask create(SupportBundleState supportBundleState) {
-    return new SupportBundlePipelineInfoTask(supportBundleState.getUuid(), supportBundleState.getNamespaceList(),
-                                             supportBundleState.getAppId(), supportBundleState.getBasePath(),
+  public SupportBundlePipelineInfoTask create(SupportBundleTaskConfiguration taskConfiguration) {
+    return new SupportBundlePipelineInfoTask(taskConfiguration.getUuid(), taskConfiguration.getNamespaces(),
+                                             taskConfiguration.getApp(), taskConfiguration.getBasePath(),
                                              remoteApplicationDetailFetcher, remoteProgramRunRecordsFetcher,
-                                             remoteProgramLogsFetcher, supportBundleState.getProgramType(),
-                                             supportBundleState.getProgramName(), remoteMetricsSystemClient,
-                                             supportBundleState.getSupportBundleJob(),
-                                             supportBundleState.getMaxRunsPerProgram());
+                                             remoteProgramLogsFetcher, taskConfiguration.getProgramType(),
+                                             taskConfiguration.getProgramName(), remoteMetricsSystemClient,
+                                             taskConfiguration.getSupportBundleJob(),
+                                             taskConfiguration.getMaxRunsPerProgram());
   }
 }
