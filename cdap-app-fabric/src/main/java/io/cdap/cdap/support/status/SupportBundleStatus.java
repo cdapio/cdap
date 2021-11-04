@@ -87,7 +87,11 @@ public class SupportBundleStatus {
   }
 
   /**
+<<<<<<< HEAD
    * Get support bundle generation id
+=======
+   * Set support bundle generation id
+>>>>>>> 2ab03a9aa7a (revised the comments)
    */
   public String getBundleId() {
     return bundleId;

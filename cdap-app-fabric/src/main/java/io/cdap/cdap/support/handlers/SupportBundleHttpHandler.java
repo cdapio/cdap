@@ -51,6 +51,7 @@ public class SupportBundleHttpHandler extends AbstractAppFabricHttpHandler {
   /**
    * Trigger the Support Bundle Generation.
    *
+<<<<<<< HEAD
    * @param namespace the namespace id
    * @param application the app id
    * @param programType the program type
