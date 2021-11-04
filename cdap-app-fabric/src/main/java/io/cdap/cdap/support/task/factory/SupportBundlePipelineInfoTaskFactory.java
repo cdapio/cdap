@@ -25,7 +25,8 @@ import io.cdap.cdap.support.SupportBundleState;
 import io.cdap.cdap.support.task.SupportBundlePipelineInfoTask;
 
 /**
- * Support bundle
+ * Support bundle pipeline info task factory to create pipeline info task which collect pipeline info and
+ * generate them into files.
  */
 public class SupportBundlePipelineInfoTaskFactory implements SupportBundleTaskFactory {
 
@@ -35,11 +36,10 @@ public class SupportBundlePipelineInfoTaskFactory implements SupportBundleTaskFa
   private final RemoteMetricsSystemClient remoteMetricsSystemClient;
 
   @Inject
-  public SupportBundlePipelineInfoTaskFactory(
-      RemoteProgramRunRecordsFetcher remoteProgramRunRecordsFetcher,
-      RemoteProgramLogsFetcher remoteProgramLogsFetcher,
-      RemoteApplicationDetailFetcher remoteApplicationDetailFetcher,
-      RemoteMetricsSystemClient remoteMetricsSystemClient) {
+  public SupportBundlePipelineInfoTaskFactory(RemoteProgramRunRecordsFetcher remoteProgramRunRecordsFetcher,
+                                              RemoteProgramLogsFetcher remoteProgramLogsFetcher,
+                                              RemoteApplicationDetailFetcher remoteApplicationDetailFetcher,
+                                              RemoteMetricsSystemClient remoteMetricsSystemClient) {
     this.remoteProgramRunRecordsFetcher = remoteProgramRunRecordsFetcher;
     this.remoteProgramLogsFetcher = remoteProgramLogsFetcher;
     this.remoteApplicationDetailFetcher = remoteApplicationDetailFetcher;
@@ -48,17 +48,12 @@ public class SupportBundlePipelineInfoTaskFactory implements SupportBundleTaskFa
 
   @Override
   public SupportBundlePipelineInfoTask create(SupportBundleState supportBundleState) {
-    return new SupportBundlePipelineInfoTask(
-        supportBundleState.getUuid(),
-        supportBundleState.getNamespaceList(),
-        supportBundleState.getAppId(),
-        supportBundleState.getBasePath(),
-        remoteApplicationDetailFetcher,
-        remoteProgramRunRecordsFetcher,
-        remoteProgramLogsFetcher,
-        supportBundleState.getWorkflowName(),
-        remoteMetricsSystemClient,
-        supportBundleState.getSupportBundleJob(),
-        supportBundleState.getMaxRunsPerPipeline());
+    return new SupportBundlePipelineInfoTask(supportBundleState.getUuid(), supportBundleState.getNamespaceList(),
+                                             supportBundleState.getAppId(), supportBundleState.getBasePath(),
+                                             remoteApplicationDetailFetcher, remoteProgramRunRecordsFetcher,
+                                             remoteProgramLogsFetcher, supportBundleState.getProgramType(),
+                                             supportBundleState.getProgramName(), remoteMetricsSystemClient,
+                                             supportBundleState.getSupportBundleJob(),
+                                             supportBundleState.getMaxRunsPerProgram());
   }
 }

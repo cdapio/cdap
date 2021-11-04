@@ -16,13 +16,9 @@
 
 package io.cdap.cdap.support.job;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.ByteStreams;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonObject;
 import com.google.inject.Injector;
-import io.cdap.cdap.AppWithServices;
 import io.cdap.cdap.AppWithWorkflow;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.app.store.Store;
@@ -37,8 +33,10 @@ import io.cdap.cdap.logging.gateway.handlers.RemoteProgramLogsFetcher;
 import io.cdap.cdap.logging.gateway.handlers.RemoteProgramRunRecordsFetcher;
 import io.cdap.cdap.metadata.RemoteApplicationDetailFetcher;
 import io.cdap.cdap.metrics.process.RemoteMetricsSystemClient;
-import io.cdap.cdap.proto.*;
-import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -51,7 +49,6 @@ import io.cdap.cdap.support.status.SupportBundleStatus;
 import io.cdap.cdap.support.status.SupportBundleTaskStatus;
 import io.cdap.cdap.support.task.SupportBundlePipelineInfoTask;
 import io.cdap.cdap.support.task.SupportBundleSystemLogTask;
-import io.cdap.cdap.support.task.SupportBundleTask;
 import io.cdap.cdap.support.task.factory.SupportBundlePipelineInfoTaskFactory;
 import io.cdap.cdap.support.task.factory.SupportBundleSystemLogTaskFactory;
 import io.cdap.cdap.support.task.factory.SupportBundleTaskFactory;
@@ -66,10 +63,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.Reader;
-import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -119,24 +114,20 @@ public class SupportBundleJobTest extends AppFabricTestBase {
   public void testSupportBundleJobExecute() throws Exception {
     generateWorkflowLog();
     SupportBundleConfiguration supportBundleConfiguration =
-      new SupportBundleConfiguration(namespaceId.getNamespace(), AppWithWorkflow.NAME, null,
+      new SupportBundleConfiguration(namespaceId.getNamespace(), "workflows", AppWithWorkflow.NAME, null,
                                      AppWithWorkflow.SampleWorkflow.NAME, 1);
     String uuid = UUID.randomUUID().toString();
     File tempFolder = new File(configuration.get(Constants.SupportBundle.LOCAL_DATA_DIR));
     File uuidFile = new File(tempFolder, uuid);
-    SupportBundleStatus supportBundleStatus = new SupportBundleStatus();
-    supportBundleStatus.setBundleId(uuid);
-    supportBundleStatus.setStartTimestamp(System.currentTimeMillis());
-
-    supportBundleStatus.setParameters(supportBundleConfiguration);
+    SupportBundleStatus supportBundleStatus =
+      new SupportBundleStatus(uuid, System.currentTimeMillis(), supportBundleConfiguration,
+                              CollectionState.IN_PROGRESS);
     SupportBundleJob supportBundleJob =
       new SupportBundleJob(supportBundleTaskFactorySet, executorService, configuration, supportBundleStatus);
 
-    SupportBundleState supportBundleState = new SupportBundleState(supportBundleConfiguration);
-    supportBundleState.setUuid(uuid);
-    supportBundleState.setBasePath(uuidFile.getPath());
-    supportBundleState.setNamespaceList(Collections.singletonList(namespaceId.getNamespace()));
-    supportBundleState.setSupportBundleJob(supportBundleJob);
+    SupportBundleState supportBundleState = new SupportBundleState(supportBundleConfiguration, uuid, uuidFile.getPath(),
+                                                                   Collections.singletonList(
+                                                                     namespaceId.getNamespace()), supportBundleJob);
     supportBundleJob.generateBundle(supportBundleState);
 
     TimeUnit.SECONDS.sleep(10);
@@ -172,22 +163,20 @@ public class SupportBundleJobTest extends AppFabricTestBase {
   public void testSupportBundlePipelineInfo() throws Exception {
     String runId = generateWorkflowLog();
     SupportBundleConfiguration supportBundleConfiguration =
-      new SupportBundleConfiguration(namespaceId.getNamespace(), AppWithWorkflow.NAME, null,
+      new SupportBundleConfiguration(namespaceId.getNamespace(), "workflows", AppWithWorkflow.NAME, null,
                                      AppWithWorkflow.SampleWorkflow.NAME, 1);
     String uuid = UUID.randomUUID().toString();
     File tempFolder = new File(configuration.get(Constants.SupportBundle.LOCAL_DATA_DIR));
     File uuidFile = new File(tempFolder, uuid);
-    SupportBundleStatus supportBundleStatus = new SupportBundleStatus();
-    supportBundleStatus.setBundleId(uuid);
-    supportBundleStatus.setStartTimestamp(System.currentTimeMillis());
-
-    supportBundleStatus.setParameters(supportBundleConfiguration);
+    SupportBundleStatus supportBundleStatus =
+      new SupportBundleStatus(uuid, System.currentTimeMillis(), supportBundleConfiguration,
+                              CollectionState.IN_PROGRESS);
     SupportBundleJob supportBundleJob =
       new SupportBundleJob(supportBundleTaskFactorySet, executorService, configuration, supportBundleStatus);
     SupportBundlePipelineInfoTask supportBundlePipelineInfoTask =
       new SupportBundlePipelineInfoTask(uuid, Collections.singletonList(namespaceId.getNamespace()),
                                         AppWithWorkflow.NAME, uuidFile.getPath(), remoteApplicationDetailFetcher,
-                                        remoteProgramRunRecordsFetcher, remoteProgramLogsFetcher,
+                                        remoteProgramRunRecordsFetcher, remoteProgramLogsFetcher, "workflows",
                                         AppWithWorkflow.SampleWorkflow.NAME, remoteMetricsSystemClient,
                                         supportBundleJob, 1);
     supportBundlePipelineInfoTask.collect();

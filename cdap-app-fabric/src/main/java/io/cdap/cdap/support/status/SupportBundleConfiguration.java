@@ -19,53 +19,75 @@ package io.cdap.cdap.support.status;
 import javax.annotation.Nullable;
 
 /**
- * Support bundle configuration for gathering post api parameters
+ * Support bundle configuration for gathering post api parameters.
  */
 public class SupportBundleConfiguration {
-  /** pipeline namespace id */
+  /**
+   * pipeline namespace id
+   */
   private final String namespaceId;
-  /** pipeline application id */
+  /**
+   * pipeline application id
+   */
   private final String appId;
-  /** pipeline workflow name */
-  private final String workflowName;
-  /** pipeline run id */
+  /**
+   * pipeline program type
+   */
+  private final String programType;
+  /**
+   * pipeline program name
+   */
+  private final String programName;
+  /**
+   * pipeline run id
+   */
   private final String runId;
-  // max num of run log customer request for each pipeline run
-  private final int maxRunsPerPipeline;
+  // max num of run log customer request for each program run
+  private final int maxRunsPerProgram;
 
-  public SupportBundleConfiguration(@Nullable String namespaceId,
-                                    @Nullable String appId,
-                                    @Nullable String runId,
-                                    @Nullable String workflowName,
-                                    int maxRunsPerPipeline) {
+  public SupportBundleConfiguration(@Nullable String namespaceId, @Nullable String appId, @Nullable String runId,
+                                    String programType, String programName, int maxRunsPerProgram) {
     this.namespaceId = namespaceId;
     this.appId = appId;
     this.runId = runId;
-    this.workflowName = workflowName;
-    this.maxRunsPerPipeline = maxRunsPerPipeline;
+    this.programType = programType;
+    this.programName = programName;
+    this.maxRunsPerProgram = maxRunsPerProgram;
   }
-  /** Get pipeline namespace id */
+
+  /**
+   * Get pipeline namespace id
+   */
   public String getNamespaceId() {
     return namespaceId;
   }
 
-  /** Get pipeline application id */
+  /**
+   * Get pipeline application id
+   */
   public String getAppId() {
     return appId;
   }
 
-  /** Get pipeline workflow name */
-  public String getWorkflowName() {
-    return workflowName;
+  public String getProgramType() {
+    return programType;
   }
 
-  /** Get pipeline run id */
+  public String getProgramName() {
+    return programName;
+  }
+
+  /**
+   * Get pipeline run id
+   */
   public String getRunId() {
     return runId;
   }
 
-  /** Get num of run log needed for each run */
-  public Integer getMaxRunsPerPipeline() {
-    return maxRunsPerPipeline;
+  /**
+   * Get num of run log needed for each run
+   */
+  public Integer getMaxRunsPerProgram() {
+    return maxRunsPerProgram;
   }
 }

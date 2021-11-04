@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Generates support bundle system log
+ * Collects support bundle system log from data fusion instance.
  */
 public class SupportBundleSystemLogTask implements SupportBundleTask {
 
@@ -44,23 +44,14 @@ public class SupportBundleSystemLogTask implements SupportBundleTask {
   private final List<String> serviceList;
 
   @Inject
-  public SupportBundleSystemLogTask(@Assisted String basePath,
-                                    RemoteProgramLogsFetcher remoteProgramLogsFetcher) {
+  public SupportBundleSystemLogTask(@Assisted String basePath, RemoteProgramLogsFetcher remoteProgramLogsFetcher) {
     this.basePath = basePath;
     this.remoteProgramLogsFetcher = remoteProgramLogsFetcher;
-    this.serviceList =
-        Arrays.asList(
-            Constants.Service.APP_FABRIC_HTTP,
-            Constants.Service.DATASET_EXECUTOR,
-            Constants.Service.EXPLORE_HTTP_USER_SERVICE,
-            Constants.Service.LOGSAVER,
-            Constants.Service.MESSAGING_SERVICE,
-            Constants.Service.METADATA_SERVICE,
-            Constants.Service.METRICS,
-            Constants.Service.METRICS_PROCESSOR,
-            Constants.Service.RUNTIME,
-            Constants.Service.TRANSACTION,
-            "pipeline");
+    this.serviceList = Arrays.asList(Constants.Service.APP_FABRIC_HTTP, Constants.Service.DATASET_EXECUTOR,
+                                     Constants.Service.EXPLORE_HTTP_USER_SERVICE, Constants.Service.LOGSAVER,
+                                     Constants.Service.MESSAGING_SERVICE, Constants.Service.METADATA_SERVICE,
+                                     Constants.Service.METRICS, Constants.Service.METRICS_PROCESSOR,
+                                     Constants.Service.RUNTIME, Constants.Service.TRANSACTION, "pipeline");
   }
 
   /**
@@ -75,14 +66,13 @@ public class SupportBundleSystemLogTask implements SupportBundleTask {
       long currentTimeMillis = System.currentTimeMillis();
       long fromMillis = currentTimeMillis - TimeUnit.DAYS.toMillis(1);
       try (FileWriter file = new FileWriter(
-          new File(systemLogPath, serviceId + SupportBundleFileNames.systemLogSuffixName))) {
-        String systemLog =
-            remoteProgramLogsFetcher.getProgramSystemLog(
-                componentId, serviceId, fromMillis / 1000, currentTimeMillis / 1000);
+        new File(systemLogPath, serviceId + SupportBundleFileNames.systemLogSuffixName))) {
+        String systemLog = remoteProgramLogsFetcher.getProgramSystemLog(componentId, serviceId, fromMillis / 1000,
+                                                                        currentTimeMillis / 1000);
         file.write(systemLog);
       } catch (IOException e) {
-        LOG.warn("Can not write system log file with service {} ", serviceId, e);
-        throw new IOException("Can not write system log file ", e);
+        LOG.error("Failed to write system log file with service {} ", serviceId, e);
+        throw new IOException("Failed to write system log file ", e);
       }
     }
   }

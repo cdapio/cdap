@@ -99,7 +99,7 @@ public class SupportBundleServiceTest extends AppFabricTestBase {
 
 
     SupportBundleConfiguration supportBundleConfiguration = new SupportBundleConfiguration(
-      namespaceId.getNamespace(), AppWithWorkflow.NAME, null, AppWithWorkflow.SampleWorkflow.NAME,
+      namespaceId.getNamespace(), "workflows", AppWithWorkflow.NAME, null, AppWithWorkflow.SampleWorkflow.NAME,
       1);
 
     String uuid = supportBundleService.generateSupportBundle(supportBundleConfiguration);

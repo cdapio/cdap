@@ -21,124 +21,121 @@ import io.cdap.cdap.support.job.SupportBundleJob;
 import io.cdap.cdap.support.status.SupportBundleConfiguration;
 
 import java.util.List;
-import javax.annotation.Nullable;
 
 /**
- * Support bundle state for handling all assisted parameters inside the task factories
+ * Support bundle state for handling all assisted parameters inside the task factories.
  */
 public class SupportBundleState {
-  /** unique support bundle id */
-  private String uuid;
-  /** pipeline namespace id */
-  private String namespaceId;
-  /** pipeline application id */
-  private String appId;
-  /** pipeline run id */
-  private String runId;
-  /** support bundle base path */
-  private String basePath;
-  /** pipeline workflow name */
-  private String workflowName;
-  /** all the namespace under the pipeline */
-  private List<String> namespaceList;
-  /** support bundle job to process all the tasks */
-  private SupportBundleJob supportBundleJob;
-  /** support bundle max runs fetch for each pipeline */
-  private Integer maxRunsPerPipeline;
+  /**
+   * unique support bundle id
+   */
+  private final String uuid;
+  /**
+   * pipeline application id
+   */
+  private final String appId;
+  /**
+   * pipeline run id
+   */
+  private final String runId;
+  /**
+   * support bundle base path
+   */
+  private final String basePath;
+  /**
+   * pipeline program type
+   */
+  private final String programType;
+  /**
+   * pipeline program name
+   */
+  private final String programName;
+  /**
+   * all the namespace under the pipeline
+   */
+  private final List<String> namespaceList;
+  /**
+   * support bundle job to process all the tasks
+   */
+  private final SupportBundleJob supportBundleJob;
+  /**
+   * support bundle max run per program
+   */
+  private final Integer maxRunsPerProgram;
 
-  public SupportBundleState(SupportBundleConfiguration supportBundleConfiguration) {
+  public SupportBundleState(SupportBundleConfiguration supportBundleConfiguration, String uuid, String basePath,
+                            List<String> namespaceList, SupportBundleJob supportBundleJob) {
     this.appId = supportBundleConfiguration.getAppId();
     this.runId = supportBundleConfiguration.getRunId();
-    this.workflowName = supportBundleConfiguration.getWorkflowName();
+    this.programType = supportBundleConfiguration.getProgramType();
+    this.programName = supportBundleConfiguration.getProgramName();
+    this.maxRunsPerProgram = supportBundleConfiguration.getMaxRunsPerProgram();
+    this.uuid = uuid;
+    this.basePath = basePath;
+    this.namespaceList = ImmutableList.copyOf(namespaceList);
+    this.supportBundleJob = supportBundleJob;
   }
 
-  /** Get support bundle id */
+  /**
+   * Get support bundle id
+   */
   public String getUuid() {
     return uuid;
   }
 
-  /** Set support bundle id */
-  public void setUuid(String uuid) {
-    this.uuid = uuid;
-  }
-
-  /** Get pipeline namespace id */
-  public String getNamespaceId() {
-    return namespaceId;
-  }
-
-  /** Set pipeline namespace id */
-  public void setNamespaceId(@Nullable String namespaceId) {
-    this.namespaceId = namespaceId;
-  }
-
-  /** Get pipeline Application id */
+  /**
+   * Get pipeline Application id
+   */
   public String getAppId() {
     return appId;
   }
 
-  /** Set pipeline Application id */
-  public void setAppId(@Nullable String appId) {
-    this.appId = appId;
-  }
-
-  /** Get pipeline run id */
+  /**
+   * Get pipeline run id
+   */
   public String getRunId() {
     return runId;
   }
 
-  /** Set pipeline run id */
-  public void setRunId(@Nullable String runId) {
-    this.runId = runId;
-  }
-
-  /** Get support bundle base path */
+  /**
+   * Get support bundle base path
+   */
   public String getBasePath() {
     return basePath;
   }
 
-  /** Set support bundle base path */
-  public void setBasePath(@Nullable String basePath) {
-    this.basePath = basePath;
+  /**
+   * Get support bundle program type
+   */
+  public String getProgramType() {
+    return programType;
   }
 
-  /** Get workflow name */
-  public String getWorkflowName() {
-    return workflowName;
+  /**
+   * Get support bundle program name
+   */
+  public String getProgramName() {
+    return programName;
   }
 
-  /** Set workflow name */
-  public void setWorkflowName(@Nullable String workflowName) {
-    this.workflowName = workflowName;
-  }
-
-  /** Get list of namespace */
+  /**
+   * Get list of namespace
+   */
   public List<String> getNamespaceList() {
     return namespaceList;
   }
 
-  /** Set list of namespace */
-  public void setNamespaceList(List<String> namespaceList) {
-    this.namespaceList = ImmutableList.copyOf(namespaceList);
-  }
-
-  /** Get support bundle job */
+  /**
+   * Get support bundle job
+   */
   public SupportBundleJob getSupportBundleJob() {
     return supportBundleJob;
   }
 
-  /** Set support bundle job */
-  public void setSupportBundleJob(SupportBundleJob supportBundleJob) {
-    this.supportBundleJob = supportBundleJob;
-  }
-
-  /** Get max runs allowed for each pipeline */
-  public Integer getMaxRunsPerPipeline() {
-    return maxRunsPerPipeline;
-  }
-
-  /** Set max runs allowed for each pipeline */
-  public void setMaxRunsPerPipeline(Integer maxRunsPerPipeline) {
-    this.maxRunsPerPipeline = maxRunsPerPipeline;
+  /**
+   * Get support bundle max run per program
+   */
+  public int getMaxRunsPerProgram() {
+    return maxRunsPerProgram;
   }
 }

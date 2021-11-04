@@ -21,6 +21,9 @@ import io.cdap.cdap.logging.gateway.handlers.RemoteProgramLogsFetcher;
 import io.cdap.cdap.support.SupportBundleState;
 import io.cdap.cdap.support.task.SupportBundleSystemLogTask;
 
+/**
+ * Support Bundle system log task factory to create system log task to collect system logs for the data fusion instance.
+ */
 public class SupportBundleSystemLogTaskFactory implements SupportBundleTaskFactory {
   private final RemoteProgramLogsFetcher remoteProgramLogsFetcher;
 
@@ -31,8 +34,6 @@ public class SupportBundleSystemLogTaskFactory implements SupportBundleTaskFacto
 
   @Override
   public SupportBundleSystemLogTask create(SupportBundleState supportBundleState) {
-    return new SupportBundleSystemLogTask(
-      supportBundleState.getBasePath(),
-      remoteProgramLogsFetcher);
+    return new SupportBundleSystemLogTask(supportBundleState.getBasePath(), remoteProgramLogsFetcher);
   }
 }

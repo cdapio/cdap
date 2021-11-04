@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Collects pipeline run info
+ * Collects pipeline run info.
  */
 public class SupportBundlePipelineRunLogTask implements SupportBundleTask {
 
@@ -42,19 +42,20 @@ public class SupportBundlePipelineRunLogTask implements SupportBundleTask {
   private final RemoteProgramLogsFetcher remoteProgramLogsFetcher;
   private final String namespaceId;
   private final String appId;
-  private final String workflowName;
+  private final String programType;
+  private final String programName;
   private final List<RunRecord> runRecordList;
 
   @Inject
-  public SupportBundlePipelineRunLogTask(String appFolderPath, String namespaceId, String appId,
-                                         String workflowName,
-                                         RemoteProgramLogsFetcher remoteProgramLogsFetcher,
+  public SupportBundlePipelineRunLogTask(String appFolderPath, String namespaceId, String appId, String programType,
+                                         String programName, RemoteProgramLogsFetcher remoteProgramLogsFetcher,
                                          List<RunRecord> runRecordList) {
     this.appFolderPath = appFolderPath;
     this.remoteProgramLogsFetcher = remoteProgramLogsFetcher;
     this.namespaceId = namespaceId;
     this.appId = appId;
-    this.workflowName = workflowName;
+    this.programType = programType;
+    this.programName = programName;
     this.runRecordList = runRecordList;
   }
 
@@ -62,23 +63,20 @@ public class SupportBundlePipelineRunLogTask implements SupportBundleTask {
   public void collect() throws IOException, NotFoundException {
     for (RunRecord runRecord : runRecordList) {
       String runId = runRecord.getPid();
-      try (FileWriter file = new FileWriter(
-          new File(appFolderPath, runId + SupportBundleFileNames.logSuffixName))) {
+      try (FileWriter file = new FileWriter(new File(appFolderPath, runId + SupportBundleFileNames.logSuffixName))) {
         long currentTimeMillis = System.currentTimeMillis();
         long fromMillis = currentTimeMillis - TimeUnit.DAYS.toMillis(1);
         ProgramId programId =
-            new ProgramId(
-                namespaceId, appId, ProgramType.valueOfCategoryName("workflows"), workflowName);
+          new ProgramId(namespaceId, appId, ProgramType.valueOfCategoryName(programType), programName);
         String runLog =
-            remoteProgramLogsFetcher.getProgramRunLogs(
-                programId, runId, fromMillis / 1000, currentTimeMillis / 1000);
+          remoteProgramLogsFetcher.getProgramRunLogs(programId, runId, fromMillis / 1000, currentTimeMillis / 1000);
         file.write(runLog);
       } catch (IOException e) {
-        LOG.warn("Can not write file with run {} ", runId, e);
-        throw new IOException("Can not write file ", e);
+        LOG.error("Failed to write file with run {} ", runId, e);
+        throw new IOException("Failed to write file ", e);
       } catch (NotFoundException e) {
-        LOG.warn("Can not find run log with run {} ", runId, e);
-        throw new NotFoundException("Can not find run log ", e.getMessage());
+        LOG.error("Failed to find run log with run {} ", runId, e);
+        throw new NotFoundException("Failed to find run log ", e.getMessage());
       }
     }
   }

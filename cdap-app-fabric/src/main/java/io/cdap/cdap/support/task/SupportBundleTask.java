@@ -21,8 +21,12 @@ import org.json.JSONException;
 
 import java.io.IOException;
 
-/** Establishes an interface for support bundle task */
+/**
+ * Establishes an interface for support bundle task.
+ */
 public interface SupportBundleTask {
-  /** Collect Log or pipeline info */
+  /**
+   * Collect Log or pipeline info
+   */
   void collect() throws IOException, NotFoundException, JSONException;
 }

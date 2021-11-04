@@ -43,7 +43,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Collects pipeline run info
+ * Collects pipeline run info.
  */
 public class SupportBundleRuntimeInfoTask implements SupportBundleTask {
 
@@ -51,23 +51,21 @@ public class SupportBundleRuntimeInfoTask implements SupportBundleTask {
   private static final Gson gson = new GsonBuilder().create();
   private final String namespaceId;
   private final String appId;
-  private final String workflowName;
+  private final String programType;
+  private final String programName;
   private final RemoteMetricsSystemClient remoteMetricsSystemClient;
   private final String appPath;
   private final List<RunRecord> runRecordList;
   private final ApplicationDetail applicationDetail;
 
   @Inject
-  public SupportBundleRuntimeInfoTask(String appPath,
-                                      String namespaceId,
-                                      String appId,
-                                      String workflowName,
-                                      RemoteMetricsSystemClient remoteMetricsSystemClient,
-                                      List<RunRecord> runRecordList,
-                                      ApplicationDetail applicationDetail) {
+  public SupportBundleRuntimeInfoTask(String appPath, String namespaceId, String appId, String programType,
+                                      String programName, RemoteMetricsSystemClient remoteMetricsSystemClient,
+                                      List<RunRecord> runRecordList, ApplicationDetail applicationDetail) {
     this.namespaceId = namespaceId;
     this.appId = appId;
-    this.workflowName = workflowName;
+    this.programType = programType;
+    this.programName = programName;
     this.appPath = appPath;
     this.remoteMetricsSystemClient = remoteMetricsSystemClient;
     this.runRecordList = runRecordList;
@@ -86,18 +84,14 @@ public class SupportBundleRuntimeInfoTask implements SupportBundleTask {
         jsonObject.addProperty("profileName", runRecord.getProfileId().getProfile());
         jsonObject.addProperty("runtimeArgs", runRecord.getProperties().get("runtimeArgs"));
         JsonObject metrics =
-            queryMetrics(
-                runId,
-                applicationDetail.getConfiguration(),
-                runRecord != null ? runRecord.getStartTs() : 0,
-                runRecord != null && runRecord.getStopTs() != null
-                    ? runRecord.getStopTs()
-                    : DateTime.now().getMillis());
+          queryMetrics(runId, applicationDetail.getConfiguration(), runRecord != null ? runRecord.getStartTs() : 0,
+                       runRecord != null && runRecord.getStopTs() != null ? runRecord.getStopTs() : DateTime.now()
+                         .getMillis());
         jsonObject.add("metrics", metrics);
         gson.toJson(jsonObject, file);
       } catch (IOException e) {
-        LOG.warn("Can not write file with run {} ", runId, e);
-        throw new IOException("Can not write run info file ", e);
+        LOG.error("Failed to write file with run {} ", runId, e);
+        throw new IOException("Failed to write run info file ", e);
       }
     }
   }
@@ -106,9 +100,7 @@ public class SupportBundleRuntimeInfoTask implements SupportBundleTask {
     JsonObject metrics = new JsonObject();
     try {
       JSONObject appConf =
-          configuration != null && configuration.length() > 0
-              ? new JSONObject(configuration)
-              : new JSONObject();
+        configuration != null && configuration.length() > 0 ? new JSONObject(configuration) : new JSONObject();
       List<String> metricsList = new ArrayList<>();
       JSONArray stages = appConf.has("stages") ? appConf.getJSONArray("stages") : new JSONArray();
       for (int i = 0; i < stages.length(); i++) {
@@ -121,10 +113,9 @@ public class SupportBundleRuntimeInfoTask implements SupportBundleTask {
       queryTags.put("namespace", namespaceId);
       queryTags.put("app", appId);
       queryTags.put("run", runId);
-      queryTags.put("workflow", workflowName);
-      List<MetricTimeSeries> metricTimeSeriesList =
-          new ArrayList<>(remoteMetricsSystemClient.query((int) (startTs - 5000),
-                                                          (int) (stopTs), queryTags, metricsList));
+      queryTags.put(programType, programName);
+      List<MetricTimeSeries> metricTimeSeriesList = new ArrayList<>(
+        remoteMetricsSystemClient.query((int) (startTs - 5000), (int) (stopTs), queryTags, metricsList));
       for (MetricTimeSeries timeSeries : metricTimeSeriesList) {
         if (!metrics.has(timeSeries.getMetricName())) {
           metrics.add(timeSeries.getMetricName(), new JsonArray());
@@ -137,7 +128,7 @@ public class SupportBundleRuntimeInfoTask implements SupportBundleTask {
         }
       }
     } catch (IOException e) {
-      LOG.warn("Can not find metrics with run {} ", runId, e);
+      LOG.warn("Failed to find metrics with run {} ", runId, e);
       return null;
     } catch (JSONException e) {
       LOG.warn("JSON format error with run {} ", runId, e);

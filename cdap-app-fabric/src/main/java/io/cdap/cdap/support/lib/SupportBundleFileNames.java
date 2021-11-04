@@ -17,10 +17,14 @@
 package io.cdap.cdap.support.lib;
 
 /**
- *
+ * Support bundle constant creation file names
  */
-public class SupportBundleFileNames {
+public final class SupportBundleFileNames {
   public static String statusFileName = "status.json";
   public static String systemLogSuffixName = "-system-log.txt";
   public static String logSuffixName = "-log.txt";
+
+  private SupportBundleFileNames() {
+
+  }
 }
