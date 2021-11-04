@@ -16,13 +16,8 @@
 
 package io.cdap.cdap.support.status;
 
-import com.google.gson.annotations.SerializedName;
-
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * Status when generating Support bundle
+ * Status when generating Support bundle.
  */
 public class SupportBundleStatus {
   // UUID of the bundle status object describes
@@ -32,36 +27,27 @@ public class SupportBundleStatus {
   // Failed bundle describes the failure
   private String statusDetails;
   // when bundle collection was started
-  private Long startTimestamp;
+  private long startTimestamp;
   // FINISHED/FAILED bundles when bundle collection was completed
-  private Long finishTimestamp;
+  private long finishTimestamp;
   // any parameters passed to start collection
   private SupportBundleConfiguration parameters;
 
-  public SupportBundleStatus(String bundleId, SupportBundleConfiguration parameters) {
+  public SupportBundleStatus(String bundleId, long startTimestamp, SupportBundleConfiguration parameters,
+                             CollectionState status) {
     this.bundleId = bundleId;
+    this.startTimestamp = startTimestamp;
     this.parameters = parameters;
-    this.startTimestamp = System.currentTimeMillis();
+    this.status = status;
   }
 
-  /**
-   * Set support bundle generation id
-   */
-  public void setBundleId(String bundleId) {
-    this.bundleId = bundleId;
-  }
-
-  /**
-   * Get support bundle generation id
-   */
-  public String getBundleId() {
-    return bundleId;
-  }
-
-  /**
-   * Set support bundle generation status
-   */
-  public void setStatus(CollectionState status) {
+  public SupportBundleStatus(SupportBundleStatus supportBundleStatus, String statusDetails, CollectionState status,
+                             long finishTimestamp) {
+    this.bundleId = supportBundleStatus.getBundleId();
+    this.startTimestamp = supportBundleStatus.getStartTimestamp();
+    this.parameters = supportBundleStatus.getParameters();
+    this.statusDetails = statusDetails;
+    this.finishTimestamp = finishTimestamp;
     this.status = status;
   }
 
@@ -73,24 +59,10 @@ public class SupportBundleStatus {
   }
 
   /**
-   * Set support bundle generation status details
-   */
-  public void setStatusDetails(String statusDetails) {
-    this.statusDetails = statusDetails;
-  }
-
-  /**
    * Get support bundle generation status details
    */
   public String getStatusDetails() {
     return statusDetails;
-  }
-
-  /**
-   * Set support bundle generation start time
-   */
-  public void setStartTimestamp(Long startTimestamp) {
-    this.startTimestamp = startTimestamp;
   }
 
   /**
@@ -101,24 +73,10 @@ public class SupportBundleStatus {
   }
 
   /**
-   * Set support bundle generation finish time
-   */
-  public void setFinishTimestamp(Long finishTimestamp) {
-    this.finishTimestamp = finishTimestamp;
-  }
-
-  /**
    * Get support bundle generation finish time
    */
-  public Long getFinishTimestamp() {
+  public long getFinishTimestamp() {
     return finishTimestamp;
-  }
-
-  /**
-   * Set support bundle generation request parameters
-   */
-  public void setParameters(SupportBundleConfiguration parameters) {
-    this.parameters = parameters;
   }
 
   /**
@@ -126,5 +84,12 @@ public class SupportBundleStatus {
    */
   public SupportBundleConfiguration getParameters() {
     return parameters;
+  }
+
+  /**
+   * Set support bundle generation id
+   */
+  public String getBundleId() {
+    return bundleId;
   }
 }

@@ -19,53 +19,76 @@ package io.cdap.cdap.support.status;
 import javax.annotation.Nullable;
 
 /**
- * Support bundle configuration for gathering post api parameters
+ * Support bundle configuration for gathering post api parameters.
  */
 public class SupportBundleConfiguration {
-  /** pipeline namespace id */
-  private final String namespaceId;
-  /** pipeline application id */
-  private final String appId;
-  /** pipeline workflow name */
-  private final String workflowName;
-  /** pipeline run id */
-  private final String runId;
-  // max num of run log customer request for each pipeline run
-  private final int maxRunsPerPipeline;
+  /**
+   * pipeline namespace id
+   */
+  private final String namespace;
+  /**
+   * pipeline application id
+   */
+  private final String app;
+  /**
+   * pipeline program type
+   */
+  private final String programType;
+  /**
+   * pipeline program name
+   */
+  private final String programName;
+  /**
+   * pipeline run id
+   */
+  private final String run;
+  // max num of run log customer request for each program run
+  private final int maxRunsPerProgram;
 
-  public SupportBundleConfiguration(@Nullable String namespaceId,
-                                    @Nullable String appId,
-                                    @Nullable String runId,
-                                    @Nullable String workflowName,
-                                    int maxRunsPerPipeline) {
-    this.namespaceId = namespaceId;
-    this.appId = appId;
-    this.runId = runId;
-    this.workflowName = workflowName;
-    this.maxRunsPerPipeline = maxRunsPerPipeline;
-  }
-  /** Get pipeline namespace id */
-  public String getNamespaceId() {
-    return namespaceId;
-  }
-
-  /** Get pipeline application id */
-  public String getAppId() {
-    return appId;
-  }
-
-  /** Get pipeline workflow name */
-  public String getWorkflowName() {
-    return workflowName;
+  public SupportBundleConfiguration(@Nullable String namespace, @Nullable String app,
+                                    @Nullable String run, String programType, String programName,
+                                    int maxRunsPerProgram) {
+    this.namespace = namespace;
+    this.app = app;
+    this.run = run;
+    this.programType = programType;
+    this.programName = programName;
+    this.maxRunsPerProgram = maxRunsPerProgram;
   }
 
-  /** Get pipeline run id */
-  public String getRunId() {
-    return runId;
+  /**
+   * Get pipeline namespace id
+   */
+  public String getNamespace() {
+    return namespace;
   }
 
-  /** Get num of run log needed for each run */
-  public Integer getMaxRunsPerPipeline() {
-    return maxRunsPerPipeline;
+  /**
+   * Get pipeline application id
+   */
+  public String getApp() {
+    return app;
+  }
+
+  public String getProgramType() {
+    return programType;
+  }
+
+  public String getProgramName() {
+    return programName;
+  }
+
+  /**
+   * Get pipeline run id
+   */
+  public String getRun() {
+    return run;
+  }
+
+  /**
+   * Get num of run log needed for each run
+   */
+  public Integer getMaxRunsPerProgram() {
+    return maxRunsPerProgram;
   }
 }

@@ -20,9 +20,10 @@ package io.cdap.cdap.support.status;
  * Support Bundle generation status
  */
 public enum CollectionState {
-  INVALID,
+  QUEUED,
   IN_PROGRESS,
   FINISHED,
+  TIMEOUT,
   FAILED,
-  QUEUED
+  INVALID
 }

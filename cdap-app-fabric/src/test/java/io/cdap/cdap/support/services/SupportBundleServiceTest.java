@@ -57,16 +57,15 @@ public class SupportBundleServiceTest extends AppFabricTestBase {
     createNamespace("default");
     List<String> bundleIdList = new ArrayList<>();
     for (int i = 0; i < 8; i++) {
-      String path = String.format("%s/support/bundle?namespaceId=default", Constants.Gateway.API_VERSION_3);
+      String path = String.format("%s/support/bundle?namespace=default", Constants.Gateway.API_VERSION_3);
       HttpResponse response = doPost(path);
       Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
       String bundleId = response.getResponseBodyAsString();
       File bundleFile = new File(tempFolder, bundleId);
-      if (!new File(bundleFile, SupportBundleFileNames.statusFileName).exists()) {
-        SupportBundleStatus supportBundleStatus = new SupportBundleStatus(bundleId, null);
-        supportBundleStatus.setStatus(CollectionState.FINISHED);
-        supportBundleStatus.setFinishTimestamp(System.currentTimeMillis());
-        try (FileWriter statusFile = new FileWriter(new File(bundleFile, SupportBundleFileNames.statusFileName))) {
+      if (!new File(bundleFile, SupportBundleFileNames.STATUS_FILE_NAME).exists()) {
+        SupportBundleStatus supportBundleStatus =
+          new SupportBundleStatus(bundleId, System.currentTimeMillis(), null, CollectionState.FINISHED);
+        try (FileWriter statusFile = new FileWriter(new File(bundleFile, SupportBundleFileNames.STATUS_FILE_NAME))) {
           GSON.toJson(supportBundleStatus, statusFile);
           statusFile.flush();
         } catch (Exception e) {
