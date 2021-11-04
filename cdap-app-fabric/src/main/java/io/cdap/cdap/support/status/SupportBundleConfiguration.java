@@ -16,6 +16,12 @@
 
 package io.cdap.cdap.support.status;
 
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramRunId;
+
 import javax.annotation.Nullable;
 
 /**

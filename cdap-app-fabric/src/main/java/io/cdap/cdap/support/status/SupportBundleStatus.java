@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.support.status;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Status when generating Support bundle.
