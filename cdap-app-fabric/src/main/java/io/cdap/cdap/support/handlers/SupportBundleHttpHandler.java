@@ -18,9 +18,7 @@ package io.cdap.cdap.support.handlers;
 
 import com.google.inject.Inject;
 import io.cdap.cdap.api.common.HttpErrorStatusProvider;
-import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.conf.Constants.SupportBundle;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.support.services.SupportBundleService;
 import io.cdap.cdap.support.status.SupportBundleConfiguration;
@@ -30,6 +28,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.POST;
@@ -43,42 +42,39 @@ import javax.ws.rs.QueryParam;
 public class SupportBundleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(SupportBundleHttpHandler.class);
-  private final CConfiguration cConf;
-  private final SupportBundleService service;
+  private final SupportBundleService bundleService;
 
   @Inject
-  SupportBundleHttpHandler(CConfiguration cConf,
-                           SupportBundleService supportBundleService) {
-    this.cConf = cConf;
-    this.service = supportBundleService;
+  SupportBundleHttpHandler(SupportBundleService supportBundleService) {
+    this.bundleService = supportBundleService;
   }
 
   /**
-   * Trigger the Support Bundle Generation and async gather information about instance and write into files.
+   * Trigger the Support Bundle Generation.
    *
-   * @param namespaceId the namespace id
-   * @param appId the app id
-   * @param workflowName the workflow name
-   * @param runId the runid of the workflow uuid of this support bundle
-   * @param maxRunsPerPipeline the max num of run log for each pipeline do they prefer
+   * @param namespace the namespace id
+   * @param application the app id
+   * @param programType the program type
+   * @param programName the program name
+   * @param run the runid of the workflow uuid of this support bundle
+   * @param maxRunsPerProgram the max num of run log for each pipeline do they prefer
    */
   @POST
   @Path("/support/bundle")
-  public void createSupportBundle(HttpRequest request,
-                                  HttpResponder responder,
-                                  @Nullable @QueryParam("namespaceId") String namespaceId,
-                                  @Nullable @QueryParam("appId") String appId,
-                                  @Nullable @QueryParam("workflowName") String workflowName,
-                                  @Nullable @QueryParam("runId") String runId,
-                                  @QueryParam("maxRunsPerPipeline") @DefaultValue("1") Integer maxRunsPerPipeline) {
+  public void createSupportBundle(HttpRequest request, HttpResponder responder,
+                                  @Nullable @QueryParam("namespace") String namespace,
+                                  @Nullable @QueryParam("application") String application,
+                                  @Nonnull @QueryParam("programType") String programType,
+                                  @Nonnull @QueryParam("programId") String programName,
+                                  @Nullable @QueryParam("run") String run,
+                                  @Nullable @QueryParam("maxRunsPerProgram") @DefaultValue("1")
+                                    Integer maxRunsPerProgram) {
     // Establishes the support bundle configuration
     try {
-      SupportBundleConfiguration bundleConfiguration =
-        new SupportBundleConfiguration(namespaceId, appId, runId,
-                                       workflowName == null ? cConf.get(SupportBundle.DEFAULT_WORKFLOW) : workflowName,
-                                       maxRunsPerPipeline);
+      SupportBundleConfiguration bundleConfig =
+        new SupportBundleConfiguration(namespace, application, run, programType, programName, maxRunsPerProgram);
       // Generates support bundle and returns with uuid
-      String uuid = service.generateSupportBundle(bundleConfiguration);
+      String uuid = bundleService.generateSupportBundle(bundleConfig);
       responder.sendString(HttpResponseStatus.OK, uuid);
     } catch (Exception e) {
       LOG.error("Failed to trigger support bundle generation ", e);
@@ -88,4 +84,3 @@ public class SupportBundleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 }
-
