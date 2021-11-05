@@ -17,9 +17,9 @@
 package io.cdap.cdap.support.handlers;
 
 import com.google.inject.Inject;
-import io.cdap.cdap.api.common.HttpErrorStatusProvider;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.support.services.SupportBundleService;
 import io.cdap.cdap.support.status.SupportBundleConfiguration;
 import io.cdap.http.HttpResponder;
@@ -28,7 +28,6 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.POST;
@@ -64,23 +63,18 @@ public class SupportBundleHttpHandler extends AbstractAppFabricHttpHandler {
   public void createSupportBundle(HttpRequest request, HttpResponder responder,
                                   @Nullable @QueryParam("namespace") String namespace,
                                   @Nullable @QueryParam("application") String application,
-                                  @Nonnull @QueryParam("programType") String programType,
-                                  @Nonnull @QueryParam("programId") String programName,
+                                  @Nullable @QueryParam("programType") @DefaultValue("workflows") String programType,
+                                  @Nullable @QueryParam("programId") @DefaultValue("DataPipelineWorkflow")
+                                    String programName,
                                   @Nullable @QueryParam("run") String run,
                                   @Nullable @QueryParam("maxRunsPerProgram") @DefaultValue("1")
-                                    Integer maxRunsPerProgram) {
+                                    Integer maxRunsPerProgram) throws Exception {
     // Establishes the support bundle configuration
-    try {
-      SupportBundleConfiguration bundleConfig =
-        new SupportBundleConfiguration(namespace, application, run, programType, programName, maxRunsPerProgram);
-      // Generates support bundle and returns with uuid
-      String uuid = bundleService.generateSupportBundle(bundleConfig);
-      responder.sendString(HttpResponseStatus.OK, uuid);
-    } catch (Exception e) {
-      LOG.error("Failed to trigger support bundle generation ", e);
-      if (e instanceof HttpErrorStatusProvider) {
-        responder.sendString(HttpResponseStatus.valueOf(((HttpErrorStatusProvider) e).getStatusCode()), e.getMessage());
-      }
-    }
+    SupportBundleConfiguration bundleConfig =
+      new SupportBundleConfiguration(namespace, application, run, ProgramType.valueOfCategoryName(programType),
+                                     programName, maxRunsPerProgram);
+    // Generates support bundle and returns with uuid
+    String uuid = bundleService.generateSupportBundle(bundleConfig);
+    responder.sendString(HttpResponseStatus.OK, uuid);
   }
 }

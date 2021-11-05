@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.support.status;
 
+import io.cdap.cdap.proto.ProgramType;
+
 import javax.annotation.Nullable;
 
 /**
@@ -25,15 +27,17 @@ public class SupportBundleConfiguration {
   /**
    * pipeline namespace id
    */
+  @Nullable
   private final String namespace;
   /**
    * pipeline application id
    */
+  @Nullable
   private final String app;
   /**
    * pipeline program type
    */
-  private final String programType;
+  private final ProgramType programType;
   /**
    * pipeline program name
    */
@@ -41,12 +45,13 @@ public class SupportBundleConfiguration {
   /**
    * pipeline run id
    */
+  @Nullable
   private final String run;
-  // max num of run log customer request for each program run
+  /** max num of run log customer request for each program run */
   private final int maxRunsPerProgram;
 
   public SupportBundleConfiguration(@Nullable String namespace, @Nullable String app,
-                                    @Nullable String run, String programType, String programName,
+                                    @Nullable String run, ProgramType programType, String programName,
                                     int maxRunsPerProgram) {
     this.namespace = namespace;
     this.app = app;
@@ -59,6 +64,7 @@ public class SupportBundleConfiguration {
   /**
    * Get pipeline namespace id
    */
+  @Nullable
   public String getNamespace() {
     return namespace;
   }
@@ -66,14 +72,21 @@ public class SupportBundleConfiguration {
   /**
    * Get pipeline application id
    */
+  @Nullable
   public String getApp() {
     return app;
   }
 
-  public String getProgramType() {
+  /**
+   * Get instance program type
+   */
+  public ProgramType getProgramType() {
     return programType;
   }
 
+  /**
+   * Get instance program name
+   */
   public String getProgramName() {
     return programName;
   }
@@ -81,6 +94,7 @@ public class SupportBundleConfiguration {
   /**
    * Get pipeline run id
    */
+  @Nullable
   public String getRun() {
     return run;
   }
