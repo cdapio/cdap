@@ -91,29 +91,30 @@ public class SupportBundleService implements Closeable {
     SupportBundleStatus supportBundleStatus =
       new SupportBundleStatus(uuid, System.currentTimeMillis(), supportBundleConfiguration,
                               CollectionState.IN_PROGRESS);
+
+    // Puts all the files under the uuid path
+    File baseDirectory = new File(localDir);
+    DirUtils.mkdirs(baseDirectory);
+    int fileCount = DirUtils.list(baseDirectory).size();
+
+    // We want to keep consistent number of bundle to provide to customer
+    int folderMaxNumber = cConf.getInt(Constants.SupportBundle.MAX_FOLDER_SIZE);
+    if (fileCount >= folderMaxNumber) {
+      File oldFilesDirectory = getOldestFolder(baseDirectory);
+      deleteOldFolders(oldFilesDirectory);
+    }
+    DirUtils.mkdirs(basePath);
+
     try {
-      // Puts all the files under the uuid path
-      File baseDirectory = new File(localDir);
-      DirUtils.mkdirs(baseDirectory);
-      int fileCount = DirUtils.list(baseDirectory).size();
-
-      // We want to keep consistent number of bundle to provide to customer
-      int folderMaxNumber = cConf.getInt(Constants.SupportBundle.MAX_FOLDER_SIZE);
-      if (fileCount >= folderMaxNumber) {
-        File oldFilesDirectory = getOldestFolder(baseDirectory);
-        deleteOldFolders(oldFilesDirectory);
-      }
-      DirUtils.mkdirs(basePath);
-
       SupportBundleStatus finishBundleStatus =
         new SupportBundleStatus(supportBundleStatus, "", CollectionState.FINISHED, System.currentTimeMillis());
       addToStatus(finishBundleStatus, basePath.getPath());
     } catch (Exception e) {
+      LOG.error("Failed to finish execute tasks", e);
       SupportBundleStatus failedBundleStatus =
         new SupportBundleStatus(supportBundleStatus, e.getMessage(), CollectionState.FAILED,
                                 System.currentTimeMillis());
       addToStatus(failedBundleStatus, basePath.getPath());
-      throw new IllegalArgumentException("Failed to generate support bundle ", e);
     }
     return uuid;
   }
@@ -137,12 +138,8 @@ public class SupportBundleService implements Closeable {
   /**
    * Deletes old folders after certain number of folders exist
    */
-  private void deleteOldFolders(@Nullable File oldFilesDirectory) {
-    try {
-      DirUtils.deleteDirectoryContents(oldFilesDirectory);
-    } catch (IOException e) {
-      LOG.error("Failed to clean up directory {}", oldFilesDirectory, e);
-    }
+  private void deleteOldFolders(@Nullable File oldFilesDirectory) throws IOException {
+    DirUtils.deleteDirectoryContents(oldFilesDirectory);
   }
 
   @Override
@@ -156,9 +153,6 @@ public class SupportBundleService implements Closeable {
   private void addToStatus(SupportBundleStatus supportBundleStatus, String basePath) throws IOException {
     try (FileWriter statusFile = new FileWriter(new File(basePath, SupportBundleFileNames.STATUS_FILE_NAME))) {
       GSON.toJson(supportBundleStatus, statusFile);
-      statusFile.flush();
-    } catch (IOException e) {
-      throw new IOException("Failed to update status file ", e);
     }
   }
 
@@ -177,13 +171,11 @@ public class SupportBundleService implements Closeable {
     SupportBundleStatus supportBundleStatus;
     try (Reader reader = Files.newBufferedReader(statusFile.toPath(), StandardCharsets.UTF_8)) {
       supportBundleStatus = GSON.fromJson(reader, SupportBundleStatus.class);
-    } catch (IOException e) {
-      throw new IOException("Failed to read this status file ", e);
     }
     return supportBundleStatus;
   }
 
-  private void validNamespace(String namespace) throws Exception {
+  private void validNamespace(@Nullable String namespace) throws Exception {
     if (namespace != null) {
       NamespaceId namespaceId = new NamespaceId(namespace);
       if (!namespaceQueryClient.exists(namespaceId)) {

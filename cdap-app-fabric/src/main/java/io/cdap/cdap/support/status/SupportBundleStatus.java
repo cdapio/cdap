@@ -20,18 +20,18 @@ package io.cdap.cdap.support.status;
  * Status when generating Support bundle.
  */
 public class SupportBundleStatus {
-  // UUID of the bundle status object describes
-  private String bundleId;
-  // status of bundle collection (IN_PROGRESS/FINISHED/FAILED)
-  private CollectionState status;
-  // Failed bundle describes the failure
+  /** UUID of the bundle status object describes */
+  private final String bundleId;
+  /** status of bundle collection (IN_PROGRESS/FINISHED/FAILED) */
+  private final CollectionState status;
+  /** Failed bundle describes the failure */
   private String statusDetails;
-  // when bundle collection was started
-  private long startTimestamp;
-  // FINISHED/FAILED bundles when bundle collection was completed
+  /** when bundle collection was started */
+  private final long startTimestamp;
+  /** FINISHED/FAILED bundles when bundle collection was completed */
   private long finishTimestamp;
-  // any parameters passed to start collection
-  private SupportBundleConfiguration parameters;
+  /** any parameters passed to start collection */
+  private final SupportBundleConfiguration parameters;
 
   public SupportBundleStatus(String bundleId, long startTimestamp, SupportBundleConfiguration parameters,
                              CollectionState status) {
@@ -87,7 +87,7 @@ public class SupportBundleStatus {
   }
 
   /**
-   * Set support bundle generation id
+   * Get support bundle generation id
    */
   public String getBundleId() {
     return bundleId;
