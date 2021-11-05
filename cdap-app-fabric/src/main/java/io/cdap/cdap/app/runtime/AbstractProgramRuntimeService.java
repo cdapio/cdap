@@ -181,6 +181,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
         Program executableProgram = createProgram(cConf, runner, programDescriptor, artifactDetail, tempDir);
         cleanUpTaskRef.set(createCleanupTask(cleanUpTaskRef.get(), executableProgram));
 
+        LOG.error(">>>>>>>>> runner type is " + runner.getClass().toString());
         controller.setProgramController(runner.run(executableProgram, optionsWithPlugins));
       } catch (Exception e) {
         controller.failed(e);
