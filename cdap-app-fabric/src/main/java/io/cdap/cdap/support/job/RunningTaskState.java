@@ -19,16 +19,18 @@ package io.cdap.cdap.support.job;
 import io.cdap.cdap.support.status.SupportBundleTaskStatus;
 
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Support Bundle task state to record the task status.
  */
 public class RunningTaskState {
   private final Future<SupportBundleTaskStatus> future;
-  private final long startTime;
+  private final AtomicLong startTime;
   private final SupportBundleTaskStatus taskStatus;
 
-  public RunningTaskState(Future<SupportBundleTaskStatus> future, long startTime, SupportBundleTaskStatus taskStatus) {
+  public RunningTaskState(Future<SupportBundleTaskStatus> future, AtomicLong startTime,
+                          SupportBundleTaskStatus taskStatus) {
     this.future = future;
     this.startTime = startTime;
     this.taskStatus = taskStatus;
@@ -38,7 +40,7 @@ public class RunningTaskState {
     return future;
   }
 
-  public long getStartTime() {
+  public AtomicLong getStartTime() {
     return startTime;
   }
 

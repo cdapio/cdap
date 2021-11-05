@@ -113,7 +113,7 @@ public class SupportBundleJob {
       }
       return latestTaskStatus.get();
     });
-    RunningTaskState runningTaskState = new RunningTaskState(futureService, startTimeStore.get(), taskStatus);
+    RunningTaskState runningTaskState = new RunningTaskState(futureService, startTimeStore, taskStatus);
     runningTaskStateQueue.offer(runningTaskState);
   }
 
@@ -126,7 +126,7 @@ public class SupportBundleJob {
       Future<SupportBundleTaskStatus> future = runningTaskState.getFuture();
       try {
         long currentTime = System.currentTimeMillis();
-        long futureStartTime = runningTaskState.getStartTime();
+        long futureStartTime = runningTaskState.getStartTime().get();
         long timeLeftBeforeTimeout = TimeUnit.MINUTES.toMillis(maxThreadTimeout) - (currentTime - futureStartTime);
         future.get(timeLeftBeforeTimeout, TimeUnit.MILLISECONDS);
       } catch (Exception e) {
