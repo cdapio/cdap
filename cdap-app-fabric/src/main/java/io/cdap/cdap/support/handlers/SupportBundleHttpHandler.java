@@ -17,7 +17,6 @@
 package io.cdap.cdap.support.handlers;
 
 import com.google.inject.Inject;
-import io.cdap.cdap.api.common.HttpErrorStatusProvider;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.support.services.SupportBundleService;
@@ -68,19 +67,12 @@ public class SupportBundleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @Nonnull @QueryParam("programId") String programName,
                                   @Nullable @QueryParam("run") String run,
                                   @Nullable @QueryParam("maxRunsPerProgram") @DefaultValue("1")
-                                    Integer maxRunsPerProgram) {
+                                    Integer maxRunsPerProgram) throws Exception {
     // Establishes the support bundle configuration
-    try {
-      SupportBundleConfiguration bundleConfig =
-        new SupportBundleConfiguration(namespace, application, run, programType, programName, maxRunsPerProgram);
-      // Generates support bundle and returns with uuid
-      String uuid = bundleService.generateSupportBundle(bundleConfig);
-      responder.sendString(HttpResponseStatus.OK, uuid);
-    } catch (Exception e) {
-      LOG.error("Failed to trigger support bundle generation ", e);
-      if (e instanceof HttpErrorStatusProvider) {
-        responder.sendString(HttpResponseStatus.valueOf(((HttpErrorStatusProvider) e).getStatusCode()), e.getMessage());
-      }
-    }
+    SupportBundleConfiguration bundleConfig =
+      new SupportBundleConfiguration(namespace, application, run, programType, programName, maxRunsPerProgram);
+    // Generates support bundle and returns with uuid
+    String uuid = bundleService.generateSupportBundle(bundleConfig);
+    responder.sendString(HttpResponseStatus.OK, uuid);
   }
 }

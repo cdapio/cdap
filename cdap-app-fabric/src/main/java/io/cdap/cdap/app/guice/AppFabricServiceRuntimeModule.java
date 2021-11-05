@@ -125,7 +125,6 @@ import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
 import io.cdap.cdap.security.store.SecureStoreHandler;
-import io.cdap.cdap.support.handlers.SupportBundleHttpHandler;
 import io.cdap.http.HttpHandler;
 import org.quartz.SchedulerException;
 import org.quartz.core.JobRunShellFactory;
@@ -380,7 +379,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(WorkflowStatsSLAHttpHandler.class);
       handlerBinder.addBinding().to(AuthorizationHandler.class);
       handlerBinder.addBinding().to(SecureStoreHandler.class);
-      handlerBinder.addBinding().to(SupportBundleHttpHandler.class);
       handlerBinder.addBinding().to(RemotePrivilegesHandler.class);
       handlerBinder.addBinding().to(OperationalStatsHttpHandler.class);
       handlerBinder.addBinding().to(ProfileHttpHandler.class);
