@@ -122,9 +122,6 @@ public class SupportBundleService implements Closeable {
                                          supportBundleJob);
 
     try {
-      SupportBundleStatus finishBundleStatus =
-        new SupportBundleStatus(supportBundleStatus, "", CollectionState.FINISHED, System.currentTimeMillis());
-      addToStatus(finishBundleStatus, uuidPath.getPath());
       executorService.execute(() -> supportBundleJob.generateBundle(supportBundleTaskConfiguration));
     } catch (Exception e) {
       LOG.error("Failed to finish execute tasks", e);
