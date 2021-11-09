@@ -103,7 +103,7 @@ public class MessagingMetricsProcessorManagerService extends AbstractIdleService
   protected void startUp() throws Exception {
     MetricStoreMetricsWriter metricsWriter = new MetricStoreMetricsWriter(metricStore);
     DefaultMetricsWriterContext context = new DefaultMetricsWriterContext(metricsContext,
-      cConf, metricsWriter.getID());
+                                                                          cConf, metricsWriter.getID());
     metricsWriter.initialize(context);
     this.metricsWriters.add(metricsWriter);
 
@@ -111,11 +111,13 @@ public class MessagingMetricsProcessorManagerService extends AbstractIdleService
       MetricsWriter writer = metricsWriterEntry.getValue();
       this.metricsWriters.add(writer);
       DefaultMetricsWriterContext metricsWriterContext = new DefaultMetricsWriterContext(metricsContext,
-        cConf, writer.getID());
+                                                                                         cConf, writer.getID());
       writer.initialize(metricsWriterContext);
     }
 
+    String processorKey = String.format("metrics.processor.%s", instanceId);
     for (MetricsWriter metricsExtension : this.metricsWriters) {
+      MetricsMetaKeyProvider topicIdMetricsKeyProvider = getKeyProvider(metricsExtension, cConf);
       metricsProcessorServices.add(new MessagingMetricsProcessorService(
         cConf,
         metricDatasetFactory,
@@ -126,13 +128,25 @@ public class MessagingMetricsProcessorManagerService extends AbstractIdleService
         topicNumbers,
         metricsContext,
         metricsProcessIntervalMillis,
-        instanceId));
+        instanceId,
+        new DefaultMetadataHandler(processorKey, topicIdMetricsKeyProvider),
+        topicIdMetricsKeyProvider));
 
     }
 
     for (MessagingMetricsProcessorService processorService : metricsProcessorServices) {
       processorService.startAndWait();
     }
+  }
+
+  private MetricsMetaKeyProvider getKeyProvider(MetricsWriter writer, CConfiguration cConf) {
+    boolean useSubscriberInKey = getUseSubscriberInKey(writer, cConf);
+    return useSubscriberInKey ? new TopicSubscriberMetricsKeyProvider(writer.getID()) : new TopicIdMetricsKeyProvider();
+  }
+
+  private boolean getUseSubscriberInKey(MetricsWriter writer, CConfiguration cConf) {
+    String confKey = String.format(Constants.Metrics.WRITER_USE_SUBSCRIBER_METADATA_KEY, writer.getID());
+    return cConf.getBoolean(confKey, false);
   }
 
   @Override
