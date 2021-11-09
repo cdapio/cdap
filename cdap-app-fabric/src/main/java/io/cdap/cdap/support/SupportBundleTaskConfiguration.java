@@ -17,6 +17,7 @@
 package io.cdap.cdap.support;
 
 import com.google.common.collect.ImmutableList;
+import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.support.job.SupportBundleJob;
 import io.cdap.cdap.support.status.SupportBundleConfiguration;
@@ -51,7 +52,7 @@ public class SupportBundleTaskConfiguration {
   /**
    * pipeline program type
    */
-  private String programType;
+  private ProgramType programType;
   /**
    * all the namespace under the pipeline
    */
@@ -110,7 +111,7 @@ public class SupportBundleTaskConfiguration {
   /**
    * Get support bundle program type
    */
-  public String getProgramType() {
+  public ProgramType getProgramType() {
     return programType;
   }
 
