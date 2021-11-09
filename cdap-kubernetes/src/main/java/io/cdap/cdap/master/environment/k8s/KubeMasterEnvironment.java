@@ -41,7 +41,6 @@ import io.kubernetes.client.openapi.models.V1DownwardAPIVolumeFile;
 import io.kubernetes.client.openapi.models.V1DownwardAPIVolumeSource;
 import io.kubernetes.client.openapi.models.V1EnvVar;
 import io.kubernetes.client.openapi.models.V1Namespace;
-import io.kubernetes.client.openapi.models.V1NamespaceList;
 import io.kubernetes.client.openapi.models.V1ObjectFieldSelector;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1ObjectMetaBuilder;
@@ -133,6 +132,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String CDAP_CONFIG_MAP_PREFIX = "cdap-compressed-files-";
   private static final String NAMESPACE_CREATION_ENABLED = "master.environment.k8s.namespace.creation.enabled";
   private static final String CDAP_NAMESPACE_LABEL = "cdap.namespace";
+  private static final String RESOURCE_QUOTA_NAME = "cdap-resource-quota";
 
   private static final String DEFAULT_NAMESPACE = "default";
   private static final String DEFAULT_INSTANCE_LABEL = "cdap.instance";
@@ -304,60 +304,17 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     String namespace = properties.get(NAMESPACE_PROPERTY);
     if (namespace == null || namespace.isEmpty()) {
       throw new IOException(String.format("Cannot create Kubernetes namespace for %s because no name was provided",
-                            cdapNamespace));
+                                          cdapNamespace));
     }
-    try {
-      V1NamespaceList namespaceList = coreV1Api.listNamespace(null, null, null,
-              String.format("metadata.name=%s", namespace), null, 1, null, null, 10, false);
-      if (!namespaceList.getItems().isEmpty()) {
-        throw new IOException(String.format("Kubernetes namespace %s already exists", namespace));
-      }
-    } catch (ApiException e) {
-      throw new IOException("Cannot check if Kubernetes namespace already exists. Error code = "
-                            + e.getCode() + ", Body = " + e.getResponseBody(), e);
-    }
-
-    V1Namespace namespaceObject = new V1Namespace();
-    namespaceObject.setMetadata(new V1ObjectMeta().name(namespace).putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace));
-
-    String kubeCpuLimit = properties.get(NAMESPACE_CPU_LIMIT_PROPERTY);
-    String kubeMemoryLimit = properties.get(NAMESPACE_MEMORY_LIMIT_PROPERTY);
-    Map<String, Quantity> hardLimitMap = new HashMap<>();
-    if (kubeCpuLimit != null && !kubeCpuLimit.isEmpty()) {
-      hardLimitMap.put("limits.cpu", new Quantity(kubeCpuLimit));
-    }
-    if (kubeMemoryLimit != null && !kubeMemoryLimit.isEmpty()) {
-      hardLimitMap.put("limits.memory", new Quantity(kubeMemoryLimit));
-    }
-    V1ResourceQuota resourceQuota = new V1ResourceQuota();
-    resourceQuota.setMetadata(new V1ObjectMeta()
-            .name("cdap-resource-quota")
-            .putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace));
-    resourceQuota.setSpec(new V1ResourceQuotaSpec().hard(hardLimitMap));
-
-    try {
-      coreV1Api.createNamespace(namespaceObject, null, null, null);
-      LOG.info("Created Kubernetes namespace {} for namespace {}", namespace, cdapNamespace);
-      if (!hardLimitMap.isEmpty()) {
-        coreV1Api.createNamespacedResourceQuota(namespace, resourceQuota, null, null, null);
-        LOG.info("Created resource quota for Kubernetes namespace {} for namespace {}", namespace, cdapNamespace);
-      }
-    } catch (ApiException e) {
-      try {
-        deleteKubeNamespace(namespace);
-      } catch (IOException deletionException) {
-        e.addSuppressed(deletionException);
-      }
-      throw new IOException("Error occurred while creating Kubernetes namespace. Error code = "
-                            + e.getCode() + ", Body = " + e.getResponseBody(), e);
-    }
+    findOrCreateKubeNamespace(namespace, cdapNamespace);
+    updateOrCreateResourceQuota(namespace, cdapNamespace, properties);
   }
 
   @Override
   public void onNamespaceDeletion(String cdapNamespace, Map<String, String> properties) throws Exception {
     String namespace = properties.get(NAMESPACE_PROPERTY);
     if (namespaceCreationEnabled && namespace != null && !namespace.isEmpty()) {
-      deleteKubeNamespace(namespace);
+      deleteKubeNamespace(namespace, cdapNamespace);
     }
   }
 
@@ -637,14 +594,121 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   }
 
   /**
-   * Deletes Kubernetes namespace and associated resources if they exist for the given CDAP namespace
+   * Checks if namespace already exists from the same CDAP instance. Otherwise, creates a new Kubernetes namespace.
    */
-  private void deleteKubeNamespace(String namespace) throws Exception {
+  private void findOrCreateKubeNamespace(String namespace, String cdapNamespace) throws Exception {
     try {
-      // PropagationPolicy is set to background cascading deletion. Kubernetes deletes the owner object immediately and
-      // the controller cleans up the dependent objects in the background.
-      coreV1Api.deleteNamespace(namespace, null, null, 0, null, "Background", null);
-      LOG.info("Deleted Kubernetes namespace and associated resources for {}", namespace);
+      V1Namespace existingNamespace = coreV1Api.readNamespace(namespace, null, null, null);
+      if (existingNamespace.getMetadata() == null) {
+        throw new IOException(String.format("Kubernetes namespace %s exists but was not created by CDAP", namespace));
+      }
+      Map<String, String> labels = existingNamespace.getMetadata().getLabels();
+      if (labels == null || !cdapNamespace.equals(labels.get(CDAP_NAMESPACE_LABEL))) {
+        throw new IOException(String.format("Kubernetes namespace %s exists but was not created by CDAP namespace %s",
+                                            namespace, cdapNamespace));
+      }
+    } catch (ApiException e) {
+      if (e.getCode() != HttpURLConnection.HTTP_NOT_FOUND) {
+        throw new IOException("Error occurred while checking if Kubernetes namespace already exists. Error code = "
+                                + e.getCode() + ", Body = " + e.getResponseBody(), e);
+      }
+      createKubeNamespace(namespace, cdapNamespace);
+    }
+  }
+
+  private void createKubeNamespace(String namespace, String cdapNamespace) throws Exception {
+    V1Namespace namespaceObject = new V1Namespace();
+    namespaceObject.setMetadata(new V1ObjectMeta().name(namespace).putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace));
+    try {
+      coreV1Api.createNamespace(namespaceObject, null, null, null);
+      LOG.debug("Created Kubernetes namespace {} for namespace {}", namespace, cdapNamespace);
+    } catch (ApiException e) {
+      try {
+        deleteKubeNamespace(namespace, cdapNamespace);
+      } catch (IOException deletionException) {
+        e.addSuppressed(deletionException);
+      }
+      throw new IOException("Error occurred while creating Kubernetes namespace. Error code = "
+                              + e.getCode() + ", Body = " + e.getResponseBody(), e);
+    }
+  }
+
+  /**
+   * Updates resource quota if it already exists in the Kubernetes namespace. Otherwise, creates a new resource quota.
+   */
+  private void updateOrCreateResourceQuota(String namespace, String cdapNamespace, Map<String, String> properties)
+    throws Exception {
+
+    String kubeCpuLimit = properties.get(NAMESPACE_CPU_LIMIT_PROPERTY);
+    String kubeMemoryLimit = properties.get(NAMESPACE_MEMORY_LIMIT_PROPERTY);
+    Map<String, Quantity> hardLimitMap = new HashMap<>();
+    if (kubeCpuLimit != null && !kubeCpuLimit.isEmpty()) {
+      hardLimitMap.put("limits.cpu", new Quantity(kubeCpuLimit));
+    }
+    if (kubeMemoryLimit != null && !kubeMemoryLimit.isEmpty()) {
+      hardLimitMap.put("limits.memory", new Quantity(kubeMemoryLimit));
+    }
+    if (hardLimitMap.isEmpty()) {
+      // no resource limits to create
+      return;
+    }
+
+    V1ResourceQuota resourceQuota = new V1ResourceQuota();
+    resourceQuota.setMetadata(new V1ObjectMeta()
+                                .name(RESOURCE_QUOTA_NAME)
+                                .putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace));
+    resourceQuota.setSpec(new V1ResourceQuotaSpec().hard(hardLimitMap));
+    try {
+      V1ResourceQuota existingResourceQuota = coreV1Api.readNamespacedResourceQuota(RESOURCE_QUOTA_NAME, namespace,
+                                                                                    null, null, null);
+      if (existingResourceQuota.getMetadata() == null) {
+        throw new IOException(String.format("%s exists but was not created by CDAP", RESOURCE_QUOTA_NAME));
+      }
+      Map<String, String> labels = existingResourceQuota.getMetadata().getLabels();
+      if (labels == null || !cdapNamespace.equals(labels.get(CDAP_NAMESPACE_LABEL))) {
+        throw new IOException(String.format("%s exists but was not created by CDAP namespace %s",
+                                            RESOURCE_QUOTA_NAME, cdapNamespace));
+      }
+      if (!hardLimitMap.equals(existingResourceQuota.getSpec().getHard())) {
+        coreV1Api.replaceNamespacedResourceQuota(RESOURCE_QUOTA_NAME, namespace, resourceQuota, null, null, null);
+      }
+    } catch (ApiException e) {
+      if (e.getCode() != HttpURLConnection.HTTP_NOT_FOUND) {
+        throw new IOException("Error occurred while checking or updating Kubernetes resource quota. Error code = "
+                                + e.getCode() + ", Body = " + e.getResponseBody(), e);
+      }
+      createKubeResourceQuota(namespace, resourceQuota);
+    }
+  }
+
+  private void createKubeResourceQuota(String namespace, V1ResourceQuota resourceQuota) throws Exception {
+    try {
+      coreV1Api.createNamespacedResourceQuota(namespace, resourceQuota, null, null, null);
+      LOG.debug("Created resource quota for Kubernetes namespace {}", namespace);
+    } catch (ApiException e) {
+      throw new IOException("Error occurred while creating Kubernetes resource quota. Error code = "
+                              + e.getCode() + ", Body = " + e.getResponseBody(), e);
+    }
+  }
+
+  /**
+   * Deletes Kubernetes namespace created by CDAP and associated resources if they exist.
+   */
+  private void deleteKubeNamespace(String namespace, String cdapNamespace) throws Exception {
+    try {
+      V1Namespace namespaceObject = coreV1Api.readNamespace(namespace, null, null, null);
+      if (namespaceObject.getMetadata() != null) {
+        Map<String, String> namespaceLabels = namespaceObject.getMetadata().getLabels();
+        if (namespaceLabels != null && namespaceLabels.get(CDAP_NAMESPACE_LABEL).equals(cdapNamespace)) {
+          // PropagationPolicy is set to background cascading deletion. Kubernetes deletes the owner object immediately
+          // and the controller cleans up the dependent objects in the background.
+          coreV1Api.deleteNamespace(namespace, null, null, 0, null, "Background", null);
+          LOG.info("Deleted Kubernetes namespace and associated resources for {}", namespace);
+          return;
+        }
+      }
+      LOG.debug("Kubernetes namespace {} was not deleted because it was not created by CDAP namespace {}",
+                namespace, cdapNamespace);
     } catch (ApiException e) {
       if (e.getCode() == HttpURLConnection.HTTP_NOT_FOUND) {
         LOG.debug("Kubernetes namespace {} was not deleted because it was not found", namespace);
