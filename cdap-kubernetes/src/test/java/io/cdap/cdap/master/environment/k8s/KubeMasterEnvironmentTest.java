@@ -19,7 +19,6 @@ package io.cdap.cdap.master.environment.k8s;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1Namespace;
-import io.kubernetes.client.openapi.models.V1NamespaceList;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
@@ -30,7 +29,6 @@ import org.junit.rules.ExpectedException;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -75,34 +73,41 @@ public class KubeMasterEnvironmentTest {
     Map<String, String> properties = new HashMap<>();
     properties.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE);
 
-    V1NamespaceList returnedNamespaceList = new V1NamespaceList();
     V1Namespace returnedNamespace = new V1Namespace().metadata(new V1ObjectMeta().name(KUBE_NAMESPACE));
-    returnedNamespaceList.setItems(Collections.singletonList(returnedNamespace));
-    when(coreV1Api.listNamespace(any(), any(), any(), eq(String.format("metadata.name=%s", KUBE_NAMESPACE)), any(),
-            any(), any(), any(), any(), any()))
-            .thenReturn(returnedNamespaceList);
+    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any(), any(), any())).thenReturn(returnedNamespace);
 
     thrown.expect(IOException.class);
-    thrown.expectMessage(String.format("Kubernetes namespace %s already exists", KUBE_NAMESPACE));
+    thrown.expectMessage(String.format("Kubernetes namespace %s exists but was not created by CDAP", KUBE_NAMESPACE));
     kubeMasterEnvironment.onNamespaceCreation(CDAP_NAMESPACE, properties);
   }
 
   @Test
-  public void testOnNamespaceCreationWithKubernetesError() throws Exception {
+  public void testOnNamespaceCreationWithExistingNamespaceAndWrongCdapInstance() throws Exception {
     Map<String, String> properties = new HashMap<>();
     properties.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE);
 
-    when(coreV1Api.listNamespace(any(), any(), any(), eq(String.format("metadata.name=%s", KUBE_NAMESPACE)), any(),
-            any(), any(), any(), any(), any()))
-            .thenReturn(new V1NamespaceList());
-    when(coreV1Api.createNamespace(any(), any(), any(), any()))
-            .thenThrow(new ApiException());
-    when(coreV1Api.deleteNamespace(eq(KUBE_NAMESPACE), any(), any(), any(), any(), any(), any()))
-            .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "message"));
+    V1ObjectMeta returnedMeta = new V1ObjectMeta().name(KUBE_NAMESPACE)
+      .putLabelsItem("cdap.namespace", "wrong namespace");
+    V1Namespace returnedNamespace = new V1Namespace().metadata(returnedMeta);
+    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any(), any(), any())).thenReturn(returnedNamespace);
 
     thrown.expect(IOException.class);
-    thrown.expectMessage("Error occurred while creating Kubernetes namespace.");
+    thrown.expectMessage(String.format("Kubernetes namespace %s exists but was not created by CDAP namespace %s",
+                                       KUBE_NAMESPACE, CDAP_NAMESPACE));
     kubeMasterEnvironment.onNamespaceCreation(CDAP_NAMESPACE, properties);
+  }
+
+  @Test
+  public void testOnNamespaceCreationSuccess() throws Exception {
+    Map<String, String> properties = new HashMap<>();
+    properties.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE);
+    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any(), any(), any()))
+      .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
+    try {
+      kubeMasterEnvironment.onNamespaceCreation(CDAP_NAMESPACE, properties);
+    } catch (Exception e) {
+      Assert.fail("Kubernetes creation should not error if namespace does not exist. Exception: " + e);
+    }
   }
 
   @Test
@@ -110,22 +115,28 @@ public class KubeMasterEnvironmentTest {
     Map<String, String> properties = new HashMap<>();
     properties.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE);
 
-    when(coreV1Api.listNamespace(any(), any(), any(), eq(String.format("metadata.name=%s", KUBE_NAMESPACE)), any(),
-            any(), any(), any(), any(), any()))
-            .thenReturn(new V1NamespaceList());
+    V1ObjectMeta returnedMeta = new V1ObjectMeta().name(KUBE_NAMESPACE)
+      .putLabelsItem("cdap.namespace", CDAP_NAMESPACE);
+    V1Namespace returnedNamespace = new V1Namespace().metadata(returnedMeta);
+
+    // throw ApiException when coreV1Api.readNamespace() is called in findOrCreateKubeNamespace()
+    // return returnedNamespace when coreV1Api.readNamespace() is called in deleteKubeNamespace()
+    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any(), any(), any()))
+      .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"))
+      .thenReturn(returnedNamespace);
     when(coreV1Api.createNamespace(any(), any(), any(), any()))
-            .thenThrow(new ApiException());
+      .thenThrow(new ApiException());
     when(coreV1Api.deleteNamespace(eq(KUBE_NAMESPACE), any(), any(), any(), any(), any(), any()))
-            .thenThrow(new ApiException(HttpURLConnection.HTTP_INTERNAL_ERROR, "internal error message"));
+      .thenThrow(new ApiException(HttpURLConnection.HTTP_INTERNAL_ERROR, "internal error message"));
 
     try {
       kubeMasterEnvironment.onNamespaceCreation(CDAP_NAMESPACE, properties);
     } catch (IOException e) {
       Assert.assertThat(e.getMessage(),
-                 CoreMatchers.containsString("Error occurred while creating Kubernetes namespace"));
+                        CoreMatchers.containsString("Error occurred while creating Kubernetes namespace"));
       Assert.assertEquals(1, e.getCause().getSuppressed().length);
       Assert.assertThat(e.getCause().getSuppressed()[0].getMessage(),
-                 CoreMatchers.containsString("Error occurred while deleting Kubernetes namespace."));
+                        CoreMatchers.containsString("Error occurred while deleting Kubernetes namespace."));
     }
   }
 
@@ -133,8 +144,8 @@ public class KubeMasterEnvironmentTest {
   public void testOnNamespaceDeletionWithKubernetesNotFoundError() throws Exception {
     Map<String, String> properties = new HashMap<>();
     properties.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE);
-    when(coreV1Api.deleteNamespace(eq(KUBE_NAMESPACE), any(), any(), any(), any(), any(), any()))
-            .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "message"));
+    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any(), any(), any()))
+      .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
     try {
       kubeMasterEnvironment.onNamespaceDeletion(CDAP_NAMESPACE, properties);
     } catch (Exception e) {
