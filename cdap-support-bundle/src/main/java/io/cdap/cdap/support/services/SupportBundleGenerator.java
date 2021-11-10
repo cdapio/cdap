@@ -52,6 +52,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /**
  * Support bundle service to generate base path, uuid and trigger the job to execute tasks.
@@ -126,6 +127,21 @@ public class SupportBundleGenerator {
     return uuid;
   }
 
+  /** Ensure previous executor has finished all the jobs and tasks before starting a new one */
+  public String ensurePreviousExecutorFinish() throws IOException {
+    File baseDirectory = new File(localDir);
+    int fileCount = DirUtils.list(baseDirectory).size();
+    if (fileCount == 0) {
+      return null;
+    }
+    File latestDirectory = getLatestFolder(baseDirectory);
+    SupportBundleStatus supportBundleStatus = getBundleStatus(latestDirectory);
+    if (supportBundleStatus.getStatus() == CollectionState.IN_PROGRESS) {
+      return GSON.toJson(supportBundleStatus);
+    }
+    return null;
+  }
+
   /**
    * Gets single support bundle status with uuid
    */
@@ -167,6 +183,16 @@ public class SupportBundleGenerator {
         throw new RuntimeException("Failed to get file status ", e);
       }
     }).thenComparing(File::lastModified));
+  }
+
+  /**
+   * Gets latest folder from the root directory
+   */
+  private File getLatestFolder(File baseDirectory) {
+    List<File> uuidFiles = DirUtils.listFiles(baseDirectory).stream()
+      .filter(file -> !file.getName().startsWith(".") && !file.isHidden() && file.isDirectory())
+      .collect(Collectors.toList());
+    return Collections.max(uuidFiles, Comparator.comparing(File::lastModified));
   }
 
   /**
