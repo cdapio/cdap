@@ -20,13 +20,17 @@ import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.support.services.SupportBundleService;
 import io.cdap.cdap.support.status.SupportBundleConfiguration;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import javax.ws.rs.DefaultValue;
@@ -40,11 +44,15 @@ import javax.ws.rs.QueryParam;
 @Path(Constants.Gateway.API_VERSION_3)
 public class SupportBundleHttpHandler extends AbstractAppFabricHttpHandler {
 
-  private static final Logger LOG = LoggerFactory.getLogger(SupportBundleHttpHandler.class);
   private final SupportBundleService bundleService;
+  private final AccessEnforcer accessEnforcer;
+  private final AuthenticationContext authenticationContext;
 
   @Inject
-  SupportBundleHttpHandler(SupportBundleService supportBundleService) {
+  SupportBundleHttpHandler(AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext,
+                           SupportBundleService supportBundleService) {
+    this.accessEnforcer = accessEnforcer;
+    this.authenticationContext = authenticationContext;
     this.bundleService = supportBundleService;
   }
 
@@ -65,10 +73,10 @@ public class SupportBundleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @Nullable @QueryParam("application") String application,
                                   @Nullable @QueryParam("programType") @DefaultValue("workflows") String programType,
                                   @Nullable @QueryParam("programId") @DefaultValue("DataPipelineWorkflow")
-                                      String programName,
-                                  @Nullable @QueryParam("run") String run,
+                                    String programName, @Nullable @QueryParam("run") String run,
                                   @Nullable @QueryParam("maxRunsPerProgram") @DefaultValue("1")
-                                      Integer maxRunsPerProgram) throws Exception {
+                                    Integer maxRunsPerProgram) throws Exception {
+    ensureVisibilityOnProgram(namespace, application, programType, programName, run);
     // Establishes the support bundle configuration
     SupportBundleConfiguration bundleConfig =
       new SupportBundleConfiguration(namespace, application, run, ProgramType.valueOfCategoryName(programType),
@@ -76,5 +84,27 @@ public class SupportBundleHttpHandler extends AbstractAppFabricHttpHandler {
     // Generates support bundle and returns with uuid
     String uuid = bundleService.generateSupportBundle(bundleConfig);
     responder.sendString(HttpResponseStatus.OK, uuid);
+  }
+
+  /** ensure the user has visibility for the query request they made */
+  private void ensureVisibilityOnProgram(String namespace, String application, String programType, String programName,
+                                         String run) throws Exception {
+    if (namespace != null) {
+      if (application != null) {
+        if (run == null) {
+          ProgramId programId =
+            new ProgramId(namespace, application, ProgramType.valueOfCategoryName(programType), programName);
+          accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.GET);
+        } else {
+          ProgramRunId programRunId =
+            new ProgramRunId(namespace, application, ProgramType.valueOfCategoryName(programType), programName, run);
+          accessEnforcer.enforce(programRunId, authenticationContext.getPrincipal(), StandardPermission.GET);
+        }
+      } else {
+        NamespaceId namespaceId =
+          new NamespaceId(namespace);
+        accessEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), StandardPermission.GET);
+      }
+    }
   }
 }
