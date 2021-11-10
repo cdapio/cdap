@@ -139,9 +139,12 @@ public class SupportBundleServiceTest extends AppFabricTestBase {
       TimeUnit.SECONDS.sleep(3);
     }
     File bundleFile = new File(tempFolder, bundleIdList.get(4));
-    SupportBundleStatus supportBundleStatus =
-      SupportBundleStatus.builder().setBundleId(bundleIdList.get(4)).setStatus(CollectionState.FAILED)
-        .setParameters(null).setStartTimestamp(System.currentTimeMillis()).build();
+    SupportBundleStatus supportBundleStatus = SupportBundleStatus.builder()
+      .setBundleId(bundleIdList.get(4))
+      .setStatus(CollectionState.FAILED)
+      .setParameters(null)
+      .setStartTimestamp(System.currentTimeMillis())
+      .build();
     try (FileWriter statusFile = new FileWriter(new File(bundleFile, SupportBundleFileNames.STATUS_FILE_NAME))) {
       GSON.toJson(supportBundleStatus, statusFile);
     } catch (Exception e) {
@@ -164,8 +167,10 @@ public class SupportBundleServiceTest extends AppFabricTestBase {
   private void setStartAndRunning(ProgramId id, String pid, Map<String, String> runtimeArgs,
                                   Map<String, String> systemArgs, ArtifactId artifactId) {
     if (!systemArgs.containsKey(SystemArguments.PROFILE_NAME)) {
-      systemArgs = ImmutableMap.<String, String>builder().putAll(systemArgs)
-        .put(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName()).build();
+      systemArgs = ImmutableMap.<String, String>builder()
+        .putAll(systemArgs)
+        .put(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName())
+        .build();
     }
     long startTime = RunIds.getTime(pid, TimeUnit.SECONDS);
     store.setProvisioning(id.run(pid), runtimeArgs, systemArgs, AppFabricTestHelper.createSourceId(++sourceId),

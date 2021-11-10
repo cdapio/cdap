@@ -78,7 +78,8 @@ public class SupportBundleJob {
   public void generateBundle(SupportBundleTaskConfiguration bundleTaskConfig) {
     try {
       File basePath = bundleTaskConfig.getBasePath();
-      supportBundleTasks.addAll(supportBundleTaskFactories.stream().map(factory -> factory.create(bundleTaskConfig))
+      supportBundleTasks.addAll(supportBundleTaskFactories.stream()
+                                  .map(factory -> factory.create(bundleTaskConfig))
                                   .collect(Collectors.toList()));
       for (SupportBundleTask supportBundleTask : supportBundleTasks) {
         String className = supportBundleTask.getClass().getName();
@@ -136,9 +137,10 @@ public class SupportBundleJob {
         updateFailedTask(runningTaskState.getTaskStatus(), future, basePath);
       }
     }
-    SupportBundleStatus finishBundleStatus =
-      SupportBundleStatus.builder(supportBundleStatus).setStatus(CollectionState.FINISHED)
-        .setFinishTimestamp(System.currentTimeMillis()).buildWithFinishStatus();
+    SupportBundleStatus finishBundleStatus = SupportBundleStatus.builder(supportBundleStatus)
+      .setStatus(CollectionState.FINISHED)
+      .setFinishTimestamp(System.currentTimeMillis())
+      .build();
     addToStatus(finishBundleStatus, basePath);
   }
 
@@ -146,9 +148,13 @@ public class SupportBundleJob {
    * Start a new status task
    */
   public SupportBundleTaskStatus initializeTask(String name, String type, String basePath) {
-    SupportBundleTaskStatus supportBundleTaskStatus =
-      SupportBundleTaskStatus.builder().setName(name).setType(type).setStartTimestamp(System.currentTimeMillis())
-        .build();
+    SupportBundleTaskStatus supportBundleTaskStatus = SupportBundleTaskStatus.builder()
+      .setName(name)
+      .setType(type)
+      .setRetries(0)
+      .setStartTimestamp(System.currentTimeMillis())
+      .setStatus(CollectionState.QUEUED)
+      .build();
     supportBundleStatus.getTasks().add(supportBundleTaskStatus);
     addToStatus(supportBundleStatus, basePath);
     return supportBundleTaskStatus;
@@ -161,9 +167,12 @@ public class SupportBundleJob {
                                              CollectionState status) {
 
     SupportBundleTaskStatus newTaskStatus =
-      status == CollectionState.IN_PROGRESS ? SupportBundleTaskStatus.builder(taskStatus).setStatus(status)
-        .buildWithNewStatus() : SupportBundleTaskStatus.builder(taskStatus)
-        .setFinishTimestamp(System.currentTimeMillis()).setStatus(status).buildWithFinishStatus();
+      status == CollectionState.IN_PROGRESS ? SupportBundleTaskStatus.builder(taskStatus)
+        .setStatus(status)
+        .build() : SupportBundleTaskStatus.builder(taskStatus)
+        .setFinishTimestamp(System.currentTimeMillis())
+        .setStatus(status)
+        .build();
 
     supportBundleStatus.getTasks().remove(taskStatus);
     supportBundleStatus.getTasks().add(newTaskStatus);
@@ -191,9 +200,10 @@ public class SupportBundleJob {
       LOG.error("The task has reached maximum times of retries {} ", taskName);
       updateTask(taskStatus, basePath, CollectionState.FAILED);
     } else {
-      SupportBundleTaskStatus updatedTaskStatus =
-        SupportBundleTaskStatus.builder(taskStatus).setRetries(retryCount).setStatus(CollectionState.QUEUED)
-          .buildWithNewStatus();
+      SupportBundleTaskStatus updatedTaskStatus = SupportBundleTaskStatus.builder(taskStatus)
+        .setRetries(retryCount)
+        .setStatus(CollectionState.QUEUED)
+        .build();
       supportBundleStatus.getTasks().remove(taskStatus);
       supportBundleStatus.getTasks().add(updatedTaskStatus);
       addToStatus(supportBundleStatus, basePath);
