@@ -132,6 +132,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       // if it already exists, it means this is a retry. We can skip actually making the request
       Optional<Cluster> existing = client.getCluster(clusterName);
       if (existing.isPresent()) {
+        // TODO: add debug log
         return existing.get();
       }
 

@@ -1070,7 +1070,9 @@ class DataprocClient implements AutoCloseable {
 
   // if there was an API exception that was not a 4xx, we can just try again
   private RetryableProvisionException handleApiException(ApiException e) throws RetryableProvisionException {
+    // TODO should we consider 504 as a retryable exception?
     if (e.getStatusCode().getCode().getHttpStatusCode() / 100 != 4) {
+      // TODO Debug Log
       throw new RetryableProvisionException(e);
     }
     throw new DataprocRuntimeException(e);
