@@ -28,8 +28,6 @@ import javax.annotation.Nullable;
 @Beta
 public class JoinField extends Field {
   private final String stageName;
-  private final String fieldName;
-  private final String alias;
 
   public JoinField(String stageName, String fieldName) {
     this(stageName, fieldName, null);
