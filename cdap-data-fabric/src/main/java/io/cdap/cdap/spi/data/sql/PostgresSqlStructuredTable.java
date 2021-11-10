@@ -85,6 +85,18 @@ public class PostgresSqlStructuredTable implements StructuredTable {
   }
 
   @Override
+  public void update(Collection<Field<?>> fields) throws InvalidFieldException, IOException {
+    LOG.trace("Table {}: Update fields {}", tableSchema.getTableId(), fields);
+    Set<String> fieldNames = fields.stream().map(Field::getName).collect(Collectors.toSet());
+    if (!fieldNames.containsAll(tableSchema.getPrimaryKeys())) {
+      throw new InvalidFieldException(tableSchema.getTableId(), fields,
+                                      String.format("Given fields %s do not contain all the " +
+                                                      "primary keys %s", fieldNames, tableSchema.getPrimaryKeys()));
+    }
+    updateInternal(fields);
+  }
+
+  @Override
   public Optional<StructuredRow> read(Collection<Field<?>> keys) throws InvalidFieldException, IOException {
     return readRow(keys, null);
   }
@@ -505,6 +517,30 @@ public class PostgresSqlStructuredTable implements StructuredTable {
     }
   }
 
+  private void updateInternal(Collection<Field<?>> fields) throws IOException {
+    String sqlQuery = getUpdateSqlQuery(fields);
+    try (PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
+      Map<Boolean, List<Field<?>>> lists = fields.stream().collect(
+        Collectors.partitioningBy(field -> tableSchema.isPrimaryKeyColumn(field.getName())));
+      int index = 1;
+      // set field values to update
+      for (Field<?> field : lists.get(false)) {
+        setField(statement, field, index);
+        index++;
+      }
+      // set field values in the WHERE clause
+      for (Field<?> field : lists.get(true)) {
+        setField(statement, field, index);
+        index++;
+      }
+      LOG.trace("SQL statement: {}", statement);
+      statement.executeUpdate();
+    } catch (SQLException e) {
+      throw new IOException(String.format("Failed to write to table %s with fields %s",
+                                          tableSchema.getTableId().getName(), fields), e);
+    }
+  }
+
   /**
    * Read a row from the table. Null columns mean read from all columns.
    *
@@ -684,6 +720,20 @@ public class PostgresSqlStructuredTable implements StructuredTable {
       }
     }
     return insertPart.toString() + valuePart.toString() + conflictPart.toString() + updatePart.toString();
+  }
+
+  private String getUpdateSqlQuery(Collection<Field<?>> fields) {
+    String tablePart = "UPDATE " + tableSchema.getTableId().getName();
+    StringJoiner updatePart = new StringJoiner(", ", " SET ", "");
+    StringJoiner conditionPart = new StringJoiner(" AND ", " WHERE " , ";");
+    for (Field<?> field : fields) {
+      if (tableSchema.isPrimaryKeyColumn(field.getName())) {
+        conditionPart.add(field.getName() + "=?");
+      } else {
+        updatePart.add(field.getName() + "=?");
+      }
+    }
+    return tablePart + updatePart + conditionPart;
   }
 
   private String getReadQuery(Collection<Field<?>> keys, Collection<String> columns, boolean forUpdate) {
