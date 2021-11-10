@@ -67,6 +67,24 @@ public class MetricStructuredTable implements StructuredTable {
   }
 
   @Override
+  public void update(Collection<Field<?>> fields) throws InvalidFieldException, IOException {
+    try {
+      if (!emitTimeMetrics) {
+        structuredTable.update(fields);
+      } else {
+        long curTime = System.nanoTime();
+        structuredTable.update(fields);
+        long duration = System.nanoTime() - curTime;
+        metricsCollector.increment(metricPrefix + "update.time", duration);
+      }
+      metricsCollector.increment(metricPrefix + "update.count", 1L);
+    } catch (Exception e) {
+      metricsCollector.increment(metricPrefix + "update.error", 1L);
+      throw e;
+    }
+  }
+
+  @Override
   public Optional<StructuredRow> read(Collection<Field<?>> keys) throws InvalidFieldException, IOException {
     try {
       Optional<StructuredRow> result;
