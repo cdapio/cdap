@@ -17,8 +17,8 @@
 package io.cdap.cdap.etl.api.join;
 
 import io.cdap.cdap.api.annotation.Beta;
-
 import io.cdap.cdap.etl.api.Field;
+
 import java.util.Objects;
 import javax.annotation.Nullable;
 
