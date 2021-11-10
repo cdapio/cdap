@@ -17,7 +17,6 @@
 package io.cdap.cdap.support.task;
 
 import com.google.inject.Inject;
-import com.google.inject.assistedinject.Assisted;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.DirUtils;
@@ -44,7 +43,7 @@ public class SupportBundleSystemLogTask implements SupportBundleTask {
   private final List<String> serviceList;
 
   @Inject
-  public SupportBundleSystemLogTask(@Assisted File basePath, RemoteProgramLogsFetcher remoteProgramLogsFetcher) {
+  public SupportBundleSystemLogTask(File basePath, RemoteProgramLogsFetcher remoteProgramLogsFetcher) {
     this.basePath = basePath;
     this.remoteProgramLogsFetcher = remoteProgramLogsFetcher;
     this.serviceList = Arrays.asList(Constants.Service.APP_FABRIC_HTTP, Constants.Service.DATASET_EXECUTOR,

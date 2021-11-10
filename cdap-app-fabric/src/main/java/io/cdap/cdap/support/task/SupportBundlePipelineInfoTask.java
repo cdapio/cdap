@@ -19,7 +19,6 @@ package io.cdap.cdap.support.task;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
-import com.google.inject.assistedinject.Assisted;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.logging.gateway.handlers.RemoteProgramLogsFetcher;
@@ -60,25 +59,23 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
   private final RemoteMetricsSystemClient remoteMetricsSystemClient;
   private final List<NamespaceId> namespaces;
   private final String uuid;
-  private final String app;
+  private final String application;
   private final ProgramType programType;
   private final String programName;
   private final SupportBundleJob supportBundleJob;
   private final int maxRunsPerProgram;
 
   @Inject
-  public SupportBundlePipelineInfoTask(@Assisted String uuid, @Assisted List<NamespaceId> namespaces,
-                                       @Assisted String app, @Assisted File basePath,
+  public SupportBundlePipelineInfoTask(String uuid, List<NamespaceId> namespaces, String application, File basePath,
                                        RemoteApplicationDetailFetcher remoteApplicationDetailFetcher,
                                        RemoteProgramRunRecordsFetcher remoteProgramRunRecordsFetcher,
-                                       RemoteProgramLogsFetcher remoteProgramLogsFetcher,
-                                       @Assisted ProgramType programType, @Assisted String programName,
-                                       RemoteMetricsSystemClient remoteMetricsSystemClient,
-                                       @Assisted SupportBundleJob supportBundleJob, @Assisted int maxRunsPerProgram) {
+                                       RemoteProgramLogsFetcher remoteProgramLogsFetcher, ProgramType programType,
+                                       String programName, RemoteMetricsSystemClient remoteMetricsSystemClient,
+                                       SupportBundleJob supportBundleJob, int maxRunsPerProgram) {
     this.uuid = uuid;
     this.basePath = basePath;
     this.namespaces = namespaces;
-    this.app = app;
+    this.application = application;
     this.remoteApplicationDetailFetcher = remoteApplicationDetailFetcher;
     this.remoteProgramRunRecordsFetcher = remoteProgramRunRecordsFetcher;
     this.remoteProgramLogsFetcher = remoteProgramLogsFetcher;
@@ -92,24 +89,29 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
   @Override
   public void collect() throws IOException, NotFoundException {
     for (NamespaceId namespaceId : namespaces) {
-      List<ApplicationRecord> apps = new ArrayList<>();
-      if (app == null) {
-        apps.addAll(remoteApplicationDetailFetcher.list(namespaceId.getNamespace()).stream()
-                      .map(applicationDetail -> new ApplicationRecord(applicationDetail)).collect(Collectors.toList()));
+      List<ApplicationRecord> appRecords = new ArrayList<>();
+      if (application == null) {
+        appRecords.addAll(remoteApplicationDetailFetcher.list(namespaceId.getNamespace())
+                            .stream()
+                            .map(applicationDetail -> new ApplicationRecord(applicationDetail))
+                            .collect(Collectors.toList()));
       } else {
-        apps.add(new ApplicationRecord(
-          remoteApplicationDetailFetcher.get(new ApplicationId(namespaceId.getNamespace(), app))));
+        appRecords.add(new ApplicationRecord(
+          remoteApplicationDetailFetcher.get(new ApplicationId(namespaceId.getNamespace(), application))));
       }
 
-      for (ApplicationRecord appId : apps) {
-        String application = appId.getName();
+      for (ApplicationRecord appRecord : appRecords) {
+        String application = appRecord.getName();
         ApplicationId applicationId = new ApplicationId(namespaceId.getNamespace(), application);
-        File appFolderPath = new File(basePath, appId.getName());
+        //Handle not found for applicationId
+        ApplicationDetail applicationDetail = remoteApplicationDetailFetcher.get(applicationId);
+
+        File appFolderPath = new File(basePath, appRecord.getName());
         DirUtils.mkdirs(appFolderPath);
-        try (FileWriter file = new FileWriter(new File(appFolderPath, appId.getName() + ".json"))) {
-          ApplicationDetail applicationDetail = remoteApplicationDetailFetcher.get(applicationId);
+        try (FileWriter file = new FileWriter(new File(appFolderPath, appRecord.getName() + ".json"))) {
           gson.toJson(applicationDetail, file);
-          ProgramId programId = new ProgramId(namespaceId.getNamespace(), appId.getName(), programType, programName);
+          ProgramId programId =
+            new ProgramId(namespaceId.getNamespace(), appRecord.getName(), programType, programName);
           List<RunRecord> runRecordList = sortRunRecords(programId);
           SupportBundleRuntimeInfoTask supportBundleRuntimeInfoTask =
             new SupportBundleRuntimeInfoTask(appFolderPath, namespaceId, applicationId, programType, programId,
@@ -118,18 +120,20 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
             new SupportBundlePipelineRunLogTask(appFolderPath, programId, remoteProgramLogsFetcher, runRecordList);
           String runtimeInfoClassName = supportBundleRuntimeInfoTask.getClass().getName();
           String runtimeInfoTaskName =
-            uuid.concat(": ").concat(runtimeInfoClassName).concat(": ").concat(appId.getName());
+            uuid.concat(": ").concat(runtimeInfoClassName).concat(": ").concat(appRecord.getName());
           SupportBundleTaskStatus runtimeInfoTaskStatus =
             supportBundleJob.initializeTask(runtimeInfoTaskName, runtimeInfoClassName, basePath.getPath());
           supportBundleJob.executeTask(runtimeInfoTaskStatus, supportBundleRuntimeInfoTask, basePath.getPath(),
                                        runtimeInfoClassName, runtimeInfoTaskName, 0);
           String runtimeLogClassName = supportBundlePipelineRunLogTask.getClass().getName();
           String runtimeLogTaskName =
-            uuid.concat(": ").concat(runtimeLogClassName).concat(": ").concat(appId.getName());
+            uuid.concat(": ").concat(runtimeLogClassName).concat(": ").concat(appRecord.getName());
           SupportBundleTaskStatus runtimeLogTaskStatus =
             supportBundleJob.initializeTask(runtimeLogTaskName, runtimeLogClassName, basePath.getPath());
           supportBundleJob.executeTask(runtimeLogTaskStatus, supportBundlePipelineRunLogTask, basePath.getPath(),
                                        runtimeLogClassName, runtimeLogTaskName, 0);
+        } catch (NotFoundException e) {
+          LOG.debug("Failed to find application {} ", applicationId, e);
         }
       }
     }
@@ -139,8 +143,10 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
     List<RunRecord> runRecordList = new ArrayList<>();
     List<RunRecord> allRunRecordList = remoteProgramRunRecordsFetcher.getProgramRuns(programId, 0, Long.MAX_VALUE, 100);
 
-    List<RunRecord> sortedRunRecordList = allRunRecordList.stream().filter(run -> run.getStatus().isEndState())
-      .sorted(Comparator.comparing(RunRecord::getStartTs).reversed()).collect(Collectors.toList());
+    List<RunRecord> sortedRunRecordList = allRunRecordList.stream()
+      .filter(run -> run.getStatus().isEndState())
+      .sorted(Comparator.comparing(RunRecord::getStartTs).reversed())
+      .collect(Collectors.toList());
     // Gets the last N runs info
     for (RunRecord runRecord : sortedRunRecordList) {
       if (runRecordList.size() >= maxRunsPerProgram) {

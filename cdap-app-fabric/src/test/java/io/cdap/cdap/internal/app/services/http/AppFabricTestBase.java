@@ -81,7 +81,6 @@ import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
-import io.cdap.cdap.logging.service.LogQueryService;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metadata.MetadataService;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
@@ -222,7 +221,6 @@ public abstract class AppFabricTestBase {
   private static MetadataClient metadataClient;
   private static MetricStore metricStore;
   private static RemoteClientFactory remoteClientFactory;
-  private static LogQueryService logQueryService;
 
   private static HttpRequestConfig httpRequestConfig;
 
@@ -292,8 +290,6 @@ public abstract class AppFabricTestBase {
     metadataService.startAndWait();
     metadataSubscriberService = injector.getInstance(MetadataSubscriberService.class);
     metadataSubscriberService.startAndWait();
-    logQueryService = injector.getInstance(LogQueryService.class);
-    logQueryService.startAndWait();
     locationFactory = getInjector().getInstance(LocationFactory.class);
     datasetClient = new DatasetClient(getClientConfig(discoveryClient, Constants.Service.DATASET_MANAGER));
     remoteClientFactory = new RemoteClientFactory(discoveryClient,
@@ -324,7 +320,6 @@ public abstract class AppFabricTestBase {
     serviceStore.stopAndWait();
     metadataSubscriberService.stopAndWait();
     metadataService.stopAndWait();
-    logQueryService.stopAndWait();
     if (messagingService instanceof Service) {
       ((Service) messagingService).stopAndWait();
     }
