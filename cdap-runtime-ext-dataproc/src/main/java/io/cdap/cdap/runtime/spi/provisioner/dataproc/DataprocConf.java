@@ -87,6 +87,12 @@ final class DataprocConf {
   static final String SECONDARY_WORKER_NUM_NODES = "secondaryWorkerNumNodes";
   static final String AUTOSCALING_POLICY = "autoScalingPolicy";
 
+  public static final String COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT = "compute.request.connectionTimeout";
+  public static final int COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT_DEFAULT = 20000;
+  public static final String COMPUTE_HTTP_REQUEST_READ_TIMEOUT = "compute.request.readTimeout";
+  public static final int COMPUTE_HTTP_REQUEST_READ_TIMEOUT_DEFAULT = 20000;
+
+
   private final String accountKey;
   private final String region;
   private final String zone;
@@ -149,6 +155,9 @@ final class DataprocConf {
   private final String clusterReuseKey;
   private final boolean enablePredefinedAutoScaling;
 
+  private final int computeReadTimeout;
+  private final int computeConnectionTimeout;
+
   DataprocConf(DataprocConf conf, String network, String subnet) {
     this(conf.accountKey, conf.region, conf.zone, conf.projectId, conf.networkHostProjectID, network, subnet,
          conf.masterNumNodes, conf.masterCPUs, conf.masterMemoryMB, conf.masterDiskGB, conf.masterDiskType,
@@ -161,7 +170,8 @@ final class DataprocConf {
          conf.clusterMetaData, conf.clusterLabels, conf.networkTags, conf.initActions, conf.runtimeJobManagerEnabled,
          conf.clusterProperties, conf.autoScalingPolicy, conf.idleTTLMinutes, conf.tokenEndpoint,
          conf.secureBootEnabled, conf.vTpmEnabled, conf.integrityMonitoringEnabled, conf.clusterReuseEnabled,
-         conf.clusterReuseThresholdMinutes, conf.clusterReuseKey, conf.enablePredefinedAutoScaling);
+         conf.clusterReuseThresholdMinutes, conf.clusterReuseKey, conf.enablePredefinedAutoScaling,
+         conf.computeReadTimeout, conf.computeConnectionTimeout);
   }
 
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
@@ -183,7 +193,7 @@ final class DataprocConf {
                        @Nullable String tokenEndpoint, boolean secureBootEnabled, boolean vTpmEnabled,
                        boolean integrityMonitoringEnabled, boolean clusterReuseEnabled,
                        long clusterReuseThresholdMinutes, @Nullable String clusterReuseKey,
-                       boolean enablePredefinedAutoScaling) {
+                       boolean enablePredefinedAutoScaling, int computeReadTimeout, int computeConnectionTimeout) {
     this.accountKey = accountKey;
     this.region = region;
     this.zone = zone;
@@ -235,6 +245,8 @@ final class DataprocConf {
     this.vTpmEnabled = vTpmEnabled;
     this.integrityMonitoringEnabled = integrityMonitoringEnabled;
     this.enablePredefinedAutoScaling = enablePredefinedAutoScaling;
+    this.computeReadTimeout = computeReadTimeout;
+    this.computeConnectionTimeout = computeConnectionTimeout;
   }
 
   String getRegion() {
@@ -439,6 +451,14 @@ final class DataprocConf {
 
   public boolean isPredefinedAutoScaleEnabled() {
     return enablePredefinedAutoScaling;
+  }
+
+  public int getComputeReadTimeout() {
+    return computeReadTimeout;
+  }
+
+  public int getComputeConnectionTimeout() {
+    return computeConnectionTimeout;
   }
 
   /**
@@ -670,6 +690,10 @@ final class DataprocConf {
         throw new IllegalStateException("SHA-1 algorithm is not available for cluster reuse", e);
       }
     }
+    int computeReadTimeout = getInt(properties, COMPUTE_HTTP_REQUEST_READ_TIMEOUT,
+                                    COMPUTE_HTTP_REQUEST_READ_TIMEOUT_DEFAULT);
+    int computeConnectionTimeout = getInt(properties, COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT,
+                                          COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT_DEFAULT);
 
     return new DataprocConf(accountKey, region, zone, projectId, networkHostProjectID, network, subnet,
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
@@ -684,7 +708,7 @@ final class DataprocConf {
                             initActions, runtimeJobManagerEnabled, clusterProps, autoScalingPolicy, idleTTL,
                             tokenEndpoint, secureBootEnabled, vTpmEnabled, integrityMonitoringEnabled,
                             clusterReuseEnabled, clusterReuseThresholdMinutes, clusterReuseKey,
-                            enablePredefinedAutoScaling);
+                            enablePredefinedAutoScaling, computeReadTimeout, computeConnectionTimeout);
   }
 
   // the UI never sends nulls, it only sends empty strings.

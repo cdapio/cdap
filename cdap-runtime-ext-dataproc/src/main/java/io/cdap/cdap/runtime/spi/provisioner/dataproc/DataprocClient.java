@@ -18,6 +18,8 @@ package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.api.client.http.HttpTransport;
@@ -355,9 +357,18 @@ class DataprocClient implements AutoCloseable {
   private static Compute getCompute(DataprocConf conf) throws GeneralSecurityException, IOException {
     HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
     return new Compute.Builder(httpTransport, JacksonFactory.getDefaultInstance(),
-                               new HttpCredentialsAdapter(conf.getComputeCredential()))
+                               setHttpTimeouts(new HttpCredentialsAdapter(conf.getComputeCredential()), conf))
       .setApplicationName("cdap")
       .build();
+  }
+
+  private static HttpRequestInitializer setHttpTimeouts(HttpRequestInitializer requestInitializer,
+                                                        DataprocConf conf) {
+    return httpRequest -> {
+      requestInitializer.initialize(httpRequest);
+      httpRequest.setConnectTimeout(conf.getComputeConnectionTimeout());
+      httpRequest.setReadTimeout(conf.getComputeReadTimeout());
+    };
   }
 
   private DataprocClient(DataprocConf conf, ClusterControllerClient client, Compute compute,
