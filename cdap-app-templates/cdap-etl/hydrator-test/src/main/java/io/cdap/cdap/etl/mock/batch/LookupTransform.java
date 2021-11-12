@@ -46,8 +46,9 @@ import java.util.Map;
  * @param <T> The type of object that will be returned for the lookup.
  */
 @Plugin(type = Transform.PLUGIN_TYPE)
-@Name("Lookup")
+@Name(LookupTransform.NAME)
 public class LookupTransform<T> extends Transform<StructuredRecord, StructuredRecord> {
+  public static final String NAME = "Lookup";
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Config config;
   private Lookup<T> lookup;
@@ -122,10 +123,10 @@ public class LookupTransform<T> extends Transform<StructuredRecord, StructuredRe
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
-    properties.put("lookupKey", new PluginPropertyField("fields", "", "string", true, false));
+    properties.put("lookupKey", new PluginPropertyField("lookupKey", "", "string", true, false));
     properties.put("destinationField", new PluginPropertyField("destinationField", "", "string", true, false));
     properties.put("lookupName", new PluginPropertyField("lookupName", "", "string", true, false));
-    return PluginClass.builder().setName("Lookup").setType(Transform.PLUGIN_TYPE)
+    return PluginClass.builder().setName(NAME).setType(Transform.PLUGIN_TYPE)
              .setDescription("").setClassName(LookupTransform.class.getName()).setProperties(properties)
              .setConfigFieldName("config").build();
   }

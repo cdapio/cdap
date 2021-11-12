@@ -85,6 +85,7 @@ import java.nio.file.Files;
 import java.sql.Connection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -192,8 +193,10 @@ public class IntegrationTestManager extends AbstractTestManager {
 
         // Upload artifact for application
         ContentProvider<InputStream> artifactStream = locationFactory.create(appJarFile.toURI())::getInputStream;
-        artifactClient.add(namespace, applicationClz.getSimpleName(), artifactStream, null);
+        artifactClient.add(namespace, applicationClz.getSimpleName(), artifactStream, VERSION);
 
+        List<ArtifactSummary> deployedArtifacts = artifactClient.list(namespace);
+        assert deployedArtifacts.size() > 0;
         // Deploy application
         ArtifactSummary summary = new ArtifactSummary(applicationClz.getSimpleName(), VERSION);
         AppRequest<?> request = new AppRequest<>(summary, appConfig);
