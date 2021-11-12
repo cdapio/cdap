@@ -234,7 +234,7 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
         // as intermediate joins will already be partitioned on the key
         if (joined == left) {
           joined = partitionOnKey(joined, leftKeys, joinRequest.isNullSafe(),
-            leftSparkSchema, joinPartitions);
+                                  leftSparkSchema, joinPartitions);
         }
       }
       joined = joined.join(right, joinOn, joinType);
@@ -387,9 +387,9 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
 
     // Add a column that uses the 'numbers' array as the value for every row
     Dataset explodedData = data.withColumn(saltColumnName,
-      functions.array(
-        Arrays.stream(numbers).map(functions::lit).toArray(Column[]::new)
-      ));
+                                           functions.array(
+                                             Arrays.stream(numbers).map(functions::lit).toArray(Column[]::new)
+                                           ));
     explodedData = explodedData.withColumn(saltColumnName, functions.explode(explodedData.col(saltColumnName)));
     return explodedData;
   }
