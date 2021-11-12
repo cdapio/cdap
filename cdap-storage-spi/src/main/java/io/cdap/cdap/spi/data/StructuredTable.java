@@ -49,6 +49,17 @@ public interface StructuredTable extends Closeable {
   void upsert(Collection<Field<?>> fields) throws InvalidFieldException, IOException;
 
   /**
+   * Update the collection of fields to the table.
+   * The fields contain the primary key and other columns to update.
+   *
+   * @param fields the fields to write
+   * @throws InvalidFieldException if any of the fields are not part of the table schema, or the types of the value
+   *                               do not match
+   * @throws IOException if there is an error writing to the table
+   */
+  void update(Collection<Field<?>> fields) throws InvalidFieldException, IOException;
+
+  /**
    * Read a single row with all the columns from the table.
    *
    * @param keys the primary key of the row to read
