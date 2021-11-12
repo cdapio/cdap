@@ -16,12 +16,14 @@
 
 package io.cdap.cdap.etl.mock.batch;
 
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.annotation.Requirements;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.dataset.table.Row;
 import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
@@ -37,6 +39,7 @@ import java.util.Collections;
 public class IncapableSource extends BatchSource<byte[], Row, StructuredRecord> {
 
   public static final String NAME = "IncapableSource";
+  public static final PluginClass PLUGIN_CLASS = getPluginClass();
 
   @Override
   public void prepareRun(BatchSourceContext context) throws Exception {
@@ -48,6 +51,16 @@ public class IncapableSource extends BatchSource<byte[], Row, StructuredRecord> 
    */
   public static ETLPlugin getPlugin() {
     return new ETLPlugin(IncapableSource.NAME, BatchSource.PLUGIN_TYPE, Collections.emptyMap(), null);
+  }
+
+  private static PluginClass getPluginClass() {
+    return PluginClass.builder()
+      .setName(IncapableSource.NAME)
+      .setType(BatchSource.PLUGIN_TYPE)
+      .setDescription("")
+      .setClassName(IncapableSource.class.getName())
+      .setRequirements(new io.cdap.cdap.api.plugin.Requirements(ImmutableSet.of(Table.TYPE)))
+      .build();
   }
 }
 

@@ -30,6 +30,7 @@ import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * An transform that throws exception if expected condition is not met.
@@ -60,7 +61,7 @@ public class ExceptionTransform extends Transform<StructuredRecord, StructuredRe
   public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) throws Exception {
     String expectedField = properties.get(EXPECTED_FIELD);
     String expectedValue = properties.get(EXPECTED_VALUE);
-    if (expectedField == null || !input.get(expectedField).equals(expectedValue)) {
+    if (expectedField == null || !Objects.equals(input.get(expectedField), expectedValue)) {
       throw new IllegalArgumentException("Not getting expected value");
     }
     emitter.emit(input);
@@ -74,8 +75,12 @@ public class ExceptionTransform extends Transform<StructuredRecord, StructuredRe
   }
 
   private static PluginClass getPluginClass() {
-    return PluginClass.builder().setName(NAME).setType(Transform.PLUGIN_TYPE)
-             .setDescription("").setClassName(IdentityTransform.class.getName()).setProperties(Collections.emptyMap())
-             .build();
+    return PluginClass.builder()
+      .setName(NAME)
+      .setType(Transform.PLUGIN_TYPE)
+      .setDescription("")
+      .setClassName(ExceptionTransform.class.getName())
+      .setProperties(Collections.emptyMap())
+      .build();
   }
 }
