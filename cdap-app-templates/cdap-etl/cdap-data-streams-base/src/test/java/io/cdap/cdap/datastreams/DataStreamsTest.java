@@ -99,6 +99,7 @@ import java.util.concurrent.TimeoutException;
 /**
  *
  */
+@Ignore("CDAP-18498")
 public class DataStreamsTest extends HydratorTestBase {
   private static final Gson GSON = new Gson();
   private static final ArtifactId APP_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("app", "1.0.0");

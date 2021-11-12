@@ -69,6 +69,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+@Ignore("CDAP-18498")
 public class DraftServiceTest extends DataPipelineServiceTest {
 
   private static final Gson GSON = new GsonBuilder()

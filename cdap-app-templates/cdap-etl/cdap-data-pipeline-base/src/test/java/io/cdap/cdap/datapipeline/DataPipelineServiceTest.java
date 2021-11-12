@@ -87,6 +87,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Tests for the data pipeline service.
  */
+@Ignore("CDAP-18498")
 public class DataPipelineServiceTest extends HydratorTestBase {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
