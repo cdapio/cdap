@@ -102,13 +102,13 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
       new SupportBundleConfiguration(namespace, application, run, ProgramType.valueOfCategoryName(programType),
                                      programName, Optional.ofNullable(maxRunsPerProgram).orElse(1));
     // Generates support bundle and returns with uuid
-    String status = bundleGenerator.ensurePreviousExecutorFinish();
-    if (status == null) {
+    String prevInProgressUUID = bundleGenerator.ensurePreviousExecutorFinish();
+    if (prevInProgressUUID == null) {
       // Generates support bundle and returns with uuid
       String uuid = bundleGenerator.generate(bundleConfig, executorService);
       responder.sendString(HttpResponseStatus.CREATED, uuid);
     } else {
-      responder.sendString(HttpResponseStatus.OK, status);
+      responder.sendString(HttpResponseStatus.OK, prevInProgressUUID);
     }
   }
 }

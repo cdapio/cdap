@@ -64,14 +64,6 @@ public class SupportBundleHttpHandlerTest extends SupportBundleTestBase {
     Assert.assertFalse(bundleId.isEmpty());
   }
 
-  @Test
-  public void testCreateSupportBundleWithMaxRunsSpecified() throws Exception {
-    String bundleId = requestBundle(Collections.singletonMap("maxRunsPerProgram", "2"));
-
-    Assert.assertNotNull(bundleId);
-    Assert.assertFalse(bundleId.isEmpty());
-  }
-
   /**
    * Requests generation of support bundle.
    *
@@ -102,7 +94,7 @@ public class SupportBundleHttpHandlerTest extends SupportBundleTestBase {
     HttpRequest request = HttpRequest.post(URIScheme.createURI(discoverable, path).toURL()).build();
     HttpResponse response = HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
 
-    Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+    Assert.assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
     return response.getResponseBodyAsString();
   }
 }

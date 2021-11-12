@@ -52,7 +52,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 
 /**
  * Support bundle service to generate base path, uuid and trigger the job to execute tasks.
@@ -136,8 +135,8 @@ public class SupportBundleGenerator {
     }
     File latestDirectory = getLatestFolder(baseDirectory);
     SupportBundleStatus supportBundleStatus = getBundleStatus(latestDirectory);
-    if (supportBundleStatus.getStatus() == CollectionState.IN_PROGRESS) {
-      return GSON.toJson(supportBundleStatus);
+    if (supportBundleStatus != null && supportBundleStatus.getStatus() == CollectionState.IN_PROGRESS) {
+      return supportBundleStatus.getBundleId();
     }
     return null;
   }

@@ -36,7 +36,7 @@ public class SupportBundleServiceMainTest extends MasterServiceMainTestBase {
     URL url = getRouterBaseURI().resolve("/v3/support/bundle").toURL();
     HttpResponse response = HttpRequests.execute(HttpRequest.post(url).build(),
                                                  new DefaultHttpRequestConfig(false));
-    Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+    Assert.assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
     String uuid = response.getResponseBodyAsString();
     Assert.assertNotNull(uuid);
