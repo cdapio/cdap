@@ -113,9 +113,19 @@ public class SupportBundleServiceTest extends AppFabricTestBase {
     Assert.assertNotNull(uuid);
     File tempFolder = new File(configuration.get(SupportBundle.LOCAL_DATA_DIR));
     File uuidFile = new File(tempFolder, uuid);
-
-    TimeUnit.SECONDS.sleep(10);
+    File statusFile = new File(uuidFile, SupportBundleFileNames.STATUS_FILE_NAME);
+    while (!statusFile.exists()) {
+      //Wait unit status file set up
+      statusFile = new File(uuidFile, SupportBundleFileNames.STATUS_FILE_NAME);
+    }
     SupportBundleStatus supportBundleStatus = supportBundleService.getSingleBundleJson(uuidFile);
+    while (supportBundleStatus.getStatus() == CollectionState.IN_PROGRESS) {
+      //Wait unit status set up
+      SupportBundleStatus updatedBundleStatus = supportBundleService.getSingleBundleJson(uuidFile);
+      if (updatedBundleStatus != null) {
+        supportBundleStatus = updatedBundleStatus;
+      }
+    }
     Set<SupportBundleTaskStatus> supportBundleTaskStatusList = supportBundleStatus.getTasks();
     Assert.assertEquals(uuid, supportBundleStatus.getBundleId());
     Assert.assertEquals(CollectionState.FINISHED, supportBundleStatus.getStatus());
@@ -134,9 +144,19 @@ public class SupportBundleServiceTest extends AppFabricTestBase {
     for (int i = 0; i < 7; i++) {
       HttpResponse response = doPost(path);
       Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
-      String bundleId = response.getResponseBodyAsString();
-      bundleIdList.add(bundleId);
-      TimeUnit.SECONDS.sleep(3);
+      String uuid = response.getResponseBodyAsString();
+      bundleIdList.add(uuid);
+      File uuidFile = new File(tempFolder, uuid);
+      File statusFile = new File(uuidFile, SupportBundleFileNames.STATUS_FILE_NAME);
+      while (!statusFile.exists()) {
+        //Wait unit status set up
+        statusFile = new File(uuidFile, SupportBundleFileNames.STATUS_FILE_NAME);
+      }
+      SupportBundleStatus supportBundleStatus = supportBundleService.getSingleBundleJson(uuidFile);
+      while (supportBundleStatus.getStatus() == null) {
+        //Wait unit status set up
+        supportBundleStatus = supportBundleService.getSingleBundleJson(uuidFile);
+      }
     }
     File bundleFile = new File(tempFolder, bundleIdList.get(4));
     SupportBundleStatus supportBundleStatus = SupportBundleStatus.builder()

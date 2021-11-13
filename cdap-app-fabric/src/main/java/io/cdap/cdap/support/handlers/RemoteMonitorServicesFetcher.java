@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.logging.gateway.handlers;
+package io.cdap.cdap.support.handlers;
 
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -24,9 +24,7 @@ import io.cdap.cdap.common.conf.Constants.Gateway;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
-import io.cdap.cdap.proto.ProgramRunStatus;
-import io.cdap.cdap.proto.RunRecord;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.SystemServiceMeta;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
@@ -39,49 +37,31 @@ import java.net.HttpURLConnection;
 import java.util.List;
 
 /**
- * Fetch List of {@link RunRecord} via internal REST API calls
+ * Fetch Program logs via internal REST API calls
  */
-public class RemoteProgramRunRecordsFetcher implements ProgramRunRecordsFetcher {
-
+public class RemoteMonitorServicesFetcher {
   private final RemoteClient remoteClient;
 
   @Inject
-  public RemoteProgramRunRecordsFetcher(RemoteClientFactory remoteClientFactory) {
+  public RemoteMonitorServicesFetcher(RemoteClientFactory remoteClientFactory) {
     this.remoteClient =
       remoteClientFactory.createRemoteClient(Constants.Service.APP_FABRIC_HTTP, new DefaultHttpRequestConfig(false),
                                              Gateway.API_VERSION_3);
   }
 
   /**
-   * Gets the run records of a program.
+   * Lists all system services.
    *
-   * @param program the program
-   * @return the run records of the program
-   * @throws IOException              if a network error occurred
-   * @throws NotFoundException        if the application or program could not be found
+   * @return list of {@link SystemServiceMeta}s.
+   * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  @Override
-  public Iterable<RunRecord> getProgramRuns(ProgramId program, long startTime, long endTime, int limit)
-    throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
-
-    String queryParams =
-      String.format("%s=%s&%s=%d&%s=%d&%s=%d", Constants.AppFabric.QUERY_PARAM_STATUS, ProgramRunStatus.ALL.name(),
-                    Constants.AppFabric.QUERY_PARAM_START_TIME, startTime, Constants.AppFabric.QUERY_PARAM_END_TIME,
-                    endTime, Constants.AppFabric.QUERY_PARAM_LIMIT, limit);
-
-    String url =
-      String.format("namespaces/%s/apps/%s/versions/%s/%s/%s/runs?%s", program.getNamespaceId().getNamespace(),
-                    program.getApplication(), program.getVersion(), program.getType().getCategoryName(),
-                    program.getProgram(), queryParams);
+  public Iterable<SystemServiceMeta> listSystemServices() throws NotFoundException, IOException {
+    String url = "system/services";
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
     HttpResponse response;
     response = execute(requestBuilder.build());
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(program);
-    }
-
-    return ObjectResponse.fromJsonBody(response, new TypeToken<List<RunRecord>>() { }).getResponseObject();
+    return ObjectResponse.fromJsonBody(response, new TypeToken<List<SystemServiceMeta>>() { }).getResponseObject();
   }
 
   private HttpResponse execute(HttpRequest request) throws IOException, NotFoundException, UnauthorizedException {

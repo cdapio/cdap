@@ -28,8 +28,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Collects pipeline run info.
@@ -40,12 +40,12 @@ public class SupportBundlePipelineRunLogTask implements SupportBundleTask {
   private final File appFolderPath;
   private final RemoteProgramLogsFetcher remoteProgramLogsFetcher;
   private final ProgramId programName;
-  private final List<RunRecord> runRecordList;
+  private final Iterable<RunRecord> runRecordList;
 
   @Inject
   public SupportBundlePipelineRunLogTask(File appFolderPath, ProgramId programName,
                                          RemoteProgramLogsFetcher remoteProgramLogsFetcher,
-                                         List<RunRecord> runRecordList) {
+                                         Iterable<RunRecord> runRecordList) {
     this.appFolderPath = appFolderPath;
     this.remoteProgramLogsFetcher = remoteProgramLogsFetcher;
     this.programName = programName;
@@ -58,10 +58,10 @@ public class SupportBundlePipelineRunLogTask implements SupportBundleTask {
       String runId = runRecord.getPid();
       try (FileWriter file = new FileWriter(new File(appFolderPath, runId + SupportBundleFileNames.LOG_SUFFIX_NAME))) {
         long currentTimeMillis = System.currentTimeMillis();
-        long fromMillis = currentTimeMillis - TimeUnit.DAYS.toMillis(1);
-        String runLog =
-          remoteProgramLogsFetcher.getProgramRunLogs(programName, runId, fromMillis / 1000, currentTimeMillis / 1000);
-        file.write(runLog == null ? "" : runLog);
+        long fromMillis = 0;
+        Stream<String> runLog =
+          remoteProgramLogsFetcher.getProgramRunLogs(programName, runId, fromMillis, currentTimeMillis / 1000);
+        file.write(runLog.collect(Collectors.joining()));
       }
     }
   }

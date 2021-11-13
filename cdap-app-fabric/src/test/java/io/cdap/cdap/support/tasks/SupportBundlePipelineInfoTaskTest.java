@@ -14,9 +14,10 @@
  * the License.
  */
 
-package io.cdap.cdap.support.job;
+package io.cdap.cdap.support.tasks;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.JsonObject;
 import com.google.inject.Injector;
 import io.cdap.cdap.AppWithWorkflow;
 import io.cdap.cdap.api.artifact.ArtifactId;
@@ -24,22 +25,28 @@ import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.app.store.DefaultStore;
+import io.cdap.cdap.logging.gateway.handlers.RemoteProgramLogsFetcher;
+import io.cdap.cdap.logging.gateway.handlers.RemoteProgramRunRecordsFetcher;
+import io.cdap.cdap.metadata.RemoteApplicationDetailFetcher;
+import io.cdap.cdap.metrics.process.RemoteMetricsSystemClient;
+import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
-import io.cdap.cdap.support.SupportBundleTaskConfiguration;
+import io.cdap.cdap.support.job.SupportBundleJob;
+import io.cdap.cdap.support.lib.SupportBundleFileNames;
 import io.cdap.cdap.support.status.CollectionState;
 import io.cdap.cdap.support.status.SupportBundleConfiguration;
 import io.cdap.cdap.support.status.SupportBundleStatus;
 import io.cdap.cdap.support.status.SupportBundleTaskStatus;
+import io.cdap.cdap.support.task.SupportBundlePipelineInfoTask;
 import io.cdap.cdap.support.task.factory.SupportBundlePipelineInfoTaskFactory;
 import io.cdap.cdap.support.task.factory.SupportBundleSystemLogTaskFactory;
 import io.cdap.cdap.support.task.factory.SupportBundleTaskFactory;
@@ -49,8 +56,13 @@ import org.iq80.leveldb.shaded.guava.util.concurrent.MoreExecutors;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -63,17 +75,21 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class SupportBundleJobTest extends AppFabricTestBase {
+public class SupportBundlePipelineInfoTaskTest extends AppFabricTestBase {
+  private static final Logger LOG = LoggerFactory.getLogger(SupportBundlePipelineInfoTaskTest.class);
   private static final NamespaceId namespaceId = NamespaceId.DEFAULT;
 
   private static CConfiguration configuration;
   private static Store store;
   private static ExecutorService executorService;
   private static Set<SupportBundleTaskFactory> supportBundleTaskFactorySet;
+  private static RemoteProgramLogsFetcher remoteProgramLogsFetcher;
+  private static RemoteProgramRunRecordsFetcher remoteProgramRunRecordsFetcher;
+  private static RemoteMetricsSystemClient remoteMetricsSystemClient;
+  private static RemoteApplicationDetailFetcher remoteApplicationDetailFetcher;
   private static String workflowName;
   private static String application;
   private static ProgramType programType;
-  private static String runId;
   private int sourceId;
 
   @BeforeClass
@@ -85,18 +101,21 @@ public class SupportBundleJobTest extends AppFabricTestBase {
     supportBundleTaskFactorySet = new HashSet<>();
     supportBundleTaskFactorySet.add(injector.getInstance(SupportBundlePipelineInfoTaskFactory.class));
     supportBundleTaskFactorySet.add(injector.getInstance(SupportBundleSystemLogTaskFactory.class));
-    long startTime = System.currentTimeMillis();
+    remoteProgramLogsFetcher = injector.getInstance(RemoteProgramLogsFetcher.class);
+    remoteProgramRunRecordsFetcher = injector.getInstance(RemoteProgramRunRecordsFetcher.class);
+    remoteMetricsSystemClient = injector.getInstance(RemoteMetricsSystemClient.class);
+    remoteApplicationDetailFetcher = injector.getInstance(RemoteApplicationDetailFetcher.class);
 
     workflowName = AppWithWorkflow.SampleWorkflow.NAME;
     application = AppWithWorkflow.NAME;
     programType = ProgramType.valueOfCategoryName("workflows");
-    RunId workflowRunId = RunIds.generate(startTime);
-    runId = workflowRunId.getId();
   }
 
+  //Contains two sub-task supportBundleRuntimeInfo and supportBundlePipelineRunLog
+  //So we will test all three files together
   @Test
-  public void testSupportBundleJobExecute() throws Exception {
-    generateWorkflowLog();
+  public void testSupportBundlePipelineInfo() throws Exception {
+    String runId = generateWorkflowLog();
     SupportBundleConfiguration supportBundleConfiguration =
       new SupportBundleConfiguration(namespaceId.getNamespace(), application, runId, programType, workflowName, 1);
     String uuid = UUID.randomUUID().toString();
@@ -108,25 +127,55 @@ public class SupportBundleJobTest extends AppFabricTestBase {
       .setParameters(supportBundleConfiguration)
       .setStatus(CollectionState.IN_PROGRESS)
       .build();
-    DirUtils.mkdirs(uuidFile);
     SupportBundleJob supportBundleJob =
       new SupportBundleJob(supportBundleTaskFactorySet, executorService, configuration, supportBundleStatus);
-
-    SupportBundleTaskConfiguration taskConfiguration =
-      new SupportBundleTaskConfiguration(supportBundleConfiguration, uuid, uuidFile,
-                                         Collections.singletonList(namespaceId), supportBundleJob);
-    supportBundleJob.generateBundle(taskConfiguration);
-
+    SupportBundlePipelineInfoTask supportBundlePipelineInfoTask =
+      new SupportBundlePipelineInfoTask(uuid, Collections.singletonList(namespaceId), application, uuidFile,
+                                        remoteApplicationDetailFetcher, remoteProgramRunRecordsFetcher,
+                                        remoteProgramLogsFetcher, programType, workflowName, remoteMetricsSystemClient,
+                                        supportBundleJob, 1);
+    supportBundlePipelineInfoTask.collect();
 
     Set<SupportBundleTaskStatus> supportBundleTaskStatusList = supportBundleStatus.getTasks();
-    Assert.assertEquals(uuid, supportBundleStatus.getBundleId());
 
     for (SupportBundleTaskStatus supportBundleTaskStatus : supportBundleTaskStatusList) {
-      Assert.assertEquals(CollectionState.FINISHED, supportBundleTaskStatus.getStatus());
+      if (!supportBundleTaskStatus.getName()
+        .endsWith("SupportBundleSystemLogTask") && !supportBundleTaskStatus.getName()
+        .endsWith("SupportBundlePipelineInfoTask")) {
+        Assert.assertEquals(CollectionState.FINISHED, supportBundleTaskStatus.getStatus());
+      }
     }
+
+    File pipelineFolder = new File(uuidFile, AppWithWorkflow.NAME);
+    File[] pipelineFiles =
+      pipelineFolder.listFiles((dir, name) -> !name.startsWith(".") && !dir.isHidden() && dir.isDirectory());
+    Assert.assertEquals(3, pipelineFiles.length);
+
+    File pipelineInfoFile = new File(pipelineFolder, AppWithWorkflow.NAME + ".json");
+    try (Reader reader = Files.newBufferedReader(pipelineInfoFile.toPath(), StandardCharsets.UTF_8)) {
+      ApplicationDetail pipelineInfo = GSON.fromJson(reader, ApplicationDetail.class);
+      Assert.assertEquals(AppWithWorkflow.NAME, pipelineInfo.getName());
+      Assert.assertEquals("-SNAPSHOT", pipelineInfo.getAppVersion());
+      Assert.assertEquals("Sample application", pipelineInfo.getDescription());
+    } catch (Exception e) {
+      LOG.error("Can not read pipelineInfo file ", e);
+      Assert.fail();
+    }
+
+    File runInfoFile = new File(pipelineFolder, runId + ".json");
+    try (Reader reader = Files.newBufferedReader(runInfoFile.toPath(), StandardCharsets.UTF_8)) {
+      JsonObject runInfo = GSON.fromJson(reader, JsonObject.class);
+      Assert.assertEquals("COMPLETED", runInfo.get("status").getAsString());
+    } catch (Exception e) {
+      LOG.error("Can not read status file ", e);
+      Assert.fail();
+    }
+
+    File runLogFile = new File(pipelineFolder, runId + SupportBundleFileNames.LOG_SUFFIX_NAME);
+    Assert.assertTrue(runLogFile.exists());
   }
 
-  private void generateWorkflowLog() throws Exception {
+  private String generateWorkflowLog() throws Exception {
     deploy(AppWithWorkflow.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, namespaceId.getNamespace());
     long startTime = System.currentTimeMillis();
 
@@ -148,6 +197,7 @@ public class SupportBundleJobTest extends AppFabricTestBase {
     store.setStop(workflowProgram.run(workflowRunId.getId()), workflowStopTime, ProgramRunStatus.COMPLETED,
                   AppFabricTestHelper.createSourceId(++sourceId));
 
+    return runs.get(0).getPid();
   }
 
   private void setStartAndRunning(ProgramId id, String pid, ArtifactId artifactId) {
@@ -170,3 +220,4 @@ public class SupportBundleJobTest extends AppFabricTestBase {
     store.setRunning(id.run(pid), startTime + 1, null, AppFabricTestHelper.createSourceId(++sourceId));
   }
 }
+
