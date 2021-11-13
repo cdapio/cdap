@@ -4653,4 +4653,12 @@
       Max 5 minutes allows for each thread process.
     </description>
   </property>
+
+  <property>
+    <name>support.bundle.system.log.start.time</name>
+    <value>1</value>
+    <description>
+      system log start 1 day ago to collect logs
+    </description>
+  </property>
 </configuration>
