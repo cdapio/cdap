@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.spark;
+package io.cdap.cdap.app.runtime.spark.service;
 
 
 import io.cdap.cdap.common.conf.Constants;

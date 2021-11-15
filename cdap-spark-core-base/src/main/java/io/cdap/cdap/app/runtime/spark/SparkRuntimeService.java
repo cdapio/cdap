@@ -39,6 +39,7 @@ import io.cdap.cdap.api.spark.Spark;
 import io.cdap.cdap.api.spark.SparkClientContext;
 import io.cdap.cdap.app.runtime.spark.distributed.SparkContainerLauncher;
 import io.cdap.cdap.app.runtime.spark.python.PySparkUtil;
+import io.cdap.cdap.app.runtime.spark.service.ArtifactFetcherService;
 import io.cdap.cdap.app.runtime.spark.submit.SparkSubmitter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.CConfigurationUtil;
@@ -73,6 +74,8 @@ import org.apache.spark.deploy.SparkSubmit;
 import org.apache.twill.api.Configs;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillRunnable;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -148,6 +151,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   private Callable<ListenableFuture<RunId>> submitSpark;
   private Runnable cleanupTask;
   private final MasterEnvironment masterEnv;
+  private ArtifactFetcherService artifactFetcherService;
 
   SparkRuntimeService(CConfiguration cConf, final Spark spark, @Nullable File pluginArchive,
                       SparkRuntimeContext runtimeContext, SparkSubmitter sparkSubmitter,
@@ -243,6 +247,14 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         for (File file : files) {
           localizeResources.add(new LocalizeResource(file));
         }
+
+        if (cConfCopy.getBoolean(Constants.Environment.PROGRAM_SUBMISSION_MASTER_ENV_ENABLED, true)) {
+          // In case of spark-on-k8s, artifactFetcherService is used by spark-drivers for fetching artifacts bundle.
+          Location location = createBundle(new File("./artifacts").getAbsoluteFile().toPath());
+          artifactFetcherService = new ArtifactFetcherService(cConf, location);
+          artifactFetcherService.startAndWait();
+        }
+
       } else if (isLocal) {
         // In local mode, always copy (or link if local) user requested resources
         copyUserResources(context.getLocalizeResources(), tempDir);
@@ -348,6 +360,39 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       }
       throw t;
     }
+  }
+
+  /**
+   * Creates a jar bundle of all required artifacts.
+   * @param artifactsPath the local path where artifacts are located.
+   * @return Location of the created jar bundle of artifacts.
+   * @throws IOException
+   */
+  private static Location createBundle(java.nio.file.Path artifactsPath) throws IOException {
+    File tmpDir = Files.createTempDir();
+    for (File file : new File(artifactsPath.toFile().toString()).listFiles()) {
+      if (file.getName().startsWith("unpacked")) {
+        // unpacked directory is skipped.
+        continue;
+      }
+
+      if (file.getName().equals(SparkRuntimeContextProvider.PROGRAM_JAR_NAME)) {
+        File programJar = tmpDir.toPath().resolve(SparkRuntimeContextProvider.PROGRAM_JAR_NAME).toFile();
+        Files.copy(file, programJar);
+        BundleJarUtil.unJar(programJar,
+                            tmpDir.toPath().resolve(SparkRuntimeContextProvider.PROGRAM_JAR_EXPANDED_NAME).toFile());
+      } else {
+        // plugin jars should also be included in the bundle
+        File plugin = tmpDir.toPath().resolve(SparkRuntimeContextProvider.ARTIFACTS_DIRECTORY_NAME)
+          .resolve(file.getName()).toFile();
+        Files.createParentDirs(plugin);
+        Files.copy(file, plugin);
+      }
+    }
+    String bundleName = String.format("%s-%s.jar", "bundle", System.currentTimeMillis());
+    File bundleFile = Files.createTempDir().toPath().toAbsolutePath().resolve(bundleName).toFile();
+    BundleJarUtil.createJar(tmpDir.getAbsoluteFile(), bundleFile);
+    return new LocalLocationFactory().create(bundleFile.getPath());
   }
 
   @Override

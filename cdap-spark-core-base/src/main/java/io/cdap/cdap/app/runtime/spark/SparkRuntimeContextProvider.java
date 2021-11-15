@@ -121,6 +121,7 @@ public final class SparkRuntimeContextProvider {
   static final String PROGRAM_JAR_EXPANDED_NAME = "program.jar.expanded.zip";
   static final String PROGRAM_JAR_NAME = "program.jar";
   static final String EXECUTOR_CLASSLOADER_NAME = "org.apache.spark.repl.ExecutorClassLoader";
+  public static final String ARTIFACTS_DIRECTORY_NAME = "artifacts_archive.jar";
 
   private static volatile SparkRuntimeContext sparkRuntimeContext;
   private static String masterEnvName;
