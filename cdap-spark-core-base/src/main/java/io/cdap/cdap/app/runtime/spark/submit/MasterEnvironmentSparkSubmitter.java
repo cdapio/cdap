@@ -35,7 +35,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.twill.filesystem.LocationFactory;
 
-
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.ArrayList;
@@ -91,7 +90,8 @@ public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
     Map<String, String> config = new HashMap<>();
     config.put(SparkConfig.DRIVER_ENV_PREFIX + "CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR);
     config.put("spark.executorEnv.CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR);
-    config.put("spark.executorEnv.ARTIFACT_FECTHER_PORT", cConf.get(Constants.Spark.Driver.PORT));
+    config.put("spark.executorEnv.ARTIFACT_FECTHER_PORT",
+               cConf.get(io.cdap.cdap.app.runtime.spark.Constant.Spark.ArtifactFetcher.PORT));
     config.putAll(generateOrGetSparkConfig().getConfigs());
     return config;
   }
@@ -109,6 +109,14 @@ public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
     String uri = String.format("http://%s:%d", socketAddress.getAddress().getHostAddress(), socketAddress.getPort());
     SparkRuntimeEnv.setProperty(SparkConfig.DRIVER_ENV_PREFIX + SparkRuntimeUtils.CDAP_SPARK_EXECUTION_SERVICE_URI,
                                 uri);
+
+    if (cConf.get(io.cdap.cdap.app.runtime.spark.Constant.Spark.ArtifactFetcher.PORT) != null) {
+      String artifactFetcherUri =
+        String.format("http://%s:%s", socketAddress.getAddress().getHostAddress(),
+                      cConf.get(io.cdap.cdap.app.runtime.spark.Constant.Spark.ArtifactFetcher.PORT));
+      SparkRuntimeEnv.setProperty(SparkConfig.DRIVER_ENV_PREFIX + "ARTIFACT_FECTHER_URI",
+                                  artifactFetcherUri);
+    }
     return Collections.emptyList();
   }
 

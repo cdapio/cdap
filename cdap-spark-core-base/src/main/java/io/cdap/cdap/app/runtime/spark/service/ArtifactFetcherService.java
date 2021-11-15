@@ -14,11 +14,11 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.spark;
+package io.cdap.cdap.app.runtime.spark.service;
 
 import com.google.common.util.concurrent.AbstractIdleService;
+import io.cdap.cdap.app.runtime.spark.Constant;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.filesystem.Location;
@@ -32,6 +32,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class ArtifactFetcherService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactFetcherService.class);
+  private static final String BIND_ADDRESS = "0.0.0.0";
 
   private final NettyHttpService httpService;
 
@@ -40,11 +41,11 @@ public class ArtifactFetcherService extends AbstractIdleService {
       .setHttpHandlers(
         new ArtifactFetcherHttpHandler(bundleLocation)
       )
-      .setHost(cConf.get(Constants.Spark.Driver.ADDRESS))
-      .setPort(cConf.getInt(Constants.Spark.Driver.PORT))
-      .setExecThreadPoolSize(cConf.getInt(Constants.Spark.Driver.EXEC_THREADS))
-      .setBossThreadPoolSize(cConf.getInt(Constants.Spark.Driver.BOSS_THREADS))
-      .setWorkerThreadPoolSize(cConf.getInt(Constants.Spark.Driver.WORKER_THREADS))
+      .setHost(BIND_ADDRESS)
+      .setPort(cConf.getInt(Constant.Spark.ArtifactFetcher.PORT))
+      .setExecThreadPoolSize(cConf.getInt(Constant.Spark.Driver.EXEC_THREADS))
+      .setBossThreadPoolSize(cConf.getInt(Constant.Spark.Driver.BOSS_THREADS))
+      .setWorkerThreadPoolSize(cConf.getInt(Constant.Spark.Driver.WORKER_THREADS))
       .build();
   }
 

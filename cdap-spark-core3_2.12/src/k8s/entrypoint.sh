@@ -93,6 +93,7 @@ case "$1" in
       io.cdap.cdap.app.runtime.spark.distributed.k8s.SparkContainerDriverLauncher
       --delegate-class org.apache.spark.deploy.SparkSubmit
       --conf "spark.driver.bindAddress=$SPARK_DRIVER_BIND_ADDRESS"
+      --artifact-fetcher-uri $ARTIFACT_FECTHER_URI
       --deploy-mode client
       "$@"
     )
