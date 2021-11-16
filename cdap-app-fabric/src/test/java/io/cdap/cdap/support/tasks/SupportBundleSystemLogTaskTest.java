@@ -28,7 +28,7 @@ import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.app.store.DefaultStore;
-import io.cdap.cdap.logging.gateway.handlers.RemoteProgramLogsFetcher;
+import io.cdap.cdap.logging.gateway.handlers.RemoteLogsFetcher;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.RunRecord;
@@ -60,7 +60,7 @@ public class SupportBundleSystemLogTaskTest extends AppFabricTestBase {
   private static CConfiguration configuration;
   private static Store store;
   private static Set<SupportBundleTaskFactory> supportBundleTaskFactorySet;
-  private static RemoteProgramLogsFetcher remoteProgramLogsFetcher;
+  private static RemoteLogsFetcher remoteLogsFetcher;
   private static RemoteMonitorServicesFetcher remoteMonitorServicesFetcher;
   private int sourceId;
 
@@ -72,7 +72,7 @@ public class SupportBundleSystemLogTaskTest extends AppFabricTestBase {
     supportBundleTaskFactorySet = new HashSet<>();
     supportBundleTaskFactorySet.add(injector.getInstance(SupportBundlePipelineInfoTaskFactory.class));
     supportBundleTaskFactorySet.add(injector.getInstance(SupportBundleSystemLogTaskFactory.class));
-    remoteProgramLogsFetcher = injector.getInstance(RemoteProgramLogsFetcher.class);
+    remoteLogsFetcher = injector.getInstance(RemoteLogsFetcher.class);
     remoteMonitorServicesFetcher = injector.getInstance(RemoteMonitorServicesFetcher.class);
   }
 
@@ -83,7 +83,7 @@ public class SupportBundleSystemLogTaskTest extends AppFabricTestBase {
     File tempFolder = new File(configuration.get(Constants.SupportBundle.LOCAL_DATA_DIR));
     File uuidFile = new File(tempFolder, uuid);
     SupportBundleSystemLogTask systemLogTask =
-      new SupportBundleSystemLogTask(uuidFile, remoteProgramLogsFetcher, configuration, remoteMonitorServicesFetcher);
+      new SupportBundleSystemLogTask(uuidFile, remoteLogsFetcher, configuration, remoteMonitorServicesFetcher);
     systemLogTask.collect();
 
     File systemLogFolder = new File(uuidFile, "system-log");

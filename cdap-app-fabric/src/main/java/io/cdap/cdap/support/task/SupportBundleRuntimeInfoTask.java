@@ -101,12 +101,15 @@ public class SupportBundleRuntimeInfoTask implements SupportBundleTask {
     int startQueryTime = (int) (startTs - 5000);
     JsonObject metrics = new JsonObject();
     try {
+      //This program type tag can be null
       String typeTag = getMetricsTag(programType);
       Map<String, String> queryTags = new HashMap<>();
       queryTags.put("namespace", namespaceId.getNamespace());
       queryTags.put("app", appId.getApplication());
       queryTags.put("run", runId);
-      queryTags.put(typeTag, programName.getProgram());
+      if (typeTag != null) {
+        queryTags.put(typeTag, programName.getProgram());
+      }
       Collection<String> metricsNameList = remoteMetricsSystemClient.search(queryTags);
       List<MetricTimeSeries> metricTimeSeriesList = new ArrayList<>(
         remoteMetricsSystemClient.query(startQueryTime, (int) (stopTs), queryTags, metricsNameList));
