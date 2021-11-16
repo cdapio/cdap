@@ -33,7 +33,7 @@ public class SupportBundleTaskStatus {
   // status for task (QUEUED/IN_PROGRESS/FINISHED/FAILED)
   private final CollectionState status;
   // if task was retried, number of retries, otherwise 0
-  private final Integer retries;
+  private final int retries;
   // array of subtasks (if any)
   @SerializedName("sub-tasks")
   private final List<SupportBundleTaskStatus> subTasks;
@@ -64,11 +64,11 @@ public class SupportBundleTaskStatus {
   }
 
   /**
-   * @param outdatedTaskStatus outdated task status
+   * @param previousTaskStatus outdated task status
    * @return Builder to create a SupportBundleTaskStatus, initialized with values from the specified existing status
    */
-  public static SupportBundleTaskStatus.Builder builder(SupportBundleTaskStatus outdatedTaskStatus) {
-    return new SupportBundleTaskStatus.Builder(outdatedTaskStatus);
+  public static SupportBundleTaskStatus.Builder builder(SupportBundleTaskStatus previousTaskStatus) {
+    return new SupportBundleTaskStatus.Builder(previousTaskStatus);
   }
 
   /**
@@ -88,12 +88,12 @@ public class SupportBundleTaskStatus {
       this.subTasks = new ArrayList<>();
     }
 
-    private Builder(SupportBundleTaskStatus outdatedTaskStatus) {
-      this.name = outdatedTaskStatus.getName();
-      this.type = outdatedTaskStatus.getType();
-      this.startTimestamp = outdatedTaskStatus.getStartTimestamp();
-      this.subTasks = outdatedTaskStatus.getSubTasks();
-      this.retries = outdatedTaskStatus.getRetries();
+    private Builder(SupportBundleTaskStatus previousTaskStatus) {
+      this.name = previousTaskStatus.getName();
+      this.type = previousTaskStatus.getType();
+      this.startTimestamp = previousTaskStatus.getStartTimestamp();
+      this.subTasks = previousTaskStatus.getSubTasks();
+      this.retries = previousTaskStatus.getRetries();
     }
 
     /**
@@ -161,9 +161,6 @@ public class SupportBundleTaskStatus {
       }
       if (type == null) {
         throw new IllegalArgumentException("Bundle task type must be specified.");
-      }
-      if (retries == null) {
-        throw new IllegalArgumentException("Bundle task retries must be specified.");
       }
       if (status == null) {
         throw new IllegalArgumentException("Bundle task status must be specified.");

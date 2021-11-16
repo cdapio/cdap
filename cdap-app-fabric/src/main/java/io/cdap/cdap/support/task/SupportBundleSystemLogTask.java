@@ -21,17 +21,14 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.DirUtils;
-import io.cdap.cdap.logging.gateway.handlers.RemoteProgramLogsFetcher;
+import io.cdap.cdap.logging.gateway.handlers.RemoteLogsFetcher;
 import io.cdap.cdap.proto.SystemServiceMeta;
 import io.cdap.cdap.support.handlers.RemoteMonitorServicesFetcher;
 import io.cdap.cdap.support.lib.SupportBundleFileNames;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Collects support bundle system log from data fusion instance.
@@ -39,15 +36,15 @@ import java.util.stream.Stream;
 public class SupportBundleSystemLogTask implements SupportBundleTask {
 
   private final File basePath;
-  private final RemoteProgramLogsFetcher remoteProgramLogsFetcher;
+  private final RemoteLogsFetcher remoteLogsFetcher;
   private final RemoteMonitorServicesFetcher remoteMonitorServicesFetcher;
   private final CConfiguration cConf;
 
   @Inject
-  public SupportBundleSystemLogTask(File basePath, RemoteProgramLogsFetcher remoteProgramLogsFetcher,
+  public SupportBundleSystemLogTask(File basePath, RemoteLogsFetcher remoteLogsFetcher,
                                     CConfiguration cConf, RemoteMonitorServicesFetcher remoteMonitorServicesFetcher) {
     this.basePath = basePath;
-    this.remoteProgramLogsFetcher = remoteProgramLogsFetcher;
+    this.remoteLogsFetcher = remoteLogsFetcher;
     this.remoteMonitorServicesFetcher = remoteMonitorServicesFetcher;
     this.cConf = cConf;
   }
@@ -65,13 +62,9 @@ public class SupportBundleSystemLogTask implements SupportBundleTask {
       long currentTimeMillis = System.currentTimeMillis();
       long fromMillis =
         currentTimeMillis - TimeUnit.DAYS.toMillis(cConf.getInt(Constants.SupportBundle.SYSTEM_LOG_START_TIME));
-      try (FileWriter file = new FileWriter(
-        new File(systemLogPath, serviceMeta.getName() + SupportBundleFileNames.SYSTEMLOG_SUFFIX_NAME))) {
-        Stream<String> systemLog =
-          remoteProgramLogsFetcher.getProgramSystemLog(componentId, serviceMeta.getName(), fromMillis / 1000,
-                                                       currentTimeMillis / 1000);
-        file.write(systemLog.collect(Collectors.joining()));
-      }
+      File file = new File(systemLogPath, serviceMeta.getName() + SupportBundleFileNames.SYSTEMLOG_SUFFIX_NAME);
+      remoteLogsFetcher.getSystemServiceLog(componentId, serviceMeta.getName(), fromMillis / 1000,
+                                            currentTimeMillis / 1000, file);
     }
   }
 }
