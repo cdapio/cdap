@@ -44,7 +44,7 @@ import java.util.Map;
 @Name(FieldCountReducibleAggregator.NAME)
 public class FieldCountReducibleAggregator
   extends BatchReducibleAggregator<Object, StructuredRecord, StructuredRecord, StructuredRecord> {
-  public static final String NAME = "FieldCount Aggregator";
+  public static final String NAME = "FieldCountReducibleAggregator";
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private static final Schema REDUCE_SCHEMA =
     Schema.recordOf("record", Schema.Field.of("fc", Schema.of(Schema.Type.LONG)));

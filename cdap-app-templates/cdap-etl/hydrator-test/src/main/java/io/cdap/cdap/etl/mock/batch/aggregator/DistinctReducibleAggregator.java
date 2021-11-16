@@ -45,12 +45,9 @@ import javax.annotation.Nullable;
  */
 @Plugin(type = BatchReducibleAggregator.PLUGIN_TYPE)
 @Name(DistinctReducibleAggregator.NAME)
-@Description(DistinctReducibleAggregator.DESCRIPTION)
 public class DistinctReducibleAggregator
   extends BatchReducibleAggregator<StructuredRecord, StructuredRecord, StructuredRecord, StructuredRecord> {
-  public static final String NAME = "Distinct Aggregator";
-  public static final String DESCRIPTION = "Deduplicates input records so that only provided fields are used to " +
-    "apply distinction on while other fields are projected out.";
+  public static final String NAME = "DistinctReducibleAggregator";
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Conf config;
   private Iterable<String> fields;
@@ -131,7 +128,6 @@ public class DistinctReducibleAggregator
    * Plugin Configuration.
    */
   public static class Conf extends PluginConfig {
-    @Description("Comma-separated list of fields to perform the distinct on.")
     private String fields;
 
     @Nullable
@@ -157,11 +153,10 @@ public class DistinctReducibleAggregator
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
-    properties.put("fields", new PluginPropertyField(
-      "fields", "Comma-separated list of fields to perform the distinct on.", "string", true, false));
+    properties.put("fields", new PluginPropertyField("fields", "", "string", true, false));
     properties.put("partitions", new PluginPropertyField("partitions", "", "int", false, false));
     return PluginClass.builder().setName(NAME).setType(BatchReducibleAggregator.PLUGIN_TYPE)
-             .setDescription(DESCRIPTION).setClassName(DistinctReducibleAggregator.class.getName())
+             .setDescription("").setClassName(DistinctReducibleAggregator.class.getName())
              .setConfigFieldName("config").setProperties(properties).build();
   }
 }
