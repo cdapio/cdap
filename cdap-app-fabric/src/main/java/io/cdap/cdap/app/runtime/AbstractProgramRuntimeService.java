@@ -149,9 +149,13 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
   @Override
   public final RuntimeInfo run(ProgramDescriptor programDescriptor, ProgramOptions options, RunId runId) {
+    LOG.info("Inside abstract program runtime service");
     ProgramId programId = programDescriptor.getProgramId();
+    LOG.info("Got program ID - {}", programId);
     ProgramRunId programRunId = programId.run(runId);
+    LOG.info("Got program run ID - {}", programRunId);
     ClusterMode clusterMode = ProgramRunners.getClusterMode(options);
+    LOG.info("Got cluster mode - {}", clusterMode);
 
     // Creates the ProgramRunner based on the cluster mode
     ProgramRunner runner = (clusterMode == ClusterMode.ON_PREMISE
@@ -159,12 +163,17 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       : Optional.ofNullable(remoteProgramRunnerFactory).orElseThrow(UnsupportedOperationException::new)
     ).create(programId.getType());
 
-
+    LOG.info("Got program runner");
     File tempDir = createTempDirectory(programId, runId);
+    LOG.info("Creating clean up task now");
     AtomicReference<Runnable> cleanUpTaskRef = new AtomicReference<>(createCleanupTask(tempDir, runner));
+    LOG.info("Cleaned up dirs, creating delayed program controller now");
     DelayedProgramController controller = new DelayedProgramController(programRunId);
+    LOG.info("created controller");
     RuntimeInfo runtimeInfo = createRuntimeInfo(controller, programId, () -> cleanUpTaskRef.get().run());
+    LOG.info("created runtime info");
     updateRuntimeInfo(runtimeInfo);
+    LOG.info("updated runtime info");
 
     executor.execute(() -> {
       try {
@@ -176,18 +185,26 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
         // Take a snapshot of all the plugin artifacts used by the program
         ProgramOptions optionsWithPlugins = createPluginSnapshot(runtimeProgramOptions, programId, tempDir,
                                                                  programDescriptor.getApplicationSpecification());
+        LOG.info("created plugin snapshot");
 
         // Create and run the program
         Program executableProgram = createProgram(cConf, runner, programDescriptor, artifactDetail, tempDir);
         cleanUpTaskRef.set(createCleanupTask(cleanUpTaskRef.get(), executableProgram));
+        LOG.info("added cleanup task ref");
 
         controller.setProgramController(runner.run(executableProgram, optionsWithPlugins));
+        LOG.info("finished setting program controller");
       } catch (Exception e) {
         controller.failed(e);
         programStateWriter.error(programRunId, e);
         LOG.error("Exception while trying to run program", e);
       }
     });
+    LOG.info("all good with run, returning runtime info now");
+    LOG.info("runtime info program type - {}", runtimeInfo.getType());
+    LOG.info("runtime info program ID - {}", runtimeInfo.getProgramId());
+    LOG.info("runtime info program controller - {}", runtimeInfo.getController());
+    LOG.info("runtime info twill id - {}", runtimeInfo.getTwillRunId());
     return runtimeInfo;
   }
 
@@ -258,6 +275,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
           LOG.warn("Exception when cleaning up resource {}", resource, t);
         }
       }
+      LOG.info("Cleaned up successfully");
     };
   }
 

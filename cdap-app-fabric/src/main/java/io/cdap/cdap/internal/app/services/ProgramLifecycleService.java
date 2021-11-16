@@ -650,10 +650,12 @@ public class ProgramLifecycleService {
    */
   ProgramController startInternal(ProgramDescriptor programDescriptor,
                                   ProgramOptions programOptions, ProgramRunId programRunId) {
+    LOG.info("Inside program lifecycle service");
     RunId runId = RunIds.fromString(programRunId.getRun());
 
     synchronized (this) {
       RuntimeInfo runtimeInfo = runtimeService.lookup(programRunId.getParent(), runId);
+      LOG.info("Got some runtime info");
       if (runtimeInfo != null) {
         return runtimeInfo.getController();
       }

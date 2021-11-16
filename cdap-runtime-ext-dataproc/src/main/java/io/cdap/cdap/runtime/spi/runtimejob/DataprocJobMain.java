@@ -119,7 +119,9 @@ public class DataprocJobMain {
         Class<?> runEnvCls = newCL.loadClass(RuntimeJobEnvironment.class.getName());
         Class<?> runnerCls = newCL.loadClass(runtimeJobClassName);
         Method runMethod = runnerCls.getMethod("run", runEnvCls);
-        Method stopMethod = runnerCls.getMethod("requestStop");
+        LOG.info("Calling new request stop method");
+        Method stopMethod = runnerCls.getMethod("requestStop", long.class);
+        LOG.info("Request stop method called successfully");
 
         Object runner = runnerCls.newInstance();
 
@@ -129,7 +131,8 @@ public class DataprocJobMain {
             return;
           }
           try {
-            stopMethod.invoke(runner);
+            long testValue = (long) stopMethod.invoke(runner, 30);
+            LOG.info("Timeout value - {}", testValue);
           } catch (Exception e) {
             LOG.error("Exception raised when calling {}.stop()", runtimeJobClassName, e);
           }

@@ -16,12 +16,14 @@
 
 package io.cdap.cdap.internal.app.runtime.monitor;
 
+import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
 import com.google.common.net.HttpHeaders;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.messaging.Message;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
@@ -118,6 +120,38 @@ public class RuntimeClient {
     } finally {
       closeURLConnection(urlConn);
     }
+  }
+
+  /**
+   * This method should call the runtime handler method to check if it should shutdown gracefuly
+   */
+  public long checkIfProgramShouldBeStopped(ProgramRunId programRunId, TopicId topicId,
+                                            Iterator<Message> messagesIterator)
+    throws IOException, BadRequestException {
+    // TODO get the timeout value from the runtime handler
+    // Get if shutdown should be graceful
+    // based on the timeout value trigger a stop by calling dataprocRuntimeJobManager.stop()
+    /*programRunId = NamespaceId.DEFAULT.app("app").workflow("workflow").run(RunIds.generate());
+    topicId = NamespaceId.SYSTEM.topic("topic");
+
+    List<Message> messages = new ArrayList<>();
+    String messageId = RunIds.generate().getId();
+    int size = Math.max(1, RuntimeClient.CHUNK_SIZE / 4);
+    byte[] payload = Strings.repeat("m", size).getBytes(StandardCharsets.UTF_8);
+    Message message = new Message() {
+      @Override
+      public String getId() {
+        return messageId;
+      }
+
+      @Override
+      public byte[] getPayload() {
+        return payload;
+      }
+    };
+    messages.add(message);
+    sendMessages(programRunId, topicId, messages.iterator());*/
+    return 61;
   }
 
   /**

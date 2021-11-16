@@ -84,6 +84,8 @@ class RemoteExecutionService extends AbstractRetryableScheduledService {
       // Periodically check the liveness. We allow one non-running to pass to accommodate for the delay
       // of TMS messages relay from the remote runtime back to CDAP.
       if (!processController.isRunning() && ++notRunningCount > 1) {
+        LOG.info("Is process controller running? - {}", processController.isRunning());
+        LOG.info("notRunningCount - {}", notRunningCount);
         LOG.debug("Program {} is not running", programRunId);
         programStateWriter.error(programRunId, new IllegalStateException("Program terminated " + programRunId));
         stop();

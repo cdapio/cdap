@@ -144,6 +144,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
   private final CompletableFuture<ProgramController> controllerFuture = new CompletableFuture<>();
   private final CountDownLatch runCompletedLatch = new CountDownLatch(1);
   private volatile boolean stopRequested;
+  private RuntimeClientService runtimeClientService;
 
   @Override
   public void run(RuntimeJobEnvironment runtimeJobEnv) throws Exception {
@@ -254,8 +255,12 @@ public class DefaultRuntimeJob implements RuntimeJob {
   }
 
   @Override
-  public void requestStop() {
+  public void requestStop(long timeout) {
     try {
+      LOG.info("Default timeout value is {}", timeout);
+      // call the runtime client service here
+      timeout = runtimeClientService.getStoppingTimeoutInSeconds();
+      LOG.info("Successfully got the stopping timeout - {}", timeout);
       stopRequested = true;
       ProgramController controller = Uninterruptibles.getUninterruptibly(controllerFuture);
       if (!controller.getState().isDone()) {
@@ -405,7 +410,8 @@ public class DefaultRuntimeJob implements RuntimeJob {
     if (injector.getInstance(RuntimeMonitorType.class) == RuntimeMonitorType.SSH) {
       services.add(injector.getInstance(TrafficRelayService.class));
     }
-    services.add(injector.getInstance(RuntimeClientService.class));
+    runtimeClientService = injector.getInstance(RuntimeClientService.class);
+    services.add(runtimeClientService);
 
     // Creates a service to emit profile metrics
     ProgramRunId programRunId = injector.getInstance(ProgramRunId.class);

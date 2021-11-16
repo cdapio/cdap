@@ -144,6 +144,13 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
     return programFinishTime;
   }
 
+  public long getStoppingTimeoutInSeconds() throws BadRequestException, IOException {
+    LOG.info("Calling runtime client to get stopping timeout");
+    long timeout = runtimeClient.checkIfProgramShouldBeStopped(null, null, null);
+    LOG.info("Got the stopping timeout value - {}", timeout);
+    return timeout;
+  }
+
   /**
    * Creates an instance of {@link TopicRelayer} based on the topic.
    */
