@@ -60,7 +60,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
+ * Support bundle service tests.
  */
 public class SupportBundleServiceTest extends AppFabricTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(SupportBundleService.class);

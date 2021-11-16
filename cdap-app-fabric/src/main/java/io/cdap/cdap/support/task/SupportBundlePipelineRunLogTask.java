@@ -56,7 +56,7 @@ public class SupportBundlePipelineRunLogTask implements SupportBundleTask {
       File file = new File(appFolderPath, runId + SupportBundleFileNames.LOG_SUFFIX_NAME);
       long currentTimeMillis = System.currentTimeMillis();
       long fromMillis = 0;
-      remoteLogsFetcher.getProgramRunLogs(programName, runId, fromMillis, currentTimeMillis / 1000, file);
+      remoteLogsFetcher.writeProgramRunLogs(programName, runId, fromMillis, currentTimeMillis / 1000, file);
     }
   }
 }

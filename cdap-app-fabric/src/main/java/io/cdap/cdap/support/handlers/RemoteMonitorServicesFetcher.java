@@ -36,6 +36,8 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.List;
 
+import static io.cdap.cdap.common.conf.Constants.SupportBundle.SYSTEM_LOG_SERVICE_URL;
+
 /**
  * Fetch Program logs via internal REST API calls
  */
@@ -53,15 +55,15 @@ public class RemoteMonitorServicesFetcher {
    * Lists all system services.
    *
    * @return list of {@link SystemServiceMeta}s.
-   * @throws IOException if a network error occurred
+   * @throws IOException              if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public Iterable<SystemServiceMeta> listSystemServices() throws NotFoundException, IOException {
-    String url = "system/services";
-    HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
+    HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, SYSTEM_LOG_SERVICE_URL);
     HttpResponse response;
     response = execute(requestBuilder.build());
-    return ObjectResponse.fromJsonBody(response, new TypeToken<List<SystemServiceMeta>>() { }).getResponseObject();
+    return ObjectResponse.fromJsonBody(response, new TypeToken<List<SystemServiceMeta>>() {
+    }).getResponseObject();
   }
 
   private HttpResponse execute(HttpRequest request) throws IOException, NotFoundException, UnauthorizedException {
@@ -70,7 +72,8 @@ public class RemoteMonitorServicesFetcher {
       throw new NotFoundException(httpResponse.getResponseBodyAsString());
     }
     if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
-      throw new IOException(String.format("Request failed %s", httpResponse.getResponseBodyAsString()));
+      throw new IOException(String.format("Request failed %s with code %d ", httpResponse.getResponseBodyAsString(),
+                                          httpResponse.getResponseCode()));
     }
     return httpResponse;
   }

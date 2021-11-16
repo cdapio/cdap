@@ -121,14 +121,14 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
         String runtimeInfoClassName = supportBundleRuntimeInfoTask.getClass().getName();
         String runtimeInfoTaskName =
           uuid.concat(": ").concat(runtimeInfoClassName).concat(": ").concat(appDetail.getName());
-        supportBundleJob.processSubTask(runtimeInfoTaskName, runtimeInfoClassName, supportBundleRuntimeInfoTask,
-                                        basePath.getPath());
+        supportBundleJob.executeTask(supportBundleRuntimeInfoTask, basePath.getPath(), runtimeInfoTaskName,
+                                     runtimeInfoTaskName);
 
         String runtimeLogClassName = supportBundlePipelineRunLogTask.getClass().getName();
         String runtimeLogTaskName =
           uuid.concat(": ").concat(runtimeLogClassName).concat(": ").concat(appDetail.getName());
-        supportBundleJob.processSubTask(runtimeLogTaskName, runtimeLogClassName, supportBundlePipelineRunLogTask,
-                                        basePath.getPath());
+        supportBundleJob.executeTask(supportBundlePipelineRunLogTask, basePath.getPath(), runtimeLogTaskName,
+                                     runtimeLogClassName);
       }
     }
   }

@@ -63,7 +63,7 @@ public class SupportBundleSystemLogTask implements SupportBundleTask {
       long fromMillis =
         currentTimeMillis - TimeUnit.DAYS.toMillis(cConf.getInt(Constants.SupportBundle.SYSTEM_LOG_START_TIME));
       File file = new File(systemLogPath, serviceMeta.getName() + SupportBundleFileNames.SYSTEMLOG_SUFFIX_NAME);
-      remoteLogsFetcher.getSystemServiceLog(componentId, serviceMeta.getName(), fromMillis / 1000,
+      remoteLogsFetcher.writeSystemServiceLog(componentId, serviceMeta.getName(), fromMillis / 1000,
                                             currentTimeMillis / 1000, file);
     }
   }

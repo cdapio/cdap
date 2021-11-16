@@ -84,9 +84,7 @@ public class SupportBundleJob {
       for (SupportBundleTask supportBundleTask : supportBundleTasks) {
         String className = supportBundleTask.getClass().getName();
         String taskName = bundleTaskConfig.getUuid().concat(": ").concat(className);
-        processSubTask(taskName, className, supportBundleTask, basePath.getPath());
-        SupportBundleTaskStatus taskStatus = initializeTask(taskName, className, basePath.getPath());
-        executeTask(taskStatus, supportBundleTask, basePath.getPath(), className, taskName);
+        executeTask(supportBundleTask, basePath.getPath(), taskName, className);
       }
       completeProcessing(basePath.getPath());
     } catch (Exception e) {
@@ -95,11 +93,11 @@ public class SupportBundleJob {
   }
 
   /**
-   * Initialize the executor for each task to generate support bundle files
+   * Execute each task to generate support bundle files
    */
-  public void executeTask(SupportBundleTaskStatus taskStatus, SupportBundleTask supportBundleTask, String basePath,
-                          String className, String taskName) {
-    executeTask(taskStatus, supportBundleTask, basePath, className, taskName, 0);
+  public void executeTask(SupportBundleTask supportBundleTask, String basePath, String taskName, String taskType) {
+    SupportBundleTaskStatus taskStatus = initializeTask(taskName, taskType, basePath);
+    executeTask(taskStatus, supportBundleTask, basePath, taskName, taskType, 0);
   }
 
   /**
@@ -128,11 +126,6 @@ public class SupportBundleJob {
     addToStatus(finishBundleStatus, basePath);
   }
 
-  public void processSubTask(String taskName, String taskType, SupportBundleTask supportBundleTask, String basePath) {
-    SupportBundleTaskStatus runtimeInfoTaskStatus = initializeTask(taskName, taskType, basePath);
-    executeTask(runtimeInfoTaskStatus, supportBundleTask, basePath, taskType, taskName);
-  }
-
   /**
    * Start a new status task
    */
@@ -152,7 +145,7 @@ public class SupportBundleJob {
    * Execute each task to generate support bundle files with accumulate retryCount
    */
   private void executeTask(SupportBundleTaskStatus taskStatus, SupportBundleTask supportBundleTask, String basePath,
-                           String className, String taskName, int retryCount) {
+                           String taskName, String taskType, int retryCount) {
     AtomicLong startTimeStore = new AtomicLong(0L);
     AtomicReference<SupportBundleTaskStatus> latestTaskStatus = new AtomicReference<>(taskStatus);
     Future<SupportBundleTaskStatus> futureService = executor.submit(() -> {
@@ -164,7 +157,7 @@ public class SupportBundleJob {
         latestTaskStatus.set(updateTask(latestTaskStatus.get(), basePath, CollectionState.FINISHED));
       } catch (Exception e) {
         LOG.warn("Failed to execute task with supportBundleTask {} ", taskName, e);
-        executeTaskAgainAfterFailed(supportBundleTask, className, taskName, latestTaskStatus.get(), basePath,
+        executeTaskAgainAfterFailed(supportBundleTask, taskName, taskType, latestTaskStatus.get(), basePath,
                                     retryCount + 1);
       }
       return latestTaskStatus.get();
@@ -208,7 +201,7 @@ public class SupportBundleJob {
   /**
    * Queue the task again after exception
    */
-  private void executeTaskAgainAfterFailed(SupportBundleTask supportBundleTask, String className, String taskName,
+  private void executeTaskAgainAfterFailed(SupportBundleTask supportBundleTask, String taskName, String taskType,
                                            SupportBundleTaskStatus taskStatus, String basePath, int retryCount) {
     if (retryCount >= maxRetries) {
       LOG.error("The task has reached maximum times of retries {} ", taskName);
@@ -219,7 +212,7 @@ public class SupportBundleJob {
       supportBundleStatus.getTasks().remove(taskStatus);
       supportBundleStatus.getTasks().add(updatedTaskStatus);
       addToStatus(supportBundleStatus, basePath);
-      executeTask(taskStatus, supportBundleTask, basePath, className, taskName, retryCount);
+      executeTask(taskStatus, supportBundleTask, basePath, taskType, taskName, retryCount);
     }
   }
 

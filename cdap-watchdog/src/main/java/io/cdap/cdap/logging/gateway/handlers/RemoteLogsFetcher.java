@@ -66,15 +66,16 @@ public class RemoteLogsFetcher implements LogsFetcher {
    *                                  server
    */
   @Override
-  public void getProgramRunLogs(ProgramId program, String runId, long start, long stop, File file)
+  public void writeProgramRunLogs(ProgramId program, String runId, long start, long stop, File file)
     throws IOException, UnauthenticatedException, UnauthorizedException {
 
     String path = String.format("namespaces/%s/apps/%s/%s/%s/runs/%s/logs?start=%d&stop=%d",
                                 program.getNamespaceId().getNamespace(), program.getApplication(),
                                 program.getType().getCategoryName(), program.getProgram(), runId, start, stop);
-    FileChannel channel = new FileOutputStream(file, false).getChannel();
-    URL url = remoteClient.resolve(path);
-    execute(url, channel, file);
+    try (FileChannel channel = new FileOutputStream(file, false).getChannel()) {
+      URL url = remoteClient.resolve(path);
+      execute(url, channel, file);
+    }
   }
 
   /**
@@ -90,12 +91,13 @@ public class RemoteLogsFetcher implements LogsFetcher {
    *                                  server
    */
   @Override
-  public void getSystemServiceLog(String componentId, String serviceId, long start, long stop, File file)
+  public void writeSystemServiceLog(String componentId, String serviceId, long start, long stop, File file)
     throws IOException, UnauthenticatedException, UnauthorizedException {
     String path = String.format("system/%s/%s/logs?start=%d&stop=%d", componentId, serviceId, start, stop);
-    FileChannel channel = new FileOutputStream(file, false).getChannel();
-    URL url = remoteClient.resolve(path);
-    execute(url, channel, file);
+    try (FileChannel channel = new FileOutputStream(file, false).getChannel()) {
+      URL url = remoteClient.resolve(path);
+      execute(url, channel, file);
+    }
   }
 
   private void execute(URL url, FileChannel channel, File destination) throws IOException, UnauthorizedException {

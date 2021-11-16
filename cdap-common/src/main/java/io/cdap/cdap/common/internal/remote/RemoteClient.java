@@ -25,8 +25,6 @@ import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.security.HttpsEnabler;
-import io.cdap.cdap.common.service.Retries;
-import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpContentConsumer;
 import io.cdap.common.http.HttpMethod;
@@ -36,8 +34,6 @@ import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -57,9 +53,6 @@ import javax.net.ssl.HttpsURLConnection;
 public class RemoteClient {
 
   public static final String RUNTIME_SERVICE_ROUTING_BASE_URI = "cdap.runtime.service.routing.base.uri";
-  private static final Logger LOG = LoggerFactory.getLogger(RemoteClient.class);
-  private static final int RETRY_LIMIT = 5;
-  private static final int RETRY_DELAY = 5;
 
   private final InternalAuthenticator internalAuthenticator;
   private final EndpointStrategy endpointStrategy;
@@ -108,7 +101,7 @@ public class RemoteClient {
    *
    * @param request the request to perform
    * @return the response
-   * @throws IOException                 if there was an IOException while performing the request
+   * @throws IOException if there was an IOException while performing the request
    * @throws ServiceUnavailableException if there was a ConnectException while making the request, or if the response
    *                                     was a 503
    */
@@ -166,19 +159,13 @@ public class RemoteClient {
     HttpRequest httpRequest =
       new HttpRequest(request.getMethod(), rewrittenURL, headers, request.getBody(), request.getBodyLength(),
                       request.getConsumer());
-    Retries.callWithRetries(() -> {
-      HttpResponse httpResponse = HttpRequests.execute(httpRequest, httpRequestConfig);
+    HttpResponse httpResponse = HttpRequests.execute(httpRequest, httpRequestConfig);
 
-      if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
-        throw new IOException(httpResponse.getResponseBodyAsString());
-      }
-      try {
-        httpResponse.consumeContent();
-      } catch (Exception e) {
-        LOG.warn("No content from http response ", e);
-      }
-      return null;
-    }, RetryStrategies.limit(RETRY_LIMIT, RetryStrategies.fixDelay(RETRY_DELAY, TimeUnit.SECONDS)));
+    if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
+      throw new IOException(String.format("Request failed %s with code %d ", httpResponse.getResponseBodyAsString(),
+                                          httpResponse.getResponseCode()));
+    }
+    httpResponse.consumeContent();
   }
 
   /**
