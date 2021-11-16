@@ -108,9 +108,6 @@ public class MetricsClientTestRun extends ClientTestBase {
       Assert.assertEquals("run", tags.get(0).getName());
 
       List<String> metrics = metricsClient.searchMetrics(MetricsTags.service(service));
-      for (String me : metrics) {
-        System.out.println("printout metrics: " + me);
-      }
       Assert.assertTrue(metrics.contains(Constants.Metrics.Name.Service.SERVICE_INPUT));
     } finally {
       programClient.stop(service);
