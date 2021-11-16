@@ -70,11 +70,11 @@ public class SupportBundleStatus {
   }
 
   /**
-   * @param outdatedStatus outdated status
+   * @param previousStatus outdated status
    * @return Builder to create a SupportBundleStatus, initialized with values from the specified existing status
    */
-  public static SupportBundleStatus.Builder builder(SupportBundleStatus outdatedStatus) {
-    return new SupportBundleStatus.Builder(outdatedStatus);
+  public static SupportBundleStatus.Builder builder(SupportBundleStatus previousStatus) {
+    return new SupportBundleStatus.Builder(previousStatus);
   }
 
   /**
@@ -93,11 +93,11 @@ public class SupportBundleStatus {
       this.tasks = Collections.newSetFromMap(new ConcurrentHashMap<>());
     }
 
-    private Builder(SupportBundleStatus outdatedStatus) {
-      this.bundleId = outdatedStatus.getBundleId();
-      this.startTimestamp = outdatedStatus.getStartTimestamp();
-      this.parameters = outdatedStatus.getParameters();
-      this.tasks = outdatedStatus.getTasks();
+    private Builder(SupportBundleStatus previousStatus) {
+      this.bundleId = previousStatus.getBundleId();
+      this.startTimestamp = previousStatus.getStartTimestamp();
+      this.parameters = previousStatus.getParameters();
+      this.tasks = previousStatus.getTasks();
     }
 
     /**
