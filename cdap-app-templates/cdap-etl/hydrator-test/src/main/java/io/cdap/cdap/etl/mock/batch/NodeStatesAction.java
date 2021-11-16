@@ -17,25 +17,34 @@
 package io.cdap.cdap.etl.mock.batch;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.dataset.table.Put;
 import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginConfig;
+import io.cdap.cdap.api.plugin.PluginPropertyField;
 import io.cdap.cdap.api.workflow.WorkflowNodeState;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchActionContext;
+import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.batch.PostAction;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Ending action writes the workflow's node states to a Table.
  */
 @Plugin(type = PostAction.PLUGIN_TYPE)
-@Name("TokenWriter")
+@Name(NodeStatesAction.NAME)
 public class NodeStatesAction extends PostAction {
+
+  public static final String NAME = "TokenWriter";
+  public static final PluginClass PLUGIN_CLASS = getPluginClass();
+
   private final Conf conf;
 
   public NodeStatesAction(Conf conf) {
@@ -62,6 +71,20 @@ public class NodeStatesAction extends PostAction {
 
   public static ETLPlugin getPlugin(String tableName) {
     return new ETLPlugin("TokenWriter", PostAction.PLUGIN_TYPE, ImmutableMap.of("tableName", tableName), null);
+  }
+
+  private static PluginClass getPluginClass() {
+    Map<String, PluginPropertyField> properties = new HashMap<>();
+    properties.put("tableName", new PluginPropertyField("tableName", "", "string", true, false));
+
+    return PluginClass.builder()
+      .setName(NodeStatesAction.NAME)
+      .setType(PostAction.PLUGIN_TYPE)
+      .setDescription("")
+      .setClassName(NodeStatesAction.class.getName())
+      .setProperties(properties)
+      .setConfigFieldName("conf")
+      .build();
   }
 
   /**
