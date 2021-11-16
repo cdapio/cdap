@@ -30,6 +30,7 @@ import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.logging.gateway.handlers.RemoteLogsFetcher;
+import io.cdap.cdap.logging.gateway.handlers.RemoteProgramRunRecordFetcher;
 import io.cdap.cdap.logging.gateway.handlers.RemoteProgramRunRecordsFetcher;
 import io.cdap.cdap.metadata.RemoteApplicationDetailFetcher;
 import io.cdap.cdap.metrics.process.RemoteMetricsSystemClient;
@@ -87,6 +88,7 @@ public class SupportBundlePipelineInfoTaskTest extends AppFabricTestBase {
   private static RemoteProgramRunRecordsFetcher remoteProgramRunRecordsFetcher;
   private static RemoteMetricsSystemClient remoteMetricsSystemClient;
   private static RemoteApplicationDetailFetcher remoteApplicationDetailFetcher;
+  private static RemoteProgramRunRecordFetcher remoteProgramRunRecordFetcher;
   private static String workflowName;
   private static String application;
   private static ProgramType programType;
@@ -105,7 +107,7 @@ public class SupportBundlePipelineInfoTaskTest extends AppFabricTestBase {
     remoteProgramRunRecordsFetcher = injector.getInstance(RemoteProgramRunRecordsFetcher.class);
     remoteMetricsSystemClient = injector.getInstance(RemoteMetricsSystemClient.class);
     remoteApplicationDetailFetcher = injector.getInstance(RemoteApplicationDetailFetcher.class);
-
+    remoteProgramRunRecordFetcher = injector.getInstance(RemoteProgramRunRecordFetcher.class);
     workflowName = AppWithWorkflow.SampleWorkflow.NAME;
     application = AppWithWorkflow.NAME;
     programType = ProgramType.valueOfCategoryName("workflows");
@@ -130,10 +132,10 @@ public class SupportBundlePipelineInfoTaskTest extends AppFabricTestBase {
     SupportBundleJob supportBundleJob =
       new SupportBundleJob(supportBundleTaskFactorySet, executorService, configuration, supportBundleStatus);
     SupportBundlePipelineInfoTask supportBundlePipelineInfoTask =
-      new SupportBundlePipelineInfoTask(uuid, Collections.singletonList(namespaceId), application, uuidFile,
+      new SupportBundlePipelineInfoTask(uuid, Collections.singletonList(namespaceId), application, null, uuidFile,
                                         remoteApplicationDetailFetcher, remoteProgramRunRecordsFetcher,
                                         remoteLogsFetcher, programType, workflowName, remoteMetricsSystemClient,
-                                        supportBundleJob, 1);
+                                        supportBundleJob, 1, remoteProgramRunRecordFetcher);
     supportBundlePipelineInfoTask.collect();
 
     Set<SupportBundleTaskStatus> supportBundleTaskStatusList = supportBundleStatus.getTasks();

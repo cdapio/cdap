@@ -132,9 +132,9 @@ public class SupportBundleJobTest extends AppFabricTestBase {
 
     ProgramId workflowProgram = new ProgramId(namespaceId.getNamespace(), AppWithWorkflow.NAME, ProgramType.WORKFLOW,
                                               AppWithWorkflow.SampleWorkflow.NAME);
-    RunId workflowRunId = RunIds.generate(startTime);
+
     ArtifactId artifactId = namespaceId.artifact("testArtifact", "1.0").toApiArtifactId();
-    setStartAndRunning(workflowProgram, workflowRunId.getId(), artifactId);
+    setStartAndRunning(workflowProgram, runId, artifactId);
 
     List<RunRecord> runs = getProgramRuns(workflowProgram, ProgramRunStatus.RUNNING);
     Assert.assertEquals(1, runs.size());
@@ -145,7 +145,7 @@ public class SupportBundleJobTest extends AppFabricTestBase {
 
     // workflow ran for 1 minute
     long workflowStopTime = TimeUnit.MILLISECONDS.toSeconds(startTime) + 60;
-    store.setStop(workflowProgram.run(workflowRunId.getId()), workflowStopTime, ProgramRunStatus.COMPLETED,
+    store.setStop(workflowProgram.run(runId), workflowStopTime, ProgramRunStatus.COMPLETED,
                   AppFabricTestHelper.createSourceId(++sourceId));
 
   }

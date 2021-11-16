@@ -18,6 +18,7 @@ package io.cdap.cdap.support.task.factory;
 
 import com.google.inject.Inject;
 import io.cdap.cdap.logging.gateway.handlers.RemoteLogsFetcher;
+import io.cdap.cdap.logging.gateway.handlers.RemoteProgramRunRecordFetcher;
 import io.cdap.cdap.logging.gateway.handlers.RemoteProgramRunRecordsFetcher;
 import io.cdap.cdap.metadata.RemoteApplicationDetailFetcher;
 import io.cdap.cdap.metrics.process.RemoteMetricsSystemClient;
@@ -34,26 +35,29 @@ public class SupportBundlePipelineInfoTaskFactory implements SupportBundleTaskFa
   private final RemoteLogsFetcher remoteLogsFetcher;
   private final RemoteApplicationDetailFetcher remoteApplicationDetailFetcher;
   private final RemoteMetricsSystemClient remoteMetricsSystemClient;
+  private final RemoteProgramRunRecordFetcher remoteProgramRunRecordFetcher;
 
   @Inject
   public SupportBundlePipelineInfoTaskFactory(RemoteProgramRunRecordsFetcher remoteProgramRunRecordsFetcher,
                                               RemoteLogsFetcher remoteLogsFetcher,
                                               RemoteApplicationDetailFetcher remoteApplicationDetailFetcher,
-                                              RemoteMetricsSystemClient remoteMetricsSystemClient) {
+                                              RemoteMetricsSystemClient remoteMetricsSystemClient,
+                                              RemoteProgramRunRecordFetcher remoteProgramRunRecordFetcher) {
     this.remoteProgramRunRecordsFetcher = remoteProgramRunRecordsFetcher;
     this.remoteLogsFetcher = remoteLogsFetcher;
     this.remoteApplicationDetailFetcher = remoteApplicationDetailFetcher;
     this.remoteMetricsSystemClient = remoteMetricsSystemClient;
+    this.remoteProgramRunRecordFetcher = remoteProgramRunRecordFetcher;
   }
 
   @Override
   public SupportBundlePipelineInfoTask create(SupportBundleTaskConfiguration taskConfiguration) {
     return new SupportBundlePipelineInfoTask(taskConfiguration.getUuid(), taskConfiguration.getNamespaces(),
-                                             taskConfiguration.getApp(), taskConfiguration.getBasePath(),
-                                             remoteApplicationDetailFetcher, remoteProgramRunRecordsFetcher,
-                                             remoteLogsFetcher, taskConfiguration.getProgramType(),
-                                             taskConfiguration.getProgramName(), remoteMetricsSystemClient,
-                                             taskConfiguration.getSupportBundleJob(),
-                                             taskConfiguration.getMaxRunsPerProgram());
+                                             taskConfiguration.getApp(), taskConfiguration.getRun(),
+                                             taskConfiguration.getBasePath(), remoteApplicationDetailFetcher,
+                                             remoteProgramRunRecordsFetcher, remoteLogsFetcher,
+                                             taskConfiguration.getProgramType(), taskConfiguration.getProgramName(),
+                                             remoteMetricsSystemClient, taskConfiguration.getSupportBundleJob(),
+                                             taskConfiguration.getMaxRunsPerProgram(), remoteProgramRunRecordFetcher);
   }
 }

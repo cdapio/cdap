@@ -36,8 +36,6 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.List;
 
-import static io.cdap.cdap.common.conf.Constants.SupportBundle.SYSTEM_LOG_SERVICE_URL;
-
 /**
  * Fetch Program logs via internal REST API calls
  */
@@ -59,7 +57,8 @@ public class RemoteMonitorServicesFetcher {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public Iterable<SystemServiceMeta> listSystemServices() throws NotFoundException, IOException {
-    HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, SYSTEM_LOG_SERVICE_URL);
+    HttpRequest.Builder requestBuilder =
+      remoteClient.requestBuilder(HttpMethod.GET, Constants.Monitor.SYSTEM_LOG_SERVICE_URL);
     HttpResponse response;
     response = execute(requestBuilder.build());
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<SystemServiceMeta>>() {

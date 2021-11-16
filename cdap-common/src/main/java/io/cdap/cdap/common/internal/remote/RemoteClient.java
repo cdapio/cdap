@@ -108,16 +108,7 @@ public class RemoteClient {
   public HttpResponse execute(HttpRequest request) throws IOException, UnauthorizedException {
     HttpRequest httpRequest = request;
     URL rewrittenURL = rewriteURL(request.getURL());
-    Multimap<String, String> headers = request.getHeaders();
-    headers = headers == null ? HashMultimap.create() : HashMultimap.create(headers);
-
-    // Add Authorization header and use a rewritten URL if needed
-    RemoteAuthenticator authenticator = getAuthenticator();
-    if (authenticator != null && headers.keySet().stream().noneMatch(HttpHeaders.AUTHORIZATION::equalsIgnoreCase)) {
-      setAuthHeader(headers::put, HttpHeaders.AUTHORIZATION, authenticator.getType(), authenticator.getCredentials());
-    }
-
-    internalAuthenticator.applyInternalAuthenticationHeaders(headers::put);
+    Multimap<String, String> headers = setHeader(request);
 
     httpRequest =
       new HttpRequest(request.getMethod(), rewrittenURL, headers, request.getBody(), request.getBodyLength());
@@ -145,16 +136,7 @@ public class RemoteClient {
    */
   public void executeStreamingRequest(HttpRequest request) throws IOException, UnauthorizedException {
     URL rewrittenURL = rewriteURL(request.getURL());
-    Multimap<String, String> headers = request.getHeaders();
-    headers = headers == null ? HashMultimap.create() : HashMultimap.create(headers);
-
-    // Add Authorization header and use a rewritten URL if needed
-    RemoteAuthenticator authenticator = getAuthenticator();
-    if (authenticator != null && headers.keySet().stream().noneMatch(HttpHeaders.AUTHORIZATION::equalsIgnoreCase)) {
-      setAuthHeader(headers::put, HttpHeaders.AUTHORIZATION, authenticator.getType(), authenticator.getCredentials());
-    }
-
-    internalAuthenticator.applyInternalAuthenticationHeaders(headers::put);
+    Multimap<String, String> headers = setHeader(request);
 
     HttpRequest httpRequest =
       new HttpRequest(request.getMethod(), rewrittenURL, headers, request.getBody(), request.getBodyLength(),
@@ -278,5 +260,19 @@ public class RemoteClient {
     // No need to synchronize as the get default method is thread safe and we don't need a singleton for authenticator
     this.authenticator = authenticator = RemoteAuthenticator.getDefaultAuthenticator();
     return authenticator;
+  }
+
+  private Multimap<String, String> setHeader(HttpRequest request) throws IOException {
+    Multimap<String, String> headers = request.getHeaders();
+    headers = headers == null ? HashMultimap.create() : HashMultimap.create(headers);
+
+    // Add Authorization header and use a rewritten URL if needed
+    RemoteAuthenticator authenticator = getAuthenticator();
+    if (authenticator != null && headers.keySet().stream().noneMatch(HttpHeaders.AUTHORIZATION::equalsIgnoreCase)) {
+      setAuthHeader(headers::put, HttpHeaders.AUTHORIZATION, authenticator.getType(), authenticator.getCredentials());
+    }
+
+    internalAuthenticator.applyInternalAuthenticationHeaders(headers::put);
+    return headers;
   }
 }
