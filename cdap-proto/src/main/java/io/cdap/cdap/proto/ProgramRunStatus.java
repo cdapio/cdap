@@ -33,6 +33,7 @@ public enum ProgramRunStatus {
   RUNNING,
   SUSPENDED,
   RESUMING,
+  STOPPING, // todo: CDAP-18743 Enhance canTransitionTo() with this state
   COMPLETED,
   FAILED,
   KILLED,
