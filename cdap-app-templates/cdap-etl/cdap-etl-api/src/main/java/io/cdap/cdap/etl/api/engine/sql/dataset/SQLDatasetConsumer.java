@@ -17,13 +17,12 @@
 package io.cdap.cdap.etl.api.engine.sql.dataset;
 
 /**
- * Represents a dataset that resides in a SQL engine outside of spark.
+ * SQL Dataset which exposes a method to get a consumer to be used to write
+ * records into the SQL engine.
+ *
+ * @param <T> the type of records this consumer will consume
  */
-public interface SQLDataset extends SQLDatasetDescription {
-
-  /**
-   * Get the number of rows stored in this dataset.
-   */
-  long getNumRows();
-
+public interface SQLDatasetConsumer<T> {
+  SQLDatasetDescription getDescription();
+  SQLDataset consume(RecordCollection<T> collection);
 }

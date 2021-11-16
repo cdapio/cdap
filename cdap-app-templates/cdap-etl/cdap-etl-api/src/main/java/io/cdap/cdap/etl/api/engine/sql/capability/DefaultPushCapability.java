@@ -14,16 +14,11 @@
  * the License.
  */
 
-package io.cdap.cdap.etl.api.engine.sql.dataset;
+package io.cdap.cdap.etl.api.engine.sql.capability;
 
-/**
- * Represents a dataset that resides in a SQL engine outside of spark.
- */
-public interface SQLDataset extends SQLDatasetDescription {
-
-  /**
-   * Get the number of rows stored in this dataset.
-   */
-  long getNumRows();
-
+public enum DefaultPushCapability implements PushCapability {
+    // Uses Hadoop API classes (OutputFormat) to write Spark RDDs into the SQL engine,
+    HADOOP_RDD_PUSH,
+    // Uses Spark RDD Operations to write records into the SQL engine.
+    SPARK_RDD_PUSH
 }

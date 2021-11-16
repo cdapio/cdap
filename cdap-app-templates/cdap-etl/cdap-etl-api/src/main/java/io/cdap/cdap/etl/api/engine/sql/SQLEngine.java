@@ -21,7 +21,11 @@ import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.etl.api.PipelineConfigurable;
 import io.cdap.cdap.etl.api.SubmitterLifecycle;
+import io.cdap.cdap.etl.api.engine.sql.capability.PullCapability;
+import io.cdap.cdap.etl.api.engine.sql.capability.PushCapability;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDataset;
+import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDatasetConsumer;
+import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDatasetProducer;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLPullDataset;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLPushDataset;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLJoinDefinition;
@@ -33,6 +37,10 @@ import io.cdap.cdap.etl.api.engine.sql.request.SQLTransformDefinition;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLTransformRequest;
 import io.cdap.cdap.etl.api.relational.Engine;
 import io.cdap.cdap.etl.api.relational.Relation;
+
+import java.util.Collections;
+import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * A SQL Engine can be used to pushdown certain dataset operations.
@@ -73,6 +81,38 @@ public interface SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT>
    */
   SQLPullDataset<StructuredRecord, KEY_IN, VALUE_IN> getPullProvider(SQLPullRequest pullRequest)
     throws SQLEngineException;
+
+  /**
+   * Creates a {@link SQLDatasetConsumer} for a given {@link SQLPushRequest} with support for
+   * a supplied{@link PushCapability}.
+   *
+   * If the return value is null, we must assume that the supplied {@link SQLPushRequest} is not supported
+   * for this capability.
+   *
+   * @param pushRequest push request used to create a consumer
+   * @param capability the push capability we wish to use to upload
+   * @return a dataset consumer for this request using the specified capability.
+   */
+  @Nullable
+  default SQLDatasetConsumer<StructuredRecord> getConsumer(SQLPushRequest pushRequest, PushCapability capability) {
+    return null;
+  }
+
+  /**
+   * Creates a {@link SQLDatasetProducer} for a given {@link SQLPullRequest} with support for
+   * a supplied {@link PullCapability}.
+   *
+   * If the return value is null, we must assume that the supplied {@link SQLPullRequest} is not supported
+   * for this capability.
+   *
+   * @param pullRequest pull request used to create a producer
+   * @param capability the capability we want to use to upload
+   * @return a dataset consumer for this request using the specified capability.
+   */
+  @Nullable
+  default SQLDatasetProducer<StructuredRecord> getProducer(SQLPullRequest pullRequest, PullCapability capability) {
+    return null;
+  }
 
   /**
    * Check if this dataset exists in the SQL Engine.
@@ -159,5 +199,21 @@ public interface SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT>
   default SQLDataset transform(SQLTransformRequest context)
     throws SQLEngineException {
     throw new UnsupportedOperationException("Relational transform is not supported by the engine");
+  }
+
+  /**
+   * Defines pull capabilities supported by this SQL Engine
+   * @return Set detailing pull capabilities supported by this engine.
+   */
+  default Set<PullCapability> getPullCapabilities() {
+    return Collections.emptySet();
+  }
+
+  /**
+   * Defines push capabilities supported by this SQL Engine
+   * @return Set detailing push capabilities supported by this engine.
+   */
+  default Set<PushCapability> getPushCapabilities() {
+    return Collections.emptySet();
   }
 }

@@ -14,16 +14,10 @@
  * the License.
  */
 
-package io.cdap.cdap.etl.api.engine.sql.dataset;
+package io.cdap.cdap.etl.api.engine.sql.capability;
 
 /**
- * Represents a dataset that resides in a SQL engine outside of spark.
+ * Marker interface which denotes capabilities exposed by the SQL engine to handle push operations.
  */
-public interface SQLDataset extends SQLDatasetDescription {
-
-  /**
-   * Get the number of rows stored in this dataset.
-   */
-  long getNumRows();
-
+public interface PushCapability {
 }

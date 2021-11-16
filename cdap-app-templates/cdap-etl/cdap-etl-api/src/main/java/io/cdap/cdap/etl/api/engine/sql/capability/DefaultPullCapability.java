@@ -14,16 +14,11 @@
  * the License.
  */
 
-package io.cdap.cdap.etl.api.engine.sql.dataset;
+package io.cdap.cdap.etl.api.engine.sql.capability;
 
-/**
- * Represents a dataset that resides in a SQL engine outside of spark.
- */
-public interface SQLDataset extends SQLDatasetDescription {
-
-  /**
-   * Get the number of rows stored in this dataset.
-   */
-  long getNumRows();
-
+public enum DefaultPullCapability implements PullCapability {
+    // Uses Hadoop API classes (InputFormat) to read records into Spark RDDs.
+    HADOOP_RDD_PULL,
+    // Uses Spark RDD Operations to read records.
+    SPARK_RDD_PULL
 }
