@@ -84,6 +84,7 @@ public class SupportBundleJob {
       for (SupportBundleTask supportBundleTask : supportBundleTasks) {
         String className = supportBundleTask.getClass().getName();
         String taskName = bundleTaskConfig.getUuid().concat(": ").concat(className);
+        processSubTask(taskName, className, supportBundleTask, basePath.getPath());
         SupportBundleTaskStatus taskStatus = initializeTask(taskName, className, basePath.getPath());
         executeTask(taskStatus, supportBundleTask, basePath.getPath(), className, taskName);
       }
@@ -99,31 +100,6 @@ public class SupportBundleJob {
   public void executeTask(SupportBundleTaskStatus taskStatus, SupportBundleTask supportBundleTask, String basePath,
                           String className, String taskName) {
     executeTask(taskStatus, supportBundleTask, basePath, className, taskName, 0);
-  }
-
-  /**
-   * Execute each task to generate support bundle files with accumulate retryCount
-   */
-  public void executeTask(SupportBundleTaskStatus taskStatus, SupportBundleTask supportBundleTask, String basePath,
-                          String className, String taskName, int retryCount) {
-    AtomicLong startTimeStore = new AtomicLong(0L);
-    AtomicReference<SupportBundleTaskStatus> latestTaskStatus = new AtomicReference<>(taskStatus);
-    Future<SupportBundleTaskStatus> futureService = executor.submit(() -> {
-      try {
-        long startTime = System.currentTimeMillis();
-        startTimeStore.set(startTime);
-        latestTaskStatus.set(updateTask(latestTaskStatus.get(), basePath, CollectionState.IN_PROGRESS));
-        supportBundleTask.collect();
-        latestTaskStatus.set(updateTask(latestTaskStatus.get(), basePath, CollectionState.FINISHED));
-      } catch (Exception e) {
-        LOG.warn("Failed to execute task with supportBundleTask {} ", taskName, e);
-        executeTaskAgainAfterFailed(supportBundleTask, className, taskName, latestTaskStatus.get(), basePath,
-                                    retryCount + 1);
-      }
-      return latestTaskStatus.get();
-    });
-    RunningTaskState runningTaskState = new RunningTaskState(futureService, startTimeStore, taskStatus);
-    runningTaskStateQueue.offer(runningTaskState);
   }
 
   /**
@@ -152,10 +128,15 @@ public class SupportBundleJob {
     addToStatus(finishBundleStatus, basePath);
   }
 
+  public void processSubTask(String taskName, String taskType, SupportBundleTask supportBundleTask, String basePath) {
+    SupportBundleTaskStatus runtimeInfoTaskStatus = initializeTask(taskName, taskType, basePath);
+    executeTask(runtimeInfoTaskStatus, supportBundleTask, basePath, taskType, taskName);
+  }
+
   /**
    * Start a new status task
    */
-  public SupportBundleTaskStatus initializeTask(String name, String type, String basePath) {
+  private SupportBundleTaskStatus initializeTask(String name, String type, String basePath) {
     SupportBundleTaskStatus supportBundleTaskStatus = SupportBundleTaskStatus.builder()
       .setName(name)
       .setType(type)
@@ -165,6 +146,31 @@ public class SupportBundleJob {
     supportBundleStatus.getTasks().add(supportBundleTaskStatus);
     addToStatus(supportBundleStatus, basePath);
     return supportBundleTaskStatus;
+  }
+
+  /**
+   * Execute each task to generate support bundle files with accumulate retryCount
+   */
+  private void executeTask(SupportBundleTaskStatus taskStatus, SupportBundleTask supportBundleTask, String basePath,
+                           String className, String taskName, int retryCount) {
+    AtomicLong startTimeStore = new AtomicLong(0L);
+    AtomicReference<SupportBundleTaskStatus> latestTaskStatus = new AtomicReference<>(taskStatus);
+    Future<SupportBundleTaskStatus> futureService = executor.submit(() -> {
+      try {
+        long startTime = System.currentTimeMillis();
+        startTimeStore.set(startTime);
+        latestTaskStatus.set(updateTask(latestTaskStatus.get(), basePath, CollectionState.IN_PROGRESS));
+        supportBundleTask.collect();
+        latestTaskStatus.set(updateTask(latestTaskStatus.get(), basePath, CollectionState.FINISHED));
+      } catch (Exception e) {
+        LOG.warn("Failed to execute task with supportBundleTask {} ", taskName, e);
+        executeTaskAgainAfterFailed(supportBundleTask, className, taskName, latestTaskStatus.get(), basePath,
+                                    retryCount + 1);
+      }
+      return latestTaskStatus.get();
+    });
+    RunningTaskState runningTaskState = new RunningTaskState(futureService, startTimeStore, taskStatus);
+    runningTaskStateQueue.offer(runningTaskState);
   }
 
   /**

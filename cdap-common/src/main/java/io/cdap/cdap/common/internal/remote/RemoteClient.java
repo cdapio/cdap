@@ -25,7 +25,10 @@ import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.common.service.Retries;
+import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.common.http.HttpContentConsumer;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequestConfig;
@@ -33,6 +36,8 @@ import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -52,6 +57,9 @@ import javax.net.ssl.HttpsURLConnection;
 public class RemoteClient {
 
   public static final String RUNTIME_SERVICE_ROUTING_BASE_URI = "cdap.runtime.service.routing.base.uri";
+  private static final Logger LOG = LoggerFactory.getLogger(RemoteClient.class);
+  private static final int RETRY_LIMIT = 5;
+  private static final int RETRY_DELAY = 5;
 
   private final InternalAuthenticator internalAuthenticator;
   private final EndpointStrategy endpointStrategy;
@@ -62,13 +70,12 @@ public class RemoteClient {
 
   RemoteClient(InternalAuthenticator internalAuthenticator, DiscoveryServiceClient discoveryClient,
                String discoverableServiceName, HttpRequestConfig httpRequestConfig, String basePath) {
-    this(internalAuthenticator, discoveryClient, discoverableServiceName, httpRequestConfig, basePath,
-         null);
+    this(internalAuthenticator, discoveryClient, discoverableServiceName, httpRequestConfig, basePath, null);
   }
 
-  RemoteClient(InternalAuthenticator internalAuthenticator,
-               DiscoveryServiceClient discoveryClient, String discoverableServiceName,
-               HttpRequestConfig httpRequestConfig, String basePath, @Nullable RemoteAuthenticator authenticator) {
+  RemoteClient(InternalAuthenticator internalAuthenticator, DiscoveryServiceClient discoveryClient,
+               String discoverableServiceName, HttpRequestConfig httpRequestConfig, String basePath,
+               @Nullable RemoteAuthenticator authenticator) {
     this.internalAuthenticator = internalAuthenticator;
     this.discoverableServiceName = discoverableServiceName;
     this.httpRequestConfig = httpRequestConfig;
@@ -91,7 +98,7 @@ public class RemoteClient {
   }
 
   private void setAuthHeader(BiConsumer<String, String> headerSetter, String header, String credentialType,
-                                        String credentialValue) {
+                             String credentialValue) {
     headerSetter.accept(header, String.format("%s %s", credentialType, credentialValue));
   }
 
@@ -101,7 +108,7 @@ public class RemoteClient {
    *
    * @param request the request to perform
    * @return the response
-   * @throws IOException if there was an IOException while performing the request
+   * @throws IOException                 if there was an IOException while performing the request
    * @throws ServiceUnavailableException if there was a ConnectException while making the request, or if the response
    *                                     was a 503
    */
@@ -119,8 +126,8 @@ public class RemoteClient {
 
     internalAuthenticator.applyInternalAuthenticationHeaders(headers::put);
 
-    httpRequest = new HttpRequest(request.getMethod(), rewrittenURL, headers,
-                      request.getBody(), request.getBodyLength());
+    httpRequest =
+      new HttpRequest(request.getMethod(), rewrittenURL, headers, request.getBody(), request.getBodyLength());
 
     try {
       HttpResponse response = HttpRequests.execute(httpRequest, httpRequestConfig);
@@ -137,6 +144,41 @@ public class RemoteClient {
     } catch (ConnectException e) {
       throw new ServiceUnavailableException(discoverableServiceName, e);
     }
+  }
+
+  /**
+   * Makes a streaming {@link HttpRequest} and consumes the response using the {@link HttpContentConsumer} provided
+   * in the request. It retries on failure.
+   */
+  public void executeStreamingRequest(HttpRequest request) throws IOException, UnauthorizedException {
+    URL rewrittenURL = rewriteURL(request.getURL());
+    Multimap<String, String> headers = request.getHeaders();
+    headers = headers == null ? HashMultimap.create() : HashMultimap.create(headers);
+
+    // Add Authorization header and use a rewritten URL if needed
+    RemoteAuthenticator authenticator = getAuthenticator();
+    if (authenticator != null && headers.keySet().stream().noneMatch(HttpHeaders.AUTHORIZATION::equalsIgnoreCase)) {
+      setAuthHeader(headers::put, HttpHeaders.AUTHORIZATION, authenticator.getType(), authenticator.getCredentials());
+    }
+
+    internalAuthenticator.applyInternalAuthenticationHeaders(headers::put);
+
+    HttpRequest httpRequest =
+      new HttpRequest(request.getMethod(), rewrittenURL, headers, request.getBody(), request.getBodyLength(),
+                      request.getConsumer());
+    Retries.callWithRetries(() -> {
+      HttpResponse httpResponse = HttpRequests.execute(httpRequest, httpRequestConfig);
+
+      if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
+        throw new IOException(httpResponse.getResponseBodyAsString());
+      }
+      try {
+        httpResponse.consumeContent();
+      } catch (Exception e) {
+        LOG.warn("No content from http response ", e);
+      }
+      return null;
+    }, RetryStrategies.limit(RETRY_LIMIT, RetryStrategies.fixDelay(RETRY_DELAY, TimeUnit.SECONDS)));
   }
 
   /**
@@ -192,8 +234,8 @@ public class RemoteClient {
       return rewriteURL(uri.toURL());
     } catch (MalformedURLException e) {
       // shouldn't happen. If it does, it means there is some bug in the service announcer
-      throw new IllegalStateException(String.format("Discovered service %s, but it announced malformed URL %s",
-                                                    discoverableServiceName, uri), e);
+      throw new IllegalStateException(
+        String.format("Discovered service %s, but it announced malformed URL %s", discoverableServiceName, uri), e);
     }
   }
 
@@ -205,11 +247,12 @@ public class RemoteClient {
    * @return a generic error message about the failure
    */
   public String createErrorMessage(HttpRequest request, @Nullable String body) {
-    String headers = request.getHeaders() == null ?
-      "null" : Joiner.on(",").withKeyValueSeparator("=").join(request.getHeaders().entries());
+    String headers = request.getHeaders() == null ? "null" : Joiner.on(",")
+      .withKeyValueSeparator("=")
+      .join(request.getHeaders().entries());
     return String.format("Error making request to %s service at %s while doing %s with headers %s%s.",
-                         discoverableServiceName, request.getURL(), request.getMethod(),
-                         headers, body == null ? "" : " and body " + body);
+                         discoverableServiceName, request.getURL(), request.getMethod(), headers,
+                         body == null ? "" : " and body " + body);
   }
 
   /**

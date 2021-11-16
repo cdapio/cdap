@@ -15,5 +15,5 @@
 
 [submodule "cdap-ui"]
   path = cdap-ui
-  url = ../cdap-ui
+  url = cdap-ui
   branch = develop

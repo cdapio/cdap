@@ -17,7 +17,7 @@
 package io.cdap.cdap.support.task.factory;
 
 import com.google.inject.Inject;
-import io.cdap.cdap.logging.gateway.handlers.RemoteProgramLogsFetcher;
+import io.cdap.cdap.logging.gateway.handlers.RemoteLogsFetcher;
 import io.cdap.cdap.logging.gateway.handlers.RemoteProgramRunRecordsFetcher;
 import io.cdap.cdap.metadata.RemoteApplicationDetailFetcher;
 import io.cdap.cdap.metrics.process.RemoteMetricsSystemClient;
@@ -31,17 +31,17 @@ import io.cdap.cdap.support.task.SupportBundlePipelineInfoTask;
 public class SupportBundlePipelineInfoTaskFactory implements SupportBundleTaskFactory {
 
   private final RemoteProgramRunRecordsFetcher remoteProgramRunRecordsFetcher;
-  private final RemoteProgramLogsFetcher remoteProgramLogsFetcher;
+  private final RemoteLogsFetcher remoteLogsFetcher;
   private final RemoteApplicationDetailFetcher remoteApplicationDetailFetcher;
   private final RemoteMetricsSystemClient remoteMetricsSystemClient;
 
   @Inject
   public SupportBundlePipelineInfoTaskFactory(RemoteProgramRunRecordsFetcher remoteProgramRunRecordsFetcher,
-                                              RemoteProgramLogsFetcher remoteProgramLogsFetcher,
+                                              RemoteLogsFetcher remoteLogsFetcher,
                                               RemoteApplicationDetailFetcher remoteApplicationDetailFetcher,
                                               RemoteMetricsSystemClient remoteMetricsSystemClient) {
     this.remoteProgramRunRecordsFetcher = remoteProgramRunRecordsFetcher;
-    this.remoteProgramLogsFetcher = remoteProgramLogsFetcher;
+    this.remoteLogsFetcher = remoteLogsFetcher;
     this.remoteApplicationDetailFetcher = remoteApplicationDetailFetcher;
     this.remoteMetricsSystemClient = remoteMetricsSystemClient;
   }
@@ -51,7 +51,7 @@ public class SupportBundlePipelineInfoTaskFactory implements SupportBundleTaskFa
     return new SupportBundlePipelineInfoTask(taskConfiguration.getUuid(), taskConfiguration.getNamespaces(),
                                              taskConfiguration.getApp(), taskConfiguration.getBasePath(),
                                              remoteApplicationDetailFetcher, remoteProgramRunRecordsFetcher,
-                                             remoteProgramLogsFetcher, taskConfiguration.getProgramType(),
+                                             remoteLogsFetcher, taskConfiguration.getProgramType(),
                                              taskConfiguration.getProgramName(), remoteMetricsSystemClient,
                                              taskConfiguration.getSupportBundleJob(),
                                              taskConfiguration.getMaxRunsPerProgram());
