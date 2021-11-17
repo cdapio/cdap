@@ -26,19 +26,31 @@ import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsSystemClient;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.config.ConnectionConfig;
+import io.cdap.cdap.common.MethodNotAllowedException;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.ProfileConflictException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.common.metrics.NoOpMetricsSystemClient;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data.runtime.TransactionExecutorModule;
+import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProfileId;
+import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.proto.profile.Profile;
+import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
+import io.cdap.cdap.proto.provisioner.ProvisionerPropertyValue;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -60,8 +72,10 @@ import org.junit.Test;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 public class TetherServerHandlerTest {
@@ -74,6 +88,7 @@ public class TetherServerHandlerTest {
   private static CConfiguration cConf;
   private static Injector injector;
   private static TransactionManager txManager;
+  private static ProfileService profileService;
 
   private NettyHttpService service;
   private ClientConfig config;
@@ -94,9 +109,13 @@ public class TetherServerHandlerTest {
         protected void configure() {
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
           expose(MetricsCollectionService.class);
+          bind(MetricsSystemClient.class).toInstance(new NoOpMetricsSystemClient());
+          expose(MetricsSystemClient.class);
+
         }
       });
     tetherStore = new TetherStore(injector.getInstance(TransactionRunner.class));
+    profileService = injector.getInstance(ProfileService.class);
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
       ((Service) messagingService).startAndWait();
@@ -127,7 +146,7 @@ public class TetherServerHandlerTest {
     cConf.setInt(Constants.Tether.CONNECTION_TIMEOUT_SECONDS, 1);
     service = new CommonNettyHttpServiceBuilder(CConfiguration.create(), getClass().getSimpleName())
       .setHttpHandlers(new TetherServerHandler(cConf, tetherStore, messagingService, transactionRunner),
-                       new TetherHandler(cConf, tetherStore))
+                       new TetherHandler(cConf, tetherStore, transactionRunner))
       .build();
     service.start();
     config = ClientConfig.builder()
@@ -209,6 +228,59 @@ public class TetherServerHandlerTest {
                                               config.resolveURL("/tethering/controlchannels/bad_peer")).build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getResponseCode());
+  }
+
+  @Test
+  public void testDeleteFailsWithProfileUsingTether() throws IOException, MethodNotAllowedException, NotFoundException, ProfileConflictException {
+    // Tether is initiated by peer
+    createTether("xyz", NAMESPACES);
+
+    // Create profile that uses this tether
+    List<ProvisionerPropertyValue> provisionerProperties = new ArrayList<>();
+    provisionerProperties.add(new ProvisionerPropertyValue(TetherHandler.TETHER_PEER_NAME, "xyz", false));
+    ProvisionerInfo provisionerInfo = new ProvisionerInfo("provisioner", provisionerProperties);
+    Profile profile = new Profile("name", "label", "desc", provisionerInfo);
+    ProfileId profileId = NamespaceId.DEFAULT.profile("p");
+    profileService.saveProfile(profileId, profile);
+
+    // Delete tethering should fail
+    HttpRequest request = HttpRequest.builder(HttpMethod.DELETE,
+                                              config.resolveURL("tethering/connections/xyz")).build();
+    HttpResponse response = HttpRequests.execute(request);
+    Assert.assertEquals(HttpResponseStatus.METHOD_NOT_ALLOWED.code(), response.getResponseCode());
+
+    // Delete the profile
+    profileService.disableProfile(profileId);
+    profileService.deleteProfile(profileId);
+
+    // Now tether deletion should succeed
+    response = HttpRequests.execute(request);
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
+  }
+
+  @Test
+  public void testGetTetheredPeersAndNamespaces() throws IOException {
+    // Tether is initiated by peer
+    createTether("xyz", NAMESPACES);
+
+    // Verify the list of tethered peers and namespaces are returned by the backend
+    HttpRequest request = HttpRequest.builder(HttpMethod.GET,
+                                              config.resolveURL("tethering/connections/peers")).build();
+    HttpResponse response = HttpRequests.execute(request);
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
+    Type type = new TypeToken<List<String>>() { }.getType();
+    List<String> peers = GSON.fromJson(response.getResponseBodyAsString(StandardCharsets.UTF_8), type);
+    Assert.assertEquals(Collections.singletonList("xyz"), peers);
+
+    request = HttpRequest.builder(HttpMethod.GET,
+                                  config.resolveURL("tethering/connections/peers/xyz/namespaces")).build();
+    response = HttpRequests.execute(request);
+    List<String> namespaces = GSON.fromJson(response.getResponseBodyAsString(StandardCharsets.UTF_8), type);
+    Assert.assertEquals(NAMESPACES.stream().map(NamespaceAllocation::getNamespace).collect(Collectors.toList()),
+                        namespaces);
+
+    // Delete tethering
+    deleteTether();
   }
 
   private void expectTetherControlResponse(String peerName, HttpResponseStatus status) throws IOException {

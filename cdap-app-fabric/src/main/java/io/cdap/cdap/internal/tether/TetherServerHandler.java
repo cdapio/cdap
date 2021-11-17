@@ -238,6 +238,29 @@ public class TetherServerHandler extends AbstractHttpHandler {
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
+  /**
+   * Returns names of tethered peers.
+   */
+  @GET
+  @Path("/tethering/connections/peers")
+  public void getTethers(HttpRequest request, HttpResponder responder) {
+    Type type = new TypeToken<List<String>>() { }.getType();
+    List<String> peers = store.getPeers().stream().map(PeerInfo::getName).collect(Collectors.toList());
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(peers, type));
+  }
+
+  /**
+   * Returns namespaces exported by a peer.
+   */
+  @GET
+  @Path("/tethering/connections/peers/{peer}/namespaces")
+  public void getTethers(HttpRequest request, HttpResponder responder, @PathParam("peer") String peer) {
+    Type type = new TypeToken<List<String>>() { }.getType();
+    List<String> namespaces = store.getPeer(peer).getMetadata().getNamespaces().stream()
+      .map(NamespaceAllocation::getNamespace).collect(Collectors.toList());
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(namespaces, type));
+  }
+
   // Currently unused.
   // TODO: Send RUN_PIPELINE message to peer.
   private void publishMessage(TopicId topicId, @Nullable TetherControlMessage message)
