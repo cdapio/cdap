@@ -90,6 +90,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.security.ApplicationPermission;
+import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
@@ -209,9 +210,10 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   public ApplicationId start(@Name("namespaceId") NamespaceId namespace, AppRequest<?> appRequest) throws Exception {
     // make sure preview id is unique for each run
     ApplicationId previewApp = namespace.app(RunIds.generate().getId());
-    accessEnforcer.enforce(previewApp, authenticationContext.getPrincipal(), ApplicationPermission.PREVIEW);
+    Principal principal = authenticationContext.getPrincipal();
+    accessEnforcer.enforce(previewApp, principal, ApplicationPermission.PREVIEW);
     ProgramId programId = getProgramIdFromRequest(previewApp, appRequest);
-    PreviewRequest previewRequest = new PreviewRequest(programId, appRequest);
+    PreviewRequest previewRequest = new PreviewRequest(programId, appRequest, principal);
 
     if (state() != State.RUNNING) {
       throw new IllegalStateException("Preview service is not running. Cannot start preview for " + programId);

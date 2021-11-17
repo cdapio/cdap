@@ -21,6 +21,8 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.function.BiConsumer;
 
@@ -29,6 +31,7 @@ import java.util.function.BiConsumer;
  * the source.
  */
 public class DefaultInternalAuthenticator implements InternalAuthenticator {
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultInternalAuthenticator.class);
   private final AuthenticationContext authenticationContext;
 
   @Inject
@@ -53,5 +56,8 @@ public class DefaultInternalAuthenticator implements InternalAuthenticator {
     if (userID != null) {
       headerSetter.accept(Constants.Security.Headers.USER_ID, userID);
     }
+    LOG.trace("Sending header {} and credential {} for AuthenticationContext {}: {}", userID, internalCredentials,
+              authenticationContext.getClass().getCanonicalName(),
+              internalCredentials == null ? "null" : internalCredentials.getValue());
   }
 }

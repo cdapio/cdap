@@ -19,22 +19,29 @@ package io.cdap.cdap.security.auth.context;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 
 /**
  * Authentication context for workers.
  */
 public class WorkerAuthenticationContext implements AuthenticationContext {
-  private static final String WORKER_USER_ID = "worker";
-  private static final String PLACEHOLDER_CREDENTIAL = "placeholder";
+  private static final String WORKER_STARTUP_ID = "worker-startup";
+  private static final String WORKER_STARTUP_CREDENTIAL = "worker-startup-creds";
+
   /**
-   * Currently only returns a hardcoded set of user ID and credentials to get around the required auth limitation.
-   * TODO CDAP-17772: Implement proper authentication context for workers.
-   *
-   * @return A placeholder principal for workers.
+   * Returns the user identity and credential of the entity making the request to run a task.
+   * @return A principal for workers based on who is making the request to run a task.
    */
   @Override
   public Principal getPrincipal() {
-    return new Principal(WORKER_USER_ID, Principal.PrincipalType.USER,
-                         new Credential(PLACEHOLDER_CREDENTIAL, Credential.CredentialType.INTERNAL));
+    String userID = SecurityRequestContext.getUserId();
+    Credential userCredential = SecurityRequestContext.getUserCredential();
+    if (userID == null) {
+      // During task pod startup, there may not be a user ID and credential yet. However, the task pods still need
+      // to connect to the file localizer endpoint to retrieve configuration files.
+      userID = WORKER_STARTUP_ID;
+      userCredential = new Credential(WORKER_STARTUP_CREDENTIAL, Credential.CredentialType.INTERNAL);
+    }
+    return new Principal(userID, Principal.PrincipalType.USER, userCredential);
   }
 }

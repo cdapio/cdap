@@ -35,6 +35,7 @@ import io.cdap.cdap.proto.DatasetSpecificationSummary;
 import io.cdap.cdap.proto.DatasetTypeMeta;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
@@ -45,7 +46,6 @@ import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,6 +100,11 @@ public class DatasetServiceClient {
   public DatasetMeta getInstance(String instanceName)
     throws DatasetManagementException, UnauthorizedException {
 
+    Principal principal = authenticationContext.getPrincipal();
+    LOG.trace("Sending principal {} from AuthenticationContext {}: {}",
+              principal,
+              authenticationContext.getClass().getCanonicalName(),
+              principal.getFullCredential() == null ? "null" : principal.getFullCredential().getValue());
     HttpResponse response = doGet("datasets/" + instanceName);
     if (HttpResponseStatus.NOT_FOUND.code() == response.getResponseCode()) {
       return null;

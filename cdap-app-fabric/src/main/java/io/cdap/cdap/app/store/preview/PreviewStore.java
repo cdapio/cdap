@@ -23,6 +23,7 @@ import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.security.Principal;
 
 import java.util.List;
 import java.util.Map;
@@ -99,8 +100,9 @@ public interface PreviewStore {
    * is added to the store.
    * @param applicationId the application id corresponding to the request
    * @param appRequest preview request configuration
+   * @param principal the principal to use to execute the request
    */
-  void add(ApplicationId applicationId, AppRequest appRequest);
+  void add(ApplicationId applicationId, AppRequest appRequest, Principal principal);
 
   /**
    * @return list of all waiting requests in waiting state sorted by submit time

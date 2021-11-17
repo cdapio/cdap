@@ -73,7 +73,11 @@ public class Principal {
     return kerberosPrincipal;
   }
 
+  @Deprecated
   @Nullable
+  /**
+   * getCredential is deprecated in favor of getFullCredential.
+   */
   public String getCredential() {
     if (credential == null) {
       return null;

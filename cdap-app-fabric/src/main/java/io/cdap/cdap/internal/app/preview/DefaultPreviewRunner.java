@@ -57,6 +57,8 @@ import io.cdap.cdap.proto.artifact.preview.PreviewConfig;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.store.StoreDefinition;
@@ -150,6 +152,9 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   @Override
   public Future<PreviewRequest> startPreview(PreviewRequest previewRequest) throws Exception {
     ProgramId programId = previewRequest.getProgram();
+    Principal principal = previewRequest.getPrincipal();
+    SecurityRequestContext.setUserId(principal.getName());
+    SecurityRequestContext.setUserCredential(principal.getFullCredential());
     long submitTimeMillis = RunIds.getTime(programId.getApplication(), TimeUnit.MILLISECONDS);
     previewStarted(programId);
 
