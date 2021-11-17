@@ -27,42 +27,26 @@ import java.util.List;
  */
 public class SupportBundleTaskStatus {
   // unique task name, also defines directory task stores resulting files in
-  private String name;
+  private final String name;
   // task class name
-  private String type;
+  private final String type;
   // status for task (QUEUED/IN_PROGRESS/FINISHED/FAILED)
-  private CollectionState status;
+  private final CollectionState status;
   // if task was retried, number of retries, otherwise 0
-  private int retries = 0;
+  private final int retries;
   // array of subtasks (if any)
   @SerializedName("sub-tasks")
-  private List<SupportBundleTaskStatus> subTasks = new ArrayList<>();
+  private final List<SupportBundleTaskStatus> subTasks;
   // if task was already started, timestamp of the last start
   @SerializedName("start-timestamp")
-  private long startTimestamp;
+  private final Long startTimestamp;
   // if the task was already finished, timestamp of the last finish Cleared when the task started
   // after retry and repopulated on subsequent finish
   @SerializedName("finish-timestamp")
-  private long finishTimestamp;
+  private final Long finishTimestamp;
 
-  public SupportBundleTaskStatus(String name, String type, long startTimestamp) {
-    this.name = name;
-    this.type = type;
-    this.startTimestamp = startTimestamp;
-  }
-
-  public SupportBundleTaskStatus(String name, String type, long startTimestamp, List<SupportBundleTaskStatus> subTasks,
-                                 int retries, CollectionState status) {
-    this.name = name;
-    this.type = type;
-    this.startTimestamp = startTimestamp;
-    this.subTasks = ImmutableList.copyOf(subTasks);
-    this.retries = retries;
-    this.status = status;
-  }
-
-  public SupportBundleTaskStatus(String name, String type, long startTimestamp, List<SupportBundleTaskStatus> subTasks,
-                                 int retries, long finishTimestamp, CollectionState status) {
+  private SupportBundleTaskStatus(String name, String type, Long startTimestamp, List<SupportBundleTaskStatus> subTasks,
+                                 int retries, Long finishTimestamp, CollectionState status) {
     this.name = name;
     this.type = type;
     this.startTimestamp = startTimestamp;
@@ -80,11 +64,11 @@ public class SupportBundleTaskStatus {
   }
 
   /**
-   * @param outdatedTaskStatus outdated task status
+   * @param previousTaskStatus outdated task status
    * @return Builder to create a SupportBundleTaskStatus, initialized with values from the specified existing status
    */
-  public static SupportBundleTaskStatus.Builder builder(SupportBundleTaskStatus outdatedTaskStatus) {
-    return new SupportBundleTaskStatus.Builder(outdatedTaskStatus);
+  public static SupportBundleTaskStatus.Builder builder(SupportBundleTaskStatus previousTaskStatus) {
+    return new SupportBundleTaskStatus.Builder(previousTaskStatus);
   }
 
   /**
@@ -93,22 +77,23 @@ public class SupportBundleTaskStatus {
   public static class Builder {
     private String name;
     private String type;
-    private long startTimestamp;
+    private Long startTimestamp;
     private List<SupportBundleTaskStatus> subTasks;
     private Integer retries;
-    private long finishTimestamp;
+    private Long finishTimestamp;
     private CollectionState status;
 
     private Builder() {
+      this.retries = 0;
       this.subTasks = new ArrayList<>();
     }
 
-    private Builder(SupportBundleTaskStatus outdatedTaskStatus) {
-      this.name = outdatedTaskStatus.getName();
-      this.type = outdatedTaskStatus.getType();
-      this.startTimestamp = outdatedTaskStatus.getStartTimestamp();
-      this.subTasks = outdatedTaskStatus.getSubTasks();
-      this.retries = outdatedTaskStatus.getRetries();
+    private Builder(SupportBundleTaskStatus previousTaskStatus) {
+      this.name = previousTaskStatus.getName();
+      this.type = previousTaskStatus.getType();
+      this.startTimestamp = previousTaskStatus.getStartTimestamp();
+      this.subTasks = previousTaskStatus.getSubTasks();
+      this.retries = previousTaskStatus.getRetries();
     }
 
     /**
@@ -176,47 +161,6 @@ public class SupportBundleTaskStatus {
       }
       if (type == null) {
         throw new IllegalArgumentException("Bundle task type must be specified.");
-      }
-      return new SupportBundleTaskStatus(name, type, startTimestamp);
-    }
-
-    /**
-     * Update the bundle task with new status
-     */
-    public SupportBundleTaskStatus buildWithNewStatus() {
-      if (name == null) {
-        throw new IllegalArgumentException("Bundle task name must be specified.");
-      }
-      if (type == null) {
-        throw new IllegalArgumentException("Bundle task type must be specified.");
-      }
-      if (subTasks == null) {
-        throw new IllegalArgumentException("Bundle sub task must be specified.");
-      }
-      if (retries == null) {
-        throw new IllegalArgumentException("Bundle task retries must be specified.");
-      }
-      if (status == null) {
-        throw new IllegalArgumentException("Bundle task status must be specified.");
-      }
-      return new SupportBundleTaskStatus(name, type, startTimestamp, subTasks, retries, status);
-    }
-
-    /**
-     * Update the bundle task with new status and add finish time stamp
-     */
-    public SupportBundleTaskStatus buildWithFinishStatus() {
-      if (name == null) {
-        throw new IllegalArgumentException("Bundle task name must be specified.");
-      }
-      if (type == null) {
-        throw new IllegalArgumentException("Bundle task type must be specified.");
-      }
-      if (subTasks == null) {
-        throw new IllegalArgumentException("Bundle sub task must be specified.");
-      }
-      if (retries == null) {
-        throw new IllegalArgumentException("Bundle task retries must be specified.");
       }
       if (status == null) {
         throw new IllegalArgumentException("Bundle task status must be specified.");

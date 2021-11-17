@@ -98,10 +98,6 @@ public class SupportBundleService implements Closeable {
     String uuid = UUID.randomUUID().toString();
     File uuidPath = new File(localDir, uuid);
 
-    SupportBundleStatus supportBundleStatus =
-      new SupportBundleStatus(uuid, System.currentTimeMillis(), supportBundleConfiguration,
-                              CollectionState.IN_PROGRESS);
-
     // Puts all the files under the uuid path
     File baseDirectory = new File(localDir);
     DirUtils.mkdirs(baseDirectory);
@@ -115,19 +111,28 @@ public class SupportBundleService implements Closeable {
     }
     DirUtils.mkdirs(uuidPath);
 
+    SupportBundleStatus supportBundleStatus = SupportBundleStatus.builder()
+      .setBundleId(uuid)
+      .setStartTimestamp(System.currentTimeMillis())
+      .setStatus(CollectionState.IN_PROGRESS)
+      .setParameters(supportBundleConfiguration)
+      .build();
+    addToStatus(supportBundleStatus, uuidPath.getPath());
+
     SupportBundleJob supportBundleJob =
       new SupportBundleJob(supportBundleTaskFactories, executorService, cConf, supportBundleStatus);
     SupportBundleTaskConfiguration supportBundleTaskConfiguration =
-      new SupportBundleTaskConfiguration(supportBundleConfiguration, uuid, uuidPath, namespaces,
-                                         supportBundleJob);
+      new SupportBundleTaskConfiguration(supportBundleConfiguration, uuid, uuidPath, namespaces, supportBundleJob);
 
     try {
       executorService.execute(() -> supportBundleJob.generateBundle(supportBundleTaskConfiguration));
     } catch (Exception e) {
       LOG.error("Failed to finish execute tasks", e);
-      SupportBundleStatus failedBundleStatus =
-        new SupportBundleStatus(supportBundleStatus, e.getMessage(), CollectionState.FAILED,
-                                System.currentTimeMillis());
+      SupportBundleStatus failedBundleStatus = SupportBundleStatus.builder(supportBundleStatus)
+        .setStatus(CollectionState.FAILED)
+        .setFinishTimestamp(System.currentTimeMillis())
+        .setStatusDetails(e.getMessage())
+        .build();
       addToStatus(failedBundleStatus, uuidPath.getPath());
     }
     return uuid;
@@ -137,7 +142,8 @@ public class SupportBundleService implements Closeable {
    * Gets oldest folder from the root directory
    */
   private File getOldestFolder(File baseDirectory) {
-    List<File> uuidFiles = DirUtils.listFiles(baseDirectory).stream()
+    List<File> uuidFiles = DirUtils.listFiles(baseDirectory)
+      .stream()
       .filter(file -> !file.getName().startsWith(".") && !file.isHidden() && file.isDirectory())
       .collect(Collectors.toList());
     return Collections.min(uuidFiles, Comparator.<File, Boolean>comparing(f1 -> {

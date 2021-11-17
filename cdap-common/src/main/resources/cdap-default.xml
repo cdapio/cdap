@@ -4647,10 +4647,10 @@
   </property>
 
   <property>
-    <name>support.bundle.default.workflow</name>
-    <value>DataPipelineWorkflow</value>
+    <name>support.bundle.system.log.start.time</name>
+    <value>1</value>
     <description>
-      The default workflow name.
+      system log start 1 day ago to collect logs
     </description>
   </property>
 </configuration>
