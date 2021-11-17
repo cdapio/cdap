@@ -148,7 +148,9 @@ public class BundleJarUtilTest {
               jarFile.stream()
                      .filter(entry -> !entry.isDirectory())
                      .map(entry -> {
+                       // The Set "files" only contains filename
                        String name = entry.getName();
+                       // Name is absolute path
                        return name.substring(name.lastIndexOf("/") + 1);
                      })
                      .allMatch(files::contains)
