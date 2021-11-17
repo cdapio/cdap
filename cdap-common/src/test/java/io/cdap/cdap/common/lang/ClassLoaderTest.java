@@ -165,7 +165,7 @@ public class ClassLoaderTest {
     StringBuilder extraClassPathBuilder = new StringBuilder();
     extraClassPathBuilder.append(gsonDir.getAbsolutePath()).append(File.pathSeparatorChar);
 
-    // Inside io.cdap.cdap.common.lang.DirectoryClassLoader, the logic of resolve extraClassPath is exact match[line:124]
+    // Inside DirectoryClassLoader, the logic of resolve extraClassPath is exact match[line:124]
     // unless the path ends with "/*"
     // So we need deliver an exact jar path for loader
     DirUtils.listFiles(gsonDir, "jar").forEach(jarFile -> {
