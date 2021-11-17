@@ -33,6 +33,7 @@ import io.cdap.cdap.common.app.MainClassLoader;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.io.SchemaGenerator;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -64,8 +65,10 @@ public class ClassLoaderTest {
 
   @Test
   public void testPackageFilter() throws ClassNotFoundException {
-    ClassLoader classLoader = new PackageFilterClassLoader(getClass().getClassLoader(),
-                                                           input -> input.startsWith("io.cdap.cdap.api."));
+    ClassLoader classLoader = new PackageFilterClassLoader(
+            getClass().getClassLoader(),
+            input -> input.startsWith("io.cdap.cdap.api.")
+    );
 
     // Load allowed class. It should gives the same class.
     Class<?> cls = classLoader.loadClass(Application.class.getName());
@@ -99,8 +102,8 @@ public class ClassLoaderTest {
     // One allows "io.cdap.cdap.api.app", the other allows "io.cdap.cdap.api.annotation"
     ClassLoader parent = getClass().getClassLoader();
     ClassLoader classLoader = new CombineClassLoader(null,
-      new PackageFilterClassLoader(parent, Application.class.getPackage().getName()::equals),
-      new PackageFilterClassLoader(parent, Beta.class.getPackage().getName()::equals)
+            new PackageFilterClassLoader(parent, Application.class.getPackage().getName()::equals),
+            new PackageFilterClassLoader(parent, Beta.class.getPackage().getName()::equals)
     );
 
     // Should be able to load classes from those two packages
@@ -119,11 +122,16 @@ public class ClassLoaderTest {
   @Test
   public void testWeakReferenceClassLoader() throws Exception {
     // Creates a jar that has Application class in it.
-    Location jar = AppJarHelper.createDeploymentJar(new LocalLocationFactory(TMP_FOLDER.newFolder()),
-                                                    ClassLoaderTest.class);
+    Location jar = AppJarHelper.createDeploymentJar(
+            new LocalLocationFactory(TMP_FOLDER.newFolder()),
+            ClassLoaderTest.class
+    );
     // Create a class loader that load from that jar.
     ClassLoader cl = new DirectoryClassLoader(
-      BundleJarUtil.prepareClassLoaderFolder(jar, TMP_FOLDER::newFolder).getDir(), null, "lib");
+            BundleJarUtil.prepareClassLoaderFolder(jar, TMP_FOLDER::newFolder).getDir(),
+            null,
+            "lib"
+    );
 
     // Wrap it with the WeakReference ClassLoader
     ClassLoader classLoader = new WeakReferenceDelegatorClassLoader(cl);
@@ -142,6 +150,7 @@ public class ClassLoaderTest {
 
     // Create two jars, one with guava, one with gson
     ApplicationBundler bundler = new ApplicationBundler(new ClassAcceptor());
+
     Location guavaJar = Locations.toLocation(new File(tmpDir, "guava.jar"));
     bundler.createBundle(guavaJar, ImmutableList.class);
 
@@ -153,8 +162,25 @@ public class ClassLoaderTest {
     File gsonDir = BundleJarUtil.prepareClassLoaderFolder(gsonJar, TMP_FOLDER::newFolder).getDir();
 
     // Create a DirectoryClassLoader using guava dir as the main directory, with the gson dir in the extra classpath
-    String extraClassPath = gsonDir.getAbsolutePath() + File.pathSeparatorChar + gsonDir.getAbsolutePath() + "/lib/*";
-    ClassLoader cl = new DirectoryClassLoader(guavaDir, extraClassPath, null, Collections.singletonList("lib"));
+    StringBuilder extraClassPathBuilder = new StringBuilder();
+    extraClassPathBuilder.append(gsonDir.getAbsolutePath()).append(File.pathSeparatorChar);
+
+    // Inside io.cdap.cdap.common.lang.DirectoryClassLoader, the logic of resolve extraClassPath is exact match[line:124]
+    // unless the path ends with "/*"
+    // So we need deliver an exact jar path for loader
+    DirUtils.listFiles(gsonDir, "jar").forEach(jarFile -> {
+              extraClassPathBuilder.append(jarFile.getAbsolutePath());
+              extraClassPathBuilder.append(File.pathSeparatorChar);
+            }
+    );
+
+    extraClassPathBuilder.append(gsonDir.getAbsolutePath()).append("/lib/*");
+    ClassLoader cl = new DirectoryClassLoader(
+            guavaDir,
+            extraClassPathBuilder.toString(),
+            null,
+            Collections.singletonList("lib")
+    );
 
     // Should be able to load both guava and gson class from the class loader
     cl.loadClass(ImmutableList.class.getName());
@@ -166,8 +192,7 @@ public class ClassLoaderTest {
     // This test is to test classes defined by the InterceptableClassLoader also has package being defined.
     // Create a classloader using urls from the current classloader and parent as the parent of the current classloader
     List<URL> urls = ClassLoaders.getClassLoaderURLs(getClass().getClassLoader(), new ArrayList<>());
-    ClassLoader cl = new InterceptableClassLoader(urls.toArray(new URL[0]),
-                                                  getClass().getClassLoader().getParent()) {
+    ClassLoader cl = new InterceptableClassLoader(urls.toArray(new URL[0]), getClass().getClassLoader().getParent()) {
       @Override
       protected boolean needIntercept(String className) {
         // We intercept the ClassLoaderTest class (from local file) and all guava classes (from jar)
@@ -175,6 +200,7 @@ public class ClassLoaderTest {
       }
 
       @Override
+      @SuppressWarnings("UnstableApiUsage")
       public byte[] rewriteClass(String className, InputStream input) throws IOException {
         // We don't really rewrite class. Simply read the bytecode from the input stream.
         return ByteStreams.toByteArray(input);
