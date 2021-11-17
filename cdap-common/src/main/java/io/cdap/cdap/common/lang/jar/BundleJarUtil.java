@@ -56,6 +56,7 @@ public class BundleJarUtil {
    * Gets the {@link Manifest} inside the given jar.
    *
    * @param jarLocation Location of the jar file.
+   *
    * @return The manifest inside the jar file or {@code null} if no manifest inside the jar file.
    * @throws IOException if failed to load the manifest.
    */
@@ -77,6 +78,7 @@ public class BundleJarUtil {
    * Gets the {@link Manifest} inside the given jar.
    *
    * @param url the {@link URL} of the jar
+   *
    * @return The manifest inside the jar file or {@code null} if no manifest inside the jar file.
    * @throws IOException if failed to load the manifest.
    */
@@ -97,6 +99,7 @@ public class BundleJarUtil {
    * Gets the {@link Manifest} inside the given jar.
    *
    * @param file the jar file.
+   *
    * @return The manifest inside the jar file or {@code null} if no manifest inside the jar file.
    * @throws IOException if failed to load the manifest.
    */
@@ -121,8 +124,9 @@ public class BundleJarUtil {
    * Adds file(s) to a zip archive. If the given input file is a directory,
    * all files under it will be added recursively.
    *
-   * @param input input directory (or file) whose contents needs to be archived
+   * @param input  input directory (or file) whose contents needs to be archived
    * @param output an opened {@link ZipOutputStream} for the archive content to add to
+   *
    * @throws IOException if there is failure in the archive creation
    */
   public static void addToArchive(File input, ZipOutputStream output) throws IOException {
@@ -133,42 +137,44 @@ public class BundleJarUtil {
    * Adds file(s) to a zip archive. If the given input file is a directory,
    * all files under it will be added recursively.
    *
-   * @param input input directory (or file) whose contents needs to be archived
+   * @param input          input directory (or file) whose contents needs to be archived
    * @param includeDirName if {@code true} and if the input is a directory, prefix each entries with the directory name
-   * @param output an opened {@link ZipOutputStream} for the archive content to add to
+   * @param output         an opened {@link ZipOutputStream} for the archive content to add to
+   *
    * @throws IOException if there is failure in the archive creation
    */
   public static void addToArchive(final File input, final boolean includeDirName,
                                   final ZipOutputStream output) throws IOException {
     final URI baseURI = input.toURI();
     Files.walkFileTree(input.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS),
-                       Integer.MAX_VALUE, new SimpleFileVisitor<Path>() {
-      @Override
-      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-        URI uri = baseURI.relativize(dir.toUri());
-        String entryName = includeDirName ? input.getName() + "/" + uri.getPath() : uri.getPath();
+            Integer.MAX_VALUE, new SimpleFileVisitor<Path>() {
+              @Override
+              public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                URI uri = baseURI.relativize(dir.toUri());
+                String entryName = includeDirName ? input.getName() + "/" + uri.getPath() : uri.getPath();
 
-        if (!entryName.isEmpty()) {
-          output.putNextEntry(new ZipEntry(entryName));
-          output.closeEntry();
-        }
-        return FileVisitResult.CONTINUE;
-      }
+                if (!entryName.isEmpty()) {
+                  output.putNextEntry(new ZipEntry(entryName));
+                  output.closeEntry();
+                }
+                return FileVisitResult.CONTINUE;
+              }
 
-      @Override
-      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-        URI uri = baseURI.relativize(file.toUri());
-        if (uri.getPath().isEmpty()) {
-          // Only happen if the given "input" is a file.
-          output.putNextEntry(new ZipEntry(file.toFile().getName()));
-        } else {
-          output.putNextEntry(new ZipEntry(includeDirName ? input.getName() + "/" + uri.getPath() : uri.getPath()));
-        }
-        Files.copy(file, output);
-        output.closeEntry();
-        return FileVisitResult.CONTINUE;
-      }
-    });
+              @Override
+              public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                URI uri = baseURI.relativize(file.toUri());
+                if (uri.getPath().isEmpty()) {
+                  // Only happen if the given "input" is a file.
+                  output.putNextEntry(new ZipEntry(file.toFile().getName()));
+                } else {
+                  output.putNextEntry(new ZipEntry(includeDirName ?
+                          input.getName() + "/" + uri.getPath() : uri.getPath()));
+                }
+                Files.copy(file, output);
+                output.closeEntry();
+                return FileVisitResult.CONTINUE;
+              }
+            });
   }
 
   /**
@@ -181,14 +187,15 @@ public class BundleJarUtil {
    * directory was used as the destinationFolder in a previous call to this method). In this case,
    * no unpacking is needed. The {@link ClassLoaderFolder} returned will be pointing at the provided directory.
    *
-   * @param jarLocation Location containing the jar file or local directory with already unpacked jar files
+   * @param jarLocation         Location containing the jar file or local directory with already unpacked jar files
    * @param destinationSupplier Supply the directory to expand into when needed
+   *
    * @return a {@link ClassLoaderFolder} containing the directory with the content ready for classloader creation.
    * @throws IOException If failed to expand the jar
    */
   public static ClassLoaderFolder prepareClassLoaderFolder(Location jarLocation,
                                                            ThrowingSupplier<File, IOException> destinationSupplier)
-    throws IOException {
+          throws IOException {
     return new ClassLoaderFolder(jarLocation, destinationSupplier);
   }
 
@@ -197,15 +204,16 @@ public class BundleJarUtil {
    */
   public static ClassLoaderFolder prepareClassLoaderFolder(File jarFile,
                                                            ThrowingSupplier<File, IOException> destinationSupplier)
-    throws IOException {
+          throws IOException {
     return prepareClassLoaderFolder(Locations.toLocation(jarFile), destinationSupplier);
   }
 
   /**
    * Unpack a jar file in the given location to a directory.
    *
-   * @param jarLocation Location containing the jar file
+   * @param jarLocation       Location containing the jar file
    * @param destinationFolder Directory to expand into
+   *
    * @return The {@code destinationFolder}
    * @throws IOException If failed to expand the jar
    */
@@ -216,14 +224,15 @@ public class BundleJarUtil {
   /**
    * Unpack a jar file in the given location to a directory.
    *
-   * @param jarLocation Location containing the jar file
+   * @param jarLocation       Location containing the jar file
    * @param destinationFolder Directory to expand into
-   * @param nameFilter Predicate to select files to unpack
+   * @param nameFilter        Predicate to select files to unpack
+   *
    * @return The {@code destinationFolder}
    * @throws IOException If failed to expand the jar
    */
   public static File unJar(Location jarLocation, File destinationFolder, Predicate<String> nameFilter)
-    throws IOException {
+          throws IOException {
     try (ZipInputStream zipIn = new ZipInputStream(new BufferedInputStream(jarLocation.getInputStream()))) {
       unJar(zipIn, destinationFolder, nameFilter);
     }
@@ -233,8 +242,9 @@ public class BundleJarUtil {
   /**
    * Unpack a jar file to a directory.
    *
-   * @param jarFile the jar file to unpack
+   * @param jarFile           the jar file to unpack
    * @param destinationFolder Directory to expand into
+   *
    * @return The {@code destinationFolder}
    * @throws IOException If failed to expand the jar
    */
@@ -245,8 +255,9 @@ public class BundleJarUtil {
   /**
    * Unpack a jar file to a directory, overwriting any existing files.
    *
-   * @param jarFile the jar file to unpack
+   * @param jarFile           the jar file to unpack
    * @param destinationFolder Directory to expand into
+   *
    * @return The {@code destinationFolder}
    * @throws IOException If failed to expand the jar
    */
@@ -257,16 +268,17 @@ public class BundleJarUtil {
   /**
    * Unpack a jar file to a directory.
    *
-   * @param jarFile the jar file to unpack
+   * @param jarFile           the jar file to unpack
    * @param destinationFolder Directory to expand into
-   * @param nameFilter Predicate to select files to unpack
-   * @param copyOptions Copy options to use when unpacking
+   * @param nameFilter        Predicate to select files to unpack
+   * @param copyOptions       Copy options to use when unpacking
+   *
    * @return The {@code destinationFolder}
    * @throws IOException If failed to expand the jar
    */
   private static File unJar(File jarFile, File destinationFolder, Predicate<String> nameFilter,
-                            CopyOption ...copyOptions)
-    throws IOException {
+                            CopyOption... copyOptions)
+          throws IOException {
     try (ZipInputStream zipIn = new ZipInputStream(new BufferedInputStream(new FileInputStream(jarFile)))) {
       unJar(zipIn, destinationFolder, nameFilter, copyOptions);
     }
@@ -277,6 +289,7 @@ public class BundleJarUtil {
    * Search for {@link Manifest} from the given {@link JarInputStream}.
    *
    * @param jarInput the {@link JarInputStream} to look for {@link Manifest}
+   *
    * @return The {@link Manifest} or {@code null} if no manifest was found.
    * @throws IOException if failed to read from the given input
    */
@@ -301,15 +314,19 @@ public class BundleJarUtil {
   }
 
   private static void unJar(ZipInputStream input, File targetDirectory, Predicate<String> nameFilter,
-                            CopyOption ...copyOptions)
-    throws IOException {
+                            CopyOption... copyOptions)
+          throws IOException {
     Path targetPath = targetDirectory.toPath();
     Files.createDirectories(targetPath);
 
     ZipEntry entry;
     while ((entry = input.getNextEntry()) != null) {
       if (nameFilter.test(entry.getName())) {
-        Path output = targetPath.resolve(entry.getName());
+        // The name of entries is absolute path, which starts with a '/'
+        // Inside sun.nio.fs.AbstractPath.resolve, it's just connect "this" and "other" if "other" starts with a '/'
+        // So we need split the filename out of the entry name
+        String name = entry.getName();
+        Path output = targetPath.resolve(name.substring(name.lastIndexOf("/") + 1));
 
         if (entry.isDirectory()) {
           Files.createDirectories(output);
