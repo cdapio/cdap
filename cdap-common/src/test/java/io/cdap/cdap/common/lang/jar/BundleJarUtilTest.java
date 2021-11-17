@@ -86,6 +86,7 @@ public class BundleJarUtilTest {
   }
 
   @Test
+  @SuppressWarnings({"UnstableApiUsage", "ResultOfMethodCallIgnored"})
   public void testPrepareClassLoader() throws IOException {
     // Create a file inside a sub-dir.
     File dir = TEMP_FOLDER.newFolder();
