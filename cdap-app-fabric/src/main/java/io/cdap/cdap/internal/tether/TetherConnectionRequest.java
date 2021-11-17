@@ -22,12 +22,17 @@ import java.util.List;
  * Tethering request sent from the {@link io.cdap.cdap.internal.tether.RemoteAgentService} to
  * the tethering server.
  */
-public class TetherConnectionRequest extends TetherRequestBase {
+public class TetherConnectionRequest {
+  private final String peer;
   private final List<NamespaceAllocation> namespaces;
 
   public TetherConnectionRequest(String peer, List<NamespaceAllocation> namespaces) {
-    super(peer);
+    this.peer = peer;
     this.namespaces = namespaces;
+  }
+
+  public String getPeer() {
+    return peer;
   }
 
   public List<NamespaceAllocation> getNamespaces() {

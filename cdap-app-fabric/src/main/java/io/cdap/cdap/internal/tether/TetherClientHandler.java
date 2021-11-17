@@ -53,7 +53,7 @@ public class TetherClientHandler extends AbstractHttpHandler {
 
   private final TetherStore store;
   private final NamespaceAdmin namespaceAdmin;
-  private String instanceName;
+  private final String instanceName;
 
   @Inject
   TetherClientHandler(CConfiguration cConf, TetherStore store, NamespaceAdmin namespaceAdmin) {
@@ -73,7 +73,7 @@ public class TetherClientHandler extends AbstractHttpHandler {
 
     List<PeerInfo> peers = store.getPeers();
     Optional<PeerInfo> peer = peers.stream()
-      .filter(p -> p.getName().equals(tetherCreationRequest.getInstance()))
+      .filter(p -> p.getName().equals(tetherCreationRequest.getPeer()))
       .findFirst();
     if (peer.isPresent()) {
       LOG.info("Peer {} is already present in state {}, ignoring tethering request",
@@ -107,7 +107,7 @@ public class TetherClientHandler extends AbstractHttpHandler {
     }
 
     PeerMetadata peerMetadata = new PeerMetadata(namespaceAllocations, tetherCreationRequest.getMetadata());
-    PeerInfo peerInfo = new PeerInfo(tetherCreationRequest.getInstance(), tetherCreationRequest.getEndpoint(),
+    PeerInfo peerInfo = new PeerInfo(tetherCreationRequest.getPeer(), tetherCreationRequest.getEndpoint(),
                                      TetherStatus.PENDING, peerMetadata);
     store.addPeer(peerInfo);
     responder.sendStatus(HttpResponseStatus.OK);

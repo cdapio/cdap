@@ -64,7 +64,7 @@ public class MockTetherServerHandler extends AbstractHttpHandler {
   public void createTether(FullHttpRequest request, HttpResponder responder) {
     String content = request.content().toString(StandardCharsets.UTF_8);
     TetherConnectionRequest tetherRequest = GSON.fromJson(content, TetherConnectionRequest.class);
-    Assert.assertEquals(TetherClientHandlerTest.CLIENT_INSTANCE, tetherRequest.getInstance());
+    Assert.assertEquals(TetherClientHandlerTest.CLIENT_INSTANCE, tetherRequest.getPeer());
     Assert.assertEquals(TetherClientHandlerTest.NAMESPACES, tetherRequest.getNamespaces());
     tetherCreated = true;
     responder.sendStatus(HttpResponseStatus.OK);

@@ -126,7 +126,7 @@ public class TetherServerHandlerTest {
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
                                     structuredTableRegistry);
     cConf.setBoolean(Constants.Tether.TETHER_SERVER_ENABLE, true);
-    cConf.setInt(Constants.Tether.CONNECTION_TIMEOUT, 1);
+    cConf.setInt(Constants.Tether.CONNECTION_TIMEOUT_SECONDS, 1);
     service = new CommonNettyHttpServiceBuilder(CConfiguration.create(), getClass().getSimpleName())
       .setHttpHandlers(new TetherServerHandler(cConf, tetherStore, messagingService, transactionRunner),
                        new TetherHandler(cConf, tetherStore))
@@ -172,7 +172,7 @@ public class TetherServerHandlerTest {
     expectTetherControlResponse("xyz", HttpResponseStatus.OK);
 
     // Wait until we don't receive any control messages from the peer for upto the timeout interval.
-    Thread.sleep(cConf.getInt(Constants.Tether.CONNECTION_TIMEOUT) * 1000);
+    Thread.sleep(cConf.getInt(Constants.Tether.CONNECTION_TIMEOUT_SECONDS) * 1000);
     expectTetherStatus("xyz", TetherStatus.ACCEPTED, NAMESPACES, TetherConnectionStatus.INACTIVE);
 
     // Delete tethering

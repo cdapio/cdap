@@ -44,6 +44,9 @@ import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
 
+/**
+ * Main class for running remote agent service in Kubernetes.
+ */
 public class RemoteAgentServiceMain extends AbstractServiceMain<EnvironmentOptions> {
   /**
    * Main entry point

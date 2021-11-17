@@ -22,7 +22,9 @@ import java.util.Map;
 /**
  * Tethering request that's sent to the client.
  */
-public class TetherCreationRequest extends TetherRequestBase {
+public class TetherCreationRequest {
+  // Name of the peer
+  private final String peer;
   // Server endpoint
   private final String endpoint;
   // CDAP namespaces
@@ -30,12 +32,16 @@ public class TetherCreationRequest extends TetherRequestBase {
   // Metadata associated with this tether
   private final Map<String, String> metadata;
 
-  public TetherCreationRequest(String instance, String endpoint,
+  public TetherCreationRequest(String peer, String endpoint,
                                List<String> namespaces, Map<String, String> metadata) {
-    super(instance);
+    this.peer = peer;
     this.endpoint = endpoint;
     this.namespaces = namespaces;
     this.metadata = metadata;
+  }
+
+  public String getPeer() {
+    return peer;
   }
 
   public String getEndpoint() {

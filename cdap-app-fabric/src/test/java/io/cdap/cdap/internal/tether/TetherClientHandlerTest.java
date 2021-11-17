@@ -166,7 +166,7 @@ public class TetherClientHandlerTest {
           .build()).build();
 
     cConf.setInt(Constants.Tether.CONNECT_INTERVAL, 1);
-    cConf.setInt(Constants.Tether.CONNECTION_TIMEOUT, 5);
+    cConf.setInt(Constants.Tether.CONNECTION_TIMEOUT_SECONDS, 5);
     cConf.set(Constants.INSTANCE_NAME, CLIENT_INSTANCE);
 
     clientService = new CommonNettyHttpServiceBuilder(conf, getClass().getSimpleName() + "_client")
@@ -239,7 +239,7 @@ public class TetherClientHandlerTest {
 
     // Make server respond with 500 error for control messages.
     serverHandler.setResponseStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    Thread.sleep(cConf.getInt(Constants.Tether.CONNECTION_TIMEOUT) * 1000);
+    Thread.sleep(cConf.getInt(Constants.Tether.CONNECTION_TIMEOUT_SECONDS) * 1000);
     // Control channel state should become inactive
     waitForTetherStatus(TetherStatus.ACCEPTED, SERVER_INSTANCE, serverEndpoint,
                         PROJECT, LOCATION, NAMESPACES, TetherConnectionStatus.INACTIVE);
@@ -333,6 +333,24 @@ public class TetherClientHandlerTest {
     deleteTether(SERVER_INSTANCE);
   }
 
+  @Test
+  public void testGetTetherUnknownPeer() throws IOException {
+    HttpRequest request = HttpRequest.builder(HttpMethod.GET,
+                                              clientConfig.resolveURL("tethering/connections/unknonwn_peer"))
+      .build();
+    HttpResponse response = HttpRequests.execute(request);
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getResponseCode());
+  }
+
+  @Test
+  public void testDeleteTetherUnknownPeer() throws IOException {
+    HttpRequest request = HttpRequest.builder(HttpMethod.DELETE,
+                                              clientConfig.resolveURL("tethering/connections/unknonwn_peer"))
+      .build();
+    HttpResponse response = HttpRequests.execute(request);
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getResponseCode());
+  }
+
   private void deleteTether(String instance) throws IOException {
     HttpRequest request = HttpRequest.builder(HttpMethod.DELETE,
                                               clientConfig.resolveURL("tethering/connections/" + instance))
@@ -366,7 +384,7 @@ public class TetherClientHandlerTest {
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
 
-    waitForTetherStatus(expectedTetherStatus, tetherRequest.getInstance(), tetherRequest.getEndpoint(),
+    waitForTetherStatus(expectedTetherStatus, tetherRequest.getPeer(), tetherRequest.getEndpoint(),
                         project, location, namespaceAllocations, TetherConnectionStatus.ACTIVE);
   }
 

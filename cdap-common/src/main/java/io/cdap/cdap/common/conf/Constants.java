@@ -1801,7 +1801,7 @@ public final class Constants {
     /**
      * Tethering connection timeout.
      */
-    public static final String CONNECTION_TIMEOUT = "tether.connection.timeout";
-    public static final int CONNECTION_TIMEOUT_DEFAULT = 60;
+    public static final String CONNECTION_TIMEOUT_SECONDS = "tether.connection.timeout.seconds";
+    public static final int DEFAULT_CONNECTION_TIMEOUT_SECONDS = 60;
   }
 }

@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.tether;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.http.AbstractHttpHandler;
@@ -35,7 +36,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- * {@link io.cdap.http.HttpHandler} to manage tehering v3 REST APIs that are common to client and server.
+ * {@link io.cdap.http.HttpHandler} to manage tethering v3 REST APIs that are common to client and server.
  */
 @Path(Constants.Gateway.API_VERSION_3)
 public class TetherHandler extends AbstractHttpHandler {
@@ -55,7 +56,8 @@ public class TetherHandler extends AbstractHttpHandler {
   @Override
   public void init(HandlerContext context) {
     super.init(context);
-    connectionTimeout = cConf.getInt(Constants.Tether.CONNECTION_TIMEOUT, Constants.Tether.CONNECTION_TIMEOUT_DEFAULT);
+    connectionTimeout = cConf.getInt(Constants.Tether.CONNECTION_TIMEOUT_SECONDS,
+                                     Constants.Tether.DEFAULT_CONNECTION_TIMEOUT_SECONDS);
   }
 
   /**
@@ -66,12 +68,7 @@ public class TetherHandler extends AbstractHttpHandler {
   public void getTethers(HttpRequest request, HttpResponder responder) {
     List<PeerStatus> peerStatusList = new ArrayList<>();
     for (PeerInfo peer : store.getPeers()) {
-      TetherConnectionStatus connectionStatus = TetherConnectionStatus.INACTIVE;
-      if (System.currentTimeMillis() - peer.getLastConnectionTime() < connectionTimeout * 1000L) {
-        connectionStatus = TetherConnectionStatus.ACTIVE;
-      }
-      peerStatusList.add(new PeerStatus(peer.getName(), peer.getEndpoint(), peer.getTetherStatus(),
-                                        peer.getMetadata(), connectionStatus));
+      peerStatusList.add(getPeerStatus(peer));
     }
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(peerStatusList));
   }
@@ -82,14 +79,16 @@ public class TetherHandler extends AbstractHttpHandler {
   @GET
   @Path("/tethering/connections/{peer}")
   public void getTether(HttpRequest request, HttpResponder responder, @PathParam("peer") String peer) {
-    PeerInfo peerInfo = store.getPeer(peer);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getPeerStatus(store.getPeer(peer))));
+  }
+
+  private PeerStatus getPeerStatus(PeerInfo peerInfo) {
     TetherConnectionStatus connectionStatus = TetherConnectionStatus.INACTIVE;
     if (System.currentTimeMillis() - peerInfo.getLastConnectionTime() < connectionTimeout * 1000L) {
       connectionStatus = TetherConnectionStatus.ACTIVE;
     }
-    PeerStatus peerStatus = new PeerStatus(peerInfo.getName(), peerInfo.getEndpoint(), peerInfo.getTetherStatus(),
-                                           peerInfo.getMetadata(), connectionStatus);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(peerStatus));
+    return new PeerStatus(peerInfo.getName(), peerInfo.getEndpoint(), peerInfo.getTetherStatus(),
+                          peerInfo.getMetadata(), connectionStatus);
   }
 
   /**
@@ -97,7 +96,11 @@ public class TetherHandler extends AbstractHttpHandler {
    */
   @DELETE
   @Path("/tethering/connections/{peer}")
-  public void deleteTether(HttpRequest request, HttpResponder responder, @PathParam("peer") String peer) {
+  public void deleteTether(HttpRequest request, HttpResponder responder, @PathParam("peer") String peer)
+    throws NotFoundException {
+    if (store.getPeer(peer) == null) {
+      throw new NotFoundException(String.format("Peer {} not found", peer));
+    }
     store.deletePeer(peer);
     responder.sendStatus(HttpResponseStatus.OK);
   }

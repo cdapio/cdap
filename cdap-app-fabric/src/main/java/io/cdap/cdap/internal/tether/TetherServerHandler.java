@@ -25,6 +25,7 @@ import io.cdap.cdap.api.messaging.MessageFetcher;
 import io.cdap.cdap.api.messaging.MessagePublisher;
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotImplementedException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -177,7 +178,7 @@ public class TetherServerHandler extends AbstractHttpHandler {
 
     String content = request.content().toString(StandardCharsets.UTF_8);
     TetherConnectionRequest tetherRequest = GSON.fromJson(content, TetherConnectionRequest.class);
-    TopicId topicId = new TopicId(NamespaceId.SYSTEM.getNamespace(), "tethering_" + tetherRequest.getInstance());
+    TopicId topicId = new TopicId(NamespaceId.SYSTEM.getNamespace(), "tethering_" + tetherRequest.getPeer());
     try {
       messagingService.createTopic(new TopicMetadata(topicId, Collections.emptyMap()));
     } catch (TopicAlreadyExistsException e) {
@@ -190,8 +191,17 @@ public class TetherServerHandler extends AbstractHttpHandler {
     // We don't need to keep track of the client metadata on the server side.
     PeerMetadata peerMetadata = new PeerMetadata(tetherRequest.getNamespaces(), Collections.emptyMap());
     // We don't store the peer endpoint on the server side because the connection is initiated by the client.
-    PeerInfo peerInfo = new PeerInfo(tetherRequest.getInstance(), null, TetherStatus.PENDING, peerMetadata);
-    store.addPeer(peerInfo);
+    PeerInfo peerInfo = new PeerInfo(tetherRequest.getPeer(), null, TetherStatus.PENDING, peerMetadata);
+    try {
+      store.addPeer(peerInfo);
+    } catch (Exception e) {
+      try {
+        messagingService.deleteTopic(topicId);
+      } catch (Exception ex) {
+        e.addSuppressed(ex);
+      }
+      throw new IOException("Failed to create tether with peer " + tetherRequest.getPeer(), e);
+    }
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -201,16 +211,8 @@ public class TetherServerHandler extends AbstractHttpHandler {
   @POST
   @Path("/tethering/connections/{peer}/accept")
   public void acceptTether(HttpRequest request, HttpResponder responder, @PathParam("peer") String peer)
-    throws NotImplementedException {
-    checkTetherServerEnabled();
-
-    PeerInfo peerInfo = store.getPeer(peer);
-    if (peerInfo.getTetherStatus() == TetherStatus.PENDING) {
-      store.updatePeer(peerInfo.getName(), TetherStatus.ACCEPTED);
-    } else {
-      LOG.info("Ignoring tethering accept as tethering state is {}", peerInfo.getTetherStatus());
-    }
-    responder.sendStatus(HttpResponseStatus.OK);
+    throws NotImplementedException, BadRequestException {
+    updateTetherStatus(responder, peer, TetherStatus.ACCEPTED);
   }
 
   /**
@@ -219,14 +221,22 @@ public class TetherServerHandler extends AbstractHttpHandler {
   @POST
   @Path("/tethering/connections/{peer}/reject")
   public void rejectTether(HttpRequest request, HttpResponder responder, @PathParam("peer") String peer)
-    throws NotImplementedException {
-    checkTetherServerEnabled();
+    throws NotImplementedException, BadRequestException {
+    updateTetherStatus(responder, peer, TetherStatus.REJECTED);
+  }
 
+  private void updateTetherStatus(HttpResponder responder, String peer, TetherStatus newStatus)
+    throws NotImplementedException, BadRequestException {
+    checkTetherServerEnabled();
     PeerInfo peerInfo = store.getPeer(peer);
+    if (peerInfo == null) {
+      throw new BadRequestException(String.format("Peer %s not found", peer));
+    }
     if (peerInfo.getTetherStatus() == TetherStatus.PENDING) {
-      store.updatePeer(peerInfo.getName(), TetherStatus.REJECTED);
+      store.updatePeer(peerInfo.getName(), newStatus);
     } else {
-      LOG.info("Ignoring tethering reject as tethering state is {}", peerInfo.getTetherStatus());
+      LOG.info("Cannot update tether state to {} as current state state is {}",
+               newStatus, peerInfo.getTetherStatus());
     }
     responder.sendStatus(HttpResponseStatus.OK);
   }
