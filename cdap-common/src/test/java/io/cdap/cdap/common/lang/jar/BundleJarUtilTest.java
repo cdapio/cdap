@@ -99,11 +99,11 @@ public class BundleJarUtilTest {
 
     // Unpack the jar into a folder
     File unpackedDir = BundleJarUtil.prepareClassLoaderFolder(Locations.toLocation(destArchive),
-                                                              TEMP_FOLDER::newFolder).getDir();
+            TEMP_FOLDER::newFolder).getDir();
 
     // Unpack from the unpacked folder again. It should return the same folder
     try (ClassLoaderFolder classLoaderFolder = BundleJarUtil.prepareClassLoaderFolder(unpackedDir,
-                                                                                      TEMP_FOLDER::newFolder)) {
+            TEMP_FOLDER::newFolder)) {
       Assert.assertEquals(unpackedDir, classLoaderFolder.getDir());
     }
 
@@ -144,7 +144,15 @@ public class BundleJarUtilTest {
     BundleJarUtil.createJar(input, destArchive);
 
     try (JarFile jarFile = new JarFile(destArchive)) {
-      Assert.assertTrue(jarFile.stream().map(JarEntry::getName).allMatch(files::contains));
+      Assert.assertTrue(
+              jarFile.stream()
+                     .filter(entry -> !entry.isDirectory())
+                     .map(entry -> {
+                       String name = entry.getName();
+                       return name.substring(name.lastIndexOf("/") + 1);
+                     })
+                     .allMatch(files::contains)
+      );
     }
   }
 }
