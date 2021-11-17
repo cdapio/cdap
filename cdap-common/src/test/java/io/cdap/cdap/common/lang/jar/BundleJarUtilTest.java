@@ -59,6 +59,7 @@ public class BundleJarUtilTest {
   }
 
   @Test
+  @SuppressWarnings({"UnstableApiUsage", "ResultOfMethodCallIgnored"})
   public void testRecursive() throws IOException {
     // Create a file inside a sub-dir.
     File dir = TEMP_FOLDER.newFolder();
@@ -73,9 +74,11 @@ public class BundleJarUtilTest {
     final File target = new File(TEMP_FOLDER.newFolder(), "target.jar");
     BundleJarUtil.createJar(dir, target);
     JarFile jarFile = new JarFile(target);
-    Assert.assertTrue(jarFile.getJarEntry("subdir/").isDirectory());
+    // The name of entries is absolute path
+    Assert.assertTrue(jarFile.getJarEntry("subDir.getAbsolutePath()").isDirectory());
 
-    JarEntry jarEntry = jarFile.getJarEntry("subdir/file1");
+    // The name of entries is absolute path
+    JarEntry jarEntry = jarFile.getJarEntry(file1.getAbsolutePath());
     Assert.assertNotNull(jarEntry);
     try (Reader reader = new InputStreamReader(jarFile.getInputStream(jarEntry), Charsets.UTF_8)) {
       Assert.assertEquals(message, CharStreams.toString(reader));
