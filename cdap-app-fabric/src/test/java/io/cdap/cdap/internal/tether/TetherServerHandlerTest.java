@@ -39,8 +39,6 @@ import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data.runtime.TransactionExecutorModule;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
-import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -139,8 +137,6 @@ public class TetherServerHandlerTest {
           .setPort(service.getBindAddress().getPort())
           .setSSLEnabled(false)
           .build()).build();
-
-    messagingService.deleteTopic(new TopicId(NamespaceId.SYSTEM.getNamespace(), "tethering_xyz"));
   }
 
   @Test
