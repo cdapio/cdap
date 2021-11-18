@@ -31,6 +31,7 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.StoreDefinition;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -49,6 +50,12 @@ public class TetherStore {
     this.transactionRunner = transactionRunner;
   }
 
+  /**
+   * Adds a peer.
+   *
+   * @param peerInfo peer information
+   * @throws IOException
+   */
   public void addPeer(PeerInfo peerInfo) {
     TransactionRunners.run(transactionRunner, context -> {
       StructuredTable tetherTable = context.getTable(StoreDefinition.TetherStore.TETHER);
@@ -64,6 +71,14 @@ public class TetherStore {
     });
   }
 
+  /**
+   * Updates tether status and last connection time for a peer.
+   *
+   * @param peerName name of the peer
+   * @param tetherStatus status of tether with the peer
+   * @param lastConnectionTime last timestamp we successfully connected to the peer
+   * @throws IOException
+   */
   public void updatePeer(String peerName, TetherStatus tetherStatus, long lastConnectionTime) {
     TransactionRunners.run(transactionRunner, context -> {
       Collection<Field<?>> fields = new ArrayList<>();
@@ -75,6 +90,13 @@ public class TetherStore {
     });
   }
 
+  /**
+   * Updates tether status for a peer.
+   *
+   * @param peerName name of the peer
+   * @param tetherStatus status of tether with the peer
+   * @throws IOException
+   */
     public void updatePeer(String peerName, TetherStatus tetherStatus) {
     TransactionRunners.run(transactionRunner, context -> {
       Collection<Field<?>> fields = new ArrayList<>();
@@ -85,6 +107,13 @@ public class TetherStore {
     });
   }
 
+  /**
+   * Updates tether status for a peer.
+   *
+   * @param peerName name of the peer
+   * @param lastConnectionTime last timestamp we successfully connected to the peer
+   * @throws IOException
+   */
   public void updatePeer(String peerName, long lastConnectionTime) {
     TransactionRunners.run(transactionRunner, context -> {
       Collection<Field<?>> fields = new ArrayList<>();
@@ -95,6 +124,12 @@ public class TetherStore {
     });
   }
 
+  /**
+   * Deletes a peer
+   *
+   * @param peerName name of the peer
+   * @throws IOException
+   */
   public void deletePeer(String peerName) {
     TransactionRunners.run(transactionRunner, context -> {
       StructuredTable capabilityTable = context.getTable(StoreDefinition.TetherStore.TETHER);
@@ -103,6 +138,12 @@ public class TetherStore {
     });
   }
 
+  /**
+   * Get information about all tethered peers
+   *
+   * @return information about status of tethered peer
+   * @throws IOException
+   */
   public List<PeerInfo> getPeers() {
     List<PeerInfo> peers = new ArrayList<>();
     return TransactionRunners.run(transactionRunner, context -> {
@@ -123,6 +164,12 @@ public class TetherStore {
     });
   }
 
+  /**
+   * Get information about a peer
+   *
+   * @return information about status of a peer
+   * @throws IOException, NotFoundException
+   */
   public PeerInfo getPeer(String peerName) {
     return TransactionRunners.run(transactionRunner, context -> {
       StructuredTable tetherTable = context
@@ -145,7 +192,14 @@ public class TetherStore {
     });
   }
 
-  TetherStatus getTetherStatus(String peerName) {
+  /**
+   * Get tether status for a peer
+   *
+   * @param peerName name of the peer
+   * @return tether status
+   * @throws IOException, NotFoundException
+   */
+  public TetherStatus getTetherStatus(String peerName) {
     return TransactionRunners.run(transactionRunner, context -> {
       StructuredTable tetherTable = context
         .getTable(StoreDefinition.TetherStore.TETHER);

@@ -203,6 +203,14 @@ public class TetherServerHandlerTest {
     deleteTether();
   }
 
+  @Test
+  public void testConnectControlChannelUnknownPeer() throws IOException {
+    HttpRequest request = HttpRequest.builder(HttpMethod.GET,
+                                              config.resolveURL("/tethering/controlchannels/bad_peer")).build();
+    HttpResponse response = HttpRequests.execute(request);
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getResponseCode());
+  }
+
   private void expectTetherControlResponse(String peerName, HttpResponseStatus status) throws IOException {
 
     HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.GET,

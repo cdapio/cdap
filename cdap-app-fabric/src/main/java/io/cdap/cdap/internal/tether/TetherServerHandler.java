@@ -120,8 +120,8 @@ public class TetherServerHandler extends AbstractHttpHandler {
    */
   @GET
   @Path("/tethering/controlchannels/{peer}")
-  public void connectControlChannel(HttpRequest request, HttpResponder responder,
-                                    @PathParam("peer") String peer) throws IOException, NotImplementedException {
+  public void connectControlChannel(HttpRequest request, HttpResponder responder, @PathParam("peer") String peer)
+    throws IOException, NotImplementedException {
     checkTetherServerEnabled();
 
     store.updatePeer(peer, System.currentTimeMillis());
@@ -226,12 +226,9 @@ public class TetherServerHandler extends AbstractHttpHandler {
   }
 
   private void updateTetherStatus(HttpResponder responder, String peer, TetherStatus newStatus)
-    throws NotImplementedException, BadRequestException {
+    throws NotImplementedException {
     checkTetherServerEnabled();
     PeerInfo peerInfo = store.getPeer(peer);
-    if (peerInfo == null) {
-      throw new BadRequestException(String.format("Peer %s not found", peer));
-    }
     if (peerInfo.getTetherStatus() == TetherStatus.PENDING) {
       store.updatePeer(peerInfo.getName(), newStatus);
     } else {

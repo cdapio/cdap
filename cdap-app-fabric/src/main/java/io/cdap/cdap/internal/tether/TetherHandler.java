@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.tether;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.http.AbstractHttpHandler;
@@ -96,11 +95,9 @@ public class TetherHandler extends AbstractHttpHandler {
    */
   @DELETE
   @Path("/tethering/connections/{peer}")
-  public void deleteTether(HttpRequest request, HttpResponder responder, @PathParam("peer") String peer)
-    throws NotFoundException {
-    if (store.getPeer(peer) == null) {
-      throw new NotFoundException(String.format("Peer {} not found", peer));
-    }
+  public void deleteTether(HttpRequest request, HttpResponder responder, @PathParam("peer") String peer) {
+    // getPeer() throws NotFoundException if peer is not present
+    store.getPeer(peer);
     store.deletePeer(peer);
     responder.sendStatus(HttpResponseStatus.OK);
   }
