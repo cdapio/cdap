@@ -49,10 +49,12 @@ import java.net.URLEncoder;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 import static org.iq80.leveldb.impl.Iq80DBFactory.factory;
@@ -130,6 +132,15 @@ public class LevelDBTableService implements AutoCloseable {
   public void compactAll() {
     // TODO CDAP-18546: deprecate compaction in favor of using sharding for efficient recycling range deleted rows.
     for (Map.Entry<String, DB> entry : tables.entrySet()) {
+      executor.schedule(
+        new Runnable() {
+          @Override
+          public void run() {
+            compact(entry.getKey());
+          }
+        },
+        (long) (ThreadLocalRandom.current().nextDouble() * compactionInterval.getSeconds()),
+        TimeUnit.SECONDS);
       compact(entry.getKey());
     }
   }

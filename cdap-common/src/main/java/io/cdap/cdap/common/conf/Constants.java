@@ -1453,7 +1453,7 @@ public final class Constants {
   public static final int DEFAULT_DATA_LEVELDB_BLOCKSIZE = 1024;
   public static final long DEFAULT_DATA_LEVELDB_CACHESIZE = 1024 * 1024 * 100;
   public static final boolean DEFAULT_DATA_LEVELDB_FSYNC = true;
-  public static final long DEFAULT_DATA_LEVELDB_COMPACTION_INTERVAL_SECONDS = 0;
+  public static final long DEFAULT_DATA_LEVELDB_COMPACTION_INTERVAL_SECONDS = 3600 * 24 * 7L;
   public static final int DEFAULT_DATA_LEVELDB_COMPACTION_LEVEL_MIN = 0;
   public static final int DEFAULT_DATA_LEVELDB_COMPACTION_LEVEL_MAX = 4;
 
