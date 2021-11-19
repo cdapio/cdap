@@ -49,7 +49,6 @@ import java.net.URLEncoder;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -141,7 +140,6 @@ public class LevelDBTableService implements AutoCloseable {
         },
         (long) (ThreadLocalRandom.current().nextDouble() * compactionInterval.getSeconds()),
         TimeUnit.SECONDS);
-      compact(entry.getKey());
     }
   }
 
