@@ -184,7 +184,7 @@ public class TetherClientHandlerTest {
 
     clientService = new CommonNettyHttpServiceBuilder(conf, getClass().getSimpleName() + "_client")
       .setHttpHandlers(new TetherClientHandler(cConf, tetherStore, namespaceAdmin),
-                       new TetherHandler(cConf, tetherStore))
+                       new TetherHandler(cConf, tetherStore, injector.getInstance(TransactionRunner.class)))
       .build();
     clientService.start();
     clientConfig = ClientConfig.builder()

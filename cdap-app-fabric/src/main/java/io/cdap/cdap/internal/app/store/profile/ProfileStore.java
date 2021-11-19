@@ -27,6 +27,7 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.profile.Profile;
+import io.cdap.cdap.proto.provisioner.ProvisionerPropertyValue;
 import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
 import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.StructuredTable;
@@ -274,6 +275,27 @@ public class ProfileStore {
     }
     addEntityIdKey(keys, entityId);
     profileEntityTable.delete(keys);
+  }
+
+  /**
+   * Returns names of profiles that have a given property value.
+   *
+   * @param propertyValue the {@link ProvisionerPropertyValue} to find in profiles
+   * @return the list of profile names that have the property value
+   */
+  public List<String> findProfilesWithProperty(ProvisionerPropertyValue propertyValue) throws IOException {
+    try (CloseableIterator<StructuredRow> iterator =
+           profileTable.scan(Range.all(), Integer.MAX_VALUE)) {
+      List<String> profiles = new ArrayList<>();
+      while (iterator.hasNext()) {
+        Profile profile = GSON.fromJson(iterator.next()
+                                          .getString(StoreDefinition.ProfileStore.PROFILE_DATA_FIELD), Profile.class);
+        if (profile.getProvisioner().getProperties().contains(propertyValue)) {
+          profiles.add(profile.getName());
+        }
+      }
+      return profiles;
+    }
   }
 
   @SuppressWarnings("OptionalIsPresent")
