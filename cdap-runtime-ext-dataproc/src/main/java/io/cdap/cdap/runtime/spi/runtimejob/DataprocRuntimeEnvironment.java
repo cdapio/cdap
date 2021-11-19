@@ -20,6 +20,7 @@ package io.cdap.cdap.runtime.spi.runtimejob;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
+import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.TwillRunnerService;
@@ -78,7 +79,7 @@ public class DataprocRuntimeEnvironment implements RuntimeJobEnvironment {
 //    yarnTwillRunnerService = new YarnTwillRunnerService(conf, connectionStr, locationFactory);
 //    yarnTwillRunnerService.start();
 //    properties = ImmutableMap.of(ZK_QUORUM, connectionStr, APP_SPARK_COMPAT, sparkCompat);
-    properties = new HashMap<>();
+    properties = ImmutableMap.of(APP_SPARK_COMPAT, sparkCompat);
   }
 
   @Override

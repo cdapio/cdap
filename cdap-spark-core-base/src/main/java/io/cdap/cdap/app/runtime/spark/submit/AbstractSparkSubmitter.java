@@ -73,12 +73,17 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     }
   };
 
+  protected void prepareLocalizeResources(List<LocalizeResource> resources) throws Exception {
+    // no-op
+  }
+
   @Override
   public final <V> ListenableFuture<V> submit(final SparkRuntimeContext runtimeContext,
                                               Map<String, String> configs, List<LocalizeResource> resources,
                                               URI jobFile, final V result) throws Exception {
     final SparkSpecification spec = runtimeContext.getSparkSpecification();
 
+    prepareLocalizeResources(resources);
     final List<String> args = createSubmitArguments(runtimeContext, configs, resources, jobFile);
 
     // Spark submit is called from this executor

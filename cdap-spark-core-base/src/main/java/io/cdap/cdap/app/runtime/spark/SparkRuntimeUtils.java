@@ -32,6 +32,7 @@ import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeClient;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.spark.SparkConf;
@@ -66,6 +67,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -145,9 +147,17 @@ public final class SparkRuntimeUtils {
   /**
    * Saves the names of localized resources to the given config.
    */
-  public static void setLocalizedResources(Set<String> localizedResourcesNames,
+  public static void setLocalizedResources(Map<String, LocalizeResource> localizedResources,
                                            Map<String, String> configs) {
-    configs.put(LOCALIZED_RESOURCES, GSON.toJson(localizedResourcesNames));
+    Map<String, String> localizedNames = new HashMap<>();
+    for (Map.Entry<String, LocalizeResource> entry : localizedResources.entrySet()) {
+      String targetName = entry.getValue().getURI().getPath();
+      int idx = targetName.lastIndexOf("/");
+      targetName = idx < 0 ? targetName : targetName.substring(idx + 1);
+      localizedNames.put(entry.getKey(), targetName);
+    }
+
+    configs.put(LOCALIZED_RESOURCES, GSON.toJson(localizedNames));
   }
 
   /**
@@ -159,12 +169,9 @@ public final class SparkRuntimeUtils {
     if (resources == null) {
       return Collections.emptyMap();
     }
-    Map<String, File> result = new HashMap<>();
-    Set<String> resourceNames = GSON.fromJson(resources, new TypeToken<Set<String>>() { }.getType());
-    for (String name : resourceNames) {
-      result.put(name, new File(dir, name));
-    }
-    return result;
+    Map<String, String> resourceNames = GSON.fromJson(resources, new TypeToken<Map<String, String>>() { }.getType());
+    return resourceNames.entrySet().stream()
+      .collect(Collectors.toMap(Map.Entry::getKey, e -> new File(dir, e.getValue())));
   }
 
   /**
