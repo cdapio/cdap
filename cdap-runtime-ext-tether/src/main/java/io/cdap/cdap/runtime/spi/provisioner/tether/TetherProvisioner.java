@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.tether;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
@@ -90,7 +94,8 @@ public class TetherProvisioner implements Provisioner {
    */
   @Override
   public Optional<RuntimeJobManager> getRuntimeJobManager(ProvisionerContext context) {
-    TetherConf conf = TetherConf.fromProperties(context.getProperties());
-    return Optional.of(new TetherRuntimeJobManager(conf.getTetheredInstanceName(), conf.getTetheredNamespace()));
+    Injector injector = Guice.createInjector(new MessagingClientModule());
+    return Optional.of(new TetherRuntimeJobManager(injector.getInstance(MessagingService.class),
+                                                   context.getProperties()));
   }
 }
