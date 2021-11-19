@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.app.runtime.spark;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import io.cdap.cdap.api.Admin;
 import io.cdap.cdap.api.ProgramLifecycle;
@@ -140,14 +139,11 @@ final class BasicSparkClientContext implements SparkClientContext {
 
   @Override
   public void localize(String name, URI uri, boolean archive) {
-    try {
-      URI actualURI = new URI(uri.getScheme(), uri.getAuthority(), uri.getPath(), uri.getQuery(), name);
-      localizeResources.put(name, new LocalizeResource(actualURI, archive));
-    } catch (URISyntaxException e) {
-      // Most of the URI is constructed from the passed URI. So ideally, this should not happen.
-      // If it does though, there is nothing that clients can do to recover, so not propagating a checked exception.
-      throw Throwables.propagate(e);
-    }
+//    try {
+      localizeResources.put(name, new LocalizeResource(uri, archive));
+//    } catch (URISyntaxException e) {
+//      throw new IllegalArgumentException("Invalid URI", e);
+//    }
   }
 
   @Override

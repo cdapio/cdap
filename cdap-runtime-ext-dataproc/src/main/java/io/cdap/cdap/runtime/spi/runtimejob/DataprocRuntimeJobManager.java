@@ -457,8 +457,9 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       .setEnvironmentConfig(
         EnvironmentConfig.newBuilder().setExecutionConfig(
           ExecutionConfig.newBuilder()
-            .setNetworkUri(String.format("projects/%s/global/networks/default", projectId))
-            .setSubnetworkUri(String.format("projects/%s/regions/%s/subnetworks/default", projectId, region))
+          .setNetworkUri("test-private")
+//            .setNetworkUri(String.format("projects/%s/global/networks/test-private", projectId))
+//            .setSubnetworkUri(String.format("projects/%s/regions/%s/subnetworks/default", projectId, region))
         ))
       .setRuntimeConfig(RuntimeConfig.newBuilder().putAllProperties(properties))
       .putAllLabels(labels)

@@ -23,6 +23,7 @@ import io.cdap.cdap.app.runtime.spark.SparkRuntimeContextConfig;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeEnv;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeUtils;
 import io.cdap.cdap.app.runtime.spark.distributed.SparkExecutionService;
+import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import io.cdap.cdap.proto.id.ProgramRunId;
@@ -32,6 +33,8 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.nio.file.Files;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -88,6 +91,19 @@ public class DistributedSparkSubmitter extends AbstractSparkSubmitter {
 //
 //    return config;
 //  }
+
+  @Override
+  protected void prepareLocalizeResources(List<LocalizeResource> resources) throws Exception {
+    for (LocalizeResource resource : resources) {
+      File source = new File(resource.getURI());
+      File dest = new File(source.getName());
+
+      if (!dest.exists()) {
+        LOG.error("Linking {} to {}", source.getAbsolutePath(), dest.getAbsolutePath());
+        Files.createLink(dest.toPath(), source.toPath());
+      }
+    }
+  }
 
   @Override
   protected void addMaster(Map<String, String> configs, ImmutableList.Builder<String> argBuilder) {

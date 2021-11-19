@@ -45,6 +45,11 @@ public class SparkMetricsSink implements Sink {
 
   private final SparkMetricsReporter reporter;
 
+  public SparkMetricsSink(Properties properties, MetricRegistry registry) {
+    reporter = new SparkMetricsReporter(registry, TimeUnit.SECONDS, TimeUnit.SECONDS, MetricFilter.ALL);
+    LOG.debug("Using SparkMetricsSink for reporting metrics: {}", properties);
+  }
+
   public SparkMetricsSink(Properties properties, MetricRegistry registry,
                           org.apache.spark.SecurityManager securityManager) {
     reporter = new SparkMetricsReporter(registry, TimeUnit.SECONDS, TimeUnit.SECONDS, MetricFilter.ALL);

@@ -505,7 +505,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     File jarFile = new File(tempDir, CDAP_LAUNCHER_JAR);
     ContainerLauncherGenerator.generateLauncherJar(
       Arrays.asList("org.apache.spark.deploy.yarn.ApplicationMaster",
-                    "org.apache.spark.executor.CoarseGrainedExecutorBackend",
+//                    "org.apache.spark.executor.CoarseGrainedExecutorBackend",
                     "org.apache.spark.executor.YarnCoarseGrainedExecutorBackend"),
       SparkContainerLauncher.class, jarFile);
     return jarFile;
@@ -578,7 +578,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     prependConfig(configs, "spark.extraListeners", DelegatingSparkListener.class.getName(), ",");
 
     configs.put("spark.metrics.conf", metricsConfPath);
-    SparkRuntimeUtils.setLocalizedResources(localizedResources.keySet(), configs);
+    SparkRuntimeUtils.setLocalizedResources(localizedResources, configs);
 
     if (context.isPySpark()) {
       Iterable<String> pyFilePaths = Iterables.transform(pyFiles, new Function<URI, String>() {
@@ -849,8 +849,8 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
                                         List<LocalizeResource> result) throws URISyntaxException {
     for (Map.Entry<String, LocalizeResource> entry : resources.entrySet()) {
       URI uri = entry.getValue().getURI();
-      URI actualURI = new URI(uri.getScheme(), uri.getAuthority(), uri.getPath(), uri.getQuery(), entry.getKey());
-      result.add(new LocalizeResource(actualURI, entry.getValue().isArchive()));
+//      URI actualURI = new URI(uri.getScheme(), uri.getAuthority(), uri.getPath(), uri.getQuery(), entry.getKey());
+      result.add(new LocalizeResource(uri, entry.getValue().isArchive()));
     }
   }
 
