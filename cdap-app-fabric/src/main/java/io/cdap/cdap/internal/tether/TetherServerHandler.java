@@ -178,7 +178,8 @@ public class TetherServerHandler extends AbstractHttpHandler {
 
     String content = request.content().toString(StandardCharsets.UTF_8);
     TetherConnectionRequest tetherRequest = GSON.fromJson(content, TetherConnectionRequest.class);
-    TopicId topicId = new TopicId(NamespaceId.SYSTEM.getNamespace(), "tethering_" + tetherRequest.getPeer());
+    TopicId topicId = new TopicId(NamespaceId.SYSTEM.getNamespace(),
+                                  TETHERING_TOPIC_PREFIX + tetherRequest.getPeer());
     try {
       messagingService.createTopic(new TopicMetadata(topicId, Collections.emptyMap()));
     } catch (TopicAlreadyExistsException e) {
