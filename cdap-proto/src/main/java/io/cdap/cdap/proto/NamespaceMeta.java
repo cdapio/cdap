@@ -45,7 +45,7 @@ public final class NamespaceMeta {
   private final long generation;
   private final NamespaceConfig config;
 
-  public NamespaceMeta(String name, String description, long generation, NamespaceConfig config) {
+  NamespaceMeta(String name, String description, long generation, NamespaceConfig config) {
     this.name = name;
     this.description = description;
     this.generation = generation;
@@ -187,6 +187,11 @@ public final class NamespaceMeta {
 
     public Builder setGeneration(long generation) {
       this.generation = generation;
+      return this;
+    }
+
+    public Builder setConfig(Map<String, String> configMap) {
+      this.configMap = configMap;
       return this;
     }
 

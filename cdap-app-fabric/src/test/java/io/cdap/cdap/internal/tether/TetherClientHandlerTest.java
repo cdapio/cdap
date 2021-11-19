@@ -38,7 +38,6 @@ import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data.runtime.TransactionExecutorModule;
-import io.cdap.cdap.proto.NamespaceConfig;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
@@ -115,21 +114,35 @@ public class TetherClientHandlerTest {
     txManager.startAndWait();
 
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
-    NamespaceConfig config1 = new NamespaceConfig(ImmutableMap.of(
+    Map<String, String> config1 = ImmutableMap.of(
       TetherClientHandler.NAMESPACE_CPU_LIMIT_PROPERTY, NAMESPACES.get(0).getCpuLimit(),
-      TetherClientHandler.NAMESPACE_MEMORY_LIMIT_PROPERTY, NAMESPACES.get(0).getMemoryLimit()));
-    NamespaceMeta nsMeta1 =  new NamespaceMeta(NAMESPACE_1, "my ns1", System.currentTimeMillis(), config1);
-    NamespaceConfig config2 = new NamespaceConfig(ImmutableMap.of(
+      TetherClientHandler.NAMESPACE_MEMORY_LIMIT_PROPERTY, NAMESPACES.get(0).getMemoryLimit());
+    NamespaceMeta nsMeta1 = new NamespaceMeta.Builder()
+      .setName(NAMESPACE_1)
+      .setDescription("my ns1")
+      .setGeneration(System.currentTimeMillis())
+      .setConfig(config1)
+      .build();
+    Map<String, String> config2 = ImmutableMap.of(
       TetherClientHandler.NAMESPACE_CPU_LIMIT_PROPERTY, NAMESPACES.get(1).getCpuLimit(),
-      TetherClientHandler.NAMESPACE_MEMORY_LIMIT_PROPERTY, NAMESPACES.get(1).getMemoryLimit()));
-    NamespaceMeta nsMeta2 =  new NamespaceMeta(NAMESPACE_2, "my ns2", System.currentTimeMillis(), config2);
+      TetherClientHandler.NAMESPACE_MEMORY_LIMIT_PROPERTY, NAMESPACES.get(1).getMemoryLimit());
+    NamespaceMeta nsMeta2 = new NamespaceMeta.Builder()
+      .setName(NAMESPACE_2)
+      .setDescription("my ns2")
+      .setGeneration(System.currentTimeMillis())
+      .setConfig(config2)
+      .build();
 
-    Map<String, String> config = new HashMap<>();
+    Map<String, String> config3 = new HashMap<>();
     // Not using an ImmutableMap here because it doesn't allow null values.
-    config.put(TetherClientHandler.NAMESPACE_CPU_LIMIT_PROPERTY, NAMESPACES.get(2).getCpuLimit());
-    config.put(TetherClientHandler.NAMESPACE_MEMORY_LIMIT_PROPERTY, NAMESPACES.get(2).getMemoryLimit());
-    NamespaceMeta nsMeta3 =  new NamespaceMeta(NAMESPACE_3, "my ns3", System.currentTimeMillis(),
-                                               new NamespaceConfig(config));
+    config3.put(TetherClientHandler.NAMESPACE_CPU_LIMIT_PROPERTY, NAMESPACES.get(2).getCpuLimit());
+    config3.put(TetherClientHandler.NAMESPACE_MEMORY_LIMIT_PROPERTY, NAMESPACES.get(2).getMemoryLimit());
+    NamespaceMeta nsMeta3 = new NamespaceMeta.Builder()
+      .setName(NAMESPACE_3)
+      .setDescription("my ns3")
+      .setGeneration(System.currentTimeMillis())
+      .setConfig(config3)
+      .build();
     namespaceAdmin.create(nsMeta1);
     namespaceAdmin.create(nsMeta2);
     namespaceAdmin.create(nsMeta3);
