@@ -91,7 +91,7 @@
 
   <property>
     <name>data.local.storage.blocksize</name>
-    <value>1024</value>
+    <value>8192</value>
     <description>
       Block size in bytes for data fabric when in CDAP Local Sandbox
     </description>
