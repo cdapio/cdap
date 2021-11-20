@@ -28,9 +28,6 @@ import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.sql.PostgresInstantiator;
-import io.cdap.cdap.spi.data.sql.PostgresSqlStructuredTableAdmin;
-import io.cdap.cdap.spi.data.sql.SqlStructuredTableRegistry;
-import io.cdap.cdap.spi.data.sql.SqlTransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.store.StoreDefinition;
 import org.apache.twill.filesystem.LocationFactory;
@@ -38,7 +35,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 import java.io.IOException;
-import javax.sql.DataSource;
 
 public class SqlArtifactStoreTest extends ArtifactStoreTest {
 
@@ -49,21 +45,17 @@ public class SqlArtifactStoreTest extends ArtifactStoreTest {
     CConfiguration cConf = CConfiguration.create();
     // any plugin which requires transaction will be excluded
     cConf.set(Constants.REQUIREMENTS_DATASET_TYPE_EXCLUDE, Joiner.on(",").join(Table.TYPE, KeyValueTable.TYPE));
+    pg = PostgresInstantiator.createAndStart(cConf, TEMP_FOLDER.newFolder());
+
     Injector injector = AppFabricTestHelper.getInjector(cConf);
 
-    pg = pg = PostgresInstantiator.createAndStart(cConf, TEMP_FOLDER.newFolder());
-    DataSource dataSource = pg.getPostgresDatabase();
-    SqlStructuredTableRegistry registry = new SqlStructuredTableRegistry(dataSource);
-    registry.initialize();
-    StructuredTableAdmin structuredTableAdmin =
-      new PostgresSqlStructuredTableAdmin(registry, dataSource);
-    TransactionRunner transactionRunner = new SqlTransactionRunner(structuredTableAdmin, dataSource);
+    TransactionRunner transactionRunner = injector.getInstance(TransactionRunner.class);
     artifactStore = new ArtifactStore(cConf,
                                       injector.getInstance(NamespacePathLocator.class),
                                       injector.getInstance(LocationFactory.class),
                                       injector.getInstance(Impersonator.class),
                                       transactionRunner);
-    StoreDefinition.ArtifactStore.createTables(structuredTableAdmin, false);
+    StoreDefinition.ArtifactStore.create(injector.getInstance(StructuredTableAdmin.class));
   }
 
   @AfterClass

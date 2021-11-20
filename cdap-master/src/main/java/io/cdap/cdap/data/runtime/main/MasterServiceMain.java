@@ -97,7 +97,6 @@ import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.store.SecureStoreService;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.store.StoreDefinition;
@@ -644,9 +643,8 @@ public class MasterServiceMain extends DaemonMain {
 
       try {
         // Define all StructuredTable before starting any services that need StructuredTable
-        StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
-                                        injector.getInstance(StructuredTableRegistry.class));
-      } catch (IOException | TableAlreadyExistsException e) {
+        StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
+      } catch (IOException e) {
         throw new RuntimeException("Unable to create the system tables.", e);
       }
       metadataStorage = injector.getInstance(MetadataStorage.class);

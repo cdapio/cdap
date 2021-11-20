@@ -21,7 +21,6 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,11 +52,6 @@ public class CachedStructuredTableRegistry implements StructuredTableRegistry {
           return getSpecificationFromDelegate(tableId);
         }
       });
-  }
-
-  @Override
-  public void initialize() throws IOException {
-    delegate.initialize();
   }
 
   @Override

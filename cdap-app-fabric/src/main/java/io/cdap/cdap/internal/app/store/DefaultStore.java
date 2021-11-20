@@ -93,7 +93,7 @@ public class DefaultStore implements Store {
   private static final DatasetId WORKFLOW_STATS_INSTANCE_ID = NamespaceId.SYSTEM.dataset("workflow.stats");
   private static final Map<String, String> EMPTY_STRING_MAP = Collections.emptyMap();
 
-  private TransactionRunner transactionRunner;
+  private final TransactionRunner transactionRunner;
 
   @Inject
   public DefaultStore(TransactionRunner transactionRunner) {
@@ -617,8 +617,8 @@ public class DefaultStore implements Store {
   }
 
   private static class ApplicationSpecificationWithChangedServices extends ForwardingApplicationSpecification {
-    private String serviceName;
-    private ServiceSpecification serviceSpecification;
+    private final String serviceName;
+    private final ServiceSpecification serviceSpecification;
 
     private ApplicationSpecificationWithChangedServices(ApplicationSpecification delegate,
                                                         String serviceName, ServiceSpecification serviceSpecification) {
@@ -677,8 +677,8 @@ public class DefaultStore implements Store {
   }
 
   private static class ApplicationSpecificationWithChangedWorkers extends ForwardingApplicationSpecification {
-    private String workerId;
-    private WorkerSpecification workerSpecification;
+    private final String workerId;
+    private final WorkerSpecification workerSpecification;
 
     private ApplicationSpecificationWithChangedWorkers(ApplicationSpecification delegate, String workerId,
                                                        WorkerSpecification workerSpec) {

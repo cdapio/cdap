@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.store;
 
-import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.proto.NamespaceMeta;
@@ -30,6 +29,7 @@ import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -63,7 +63,7 @@ public final class NamespaceTable {
     Field<String> nameField = Fields.stringField(StoreDefinition.NamespaceStore.NAMESPACE_FIELD, metadata.getName());
     Field<String> metadataField =
       Fields.stringField(StoreDefinition.NamespaceStore.NAMESPACE_METADATA_FIELD, GSON.toJson(metadata));
-    table.upsert(ImmutableList.of(nameField, metadataField));
+    table.upsert(Arrays.asList(nameField, metadataField));
   }
 
   /**
@@ -86,8 +86,8 @@ public final class NamespaceTable {
    * @param id id of the namespace
    */
   public void delete(NamespaceId id) throws IOException {
-    table.delete(
-      ImmutableList.of(Fields.stringField(StoreDefinition.NamespaceStore.NAMESPACE_FIELD, id.getEntityName())));
+    table.delete(Collections.singleton(Fields.stringField(StoreDefinition.NamespaceStore.NAMESPACE_FIELD,
+                                                          id.getEntityName())));
   }
 
   /**

@@ -834,6 +834,11 @@
   </property>
 
   <property>
+    <name>data.storage.extensions.dir</name>
+    <value>/opt/cdap/master/ext/storageproviders</value>
+  </property>
+
+  <property>
     <name>data.storage.implementation</name>
     <value>nosql</value>
     <description>

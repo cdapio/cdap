@@ -83,7 +83,6 @@ import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.security.authorization.InMemoryAccessController;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.store.StoreDefinition;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -172,16 +171,9 @@ public class AppFabricTestHelper {
       startService(injector, MetadataService.class);
 
       // Register the tables before services will need to use them
-      StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
-      StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
       try {
-        structuredTableRegistry.initialize();
+        StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
       } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-      try {
-        StoreDefinition.createAllTables(tableAdmin, structuredTableRegistry);
-      } catch (IOException | TableAlreadyExistsException e) {
         throw new RuntimeException("Failed to create the system tables", e);
       }
 

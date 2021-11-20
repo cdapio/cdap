@@ -29,8 +29,10 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
+import io.cdap.cdap.spi.data.TableNotFoundException;
+import io.cdap.cdap.spi.data.common.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
+import io.cdap.cdap.spi.data.table.StructuredTableSchema;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,10 +54,7 @@ public final class NoSqlStructuredTableAdmin implements StructuredTableAdmin {
   private final DatasetSpecification indexTableSpec;
   private final StructuredTableRegistry registry;
 
-  @Inject
-  public NoSqlStructuredTableAdmin(
-    @Named(Constants.Dataset.TABLE_TYPE) DatasetDefinition tableDefinition,
-    StructuredTableRegistry registry) {
+  NoSqlStructuredTableAdmin(DatasetDefinition tableDefinition, StructuredTableRegistry registry) {
     //noinspection unchecked - due to the guice binding we know that the tableDefinition is of the right type
     this.indexTableDefinition =
       new NoSqlStructuredTableDatasetDefinition(new IndexedTableDefinition("indexedTable", tableDefinition));
@@ -67,7 +66,7 @@ public final class NoSqlStructuredTableAdmin implements StructuredTableAdmin {
 
   @Override
   public void create(StructuredTableSpecification spec) throws IOException, TableAlreadyExistsException {
-    if (registry.getSpecification(spec.getTableId()) != null) {
+    if (exists(spec.getTableId())) {
       throw new TableAlreadyExistsException(spec.getTableId());
     }
     LOG.info("Creating table {} in namespace {}", spec, NamespaceId.SYSTEM);
@@ -80,8 +79,17 @@ public final class NoSqlStructuredTableAdmin implements StructuredTableAdmin {
   }
 
   @Override
-  public StructuredTableSpecification getSpecification(StructuredTableId tableId) {
-    return registry.getSpecification(tableId);
+  public boolean exists(StructuredTableId tableId) throws IOException {
+    return registry.getSpecification(tableId) != null;
+  }
+
+  @Override
+  public StructuredTableSchema getSchema(StructuredTableId tableId) throws TableNotFoundException {
+    StructuredTableSpecification spec = registry.getSpecification(tableId);
+    if (spec == null) {
+      throw new TableNotFoundException(tableId);
+    }
+    return new StructuredTableSchema(spec);
   }
 
   @Override

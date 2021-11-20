@@ -29,7 +29,6 @@ import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.store.NamespaceStore;
 import io.cdap.cdap.store.StoreDefinition;
 import org.apache.tephra.TransactionManager;
@@ -80,8 +79,7 @@ public class StorageProviderNamespaceAdminTest {
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
     // Define all StructuredTable before starting any services that need StructuredTable
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
-                                    injector.getInstance(StructuredTableRegistry.class));
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
 
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();

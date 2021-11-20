@@ -33,7 +33,6 @@ import io.cdap.cdap.proto.MRJobInfo;
 import io.cdap.cdap.proto.MRTaskInfo;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.store.StoreDefinition;
 import org.apache.hadoop.mapreduce.TaskCounter;
 import org.apache.tephra.TransactionManager;
@@ -60,9 +59,7 @@ public class LocalMRJobInfoFetcherTest {
   public static Injector startMetricsService(CConfiguration conf) throws Exception {
     Injector injector = Guice.createInjector(new AppFabricTestModule(conf));
     injector.getInstance(TransactionManager.class).startAndWait();
-    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
-    structuredTableRegistry.initialize();
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class), structuredTableRegistry);
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
     injector.getInstance(DatasetOpExecutorService.class).startAndWait();
     injector.getInstance(DatasetService.class).startAndWait();
     return injector;

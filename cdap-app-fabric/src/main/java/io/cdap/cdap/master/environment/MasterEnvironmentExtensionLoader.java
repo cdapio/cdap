@@ -25,7 +25,6 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -101,16 +100,7 @@ public class MasterEnvironmentExtensionLoader extends AbstractExtensionLoader<St
         return packages;
       }
 
-      packages = new HashSet<>();
-      Set<String> allowResources = getAllowedResources();
-      for (String resource : allowResources) {
-        if (resource.endsWith(".class")) {
-          int idx = resource.lastIndexOf("/");
-          if (idx >= 0) {
-            packages.add(resource.substring(0, idx));
-          }
-        }
-      }
+      packages = createPackageSets(getAllowedResources());
 
       this.allowedPackages = packages;
       return packages;

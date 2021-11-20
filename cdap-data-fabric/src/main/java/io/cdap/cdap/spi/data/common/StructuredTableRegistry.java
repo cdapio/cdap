@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,10 +14,12 @@
  * the License.
  */
 
-package io.cdap.cdap.spi.data.table;
+package io.cdap.cdap.spi.data.common;
 
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
+import io.cdap.cdap.spi.data.table.StructuredTableId;
+import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 
 import java.io.IOException;
 import javax.annotation.Nullable;
@@ -27,12 +29,6 @@ import javax.annotation.Nullable;
  */
 @Beta
 public interface StructuredTableRegistry {
-  /**
-   * Initializes the underlying storage for the registry.
-   *
-   * @throws IOException if not able to write to the underlying storage
-   */
-  void initialize() throws IOException;
 
   /**
    * Register a table specification.

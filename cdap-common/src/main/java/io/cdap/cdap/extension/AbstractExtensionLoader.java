@@ -44,6 +44,7 @@ import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -84,6 +85,17 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
   private final LoadingCache<EXTENSION_TYPE, AtomicReference<EXTENSION>> extensionsCache;
   private final LoadingCache<File, ServiceLoader<EXTENSION>> serviceLoaderCache;
   private Map<EXTENSION_TYPE, EXTENSION> allExtensions;
+
+  protected static Set<String> createPackageSets(Set<String> resources) {
+    return resources.stream()
+      .filter(resource -> resource.endsWith(".class"))
+      .map(resource -> {
+        int idx = resource.lastIndexOf("/");
+        return idx < 0 ? "" : resource.substring(0, idx).replace('/', '.');
+      })
+      .filter(s -> !s.isEmpty())
+      .collect(Collectors.toSet());
+  }
 
   @SuppressWarnings("unchecked")
   public AbstractExtensionLoader(String extDirs) {

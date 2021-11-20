@@ -29,9 +29,6 @@ import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.sql.PostgresInstantiator;
-import io.cdap.cdap.spi.data.sql.PostgresSqlStructuredTableAdmin;
-import io.cdap.cdap.spi.data.sql.SqlStructuredTableRegistry;
-import io.cdap.cdap.spi.data.sql.SqlTransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.store.StoreDefinition;
 import org.junit.AfterClass;
@@ -40,7 +37,6 @@ import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
-import javax.sql.DataSource;
 
 /**
  * Test Profile Service using SQL storage.
@@ -61,19 +57,13 @@ public class SqlProfileServiceTest extends ProfileServiceTest {
     cConf = CConfiguration.create();
     // any plugin which requires transaction will be excluded
     cConf.set(Constants.REQUIREMENTS_DATASET_TYPE_EXCLUDE, Joiner.on(",").join(Table.TYPE, KeyValueTable.TYPE));
-    cConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_SQL);
 
     pg = PostgresInstantiator.createAndStart(cConf, TEMP_FOLDER.newFolder());
-    DataSource dataSource = pg.getPostgresDatabase();
-    SqlStructuredTableRegistry registry = new SqlStructuredTableRegistry(dataSource);
-    registry.initialize();
-    structuredTableAdmin =
-      new PostgresSqlStructuredTableAdmin(registry, dataSource);
-    TransactionRunner transactionRunner = new SqlTransactionRunner(structuredTableAdmin, dataSource);
-    // TODO: (CDAP-14830) the creation of tables below can be removed after the storage SPI injection is done
-    StoreDefinition.createAllTables(structuredTableAdmin, registry);
+    injector = AppFabricTestHelper.getInjector(cConf);
+    structuredTableAdmin = injector.getInstance(StructuredTableAdmin.class);
+    TransactionRunner transactionRunner = injector.getInstance(TransactionRunner.class);
+    StoreDefinition.createAllTables(structuredTableAdmin);
 
-    injector = AppFabricTestHelper.getInjector();
     profileService = new ProfileService(cConf, injector.getInstance(MetricsSystemClient.class), transactionRunner);
     defaultStore = new DefaultStore(transactionRunner);
   }

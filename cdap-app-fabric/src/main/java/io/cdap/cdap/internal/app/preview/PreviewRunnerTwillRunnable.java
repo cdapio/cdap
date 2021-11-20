@@ -23,8 +23,10 @@ import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
+import com.google.inject.Binding;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.api.common.Bytes;
@@ -74,6 +76,7 @@ import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
+import io.cdap.cdap.spi.data.StorageProvider;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.AbstractTwillRunnable;
@@ -101,6 +104,7 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
 
   private PreviewRunnerManager previewRunnerManager;
   private LogAppenderInitializer logAppenderInitializer;
+  private StorageProvider storageProvider;
 
   public PreviewRunnerTwillRunnable(String cConfFileName, String hConfFileName) {
     super(ImmutableMap.of("cConf", cConfFileName, "hConf", hConfFileName));
@@ -152,6 +156,13 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
 
   @Override
   public void destroy() {
+    if (storageProvider != null) {
+      try {
+        storageProvider.close();
+      } catch (Exception e) {
+        LOG.warn("Exception raised when closing storage provider", e);
+      }
+    }
     logAppenderInitializer.close();
   }
 
@@ -183,6 +194,13 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
                                                               Constants.Logging.COMPONENT_NAME,
                                                               PreviewRunnerTwillApplication.NAME);
     LoggingContextAccessor.setLoggingContext(loggingContext);
+
+    // Optionally get the storage provider. It is for destroy() method to close it on shutdown.
+    Binding<StorageProvider> storageBinding = injector.getExistingBinding(Key.get(StorageProvider.class));
+    if (storageBinding != null) {
+      storageProvider = storageBinding.getProvider().get();
+    }
+
     previewRunnerManager = injector.getInstance(PreviewRunnerManager.class);
   }
 

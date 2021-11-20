@@ -133,7 +133,6 @@ import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.AccessController;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.store.StoreDefinition;
 import io.cdap.cdap.test.internal.ApplicationManagerFactory;
@@ -335,8 +334,7 @@ public class TestBase {
     metadataService.startAndWait();
 
     // Define all StructuredTable before starting any services that need StructuredTable
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
-                                    injector.getInstance(StructuredTableRegistry.class));
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
 
     dsOpService = injector.getInstance(DatasetOpExecutorService.class);
     dsOpService.startAndWait();

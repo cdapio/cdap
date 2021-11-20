@@ -36,7 +36,6 @@ import io.cdap.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
 import io.cdap.cdap.data2.dataset2.InMemoryDatasetFramework;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.store.StoreDefinition;
 import org.apache.hadoop.conf.Configuration;
@@ -83,12 +82,11 @@ public class NoSqlJobQueueTableTest extends JobQueueTableTest {
       }
     );
 
-    injector.getInstance(StructuredTableRegistry.class).initialize();
     StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
     transactionRunner = injector.getInstance(TransactionRunner.class);
 
-    StoreDefinition.JobQueueStore.createTables(tableAdmin, false);
-    StoreDefinition.AppMetadataStore.createTables(tableAdmin, false);
+    StoreDefinition.JobQueueStore.create(tableAdmin);
+    StoreDefinition.AppMetadataStore.create(tableAdmin);
   }
 
   @AfterClass

@@ -17,12 +17,14 @@
 package io.cdap.cdap.spi.data.sql;
 
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistryTest;
+import io.cdap.cdap.spi.data.common.StructuredTableRegistry;
+import io.cdap.cdap.spi.data.common.StructuredTableRegistryTest;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.IOException;
 import javax.sql.DataSource;
 
 /**
@@ -32,14 +34,21 @@ public class SqlStructuredTableRegistryTest extends StructuredTableRegistryTest 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
+  private static EmbeddedPostgres pg;
   private static StructuredTableRegistry registry;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    EmbeddedPostgres pg = PostgresInstantiator.createAndStart(TEMP_FOLDER.newFolder());
+    pg = PostgresInstantiator.createAndStart(TEMP_FOLDER.newFolder());
     DataSource dataSource = pg.getPostgresDatabase();
     registry = new SqlStructuredTableRegistry(dataSource);
   }
+
+  @AfterClass
+  public static void finish() throws IOException {
+    pg.close();
+  }
+
   @Override
   protected StructuredTableRegistry getStructuredTableRegistry() {
     return registry;

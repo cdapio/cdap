@@ -48,7 +48,7 @@ public final class FieldValidator {
     if (expected == null) {
       throw new InvalidFieldException(tableSchema.getTableId(), fieldName);
     }
-    if (!expected.equals(actual)) {
+    if (!expected.isCompatible(actual)) {
       throw new InvalidFieldException(tableSchema.getTableId(), fieldName, expected, actual);
     }
 

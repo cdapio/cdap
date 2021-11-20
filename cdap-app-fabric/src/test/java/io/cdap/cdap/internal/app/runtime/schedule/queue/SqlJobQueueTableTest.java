@@ -36,7 +36,6 @@ import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.sql.PostgresInstantiator;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.store.StoreDefinition;
 import org.junit.AfterClass;
@@ -78,12 +77,11 @@ public class SqlJobQueueTableTest extends JobQueueTableTest {
       }
     );
 
-    injector.getInstance(StructuredTableRegistry.class).initialize();
     StructuredTableAdmin structuredTableAdmin = injector.getInstance(StructuredTableAdmin.class);
     transactionRunner = injector.getInstance(TransactionRunner.class);
 
-    StoreDefinition.JobQueueStore.createTables(structuredTableAdmin, false);
-    StoreDefinition.AppMetadataStore.createTables(structuredTableAdmin, false);
+    StoreDefinition.JobQueueStore.create(structuredTableAdmin);
+    StoreDefinition.AppMetadataStore.create(structuredTableAdmin);
   }
 
   @Override

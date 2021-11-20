@@ -24,8 +24,8 @@ import io.cdap.cdap.common.conf.Constants;
 
 /**
  * Provider for {@link PluginFinder}.
- * Use {@link LocalPluginFinder} if storage implication is {@link Constants.Dataset#DATA_STORAGE_SQL}.
- * Use {@link RemotePluginFinder} if storage implication is {@link Constants.Dataset#DATA_STORAGE_NOSQL}.
+ * Use {@link RemotePluginFinder} if storage implication is {@link Constants.Dataset#DATA_STORAGE_NOSQL},
+ * otherwise use {@link LocalPluginFinder}.
  */
 public class PluginFinderProvider implements Provider<PluginFinder> {
 
@@ -50,12 +50,7 @@ public class PluginFinderProvider implements Provider<PluginFinder> {
     if (storageImpl.equals(Constants.Dataset.DATA_STORAGE_NOSQL)) {
       return injector.getInstance(RemotePluginFinder.class);
     }
-    if (storageImpl.equals(Constants.Dataset.DATA_STORAGE_SQL)) {
-      return injector.getInstance(LocalPluginFinder.class);
-    }
-    throw new UnsupportedOperationException(
-      String.format(
-        "%s is not a supported storage implementation, the supported ones are %s and %s",
-        storageImpl, Constants.Dataset.DATA_STORAGE_NOSQL, Constants.Dataset.DATA_STORAGE_SQL));
+
+    return injector.getInstance(LocalPluginFinder.class);
   }
 }

@@ -20,10 +20,12 @@ import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.spi.data.table.field.FieldType;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -40,11 +42,16 @@ public class StructuredTableSchema {
   private final Set<String> indexes;
 
   public StructuredTableSchema(StructuredTableSpecification spec) {
-    this.tableId = spec.getTableId();
-    this.fields = Collections.unmodifiableMap(spec.getFieldTypes().stream().collect(
+    this(spec.getTableId(), spec.getFieldTypes(), spec.getPrimaryKeys(), spec.getIndexes());
+  }
+
+  public StructuredTableSchema(StructuredTableId tableId, List<FieldType> fields,
+                               List<String> primaryKeys, Collection<String> indexes) {
+    this.tableId = tableId;
+    this.fields = Collections.unmodifiableMap(fields.stream().collect(
       Collectors.toMap(FieldType::getName, FieldType::getType)));
-    this.primaryKeys = Collections.unmodifiableList(new ArrayList<>(spec.getPrimaryKeys()));
-    this.indexes = Collections.unmodifiableSet(new HashSet<>(spec.getIndexes()));
+    this.primaryKeys = Collections.unmodifiableList(new ArrayList<>(primaryKeys));
+    this.indexes = Collections.unmodifiableSet(new HashSet<>(indexes));
   }
 
   public StructuredTableId getTableId() {
@@ -88,5 +95,62 @@ public class StructuredTableSchema {
   @Nullable
   public FieldType.Type getType(String fieldName) {
     return fields.get(fieldName);
+  }
+
+  public Set<String> getFieldNames() {
+    return fields.keySet();
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (this == other) {
+      return true;
+    }
+    if (other == null || getClass() != other.getClass()) {
+      return false;
+    }
+    StructuredTableSchema that = (StructuredTableSchema) other;
+    return Objects.equals(tableId, that.tableId)
+      && Objects.equals(fields, that.fields)
+      && Objects.equals(primaryKeys, that.primaryKeys)
+      && Objects.equals(indexes, that.indexes);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(tableId, fields, primaryKeys, indexes);
+  }
+  
+  /**
+   * Checks if this schema is compatible with the given {@link StructuredTableSpecification}. They are compatible if
+   *
+   * <ol>
+   *   <li>
+   *     This schema contains all the fields in the specification.
+   *   </li>
+   *   <li>
+   *     Each schema field has data type that can store the corresponding spec field data without losing precision.
+   *   </li>
+   *   <li>
+   *     They have the same set of primary keys.
+   *   </li>
+   *   <li>
+   *     They have the same set of indexes.
+   *   </li>
+   * </ol>
+   *
+   * @param spec the {@link StructuredTableSpecification} to check for compatibility
+   * @return {@code true} if this schema is compatible with the given specification, otherwise return {@code false}
+   */
+  public boolean isCompatible(StructuredTableSpecification spec) {
+    for (FieldType field : spec.getFieldTypes()) {
+      FieldType.Type type = getType(field.getName());
+      if (type == null || !type.isCompatible(field.getType())) {
+        return false;
+      }
+    }
+
+    return getPrimaryKeys().equals(spec.getPrimaryKeys())
+      && getIndexes().equals(new HashSet<>(spec.getIndexes()));
   }
 }
