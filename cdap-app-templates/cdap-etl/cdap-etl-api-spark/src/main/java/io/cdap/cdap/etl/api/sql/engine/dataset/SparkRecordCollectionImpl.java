@@ -14,16 +14,24 @@
  * the License.
  */
 
-package io.cdap.cdap.etl.api.engine.sql.dataset;
+package io.cdap.cdap.etl.api.sql.engine.dataset;
+
+import org.apache.spark.api.java.JavaRDD;
 
 /**
- * Represents a dataset that resides in a SQL engine outside of spark.
+ * Implementation for SparkRecordCollection
+ * @param <T> type of records represented by this collection.
  */
-public interface SQLDataset extends SQLDatasetDescription {
+public class SparkRecordCollectionImpl<T> implements SparkRecordCollection<T> {
 
-  /**
-   * Get the number of rows stored in this dataset.
-   */
-  long getNumRows();
+  private final JavaRDD<T> javaRDD;
 
+  public SparkRecordCollectionImpl(JavaRDD<T> javaRDD) {
+    this.javaRDD = javaRDD;
+  }
+
+  @Override
+  public JavaRDD<T> getRDD() {
+    return javaRDD;
+  }
 }

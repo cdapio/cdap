@@ -17,13 +17,11 @@
 package io.cdap.cdap.etl.api.engine.sql.dataset;
 
 /**
- * Represents a dataset that resides in a SQL engine outside of spark.
+ * Class that defines a record collection of a give type.
+ * For Spark, this could wrap an RDD or Dataset.
+ * For MapReduce, this can swap Key/Value pairs.
+ *
+ * @param <T> type of the records represented by this collection.
  */
-public interface SQLDataset extends SQLDatasetDescription {
-
-  /**
-   * Get the number of rows stored in this dataset.
-   */
-  long getNumRows();
-
+public interface RecordCollection<T> {
 }
