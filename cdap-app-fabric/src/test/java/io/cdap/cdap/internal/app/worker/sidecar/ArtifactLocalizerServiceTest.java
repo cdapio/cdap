@@ -173,6 +173,7 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
 
     // Make sure the artifact was actually cached
     Assert.assertTrue(artifactPath.exists());
+    Assert.assertTrue(artifactPath.isFile());
 
     // Call the sidecar again and make sure the same path was returned
     File sameArtifactPath = client.getArtifactLocation(artifactId.toEntityId());
