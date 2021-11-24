@@ -151,4 +151,48 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
     Assert.assertTrue(files.size() > 1);
     Assert.assertTrue(files.stream().anyMatch(s -> s.equals("META-INF")));
   }
+
+  @Test
+  public void testArtifact() throws Exception {
+    LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
+    ArtifactRepository artifactRepository = getInjector().getInstance(ArtifactRepository.class);
+    ArtifactLocalizerClient client = new ArtifactLocalizerClient(cConf);
+
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "some-task", "1.0.0-SNAPSHOT");
+    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, TaskWorkerServiceTest.TestRunnableClass.class);
+    File appJarFile = new File(tmpFolder.newFolder(),
+                               String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
+    File newAppJarFile = new File(tmpFolder.newFolder(),
+                                  String.format("%s-%s-copy.jar", artifactId.getName(),
+                                                artifactId.getVersion().getVersion()));
+    Locations.linkOrCopy(appJar, appJarFile);
+    appJar.delete();
+    artifactRepository.addArtifact(artifactId, appJarFile);
+
+    File artifactPath = client.getArtifactLocation(artifactId.toEntityId());
+
+    // Make sure the artifact was actually cached
+    Assert.assertTrue(artifactPath.exists());
+    Assert.assertTrue(artifactPath.isFile());
+
+    // Call the sidecar again and make sure the same path was returned
+    File sameArtifactPath = client.getArtifactLocation(artifactId.toEntityId());
+    Assert.assertEquals(artifactPath, sameArtifactPath);
+
+    // Delete and recreate the artifact to update the last modified date
+    artifactRepository.deleteArtifact(artifactId);
+
+    // This sleep is needed to delay the file copy so that the lastModified time on the file is different
+    Thread.sleep(1000);
+
+    // Wait a bit before recreating the artifact to make sure the last modified time is different
+    Files.copy(appJarFile, newAppJarFile);
+    artifactRepository.addArtifact(artifactId, newAppJarFile);
+
+    File newArtifactPath = client.getArtifactLocation(artifactId.toEntityId());
+
+    //Make sure the two paths arent the same and that the old one is gone
+    Assert.assertNotEquals(artifactPath, newArtifactPath);
+    Assert.assertTrue(newArtifactPath.exists());
+  }
 }
