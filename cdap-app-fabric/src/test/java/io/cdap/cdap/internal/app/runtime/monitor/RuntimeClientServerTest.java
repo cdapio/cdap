@@ -115,7 +115,9 @@ public class RuntimeClientServerTest {
       new RuntimeServerModule() {
         @Override
         protected void bindRequestValidator() {
-          bind(RuntimeRequestValidator.class).toInstance((programRunId, request) -> { });
+          bind(RuntimeRequestValidator.class).toInstance((programRunId, request) -> {
+            return null;
+          });
         }
 
         @Override
@@ -231,6 +233,15 @@ public class RuntimeClientServerTest {
     try (InputStream is = eventFiles.get(0).getInputStream()) {
       Assert.assertEquals("Testing", new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8));
     }
+  }
+
+  @Test
+  public void testStoppingTimeout() throws Exception {
+    ProgramRunId prId = ProgramRunId.fromString(
+      "program_run:default.app.-SNAPSHOT.workflow.workflow.daf7e1f1-52fb-11ec-9920-000000b8aa5e");
+    ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").workflow("workflow").run(RunIds.generate());
+    long actualTimeout = runtimeClient.stoppingTimeoutForProgram(programRunId, null);
+    Assert.assertEquals(60, actualTimeout);
   }
 
   private void assertMessages(TopicId topicId, Collection<Message> messages) throws Exception {

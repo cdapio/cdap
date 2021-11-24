@@ -17,6 +17,8 @@
 package io.cdap.cdap.internal.app.runtime.monitor;
 
 import com.google.common.io.Closeables;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.messaging.MessagingContext;
@@ -25,6 +27,7 @@ import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.ProgramType;
@@ -135,33 +138,56 @@ public class RuntimeHandler extends AbstractHttpHandler {
                                     @PathParam("run") String run,
                                     @PathParam("topic") String topic) throws Exception {
 
-    if (!"avro/binary".equals(request.headers().get(HttpHeaderNames.CONTENT_TYPE))) {
-      throw new BadRequestException("Only avro/binary content type is supported.");
-    }
-
-    ApplicationId appId = new NamespaceId(namespace).app(app, version);
-    ProgramRunId programRunId = new ProgramRunId(appId,
-                                                 ProgramType.valueOfCategoryName(programType, BadRequestException::new),
-                                                 program, run);
-    requestValidator.validate(programRunId, request);
-
-    if (!allowedTopics.contains(topic)) {
-      throw new UnauthorizedException("Access denied for topic " + topic);
-    }
-
-    TopicId topicId = NamespaceId.SYSTEM.topic(topic);
-    if (topic.startsWith(logsTopicPrefix)) {
-      return new MessageBodyConsumer(topicId, logProcessor::process);
-    }
-
-    return new MessageBodyConsumer(topicId, payloads -> {
-      try {
-        messagingContext.getDirectMessagePublisher().publish(topicId.getNamespace(),
-                                                             topicId.getTopic(), payloads);
-      } catch (TopicNotFoundException e) {
-        throw new BadRequestException(e);
+    try {
+      if (!"avro/binary".equals(request.headers().get(HttpHeaderNames.CONTENT_TYPE))) {
+        throw new BadRequestException("Only avro/binary content type is supported.");
       }
-    });
+
+      ApplicationId appId = new NamespaceId(namespace).app(app, version);
+      ProgramRunId programRunId = new ProgramRunId(appId,
+                                                   ProgramType.valueOfCategoryName(
+                                                     programType, BadRequestException::new),
+                                                   program, run);
+      RunRecordDetail runRecord = requestValidator.checkRunRecord(programRunId, request);
+
+      if (!allowedTopics.contains(topic)) {
+        throw new UnauthorizedException("Access denied for topic " + topic);
+      }
+
+      TopicId topicId = NamespaceId.SYSTEM.topic(topic);
+      if (topic.startsWith(logsTopicPrefix)) {
+        return new MessageBodyConsumer(topicId, logProcessor::process, runRecord);
+      }
+
+      LOG.info("Validating programrunID {} for topic {}", programRunId, topic);
+      LOG.info("Run record detail - {}", runRecord);
+      return new MessageBodyConsumer(topicId, payloads -> {
+        try {
+          messagingContext.getDirectMessagePublisher().publish(topicId.getNamespace(),
+                                                               topicId.getTopic(), payloads);
+        } catch (TopicNotFoundException e) {
+          throw new BadRequestException(e);
+        }
+      }, runRecord);
+    } catch (Exception e) {
+      LOG.error("Something went wrong inside RT handler - {}", e.getMessage());
+      return new BodyConsumer() {
+        @Override
+        public void chunk(ByteBuf request, HttpResponder responder) {
+          // no-op
+        }
+
+        @Override
+        public void finished(HttpResponder responder) {
+          LOG.info("Inside finished() in empty response");
+        }
+
+        @Override
+        public void handleError(Throwable cause) {
+          LOG.info("Inside handleError() of empty response - {}", cause);
+        }
+      };
+    }
   }
 
   /**
@@ -188,7 +214,7 @@ public class RuntimeHandler extends AbstractHttpHandler {
     ProgramRunId programRunId = new ProgramRunId(appId,
                                                  ProgramType.valueOfCategoryName(programType, BadRequestException::new),
                                                  program, run);
-    requestValidator.validate(programRunId, request);
+    requestValidator.checkRunRecord(programRunId, request);
 
     Location location = eventLogsBaseLocation.append(String.format("%s-%s-%s-%s-%s", namespace, app, program, run, id));
     if (location.exists()) {
@@ -244,8 +270,12 @@ public class RuntimeHandler extends AbstractHttpHandler {
     private final List<byte[]> payloads;
     private ByteBuffer payload;
     private long items;
+    private RunRecordDetail runRecord;
+    private static final Gson GSON = new GsonBuilder()
+      .setPrettyPrinting()
+      .create();
 
-    MessageBodyConsumer(TopicId topicId, PayloadProcessor payloadProcessor) {
+    MessageBodyConsumer(TopicId topicId, PayloadProcessor payloadProcessor, RunRecordDetail runRecord) {
       this.topicId = topicId;
       this.payloadProcessor = payloadProcessor;
       this.buffer = Unpooled.compositeBuffer();
@@ -253,6 +283,7 @@ public class RuntimeHandler extends AbstractHttpHandler {
       this.decoder = DecoderFactory.get().directBinaryDecoder(inputStream, null);
       this.payloads = new LinkedList<>();
       this.items = -1L;
+      this.runRecord = runRecord;
     }
 
     @Override
@@ -316,13 +347,18 @@ public class RuntimeHandler extends AbstractHttpHandler {
     @Override
     public void finished(HttpResponder responder) {
       try {
+        LOG.info("Inside finished() of message body consumer");
         if (payloads.isEmpty()) {
+          LOG.info("Payloads is empty, sending http ok now");
           responder.sendStatus(HttpResponseStatus.OK);
           return;
         }
         try {
+          LOG.info("Payload was not empty, processing that now");
           payloadProcessor.process(payloads.iterator());
-          responder.sendStatus(HttpResponseStatus.OK);
+          LOG.info("Inside message body consumer, runrecord is {}", runRecord);
+          // responder.sendStatus(HttpResponseStatus.OK);
+          responder.sendJson(HttpResponseStatus.OK, GSON.toJson(runRecord, RunRecordDetail.class));
         } catch (BadRequestException e) {
           responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         } catch (UnauthorizedException e) {

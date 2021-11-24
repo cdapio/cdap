@@ -465,8 +465,9 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    * Stops the dataproc job. Returns job object if it was stopped.
    */
   private void stopJob(String jobId) throws Exception {
+    LOG.info("This method is a no-op");
     try {
-      jobControllerClient.cancelJob(projectId, region, jobId);
+      // jobControllerClient.cancelJob(projectId, region, jobId);
       LOG.debug("Stopped the job {} on cluster {}.", jobId, clusterName);
     } catch (ApiException e) {
       if (e.getStatusCode().getCode() != StatusCode.Code.FAILED_PRECONDITION) {

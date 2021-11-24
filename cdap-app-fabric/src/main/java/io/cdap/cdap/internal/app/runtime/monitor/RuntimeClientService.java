@@ -49,6 +49,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -144,11 +145,16 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
     return programFinishTime;
   }
 
-  public long getStoppingTimeoutInSeconds() throws BadRequestException, IOException {
+  public long getStoppingTimeoutInSeconds() throws IOException, BadRequestException {
     LOG.info("Calling runtime client to get stopping timeout");
-    long timeout = runtimeClient.checkIfProgramShouldBeStopped(null, null, null);
-    LOG.info("Got the stopping timeout value - {}", timeout);
-    return timeout;
+    TopicRelayer programStatusEventTopic = topicRelayers.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC);
+    TopicId topicID = programStatusEventTopic.topicId;
+    LOG.info("Getting program status event topicId - {} for program run id - {}", topicID, programRunId);
+    runtimeClient.sendMessages(programRunId, topicID, Collections.emptyIterator());
+    //LOG.info("Got the stopping timeout value - {}", timeout);
+    LOG.info("called send messages with empty iterator");
+
+    return 60;
   }
 
   /**

@@ -119,9 +119,7 @@ public class DataprocJobMain {
         Class<?> runEnvCls = newCL.loadClass(RuntimeJobEnvironment.class.getName());
         Class<?> runnerCls = newCL.loadClass(runtimeJobClassName);
         Method runMethod = runnerCls.getMethod("run", runEnvCls);
-        LOG.info("Calling new request stop method");
-        Method stopMethod = runnerCls.getMethod("requestStop", long.class);
-        LOG.info("Request stop method called successfully");
+        Method stopMethod = runnerCls.getMethod("requestStop");
 
         Object runner = runnerCls.newInstance();
 
@@ -131,7 +129,7 @@ public class DataprocJobMain {
             return;
           }
           try {
-            long testValue = (long) stopMethod.invoke(runner, 30);
+            long testValue = (long) stopMethod.invoke(runner);
             LOG.info("Timeout value - {}", testValue);
           } catch (Exception e) {
             LOG.error("Exception raised when calling {}.stop()", runtimeJobClassName, e);
@@ -143,7 +141,7 @@ public class DataprocJobMain {
       } finally {
         // call destroy() method on envProviderClass
         Method closeMethod = dataprocEnvClass.getMethod("destroy");
-        LOG.info("Invoking destroy() on {}", runtimeJobClassName);
+        LOG.info("Invoking destroy() on {}", dataprocEnvClassName);
         closeMethod.invoke(newDataprocEnvInstance);
       }
 

@@ -67,12 +67,13 @@ public final class RunRecordDetail extends RunRecord {
   private transient volatile Map<String, String> userArgs;
 
   private RunRecordDetail(ProgramRunId programRunId, long startTs, @Nullable Long runTs, @Nullable Long stopTs,
-                          @Nullable Long suspendTs, @Nullable Long resumeTs,
+                          @Nullable Long suspendTs, @Nullable Long resumeTs,  @Nullable Long stoppingTs,
                           ProgramRunStatus status, @Nullable Map<String, String> properties,
                           @Nullable Map<String, String> systemArgs, @Nullable String twillRunId,
                           ProgramRunCluster cluster, ProfileId profileId, byte[] sourceId,
                           @Nullable ArtifactId artifactId, @Nullable String principal) {
-    super(programRunId.getRun(), startTs, runTs, stopTs, suspendTs, resumeTs, status, properties, cluster, profileId);
+    super(programRunId.getRun(), startTs, runTs, stopTs, suspendTs, resumeTs, stoppingTs, status, properties, cluster,
+          profileId);
     this.programRunId = programRunId;
     this.systemArgs = systemArgs;
     this.twillRunId = twillRunId;
@@ -148,6 +149,7 @@ public final class RunRecordDetail extends RunRecord {
       Objects.equal(this.getStopTs(), that.getStopTs()) &&
       Objects.equal(this.getSuspendTs(), that.getSuspendTs()) &&
       Objects.equal(this.getResumeTs(), that.getResumeTs()) &&
+      Objects.equal(this.getStoppingTs(), that.getStoppingTs()) &&
       Objects.equal(this.getStatus(), that.getStatus()) &&
       Objects.equal(this.getProperties(), that.getProperties()) &&
       Objects.equal(this.getTwillRunId(), that.getTwillRunId()) &&
@@ -159,8 +161,8 @@ public final class RunRecordDetail extends RunRecord {
   @Override
   public int hashCode() {
     return Objects.hashCode(getProgramRunId(), getStartTs(), getRunTs(), getStopTs(), getSuspendTs(), getResumeTs(),
-                            getStatus(), getProperties(), getTwillRunId(), Arrays.hashCode(getSourceId()),
-                            getArtifactId(), getPrincipal());
+                            getStoppingTs(), getStatus(), getProperties(), getTwillRunId(),
+                            Arrays.hashCode(getSourceId()), getArtifactId(), getPrincipal());
   }
 
   @Override
@@ -172,6 +174,7 @@ public final class RunRecordDetail extends RunRecord {
       .add("stopTs", getStopTs())
       .add("suspendTs", getSuspendTs())
       .add("resumeTs", getResumeTs())
+      .add("stoppingTs", getStoppingTs())
       .add("status", getStatus())
       .add("twillrunid", getTwillRunId())
       .add("systemArgs", getSystemArgs())
@@ -267,7 +270,7 @@ public final class RunRecordDetail extends RunRecord {
       // we are not validating artifactId for null,
       // artifactId could be null for program starts that were recorded pre 5.0 but weren't processed
       // we don't want to throw exception while processing them
-      return new RunRecordDetail(programRunId, startTs, runTs, stopTs, suspendTs, resumeTs,
+      return new RunRecordDetail(programRunId, startTs, runTs, stopTs, suspendTs, resumeTs, stoppingTs,
                                  status, properties, systemArgs, twillRunId, cluster, profileId,
                                  sourceId, artifactId, principal);
     }

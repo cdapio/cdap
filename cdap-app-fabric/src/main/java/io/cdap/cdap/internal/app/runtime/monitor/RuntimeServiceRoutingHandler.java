@@ -190,7 +190,7 @@ public class RuntimeServiceRoutingHandler extends AbstractHttpHandler {
     ProgramRunId programRunId = new ProgramRunId(appId,
                                                  ProgramType.valueOfCategoryName(programType, BadRequestException::new),
                                                  program, run);
-    requestValidator.validate(programRunId, request);
+    requestValidator.checkRunRecord(programRunId, request);
     Discoverable discoverable = endpointStrategyLoadingCache.getUnchecked(service).pick(2, TimeUnit.SECONDS);
     if (discoverable == null) {
       throw new ServiceUnavailableException(service);

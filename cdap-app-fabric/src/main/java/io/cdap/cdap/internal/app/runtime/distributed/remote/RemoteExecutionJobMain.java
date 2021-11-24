@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -108,10 +107,8 @@ public class RemoteExecutionJobMain {
     }
 
     // Stop the job when this process get terminated
-    // Runtime.getRuntime().addShutdownHook(new Thread(runtimeJob::requestStop));
-    // TODO make the default value configurable
     LOG.info("Calling runtime job's request stop");
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> runtimeJob.requestStop(60)));
+    Runtime.getRuntime().addShutdownHook(new Thread(runtimeJob::requestStop));
     LOG.info("Called runtime job's request stop");
 
     System.setProperty(Constants.Zookeeper.TWILL_ZK_SERVER_LOCALHOST, "false");

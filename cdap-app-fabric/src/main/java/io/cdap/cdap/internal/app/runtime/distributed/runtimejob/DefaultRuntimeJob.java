@@ -255,11 +255,11 @@ public class DefaultRuntimeJob implements RuntimeJob {
   }
 
   @Override
-  public void requestStop(long timeout) {
+  public void requestStop() {
     try {
-      LOG.info("Default timeout value is {}", timeout);
+      LOG.info("Requesting stop now");
       // call the runtime client service here
-      timeout = runtimeClientService.getStoppingTimeoutInSeconds();
+      long timeout = runtimeClientService.getStoppingTimeoutInSeconds();
       LOG.info("Successfully got the stopping timeout - {}", timeout);
       stopRequested = true;
       ProgramController controller = Uninterruptibles.getUninterruptibly(controllerFuture);

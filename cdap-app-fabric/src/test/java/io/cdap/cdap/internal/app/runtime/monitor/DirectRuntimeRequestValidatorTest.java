@@ -152,7 +152,7 @@ public class DirectRuntimeRequestValidatorTest {
     RuntimeRequestValidator validator = new DirectRuntimeRequestValidator(cConf, txRunner,
                                                                           new MockProgramRunRecordFetcher(),
                                                                           accessEnforcer, authenticationContext);
-    validator.validate(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+    validator.checkRunRecord(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
   }
 
   @Test (expected = BadRequestException.class)
@@ -163,7 +163,7 @@ public class DirectRuntimeRequestValidatorTest {
     RuntimeRequestValidator validator = new DirectRuntimeRequestValidator(cConf, txRunner,
                                                                           new MockProgramRunRecordFetcher(),
                                                                           accessEnforcer, authenticationContext);
-    validator.validate(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+    validator.checkRunRecord(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
   }
 
   @Test (expected = UnauthorizedException.class)
@@ -179,7 +179,7 @@ public class DirectRuntimeRequestValidatorTest {
     Mockito.doThrow(new UnauthorizedException("Unauthorized"))
       .when(accessEnforcer).enforce(programRunId, principal, StandardPermission.GET);
 
-    validator.validate(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+    validator.checkRunRecord(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
   }
 
   @Test (expected = BadRequestException.class)
@@ -202,7 +202,7 @@ public class DirectRuntimeRequestValidatorTest {
     RuntimeRequestValidator validator = new DirectRuntimeRequestValidator(cConf, txRunner,
                                                                           new MockProgramRunRecordFetcher(),
                                                                           accessEnforcer, authenticationContext);
-    validator.validate(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+    validator.checkRunRecord(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
   }
 
   @Test
@@ -226,11 +226,11 @@ public class DirectRuntimeRequestValidatorTest {
                                                                           accessEnforcer, authenticationContext);
 
     // The first call should be hitting the run record fetching to fetch the run record.
-    validator.validate(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+    validator.checkRunRecord(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
 
     // The second call will hit the runtime store, so it shouldn't matter what the run record fetch returns
     runRecordFetcher.setRunRecord(null);
-    validator.validate(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+    validator.checkRunRecord(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
   }
 
   private byte[] createSourceId(int value) {

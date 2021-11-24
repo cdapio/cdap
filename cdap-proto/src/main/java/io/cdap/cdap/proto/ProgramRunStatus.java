@@ -33,6 +33,7 @@ public enum ProgramRunStatus {
   RUNNING,
   SUSPENDED,
   RESUMING,
+  STOPPING,
   COMPLETED,
   FAILED,
   KILLED,

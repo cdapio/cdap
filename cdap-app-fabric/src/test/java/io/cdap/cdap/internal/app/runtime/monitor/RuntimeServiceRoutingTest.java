@@ -114,6 +114,7 @@ public class RuntimeServiceRoutingTest {
             if (!expected.equals(authHeader)) {
               throw new UnauthenticatedException("Program run " + programRunId + " is not authorized");
             }
+            return null;
           });
         }
 

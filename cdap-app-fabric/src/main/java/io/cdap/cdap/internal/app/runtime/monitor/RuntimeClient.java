@@ -16,14 +16,12 @@
 
 package io.cdap.cdap.internal.app.runtime.monitor;
 
-import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
 import com.google.common.net.HttpHeaders;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.messaging.Message;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ServiceUnavailableException;
-import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
@@ -36,7 +34,8 @@ import io.cdap.common.http.HttpMethod;
 import org.apache.avro.Schema;
 import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
-import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,6 +46,7 @@ import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.zip.GZIPOutputStream;
@@ -57,6 +57,7 @@ import javax.ws.rs.core.MediaType;
  */
 public class RuntimeClient {
 
+  private static final Logger LOG = LoggerFactory.getLogger(RuntimeClient.class);
   static final int CHUNK_SIZE = 1 << 15;  // 32K
 
   private final boolean compression;
@@ -93,10 +94,12 @@ public class RuntimeClient {
    */
   public void sendMessages(ProgramRunId programRunId,
                            TopicId topicId, Iterator<Message> messages) throws IOException, BadRequestException {
+    LOG.info("Trying to send messages");
     if (!NamespaceId.SYSTEM.equals(topicId.getNamespaceId())) {
+      LOG.error("Namespace id does not exist");
       throw new IllegalArgumentException("Only topic in the system namespace is supported");
     }
-
+    LOG.info("Creating path now");
     String path = String.format("%s/apps/%s/versions/%s/%s/%s/runs/%s/topics/%s",
                                 programRunId.getNamespace(),
                                 programRunId.getApplication(),
@@ -105,53 +108,75 @@ public class RuntimeClient {
                                 programRunId.getProgram(),
                                 programRunId.getRun(),
                                 topicId.getTopic());
-
+    LOG.info("Opening http url conn to path - {}", path);
     // Stream out the messages
     HttpURLConnection urlConn = remoteClient.openConnection(HttpMethod.POST, path);
+    LOG.info("Making a call to url - {}", urlConn.getURL());
     try {
       urlConn.setChunkedStreamingMode(CHUNK_SIZE);
+      LOG.info("Set chunked streaming mode");
       urlConn.setRequestProperty(HttpHeaders.CONTENT_TYPE, "avro/binary");
-
+      LOG.info("Set request property");
       try (OutputStream os = openOutputStream(urlConn)) {
-        writeMessages(messages, EncoderFactory.get().directBinaryEncoder(os, null));
+        LOG.info("Opened output stream");
+        writeMessages(messages, EncoderFactory.get().directBinaryEncoder(os, null), topicId.getTopic());
+        LOG.info("Wrote messages");
       }
-
+      LOG.info("Will throw error if any");
       throwIfError(programRunId, urlConn);
+      // return grace period
+      LOG.info("No error was thrown");
+      LOG.info("Response code is {}", urlConn.getResponseCode());
     } finally {
+      LOG.info("Will close connection now");
       closeURLConnection(urlConn);
     }
   }
 
   /**
    * This method should call the runtime handler method to check if it should shutdown gracefuly
+   * @return
    */
-  public long checkIfProgramShouldBeStopped(ProgramRunId programRunId, TopicId topicId,
-                                            Iterator<Message> messagesIterator)
+  public long stoppingTimeoutForProgram(ProgramRunId programRunId, TopicId topicId)
     throws IOException, BadRequestException {
-    // TODO get the timeout value from the runtime handler
+    LOG.info("Checking if program should be stopped");
+    LOG.info("program ID is {}", programRunId);
+    String path = String.format("%s/apps/%s/versions/%s/%s/%s/runs/%s/topics/%s",
+                                programRunId.getNamespace(),
+                                programRunId.getApplication(),
+                                programRunId.getVersion(),
+                                programRunId.getType().getCategoryName(),
+                                programRunId.getProgram(),
+                                programRunId.getRun(),
+                                topicId.getTopic());
+    LOG.info("Making a post call to path - {}", path);
     // Get if shutdown should be graceful
     // based on the timeout value trigger a stop by calling dataprocRuntimeJobManager.stop()
-    /*programRunId = NamespaceId.DEFAULT.app("app").workflow("workflow").run(RunIds.generate());
-    topicId = NamespaceId.SYSTEM.topic("topic");
-
-    List<Message> messages = new ArrayList<>();
-    String messageId = RunIds.generate().getId();
-    int size = Math.max(1, RuntimeClient.CHUNK_SIZE / 4);
-    byte[] payload = Strings.repeat("m", size).getBytes(StandardCharsets.UTF_8);
-    Message message = new Message() {
-      @Override
-      public String getId() {
-        return messageId;
+    HttpURLConnection urlConn = remoteClient.openConnection(HttpMethod.POST, path);
+    try {
+      LOG.info("Full url - {}", urlConn.getURL());
+      urlConn.setChunkedStreamingMode(CHUNK_SIZE);
+      urlConn.setRequestProperty(HttpHeaders.CONTENT_TYPE, "avro/binary");
+      LOG.info("OPening output stream");
+      try (OutputStream os = openOutputStream(urlConn)) {
+        LOG.info("writing empty message into OS");
+        writeMessages(Collections.emptyIterator(), EncoderFactory.get().directBinaryEncoder(os, null),
+                      topicId.getTopic());
       }
-
-      @Override
-      public byte[] getPayload() {
-        return payload;
-      }
-    };
-    messages.add(message);
-    sendMessages(programRunId, topicId, messages.iterator());*/
-    return 61;
+      LOG.info("Will throw any error");
+      throwIfError(programRunId, urlConn);
+      LOG.info("No error, fetching response code now");
+      int responseCode = urlConn.getResponseCode();
+      LOG.info("Response code is {}", responseCode);
+      long stoppingTimeout = Long.valueOf(urlConn.getResponseMessage());
+      LOG.info("Stopping timeout is {}", stoppingTimeout);
+      return stoppingTimeout;
+    } catch (Throwable e) {
+      LOG.error("An exception occurred - {}", e.getMessage());
+      throw e;
+    } finally {
+      closeURLConnection(urlConn);
+    }
   }
 
   /**
@@ -174,6 +199,7 @@ public class RuntimeClient {
 
     // Stream out the messages
     HttpURLConnection urlConn = remoteClient.openConnection(HttpMethod.POST, path);
+    LOG.info("Making a call to url - {}", urlConn.getURL());
     try {
       urlConn.setChunkedStreamingMode(CHUNK_SIZE);
       urlConn.setRequestProperty(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM);
@@ -226,10 +252,14 @@ public class RuntimeClient {
    */
   private void throwIfError(ProgramRunId programRunId,
                             HttpURLConnection urlConn) throws IOException, BadRequestException {
+    LOG.info("Inside throw if error");
     int responseCode = urlConn.getResponseCode();
+    LOG.info("Got response code - {}", responseCode);
     if (responseCode == HttpURLConnection.HTTP_OK) {
+      LOG.info("Response code is http ok");
       return;
     }
+    LOG.info("Response code is not http ok, will analyze the error now");
     try (InputStream errorStream = urlConn.getErrorStream()) {
       String errorMsg = "unknown error";
       if (errorStream != null) {
@@ -264,7 +294,7 @@ public class RuntimeClient {
    * Streaming encode the given list of messages based on the schema
    * as defined by the {@link MonitorSchemas.V2.MonitorRequest}.
    */
-  private void writeMessages(Iterator<Message> messages, Encoder encoder) throws IOException {
+  private void writeMessages(Iterator<Message> messages, Encoder encoder, String topic) throws IOException {
     encoder.writeArrayStart();
 
     // Buffer payloads to the size of one HTTP chunk, then write out one array block.
@@ -273,7 +303,11 @@ public class RuntimeClient {
     List<byte[]> payloads = new ArrayList<>();
     long blockSize = 0;
     while (messages.hasNext()) {
-      byte[] payload = messages.next().getPayload();
+      Message message = messages.next();
+      byte[] payload = message.getPayload();
+      if (topic.equalsIgnoreCase("programstatusevent")) {
+        LOG.info("Message payload as string {}", message.getPayloadAsString());
+      }
       payloads.add(payload);
       blockSize += encodedLength(payload);
       if (blockSize >= CHUNK_SIZE) {

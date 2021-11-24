@@ -32,7 +32,6 @@ public interface RuntimeJob {
   /**
    * This method will be called when there is an explicit stop to terminate the running program.
    * This method should block until the runtime job is stopped.
-   * @param timeout
    */
-  void requestStop(long timeout);
+  void requestStop();
 }
