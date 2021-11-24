@@ -17,6 +17,7 @@
 package io.cdap.cdap.etl.api.join;
 
 import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.etl.api.Field;
 
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -25,32 +26,20 @@ import javax.annotation.Nullable;
  * The name of a field and an optional alias to rename it to.
  */
 @Beta
-public class JoinField {
+public class JoinField extends Field {
   private final String stageName;
-  private final String fieldName;
-  private final String alias;
 
   public JoinField(String stageName, String fieldName) {
     this(stageName, fieldName, null);
   }
 
   public JoinField(String stageName, String fieldName, @Nullable String alias) {
+    super(fieldName, alias);
     this.stageName = stageName;
-    this.fieldName = fieldName;
-    this.alias = alias;
   }
 
   public String getStageName() {
     return stageName;
-  }
-
-  public String getFieldName() {
-    return fieldName;
-  }
-
-  @Nullable
-  public String getAlias() {
-    return alias;
   }
 
   @Override
@@ -74,7 +63,7 @@ public class JoinField {
 
   @Override
   public String toString() {
-    return "Field{" +
+    return "JoinField{" +
       "stage='" + stageName + '\'' +
       ", field='" + fieldName + '\'' +
       ", alias='" + alias + '\'' +
