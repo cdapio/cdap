@@ -29,6 +29,8 @@ import io.cdap.cdap.api.worker.Worker;
 import io.cdap.cdap.api.workflow.Workflow;
 import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
 
+import javax.annotation.Nullable;
+
 /**
  * Configures a CDAP Application.
  */
@@ -119,4 +121,25 @@ public interface ApplicationConfigurer extends PluginConfigurer, DatasetConfigur
    * @return The {@link TriggerFactory} used to get triggers
    */
   TriggerFactory getTriggerFactory();
+
+  /**
+   * Return the runtime configurer that contains the runtime arguments and provides access for other runtime
+   * functionalities. This is used for the app to provide additional information for the newly generated app spec
+   * before each program run. This method will return null when the app initially gets deployed.
+   *
+   * @return the runtime configurer, or null if this is the initial deploy time.
+   */
+  @Nullable
+  default RuntimeConfigurer getRuntimeConfigurer() {
+    return null;
+  }
+
+  /**
+   * Return the namespace the app is deployed.
+   *
+   * @return the namespace the app is deployed
+   */
+  default String getDeployedNamespace() {
+    throw new UnsupportedOperationException("Getting deployed namespace is not supported");
+  }
 }

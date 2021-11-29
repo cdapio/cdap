@@ -586,6 +586,8 @@ public class ProgramLifecycleService {
    * @param programId the {@link ProgramId} to start/stop
    * @param overrides the arguments to override in the program's configured user arguments before starting
    * @param debug {@code true} if the program is to be started in debug mode, {@code false} otherwise
+   * @param isPreview true if the program is for preview run, for preview run, the app is already deployed with resolved
+   *                  properties, so no need to regenerate app spec again
    * @return {@link ProgramController}
    * @throws ConflictException if the specified program is already running, and if concurrent runs are not allowed
    * @throws NotFoundException if the specified program or the app it belongs to is not found in the specified namespace
@@ -594,7 +596,8 @@ public class ProgramLifecycleService {
    *                               a user requires {@link ApplicationPermission#EXECUTE} on the program
    * @throws Exception if there were other exceptions checking if the current user is authorized to start the program
    */
-  public ProgramController start(ProgramId programId, Map<String, String> overrides, boolean debug) throws Exception {
+  public ProgramController start(ProgramId programId, Map<String, String> overrides, boolean debug,
+                                 boolean isPreview) throws Exception {
     accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), ApplicationPermission.EXECUTE);
     checkConcurrentExecution(programId);
 
@@ -602,6 +605,7 @@ public class ProgramLifecycleService {
     addAppCDAPVersion(programId, sysArgs);
     sysArgs.put(ProgramOptionConstants.SKIP_PROVISIONING, "true");
     sysArgs.put(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName());
+    sysArgs.put(ProgramOptionConstants.IS_PREVIEW, Boolean.toString(isPreview));
     Map<String, String> userArgs = propertiesResolver.getUserProperties(programId);
     if (overrides != null) {
       userArgs.putAll(overrides);

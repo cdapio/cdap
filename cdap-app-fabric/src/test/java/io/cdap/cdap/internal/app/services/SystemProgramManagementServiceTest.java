@@ -42,6 +42,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -100,8 +101,8 @@ public class SystemProgramManagementServiceTest extends AppFabricTestBase {
     Assert.assertEquals(ProgramStatus.STOPPED.name(), getProgramStatus(programId));
     assertProgramRuns(programId, ProgramRunStatus.RUNNING, 0);
     //Run the program manually twice to test pruning. One run should be killed
-    programLifecycleService.start(programId, new HashMap<>(), false);
-    programLifecycleService.start(programId, new HashMap<>(), false);
+    programLifecycleService.start(programId, new HashMap<>(), false, false);
+    programLifecycleService.start(programId, new HashMap<>(), false, false);
     assertProgramRuns(programId, ProgramRunStatus.RUNNING, 2);
     progmMgmtSvc.setProgramsEnabled(enabledServices);
     progmMgmtSvc.runTask();
@@ -123,6 +124,6 @@ public class SystemProgramManagementServiceTest extends AppFabricTestBase {
     applicationLifecycleService.deployApp(NamespaceId.SYSTEM, APP_NAME, VERSION, summary, null,
                                           programId -> {
                                             // no-op
-                                          }, null, false);
+                                          }, null, false, false, Collections.emptyMap());
   }
 }

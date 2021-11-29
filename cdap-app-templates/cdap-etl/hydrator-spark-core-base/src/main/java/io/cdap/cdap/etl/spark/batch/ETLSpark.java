@@ -22,6 +22,7 @@ import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.annotation.TransactionControl;
 import io.cdap.cdap.api.annotation.TransactionPolicy;
+import io.cdap.cdap.api.app.RuntimeConfigurer;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.macro.MacroEvaluator;
@@ -44,6 +45,7 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Configures and sets up runs of {@link BatchSparkPipelineDriver}.
@@ -59,10 +61,14 @@ public class ETLSpark extends AbstractSpark {
     .create();
 
   private final BatchPhaseSpec phaseSpec;
+  private final RuntimeConfigurer runtimeConfigurer;
+  private final String deployedNamespace;
   private Finisher finisher;
 
-  public ETLSpark(BatchPhaseSpec phaseSpec) {
+  public ETLSpark(BatchPhaseSpec phaseSpec, @Nullable RuntimeConfigurer runtimeConfigurer, String deployedNamespace) {
     this.phaseSpec = phaseSpec;
+    this.runtimeConfigurer = runtimeConfigurer;
+    this.deployedNamespace = deployedNamespace;
   }
 
   @Override
@@ -72,7 +78,7 @@ public class ETLSpark extends AbstractSpark {
 
     // register the plugins at program level so that the program can be failed by the platform early in case of
     // plugin requirements not being meet
-    phaseSpec.getPhase().registerPlugins(getConfigurer());
+    phaseSpec.getPhase().registerPlugins(getConfigurer(), runtimeConfigurer, deployedNamespace);
 
     setMainClass(BatchSparkPipelineDriver.class);
 

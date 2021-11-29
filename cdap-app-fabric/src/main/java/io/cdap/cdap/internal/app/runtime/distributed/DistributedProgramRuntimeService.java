@@ -33,6 +33,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.Delegator;
 import io.cdap.cdap.common.twill.TwillAppNames;
+import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -88,8 +89,9 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
                                    // privileges needed for artifacts
                                    @Named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO)
                                      ArtifactRepository noAuthArtifactRepository,
-                                   Impersonator impersonator, ProgramStateWriter programStateWriter) {
-    super(cConf, programRunnerFactory, noAuthArtifactRepository, programStateWriter);
+                                   Impersonator impersonator, ProgramStateWriter programStateWriter,
+                                   ConfiguratorFactory configuratorFactory) {
+    super(cConf, programRunnerFactory, noAuthArtifactRepository, programStateWriter, configuratorFactory);
     this.twillRunner = twillRunner;
     this.store = store;
     this.impersonator = impersonator;

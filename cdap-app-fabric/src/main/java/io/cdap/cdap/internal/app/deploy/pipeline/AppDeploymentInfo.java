@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.deploy.pipeline;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.annotations.SerializedName;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.artifact.ApplicationClass;
@@ -26,6 +25,8 @@ import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import org.apache.twill.filesystem.Location;
 
+import java.util.Collections;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -44,23 +45,25 @@ public class AppDeploymentInfo {
   private final KerberosPrincipalId ownerPrincipal;
   @SerializedName("update-schedules")
   private final boolean updateSchedules;
+  private final boolean isRuntime;
+  private final Map<String, String> userProps;
 
   public AppDeploymentInfo(AppDeploymentInfo info, Location artifactLocation) {
     this(info.artifactId, artifactLocation, info.namespaceId, info.applicationClass, info.appName, info.appVersion,
-         info.configString, info.ownerPrincipal, info.updateSchedules);
+         info.configString, info.ownerPrincipal, info.updateSchedules, info.isRuntime, Collections.emptyMap());
   }
 
-  @VisibleForTesting
   public AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
                            ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
                            @Nullable String configString) {
-    this(artifactId, artifactLocation, namespaceId, applicationClass, appName, appVersion, configString, null, true);
+    this(artifactId, artifactLocation, namespaceId, applicationClass, appName, appVersion, configString, null,
+         true, false, Collections.emptyMap());
   }
 
   public AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
                            ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
                            @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
-                           boolean updateSchedules) {
+                           boolean updateSchedules, boolean isRuntime, Map<String, String> userProps) {
     this.artifactId = artifactId;
     this.artifactLocation = artifactLocation;
     this.namespaceId = namespaceId;
@@ -70,6 +73,8 @@ public class AppDeploymentInfo {
     this.configString = configString;
     this.ownerPrincipal = ownerPrincipal;
     this.updateSchedules = updateSchedules;
+    this.isRuntime = isRuntime;
+    this.userProps = userProps;
   }
 
   /**
@@ -141,5 +146,19 @@ public class AppDeploymentInfo {
    */
   public boolean canUpdateSchedules() {
     return updateSchedules;
+  }
+
+  /**
+   * @return true if this deployment happens at runtime before the program run, false otherwise
+   */
+  public boolean isRuntime() {
+    return isRuntime;
+  }
+
+  /**
+   * @return the runtime arguments for the app deployment, this is only used when isRuntime is true
+   */
+  public Map<String, String> getUserProps() {
+    return userProps;
   }
 }

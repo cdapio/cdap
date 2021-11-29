@@ -97,6 +97,7 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -616,7 +617,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           try {
             applicationLifecycleService.deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(),
                                                   artifactSummary, configString, createProgramTerminator(),
-                                                  ownerPrincipalId, appRequest.canUpdateSchedules());
+                                                  ownerPrincipalId, appRequest.canUpdateSchedules(), false,
+                                                  Collections.emptyMap());
           } catch (DatasetManagementException e) {
             if (e.getCause() instanceof UnauthorizedException) {
               throw (UnauthorizedException) e.getCause();

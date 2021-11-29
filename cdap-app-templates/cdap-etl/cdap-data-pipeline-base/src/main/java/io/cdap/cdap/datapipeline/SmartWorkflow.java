@@ -172,7 +172,8 @@ public class SmartWorkflow extends AbstractWorkflow {
     // the run early, before provisioning is performed.
     // If plugins were registered only at the application level, CDAP would not be able to fail the run early.
     try {
-      spec = new BatchPipelineSpecGenerator(getConfigurer(),
+      spec = new BatchPipelineSpecGenerator(applicationConfigurer.getDeployedNamespace(), getConfigurer(),
+                                            applicationConfigurer.getRuntimeConfigurer(),
                                             ImmutableSet.of(BatchSource.PLUGIN_TYPE),
                                             ImmutableSet.of(BatchSink.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE,
                                                             AlertPublisher.PLUGIN_TYPE),
@@ -739,14 +740,19 @@ public class SmartWorkflow extends AbstractWorkflow {
       // spark programs will be all by themselves in a phase
       String stageName = phase.getStagesOfType(Constants.SPARK_PROGRAM_PLUGIN_TYPE).iterator().next().getName();
       StageSpec stageSpec = stageSpecs.get(stageName);
-      applicationConfigurer.addSpark(new ExternalSparkProgram(batchPhaseSpec, stageSpec));
+      applicationConfigurer.addSpark(new ExternalSparkProgram(batchPhaseSpec, stageSpec,
+                                                              applicationConfigurer.getRuntimeConfigurer(),
+                                                              applicationConfigurer.getDeployedNamespace()));
       programAdder.addSpark(programName);
     } else if (useSpark) {
-      applicationConfigurer.addSpark(new ETLSpark(batchPhaseSpec));
+      applicationConfigurer.addSpark(new ETLSpark(batchPhaseSpec, applicationConfigurer.getRuntimeConfigurer(),
+                                                  applicationConfigurer.getDeployedNamespace()));
       programAdder.addSpark(programName);
     } else {
       applicationConfigurer.addMapReduce(new ETLMapReduce(batchPhaseSpec,
-                                                          new HashSet<>(connectorDatasets.values())));
+                                                          new HashSet<>(connectorDatasets.values()),
+                                                          applicationConfigurer.getRuntimeConfigurer(),
+                                                          applicationConfigurer.getDeployedNamespace()));
       programAdder.addMapReduce(programName);
     }
     return programAdder;

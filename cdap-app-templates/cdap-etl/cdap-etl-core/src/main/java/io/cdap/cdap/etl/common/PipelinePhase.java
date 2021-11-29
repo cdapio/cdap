@@ -17,8 +17,11 @@
 package io.cdap.cdap.etl.common;
 
 import com.google.common.base.Joiner;
+import io.cdap.cdap.api.app.RuntimeConfigurer;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.artifact.ArtifactVersionRange;
+import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.plugin.PluginSelector;
@@ -190,8 +193,22 @@ public class PipelinePhase implements Iterable<StageSpec>, Serializable {
    *
    * @param pluginConfigurer the {@link PluginConfigurer} to which the plugins in this {@link PipelinePhase} needs to be
    * registered
+   * @param runtimeConfigurer the runtime configurer to provide runtime arguments to resolve macro better, null
+   *                          if this is the initial deploy
+   * @param namespace namespace the app is deployed
    */
-  public void registerPlugins(PluginConfigurer pluginConfigurer) {
+  public void registerPlugins(PluginConfigurer pluginConfigurer, @Nullable RuntimeConfigurer runtimeConfigurer,
+                              String namespace) {
+    MacroParserOptions options = MacroParserOptions.builder().skipInvalidMacros().setEscaping(false)
+                                   .setFunctionWhitelist(ConnectionMacroEvaluator.FUNCTION_NAME).build();
+    MacroEvaluator runtimeEvaluator = null;
+    if (runtimeConfigurer != null) {
+      Map<String, MacroEvaluator> evaluators = Collections.singletonMap(
+        ConnectionMacroEvaluator.FUNCTION_NAME, new ConnectionMacroEvaluator(namespace, runtimeConfigurer));
+      runtimeEvaluator = new DefaultMacroEvaluator(
+        new BasicArguments(runtimeConfigurer.getRuntimeArguments()), evaluators, Collections.singleton(
+        ConnectionMacroEvaluator.FUNCTION_NAME));
+    }
     for (StageSpec stageSpec : stagesByName.values()) {
       // we don't need to register connectors only source, sink and transform plugins
       if (stageSpec.getPluginType().equals(Constants.Connector.PLUGIN_TYPE)) {
@@ -202,8 +219,11 @@ public class PipelinePhase implements Iterable<StageSpec>, Serializable {
       ArtifactSelector artifactSelector = new ArtifactSelector(pluginSpec.getArtifact().getScope(),
                                                                pluginSpec.getArtifact().getName(),
                                                                new ArtifactVersionRange(version, true, version, true));
+      Map<String, String> prop = pluginSpec.getProperties();
       pluginConfigurer.usePluginClass(pluginSpec.getType(), pluginSpec.getName(), stageSpec.getName(),
-                                      PluginProperties.builder().addAll(pluginSpec.getProperties()).build(),
+                                      PluginProperties.builder().addAll(
+                                        runtimeConfigurer == null ? prop :
+                                          pluginConfigurer.evaluateMacros(prop, runtimeEvaluator, options)).build(),
                                       artifactSelector);
     }
   }

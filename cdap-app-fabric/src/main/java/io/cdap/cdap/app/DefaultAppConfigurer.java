@@ -23,6 +23,7 @@ import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.app.ApplicationConfigurer;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.app.ProgramType;
+import io.cdap.cdap.api.app.RuntimeConfigurer;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.mapreduce.MapReduce;
@@ -90,6 +91,7 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   private final Map<String, WorkerSpecification> workers = new HashMap<>();
   private final Map<StructuredTableId, StructuredTableSpecification> systemTables = new HashMap<>();
   private final TriggerFactory triggerFactory;
+  private final RuntimeConfigurer runtimeConfigurer;
   private String name;
   private Map<MetadataScope, Metadata> appMetadata;
   private String description;
@@ -97,12 +99,13 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   // passed app to be used to resolve default name and description
   @VisibleForTesting
   public DefaultAppConfigurer(Id.Namespace namespace, Id.Artifact artifactId, Application app) {
-    this(namespace, artifactId, app, "", null, null);
+    this(namespace, artifactId, app, "", null, null, null);
   }
 
   public DefaultAppConfigurer(Id.Namespace namespace, Id.Artifact artifactId, Application app, String configuration,
                               @Nullable PluginFinder pluginFinder,
-                              @Nullable PluginInstantiator pluginInstantiator) {
+                              @Nullable PluginInstantiator pluginInstantiator,
+                              @Nullable RuntimeConfigurer runtimeConfigurer) {
     super(namespace, artifactId, pluginFinder, pluginInstantiator);
     this.name = app.getClass().getSimpleName();
     this.description = "";
@@ -112,6 +115,7 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
     this.pluginInstantiator = pluginInstantiator;
     this.appMetadata = new HashMap<>();
     this.triggerFactory = new DefaultTriggerFactory(namespace.toEntityId());
+    this.runtimeConfigurer = runtimeConfigurer;
   }
 
   @Override
@@ -256,6 +260,16 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
         programName, schedulableProgramType));
     }
     return new DefaultScheduleBuilder(scheduleName, programName, triggerFactory);
+  }
+
+  @Override
+  public RuntimeConfigurer getRuntimeConfigurer() {
+    return runtimeConfigurer;
+  }
+
+  @Override
+  public String getDeployedNamespace() {
+    return deployNamespace.getId();
   }
 
   /**

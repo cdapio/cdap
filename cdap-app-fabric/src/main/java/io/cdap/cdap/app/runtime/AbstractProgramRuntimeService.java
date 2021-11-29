@@ -22,16 +22,21 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.common.RuntimeArguments;
 import io.cdap.cdap.api.plugin.Plugin;
+import io.cdap.cdap.app.deploy.ConfigResponse;
+import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.program.ProgramDescriptor;
@@ -46,6 +51,9 @@ import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.lang.jar.ClassLoaderFolder;
 import io.cdap.cdap.common.twill.TwillAppNames;
 import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -85,10 +93,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
@@ -113,6 +123,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   private final ProgramRunnerFactory programRunnerFactory;
   private final ArtifactRepository noAuthArtifactRepository;
   private final ProgramStateWriter programStateWriter;
+  private final ConfiguratorFactory configuratorFactory;
   private ProgramRunnerFactory remoteProgramRunnerFactory;
   private TwillRunnerService remoteTwillRunnerService;
   private ExecutorService executor;
@@ -120,13 +131,15 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   protected AbstractProgramRuntimeService(CConfiguration cConf,
                                           ProgramRunnerFactory programRunnerFactory,
                                           ArtifactRepository noAuthArtifactRepository,
-                                          ProgramStateWriter programStateWriter) {
+                                          ProgramStateWriter programStateWriter,
+                                          ConfiguratorFactory configuratorFactory) {
     this.cConf = cConf;
     this.runtimeInfosLock = new ReentrantReadWriteLock();
     this.runtimeInfos = HashBasedTable.create();
     this.programRunnerFactory = programRunnerFactory;
     this.noAuthArtifactRepository = noAuthArtifactRepository;
     this.programStateWriter = programStateWriter;
+    this.configuratorFactory = configuratorFactory;
   }
 
   /**
@@ -159,7 +172,6 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       : Optional.ofNullable(remoteProgramRunnerFactory).orElseThrow(UnsupportedOperationException::new)
     ).create(programId.getType());
 
-
     File tempDir = createTempDirectory(programId, runId);
     AtomicReference<Runnable> cleanUpTaskRef = new AtomicReference<>(createCleanupTask(tempDir, runner));
     DelayedProgramController controller = new DelayedProgramController(programRunId);
@@ -171,14 +183,32 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
         // Get the artifact details and save it into the program options.
         ArtifactId artifactId = programDescriptor.getArtifactId();
         ArtifactDetail artifactDetail = getArtifactDetail(artifactId);
+        ApplicationSpecification appSpec = programDescriptor.getApplicationSpecification();
+        ProgramDescriptor newProgramDescriptor = programDescriptor;
+
+        boolean isPreview = Boolean.valueOf(
+          options.getArguments().getOption(ProgramOptionConstants.IS_PREVIEW, "false"));
+        // do the app spec regeneration if the mode is on premise, for isolated mode, the regeneration is done on the
+        // runtime environment before the program launch
+        // for preview we already have a resolved app spec, so no need to regenerate the app spec again
+        if (!isPreview && appSpec != null && ClusterMode.ON_PREMISE.equals(clusterMode)) {
+          try {
+            ApplicationSpecification generatedAppSpec =
+              regenerateAppSpec(artifactDetail, programId, artifactId, appSpec, options);
+            appSpec = generatedAppSpec != null ? generatedAppSpec : appSpec;
+            newProgramDescriptor = new ProgramDescriptor(programDescriptor.getProgramId(), appSpec);
+          } catch (Exception e) {
+            LOG.warn("Failed to regenerate the app spec for program {}, using the existing app spec", programId);
+          }
+        }
         ProgramOptions runtimeProgramOptions = updateProgramOptions(artifactId, programId, options, runId);
 
         // Take a snapshot of all the plugin artifacts used by the program
         ProgramOptions optionsWithPlugins = createPluginSnapshot(runtimeProgramOptions, programId, tempDir,
-                                                                 programDescriptor.getApplicationSpecification());
+                                                                 newProgramDescriptor.getApplicationSpecification());
 
         // Create and run the program
-        Program executableProgram = createProgram(cConf, runner, programDescriptor, artifactDetail, tempDir);
+        Program executableProgram = createProgram(cConf, runner, newProgramDescriptor, artifactDetail, tempDir);
         cleanUpTaskRef.set(createCleanupTask(cleanUpTaskRef.get(), executableProgram));
 
         controller.setProgramController(runner.run(executableProgram, optionsWithPlugins));
@@ -273,6 +303,41 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
                                                programId.getProgram(), runId.getId()));
     dir.mkdirs();
     return dir;
+  }
+
+  /**
+   * Regenerates the app spec before the program start
+   *
+   * @return the regenerated app spec, or null if there is any exception generating the app spec.
+   */
+  @Nullable
+  private ApplicationSpecification regenerateAppSpec(
+    ArtifactDetail artifactDetail, ProgramId programId, ArtifactId artifactId,
+    ApplicationSpecification existingAppSpec,
+    ProgramOptions options) throws InterruptedException, ExecutionException, TimeoutException {
+    ApplicationClass appClass = Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(), null);
+    if (appClass == null) {
+      // This should never happen.
+      throw new IllegalStateException(String.format(
+        "No application class found in artifact '%s' in namespace '%s'.",
+        artifactDetail.getDescriptor().getArtifactId(), programId.getNamespace()));
+    }
+
+    AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(
+      artifactId, artifactDetail.getDescriptor().getLocation(), programId.getNamespaceId(), appClass,
+      existingAppSpec.getName(), existingAppSpec.getAppVersion(), existingAppSpec.getConfiguration(), null, false,
+      true, options.getUserArguments().asMap());
+    Configurator configurator = this.configuratorFactory.create(deploymentInfo);
+    ListenableFuture<ConfigResponse> future = configurator.config();
+    ConfigResponse response = future.get(120, TimeUnit.SECONDS);
+    
+    if (response.getExitCode() == 0) {
+      AppSpecInfo appSpecInfo = response.getAppSpecInfo();
+      if (appSpecInfo != null && appSpecInfo.getAppSpec() != null) {
+        return appSpecInfo.getAppSpec();
+      }
+    }
+    return null;
   }
 
   /**

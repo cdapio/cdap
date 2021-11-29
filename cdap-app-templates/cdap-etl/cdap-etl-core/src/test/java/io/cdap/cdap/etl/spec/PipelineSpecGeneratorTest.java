@@ -65,6 +65,7 @@ import io.cdap.cdap.etl.proto.v2.ETLTransformationPushdown;
 import io.cdap.cdap.etl.proto.v2.spec.PipelineSpec;
 import io.cdap.cdap.etl.proto.v2.spec.PluginSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.proto.id.NamespaceId;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -133,8 +134,8 @@ public class PipelineSpecGeneratorTest {
     pluginConfigurer.addMockPlugin(BatchJoiner.PLUGIN_TYPE, "mockautojoiner", new MockAutoJoin(), artifactIds);
     pluginConfigurer.addMockPlugin(BatchSQLEngine.PLUGIN_TYPE, "mocksqlengine", new MockSQLEngine(), artifactIds);
 
-    specGenerator = new BatchPipelineSpecGenerator(pluginConfigurer,
-                                                   ImmutableSet.of(BatchSource.PLUGIN_TYPE),
+    specGenerator = new BatchPipelineSpecGenerator(NamespaceId.DEFAULT.getNamespace(), pluginConfigurer,
+                                                   null, ImmutableSet.of(BatchSource.PLUGIN_TYPE),
                                                    ImmutableSet.of(BatchSink.PLUGIN_TYPE),
                                                    Engine.MAPREDUCE);
   }
@@ -867,7 +868,8 @@ public class PipelineSpecGeneratorTest {
       .setEngine(Engine.MAPREDUCE)
       .build();
 
-    new BatchPipelineSpecGenerator(pluginConfigurer, ImmutableSet.of(BatchSource.PLUGIN_TYPE),
+    new BatchPipelineSpecGenerator(NamespaceId.DEFAULT.getNamespace(),
+                                   pluginConfigurer, null, ImmutableSet.of(BatchSource.PLUGIN_TYPE),
                                    ImmutableSet.of(BatchSink.PLUGIN_TYPE), Engine.MAPREDUCE)
       .generateSpec(config);
   }
@@ -894,7 +896,8 @@ public class PipelineSpecGeneratorTest {
       .setNumOfRecordsPreview(100)
       .build();
 
-    PipelineSpec actual = new BatchPipelineSpecGenerator(pluginConfigurer, ImmutableSet.of(BatchSource.PLUGIN_TYPE),
+    PipelineSpec actual = new BatchPipelineSpecGenerator(NamespaceId.DEFAULT.getNamespace(), pluginConfigurer, null,
+                                                         ImmutableSet.of(BatchSource.PLUGIN_TYPE),
                                                          ImmutableSet.of(BatchSink.PLUGIN_TYPE), Engine.MAPREDUCE)
       .generateSpec(config);
 

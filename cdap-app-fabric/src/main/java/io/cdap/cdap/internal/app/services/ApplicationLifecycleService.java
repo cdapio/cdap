@@ -575,7 +575,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactId, artifactDetail.getDescriptor().getLocation(),
                                                              appId.getParent(), appClass, appId.getApplication(),
                                                              appId.getVersion(), updatedAppConfig, ownerPrincipal,
-                                                             updateSchedules);
+                                                             updateSchedules, false, Collections.emptyMap());
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);
     // TODO: (CDAP-3258) Manager needs MUCH better error handling.
@@ -616,7 +616,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     ArtifactDetail artifactDetail = artifactRepository.addArtifact(artifactId, jarFile);
     try {
       return deployApp(namespace, appName, null, configStr, programTerminator, artifactDetail, ownerPrincipal,
-                       updateSchedules);
+                       updateSchedules, false, Collections.emptyMap());
     } catch (Exception e) {
       // if we added the artifact, but failed to deploy the application, delete the artifact to bring us back
       // to the state we were in before this call.
@@ -687,7 +687,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                            @Nullable Boolean updateSchedules) throws Exception {
     ArtifactDetail artifactDetail = artifactRepository.getArtifact(artifactId);
     return deployApp(namespace, appName, appVersion, configStr, programTerminator, artifactDetail, ownerPrincipal,
-                     updateSchedules == null ? appUpdateSchedules : updateSchedules);
+                     updateSchedules == null ? appUpdateSchedules : updateSchedules, false, Collections.emptyMap());
   }
 
   /**
@@ -705,6 +705,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @param ownerPrincipal the kerberos principal of the application owner
    * @param updateSchedules specifies if schedules of the workflow have to be updated,
    *                        if null value specified by the property "app.deploy.update.schedules" will be used.
+   * @param isPreview whether the app deployment is for preview
+   * @param userProps the user properties for the app deployment, this is basically used for preview deployment
    * @return information about the deployed application
    * @throws InvalidArtifactException if the artifact does not contain any application classes
    * @throws IOException if there was an IO error reading artifact detail from the meta store
@@ -717,7 +719,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                            @Nullable String configStr,
                                            ProgramTerminator programTerminator,
                                            @Nullable KerberosPrincipalId ownerPrincipal,
-                                           @Nullable Boolean updateSchedules) throws Exception {
+                                           @Nullable Boolean updateSchedules, boolean isPreview,
+                                           Map<String, String> userProps) throws Exception {
     NamespaceId artifactNamespace =
       ArtifactScope.SYSTEM.equals(summary.getScope()) ? NamespaceId.SYSTEM : namespace;
     ArtifactRange range = new ArtifactRange(artifactNamespace.getNamespace(), summary.getName(),
@@ -729,7 +732,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       throw new ArtifactNotFoundException(range.getNamespace(), range.getName());
     }
     return deployApp(namespace, appName, appVersion, configStr, programTerminator, artifactDetail.iterator().next(),
-                     ownerPrincipal, updateSchedules == null ? appUpdateSchedules : updateSchedules);
+                     ownerPrincipal, updateSchedules == null ? appUpdateSchedules : updateSchedules, isPreview,
+                     userProps);
   }
 
   /**
@@ -883,7 +887,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                             ProgramTerminator programTerminator,
                                             ArtifactDetail artifactDetail,
                                             @Nullable KerberosPrincipalId ownerPrincipal,
-                                            boolean updateSchedules) throws Exception {
+                                            boolean updateSchedules, boolean isPreview,
+                                            Map<String, String> userProps) throws Exception {
     // Now to deploy an app, we need ADMIN privilege on the owner principal if it is present, and also ADMIN on the app
     // But since at this point, app name is unknown to us, so the enforcement on the app is happening in the deploy
     // pipeline - LocalArtifactLoaderStage
@@ -913,7 +918,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(
       Artifacts.toProtoArtifactId(namespaceId, artifactDetail.getDescriptor().getArtifactId()),
       artifactDetail.getDescriptor().getLocation(), namespaceId, appClass, appName,
-      appVersion, configStr, ownerPrincipal, updateSchedules);
+      appVersion, configStr, ownerPrincipal, updateSchedules, isPreview, userProps);
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);
     // TODO: (CDAP-3258) Manager needs MUCH better error handling.
