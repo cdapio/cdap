@@ -115,7 +115,8 @@ public class MasterServiceMainTestBase {
                     LogsServiceMain.class,
                     MetadataServiceMain.class,
                     RuntimeServiceMain.class,
-                    AppFabricServiceMain.class));
+                    AppFabricServiceMain.class,
+                    SupportBundleServiceMain.class));
 
     if (SecurityUtil.isManagedSecurity(cConf)) {
       serviceMainClasses.add(AuthenticationServiceMain.class);
