@@ -29,6 +29,7 @@ import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.proto.ProgramType;
@@ -60,8 +61,8 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
                                 @Named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO)
                                   ArtifactRepository noAuthArtifactRepository,
                                 @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname,
-                                ProgramStateWriter programStateWriter) {
-    super(cConf, programRunnerFactory, noAuthArtifactRepository, programStateWriter);
+                                ProgramStateWriter programStateWriter, ConfiguratorFactory configuratorFactory) {
+    super(cConf, programRunnerFactory, noAuthArtifactRepository, programStateWriter, configuratorFactory);
     this.hostname = hostname.getCanonicalHostName();
   }
 

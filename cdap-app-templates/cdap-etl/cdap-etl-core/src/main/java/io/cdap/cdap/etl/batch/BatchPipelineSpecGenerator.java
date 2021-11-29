@@ -17,6 +17,7 @@
 package io.cdap.cdap.etl.batch;
 
 import io.cdap.cdap.api.DatasetConfigurer;
+import io.cdap.cdap.api.app.RuntimeConfigurer;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.api.validation.ValidationException;
@@ -29,17 +30,18 @@ import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spec.PipelineSpecGenerator;
 
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Generates a pipeline spec for batch apps.
  */
 public class BatchPipelineSpecGenerator extends PipelineSpecGenerator<ETLBatchConfig, BatchPipelineSpec> {
 
-  public <T extends PluginConfigurer & DatasetConfigurer> BatchPipelineSpecGenerator(T configurer,
-                                                                                     Set<String> sourcePluginTypes,
-                                                                                     Set<String> sinkPluginTypes,
-                                                                                     Engine engine) {
-    super(configurer, sourcePluginTypes, sinkPluginTypes, engine);
+  public <T extends PluginConfigurer & DatasetConfigurer> BatchPipelineSpecGenerator(
+    String namespace,
+    T configurer, @Nullable RuntimeConfigurer runtimeConfigurer, Set<String> sourcePluginTypes,
+    Set<String> sinkPluginTypes, Engine engine) {
+    super(namespace, configurer, runtimeConfigurer, sourcePluginTypes, sinkPluginTypes, engine);
   }
 
   @Override

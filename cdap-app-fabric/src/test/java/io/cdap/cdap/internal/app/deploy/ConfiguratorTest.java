@@ -118,7 +118,7 @@ public class ConfiguratorTest {
 
     // Create a configurator that is testable. Provide it a application.
     Configurator configurator = new InMemoryConfigurator(conf, pluginFinder, new DefaultImpersonator(cConf, null),
-                                                         artifactRepo, appDeploymentInfo);
+                                                         artifactRepo, null, appDeploymentInfo);
     // Extract response from the configurator.
     ListenableFuture<ConfigResponse> result = configurator.config();
     ConfigResponse response = result.get(10, TimeUnit.SECONDS);
@@ -162,7 +162,7 @@ public class ConfiguratorTest {
 
     // Create a configurator that is testable. Provide it an application.
     Configurator configurator = new InMemoryConfigurator(conf, pluginFinder, new DefaultImpersonator(cConf, null),
-                                                         artifactRepo, appDeploymentInfo);
+                                                         artifactRepo, null, appDeploymentInfo);
 
     ListenableFuture<ConfigResponse> result = configurator.config();
     ConfigResponse response = result.get(10, TimeUnit.SECONDS);
@@ -184,7 +184,7 @@ public class ConfiguratorTest {
 
     Configurator configuratorWithoutConfig = new InMemoryConfigurator(conf, pluginFinder,
                                                                       new DefaultImpersonator(cConf, null),
-                                                                      artifactRepo, appDeploymentInfo);
+                                                                      artifactRepo, null, appDeploymentInfo);
     result = configuratorWithoutConfig.config();
     response = result.get(10, TimeUnit.SECONDS);
     Assert.assertNotNull(response);

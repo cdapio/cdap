@@ -26,6 +26,7 @@ import io.cdap.cdap.api.ProgramLifecycle;
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.annotation.TransactionControl;
 import io.cdap.cdap.api.annotation.TransactionPolicy;
+import io.cdap.cdap.api.app.RuntimeConfigurer;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.mapreduce.AbstractMapReduce;
@@ -62,6 +63,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * MapReduce Driver for ETL Batch Applications.
@@ -94,12 +96,17 @@ public class ETLMapReduce extends AbstractMapReduce {
 
   // this is only visible at configure time, not at runtime
   private final BatchPhaseSpec phaseSpec;
+  private final RuntimeConfigurer runtimeConfigurer;
+  private final String deployedNamespace;
 
   private final Set<String> connectorDatasets;
 
-  public ETLMapReduce(BatchPhaseSpec phaseSpec, Set<String> connectorDatasets) {
+  public ETLMapReduce(BatchPhaseSpec phaseSpec, Set<String> connectorDatasets,
+                      @Nullable RuntimeConfigurer runtimeConfigurer, String deployedNamespace) {
     this.phaseSpec = phaseSpec;
     this.connectorDatasets = connectorDatasets;
+    this.runtimeConfigurer = runtimeConfigurer;
+    this.deployedNamespace = deployedNamespace;
   }
 
   @Override
@@ -109,7 +116,7 @@ public class ETLMapReduce extends AbstractMapReduce {
 
     // register the plugins at program level so that the program can be failed by the platform early in case of
     // plugin requirements not being meet
-    phaseSpec.getPhase().registerPlugins(getConfigurer());
+    phaseSpec.getPhase().registerPlugins(getConfigurer(), runtimeConfigurer, deployedNamespace);
 
     // Set resources for mapper, reducer and driver
     setMapperResources(phaseSpec.getResources());

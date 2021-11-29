@@ -35,6 +35,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.etl.api.Engine;
+import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.connector.BrowseDetail;
 import io.cdap.cdap.etl.api.connector.BrowseEntity;
 import io.cdap.cdap.etl.api.connector.BrowseRequest;
@@ -45,6 +46,7 @@ import io.cdap.cdap.etl.mock.batch.MockSource;
 import io.cdap.cdap.etl.mock.connector.FileConnector;
 import io.cdap.cdap.etl.mock.test.HydratorTestBase;
 import io.cdap.cdap.etl.mock.transform.IdentityTransform;
+import io.cdap.cdap.etl.mock.transform.PluginValidationTransform;
 import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 import io.cdap.cdap.etl.proto.connection.ConnectionCreationRequest;
 import io.cdap.cdap.etl.proto.connection.ConnectorDetail;
@@ -336,7 +338,7 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     StructuredRecord dwayne = StructuredRecord.builder(schema).set("name", "dwayne").build();
 
     // add the dataset by the test, the source won't create it since table name is macro enabled
-    addDatasetInstance(NamespaceId.DEFAULT.dataset(srcTableName), Table.TYPE);
+    addDatasetInstance(NamespaceId.DEFAULT.dataset(srcTableName), Table.class.getName());
     DataSetManager<Table> sourceTable = getDataset(srcTableName);
     MockSource.writeInput(sourceTable, ImmutableList.of(samuel, dwayne));
 
@@ -376,7 +378,7 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     runtimeArguments = ImmutableMap.of("badval", "{\"a\" : 1}", "srcTable", newSrcTableName,
                                        "sinkTable", newSinkTableName);
 
-    addDatasetInstance(NamespaceId.DEFAULT.dataset(newSrcTableName), Table.TYPE);
+    addDatasetInstance(NamespaceId.DEFAULT.dataset(newSrcTableName), Table.class.getName());
     StructuredRecord newRecord1 = StructuredRecord.builder(schema).set("name", "john").build();
     StructuredRecord newRecord2 = StructuredRecord.builder(schema).set("name", "tom").build();
     sourceTable = getDataset(newSrcTableName);
@@ -392,6 +394,104 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
 
     deleteConnection(sourceConnName);
     deleteConnection(sinkConnName);
+
+    deleteDatasetInstance(NamespaceId.DEFAULT.dataset(srcTableName));
+    deleteDatasetInstance(NamespaceId.DEFAULT.dataset(sinkTableName));
+    deleteDatasetInstance(NamespaceId.DEFAULT.dataset(newSrcTableName));
+    deleteDatasetInstance(NamespaceId.DEFAULT.dataset(newSinkTableName));
+  }
+
+  @Test
+  public void testUsingConnectionsWithPluginMacros() throws Exception {
+    testConnectionsWithPluginMacros(Engine.SPARK);
+    testConnectionsWithPluginMacros(Engine.MAPREDUCE);
+  }
+
+  private void testConnectionsWithPluginMacros(Engine engine) throws Exception {
+    String sourceConnName = "sourceConnPluginMacros " + engine;
+    String transformConnName = "transformConnPluginMacros " + engine;
+    String sinkConnName = "sinkConnPluginMacros " + engine;
+    String srcTableName = "srcPluginMacros" + engine;
+    String sinkTableName = "sinkPluginMacros" + engine;
+
+    addConnection(
+      sourceConnName, new ConnectionCreationRequest(
+        "", new PluginInfo("test", "dummy", null, Collections.singletonMap("tableName", "${srcTable}"),
+                           new ArtifactSelectorConfig())));
+    addConnection(
+      transformConnName, new ConnectionCreationRequest(
+        "", new PluginInfo("test", "dummy", null, ImmutableMap.of("plugin1", "${plugin1}",
+                                                                  "plugin1Type", "${plugin1Type}"),
+                           new ArtifactSelectorConfig())));
+    addConnection(
+      sinkConnName, new ConnectionCreationRequest(
+        "", new PluginInfo("test", "dummy", null, Collections.singletonMap("tableName", "${sinkTable}"),
+                           new ArtifactSelectorConfig())));
+
+    // source -> pluginValidation transform -> sink
+    ETLBatchConfig config = ETLBatchConfig.builder()
+                              .setEngine(engine)
+                              .addStage(new ETLStage("source", MockSource.getPluginUsingConnection(sourceConnName)))
+                              .addStage(new ETLStage(
+                                "transform",
+                                PluginValidationTransform.getPluginUsingConnection(
+                                  transformConnName, "${plugin2}", "${plugin2Type}")))
+                              .addStage(new ETLStage("sink", MockSink.getPluginUsingConnection(sinkConnName)))
+                              .addConnection("source", "transform")
+                              .addConnection("transform", "sink")
+                              .build();
+
+    // runtime arguments
+    Map<String, String> runtimeArguments = ImmutableMap.<String, String>builder().put("srcTable", srcTableName)
+                                             .put("sinkTable", sinkTableName)
+                                             .put("plugin1", "Identity")
+                                             .put("plugin1Type", Transform.PLUGIN_TYPE)
+                                             .put("plugin2", "Double")
+                                             .put("plugin2Type", Transform.PLUGIN_TYPE).build();
+
+    Schema schema = Schema.recordOf("x", Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
+    StructuredRecord samuel = StructuredRecord.builder(schema).set("name", "samuel").build();
+    StructuredRecord dwayne = StructuredRecord.builder(schema).set("name", "dwayne").build();
+
+    addDatasetInstance(NamespaceId.DEFAULT.dataset(srcTableName), Table.class.getName());
+    DataSetManager<Table> sourceTable = getDataset(srcTableName);
+    MockSource.writeInput(sourceTable, ImmutableList.of(samuel, dwayne));
+
+    // verify preview can run successfully using connections
+    PreviewManager previewManager = getPreviewManager();
+    PreviewConfig previewConfig = new PreviewConfig(SmartWorkflow.NAME, ProgramType.WORKFLOW,
+                                                    runtimeArguments, 10);
+    // Start the preview and get the corresponding PreviewRunner.
+    ApplicationId previewId = previewManager.start(NamespaceId.DEFAULT,
+                                                   new AppRequest<>(APP_ARTIFACT, config, previewConfig));
+
+    // Wait for the preview status go into COMPLETED.
+    Tasks.waitFor(PreviewStatus.Status.COMPLETED, new Callable<PreviewStatus.Status>() {
+      @Override
+      public PreviewStatus.Status call() throws Exception {
+        PreviewStatus status = previewManager.getStatus(previewId);
+        return status == null ? null : status.getStatus();
+      }
+    }, 5, TimeUnit.MINUTES);
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
+    ApplicationId appId = NamespaceId.DEFAULT.app("testConnectionsWithPluginMacros" + engine);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    // start the actual pipeline run
+    WorkflowManager manager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    manager.startAndWaitForGoodRun(runtimeArguments, ProgramRunStatus.COMPLETED, 3, TimeUnit.MINUTES);
+
+    DataSetManager<Table> sinkTable = getDataset(sinkTableName);
+    List<StructuredRecord> outputRecords = MockSink.readOutput(sinkTable);
+    Assert.assertEquals(ImmutableSet.of(dwayne, samuel), new HashSet<>(outputRecords));
+
+    deleteConnection(sourceConnName);
+    deleteConnection(sinkConnName);
+    deleteConnection(transformConnName);
+
+    deleteDatasetInstance(NamespaceId.DEFAULT.dataset(srcTableName));
+    deleteDatasetInstance(NamespaceId.DEFAULT.dataset(sinkTableName));
   }
 
   private void addConnection(String connection, ConnectionCreationRequest creationRequest) throws IOException {

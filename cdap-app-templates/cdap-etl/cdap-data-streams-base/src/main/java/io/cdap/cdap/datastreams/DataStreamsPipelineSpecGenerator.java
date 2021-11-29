@@ -17,6 +17,7 @@
 package io.cdap.cdap.datastreams;
 
 import io.cdap.cdap.api.DatasetConfigurer;
+import io.cdap.cdap.api.app.RuntimeConfigurer;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.api.FailureCollector;
@@ -28,6 +29,7 @@ import io.cdap.cdap.etl.spec.PipelineSpecGenerator;
 import org.apache.hadoop.fs.Path;
 
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Generates specs for data stream pipelines.
@@ -35,10 +37,10 @@ import java.util.Set;
 public class DataStreamsPipelineSpecGenerator
   extends PipelineSpecGenerator<DataStreamsConfig, DataStreamsPipelineSpec> {
 
-  <T extends PluginConfigurer & DatasetConfigurer> DataStreamsPipelineSpecGenerator(T configurer,
-                                                                                    Set<String> sourcePluginTypes,
-                                                                                    Set<String> sinkPluginTypes) {
-    super(configurer, sourcePluginTypes, sinkPluginTypes, Engine.SPARK);
+  <T extends PluginConfigurer & DatasetConfigurer> DataStreamsPipelineSpecGenerator(
+    String namespace, T configurer, @Nullable RuntimeConfigurer runtimeConfigurer, Set<String> sourcePluginTypes,
+    Set<String> sinkPluginTypes) {
+    super(namespace, configurer, runtimeConfigurer, sourcePluginTypes, sinkPluginTypes, Engine.SPARK);
   }
 
   @Override
