@@ -29,11 +29,6 @@
   <name>CDAP Support-Bundle</name>
   <packaging>jar</packaging>
 
-  <properties>
-    <maven.compiler.source>8</maven.compiler.source>
-    <maven.compiler.target>8</maven.compiler.target>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
@@ -42,7 +37,8 @@
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
-      <artifactId>jul-to-slf4j</artifactId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${slf4j.version}</version>
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>

@@ -17,45 +17,30 @@
 package io.cdap.cdap.master.environment.k8s;
 
 import com.google.common.util.concurrent.Service;
-import com.google.inject.AbstractModule;
 import com.google.inject.Binding;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
-import com.google.inject.Scopes;
 import io.cdap.cdap.app.guice.AuthorizationModule;
-import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
-import io.cdap.cdap.app.guice.SupportBundleRuntimeServiceModule;
+import io.cdap.cdap.app.guice.SupportBundleServiceModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.DFSLocationModule;
-import io.cdap.cdap.common.guice.SupplierProviderBridge;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.namespace.guice.NamespaceQueryAdminModule;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
-import io.cdap.cdap.data2.audit.AuditModule;
-import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
-import io.cdap.cdap.data2.metadata.writer.MessagingMetadataPublisher;
-import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
-import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
-import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.internal.app.services.SupportBundleInternalService;
-import io.cdap.cdap.internal.provision.ProvisionerModule;
-import io.cdap.cdap.logging.guice.LogQueryRuntimeModule;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
-import io.cdap.cdap.metrics.guice.MetricsStoreModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.store.SecureStoreService;
-import org.apache.twill.api.TwillRunner;
-import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.zookeeper.ZKClientService;
 
 import java.util.Arrays;
@@ -87,28 +72,11 @@ public class SupportBundleServiceMain extends AbstractServiceMain<EnvironmentOpt
       new SystemDatasetRuntimeModule().getStandaloneModules(),
       // The Dataset set modules are only needed to satisfy dependency injection
       new DataSetsModules().getStandaloneModules(),
-      new MetricsStoreModule(),
-      new ExploreClientModule(),
-      new AuditModule(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getMasterModule(),
-      new SupportBundleRuntimeServiceModule().getDistributedModules(),
-      new ProvisionerModule(),
-      new ProgramRunnerRuntimeModule().getDistributedModules(true),
+      new SupportBundleServiceModule(),
       new SecureStoreServerModule(),
-      new LogQueryRuntimeModule().getDistributedModules(),
-      new DFSLocationModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(TwillRunnerService.class).toProvider(
-              new SupplierProviderBridge<>(masterEnv.getTwillRunnerSupplier()))
-            .in(Scopes.SINGLETON);
-          bind(TwillRunner.class).to(TwillRunnerService.class);
-          bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
-          bind(MetadataServiceClient.class).to(DefaultMetadataServiceClient.class);
-        }
-      }
+      new DFSLocationModule()
     );
   }
 

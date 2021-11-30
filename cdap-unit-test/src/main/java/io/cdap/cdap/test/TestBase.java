@@ -53,7 +53,7 @@ import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.MonitorHandlerModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
-import io.cdap.cdap.app.guice.SupportBundleRuntimeServiceModule;
+import io.cdap.cdap.app.guice.SupportBundleServiceModule;
 import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.preview.PreviewHttpServer;
 import io.cdap.cdap.app.preview.PreviewManager;
@@ -305,7 +305,7 @@ public class TestBase {
       new PreviewConfigModule(cConf, new Configuration(), SConfiguration.create()),
       new PreviewManagerModule(false),
       new PreviewRunnerManagerModule().getInMemoryModules(),
-      new SupportBundleRuntimeServiceModule().getInMemoryModules(),
+      new SupportBundleServiceModule(),
       new MockProvisionerModule(),
       new AbstractModule() {
         @Override

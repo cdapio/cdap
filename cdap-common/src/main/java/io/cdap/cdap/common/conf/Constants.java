@@ -1775,6 +1775,8 @@ public final class Constants {
     public static final String SERVICE_EXEC_THREADS = "support.bundle.service.exec.threads";
     public static final String SERVICE_MEMORY_MB = "support.bundle.service.memory.mb";
     public static final String SERVICE_NUM_CORES = "support.bundle.service.num.cores";
+    public static final String CONTAINER_INSTANCES = "support.bundle.container.instances";
+    public static final String MAX_INSTANCES = "support.bundle.max.instances";
     public static final String HANDLERS_NAME = "support.bundle.handlers";
     public static final String MAX_FOLDER_SIZE = "support.bundle.max.folder.size";
     public static final String MAX_THREADS = "support.bundle.max.threads";
