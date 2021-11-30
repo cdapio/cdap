@@ -29,9 +29,8 @@ import java.util.Map;
  * By default features default to enabled after they are introduced, and disabled before they were introduced
  */
 public enum Feature {
-  INCLUDE_FEATURE_FLAGS_IN_RUNTIME_ARGUMENTS("6.6.0"),
-  INCLUDE_PREFIX_FOR_WRANGLER_CREATE_RECORD("6.6.0");
-
+  INCLUDE_FEATURE_FLAGS_IN_RUNTIME_ARGUMENTS("6.6.0");
+  
   public static final String FEATURE_FLAG_PREFIX = "feature.";
   private final PlatformInfo.Version versionIntroduced;
   private final boolean defaultAfterDeployment;
