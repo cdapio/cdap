@@ -4737,15 +4737,15 @@
     </description>
   </property>
 
- <property>
-   <name>tethering.agent.connection.interval.secs</name>
-   <value>10</value>
-   <description>
-     Interval for connecting to the tethering server.
-   </description>
- </property>
+  <property>
+    <name>tethering.agent.connection.interval.secs</name>
+    <value>10</value>
+    <description>
+      Interval for connecting to the tethering server.
+    </description>
+  </property>
 
-<property>
+  <property>
     <name>tethering.agent.retry.policy.base.delay.ms</name>
     <value>10000</value>
     <description>
@@ -4793,4 +4793,13 @@
       Determines if tethering server shouuld be enabled.
     </description>
   </property>
+
+  <property>
+    <name>feature.feature.flags.in.runtime.enabled</name>
+    <value>true</value>
+    <description>
+      Pass feature flags as runtime arguments. 
+    </description>
+  </property>
+
 </configuration>

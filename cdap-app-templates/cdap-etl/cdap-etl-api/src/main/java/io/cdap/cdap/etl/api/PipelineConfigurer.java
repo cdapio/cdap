@@ -17,9 +17,11 @@
 package io.cdap.cdap.etl.api;
 
 import io.cdap.cdap.api.DatasetConfigurer;
+import io.cdap.cdap.api.FeatureFlagsProvider;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -27,7 +29,7 @@ import java.util.Map;
  * Using this as a layer between plugins and CDAP's PluginConfigurer in case pipelines need etl specific methods.
  */
 @Beta
-public interface PipelineConfigurer extends PluginConfigurer, DatasetConfigurer {
+public interface PipelineConfigurer extends PluginConfigurer, DatasetConfigurer, FeatureFlagsProvider {
 
   /**
    * Get stage configurer for the pipeline stage

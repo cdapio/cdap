@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 import io.cdap.cdap.api.DatasetConfigurer;
+import io.cdap.cdap.api.FeatureFlagsProvider;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
@@ -95,18 +96,19 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
     BatchSource.PLUGIN_TYPE, Transform.PLUGIN_TYPE, BatchAggregator.PLUGIN_TYPE, ErrorTransform.PLUGIN_TYPE);
   protected final PluginConfigurer pluginConfigurer;
   protected final DatasetConfigurer datasetConfigurer;
+  protected final FeatureFlagsProvider featureFlagProvider;
   protected final Engine engine;
   private final Set<String> sourcePluginTypes;
   private final Set<String> sinkPluginTypes;
   private final ConnectionRegistryMacroEvaluator connectionEvaluator;
   private final MacroParserOptions options;
 
-  protected <T extends PluginConfigurer & DatasetConfigurer> PipelineSpecGenerator(T configurer,
-                                                                                   Set<String> sourcePluginTypes,
-                                                                                   Set<String> sinkPluginTypes,
-                                                                                   Engine engine) {
+
+  protected <T extends PluginConfigurer & DatasetConfigurer & FeatureFlagsProvider>
+  PipelineSpecGenerator(T configurer, Set<String> sourcePluginTypes, Set<String> sinkPluginTypes, Engine engine) {
     this.pluginConfigurer = configurer;
     this.datasetConfigurer = configurer;
+    this.featureFlagProvider = configurer;
     this.sourcePluginTypes = sourcePluginTypes;
     this.sinkPluginTypes = sinkPluginTypes;
     this.engine = engine;
@@ -152,7 +154,8 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       pluginTypes.put(stageName, stage.getPlugin().getType());
       pluginConfigurers.put(stageName, new DefaultPipelineConfigurer(pluginConfigurer, datasetConfigurer,
                                                                      stageName, engine,
-                                                                     new DefaultStageConfigurer(stageName)));
+                                                                     new DefaultStageConfigurer(stageName),
+                                                                     featureFlagProvider));
     }
     SchemaPropagator schemaPropagator = new SchemaPropagator(pluginConfigurers, validatedPipeline::getOutputs,
                                                              pluginTypes::get);

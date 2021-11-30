@@ -29,12 +29,14 @@ import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
+import io.cdap.cdap.api.common.FeatureFlagsUtils;
 import io.cdap.cdap.app.DefaultAppConfigurer;
 import io.cdap.cdap.app.DefaultApplicationContext;
 import io.cdap.cdap.app.deploy.ConfigResponse;
 import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.CConfigurationUtil;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
@@ -57,6 +59,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.Map;
 
 /**
  * In Memory Configurator doesn't spawn a external process, but does this in memory.
@@ -150,8 +153,9 @@ public final class InMemoryConfigurator implements Configurator {
     try (
       PluginInstantiator pluginInstantiator = new PluginInstantiator(cConf, app.getClass().getClassLoader(), tempDir)
     ) {
+      Map<String, String> featureFlags = FeatureFlagsUtils.extractFeatureFlags(CConfigurationUtil.asMap(cConf));
       configurer = new DefaultAppConfigurer(appNamespace, artifactId, app,
-                                            configString, pluginFinder, pluginInstantiator);
+                                            configString, pluginFinder, pluginInstantiator, featureFlags);
       T appConfig;
       Type configType = Artifacts.getConfigType(app.getClass());
       if (configString.isEmpty()) {

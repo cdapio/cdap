@@ -149,5 +149,10 @@ public class MockPipelineConfigurer implements PipelineConfigurer, DatasetConfig
   public void createDataset(String s, Class<? extends Dataset> aClass) {
 
   }
+
+  @Override
+  public Map<String, String> getFeatureFlags() {
+    return Collections.emptyMap();
+  }
 }
 

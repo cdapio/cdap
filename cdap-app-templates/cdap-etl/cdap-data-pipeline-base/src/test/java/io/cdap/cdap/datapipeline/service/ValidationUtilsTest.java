@@ -19,6 +19,7 @@ package io.cdap.cdap.datapipeline.service;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import io.cdap.cdap.api.FeatureFlagsProvider;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
@@ -55,6 +56,10 @@ import java.util.stream.Collectors;
  */
 public class ValidationUtilsTest {
 
+  private FeatureFlagsProvider getFeatureFlagsProvider() {
+    return () -> Collections.emptyMap();
+  }
+
   @Test
   public void testValidateNoException() {
     Schema testSchema = Schema.recordOf("a", Schema.Field.of("a", Schema.of(Schema.Type.STRING)));
@@ -64,7 +69,8 @@ public class ValidationUtilsTest {
       etlStage, Collections
       .singletonList(testStageSchema), false);
     StageValidationResponse stageValidationResponse = ValidationUtils
-      .validate(validationRequest, getPluginConfigurer(MockSource.PLUGIN_CLASS), properties -> properties);
+      .validate(validationRequest, getPluginConfigurer(MockSource.PLUGIN_CLASS),
+                properties -> properties, getFeatureFlagsProvider());
     Assert.assertTrue(stageValidationResponse.getFailures().isEmpty());
   }
 
@@ -77,7 +83,8 @@ public class ValidationUtilsTest {
       etlStage, Collections
       .singletonList(testStageSchema), false);
     StageValidationResponse stageValidationResponse = ValidationUtils
-      .validate(validationRequest, getPluginConfigurer(MockSource.PLUGIN_CLASS), properties -> properties);
+      .validate(validationRequest, getPluginConfigurer(MockSource.PLUGIN_CLASS),
+                properties -> properties, getFeatureFlagsProvider());
     Assert.assertEquals(1, stageValidationResponse.getFailures().size());
   }
 
@@ -97,7 +104,7 @@ public class ValidationUtilsTest {
           propertiesCopy.put("tableName", testtable);
         }
         return propertiesCopy;
-      });
+      }, getFeatureFlagsProvider());
     Assert.assertTrue(stageValidationResponse.getFailures().isEmpty());
     Assert.assertEquals(testtable, stageValidationResponse.getSpec().getPlugin().getProperties().get("tableName"));
   }

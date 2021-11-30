@@ -20,6 +20,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import io.cdap.cdap.api.DatasetConfigurer;
+import io.cdap.cdap.api.FeatureFlagsProvider;
 import io.cdap.cdap.api.Predicate;
 import io.cdap.cdap.api.customaction.CustomAction;
 import io.cdap.cdap.api.dataset.Dataset;
@@ -58,6 +59,7 @@ public class DefaultWorkflowConfigurer extends AbstractConfigurer
   private final String className;
   private final Map<String, DatasetCreationSpec> localDatasetSpecs = new HashMap<>();
   private final DatasetConfigurer datasetConfigurer;
+  private final FeatureFlagsProvider featureFlagsProvider;
   private final Id.Namespace deployNamespace;
   private final Id.Artifact artifactId;
   private final PluginFinder pluginFinder;
@@ -71,7 +73,8 @@ public class DefaultWorkflowConfigurer extends AbstractConfigurer
 
   public DefaultWorkflowConfigurer(Workflow workflow, DatasetConfigurer datasetConfigurer,
                                    Id.Namespace deployNamespace, Id.Artifact artifactId,
-                                   PluginFinder pluginFinder, PluginInstantiator pluginInstantiator) {
+                                   PluginFinder pluginFinder, PluginInstantiator pluginInstantiator,
+                                   FeatureFlagsProvider featureFlagsProvider) {
     super(deployNamespace, artifactId, pluginFinder, pluginInstantiator);
     this.className = workflow.getClass().getName();
     this.name = workflow.getClass().getSimpleName();
@@ -81,6 +84,7 @@ public class DefaultWorkflowConfigurer extends AbstractConfigurer
     this.artifactId = artifactId;
     this.pluginFinder = pluginFinder;
     this.pluginInstantiator = pluginInstantiator;
+    this.featureFlagsProvider = featureFlagsProvider;
   }
 
   @Override
@@ -237,5 +241,10 @@ public class DefaultWorkflowConfigurer extends AbstractConfigurer
                                                                                 artifactId, pluginFinder,
                                                                                 pluginInstantiator);
     nodes.add(new WorkflowConditionNode(spec.getName(), spec, ifBranch, elseBranch));
+  }
+
+  @Override
+  public Map<String, String> getFeatureFlags() {
+    return featureFlagsProvider.getFeatureFlags();
   }
 }

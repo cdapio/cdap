@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
+import io.cdap.cdap.api.FeatureFlagsProvider;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.macro.MacroEvaluator;
@@ -105,7 +106,9 @@ public class RemoteValidationTask implements RunnableTask {
       macroProperties -> systemAppContext
         .evaluateMacros(namespace, macroProperties, macroEvaluator, macroParserOptions);
     PluginConfigurer pluginConfigurer = systemAppContext.createPluginConfigurer(namespace);
-    StageValidationResponse validationResponse = ValidationUtils.validate(validationRequest, pluginConfigurer, macroFn);
+    StageValidationResponse validationResponse = ValidationUtils.validate(
+      validationRequest, pluginConfigurer, macroFn, () -> systemAppContext.getFeatureFlags()
+    );
 
     // If the validation success and if it only involves system artifacts, then we don't need to restart task runner
     if (validationResponse.getFailures().isEmpty()) {

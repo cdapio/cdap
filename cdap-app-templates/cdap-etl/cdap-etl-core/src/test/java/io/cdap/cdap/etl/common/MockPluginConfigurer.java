@@ -18,6 +18,7 @@ package io.cdap.cdap.etl.common;
 
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.DatasetConfigurer;
+import io.cdap.cdap.api.FeatureFlagsProvider;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetProperties;
@@ -31,6 +32,7 @@ import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.plugin.PluginSelector;
 import io.cdap.cdap.internal.app.runtime.plugin.MacroParser;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -43,7 +45,7 @@ import javax.annotation.Nullable;
  * Mock {@link PluginConfigurer} for unit tests. No-op for dataset methods.
  * Use the setter methods to populate the plugin objects that should be returned by the PluginConfigurer methods.
  */
-public class MockPluginConfigurer implements PluginConfigurer, DatasetConfigurer {
+public class MockPluginConfigurer implements PluginConfigurer, DatasetConfigurer, FeatureFlagsProvider {
   private Map<Key, Value> plugins;
 
   private static class Value {
@@ -69,6 +71,11 @@ public class MockPluginConfigurer implements PluginConfigurer, DatasetConfigurer
     Key key = new Key(type, name);
     Value value = new Value(plugin, artifacts);
     plugins.put(key, value);
+  }
+
+  @Override
+  public Map<String, String> getFeatureFlags() {
+    return Collections.emptyMap();
   }
 
   @Nullable

@@ -23,11 +23,13 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+import io.cdap.cdap.api.FeatureFlagsProvider;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.common.FeatureFlagsUtils;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
@@ -174,7 +176,8 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
     Function<Map<String, String>, Map<String, String>> macroFn =
       macroProperties -> getContext().evaluateMacros(namespace, macroProperties, macroEvaluator, macroParserOptions);
     String validationResponse = GSON.toJson(ValidationUtils.validate(
-      validationRequest, getContext().createServicePluginConfigurer(namespace), macroFn));
+      validationRequest, getContext().createServicePluginConfigurer(namespace), macroFn,
+      () -> FeatureFlagsUtils.extractFeatureFlags(getContext().getRuntimeArguments())));
     responder.sendString(validationResponse);
   }
 

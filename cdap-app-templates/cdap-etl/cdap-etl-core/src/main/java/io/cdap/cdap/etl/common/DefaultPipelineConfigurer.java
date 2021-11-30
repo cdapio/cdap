@@ -17,6 +17,7 @@
 package io.cdap.cdap.etl.common;
 
 import io.cdap.cdap.api.DatasetConfigurer;
+import io.cdap.cdap.api.FeatureFlagsProvider;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
@@ -50,25 +51,28 @@ public class DefaultPipelineConfigurer implements PipelineConfigurer, MultiInput
   private final String stageName;
   private final DefaultStageConfigurer stageConfigurer;
   private final Map<String, String> properties;
+  private final Map<String, String> featureFlags;
 
-  public <C extends PluginConfigurer & DatasetConfigurer> DefaultPipelineConfigurer(
+  public <C extends PluginConfigurer & DatasetConfigurer & FeatureFlagsProvider> DefaultPipelineConfigurer(
     C configurer, String stageName, Engine engine) {
     this(configurer, stageName, engine, new DefaultStageConfigurer(stageName));
   }
 
-  public <C extends PluginConfigurer & DatasetConfigurer> DefaultPipelineConfigurer(
+  public <C extends PluginConfigurer & DatasetConfigurer & FeatureFlagsProvider> DefaultPipelineConfigurer(
     C configurer, String stageName, Engine engine, DefaultStageConfigurer stageConfigurer) {
-    this(configurer, configurer, stageName, engine, stageConfigurer);
+    this(configurer, configurer, stageName, engine, stageConfigurer, configurer);
   }
 
   public DefaultPipelineConfigurer(PluginConfigurer pluginConfigurer, DatasetConfigurer datasetConfigurer,
-                                   String stageName, Engine engine, DefaultStageConfigurer stageConfigurer) {
+                                   String stageName, Engine engine, DefaultStageConfigurer stageConfigurer,
+                                   FeatureFlagsProvider  featureFlagsProvider) {
     this.pluginConfigurer = pluginConfigurer;
     this.datasetConfigurer = datasetConfigurer;
     this.stageName = stageName;
     this.stageConfigurer = stageConfigurer;
     this.engine = engine;
     this.properties = new HashMap<>();
+    this.featureFlags = featureFlagsProvider.getFeatureFlags();
   }
 
   @Override
@@ -166,5 +170,9 @@ public class DefaultPipelineConfigurer implements PipelineConfigurer, MultiInput
 
   public Map<String, String> getPipelineProperties() {
     return properties;
+  }
+
+  public Map<String, String> getFeatureFlags() {
+    return featureFlags;
   }
 }

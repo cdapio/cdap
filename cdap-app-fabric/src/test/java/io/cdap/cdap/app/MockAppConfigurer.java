@@ -41,6 +41,7 @@ import io.cdap.cdap.internal.app.runtime.schedule.trigger.DefaultTriggerFactory;
 import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
 import io.cdap.cdap.proto.id.NamespaceId;
 
+import java.util.Collections;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -170,5 +171,10 @@ public final class MockAppConfigurer implements ApplicationConfigurer {
   @Override
   public void createDataset(String datasetName, Class<? extends Dataset> datasetClass) {
 
+  }
+
+  @Override
+  public Map<String, String> getFeatureFlags() {
+    return Collections.emptyMap();
   }
 }

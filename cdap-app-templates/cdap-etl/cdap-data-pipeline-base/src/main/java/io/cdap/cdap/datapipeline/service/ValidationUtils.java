@@ -18,6 +18,7 @@ package io.cdap.cdap.datapipeline.service;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import io.cdap.cdap.api.FeatureFlagsProvider;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.etl.api.Engine;
@@ -58,17 +59,20 @@ public final class ValidationUtils {
   /**
    * Validate plugin based on the {@link StageValidationRequest}
    *
-   * @param validationRequest {@link StageValidationRequest} with plugin properties
-   * @param pluginConfigurer  {@link PluginConfigurer} for using the plugin
-   * @param macroFn           {@link Function} for evaluating macros
+   * @param validationRequest   {@link StageValidationRequest} with plugin properties
+   * @param pluginConfigurer    {@link PluginConfigurer} for using the plugin
+   * @param macroFn             {@link Function} for evaluating macros
+   * @param featureFlagProvider {@link FeatureFlagProvider} to obtain enabled feature flags
    * @return {@link StageValidationResponse} in json format
    */
   public static StageValidationResponse validate(StageValidationRequest validationRequest,
                                                  PluginConfigurer pluginConfigurer,
-                                                 Function<Map<String, String>, Map<String, String>> macroFn) {
+                                                 Function<Map<String, String>, Map<String, String>> macroFn,
+                                                 FeatureFlagsProvider featureFlagProvider) {
 
     ETLStage stageConfig = validationRequest.getStage();
-    ValidatingConfigurer validatingConfigurer = new ValidatingConfigurer(pluginConfigurer);
+    ValidatingConfigurer validatingConfigurer = new ValidatingConfigurer(pluginConfigurer,
+                                                                           featureFlagProvider.getFeatureFlags());
     // Batch or Streaming doesn't matter for a single stage.
     PipelineSpecGenerator<ETLBatchConfig, BatchPipelineSpec> pipelineSpecGenerator =
       new BatchPipelineSpecGenerator(validatingConfigurer, Collections.emptySet(), Collections.emptySet(),

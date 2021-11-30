@@ -17,6 +17,7 @@
 package io.cdap.cdap.datastreams;
 
 import io.cdap.cdap.api.DatasetConfigurer;
+import io.cdap.cdap.api.FeatureFlagsProvider;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.api.FailureCollector;
@@ -35,9 +36,8 @@ import java.util.Set;
 public class DataStreamsPipelineSpecGenerator
   extends PipelineSpecGenerator<DataStreamsConfig, DataStreamsPipelineSpec> {
 
-  <T extends PluginConfigurer & DatasetConfigurer> DataStreamsPipelineSpecGenerator(T configurer,
-                                                                                    Set<String> sourcePluginTypes,
-                                                                                    Set<String> sinkPluginTypes) {
+  <T extends PluginConfigurer & DatasetConfigurer & FeatureFlagsProvider>
+  DataStreamsPipelineSpecGenerator(T configurer, Set<String> sourcePluginTypes, Set<String> sinkPluginTypes) {
     super(configurer, sourcePluginTypes, sinkPluginTypes, Engine.SPARK);
   }
 

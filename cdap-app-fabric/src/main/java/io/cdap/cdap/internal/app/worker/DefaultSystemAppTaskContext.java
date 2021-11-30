@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.worker;
 
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactManager;
+import io.cdap.cdap.api.common.FeatureFlagsUtils;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
@@ -29,6 +30,7 @@ import io.cdap.cdap.api.service.worker.SystemAppTaskContext;
 import io.cdap.cdap.app.services.AbstractServiceDiscoverer;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.CConfigurationUtil;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.service.Retries;
@@ -165,5 +167,10 @@ public class DefaultSystemAppTaskContext extends AbstractServiceDiscoverer imple
     } catch (IOException e) {
       LOG.warn("Error while cleaning up resources.", e);
     }
+  }
+
+  @Override
+  public Map<String, String> getFeatureFlags() {
+    return FeatureFlagsUtils.extractFeatureFlags(CConfigurationUtil.asMap(cConf));
   }
 }

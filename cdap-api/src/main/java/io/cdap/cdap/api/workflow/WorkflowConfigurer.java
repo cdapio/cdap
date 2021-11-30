@@ -17,9 +17,11 @@
 package io.cdap.cdap.api.workflow;
 
 import io.cdap.cdap.api.DatasetConfigurer;
+import io.cdap.cdap.api.FeatureFlagsProvider;
 import io.cdap.cdap.api.Predicate;
 import io.cdap.cdap.api.ProgramConfigurer;
 import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.app.ApplicationConfigurer;
 import io.cdap.cdap.api.customaction.CustomAction;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetProperties;
@@ -28,7 +30,8 @@ import io.cdap.cdap.api.plugin.PluginConfigurer;
 /**
  * Configurer for configuring the {@link Workflow}.
  */
-public interface WorkflowConfigurer extends ProgramConfigurer, PluginConfigurer, DatasetConfigurer {
+public interface WorkflowConfigurer
+  extends ProgramConfigurer, PluginConfigurer, DatasetConfigurer, FeatureFlagsProvider {
 
   /**
    * Adds a MapReduce program as a next sequential step in the {@link Workflow}. MapReduce program must be
