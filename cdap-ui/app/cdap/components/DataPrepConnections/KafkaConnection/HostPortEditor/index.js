@@ -25,9 +25,10 @@ import HostPortRow from 'components/DataPrepConnections/KafkaConnection/HostPort
 require('./HostPortEditor.scss');
 
 const mapStateToFieldNameProps = (state, ownProps) => {
+  const row = state.hostport.rows[ownProps.index];
   return {
-    host: state.hostport.rows[ownProps.index].host,
-    port: state.hostport.rows[ownProps.index].port,
+    host: row ? row.host : '',
+    port: row ? row.port : '',
   };
 };
 
