@@ -4658,4 +4658,12 @@
       system log start 1 day ago to collect logs
     </description>
   </property>
+
+  <property>
+    <name>feature.include.feature.flags.in.runtime.arguments.enabled</name>
+    <value>true</value>
+  </property>
+
+
+
 </configuration>
