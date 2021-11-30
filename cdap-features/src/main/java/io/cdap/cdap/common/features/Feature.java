@@ -22,6 +22,12 @@ import io.cdap.cdap.etl.api.StageContext;
 
 import java.util.Map;
 
+/**
+ * Defines Features Flags to be used in CDAP.
+ * Features take the version that they were introduced as a first parameter. Optionally they can take a
+ * second paramenter to define their default behavior if they are not present in configuration.
+ * By default features default to enabled after they are introduced, and disabled before they were introduced
+ */
 public enum Feature {
   INCLUDE_FEATURE_FLAGS_IN_RUNTIME_ARGUMENTS("6.6.0"),
   INCLUDE_PREFIX_FOR_WRANGLER_CREATE_RECORD("6.6.0");

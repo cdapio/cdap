@@ -172,6 +172,14 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   protected final RetryStrategy retryStrategy;
 
 
+  /**
+   * Returns runtime arguments as a Map by:
+   *  If INCLUDE_FEATURE_FLAGS_IN_RUNTIME_ARGUMEMTS: extracting any feature flag defined in CConfiguration
+   *  Adding the userArguments from programOptions 
+   *  
+   * @param programOptions
+   * @return a map of runtime arguments.
+   */
   private Map<String, String> getRuntimeArgs(ProgramOptions programOptions) {
     Map<String, String> runtimeArgs = new HashMap<>();
     if (Feature.INCLUDE_FEATURE_FLAGS_IN_RUNTIME_ARGUMENTS.isEnabled(CConfigurationUtil.asMap(cConf))) {
