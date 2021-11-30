@@ -4662,6 +4662,9 @@
   <property>
     <name>feature.include.feature.flags.in.runtime.arguments.enabled</name>
     <value>true</value>
+    <description>
+      Pass feature flags as runtime arguments. 
+    </description>
   </property>
 
 </configuration>
