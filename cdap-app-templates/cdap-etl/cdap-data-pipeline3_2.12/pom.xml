@@ -105,6 +105,7 @@
         </exclusion>
       </exclusions>
     </dependency>
+
     <dependency>
       <groupId>io.cdap.common</groupId>
       <artifactId>common-http</artifactId>
