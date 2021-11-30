@@ -16,22 +16,24 @@
 
 package io.cdap.cdap.etl.api.sql.engine.dataset;
 
-import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.StructType;
+
 
 /**
- * Implementation for SparkRecordCollection
- * @param <T> type of records represented by this collection.
+ * Implementation for SparkRecordCollection.
  */
-public class SparkRecordCollectionImpl<T> implements SparkRecordCollection<T> {
+public class SparkRecordCollectionImpl implements SparkRecordCollection {
 
-  private final JavaRDD<T> javaRDD;
+  private final Dataset<Row> dataFrame;
 
-  public SparkRecordCollectionImpl(JavaRDD<T> javaRDD) {
-    this.javaRDD = javaRDD;
+  public SparkRecordCollectionImpl(Dataset<Row> dataset) {
+    this.dataFrame = dataset;
   }
 
   @Override
-  public JavaRDD<T> getRDD() {
-    return javaRDD;
+  public Dataset<Row> getDataFrame() {
+    return dataFrame;
   }
 }

@@ -112,7 +112,7 @@ public class SQLEngineCollection<T> implements SQLBackedCollection<T> {
   @SuppressWarnings("raw")
   private SparkCollection<T> pull() {
     if (localCollection == null) {
-      SQLEngineJob<JavaRDD<T>> pullJob = adapter.pull(job, jsc);
+      SQLEngineJob<JavaRDD<T>> pullJob = adapter.pull(job);
       adapter.waitForJobAndHandleException(pullJob);
       JavaRDD<T> rdd = pullJob.waitFor();
       localCollection =

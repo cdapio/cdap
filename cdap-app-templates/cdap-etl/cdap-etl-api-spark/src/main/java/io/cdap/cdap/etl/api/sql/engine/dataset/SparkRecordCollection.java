@@ -17,12 +17,12 @@
 package io.cdap.cdap.etl.api.sql.engine.dataset;
 
 import io.cdap.cdap.etl.api.engine.sql.dataset.RecordCollection;
-import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 
 /**
  * Representation of the record collection for Spark records.
- * @param <T> type of the records stored in this collection.
  */
-public interface SparkRecordCollection<T> extends RecordCollection<T> {
-  JavaRDD<T> getRDD();
+public interface SparkRecordCollection extends RecordCollection {
+  Dataset<Row> getDataFrame();
 }

@@ -94,7 +94,7 @@ public interface SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT>
    * @return a dataset consumer for this request using the specified capability.
    */
   @Nullable
-  default SQLDatasetConsumer<StructuredRecord> getConsumer(SQLPushRequest pushRequest, PushCapability capability) {
+  default SQLDatasetConsumer getConsumer(SQLPushRequest pushRequest, PushCapability capability) {
     return null;
   }
 
@@ -110,7 +110,7 @@ public interface SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT>
    * @return a dataset consumer for this request using the specified capability.
    */
   @Nullable
-  default SQLDatasetProducer<StructuredRecord> getProducer(SQLPullRequest pullRequest, PullCapability capability) {
+  default SQLDatasetProducer getProducer(SQLPullRequest pullRequest, PullCapability capability) {
     return null;
   }
 

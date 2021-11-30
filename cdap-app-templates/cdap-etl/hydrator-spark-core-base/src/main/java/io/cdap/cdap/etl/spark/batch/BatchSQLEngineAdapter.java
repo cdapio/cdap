@@ -21,10 +21,16 @@ import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.metrics.Metrics;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
+import io.cdap.cdap.api.spark.sql.DataFrames;
 import io.cdap.cdap.etl.api.StageMetrics;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngine;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngineException;
+import io.cdap.cdap.etl.api.engine.sql.capability.PullCapability;
+import io.cdap.cdap.etl.api.engine.sql.capability.PushCapability;
+import io.cdap.cdap.etl.api.engine.sql.dataset.RecordCollection;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDataset;
+import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDatasetConsumer;
+import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDatasetProducer;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLPullDataset;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLPushDataset;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLJoinDefinition;
@@ -39,6 +45,8 @@ import io.cdap.cdap.etl.api.join.JoinStage;
 import io.cdap.cdap.etl.api.relational.Engine;
 import io.cdap.cdap.etl.api.relational.Relation;
 import io.cdap.cdap.etl.api.relational.RelationalTransform;
+import io.cdap.cdap.etl.api.sql.engine.dataset.SparkRecordCollection;
+import io.cdap.cdap.etl.api.sql.engine.dataset.SparkRecordCollectionImpl;
 import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.DefaultStageMetrics;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
@@ -52,6 +60,10 @@ import io.cdap.cdap.etl.spark.function.TransformToPairFunction;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SQLContext;
+import org.apache.spark.sql.types.StructType;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,6 +95,8 @@ public class BatchSQLEngineAdapter implements Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(BatchSQLEngineAdapter.class);
 
   private final JavaSparkExecutionContext sec;
+  private final JavaSparkContext jsc;
+  private final SQLContext sqlContext;
   private final SQLEngine<?, ?, ?, ?> sqlEngine;
   private final Metrics metrics;
   private final Map<String, StageStatisticsCollector> statsCollectors;
@@ -92,9 +106,12 @@ public class BatchSQLEngineAdapter implements Closeable {
 
   public BatchSQLEngineAdapter(SQLEngine<?, ?, ?, ?> sqlEngine,
                                JavaSparkExecutionContext sec,
+                               JavaSparkContext jsc,
                                Map<String, StageStatisticsCollector> statsCollectors) {
     this.sqlEngine = sqlEngine;
     this.sec = sec;
+    this.jsc = jsc;
+    this.sqlContext = new SQLContext(jsc);
     this.metrics = sec.getMetrics();
     this.statsCollectors = statsCollectors;
     this.jobs = new HashMap<>();
@@ -164,13 +181,30 @@ public class BatchSQLEngineAdapter implements Closeable {
    * @return {@link SQLDataset} instance representing the pushed records.
    * @throws SQLEngineException if the push operation fails.
    */
+  @SuppressWarnings("unchecked")
   public SQLDataset pushInternal(String datasetName,
                                  Schema schema,
                                  SparkCollection<?> collection) throws SQLEngineException {
     // Create push request
     SQLPushRequest pushRequest = new SQLPushRequest(datasetName, schema);
 
-    //Get the push provider and wait for it to be ready to use
+    // Check if any of the declared capabilities for this plugin is able to consume this Push Request.
+    // If so, we will process this request using a consumer.
+    for (PushCapability capability : sqlEngine.getPushCapabilities()) {
+      SQLDatasetConsumer consumer = sqlEngine.getConsumer(pushRequest, capability);
+
+      // If a consumer is able to consume this request, we delegate the execution to the consumer.
+      if (consumer != null) {
+        StructType sparkSchema = DataFrames.toDataType(schema);
+        JavaRDD<Row> rowRDD = ((JavaRDD<StructuredRecord>) collection.getUnderlying())
+          .map(r -> DataFrames.toRow(r, sparkSchema));
+        Dataset<Row> ds = sqlContext.createDataFrame(rowRDD, sparkSchema);
+        RecordCollection recordCollection = new SparkRecordCollectionImpl(ds);
+        return consumer.consume(recordCollection);
+      }
+    }
+
+    // If no capabilities could be used to produce records, proceed using the Push Provider.
     SQLPushDataset<StructuredRecord, ?, ?> pushDataset = sqlEngine.getPushProvider(pushRequest);
 
     //Write records using the Push provider.
@@ -184,12 +218,10 @@ public class BatchSQLEngineAdapter implements Closeable {
    * Creates a new job to pull a Spark Collection from the SQL engine
    *
    * @param job the job representing the compute stage for the dataset we need to pull.
-   * @param jsc the Java Spark context instance.
    * @return Job representing this pull operation.
    */
   @SuppressWarnings("unchecked,raw")
-  public <T> SQLEngineJob<JavaRDD<T>> pull(SQLEngineJob<SQLDataset> job,
-                                       JavaSparkContext jsc) {
+  public <T> SQLEngineJob<JavaRDD<T>> pull(SQLEngineJob<SQLDataset> job) {
     //If this job already exists, return the existing instance.
     SQLEngineJobKey jobKey = new SQLEngineJobKey(job.getDatasetName(), SQLEngineJobType.PULL);
     if (jobs.containsKey(jobKey)) {
@@ -202,7 +234,7 @@ public class BatchSQLEngineAdapter implements Closeable {
       try {
         LOG.debug("Starting pull for dataset '{}'", job.getDatasetName());
         waitForJobAndHandleExceptionInternal(job);
-        JavaRDD<T> result = pullInternal(job.waitFor(), jsc);
+        JavaRDD<T> result = pullInternal(job.waitFor());
         LOG.debug("Completed pull for dataset '{}'", job.getDatasetName());
         future.complete(result);
       } catch (Throwable t) {
@@ -222,15 +254,35 @@ public class BatchSQLEngineAdapter implements Closeable {
    * Pull implementation. This method has blocking calls and should be executed in a separate thread.
    *
    * @param dataset the dataset to pull.
-   * @param jsc the Java Spark Context instance.
    * @return {@link JavaRDD} representing the records contained in this dataset.
    * @throws SQLEngineException if the pull process fails.
    */
   @SuppressWarnings("unchecked,raw")
-  private <T> JavaRDD<T> pullInternal(SQLDataset dataset,
-                                  JavaSparkContext jsc) throws SQLEngineException {
+  private <T> JavaRDD<T> pullInternal(SQLDataset dataset) throws SQLEngineException {
     // Create pull operation for this dataset and wait until completion
     SQLPullRequest pullRequest = new SQLPullRequest(dataset);
+
+    // Check if any of the declared capabilities for this plugin is able to produce records using this Pull Request.
+    // If so, we will process this request using a producer.
+    for (PullCapability capability : sqlEngine.getPullCapabilities()) {
+      SQLDatasetProducer producer = sqlEngine.getProducer(pullRequest, capability);
+
+      // If a producer is able to produce records for this pull request, extract the RDD from this request.
+      if (producer != null) {
+        RecordCollection recordCollection = producer.produce(dataset);
+
+        // Note that we only support Spark collections at this time.
+        // If the collection that got generarted is not an instance of a SparkRecordCollection, skip.
+        if (recordCollection instanceof SparkRecordCollection) {
+          Schema schema = dataset.getSchema();
+          return (JavaRDD<T>) ((SparkRecordCollection) recordCollection).getDataFrame()
+            .javaRDD()
+            .map(r -> DataFrames.fromRow((Row) r, schema));
+        }
+      }
+    }
+
+    // If no capabilities could be used to produce records, proceed using the Pull Provider.
     SQLPullDataset<StructuredRecord, ?, ?> sqlPullDataset = sqlEngine.getPullProvider(pullRequest);
 
     // Run operation to read from the InputFormatProvider supplied by this operation.
