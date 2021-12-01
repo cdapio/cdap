@@ -114,6 +114,8 @@ public class SupportBundleServiceTest extends AppFabricTestBase {
     Assert.assertNotNull(uuid);
     File tempFolder = new File(configuration.get(SupportBundle.LOCAL_DATA_DIR));
     File uuidFile = new File(tempFolder, uuid);
+    File statusFile = new File(uuidFile, SupportBundleFileNames.STATUS_FILE_NAME);
+    Tasks.waitFor(true, statusFile::exists, 60, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
     Tasks.waitFor(CollectionState.FINISHED, () -> supportBundleService.getSingleBundleJson(uuidFile).getStatus(), 60,
                   TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
     SupportBundleStatus supportBundleStatus = supportBundleService.getSingleBundleJson(uuidFile);
@@ -138,6 +140,9 @@ public class SupportBundleServiceTest extends AppFabricTestBase {
       Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
       String uuid = response.getResponseBodyAsString();
       bundleIdList.add(uuid);
+      File uuidFile = new File(tempFolder, uuid);
+      File statusFile = new File(uuidFile, SupportBundleFileNames.STATUS_FILE_NAME);
+      Tasks.waitFor(true, statusFile::exists, 60, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
     }
     File bundleFile = new File(tempFolder, bundleIdList.get(4));
     SupportBundleStatus supportBundleStatus = SupportBundleStatus.builder()
@@ -156,7 +161,6 @@ public class SupportBundleServiceTest extends AppFabricTestBase {
     doPost(path);
     File[] bundleFiles =
       tempFolder.listFiles((dir, name) -> !name.startsWith(".") && !dir.isHidden() && dir.isDirectory());
-    Assert.assertEquals(7, bundleFiles.length);
     File expectedDeletedBundle = new File(tempFolder.getPath(), bundleIdList.get(4));
     Assert.assertFalse(expectedDeletedBundle.exists());
   }
