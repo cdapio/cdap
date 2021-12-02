@@ -81,9 +81,9 @@ public class AuthorizationArtifactRepository implements ArtifactRepository {
   }
 
   @Override
-  public CloseableClassLoader createArtifactClassLoader(Location artifactLocation,
+  public CloseableClassLoader createArtifactClassLoader(ArtifactDescriptor artifactDescriptor,
                                                         EntityImpersonator entityImpersonator) throws IOException {
-    return delegate.createArtifactClassLoader(artifactLocation, entityImpersonator);
+    return delegate.createArtifactClassLoader(artifactDescriptor, entityImpersonator);
   }
 
   @Override

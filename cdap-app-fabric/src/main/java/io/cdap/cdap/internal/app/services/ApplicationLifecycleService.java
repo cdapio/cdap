@@ -552,8 +552,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                           allowedArtifactScopes, allowSnapshot);
 
     try (CloseableClassLoader artifactClassLoader =
-      artifactRepository.createArtifactClassLoader(artifactDetail.getDescriptor().getLocation(),
-                                                   classLoaderImpersonator)) {
+           artifactRepository.createArtifactClassLoader(artifactDetail.getDescriptor(), classLoaderImpersonator)) {
       Object appMain = artifactClassLoader.loadClass(appClass.getClassName()).newInstance();
       // Run config update logic for the application to generate updated config.
       if (!(appMain instanceof Application)) {

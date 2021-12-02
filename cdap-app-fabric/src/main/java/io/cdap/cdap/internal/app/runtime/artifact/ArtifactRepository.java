@@ -59,9 +59,8 @@ public interface ArtifactRepository extends ArtifactRepositoryReader {
    *
    * @see ArtifactClassLoaderFactory
    */
-  CloseableClassLoader createArtifactClassLoader(Location artifactLocation,
+  CloseableClassLoader createArtifactClassLoader(ArtifactDescriptor artifactDescriptor,
                                                  EntityImpersonator entityImpersonator) throws IOException;
-
   /**
    * Clear all artifacts in the given namespace. This method is only intended to be called by unit tests, and
    * when a namespace is being deleted.

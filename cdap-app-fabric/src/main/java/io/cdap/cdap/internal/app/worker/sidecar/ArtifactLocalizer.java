@@ -106,6 +106,21 @@ public class ArtifactLocalizer {
   }
 
   /**
+   * Gets the location on the local filesystem for the given artifact. This method handles fetching the artifact as well
+   * as caching it.
+   *
+   * @param artifactId The ArtifactId of the artifact to fetch
+   * @return The Local Location for this artifact
+   * @throws ArtifactNotFoundException if the given artifact does not exist
+   * @throws IOException if there was an exception while fetching or caching the artifact
+   * @throws Exception if there was an unexpected error
+   */
+  public File getArtifact(ArtifactId artifactId) throws Exception {
+    LOG.debug("Fetching artifact info for {}", artifactId);
+    return Retries.callWithRetries(() -> fetchArtifact(artifactId), retryStrategy);
+  }
+
+  /**
    * Gets the location on the local filesystem for the directory that contains the unpacked artifact. This method
    * handles fetching, caching and unpacking the artifact.
    *

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.preview;
 
+import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerTwillRunnable;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;
@@ -32,11 +33,14 @@ public class PreviewRunnerTwillApplication implements TwillApplication {
   private final URI cConfFileURI;
   private final URI hConfFileURI;
   private final ResourceSpecification resourceSpec;
+  private final ResourceSpecification artifactLocalizerResourceSpec;
 
-  public PreviewRunnerTwillApplication(URI cConfFileURI, URI hConfFileURI, ResourceSpecification resourceSpec) {
+  public PreviewRunnerTwillApplication(URI cConfFileURI, URI hConfFileURI, ResourceSpecification resourceSpec,
+                                       ResourceSpecification artifactLocalizerResourceSpec) {
     this.cConfFileURI = cConfFileURI;
     this.hConfFileURI = hConfFileURI;
     this.resourceSpec = resourceSpec;
+    this.artifactLocalizerResourceSpec = artifactLocalizerResourceSpec;
   }
 
   @Override
@@ -48,6 +52,12 @@ public class PreviewRunnerTwillApplication implements TwillApplication {
       .withLocalFiles()
         .add("cConf.xml", cConfFileURI)
         .add("hConf.xml", hConfFileURI)
+      .apply()
+        .add(new ArtifactLocalizerTwillRunnable("cConf.xml", "hConf.xml"),
+             artifactLocalizerResourceSpec)
+        .withLocalFiles()
+        .add("cConf.xml", cConfFileURI)
+        .add("hConf.xml", hConfFileURI)      
       .apply()
       .anyOrder()
       .build();

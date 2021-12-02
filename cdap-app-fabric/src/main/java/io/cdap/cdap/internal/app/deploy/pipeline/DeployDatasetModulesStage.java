@@ -22,6 +22,7 @@ import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.pipeline.AbstractStage;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
@@ -76,8 +77,11 @@ public class DeployDatasetModulesStage extends AbstractStage<ApplicationDeployab
                                                 ownerPrincipal);
 
       EntityImpersonator classLoaderImpersonator = new EntityImpersonator(input.getArtifactId(), impersonator);
-      try (CloseableClassLoader classLoader = artifactRepository.createArtifactClassLoader(input.getArtifactLocation(),
-                                                                                           classLoaderImpersonator)) {
+      try (CloseableClassLoader classLoader =
+             artifactRepository.createArtifactClassLoader(new ArtifactDescriptor(input.getArtifactId().getNamespace(),
+                                                                                 input.getArtifactId().toApiArtifactId(),
+                                                                                 input.getArtifactLocation()),
+                                                          classLoaderImpersonator)) {
         deployer.deployModules(input.getApplicationId().getParent(),
                                datasetModules,
                                input.getArtifactLocation(),

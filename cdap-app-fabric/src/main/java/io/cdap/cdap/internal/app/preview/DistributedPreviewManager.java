@@ -30,6 +30,9 @@ import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
+import io.cdap.cdap.internal.app.worker.TaskWorkerTwillRunnable;
+import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerTwillRunnable;
+import io.cdap.cdap.master.spi.twill.DependentTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecretDisk;
 import io.cdap.cdap.master.spi.twill.SecureTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecurityContext;
@@ -163,14 +166,28 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
             .setInstances(cConf.getInt(Constants.Preview.CONTAINER_COUNT))
             .build();
 
+          ResourceSpecification artifactLocalizerResourceSpec = ResourceSpecification.Builder.with()
+            .setVirtualCores(cConf.getInt(Constants.ArtifactLocalizer.CONTAINER_CORES))
+            .setMemory(cConf.getInt(Constants.ArtifactLocalizer.CONTAINER_MEMORY_MB),
+                       ResourceSpecification.SizeUnit.MEGA)
+            .setInstances(cConf.getInt(Constants.TaskWorker.CONTAINER_COUNT))
+            .build();
+
           LOG.info("Starting preview runners with {} instances", resourceSpec.getInstances());
 
           TwillPreparer twillPreparer = twillRunner.prepare(new PreviewRunnerTwillApplication(cConfPath.toUri(),
                                                                                               hConfPath.toUri(),
-                                                                                              resourceSpec));
+                                                                                              resourceSpec,
+                                                                                              artifactLocalizerResourceSpec));
           String priorityClass = cConf.get(Constants.Preview.CONTAINER_PRIORITY_CLASS_NAME);
           if (priorityClass != null) {
             twillPreparer = twillPreparer.setSchedulerQueue(priorityClass);
+          }
+
+          if (twillPreparer instanceof DependentTwillPreparer) {
+            twillPreparer = ((DependentTwillPreparer) twillPreparer)
+              .dependentRunnableNames(PreviewRunnerTwillRunnable.class.getSimpleName(),
+                                      ArtifactLocalizerTwillRunnable.class.getSimpleName());
           }
 
           if (twillPreparer instanceof StatefulTwillPreparer) {
