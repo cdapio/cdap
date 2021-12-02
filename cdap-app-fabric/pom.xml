@@ -23,7 +23,7 @@
   <parent>
     <groupId>io.cdap.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>6.6.0-SNAPSHOT</version>
+    <version>6.7.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-app-fabric</artifactId>
@@ -233,7 +233,7 @@
     <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-test</artifactId>
-      <version>6.6.0-SNAPSHOT</version>
+      <version>6.7.0-SNAPSHOT</version>
       <scope>test</scope>
     </dependency>
     <dependency>

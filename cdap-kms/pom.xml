@@ -22,7 +22,7 @@
   <parent>
     <artifactId>cdap</artifactId>
     <groupId>io.cdap.cdap</groupId>
-    <version>6.6.0-SNAPSHOT</version>
+    <version>6.7.0-SNAPSHOT</version>
   </parent>
   <properties>
     <hadoop.common.version>2.6.0</hadoop.common.version>
