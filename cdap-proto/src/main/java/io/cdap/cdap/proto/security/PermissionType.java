@@ -22,7 +22,8 @@ package io.cdap.cdap.proto.security;
 public enum PermissionType {
   STANDARD(StandardPermission.class),
   APPLICATION(ApplicationPermission.class),
-  ACCESS(AccessPermission.class);
+  ACCESS(AccessPermission.class),
+  INSTANCE(InstancePermission.class);
 
   private final Class<? extends Permission> permissionClass;
 
