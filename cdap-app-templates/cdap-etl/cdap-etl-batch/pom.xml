@@ -23,7 +23,7 @@
   <parent>
     <groupId>io.cdap.cdap</groupId>
     <artifactId>cdap-etl</artifactId>
-    <version>6.6.0-SNAPSHOT</version>
+    <version>6.7.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-etl-batch</artifactId>
