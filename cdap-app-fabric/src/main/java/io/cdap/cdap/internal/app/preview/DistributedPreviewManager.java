@@ -175,10 +175,11 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
 
           LOG.info("Starting preview runners with {} instances", resourceSpec.getInstances());
 
-          TwillPreparer twillPreparer = twillRunner.prepare(new PreviewRunnerTwillApplication(cConfPath.toUri(),
-                                                                                              hConfPath.toUri(),
-                                                                                              resourceSpec,
-                                                                                              artifactLocalizerResourceSpec));
+          TwillPreparer twillPreparer = twillRunner.prepare(
+            new PreviewRunnerTwillApplication(cConfPath.toUri(),
+                                              hConfPath.toUri(),
+                                              resourceSpec,
+                                              artifactLocalizerResourceSpec));
           String priorityClass = cConf.get(Constants.Preview.CONTAINER_PRIORITY_CLASS_NAME);
           if (priorityClass != null) {
             twillPreparer = twillPreparer.setSchedulerQueue(priorityClass);

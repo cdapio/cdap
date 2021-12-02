@@ -78,10 +78,11 @@ public class DeployDatasetModulesStage extends AbstractStage<ApplicationDeployab
 
       EntityImpersonator classLoaderImpersonator = new EntityImpersonator(input.getArtifactId(), impersonator);
       try (CloseableClassLoader classLoader =
-             artifactRepository.createArtifactClassLoader(new ArtifactDescriptor(input.getArtifactId().getNamespace(),
-                                                                                 input.getArtifactId().toApiArtifactId(),
-                                                                                 input.getArtifactLocation()),
-                                                          classLoaderImpersonator)) {
+             artifactRepository.createArtifactClassLoader(
+               new ArtifactDescriptor(input.getArtifactId().getNamespace(),
+                                      input.getArtifactId().toApiArtifactId(),
+                                      input.getArtifactLocation()),
+               classLoaderImpersonator)) {
         deployer.deployModules(input.getApplicationId().getParent(),
                                datasetModules,
                                input.getArtifactLocation(),
