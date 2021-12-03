@@ -132,7 +132,7 @@ public class MacroParser {
       throw new InvalidMacroException(String.format("Could not find enclosing '}' for macro '%s'.",
                                                     str.substring(startIndex)));
     } else if (endIndex == startIndex + 2) {
-      throw new InvalidMacroException("Macro expression can not be empty");
+      throw new InvalidMacroException("Macro expression cannot be empty");
     }
 
     // macroStr = 'macroFunction(macroArguments)' or just 'property' for ${property}
