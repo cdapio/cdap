@@ -16,4 +16,4 @@
 [submodule "cdap-ui"]
   path = cdap-ui
   url = ../cdap-ui
-  branch = fix/test-new-node-version
+  branch = podesta/node-updates
