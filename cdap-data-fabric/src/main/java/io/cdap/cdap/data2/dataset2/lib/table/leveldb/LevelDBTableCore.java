@@ -265,7 +265,7 @@ public class LevelDBTableCore {
 
     DBIterator iterator = getDB().iterator();
     seekToStart(iterator, startRow);
-    byte[] endKey = stopRow == null ? null : createEndKey(stopRow);
+    byte[] endKey = stopRow == null ? null : createStartKey(stopRow);
     return new LevelDBScanner(iterator, endKey, filter, columns, tx);
   }
 
@@ -470,7 +470,7 @@ public class LevelDBTableCore {
     DB db = getDB();
     DBIterator iterator = db.iterator();
     seekToStart(iterator, startRow);
-    byte[] endKey = stopRow == null ? null : createEndKey(stopRow);
+    byte[] endKey = stopRow == null ? null : createStartKey(stopRow);
 
     DBIterator deleteIterator = db.iterator();
     seekToStart(deleteIterator, startRow);
@@ -622,10 +622,6 @@ public class LevelDBTableCore {
 
   private static byte[] createStartKey(byte[] row) { // the first possible key of a row
     return KeyValue.getKey(row, DATA_COLFAM, null, KeyValue.LATEST_TIMESTAMP, KeyValue.Type.Maximum);
-  }
-
-  private static byte[] createEndKey(byte[] row) {
-    return createStartKey(row); // the first key of the stop is the first to be excluded
   }
 
   private static byte[] createStartKey(byte[] row, byte[] column) {
