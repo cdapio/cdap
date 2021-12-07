@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.services;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.AppWithProgramsUsingGuava;
@@ -59,6 +60,8 @@ import io.cdap.cdap.spi.metadata.MetadataKind;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.Read;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -81,6 +84,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.zip.ZipOutputStream;
+import scala.App;
 
 /**
  *
@@ -346,6 +350,24 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     appId.workflow(AppWithProgramsUsingGuava.NoOpWorkflow.NAME);
     startProgram(Id.Program.fromEntityId(workflow), ImmutableMap.of("fail.in.workflow.initialize", "true"));
     waitForRuns(1, workflow, ProgramRunStatus.FAILED);
+  }
+
+  @Test
+  public void testScanApplications() throws Exception {
+    createNamespace("ns1");
+    createNamespace("ns2");
+    createNamespace("ns3");
+
+    deploy(AllProgramsApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN, "ns1");
+    deploy(AllProgramsApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN, "ns2");
+    deploy(AllProgramsApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN, "ns3");
+
+    List<ApplicationDetail> appDetails = new ArrayList<ApplicationDetail>();
+
+    applicationLifecycleService.scanApplications(new NamespaceId("ns1"), ImmutableSet.of(),null,
+        d -> appDetails.add(d));
+
+    Assert.assertEquals(appDetails.size(),1 );
   }
 
   @Test

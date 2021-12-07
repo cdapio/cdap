@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.services;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
@@ -59,6 +60,7 @@ import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.registry.UsageRegistry;
+import io.cdap.cdap.gateway.handlers.JsonListResponder;
 import io.cdap.cdap.internal.app.DefaultApplicationUpdateContext;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
@@ -73,6 +75,7 @@ import io.cdap.cdap.internal.profile.AdminEventPublisher;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.PluginInstanceDetail;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.artifact.AppRequest;
@@ -96,6 +99,7 @@ import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
+import java.util.function.BiConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,6 +120,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -237,7 +242,48 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         result.add(enforceApplicationDetailAccess(entry.getKey(), applicationDetail));
       }
     }
-    return result;
+   return result;
+  }
+
+  public void scanApplications(NamespaceId namespace, Set<String> artifactNames,
+      @Nullable String artifactVersion,
+      Consumer<ApplicationDetail> consumer) {
+
+    Predicate<ApplicationDetail> predicate = getAppPredicate(artifactNames, artifactVersion);
+
+    store.scanApplications(20,
+        (appId, appSpec) -> {
+          if (!appId.getNamespace().equals(namespace.getNamespace())) {
+            return;
+          }
+
+          Set<? extends EntityId> visible = accessEnforcer.isVisible(ImmutableSet.of(appId),
+              authenticationContext.getPrincipal());
+          if (!visible.contains(appId)) {
+            return;
+          }
+
+          Map<ApplicationId, String> owners;
+          try {
+            owners = ownerAdmin.getOwnerPrincipals(ImmutableSet.of(appId));
+          } catch (IOException e) {
+            LOG.debug("Application {} is ignored due to exception.", appId.getApplication(), e);
+            return;
+          }
+
+          ApplicationDetail applicationDetail = ApplicationDetail.fromSpec(appSpec, owners.get(appId));
+
+          try {
+            capabilityReader.checkAllEnabled(appSpec);
+          } catch (CapabilityNotAvailableException | IOException ex) {
+            LOG.debug("Application {} is ignored due to exception.", appId.getApplication(), ex);
+            return;
+          }
+
+          if (predicate.test(applicationDetail)) {
+            consumer.accept(applicationDetail);
+          }
+        });
   }
 
   /**
