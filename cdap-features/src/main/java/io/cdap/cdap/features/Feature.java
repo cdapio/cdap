@@ -12,13 +12,13 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
+ *
  */
 
-package io.cdap.cdap.common.features;
+package io.cdap.cdap.features;
 
 import io.cdap.cdap.api.PlatformInfo;
-import io.cdap.cdap.etl.api.Arguments;
-import io.cdap.cdap.etl.api.StageContext;
+
 
 import java.util.Map;
 
@@ -44,15 +44,6 @@ public enum Feature {
     this.featureFlagString = FEATURE_FLAG_PREFIX + this.name().toLowerCase().replace('_', '.') + ".enabled";
     this.versionIntroduced = new PlatformInfo.Version(versionDeployed);
     this.defaultAfterDeployment = defaultAfterDeployment;
-  }
-
-  public boolean isEnabled(StageContext context) {
-    Arguments args = context.getArguments();
-    String featureFlagValue = args.get(featureFlagString);
-    if (featureFlagValue == null) {
-      return getDefaultValue();
-    }
-    return convertStringToBoolean(featureFlagValue);
   }
 
   public boolean isEnabled(Map<String, String> configuration) {

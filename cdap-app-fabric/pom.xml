@@ -258,12 +258,6 @@
       <artifactId>cdap-features</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
-      <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-etl-api</artifactId>
-      <version>${project.version}</version>
-      <scope>provided</scope>
-    </dependency>
   </dependencies>
 
   <build>

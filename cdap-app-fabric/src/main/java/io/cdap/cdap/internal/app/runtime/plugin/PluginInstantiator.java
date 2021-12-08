@@ -44,6 +44,7 @@ import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.plugin.PluginPropertyField;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.CConfigurationUtil;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.CombineClassLoader;
@@ -51,6 +52,7 @@ import io.cdap.cdap.common.lang.InstantiatorFactory;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.lang.jar.ClassLoaderFolder;
 import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.internal.lang.FieldVisitor;
 import io.cdap.cdap.internal.lang.Fields;
@@ -110,6 +112,7 @@ public class PluginInstantiator implements Closeable {
   private final File pluginDir;
   private final ClassLoader parentClassLoader;
   private final boolean ownedParentClassLoader;
+  private final CConfiguration cConf;
 
   public PluginInstantiator(CConfiguration cConf, ClassLoader parentClassLoader, File pluginDir) {
     this(cConf, parentClassLoader, pluginDir, true);
@@ -128,6 +131,7 @@ public class PluginInstantiator implements Closeable {
       .build(new ClassLoaderCacheLoader());
     this.parentClassLoader = filterClassloader ? PluginClassLoader.createParent(parentClassLoader) : parentClassLoader;
     this.ownedParentClassLoader = filterClassloader;
+    this.cConf = cConf;
   }
 
   /**
@@ -277,8 +281,12 @@ public class PluginInstantiator implements Closeable {
       PluginProperties pluginProperties = substituteMacros(plugin, macroEvaluator, options);
       Set<String> macroFields = (macroEvaluator == null) ? getFieldsWithMacro(plugin) : Collections.emptySet();
 
+      // Get Feature Flags from Configuration
+      Map<String, String> featureFlags = getFeatureFlags(cConf);
+
       PluginProperties rawProperties = plugin.getProperties();
-      ConfigFieldSetter fieldSetter = new ConfigFieldSetter(pluginClass, pluginProperties, rawProperties, macroFields);
+      ConfigFieldSetter fieldSetter = new ConfigFieldSetter(pluginClass, pluginProperties, rawProperties,
+                                                            macroFields, featureFlags);
       Reflections.visit(config, configFieldType.getType(), fieldSetter);
 
       if (!fieldSetter.invalidProperties.isEmpty() || !fieldSetter.missingProperties.isEmpty()) {
@@ -431,6 +439,25 @@ public class PluginInstantiator implements Closeable {
     }
   }
 
+  private Map<String, String> getFeatureFlags(CConfiguration cConf) {
+    Map<String, String> featureFlags = new HashMap<>();
+    if (Feature.INCLUDE_FEATURE_FLAGS_IN_RUNTIME_ARGUMENTS.isEnabled(CConfigurationUtil.asMap(cConf))) {
+      for (Map.Entry<String, String> entry : cConf) {
+        String name = entry.getKey();
+        if (name.startsWith(Feature.FEATURE_FLAG_PREFIX)) {
+          String value = cConf.get(name);
+          if (!(("true".equals(value) || ("false".equals(value))))) {
+            throw new IllegalArgumentException("Configured flag is not a valid boolean: name="
+                                                 + name + ", value=" + value);
+          }
+          featureFlags.put(name, value);
+        }
+      }
+    }
+    return featureFlags;
+  }
+
+
   /**
    * Key for the classloader cache.
    */
@@ -510,6 +537,7 @@ public class PluginInstantiator implements Closeable {
     }
   }
 
+
   /**
    * A RemovalListener for closing plugin ClassLoader.
    */
@@ -532,14 +560,16 @@ public class PluginInstantiator implements Closeable {
     private final Set<String> macroFields;
     private final Set<String> missingProperties;
     private final Set<InvalidPluginProperty> invalidProperties;
+    private final Map<String, String> featureFlags;
     private final Gson gson;
 
     ConfigFieldSetter(PluginClass pluginClass, PluginProperties properties, PluginProperties rawProperties,
-                      Set<String> macroFields) {
+                      Set<String> macroFields, Map<String, String> featureFlags) {
       this.pluginClass = pluginClass;
       this.properties = properties;
       this.rawProperties = rawProperties;
       this.macroFields = macroFields;
+      this.featureFlags = featureFlags;
       this.missingProperties = new HashSet<>();
       this.invalidProperties = new HashSet<>();
 
@@ -567,6 +597,8 @@ public class PluginInstantiator implements Closeable {
           case "rawProperties":
             field.set(instance, rawProperties);
             break;
+          case "featureFlags":
+            field.set(instance, featureFlags);
         }
         return;
       }

@@ -66,9 +66,7 @@ import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.services.AbstractServiceDiscoverer;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.CConfigurationUtil;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.features.Feature;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.lang.CombineClassLoader;
@@ -171,34 +169,6 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   protected final DynamicDatasetCache datasetCache;
   protected final RetryStrategy retryStrategy;
 
-
-  /**
-   * Returns runtime arguments as a Map by:
-   *  If INCLUDE_FEATURE_FLAGS_IN_RUNTIME_ARGUMEMTS: extracting any feature flag defined in CConfiguration
-   *  Adding the userArguments from programOptions 
-   *  
-   * @param programOptions
-   * @return a map of runtime arguments.
-   */
-  private Map<String, String> getRuntimeArgs(ProgramOptions programOptions) {
-    Map<String, String> runtimeArgs = new HashMap<>();
-    if (Feature.INCLUDE_FEATURE_FLAGS_IN_RUNTIME_ARGUMENTS.isEnabled(CConfigurationUtil.asMap(cConf))) {
-      for (Map.Entry<String, String> entry : cConf) {
-        String name = entry.getKey();
-        if (name.startsWith(Feature.FEATURE_FLAG_PREFIX)) {
-          String value = cConf.get(name);
-          if (!(("true".equals(value) || ("false".equals(value))))) {
-            throw new IllegalArgumentException("Configured flag is not a valid boolean: name="
-                                                 + name + ", value=" + value);
-          }
-          runtimeArgs.put(name, value);
-        }
-      }
-    }
-    runtimeArgs.putAll(programOptions.getUserArguments().asMap());
-    return runtimeArgs;
-  }
-
   /**
    * Constructs a context. To have plugin support, the {@code pluginInstantiator} must not be null.
    */
@@ -221,7 +191,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.remoteClientFactory = remoteClientFactory;
     this.programRunId = program.getId().run(ProgramRunners.getRunId(programOptions));
     this.triggeringScheduleInfo = getTriggeringScheduleInfo(programOptions);
-    Map<String, String> runtimeArgs = getRuntimeArgs(programOptions);
+
+    Map<String, String> runtimeArgs = new HashMap<>(programOptions.getUserArguments().asMap());
     this.logicalStartTime = ProgramRunners.updateLogicalStartTime(runtimeArgs);
     this.runtimeArguments = Collections.unmodifiableMap(runtimeArgs);
 

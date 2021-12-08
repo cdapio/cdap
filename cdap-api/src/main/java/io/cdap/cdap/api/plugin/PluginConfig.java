@@ -21,6 +21,7 @@ import io.cdap.cdap.api.annotation.Beta;
 
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -41,11 +42,13 @@ public abstract class PluginConfig extends Config implements Serializable {
   private PluginProperties properties;
   private PluginProperties rawProperties;
   private Set<String> macroFields;
+  private Map<String, String> featureFlags;
 
   protected PluginConfig() {
     this.properties = PluginProperties.builder().build();
     this.rawProperties = PluginProperties.builder().build();
     this.macroFields = Collections.emptySet();
+    this.featureFlags = Collections.emptyMap();
   }
 
   /**
@@ -77,6 +80,11 @@ public abstract class PluginConfig extends Config implements Serializable {
     return rawProperties;
   }
 
+
+  public final Map<String, String> getFeatureFlags() {
+    return featureFlags;
+  }
+
   /**
    * Returns true if property value contains a macro; false otherwise. This method should only be called at
    * configure time. At runtime this will always return false, as macro substitution will have already occurred.
@@ -87,4 +95,6 @@ public abstract class PluginConfig extends Config implements Serializable {
   public boolean containsMacro(String fieldName) {
     return macroFields.contains(fieldName);
   }
+
+
 }
