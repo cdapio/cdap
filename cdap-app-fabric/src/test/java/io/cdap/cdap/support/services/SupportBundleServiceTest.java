@@ -159,8 +159,6 @@ public class SupportBundleServiceTest extends AppFabricTestBase {
     }
     //Exceed the maximum number of folder allows in bundle
     doPost(path);
-    File[] bundleFiles =
-      tempFolder.listFiles((dir, name) -> !name.startsWith(".") && !dir.isHidden() && dir.isDirectory());
     File expectedDeletedBundle = new File(tempFolder.getPath(), bundleIdList.get(4));
     Assert.assertFalse(expectedDeletedBundle.exists());
   }
