@@ -20,8 +20,6 @@ package io.cdap.cdap.etl.api.engine.sql.dataset;
  * Class that defines a record collection of a give type.
  * For Spark, this could wrap an RDD or Dataset.
  * For MapReduce, this can swap Key/Value pairs.
- *
- * @param <T> type of the records represented by this collection.
  */
-public interface RecordCollection<T> {
+public interface RecordCollection {
 }

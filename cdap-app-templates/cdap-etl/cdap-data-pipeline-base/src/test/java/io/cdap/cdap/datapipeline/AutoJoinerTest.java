@@ -29,6 +29,7 @@ import io.cdap.cdap.etl.api.join.JoinDistribution;
 import io.cdap.cdap.etl.api.join.JoinField;
 import io.cdap.cdap.etl.mock.batch.MockExternalSource;
 import io.cdap.cdap.etl.mock.batch.MockSQLEngine;
+import io.cdap.cdap.etl.mock.batch.MockSQLEngineWithCapabilities;
 import io.cdap.cdap.etl.mock.batch.MockSink;
 import io.cdap.cdap.etl.mock.batch.MockSource;
 import io.cdap.cdap.etl.mock.batch.joiner.MockAutoJoiner;
@@ -272,6 +273,12 @@ public class AutoJoinerTest extends HydratorTestBase {
                                      expected, expectedSchema, Engine.SPARK);
     testSimpleAutoJoinUsingSQLEngine(Arrays.asList("users", "purchases"), Collections.singletonList("purchases"),
                                      expected, expectedSchema, Engine.SPARK);
+    testSimpleAutoJoinUsingSQLEngineWithCapabilities(Arrays.asList("users", "purchases"),
+                                                     Collections.singletonList("users"),
+                                                     expected, expectedSchema, Engine.SPARK);
+    testSimpleAutoJoinUsingSQLEngineWithCapabilities(Arrays.asList("users", "purchases"),
+                                                     Collections.singletonList("purchases"),
+                                                     expected, expectedSchema, Engine.SPARK);
   }
 
 
@@ -317,6 +324,8 @@ public class AutoJoinerTest extends HydratorTestBase {
 
     testSimpleAutoJoinUsingSQLEngine(Arrays.asList("users", "purchases"), Collections.emptyList(), expected,
                                      expectedSchema, Engine.SPARK);
+    testSimpleAutoJoinUsingSQLEngineWithCapabilities(Arrays.asList("users", "purchases"), Collections.emptyList(),
+                                                     expected, expectedSchema, Engine.SPARK);
   }
 
   @Test
@@ -686,6 +695,85 @@ public class AutoJoinerTest extends HydratorTestBase {
                                                               joinInputDir.getAbsolutePath(),
                                                               joinOutputDir.getAbsolutePath(),
                                                               expectedSchema)))
+      .addStage(new ETLStage("users", MockSource.getPlugin(userInput, USER_SCHEMA)))
+      .addStage(new ETLStage("purchases", MockSource.getPlugin(purchaseInput, PURCHASE_SCHEMA)))
+      .addStage(new ETLStage("join", MockAutoJoiner.getPlugin(Arrays.asList("purchases", "users"),
+                                                              Arrays.asList("region", "user_id"),
+                                                              required, broadcast, Collections.emptyList(), true)))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(output)))
+      .addConnection("users", "join")
+      .addConnection("purchases", "join")
+      .addConnection("join", "sink")
+      .setEngine(engine)
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
+    ApplicationId appId = NamespaceId.DEFAULT.app(UUID.randomUUID().toString());
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    // write input data
+    List<StructuredRecord> userData = Arrays.asList(USER_ALICE, USER_ALYCE, USER_BOB);
+    DataSetManager<Table> inputManager = getDataset(userInput);
+    MockSource.writeInput(inputManager, userData);
+
+    List<StructuredRecord> purchaseData = new ArrayList<>();
+    purchaseData.add(StructuredRecord.builder(PURCHASE_SCHEMA)
+                       .set("region", "us")
+                       .set("user_id", 0)
+                       .set("purchase_id", 123).build());
+    purchaseData.add(StructuredRecord.builder(PURCHASE_SCHEMA)
+                       .set("region", "us")
+                       .set("user_id", 2)
+                       .set("purchase_id", 456).build());
+    inputManager = getDataset(purchaseInput);
+    MockSource.writeInput(inputManager, purchaseData);
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    Map<String, String> args = Collections.singletonMap(MockAutoJoiner.PARTITIONS_ARGUMENT, "1");
+    workflowManager.startAndWaitForGoodRun(args, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+
+    DataSetManager<Table> outputManager = getDataset(output);
+    List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);
+
+    Assert.assertEquals(expected, new HashSet<>(outputRecords));
+
+    validateMetric(5, appId, "join.records.in");
+    validateMetric(expected.size(), appId, "join.records.out");
+
+    if (broadcast.isEmpty()) {
+      // Ensure all records were written to the SQL engine
+      Assert.assertEquals(5, MockSQLEngine.countLinesInDirectory(joinOutputDir));
+    } else {
+      // Ensure no records are written to the SQL engine if the join contains a broadcast.
+      Assert.assertEquals(0, MockSQLEngine.countLinesInDirectory(joinOutputDir));
+    }
+  }
+
+  private void testSimpleAutoJoinUsingSQLEngineWithCapabilities(List<String> required, List<String> broadcast,
+                                                                Set<StructuredRecord> expected, Schema expectedSchema,
+                                                                Engine engine) throws Exception {
+
+    File joinOutputDir = TMP_FOLDER.newFolder();
+
+    /*
+         users ------|
+                     |--> join --> sink
+         purchases --|
+
+
+         joinOn: users.region = purchases.region and users.user_id = purchases.user_id
+     */
+    String userInput = UUID.randomUUID().toString();
+    String purchaseInput = UUID.randomUUID().toString();
+    String output = UUID.randomUUID().toString();
+    String sqlEnginePlugin = UUID.randomUUID().toString();
+    ETLBatchConfig config = ETLBatchConfig.builder()
+      .setPushdownEnabled(true)
+      .setTransformationPushdown(
+        new ETLTransformationPushdown(MockSQLEngineWithCapabilities.getPlugin(sqlEnginePlugin,
+                                                                              joinOutputDir.getAbsolutePath(),
+                                                                              expectedSchema,
+                                                                              expected)))
       .addStage(new ETLStage("users", MockSource.getPlugin(userInput, USER_SCHEMA)))
       .addStage(new ETLStage("purchases", MockSource.getPlugin(purchaseInput, PURCHASE_SCHEMA)))
       .addStage(new ETLStage("join", MockAutoJoiner.getPlugin(Arrays.asList("purchases", "users"),

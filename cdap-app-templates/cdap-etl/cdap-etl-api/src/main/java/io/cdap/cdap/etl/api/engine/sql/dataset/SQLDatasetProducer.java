@@ -19,10 +19,8 @@ package io.cdap.cdap.etl.api.engine.sql.dataset;
 /**
  * SQL Dataset which exposes a method to get a producer that can be used to extract
  * records from the SQL engine.
- *
- * @param <T> the type of records this producer will produce
  */
-public interface SQLDatasetProducer<T> {
+public interface SQLDatasetProducer {
   SQLDatasetDescription getDescription();
-  RecordCollection<T> produce(SQLDataset dataset);
+  RecordCollection produce(SQLDataset dataset);
 }
