@@ -46,7 +46,7 @@ public class SqlAppMetadataStoreTest extends AppMetadataStoreTest {
   public static void beforeClass() throws IOException, TableAlreadyExistsException {
     pg = PostgresInstantiator.createAndStart(TEMP_FOLDER.newFolder());
     DataSource dataSource = pg.getPostgresDatabase();
-    SqlStructuredTableRegistry structuredTableRegistry = new SqlStructuredTableRegistry(dataSource);
+    SqlStructuredTableRegistry structuredTableRegistry = new SqlStructuredTableRegistry(dataSource, 10);
     structuredTableRegistry.initialize();
     StructuredTableAdmin structuredTableAdmin =
       new PostgresSqlStructuredTableAdmin(structuredTableRegistry, dataSource);

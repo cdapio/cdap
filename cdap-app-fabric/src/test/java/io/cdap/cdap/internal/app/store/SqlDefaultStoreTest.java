@@ -57,7 +57,7 @@ public class SqlDefaultStoreTest extends DefaultStoreTest {
     Injector injector = AppFabricTestHelper.getInjector();
     pg = PostgresInstantiator.createAndStart(injector.getInstance(CConfiguration.class), TEMP_FOLDER.newFolder());
     DataSource dataSource = pg.getPostgresDatabase();
-    StructuredTableRegistry structuredTableRegistry = new SqlStructuredTableRegistry(dataSource);
+    StructuredTableRegistry structuredTableRegistry = new SqlStructuredTableRegistry(dataSource, 10);
     structuredTableRegistry.initialize();
     StructuredTableAdmin structuredTableAdmin =
       new PostgresSqlStructuredTableAdmin(structuredTableRegistry, dataSource);

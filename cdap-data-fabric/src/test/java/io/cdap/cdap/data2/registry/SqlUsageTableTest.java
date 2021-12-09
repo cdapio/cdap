@@ -43,7 +43,8 @@ public class SqlUsageTableTest extends UsageTableTest {
   public static void beforeClass() throws IOException, TableAlreadyExistsException {
     pg = PostgresInstantiator.createAndStart(TEMP_FOLDER.newFolder());
     DataSource dataSource = pg.getPostgresDatabase();
-    StructuredTableRegistry registry = new SqlStructuredTableRegistry(dataSource);
+    // Setting fetch size to 10 for testing
+    StructuredTableRegistry registry = new SqlStructuredTableRegistry(dataSource, 10);
     registry.initialize();
     StructuredTableAdmin structuredTableAdmin = new PostgresSqlStructuredTableAdmin(registry, dataSource);
     transactionRunner = new SqlTransactionRunner(structuredTableAdmin, dataSource);

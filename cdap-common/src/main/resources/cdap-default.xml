@@ -899,6 +899,14 @@
   </property>
 
   <property>
+    <name>data.storage.sql.scan.size.rows</name>
+    <value>100</value>
+    <description>
+      The number of rows fetched for database reads from PostgreSQL.
+    </description>
+  </property>
+
+  <property>
     <name>data.storage.sql.jdbc.connection.pool.size</name>
     <value>800</value>
     <description>
