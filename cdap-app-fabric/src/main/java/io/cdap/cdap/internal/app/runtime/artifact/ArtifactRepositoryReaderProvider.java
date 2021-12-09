@@ -19,6 +19,8 @@ package io.cdap.cdap.internal.app.runtime.artifact;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Provider;
+import com.google.inject.name.Named;
+import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 
@@ -33,7 +35,9 @@ public final class ArtifactRepositoryReaderProvider implements Provider<Artifact
   private final Injector injector;
 
   @Inject
-  ArtifactRepositoryReaderProvider(CConfiguration cConf, Injector injector) {
+  ArtifactRepositoryReaderProvider(@Named(PreviewConfigModule.PREVIEW_CCONF)CConfiguration cConf,
+                                   Injector injector) {
+    String storageImpl = cConf.get(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION);
     this.cConf = cConf;
     this.injector = injector;
   }

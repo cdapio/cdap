@@ -19,6 +19,8 @@ package io.cdap.cdap.internal.app.runtime.artifact;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Provider;
+import com.google.inject.name.Named;
+import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 
@@ -33,7 +35,7 @@ public class PluginFinderProvider implements Provider<PluginFinder> {
   private final Injector injector;
 
   @Inject
-  PluginFinderProvider(CConfiguration cConf, Injector injector) {
+  PluginFinderProvider(@Named(PreviewConfigModule.PREVIEW_CCONF)CConfiguration cConf, Injector injector) {
     this.cConf = cConf;
     this.injector = injector;
   }

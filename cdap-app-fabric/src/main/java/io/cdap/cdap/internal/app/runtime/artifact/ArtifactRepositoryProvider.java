@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.metadata;
+package io.cdap.cdap.internal.app.runtime.artifact;
 
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -25,24 +25,26 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 
 /**
- * Provider for {@link PreferencesFetcher}.
- * Use {@link LocalPreferencesFetcherInternal} if storage implication is {@link Constants.Dataset#DATA_STORAGE_SQL}.
- * Use {@link RemotePreferencesFetcherInternal} if storage implication is {@link Constants.Dataset#DATA_STORAGE_NOSQL}
+ * Provider for {@link ArtifactRepository}.
+ * Use {@link LocalArtifactRepositoryReader} if storage implementation is {@link Constants.Dataset#DATA_STORAGE_SQL}.
+ * Use {@link RemoteArtifactRepositoryReader} if storage implementation is {@link Constants.Dataset#DATA_STORAGE_NOSQL}.
  */
-public class PreferencesFetcherProvider implements Provider<PreferencesFetcher> {
+public final class ArtifactRepositoryProvider implements Provider<ArtifactRepository> {
 
   private final CConfiguration cConf;
   private final Injector injector;
 
   @Inject
-  PreferencesFetcherProvider(@Named(PreviewConfigModule.PREVIEW_CCONF)CConfiguration cConf,
-                             Injector injector) {
+  ArtifactRepositoryProvider(@Named(PreviewConfigModule.PREVIEW_CCONF)CConfiguration cConf,
+                                   Injector injector) {
+    String storageImpl = cConf.get(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION);
+    System.out.println("wyzhang: ArtifactRepositoryProvider: data storage impl = " + storageImpl);
     this.cConf = cConf;
     this.injector = injector;
   }
 
   @Override
-  public PreferencesFetcher get() {
+  public ArtifactRepository get() {
     String storageImpl = cConf.get(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION);
     if (storageImpl == null) {
       throw new IllegalStateException(
@@ -51,10 +53,10 @@ public class PreferencesFetcherProvider implements Provider<PreferencesFetcher> 
 
     storageImpl = storageImpl.toLowerCase();
     if (storageImpl.equals(Constants.Dataset.DATA_STORAGE_NOSQL)) {
-      return injector.getInstance(RemotePreferencesFetcherInternal.class);
+      return injector.getInstance(RemoteArtifactRepository.class);
     }
     if (storageImpl.equals(Constants.Dataset.DATA_STORAGE_SQL)) {
-      return injector.getInstance(LocalPreferencesFetcherInternal.class);
+      return injector.getInstance(DefaultArtifactRepository.class);
     }
     throw new UnsupportedOperationException(
       String.format(
@@ -62,4 +64,3 @@ public class PreferencesFetcherProvider implements Provider<PreferencesFetcher> 
         storageImpl, Constants.Dataset.DATA_STORAGE_NOSQL, Constants.Dataset.DATA_STORAGE_SQL));
   }
 }
-
