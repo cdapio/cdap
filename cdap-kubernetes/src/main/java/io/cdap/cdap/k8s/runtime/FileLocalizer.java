@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.k8s.runtime;
 
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnableContext;

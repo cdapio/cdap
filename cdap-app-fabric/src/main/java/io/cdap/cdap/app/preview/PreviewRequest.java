@@ -21,6 +21,9 @@ import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.artifact.preview.PreviewConfig;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.security.Principal;
+
+import javax.annotation.Nullable;
 
 /**
  * Represents the preview application request.
@@ -28,14 +31,16 @@ import io.cdap.cdap.proto.id.ProgramId;
 public class PreviewRequest {
   private final ProgramId program;
   private final AppRequest<?> appRequest;
+  private final Principal principal;
 
-  public PreviewRequest(ProgramId program, AppRequest<?> appRequest) {
+  public PreviewRequest(ProgramId program, AppRequest<?> appRequest, @Nullable Principal principal) {
     this.program = program;
     this.appRequest = appRequest;
+    this.principal = principal;
   }
 
-  public PreviewRequest(ApplicationId applicationId, AppRequest<?> appRequest) {
-    this(getProgramIdFromRequest(applicationId, appRequest), appRequest);
+  public PreviewRequest(ApplicationId applicationId, AppRequest<?> appRequest, Principal principal) {
+    this(getProgramIdFromRequest(applicationId, appRequest), appRequest, principal);
   }
 
   public ProgramId getProgram() {
@@ -45,6 +50,9 @@ public class PreviewRequest {
   public AppRequest<?> getAppRequest() {
     return appRequest;
   }
+
+  @Nullable
+  public Principal getPrinciple() { return principal; }
 
   private static ProgramId getProgramIdFromRequest(ApplicationId preview, AppRequest request) {
     PreviewConfig previewConfig = request.getPreview();

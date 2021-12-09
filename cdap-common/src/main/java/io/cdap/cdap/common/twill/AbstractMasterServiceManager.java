@@ -26,6 +26,10 @@ import io.cdap.cdap.common.logging.LogSamplers;
 import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.proto.Containers;
 import io.cdap.cdap.proto.SystemServiceLiveInfo;
+import io.cdap.cdap.proto.security.Credential;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequestConfig;
 import io.cdap.common.http.HttpRequests;
@@ -64,9 +68,11 @@ public abstract class AbstractMasterServiceManager implements MasterServiceManag
   private final HttpRequestConfig httpRequestConfig;
   private final TwillRunner twillRunner;
   private final int serviceTimeoutSeconds;
+  private final AuthenticationContext authenticationContext;
 
   protected AbstractMasterServiceManager(CConfiguration cConf, DiscoveryServiceClient discoveryClient,
-                                         String serviceName, TwillRunner twillRunner) {
+                                         String serviceName, TwillRunner twillRunner,
+                                         AuthenticationContext authenticationContext) {
     this.cConf = cConf;
     this.discoveryClient = discoveryClient;
     this.serviceName = serviceName;
@@ -75,6 +81,7 @@ public abstract class AbstractMasterServiceManager implements MasterServiceManag
     int requestTimeout = serviceTimeoutSeconds * 1000;
     this.httpRequestConfig = new HttpRequestConfig(requestTimeout, requestTimeout, false);
     this.twillRunner = twillRunner;
+    this.authenticationContext = authenticationContext;
   }
 
   /**
@@ -190,10 +197,31 @@ public abstract class AbstractMasterServiceManager implements MasterServiceManag
     }
   }
 
+  // wyzhang: ping to migrate to remote client
   private boolean isEndpointAlive(Discoverable discoverable) {
+    LOG.info("wyzhang: isEndpointAlive start");
     try {
       URL url = URIScheme.createURI(discoverable, "/ping").toURL();
-      int responseCode = HttpRequests.execute(HttpRequest.get(url).build(), httpRequestConfig).getResponseCode();
+      Principal principal = authenticationContext.getPrincipal();
+      LOG.info("wyzhang: isEndpointAlive authenticationContext is " + authenticationContext.getClass().getName());
+      String userID = null;
+      Credential internalCredentials = null;
+      if (principal != null) {
+        userID = principal.getName();
+        internalCredentials = principal.getFullCredential();
+      }
+      HttpRequest.Builder builder = HttpRequest.get(url);
+      if (userID != null) {
+        LOG.info("wyzhang: isEndpointAlive user_id header " + userID);
+        builder.addHeader(Constants.Security.Headers.USER_ID, userID);
+      }
+      if (internalCredentials != null) {
+        builder.addHeader(Constants.Security.Headers.RUNTIME_TOKEN,
+                          String.format("%s %s", internalCredentials.getType().getQualifiedName(),
+                                        internalCredentials.getValue()));
+        LOG.info("wyzhang: isEndpointAlive runtime token header " + internalCredentials.toString());
+      }
+      int responseCode = HttpRequests.execute(builder.build(), httpRequestConfig).getResponseCode();
       if (responseCode == HttpURLConnection.HTTP_OK) {
         return true;
       }

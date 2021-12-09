@@ -18,6 +18,7 @@ package io.cdap.cdap.master.environment;
 
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.common.internal.remote.InternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnableContext;

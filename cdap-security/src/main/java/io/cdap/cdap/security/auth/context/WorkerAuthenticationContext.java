@@ -19,13 +19,14 @@ package io.cdap.cdap.security.auth.context;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 
 /**
  * Authentication context for workers.
  */
 public class WorkerAuthenticationContext implements AuthenticationContext {
-  private static final String WORKER_USER_ID = "worker";
-  private static final String PLACEHOLDER_CREDENTIAL = "placeholder";
+  public static final String WORKER_USER_ID = "worker_user_id";
+  public static final String PLACEHOLDER_CREDENTIAL = "placeholder_credential";
   /**
    * Currently only returns a hardcoded set of user ID and credentials to get around the required auth limitation.
    * TODO CDAP-17772: Implement proper authentication context for workers.
@@ -34,6 +35,13 @@ public class WorkerAuthenticationContext implements AuthenticationContext {
    */
   @Override
   public Principal getPrincipal() {
+    // By default, assume the principal comes from a user request and handle accordingly using SecurityRequestContext.
+    String userId = SecurityRequestContext.getUserId();
+    Credential userCredential = SecurityRequestContext.getUserCredential();
+    if (userId != null) {
+      return new Principal(userId, Principal.PrincipalType.USER, userCredential);
+    }
+
     return new Principal(WORKER_USER_ID, Principal.PrincipalType.USER,
                          new Credential(PLACEHOLDER_CREDENTIAL, Credential.CredentialType.INTERNAL));
   }

@@ -100,7 +100,7 @@ public class TaskWorkerService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    preloadArtifacts();
+//    preloadArtifacts();
 
     LOG.debug("Starting TaskWorkerService");
     httpService.start();
@@ -110,6 +110,7 @@ public class TaskWorkerService extends AbstractIdleService {
     LOG.debug("Starting TaskWorkerService has completed");
   }
 
+  // wyzhang: preloadArtifacts: move to artifact localizer
   /**
    * Preloading artifacts by running a {@link SystemAppTask} for each of the artifact.
    */

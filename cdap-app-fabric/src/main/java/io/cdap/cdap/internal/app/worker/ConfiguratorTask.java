@@ -80,8 +80,7 @@ public class ConfiguratorTask implements RunnableTask {
       new ConfigModule(cConf),
       new LocalLocationModule(),
       new ConfiguratorTaskModule(),
-      new AuthenticationContextModules().getMasterWorkerModule()
-    );
+      new AuthenticationContextModules().getMasterWorkerModule());
     ConfigResponse result = injector.getInstance(ConfiguratorTaskRunner.class).configure(deploymentInfo);
     AppSpecInfo appSpecInfo = result.getAppSpecInfo();
 

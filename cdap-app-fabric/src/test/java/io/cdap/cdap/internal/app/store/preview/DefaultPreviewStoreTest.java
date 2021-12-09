@@ -155,7 +155,7 @@ public class DefaultPreviewStoreTest {
 
     RunId id1 = RunIds.generate();
     ApplicationId applicationId = new ApplicationId("ns1", id1.getId());
-    store.add(applicationId, testRequest);
+    store.add(applicationId, testRequest, null);
     List<PreviewRequest> allWaiting = store.getAllInWaitingState();
     Assert.assertEquals(1, allWaiting.size());
 
@@ -169,9 +169,9 @@ public class DefaultPreviewStoreTest {
 
     // add 2 requests to the queue
     ApplicationId applicationId2 = new ApplicationId("ns1", RunIds.generate().getId());
-    store.add(applicationId2, testRequest);
+    store.add(applicationId2, testRequest, null);
     ApplicationId applicationId3 = new ApplicationId("ns1", RunIds.generate().getId());
-    store.add(applicationId3, testRequest);
+    store.add(applicationId3, testRequest, null);
 
     allWaiting = store.getAllInWaitingState();
     Assert.assertEquals(2, allWaiting.size());
@@ -202,9 +202,9 @@ public class DefaultPreviewStoreTest {
     String thirdApplication = RunIds.generate(System.currentTimeMillis()).getId();
     ApplicationId thirdApplicationId = new ApplicationId(NamespaceMeta.DEFAULT.getName(), thirdApplication);
 
-    store.add(firstApplicationId, testRequest);
-    store.add(secondApplicationId, testRequest);
-    store.add(thirdApplicationId, testRequest);
+    store.add(firstApplicationId, testRequest, null);
+    store.add(secondApplicationId, testRequest, null);
+    store.add(thirdApplicationId, testRequest, null);
 
     // set poller info so that it gets removed from WAITING state
     store.setPreviewRequestPollerInfo(firstApplicationId, null);

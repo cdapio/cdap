@@ -156,9 +156,9 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
   }
 
   private void doInitialize(TwillContext context) throws Exception {
-    CConfiguration cConf = CConfiguration.create();
-    cConf.clear();
-    cConf.addResource(new File(getArgument("cConf")).toURI().toURL());
+    CConfiguration cConf = CConfiguration.create(new File(getArgument("cConf")).toURI().toURL());
+    LOG.info("wyzhang: PreviewRunnerTwillRunnable doInit internal_cert_path {} ",
+             cConf.get(Constants.Security.SSL.INTERNAL_CERT_PATH));
 
     Configuration hConf = new Configuration();
     hConf.clear();

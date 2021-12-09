@@ -22,9 +22,11 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.AbstractModule;
+import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import io.cdap.cdap.app.guice.DistributedArtifactManagerModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
@@ -117,6 +119,7 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
         modules.add(new ZKClientModule());
       }
     }
+    modules.add(new DistributedArtifactManagerModule());
 
     return Guice.createInjector(modules);
   }

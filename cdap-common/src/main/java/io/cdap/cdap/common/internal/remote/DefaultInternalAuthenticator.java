@@ -54,4 +54,9 @@ public class DefaultInternalAuthenticator implements InternalAuthenticator {
       headerSetter.accept(Constants.Security.Headers.USER_ID, userID);
     }
   }
+
+  @Override
+  public AuthenticationContext getAuthenticationContext() {
+    return authenticationContext;
+  }
 }

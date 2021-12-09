@@ -281,6 +281,17 @@ public final class ClientMessagingService implements MessagingService {
       .withBody(os.toByteBuffer())
       .build();
 
+    if (remoteClient != null &&
+      remoteClient.getInternalAuthenticator() != null &&
+      remoteClient.getInternalAuthenticator().getAuthenticationContext() != null) {
+      System.out.println("wyzhang: ClientMessagingService remoteClient authentication context class:  " +
+                           remoteClient.getInternalAuthenticator().getAuthenticationContext().getClass().getName());
+
+      System.out.println("wyzhang: ClientMessagingService remoteClient getPrinciple: " +
+                           remoteClient.getInternalAuthenticator().getAuthenticationContext()
+                             .getPrincipal().toString());
+    }
+
     HttpResponse response = remoteClient.execute(httpRequest);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {

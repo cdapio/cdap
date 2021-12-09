@@ -28,7 +28,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
-import java.util.concurrent.ExecutionException;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -40,6 +41,8 @@ public class ArtifactLocalizerService extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactLocalizerService.class);
 
+  private final CConfiguration cConf;
+  private final ArtifactLocalizer artifactLocalizer;
   private final NettyHttpService httpService;
   private final ArtifactLocalizerCleaner cleaner;
   private final int cacheCleanupInterval;
@@ -48,6 +51,8 @@ public class ArtifactLocalizerService extends AbstractIdleService {
   @Inject
   ArtifactLocalizerService(CConfiguration cConf,
                            ArtifactLocalizer artifactLocalizer) {
+    this.cConf = cConf;
+    this.artifactLocalizer = artifactLocalizer;
     this.httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TASK_WORKER)
       .setHost(InetAddress.getLoopbackAddress().getHostName())
       .setPort(cConf.getInt(Constants.ArtifactLocalizer.PORT))
@@ -67,6 +72,10 @@ public class ArtifactLocalizerService extends AbstractIdleService {
     scheduledExecutorService = Executors
       .newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("artifact-cache-cleaner"));
     scheduledExecutorService.scheduleAtFixedRate(cleaner, cacheCleanupInterval, cacheCleanupInterval, TimeUnit.MINUTES);
+
+    Set<String> artifacts = new HashSet<>(cConf.getTrimmedStringCollection(Constants.TaskWorker.PRELOAD_ARTIFACTS));
+    artifactLocalizer.preloadArtifacts(artifacts);
+    
     LOG.debug("Starting ArtifactLocalizerService has completed");
   }
 

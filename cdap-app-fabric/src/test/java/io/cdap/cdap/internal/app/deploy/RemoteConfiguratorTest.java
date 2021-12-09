@@ -123,7 +123,8 @@ public class RemoteConfiguratorTest {
       .setHttpHandlers(
         new TaskWorkerHttpHandlerInternal(cConf, className -> { }, new NoOpMetricsCollectionService()),
         new ArtifactHttpHandlerInternal(new TestArtifactRepository(cConf), namespaceAdmin),
-        new ArtifactLocalizerHttpHandlerInternal(new ArtifactLocalizer(cConf, remoteClientFactory))
+        new ArtifactLocalizerHttpHandlerInternal(new ArtifactLocalizer(cConf, remoteClientFactory,
+                                                                       ((namespaceId, retryStrategy) -> null)))
       )
       .setPort(cConf.getInt(Constants.ArtifactLocalizer.PORT))
       .setChannelPipelineModifier(new ChannelPipelineModifier() {

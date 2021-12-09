@@ -21,6 +21,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.twill.AbstractMasterServiceManager;
 import io.cdap.cdap.common.twill.MasterServiceManager;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
@@ -30,8 +31,9 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 public class RuntimeServiceManager extends AbstractMasterServiceManager {
 
   @Inject
-  RuntimeServiceManager(CConfiguration cConf, DiscoveryServiceClient discoveryClient, TwillRunner twillRunner) {
-    super(cConf, discoveryClient, Constants.Service.RUNTIME, twillRunner);
+  RuntimeServiceManager(CConfiguration cConf, DiscoveryServiceClient discoveryClient, TwillRunner twillRunner,
+                        AuthenticationContext authenticationContext) {
+    super(cConf, discoveryClient, Constants.Service.RUNTIME, twillRunner, authenticationContext);
   }
 
   @Override

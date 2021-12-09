@@ -67,7 +67,11 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
   // Contains the list of configuration / secret names coming from the Pod information, which are
   // needed to propagate to deployments created via the KubeTwillRunnerService
-  private static final Set<String> CONFIG_NAMES = ImmutableSet.of("cdap-conf", "hadoop-conf");
+  // wyzhang: List of configs to mount by default
+  public static final String CDAP_CONFIG_NAME = "cdap-conf";
+  public static final String HADOOP_CONFIG_NAME = "hadoop-conf";
+  public static final String SECURITY_CONFIG_NAME = "cdap-security";
+  private static final Set<String> CONFIG_NAMES = ImmutableSet.of("cdap-conf", "hadoop-conf", "cdap-security");
   private static final Set<String> CUSTOM_VOLUME_PREFIX = ImmutableSet.of("cdap-cm-vol-", "cdap-se-vol-");
 
   private static final String MASTER_MAX_INSTANCES = "master.service.max.instances";

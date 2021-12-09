@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.common.internal.remote;
 
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+
 import java.util.function.BiConsumer;
 
 /**
@@ -25,5 +27,10 @@ public class NoOpInternalAuthenticator implements InternalAuthenticator {
   @Override
   public void applyInternalAuthenticationHeaders(BiConsumer<String, String> headerSetter) {
     return;
+  }
+
+  @Override
+  public AuthenticationContext getAuthenticationContext() {
+    return null;
   }
 }

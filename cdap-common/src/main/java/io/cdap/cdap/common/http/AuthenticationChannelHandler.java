@@ -59,9 +59,10 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
       HttpRequest request = (HttpRequest) msg;
       currentUserId = request.headers().get(Constants.Security.Headers.USER_ID);
       if (enforceAuthenticatedRequests && currentUserId == null) {
-
-        throw new IllegalArgumentException(String.format("Missing user ID header for request from IP %s",
-                                                         ctx.channel().remoteAddress().toString()));
+        currentUserId = "empty-userid";
+        LOG.error("wyzhang: AuthenticationChannelHandler user id missing req =" + request.uri());
+//        throw new IllegalArgumentException(String.format("Missing user ID header for request from IP %s",
+//                                                         ctx.channel().remoteAddress().toString()));
       }
       currentUserIP = request.headers().get(Constants.Security.Headers.USER_IP);
       String authHeader = request.headers().get(Constants.Security.Headers.RUNTIME_TOKEN);
@@ -87,8 +88,11 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
           }
         }
       } else if (enforceAuthenticatedRequests) {
-        throw new IllegalArgumentException(String.format("Missing Authorization header for request from IP %s",
-                                                         ctx.channel().remoteAddress().toString()));
+        LOG.error("wyzhang: AuthenticationChannelHandler auth header missing for url {}", request.uri());
+        currentUserCredential = new Credential("empty-credential", Credential.CredentialType.INTERNAL_PLACEHOLD);
+//        throw new IllegalArgumentException(String.format(
+//          "Missing Authorization header for request from IP %s for url %s",
+//          ctx.channel().remoteAddress().toString(), request.uri()));
       }
 
       SecurityRequestContext.setUserId(currentUserId);

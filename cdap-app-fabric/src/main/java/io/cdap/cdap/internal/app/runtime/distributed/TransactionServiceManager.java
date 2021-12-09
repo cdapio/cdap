@@ -20,6 +20,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.twill.AbstractMasterServiceManager;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -37,8 +38,9 @@ public class TransactionServiceManager extends AbstractMasterServiceManager {
 
   @Inject
   TransactionServiceManager(CConfiguration cConf, TwillRunner twillRunner,
-                            TransactionSystemClient txClient, DiscoveryServiceClient discoveryClient) {
-    super(cConf, discoveryClient, Constants.Service.TRANSACTION, twillRunner);
+                            TransactionSystemClient txClient, DiscoveryServiceClient discoveryClient,
+                            AuthenticationContext authenticationContext) {
+    super(cConf, discoveryClient, Constants.Service.TRANSACTION, twillRunner, authenticationContext);
     this.txClient = txClient;
   }
 

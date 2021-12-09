@@ -20,6 +20,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.twill.AbstractMasterServiceManager;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
@@ -30,8 +31,8 @@ public class NonHadoopAppFabricServiceManager extends AbstractMasterServiceManag
 
   @Inject
   NonHadoopAppFabricServiceManager(CConfiguration cConf, DiscoveryServiceClient discoveryClient,
-                                   TwillRunner twillRunner) {
-    super(cConf, discoveryClient, Constants.Service.APP_FABRIC_HTTP, twillRunner);
+                                   TwillRunner twillRunner, AuthenticationContext authenticationContext) {
+    super(cConf, discoveryClient, Constants.Service.APP_FABRIC_HTTP, twillRunner, authenticationContext);
   }
 
   @Override

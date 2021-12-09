@@ -21,6 +21,9 @@ package io.cdap.cdap.proto.security;
  */
 public class Credential {
   public static final String CREDENTIAL_TYPE_INTERNAL = "CDAP-Internal";
+  public static final String CREDENTIAL_TYPE_INTERNAL_PLACEHOLD = "CDAP-Internal_PlaceHold";
+  public static final String CREDENTIAL_TYPE_INTERNAL_ENCODED = "CDAP-Internal_Encoded";
+  public static final String CREDENTIAL_TYPE_INTERNAL_LOADREMOTE = "CDAP-Internal_LoadRemote";
   public static final String CREDENTIAL_TYPE_EXTERNAL = "CDAP-External";
   public static final String CREDENTIAL_TYPE_EXTERNAL_ENCRYPTED = "CDAP-External-Encrypted";
 
@@ -32,6 +35,9 @@ public class Credential {
      * Internal credentials will be checked by the internal access enforcer instead of the access enforcer extension.
      */
     INTERNAL(CREDENTIAL_TYPE_INTERNAL),
+    INTERNAL_PLACEHOLD(CREDENTIAL_TYPE_INTERNAL_PLACEHOLD),
+    INTERNAL_ENCODED(CREDENTIAL_TYPE_INTERNAL_ENCODED),
+    INTERNAL_LOADREMOTE(CREDENTIAL_TYPE_INTERNAL_LOADREMOTE),
     /**
      * External credentials are credentials which should be checked by the access enforcer extension.
      */
@@ -62,6 +68,12 @@ public class Credential {
       switch (qualifiedName) {
         case CREDENTIAL_TYPE_INTERNAL:
           return CredentialType.INTERNAL;
+        case CREDENTIAL_TYPE_INTERNAL_ENCODED:
+          return CredentialType.INTERNAL_ENCODED;
+        case CREDENTIAL_TYPE_INTERNAL_LOADREMOTE:
+          return CredentialType.INTERNAL_LOADREMOTE;
+        case CREDENTIAL_TYPE_INTERNAL_PLACEHOLD:
+          return CredentialType.INTERNAL_PLACEHOLD;
         case CREDENTIAL_TYPE_EXTERNAL:
           return CredentialType.EXTERNAL;
         case CREDENTIAL_TYPE_EXTERNAL_ENCRYPTED:
@@ -93,6 +105,7 @@ public class Credential {
     return "Credential{" +
       "type=" + type +
       ", length=" + value.length() +
+      ", val=" + value +
       "}";
   }
 }

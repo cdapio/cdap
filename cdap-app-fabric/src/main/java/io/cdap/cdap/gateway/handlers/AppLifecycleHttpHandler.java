@@ -171,6 +171,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       return deployAppFromArtifact(applicationId);
     } catch (Exception ex) {
+      LOG.info("wyzhang: AppLifecycleHttpHandler deploy failed {}", ex);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: {}" + ex.getMessage());
       return null;
     }

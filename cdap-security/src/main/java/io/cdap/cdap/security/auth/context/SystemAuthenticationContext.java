@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.util.Base64;
 import java.util.Collections;
 
+// wyzhang: SystemAuthenticationContext
 /**
  * Authentication context for master services which utilize internal authentication.
  */
@@ -73,7 +74,7 @@ public class SystemAuthenticationContext implements AuthenticationContext {
     String encodedAccessToken;
     try {
       encodedAccessToken = Base64.getEncoder().encodeToString(accessTokenCodec.encode(accessToken));
-      Credential credential = new Credential(encodedAccessToken, Credential.CredentialType.INTERNAL);
+      Credential credential = new Credential(encodedAccessToken, Credential.CredentialType.INTERNAL_ENCODED);
       return new Principal(userId, Principal.PrincipalType.USER, credential);
     } catch (IOException e) {
       throw new RuntimeException("Unexpected failure while creating internal system identity", e);

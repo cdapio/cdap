@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.common.internal.remote;
 
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+
 import java.util.function.BiConsumer;
 
 /**
@@ -29,4 +31,6 @@ public interface InternalAuthenticator {
    * @param headerSetter A BiConsumer header setting function used to set header values for a request.
    */
   void applyInternalAuthenticationHeaders(BiConsumer<String, String> headerSetter);
+
+  AuthenticationContext getAuthenticationContext();
 }

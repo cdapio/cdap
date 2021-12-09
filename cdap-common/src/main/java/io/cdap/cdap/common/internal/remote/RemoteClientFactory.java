@@ -30,7 +30,7 @@ public class RemoteClientFactory {
                                                                                               15000,
                                                                                               false);
   private final DiscoveryServiceClient discoveryClient;
-  private final InternalAuthenticator internalAuthenticator;
+  private InternalAuthenticator internalAuthenticator;
 
   @Inject @VisibleForTesting
   public RemoteClientFactory(DiscoveryServiceClient discoveryClient, InternalAuthenticator internalAuthenticator) {
@@ -42,5 +42,13 @@ public class RemoteClientFactory {
                                          String basePath) {
     return new RemoteClient(internalAuthenticator, discoveryClient, discoverableServiceName,
                             httpRequestConfig, basePath);
+  }
+
+  public InternalAuthenticator getInternalAuthenticator() {
+    return internalAuthenticator;
+  }
+
+  public void setInternalAuthenticator(InternalAuthenticator internalAuthenticator) {
+    this.internalAuthenticator = internalAuthenticator;
   }
 }

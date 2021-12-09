@@ -20,6 +20,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.twill.AbstractMasterServiceManager;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
@@ -29,8 +30,9 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 public class LogSaverServiceManager extends AbstractMasterServiceManager {
 
   @Inject
-  LogSaverServiceManager(CConfiguration cConf, TwillRunner twillRunner, DiscoveryServiceClient discoveryClient) {
-    super(cConf, discoveryClient, Constants.Service.LOGSAVER, twillRunner);
+  LogSaverServiceManager(CConfiguration cConf, TwillRunner twillRunner, DiscoveryServiceClient discoveryClient,
+                         AuthenticationContext authenticationContext) {
+    super(cConf, discoveryClient, Constants.Service.LOGSAVER, twillRunner, authenticationContext);
   }
 
   @Override

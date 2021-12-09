@@ -21,6 +21,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.net.HttpHeaders;
 import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
@@ -53,7 +54,7 @@ public class RemoteClient {
 
   public static final String RUNTIME_SERVICE_ROUTING_BASE_URI = "cdap.runtime.service.routing.base.uri";
 
-  private final InternalAuthenticator internalAuthenticator;
+  private InternalAuthenticator internalAuthenticator;
   private final EndpointStrategy endpointStrategy;
   private final HttpRequestConfig httpRequestConfig;
   private final String discoverableServiceName;
@@ -76,6 +77,14 @@ public class RemoteClient {
     String cleanBasePath = basePath.startsWith("/") ? basePath.substring(1) : basePath;
     this.basePath = cleanBasePath.endsWith("/") ? cleanBasePath : cleanBasePath + "/";
     this.authenticator = authenticator;
+  }
+
+  public InternalAuthenticator getInternalAuthenticator() {
+    return internalAuthenticator;
+  }
+
+  public void updateInternalAuthenticator(InternalAuthenticator internalAuthenticator) {
+    this.internalAuthenticator = internalAuthenticator;
   }
 
   /**
@@ -121,6 +130,10 @@ public class RemoteClient {
 
     httpRequest = new HttpRequest(request.getMethod(), rewrittenURL, headers,
                       request.getBody(), request.getBodyLength());
+
+    if (!httpRequest.getHeaders().containsKey(Constants.Security.Headers.USER_ID)) {
+      System.out.println("wyzhang: remote client execute missing user_id " + httpRequest.getURL());
+    }
 
     try {
       HttpResponse response = HttpRequests.execute(httpRequest, httpRequestConfig);
