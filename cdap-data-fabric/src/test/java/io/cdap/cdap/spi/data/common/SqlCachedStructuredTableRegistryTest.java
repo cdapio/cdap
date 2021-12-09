@@ -42,7 +42,8 @@ public class SqlCachedStructuredTableRegistryTest extends CachedStructuredTableR
   public static void beforeClass() throws Exception {
     pg = PostgresInstantiator.createAndStart(TEMP_FOLDER.newFolder());
     DataSource dataSource = pg.getPostgresDatabase();
-    sqlRegistry = new SqlStructuredTableRegistry(dataSource);
+    // Setting fetch size to 10 for testing
+    sqlRegistry = new SqlStructuredTableRegistry(dataSource, 10);
     registry = new CachedStructuredTableRegistry(sqlRegistry);
   }
 
