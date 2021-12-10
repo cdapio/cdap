@@ -410,7 +410,7 @@ public class SmartWorkflow extends AbstractWorkflow {
       if (value == null) {
         LOG.warn("Runtime argument '{}' is not found in run '{}' of the triggering pipeline '{}' " +
                    "in namespace '{}' ",
-                 sourceKey, triggerInfo.getRunId(), triggerInfo.getApplicationSpecification().getName(),
+                 sourceKey, triggerInfo.getRunId(), triggerInfo.getApplicationName(),
                  triggerInfo.getNamespace());
         continue;
       }
@@ -430,7 +430,7 @@ public class SmartWorkflow extends AbstractWorkflow {
       Map<String, String> pluginProperties = resolvedProperties.get(stageName);
       if (pluginProperties == null) {
         LOG.warn("No plugin properties can be found with stage name '{}' in triggering pipeline '{}' " +
-                   "in namespace '{}' ", mapping.getStageName(), triggerInfo.getApplicationSpecification().getName(),
+                   "in namespace '{}' ", mapping.getStageName(), triggerInfo.getApplicationName(),
                  triggerInfo.getNamespace());
         continue;
       }
@@ -443,7 +443,7 @@ public class SmartWorkflow extends AbstractWorkflow {
       String value = pluginProperties.get(sourceKey);
       if (value == null) {
         LOG.warn("No property with name '{}' can be found in plugin '{}' of the triggering pipeline '{}' " +
-                   "in namespace '{}' ", sourceKey, stageName, triggerInfo.getApplicationSpecification().getName(),
+                   "in namespace '{}' ", sourceKey, stageName, triggerInfo.getApplicationName(),
                  triggerInfo.getNamespace());
         continue;
       }
