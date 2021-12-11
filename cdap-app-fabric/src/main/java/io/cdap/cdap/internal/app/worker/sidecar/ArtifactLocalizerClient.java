@@ -54,6 +54,19 @@ public class ArtifactLocalizerClient {
   }
 
   /**
+   * Gets the location on the local filesystem for the given artifact. This method handles fetching the artifact as well
+   * as caching it.
+   *
+   * @param artifactId The ArtifactId of the artifact to fetch
+   * @return The Local Location for this artifact
+   * @throws ArtifactNotFoundException if the given artifact does not exist
+   * @throws IOException if there was an exception while fetching or caching the artifact
+   */
+  public File getArtifactLocation(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
+    return sendRequest(artifactId, false);
+  }
+
+  /**
    * Gets the location on the local filesystem for the directory that contains the unpacked artifact. This method
    * handles fetching, caching and unpacking the artifact.
    *
@@ -63,6 +76,10 @@ public class ArtifactLocalizerClient {
    * @throws IOException if there was an exception while fetching, caching or unpacking the artifact
    */
   public File getUnpackedArtifactLocation(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
+    return sendRequest(artifactId, true);
+  }
+
+  private File sendRequest(ArtifactId artifactId, boolean unpack) throws IOException, ArtifactNotFoundException {
     String urlPath = String.format("/artifact/namespaces/%s/artifacts/%s/versions/%s",
                                    artifactId.getNamespace(), artifactId.getArtifact(), artifactId.getVersion());
     URL url;
