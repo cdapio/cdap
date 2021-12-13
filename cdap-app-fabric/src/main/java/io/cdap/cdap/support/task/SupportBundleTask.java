@@ -17,6 +17,7 @@
 package io.cdap.cdap.support.task;
 
 import io.cdap.cdap.common.NotFoundException;
+import io.kubernetes.client.openapi.ApiException;
 import org.json.JSONException;
 
 import java.io.IOException;
@@ -24,5 +25,5 @@ import java.io.IOException;
 /** Establishes an interface for support bundle task */
 public interface SupportBundleTask {
   /** Collect Log or pipeline info */
-  void collect() throws IOException, NotFoundException, JSONException;
+  void collect() throws IOException, NotFoundException, JSONException, ApiException;
 }
