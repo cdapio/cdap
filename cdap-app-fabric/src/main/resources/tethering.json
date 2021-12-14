@@ -1,0 +1,29 @@
+{
+  "configuration-groups": [
+    {
+      "label": "Tethering Information",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Instance Name",
+          "name": "tetheredInstanceName",
+          "required": true,
+          "description": "The tethered CDAP instance to connect to.",
+          "widget-attributes": {
+            "placeholder": "Specify the tethered instance to connect to"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Namespace",
+          "name": "tetheredNamespace",
+          "required": true,
+          "description": "From the selected tethered CDAP instance, the namespace to run pipelines on.",
+          "widget-attributes": {
+            "placeholder": "Specify the namespace within the tethered instance to use"
+          }
+        }
+      ]
+    }
+  ]
+}
