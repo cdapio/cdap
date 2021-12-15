@@ -65,7 +65,9 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.DefaultNamespaceStore;
+import java.util.ArrayList;
 import org.apache.twill.api.RunId;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -842,6 +844,41 @@ public abstract class DefaultStoreTest {
 
     //All the 6 specs should have been deleted.
     Assert.assertEquals(0, specsToBeVerified.size());
+  }
+
+  @Test
+  public void testScanApplications() {
+    ApplicationSpecification appSpec = Specifications.from(new AllProgramsApp());
+
+    // Writes 100 application specs
+    int count = 100;
+    for (int i = 0; i < count; i++) {
+      String appName = "test" + i;
+      store.addApplication(new ApplicationId(NamespaceId.DEFAULT.getNamespace(), appName), appSpec);
+    }
+
+    List<ApplicationId> apps = new ArrayList<ApplicationId>();
+    store.scanApplications(20, (appId, spec) -> apps.add(appId));
+
+    Assert.assertEquals(count, apps.size());
+  }
+
+  @Test
+  public void testScanApplicationsWithNamespace() {
+    ApplicationSpecification appSpec = Specifications.from(new AllProgramsApp());
+
+    // Writes 100 application specs
+    int count = 4;
+    for (int i = 0; i < count/2; i++) {
+      String appName = "test" + i;
+      store.addApplication(new ApplicationId(NamespaceId.DEFAULT.getNamespace(), appName), appSpec);
+      store.addApplication(new ApplicationId(NamespaceId.CDAP.getNamespace(), appName), appSpec);
+    }
+
+    List<ApplicationId> apps = new ArrayList<ApplicationId>();
+    store.scanApplications(NamespaceId.CDAP, 20, (appId, spec) -> apps.add(appId));
+
+    Assert.assertEquals(count/2, apps.size());
   }
 
   @Test
