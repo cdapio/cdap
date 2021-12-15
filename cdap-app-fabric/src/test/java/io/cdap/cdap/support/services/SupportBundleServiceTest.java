@@ -54,7 +54,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -114,10 +113,14 @@ public class SupportBundleServiceTest extends AppFabricTestBase {
     Assert.assertNotNull(uuid);
     File tempFolder = new File(configuration.get(SupportBundle.LOCAL_DATA_DIR));
     File uuidFile = new File(tempFolder, uuid);
-    File statusFile = new File(uuidFile, SupportBundleFileNames.STATUS_FILE_NAME);
-    Tasks.waitFor(true, statusFile::exists, 60, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
-    Tasks.waitFor(CollectionState.FINISHED, () -> supportBundleService.getSingleBundleJson(uuidFile).getStatus(), 60,
-                  TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
+
+    Tasks.waitFor(CollectionState.FINISHED, () -> {
+      SupportBundleStatus supportBundleStatus = supportBundleService.getSingleBundleJson(uuidFile);
+      if (supportBundleStatus == null) {
+        return CollectionState.INVALID;
+      }
+      return supportBundleService.getSingleBundleJson(uuidFile).getStatus();
+    }, 60, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
     SupportBundleStatus supportBundleStatus = supportBundleService.getSingleBundleJson(uuidFile);
 
     Set<SupportBundleTaskStatus> supportBundleTaskStatusList = supportBundleStatus.getTasks();
@@ -134,32 +137,21 @@ public class SupportBundleServiceTest extends AppFabricTestBase {
     File tempFolder = new File(configuration.get(Constants.SupportBundle.LOCAL_DATA_DIR));
     createNamespace("default");
     String path = String.format("%s/support/bundle?namespace=default", Constants.Gateway.API_VERSION_3);
-    List<String> bundleIdList = new ArrayList<>();
-    for (int i = 0; i < 7; i++) {
+    String expectedDeletedUuid = "";
+    for (int i = 0; i < 8; i++) {
       HttpResponse response = doPost(path);
       Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
       String uuid = response.getResponseBodyAsString();
-      bundleIdList.add(uuid);
       File uuidFile = new File(tempFolder, uuid);
       File statusFile = new File(uuidFile, SupportBundleFileNames.STATUS_FILE_NAME);
       Tasks.waitFor(true, statusFile::exists, 60, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
-    }
-    File bundleFile = new File(tempFolder, bundleIdList.get(4));
-    SupportBundleStatus supportBundleStatus = SupportBundleStatus.builder()
-      .setBundleId(bundleIdList.get(4))
-      .setStatus(CollectionState.FAILED)
-      .setParameters(null)
-      .setStartTimestamp(System.currentTimeMillis())
-      .build();
-    try (FileWriter statusFile = new FileWriter(new File(bundleFile, SupportBundleFileNames.STATUS_FILE_NAME))) {
-      GSON.toJson(supportBundleStatus, statusFile);
-    } catch (Exception e) {
-      LOG.error("Can not update status file ", e);
-      Assert.fail();
+      if (i == 4) {
+        expectedDeletedUuid = uuid;
+        updateStatusToFail(tempFolder, uuid);
+      }
     }
     //Exceed the maximum number of folder allows in bundle
-    doPost(path);
-    File expectedDeletedBundle = new File(tempFolder.getPath(), bundleIdList.get(4));
+    File expectedDeletedBundle = new File(tempFolder.getPath(), expectedDeletedUuid);
     Assert.assertFalse(expectedDeletedBundle.exists());
   }
 
@@ -181,5 +173,21 @@ public class SupportBundleServiceTest extends AppFabricTestBase {
     store.setProvisioned(id.run(pid), 0, AppFabricTestHelper.createSourceId(++sourceId));
     store.setStart(id.run(pid), null, systemArgs, AppFabricTestHelper.createSourceId(++sourceId));
     store.setRunning(id.run(pid), startTime + 1, null, AppFabricTestHelper.createSourceId(++sourceId));
+  }
+
+  private void updateStatusToFail(File tempFolder, String uuid) {
+    File bundleFile = new File(tempFolder, uuid);
+    SupportBundleStatus supportBundleStatus = SupportBundleStatus.builder()
+      .setBundleId(uuid)
+      .setStatus(CollectionState.FAILED)
+      .setParameters(null)
+      .setStartTimestamp(System.currentTimeMillis())
+      .build();
+    try (FileWriter statusFile = new FileWriter(new File(bundleFile, SupportBundleFileNames.STATUS_FILE_NAME))) {
+      GSON.toJson(supportBundleStatus, statusFile);
+    } catch (Exception e) {
+      LOG.error("Can not update status file ", e);
+      Assert.fail();
+    }
   }
 }

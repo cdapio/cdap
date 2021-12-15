@@ -65,7 +65,7 @@ public class SupportBundleService implements Closeable {
 
   private static final Logger LOG = LoggerFactory.getLogger(SupportBundleService.class);
   private static final Gson GSON = new GsonBuilder().create();
-  private static Set<SupportBundleTaskFactory> supportBundleTaskFactories;
+  private final Set<SupportBundleTaskFactory> supportBundleTaskFactories;
   private final ExecutorService executorService;
   private final CConfiguration cConf;
   private final RemoteNamespaceQueryClient namespaceQueryClient;
