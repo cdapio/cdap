@@ -560,6 +560,29 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  public void scanApplications(NamespaceId id, int txBatchSize,
+                               BiConsumer<ApplicationId, ApplicationSpecification> consumer) {
+
+    AtomicReference<AppMetadataStore.Cursor> cursorRef = new AtomicReference<>(AppMetadataStore.Cursor.EMPTY);
+
+    while (true) {
+      AtomicInteger count = new AtomicInteger();
+
+      TransactionRunners.run(transactionRunner, context -> {
+        getAppMetadataStore(context).scanApplications(id.getNamespace(), cursorRef.get(), (cursor, entry) -> {
+          cursorRef.set(cursor);
+          consumer.accept(entry.getKey(), entry.getValue().getSpec());
+          return count.incrementAndGet() < txBatchSize;
+        });
+      });
+
+      if (count.get() == 0) {
+        break;
+      }
+    }
+  }
+
+  @Override
   public Map<ApplicationId, ApplicationSpecification> getApplications(Collection<ApplicationId> ids) {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getApplicationsForAppIds(ids).entrySet().stream()
