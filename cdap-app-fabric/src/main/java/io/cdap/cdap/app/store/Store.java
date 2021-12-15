@@ -314,6 +314,17 @@ public interface Store {
   void scanApplications(int txBatchSize, BiConsumer<ApplicationId, ApplicationSpecification> consumer);
 
   /**
+   * Scans for applications in the specified namespace
+   *
+   * @param id the namespace to scan application specs from
+   * @param txBatchSize maximum number of applications to scan in one transaction to
+   *                    prevent holding a single transaction for too long
+   * @param consumer a {@link BiConsumer} to consume each application being scanned
+   */
+  void scanApplications(NamespaceId id, int txBatchSize,
+                        BiConsumer<ApplicationId, ApplicationSpecification> consumer);
+
+  /**
    * Returns a Map of {@link ApplicationSpecification} for the given set of {@link ApplicationId}.
    *
    * @param ids the list of application ids to get the specs
