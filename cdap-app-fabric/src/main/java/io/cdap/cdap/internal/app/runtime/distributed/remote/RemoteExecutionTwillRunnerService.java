@@ -26,6 +26,7 @@ import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
+import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
@@ -455,7 +456,8 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
             }
             completed.set(false);
             try {
-              if (createControllerIfNeeded(runRecordDetail)) {
+              if (runRecordDetail.getStatus() == ProgramRunStatus.RUNNING
+                && createControllerIfNeeded(runRecordDetail)) {
                 count.incrementAndGet();
               }
             } catch (Exception e) {
