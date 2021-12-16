@@ -40,7 +40,6 @@ import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
-import io.cdap.cdap.security.store.SecureStoreService;
 import org.apache.twill.zookeeper.ZKClientService;
 
 import java.util.Arrays;
@@ -48,7 +47,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * The main class to run app-fabric and other supporting services.
+ * The main class to run supportbundle and other supporting services.
  */
 
 public class SupportBundleServiceMain extends AbstractServiceMain<EnvironmentOptions> {
@@ -86,7 +85,6 @@ public class SupportBundleServiceMain extends AbstractServiceMain<EnvironmentOpt
                              MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
                              EnvironmentOptions options) {
     services.add(injector.getInstance(SupportBundleInternalService.class));
-    services.add(injector.getInstance(SecureStoreService.class));
     Binding<ZKClientService> zkBinding = injector.getExistingBinding(
       Key.get(ZKClientService.class));
     if (zkBinding != null) {

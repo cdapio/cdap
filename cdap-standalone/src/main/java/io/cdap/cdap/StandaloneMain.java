@@ -308,7 +308,6 @@ public class StandaloneMain {
 
     supportBundleInternalService.startAndWait();
 
-
     String protocol = sslEnabled ? "https" : "http";
     int dashboardPort = sslEnabled ?
       cConf.getInt(Constants.Dashboard.SSL_BIND_PORT) :
