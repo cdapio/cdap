@@ -139,6 +139,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private static final String CPU_MULTIPLIER = "master.environment.k8s.container.cpu.multiplier";
   private static final String MEMORY_MULTIPLIER = "master.environment.k8s.container.memory.multiplier";
   private static final String DEFAULT_MULTIPLIER = "1.0";
+  private static final int ERROR_CODE_ALREADY_EXISTS = 409;
 
   private final MasterEnvironmentContext masterEnvContext;
   private final ApiClient apiClient;
@@ -652,8 +653,15 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
         .endTemplate()
       .endSpec()
       .build();
-
-    batchV1Api.createNamespacedJob(kubeNamespace, job, "true", null, null);
+    try {
+      batchV1Api.createNamespacedJob(kubeNamespace, job, "true", null, null);
+    } catch (ApiException e) {
+      if (e.getCode() == ERROR_CODE_ALREADY_EXISTS) {
+        LOG.warn("The job already exists : " , e.getResponseBody());
+      } else {
+        throw e;
+      }
+    }
     LOG.trace("Created Job {} in Kubernetes.", metadata.getName());
     return job.getMetadata();
   }
