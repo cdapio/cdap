@@ -140,8 +140,8 @@ public class DefaultArtifactRepository implements ArtifactRepository {
 
   @Override
   public CloseableClassLoader createArtifactClassLoader(
-    Location artifactLocation, EntityImpersonator entityImpersonator) throws IOException {
-    return artifactClassLoaderFactory.createClassLoader(ImmutableList.of(artifactLocation).iterator(),
+    ArtifactDescriptor artifactDescriptor, EntityImpersonator entityImpersonator) throws IOException {
+    return artifactClassLoaderFactory.createClassLoader(ImmutableList.of(artifactDescriptor.getLocation()).iterator(),
                                                         entityImpersonator);
   }
 

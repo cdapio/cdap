@@ -53,15 +53,14 @@ import javax.annotation.Nullable;
 public interface ArtifactRepository extends ArtifactRepositoryReader {
 
   /**
-   * Create a classloader that uses the artifact at the specified location to load classes, with access to
+   * Create a classloader that uses the artifact specified by {@link ArtifactDescriptor} to load classes, with access to
    * packages that all program type has access to.
    * It delegates to {@link ArtifactClassLoaderFactory#createClassLoader(Location, EntityImpersonator)}.
    *
    * @see ArtifactClassLoaderFactory
    */
-  CloseableClassLoader createArtifactClassLoader(Location artifactLocation,
+  CloseableClassLoader createArtifactClassLoader(ArtifactDescriptor artifactDescriptor,
                                                  EntityImpersonator entityImpersonator) throws IOException;
-
   /**
    * Clear all artifacts in the given namespace. This method is only intended to be called by unit tests, and
    * when a namespace is being deleted.
