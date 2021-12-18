@@ -43,6 +43,7 @@ import io.cdap.cdap.common.lang.CombineClassLoader;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
@@ -113,8 +114,11 @@ public final class InMemoryConfigurator implements Configurator {
 
     // Create the classloader
     EntityImpersonator classLoaderImpersonator = new EntityImpersonator(artifactId.toEntityId(), impersonator);
-    try (CloseableClassLoader classLoader = artifactRepository.createArtifactClassLoader(artifactLocation,
-                                                                                         classLoaderImpersonator)) {
+    try (CloseableClassLoader classLoader =
+           artifactRepository.createArtifactClassLoader(new ArtifactDescriptor(artifactId.getNamespace().getId(),
+                                                                               artifactId.toArtifactId(),
+                                                                               artifactLocation),
+                                                        classLoaderImpersonator)) {
       SettableFuture<ConfigResponse> result = SettableFuture.create();
 
       Object appMain = classLoader.loadClass(appClassName).newInstance();
