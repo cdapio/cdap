@@ -66,6 +66,7 @@ final class DataprocConf {
   // Dataproc will pass it to GCE when creating the GCE cluster.
   // It can be overridden by profile runtime arguments (system.profile.properties.serviceAccount)
   static final String SERVICE_ACCOUNT = "serviceAccount";
+  static final String ROOT_URL = "rootUrl";
 
   static final Pattern CLUSTER_PROPERTIES_PATTERN = Pattern.compile("^[a-zA-Z0-9\\-]+:");
   static final int MAX_NETWORK_TAGS = 64;
@@ -96,6 +97,7 @@ final class DataprocConf {
   private final String subnet;
   private final String imageVersion;
   private final String customImageUri;
+  private final String rootUrl;
 
   private final int masterNumNodes;
   private final int masterCPUs;
@@ -163,7 +165,8 @@ final class DataprocConf {
          conf.clusterMetaData, conf.clusterLabels, conf.networkTags, conf.initActions, conf.runtimeJobManagerEnabled,
          conf.clusterProperties, conf.autoScalingPolicy, conf.idleTTLMinutes, conf.tokenEndpoint,
          conf.secureBootEnabled, conf.vTpmEnabled, conf.integrityMonitoringEnabled, conf.clusterReuseEnabled,
-         conf.clusterReuseThresholdMinutes, conf.clusterReuseKey, conf.computeReadTimeout, conf.computeConnectionTimeout);
+         conf.clusterReuseThresholdMinutes, conf.clusterReuseKey, conf.computeReadTimeout, conf.computeConnectionTimeout,
+         conf.rootUrl);
   }
 
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
@@ -185,7 +188,7 @@ final class DataprocConf {
                        @Nullable String tokenEndpoint, boolean secureBootEnabled, boolean vTpmEnabled,
                        boolean integrityMonitoringEnabled, boolean clusterReuseEnabled,
                        long clusterReuseThresholdMinutes, @Nullable String clusterReuseKey,
-                       int computeReadTimeout, int computeConnectionTimeout) {
+                       int computeReadTimeout, int computeConnectionTimeout, @Nullable String rootUrl) {
     this.accountKey = accountKey;
     this.region = region;
     this.zone = zone;
@@ -238,6 +241,7 @@ final class DataprocConf {
     this.integrityMonitoringEnabled = integrityMonitoringEnabled;
     this.computeReadTimeout = computeReadTimeout;
     this.computeConnectionTimeout = computeConnectionTimeout;
+    this.rootUrl = rootUrl;
   }
 
   String getRegion() {
@@ -441,6 +445,10 @@ final class DataprocConf {
 
   public int getComputeConnectionTimeout() {
     return computeConnectionTimeout;
+  }
+
+  public String getRootUrl() {
+    return rootUrl;
   }
 
   /**
@@ -664,6 +672,7 @@ final class DataprocConf {
                                     COMPUTE_HTTP_REQUEST_READ_TIMEOUT_DEFAULT);
     int computeConnectionTimeout = getInt(properties, COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT,
                                           COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT_DEFAULT);
+    String rootUrl = getString(properties, ROOT_URL);
 
     return new DataprocConf(accountKey, region, zone, projectId, networkHostProjectID, network, subnet,
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
@@ -678,7 +687,7 @@ final class DataprocConf {
                             initActions, runtimeJobManagerEnabled, clusterProps, autoScalingPolicy, idleTTL,
                             tokenEndpoint, secureBootEnabled, vTpmEnabled, integrityMonitoringEnabled,
                             clusterReuseEnabled, clusterReuseThresholdMinutes, clusterReuseKey,
-                            computeReadTimeout, computeConnectionTimeout);
+                            computeReadTimeout, computeConnectionTimeout, rootUrl);
   }
 
   // the UI never sends nulls, it only sends empty strings.

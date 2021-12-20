@@ -4717,7 +4717,7 @@
   </property>
 
   <property>
-    <name>compute.request.connectionTimeout</name>
+    <name>provisioner.system.properties.gcp-dataproc.compute.request.connectionTimeout</name>
     <value>20000</value>
     <description>
       The default Compute connection timeout.
@@ -4725,10 +4725,18 @@
   </property>
 
   <property>
-    <name>compute.request.readTimeout</name>
+    <name>provisioner.system.properties.gcp-dataproc.compute.request.readTimeout</name>
     <value>20000</value>
     <description>
       The default Compute read timeout.
+    </description>
+  </property>
+
+  <property>
+    <name>provisioner.system.properties.gcp-dataproc.rootUrl</name>
+    <value>dataproc.googleapis.com:443</value>
+    <description>
+      The default Root URL for Dataproc.
     </description>
   </property>
 </configuration>
