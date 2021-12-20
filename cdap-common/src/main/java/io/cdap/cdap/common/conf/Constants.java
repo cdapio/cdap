@@ -787,6 +787,21 @@ public final class Constants {
     public static final String AUTHORIZATION_METRICS_TAGS_ENABLED = "security.authorization.metrics.tags.enabled";
 
     /**
+     * Writer specific config for use subscriber in metadata key
+     */
+    public static final String WRITER_USE_SUBSCRIBER_METADATA_KEY = "metrics.writer.%s.use.subscriber.metadata.key";
+
+    /**
+     * Writer specific config for restricting write frequency
+     */
+    public static final String WRITER_LIMIT_WRITE_FREQ = "metrics.writer.%s.limit.write.freq";
+
+    /**
+     * Writer specific config for delay between writes
+     */
+    public static final String WRITER_WRITE_FREQUENCY_SECONDS = "metrics.writer.%s.write.frequency.seconds";
+
+    /**
      * Metric's dataset related constants.
      */
     public static final class Dataset {

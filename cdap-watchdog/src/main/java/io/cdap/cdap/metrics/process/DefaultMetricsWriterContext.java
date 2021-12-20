@@ -43,6 +43,6 @@ public class DefaultMetricsWriterContext implements MetricsWriterContext {
   }
 
   public Map<String, String> getProperties() {
-    return Collections.unmodifiableMap(properties);
+    return properties;
   }
 }
