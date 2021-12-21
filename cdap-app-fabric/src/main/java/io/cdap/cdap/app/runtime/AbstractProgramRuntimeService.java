@@ -184,8 +184,8 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
         controller.setProgramController(runner.run(executableProgram, optionsWithPlugins));
       } catch (Exception e) {
-        controller.failed(e);
-        programStateWriter.error(programRunId, e);
+//        controller.failed(e);
+//        programStateWriter.error(programRunId, e);
         LOG.error("Exception while trying to run program", e);
       }
     });
