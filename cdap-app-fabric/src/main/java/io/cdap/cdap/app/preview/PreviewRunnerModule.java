@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2020 Cask Data, Inc.
+ * Copyright © 2016-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,12 +22,15 @@ import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.multibindings.OptionalBinder;
 import com.google.inject.name.Names;
 import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.deploy.ManagerFactory;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.config.PreferencesService;
@@ -49,22 +52,27 @@ import io.cdap.cdap.internal.app.preview.MessagingPreviewDataPublisher;
 import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReaderProvider;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactStore;
 import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.LocalArtifactRepositoryReader;
+import io.cdap.cdap.internal.app.runtime.artifact.LocalPluginFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
-import io.cdap.cdap.internal.app.runtime.artifact.PluginFinderProvider;
+import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReader;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowStateWriter;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import io.cdap.cdap.internal.app.store.DefaultStore;
+import io.cdap.cdap.internal.app.worker.RemoteWorkerPluginFinder;
+import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerClient;
 import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.internal.capability.CapabilityStatusStore;
 import io.cdap.cdap.internal.pipeline.SynchronousPipelineFactory;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metadata.DefaultMetadataAdmin;
+import io.cdap.cdap.metadata.LocalPreferencesFetcherInternal;
 import io.cdap.cdap.metadata.MetadataAdmin;
 import io.cdap.cdap.metadata.PreferencesFetcher;
-import io.cdap.cdap.metadata.PreferencesFetcherProvider;
+import io.cdap.cdap.metadata.RemotePreferencesFetcherInternal;
 import io.cdap.cdap.pipeline.PipelineFactory;
 import io.cdap.cdap.scheduler.NoOpScheduler;
 import io.cdap.cdap.scheduler.Scheduler;
@@ -84,6 +92,7 @@ import io.cdap.cdap.store.DefaultOwnerStore;
  * Provides bindings required to create injector for running preview.
  */
 public class PreviewRunnerModule extends PrivateModule {
+  private final CConfiguration cConf;
   private final ArtifactStore artifactStore;
   private final AccessControllerInstantiator accessControllerInstantiator;
   private final AccessEnforcer accessEnforcer;
@@ -91,22 +100,18 @@ public class PreviewRunnerModule extends PrivateModule {
   private final PermissionManager permissionManager;
   private final PreferencesService preferencesService;
   private final ProgramRuntimeProviderLoader programRuntimeProviderLoader;
-  private final ArtifactRepositoryReaderProvider artifactRepositoryReaderProvider;
-  private final PluginFinderProvider pluginFinderProvider;
-  private final PreferencesFetcherProvider preferencesFetcherProvider;
-  private final MessagingService messagingService;
+    private final MessagingService messagingService;
 
   @Inject
-  PreviewRunnerModule(ArtifactRepositoryReaderProvider readerProvider, ArtifactStore artifactStore,
+  PreviewRunnerModule(CConfiguration cConf,
+                      ArtifactStore artifactStore,
                       AccessControllerInstantiator accessControllerInstantiator,
                       AccessEnforcer accessEnforcer,
                       ContextAccessEnforcer contextAccessEnforcer,
                       PermissionManager permissionManager, PreferencesService preferencesService,
                       ProgramRuntimeProviderLoader programRuntimeProviderLoader,
-                      PluginFinderProvider pluginFinderProvider,
-                      PreferencesFetcherProvider preferencesFetcherProvider,
                       MessagingService messagingService) {
-    this.artifactRepositoryReaderProvider = readerProvider;
+    this.cConf = cConf;
     this.artifactStore = artifactStore;
     this.accessControllerInstantiator = accessControllerInstantiator;
     this.accessEnforcer = accessEnforcer;
@@ -114,24 +119,48 @@ public class PreviewRunnerModule extends PrivateModule {
     this.permissionManager = permissionManager;
     this.preferencesService = preferencesService;
     this.programRuntimeProviderLoader = programRuntimeProviderLoader;
-    this.pluginFinderProvider = pluginFinderProvider;
-    this.preferencesFetcherProvider = preferencesFetcherProvider;
     this.messagingService = messagingService;
   }
 
   @Override
   protected void configure() {
-    bind(ArtifactRepositoryReader.class).toProvider(artifactRepositoryReaderProvider);
+    Boolean artifactLocalizerEnabled = cConf.getBoolean(Constants.Preview.ARTIFACT_LOCALIZER_ENABLED, false);
 
-    bind(ArtifactRepository.class).to(DefaultArtifactRepository.class);
-    expose(ArtifactRepository.class);
+    if (artifactLocalizerEnabled) {
+      bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class);
+      bind(ArtifactRepository.class).to(RemoteArtifactRepository.class);
+      expose(ArtifactRepository.class);
 
-    bind(ArtifactRepository.class)
-      .annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO))
-      .to(DefaultArtifactRepository.class)
-      .in(Scopes.SINGLETON);
-    expose(ArtifactRepository.class)
-      .annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO));
+      bind(ArtifactRepository.class)
+        .annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO))
+        .to(RemoteArtifactRepository.class)
+        .in(Scopes.SINGLETON);
+      expose(ArtifactRepository.class).annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO));
+
+      bind(PluginFinder.class).to(RemoteWorkerPluginFinder.class);
+      expose(PluginFinder.class);
+
+      bind(PreferencesFetcher.class).to(RemotePreferencesFetcherInternal.class);
+      expose(PreferencesFetcher.class);
+
+      OptionalBinder.newOptionalBinder(binder(), ArtifactLocalizerClient.class);
+    } else {
+      bind(ArtifactRepositoryReader.class).to(LocalArtifactRepositoryReader.class);
+      bind(ArtifactRepository.class).to(DefaultArtifactRepository.class);
+      expose(ArtifactRepository.class);
+
+      bind(ArtifactRepository.class)
+        .annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO))
+        .to(DefaultArtifactRepository.class)
+        .in(Scopes.SINGLETON);
+      expose(ArtifactRepository.class).annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO));
+
+      bind(PluginFinder.class).to(LocalPluginFinder.class);
+      expose(PluginFinder.class);
+
+      bind(PreferencesFetcher.class).to(LocalPreferencesFetcherInternal.class);
+      expose(PreferencesFetcher.class);
+    }
 
     bind(ArtifactStore.class).toInstance(artifactStore);
     expose(ArtifactStore.class);
@@ -205,12 +234,6 @@ public class PreviewRunnerModule extends PrivateModule {
     expose(OwnerStore.class);
     bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
     expose(OwnerAdmin.class);
-
-    bind(PluginFinder.class).toProvider(pluginFinderProvider);
-    expose(PluginFinder.class);
-
-    bind(PreferencesFetcher.class).toProvider(preferencesFetcherProvider);
-    expose(PreferencesFetcher.class);
 
     bind(CapabilityReader.class).to(CapabilityStatusStore.class);
   }
