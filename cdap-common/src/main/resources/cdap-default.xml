@@ -4739,20 +4739,4 @@
       The default Root URL for Dataproc.
     </description>
   </property>
-
-  <property>
-    <name>compute.request.connectionTimeout</name>
-    <value>20000</value>
-    <description>
-      The default Compute connection timeout.
-    </description>
-  </property>
-
-  <property>
-    <name>compute.request.readTimeout</name>
-    <value>20000</value>
-    <description>
-      The default Compute read timeout.
-    </description>
-  </property>
 </configuration>

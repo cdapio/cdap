@@ -165,8 +165,8 @@ final class DataprocConf {
          conf.clusterMetaData, conf.clusterLabels, conf.networkTags, conf.initActions, conf.runtimeJobManagerEnabled,
          conf.clusterProperties, conf.autoScalingPolicy, conf.idleTTLMinutes, conf.tokenEndpoint,
          conf.secureBootEnabled, conf.vTpmEnabled, conf.integrityMonitoringEnabled, conf.clusterReuseEnabled,
-         conf.clusterReuseThresholdMinutes, conf.clusterReuseKey, conf.computeReadTimeout, conf.computeConnectionTimeout,
-         conf.rootUrl);
+         conf.clusterReuseThresholdMinutes, conf.clusterReuseKey, conf.computeReadTimeout,
+         conf.computeConnectionTimeout, conf.rootUrl);
   }
 
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
