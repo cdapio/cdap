@@ -19,8 +19,11 @@ package io.cdap.cdap.master.environment.k8s;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
+import io.cdap.cdap.common.internal.DefaultLocalFileProvider;
+import io.cdap.cdap.common.internal.LocalFileProvider;
 import io.cdap.cdap.k8s.discovery.KubeDiscoveryService;
 import io.cdap.cdap.k8s.runtime.KubeTwillRunnerService;
+import io.cdap.cdap.k8s.spi.environment.KubeEnvironmentInitializer;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
@@ -30,7 +33,6 @@ import io.cdap.cdap.master.spi.environment.spark.SparkConfig;
 import io.cdap.cdap.master.spi.environment.spark.SparkLocalizeResource;
 import io.cdap.cdap.master.spi.environment.spark.SparkSubmitContext;
 import io.kubernetes.client.custom.Quantity;
-import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1ConfigMapBuilder;
@@ -124,8 +126,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String SPARK_CONFIGS_PREFIX = "spark.kubernetes";
   private static final String SPARK_KUBERNETES_DRIVER_LABEL_PREFIX = "spark.kubernetes.driver.label.";
   private static final String SPARK_KUBERNETES_EXECUTOR_LABEL_PREFIX = "spark.kubernetes.executor.label.";
-  private static final String SPARK_KUBERNETES_DRIVER_POD_TEMPLATE = "spark.kubernetes.driver.podTemplateFile";
-  private static final String SPARK_KUBERNETES_EXECUTOR_POD_TEMPLATE = "spark.kubernetes.executor.podTemplateFile";
+  protected static final String SPARK_KUBERNETES_DRIVER_POD_TEMPLATE = "spark.kubernetes.driver.podTemplateFile";
+  protected static final String SPARK_KUBERNETES_EXECUTOR_POD_TEMPLATE = "spark.kubernetes.executor.podTemplateFile";
   private static final String SPARK_KUBERNETES_METRICS_PROPERTIES_CONF = "spark.metrics.conf";
   private static final String POD_TEMPLATE_FILE_NAME = "podTemplate-";
   private static final String CDAP_LOCALIZE_FILES_PATH = "/etc/cdap/localizefiles";
@@ -133,6 +135,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String NAMESPACE_CREATION_ENABLED = "master.environment.k8s.namespace.creation.enabled";
   private static final String CDAP_NAMESPACE_LABEL = "cdap.namespace";
   private static final String RESOURCE_QUOTA_NAME = "cdap-resource-quota";
+  private static final String INITIALIZER_EXTENSION_DIR = "master.environment.k8s.initializer.extension.dir";
 
   private static final String DEFAULT_NAMESPACE = "default";
   private static final String DEFAULT_INSTANCE_LABEL = "cdap.instance";
@@ -158,17 +161,28 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private String configMapName;
   private CoreV1Api coreV1Api;
   private boolean namespaceCreationEnabled;
+  private KubeEnvironmentInitializerProvider kubeEnvironmentInitializerProvider;
+  private KubeMasterPathProvider kubeMasterPathProvider;
+  private LocalFileProvider localFileProvider;
 
   @Override
   public void initialize(MasterEnvironmentContext context) throws IOException, ApiException {
     LOG.info("Initializing Kubernetes environment");
 
     Map<String, String> conf = context.getConfigurations();
+    localFileProvider = new DefaultLocalFileProvider();
     podInfoDir = new File(conf.getOrDefault(POD_INFO_DIR, DEFAULT_POD_INFO_DIR));
     podLabelsFile = new File(podInfoDir, conf.getOrDefault(POD_LABELS_FILE, DEFAULT_POD_LABELS_FILE));
     podNameFile = new File(podInfoDir, conf.getOrDefault(POD_NAME_FILE, DEFAULT_POD_NAME_FILE));
     podUidFile = new File(podInfoDir, conf.getOrDefault(POD_UID_FILE, DEFAULT_POD_UID_FILE));
     namespaceCreationEnabled = Boolean.parseBoolean(conf.get(NAMESPACE_CREATION_ENABLED));
+    String k8sExtInitDir = conf.get(INITIALIZER_EXTENSION_DIR);
+    if (k8sExtInitDir == null) {
+      kubeEnvironmentInitializerProvider = new NoOpKubeEnvironmentInitializerProvider();
+    } else {
+      kubeEnvironmentInitializerProvider = new KubeEnvironmentInitializerExtensionLoader(k8sExtInitDir);
+    }
+    kubeMasterPathProvider = new DefaultKubeMasterPathProvider();
 
     // We don't support scaling from inside pod. Scaling should be done via CDAP operator.
     // Currently we don't support more than one instance per system service, hence set it to "1".
@@ -225,6 +239,12 @@ public class KubeMasterEnvironment implements MasterEnvironment {
                                              Collections.singletonMap(instanceLabel, instanceName),
                                              Integer.parseInt(conf.getOrDefault(JOB_CLEANUP_INTERVAL, "60")),
                                              Integer.parseInt(conf.getOrDefault(JOB_CLEANUP_BATCH_SIZE, "1000")));
+    // Load Kubernetes environment initializer extensions
+    Map<String, KubeEnvironmentInitializer> kubeEnvironmentInitializers = kubeEnvironmentInitializerProvider
+      .loadKubeEnvironmentInitializers();
+    for (String initializerName: kubeEnvironmentInitializers.keySet()) {
+      LOG.info("Loaded Kubernetes environment initializer {}", initializerName);
+    }
     LOG.info("Kubernetes environment initialized with pod labels {}", podLabels);
   }
 
@@ -276,7 +296,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   @Override
   public SparkConfig generateSparkSubmitConfig(SparkSubmitContext sparkSubmitContext) throws Exception {
     // Get k8s master path for spark submit
-    String master = getMasterPath();
+    String master = kubeMasterPathProvider.getMasterPath();
 
     Map<String, String> sparkConfMap = new HashMap<>(additionalSparkConfs);
     // Create pod template with config maps and add to spark conf.
@@ -308,6 +328,13 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     }
     findOrCreateKubeNamespace(namespace, cdapNamespace);
     updateOrCreateResourceQuota(namespace, cdapNamespace, properties);
+
+    // Run Kubernetes environment initializers on namespace creation
+    for (Map.Entry<String, KubeEnvironmentInitializer> k8sInitializer: kubeEnvironmentInitializerProvider
+      .loadKubeEnvironmentInitializers().entrySet()) {
+      LOG.info("Running Kubernetes environment initializer {} for namespace creation", k8sInitializer.getKey());
+      k8sInitializer.getValue().postNamespaceCreation(cdapNamespace, properties, coreV1Api);
+    }
   }
 
   @Override
@@ -407,20 +434,6 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     return CUSTOM_VOLUME_PREFIX.stream().anyMatch(name::startsWith);
   }
 
-  private String getMasterPath() {
-    // Spark master base path
-    String master;
-    // apiClient.getBasePath() returns path similar to https://10.8.0.1:443
-    try {
-      ApiClient apiClient = Config.defaultClient();
-      master = apiClient.getBasePath();
-    } catch (Exception e) {
-      // should not happen
-      throw new RuntimeException("Exception while getting kubernetes master path", e);
-    }
-    return master;
-  }
-
   private File getDriverPodTemplate(PodInfo podInfo, SparkSubmitContext sparkSubmitContext) throws Exception {
     V1Pod driverPod = new V1Pod();
     // set owner references for driver pod
@@ -433,6 +446,13 @@ public class KubeMasterEnvironment implements MasterEnvironment {
                                                     .withName(podInfo.getName()).build()).build());
     V1PodSpec driverPodSpec = createBasePodSpec();
     driverPod.setSpec(driverPodSpec);
+
+    // Run Kubernetes environment initializers on driver pod spec generation
+    for (Map.Entry<String, KubeEnvironmentInitializer> k8sInitializer: kubeEnvironmentInitializerProvider
+      .loadKubeEnvironmentInitializers().entrySet()) {
+      LOG.info("Running Kubernetes environment initializer {} for modifying driver pod spec", k8sInitializer.getKey());
+      k8sInitializer.getValue().modifySparkDriverPodTemplate(driverPodSpec);
+    }
 
     // While generating driver pod template, need to create config map that has compressed localize files
     try {
@@ -478,6 +498,13 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     V1PodSpec executorPodSpec = createBasePodSpec();
     executorPod.setSpec(executorPodSpec);
 
+    // Run Kubernetes environment initializers on executor pod spec generation
+    for (Map.Entry<String, KubeEnvironmentInitializer> k8sInitializer: kubeEnvironmentInitializerProvider
+      .loadKubeEnvironmentInitializers().entrySet()) {
+      LOG.info("Running Kubernetes environment initializer {} for modifying executor pod spec", k8sInitializer.getKey());
+      k8sInitializer.getValue().modifySparkExecutorPodTemplate(executorPodSpec);
+    }
+
     // Add configmap as a volume
     executorPodSpec.addVolumesItem(new V1Volume().name(configMapName)
                                      .configMap(new V1ConfigMapVolumeSourceBuilder().withName(configMapName).build()));
@@ -492,7 +519,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   }
 
   private File serializePodTemplate(V1Pod v1Pod) throws IOException {
-    File templateFile = new File(POD_TEMPLATE_FILE_NAME + UUID.randomUUID().toString());
+    File templateFile = localFileProvider.createNewFile(POD_TEMPLATE_FILE_NAME + UUID.randomUUID().toString());
     String podTemplateYaml = Yaml.dump(v1Pod);
     try (FileWriter writer = new FileWriter(templateFile)) {
       writer.write(podTemplateYaml);
@@ -727,5 +754,50 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   @VisibleForTesting
   void setNamespaceCreationEnabled() {
     this.namespaceCreationEnabled = true;
+  }
+
+  @VisibleForTesting
+  void setKubeEnvironmentInitializerProvider(KubeEnvironmentInitializerProvider kubeEnvironmentInitializerProvider) {
+    this.kubeEnvironmentInitializerProvider = kubeEnvironmentInitializerProvider;
+  }
+
+  @VisibleForTesting
+  void setKubeMasterPathProvider(KubeMasterPathProvider kubeMasterPathProvider) {
+    this.kubeMasterPathProvider = kubeMasterPathProvider;
+  }
+
+  @VisibleForTesting
+  void setAdditionalSparkConfs(Map<String, String> additionalSparkConfs) {
+    this.additionalSparkConfs = additionalSparkConfs;
+  }
+
+  @VisibleForTesting
+  void setPodInfo(PodInfo podInfo) {
+    this.podInfo = podInfo;
+  }
+
+  @VisibleForTesting
+  void setPodInfoDir(File podInfoDir) {
+    this.podInfoDir = podInfoDir;
+  }
+
+  @VisibleForTesting
+  void setPodLabelsFile(File podLabelsFile) {
+    this.podLabelsFile = podLabelsFile;
+  }
+
+  @VisibleForTesting
+  void setPodNameFile(File podNameFile) {
+    this.podNameFile = podNameFile;
+  }
+
+  @VisibleForTesting
+  void setPodUidFile(File podUidFile) {
+    this.podUidFile = podUidFile;
+  }
+
+  @VisibleForTesting
+  void setLocalFileProvider(LocalFileProvider localFileProvider) {
+    this.localFileProvider = localFileProvider;
   }
 }
