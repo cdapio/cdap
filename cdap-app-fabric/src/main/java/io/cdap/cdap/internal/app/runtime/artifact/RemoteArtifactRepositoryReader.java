@@ -43,6 +43,8 @@ import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FilterInputStream;
 import java.io.IOException;
@@ -57,6 +59,8 @@ import java.util.List;
  * Implementation for fetching artifact metadata from remote {@link ArtifactHttpHandlerInternal}
  */
 public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader {
+  private static final Logger LOG = LoggerFactory.getLogger(RemoteArtifactRepositoryReader.class);
+
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
@@ -153,6 +157,8 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
     List<ArtifactDetail> details = GSON.fromJson(httpResponse.getResponseBodyAsString(), ARTIFACT_DETAIL_LIST_TYPE);
     List<ArtifactDetail> detailList = new ArrayList<>();
     for (ArtifactDetail detail : details) {
+      LOG.error("wyzhang: RemoteArtifatRepositoryReader getArtifactDetails {}", detail.toString());
+      LOG.error("wyzhang: RemoteArtifatRepositoryReader locationFactory {}", locationFactory.getClass().getName());
       Location artifactLocation = locationFactory.create(detail.getDescriptor().getLocationURI());
       detailList.add(
         new ArtifactDetail(new ArtifactDescriptor(detail.getDescriptor().getNamespace(),
