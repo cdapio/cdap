@@ -78,6 +78,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -327,6 +328,24 @@ public class DefaultStore implements Store {
   public int countActiveRuns(@Nullable Integer limit) {
     return TransactionRunners.run(transactionRunner,
                                   context -> (int) getAppMetadataStore(context).countActiveRuns(limit));
+  }
+
+  @Override
+  public void scanActiveRuns(int txBatchSize, Consumer<RunRecordDetail> consumer) {
+    AtomicReference<AppMetadataStore.Cursor> cursorRef = new AtomicReference<>(AppMetadataStore.Cursor.EMPTY);
+
+    AtomicInteger count = new AtomicInteger();
+    do {
+      count.set(0);
+      TransactionRunners.run(transactionRunner, context -> {
+        AppMetadataStore.create(context).scanActiveRuns(cursorRef.get(), txBatchSize, (cursor, runRecordDetail) -> {
+          count.incrementAndGet();
+          cursorRef.set(cursor);
+          consumer.accept(runRecordDetail);
+        });
+      });
+    }
+    while (count.get() > 0);
   }
 
   @Override
