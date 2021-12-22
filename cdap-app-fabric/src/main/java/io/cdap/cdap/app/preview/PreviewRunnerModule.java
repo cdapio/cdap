@@ -31,6 +31,7 @@ import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.config.PreferencesService;

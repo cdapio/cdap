@@ -24,6 +24,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.Constants;
@@ -34,8 +35,10 @@ import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import io.cdap.cdap.gateway.handlers.ArtifactHttpHandlerInternal;
+import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerClient;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
+import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
@@ -54,6 +57,8 @@ import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+
 
 /**
  * Implementation for fetching artifact metadata from remote {@link ArtifactHttpHandlerInternal}
@@ -69,13 +74,16 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
 
   private final RemoteClient remoteClient;
   private final LocationFactory locationFactory;
+  private final Optional<ArtifactLocalizerClient> artifactLocalizerClient;
 
   @Inject
   public RemoteArtifactRepositoryReader(LocationFactory locationFactory,
-                                        RemoteClientFactory remoteClientFactory) {
+                                        RemoteClientFactory remoteClientFactory,
+                                        Optional<ArtifactLocalizerClient> artifactLocalizerClient) {
     this.remoteClient = remoteClientFactory.createRemoteClient(Constants.Service.APP_FABRIC_HTTP,
       new DefaultHttpRequestConfig(false), Constants.Gateway.INTERNAL_API_VERSION_3);
     this.locationFactory = locationFactory;
+    this.artifactLocalizerClient = artifactLocalizerClient;
   }
 
   /**
@@ -94,12 +102,20 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
     httpResponse = execute(requestBuilder.build());
     ArtifactDetail detail = GSON.fromJson(httpResponse.getResponseBodyAsString(), ARTIFACT_DETAIL_TYPE);
-    
-    Location artifactLocation = Locations
-        .getLocationFromAbsolutePath(locationFactory, detail.getDescriptor().getLocationURI().getPath());
-    return new ArtifactDetail(new ArtifactDescriptor(detail.getDescriptor().getNamespace(),
-                                                     detail.getDescriptor().getArtifactId(), artifactLocation),
-                              detail.getMeta());
+
+    Location location;
+    if (artifactLocalizerClient.isPresent()) {
+      ArtifactId id = new ArtifactId(detail.getDescriptor().getNamespace(),
+                                             detail.getDescriptor().getArtifactId().getName(),
+                                             detail.getDescriptor().getArtifactId().getVersion().getVersion());
+      location = Locations.toLocation(artifactLocalizerClient.get().getArtifactLocation(id));
+    } else {
+      location = Locations.getLocationFromAbsolutePath(locationFactory,
+                                                       detail.getDescriptor().getLocationURI().getPath());
+    }
+      return new ArtifactDetail(new ArtifactDescriptor(detail.getDescriptor().getNamespace(),
+                                                       detail.getDescriptor().getArtifactId(), location),
+                                detail.getMeta());
   }
 
   /**
@@ -159,10 +175,18 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
     for (ArtifactDetail detail : details) {
       LOG.error("wyzhang: RemoteArtifatRepositoryReader getArtifactDetails {}", detail.toString());
       LOG.error("wyzhang: RemoteArtifatRepositoryReader locationFactory {}", locationFactory.getClass().getName());
-      Location artifactLocation = locationFactory.create(detail.getDescriptor().getLocationURI());
+      Location location;
+      if (artifactLocalizerClient.isPresent()) {
+        ArtifactId artifactId = new ArtifactId(detail.getDescriptor().getNamespace(),
+                                       detail.getDescriptor().getArtifactId().getName(),
+                                       detail.getDescriptor().getArtifactId().getVersion().getVersion());
+        location = Locations.toLocation(artifactLocalizerClient.get().getArtifactLocation(artifactId));
+      } else {
+        location = locationFactory.create(detail.getDescriptor().getLocationURI());
+      }
       detailList.add(
         new ArtifactDetail(new ArtifactDescriptor(detail.getDescriptor().getNamespace(),
-                                                  detail.getDescriptor().getArtifactId(), artifactLocation),
+                                                  detail.getDescriptor().getArtifactId(), location),
                            detail.getMeta()));
     }
     return detailList;
@@ -203,6 +227,16 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
       throw new IOException(
         String.format("Failed to fetch artifact %s version %s from %s. Response code: %d. Error: %s",
                       artifactId.getName(), artifactId.getVersion(), urlConn.getURL(), responseCode, errorMsg));
+    }
+  }
+
+  private Location localizedArtifact(ArtifactId artifactId) throws IOException {
+    LOG.debug("wyzhang: localizeArtifact: {}", artifactId);
+
+    try {
+      return Locations.toLocation(artifactLocalizerClient.get().getArtifactLocation(artifactId));
+    } catch (ArtifactNotFoundException e) {
+      throw new IOException(String.format("Artifact %s is not found", artifactId), e);
     }
   }
 }

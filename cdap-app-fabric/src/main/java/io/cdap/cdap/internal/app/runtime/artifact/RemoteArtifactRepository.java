@@ -51,6 +51,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
 import javax.annotation.Nullable;
@@ -61,37 +62,33 @@ import javax.annotation.Nullable;
 public class RemoteArtifactRepository implements ArtifactRepository {
   private static final Logger LOG = LoggerFactory.getLogger(RemoteArtifactRepository.class);
 
-  private final LocationFactory locationFactory;
   private final ArtifactRepositoryReader artifactRepositoryReader;
   private final ArtifactClassLoaderFactory artifactClassLoaderFactory;
-  private final RemoteClient remoteClientInternal;
-  private final ArtifactLocalizerClient artifactLocalizerClient;
+  private final Optional<ArtifactLocalizerClient> artifactLocalizerClient;
 
   @VisibleForTesting
   @Inject
   public RemoteArtifactRepository(CConfiguration cConf, ArtifactRepositoryReader artifactRepositoryReader,
                                   ProgramRunnerFactory programRunnerFactory,
-                                  RemoteClientFactory remoteClientFactory,
-                                  ArtifactLocalizerClient artifactLocalizerClient,
-                                  LocationFactory locationFactory) {
-    this.locationFactory = locationFactory;
+                                  Optional<ArtifactLocalizerClient> artifactLocalizerClient) {
     this.artifactRepositoryReader = artifactRepositoryReader;
     this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, programRunnerFactory);
     this.artifactLocalizerClient = artifactLocalizerClient;
-    this.remoteClientInternal = remoteClientFactory.createRemoteClient(
-      Constants.Service.APP_FABRIC_HTTP,
-      new DefaultHttpRequestConfig(false),
-      String.format("%s", Constants.Gateway.INTERNAL_API_VERSION_3));
   }
 
   @Override
   public CloseableClassLoader createArtifactClassLoader(ArtifactDescriptor artifactDescriptor,
                                                         EntityImpersonator entityImpersonator) throws IOException {
-    ArtifactId id = new ArtifactId(artifactDescriptor.getNamespace(),
-                                   artifactDescriptor.getArtifactId().getName(),
-                                   artifactDescriptor.getArtifactId().getVersion().getVersion());
-    Location localizedLocation = localizedArtifact(id);
-    return artifactClassLoaderFactory.createClassLoader(localizedLocation, entityImpersonator);
+    Location location;
+    if (artifactLocalizerClient.isPresent()) {
+      ArtifactId id = new ArtifactId(artifactDescriptor.getNamespace(),
+                                     artifactDescriptor.getArtifactId().getName(),
+                                     artifactDescriptor.getArtifactId().getVersion().getVersion());
+      location = localizedArtifact(id);
+    } else {
+      location = artifactDescriptor.getLocation();
+    }
+    return artifactClassLoaderFactory.createClassLoader(location, entityImpersonator);
   }
 
   @Override
@@ -233,7 +230,7 @@ public class RemoteArtifactRepository implements ArtifactRepository {
     LOG.debug("wyzhang: localizeArtifact: {}", artifactId);
 
     try {
-      return Locations.toLocation(artifactLocalizerClient.getArtifactLocation(artifactId));
+      return Locations.toLocation(artifactLocalizerClient.get().getArtifactLocation(artifactId));
     } catch (ArtifactNotFoundException e) {
       throw new IOException(String.format("Artifact %s is not found", artifactId), e);
     }
