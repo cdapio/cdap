@@ -481,6 +481,15 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
    * service.
    */
   private boolean createControllerIfNeeded(RunRecordDetail runRecordDetail) {
+    // Controller only needs to be created for program runs in RUNNING or SUSPENDED state.
+    // Program runs in PENDING and STARTING state will eventually start and controller will be created later.
+    if (runRecordDetail.getStatus() != ProgramRunStatus.RUNNING
+      && runRecordDetail.getStatus() != ProgramRunStatus.SUSPENDED) {
+      LOG.debug("Skip creating controller for run {} with status {}", runRecordDetail.getProgramRunId(),
+                runRecordDetail.getStatus());
+      return false;
+    }
+
     Map<String, String> systemArgs = runRecordDetail.getSystemArgs();
     try {
       ClusterMode clusterMode = ClusterMode.valueOf(systemArgs.getOrDefault(ProgramOptionConstants.CLUSTER_MODE,
