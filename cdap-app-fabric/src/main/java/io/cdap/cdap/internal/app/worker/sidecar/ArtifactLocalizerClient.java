@@ -80,8 +80,9 @@ public class ArtifactLocalizerClient {
   }
 
   private File sendRequest(ArtifactId artifactId, boolean unpack) throws IOException, ArtifactNotFoundException {
-    String urlPath = String.format("/artifact/namespaces/%s/artifacts/%s/versions/%s",
-                                   artifactId.getNamespace(), artifactId.getArtifact(), artifactId.getVersion());
+    String urlPath = String.format("/artifact/namespaces/%s/artifacts/%s/versions/%s?unpack=%b",
+                                   artifactId.getNamespace(), artifactId.getArtifact(), artifactId.getVersion(),
+                                   unpack);
     URL url;
     try {
       url = new URI(sidecarBaseURL + urlPath).toURL();

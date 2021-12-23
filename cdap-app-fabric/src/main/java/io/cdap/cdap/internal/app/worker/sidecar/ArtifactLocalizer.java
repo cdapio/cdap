@@ -130,7 +130,7 @@ public class ArtifactLocalizer {
    * @throws Exception if there was an unexpected error
    */
   public File getAndUnpackArtifact(ArtifactId artifactId) throws Exception {
-    File jarLocation = Retries.callWithRetries(() -> fetchArtifact(artifactId), retryStrategy);
+    File jarLocation = getArtifact(artifactId);
     File unpackDir = getUnpackLocalPath(artifactId, Long.parseLong(jarLocation.getName().split("\\.")[0]));
     if (unpackDir.exists()) {
       LOG.debug("Found unpack directory as {}", unpackDir);
