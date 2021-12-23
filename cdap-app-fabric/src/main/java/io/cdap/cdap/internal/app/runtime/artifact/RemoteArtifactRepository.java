@@ -62,9 +62,9 @@ public class RemoteArtifactRepository implements ArtifactRepository {
   }
 
   @Override
-  public CloseableClassLoader createArtifactClassLoader(Location artifactLocation,
+  public CloseableClassLoader createArtifactClassLoader(ArtifactDescriptor artifactDescriptor,
                                                         EntityImpersonator entityImpersonator) throws IOException {
-    return artifactClassLoaderFactory.createClassLoader(artifactLocation, entityImpersonator);
+    return artifactClassLoaderFactory.createClassLoader(artifactDescriptor.getLocation(), entityImpersonator);
   }
 
   @Override
