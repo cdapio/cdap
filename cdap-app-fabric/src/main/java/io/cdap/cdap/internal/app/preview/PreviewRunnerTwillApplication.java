@@ -16,11 +16,13 @@
 
 package io.cdap.cdap.internal.app.preview;
 
+import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerTwillRunnable;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;
 
 import java.net.URI;
+import java.util.Optional;
 
 /**
  * The {@link TwillApplication} for launch preview runner.
@@ -32,24 +34,36 @@ public class PreviewRunnerTwillApplication implements TwillApplication {
   private final URI cConfFileURI;
   private final URI hConfFileURI;
   private final ResourceSpecification resourceSpec;
+  private final Optional<ResourceSpecification> artifactLocalizerResourceSpec;
 
-  public PreviewRunnerTwillApplication(URI cConfFileURI, URI hConfFileURI, ResourceSpecification resourceSpec) {
+  public PreviewRunnerTwillApplication(URI cConfFileURI, URI hConfFileURI, ResourceSpecification resourceSpec,
+                                       Optional<ResourceSpecification> artifactLocalizerResourceSpec) {
     this.cConfFileURI = cConfFileURI;
     this.hConfFileURI = hConfFileURI;
     this.resourceSpec = resourceSpec;
+    this.artifactLocalizerResourceSpec = artifactLocalizerResourceSpec;
   }
 
   @Override
   public TwillSpecification configure() {
-    return TwillSpecification.Builder.with()
+    TwillSpecification.Builder.MoreRunnable runnables = TwillSpecification.Builder.with()
       .setName(NAME)
-      .withRunnable()
-        .add(new PreviewRunnerTwillRunnable("cConf.xml", "hConf.xml"), resourceSpec)
+      .withRunnable();
+
+    TwillSpecification.Builder.RunnableSetter runnableSetter =
+    runnables.add(new PreviewRunnerTwillRunnable("cConf.xml", "hConf.xml"), resourceSpec)
       .withLocalFiles()
         .add("cConf.xml", cConfFileURI)
         .add("hConf.xml", hConfFileURI)
-      .apply()
-      .anyOrder()
-      .build();
+      .apply();
+
+    artifactLocalizerResourceSpec.ifPresent(spec ->
+      runnables.add(new ArtifactLocalizerTwillRunnable("cConf.xml", "hConf.xml"), spec)
+        .withLocalFiles()
+        .add("cConf.xml", cConfFileURI)
+        .add("hConf.xml", hConfFileURI)
+        .apply());
+
+    return runnableSetter.anyOrder().build();
   }
 }

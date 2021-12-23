@@ -30,6 +30,8 @@ import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
+import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerTwillRunnable;
+import io.cdap.cdap.master.spi.twill.DependentTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecretDisk;
 import io.cdap.cdap.master.spi.twill.SecureTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecurityContext;
@@ -56,6 +58,7 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -157,20 +160,45 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
             hConf.writeXml(writer);
           }
 
-          ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
+          Boolean artifactLocalizerEnabled = cConf.getBoolean(Constants.Preview.ARTIFACT_LOCALIZER_ENABLED);
+
+          ResourceSpecification runnerResourceSpec = ResourceSpecification.Builder.with()
             .setVirtualCores(cConf.getInt(Constants.Preview.CONTAINER_CORES))
             .setMemory(cConf.getInt(Constants.Preview.CONTAINER_MEMORY_MB), ResourceSpecification.SizeUnit.MEGA)
             .setInstances(cConf.getInt(Constants.Preview.CONTAINER_COUNT))
             .build();
 
-          LOG.info("Starting preview runners with {} instances", resourceSpec.getInstances());
+          Optional<ResourceSpecification> artifactLocalizerResourceSpec = Optional.empty();
+          if (artifactLocalizerEnabled) {
+            artifactLocalizerResourceSpec = Optional.of(
+              ResourceSpecification.Builder.with()
+                .setVirtualCores(cConf.getInt(Constants.ArtifactLocalizer.CONTAINER_CORES))
+                .setMemory(cConf.getInt(Constants.ArtifactLocalizer.CONTAINER_MEMORY_MB),
+                           ResourceSpecification.SizeUnit.MEGA)
+                .setInstances(cConf.getInt(Constants.TaskWorker.CONTAINER_COUNT))
+                .build());
+          }
 
-          TwillPreparer twillPreparer = twillRunner.prepare(new PreviewRunnerTwillApplication(cConfPath.toUri(),
-                                                                                              hConfPath.toUri(),
-                                                                                              resourceSpec));
+          LOG.info("Starting preview runners with {} instances and artifactLocalizer {}",
+                   runnerResourceSpec.getInstances(),
+                   artifactLocalizerEnabled ? "enabled" : "disabled");
+
+          TwillPreparer twillPreparer = twillRunner.prepare(
+            new PreviewRunnerTwillApplication(cConfPath.toUri(),
+                                              hConfPath.toUri(),
+                                              runnerResourceSpec,
+                                              artifactLocalizerResourceSpec));
           String priorityClass = cConf.get(Constants.Preview.CONTAINER_PRIORITY_CLASS_NAME);
           if (priorityClass != null) {
             twillPreparer = twillPreparer.setSchedulerQueue(priorityClass);
+          }
+
+          if (twillPreparer instanceof DependentTwillPreparer) {
+            if (artifactLocalizerEnabled) {
+              twillPreparer = ((DependentTwillPreparer) twillPreparer)
+                .dependentRunnableNames(PreviewRunnerTwillRunnable.class.getSimpleName(),
+                                        ArtifactLocalizerTwillRunnable.class.getSimpleName());
+            }
           }
 
           if (twillPreparer instanceof StatefulTwillPreparer) {
