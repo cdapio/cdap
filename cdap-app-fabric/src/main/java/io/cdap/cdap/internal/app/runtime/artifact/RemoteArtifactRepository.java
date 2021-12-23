@@ -28,7 +28,9 @@ import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
+import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerClient;
 import io.cdap.cdap.proto.artifact.ApplicationClassInfo;
 import io.cdap.cdap.proto.artifact.ApplicationClassSummary;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
@@ -36,12 +38,15 @@ import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import org.apache.twill.filesystem.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
 import javax.annotation.Nullable;
@@ -50,21 +55,34 @@ import javax.annotation.Nullable;
  * RemoteArtifactRepository provides a remote implementation of ArtifactRepository
  */
 public class RemoteArtifactRepository implements ArtifactRepository {
+  private static final Logger LOG = LoggerFactory.getLogger(RemoteArtifactRepository.class);
+
   private final ArtifactRepositoryReader artifactRepositoryReader;
   private final ArtifactClassLoaderFactory artifactClassLoaderFactory;
+  private final Optional<ArtifactLocalizerClient> artifactLocalizerClient;
 
   @VisibleForTesting
   @Inject
   public RemoteArtifactRepository(CConfiguration cConf, ArtifactRepositoryReader artifactRepositoryReader,
-                                  ProgramRunnerFactory programRunnerFactory) {
+                                  ProgramRunnerFactory programRunnerFactory,
+                                  Optional<ArtifactLocalizerClient> artifactLocalizerClient) {
     this.artifactRepositoryReader = artifactRepositoryReader;
     this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, programRunnerFactory);
+    this.artifactLocalizerClient = artifactLocalizerClient;
   }
 
   @Override
   public CloseableClassLoader createArtifactClassLoader(ArtifactDescriptor artifactDescriptor,
                                                         EntityImpersonator entityImpersonator) throws IOException {
-    return artifactClassLoaderFactory.createClassLoader(artifactDescriptor.getLocation(), entityImpersonator);
+    Location location;
+    if (artifactLocalizerClient.isPresent()) {
+      location = localizeArtifact(new ArtifactId(artifactDescriptor.getNamespace(),
+                                     artifactDescriptor.getArtifactId().getName(),
+                                     artifactDescriptor.getArtifactId().getVersion().getVersion()));
+    } else {
+      location = artifactDescriptor.getLocation();
+    }
+    return artifactClassLoaderFactory.createClassLoader(location, entityImpersonator);
   }
 
   @Override
@@ -199,6 +217,16 @@ public class RemoteArtifactRepository implements ArtifactRepository {
   @Override
   public List<ArtifactDetail> getArtifactDetails(ArtifactRange range, int limit,
                                                  ArtifactSortOrder order) throws Exception {
-    throw new UnsupportedOperationException();
+    return artifactRepositoryReader.getArtifactDetails(range, limit, order);
+  }
+
+  private Location localizeArtifact(ArtifactId artifactId) throws IOException {
+    LOG.debug("wyzhang: localizeArtifact: {}", artifactId);
+
+    try {
+      return Locations.toLocation(artifactLocalizerClient.get().getArtifactLocation(artifactId));
+    } catch (ArtifactNotFoundException e) {
+      throw new IOException(String.format("Artifact %s is not found", artifactId), e);
+    }
   }
 }
