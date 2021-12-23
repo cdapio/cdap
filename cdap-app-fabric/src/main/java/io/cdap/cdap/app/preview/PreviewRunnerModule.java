@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2020 Cask Data, Inc.
+ * Copyright © 2016-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -49,11 +49,11 @@ import io.cdap.cdap.internal.app.preview.MessagingPreviewDataPublisher;
 import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReaderProvider;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactStore;
 import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.LocalArtifactRepositoryReader;
+import io.cdap.cdap.internal.app.runtime.artifact.LocalPluginFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
-import io.cdap.cdap.internal.app.runtime.artifact.PluginFinderProvider;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowStateWriter;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import io.cdap.cdap.internal.app.store.DefaultStore;
@@ -62,9 +62,9 @@ import io.cdap.cdap.internal.capability.CapabilityStatusStore;
 import io.cdap.cdap.internal.pipeline.SynchronousPipelineFactory;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metadata.DefaultMetadataAdmin;
+import io.cdap.cdap.metadata.LocalPreferencesFetcherInternal;
 import io.cdap.cdap.metadata.MetadataAdmin;
 import io.cdap.cdap.metadata.PreferencesFetcher;
-import io.cdap.cdap.metadata.PreferencesFetcherProvider;
 import io.cdap.cdap.pipeline.PipelineFactory;
 import io.cdap.cdap.scheduler.NoOpScheduler;
 import io.cdap.cdap.scheduler.Scheduler;
@@ -91,22 +91,16 @@ public class PreviewRunnerModule extends PrivateModule {
   private final PermissionManager permissionManager;
   private final PreferencesService preferencesService;
   private final ProgramRuntimeProviderLoader programRuntimeProviderLoader;
-  private final ArtifactRepositoryReaderProvider artifactRepositoryReaderProvider;
-  private final PluginFinderProvider pluginFinderProvider;
-  private final PreferencesFetcherProvider preferencesFetcherProvider;
   private final MessagingService messagingService;
 
   @Inject
-  PreviewRunnerModule(ArtifactRepositoryReaderProvider readerProvider, ArtifactStore artifactStore,
+  PreviewRunnerModule(ArtifactStore artifactStore,
                       AccessControllerInstantiator accessControllerInstantiator,
                       AccessEnforcer accessEnforcer,
                       ContextAccessEnforcer contextAccessEnforcer,
                       PermissionManager permissionManager, PreferencesService preferencesService,
                       ProgramRuntimeProviderLoader programRuntimeProviderLoader,
-                      PluginFinderProvider pluginFinderProvider,
-                      PreferencesFetcherProvider preferencesFetcherProvider,
                       MessagingService messagingService) {
-    this.artifactRepositoryReaderProvider = readerProvider;
     this.artifactStore = artifactStore;
     this.accessControllerInstantiator = accessControllerInstantiator;
     this.accessEnforcer = accessEnforcer;
@@ -114,14 +108,12 @@ public class PreviewRunnerModule extends PrivateModule {
     this.permissionManager = permissionManager;
     this.preferencesService = preferencesService;
     this.programRuntimeProviderLoader = programRuntimeProviderLoader;
-    this.pluginFinderProvider = pluginFinderProvider;
-    this.preferencesFetcherProvider = preferencesFetcherProvider;
     this.messagingService = messagingService;
   }
 
   @Override
   protected void configure() {
-    bind(ArtifactRepositoryReader.class).toProvider(artifactRepositoryReaderProvider);
+    bind(ArtifactRepositoryReader.class).to(LocalArtifactRepositoryReader.class);
 
     bind(ArtifactRepository.class).to(DefaultArtifactRepository.class);
     expose(ArtifactRepository.class);
@@ -206,10 +198,10 @@ public class PreviewRunnerModule extends PrivateModule {
     bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
     expose(OwnerAdmin.class);
 
-    bind(PluginFinder.class).toProvider(pluginFinderProvider);
+    bind(PluginFinder.class).to(LocalPluginFinder.class);
     expose(PluginFinder.class);
 
-    bind(PreferencesFetcher.class).toProvider(preferencesFetcherProvider);
+    bind(PreferencesFetcher.class).to(LocalPreferencesFetcherInternal.class);
     expose(PreferencesFetcher.class);
 
     bind(CapabilityReader.class).to(CapabilityStatusStore.class);
