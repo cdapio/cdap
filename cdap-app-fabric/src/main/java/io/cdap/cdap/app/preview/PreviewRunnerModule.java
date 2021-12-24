@@ -61,7 +61,7 @@ import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryWithLo
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowStateWriter;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import io.cdap.cdap.internal.app.store.DefaultStore;
-import io.cdap.cdap.internal.app.worker.RemoteWorkerPluginFinder;
+import io.cdap.cdap.internal.app.worker.RemotePluginFinderWithLocalization;
 import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.internal.capability.CapabilityStatusStore;
 import io.cdap.cdap.internal.pipeline.SynchronousPipelineFactory;
@@ -147,7 +147,7 @@ public class PreviewRunnerModule extends PrivateModule {
 
       // Use remote implementation to fetch plugin metadata from AppFab.
       // Remote implementation internally uses artifact localizer to fetch and cache artifacts locally.
-      bind(PluginFinder.class).to(RemoteWorkerPluginFinder.class);
+      bind(PluginFinder.class).to(RemotePluginFinderWithLocalization.class);
       expose(PluginFinder.class);
 
       // Use remote implementation to fetch preferences from AppFab.

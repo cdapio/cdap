@@ -59,7 +59,7 @@ public class SystemAppModule extends AbstractModule {
     bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class).in(Scopes.SINGLETON);
     bind(ArtifactRepository.class).to(RemoteArtifactRepository.class);
     bind(PreferencesFetcher.class).to(RemotePreferencesFetcherInternal.class).in(Scopes.SINGLETON);
-    bind(PluginFinder.class).to(RemoteWorkerPluginFinder.class);
+    bind(PluginFinder.class).to(RemotePluginFinderWithLocalization.class);
 
     bind(ArtifactLocalizerClient.class).in(Scopes.SINGLETON);
     OptionalBinder.newOptionalBinder(binder(), ArtifactLocalizerClient.class);

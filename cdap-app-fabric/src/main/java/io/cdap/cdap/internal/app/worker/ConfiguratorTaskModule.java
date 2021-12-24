@@ -61,7 +61,7 @@ public class ConfiguratorTaskModule extends AbstractModule {
     bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.LOCAL);
     bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
 
-    bind(PluginFinder.class).to(RemoteWorkerPluginFinder.class);
+    bind(PluginFinder.class).to(RemotePluginFinderWithLocalization.class);
     bind(UGIProvider.class).to(CurrentUGIProvider.class);
 
     bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class).in(Scopes.SINGLETON);

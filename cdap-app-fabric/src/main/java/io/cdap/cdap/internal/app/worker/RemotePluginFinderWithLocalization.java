@@ -28,17 +28,19 @@ import org.apache.twill.filesystem.LocationFactory;
 import java.io.IOException;
 
 /**
- * RemoteWorkerPluginFinder is an extension of {@link RemotePluginFinder} that is meant to be used exclusively in tasks
- * running in the {@link TaskWorkerTwillRunnable}. This implementation uses the {@link ArtifactLocalizerClient} to
+ * {@link RemotePluginFinderWithLocalization} is an extension of {@link RemotePluginFinder}
+ * that localizes artifacts and use their local locations in returned value.
+ *
+ * This implementation uses the {@link ArtifactLocalizerClient} to
  * download and cache the given artifact on the local file system.
  */
-public class RemoteWorkerPluginFinder extends RemotePluginFinder {
+public class RemotePluginFinderWithLocalization extends RemotePluginFinder {
   private final ArtifactLocalizerClient artifactLocalizerClient;
 
   @Inject
-  RemoteWorkerPluginFinder(LocationFactory locationFactory,
-                           RemoteClientFactory remoteClientFactory,
-                           ArtifactLocalizerClient artifactLocalizerClient) {
+  RemotePluginFinderWithLocalization(LocationFactory locationFactory,
+                                     RemoteClientFactory remoteClientFactory,
+                                     ArtifactLocalizerClient artifactLocalizerClient) {
     super(locationFactory, remoteClientFactory);
     this.artifactLocalizerClient = artifactLocalizerClient;
   }
