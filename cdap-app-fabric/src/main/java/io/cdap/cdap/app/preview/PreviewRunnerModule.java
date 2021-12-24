@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2020 Cask Data, Inc.
+ * Copyright © 2016-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,6 +28,8 @@ import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.deploy.ManagerFactory;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.config.PreferencesService;
@@ -54,9 +56,12 @@ import io.cdap.cdap.internal.app.runtime.artifact.ArtifactStore;
 import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinderProvider;
+import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReaderWithLocalization;
+import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryWithLocalization;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowStateWriter;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import io.cdap.cdap.internal.app.store.DefaultStore;
+import io.cdap.cdap.internal.app.worker.RemoteWorkerPluginFinder;
 import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.internal.capability.CapabilityStatusStore;
 import io.cdap.cdap.internal.pipeline.SynchronousPipelineFactory;
@@ -65,6 +70,7 @@ import io.cdap.cdap.metadata.DefaultMetadataAdmin;
 import io.cdap.cdap.metadata.MetadataAdmin;
 import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.metadata.PreferencesFetcherProvider;
+import io.cdap.cdap.metadata.RemotePreferencesFetcherInternal;
 import io.cdap.cdap.pipeline.PipelineFactory;
 import io.cdap.cdap.scheduler.NoOpScheduler;
 import io.cdap.cdap.scheduler.Scheduler;
@@ -84,6 +90,7 @@ import io.cdap.cdap.store.DefaultOwnerStore;
  * Provides bindings required to create injector for running preview.
  */
 public class PreviewRunnerModule extends PrivateModule {
+  private final CConfiguration cConf;
   private final ArtifactStore artifactStore;
   private final AccessControllerInstantiator accessControllerInstantiator;
   private final AccessEnforcer accessEnforcer;
@@ -97,7 +104,8 @@ public class PreviewRunnerModule extends PrivateModule {
   private final MessagingService messagingService;
 
   @Inject
-  PreviewRunnerModule(ArtifactRepositoryReaderProvider readerProvider, ArtifactStore artifactStore,
+  PreviewRunnerModule(CConfiguration cConf,
+                      ArtifactRepositoryReaderProvider readerProvider, ArtifactStore artifactStore,
                       AccessControllerInstantiator accessControllerInstantiator,
                       AccessEnforcer accessEnforcer,
                       ContextAccessEnforcer contextAccessEnforcer,
@@ -106,6 +114,7 @@ public class PreviewRunnerModule extends PrivateModule {
                       PluginFinderProvider pluginFinderProvider,
                       PreferencesFetcherProvider preferencesFetcherProvider,
                       MessagingService messagingService) {
+    this.cConf = cConf;
     this.artifactRepositoryReaderProvider = readerProvider;
     this.artifactStore = artifactStore;
     this.accessControllerInstantiator = accessControllerInstantiator;
@@ -121,17 +130,47 @@ public class PreviewRunnerModule extends PrivateModule {
 
   @Override
   protected void configure() {
-    bind(ArtifactRepositoryReader.class).toProvider(artifactRepositoryReaderProvider);
+    Boolean artifactLocalizerEnabled = cConf.getBoolean(Constants.Preview.ARTIFACT_LOCALIZER_ENABLED, false);
 
-    bind(ArtifactRepository.class).to(DefaultArtifactRepository.class);
-    expose(ArtifactRepository.class);
+    if (artifactLocalizerEnabled) {
+      // Use remote implementation to fetch artifact metadata from AppFab.
+      // Remote implementation internally uses artifact localizer to fetch and cache artifacts locally.
+      bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReaderWithLocalization.class);
+      bind(ArtifactRepository.class).to(RemoteArtifactRepositoryWithLocalization.class);
+      expose(ArtifactRepository.class);
+      bind(ArtifactRepository.class)
+        .annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO))
+        .to(RemoteArtifactRepositoryWithLocalization.class)
+        .in(Scopes.SINGLETON);
+      expose(ArtifactRepository.class).annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO));
 
-    bind(ArtifactRepository.class)
-      .annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO))
-      .to(DefaultArtifactRepository.class)
-      .in(Scopes.SINGLETON);
-    expose(ArtifactRepository.class)
-      .annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO));
+
+      // Use remote implementation to fetch plugin metadata from AppFab.
+      // Remote implementation internally uses artifact localizer to fetch and cache artifacts locally.
+      bind(PluginFinder.class).to(RemoteWorkerPluginFinder.class);
+      expose(PluginFinder.class);
+
+      // Use remote implementation to fetch preferences from AppFab.
+      bind(PreferencesFetcher.class).to(RemotePreferencesFetcherInternal.class);
+      expose(PreferencesFetcher.class);
+    } else {
+      bind(ArtifactRepositoryReader.class).toProvider(artifactRepositoryReaderProvider);
+      bind(ArtifactRepository.class).to(DefaultArtifactRepository.class);
+      expose(ArtifactRepository.class);
+
+      bind(ArtifactRepository.class)
+        .annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO))
+        .to(DefaultArtifactRepository.class)
+        .in(Scopes.SINGLETON);
+      expose(ArtifactRepository.class)
+        .annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO));
+
+      bind(PluginFinder.class).toProvider(pluginFinderProvider);
+      expose(PluginFinder.class);
+
+      bind(PreferencesFetcher.class).toProvider(preferencesFetcherProvider);
+      expose(PreferencesFetcher.class);
+    }
 
     bind(ArtifactStore.class).toInstance(artifactStore);
     expose(ArtifactStore.class);
@@ -205,13 +244,7 @@ public class PreviewRunnerModule extends PrivateModule {
     expose(OwnerStore.class);
     bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
     expose(OwnerAdmin.class);
-
-    bind(PluginFinder.class).toProvider(pluginFinderProvider);
-    expose(PluginFinder.class);
-
-    bind(PreferencesFetcher.class).toProvider(preferencesFetcherProvider);
-    expose(PreferencesFetcher.class);
-
+    
     bind(CapabilityReader.class).to(CapabilityStatusStore.class);
   }
 
