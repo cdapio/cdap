@@ -21,10 +21,12 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
+import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.app.guice.DistributedArtifactManagerModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -39,13 +41,16 @@ import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.internal.app.preview.PreviewRequestFetcher;
+import io.cdap.cdap.internal.app.preview.PreviewRequestPollerInfoProvider;
 import io.cdap.cdap.internal.app.preview.RemotePreviewRequestFetcher;
 import io.cdap.cdap.internal.app.preview.UnsupportedPreviewRequestFetcher;
+import io.cdap.cdap.internal.app.runtime.k8s.PreviewRequestPollerInfo;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
+import io.cdap.cdap.master.spi.twill.ExtendedTwillContext;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
@@ -65,6 +70,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -81,12 +87,15 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
   private LogAppenderInitializer logAppenderInitializer;
   private TokenManager tokenManager;
 
+  private Map<String, String> args;
+  private TwillContext context;
+
   public ArtifactLocalizerTwillRunnable(String cConfFileName, String hConfFileName) {
     super(ImmutableMap.of("cConf", cConfFileName, "hConf", hConfFileName));
   }
 
   @VisibleForTesting
-  static Injector createInjector(CConfiguration cConf, Configuration hConf) {
+  static Injector createInjector(CConfiguration cConf, Configuration hConf, PreviewRequestPollerInfo pollerInfo) {
     List<Module> modules = new ArrayList<>();
 
     CoreSecurityModule coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf);
@@ -113,7 +122,9 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
           bind(DiscoveryServiceClient.class)
             .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
           if (cConf.getBoolean(Constants.Preview.ARTIFACT_LOCALIZER_ENABLED)) {
+            byte[] pollerInfoBytes = Bytes.toBytes(new Gson().toJson(pollerInfo));
             bind(PreviewRequestFetcher.class).to(RemotePreviewRequestFetcher.class);
+            bind(PreviewRequestPollerInfoProvider.class).toInstance(() -> pollerInfoBytes);
           } else {
             bind(PreviewRequestFetcher.class).to(UnsupportedPreviewRequestFetcher.class);
           }
@@ -136,7 +147,7 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
     super.initialize(context);
 
     try {
-      doInitialize();
+      doInitialize(context);
     } catch (Exception e) {
       LOG.error("Encountered error while initializing ArtifactLocalizerTwillRunnable", e);
       Throwables.propagateIfPossible(e);
@@ -183,7 +194,14 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
     }
   }
 
-  private void doInitialize() throws Exception {
+  private void doInitialize(TwillContext context) throws Exception {
+    PreviewRequestPollerInfo pollerInfo;
+    if (context instanceof ExtendedTwillContext) {
+      pollerInfo = new PreviewRequestPollerInfo(context.getInstanceId(), ((ExtendedTwillContext) context).getUID());
+    } else {
+      pollerInfo = new PreviewRequestPollerInfo(context.getInstanceId(), null);
+    }
+
     CConfiguration cConf = CConfiguration.create();
     cConf.clear();
     cConf.addResource(new File(getArgument("cConf")).toURI().toURL());
@@ -192,7 +210,7 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
     hConf.clear();
     hConf.addResource(new File(getArgument("hConf")).toURI().toURL());
 
-    Injector injector = createInjector(cConf, hConf);
+    Injector injector = createInjector(cConf, hConf, pollerInfo);
 
     // Initialize logging context
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
