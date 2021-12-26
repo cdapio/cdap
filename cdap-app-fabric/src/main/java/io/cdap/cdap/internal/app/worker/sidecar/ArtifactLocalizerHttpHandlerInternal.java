@@ -70,10 +70,21 @@ public class ArtifactLocalizerHttpHandlerInternal extends AbstractHttpHandler {
   @Path("/requests/pull")
   public void pullPreview(HttpRequest request, HttpResponder responder) throws IOException, UnauthorizedException {
     Optional<PreviewRequest> previewRequest = previewRequestFetcher.fetch();
+
+    String jsonResponse;
+
+    if (previewRequest.isPresent()) {
+      jsonResponse = GSON.toJson(previewRequest.get(), PreviewRequest.class);
+    } else {
+      jsonResponse = "";
+    }
+
     LOG.error("wyzhang: ArtifactLocalizerHttpHandlerInternal  preview request fethcer returns {}",
-              previewRequest.get());
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(previewRequest.get(), PreviewRequest.class));
+              jsonResponse);
+
+    responder.sendJson(HttpResponseStatus.OK, jsonResponse);
   }
+
 
   @GET
   @Path("/artifact/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}")
