@@ -28,6 +28,8 @@ import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -37,6 +39,7 @@ import java.util.Optional;
  * Fetch preview requests from remote server.
  */
 public class RemotePreviewRequestFetcher implements PreviewRequestFetcher {
+  private static final Logger LOG = LoggerFactory.getLogger(RemotePreviewRequestFetcher.class);
   private static final Gson GSON = new Gson();
 
   private final RemoteClient remoteClientInternal;
@@ -60,11 +63,13 @@ public class RemotePreviewRequestFetcher implements PreviewRequestFetcher {
   @Override
   public Optional<PreviewRequest> fetch(PreviewRequestPollerInfoProvider pollerInfoProvider)
     throws IOException, UnauthorizedException {
+    LOG.error("wyzhang: RemotePreviewRequestFetcher fetch start");
     HttpRequest request = remoteClientInternal.requestBuilder(HttpMethod.POST, "requests/pull")
       .withBody(ByteBuffer.wrap(pollerInfoProvider.get()))
       .build();
 
     HttpResponse httpResponse = remoteClientInternal.execute(request);
+    LOG.error("wyzhang: RemotePreviewRequestFetcher fetch got {}", httpResponse.toString());
     if (httpResponse.getResponseCode() == 200) {
       PreviewRequest previewRequest = GSON.fromJson(httpResponse.getResponseBodyAsString(), PreviewRequest.class);
       return Optional.ofNullable(previewRequest);
