@@ -38,6 +38,9 @@ import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
+import io.cdap.cdap.internal.app.preview.PreviewRequestFetcher;
+import io.cdap.cdap.internal.app.preview.RemotePreviewRequestFetcher;
+import io.cdap.cdap.internal.app.preview.UnsupportedPreviewRequestFetcher;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
@@ -109,6 +112,11 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
             .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
           bind(DiscoveryServiceClient.class)
             .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
+          if (cConf.getBoolean(Constants.Preview.ARTIFACT_LOCALIZER_ENABLED)) {
+            bind(PreviewRequestFetcher.class).to(RemotePreviewRequestFetcher.class);
+          } else {
+            bind(PreviewRequestFetcher.class).to(UnsupportedPreviewRequestFetcher.class);
+          }
         }
       });
       modules.add(new RemoteLogAppenderModule());

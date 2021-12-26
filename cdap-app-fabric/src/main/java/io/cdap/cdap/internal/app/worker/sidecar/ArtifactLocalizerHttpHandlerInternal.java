@@ -21,17 +21,24 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Singleton;
 import io.cdap.cdap.api.common.HttpErrorStatusProvider;
+import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.internal.app.preview.PreviewRequestFetcher;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.Optional;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -44,13 +51,27 @@ import javax.ws.rs.QueryParam;
 @Singleton
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3 + "/worker")
 public class ArtifactLocalizerHttpHandlerInternal extends AbstractHttpHandler {
+  private static final Logger LOG = LoggerFactory.getLogger(ArtifactLocalizerHttpHandlerInternal.class);
+
   private static final Gson GSON = new GsonBuilder().registerTypeAdapter(BasicThrowable.class,
                                                                          new BasicThrowableCodec()).create();
   private final ArtifactLocalizer artifactLocalizer;
+  private final PreviewRequestFetcher previewRequestFetcher;
 
   @VisibleForTesting
-  public ArtifactLocalizerHttpHandlerInternal(ArtifactLocalizer artifactLocalizer) {
+  public ArtifactLocalizerHttpHandlerInternal(ArtifactLocalizer artifactLocalizer,
+                                              PreviewRequestFetcher previewRequestFetcher) {
     this.artifactLocalizer = artifactLocalizer;
+    this.previewRequestFetcher = previewRequestFetcher;
+  }
+
+  @GET
+  @Path("/requests/pull")
+  public void pullPreview(HttpRequest request, HttpResponder responder) throws IOException, UnauthorizedException {
+    Optional<PreviewRequest> previewRequest = previewRequestFetcher.fetch();
+    LOG.error("wyzhang: ArtifactLocalizerHttpHandlerInternal  preview request fethcer returns {}",
+              previewRequest.get());
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(previewRequest.get(), PreviewRequest.class));
   }
 
   @GET

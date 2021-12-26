@@ -22,6 +22,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
+import io.cdap.cdap.internal.app.preview.PreviewRequestFetcher;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
@@ -50,7 +51,8 @@ public class ArtifactLocalizerService extends AbstractIdleService {
 
   @Inject
   ArtifactLocalizerService(CConfiguration cConf,
-                           ArtifactLocalizer artifactLocalizer) {
+                           ArtifactLocalizer artifactLocalizer,
+                           PreviewRequestFetcher previewRequestFetcher) {
     this.cConf = cConf;
     this.artifactLocalizer = artifactLocalizer;
     this.httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TASK_WORKER)
@@ -58,7 +60,8 @@ public class ArtifactLocalizerService extends AbstractIdleService {
       .setPort(cConf.getInt(Constants.ArtifactLocalizer.PORT))
       .setBossThreadPoolSize(cConf.getInt(Constants.ArtifactLocalizer.BOSS_THREADS))
       .setWorkerThreadPoolSize(cConf.getInt(Constants.ArtifactLocalizer.WORKER_THREADS))
-      .setHttpHandlers(new ArtifactLocalizerHttpHandlerInternal(artifactLocalizer))
+      .setHttpHandlers(new ArtifactLocalizerHttpHandlerInternal(artifactLocalizer,
+                                                                previewRequestFetcher))
       .build();
 
     this.cacheCleanupInterval = cConf.getInt(Constants.ArtifactLocalizer.CACHE_CLEANUP_INTERVAL_MIN);

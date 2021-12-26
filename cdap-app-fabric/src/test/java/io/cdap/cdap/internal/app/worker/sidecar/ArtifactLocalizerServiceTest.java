@@ -25,6 +25,7 @@ import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.internal.app.preview.UnsupportedPreviewRequestFetcher;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.app.worker.TaskWorkerServiceTest;
@@ -76,7 +77,9 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
     RemoteClientFactory remoteClientFactory =
       new RemoteClientFactory(discoveryClient, new DefaultInternalAuthenticator(new AuthenticationTestContext()));
     ArtifactLocalizerService artifactLocalizerService = new ArtifactLocalizerService(
-      cConf, new ArtifactLocalizer(cConf, remoteClientFactory, (namespaceId, retryStrategy)->null));
+      cConf,
+      new ArtifactLocalizer(cConf, remoteClientFactory, (namespaceId, retryStrategy)->null),
+      new UnsupportedPreviewRequestFetcher());
 
     // start the service
     artifactLocalizerService.startAndWait();

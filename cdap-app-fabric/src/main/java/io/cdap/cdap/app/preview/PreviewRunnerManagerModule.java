@@ -28,10 +28,10 @@ import io.cdap.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
 import io.cdap.cdap.internal.app.preview.DirectPreviewRequestFetcher;
+import io.cdap.cdap.internal.app.preview.ForwardingRemotePreviewRequestFetcher;
 import io.cdap.cdap.internal.app.preview.PreviewRequestFetcher;
 import io.cdap.cdap.internal.app.preview.PreviewRunStopper;
 import io.cdap.cdap.internal.app.preview.PreviewRunnerService;
-import io.cdap.cdap.internal.app.preview.RemotePreviewRequestFetcher;
 
 /**
  * Guice module to provide bindings for {@link PreviewRunnerManager} service.
@@ -83,7 +83,7 @@ public class PreviewRunnerManagerModule extends RuntimeModule {
           .annotatedWith(Names.named(DataSetsModules.BASE_DATASET_FRAMEWORK))
           .to(RemoteDatasetFramework.class);
 
-        bind(PreviewRequestFetcher.class).to(RemotePreviewRequestFetcher.class).in(Scopes.SINGLETON);
+        bind(PreviewRequestFetcher.class).to(ForwardingRemotePreviewRequestFetcher.class).in(Scopes.SINGLETON);
 
         bind(DefaultPreviewRunnerManager.class).in(Scopes.SINGLETON);
         bind(PreviewRunnerManager.class).to(DefaultPreviewRunnerManager.class);

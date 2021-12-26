@@ -44,6 +44,7 @@ import io.cdap.cdap.gateway.handlers.ArtifactHttpHandlerInternal;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
+import io.cdap.cdap.internal.app.preview.UnsupportedPreviewRequestFetcher;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactMeta;
@@ -123,7 +124,8 @@ public class RemoteConfiguratorTest {
         new TaskWorkerHttpHandlerInternal(cConf, className -> { }, new NoOpMetricsCollectionService()),
         new ArtifactHttpHandlerInternal(new TestArtifactRepository(cConf), namespaceAdmin),
         new ArtifactLocalizerHttpHandlerInternal(new ArtifactLocalizer(cConf, remoteClientFactory,
-                                                                       ((namespaceId, retryStrategy) -> null)))
+                                                                       ((namespaceId, retryStrategy) -> null)),
+                                                 new UnsupportedPreviewRequestFetcher())
       )
       .setPort(cConf.getInt(Constants.ArtifactLocalizer.PORT))
       .setChannelPipelineModifier(new ChannelPipelineModifier() {
