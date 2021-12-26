@@ -64,7 +64,7 @@ public class ForwardingRemotePreviewRequestFetcher implements PreviewRequestFetc
 
   @Override
   public Optional<PreviewRequest> fetch() throws IOException, UnauthorizedException {
-    String urlPath = String.format("requests/pull");
+    String urlPath = String.format("/requests/pull");
     URL url;
     try {
       url = new URI(sidecarBaseURL + urlPath).toURL();
