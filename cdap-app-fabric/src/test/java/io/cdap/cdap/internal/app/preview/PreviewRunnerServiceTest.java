@@ -27,8 +27,11 @@ import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.junit.Test;
+import org.tukaani.xz.UnsupportedOptionsException;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
@@ -72,7 +75,7 @@ public class PreviewRunnerServiceTest {
     runnerService.startAndWait();
 
     ProgramId programId = NamespaceId.DEFAULT.app("app").program(ProgramType.WORKFLOW, "workflow");
-    fetcher.addRequest(new PreviewRequest(programId, null));
+    fetcher.addRequest(new PreviewRequest(programId, null, null));
 
     Tasks.waitFor(true, () -> mockRunner.requests.get(programId) != null,
                   5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
@@ -93,7 +96,7 @@ public class PreviewRunnerServiceTest {
     runnerService.startAndWait();
 
     ProgramId programId = NamespaceId.DEFAULT.app("app").program(ProgramType.WORKFLOW, "workflow");
-    fetcher.addRequest(new PreviewRequest(programId, null));
+    fetcher.addRequest(new PreviewRequest(programId, null, null));
     Tasks.waitFor(true, () -> mockRunner.requests.get(programId) != null,
                   50, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
@@ -163,6 +166,12 @@ public class PreviewRunnerServiceTest {
     public Optional<PreviewRequest> fetch() {
       fetchCount.incrementAndGet();
       return Optional.ofNullable(requests.poll());
+    }
+
+    @Override
+    public Optional<PreviewRequest> fetch(PreviewRequestPollerInfoProvider pollerInfoProvider)
+      throws IOException, UnauthorizedException {
+      throw new UnsupportedOptionsException();
     }
 
     void addRequest(PreviewRequest request) {

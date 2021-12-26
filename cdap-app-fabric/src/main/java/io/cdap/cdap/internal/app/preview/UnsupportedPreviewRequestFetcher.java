@@ -35,4 +35,10 @@ public class UnsupportedPreviewRequestFetcher implements PreviewRequestFetcher {
   public Optional<PreviewRequest> fetch() throws IOException, UnauthorizedException {
     throw new UnsupportedOperationException("unsupported");
   }
+
+  @Override
+  public Optional<PreviewRequest> fetch(PreviewRequestPollerInfoProvider pollerInfoProvider)
+    throws IOException, UnauthorizedException {
+    throw new UnsupportedOperationException("unsupported");
+  }
 }

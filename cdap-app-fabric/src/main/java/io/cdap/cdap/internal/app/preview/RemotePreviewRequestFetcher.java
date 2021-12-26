@@ -28,7 +28,6 @@ import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -55,6 +54,12 @@ public class RemotePreviewRequestFetcher implements PreviewRequestFetcher {
 
   @Override
   public Optional<PreviewRequest> fetch() throws IOException, UnauthorizedException {
+    return fetch(pollerInfoProvider);
+  }
+
+  @Override
+  public Optional<PreviewRequest> fetch(PreviewRequestPollerInfoProvider pollerInfoProvider)
+    throws IOException, UnauthorizedException {
     HttpRequest request = remoteClientInternal.requestBuilder(HttpMethod.POST, "requests/pull")
       .withBody(ByteBuffer.wrap(pollerInfoProvider.get()))
       .build();

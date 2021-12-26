@@ -35,4 +35,7 @@ public interface PreviewRequestFetcher {
    * @throws IOException if failed to fetch preview request
    */
   Optional<PreviewRequest> fetch() throws IOException, UnauthorizedException;
+
+  Optional<PreviewRequest> fetch(PreviewRequestPollerInfoProvider pollerInfoProvider)
+    throws IOException, UnauthorizedException;
 }

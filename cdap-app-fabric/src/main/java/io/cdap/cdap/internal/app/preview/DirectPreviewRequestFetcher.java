@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.preview;
 import com.google.inject.Inject;
 import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.app.preview.PreviewRequestQueue;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -37,5 +38,11 @@ public class DirectPreviewRequestFetcher implements PreviewRequestFetcher {
   @Override
   public Optional<PreviewRequest> fetch() throws IOException {
     return previewRequestQueue.poll(null);
+  }
+
+  @Override
+  public Optional<PreviewRequest> fetch(PreviewRequestPollerInfoProvider pollerInfoProvider)
+    throws IOException, UnauthorizedException {
+    throw new UnsupportedOperationException();
   }
 }

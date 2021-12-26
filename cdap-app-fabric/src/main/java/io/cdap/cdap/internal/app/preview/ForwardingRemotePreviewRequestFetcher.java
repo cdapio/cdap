@@ -20,9 +20,12 @@ import com.google.common.base.Charsets;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.app.preview.PreviewRequest;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.proto.security.Credential;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
@@ -30,12 +33,13 @@ import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tukaani.xz.UnsupportedOptionsException;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.util.Optional;
 
 /**
@@ -47,18 +51,15 @@ public class ForwardingRemotePreviewRequestFetcher implements PreviewRequestFetc
 
   private final PreviewRequestPollerInfoProvider pollerInfoProvider;
   private final String sidecarBaseURL;
-  private final AuthenticationContext authenticationContext;
 
 
   @Inject
   ForwardingRemotePreviewRequestFetcher(CConfiguration cConf,
-                                        PreviewRequestPollerInfoProvider pollerInfoProvider,
-                                        AuthenticationContext authenticationContext) {
+                                        PreviewRequestPollerInfoProvider pollerInfoProvider) {
+    this.pollerInfoProvider = pollerInfoProvider;
     this.sidecarBaseURL = String
       .format("http://localhost:%d/%s/worker", cConf.getInt(Constants.ArtifactLocalizer.PORT),
               Constants.Gateway.INTERNAL_API_VERSION_3_TOKEN);
-    this.pollerInfoProvider = pollerInfoProvider;
-    this.authenticationContext = authenticationContext;
   }
 
   @Override
@@ -72,17 +73,32 @@ public class ForwardingRemotePreviewRequestFetcher implements PreviewRequestFetc
     }
 
     LOG.debug("wyzhang: forwarding remote preview request fetcher sent to {}", url);
-    HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.GET, url);
-    HttpRequest httpRequest = builder.build();
+    HttpRequest httpRequest = HttpRequest.builder(HttpMethod.POST, url)
+      .withBody(ByteBuffer.wrap(pollerInfoProvider.get()))
+      .build();
     HttpResponse httpResponse = HttpRequests.execute(httpRequest);
 
-    if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
-      LOG.debug("wyzhang: forwarding remote preview request fetcher resp {}", httpResponse.toString());
+    if (httpResponse.getResponseCode() != 200) {
       throw new IOException(String.format("Received status code:%s and body: %s", httpResponse.getResponseCode(),
                                           httpResponse.getResponseBodyAsString(Charsets.UTF_8)));
     }
-
     PreviewRequest previewRequest = GSON.fromJson(httpResponse.getResponseBodyAsString(), PreviewRequest.class);
     return Optional.ofNullable(previewRequest);
+  }
+
+  @Override
+  public Optional<PreviewRequest> fetch(PreviewRequestPollerInfoProvider pollerInfoProvider)
+    throws IOException, UnauthorizedException {
+    throw new UnsupportedOptionsException();
+  }
+
+  private void updatePrinciple(Principal principal) throws BadRequestException {
+    if (principal.getType() != Principal.PrincipalType.USER) {
+      throw new BadRequestException("Principle type is not USER");
+    }
+    SecurityRequestContext.reset();
+    SecurityRequestContext.setUserId(principal.getName());
+    SecurityRequestContext.setUserCredential(new Credential(Credential.CredentialType.EXTERNAL,
+                                                            principal.getCredential()));
   }
 }
