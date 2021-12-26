@@ -20,6 +20,8 @@ import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.io.Codec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.security.InvalidKeyException;
@@ -28,6 +30,8 @@ import java.security.InvalidKeyException;
  * Provides a simple interface to generate and validate {@link AccessToken}s.
  */
 public class TokenManager extends AbstractIdleService {
+
+  private static final Logger LOG = LoggerFactory.getLogger(TokenManager.class);
 
   protected final KeyManager keyManager;
   private final Codec<UserIdentity> identifierCodec;
@@ -40,6 +44,7 @@ public class TokenManager extends AbstractIdleService {
 
   @Override
   public void startUp() {
+    LOG.info("wyzhang; TokenManager start up");
     this.keyManager.startAndWait();
   }
 
@@ -50,6 +55,7 @@ public class TokenManager extends AbstractIdleService {
 
   /**
    * Generates a signature for the given token value, using the currently active secret key.
+   *
    * @param identifier Verified identity for which a token should be generated.
    * @return A token containing the verified identify and a digest of its contents.
    */

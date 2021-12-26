@@ -22,6 +22,9 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.security.Credential;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
@@ -45,12 +48,14 @@ public class ArtifactLocalizerClient {
   private static final Gson GSON = new Gson();
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactLocalizerClient.class);
   private final String sidecarBaseURL;
+  private final AuthenticationContext authenticationContext;
 
   @Inject
-  ArtifactLocalizerClient(CConfiguration cConf) {
+  ArtifactLocalizerClient(CConfiguration cConf, AuthenticationContext authenticationContext) {
     this.sidecarBaseURL = String
       .format("http://localhost:%d/%s/worker", cConf.getInt(Constants.ArtifactLocalizer.PORT),
               Constants.Gateway.INTERNAL_API_VERSION_3_TOKEN);
+    this.authenticationContext = authenticationContext;
   }
 
   /**
@@ -73,7 +78,7 @@ public class ArtifactLocalizerClient {
    * @param artifactId The ArtifactId of the artifact to fetch and unpack
    * @return The Local Location of the directory that contains the unpacked artifact files
    * @throws ArtifactNotFoundException if the given artifact does not exist
-   * @throws IOException if there was an exception while fetching, caching or unpacking the artifact
+   * @throws IOException               if there was an exception while fetching, caching or unpacking the artifact
    */
   public File getUnpackedArtifactLocation(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
     return sendRequest(artifactId, true);
@@ -90,11 +95,35 @@ public class ArtifactLocalizerClient {
       throw new IOException(e);
     }
 
-    LOG.debug("Sending request to {}", url);
-    HttpRequest httpRequest = HttpRequest.builder(HttpMethod.GET, url).build();
+    LOG.debug("wyzhang: ArtifactLocalizerClient getUnpackedArtifactLocation Sending request to {}", url);
+    HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.GET, url);
+    {
+      Principal principal = authenticationContext.getPrincipal();
+      String userID = null;
+      Credential internalCredentials = null;
+      if (principal != null) {
+        userID = principal.getName();
+        internalCredentials = principal.getFullCredential();
+      }
+      if (internalCredentials != null) {
+        LOG.debug("wyzhang: ArtifactLocalizerClient getUnpackedArtifactLocation add credential header {}",
+                  String.format("%s %s", internalCredentials.getType().getQualifiedName(),
+                                internalCredentials.getValue()));
+        builder.addHeader(Constants.Security.Headers.RUNTIME_TOKEN,
+                          String.format("%s %s", internalCredentials.getType().getQualifiedName(),
+                                        internalCredentials.getValue()));
+      }
+      if (userID != null) {
+        LOG.debug("wyzhang: ArtifactLocalizerClient getUnpackedArtifactLocation add user header {}",
+                  userID);
+        builder.addHeader(Constants.Security.Headers.USER_ID, userID);
+      }
+    }
+    HttpRequest httpRequest = builder.build();
     HttpResponse httpResponse = HttpRequests.execute(httpRequest);
 
     if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
+      LOG.info("wyzhang: ArtifactLocalizerClient getUnpackedArtifactLocation failed {}", httpResponse.toString());
       if (httpResponse.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
         throw new ArtifactNotFoundException(artifactId);
       }

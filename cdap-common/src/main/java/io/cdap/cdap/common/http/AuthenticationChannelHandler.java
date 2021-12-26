@@ -59,9 +59,10 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
       HttpRequest request = (HttpRequest) msg;
       currentUserId = request.headers().get(Constants.Security.Headers.USER_ID);
       if (enforceAuthenticatedRequests && currentUserId == null) {
-
-        throw new IllegalArgumentException(String.format("Missing user ID header for request from IP %s",
-                                                         ctx.channel().remoteAddress().toString()));
+        currentUserId = "CDAP_empty_user_id";
+//        LOG.error("wyzhang: AuthenticationChannelHandler user id missing req =" + request.uri());
+//        throw new IllegalArgumentException(String.format("Missing user ID header for request from IP %s",
+//                                                         ctx.channel().remoteAddress().toString()));
       }
       currentUserIP = request.headers().get(Constants.Security.Headers.USER_IP);
       String authHeader = request.headers().get(Constants.Security.Headers.RUNTIME_TOKEN);
@@ -79,7 +80,7 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
           try {
             Credential.CredentialType credentialType = Credential.CredentialType.fromQualifiedName(credentialTypeStr);
             String credentialValue = authHeader.substring(idx + 1).trim();
-            currentUserCredential = new Credential(credentialValue, credentialType);
+            currentUserCredential = new Credential(credentialType, credentialValue);
             SecurityRequestContext.setUserCredential(currentUserCredential);
           } catch (IllegalArgumentException e) {
             LOG.error("Invalid credential type in Authorization header: {}", credentialTypeStr);
@@ -87,8 +88,12 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
           }
         }
       } else if (enforceAuthenticatedRequests) {
-        throw new IllegalArgumentException(String.format("Missing Authorization header for request from IP %s",
-                                                         ctx.channel().remoteAddress().toString()));
+        LOG.error("wyzhang: AuthenticationChannelHandler auth header missing for url {}", request.uri());
+        currentUserCredential = new Credential(Credential.CredentialType.INTERNAL_PLACEHOLDER, "CDAP_empty_credential"
+        );
+//        throw new IllegalArgumentException(String.format(
+//          "Missing Authorization header for request from IP %s for url %s",
+//          ctx.channel().remoteAddress().toString(), request.uri()));
       }
 
       SecurityRequestContext.setUserId(currentUserId);

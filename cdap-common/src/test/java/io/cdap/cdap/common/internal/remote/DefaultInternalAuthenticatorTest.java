@@ -38,7 +38,7 @@ public class DefaultInternalAuthenticatorTest {
     String expectedName = "somebody";
     String expectedCredValue = "credential";
     Credential.CredentialType expectedCredType = Credential.CredentialType.EXTERNAL;
-    Credential credential = new Credential(expectedCredValue, expectedCredType);
+    Credential credential = new Credential(expectedCredType, expectedCredValue);
     Principal expectedPrincipal = new Principal(expectedName, Principal.PrincipalType.USER, credential);
 
     DefaultInternalAuthenticator defaultInternalAuthenticator =

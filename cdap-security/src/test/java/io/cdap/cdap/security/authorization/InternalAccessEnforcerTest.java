@@ -80,7 +80,7 @@ public class InternalAccessEnforcerTest {
                                                  currentTime + 5 * MINUTE_MILLIS);
     String encodedIdentity = Base64.getEncoder()
       .encodeToString(accessTokenCodec.encode(tokenManager.signIdentifier(userIdentity)));
-    Credential credential = new Credential(encodedIdentity, Credential.CredentialType.INTERNAL);
+    Credential credential = new Credential(Credential.CredentialType.INTERNAL, encodedIdentity);
     Principal principal = new Principal(SYSTEM_PRINCIPAL, Principal.PrincipalType.USER, null, credential);
     internalAccessEnforcer.enforce(ns, principal, StandardPermission.GET);
   }
@@ -94,7 +94,7 @@ public class InternalAccessEnforcerTest {
                                                  currentTime + 5 * MINUTE_MILLIS);
     String encodedIdentity = Base64.getEncoder()
       .encodeToString(accessTokenCodec.encode(tokenManager.signIdentifier(userIdentity)));
-    Credential credential = new Credential(encodedIdentity, Credential.CredentialType.INTERNAL);
+    Credential credential = new Credential(Credential.CredentialType.INTERNAL, encodedIdentity);
     Principal principal = new Principal(SYSTEM_PRINCIPAL, Principal.PrincipalType.USER, null, credential);
     internalAccessEnforcer.enforceOnParent(EntityType.APPLICATION, ns, principal, StandardPermission.GET);
   }
@@ -109,7 +109,7 @@ public class InternalAccessEnforcerTest {
                                                  currentTime + 5 * MINUTE_MILLIS);
     String encodedIdentity = Base64.getEncoder()
       .encodeToString(accessTokenCodec.encode(tokenManager.signIdentifier(userIdentity)));
-    Credential credential = new Credential(encodedIdentity, Credential.CredentialType.INTERNAL);
+    Credential credential = new Credential(Credential.CredentialType.INTERNAL, encodedIdentity);
     Principal principal = new Principal(SYSTEM_PRINCIPAL, Principal.PrincipalType.USER, null, credential);
     Assert.assertEquals(entities, internalAccessEnforcer.isVisible(entities, principal));
   }
@@ -123,7 +123,7 @@ public class InternalAccessEnforcerTest {
                                                  currentTime + 5 * MINUTE_MILLIS);
     String encodedIdentity = Base64.getEncoder()
       .encodeToString(accessTokenCodec.encode(tokenManager.signIdentifier(userIdentity)));
-    Credential credential = new Credential(encodedIdentity, Credential.CredentialType.EXTERNAL);
+    Credential credential = new Credential(Credential.CredentialType.EXTERNAL, encodedIdentity);
     Principal principal = new Principal(SYSTEM_PRINCIPAL, Principal.PrincipalType.USER, null, credential);
     internalAccessEnforcer.enforce(ns, principal, StandardPermission.GET);
   }
@@ -137,7 +137,7 @@ public class InternalAccessEnforcerTest {
                                                  currentTime + 5 * MINUTE_MILLIS);
     String encodedIdentity = Base64.getEncoder()
       .encodeToString(accessTokenCodec.encode(tokenManager.signIdentifier(userIdentity)));
-    Credential credential = new Credential(encodedIdentity, Credential.CredentialType.EXTERNAL);
+    Credential credential = new Credential(Credential.CredentialType.EXTERNAL, encodedIdentity);
     Principal principal = new Principal(SYSTEM_PRINCIPAL, Principal.PrincipalType.USER, null, credential);
     internalAccessEnforcer.enforceOnParent(EntityType.APPLICATION, ns, principal, StandardPermission.GET);
   }
@@ -152,7 +152,7 @@ public class InternalAccessEnforcerTest {
                                                  currentTime + 5 * MINUTE_MILLIS);
     String encodedIdentity = Base64.getEncoder()
       .encodeToString(accessTokenCodec.encode(tokenManager.signIdentifier(userIdentity)));
-    Credential credential = new Credential(encodedIdentity, Credential.CredentialType.EXTERNAL);
+    Credential credential = new Credential(Credential.CredentialType.EXTERNAL, encodedIdentity);
     Principal principal = new Principal(SYSTEM_PRINCIPAL, Principal.PrincipalType.USER, null, credential);
     internalAccessEnforcer.isVisible(entities, principal);
   }
@@ -166,7 +166,7 @@ public class InternalAccessEnforcerTest {
                                                  currentTime + 5 * MINUTE_MILLIS);
     String encodedIdentity = Base64.getEncoder()
       .encodeToString(accessTokenCodec.encode(tokenManager.signIdentifier(userIdentity)));
-    Credential credential = new Credential(encodedIdentity, Credential.CredentialType.INTERNAL);
+    Credential credential = new Credential(Credential.CredentialType.INTERNAL, encodedIdentity);
     Principal principal = new Principal(SYSTEM_PRINCIPAL, Principal.PrincipalType.USER, null, credential);
     internalAccessEnforcer.enforce(ns, principal, StandardPermission.GET);
   }
@@ -180,7 +180,7 @@ public class InternalAccessEnforcerTest {
                                                  currentTime + 5 * MINUTE_MILLIS);
     String encodedIdentity = Base64.getEncoder()
       .encodeToString(accessTokenCodec.encode(tokenManager.signIdentifier(userIdentity)));
-    Credential credential = new Credential(encodedIdentity, Credential.CredentialType.INTERNAL);
+    Credential credential = new Credential(Credential.CredentialType.INTERNAL, encodedIdentity);
     Principal principal = new Principal(SYSTEM_PRINCIPAL, Principal.PrincipalType.USER, null, credential);
     internalAccessEnforcer.enforceOnParent(EntityType.APPLICATION, ns, principal, StandardPermission.GET);
   }
@@ -195,7 +195,7 @@ public class InternalAccessEnforcerTest {
                                                  currentTime + 5 * MINUTE_MILLIS);
     String encodedIdentity = Base64.getEncoder()
       .encodeToString(accessTokenCodec.encode(tokenManager.signIdentifier(userIdentity)));
-    Credential credential = new Credential(encodedIdentity, Credential.CredentialType.INTERNAL);
+    Credential credential = new Credential(Credential.CredentialType.INTERNAL, encodedIdentity);
     Principal principal = new Principal(SYSTEM_PRINCIPAL, Principal.PrincipalType.USER, null, credential);
     Assert.assertEquals(Collections.emptySet(), internalAccessEnforcer.isVisible(entities, principal));
   }
@@ -225,7 +225,7 @@ public class InternalAccessEnforcerTest {
   @Test(expected = AccessException.class)
   public void testInternalAccessEnforceInvalidCredential() throws IOException {
     NamespaceId ns = new NamespaceId("namespace");
-    Credential credential = new Credential("invalid", Credential.CredentialType.INTERNAL);
+    Credential credential = new Credential(Credential.CredentialType.INTERNAL, "invalid");
     Principal principal = new Principal(SYSTEM_PRINCIPAL, Principal.PrincipalType.USER, null, credential);
     internalAccessEnforcer.enforce(ns, principal, StandardPermission.GET);
   }
@@ -233,7 +233,7 @@ public class InternalAccessEnforcerTest {
   @Test(expected = AccessException.class)
   public void testInternalAccessEnforceOnParentInvalidCredential() throws IOException {
     NamespaceId ns = new NamespaceId("namespace");
-    Credential credential = new Credential("invalid", Credential.CredentialType.INTERNAL);
+    Credential credential = new Credential(Credential.CredentialType.INTERNAL, "invalid");
     Principal principal = new Principal(SYSTEM_PRINCIPAL, Principal.PrincipalType.USER, null, credential);
     internalAccessEnforcer.enforceOnParent(EntityType.APPLICATION, ns, principal, StandardPermission.GET);
   }
@@ -242,7 +242,7 @@ public class InternalAccessEnforcerTest {
   public void testInternalAccessIsVisibleInvalidCredential() throws IOException {
     NamespaceId ns = new NamespaceId("namespace");
     Set<EntityId> entities = Collections.singleton(ns);
-    Credential credential = new Credential("invalid", Credential.CredentialType.INTERNAL);
+    Credential credential = new Credential(Credential.CredentialType.INTERNAL, "invalid");
     Principal principal = new Principal(SYSTEM_PRINCIPAL, Principal.PrincipalType.USER, null, credential);
     Assert.assertEquals(Collections.emptySet(), internalAccessEnforcer.isVisible(entities, principal));
   }
@@ -256,7 +256,7 @@ public class InternalAccessEnforcerTest {
                                                  currentTime - 5 * MINUTE_MILLIS);
     String encodedIdentity = Base64.getEncoder()
       .encodeToString(accessTokenCodec.encode(tokenManager.signIdentifier(userIdentity)));
-    Credential credential = new Credential(encodedIdentity, Credential.CredentialType.INTERNAL);
+    Credential credential = new Credential(Credential.CredentialType.INTERNAL, encodedIdentity);
     Principal principal = new Principal(SYSTEM_PRINCIPAL, Principal.PrincipalType.USER, null, credential);
     internalAccessEnforcer.enforce(ns, principal, StandardPermission.GET);
   }
@@ -270,7 +270,7 @@ public class InternalAccessEnforcerTest {
                                                  currentTime - 5 * MINUTE_MILLIS);
     String encodedIdentity = Base64.getEncoder()
       .encodeToString(accessTokenCodec.encode(tokenManager.signIdentifier(userIdentity)));
-    Credential credential = new Credential(encodedIdentity, Credential.CredentialType.INTERNAL);
+    Credential credential = new Credential(Credential.CredentialType.INTERNAL, encodedIdentity);
     Principal principal = new Principal(SYSTEM_PRINCIPAL, Principal.PrincipalType.USER, null, credential);
     internalAccessEnforcer.enforceOnParent(EntityType.APPLICATION, ns, principal, StandardPermission.GET);
   }
@@ -285,7 +285,7 @@ public class InternalAccessEnforcerTest {
                                                  currentTime - 5 * MINUTE_MILLIS);
     String encodedIdentity = Base64.getEncoder()
       .encodeToString(accessTokenCodec.encode(tokenManager.signIdentifier(userIdentity)));
-    Credential credential = new Credential(encodedIdentity, Credential.CredentialType.INTERNAL);
+    Credential credential = new Credential(Credential.CredentialType.INTERNAL, encodedIdentity);
     Principal principal = new Principal(SYSTEM_PRINCIPAL, Principal.PrincipalType.USER, null, credential);
     Assert.assertEquals(Collections.emptySet(), internalAccessEnforcer.isVisible(entities, principal));
   }

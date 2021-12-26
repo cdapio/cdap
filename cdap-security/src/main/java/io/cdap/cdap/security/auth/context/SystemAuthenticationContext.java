@@ -73,7 +73,7 @@ public class SystemAuthenticationContext implements AuthenticationContext {
     String encodedAccessToken;
     try {
       encodedAccessToken = Base64.getEncoder().encodeToString(accessTokenCodec.encode(accessToken));
-      Credential credential = new Credential(encodedAccessToken, Credential.CredentialType.INTERNAL);
+      Credential credential = new Credential(Credential.CredentialType.INTERNAL_BASE64_ENCODED, encodedAccessToken);
       return new Principal(userId, Principal.PrincipalType.USER, credential);
     } catch (IOException e) {
       throw new RuntimeException("Unexpected failure while creating internal system identity", e);

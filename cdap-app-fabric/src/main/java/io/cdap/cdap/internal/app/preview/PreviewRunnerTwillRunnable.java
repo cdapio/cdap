@@ -156,11 +156,9 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
   }
 
   private void doInitialize(TwillContext context) throws Exception {
-    CConfiguration cConf = CConfiguration.create();
-    cConf.clear();
-    cConf.addResource(new File(getArgument("cConf")).toURI().toURL());
+    CConfiguration cConf = CConfiguration.create(new File(getArgument("cConf")).toURI().toURL());
 
-    Configuration hConf = new Configuration();
+    Configuration hConf = new Configuration(false);
     hConf.clear();
     hConf.addResource(new File(getArgument("hConf")).toURI().toURL());
 

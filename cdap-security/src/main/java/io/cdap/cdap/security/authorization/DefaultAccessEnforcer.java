@@ -97,15 +97,20 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
     throws AccessException {
     MetricsContext metricsContext = createEntityIdMetricsContext(entity);
     if (internalAuthEnabled && principal.getFullCredential() != null
-      && principal.getFullCredential().getType() == Credential.CredentialType.INTERNAL) {
-      LOG.trace("Internal Principal enforce({}, {}, {})", entity, principal, permissions);
+      && (principal.getFullCredential().getType() == Credential.CredentialType.INTERNAL ||
+      principal.getFullCredential().getType() == Credential.CredentialType.INTERNAL_BASE64_ENCODED ||
+      principal.getFullCredential().getType() == Credential.CredentialType.INTERNAL_LOAD_REMOTE ||
+      principal.getFullCredential().getType() == Credential.CredentialType.INTERNAL_PLACEHOLDER)) {
+      LOG.debug("wyzhang Internal Principal enforce({}, {}, {})", entity, principal, permissions);
       try {
         internalAccessEnforcer.enforce(entity, principal, permissions);
         metricsContext.increment(Constants.Metrics.Authorization.INTERNAL_CHECK_SUCCESS_COUNT, 1);
       } catch (Throwable e) {
+        LOG.debug("wyzhang Internal Principal enforce exception : " + e);
         metricsContext.increment(Constants.Metrics.Authorization.INTERNAL_CHECK_FAILURE_COUNT, 1);
         throw e;
       }
+      LOG.debug("wyzhang Internal Principal enforce return");
       return;
     }
     if (!isSecurityAuthorizationEnabled()) {
@@ -119,7 +124,7 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
 
     principal = getUserPrinciple(principal);
 
-    LOG.trace("Enforcing permissions {} on {} for principal {}.", permissions, entity, principal);
+    LOG.debug("Enforcing permissions {} on {} for principal {}.", permissions, entity, principal);
     long startTime = System.nanoTime();
     try {
       accessControllerInstantiator.get().enforce(entity, principal, permissions);
@@ -144,8 +149,11 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
     throws AccessException {
     MetricsContext metricsContext = createEntityIdMetricsContext(parentId);
     if (internalAuthEnabled && principal.getFullCredential() != null
-      && principal.getFullCredential().getType() == Credential.CredentialType.INTERNAL) {
-      LOG.trace("Internal Principal enforceOnParent({}, {}, {})", parentId, principal, permission);
+      && (principal.getFullCredential().getType() == Credential.CredentialType.INTERNAL ||
+      principal.getFullCredential().getType() == Credential.CredentialType.INTERNAL_BASE64_ENCODED ||
+      principal.getFullCredential().getType() == Credential.CredentialType.INTERNAL_PLACEHOLDER ||
+      principal.getFullCredential().getType() == Credential.CredentialType.INTERNAL_LOAD_REMOTE)) {
+      LOG.debug("wyzhang Internal Principal enforceOnParent({}, {}, {})", parentId, principal, permission);
       try {
         internalAccessEnforcer.enforceOnParent(entityType, parentId, principal, permission);
         metricsContext.increment(Constants.Metrics.Authorization.INTERNAL_CHECK_SUCCESS_COUNT, 1);
@@ -168,15 +176,18 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
 
     principal = getUserPrinciple(principal);
 
-    LOG.trace("Enforcing permission {} on {} in {} for principal {}.", permission, entityType, parentId, principal);
+    LOG.debug("wyzhang: enforceOnParent Enforcing permission {} on {} in {} for principal {}.",
+              permission, entityType, parentId, principal);
     long startTime = System.nanoTime();
     try {
       accessControllerInstantiator.get().enforceOnParent(entityType, parentId, principal, permission);
       metricsContext.increment(Constants.Metrics.Authorization.EXTENSION_CHECK_SUCCESS_COUNT, 1);
     } catch (Throwable e) {
       metricsContext.increment(Constants.Metrics.Authorization.EXTENSION_CHECK_FAILURE_COUNT, 1);
+      LOG.debug("wyzhang: enforceOnParent Enforcing permission throw excdeption " + e);
       throw e;
     } finally {
+      LOG.debug("wyzhang: enforceOnParent Enforcing permission return");
       long timeTaken = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
       metricsContext.gauge(Constants.Metrics.Authorization.EXTENSION_CHECK_MILLIS, timeTaken);
       String logLine = "Enforced permission {} on {} in {} for principal {}. Time spent in enforcement was {} ms.";
@@ -257,7 +268,7 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
       return new Principal(principal.getName(),
                            principal.getType(),
                            principal.getKerberosPrincipal(),
-                           new Credential(plainCredential, Credential.CredentialType.EXTERNAL));
+                           new Credential(Credential.CredentialType.EXTERNAL, plainCredential));
     } catch (CipherException e) {
       throw new AccessException("Failed to decrypt credential in principle: " + e.getMessage(), e);
     }

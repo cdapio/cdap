@@ -39,7 +39,7 @@ public class AuthenticationTestContext implements AuthenticationContext {
     if (credentialValue != null && credentialTypeStr != null) {
       Credential.CredentialType credentialType = Credential.CredentialType
         .valueOf(credentialTypeStr);
-      credential = new Credential(credentialValue, credentialType);
+      credential = new Credential(credentialType, credentialValue);
     }
     return new Principal(System.getProperty(PRINCIPAL_NAME), Principal.PrincipalType.USER, credential);
   }

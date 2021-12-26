@@ -20,9 +20,12 @@ package io.cdap.cdap.proto.security;
  * Encapsulating class for credentials passing through CDAP.
  */
 public class Credential {
-  public static final String CREDENTIAL_TYPE_INTERNAL = "CDAP-Internal";
-  public static final String CREDENTIAL_TYPE_EXTERNAL = "CDAP-External";
-  public static final String CREDENTIAL_TYPE_EXTERNAL_ENCRYPTED = "CDAP-External-Encrypted";
+  public static final String CREDENTIAL_TYPE_INTERNAL = "CDAP_credential_internal";
+  public static final String CREDENTIAL_TYPE_INTERNAL_PLACEHOLD = "CDAP_credential_internal_placeholder";
+  public static final String CREDENTIAL_TYPE_INTERNAL_ENCODED = "CDAP_credential_internal_encoded";
+  public static final String CREDENTIAL_TYPE_INTERNAL_LOADREMOTE = "CDAP_credential_internal_loadremote";
+  public static final String CREDENTIAL_TYPE_EXTERNAL = "CDAP_credential_external";
+  public static final String CREDENTIAL_TYPE_EXTERNAL_ENCRYPTED = "CDAP_credential_external_encrypted";
 
   /**
    * Identifies the type of credential.
@@ -32,6 +35,9 @@ public class Credential {
      * Internal credentials will be checked by the internal access enforcer instead of the access enforcer extension.
      */
     INTERNAL(CREDENTIAL_TYPE_INTERNAL),
+    INTERNAL_PLACEHOLDER(CREDENTIAL_TYPE_INTERNAL_PLACEHOLD),
+    INTERNAL_BASE64_ENCODED(CREDENTIAL_TYPE_INTERNAL_ENCODED),
+    INTERNAL_LOAD_REMOTE(CREDENTIAL_TYPE_INTERNAL_LOADREMOTE),
     /**
      * External credentials are credentials which should be checked by the access enforcer extension.
      */
@@ -62,6 +68,12 @@ public class Credential {
       switch (qualifiedName) {
         case CREDENTIAL_TYPE_INTERNAL:
           return CredentialType.INTERNAL;
+        case CREDENTIAL_TYPE_INTERNAL_ENCODED:
+          return CredentialType.INTERNAL_BASE64_ENCODED;
+        case CREDENTIAL_TYPE_INTERNAL_LOADREMOTE:
+          return CredentialType.INTERNAL_LOAD_REMOTE;
+        case CREDENTIAL_TYPE_INTERNAL_PLACEHOLD:
+          return CredentialType.INTERNAL_PLACEHOLDER;
         case CREDENTIAL_TYPE_EXTERNAL:
           return CredentialType.EXTERNAL;
         case CREDENTIAL_TYPE_EXTERNAL_ENCRYPTED:
@@ -75,7 +87,7 @@ public class Credential {
   private final String value;
   private final CredentialType type;
 
-  public Credential(String value, CredentialType type) {
+  public Credential(CredentialType type, String value) {
     this.value = value;
     this.type = type;
   }
@@ -93,6 +105,7 @@ public class Credential {
     return "Credential{" +
       "type=" + type +
       ", length=" + value.length() +
+      ", val=" + value +
       "}";
   }
 }

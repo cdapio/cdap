@@ -262,7 +262,7 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
 
     String cred = cipher.encryptToBase64("credential".getBytes(StandardCharsets.UTF_8), null);
     Principal userWithCredEncrypted = new Principal("userFoo", Principal.PrincipalType.USER, null,
-                                                    new Credential(cred, Credential.CredentialType.EXTERNAL_ENCRYPTED));
+                                                    new Credential(Credential.CredentialType.EXTERNAL_ENCRYPTED, cred));
 
     ControllerWrapper controllerWrapper = createControllerWrapper(CCONF, sConfCopy, null);
     AccessController accessController = controllerWrapper.accessController;
@@ -295,9 +295,9 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
 
     String badCipherCred = Base64.getEncoder().encodeToString("invalid encrypted credential".getBytes());
 
-    Principal userWithCredEncrypted = new Principal("userFoo", Principal.PrincipalType.USER, null,
-                                                    new Credential(badCipherCred,
-                                                                   Credential.CredentialType.EXTERNAL_ENCRYPTED));
+    Principal userWithCredEncrypted = new Principal(
+      "userFoo", Principal.PrincipalType.USER, null,       
+      new Credential(Credential.CredentialType.EXTERNAL_ENCRYPTED, badCipherCred));
 
     ControllerWrapper controllerWrapper = createControllerWrapper(CCONF, sConfCopy, null);
     AccessController accessController = controllerWrapper.accessController;
@@ -322,7 +322,7 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
 
     String cred = cipher.encryptToBase64("credential".getBytes(StandardCharsets.UTF_8), null);
     Principal userWithCredEncrypted = new Principal("userFoo", Principal.PrincipalType.USER, null,
-                                                    new Credential(cred, Credential.CredentialType.EXTERNAL_ENCRYPTED));
+                                                    new Credential(Credential.CredentialType.EXTERNAL_ENCRYPTED, cred));
 
     ControllerWrapper controllerWrapper = createControllerWrapper(CCONF, sConfCopy, null);
     AccessController accessController = controllerWrapper.accessController;
@@ -364,8 +364,8 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
   @Test
   public void testInternalAuthEnforce() throws IOException, AccessException {
     Principal userWithInternalCred = new Principal("system", Principal.PrincipalType.USER, null,
-                                                   new Credential("credential",
-                                                                  Credential.CredentialType.INTERNAL));
+                                                   new Credential(Credential.CredentialType.INTERNAL, "credential"
+                                                   ));
     CConfiguration cConfCopy = CConfiguration.copy(CCONF);
     cConfCopy.setBoolean(Constants.Security.INTERNAL_AUTH_ENABLED, true);
     ControllerWrapper controllerWrapper = createControllerWrapper(cConfCopy, SCONF, new NoOpAccessController());
@@ -386,8 +386,8 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
   @Test
   public void testInternalIsVisible() throws IOException, AccessException {
     Principal userWithInternalCred = new Principal("system", Principal.PrincipalType.USER, null,
-                                                   new Credential("credential",
-                                                                  Credential.CredentialType.INTERNAL));
+                                                   new Credential(Credential.CredentialType.INTERNAL, "credential"
+                                                   ));
     CConfiguration cConfCopy = CConfiguration.copy(CCONF);
     cConfCopy.setBoolean(Constants.Security.INTERNAL_AUTH_ENABLED, true);
     ControllerWrapper controllerWrapper = createControllerWrapper(cConfCopy, SCONF, new NoOpAccessController());

@@ -100,8 +100,6 @@ public class TaskWorkerService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    preloadArtifacts();
-
     LOG.debug("Starting TaskWorkerService");
     httpService.start();
     bindAddress = httpService.getBindAddress();
