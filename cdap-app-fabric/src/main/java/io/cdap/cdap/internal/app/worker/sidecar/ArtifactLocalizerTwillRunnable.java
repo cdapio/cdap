@@ -203,8 +203,9 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
     }
 
     CConfiguration cConf = CConfiguration.create();
-    cConf.clear();
-    cConf.addResource(new File(getArgument("cConf")).toURI().toURL());
+    // TODO(wyzhang): disable so it doesn't have security disabled like preview runner does.
+//    cConf.clear();
+//    cConf.addResource(new File(getArgument("cConf")).toURI().toURL());
 
     Configuration hConf = new Configuration();
     hConf.clear();
