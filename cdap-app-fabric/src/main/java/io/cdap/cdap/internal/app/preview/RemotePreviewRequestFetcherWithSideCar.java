@@ -45,17 +45,17 @@ import java.util.Optional;
 /**
  * Fetch preview requests from remote server.
  */
-public class ForwardingRemotePreviewRequestFetcher implements PreviewRequestFetcher {
+public class RemotePreviewRequestFetcherWithSideCar implements PreviewRequestFetcher {
   private static final Gson GSON = new Gson();
-  private static final Logger LOG = LoggerFactory.getLogger(ForwardingRemotePreviewRequestFetcher.class);
+  private static final Logger LOG = LoggerFactory.getLogger(RemotePreviewRequestFetcherWithSideCar.class);
 
   private final PreviewRequestPollerInfoProvider pollerInfoProvider;
   private final String sidecarBaseURL;
 
 
   @Inject
-  ForwardingRemotePreviewRequestFetcher(CConfiguration cConf,
-                                        PreviewRequestPollerInfoProvider pollerInfoProvider) {
+  RemotePreviewRequestFetcherWithSideCar(CConfiguration cConf,
+                                         PreviewRequestPollerInfoProvider pollerInfoProvider) {
     this.pollerInfoProvider = pollerInfoProvider;
     this.sidecarBaseURL = String
       .format("http://localhost:%d/%s/worker", cConf.getInt(Constants.ArtifactLocalizer.PORT),
@@ -84,6 +84,11 @@ public class ForwardingRemotePreviewRequestFetcher implements PreviewRequestFetc
                                           httpResponse.getResponseBodyAsString(Charsets.UTF_8)));
     }
     PreviewRequest previewRequest = GSON.fromJson(httpResponse.getResponseBodyAsString(), PreviewRequest.class);
+
+    if (previewRequest != null) {
+      updatePrinciple(previewRequest.getPrincipal());
+    }
+
     return Optional.ofNullable(previewRequest);
   }
 
@@ -93,9 +98,9 @@ public class ForwardingRemotePreviewRequestFetcher implements PreviewRequestFetc
     throw new UnsupportedOptionsException();
   }
 
-  private void updatePrinciple(Principal principal) throws BadRequestException {
+  private void updatePrinciple(Principal principal) throws UnauthorizedException {
     if (principal.getType() != Principal.PrincipalType.USER) {
-      throw new BadRequestException("Principle type is not USER");
+      throw new UnauthorizedException("Principle type is not USER");
     }
     SecurityRequestContext.reset();
     SecurityRequestContext.setUserId(principal.getName());
