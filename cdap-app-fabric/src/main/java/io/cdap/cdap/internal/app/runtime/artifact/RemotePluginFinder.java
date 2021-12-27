@@ -167,7 +167,7 @@ public class RemotePluginFinder implements PluginFinder {
     HttpResponse response = remoteClient.execute(requestBuilder.build());
 
     System.out.println(String.format("wyzhang: RemotePluginFinder getPlugins returned %s",
-                                     response.toString());
+                                     response.toString()));
 
     if (response.getResponseCode() == HttpResponseStatus.NOT_FOUND.code()) {
       throw new PluginNotExistsException(namespaceId, pluginType, pluginName);
