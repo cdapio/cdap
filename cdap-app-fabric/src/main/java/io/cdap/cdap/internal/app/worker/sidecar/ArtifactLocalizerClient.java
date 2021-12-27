@@ -95,23 +95,27 @@ public class ArtifactLocalizerClient {
       throw new IOException(e);
     }
 
-    LOG.debug("wyzhang: ArtifactLocalizerClient getUnpackedArtifactLocation Sending request to {}", url);
+    LOG.debug("wyzhang: ArtifactLocalizerClient sendRequest Sending request to {}", url);
+    LOG.debug("wyzhang: ArtifactLocalizerClient sendRequest authentication context is",
+              authenticationContext.getClass().getName());
     HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.GET, url);
     {
       Principal principal = authenticationContext.getPrincipal();
+      LOG.debug("wyzhang: ArtifactLocalizerClient sendRequest authentication context principle",
+                authenticationContext.getPrincipal());
       String userID = null;
-      Credential internalCredentials = null;
+      Credential credential = null;
       if (principal != null) {
         userID = principal.getName();
-        internalCredentials = principal.getFullCredential();
+        credential = principal.getFullCredential();
       }
-      if (internalCredentials != null) {
+      if (credential != null) {
         LOG.debug("wyzhang: ArtifactLocalizerClient getUnpackedArtifactLocation add credential header {}",
-                  String.format("%s %s", internalCredentials.getType().getQualifiedName(),
-                                internalCredentials.getValue()));
+                  String.format("%s %s", credential.getType().getQualifiedName(),
+                                credential.getValue()));
         builder.addHeader(Constants.Security.Headers.RUNTIME_TOKEN,
-                          String.format("%s %s", internalCredentials.getType().getQualifiedName(),
-                                        internalCredentials.getValue()));
+                          String.format("%s %s", credential.getType().getQualifiedName(),
+                                        credential.getValue()));
       }
       if (userID != null) {
         LOG.debug("wyzhang: ArtifactLocalizerClient getUnpackedArtifactLocation add user header {}",

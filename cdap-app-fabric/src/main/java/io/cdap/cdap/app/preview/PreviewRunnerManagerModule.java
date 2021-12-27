@@ -28,10 +28,10 @@ import io.cdap.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
 import io.cdap.cdap.internal.app.preview.DirectPreviewRequestFetcher;
-import io.cdap.cdap.internal.app.preview.RemotePreviewRequestFetcherThroughSideCar;
 import io.cdap.cdap.internal.app.preview.PreviewRequestFetcher;
 import io.cdap.cdap.internal.app.preview.PreviewRunStopper;
 import io.cdap.cdap.internal.app.preview.PreviewRunnerService;
+import io.cdap.cdap.internal.app.preview.RemotePreviewRequestFetcherThroughSideCar;
 
 /**
  * Guice module to provide bindings for {@link PreviewRunnerManager} service.

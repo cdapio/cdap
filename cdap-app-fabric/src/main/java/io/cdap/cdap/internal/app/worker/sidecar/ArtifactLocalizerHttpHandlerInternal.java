@@ -24,9 +24,12 @@ import io.cdap.cdap.api.common.HttpErrorStatusProvider;
 import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.preview.PreviewRequestFetcher;
+import io.cdap.cdap.master.spi.twill.SecurityContext;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpHandler;
@@ -93,6 +96,11 @@ public class ArtifactLocalizerHttpHandlerInternal extends AbstractHttpHandler {
                        @PathParam("artifact-name") String artifactName,
                        @PathParam("artifact-version") String artifactVersion,
                        @QueryParam("unpack") @DefaultValue("true") boolean unpack) throws Exception {
+    LOG.error("wyzhang: ArtifactLocalizerHttpHandlerInternal artifact getUserId {}",
+              SecurityRequestContext.getUserId());
+    LOG.error("wyzhang: ArtifactLocalizerHttpHandlerInternal artifact getUserCrednetial {}",
+              SecurityRequestContext.getUserCredential());
+
     ArtifactId artifactId = new ArtifactId(namespaceId, artifactName, artifactVersion);
     try {
       File artifactPath = unpack
@@ -111,7 +119,8 @@ public class ArtifactLocalizerHttpHandlerInternal extends AbstractHttpHandler {
 
   /**
    * Return json representation of an exception.
-   * Used to propagate exception across network for better surfacing errors and debuggability.
+   * Used to propagate exception across network fo
+   * r better surfacing errors and debuggability.
    */
   private String exceptionToJson(Exception ex) {
     BasicThrowable basicThrowable = new BasicThrowable(ex);
