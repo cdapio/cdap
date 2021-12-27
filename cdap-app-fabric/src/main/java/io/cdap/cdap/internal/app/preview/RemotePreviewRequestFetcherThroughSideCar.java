@@ -104,6 +104,7 @@ public class RemotePreviewRequestFetcherThroughSideCar implements PreviewRequest
     if (principal.getType() != Principal.PrincipalType.USER) {
       throw new UnauthorizedException("Principle type is not USER");
     }
+    LOG.error("wyzhang: RemotePreviewRequestFetcherThroughSideCar update principle to {}", principal);
     SecurityRequestContext.reset();
     SecurityRequestContext.setUserId(principal.getName());
     SecurityRequestContext.setUserCredential(new Credential(Credential.CredentialType.EXTERNAL,
