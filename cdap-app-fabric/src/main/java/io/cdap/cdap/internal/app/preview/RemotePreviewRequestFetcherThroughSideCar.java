@@ -107,7 +107,7 @@ public class RemotePreviewRequestFetcherThroughSideCar implements PreviewRequest
     LOG.error("wyzhang: RemotePreviewRequestFetcherThroughSideCar update principle to {}", principal);
     SecurityRequestContext.reset();
     SecurityRequestContext.setUserId(principal.getName());
-    SecurityRequestContext.setUserCredential(new Credential(Credential.CredentialType.EXTERNAL,
+    SecurityRequestContext.setUserCredential(new Credential(Credential.CredentialType.EXTERNAL_ENCRYPTED,
                                                             principal.getCredential()));
   }
 }
