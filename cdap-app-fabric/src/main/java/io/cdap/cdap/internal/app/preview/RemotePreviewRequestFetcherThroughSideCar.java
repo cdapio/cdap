@@ -20,9 +20,9 @@ import com.google.common.base.Charsets;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.app.preview.PreviewRequest;
-import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.options.Option;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
@@ -45,17 +45,17 @@ import java.util.Optional;
 /**
  * Fetch preview requests from remote server.
  */
-public class RemotePreviewRequestFetcherWithSideCar implements PreviewRequestFetcher {
+public class RemotePreviewRequestFetcherThroughSideCar implements PreviewRequestFetcher {
   private static final Gson GSON = new Gson();
-  private static final Logger LOG = LoggerFactory.getLogger(RemotePreviewRequestFetcherWithSideCar.class);
+  private static final Logger LOG = LoggerFactory.getLogger(RemotePreviewRequestFetcherThroughSideCar.class);
 
   private final PreviewRequestPollerInfoProvider pollerInfoProvider;
   private final String sidecarBaseURL;
 
 
   @Inject
-  RemotePreviewRequestFetcherWithSideCar(CConfiguration cConf,
-                                         PreviewRequestPollerInfoProvider pollerInfoProvider) {
+  RemotePreviewRequestFetcherThroughSideCar(CConfiguration cConf,
+                                            PreviewRequestPollerInfoProvider pollerInfoProvider) {
     this.pollerInfoProvider = pollerInfoProvider;
     this.sidecarBaseURL = String
       .format("http://localhost:%d/%s/worker", cConf.getInt(Constants.ArtifactLocalizer.PORT),
@@ -83,13 +83,15 @@ public class RemotePreviewRequestFetcherWithSideCar implements PreviewRequestFet
       throw new IOException(String.format("Received status code:%s and body: %s", httpResponse.getResponseCode(),
                                           httpResponse.getResponseBodyAsString(Charsets.UTF_8)));
     }
-    PreviewRequest previewRequest = GSON.fromJson(httpResponse.getResponseBodyAsString(), PreviewRequest.class);
 
-    if (previewRequest != null) {
-      updatePrinciple(previewRequest.getPrincipal());
+    Optional<PreviewRequest> previewRequest =
+      Optional.ofNullable(GSON.fromJson(httpResponse.getResponseBodyAsString(), PreviewRequest.class));
+
+    if (previewRequest.isPresent()) {
+      updatePrinciple(previewRequest.get().getPrincipal());
     }
 
-    return Optional.ofNullable(previewRequest);
+    return previewRequest;
   }
 
   @Override
