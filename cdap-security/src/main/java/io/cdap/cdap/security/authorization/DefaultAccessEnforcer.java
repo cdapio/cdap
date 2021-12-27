@@ -265,9 +265,7 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
     // When user credential encryption is enabled, credential should be encrypted upon arrival
     // at router and decrypted right here before calling auth extension.
     try {
-      String plainCredential = new String(new TinkCipher(sConf).decryptFromBase64(userCredential.getValue(),
-                                                                                  null),
-                                          StandardCharsets.UTF_8);
+      String plainCredential = new TinkCipher(sConf).decryptStringFromBase64(userCredential.getValue(), null);
       return new Principal(principal.getName(),
                            principal.getType(),
                            principal.getKerberosPrincipal(),
