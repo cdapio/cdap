@@ -95,6 +95,10 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
   @Override
   public void enforce(EntityId entity, Principal principal, Set<? extends Permission> permissions)
     throws AccessException {
+    if (!isSecurityAuthorizationEnabled()) {
+      return;
+    }
+
     MetricsContext metricsContext = createEntityIdMetricsContext(entity);
     if (internalAuthEnabled && principal.getFullCredential() != null
       && (principal.getFullCredential().getType() == Credential.CredentialType.INTERNAL ||
@@ -114,9 +118,7 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
       LOG.debug("wyzhang Internal Principal enforce return");
       return;
     }
-    if (!isSecurityAuthorizationEnabled()) {
-      return;
-    }
+
     // bypass the check when the principal is the master user and the entity is in the system namespace
     if (isAccessingSystemNSAsMasterUser(entity, principal) || isEnforcingOnSamePrincipalId(entity, principal)) {
       metricsContext.increment(Constants.Metrics.Authorization.EXTENSION_CHECK_BYPASS_COUNT, 1);
@@ -148,6 +150,10 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
   @Override
   public void enforceOnParent(EntityType entityType, EntityId parentId, Principal principal, Permission permission)
     throws AccessException {
+    if (!isSecurityAuthorizationEnabled()) {
+      return;
+    }
+
     MetricsContext metricsContext = createEntityIdMetricsContext(parentId);
     if (internalAuthEnabled && principal.getFullCredential() != null
       && (principal.getFullCredential().getType() == Credential.CredentialType.INTERNAL ||
@@ -162,10 +168,6 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
         metricsContext.increment(Constants.Metrics.Authorization.INTERNAL_CHECK_FAILURE_COUNT, 1);
         throw e;
       }
-      return;
-    }
-
-    if (!isSecurityAuthorizationEnabled()) {
       return;
     }
 
@@ -203,6 +205,10 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
   @Override
   public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal)
     throws AccessException {
+    if (!isSecurityAuthorizationEnabled()) {
+      return entityIds;
+    }
+
     // Pass null for creating metrics context. Aggregations are not supported for visibility checks.
     MetricsContext metricsContext = createEntityIdMetricsContext(null);
     if (internalAuthEnabled && principal.getFullCredential() != null
@@ -210,10 +216,6 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
       LOG.trace("Internal Principal enforce({}, {})", entityIds, principal);
       metricsContext.increment(Constants.Metrics.Authorization.INTERNAL_VISIBILITY_CHECK_COUNT, 1);
       return internalAccessEnforcer.isVisible(entityIds, principal);
-    }
-
-    if (!isSecurityAuthorizationEnabled()) {
-      return entityIds;
     }
 
     metricsContext.increment(Constants.Metrics.Authorization.NON_INTERNAL_VISIBILITY_CHECK_COUNT, 1);
