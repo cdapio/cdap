@@ -39,6 +39,7 @@ import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import io.cdap.cdap.proto.artifact.PluginInfo;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
@@ -159,7 +160,14 @@ public class RemotePluginFinder implements PluginFinder {
                         ? ArtifactScope.SYSTEM : ArtifactScope.USER
         ));
 
+    System.out.println(String.format("wyzhang: RemotePluginFinder getPlugins send request user=%s, cred=%s",
+                                     SecurityRequestContext.getUserId(),
+                                     SecurityRequestContext.getUserCredential());
+
     HttpResponse response = remoteClient.execute(requestBuilder.build());
+
+    System.out.println(String.format("wyzhang: RemotePluginFinder getPlugins returned %s",
+                                     response.toString());
 
     if (response.getResponseCode() == HttpResponseStatus.NOT_FOUND.code()) {
       throw new PluginNotExistsException(namespaceId, pluginType, pluginName);

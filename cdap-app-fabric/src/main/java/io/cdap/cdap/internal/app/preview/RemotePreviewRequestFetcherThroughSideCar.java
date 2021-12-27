@@ -72,12 +72,12 @@ public class RemotePreviewRequestFetcherThroughSideCar implements PreviewRequest
       throw new IOException(e);
     }
 
-    LOG.debug("wyzhang: forwarding remote preview request fetcher sent to {}", url);
+//    LOG.debug("wyzhang: forwarding remote preview request fetcher sent to {}", url);
     HttpRequest httpRequest = HttpRequest.builder(HttpMethod.POST, url)
       .withBody(ByteBuffer.wrap(pollerInfoProvider.get()))
       .build();
     HttpResponse httpResponse = HttpRequests.execute(httpRequest);
-    LOG.debug("wyzhang: forwarding remote preview request fetcher got back to {}", httpResponse);
+//    LOG.debug("wyzhang: forwarding remote preview request fetcher got back to {}", httpResponse);
 
     if (httpResponse.getResponseCode() != 200) {
       throw new IOException(String.format("Received status code:%s and body: %s", httpResponse.getResponseCode(),
