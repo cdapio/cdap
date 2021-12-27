@@ -77,6 +77,7 @@ public class ForwardingRemotePreviewRequestFetcher implements PreviewRequestFetc
       .withBody(ByteBuffer.wrap(pollerInfoProvider.get()))
       .build();
     HttpResponse httpResponse = HttpRequests.execute(httpRequest);
+    LOG.debug("wyzhang: forwarding remote preview request fetcher got back to {}", httpResponse);
 
     if (httpResponse.getResponseCode() != 200) {
       throw new IOException(String.format("Received status code:%s and body: %s", httpResponse.getResponseCode(),

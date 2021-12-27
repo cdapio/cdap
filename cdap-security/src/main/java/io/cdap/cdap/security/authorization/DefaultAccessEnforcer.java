@@ -106,6 +106,7 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
         internalAccessEnforcer.enforce(entity, principal, permissions);
         metricsContext.increment(Constants.Metrics.Authorization.INTERNAL_CHECK_SUCCESS_COUNT, 1);
       } catch (Throwable e) {
+        e.printStackTrace();
         LOG.debug("wyzhang Internal Principal enforce exception : " + e);
         metricsContext.increment(Constants.Metrics.Authorization.INTERNAL_CHECK_FAILURE_COUNT, 1);
         throw e;

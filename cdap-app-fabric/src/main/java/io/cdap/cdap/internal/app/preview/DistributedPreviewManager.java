@@ -155,6 +155,8 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
           // is not exposed (i.e. mounted in k8s) to TaskWorkerService.
           CConfiguration cConfCopy = CConfiguration.copy(cConf);
           cConfCopy.unset(Constants.Security.SSL.INTERNAL_CERT_PATH);
+          cConfCopy.setBoolean(Constants.Security.ENABLED, false);
+          cConfCopy.setBoolean(Constants.Security.INTERNAL_AUTH_ENABLED, false);
           Path cConfPath = runDir.resolve("cConf.xml");
           try (Writer writer = Files.newBufferedWriter(cConfPath, StandardCharsets.UTF_8)) {
             cConfCopy.writeXml(writer);

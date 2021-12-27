@@ -88,7 +88,7 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
           }
         }
       } else if (enforceAuthenticatedRequests) {
-        LOG.error("wyzhang: AuthenticationChannelHandler auth header missing for url {}", request.uri());
+        LOG.error("wyzhang: AuthenticationChannelHandler auth header missing for url {}",  request.uri());
         currentUserCredential = new Credential(Credential.CredentialType.INTERNAL_PLACEHOLDER, "CDAP_empty_credential"
         );
 //        throw new IllegalArgumentException(String.format(
