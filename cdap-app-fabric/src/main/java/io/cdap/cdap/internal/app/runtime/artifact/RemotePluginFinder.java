@@ -162,7 +162,7 @@ public class RemotePluginFinder implements PluginFinder {
 
     System.out.println(String.format("wyzhang: RemotePluginFinder getPlugins send request user=%s, cred=%s",
                                      SecurityRequestContext.getUserId(),
-                                     SecurityRequestContext.getUserCredential());
+                                     SecurityRequestContext.getUserCredential()));
 
     HttpResponse response = remoteClient.execute(requestBuilder.build());
 
