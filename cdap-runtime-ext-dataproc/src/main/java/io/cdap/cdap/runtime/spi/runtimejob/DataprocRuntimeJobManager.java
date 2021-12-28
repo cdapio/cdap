@@ -204,8 +204,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
                                "provisioner.submitJob.response.count");
     } catch (AlreadyExistsException ex) {
       //the job id already exists, ignore the job.
-      LOG.warn("The job already exists: {}", ex.getMessage());
-
+      LOG.warn("The dataproc job {} already exists. Ignoring resubmission of the job.", ex.getMessage());
     } catch (Exception e) {
       // delete all uploaded gcs files in case of exception
       DataprocUtils.deleteGCSPath(getStorageClient(), bucket, runRootPath);

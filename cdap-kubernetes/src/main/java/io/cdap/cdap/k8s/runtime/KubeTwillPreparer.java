@@ -96,6 +96,7 @@ import java.io.OutputStream;
 import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -139,7 +140,6 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private static final String CPU_MULTIPLIER = "master.environment.k8s.container.cpu.multiplier";
   private static final String MEMORY_MULTIPLIER = "master.environment.k8s.container.memory.multiplier";
   private static final String DEFAULT_MULTIPLIER = "1.0";
-  private static final int ERROR_CODE_ALREADY_EXISTS = 409;
 
   private final MasterEnvironmentContext masterEnvContext;
   private final ApiClient apiClient;
@@ -655,14 +655,14 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       .build();
     try {
       batchV1Api.createNamespacedJob(kubeNamespace, job, "true", null, null);
+      LOG.trace("Created Job {} in Kubernetes.", metadata.getName());
     } catch (ApiException e) {
-      if (e.getCode() == ERROR_CODE_ALREADY_EXISTS) {
-        LOG.warn("The job already exists : " , e.getResponseBody());
+      if (e.getCode() == HttpURLConnection.HTTP_CONFLICT) {
+        LOG.warn("The job already exists : {}.\n Ignoring resubmission of the job." , e.getResponseBody());
       } else {
         throw e;
       }
     }
-    LOG.trace("Created Job {} in Kubernetes.", metadata.getName());
     return job.getMetadata();
   }
 
