@@ -62,14 +62,6 @@ public class SparkMetricsSink implements Sink {
     LOG.debug("Using SparkMetricsSink for reporting metrics: {}", properties);
   }
 
-  /**
-   * Constructor for Spark to call.
-   */
-  public SparkMetricsSink(Properties properties, MetricRegistry registry,
-                          org.apache.spark.SecurityManager securityManager) {
-    this(properties, registry);
-  }
-
   @Override
   public void start() {
     reporter.start(1, TimeUnit.SECONDS);
