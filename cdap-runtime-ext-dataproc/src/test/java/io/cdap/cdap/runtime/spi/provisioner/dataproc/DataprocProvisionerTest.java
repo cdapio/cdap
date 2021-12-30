@@ -135,6 +135,7 @@ public class DataprocProvisionerTest {
     props.put("secureBootEnabled", "false");
     props.put("vTpmEnabled", "true");
     props.put("integrityMonitoringEnabled", "true");
+    props.put("idleTTL", "20");
 
     DataprocConf conf = DataprocConf.create(props);
 
@@ -142,6 +143,7 @@ public class DataprocProvisionerTest {
     Assert.assertEquals("region1", conf.getRegion());
     Assert.assertEquals("region1-a", conf.getZone());
     Assert.assertEquals("point1", conf.getTokenEndpoint());
+    Assert.assertEquals(20, conf.getIdleTTLMinutes());
     Map<String, String> clusterMetaData = conf.getClusterMetaData();
     Assert.assertEquals("metadata-val1", clusterMetaData.get("metadata-key1"));
     Assert.assertEquals("metadata-val2", clusterMetaData.get("metadata-key2"));
@@ -160,6 +162,21 @@ public class DataprocProvisionerTest {
     Assert.assertFalse(conf.isSecureBootEnabled());
     Assert.assertTrue(conf.isvTpmEnabled());
     Assert.assertTrue(conf.isIntegrityMonitoringEnabled());
+  }
+
+  @Test
+  public void testDataprocConfDefaultIdleTTL() {
+    Map<String, String> props = new HashMap<>();
+    props.put(DataprocConf.PROJECT_ID_KEY, "pid");
+    props.put("accountKey", "key");
+    props.put("region", "region1");
+    DataprocConf conf = DataprocConf.create(props);
+    Assert.assertEquals(30, conf.getIdleTTLMinutes());
+
+    // when deleteSkip set to true fallback don't set the idleTTL
+    props.put("skipDelete", "true");
+    conf = DataprocConf.create(props);
+    Assert.assertEquals(0, conf.getIdleTTLMinutes());
   }
 
   @Test

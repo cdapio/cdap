@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2020-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,6 +24,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.Constants;
@@ -31,7 +32,6 @@ import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
-import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import io.cdap.cdap.gateway.handlers.ArtifactHttpHandlerInternal;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
@@ -52,6 +52,7 @@ import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+
 
 /**
  * Implementation for fetching artifact metadata from remote {@link ArtifactHttpHandlerInternal}
@@ -91,10 +92,9 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
     httpResponse = execute(requestBuilder.build());
     ArtifactDetail detail = GSON.fromJson(httpResponse.getResponseBodyAsString(), ARTIFACT_DETAIL_TYPE);
     
-    Location artifactLocation = Locations
-        .getLocationFromAbsolutePath(locationFactory, detail.getDescriptor().getLocationURI().getPath());
     return new ArtifactDetail(new ArtifactDescriptor(detail.getDescriptor().getNamespace(),
-                                                     detail.getDescriptor().getArtifactId(), artifactLocation),
+                                                     detail.getDescriptor().getArtifactId(),
+                                                     getArtifactLocation(detail.getDescriptor())),
                               detail.getMeta());
   }
 
@@ -153,13 +153,21 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
     List<ArtifactDetail> details = GSON.fromJson(httpResponse.getResponseBodyAsString(), ARTIFACT_DETAIL_LIST_TYPE);
     List<ArtifactDetail> detailList = new ArrayList<>();
     for (ArtifactDetail detail : details) {
-      Location artifactLocation = locationFactory.create(detail.getDescriptor().getLocationURI());
       detailList.add(
         new ArtifactDetail(new ArtifactDescriptor(detail.getDescriptor().getNamespace(),
-                                                  detail.getDescriptor().getArtifactId(), artifactLocation),
+                                                  detail.getDescriptor().getArtifactId(),
+                                                  getArtifactLocation(detail.getDescriptor())),
                            detail.getMeta()));
     }
     return detailList;
+  }
+
+  /**
+   * Allow subclasses to modify artifact locations (e.g. {@link RemoteArtifactRepositoryReaderWithLocalization}
+   * to download and cache artifact locally, subsequently return a local location.
+   */
+  protected Location getArtifactLocation(ArtifactDescriptor descriptor) throws IOException, ArtifactNotFoundException {
+    return locationFactory.create(descriptor.getLocationURI());
   }
 
   private HttpResponse execute(HttpRequest request) throws IOException, NotFoundException, UnauthorizedException {

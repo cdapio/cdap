@@ -37,6 +37,7 @@ import io.cdap.cdap.common.guice.SupplierProviderBridge;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
@@ -99,7 +100,9 @@ public class SystemAppTask implements RunnableTask {
     EntityImpersonator classLoaderImpersonator = new EntityImpersonator(artifactId.toEntityId(), impersonator);
 
     try (CloseableClassLoader artifactClassLoader =
-           artifactRepository.createArtifactClassLoader(Locations.toLocation(artifactLocation),
+           artifactRepository.createArtifactClassLoader(new ArtifactDescriptor(artifactId.getNamespace().getId(),
+                                                                               artifactId.toArtifactId(),
+                                                                               Locations.toLocation(artifactLocation)),
                                                         classLoaderImpersonator);
          SystemAppTaskContext systemAppTaskContext = buildTaskSystemAppContext(injector, systemAppNamespace,
                                                                                systemAppArtifactId,

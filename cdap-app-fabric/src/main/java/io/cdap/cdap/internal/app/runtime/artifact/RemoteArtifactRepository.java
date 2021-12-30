@@ -62,9 +62,10 @@ public class RemoteArtifactRepository implements ArtifactRepository {
   }
 
   @Override
-  public CloseableClassLoader createArtifactClassLoader(Location artifactLocation,
+  public CloseableClassLoader createArtifactClassLoader(ArtifactDescriptor artifactDescriptor,
                                                         EntityImpersonator entityImpersonator) throws IOException {
-    return artifactClassLoaderFactory.createClassLoader(artifactLocation, entityImpersonator);
+    Location location = getArtifactLocation(artifactDescriptor);
+    return artifactClassLoaderFactory.createClassLoader(location, entityImpersonator);
   }
 
   @Override
@@ -199,6 +200,14 @@ public class RemoteArtifactRepository implements ArtifactRepository {
   @Override
   public List<ArtifactDetail> getArtifactDetails(ArtifactRange range, int limit,
                                                  ArtifactSortOrder order) throws Exception {
-    throw new UnsupportedOperationException();
+    return artifactRepositoryReader.getArtifactDetails(range, limit, order);
+  }
+
+  /**
+   * Allow subclasses to modify artifact locations (e.g. {@link RemoteArtifactRepositoryWithLocalization}
+   * to download and cache artifact locally, subsequently return a local location.
+   */
+  protected Location getArtifactLocation(ArtifactDescriptor descriptor) throws IOException {
+    return descriptor.getLocation();
   }
 }

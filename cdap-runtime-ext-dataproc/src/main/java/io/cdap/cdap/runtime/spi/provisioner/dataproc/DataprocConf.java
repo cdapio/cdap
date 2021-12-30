@@ -81,6 +81,8 @@ final class DataprocConf {
   // 2 minutes (5-3) after last job completion
   static final String CLUSTER_REUSE_THRESHOLD_MINUTES = "clusterReuseThresholdMinutes";
   static final int CLUSTER_REUSE_THRESHOLD_MINUTES_DEFAULT = 3;
+  static final String CLUSTER_IDLE_TTL_MINUTES = "idleTTL";
+  static final int CLUSTER_IDLE_TTL_MINUTES_DEFAULT = 30;
 
   public static final String COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT = "compute.request.connectionTimeout";
   public static final int COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT_DEFAULT = 20000;
@@ -640,7 +642,7 @@ final class DataprocConf {
     String initActions = getString(properties, "initActions");
     boolean runtimeJobManagerEnabled = Boolean.parseBoolean(properties.get(RUNTIME_JOB_MANAGER));
     String autoScalingPolicy = getString(properties, "autoScalingPolicy");
-    int idleTTL = getInt(properties, "idleTTL", 0);
+    int idleTTL = getInt(properties, CLUSTER_IDLE_TTL_MINUTES, skipDelete ? 0 : CLUSTER_IDLE_TTL_MINUTES_DEFAULT);
 
     String tokenEndpoint = getString(properties, TOKEN_ENDPOINT_KEY);
     boolean secureBootEnabled = Boolean.parseBoolean(properties.getOrDefault(SECURE_BOOT_ENABLED, "false"));

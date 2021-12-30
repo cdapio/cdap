@@ -3241,6 +3241,18 @@
   </property>
 
   <property>
+    <name>preview.runner.artifact.localizer.enabled</name>
+    <value>false</value>
+    <description>
+      Whether to enable artifact localizer sidecar container to fetch and cache artifacts.
+      When set to true, artifacts are accessed through side-car container instead of directly
+      by preview runners. This is intended to be used in the situation where preview runner
+      doesn't or is refrained from accessing jar file directly (e.g. due to security reason
+      as preview runner may execute arbitrary user provided code)
+    </description>
+  </property>
+
+  <property>
     <name>service.retry.policy.base.delay.ms</name>
     <value>100</value>
     <description>
