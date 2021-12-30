@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.runtime.distributed;
 
 import ch.qos.logback.classic.Level;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
@@ -41,6 +42,7 @@ import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.logging.LoggerLogHandler;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.twill.TwillAppLifecycleEventHandler;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.data2.util.hbase.HBaseTableUtilFactory;
@@ -57,6 +59,7 @@ import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.master.spi.twill.SecretDisk;
 import io.cdap.cdap.master.spi.twill.SecureTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecurityContext;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.store.SecureStoreUtils;
@@ -131,6 +134,8 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
   protected final CConfiguration cConf;
   protected final Configuration hConf;
   protected final ClusterMode clusterMode;
+  // Set only if ProgramRunner is not running remotely
+  protected NamespaceQueryAdmin namespaceQueryAdmin;
   private final TwillRunner twillRunner;
   private final Impersonator impersonator;
 
@@ -347,6 +352,9 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
           .withApplicationArguments(PROGRAM_OPTIONS_FILE_NAME)
           // Use the MainClassLoader for class rewriting
           .setClassLoader(MainClassLoader.class.getName());
+
+        // Add namespace details
+        twillPreparer.withConfiguration(getNamespaceConfigs(program.getNamespaceId()));
 
         TwillController twillController;
         // Change the context classloader to the combine classloader of this ProgramRunner and
@@ -785,5 +793,16 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
     }
 
     return dependencies;
+  }
+
+  /**
+   * Get namespace details for the {@link TwillPreparer} configuration
+   */
+  @VisibleForTesting
+  Map<String, String> getNamespaceConfigs(String namespace) throws Exception {
+    if (namespaceQueryAdmin == null) {
+      return new HashMap<>();
+    }
+    return namespaceQueryAdmin.get(new NamespaceId(namespace)).getConfig().getConfigs();
   }
 }

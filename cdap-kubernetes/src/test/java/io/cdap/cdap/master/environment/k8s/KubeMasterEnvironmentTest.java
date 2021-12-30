@@ -21,6 +21,8 @@ import io.cdap.cdap.master.spi.environment.spark.SparkConfig;
 import io.cdap.cdap.master.spi.environment.spark.SparkSubmitContext;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.openapi.apis.RbacAuthorizationV1Api;
+import io.kubernetes.client.openapi.models.V1ClusterRoleBindingList;
 import io.kubernetes.client.openapi.models.V1ConfigMap;
 import io.kubernetes.client.openapi.models.V1ConfigMapProjection;
 import io.kubernetes.client.openapi.models.V1Container;
@@ -30,6 +32,7 @@ import io.kubernetes.client.openapi.models.V1Namespace;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1ProjectedVolumeSource;
+import io.kubernetes.client.openapi.models.V1RoleBindingList;
 import io.kubernetes.client.openapi.models.V1ServiceAccountTokenProjection;
 import io.kubernetes.client.openapi.models.V1Volume;
 import io.kubernetes.client.openapi.models.V1VolumeMount;
@@ -67,6 +70,7 @@ public class KubeMasterEnvironmentTest {
   private static final String KUBE_NAMESPACE = "test-kube-namespace";
 
   private CoreV1Api coreV1Api;
+  private RbacAuthorizationV1Api rbacV1Api;
   private KubeMasterEnvironment kubeMasterEnvironment;
 
   @Rule
@@ -78,8 +82,10 @@ public class KubeMasterEnvironmentTest {
   @Before
   public void init() throws IOException {
     coreV1Api = mock(CoreV1Api.class);
+    rbacV1Api = mock(RbacAuthorizationV1Api.class);
     kubeMasterEnvironment = new KubeMasterEnvironment();
     kubeMasterEnvironment.setCoreV1Api(coreV1Api);
+    kubeMasterEnvironment.setRbacV1Api(rbacV1Api);
     kubeMasterEnvironment.setNamespaceCreationEnabled();
     kubeMasterEnvironment.setLocalFileProvider(new TemporaryLocalFileProvider(temporaryFolder));
     KubeMasterPathProvider mockKubeMasterPathProvider = mock(KubeMasterPathProvider.class);
@@ -155,6 +161,7 @@ public class KubeMasterEnvironmentTest {
     properties.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE);
     when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any(), any(), any()))
       .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
+    skipRbacSteps();
     try {
       kubeMasterEnvironment.onNamespaceCreation(CDAP_NAMESPACE, properties);
     } catch (Exception e) {
@@ -224,6 +231,7 @@ public class KubeMasterEnvironmentTest {
       .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
     when(coreV1Api.readNamespacedConfigMap(eq(KUBE_NAMESPACE), eq("workload-identity-config"), any(), any(), any()))
       .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "config map not found"));
+    skipRbacSteps();
     try {
       kubeMasterEnvironment.onNamespaceCreation(CDAP_NAMESPACE, properties);
     } catch (Exception e) {
@@ -251,6 +259,7 @@ public class KubeMasterEnvironmentTest {
     when(coreV1Api.readNamespacedConfigMap(eq(KUBE_NAMESPACE), eq("workload-identity-config"), any(), any(), any()))
       .thenReturn(new V1ConfigMap().metadata(new V1ObjectMeta().name("workload-identity-config")
                                                .namespace(KUBE_NAMESPACE)));
+    skipRbacSteps();
     try {
       kubeMasterEnvironment.onNamespaceCreation(CDAP_NAMESPACE, properties);
     } catch (Exception e) {
@@ -279,6 +288,7 @@ public class KubeMasterEnvironmentTest {
     when(coreV1Api.readNamespacedConfigMap(any(), any(), any(), any(), any()))
       .thenThrow(new ApiException(HttpURLConnection.HTTP_INTERNAL_ERROR, "internal error"));
     when(coreV1Api.createNamespacedConfigMap(any(), any(), any(), any(), any())).thenThrow(new ApiException());
+    skipRbacSteps();
     kubeMasterEnvironment.onNamespaceCreation(CDAP_NAMESPACE, properties);
   }
 
@@ -301,6 +311,7 @@ public class KubeMasterEnvironmentTest {
     when(coreV1Api.readNamespacedConfigMap(eq(KUBE_NAMESPACE), eq("workload-identity-config"), any(), any(), any()))
       .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "config map not found"));
     when(coreV1Api.createNamespacedConfigMap(any(), any(), any(), any(), any())).thenThrow(new ApiException());
+    skipRbacSteps();
     kubeMasterEnvironment.onNamespaceCreation(CDAP_NAMESPACE, properties);
   }
 
@@ -318,6 +329,7 @@ public class KubeMasterEnvironmentTest {
     kubeMasterEnvironment.setWorkloadIdentityProvider(workloadIdentityProvider);
     when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any(), any(), any()))
       .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
+    skipRbacSteps();
     try {
       kubeMasterEnvironment.onNamespaceCreation(CDAP_NAMESPACE, properties);
     } catch (Exception e) {
@@ -367,6 +379,14 @@ public class KubeMasterEnvironmentTest {
                                 container.getName(),
                                 pod.getMetadata().getName()));
     }
+  }
+
+  private void skipRbacSteps() throws ApiException {
+    when(rbacV1Api.listNamespacedRoleBinding(eq(KUBE_NAMESPACE), any(), any(), any(), any(), any(), any(), any(),
+                                             any(), any(), any()))
+      .thenReturn(new V1RoleBindingList());
+    when(rbacV1Api.listClusterRoleBinding(any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+      .thenReturn(new V1ClusterRoleBindingList());
   }
 
   @Test

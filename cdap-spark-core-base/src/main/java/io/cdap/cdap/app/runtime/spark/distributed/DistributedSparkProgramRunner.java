@@ -19,6 +19,7 @@ package io.cdap.cdap.app.runtime.spark.distributed;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.common.RuntimeArguments;
 import io.cdap.cdap.api.spark.Spark;
@@ -36,6 +37,7 @@ import io.cdap.cdap.app.runtime.spark.SparkRuntimeContextConfig;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.lang.FilterClassLoader;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.twill.ProgramRuntimeClassAcceptor;
 import io.cdap.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedProgramRunner;
@@ -84,10 +86,14 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
   public DistributedSparkProgramRunner(SparkCompat sparkComat, CConfiguration cConf, YarnConfiguration hConf,
                                        Impersonator impersonator, LocationFactory locationFactory,
                                        ClusterMode clusterMode,
-                                       @Constants.AppFabric.ProgramRunner TwillRunner twillRunner) {
+                                       @Constants.AppFabric.ProgramRunner TwillRunner twillRunner,
+                                       Injector injector) {
     super(cConf, hConf, impersonator, clusterMode, twillRunner);
     this.sparkCompat = sparkComat;
     this.locationFactory = locationFactory;
+    if (!cConf.getBoolean(Constants.AppFabric.PROGRAM_REMOTE_RUNNER, false)) {
+      this.namespaceQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);
+    }
   }
 
   @Override

@@ -467,7 +467,8 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
       if (port == null) {
         return null;
       }
-      return new Discoverable(name, InetSocketAddress.createUnresolved(hostname, port), payload);
+      String namespacedHostName = String.format("%s.%s", hostname, namespace);
+      return new Discoverable(name, InetSocketAddress.createUnresolved(namespacedHostName, port), payload);
     }
   }
 }

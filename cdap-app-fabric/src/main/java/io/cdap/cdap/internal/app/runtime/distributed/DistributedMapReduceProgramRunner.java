@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.runtime.distributed;
 
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.common.RuntimeArguments;
 import io.cdap.cdap.api.mapreduce.MapReduceSpecification;
@@ -27,6 +28,7 @@ import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramRunId;
@@ -50,8 +52,12 @@ public final class DistributedMapReduceProgramRunner extends DistributedProgramR
   @Inject
   DistributedMapReduceProgramRunner(CConfiguration cConf, YarnConfiguration hConf,
                                     Impersonator impersonator, ClusterMode clusterMode,
-                                    @Constants.AppFabric.ProgramRunner TwillRunner twillRunner) {
+                                    @Constants.AppFabric.ProgramRunner TwillRunner twillRunner,
+                                    Injector injector) {
     super(cConf, hConf, impersonator, clusterMode, twillRunner);
+    if (!cConf.getBoolean(Constants.AppFabric.PROGRAM_REMOTE_RUNNER, false)) {
+      this.namespaceQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);
+    }
   }
 
   @Override

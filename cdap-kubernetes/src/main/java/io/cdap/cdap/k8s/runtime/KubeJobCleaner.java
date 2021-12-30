@@ -28,18 +28,16 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Kubernetes Job cleaner that scans and deletes completed jobs.
+ * Kubernetes Job cleaner that scans and deletes completed jobs across all namespaces.
  */
 class KubeJobCleaner implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(KubeJobCleaner.class);
   private final BatchV1Api batchV1Api;
-  private final String kubeNamespace;
   private final String selector;
   private final int batchSize;
 
-  KubeJobCleaner(BatchV1Api batchV1Api, String kubeNamespace, String selector, int batchSize) {
+  KubeJobCleaner(BatchV1Api batchV1Api, String selector, int batchSize) {
     this.batchV1Api = batchV1Api;
-    this.kubeNamespace = kubeNamespace;
     this.selector = selector;
     this.batchSize = batchSize;
   }
@@ -53,16 +51,16 @@ class KubeJobCleaner implements Runnable {
       try {
         // Attempt to delete completed jobs. K8s current implementation only supports status.successful field selector
         // for jobs. https://github.com/kubernetes/kubernetes/blob/master/pkg/apis/batch/v1/conversion.go
-        // so instead, list all the jobs in a given k8s namespace and delete completed (successful + failed) jobs one
+        // so instead, list all the jobs in all k8s namespace and delete completed (successful + failed) jobs one
         // by one.
-        V1JobList jobs = batchV1Api.listNamespacedJob(kubeNamespace, null, null, continuationToken, null, selector,
-                                                      batchSize, null, null,
-                                                      (int) TimeUnit.MINUTES.toSeconds(10), null);
+        V1JobList jobs = batchV1Api.listJobForAllNamespaces(null, continuationToken, null, selector, batchSize, null,
+                                                            null, null, (int) TimeUnit.MINUTES.toSeconds(10), null);
         for (V1Job job : jobs.getItems()) {
           V1JobStatus jobStatus = job.getStatus();
           // Only attempt to delete completed jobs.
           if (jobStatus != null && (jobStatus.getSucceeded() != null || jobStatus.getFailed() != null)) {
             String jobName = job.getMetadata().getName();
+            String kubeNamespace = job.getMetadata().getNamespace();
             V1DeleteOptions v1DeleteOptions = new V1DeleteOptions();
             v1DeleteOptions.setPropagationPolicy("Background");
             try {
