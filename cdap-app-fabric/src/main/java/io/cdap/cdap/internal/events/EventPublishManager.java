@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.events;
 
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -51,6 +52,6 @@ public class EventPublishManager extends AbstractIdleService {
 
   @Override
   protected void shutDown() throws Exception {
-
+    eventPublishers.forEach(ep -> ep.stopPublish());
   }
 }
