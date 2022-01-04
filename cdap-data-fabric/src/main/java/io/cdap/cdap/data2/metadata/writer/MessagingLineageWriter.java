@@ -53,10 +53,13 @@ public class MessagingLineageWriter implements LineageWriter, FieldLineageWriter
   private final TopicId topic;
   private final MessagingService messagingService;
   private final RetryStrategy retryStrategy;
+  private final int publishSizeLimit;
+  private boolean isLineageWarningLogged;
 
   @Inject
   MessagingLineageWriter(CConfiguration cConf, MessagingService messagingService) {
     this.topic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Metadata.MESSAGING_TOPIC));
+    this.publishSizeLimit = cConf.getInt(Constants.Metadata.MESSAGING_PUBLISH_SIZE_LIMIT);
     this.messagingService = messagingService;
     this.retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.metadata.");
   }
@@ -81,14 +84,27 @@ public class MessagingLineageWriter implements LineageWriter, FieldLineageWriter
   }
 
   private void publish(MetadataMessage message) {
-    StoreRequest request = StoreRequestBuilder.of(topic).addPayload(GSON.toJson(message)).build();
-    try {
-      Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy, Retries.ALWAYS_TRUE);
-    } catch (Exception e) {
-      LOG.trace("Failed to publish metadata message: {}", message);
-      ProgramRunId programRunId = (ProgramRunId) message.getEntityId();
-      throw new RuntimeException(String.format("Failed to publish metadata message of type '%s' for program " +
-              "run '%s'.", message.getType(), programRunId), e);
+    String messageJson = GSON.toJson(message);
+    int lineageSize = messageJson.length();
+
+    if (lineageSize > publishSizeLimit) {
+      if (!isLineageWarningLogged) {
+        LOG.warn("Some lineage messages are not being logged as they are larger than the limit of {} bytes.",
+                 publishSizeLimit);
+        isLineageWarningLogged = true;
+      }
+      LOG.trace("Size of lineage message is {} bytes, which is larger than the limit {}.\n" +
+        "Therefore the lineage will not be published.", lineageSize, publishSizeLimit);
+    } else {
+      StoreRequest request = StoreRequestBuilder.of(topic).addPayload(messageJson).build();
+      try {
+        Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy, Retries.ALWAYS_TRUE);
+      } catch (Exception e) {
+        LOG.trace("Failed to publish metadata message: {}", message);
+        ProgramRunId programRunId = (ProgramRunId) message.getEntityId();
+        throw new RuntimeException(String.format("Failed to publish metadata message of type '%s' for program " +
+                                                   "run '%s'.", message.getType(), programRunId), e);
+      }
     }
   }
 }
