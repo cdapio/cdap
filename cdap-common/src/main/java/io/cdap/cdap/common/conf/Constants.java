@@ -1536,6 +1536,7 @@ public final class Constants {
     public static final String MESSAGING_FETCH_SIZE = "metadata.messaging.fetch.size";
     public static final String MESSAGING_POLL_DELAY_MILLIS = "metadata.messaging.poll.delay.millis";
     public static final String MESSAGING_RETRIES_ON_CONFLICT = "metadata.messaging.retries.on.conflict";
+    public static final String MESSAGING_PUBLISH_SIZE_LIMIT = "metadata.messaging.publish.size.limit";
 
     public static final String STORAGE_PROVIDER_IMPLEMENTATION = "metadata.storage.implementation";
     public static final String STORAGE_PROVIDER_NOSQL = "nosql";
