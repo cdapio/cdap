@@ -51,6 +51,8 @@ public final class RouterPathLookup extends AbstractHttpHandler {
   public static final RouteDestination DATASET_EXECUTOR = new RouteDestination(Constants.Service.DATASET_EXECUTOR);
   public static final RouteDestination MESSAGING = new RouteDestination(Constants.Service.MESSAGING_SERVICE);
   public static final RouteDestination RUNTIME = new RouteDestination(Constants.Service.RUNTIME);
+  public static final RouteDestination SUPPORT_BUNDLE_SERVICE =
+    new RouteDestination(Constants.Service.SUPPORT_BUNDLE_SERVICE);
   public static final RouteDestination DONT_ROUTE = new RouteDestination(Constants.Router.DONT_ROUTE_SERVICE);
 
   /**
@@ -174,6 +176,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
         case Constants.Service.EXPLORE_HTTP_USER_SERVICE: return EXPLORE_HTTP_USER_SERVICE;
         case Constants.Service.MESSAGING_SERVICE: return MESSAGING;
         case Constants.Service.RUNTIME: return RUNTIME;
+        case Constants.Service.SUPPORT_BUNDLE_SERVICE: return SUPPORT_BUNDLE_SERVICE;
         default: return null;
       }
     } else if (uriParts.length == 7 && uriParts[3].equals("data") && uriParts[4].equals("datasets") &&
@@ -190,6 +193,9 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       // /v3/namespaces/{namespace-id}/data/datasets/{name}/properties
       // /v3/namespaces/{namespace-id}/data/datasets/{name}/admin/{method}
       return DATASET_MANAGER;
+    } else if (beginsWith(uriParts, "v3", "support", "bundle")) {
+      //Support Bundle Handler Path /v3/support/bundle
+      return SUPPORT_BUNDLE_SERVICE;
     } else if ((uriParts.length == 3) && uriParts[1].equals("metadata-internals")) {
       // we don't want to expose endpoints for direct metadata mutation from CDAP master
       // /v3/metadata-internals/{mutation-type}
@@ -209,7 +215,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
    *
    * @param actual the actual string array to check; must not contain nulls.
    * @param expected the expected string array to match; may contain nulls as wildcards.
-   *                 
+   *
    * @return true if the start of {@code actual} matches {@code expected}
    */
   @VisibleForTesting

@@ -76,7 +76,13 @@ public final class MasterUtils {
                                    Constants.MessagingSystem.CONTAINER_MEMORY_MB,
                                    Constants.MessagingSystem.CONTAINER_VIRTUAL_CORES,
                                    Constants.MessagingSystem.CONTAINER_INSTANCES,
-                                   Constants.MessagingSystem.MAX_INSTANCES));
+                                   Constants.MessagingSystem.MAX_INSTANCES))
+      .add(new ServiceResourceKeys(cConf,
+                                   Constants.Service.SUPPORT_BUNDLE_SERVICE,
+                                   Constants.SupportBundle.SERVICE_MEMORY_MB,
+                                   Constants.SupportBundle.SERVICE_NUM_CORES,
+                                   Constants.SupportBundle.CONTAINER_INSTANCES,
+                                   Constants.SupportBundle.MAX_INSTANCES));
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
       builder.add(new ExploreServiceResourceKeys(cConf,
                                                  Constants.Service.EXPLORE_HTTP_USER_SERVICE,
