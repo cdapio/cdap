@@ -658,7 +658,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       LOG.trace("Created Job {} in Kubernetes.", metadata.getName());
     } catch (ApiException e) {
       if (e.getCode() == HttpURLConnection.HTTP_CONFLICT) {
-        LOG.warn("The job already exists : {}.\n Ignoring resubmission of the job." , e.getResponseBody());
+        LOG.warn("The kubernetes job already exists : {}. Ignoring resubmission of the job." , e.getResponseBody());
       } else {
         throw e;
       }
