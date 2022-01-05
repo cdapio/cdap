@@ -342,7 +342,7 @@ class DataprocClient implements AutoCloseable {
   private static ClusterControllerClient getClusterControllerClient(DataprocConf conf) throws IOException {
     CredentialsProvider credentialsProvider = FixedCredentialsProvider.create(conf.getDataprocCredentials());
 
-    String regionalEndpoint = conf.getRegion() + DATAPROC_GOOGLEAPIS_COM_443;
+    String regionalEndpoint = conf.getRegion() + "-" + conf.getRootUrl();
 
     ClusterControllerSettings controllerSettings = ClusterControllerSettings.newBuilder()
       .setCredentialsProvider(credentialsProvider)
