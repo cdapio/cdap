@@ -109,7 +109,6 @@ class DataprocClient implements AutoCloseable {
   private static final List<IPRange> PRIVATE_IP_RANGES = DataprocUtils.parseIPRanges(Arrays.asList("10.0.0.0/8",
                                                                                                    "172.16.0.0/12",
                                                                                                    "192.168.0.0/16"));
-  static final String DATAPROC_GOOGLEAPIS_COM_443 = "-dataproc.googleapis.com:443";
   private static final int MIN_DEFAULT_CONCURRENCY = 32;
   private static final int PARTITION_NUM_FACTOR = 32;
   private static final int MIN_INITIAL_PARTITIONS_DEFAULT = 128;
