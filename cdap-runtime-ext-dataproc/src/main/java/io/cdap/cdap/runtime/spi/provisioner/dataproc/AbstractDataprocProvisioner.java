@@ -171,6 +171,7 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
       String bucket = properties.get(BUCKET);
 
       Map<String, String> systemLabels = getSystemLabels();
+      LOG.debug("Dataproc endpoint: {}", conf.getRootUrl());
       return Optional.of(
         new DataprocRuntimeJobManager(new DataprocClusterInfo(context, clusterName, conf.getDataprocCredentials(),
                                                               conf.getRootUrl(),
