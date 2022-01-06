@@ -172,6 +172,7 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
 
       Map<String, String> systemLabels = getSystemLabels();
       LOG.debug("Dataproc endpoint: {}", conf.getRootUrl());
+      LOG.debug("Dataproc logging: {}", conf.isStackdriverLoggingEnabled());
       return Optional.of(
         new DataprocRuntimeJobManager(new DataprocClusterInfo(context, clusterName, conf.getDataprocCredentials(),
                                                               conf.getRootUrl(),

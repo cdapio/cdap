@@ -319,6 +319,7 @@ class DataprocClient implements AutoCloseable {
     CredentialsProvider credentialsProvider = FixedCredentialsProvider.create(conf.getDataprocCredentials());
 
     LOG.debug("Dataproc endpoint: {}", conf.getRootUrl());
+    LOG.debug("Dataproc logging: {}", conf.isStackdriverLoggingEnabled());
     String regionalEndpoint = conf.getRegion() + "-" + conf.getRootUrl();
 
     ClusterControllerSettings controllerSettings = ClusterControllerSettings.newBuilder()
