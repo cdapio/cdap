@@ -69,6 +69,16 @@ public class KubeMasterEnvironmentTest {
   }
 
   @Test
+  public void testOnNamespaceCreationWithBootstrapNamespace() {
+    Map<String, String> properties = new HashMap<>();
+    try {
+      kubeMasterEnvironment.onNamespaceCreation("default", properties);
+    } catch (Exception e) {
+      Assert.fail("Kubernetes creation should not error for bootstrap namespace. Exception: " + e);
+    }
+  }
+
+  @Test
   public void testOnNamespaceCreationWithExistingNamespace() throws Exception {
     Map<String, String> properties = new HashMap<>();
     properties.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE);
