@@ -497,7 +497,8 @@
           "description": "Configure Dataproc to delete the cluster if it has been idle for longer than this many minutes. Clusters are normally deleted directly after a run ends, but this delete may fail in rare situations. For example, if permissions are revoked in the middle of a run, or if there is a Dataproc outage. Use this to ensure that clusters are eventually deleted even if the instance is unable to delete the cluster for any reason.",
           "widget-attributes": {
             "placeholder": "time in minutes",
-            "size": "medium"
+            "size": "medium",
+            "default": 30
           }
         },
         {
