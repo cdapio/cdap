@@ -133,8 +133,6 @@ public class ArtifactLocalizerHttpHandlerInternal extends AbstractHttpHandler {
       // TODO (CDAP-18047) enable ssl verification
       disableVerifySSL(((HttpsURLConnection) connection));
     }
-    connection.connect();
-
     connection.setRequestMethod("POST");
     connection.setRequestProperty("Content-Type", "application/json; utf-8");
     connection.setRequestProperty("Accept", "application/json");
