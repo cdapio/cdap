@@ -46,6 +46,7 @@ import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.profile.ProfileService;
+import io.cdap.cdap.proto.ProgramRunClusterStatus;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.WorkflowNodeStateDetail;
@@ -277,18 +278,31 @@ public class ProgramNotificationSubscriberServiceTest {
 
     programStateWriter.completed(programRunId);
     MetricStore metricStore = injector.getInstance(MetricStore.class);
-    Tasks.waitFor(1L, () -> getMetric(metricStore, programRunId, myProfile,
+    Map<String, String> additionalTags = getAdditionalTagsForProgramMetrics(ProgramRunStatus.RUNNING, null,
+                                                                            ProgramRunClusterStatus.PROVISIONED);
+    Tasks.waitFor(1L, () -> getMetric(metricStore, programRunId, myProfile, additionalTags,
                                       SYSTEM_METRIC_PREFIX + Constants.Metrics.Program.PROGRAM_COMPLETED_RUNS),
                   10, TimeUnit.SECONDS);
 
     // verify the metrics
-    Assert.assertEquals(1L, getMetric(metricStore, programRunId, myProfile,
+    Assert.assertEquals(1L, getMetric(metricStore, programRunId, myProfile, additionalTags,
                                       SYSTEM_METRIC_PREFIX + Constants.Metrics.Program.PROGRAM_COMPLETED_RUNS));
-    Assert.assertEquals(0L, getMetric(metricStore, programRunId, myProfile,
+    Assert.assertEquals(0L, getMetric(metricStore, programRunId, myProfile, additionalTags,
                                       SYSTEM_METRIC_PREFIX + Constants.Metrics.Program.PROGRAM_KILLED_RUNS));
-    Assert.assertEquals(0L, getMetric(metricStore, programRunId, myProfile,
+    Assert.assertEquals(0L, getMetric(metricStore, programRunId, myProfile, additionalTags,
                                       SYSTEM_METRIC_PREFIX + Constants.Metrics.Program.PROGRAM_FAILED_RUNS));
     metricStore.deleteAll();
+  }
+
+  private Map<String, String> getAdditionalTagsForProgramMetrics(ProgramRunStatus existingStatus, String provisioner,
+                                                                 ProgramRunClusterStatus clusterStatus) {
+    Map<String, String> additionalTags = new HashMap<>();
+    if (provisioner != null) {
+      additionalTags.put(Constants.Metrics.Tag.PROVISIONER, provisioner);
+    }
+    additionalTags.put(Constants.Metrics.Tag.CLUSTER_STATUS, clusterStatus.name());
+    additionalTags.put(Constants.Metrics.Tag.EXISTING_STATUS, existingStatus.name());
+    return additionalTags;
   }
 
   @Test
@@ -399,7 +413,8 @@ public class ProgramNotificationSubscriberServiceTest {
     }), 10, TimeUnit.SECONDS);
   }
 
-  private long getMetric(MetricStore metricStore, ProgramRunId programRunId, ProfileId profileId, String metricName) {
+  private long getMetric(MetricStore metricStore, ProgramRunId programRunId, ProfileId profileId,
+                         Map<String, String> additionalTags, String metricName) {
     Map<String, String> tags = ImmutableMap.<String, String>builder()
       .put(Constants.Metrics.Tag.PROFILE_SCOPE, profileId.getScope().name())
       .put(Constants.Metrics.Tag.PROFILE, profileId.getProfile())
@@ -407,6 +422,7 @@ public class ProgramNotificationSubscriberServiceTest {
       .put(Constants.Metrics.Tag.PROGRAM_TYPE, programRunId.getType().getPrettyName())
       .put(Constants.Metrics.Tag.APP, programRunId.getApplication())
       .put(Constants.Metrics.Tag.PROGRAM, programRunId.getProgram())
+      .putAll(additionalTags)
       .build();
     MetricDataQuery query = new MetricDataQuery(0, 0, Integer.MAX_VALUE, metricName, AggregationFunction.SUM,
                                                 tags, new ArrayList<>());
