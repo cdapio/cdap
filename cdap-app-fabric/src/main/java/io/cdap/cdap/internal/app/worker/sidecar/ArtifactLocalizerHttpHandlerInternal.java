@@ -126,7 +126,7 @@ public class ArtifactLocalizerHttpHandlerInternal extends AbstractHttpHandler {
   private GenerateAccessTokenResponse fetchAccessToken(String gcpProject, String gcpServiceAccountName) throws IOException {
     String endPoint = String.format(
       "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/%s@%s.iam.gserviceaccount.com:generateAccessToken",
-      gcpProject, gcpServiceAccountName);
+      gcpServiceAccountName, gcpProject);
     URL url = new URL(endPoint);
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
     if (connection instanceof HttpsURLConnection) {
