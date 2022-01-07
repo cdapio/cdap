@@ -30,6 +30,7 @@ import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
+import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerClient;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerTwillRunnable;
 import io.cdap.cdap.master.spi.twill.DependentTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecretDisk;
@@ -58,6 +59,7 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -188,6 +190,13 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
                                               hConfPath.toUri(),
                                               runnerResourceSpec,
                                               artifactLocalizerResourceSpec));
+          Boolean artifactLocalizerToken = cConf.getBoolean(Constants.Preview.ARTIFACT_LOCALIZER_TOKEN_ENABLED, false);
+          if (artifactLocalizerToken) {
+            twillPreparer = twillPreparer.withEnv(PreviewRunnerTwillRunnable.class.getName(),
+                                                  Collections.singletonMap("GCE_METADATA_HOST",
+                                                                           ArtifactLocalizerClient.getBaseURL(cConf)));
+          }
+
           String priorityClass = cConf.get(Constants.Preview.CONTAINER_PRIORITY_CLASS_NAME);
           if (priorityClass != null) {
             twillPreparer = twillPreparer.setSchedulerQueue(priorityClass);

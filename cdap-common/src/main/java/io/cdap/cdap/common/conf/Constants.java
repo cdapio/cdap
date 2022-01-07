@@ -381,6 +381,8 @@ public final class Constants {
     public static final String CONTAINER_PRIORITY_CLASS_NAME = "preview.runner.container.priority.class.name";
 
     public static final String ARTIFACT_LOCALIZER_ENABLED = "preview.runner.artifact.localizer.enabled";
+
+    public static final String ARTIFACT_LOCALIZER_TOKEN_ENABLED = "preview.runner.artifact.localizer.token.enabled";
   }
 
   /**

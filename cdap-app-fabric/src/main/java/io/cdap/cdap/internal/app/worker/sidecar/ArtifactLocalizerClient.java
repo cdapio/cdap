@@ -46,6 +46,11 @@ public class ArtifactLocalizerClient {
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactLocalizerClient.class);
   private final String sidecarBaseURL;
 
+  public static String getBaseURL(CConfiguration cConf)  {
+    return String.format("http://localhost:%d/%s/worker", cConf.getInt(Constants.ArtifactLocalizer.PORT),
+              Constants.Gateway.INTERNAL_API_VERSION_3_TOKEN);
+  }
+
   @Inject
   ArtifactLocalizerClient(CConfiguration cConf) {
     this.sidecarBaseURL = String

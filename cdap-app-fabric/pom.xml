@@ -222,7 +222,7 @@
       <artifactId>otj-pg-embedded</artifactId>
       <scope>test</scope>
     </dependency>
-   <dependency>
+    <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-minikdc</artifactId>
     </dependency>
@@ -252,6 +252,11 @@
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-core_2.11</artifactId>
       <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.apis</groupId>
+      <artifactId>google-api-services-iamcredentials</artifactId>
+      <version>v1-rev20210813-1.32.1</version>
     </dependency>
   </dependencies>
 
