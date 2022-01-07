@@ -49,6 +49,7 @@ import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
+import io.cdap.cdap.internal.app.store.RunRecordDetailWithExistingStatus;
 import io.cdap.cdap.internal.provision.ProvisionRequest;
 import io.cdap.cdap.internal.provision.ProvisionerNotifier;
 import io.cdap.cdap.internal.provision.ProvisioningService;
@@ -413,8 +414,8 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         writeToHeartBeatTable(recordedRunRecord,
                               RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS),
                               programHeartbeatTable);
-        getEmitMetricsRunnable(programRunId, recordedRunRecord,
-                               Constants.Metrics.Program.PROGRAM_REJECTED_RUNS).ifPresent(runnables::add);
+        getEmitMetricsRunnable(programRunId, recordedRunRecord, Constants.Metrics.Program.PROGRAM_REJECTED_RUNS,
+                               null).ifPresent(runnables::add);
         programLifecycleService.getRunRecordCounter().removeRequest(programRunId);
         break;
       default:
@@ -488,13 +489,13 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
                             programRunStatus, notification, sourceId, runnables);
     }
 
-    RunRecordDetail recordedRunRecord = appMetadataStore.recordProgramStop(programRunId, endTimeSecs, programRunStatus,
-                                                                           failureCause, sourceId);
+    RunRecordDetailWithExistingStatus recordedRunRecord = appMetadataStore.recordProgramStop(programRunId, endTimeSecs,
+                                                                                             programRunStatus,
+                                                                                             failureCause, sourceId);
     if (recordedRunRecord != null) {
       writeToHeartBeatTable(recordedRunRecord, endTimeSecs, programHeartbeatTable);
-
-      getEmitMetricsRunnable(programRunId, recordedRunRecord,
-                             STATUS_METRICS_NAME.get(programRunStatus)).ifPresent(runnables::add);
+      getEmitMetricsRunnable(programRunId, recordedRunRecord, STATUS_METRICS_NAME.get(programRunStatus),
+                             recordedRunRecord.getExistingStatus()).ifPresent(runnables::add);
 
       // emit program run time metric.
       long runTime = endTimeSecs - RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS);
@@ -658,14 +659,16 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   }
 
   private Optional<Runnable> getEmitMetricsRunnable(ProgramRunId programRunId,
-                                                    @Nullable RunRecordDetail recordedRunRecord,
-                                                    String metricName) {
+                                                    @Nullable RunRecordDetail recordedRunRecord, String metricName,
+                                                    @Nullable ProgramRunStatus existingStatus) {
     if (recordedRunRecord == null) {
       return Optional.empty();
     }
     Optional<ProfileId> profile = SystemArguments.getProfileIdFromArgs(programRunId.getNamespaceId(),
                                                                        recordedRunRecord.getSystemArgs());
-    return profile.map(profileId -> () -> emitProfileMetrics(programRunId, profileId, metricName));
+    Map<String, String> additionalTags = getAdditionalTagsForProgramMetrics(recordedRunRecord,
+                                                                            existingStatus);
+    return profile.map(profileId -> () -> emitProfileMetrics(programRunId, profileId, metricName, additionalTags));
   }
 
   private void publishRecordedStatus(Notification notification,
@@ -714,7 +717,8 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
    * Emit the metrics context for the program, the tags are constructed with the program run id and
    * the profile id
    */
-  private void emitProfileMetrics(ProgramRunId programRunId, ProfileId profileId, String metricName) {
+  private void emitProfileMetrics(ProgramRunId programRunId, ProfileId profileId, String metricName,
+                                  Map<String, String> additionalTags) {
     Map<String, String> tags = ImmutableMap.<String, String>builder()
       .put(Constants.Metrics.Tag.PROFILE_SCOPE, profileId.getScope().name())
       .put(Constants.Metrics.Tag.PROFILE, profileId.getProfile())
@@ -723,6 +727,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       .put(Constants.Metrics.Tag.APP, programRunId.getApplication())
       .put(Constants.Metrics.Tag.PROGRAM, programRunId.getProgram())
       .put(Constants.Metrics.Tag.RUN_ID, programRunId.getRun())
+      .putAll(additionalTags)
       .build();
 
     metricsCollectionService.getContext(tags).increment(metricName, 1L);
@@ -766,5 +771,19 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
    */
   private AppMetadataStore getAppMetadataStore(StructuredTableContext context) {
     return AppMetadataStore.create(context);
+  }
+
+  private Map<String, String> getAdditionalTagsForProgramMetrics(RunRecordDetail runRecord,
+                                                                 @Nullable ProgramRunStatus existingStatus) {
+    Map<String, String> additionalTags = new HashMap<>();
+    // don't want to add the tag if it is not present otherwise it will result in NPE
+    additionalTags.computeIfAbsent(Constants.Metrics.Tag.PROVISIONER,
+                                   provisioner -> SystemArguments.getProfileProvisioner(runRecord.getSystemArgs()));
+    additionalTags.computeIfAbsent(Constants.Metrics.Tag.CLUSTER_STATUS,
+                                   clusterStatus -> runRecord.getCluster().getStatus().name());
+    additionalTags.computeIfAbsent(Constants.Metrics.Tag.EXISTING_STATUS,
+                                   existingProgramStatus -> existingStatus == null ? null : existingStatus.name());
+
+    return additionalTags;
   }
 }

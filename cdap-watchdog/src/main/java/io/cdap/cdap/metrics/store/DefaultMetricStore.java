@@ -184,7 +184,8 @@ public class DefaultMetricStore implements MetricStore {
       ImmutableList.of(Constants.Metrics.Tag.PROFILE_SCOPE, Constants.Metrics.Tag.PROFILE,
                        Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.PROGRAM_TYPE,
                        Constants.Metrics.Tag.APP, Constants.Metrics.Tag.PROGRAM,
-                       Constants.Metrics.Tag.RUN_ID),
+                       Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.PROVISIONER,
+                       Constants.Metrics.Tag.CLUSTER_STATUS, Constants.Metrics.Tag.EXISTING_STATUS),
       ImmutableList.of(Constants.Metrics.Tag.PROFILE_SCOPE, Constants.Metrics.Tag.PROFILE)));
 
     // System components:
