@@ -3253,6 +3253,14 @@
   </property>
 
   <property>
+    <name>preview.max.num.records</name>
+    <value>5000</value>
+    <description>
+      The maximum number of records that can be set in preview configuration.
+    </description>
+  </property>
+
+  <property>
     <name>service.retry.policy.base.delay.ms</name>
     <value>100</value>
     <description>

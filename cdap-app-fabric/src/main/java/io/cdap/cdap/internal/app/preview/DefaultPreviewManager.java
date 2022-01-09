@@ -54,6 +54,7 @@ import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.utils.Networks;
+import io.cdap.cdap.config.Config;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data.runtime.preview.PreviewDataModules;
@@ -204,7 +205,8 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   }
 
   @Override
-  public ApplicationId start(@Name("namespaceId") NamespaceId namespace, AppRequest<?> appRequest) throws Exception {
+  public ApplicationId start(@Name("namespaceId") NamespaceId namespace,
+                             AppRequest<? extends Map<String, Object>> appRequest) throws Exception {
     // make sure preview id is unique for each run
     ApplicationId previewApp = namespace.app(RunIds.generate().getId());
     accessEnforcer.enforce(previewApp, authenticationContext.getPrincipal(), ApplicationPermission.PREVIEW);
@@ -213,6 +215,17 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
 
     if (state() != State.RUNNING) {
       throw new IllegalStateException("Preview service is not running. Cannot start preview for " + programId);
+    }
+
+
+    Map<String, Object> config = appRequest.getConfig();
+    if (config.get(Constants.Preview.PREVIEW_REQUEST_NUM_OF_RECORDS) instanceof Double) {
+      Double numOfRecords = (Double) config.get(Constants.Preview.PREVIEW_REQUEST_NUM_OF_RECORDS);
+      if (numOfRecords >= Double.parseDouble(previewCConf.get(Constants.Preview.MAX_NUM_OF_RECORDS))) {
+        throw new BadRequestException("Preview record limit exceeded");
+      }
+    } else {
+      throw new BadRequestException("Number of preview records not of type Double");
     }
 
     previewRequestQueue.add(previewRequest);

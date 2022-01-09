@@ -18,6 +18,7 @@ package io.cdap.cdap.app.preview;
 import com.google.gson.JsonElement;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.config.Config;
 import io.cdap.cdap.logging.read.LogReader;
 import io.cdap.cdap.metrics.query.MetricsQueryHelper;
 import io.cdap.cdap.proto.artifact.AppRequest;
@@ -42,7 +43,7 @@ public interface PreviewManager {
    * @return the {@link ApplicationId} assigned to the preview run
    * @throws Exception if there were any error during starting preview
    */
-  ApplicationId start(NamespaceId namespace, AppRequest<?> request) throws Exception;
+  ApplicationId start(NamespaceId namespace, AppRequest<? extends Map<String, Object>> request) throws Exception;
 
   /**
    * Get the status of the preview.
