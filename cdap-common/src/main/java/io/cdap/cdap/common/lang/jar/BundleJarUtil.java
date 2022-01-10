@@ -19,6 +19,8 @@ package io.cdap.cdap.common.lang.jar;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.ThrowingSupplier;
 import org.apache.twill.filesystem.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -51,6 +53,8 @@ import javax.annotation.Nullable;
  * Utility functions that operate on bundle jars.
  */
 public class BundleJarUtil {
+
+  private static final Logger LOG = LoggerFactory.getLogger(BundleJarUtil.class);
 
   /**
    * Gets the {@link Manifest} inside the given jar.
@@ -164,8 +168,10 @@ public class BundleJarUtil {
         } else {
           output.putNextEntry(new ZipEntry(includeDirName ? input.getName() + "/" + uri.getPath() : uri.getPath()));
         }
+        LOG.debug("File Size: {}", String.format("%,d kilobytes", Files.size(file) / 1024));
         Files.copy(file, output);
         output.closeEntry();
+        output.flush();
         return FileVisitResult.CONTINUE;
       }
     });
