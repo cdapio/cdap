@@ -27,6 +27,7 @@ import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginSelector;
 import io.cdap.cdap.common.ArtifactNotFoundException;
+import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
@@ -43,12 +44,12 @@ import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.net.HttpURLConnection;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
@@ -63,8 +64,8 @@ public class RemotePluginFinder implements PluginFinder {
   private static final Type PLUGIN_INFO_LIST_TYPE = new TypeToken<List<PluginInfo>>() {
   }.getType();
 
+  final RemoteClient remoteClientInternal;
   private final RemoteClient remoteClient;
-  private final RemoteClient remoteClientInternal;
   private final LocationFactory locationFactory;
   private final RetryStrategy retryStrategy;
 
@@ -161,14 +162,23 @@ public class RemotePluginFinder implements PluginFinder {
 
     HttpResponse response = remoteClient.execute(requestBuilder.build());
 
-    if (response.getResponseCode() == HttpResponseStatus.NOT_FOUND.code()) {
-      throw new PluginNotExistsException(namespaceId, pluginType, pluginName);
-    }
+    int responseCode = response.getResponseCode();
+    if (responseCode != HttpURLConnection.HTTP_OK) {
+      switch (responseCode) {
+        // throw retryable error if app fabric is not available, might be due to restarting
+        case HttpURLConnection.HTTP_BAD_GATEWAY:
+        case HttpURLConnection.HTTP_UNAVAILABLE:
+        case HttpURLConnection.HTTP_GATEWAY_TIMEOUT:
+          throw new ServiceUnavailableException(
+            Constants.Service.APP_FABRIC_HTTP,
+            Constants.Service.APP_FABRIC_HTTP + " service is not available with status " + responseCode);
+        case HttpURLConnection.HTTP_NOT_FOUND:
+          throw new PluginNotExistsException(namespaceId, pluginType, pluginName);
 
-    if (response.getResponseCode() != 200) {
+      }
       throw new IllegalArgumentException("Failure in getting plugin information with type " + pluginType + " and name "
                                            + pluginName + " that extends " + parentArtifactId
-                                           + ". Reason is " + response.getResponseCode() + ": "
+                                           + ". Reason is " + responseCode + ": "
                                            + response.getResponseBodyAsString());
     }
 
@@ -187,10 +197,19 @@ public class RemotePluginFinder implements PluginFinder {
 
     HttpResponse response = remoteClientInternal.execute(requestBuilder.build());
 
-    if (response.getResponseCode() == HttpResponseStatus.NOT_FOUND.code()) {
-      throw new ArtifactNotFoundException(artifactId);
-    }
-    if (response.getResponseCode() != 200) {
+    int responseCode = response.getResponseCode();
+    if (responseCode != HttpURLConnection.HTTP_OK) {
+      switch (responseCode) {
+        // throw retryable error if app fabric is not available, might be due to restarting
+        case HttpURLConnection.HTTP_BAD_GATEWAY:
+        case HttpURLConnection.HTTP_UNAVAILABLE:
+        case HttpURLConnection.HTTP_GATEWAY_TIMEOUT:
+          throw new ServiceUnavailableException(
+            Constants.Service.APP_FABRIC_HTTP,
+            Constants.Service.APP_FABRIC_HTTP + " service is not available with status " + responseCode);
+        case HttpURLConnection.HTTP_NOT_FOUND:
+          throw new ArtifactNotFoundException(artifactId);
+      }
       throw new IOException("Exception while getting artifacts list: " + response.getResponseCode()
                               + ": " + response.getResponseBodyAsString());
     }

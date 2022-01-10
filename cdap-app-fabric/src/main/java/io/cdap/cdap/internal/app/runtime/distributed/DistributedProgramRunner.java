@@ -114,6 +114,9 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
   public static final String CDAP_CONF_FILE_NAME = "cConf.xml";
   public static final String APP_SPEC_FILE_NAME = "appSpec.json";
   public static final String PROGRAM_OPTIONS_FILE_NAME = "program.options.json";
+  public static final String PLUGIN_DIR = "artifacts";
+  public static final String PLUGIN_ARCHIVE = "artifacts_archive.jar";
+
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedProgramRunner.class);
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
@@ -517,19 +520,16 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
     Map<String, String> newSystemArgs = new HashMap<>(systemArgs.asMap());
     newSystemArgs.putAll(extraSystemArgs);
 
-    String artifactArchiveJarName = "artifacts_archive.jar";
-    String artifactDirName = "artifacts";
-
     if (systemArgs.hasOption(ProgramOptionConstants.PLUGIN_ARCHIVE)) {
       // If the archive already exists locally, we just need to re-localize it to remote containers
       File archiveFile = new File(systemArgs.getOption(ProgramOptionConstants.PLUGIN_ARCHIVE));
       // Localize plugins to two files, one expanded into a directory, one not.
-      localizeResources.put(artifactDirName, new LocalizeResource(archiveFile, true));
-      localizeResources.put(artifactArchiveJarName, new LocalizeResource(archiveFile, false));
+      localizeResources.put(PLUGIN_DIR, new LocalizeResource(archiveFile, true));
+      localizeResources.put(PLUGIN_ARCHIVE, new LocalizeResource(archiveFile, false));
     } else if (systemArgs.hasOption(ProgramOptionConstants.PLUGIN_DIR)) {
       // If there is a plugin directory, then we need to create an archive and localize it to remote containers
       File localDir = new File(systemArgs.getOption(ProgramOptionConstants.PLUGIN_DIR));
-      File archiveFile = new File(tempDir, artifactDirName + ".jar");
+      File archiveFile = new File(tempDir, PLUGIN_DIR + ".jar");
 
       // Store all artifact jars into a new jar file for localization without compression
       try (JarOutputStream jarOut = new JarOutputStream(new FileOutputStream(archiveFile))) {
@@ -538,16 +538,16 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
       }
 
       // Localize plugins to two files, one expanded into a directory, one not.
-      localizeResources.put(artifactDirName, new LocalizeResource(archiveFile, true));
-      localizeResources.put(artifactArchiveJarName, new LocalizeResource(archiveFile, false));
+      localizeResources.put(PLUGIN_DIR, new LocalizeResource(archiveFile, true));
+      localizeResources.put(PLUGIN_ARCHIVE, new LocalizeResource(archiveFile, false));
     }
 
     // Add/rename the entries in the system arguments
-    if (localizeResources.containsKey(artifactDirName)) {
-      newSystemArgs.put(ProgramOptionConstants.PLUGIN_DIR, artifactDirName);
+    if (localizeResources.containsKey(PLUGIN_DIR)) {
+      newSystemArgs.put(ProgramOptionConstants.PLUGIN_DIR, PLUGIN_DIR);
     }
-    if (localizeResources.containsKey(artifactArchiveJarName)) {
-      newSystemArgs.put(ProgramOptionConstants.PLUGIN_ARCHIVE, artifactArchiveJarName);
+    if (localizeResources.containsKey(PLUGIN_ARCHIVE)) {
+      newSystemArgs.put(ProgramOptionConstants.PLUGIN_ARCHIVE, PLUGIN_ARCHIVE);
     }
 
     return new SimpleProgramOptions(options.getProgramId(), new BasicArguments(newSystemArgs),

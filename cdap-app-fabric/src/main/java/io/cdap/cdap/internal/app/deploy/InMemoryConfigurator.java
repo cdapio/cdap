@@ -61,7 +61,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.Map;
 
 /**
  * In Memory Configurator doesn't spawn a external process, but does this in memory.
@@ -97,7 +96,7 @@ public final class InMemoryConfigurator implements Configurator {
     this.pluginFinder = pluginFinder;
     this.appNamespace = Id.Namespace.fromEntityId(deploymentInfo.getNamespaceId());
     this.artifactId = Id.Artifact.fromEntityId(deploymentInfo.getArtifactId());
-    this.appClassName = deploymentInfo.getApplicationClass().getClassName();
+    this.appClassName = deploymentInfo.getApplicationClassName();
     this.applicationName = deploymentInfo.getApplicationName();
     this.applicationVersion = deploymentInfo.getApplicationVersion();
     this.configString = deploymentInfo.getConfigString() == null ? "" : deploymentInfo.getConfigString();
@@ -107,8 +106,8 @@ public final class InMemoryConfigurator implements Configurator {
     this.impersonator = impersonator;
     this.artifactRepository = artifactRepository;
     this.artifactLocation = deploymentInfo.getArtifactLocation();
-    this.runtimeInfo = deploymentInfo.getRuntimeInfo();
     this.remoteClientFactory = remoteClientFactory;
+    this.runtimeInfo = deploymentInfo.getRuntimeInfo();
   }
 
   /**
@@ -166,7 +165,7 @@ public final class InMemoryConfigurator implements Configurator {
           appNamespace.getId(), remoteClientFactory, runtimeInfo.getUserArguments(),
           runtimeInfo.getExistingAppSpec()) : null;
       configurer = new DefaultAppConfigurer(
-        appNamespace, artifactId, app, configString, pluginFinder, pluginInstantiator, runtimeConfigurer);
+        appNamespace, artifactId, app, configString, pluginFinder, pluginInstantiator, runtimeConfigurer, runtimeInfo);
 
       T appConfig;
       Type configType = Artifacts.getConfigType(app.getClass());

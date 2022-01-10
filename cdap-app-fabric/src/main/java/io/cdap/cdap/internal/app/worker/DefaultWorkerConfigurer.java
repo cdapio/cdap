@@ -24,6 +24,7 @@ import io.cdap.cdap.api.worker.WorkerConfigurer;
 import io.cdap.cdap.api.worker.WorkerSpecification;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.app.AbstractConfigurer;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.lang.Reflections;
@@ -32,6 +33,7 @@ import io.cdap.cdap.internal.specification.PropertyFieldExtractor;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Default implementation of the {@link WorkerConfigurer}.
@@ -48,8 +50,9 @@ public class DefaultWorkerConfigurer extends AbstractConfigurer implements Worke
 
   public DefaultWorkerConfigurer(Worker worker, Id.Namespace deployNamespace, Id.Artifact artifactId,
                                  PluginFinder pluginFinder,
-                                 PluginInstantiator pluginInstantiator) {
-    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator);
+                                 PluginInstantiator pluginInstantiator,
+                                 @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
+    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo);
     this.worker = worker;
     this.name = worker.getClass().getSimpleName();
     this.description = "";

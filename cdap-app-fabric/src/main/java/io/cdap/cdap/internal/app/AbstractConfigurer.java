@@ -26,8 +26,11 @@ import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.plugin.PluginSelector;
+import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.api.DefaultDatasetConfigurer;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 
@@ -48,12 +51,21 @@ public abstract class AbstractConfigurer extends DefaultDatasetConfigurer implem
   protected final Id.Namespace deployNamespace;
 
   protected AbstractConfigurer(Id.Namespace deployNamespace, Id.Artifact artifactId,
-                               PluginFinder pluginFinder, PluginInstantiator pluginInstantiator) {
+                               PluginFinder pluginFinder, PluginInstantiator pluginInstantiator,
+                               @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
     this.deployNamespace = deployNamespace;
     this.extraPlugins = new HashMap<>();
-    this.pluginConfigurer = new DefaultPluginConfigurer(artifactId.toEntityId(),
-                                                        deployNamespace.toEntityId(), pluginInstantiator,
-                                                        pluginFinder);
+    if (runtimeInfo != null && ClusterMode.ISOLATED.name().equals(
+      runtimeInfo.getSystemArguments().get(ProgramOptionConstants.CLUSTER_MODE))) {
+      this.pluginConfigurer = new RemotePluginConfigurer(
+        artifactId.toEntityId(), deployNamespace.toEntityId(), pluginInstantiator, pluginFinder,
+        runtimeInfo.getExistingAppSpec().getPlugins(),
+        runtimeInfo.getSystemArguments().get(ProgramOptionConstants.PLUGIN_DIR));
+    } else {
+      this.pluginConfigurer = new DefaultPluginConfigurer(artifactId.toEntityId(),
+                                                          deployNamespace.toEntityId(), pluginInstantiator,
+                                                          pluginFinder);
+    }
   }
 
   public Map<String, Plugin> getPlugins() {

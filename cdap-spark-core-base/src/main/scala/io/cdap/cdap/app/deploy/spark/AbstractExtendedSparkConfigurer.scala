@@ -16,27 +16,23 @@
 
 package io.cdap.cdap.app.deploy.spark
 
+import java.{lang, util}
+
 import io.cdap.cdap.api.annotation.TransactionControl
 import io.cdap.cdap.api.service.http.ServiceHttpEndpoint
-import io.cdap.cdap.api.spark.ExtendedSparkConfigurer
-import io.cdap.cdap.api.spark.Spark
-import io.cdap.cdap.api.spark.SparkHttpServiceHandlerSpecification
 import io.cdap.cdap.api.spark.dynamic.SparkCompiler
 import io.cdap.cdap.api.spark.service.SparkHttpServiceHandler
+import io.cdap.cdap.api.spark.{ExtendedSparkConfigurer, Spark, SparkHttpServiceHandlerSpecification}
 import io.cdap.cdap.app.runtime.spark.dynamic.AbstractSparkCompiler
 import io.cdap.cdap.common.id.Id
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository
-import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator
 import io.cdap.cdap.internal.app.runtime.service.http.HttpHandlerFactory
 import io.cdap.cdap.internal.app.services.ServiceEndpointExtractor
 import io.cdap.cdap.internal.app.spark.DefaultSparkConfigurer
 import io.cdap.cdap.internal.lang.Reflections
-import io.cdap.cdap.internal.specification.DataSetFieldExtractor
-import io.cdap.cdap.internal.specification.PropertyFieldExtractor
-
-import java.lang
-import java.util
+import io.cdap.cdap.internal.specification.{DataSetFieldExtractor, PropertyFieldExtractor}
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
@@ -49,8 +45,9 @@ abstract class AbstractExtendedSparkConfigurer(spark: Spark,
                                                deployNamespace: Id.Namespace,
                                                artifactId: Id.Artifact,
                                                pluginFinder: PluginFinder,
-                                               pluginInstantiator: PluginInstantiator)
-  extends DefaultSparkConfigurer(spark, deployNamespace, artifactId, pluginFinder, pluginInstantiator)
+                                               pluginInstantiator: PluginInstantiator,
+                                               runtimeInfo: AppDeploymentRuntimeInfo)
+  extends DefaultSparkConfigurer(spark, deployNamespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo)
   with ExtendedSparkConfigurer {
 
   private val handlers = new mutable.ArrayBuffer[SparkHttpServiceHandler]()

@@ -16,16 +16,15 @@
 
 package io.cdap.cdap.app.deploy.spark
 
+import java.net.URL
+
 import io.cdap.cdap.api.spark.Spark
 import io.cdap.cdap.api.spark.dynamic.SparkCompiler
-import io.cdap.cdap.app.runtime.spark.dynamic.DefaultSparkCompiler
-import io.cdap.cdap.app.runtime.spark.dynamic.URLAdder
+import io.cdap.cdap.app.runtime.spark.dynamic.{DefaultSparkCompiler, URLAdder}
 import io.cdap.cdap.common.id.Id
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator
-
-import java.net.URL
 
 import scala.tools.nsc.Settings
 
@@ -36,8 +35,10 @@ class DefaultExtendedSparkConfigurer(spark: Spark,
                                      deployNamespace: Id.Namespace,
                                      artifactId: Id.Artifact,
                                      pluginFinder: PluginFinder,
-                                     pluginInstantiator: PluginInstantiator)
-  extends AbstractExtendedSparkConfigurer(spark, deployNamespace, artifactId, pluginFinder, pluginInstantiator) {
+                                     pluginInstantiator: PluginInstantiator,
+                                     runtimeInfo: AppDeploymentRuntimeInfo)
+  extends AbstractExtendedSparkConfigurer(spark, deployNamespace, artifactId, pluginFinder,
+    pluginInstantiator, runtimeInfo) {
 
   override def createSparkCompiler(settings: Settings): SparkCompiler = {
     return new DefaultSparkCompiler(settings, new URLAdder {

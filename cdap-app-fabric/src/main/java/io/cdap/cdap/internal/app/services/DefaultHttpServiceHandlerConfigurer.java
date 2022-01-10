@@ -24,6 +24,7 @@ import io.cdap.cdap.api.service.http.ServiceHttpEndpoint;
 import io.cdap.cdap.api.service.http.SystemHttpServiceConfigurer;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.app.AbstractConfigurer;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.lang.Reflections;
@@ -37,6 +38,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Default implementation of {@link HttpServiceConfigurer}.
@@ -61,8 +63,9 @@ public class DefaultHttpServiceHandlerConfigurer extends AbstractConfigurer impl
                                              Id.Artifact artifactId,
                                              PluginFinder pluginFinder,
                                              PluginInstantiator pluginInstantiator,
-                                             SystemTableConfigurer systemTableConfigurer) {
-    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator);
+                                             SystemTableConfigurer systemTableConfigurer,
+                                             @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
+    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo);
     this.handler = handler;
     this.name = handler.getClass().getSimpleName();
     this.properties = new HashMap<>();

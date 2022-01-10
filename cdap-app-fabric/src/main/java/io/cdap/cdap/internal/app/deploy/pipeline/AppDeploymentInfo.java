@@ -25,7 +25,6 @@ import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import org.apache.twill.filesystem.Location;
 
-import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -36,6 +35,7 @@ public class AppDeploymentInfo {
   private final ArtifactId artifactId;
   private final transient Location artifactLocation;
   private final NamespaceId namespaceId;
+  private final String applicationClassName;
   private final ApplicationClass applicationClass;
   private final String appName;
   private final String appVersion;
@@ -62,15 +62,33 @@ public class AppDeploymentInfo {
                            ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
                            @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
                            boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
+    this(artifactId, artifactLocation, namespaceId, applicationClass, applicationClass.getClassName(),
+         appName, appVersion, configString, ownerPrincipal, updateSchedules, runtimeInfo);
+  }
+
+  public AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
+                           String applicationClassName, @Nullable String appName, @Nullable String appVersion,
+                           @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
+                           boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
+    this(artifactId, artifactLocation, namespaceId, null, applicationClassName, appName, appVersion, configString,
+         ownerPrincipal, updateSchedules, runtimeInfo);
+  }
+
+  private AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
+                            @Nullable ApplicationClass applicationClass, String applicationClassName,
+                            @Nullable String appName, @Nullable String appVersion,
+                            @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
+                            boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
     this.artifactId = artifactId;
     this.artifactLocation = artifactLocation;
     this.namespaceId = namespaceId;
-    this.applicationClass = applicationClass;
     this.appName = appName;
     this.appVersion = appVersion;
     this.configString = configString;
     this.ownerPrincipal = ownerPrincipal;
     this.updateSchedules = updateSchedules;
+    this.applicationClass = applicationClass;
+    this.applicationClassName = applicationClassName;
     this.runtimeInfo = runtimeInfo;
   }
 
@@ -100,10 +118,19 @@ public class AppDeploymentInfo {
   }
 
   /**
-   * Returns the {@link ApplicationClass} associated with this {@link Application}.
+   * Returns the {@link ApplicationClass} associated with this {@link Application} or {@code null} if this is runtime
+   * and cluster mode is ISOLATED, use {@link #getApplicationClassName()} to get the application class name.
    */
+  @Nullable
   public ApplicationClass getApplicationClass() {
     return applicationClass;
+  }
+
+  /**
+   * Returns the application class name for this app, this is needed to instantiate the app
+   */
+  public String getApplicationClassName() {
+    return applicationClassName;
   }
 
   /**

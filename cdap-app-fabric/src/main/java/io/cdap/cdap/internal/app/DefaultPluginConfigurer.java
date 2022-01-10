@@ -52,10 +52,10 @@ import javax.annotation.Nullable;
 public class DefaultPluginConfigurer implements PluginConfigurer {
 
   protected final PluginInstantiator pluginInstantiator;
+  protected final Map<String, PluginWithLocation> plugins;
+  protected final NamespaceId pluginNamespaceId;
   private final ArtifactId artifactId;
-  private final NamespaceId pluginNamespaceId;
   private final PluginFinder pluginFinder;
-  private final Map<String, PluginWithLocation> plugins;
 
   public DefaultPluginConfigurer(ArtifactId artifactId, NamespaceId pluginNamespaceId,
                                  PluginInstantiator pluginInstantiator, PluginFinder pluginFinder) {
@@ -113,14 +113,9 @@ public class DefaultPluginConfigurer implements PluginConfigurer {
     return evaluated;
   }
 
-  Plugin addPlugin(String pluginType, String pluginName, String pluginId,
-                   PluginProperties properties, PluginSelector selector) throws PluginNotExistsException {
-    PluginWithLocation existing = plugins.get(pluginId);
-    if (existing != null) {
-      throw new IllegalArgumentException(String.format("Plugin of type %s, name %s was already added as id %s.",
-                                                       existing.getPlugin().getPluginClass().getType(),
-                                                       existing.getPlugin().getPluginClass().getName(), pluginId));
-    }
+  protected Plugin addPlugin(String pluginType, String pluginName, String pluginId,
+                             PluginProperties properties, PluginSelector selector) throws PluginNotExistsException {
+    validateExistingPlugin(pluginId);
 
     final Class[] callerClasses = CallerClassSecurityManager.getCallerClasses();
     if (callerClasses.length < 3) {
@@ -163,5 +158,14 @@ public class DefaultPluginConfigurer implements PluginConfigurer {
     }
 
     throw exception == null ? new PluginNotExistsException(pluginNamespaceId, pluginType, pluginName) : exception;
+  }
+
+  protected void validateExistingPlugin(String pluginId) {
+    PluginWithLocation existing = plugins.get(pluginId);
+    if (existing != null) {
+      throw new IllegalArgumentException(String.format("Plugin of type %s, name %s was already added as id %s.",
+                                                       existing.getPlugin().getPluginClass().getType(),
+                                                       existing.getPlugin().getPluginClass().getName(), pluginId));
+    }
   }
 }
