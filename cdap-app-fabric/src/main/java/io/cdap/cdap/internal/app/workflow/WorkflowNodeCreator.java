@@ -25,8 +25,11 @@ import io.cdap.cdap.api.workflow.WorkflowActionNode;
 import io.cdap.cdap.api.workflow.WorkflowNode;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.app.customaction.DefaultCustomActionConfigurer;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
+
+import javax.annotation.Nullable;
 
 /**
  * Helper to create {@link WorkflowNode}
@@ -57,11 +60,12 @@ final class WorkflowNodeCreator {
 
   static WorkflowNode createWorkflowCustomActionNode(CustomAction action, Id.Namespace deployNamespace,
                                                      Id.Artifact artifactId, PluginFinder pluginFinder,
-                                                     PluginInstantiator pluginInstantiator) {
+                                                     PluginInstantiator pluginInstantiator,
+                                                     @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
     Preconditions.checkArgument(action != null, "CustomAction is null.");
     CustomActionSpecification spec = DefaultCustomActionConfigurer.configureAction(action, deployNamespace, artifactId,
                                                                                    pluginFinder,
-                                                                                   pluginInstantiator);
+                                                                                   pluginInstantiator, runtimeInfo);
     return new WorkflowActionNode(spec.getName(), spec);
   }
 }

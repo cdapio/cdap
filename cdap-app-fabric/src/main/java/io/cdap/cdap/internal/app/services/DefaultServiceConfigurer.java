@@ -34,6 +34,7 @@ import io.cdap.cdap.api.service.http.SystemHttpServiceConfigurer;
 import io.cdap.cdap.api.service.http.SystemHttpServiceContext;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.app.AbstractConfigurer;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
@@ -43,6 +44,7 @@ import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * A default implementation of {@link ServiceConfigurer}.
@@ -54,6 +56,7 @@ public class DefaultServiceConfigurer extends AbstractConfigurer implements Syst
   private final PluginFinder pluginFinder;
   private final PluginInstantiator pluginInstantiator;
   private final SystemTableConfigurer systemTableConfigurer;
+  private final AppDeploymentRuntimeInfo runtimeInfo;
 
   private String name;
   private String description;
@@ -67,8 +70,9 @@ public class DefaultServiceConfigurer extends AbstractConfigurer implements Syst
    */
   public DefaultServiceConfigurer(Service service, Id.Namespace namespace, Id.Artifact artifactId,
                                   PluginFinder pluginFinder, PluginInstantiator pluginInstantiator,
-                                  DefaultSystemTableConfigurer systemTableConfigurer) {
-    super(namespace, artifactId, pluginFinder, pluginInstantiator);
+                                  DefaultSystemTableConfigurer systemTableConfigurer,
+                                  @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
+    super(namespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo);
     this.className = service.getClass().getName();
     this.name = service.getClass().getSimpleName();
     this.description = "";
@@ -79,6 +83,7 @@ public class DefaultServiceConfigurer extends AbstractConfigurer implements Syst
     this.pluginFinder = pluginFinder;
     this.pluginInstantiator = pluginInstantiator;
     this.systemTableConfigurer = systemTableConfigurer;
+    this.runtimeInfo = runtimeInfo;
   }
 
   @Override
@@ -128,7 +133,7 @@ public class DefaultServiceConfigurer extends AbstractConfigurer implements Syst
     Map<String, HttpServiceHandlerSpecification> handleSpecs = Maps.newHashMap();
     for (HttpServiceHandler handler : handlers) {
       DefaultHttpServiceHandlerConfigurer configurer = new DefaultHttpServiceHandlerConfigurer(
-        handler, deployNamespace, artifactId, pluginFinder, pluginInstantiator, systemTableConfigurer);
+        handler, deployNamespace, artifactId, pluginFinder, pluginInstantiator, systemTableConfigurer, runtimeInfo);
       handler.configure(configurer);
       HttpServiceHandlerSpecification spec = configurer.createSpecification();
       Preconditions.checkArgument(!handleSpecs.containsKey(spec.getName()),

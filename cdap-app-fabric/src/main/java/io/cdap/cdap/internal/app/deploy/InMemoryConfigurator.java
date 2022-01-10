@@ -26,7 +26,6 @@ import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import io.cdap.cdap.api.Config;
-import io.cdap.cdap.api.ServiceDiscoverer;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
@@ -45,6 +44,7 @@ import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.lang.CombineClassLoader;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -60,7 +60,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.Map;
 
 /**
  * In Memory Configurator doesn't spawn a external process, but does this in memory.
@@ -80,9 +79,8 @@ public final class InMemoryConfigurator implements Configurator {
   private final PluginFinder pluginFinder;
   private final String appClassName;
   private final Id.Artifact artifactId;
-  private final boolean isRuntime;
-  private final Map<String, String> runtimeArguments;
   private final RemoteClientFactory remoteClientFactory;
+  private final AppDeploymentRuntimeInfo runtimeInfo;
 
   // These fields are needed to create the classLoader in the config method
   private final ArtifactRepository artifactRepository;
@@ -97,7 +95,7 @@ public final class InMemoryConfigurator implements Configurator {
     this.pluginFinder = pluginFinder;
     this.appNamespace = Id.Namespace.fromEntityId(deploymentInfo.getNamespaceId());
     this.artifactId = Id.Artifact.fromEntityId(deploymentInfo.getArtifactId());
-    this.appClassName = deploymentInfo.getApplicationClass().getClassName();
+    this.appClassName = deploymentInfo.getApplicationClassName();
     this.applicationName = deploymentInfo.getApplicationName();
     this.applicationVersion = deploymentInfo.getApplicationVersion();
     this.configString = deploymentInfo.getConfigString() == null ? "" : deploymentInfo.getConfigString();
@@ -107,9 +105,8 @@ public final class InMemoryConfigurator implements Configurator {
     this.impersonator = impersonator;
     this.artifactRepository = artifactRepository;
     this.artifactLocation = deploymentInfo.getArtifactLocation();
-    this.isRuntime = deploymentInfo.isRuntime();
-    this.runtimeArguments = deploymentInfo.getUserProps();
     this.remoteClientFactory = remoteClientFactory;
+    this.runtimeInfo = deploymentInfo.getRuntimeInfo();
   }
 
   /**
@@ -162,10 +159,11 @@ public final class InMemoryConfigurator implements Configurator {
       PluginInstantiator pluginInstantiator = new PluginInstantiator(cConf, app.getClass().getClassLoader(), tempDir)
     ) {
 
+
       configurer = new DefaultAppConfigurer(
         appNamespace, artifactId, app, configString, pluginFinder, pluginInstantiator,
-        isRuntime ? new DefaultAppRuntimeConfigurer(appNamespace.getId(),
-                                                    remoteClientFactory, runtimeArguments) : null);
+        runtimeInfo != null ? new DefaultAppRuntimeConfigurer(
+          appNamespace.getId(), remoteClientFactory, runtimeInfo.getUserArguments()) : null, runtimeInfo);
 
       T appConfig;
       Type configType = Artifacts.getConfigType(app.getClass());

@@ -53,6 +53,7 @@ import io.cdap.cdap.common.twill.TwillAppNames;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
@@ -201,7 +202,10 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
             LOG.warn("Failed to regenerate the app spec for program {}, using the existing app spec", programId);
           }
         }
-        ProgramOptions runtimeProgramOptions = updateProgramOptions(artifactId, programId, options, runId);
+
+        ProgramOptions runtimeProgramOptions = updateProgramOptions(
+          artifactId, programId, options, runId, clusterMode,
+          Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(), null));
 
         // Take a snapshot of all the plugin artifacts used by the program
         ProgramOptions optionsWithPlugins = createPluginSnapshot(runtimeProgramOptions, programId, tempDir,
@@ -326,7 +330,8 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(
       artifactId, artifactDetail.getDescriptor().getLocation(), programId.getNamespaceId(), appClass,
       existingAppSpec.getName(), existingAppSpec.getAppVersion(), existingAppSpec.getConfiguration(), null, false,
-      true, options.getUserArguments().asMap());
+      new AppDeploymentRuntimeInfo(existingAppSpec, options.getUserArguments().asMap(),
+                                   options.getArguments().asMap()));
     Configurator configurator = this.configuratorFactory.create(deploymentInfo);
     ListenableFuture<ConfigResponse> future = configurator.config();
     ConfigResponse response = future.get(120, TimeUnit.SECONDS);
@@ -351,7 +356,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   private ProgramOptions createPluginSnapshot(ProgramOptions options, ProgramId programId, File tempDir,
                                               @Nullable ApplicationSpecification appSpec) throws Exception {
     // appSpec is null in an unit test
-    if (appSpec == null || appSpec.getPlugins().isEmpty()) {
+    if (appSpec == null) {
       return options;
     }
 
@@ -406,10 +411,13 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
    * @param programId the program id
    * @param options The {@link ProgramOptions} in which the RunId to be included
    * @param runId   The RunId to be included
+   * @param clusterMode clustermode for the program run
+   * @param applicationClass application class for the program
    * @return the copy of the program options with RunId included in them
    */
   private ProgramOptions updateProgramOptions(ArtifactId artifactId, ProgramId programId,
-                                              ProgramOptions options, RunId runId) {
+                                              ProgramOptions options, RunId runId, ClusterMode clusterMode,
+                                              ApplicationClass applicationClass) {
     // Build the system arguments
     Map<String, String> systemArguments = new HashMap<>(options.getArguments().asMap());
     // don't add these system arguments if they're already there
@@ -419,6 +427,9 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     }
     systemArguments.putIfAbsent(ProgramOptionConstants.RUN_ID, runId.getId());
     systemArguments.putIfAbsent(ProgramOptionConstants.ARTIFACT_ID, Joiner.on(':').join(artifactId.toIdParts()));
+    if (clusterMode == ClusterMode.ISOLATED) {
+      systemArguments.putIfAbsent(ProgramOptionConstants.APPLICATION_CLASS, applicationClass.getClassName());
+    }
 
     // Resolves the user arguments
     // First resolves at the cluster scope if the cluster.name is not empty

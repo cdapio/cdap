@@ -30,7 +30,7 @@ import io.cdap.cdap.api.workflow.WorkflowForkConfigurer;
 import io.cdap.cdap.api.workflow.WorkflowForkNode;
 import io.cdap.cdap.api.workflow.WorkflowNode;
 import io.cdap.cdap.common.id.Id;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.workflow.condition.DefaultConditionConfigurer;
@@ -57,6 +57,7 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
   private final Id.Artifact artifactId;
   private final PluginFinder pluginFinder;
   private final PluginInstantiator pluginInstantiator;
+  private final AppDeploymentRuntimeInfo runtimeInfo;
 
   private List<WorkflowNode> currentBranch;
   private boolean addingToIfBranch = true;
@@ -64,21 +65,24 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
   public DefaultWorkflowConditionConfigurer(Predicate<WorkflowContext> predicate, T parentConfigurer,
                                             Id.Namespace deployNamespace, Id.Artifact artifactId,
                                             PluginFinder pluginFinder,
-                                            PluginInstantiator pluginInstantiator) {
-    this(predicate, null, parentConfigurer, deployNamespace, artifactId, pluginFinder, pluginInstantiator);
+                                            PluginInstantiator pluginInstantiator,
+                                            @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
+    this(predicate, null, parentConfigurer, deployNamespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo);
   }
 
   public DefaultWorkflowConditionConfigurer(Condition condition, T parentConfigurer, Id.Namespace deployNamespace,
                                             Id.Artifact artifactId, PluginFinder pluginFinder,
-                                            PluginInstantiator pluginInstantiator) {
-    this(null, condition, parentConfigurer, deployNamespace, artifactId, pluginFinder, pluginInstantiator);
+                                            PluginInstantiator pluginInstantiator,
+                                            @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
+    this(null, condition, parentConfigurer, deployNamespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo);
   }
 
   private DefaultWorkflowConditionConfigurer(@Nullable Predicate<WorkflowContext> predicate,
                                              @Nullable Condition condition, T parentConfigurer,
                                              Id.Namespace deployNamespace, Id.Artifact artifactId,
                                              PluginFinder pluginFinder,
-                                             PluginInstantiator pluginInstantiator) {
+                                             PluginInstantiator pluginInstantiator,
+                                             @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
     this.condition = condition;
     this.predicate = predicate;
     this.parentConfigurer = parentConfigurer;
@@ -87,6 +91,7 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
     this.pluginFinder = pluginFinder;
     this.pluginInstantiator = pluginInstantiator;
     this.currentBranch = Lists.newArrayList();
+    this.runtimeInfo = runtimeInfo;
   }
 
   @Override
@@ -104,14 +109,15 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
   @Override
   public WorkflowConditionConfigurer<T> addAction(CustomAction action) {
     currentBranch.add(WorkflowNodeCreator.createWorkflowCustomActionNode(action, deployNamespace, artifactId,
-                                                                         pluginFinder, pluginInstantiator));
+                                                                         pluginFinder, pluginInstantiator,
+                                                                         runtimeInfo));
     return this;
   }
 
   @Override
   public WorkflowForkConfigurer<? extends WorkflowConditionConfigurer<T>> fork() {
     return new DefaultWorkflowForkConfigurer<>(this, deployNamespace, artifactId, pluginFinder,
-                                               pluginInstantiator);
+                                               pluginInstantiator, runtimeInfo);
   }
 
   @Override
@@ -119,14 +125,14 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
   public WorkflowConditionConfigurer<? extends WorkflowConditionConfigurer<T>> condition(
     Predicate<WorkflowContext> predicate) {
     return new DefaultWorkflowConditionConfigurer<>(predicate, this, deployNamespace, artifactId, pluginFinder,
-                                                    pluginInstantiator);
+                                                    pluginInstantiator, runtimeInfo);
   }
 
   @Override
   @SuppressWarnings("unchecked")
   public WorkflowConditionConfigurer<? extends WorkflowConditionConfigurer<T>> condition(Condition condition) {
     return new DefaultWorkflowConditionConfigurer<>(condition, this, deployNamespace, artifactId, pluginFinder,
-                                                    pluginInstantiator);
+                                                    pluginInstantiator, runtimeInfo);
   }
 
   @Override
@@ -170,7 +176,7 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
     Preconditions.checkArgument(condition != null, "Condition is null.");
     ConditionSpecification spec = DefaultConditionConfigurer.configureCondition(condition, deployNamespace,
                                                                                 artifactId, pluginFinder,
-                                                                                pluginInstantiator);
+                                                                                pluginInstantiator, runtimeInfo);
     currentBranch.add(new WorkflowConditionNode(spec.getName(), spec, ifBranch, elseBranch));
   }
 
