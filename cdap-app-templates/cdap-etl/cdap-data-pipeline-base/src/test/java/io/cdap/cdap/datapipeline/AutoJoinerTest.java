@@ -31,6 +31,7 @@ import io.cdap.cdap.etl.mock.batch.MockExternalSource;
 import io.cdap.cdap.etl.mock.batch.MockSQLEngine;
 import io.cdap.cdap.etl.mock.batch.MockSQLEngineWithCapabilities;
 import io.cdap.cdap.etl.mock.batch.MockSink;
+import io.cdap.cdap.etl.mock.batch.MockSinkWithWriteCapability;
 import io.cdap.cdap.etl.mock.batch.MockSource;
 import io.cdap.cdap.etl.mock.batch.joiner.MockAutoJoiner;
 import io.cdap.cdap.etl.mock.test.HydratorTestBase;
@@ -765,7 +766,8 @@ public class AutoJoinerTest extends HydratorTestBase {
      */
     String userInput = UUID.randomUUID().toString();
     String purchaseInput = UUID.randomUUID().toString();
-    String output = UUID.randomUUID().toString();
+    String sinkOutput = UUID.randomUUID().toString();
+    String sinkWithWriteCapabilitiesOutput = UUID.randomUUID().toString();
     String sqlEnginePlugin = UUID.randomUUID().toString();
     ETLBatchConfig config = ETLBatchConfig.builder()
       .setPushdownEnabled(true)
@@ -779,10 +781,13 @@ public class AutoJoinerTest extends HydratorTestBase {
       .addStage(new ETLStage("join", MockAutoJoiner.getPlugin(Arrays.asList("purchases", "users"),
                                                               Arrays.asList("region", "user_id"),
                                                               required, broadcast, Collections.emptyList(), true)))
-      .addStage(new ETLStage("sink", MockSink.getPlugin(output)))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(sinkOutput)))
+      .addStage(new ETLStage("sinkwithwritecapability",
+                             MockSinkWithWriteCapability.getPlugin(sinkWithWriteCapabilitiesOutput)))
       .addConnection("users", "join")
       .addConnection("purchases", "join")
       .addConnection("join", "sink")
+      .addConnection("join", "sinkwithwritecapability")
       .setEngine(engine)
       .build();
 
@@ -808,10 +813,13 @@ public class AutoJoinerTest extends HydratorTestBase {
     MockSource.writeInput(inputManager, purchaseData);
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
-    Map<String, String> args = Collections.singletonMap(MockAutoJoiner.PARTITIONS_ARGUMENT, "1");
+    Map<String, String> args = ImmutableMap.<String, String>builder()
+      .put(MockAutoJoiner.PARTITIONS_ARGUMENT, "1")
+      .put(io.cdap.cdap.etl.common.Constants.CONSOLIDATE_STAGES, "false")
+      .build();
     workflowManager.startAndWaitForGoodRun(args, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
-    DataSetManager<Table> outputManager = getDataset(output);
+    DataSetManager<Table> outputManager = getDataset(sinkOutput);
     List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);
 
     Assert.assertEquals(expected, new HashSet<>(outputRecords));
@@ -822,6 +830,9 @@ public class AutoJoinerTest extends HydratorTestBase {
     if (broadcast.isEmpty()) {
       // Ensure all records were written to the SQL engine
       Assert.assertEquals(5, MockSQLEngine.countLinesInDirectory(joinOutputDir));
+
+      validateMetric(12345, appId, "MockWithWriteCapability.records.in");
+      validateMetric(12345, appId, "MockWithWriteCapability.records.out");
     } else {
       // Ensure no records are written to the SQL engine if the join contains a broadcast.
       Assert.assertEquals(0, MockSQLEngine.countLinesInDirectory(joinOutputDir));

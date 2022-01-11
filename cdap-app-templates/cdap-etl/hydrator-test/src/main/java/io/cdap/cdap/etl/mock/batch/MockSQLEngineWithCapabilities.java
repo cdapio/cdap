@@ -44,6 +44,8 @@ import io.cdap.cdap.etl.api.engine.sql.request.SQLJoinDefinition;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLJoinRequest;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPullRequest;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPushRequest;
+import io.cdap.cdap.etl.api.engine.sql.request.SQLWriteRequest;
+import io.cdap.cdap.etl.api.engine.sql.request.SQLWriteResult;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.format.StructuredRecordStringConverter;
 
@@ -167,6 +169,11 @@ public class MockSQLEngineWithCapabilities extends BatchSQLEngine<Object, Object
         return 1;
       }
     };
+  }
+
+  @Override
+  public SQLWriteResult write(SQLWriteRequest writeRequest) throws SQLEngineException {
+    return SQLWriteResult.success(writeRequest.getDatasetName(), 12345);
   }
 
   @Override
