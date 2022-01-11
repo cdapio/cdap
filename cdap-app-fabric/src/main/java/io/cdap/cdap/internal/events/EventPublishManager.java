@@ -33,13 +33,13 @@ public class EventPublishManager extends AbstractIdleService {
 
   @Inject
   EventPublishManager(CConfiguration cConf, Set<EventPublisher> eventPublishers) {
-    this. publishEnabled = cConf.getBoolean(Constants.Event.PUBLISH_ENABLED);
+    this.publishEnabled = cConf.getBoolean(Constants.Event.PUBLISH_ENABLED);
     this.eventPublishers = eventPublishers;
   }
 
   @Override
   protected void startUp() throws Exception {
-    if(!publishEnabled){
+    if (!publishEnabled) {
       return;
     }
     eventPublishers.forEach(eventPublisher -> {

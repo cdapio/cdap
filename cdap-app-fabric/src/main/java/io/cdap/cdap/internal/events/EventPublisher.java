@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.internal.events;
 
+import io.cdap.cdap.spi.events.Event;
+import io.cdap.cdap.spi.events.EventWriter;
+
 import java.util.Collection;
 
 /**
@@ -24,11 +27,26 @@ import java.util.Collection;
  * @param <E> Event handled by this publisher
  */
 public interface EventPublisher<E extends Event> {
+
+  /**
+   * Initialize this publisher
+   * @param eventWriters {@link Collection} of {@link EventWriter}s to which events has to be published.
+   */
   void initialize(Collection<EventWriter<E>> eventWriters);
 
+  /**
+   * Start publish , to be called once init is complete
+   */
   void startPublish();
 
+  /**
+   * Stop publish , when system is shutting down
+   */
   void stopPublish();
 
+  /**
+   * Return the path where event writer extensions can be loaded from
+   * @return
+   */
   String getEventWriterPath();
 }

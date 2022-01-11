@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,15 +14,35 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.events;
+package io.cdap.cdap.spi.events;
 
 import java.util.Collection;
 
+/**
+ * Interface for an {@link Event} writer.
+ *
+ * @param <E> The type of event
+ */
 public interface EventWriter<E extends Event> extends AutoCloseable {
 
+  /**
+   * Returns the identifier for this writer
+   *
+   * @return String id for the writer
+   */
   String getID();
 
+  /**
+   * Method that can be called to initialize the writer
+   *
+   * @param eventWriterContext {@link EventWriterContext}
+   */
   void initialize(EventWriterContext eventWriterContext);
 
+  /**
+   * Write the collection of events
+   *
+   * @param events {@link Collection} of {@link Event}s.
+   */
   void write(Collection<E> events);
 }

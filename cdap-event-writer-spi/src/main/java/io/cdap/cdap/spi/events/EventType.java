@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,20 +14,14 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.events;
+package io.cdap.cdap.spi.events;
 
-public interface Event<T> {
-  EventType getType();
-
-  long getPublishTime();
-
-  String getVersion();
-
-  String getInstanceName();
-
-  default String getProjectName() {
-    return null;
-  }
-
-  T getEventDetails();
+/**
+ * Enum representing a CDAP {@link Event} type
+ */
+public enum EventType {
+  /**
+   * Event for program status
+   */
+  PROGRAM_STATUS
 }

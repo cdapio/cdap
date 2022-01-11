@@ -20,6 +20,9 @@ import java.util.Collection;
 import java.util.Map;
 import javax.annotation.Nullable;
 
+/**
+ * Program status event details
+ */
 public class ProgramStatusEventDetails {
 
   private final String runID;

@@ -16,8 +16,14 @@
 
 package io.cdap.cdap.internal.events;
 
+import io.cdap.cdap.spi.events.Event;
+import io.cdap.cdap.spi.events.EventType;
+
 import javax.annotation.Nullable;
 
+/**
+ * {@link Event} implementation for Program Status
+ */
 public class ProgramStatusEvent implements Event<ProgramStatusEventDetails> {
 
   private final long publishTime;

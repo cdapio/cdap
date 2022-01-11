@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.internal.events;
 
+import io.cdap.cdap.spi.events.Event;
+
+/**
+ * Class for holding metrics for a plugin to be published with {@link Event}
+ */
 public class PluginMetrics {
 
   String pluginId;

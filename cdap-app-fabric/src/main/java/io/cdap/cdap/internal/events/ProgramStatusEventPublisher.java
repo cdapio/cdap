@@ -33,6 +33,7 @@ import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.events.EventWriter;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -43,6 +44,9 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
+/**
+ * {@link EventPublisher} implementation for program status
+ */
 public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberService
   implements EventPublisher<ProgramStatusEvent> {
 
