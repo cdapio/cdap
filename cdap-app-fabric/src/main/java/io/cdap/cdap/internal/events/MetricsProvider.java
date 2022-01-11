@@ -16,18 +16,18 @@
 
 package io.cdap.cdap.internal.events;
 
-public interface Event<T> {
-  EventType getType();
+import io.cdap.cdap.proto.id.ProgramRunId;
 
-  long getPublishTime();
+/**
+ * Provides metrics for the completed {@link io.cdap.cdap.spi.events.Event}s,
+ * such as output and input records and bytes.
+ */
+public interface MetricsProvider {
 
-  String getVersion();
-
-  String getInstanceName();
-
-  default String getProjectName() {
-    return null;
-  }
-
-  T getEventDetails();
+  /**
+   * Provides metrics for a program execution.
+   *
+   * @param runId The {@link ProgramRunId} which references this execution.
+   */
+  ExecutionMetrics retrieveMetrics(ProgramRunId runId);
 }
