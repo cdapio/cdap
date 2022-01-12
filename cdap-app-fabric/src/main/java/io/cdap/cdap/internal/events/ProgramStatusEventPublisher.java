@@ -57,6 +57,7 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
   private Collection<EventWriter<ProgramStatusEvent>> eventWriters;
   private String instanceName;
   private String projectName;
+  private CConfiguration cConf;
 
   @Inject
   protected ProgramStatusEventPublisher(String name, CConfiguration cConf, String topicName,
@@ -67,6 +68,7 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
           cConf.getInt(Constants.Event.PROGRAM_STATUS_POLL_INTERVAL_SECONDS), messagingService,
           metricsCollectionService,
           transactionRunner);
+    this.cConf = cConf;
     this.instanceName = cConf.get(Constants.Event.INSTANCE_NAME);
     this.projectName = cConf.get(Constants.Event.PROJECT_NAME);
   }
@@ -74,6 +76,10 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
   @Override
   public void initialize(Collection<EventWriter<ProgramStatusEvent>> eventWriters) {
     this.eventWriters = eventWriters;
+    this.eventWriters.forEach(eventWriter -> {
+      DefaultEventWriterContext eventWriterContext = new DefaultEventWriterContext(cConf, eventWriter.getID());
+      eventWriter.initialize(eventWriterContext);
+    });
   }
 
   @Override
