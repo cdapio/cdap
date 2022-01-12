@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.runtime.monitor;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
@@ -25,6 +26,7 @@ import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.services.AbstractNotificationSubscriberService;
@@ -56,7 +58,7 @@ import javax.annotation.Nullable;
 public class RuntimeProgramStatusSubscriberService extends AbstractNotificationSubscriberService {
 
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeProgramStatusSubscriberService.class);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
 
   @Inject
   RuntimeProgramStatusSubscriberService(CConfiguration cConf, MessagingService messagingService,
@@ -165,7 +167,6 @@ public class RuntimeProgramStatusSubscriberService extends AbstractNotificationS
         store.deleteRunIfTerminated(programRunId, sourceId);
         break;
       case REJECTED: {
-        ProgramOptions programOptions = ProgramOptions.fromNotification(notification, GSON);
         ProgramDescriptor programDescriptor =
           GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR), ProgramDescriptor.class);
         // Strip off user args and trim down system args as runtime only needs the run status for validation purpose.
