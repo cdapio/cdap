@@ -56,6 +56,7 @@ import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;
 import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.data2.metadata.dataset.SortInfo.SortOrder;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -65,6 +66,7 @@ import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.ApplicationUpdateDetail;
 import io.cdap.cdap.proto.BatchApplicationDetail;
+import io.cdap.cdap.proto.PaginatedApplicationRecords;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.EntityId;
@@ -97,10 +99,13 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -234,8 +239,13 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getAllApps(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId,
                          @QueryParam("artifactName") String artifactName,
-                         @QueryParam("artifactVersion") String artifactVersion)
-    throws Exception {
+                         @QueryParam("artifactVersion") String artifactVersion,
+                         @QueryParam("pageToken") String pageToken,
+                         @QueryParam("pageSize") Integer pageSize,
+                         @QueryParam("orderBy") SortOrder orderBy,
+                         @QueryParam("nameFilter") String nameFilter
+      )
+      throws Exception {
 
     NamespaceId namespace = validateNamespace(namespaceId);
 
@@ -250,7 +260,48 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       .map(ApplicationRecord::new)
       .collect(Collectors.toList());
 
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(apps));
+    if (Optional.ofNullable(pageSize).orElse(0) != 0) {
+      PaginatedApplicationRecords result = getPaginatedResults(apps, pageToken, pageSize, orderBy,
+                                                               nameFilter);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(result));
+    } else {
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(apps));
+    }
+  }
+
+  /**
+   * TODO: This is a temporary implementation, will be deprecated after
+   * https://cdap.atlassian.net/browse/CDAP-18603 is fully implemented.
+   * Returns paginated result for getApps, also includes nextPageToken
+   *
+   * @param apps the applications obtained from the Store
+   * @param pageToken the next pageToken to return the paginated results from
+   * @param pageSize the total number of application records to display on the result page
+   * @param orderBy  ASC for ascending order, DESC for descending order
+   * @param nameFilter filter applications whose name contains nameFilter
+   */
+  private PaginatedApplicationRecords getPaginatedResults(List<ApplicationRecord> apps,
+                                                           String pageToken, Integer pageSize,
+                                                           SortOrder orderBy, String nameFilter
+      ) {
+
+    Comparator<ApplicationRecord> compareByApplicationId = (orderBy == SortOrder.DESC)
+        ? Comparator.comparing(ApplicationRecord::getName).reversed()
+        : Comparator.comparing(ApplicationRecord::getName);
+
+    Integer offset = (Strings.isNullOrEmpty(pageToken)) ? 0 : Integer.parseInt(pageToken);
+
+    List<ApplicationRecord> result = apps.stream()
+        .filter(record -> Strings.isNullOrEmpty(nameFilter) ||
+            record.getName().toLowerCase().contains(nameFilter.toLowerCase()))
+        .sorted(compareByApplicationId)
+        .skip(offset)
+        .limit(pageSize)
+        .collect(Collectors.toList());
+
+    String nextPageToken = (result.size() < pageSize) ? null : Integer.toString(offset + pageSize);
+
+    return new PaginatedApplicationRecords(result, nextPageToken);
   }
 
   /**
