@@ -29,7 +29,7 @@ import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.common.Bytes;
-import io.cdap.cdap.api.common.FeatureFlagsUtils;
+import io.cdap.cdap.api.common.FeatureFlagsUtil;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
@@ -177,7 +177,7 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
       macroProperties -> getContext().evaluateMacros(namespace, macroProperties, macroEvaluator, macroParserOptions);
     String validationResponse = GSON.toJson(ValidationUtils.validate(
       validationRequest, getContext().createServicePluginConfigurer(namespace), macroFn,
-      () -> FeatureFlagsUtils.extractFeatureFlags(getContext().getRuntimeArguments())));
+      () -> FeatureFlagsUtil.extractFeatureFlags(getContext().getRuntimeArguments())));
     responder.sendString(validationResponse);
   }
 

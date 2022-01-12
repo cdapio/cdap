@@ -29,7 +29,7 @@ import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
-import io.cdap.cdap.api.common.FeatureFlagsUtils;
+import io.cdap.cdap.api.common.FeatureFlagsUtil;
 import io.cdap.cdap.app.DefaultAppConfigurer;
 import io.cdap.cdap.app.DefaultApplicationContext;
 import io.cdap.cdap.app.deploy.ConfigResponse;
@@ -153,7 +153,7 @@ public final class InMemoryConfigurator implements Configurator {
     try (
       PluginInstantiator pluginInstantiator = new PluginInstantiator(cConf, app.getClass().getClassLoader(), tempDir)
     ) {
-      Map<String, String> featureFlags = FeatureFlagsUtils.extractFeatureFlags(CConfigurationUtil.asMap(cConf));
+      Map<String, String> featureFlags = FeatureFlagsUtil.extractFeatureFlags(CConfigurationUtil.asMap(cConf));
       configurer = new DefaultAppConfigurer(appNamespace, artifactId, app,
                                             configString, pluginFinder, pluginInstantiator, featureFlags);
       T appConfig;

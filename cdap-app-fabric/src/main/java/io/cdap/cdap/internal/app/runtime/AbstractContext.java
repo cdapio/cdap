@@ -30,7 +30,7 @@ import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.annotation.TransactionControl;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.common.Bytes;
-import io.cdap.cdap.api.common.FeatureFlagsUtils;
+import io.cdap.cdap.api.common.FeatureFlagsUtil;
 import io.cdap.cdap.api.common.RuntimeArguments;
 import io.cdap.cdap.api.data.DatasetInstantiationException;
 import io.cdap.cdap.api.dataset.Dataset;
@@ -187,7 +187,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     Map<String, String> runtimeArgs = new HashMap<>();
     Map<String, String> conf = CConfigurationUtil.asMap(cConf);
     if (Feature.FEATURE_FLAGS_IN_RUNTIME.isEnabled(conf)) {
-      runtimeArgs.putAll(FeatureFlagsUtils.extractFeatureFlags(conf));
+      runtimeArgs.putAll(FeatureFlagsUtil.extractFeatureFlags(conf));
     }
     runtimeArgs.putAll(programOptions.getUserArguments().asMap());
     return runtimeArgs;

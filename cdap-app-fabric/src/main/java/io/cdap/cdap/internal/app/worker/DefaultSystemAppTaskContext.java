@@ -18,7 +18,7 @@ package io.cdap.cdap.internal.app.worker;
 
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactManager;
-import io.cdap.cdap.api.common.FeatureFlagsUtils;
+import io.cdap.cdap.api.common.FeatureFlagsUtil;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
@@ -171,6 +171,6 @@ public class DefaultSystemAppTaskContext extends AbstractServiceDiscoverer imple
 
   @Override
   public Map<String, String> getFeatureFlags() {
-    return FeatureFlagsUtils.extractFeatureFlags(CConfigurationUtil.asMap(cConf));
+    return FeatureFlagsUtil.extractFeatureFlags(CConfigurationUtil.asMap(cConf));
   }
 }

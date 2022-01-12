@@ -20,10 +20,19 @@ package io.cdap.cdap.api.common;
 import java.util.HashMap;
 import java.util.Map;
 
-public class FeatureFlagsUtils {
+/**
+ * Utility Class for feature flag functions
+ */
+public class FeatureFlagsUtil {
 
   public static final String FEATURE_FLAG_PREFIX = "feature.";
 
+  /**
+   * Returns the items that are prefixed by FEATURE_FLAG_PREFIX from a map.
+   *
+   * @param conf Map of configuration options including feature flag values.
+   * @return a map including all options that are prefixed by FEATURE_FLAG_PREFIX
+   */
   public static Map<String, String> extractFeatureFlags(Map<String, String> conf) {
     Map<String, String> featureFlags = new HashMap<>();
     for (String name : conf.keySet()) {
@@ -37,6 +46,10 @@ public class FeatureFlagsUtils {
       }
     }
     return featureFlags;
+  }
+
+  private FeatureFlagsUtil() {
+
   }
 
 }

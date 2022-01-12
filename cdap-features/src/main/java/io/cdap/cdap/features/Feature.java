@@ -18,38 +18,56 @@ package io.cdap.cdap.features;
 
 import io.cdap.cdap.api.FeatureFlagsProvider;
 import io.cdap.cdap.api.PlatformInfo;
-import io.cdap.cdap.api.common.FeatureFlagsUtils;
+import io.cdap.cdap.api.common.FeatureFlagsUtil;
 
 import java.util.Map;
 
 /**
  * Defines Features Flags to be used in CDAP.
  * Features take the version that they were introduced as a first parameter. Optionally they can take a
- * second paramenter to define their default behavior if they are not present in configuration.
- * By default features default to enabled after they are introduced, and disabled before they were introduced
+ * second parameter to define their default behavior if they are not present in configuration.
+ * By default, features default to enabled after they are introduced, and disabled before they were introduced
  */
 public enum Feature {
   FEATURE_FLAGS_IN_RUNTIME("6.6.0");
   
-  public static final String FEATURE_FLAG_PREFIX = FeatureFlagsUtils.FEATURE_FLAG_PREFIX;
+  public static final String FEATURE_FLAG_PREFIX = FeatureFlagsUtil.FEATURE_FLAG_PREFIX;
   private final PlatformInfo.Version versionIntroduced;
-  private final boolean defaultAfterDeployment;
+  private final boolean defaultAfterIntroduction;
   private final String featureFlagString;
 
   Feature(String versionIntroduced) {
     this(versionIntroduced, true);
   }
 
-  Feature(String versionDeployed, boolean defaultAfterDeployment) {
+  Feature(String versionDeployed, boolean defaultAfterIntroduction) {
     this.featureFlagString = FEATURE_FLAG_PREFIX + this.name().toLowerCase().replace('_', '.') + ".enabled";
     this.versionIntroduced = new PlatformInfo.Version(versionDeployed);
-    this.defaultAfterDeployment = defaultAfterDeployment;
+    this.defaultAfterIntroduction = defaultAfterIntroduction;
   }
 
+  /**
+   * Returns if the feature flag should be enabled.
+   * First it checks featureFlagProvider to see if the feature flag has been defined.
+   * If not defined then it uses when the feature flag was first introduced, if the platform version is
+   * before or equal to when it was introduced it returns false, otherwise it returns defaultAfterIntroduction.
+   *
+   * @param featureFlagsProvider provides which feature flags have been set.
+   * @return if the Feature Flag is enabled
+   */
   public boolean isEnabled(FeatureFlagsProvider featureFlagsProvider) {
     return isEnabled(featureFlagsProvider.getFeatureFlags());
   }
 
+  /**
+   * Returns if the feature flag should be enabled.
+   * First it checks configuration to see if the feature flag has been defined.
+   * If not defined then it uses when the feature flag was first introduced, if the platform version is
+   * before or equal to when it was introduced it returns false, otherwise it returns defaultAfterIntroduction.
+   *
+   * @param configuration provides which feature flags have been set.
+   * @return if the Feature Flag is enabled
+   */
   public boolean isEnabled(Map<String, String> configuration) {
     String featureFlagValue = configuration.get(featureFlagString);
     if (featureFlagValue == null) {
@@ -58,23 +76,24 @@ public enum Feature {
     return convertStringToBoolean(featureFlagValue);
   }
 
+  /**
+   *
+   * @return string that identifies the feature flag.
+   */
   public String getFeatureFlagString() {
     return featureFlagString;
   }
 
   private boolean convertStringToBoolean(String featureFlagValue) {
-    return featureFlagValue.equals("true");
+    return Boolean.parseBoolean(featureFlagValue);
   }
 
   private boolean getDefaultValue() {
     if (PlatformInfo.getVersion().compareTo(versionIntroduced) <= 0) {
       return false;
     } else {
-      return defaultAfterDeployment;
+      return defaultAfterIntroduction;
     }
   }
-
-
-
 
 }
