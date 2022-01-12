@@ -614,7 +614,7 @@ final class DataprocConf {
     String initActions = getString(properties, "initActions");
     boolean runtimeJobManagerEnabled = Boolean.parseBoolean(properties.get(RUNTIME_JOB_MANAGER));
     String autoScalingPolicy = getString(properties, "autoScalingPolicy");
-    int idleTTL = getInt(properties, CLUSTER_IDLE_TTL_MINUTES, skipDelete ? 0 : CLUSTER_IDLE_TTL_MINUTES_DEFAULT);
+    int idleTTL = getInt(properties, CLUSTER_IDLE_TTL_MINUTES, CLUSTER_IDLE_TTL_MINUTES_DEFAULT);
 
     String tokenEndpoint = getString(properties, TOKEN_ENDPOINT_KEY);
     boolean secureBootEnabled = Boolean.parseBoolean(properties.getOrDefault(SECURE_BOOT_ENABLED, "false"));
@@ -623,7 +623,7 @@ final class DataprocConf {
       properties.getOrDefault(INTEGRITY_MONITORING_ENABLED, "false"));
 
     boolean clusterReuseEnabled = Boolean.parseBoolean(
-      properties.getOrDefault(CLUSTER_REUSE_ENABLED, "false"));
+      properties.getOrDefault(CLUSTER_REUSE_ENABLED, "true"));
     int clusterReuseThresholdMinutes = getInt(properties, CLUSTER_REUSE_THRESHOLD_MINUTES,
                                               CLUSTER_REUSE_THRESHOLD_MINUTES_DEFAULT);
     String clusterReuseKey = null;
