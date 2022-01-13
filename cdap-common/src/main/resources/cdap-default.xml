@@ -456,7 +456,17 @@
     <name>app.max.concurrent.runs</name>
     <value>-1</value>
     <description>
-      Maximum number of concurrent program runs allowed; set to -1 for unlimited
+      Maximum number of concurrent program runs allowed; set to -1 for unlimited.
+      Program runs are those with an active run record.
+    </description>
+  </property>
+
+  <property>
+    <name>app.max.concurrent.launching</name>
+    <value>-1</value>
+    <description>
+      Maximum number of concurrent launching runs allowed; set to -1 for unlimited.
+      Launching runs have an active run record with PENDING or STARTING status.
     </description>
   </property>
 
