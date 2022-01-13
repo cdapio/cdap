@@ -198,13 +198,16 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       SubmitJobRequest request = getSubmitJobRequest(runtimeJobInfo, uploadedFiles);
 
       // step 4: submit hadoop job to dataproc
-      Job job = getJobControllerClient().submitJob(request);
-      LOG.debug("Successfully submitted hadoop job {} to cluster {}.", job.getReference().getJobId(), clusterName);
+      try {
+        Job job = getJobControllerClient().submitJob(request);
+        LOG.debug("Successfully submitted hadoop job {} to cluster {}.", job.getReference().getJobId(), clusterName);
+      } catch (AlreadyExistsException ex) {
+        //the job id already exists, ignore the job.
+        LOG.warn("The dataproc job {} already exists. Ignoring resubmission of the job.",
+                 request.getJob().getReference().getJobId());
+      }
       DataprocUtils.emitMetric(provisionerContext, region,
                                "provisioner.submitJob.response.count");
-    } catch (AlreadyExistsException ex) {
-      //the job id already exists, ignore the job.
-      LOG.warn("The dataproc job {} already exists. Ignoring resubmission of the job.", ex.getMessage());
     } catch (Exception e) {
       // delete all uploaded gcs files in case of exception
       DataprocUtils.deleteGCSPath(getStorageClient(), bucket, runRootPath);
