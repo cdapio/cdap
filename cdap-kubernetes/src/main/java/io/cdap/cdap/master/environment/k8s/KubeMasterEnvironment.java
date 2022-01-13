@@ -160,72 +160,78 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private boolean namespaceCreationEnabled;
 
   @Override
-  public void initialize(MasterEnvironmentContext context) throws IOException, ApiException {
-    LOG.info("Initializing Kubernetes environment");
+  public void initialize(MasterEnvironmentContext context) throws Exception {
+    LOG.info("Xiaowei ODF Test");
+    try {
+      LOG.info("Initializing Kubernetes environment");
 
-    Map<String, String> conf = context.getConfigurations();
-    podInfoDir = new File(conf.getOrDefault(POD_INFO_DIR, DEFAULT_POD_INFO_DIR));
-    podLabelsFile = new File(podInfoDir, conf.getOrDefault(POD_LABELS_FILE, DEFAULT_POD_LABELS_FILE));
-    podNameFile = new File(podInfoDir, conf.getOrDefault(POD_NAME_FILE, DEFAULT_POD_NAME_FILE));
-    podUidFile = new File(podInfoDir, conf.getOrDefault(POD_UID_FILE, DEFAULT_POD_UID_FILE));
-    namespaceCreationEnabled = Boolean.parseBoolean(conf.get(NAMESPACE_CREATION_ENABLED));
+      Map<String, String> conf = context.getConfigurations();
+      podInfoDir = new File(conf.getOrDefault(POD_INFO_DIR, DEFAULT_POD_INFO_DIR));
+      podLabelsFile = new File(podInfoDir, conf.getOrDefault(POD_LABELS_FILE, DEFAULT_POD_LABELS_FILE));
+      podNameFile = new File(podInfoDir, conf.getOrDefault(POD_NAME_FILE, DEFAULT_POD_NAME_FILE));
+      podUidFile = new File(podInfoDir, conf.getOrDefault(POD_UID_FILE, DEFAULT_POD_UID_FILE));
+      namespaceCreationEnabled = Boolean.parseBoolean(conf.get(NAMESPACE_CREATION_ENABLED));
 
-    // We don't support scaling from inside pod. Scaling should be done via CDAP operator.
-    // Currently we don't support more than one instance per system service, hence set it to "1".
-    conf.put(MASTER_MAX_INSTANCES, "1");
-    // No TX in K8s
-    conf.put(DATA_TX_ENABLED, Boolean.toString(false));
+      // We don't support scaling from inside pod. Scaling should be done via CDAP operator.
+      // Currently we don't support more than one instance per system service, hence set it to "1".
+      conf.put(MASTER_MAX_INSTANCES, "1");
+      // No TX in K8s
+      conf.put(DATA_TX_ENABLED, Boolean.toString(false));
 
-    // Load the pod labels from the configured path. It should be setup by the CDAP operator
-    podInfo = createPodInfo(conf);
-    Map<String, String> podLabels = podInfo.getLabels();
+      // Load the pod labels from the configured path. It should be setup by the CDAP operator
+      podInfo = createPodInfo(conf);
+      Map<String, String> podLabels = podInfo.getLabels();
 
-    String namespace = podInfo.getNamespace();
-    additionalSparkConfs = getSparkConfigurations(conf);
-    coreV1Api = new CoreV1Api(Config.defaultClient());
+      String namespace = podInfo.getNamespace();
+      additionalSparkConfs = getSparkConfigurations(conf);
+      coreV1Api = new CoreV1Api(Config.defaultClient());
 
-    // Get the instance label to setup prefix for K8s services
-    String instanceLabel = conf.getOrDefault(INSTANCE_LABEL, DEFAULT_INSTANCE_LABEL);
-    String instanceName = podLabels.get(instanceLabel);
-    if (instanceName == null) {
-      throw new IllegalStateException("Missing instance label '" + instanceLabel + "' from pod labels.");
-    }
-
-    // Services are publish to K8s with a prefix
-    String resourcePrefix = "cdap-" + instanceName + "-";
-    discoveryService = new KubeDiscoveryService(namespace, "cdap-" + instanceName + "-", podLabels,
-                                                podInfo.getOwnerReferences());
-
-    // Optionally creates the pod killer task
-    String podKillerSelector = conf.get(POD_KILLER_SELECTOR);
-    if (!Strings.isNullOrEmpty(podKillerSelector)) {
-      long delayMillis = DEFAULT_POD_KILLER_DELAY_MILLIS;
-      String confDelay = conf.get(POD_KILLER_DELAY_MILLIS);
-      if (!Strings.isNullOrEmpty(confDelay)) {
-        try {
-          delayMillis = Long.parseLong(confDelay);
-          if (delayMillis <= 0) {
-            delayMillis = DEFAULT_POD_KILLER_DELAY_MILLIS;
-            LOG.warn("Only positive value is allowed for configuration {}. Defaulting to {}",
-                     POD_KILLER_DELAY_MILLIS, delayMillis);
-          }
-        } catch (NumberFormatException e) {
-          LOG.warn("Invalid value for configuration {}. Expected a positive integer, but get {}.",
-                   POD_KILLER_DELAY_MILLIS, confDelay);
-        }
+      // Get the instance label to setup prefix for K8s services
+      String instanceLabel = conf.getOrDefault(INSTANCE_LABEL, DEFAULT_INSTANCE_LABEL);
+      String instanceName = podLabels.get(instanceLabel);
+      if (instanceName == null) {
+        throw new IllegalStateException("Missing instance label '" + instanceLabel + "' from pod labels.");
       }
 
-      podKillerTask = new PodKillerTask(namespace, podKillerSelector, delayMillis);
-      LOG.info("Created pod killer task on namespace {}, with selector {} and delay {}",
-               namespace, podKillerSelector, delayMillis);
-    }
+      // Services are publish to K8s with a prefix
+      String resourcePrefix = "cdap-" + instanceName + "-";
+      discoveryService = new KubeDiscoveryService(namespace, "cdap-" + instanceName + "-", podLabels,
+                                                  podInfo.getOwnerReferences());
 
-    twillRunner = new KubeTwillRunnerService(context, namespace, discoveryService,
-                                             podInfo, resourcePrefix,
-                                             Collections.singletonMap(instanceLabel, instanceName),
-                                             Integer.parseInt(conf.getOrDefault(JOB_CLEANUP_INTERVAL, "60")),
-                                             Integer.parseInt(conf.getOrDefault(JOB_CLEANUP_BATCH_SIZE, "1000")));
-    LOG.info("Kubernetes environment initialized with pod labels {}", podLabels);
+      // Optionally creates the pod killer task
+      String podKillerSelector = conf.get(POD_KILLER_SELECTOR);
+      if (!Strings.isNullOrEmpty(podKillerSelector)) {
+        long delayMillis = DEFAULT_POD_KILLER_DELAY_MILLIS;
+        String confDelay = conf.get(POD_KILLER_DELAY_MILLIS);
+        if (!Strings.isNullOrEmpty(confDelay)) {
+          try {
+            delayMillis = Long.parseLong(confDelay);
+            if (delayMillis <= 0) {
+              delayMillis = DEFAULT_POD_KILLER_DELAY_MILLIS;
+              LOG.warn("Only positive value is allowed for configuration {}. Defaulting to {}",
+                       POD_KILLER_DELAY_MILLIS, delayMillis);
+            }
+          } catch (NumberFormatException e) {
+            LOG.warn("Invalid value for configuration {}. Expected a positive integer, but get {}.",
+                     POD_KILLER_DELAY_MILLIS, confDelay);
+          }
+        }
+
+        podKillerTask = new PodKillerTask(namespace, podKillerSelector, delayMillis);
+        LOG.info("Created pod killer task on namespace {}, with selector {} and delay {}",
+                 namespace, podKillerSelector, delayMillis);
+      }
+
+      twillRunner = new KubeTwillRunnerService(context, namespace, discoveryService,
+                                               podInfo, resourcePrefix,
+                                               Collections.singletonMap(instanceLabel, instanceName),
+                                               Integer.parseInt(conf.getOrDefault(JOB_CLEANUP_INTERVAL, "60")),
+                                               Integer.parseInt(conf.getOrDefault(JOB_CLEANUP_BATCH_SIZE, "1000")));
+      LOG.info("Kubernetes environment initialized with pod labels {}", podLabels);
+    } catch (Exception e) {
+      LOG.warn("Error initializing k8s, the error is {} ", e);
+      throw e;
+    }
   }
 
   @Override
