@@ -18,6 +18,7 @@ package io.cdap.cdap.runtime.spi.runtimejob;
 
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.api.gax.rpc.AlreadyExistsException;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.auth.oauth2.GoogleCredentials;
@@ -197,8 +198,14 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       SubmitJobRequest request = getSubmitJobRequest(runtimeJobInfo, uploadedFiles);
 
       // step 4: submit hadoop job to dataproc
-      Job job = getJobControllerClient().submitJob(request);
-      LOG.debug("Successfully submitted hadoop job {} to cluster {}.", job.getReference().getJobId(), clusterName);
+      try {
+        Job job = getJobControllerClient().submitJob(request);
+        LOG.debug("Successfully submitted hadoop job {} to cluster {}.", job.getReference().getJobId(), clusterName);
+      } catch (AlreadyExistsException ex) {
+        //the job id already exists, ignore the job.
+        LOG.warn("The dataproc job {} already exists. Ignoring resubmission of the job.",
+                 request.getJob().getReference().getJobId());
+      }
       DataprocUtils.emitMetric(provisionerContext, region,
                                "provisioner.submitJob.response.count");
     } catch (Exception e) {
