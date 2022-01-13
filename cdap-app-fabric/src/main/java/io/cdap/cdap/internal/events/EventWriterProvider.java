@@ -20,6 +20,16 @@ import io.cdap.cdap.spi.events.EventWriter;
 
 import java.util.Map;
 
+/**
+ * This interface provides Event Writers ({@link EventWriter}) in order to load them as an
+ * extension.
+ */
 public interface EventWriterProvider {
+
+  /**
+   * Method which retrieve a {@link Map} of {@link EventWriter} and the Extension Type.
+   *
+   * @return
+   */
   Map<String, EventWriter> loadEventWriters();
 }

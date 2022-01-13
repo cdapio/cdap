@@ -20,10 +20,8 @@ import java.util.Collection;
 
 /**
  * Interface for an {@link Event} writer.
- *
- * @param <E> The type of event
  */
-public interface EventWriter<E extends Event> extends AutoCloseable {
+public interface EventWriter extends AutoCloseable {
 
   /**
    * Returns the identifier for this writer
@@ -44,5 +42,5 @@ public interface EventWriter<E extends Event> extends AutoCloseable {
    *
    * @param events {@link Collection} of {@link Event}s.
    */
-  void write(Collection<E> events);
+  void write(Collection<? extends Event<?>> events);
 }

@@ -30,6 +30,7 @@ import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -48,23 +49,24 @@ import javax.annotation.Nullable;
  * {@link EventPublisher} implementation for program status
  */
 public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberService
-  implements EventPublisher<ProgramStatusEvent> {
+  implements EventPublisher {
 
   private static final String SUBSCRIBER_NAME = "program_status_event_publisher";
   private static final Gson GSON = new Gson();
   private static final String EVENT_VERSION = "v1";
-
-  private Collection<EventWriter<ProgramStatusEvent>> eventWriters;
-  private String instanceName;
-  private String projectName;
-  private CConfiguration cConf;
+  private final String instanceName;
+  private final String projectName;
+  private final CConfiguration cConf;
+  private Collection<EventWriter> eventWriters;
 
   @Inject
-  protected ProgramStatusEventPublisher(String name, CConfiguration cConf, String topicName,
+  protected ProgramStatusEventPublisher(String name, CConfiguration cConf,
                                         MessagingService messagingService,
                                         MetricsCollectionService metricsCollectionService,
                                         TransactionRunner transactionRunner) {
-    super(name, cConf, topicName, cConf.getInt(Constants.Event.PROGRAM_STATUS_FETCH_SIZE),
+    super(name, cConf,
+          cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC),
+          cConf.getInt(Constants.Event.PROGRAM_STATUS_FETCH_SIZE),
           cConf.getInt(Constants.Event.PROGRAM_STATUS_POLL_INTERVAL_SECONDS), messagingService,
           metricsCollectionService,
           transactionRunner);
@@ -74,10 +76,11 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
   }
 
   @Override
-  public void initialize(Collection<EventWriter<ProgramStatusEvent>> eventWriters) {
+  public void initialize(Collection<EventWriter> eventWriters) {
     this.eventWriters = eventWriters;
     this.eventWriters.forEach(eventWriter -> {
-      DefaultEventWriterContext eventWriterContext = new DefaultEventWriterContext(cConf, eventWriter.getID());
+      DefaultEventWriterContext eventWriterContext = new DefaultEventWriterContext(cConf,
+                                                                                   eventWriter.getID());
       eventWriter.initialize(eventWriterContext);
     });
   }
@@ -92,20 +95,17 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
     this.stop();
   }
 
-  @Override
-  public String getEventWriterPath() {
-    return null;
-  }
-
   @Nullable
   @Override
   protected String loadMessageId(StructuredTableContext context) throws Exception {
-    return AppMetadataStore.create(context).retrieveSubscriberState(getTopicId().getTopic(), SUBSCRIBER_NAME);
+    return AppMetadataStore.create(context)
+      .retrieveSubscriberState(getTopicId().getTopic(), SUBSCRIBER_NAME);
   }
 
   @Override
   protected void storeMessageId(StructuredTableContext context, String messageId) throws Exception {
-    AppMetadataStore.create(context).persistSubscriberState(getTopicId().getTopic(), SUBSCRIBER_NAME, messageId);
+    AppMetadataStore.create(context)
+      .persistSubscriberState(getTopicId().getTopic(), SUBSCRIBER_NAME, messageId);
   }
 
   @Override
@@ -125,31 +125,51 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
         return;
       }
       ProgramRunStatus programRunStatus = ProgramRunStatus.valueOf(programStatus);
-      //Should event publish happen for this status
-      if (!shouldPublish(programRunStatus)) {
-        return;
-      }
       String programRun = properties.get(ProgramOptionConstants.PROGRAM_RUN_ID);
       ProgramRunId programRunId = GSON.fromJson(programRun, ProgramRunId.class);
+
+      //Should event publish happen for this status
+      if (!shouldPublish(programRunStatus, programRunId)) {
+        return;
+      }
       ProgramStatusEventDetails.Builder builder = ProgramStatusEventDetails
-        .getBuilder(programRunId.getRun(), programRunId.getProgram(), programRunId.getNamespace(), programStatus,
+        .getBuilder(programRunId.getRun(), programRunId.getProgram(), programRunId.getNamespace(),
+                    programStatus,
                     RunIds.getTime(programRunId.getRun(), TimeUnit.MILLISECONDS));
       String userArgsString = properties.get(ProgramOptionConstants.USER_OVERRIDES);
       String sysArgsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
       Type argsMapType = new TypeToken<Map<String, String>>() {
       }.getType();
-      ProgramStatusEventDetails programStatusEventDetails = builder
+      builder = builder
         .withUserArgs(GSON.fromJson(userArgsString, argsMapType))
-        .withSystemArgs(GSON.fromJson(sysArgsString, argsMapType)).build();
-      ProgramStatusEvent programStatusEvent = new ProgramStatusEvent(publishTime, EVENT_VERSION, instanceName,
+        .withSystemArgs(GSON.fromJson(sysArgsString, argsMapType));
+      if (programRunStatus.isEndState()) {
+        builder = populateErrorDetails(builder, properties, programRunStatus);
+      }
+      ProgramStatusEventDetails programStatusEventDetails = builder.build();
+      ProgramStatusEvent programStatusEvent = new ProgramStatusEvent(publishTime, EVENT_VERSION,
+                                                                     instanceName,
                                                                      projectName, programStatusEventDetails);
       programStatusEvents.add(programStatusEvent);
     });
 
-    this.eventWriters.stream().forEach(eventWriter -> eventWriter.write(programStatusEvents));
+    this.eventWriters.forEach(eventWriter -> eventWriter.write(programStatusEvents));
   }
 
-  private boolean shouldPublish(ProgramRunStatus programRunStatus) {
-    return programRunStatus == ProgramRunStatus.STARTING;
+  private boolean shouldPublish(ProgramRunStatus programRunStatus, ProgramRunId programRunId) {
+    return !NamespaceId.SYSTEM.equals(programRunId.getNamespaceId())
+      && (programRunStatus == ProgramRunStatus.STARTING || programRunStatus.isEndState());
+  }
+
+  private ProgramStatusEventDetails.Builder populateErrorDetails(
+    ProgramStatusEventDetails.Builder builder, Map<String, String> properties,
+    ProgramRunStatus status) {
+    if (status == ProgramRunStatus.KILLED) {
+      return builder;
+    }
+    if (properties.containsKey(ProgramOptionConstants.PROGRAM_ERROR)) {
+      builder = builder.withError(properties.get(ProgramOptionConstants.PROGRAM_ERROR));
+    }
+    return builder;
   }
 }

@@ -30,12 +30,13 @@ import java.util.Set;
  */
 public class EventPublishManager extends AbstractIdleService {
 
-  private boolean publishEnabled;
-  private Set<EventPublisher> eventPublishers;
-  private EventWriterProvider eventWriterProvider;
+  private final boolean publishEnabled;
+  private final Set<EventPublisher> eventPublishers;
+  private final EventWriterProvider eventWriterProvider;
 
   @Inject
-  EventPublishManager(CConfiguration cConf, Set<EventPublisher> eventPublishers, EventWriterProvider eventWriterProvider) {
+  EventPublishManager(CConfiguration cConf, Set<EventPublisher> eventPublishers,
+                      EventWriterProvider eventWriterProvider) {
     this.publishEnabled = cConf.getBoolean(Constants.Event.PUBLISH_ENABLED);
     this.eventPublishers = eventPublishers;
     this.eventWriterProvider = eventWriterProvider;
@@ -51,8 +52,6 @@ public class EventPublishManager extends AbstractIdleService {
       Map<String, EventWriter> eventWriterMap = this.eventWriterProvider.loadEventWriters();
       // Initialize the event publisher with all the event writers provided by provider
       eventPublisher.initialize(eventWriterMap.values());
-      String eventWriterPath = eventPublisher.getEventWriterPath();
-      //TODO - load classes from the path and starts the event writers
       eventPublisher.startPublish();
     });
   }
@@ -63,8 +62,6 @@ public class EventPublishManager extends AbstractIdleService {
       return; // If publish is not enable not to shutdown
     }
     eventPublishers.forEach(eventPublisher -> {
-      String eventWriterPath = eventPublisher.getEventWriterPath();
-      //TODO - load classes from the path and stops the event writers
       eventPublisher.stopPublish();
     });
   }
