@@ -216,10 +216,10 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       if (!programJarLocation.isDirectory()) {
         File targetFile = new File(tempDir, "program.jar");
         try {
-          programJarLocation = Locations.toLocation(Locations.linkOrCopy(programJarLocation,
+          programJarLocation = Locations.toLocation(Locations.linkOrCopyOverwrite(programJarLocation,
                                                                          targetFile));
         } catch (FileAlreadyExistsException ex) {
-          LOG.warn("Program file {} already exists.", targetFile.getAbsolutePath());
+          LOG.warn("Program file {} already exists and can not be replaced.", targetFile.getAbsolutePath());
         }
     }
       // Unpack the JAR file
