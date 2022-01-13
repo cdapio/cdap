@@ -110,6 +110,8 @@ import io.cdap.cdap.internal.bootstrap.guice.BootstrapModules;
 import io.cdap.cdap.internal.capability.CapabilityModule;
 import io.cdap.cdap.internal.events.EventPublishManager;
 import io.cdap.cdap.internal.events.EventPublisher;
+import io.cdap.cdap.internal.events.EventWriterExtensionProvider;
+import io.cdap.cdap.internal.events.EventWriterProvider;
 import io.cdap.cdap.internal.events.ProgramStatusEventPublisher;
 import io.cdap.cdap.internal.pipeline.SynchronousPipelineFactory;
 import io.cdap.cdap.internal.profile.ProfileService;
@@ -367,7 +369,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         Multibinder.newSetBinder(binder(), EventPublisher.class);
       eventPublishersBinder.addBinding().to(ProgramStatusEventPublisher.class);
       bind(EventPublishManager.class).in(Scopes.SINGLETON);
-      //TODO - inject EventWriterProvider
+      bind(EventWriterProvider.class).to(EventWriterExtensionProvider.class); // To test create a dummy Provider not to provide the writer one
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
         binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));
