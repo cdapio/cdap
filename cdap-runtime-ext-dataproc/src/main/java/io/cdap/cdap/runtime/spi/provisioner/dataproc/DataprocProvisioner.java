@@ -270,7 +270,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
 
   private boolean isReuseSupported(DataprocConf conf) {
     return conf.isClusterReuseEnabled() && conf.isSkipDelete() &&
-      conf.getIdleTTLMinutes() > conf.getClusterReuseThresholdMinutes();
+      (conf.getIdleTTLMinutes() <= 0 || conf.getIdleTTLMinutes() > conf.getClusterReuseThresholdMinutes());
   }
 
   @Nullable
