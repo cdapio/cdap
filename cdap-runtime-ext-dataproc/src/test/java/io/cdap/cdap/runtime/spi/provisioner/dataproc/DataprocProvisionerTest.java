@@ -172,11 +172,6 @@ public class DataprocProvisionerTest {
     props.put("region", "region1");
     DataprocConf conf = DataprocConf.create(props);
     Assert.assertEquals(30, conf.getIdleTTLMinutes());
-
-    // when deleteSkip set to true fallback don't set the idleTTL
-    props.put("skipDelete", "true");
-    conf = DataprocConf.create(props);
-    Assert.assertEquals(0, conf.getIdleTTLMinutes());
   }
 
   @Test
@@ -289,6 +284,7 @@ public class DataprocProvisionerTest {
       .build();
     context.setProgramRunInfo(programRunInfo);
     context.setSparkCompat(SparkCompat.SPARK2_2_11);
+    context.addProperty(DataprocConf.CLUSTER_REUSE_ENABLED, "false");
 
     Mockito.when(dataprocClient.getCluster("cdap-app-runId")).thenReturn(Optional.empty());
     Mockito.when(dataprocClient.createCluster(Mockito.eq("cdap-app-runId"),
@@ -308,7 +304,6 @@ public class DataprocProvisionerTest {
     context.addProperty("accountKey", "testKey");
     context.addProperty(DataprocConf.PROJECT_ID_KEY, "testProject");
     context.addProperty("region", "testRegion");
-    context.addProperty(DataprocConf.CLUSTER_REUSE_ENABLED, "true");
     context.addProperty("idleTTL", "5");
     context.addProperty(DataprocConf.SKIP_DELETE, "true");
     context.setProfileName("testProfile");
@@ -354,7 +349,6 @@ public class DataprocProvisionerTest {
     context.addProperty("accountKey", "testKey");
     context.addProperty(DataprocConf.PROJECT_ID_KEY, "testProject");
     context.addProperty("region", "testRegion");
-    context.addProperty(DataprocConf.CLUSTER_REUSE_ENABLED, "true");
     context.addProperty("idleTTL", "5");
     context.addProperty(DataprocConf.SKIP_DELETE, "true");
     DataprocConf conf = DataprocConf.create(provisioner.createContextProperties(context));
