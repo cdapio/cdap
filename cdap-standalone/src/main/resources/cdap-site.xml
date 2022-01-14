@@ -308,4 +308,13 @@
     </description>
   </property>
 
+  <!-- Events Settings -->
+  <property>
+    <name>event.publish.enabled</name>
+    <value>true</value>
+    <description>
+      Boolean value to enable or disable publish manager to publish TMS messages.
+    </description>
+  </property>
+
 </configuration>

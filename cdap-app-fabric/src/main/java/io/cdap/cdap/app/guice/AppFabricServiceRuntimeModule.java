@@ -113,6 +113,8 @@ import io.cdap.cdap.internal.events.EventPublisher;
 import io.cdap.cdap.internal.events.EventWriterExtensionProvider;
 import io.cdap.cdap.internal.events.EventWriterProvider;
 import io.cdap.cdap.internal.events.ProgramStatusEventPublisher;
+import io.cdap.cdap.internal.events.dummy.DummyEventWriter;
+import io.cdap.cdap.internal.events.dummy.DummyEventWriterExtensionProvider;
 import io.cdap.cdap.internal.pipeline.SynchronousPipelineFactory;
 import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
@@ -133,6 +135,7 @@ import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
 import io.cdap.cdap.security.store.SecureStoreHandler;
+import io.cdap.cdap.spi.events.EventWriter;
 import io.cdap.cdap.support.handlers.SupportBundleHttpHandler;
 import io.cdap.cdap.support.module.SupportBundleModule;
 import io.cdap.http.HttpHandler;
@@ -369,7 +372,11 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         Multibinder.newSetBinder(binder(), EventPublisher.class);
       eventPublishersBinder.addBinding().to(ProgramStatusEventPublisher.class);
       bind(EventPublishManager.class).in(Scopes.SINGLETON);
-      bind(EventWriterProvider.class).to(EventWriterExtensionProvider.class); // To test create a dummy Provider not to provide the writer one
+      //TODO - inject EventWriterProvider
+
+      // To test create a dummy Provider not to provide the writer one
+      bind(EventWriterProvider.class).to(DummyEventWriterExtensionProvider.class);
+      bind(EventWriter.class).to(DummyEventWriter.class);
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
         binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));

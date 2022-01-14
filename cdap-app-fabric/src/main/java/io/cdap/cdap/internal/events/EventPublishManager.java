@@ -30,42 +30,45 @@ import java.util.Set;
  */
 public class EventPublishManager extends AbstractIdleService {
 
-  private boolean publishEnabled;
-  private Set<EventPublisher> eventPublishers;
-  private EventWriterProvider eventWriterProvider;
+    private boolean publishEnabled;
+    private Set<EventPublisher> eventPublishers;
+    private EventWriterProvider eventWriterProvider;
 
-  @Inject
-  EventPublishManager(CConfiguration cConf, Set<EventPublisher> eventPublishers, EventWriterProvider eventWriterProvider) {
-    this.publishEnabled = cConf.getBoolean(Constants.Event.PUBLISH_ENABLED);
-    this.eventPublishers = eventPublishers;
-    this.eventWriterProvider = eventWriterProvider;
-  }
-
-  @Override
-  protected void startUp() throws Exception {
-    if (!publishEnabled) {
-      return; // If publish is not enabled not to start
+    @Inject
+    EventPublishManager(CConfiguration cConf, Set<EventPublisher> eventPublishers,
+                        EventWriterProvider eventWriterProvider) {
+        this.publishEnabled = cConf.getBoolean(Constants.Event.PUBLISH_ENABLED);
+        this.eventPublishers = eventPublishers;
+        this.eventWriterProvider = eventWriterProvider;
     }
-    eventPublishers.forEach(eventPublisher -> {
-      // Loading the event writers from provider
-      Map<String, EventWriter> eventWriterMap = this.eventWriterProvider.loadEventWriters();
-      // Initialize the event publisher with all the event writers provided by provider
-      eventPublisher.initialize(eventWriterMap.values());
-      String eventWriterPath = eventPublisher.getEventWriterPath();
-      //TODO - load classes from the path and starts the event writers
-      eventPublisher.startPublish();
-    });
-  }
 
-  @Override
-  protected void shutDown() throws Exception {
-    if (!publishEnabled) {
-      return; // If publish is not enable not to shutdown
+    @Override
+    protected void startUp() throws Exception {
+        System.out.println("Startig manager... " + publishEnabled);
+        if (!publishEnabled) {
+            return; // If publish is not enabled not to start
+        }
+        eventPublishers.forEach(eventPublisher -> {
+            // Loading the event writers from provider
+            Map<String, EventWriter> eventWriterMap = this.eventWriterProvider.loadEventWriters();
+            // Initialize the event publisher with all the event writers provided by provider
+            eventPublisher.initialize(eventWriterMap.values());
+
+            String eventWriterPath = eventPublisher.getEventWriterPath();
+            //TODO - load classes from the path and starts the event writers
+            eventPublisher.startPublish();
+        });
     }
-    eventPublishers.forEach(eventPublisher -> {
-      String eventWriterPath = eventPublisher.getEventWriterPath();
-      //TODO - load classes from the path and stops the event writers
-      eventPublisher.stopPublish();
-    });
-  }
+
+    @Override
+    protected void shutDown() throws Exception {
+        if (!publishEnabled) {
+            return; // If publish is not enable not to shutdown
+        }
+        eventPublishers.forEach(eventPublisher -> {
+            String eventWriterPath = eventPublisher.getEventWriterPath();
+            //TODO - load classes from the path and stops the event writers
+            eventPublisher.stopPublish();
+        });
+    }
 }

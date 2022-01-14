@@ -70,4 +70,15 @@ public class ProgramStatusEvent implements Event<ProgramStatusEventDetails> {
   public ProgramStatusEventDetails getEventDetails() {
     return programStatusEventDetails;
   }
+
+  @Override
+  public String toString() {
+    return "ProgramStatusEvent{" +
+            "publishTime=" + publishTime +
+            ", version='" + version + '\'' +
+            ", instanceName='" + instanceName + '\'' +
+            ", projectName='" + projectName + '\'' +
+            ", programStatusEventDetails=" + programStatusEventDetails.toString() +
+            '}';
+  }
 }

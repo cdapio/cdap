@@ -1762,6 +1762,8 @@ public final class Constants {
     public static final String EVENTS_WRITER_PREFIX = "event.writer";
 
     public static final String EVENTS_WRITER_EXTENSIONS_DIR = "events.writer.extensions.dir";
+
+    public static final String PROGRAM_STATUS_RECORD_EVENT_TOPIC = "program.status.record.event.topic";
   }
 
   /**

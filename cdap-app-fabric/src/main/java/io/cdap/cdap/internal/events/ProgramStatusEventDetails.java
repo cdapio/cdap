@@ -53,6 +53,17 @@ public class ProgramStatusEventDetails {
     this.pluginMetrics = pluginMetrics;
   }
 
+  @Override
+  public String toString() {
+    return "ProgramStatusEventDetails{" +
+            "runID='" + runID + '\'' +
+            ", programName='" + programName + '\'' +
+            ", namespace='" + namespace + '\'' +
+            ", status='" + status + '\'' +
+            ", eventTime=" + eventTime +
+            '}';
+  }
+
   public static Builder getBuilder(String runID, String programName, String namespace, String status, long eventTime) {
     return new Builder(runID, programName, namespace, status, eventTime);
   }

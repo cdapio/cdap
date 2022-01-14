@@ -60,11 +60,13 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
   private CConfiguration cConf;
 
   @Inject
-  protected ProgramStatusEventPublisher(String name, CConfiguration cConf, String topicName,
+  protected ProgramStatusEventPublisher(String name, CConfiguration cConf,
                                         MessagingService messagingService,
                                         MetricsCollectionService metricsCollectionService,
                                         TransactionRunner transactionRunner) {
-    super(name, cConf, topicName, cConf.getInt(Constants.Event.PROGRAM_STATUS_FETCH_SIZE),
+    super(name, cConf,
+            cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC),
+            cConf.getInt(Constants.Event.PROGRAM_STATUS_FETCH_SIZE),
           cConf.getInt(Constants.Event.PROGRAM_STATUS_POLL_INTERVAL_SECONDS), messagingService,
           metricsCollectionService,
           transactionRunner);
@@ -78,6 +80,7 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
     this.eventWriters = eventWriters;
     this.eventWriters.forEach(eventWriter -> {
       DefaultEventWriterContext eventWriterContext = new DefaultEventWriterContext(cConf, eventWriter.getID());
+      System.out.println("Initalizing EventWriter in Publisher...");
       eventWriter.initialize(eventWriterContext);
     });
   }
@@ -111,10 +114,12 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
   @Override
   protected void processMessages(StructuredTableContext structuredTableContext,
                                  Iterator<ImmutablePair<String, Notification>> messages) {
+    System.out.println("I am processing messages!!");
     List<ProgramStatusEvent> programStatusEvents = new ArrayList<>();
     long publishTime = System.currentTimeMillis();
     messages.forEachRemaining(message -> {
       Notification notification = message.getSecond();
+      System.out.println("Notification type of the message: " + notification.getNotificationType().name());
       if (!notification.getNotificationType().equals(Notification.Type.PROGRAM_STATUS)) {
         return;
       }
@@ -125,12 +130,14 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
         return;
       }
       ProgramRunStatus programRunStatus = ProgramRunStatus.valueOf(programStatus);
+      System.out.println("Status of the event: " + programRunStatus.name());
       //Should event publish happen for this status
       if (!shouldPublish(programRunStatus)) {
         return;
       }
       String programRun = properties.get(ProgramOptionConstants.PROGRAM_RUN_ID);
       ProgramRunId programRunId = GSON.fromJson(programRun, ProgramRunId.class);
+      System.out.println("Retrieving event: " + programRunId.getRun());
       ProgramStatusEventDetails.Builder builder = ProgramStatusEventDetails
         .getBuilder(programRunId.getRun(), programRunId.getProgram(), programRunId.getNamespace(), programStatus,
                     RunIds.getTime(programRunId.getRun(), TimeUnit.MILLISECONDS));
