@@ -75,6 +75,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -213,9 +214,14 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     try {
       // If the program jar is not a directory, take a snapshot of the jar file to avoid mutation.
       if (!programJarLocation.isDirectory()) {
-        programJarLocation = Locations.toLocation(Locations.linkOrCopy(programJarLocation,
-                                                                       new File(tempDir, "program.jar")));
-      }
+        File targetFile = new File(tempDir, "program.jar");
+        try {
+          programJarLocation = Locations.toLocation(Locations.linkOrCopyOverwrite(programJarLocation,
+                                                                         targetFile));
+        } catch (FileAlreadyExistsException ex) {
+          LOG.warn("Program file {} already exists and can not be replaced.", targetFile.getAbsolutePath());
+        }
+    }
       // Unpack the JAR file
       classLoaderFolder = BundleJarUtil.prepareClassLoaderFolder(
         programJarLocation, () -> Files.createTempDirectory(tempDir.toPath(), "unpacked").toFile());

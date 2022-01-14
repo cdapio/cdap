@@ -58,6 +58,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -146,6 +147,8 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         Locations.linkOrCopy(artifactDetail.getDescriptor().getLocation(), targetFile);
         return null;
       });
+    } catch (FileAlreadyExistsException ex) {
+      LOG.warn("Artifact file {} already exists.", targetFile.getAbsolutePath());
     } catch (Exception e) {
       Throwables.propagateIfPossible(e, IOException.class);
       // should not happen
