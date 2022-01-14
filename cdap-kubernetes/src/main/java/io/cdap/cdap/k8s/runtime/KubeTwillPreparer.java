@@ -96,6 +96,7 @@ import java.io.OutputStream;
 import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -652,9 +653,16 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
         .endTemplate()
       .endSpec()
       .build();
-
-    batchV1Api.createNamespacedJob(kubeNamespace, job, "true", null, null);
-    LOG.trace("Created Job {} in Kubernetes.", metadata.getName());
+    try {
+      batchV1Api.createNamespacedJob(kubeNamespace, job, "true", null, null);
+      LOG.trace("Created Job {} in Kubernetes.", metadata.getName());
+    } catch (ApiException e) {
+      if (e.getCode() == HttpURLConnection.HTTP_CONFLICT) {
+        LOG.warn("The kubernetes job already exists : {}. Ignoring resubmission of the job." , e.getResponseBody());
+      } else {
+        throw e;
+      }
+    }
     return job.getMetadata();
   }
 
