@@ -197,6 +197,8 @@ public class TestBase {
 
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
+  @ClassRule
+  public static final LogSystemExitRule SYSTEM_EXIT_RULE = LogSystemExitRule.get();
 
   static Injector injector;
   private static CConfiguration cConf;
