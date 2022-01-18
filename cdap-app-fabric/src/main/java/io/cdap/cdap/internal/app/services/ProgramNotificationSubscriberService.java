@@ -377,6 +377,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         recordedRunRecord =
           appMetadataStore.recordProgramRunning(programRunId, logicalStartTimeSecs, twillRunId, messageIdBytes);
         writeToHeartBeatTable(recordedRunRecord, logicalStartTimeSecs, programHeartbeatTable);
+        programLifecycleService.getRunRecordCounter().removeRequest(programRunId);
         break;
       case SUSPENDED:
         long suspendTime = getTimeSeconds(notification.getProperties(),
@@ -400,6 +401,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         recordedRunRecord = handleProgramCompletion(appMetadataStore, programHeartbeatTable,
                                                     programRunId, programRunStatus, notification,
                                                     messageIdBytes, runnables);
+        programLifecycleService.getRunRecordCounter().removeRequest(programRunId);
         break;
       case REJECTED:
         ProgramOptions programOptions = ProgramOptions.fromNotification(notification, GSON);
@@ -413,6 +415,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
                               programHeartbeatTable);
         getEmitMetricsRunnable(programRunId, recordedRunRecord,
                                Constants.Metrics.Program.PROGRAM_REJECTED_RUNS).ifPresent(runnables::add);
+        programLifecycleService.getRunRecordCounter().removeRequest(programRunId);
         break;
       default:
         // This should not happen
