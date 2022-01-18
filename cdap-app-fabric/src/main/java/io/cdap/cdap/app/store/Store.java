@@ -51,6 +51,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
@@ -219,6 +220,15 @@ public interface Store {
    * @return map of logged runs
    */
   int countActiveRuns(@Nullable Integer limit);
+
+  /**
+   * Scans for active (i.e STARTING or RUNNING or SUSPENDED) run records
+   *
+   * @param txBatchSize maximum number of applications to scan in one transaction to
+   *                    prevent holding a single transaction for too long
+   * @param consumer a {@link Consumer} to consume each application being scanned
+   */
+  void scanActiveRuns(int txBatchSize, Consumer<RunRecordDetail> consumer);
 
   /**
    * Fetches the active (i.e STARTING or RUNNING or SUSPENDED) run records against a given NamespaceId.
