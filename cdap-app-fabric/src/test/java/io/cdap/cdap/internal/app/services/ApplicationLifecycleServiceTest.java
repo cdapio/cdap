@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.services;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.AppWithProgramsUsingGuava;
@@ -73,8 +74,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -346,6 +349,42 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     appId.workflow(AppWithProgramsUsingGuava.NoOpWorkflow.NAME);
     startProgram(Id.Program.fromEntityId(workflow), ImmutableMap.of("fail.in.workflow.initialize", "true"));
     waitForRuns(1, workflow, ProgramRunStatus.FAILED);
+  }
+
+  @Test
+  public void testScanApplications() throws Exception {
+    createNamespace("ns1");
+    createNamespace("ns2");
+    createNamespace("ns3");
+
+    deploy(AllProgramsApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN, "ns1");
+    deploy(AllProgramsApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN, "ns2");
+    deploy(AllProgramsApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN, "ns3");
+
+    List<ApplicationDetail> appDetails = new ArrayList<>();
+
+    applicationLifecycleService.scanApplications(new NamespaceId("ns1"), ImmutableSet.of(), null,
+        d -> appDetails.add(d));
+
+    Assert.assertEquals(appDetails.size(), 1);
+  }
+
+  @Test
+  public void testScanApplicationsWithFailingPredicate() throws Exception {
+    createNamespace("ns1");
+    createNamespace("ns2");
+    createNamespace("ns3");
+
+    deploy(AllProgramsApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN, "ns1");
+    deploy(AllProgramsApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN, "ns2");
+    deploy(AllProgramsApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN, "ns3");
+
+    List<ApplicationDetail> appDetails = new ArrayList<>();
+
+    applicationLifecycleService.scanApplications(new NamespaceId("ns1"), ImmutableSet.of("name1"), "version1",
+        d -> appDetails.add(d));
+
+    Assert.assertEquals(appDetails.size(), 0);
   }
 
   @Test
