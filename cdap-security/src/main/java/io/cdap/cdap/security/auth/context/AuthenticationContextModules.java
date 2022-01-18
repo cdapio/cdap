@@ -60,7 +60,7 @@ public class AuthenticationContextModules {
       protected void configure() {
         bind(new TypeLiteral<Class<? extends AuthenticationContext>>() { })
           .toInstance(SystemAuthenticationContext.class);
-        bind(AuthenticationContext.class).toProvider(MasterAuthenticationContextProvider.class);
+        bind(AuthenticationContext.class).toProvider(AuthenticationContextProvider.class);
         bind(InternalAuthenticator.class).toProvider(InternalAuthenticatorProvider.class);
         expose(AuthenticationContext.class);
         expose(InternalAuthenticator.class);
@@ -80,7 +80,7 @@ public class AuthenticationContextModules {
       protected void configure() {
         bind(new TypeLiteral<Class<? extends AuthenticationContext>>() { })
           .toInstance(WorkerAuthenticationContext.class);
-        bind(AuthenticationContext.class).toProvider(MasterAuthenticationContextProvider.class);
+        bind(AuthenticationContext.class).toProvider(AuthenticationContextProvider.class);
         bind(InternalAuthenticator.class).toProvider(InternalAuthenticatorProvider.class);
         expose(AuthenticationContext.class);
         expose(InternalAuthenticator.class);
@@ -130,13 +130,13 @@ public class AuthenticationContextModules {
     if (Files.exists(secretFile)) {
       try {
         String token = new String(Files.readAllBytes(secretFile), StandardCharsets.UTF_8);
-        return new Credential(token, Credential.CredentialType.INTERNAL);
+        return new Credential(Credential.CredentialType.INTERNAL_LOAD_REMOTE, token);
       } catch (IOException e) {
         throw new IllegalStateException("Can't read runtime token file", e);
       }
     }
     String token = cConf.get(Constants.Security.Authentication.RUNTIME_TOKEN);
-    return token == null ? null : new Credential(token, Credential.CredentialType.INTERNAL);
+    return token == null ? null : new Credential(Credential.CredentialType.INTERNAL_LOAD_REMOTE, token);
   }
 
   private String getUsername() {
@@ -191,15 +191,15 @@ public class AuthenticationContextModules {
    * A {@link Provider} for {@link AuthenticationContext} based on CDAP configuration for the master service processes
    * and the runtime processes to use.
    */
-  private static final class MasterAuthenticationContextProvider implements Provider<AuthenticationContext> {
+  private static final class AuthenticationContextProvider implements Provider<AuthenticationContext> {
 
     private final CConfiguration cConf;
     private final Injector injector;
     private final Class<? extends AuthenticationContext> internalAuthContextClass;
 
     @Inject
-    MasterAuthenticationContextProvider(CConfiguration cConf, Injector injector,
-                                        Class<? extends AuthenticationContext> internalAuthContextClass) {
+    AuthenticationContextProvider(CConfiguration cConf, Injector injector,
+                                  Class<? extends AuthenticationContext> internalAuthContextClass) {
       this.cConf = cConf;
       this.injector = injector;
       this.internalAuthContextClass = internalAuthContextClass;

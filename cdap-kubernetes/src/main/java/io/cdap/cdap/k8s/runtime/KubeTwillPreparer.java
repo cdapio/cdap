@@ -21,6 +21,7 @@ import com.google.common.io.Resources;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import io.cdap.cdap.master.environment.k8s.KubeMasterEnvironment;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
@@ -52,7 +53,6 @@ import io.kubernetes.client.models.V1PodSpec;
 import io.kubernetes.client.models.V1PodSpecBuilder;
 import io.kubernetes.client.models.V1ResourceRequirements;
 import io.kubernetes.client.models.V1ResourceRequirementsBuilder;
-import io.kubernetes.client.models.V1SecretVolumeSource;
 import io.kubernetes.client.models.V1SecurityContext;
 import io.kubernetes.client.models.V1SecurityContextBuilder;
 import io.kubernetes.client.models.V1StatefulSet;
@@ -595,9 +595,8 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     AppsV1Api appsApi = new AppsV1Api(apiClient);
 
     V1Deployment deployment = buildDeployment(metadata, runtimeSpecs, runtimeConfigLocation);
-
+    LOG.info("Creating Deployment {}", deployment);
     deployment = appsApi.createNamespacedDeployment(kubeNamespace, deployment, "true", null, null);
-    LOG.info("Created Deployment {} in Kubernetes", metadata.getName());
     return deployment.getMetadata();
   }
 
@@ -612,8 +611,8 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
 
     V1StatefulSet statefulSet = buildStatefulSet(metadata, runtimeSpecs, runtimeConfigLocation, statefulRunnable);
 
+    LOG.info("wyzhang: creating StatefulSet {}", statefulSet);
     statefulSet = appsApi.createNamespacedStatefulSet(kubeNamespace, statefulSet, "true", null, null);
-    LOG.info("Created StatefulSet {} in Kubernetes", metadata.getName());
     return statefulSet.getMetadata();
   }
 
@@ -824,17 +823,23 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     volumeMounts.add(new V1VolumeMount().name("workdir").mountPath(workDir));
     volumeMounts.addAll(Arrays.asList(extraMounts));
 
-    // Add secret disks as secret volume mounts
-    List<V1Volume> secretVolumes = new ArrayList<>();
-    if (secretDiskRunnables.containsKey(runnableName)) {
-      for (SecretDisk secretDisk : secretDiskRunnables.get(runnableName).getSecretDisks()) {
-        String secretName = secretDisk.getName();
-        String mountPath = secretDisk.getPath();
-        secretVolumes.add(new V1Volume().name(secretName).secret(new V1SecretVolumeSource()
-                                                                        .secretName(secretName)));
-        volumeMounts.add(new V1VolumeMount().name(secretName).mountPath(mountPath).readOnly(true));
-      }
-    }
+    List<V1VolumeMount> initContainerVolMount = new ArrayList<>(volumeMounts);
+    List<V1VolumeMount> containerVolMounts =
+      volumeMounts.stream().filter(v -> !v.getName().equals(KubeMasterEnvironment.SECURITY_CONFIG_NAME))
+        .collect(Collectors.toList());
+
+//    // Add secret disks as secret volume mounts
+////    List<V1Volume> secretVolumes = new ArrayList<>();
+//    if (secretDiskRunnables.containsKey(runnableName)) {
+//      for (SecretDisk secretDisk : secretDiskRunnables.get(runnableName).getSecretDisks()) {
+//        String secretName = secretDisk.getName();
+//        String mountPath = secretDisk.getPath();
+////        secretVolumes.add(new V1Volume().name(secretName).secret(new V1SecretVolumeSource()
+////                                                                        .secretName(secretName)));
+//        LOG.error("wyzhang: createPodSpec main container add secret {} at path {}", secretName, mountPath);
+//        containerVolMounts.add(new V1VolumeMount().name(secretName).mountPath(mountPath).readOnly(true));
+//      }
+//    }
 
     // Setup the container environment. Inherit everything from the current pod.
     Map<String, String> initContainerEnvirons = podInfo.getContainerEnvironments().stream()
@@ -854,17 +859,30 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       .withServiceAccountName(serviceAccountName)
       .withRuntimeClassName(podInfo.getRuntimeClassName())
       .addAllToVolumes(podInfo.getVolumes())
-      .addAllToVolumes(secretVolumes)
+//      .addAllToVolumes(secretVolumes)
       .addToVolumes(podInfoVolume,
                     new V1Volume().name("workdir").emptyDir(new V1EmptyDirVolumeSource()))
       .withInitContainers(createContainer("file-localizer", podInfo.getContainerImage(),
                                           podInfo.getImagePullPolicy(), workDir, initContainerResourceRequirements,
-                                          volumeMounts, initContainerEnvirons, FileLocalizer.class,
+                                          initContainerVolMount, initContainerEnvirons, FileLocalizer.class,
                                           runtimeConfigLocation.toURI().toString(),
-                                          mainRuntimeSpec.getName()))
-      .withContainers(createContainers(runtimeSpecs, workDir, volumeMounts))
+                                          mainRuntimeSpec.getName(), "initContainer"))
+      .withContainers(createContainers(runtimeSpecs, workDir, containerVolMounts))
       .withSecurityContext(podInfo.getSecurityContext())
       .build();
+  }
+
+  private List<V1VolumeMount> addSecreteVolMountIfNeeded(RuntimeSpecification runtimeSpec, List<V1VolumeMount> mounts) {
+    List<V1VolumeMount> updatedMounts = new ArrayList<>(mounts);
+    // Add secret disks as secret volume mounts
+    if (secretDiskRunnables.containsKey(runtimeSpec.getName())) {
+      for (SecretDisk secretDisk : secretDiskRunnables.get(runtimeSpec.getName()).getSecretDisks()) {
+        String secretName = secretDisk.getName();
+        String mountPath = secretDisk.getPath();
+        updatedMounts.add(new V1VolumeMount().name(secretName).mountPath(mountPath).readOnly(true));
+      }
+    }
+    return updatedMounts;
   }
 
   private List<V1Container> createContainers(Map<String, RuntimeSpecification> runtimeSpecs, String workDir,
@@ -879,8 +897,8 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
 
     containers.add(createContainer(mainRuntimeSpec.getName(), podInfo.getContainerImage(), podInfo.getImagePullPolicy(),
                                    workDir, createResourceRequirements(mainRuntimeSpec.getResourceSpecification()),
-                                   volumeMounts, environs, KubeTwillLauncher.class,
-                                   mainRuntimeSpec.getName()));
+                                   addSecreteVolMountIfNeeded(mainRuntimeSpec, volumeMounts), environs,
+                                   KubeTwillLauncher.class, mainRuntimeSpec.getName()));
 
     for (String name : this.dependentRunnableNames) {
       RuntimeSpecification spec = runtimeSpecs.get(name);
@@ -888,8 +906,8 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       environs.putAll(environments.get(name));
       containers.add(createContainer(name, podInfo.getContainerImage(), podInfo.getImagePullPolicy(), workDir,
                                      createResourceRequirements(spec.getResourceSpecification()),
-                                     volumeMounts, environs, KubeTwillLauncher.class,
-                                     name));
+                                     addSecreteVolMountIfNeeded(spec, volumeMounts), environs,
+                                     KubeTwillLauncher.class, name));
     }
 
     return containers;

@@ -36,6 +36,7 @@ import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.artifact.preview.PreviewConfig;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.security.Principal;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.RunId;
 import org.junit.AfterClass;
@@ -155,7 +156,7 @@ public class DefaultPreviewStoreTest {
 
     RunId id1 = RunIds.generate();
     ApplicationId applicationId = new ApplicationId("ns1", id1.getId());
-    store.add(applicationId, testRequest);
+    store.add(applicationId, testRequest, new Principal("user", Principal.PrincipalType.USER));
     List<PreviewRequest> allWaiting = store.getAllInWaitingState();
     Assert.assertEquals(1, allWaiting.size());
 
@@ -169,9 +170,9 @@ public class DefaultPreviewStoreTest {
 
     // add 2 requests to the queue
     ApplicationId applicationId2 = new ApplicationId("ns1", RunIds.generate().getId());
-    store.add(applicationId2, testRequest);
+    store.add(applicationId2, testRequest, new Principal("user", Principal.PrincipalType.USER));
     ApplicationId applicationId3 = new ApplicationId("ns1", RunIds.generate().getId());
-    store.add(applicationId3, testRequest);
+    store.add(applicationId3, testRequest, new Principal("user", Principal.PrincipalType.USER));
 
     allWaiting = store.getAllInWaitingState();
     Assert.assertEquals(2, allWaiting.size());
@@ -202,9 +203,9 @@ public class DefaultPreviewStoreTest {
     String thirdApplication = RunIds.generate(System.currentTimeMillis()).getId();
     ApplicationId thirdApplicationId = new ApplicationId(NamespaceMeta.DEFAULT.getName(), thirdApplication);
 
-    store.add(firstApplicationId, testRequest);
-    store.add(secondApplicationId, testRequest);
-    store.add(thirdApplicationId, testRequest);
+    store.add(firstApplicationId, testRequest, new Principal("user", Principal.PrincipalType.USER));
+    store.add(secondApplicationId, testRequest, new Principal("user", Principal.PrincipalType.USER));
+    store.add(thirdApplicationId, testRequest, new Principal("user", Principal.PrincipalType.USER));
 
     // set poller info so that it gets removed from WAITING state
     store.setPreviewRequestPollerInfo(firstApplicationId, null);

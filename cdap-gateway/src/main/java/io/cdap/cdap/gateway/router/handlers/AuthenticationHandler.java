@@ -237,10 +237,10 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
     String userCredential = userIdentityPair.getUserCredential();
     if (userCredential == null ||
       !sConf.getBoolean(Constants.Security.Authentication.USER_CREDENTIAL_ENCRYPTION_ENABLED, false)) {
-      return new Credential(userCredential, Credential.CredentialType.EXTERNAL);
+      return new Credential(Credential.CredentialType.EXTERNAL, userCredential);
     }
     String encryptedCredential = new TinkCipher(sConf).encryptStringToBase64(userCredential, null);
-    return new Credential(encryptedCredential, Credential.CredentialType.EXTERNAL_ENCRYPTED);
+    return new Credential(Credential.CredentialType.EXTERNAL_ENCRYPTED, encryptedCredential);
   }
 
   private void addAuthServerUrls(Iterable<Discoverable> discoverables, String protocol, int port, JsonArray result) {

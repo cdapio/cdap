@@ -37,6 +37,10 @@ import org.slf4j.LoggerFactory;
 public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
   private static final Logger LOG = LoggerFactory.getLogger(AuthenticationChannelHandler.class);
 
+  private static final String EMPTY_USER_ID = "CDAP_empty_user_id";
+  private static final String EMPTY_USER_CREDENTIAL = "CDAP_empty_user_credential";
+
+
   private final boolean enforceAuthenticatedRequests;
 
   private String currentUserId;
@@ -58,15 +62,14 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
       // TODO: authenticate the user using user id - CDAP-688
       HttpRequest request = (HttpRequest) msg;
       currentUserId = request.headers().get(Constants.Security.Headers.USER_ID);
-      if (enforceAuthenticatedRequests && currentUserId == null) {
-
-        throw new IllegalArgumentException(String.format("Missing user ID header for request from IP %s",
-                                                         ctx.channel().remoteAddress().toString()));
+      if (currentUserId == null) {
+        currentUserId = EMPTY_USER_ID;
       }
       currentUserIP = request.headers().get(Constants.Security.Headers.USER_IP);
       String authHeader = request.headers().get(Constants.Security.Headers.RUNTIME_TOKEN);
-      LOG.trace("Got user ID '{}', user IP '{}', and authorization header length '{}'", currentUserId, currentUserIP,
-                authHeader == null ? "NULL" : String.valueOf(authHeader.length()));
+//      LOG.debug("wyzhang: Got user ID '{}', user IP '{}', and authorization header length '{}'",
+//                currentUserId, currentUserIP,
+//                authHeader == null ? "NULL" : String.valueOf(authHeader.length()));
       if (authHeader != null) {
         int idx = authHeader.trim().indexOf(' ');
         if (idx < 0) {
@@ -79,19 +82,21 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
           try {
             Credential.CredentialType credentialType = Credential.CredentialType.fromQualifiedName(credentialTypeStr);
             String credentialValue = authHeader.substring(idx + 1).trim();
-            currentUserCredential = new Credential(credentialValue, credentialType);
+            currentUserCredential = new Credential(credentialType, credentialValue);
             SecurityRequestContext.setUserCredential(currentUserCredential);
           } catch (IllegalArgumentException e) {
             LOG.error("Invalid credential type in Authorization header: {}", credentialTypeStr);
             throw e;
           }
         }
-      } else if (enforceAuthenticatedRequests) {
-        throw new IllegalArgumentException(String.format("Missing Authorization header for request from IP %s",
-                                                         ctx.channel().remoteAddress().toString()));
+      } else {
+//        LOG.error("wyzhang: AuthenticationChannelHandler auth header missing for url {}",  request.uri());
+        currentUserCredential = new Credential(Credential.CredentialType.INTERNAL_PLACEHOLDER,
+                                               EMPTY_USER_CREDENTIAL);
       }
 
       SecurityRequestContext.setUserId(currentUserId);
+      SecurityRequestContext.setUserCredential(currentUserCredential);
       SecurityRequestContext.setUserIP(currentUserIP);
     } else if (msg instanceof HttpContent) {
       // TODO: If this is intended to handle chunking, there might be a race condition here which may need investigation

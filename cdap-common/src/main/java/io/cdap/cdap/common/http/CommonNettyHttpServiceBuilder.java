@@ -38,6 +38,10 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
   public CommonNettyHttpServiceBuilder(CConfiguration cConf, String serviceName) {
     super(serviceName);
 
+    System.out.println(String.format("wyzhang: CommonNettyHttpServiceBuilder security enabled %b ",
+                                     cConf.getBoolean(Constants.Security.ENABLED)));
+    System.out.println(String.format("wyzhang: CommonNettyHttpServiceBuilder internal auth enabled %b ",
+                                     cConf.getBoolean(Constants.Security.INTERNAL_AUTH_ENABLED)));
     if (cConf.getBoolean(Constants.Security.ENABLED)) {
       pipelineModifier = new ChannelPipelineModifier() {
         @Override

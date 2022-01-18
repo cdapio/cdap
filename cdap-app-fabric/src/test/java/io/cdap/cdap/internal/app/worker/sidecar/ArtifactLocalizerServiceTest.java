@@ -30,6 +30,8 @@ import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.app.worker.TaskWorkerServiceTest;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
+import io.cdap.cdap.security.auth.context.WorkerAuthenticationContext;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -74,8 +76,8 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
     RemoteClientFactory remoteClientFactory =
       new RemoteClientFactory(discoveryClient, new DefaultInternalAuthenticator(new AuthenticationTestContext()));
     ArtifactLocalizerService artifactLocalizerService = new ArtifactLocalizerService(
-      cConf, new ArtifactLocalizer(cConf, remoteClientFactory));
-
+      cConf,
+      new ArtifactLocalizer(cConf, remoteClientFactory, (namespaceId, retryStrategy)->null));
     // start the service
     artifactLocalizerService.startAndWait();
 
@@ -100,7 +102,8 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
     LocationFactory locationFactory = new LocalLocationFactory(TEMP_FOLDER.newFolder());
 
     ArtifactRepository artifactRepository = getInjector().getInstance(ArtifactRepository.class);
-    ArtifactLocalizerClient client = new ArtifactLocalizerClient(cConf);
+    WorkerAuthenticationContext authenticationContext = new WorkerAuthenticationContext();
+    ArtifactLocalizerClient client = new ArtifactLocalizerClient(cConf, authenticationContext);
 
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "some-task", "1.0.0-SNAPSHOT");
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, TaskWorkerServiceTest.TestRunnableClass.class);
@@ -156,7 +159,8 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
   public void testArtifact() throws Exception {
     LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
     ArtifactRepository artifactRepository = getInjector().getInstance(ArtifactRepository.class);
-    ArtifactLocalizerClient client = new ArtifactLocalizerClient(cConf);
+    AuthenticationContext authenticationContext = getInjector().getInstance(AuthenticationContext.class);
+    ArtifactLocalizerClient client = new ArtifactLocalizerClient(cConf, authenticationContext);
 
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "some-task", "1.0.0-SNAPSHOT");
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, TaskWorkerServiceTest.TestRunnableClass.class);

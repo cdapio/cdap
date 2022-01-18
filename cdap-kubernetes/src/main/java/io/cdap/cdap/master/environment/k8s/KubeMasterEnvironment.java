@@ -67,7 +67,10 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
   // Contains the list of configuration / secret names coming from the Pod information, which are
   // needed to propagate to deployments created via the KubeTwillRunnerService
-  private static final Set<String> CONFIG_NAMES = ImmutableSet.of("cdap-conf", "hadoop-conf");
+  // wyzhang: List of configs to mount by default
+  public static final String CDAP_CONFIG_NAME = "cdap-conf";
+  public static final String HADOOP_CONFIG_NAME = "hadoop-conf";
+  public static final String SECURITY_CONFIG_NAME = "cdap-security";
   private static final Set<String> CUSTOM_VOLUME_PREFIX = ImmutableSet.of("cdap-cm-vol-", "cdap-se-vol-");
 
   private static final String MASTER_MAX_INSTANCES = "master.service.max.instances";
@@ -257,14 +260,14 @@ public class KubeMasterEnvironment implements MasterEnvironment {
       .findFirst()
       .orElse(pod.getSpec().getContainers().get(0));
 
+    Set<String> configs = ImmutableSet.of(CDAP_CONFIG_NAME, HADOOP_CONFIG_NAME, SECURITY_CONFIG_NAME);
     // Get the config volumes from the pod
     List<V1Volume> volumes = pod.getSpec().getVolumes().stream()
-      .filter(v -> CONFIG_NAMES.contains(v.getName()) || isCustomVolumePrefix(v.getName()))
+      .filter(v -> configs.contains(v.getName()) || isCustomVolumePrefix(v.getName()))
       .collect(Collectors.toList());
-
     // Get the volume mounts from the container
     List<V1VolumeMount> mounts = container.getVolumeMounts().stream()
-      .filter(m -> CONFIG_NAMES.contains(m.getName()) || isCustomVolumePrefix(m.getName()))
+      .filter(m -> configs.contains(m.getName()) || isCustomVolumePrefix(m.getName()))
       .collect(Collectors.toList());
 
     List<V1EnvVar> envs = container.getEnv();

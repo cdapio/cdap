@@ -25,6 +25,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import io.cdap.cdap.app.guice.DistributedArtifactManagerModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
@@ -37,6 +38,7 @@ import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
+import io.cdap.cdap.internal.app.runtime.k8s.PreviewRequestPollerInfo;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
@@ -117,6 +119,7 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
         modules.add(new ZKClientModule());
       }
     }
+    modules.add(new DistributedArtifactManagerModule());
 
     return Guice.createInjector(modules);
   }
@@ -175,8 +178,9 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
 
   private void doInitialize() throws Exception {
     CConfiguration cConf = CConfiguration.create();
-    cConf.clear();
-    cConf.addResource(new File(getArgument("cConf")).toURI().toURL());
+    // TODO(wyzhang): disable so it doesn't have security disabled like preview runner does.
+//    cConf.clear();
+//    cConf.addResource(new File(getArgument("cConf")).toURI().toURL());
 
     Configuration hConf = new Configuration();
     hConf.clear();

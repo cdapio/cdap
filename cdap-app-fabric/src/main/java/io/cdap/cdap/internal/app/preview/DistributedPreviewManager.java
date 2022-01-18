@@ -151,9 +151,14 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
 
         Path runDir = Files.createTempDirectory(tmpDir, "preview");
         try {
+          // Unset the internal certificate path since certificate is stored cdap-security which
+          // is not exposed (i.e. mounted in k8s) to TaskWorkerService.
+          CConfiguration cConfCopy = CConfiguration.copy(cConf);
+          cConfCopy.unset(Constants.Security.SSL.INTERNAL_CERT_PATH);
+          cConfCopy.setBoolean(Constants.Security.ENABLED, false);
           Path cConfPath = runDir.resolve("cConf.xml");
           try (Writer writer = Files.newBufferedWriter(cConfPath, StandardCharsets.UTF_8)) {
-            cConf.writeXml(writer);
+            cConfCopy.writeXml(writer);
           }
           Path hConfPath = runDir.resolve("hConf.xml");
           try (Writer writer = Files.newBufferedWriter(hConfPath, StandardCharsets.UTF_8)) {
@@ -224,6 +229,14 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
               String secretPath = cConf.get(Constants.Twill.Security.WORKER_SECRET_DISK_PATH);
               twillPreparer = ((SecureTwillPreparer) twillPreparer)
                 .withSecretDisk(PreviewRunnerTwillRunnable.class.getSimpleName(),
+                                new SecretDisk(secretName, secretPath));
+            }
+
+            if (artifactLocalizerEnabled) {
+              String secretName = cConf.get(Constants.Twill.Security.MASTER_SECRET_DISK_NAME);
+              String secretPath = cConf.get(Constants.Twill.Security.MASTER_SECRET_DISK_PATH);
+              twillPreparer = ((SecureTwillPreparer) twillPreparer)
+                .withSecretDisk(ArtifactLocalizerTwillRunnable.class.getSimpleName(),
                                 new SecretDisk(secretName, secretPath));
             }
           }

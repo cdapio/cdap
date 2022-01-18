@@ -74,22 +74,33 @@ public class InternalAccessEnforcer extends AbstractAccessEnforcer {
   }
 
   private void validateAccessTokenAndIdentity(String principalName, Credential credential) throws AccessException {
+    LOG.debug("wyzhang: validateAccessTokenAndIdentity {} {}", principalName, credential.toString());
     if (credential == null) {
       throw new IllegalStateException("Attempted to internally enforce access on null credential");
     }
-    if (!credential.getType().equals(Credential.CredentialType.INTERNAL)) {
-      throw new IllegalStateException("Attempted to internally enforce access on non-internal credential type");
+    if (!(credential.getType().equals(Credential.CredentialType.INTERNAL) ||
+      credential.getType().equals(Credential.CredentialType.INTERNAL_BASE64_ENCODED) ||
+      credential.getType().equals(Credential.CredentialType.INTERNAL_LOAD_REMOTE) ||
+      credential.getType().equals(Credential.CredentialType.INTERNAL_PLACEHOLDER))) {
+      throw new IllegalStateException(
+        String.format("Attempted to internally enforce access on non-internal credential type %s ",
+                      credential.getType()));
     }
     AccessToken accessToken;
     try {
       accessToken = accessTokenCodec.decode(Base64.getDecoder().decode(credential.getValue()));
     } catch (IOException e) {
-      throw new AccessException("Failed to deserialize access token", e);
+      LOG.error("wyzhang; validateAccessTokenAndIdentity failed to deserilizate access token: principle {} cred {}",
+                principalName, credential.toString());
+      throw new AccessException(String.format("Failed to deserialize access token for credential type %s",
+                                              credential.getType()));
     }
     try {
       tokenManager.validateSecret(accessToken);
     } catch (InvalidTokenException e) {
-      throw new AccessException("Failed to validate access token", e);
+      LOG.error("wyzhang; validateAccessTokenAndIdentity failed to validate access token");
+      throw new AccessException(String.format("Failed to validate access token for credential type %s",
+                                              credential.getType()));
     }
     UserIdentity userIdentity = accessToken.getIdentifier();
     if (!userIdentity.getUsername().equals(principalName)) {
@@ -99,6 +110,7 @@ public class InternalAccessEnforcer extends AbstractAccessEnforcer {
     }
     if (userIdentity.getIdentifierType() == null || !userIdentity.getIdentifierType()
       .equals(UserIdentity.IdentifierType.INTERNAL)) {
+       LOG.error("wyzhang; validateAccessTokenAndIdentity invalid internal access token");
       throw new AccessException(String.format("Invalid internal access token type; got '%s', want '%s'",
                                               userIdentity.getIdentifierType(), UserIdentity.IdentifierType.INTERNAL));
     }
