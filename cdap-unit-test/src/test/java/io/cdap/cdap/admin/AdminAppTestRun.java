@@ -329,6 +329,7 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
     manager.waitForRun(ProgramRunStatus.COMPLETED, 180, TimeUnit.SECONDS);
 
     // validate that there are no counts for "you" and "me", and the the other counts are accurate
+    countsManager = getDataset("counts");
     countsManager.flush(); // need to start a new tx to see the output of MR
     Assert.assertEquals(2, Bytes.toInt(countsManager.get().read("world")));
     Assert.assertEquals(1, Bytes.toInt(countsManager.get().read("hello")));
