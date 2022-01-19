@@ -47,6 +47,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.guice.preview.PreviewDiscoveryRuntimeModule;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
@@ -297,6 +298,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
 
     return Guice.createInjector(
       coreSecurityModule,
+      new IOModule(),
       new ConfigModule(previewCConf, previewHConf, previewSConf),
       new PreviewDataModules().getDataFabricModule(transactionSystemClient, previewLevelDBTableService),
       new PreviewDataModules().getDataSetsModule(datasetFramework),
