@@ -72,7 +72,7 @@ public class PreviewRunnerServiceTest {
     runnerService.startAndWait();
 
     ProgramId programId = NamespaceId.DEFAULT.app("app").program(ProgramType.WORKFLOW, "workflow");
-    fetcher.addRequest(new PreviewRequest(programId, null));
+    fetcher.addRequest(new PreviewRequest(programId, null, null));
 
     Tasks.waitFor(true, () -> mockRunner.requests.get(programId) != null,
                   5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
@@ -93,7 +93,7 @@ public class PreviewRunnerServiceTest {
     runnerService.startAndWait();
 
     ProgramId programId = NamespaceId.DEFAULT.app("app").program(ProgramType.WORKFLOW, "workflow");
-    fetcher.addRequest(new PreviewRequest(programId, null));
+    fetcher.addRequest(new PreviewRequest(programId, null, null));
     Tasks.waitFor(true, () -> mockRunner.requests.get(programId) != null,
                   50, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 

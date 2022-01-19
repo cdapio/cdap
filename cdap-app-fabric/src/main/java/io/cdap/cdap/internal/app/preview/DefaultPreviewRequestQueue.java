@@ -103,7 +103,9 @@ public class DefaultPreviewRequestQueue implements PreviewRequestQueue {
 
   @Override
   public void add(PreviewRequest previewRequest) {
-    previewStore.add(previewRequest.getProgram().getParent(), previewRequest.getAppRequest());
+    previewStore.add(previewRequest.getProgram().getParent(),
+                     previewRequest.getAppRequest(),
+                     previewRequest.getPrincipal());
     if (!requestQueue.offer(previewRequest)) {
       previewStore.remove(previewRequest.getProgram().getParent());
       throw new IllegalStateException(String.format("Preview request waiting queue is full with %d requests.",
