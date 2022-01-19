@@ -28,8 +28,10 @@ import com.google.inject.assistedinject.Assisted;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.app.RuntimeConfigurer;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.app.DefaultAppConfigurer;
+import io.cdap.cdap.app.DefaultAppRuntimeConfigurer;
 import io.cdap.cdap.app.DefaultApplicationContext;
 import io.cdap.cdap.app.deploy.ConfigResponse;
 import io.cdap.cdap.app.deploy.Configurator;
@@ -37,6 +39,7 @@ import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.lang.CombineClassLoader;
@@ -57,6 +60,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.Map;
 
 /**
  * In Memory Configurator doesn't spawn a external process, but does this in memory.
@@ -76,6 +80,9 @@ public final class InMemoryConfigurator implements Configurator {
   private final PluginFinder pluginFinder;
   private final String appClassName;
   private final Id.Artifact artifactId;
+  private final boolean isRuntime;
+  private final Map<String, String> runtimeArguments;
+  private final RemoteClientFactory remoteClientFactory;
 
   // These fields are needed to create the classLoader in the config method
   private final ArtifactRepository artifactRepository;
@@ -84,7 +91,8 @@ public final class InMemoryConfigurator implements Configurator {
 
   @Inject
   public InMemoryConfigurator(CConfiguration cConf, PluginFinder pluginFinder, Impersonator impersonator,
-                              ArtifactRepository artifactRepository, @Assisted AppDeploymentInfo deploymentInfo) {
+                              ArtifactRepository artifactRepository, RemoteClientFactory remoteClientFactory,
+                              @Assisted AppDeploymentInfo deploymentInfo) {
     this.cConf = cConf;
     this.pluginFinder = pluginFinder;
     this.appNamespace = Id.Namespace.fromEntityId(deploymentInfo.getNamespaceId());
@@ -99,6 +107,9 @@ public final class InMemoryConfigurator implements Configurator {
     this.impersonator = impersonator;
     this.artifactRepository = artifactRepository;
     this.artifactLocation = deploymentInfo.getArtifactLocation();
+    this.isRuntime = deploymentInfo.isRuntime();
+    this.runtimeArguments = deploymentInfo.getUserArguments();
+    this.remoteClientFactory = remoteClientFactory;
   }
 
   /**
@@ -150,8 +161,12 @@ public final class InMemoryConfigurator implements Configurator {
     try (
       PluginInstantiator pluginInstantiator = new PluginInstantiator(cConf, app.getClass().getClassLoader(), tempDir)
     ) {
-      configurer = new DefaultAppConfigurer(appNamespace, artifactId, app,
-                                            configString, pluginFinder, pluginInstantiator);
+
+      RuntimeConfigurer runtimeConfigurer =
+        isRuntime ? new DefaultAppRuntimeConfigurer(appNamespace.getId(), remoteClientFactory, runtimeArguments) : null;
+      configurer = new DefaultAppConfigurer(
+        appNamespace, artifactId, app, configString, pluginFinder, pluginInstantiator, runtimeConfigurer);
+
       T appConfig;
       Type configType = Artifacts.getConfigType(app.getClass());
       if (configString.isEmpty()) {

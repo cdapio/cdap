@@ -16,14 +16,12 @@
 
 package io.cdap.cdap.internal.sysapp;
 
-import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.app.program.ProgramDescriptor;
-import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.NotFoundException;
@@ -119,7 +117,8 @@ public class SystemAppEnableExecutor {
     try {
       return appLifecycleService.deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(),
                                            artifactSummary, configString, x -> { },
-                                           ownerPrincipalId, arguments.canUpdateSchedules());
+                                           ownerPrincipalId, arguments.canUpdateSchedules(), false,
+                                           Collections.emptyMap());
 
     } catch (UnauthorizedException | InvalidArtifactException e) {
       throw e;

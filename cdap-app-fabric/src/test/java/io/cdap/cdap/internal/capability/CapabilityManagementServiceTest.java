@@ -544,7 +544,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       });
     Iterable<ProgramDescriptor> programs = applicationWithPrograms.getPrograms();
     for (ProgramDescriptor program : programs) {
-      programLifecycleService.start(program.getProgramId(), new HashMap<>(), false);
+      programLifecycleService.start(program.getProgramId(), new HashMap<>(), false, false);
     }
     ProgramId programId = new ProgramId(applicationId, ProgramType.WORKFLOW,
                                         CapabilitySleepingWorkflowApp.SleepWorkflow.class.getSimpleName());
@@ -571,7 +571,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     //try starting programs
     for (ProgramDescriptor program : programs) {
       try {
-        programLifecycleService.start(program.getProgramId(), new HashMap<>(), false);
+        programLifecycleService.start(program.getProgramId(), new HashMap<>(), false, false);
         Assert.fail("expecting exception");
       } catch (CapabilityNotAvailableException ex) {
         //expecting exception
@@ -624,7 +624,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       });
     Iterable<ProgramDescriptor> programs = applicationWithPrograms.getPrograms();
     for (ProgramDescriptor program : programs) {
-      programLifecycleService.start(program.getProgramId(), new HashMap<>(), false);
+      programLifecycleService.start(program.getProgramId(), new HashMap<>(), false, false);
     }
     ProgramId programId = new ProgramId(applicationId, ProgramType.WORKFLOW,
                                         CapabilitySleepingWorkflowPluginApp.SleepWorkflow.class.getSimpleName());
@@ -651,7 +651,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     //try starting programs
     for (ProgramDescriptor program : programs) {
       try {
-        programLifecycleService.start(program.getProgramId(), new HashMap<>(), false);
+        programLifecycleService.start(program.getProgramId(), new HashMap<>(), false, false);
         Assert.fail("expecting exception");
       } catch (CapabilityNotAvailableException ex) {
         //expecting exception

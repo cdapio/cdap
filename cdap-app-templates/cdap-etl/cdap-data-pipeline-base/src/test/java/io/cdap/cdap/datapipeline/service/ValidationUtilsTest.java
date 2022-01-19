@@ -16,9 +16,6 @@
 
 package io.cdap.cdap.datapipeline.service;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
@@ -27,28 +24,20 @@ import io.cdap.cdap.api.plugin.InvalidPluginConfigException;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.plugin.PluginProperties;
-import io.cdap.cdap.api.plugin.PluginPropertyField;
 import io.cdap.cdap.api.plugin.PluginSelector;
-import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.mock.batch.MockSource;
-import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
 import io.cdap.cdap.etl.proto.v2.validation.StageSchema;
 import io.cdap.cdap.etl.proto.v2.validation.StageValidationRequest;
 import io.cdap.cdap.etl.proto.v2.validation.StageValidationResponse;
-import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import io.cdap.cdap.internal.lang.Fields;
-import io.cdap.cdap.internal.lang.Reflections;
+import io.cdap.cdap.proto.id.NamespaceId;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Tests for ValidationUtils
@@ -64,7 +53,8 @@ public class ValidationUtilsTest {
       etlStage, Collections
       .singletonList(testStageSchema), false);
     StageValidationResponse stageValidationResponse = ValidationUtils
-      .validate(validationRequest, getPluginConfigurer(MockSource.PLUGIN_CLASS), properties -> properties);
+      .validate(NamespaceId.DEFAULT.getNamespace(),
+                validationRequest, getPluginConfigurer(MockSource.PLUGIN_CLASS), properties -> properties);
     Assert.assertTrue(stageValidationResponse.getFailures().isEmpty());
   }
 
@@ -77,7 +67,8 @@ public class ValidationUtilsTest {
       etlStage, Collections
       .singletonList(testStageSchema), false);
     StageValidationResponse stageValidationResponse = ValidationUtils
-      .validate(validationRequest, getPluginConfigurer(MockSource.PLUGIN_CLASS), properties -> properties);
+      .validate(NamespaceId.DEFAULT.getNamespace(),
+                validationRequest, getPluginConfigurer(MockSource.PLUGIN_CLASS), properties -> properties);
     Assert.assertEquals(1, stageValidationResponse.getFailures().size());
   }
 
@@ -91,8 +82,9 @@ public class ValidationUtilsTest {
       .singletonList(testStageSchema), false);
     String testtable = "testtable";
     StageValidationResponse stageValidationResponse = ValidationUtils
-      .validate(validationRequest, getPluginConfigurer(MockSource.PLUGIN_CLASS), properties -> {
-        HashMap<String, String> propertiesCopy = new HashMap<>(properties);
+      .validate(NamespaceId.DEFAULT.getNamespace(), validationRequest,
+                getPluginConfigurer(MockSource.PLUGIN_CLASS), properties -> {
+        Map<String, String> propertiesCopy = new HashMap<>(properties);
         if (propertiesCopy.getOrDefault("tableName", "").equals("@{tName}")) {
           propertiesCopy.put("tableName", testtable);
         }

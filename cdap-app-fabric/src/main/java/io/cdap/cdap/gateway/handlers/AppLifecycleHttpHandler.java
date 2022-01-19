@@ -667,7 +667,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           try {
             applicationLifecycleService.deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(),
                                                   artifactSummary, configString, createProgramTerminator(),
-                                                  ownerPrincipalId, appRequest.canUpdateSchedules());
+                                                  ownerPrincipalId, appRequest.canUpdateSchedules(), false,
+                                                  Collections.emptyMap());
           } catch (DatasetManagementException e) {
             if (e.getCause() instanceof UnauthorizedException) {
               throw (UnauthorizedException) e.getCause();

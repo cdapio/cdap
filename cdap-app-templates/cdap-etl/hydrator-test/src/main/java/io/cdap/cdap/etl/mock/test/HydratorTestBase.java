@@ -82,6 +82,7 @@ import io.cdap.cdap.etl.mock.transform.FlattenErrorTransform;
 import io.cdap.cdap.etl.mock.transform.IdentityTransform;
 import io.cdap.cdap.etl.mock.transform.IntValueFilterTransform;
 import io.cdap.cdap.etl.mock.transform.NullFieldSplitterTransform;
+import io.cdap.cdap.etl.mock.transform.PluginValidationTransform;
 import io.cdap.cdap.etl.mock.transform.SleepTransform;
 import io.cdap.cdap.etl.mock.transform.StringValueFilterTransform;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -118,7 +119,8 @@ public class HydratorTestBase extends TestBase {
     DistinctReducibleAggregator.PLUGIN_CLASS, FieldCountReducibleAggregator.PLUGIN_CLASS,
     FileConnector.PLUGIN_CLASS, IncapableSource.PLUGIN_CLASS, IncapableSink.PLUGIN_CLASS,
     LookupTransform.PLUGIN_CLASS, SleepTransform.PLUGIN_CLASS, NodeStatesAction.PLUGIN_CLASS,
-    DistinctAggregator.PLUGIN_CLASS, NullErrorTransform.PLUGIN_CLASS, ExceptionTransform.PLUGIN_CLASS
+    DistinctAggregator.PLUGIN_CLASS, NullErrorTransform.PLUGIN_CLASS, ExceptionTransform.PLUGIN_CLASS,
+    PluginValidationTransform.PLUGIN_CLASS
   );
   private static final Set<PluginClass> STREAMING_MOCK_PLUGINS = ImmutableSet.of(
     io.cdap.cdap.etl.mock.spark.streaming.MockSource.PLUGIN_CLASS,
