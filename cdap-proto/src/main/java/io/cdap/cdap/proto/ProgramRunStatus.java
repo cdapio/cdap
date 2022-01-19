@@ -33,7 +33,7 @@ public enum ProgramRunStatus {
   RUNNING,
   SUSPENDED,
   RESUMING,
-  STOPPING, // todo: CDAP-18743 Enhance canTransitionTo() with this state
+  STOPPING,
   COMPLETED,
   FAILED,
   KILLED,
@@ -57,27 +57,37 @@ public enum ProgramRunStatus {
     switch (this) {
       case PENDING:
         // STARTING is the happy path
+        // STOPPING happens if the run was manually stopped gracefully(may include a timeout)
         // KILLED happens if the run was manually stopped
         // FAILED happens if the provisioning failed
-        return status == STARTING || status == KILLED || status == FAILED;
+        return status == STARTING || status == STOPPING || status == KILLED || status == FAILED;
       case STARTING:
         // RUNNING is the happy path
+        // STOPPING happens if the run was manually stopped gracefully(may include a timeout)
         // KILLED happens if the run was manually stopped
         // FAILED happens if the run failed while starting
         // COMPLETED happens somehow? Not sure when we expect this but we test that this transition can happen
         // SUSPENDED happens if you suspend while starting. Not sure why this is allowed, seems wrong (CDAP-13551)
-        return status == RUNNING || status == SUSPENDED || status == COMPLETED || status == KILLED || status == FAILED;
+        return status == RUNNING || status == STOPPING || status == SUSPENDED || status == COMPLETED ||
+          status == KILLED || status == FAILED;
       case RUNNING:
         // SUSPENDED happens if the run was suspended
+        // STOPPING happens if the run was manually stopped gracefully(may include a timeout)
         // COMPLETED is the happy path
         // KILLED happens if the run was manually stopped
         // FAILED happens if the run failed
-        return status == SUSPENDED || status == COMPLETED || status == KILLED || status == FAILED;
+        return status == SUSPENDED || status == STOPPING || status == COMPLETED || status == KILLED || status == FAILED;
+      case STOPPING:
+        // COMPLETED is the happy path
+        // KILLED happens if the run was manually stopped
+        // FAILED happens if the run failed
+        return status == COMPLETED || status == KILLED || status == FAILED;
       case SUSPENDED:
         // RUNNING happens if the run was resumed (there is no RESUMING state even though it is an enum value...)
+        // STOPPING happens if the run was manually stopped gracefully(may include a timeout)
         // KILLED happens if the run was manually stopped
         // FAILED happens if the run failed while suspended
-        return status == RUNNING || status == KILLED || status == FAILED;
+        return status == RUNNING || status == STOPPING || status == KILLED || status == FAILED;
       case COMPLETED:
       case FAILED:
       case KILLED:
