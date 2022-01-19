@@ -4883,6 +4883,14 @@
   </property>
 
   <property>
+    <name>tethering.topic</name>
+    <value>tethering</value>
+    <description>
+      TMS topic used on tethering client
+    </description>
+  </property>
+
+  <property>
     <name>tethering.server.enabled</name>
     <value>false</value>
     <description>

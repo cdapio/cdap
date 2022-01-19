@@ -33,6 +33,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
+import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.data.runtime.StorageModule;
@@ -58,7 +59,9 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -84,9 +87,13 @@ public class TetheringServerHandlerTest {
   private NettyHttpService service;
   private ClientConfig config;
 
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+
   @BeforeClass
-  public static void setup() {
+  public static void setup() throws IOException {
     cConf = CConfiguration.create();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     topicPrefix = cConf.get(Constants.Tethering.TOPIC_PREFIX);
     injector = Guice.createInjector(
       new ConfigModule(cConf),
@@ -94,6 +101,7 @@ public class TetheringServerHandlerTest {
       new TransactionModules().getInMemoryModules(),
       new TransactionExecutorModule(),
       new InMemoryDiscoveryModule(),
+      new LocalLocationModule(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
       new StorageModule(),
       new PrivateModule() {
