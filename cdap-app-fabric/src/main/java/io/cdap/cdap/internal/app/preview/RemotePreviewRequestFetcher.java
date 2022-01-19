@@ -24,11 +24,14 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
-import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -38,6 +41,8 @@ import java.util.Optional;
  * Fetch preview requests from remote server.
  */
 public class RemotePreviewRequestFetcher implements PreviewRequestFetcher {
+  private static final Logger LOG = LoggerFactory.getLogger(RemotePreviewRequestFetcher.class);
+
   private static final Gson GSON = new Gson();
 
   private final RemoteClient remoteClientInternal;
@@ -62,6 +67,13 @@ public class RemotePreviewRequestFetcher implements PreviewRequestFetcher {
     HttpResponse httpResponse = remoteClientInternal.execute(request);
     if (httpResponse.getResponseCode() == 200) {
       PreviewRequest previewRequest = GSON.fromJson(httpResponse.getResponseBodyAsString(), PreviewRequest.class);
+      if (previewRequest != null) {
+        LOG.info("wyzhang: RemotePreviewRequest fetcher got preview request principle {}",
+                 previewRequest.getPrincipal());
+        Principal principal = previewRequest.getPrincipal();
+        SecurityRequestContext.setUserId(principal.getName());
+        SecurityRequestContext.setUserCredential(principal.getFullCredential());
+      }
       return Optional.ofNullable(previewRequest);
     }
     throw new IOException(String.format("Received status code:%s and body: %s", httpResponse.getResponseCode(),
