@@ -158,7 +158,10 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         return;
       }
       try {
-        if (runRecordDetail.getStatus() == ProgramRunStatus.STARTING) {
+        if (runRecordDetail.getStatus() == ProgramRunStatus.PENDING) {
+          programLifecycleService.getRunRecordCounter().addRequest(runRecordDetail.getProgramRunId());
+        } else if (runRecordDetail.getStatus() == ProgramRunStatus.STARTING) {
+          programLifecycleService.getRunRecordCounter().addRequest(runRecordDetail.getProgramRunId());
           // It is unknown what is the state of program runs in STARTING state.
           // A STARTING message is published again to retry STARTING logic.
           ProgramOptions programOptions =
