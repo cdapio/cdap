@@ -33,6 +33,7 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironmentTask;
 import io.cdap.cdap.master.spi.environment.spark.SparkConfig;
 import io.cdap.cdap.master.spi.environment.spark.SparkLocalizeResource;
 import io.cdap.cdap.master.spi.environment.spark.SparkSubmitContext;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
@@ -378,8 +379,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
   @Override
   public void onNamespaceCreation(String cdapNamespace, Map<String, String> properties) throws Exception {
-    // check if namespace creation is enabled from master config
-    if (!namespaceCreationEnabled) {
+    // check if namespace creation is enabled from master config or if cdapNamespace is a bootstrap namespace
+    if (!namespaceCreationEnabled || NamespaceId.isReserved(cdapNamespace)) {
       return;
     }
     String namespace = properties.get(NAMESPACE_PROPERTY);
