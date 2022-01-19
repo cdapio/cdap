@@ -19,7 +19,11 @@ package io.cdap.cdap.master.environment.k8s;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
+import com.google.gson.Gson;
+import io.cdap.cdap.k8s.common.DefaultLocalFileProvider;
+import io.cdap.cdap.k8s.common.LocalFileProvider;
 import io.cdap.cdap.k8s.discovery.KubeDiscoveryService;
+import io.cdap.cdap.k8s.identity.GCPWorkloadIdentityCredential;
 import io.cdap.cdap.k8s.runtime.KubeTwillRunnerService;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
@@ -30,16 +34,18 @@ import io.cdap.cdap.master.spi.environment.spark.SparkConfig;
 import io.cdap.cdap.master.spi.environment.spark.SparkLocalizeResource;
 import io.cdap.cdap.master.spi.environment.spark.SparkSubmitContext;
 import io.kubernetes.client.custom.Quantity;
-import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.openapi.models.V1ConfigMap;
 import io.kubernetes.client.openapi.models.V1ConfigMapBuilder;
+import io.kubernetes.client.openapi.models.V1ConfigMapProjection;
 import io.kubernetes.client.openapi.models.V1ConfigMapVolumeSourceBuilder;
 import io.kubernetes.client.openapi.models.V1Container;
 import io.kubernetes.client.openapi.models.V1ContainerBuilder;
 import io.kubernetes.client.openapi.models.V1DownwardAPIVolumeFile;
 import io.kubernetes.client.openapi.models.V1DownwardAPIVolumeSource;
 import io.kubernetes.client.openapi.models.V1EnvVar;
+import io.kubernetes.client.openapi.models.V1KeyToPath;
 import io.kubernetes.client.openapi.models.V1Namespace;
 import io.kubernetes.client.openapi.models.V1ObjectFieldSelector;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
@@ -49,10 +55,13 @@ import io.kubernetes.client.openapi.models.V1OwnerReferenceBuilder;
 import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1PodSpec;
 import io.kubernetes.client.openapi.models.V1PodSpecBuilder;
+import io.kubernetes.client.openapi.models.V1ProjectedVolumeSource;
 import io.kubernetes.client.openapi.models.V1ResourceQuota;
 import io.kubernetes.client.openapi.models.V1ResourceQuotaSpec;
+import io.kubernetes.client.openapi.models.V1ServiceAccountTokenProjection;
 import io.kubernetes.client.openapi.models.V1Volume;
 import io.kubernetes.client.openapi.models.V1VolumeMount;
+import io.kubernetes.client.openapi.models.V1VolumeProjection;
 import io.kubernetes.client.util.Config;
 import io.kubernetes.client.util.Yaml;
 import org.apache.twill.api.TwillRunnerService;
@@ -124,15 +133,42 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String SPARK_CONFIGS_PREFIX = "spark.kubernetes";
   private static final String SPARK_KUBERNETES_DRIVER_LABEL_PREFIX = "spark.kubernetes.driver.label.";
   private static final String SPARK_KUBERNETES_EXECUTOR_LABEL_PREFIX = "spark.kubernetes.executor.label.";
-  private static final String SPARK_KUBERNETES_DRIVER_POD_TEMPLATE = "spark.kubernetes.driver.podTemplateFile";
-  private static final String SPARK_KUBERNETES_EXECUTOR_POD_TEMPLATE = "spark.kubernetes.executor.podTemplateFile";
+  @VisibleForTesting
+  static final String SPARK_KUBERNETES_DRIVER_POD_TEMPLATE = "spark.kubernetes.driver.podTemplateFile";
+  @VisibleForTesting
+  static final String SPARK_KUBERNETES_EXECUTOR_POD_TEMPLATE = "spark.kubernetes.executor.podTemplateFile";
   private static final String SPARK_KUBERNETES_METRICS_PROPERTIES_CONF = "spark.metrics.conf";
   private static final String POD_TEMPLATE_FILE_NAME = "podTemplate-";
   private static final String CDAP_LOCALIZE_FILES_PATH = "/etc/cdap/localizefiles";
   private static final String CDAP_CONFIG_MAP_PREFIX = "cdap-compressed-files-";
   private static final String NAMESPACE_CREATION_ENABLED = "master.environment.k8s.namespace.creation.enabled";
   private static final String CDAP_NAMESPACE_LABEL = "cdap.namespace";
+
+  // Workload Identity Constants
   private static final String RESOURCE_QUOTA_NAME = "cdap-resource-quota";
+  private static final String WORKLOAD_IDENTITY_ENABLED = "master.environment.k8s.workload.identity.enabled";
+  private static final String WORKLOAD_IDENTITY_POOL = "master.environment.k8s.workload.identity.pool";
+  private static final String WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL
+    = "master.environment.k8s.workload.identity.gcp.service.account.email";
+  private static final String WORKLOAD_IDENTITY_PROVIDER = "master.environment.k8s.workload.identity.provider";
+  private static final String WORKLOAD_IDENTITY_SERVICE_ACCOUNT_TOKEN_TTL_SECONDS
+    = "master.environment.k8s.workload.identity.service.account.token.ttl.seconds";
+  private static final long WORKLOAD_IDENTITY_SERVICE_ACCOUNT_TOKEN_TTL_SECONDS_DEFAULT = 172800L;
+  private static final String WORKLOAD_IDENTITY_CONFIGMAP_NAME = "workload-identity-config";
+  private static final String WORKLOAD_IDENTITY_PROJECTED_VOLUME_NAME = "gcp-ksa";
+  private static final String WORKLOAD_IDENTITY_CONFIGMAP_KEY = "config";
+  private static final String WORKLOAD_IDENTITY_CONFIGMAP_FILE = "google-application-credentials.json";
+  private static final String WORKLOAD_IDENTITY_DATA_KEY = "config";
+  private static final String WORKLOAD_IDENTITY_AUDIENCE_FORMAT = "identitynamespace:%s:%s";
+  private static final String WORKLOAD_IDENTITY_IMPERSONATION_URL_FORMAT = "https://iamcredentials.googleapis.com/" +
+    "v1/projects/-/serviceAccounts/%s:generateAccessToken";
+  private static final String WORKLOAD_IDENTITY_TOKEN_URL = "https://sts.googleapis.com/v1/token";
+  private static final String WORKLOAD_IDENTITY_CREDENTIAL_DIR = "/var/run/secrets/tokens/gcp-ksa";
+  private static final String WORKLOAD_IDENTITY_CREDENTIAL_KSA_PATH = "token";
+  private static final String WORKLOAD_IDENTITY_CREDENTIAL_KSA_SOURCE_PATH = WORKLOAD_IDENTITY_CREDENTIAL_DIR + "/" +
+    WORKLOAD_IDENTITY_CREDENTIAL_KSA_PATH;
+  private static final String WORKLOAD_IDENTITY_CREDENTIAL_GSA_SOURCE_PATH = WORKLOAD_IDENTITY_CREDENTIAL_DIR + "/" +
+    WORKLOAD_IDENTITY_CONFIGMAP_FILE;
 
   private static final String DEFAULT_NAMESPACE = "default";
   private static final String DEFAULT_INSTANCE_LABEL = "cdap.instance";
@@ -158,17 +194,62 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private String configMapName;
   private CoreV1Api coreV1Api;
   private boolean namespaceCreationEnabled;
+  private KubeMasterPathProvider kubeMasterPathProvider;
+  private LocalFileProvider localFileProvider;
+  private final Gson gson;
+  private boolean workloadIdentityEnabled;
+  private String workloadIdentityPool;
+  private String workloadIdentityGCPServiceAccountEmail;
+  private String workloadIdentityProvider;
+  private long workloadIdentityServiceAccountTokenTTLSeconds;
+
+  public KubeMasterEnvironment() {
+    gson = new Gson();
+  }
 
   @Override
-  public void initialize(MasterEnvironmentContext context) throws IOException, ApiException {
+  public void initialize(MasterEnvironmentContext context) throws IOException, IllegalArgumentException, ApiException {
     LOG.info("Initializing Kubernetes environment");
 
     Map<String, String> conf = context.getConfigurations();
+    kubeMasterPathProvider = new DefaultKubeMasterPathProvider();
+    localFileProvider = new DefaultLocalFileProvider();
     podInfoDir = new File(conf.getOrDefault(POD_INFO_DIR, DEFAULT_POD_INFO_DIR));
     podLabelsFile = new File(podInfoDir, conf.getOrDefault(POD_LABELS_FILE, DEFAULT_POD_LABELS_FILE));
     podNameFile = new File(podInfoDir, conf.getOrDefault(POD_NAME_FILE, DEFAULT_POD_NAME_FILE));
     podUidFile = new File(podInfoDir, conf.getOrDefault(POD_UID_FILE, DEFAULT_POD_UID_FILE));
     namespaceCreationEnabled = Boolean.parseBoolean(conf.get(NAMESPACE_CREATION_ENABLED));
+    workloadIdentityEnabled = Boolean.parseBoolean(conf.get(WORKLOAD_IDENTITY_ENABLED));
+    if (workloadIdentityEnabled) {
+      // Validate all workload identity configurations are set
+      String missingConfig = null;
+      workloadIdentityPool = conf.get(WORKLOAD_IDENTITY_POOL);
+      if (workloadIdentityPool == null) {
+        missingConfig = WORKLOAD_IDENTITY_POOL;
+      }
+      workloadIdentityGCPServiceAccountEmail = conf.get(WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL);
+      if (workloadIdentityGCPServiceAccountEmail == null) {
+        missingConfig = WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL;
+      }
+      workloadIdentityProvider = conf.get(WORKLOAD_IDENTITY_PROVIDER);
+      if (workloadIdentityProvider == null) {
+        missingConfig = WORKLOAD_IDENTITY_PROVIDER;
+      }
+      workloadIdentityServiceAccountTokenTTLSeconds = WORKLOAD_IDENTITY_SERVICE_ACCOUNT_TOKEN_TTL_SECONDS_DEFAULT;
+      String confWorkloadIdentityTokenTTL = conf.get(WORKLOAD_IDENTITY_SERVICE_ACCOUNT_TOKEN_TTL_SECONDS);
+      if (confWorkloadIdentityTokenTTL != null) {
+        workloadIdentityServiceAccountTokenTTLSeconds = Long.parseLong(confWorkloadIdentityTokenTTL);
+      }
+      if (workloadIdentityServiceAccountTokenTTLSeconds <= 0) {
+        throw new IllegalArgumentException(String.format("Workload identity k8s service account token TTL '%d' " +
+                                                           "cannot be less than zero",
+                                                         workloadIdentityServiceAccountTokenTTLSeconds));
+      }
+      if (missingConfig != null) {
+        throw new IllegalArgumentException(String.format("Missing expected workload identity config '%s'",
+                                                         missingConfig));
+      }
+    }
 
     // We don't support scaling from inside pod. Scaling should be done via CDAP operator.
     // Currently we don't support more than one instance per system service, hence set it to "1".
@@ -276,7 +357,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   @Override
   public SparkConfig generateSparkSubmitConfig(SparkSubmitContext sparkSubmitContext) throws Exception {
     // Get k8s master path for spark submit
-    String master = getMasterPath();
+    String master = kubeMasterPathProvider.getMasterPath();
 
     Map<String, String> sparkConfMap = new HashMap<>(additionalSparkConfs);
     // Create pod template with config maps and add to spark conf.
@@ -308,6 +389,9 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     }
     findOrCreateKubeNamespace(namespace, cdapNamespace);
     updateOrCreateResourceQuota(namespace, cdapNamespace, properties);
+    if (workloadIdentityEnabled) {
+      findOrCreateWorkloadIdentityConfigMap(namespace);
+    }
   }
 
   @Override
@@ -407,20 +491,6 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     return CUSTOM_VOLUME_PREFIX.stream().anyMatch(name::startsWith);
   }
 
-  private String getMasterPath() {
-    // Spark master base path
-    String master;
-    // apiClient.getBasePath() returns path similar to https://10.8.0.1:443
-    try {
-      ApiClient apiClient = Config.defaultClient();
-      master = apiClient.getBasePath();
-    } catch (Exception e) {
-      // should not happen
-      throw new RuntimeException("Exception while getting kubernetes master path", e);
-    }
-    return master;
-  }
-
   private File getDriverPodTemplate(PodInfo podInfo, SparkSubmitContext sparkSubmitContext) throws Exception {
     V1Pod driverPod = new V1Pod();
     // set owner references for driver pod
@@ -463,6 +533,10 @@ public class KubeMasterEnvironment implements MasterEnvironment {
         container.addVolumeMountsItem(new V1VolumeMount().name(configMapName)
                                         .mountPath(CDAP_LOCALIZE_FILES_PATH).readOnly(true));
       }
+      if (workloadIdentityEnabled) {
+        setupWorkloadIdentityForPodSpec(driverPodSpec, workloadIdentityPool,
+                                        workloadIdentityServiceAccountTokenTTLSeconds);
+      }
     } catch (ApiException e) {
       throw new IOException("Error occurred while creating pod spec. Error code = "
                               + e.getCode() + ", Body = " + e.getResponseBody(), e);
@@ -486,13 +560,18 @@ public class KubeMasterEnvironment implements MasterEnvironment {
       container.addVolumeMountsItem(new V1VolumeMount().name(configMapName)
                                       .mountPath(CDAP_LOCALIZE_FILES_PATH).readOnly(true));
     }
+    if (workloadIdentityEnabled) {
+      setupWorkloadIdentityForPodSpec(executorPodSpec, workloadIdentityPool,
+                                      workloadIdentityServiceAccountTokenTTLSeconds);
+    }
 
     // Create spark template file. We do not delete it because pod will get deleted at the end of job completion.
     return serializePodTemplate(executorPod);
   }
 
   private File serializePodTemplate(V1Pod v1Pod) throws IOException {
-    File templateFile = new File(POD_TEMPLATE_FILE_NAME + UUID.randomUUID().toString());
+    // Uses a relative path to create the Spark driver and executor template files.
+    File templateFile = localFileProvider.getWritableFileRef(POD_TEMPLATE_FILE_NAME + UUID.randomUUID().toString());
     String podTemplateYaml = Yaml.dump(v1Pod);
     try (FileWriter writer = new FileWriter(templateFile)) {
       writer.write(podTemplateYaml);
@@ -719,6 +798,79 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     }
   }
 
+  /**
+   * Finds or creates the ConfigMap which stores the GCP credentials for Fleet Workload Identity.
+   * For details, see steps 6-7 of
+   * https://cloud.google.com/anthos/multicluster-management/fleets/workload-identity#impersonate_a_service_account
+   */
+  private void findOrCreateWorkloadIdentityConfigMap(String k8sNamespace) throws ApiException, IOException {
+    // Check if workload identity config map already exists
+    try {
+      coreV1Api.readNamespacedConfigMap(k8sNamespace, WORKLOAD_IDENTITY_CONFIGMAP_NAME, null, false, false);
+      // Workload identity config map already exists, so return early
+      LOG.debug("Workload identity config found, returning without creating it...");
+      return;
+    } catch (ApiException e) {
+      if (e.getCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+        LOG.debug("Creating workload identity config map for kubernetes namespace {}", k8sNamespace);
+      } else {
+        throw new IOException("Failed to fetch existing workload identity config map. Error code = " + e.getCode() +
+          ", Body = " + e.getResponseBody(), e);
+      }
+    }
+
+    String workloadIdentityAudience = String.format(WORKLOAD_IDENTITY_AUDIENCE_FORMAT, workloadIdentityPool,
+                                                    workloadIdentityProvider);
+    String workloadIdentityImpersonationURL = String.format(WORKLOAD_IDENTITY_IMPERSONATION_URL_FORMAT,
+                                                            workloadIdentityGCPServiceAccountEmail);
+    GCPWorkloadIdentityCredential credential =
+      new GCPWorkloadIdentityCredential(GCPWorkloadIdentityCredential.CredentialType.EXTERNAL_ACCOUNT,
+                                        workloadIdentityAudience, workloadIdentityImpersonationURL,
+                                        GCPWorkloadIdentityCredential.TokenType.JWT, WORKLOAD_IDENTITY_TOKEN_URL,
+                                        WORKLOAD_IDENTITY_CREDENTIAL_KSA_SOURCE_PATH);
+    String workloadIdentityCredentialJSON = gson.toJson(credential);
+    Map<String, String> workloadIdentityConfigMapData = new HashMap<>();
+    workloadIdentityConfigMapData.put(WORKLOAD_IDENTITY_DATA_KEY, workloadIdentityCredentialJSON);
+    V1ConfigMap configMap = new V1ConfigMap()
+      .metadata(new V1ObjectMeta().namespace(k8sNamespace).name(WORKLOAD_IDENTITY_CONFIGMAP_NAME))
+      .data(workloadIdentityConfigMapData);
+    coreV1Api.createNamespacedConfigMap(k8sNamespace, configMap, null, null, null);
+  }
+
+  /**
+   * Applies workload identity configurations to a given pod specification. For additional details, see steps 6-7 of
+   * https://cloud.google.com/anthos/multicluster-management/fleets/workload-identity#impersonate_a_service_account
+   * @param podSpec The pod spec to setup workload identity for.
+   */
+  private static void setupWorkloadIdentityForPodSpec(V1PodSpec podSpec, String workloadIdentityPool,
+                                                      long workloadIdentityServiceAccountTokenTTLSeconds) {
+    // Mount volume to expected directory
+    V1ServiceAccountTokenProjection serviceAccountTokenProjection = new V1ServiceAccountTokenProjection()
+      .path(WORKLOAD_IDENTITY_CREDENTIAL_KSA_PATH)
+      .expirationSeconds(workloadIdentityServiceAccountTokenTTLSeconds)
+      .audience(workloadIdentityPool);
+    V1ConfigMapProjection configMapProjection = new V1ConfigMapProjection()
+      .name(WORKLOAD_IDENTITY_CONFIGMAP_NAME)
+      .optional(false)
+      .addItemsItem(new V1KeyToPath().key(WORKLOAD_IDENTITY_CONFIGMAP_KEY)
+                      .path(WORKLOAD_IDENTITY_CONFIGMAP_FILE));
+    podSpec.addVolumesItem(new V1Volume().name(WORKLOAD_IDENTITY_PROJECTED_VOLUME_NAME)
+                             .projected(new V1ProjectedVolumeSource()
+                                          .defaultMode(420)
+                                          .addSourcesItem(new V1VolumeProjection()
+                                                            .serviceAccountToken(serviceAccountTokenProjection))
+                                          .addSourcesItem(new V1VolumeProjection()
+                                                            .configMap(configMapProjection))));
+    for (V1Container container : podSpec.getContainers()) {
+      // Mount projected volume
+      container.addVolumeMountsItem(new V1VolumeMount().name(WORKLOAD_IDENTITY_PROJECTED_VOLUME_NAME)
+                                      .mountPath(WORKLOAD_IDENTITY_CREDENTIAL_DIR).readOnly(true));
+      // Setup environment variables
+      container.addEnvItem(new V1EnvVar().name("GOOGLE_APPLICATION_CREDENTIALS")
+                             .value(WORKLOAD_IDENTITY_CREDENTIAL_GSA_SOURCE_PATH));
+    }
+  }
+
   @VisibleForTesting
   void setCoreV1Api(CoreV1Api coreV1Api) {
     this.coreV1Api = coreV1Api;
@@ -727,5 +879,70 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   @VisibleForTesting
   void setNamespaceCreationEnabled() {
     this.namespaceCreationEnabled = true;
+  }
+
+  @VisibleForTesting
+  void setLocalFileProvider(LocalFileProvider localFileProvider) {
+    this.localFileProvider = localFileProvider;
+  }
+
+  @VisibleForTesting
+  void setWorkloadIdentityEnabled() {
+    this.workloadIdentityEnabled = true;
+  }
+
+  @VisibleForTesting
+  void setWorkloadIdentityPool(String workloadIdentityPool) {
+    this.workloadIdentityPool = workloadIdentityPool;
+  }
+
+  @VisibleForTesting
+  void setWorkloadIdentityGcpServiceAccountName(String workloadIdentityGCPServiceAccountName) {
+    this.workloadIdentityGCPServiceAccountEmail = workloadIdentityGCPServiceAccountName;
+  }
+
+  @VisibleForTesting
+  void setWorkloadIdentityProvider(String workloadIdentityProvider) {
+    this.workloadIdentityProvider = workloadIdentityProvider;
+  }
+
+  @VisibleForTesting
+  void setWorkloadIdentityServiceAccountTokenTTLSeconds(long workloadIdentityServiceAccountTokenTTLSeconds) {
+    this.workloadIdentityServiceAccountTokenTTLSeconds = workloadIdentityServiceAccountTokenTTLSeconds;
+  }
+
+  @VisibleForTesting
+  void setKubeMasterPathProvider(KubeMasterPathProvider kubeMasterPathProvider) {
+    this.kubeMasterPathProvider = kubeMasterPathProvider;
+  }
+
+  @VisibleForTesting
+  void setAdditionalSparkConfs(Map<String, String> additionalSparkConfs) {
+    this.additionalSparkConfs = additionalSparkConfs;
+  }
+
+  @VisibleForTesting
+  void setPodInfo(PodInfo podInfo) {
+    this.podInfo = podInfo;
+  }
+
+  @VisibleForTesting
+  void setPodInfoDir(File podInfoDir) {
+    this.podInfoDir = podInfoDir;
+  }
+
+  @VisibleForTesting
+  void setPodLabelsFile(File podLabelsFile) {
+    this.podLabelsFile = podLabelsFile;
+  }
+
+  @VisibleForTesting
+  void setPodNameFile(File podNameFile) {
+    this.podNameFile = podNameFile;
+  }
+
+  @VisibleForTesting
+  void setPodUidFile(File podUidFile) {
+    this.podUidFile = podUidFile;
   }
 }

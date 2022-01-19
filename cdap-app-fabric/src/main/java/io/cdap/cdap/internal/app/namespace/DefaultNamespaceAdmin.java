@@ -192,6 +192,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
         masterEnv.onNamespaceCreation(namespace.getNamespace(), metadata.getConfig().getConfigs());
       }
     } catch (Throwable t) {
+      LOG.error(String.format("Failed to create namespace '%s'", namespace.getNamespace()), t);
       // failed to create namespace in underlying storage so delete the namespace meta stored in the store earlier
       deleteNamespaceMeta(metadata.getNamespaceId());
       throw new NamespaceCannotBeCreatedException(namespace, t);
