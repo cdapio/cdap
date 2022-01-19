@@ -35,13 +35,14 @@ public final class RunRecordDetailWithExistingStatus extends RunRecordDetail {
 
   private RunRecordDetailWithExistingStatus(ProgramRunId programRunId, long startTs, @Nullable Long runTs,
                                             @Nullable Long stopTs, @Nullable Long suspendTs, @Nullable Long resumeTs,
+                                            @Nullable Long stoppingTs, @Nullable Long stoppingTimeoutTs,
                                             ProgramRunStatus status, @Nullable Map<String, String> properties,
                                             @Nullable Map<String, String> systemArgs, @Nullable String twillRunId,
                                             ProgramRunCluster cluster, ProfileId profileId, byte[] sourceId,
                                             @Nullable ArtifactId artifactId, @Nullable String principal,
                                             @Nullable ProgramRunStatus existingStatus) {
-    super(programRunId, startTs, runTs, stopTs, suspendTs, resumeTs, status, properties, systemArgs, twillRunId,
-          cluster, profileId, sourceId, artifactId, principal);
+    super(programRunId, startTs, runTs, stopTs, suspendTs, resumeTs, stoppingTs, stoppingTimeoutTs, status, properties,
+          systemArgs, twillRunId, cluster, profileId, sourceId, artifactId, principal);
     this.existingStatus = existingStatus;
   }
 
@@ -83,8 +84,9 @@ public final class RunRecordDetailWithExistingStatus extends RunRecordDetail {
       // artifactId could be null for program starts that were recorded pre 5.0 but weren't processed
       // we don't want to throw exception while processing them
       return new RunRecordDetailWithExistingStatus(programRunId, startTs, runTs, stopTs, suspendTs, resumeTs,
-                                                   status, properties, systemArgs, twillRunId, cluster, profileId,
-                                                   sourceId, artifactId, principal, existingStatus);
+                                                   stoppingTs, stoppingTimeoutTs, status, properties, systemArgs,
+                                                   twillRunId, cluster, profileId, sourceId, artifactId, principal,
+                                                   existingStatus);
     }
   }
 }

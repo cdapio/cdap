@@ -43,7 +43,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * A {@link RuntimeRequestValidator} implementation that reads from the runtime table directly.
@@ -54,7 +56,7 @@ public final class DirectRuntimeRequestValidator implements RuntimeRequestValida
 
   private final TransactionRunner txRunner;
   private final ProgramRunRecordFetcher runRecordFetcher;
-  private final LoadingCache<ProgramRunId, Boolean> programRunsCache;
+  private final LoadingCache<ProgramRunId, Optional<ProgramRunInfo>> programRunsCache;
   private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
 
@@ -73,49 +75,63 @@ public final class DirectRuntimeRequestValidator implements RuntimeRequestValida
     long pollTimeMillis = cConf.getLong(Constants.RuntimeMonitor.POLL_TIME_MS);
     this.programRunsCache = CacheBuilder.newBuilder()
       .expireAfterWrite(pollTimeMillis, TimeUnit.MILLISECONDS)
-      .build(new CacheLoader<ProgramRunId, Boolean>() {
+      .build(new CacheLoader<ProgramRunId, Optional<ProgramRunInfo>>() {
+        /**
+         * For a programRunId this cache stores a {@link ProgramRunInfo} object only for valid programRunIds,
+         * i.e. this value will be Optional.empty() if the programRunId is invalid.
+         */
         @Override
-        public Boolean load(ProgramRunId programRunId) throws IOException, UnauthorizedException {
-          return isValid(programRunId);
+        public Optional<ProgramRunInfo> load(ProgramRunId programRunId)
+          throws IOException, UnauthorizedException {
+          return getRunRecordStatusForProgramsInNonEndState(programRunId);
         }
       });
   }
 
   @Override
-  public void validate(ProgramRunId programRunId, HttpRequest request) throws BadRequestException {
+  public ProgramRunInfo getProgramRunStatus(ProgramRunId programRunId, HttpRequest request)
+    throws BadRequestException {
     accessEnforcer.enforce(programRunId, authenticationContext.getPrincipal(), StandardPermission.GET);
-    boolean exists;
+    ProgramRunInfo programRunInfo;
     try {
-      exists = programRunsCache.get(programRunId);
+      programRunInfo = programRunsCache.get(programRunId)
+        .orElseThrow(() -> new BadRequestException("Program run " + programRunId + " is not valid"));
+    } catch (BadRequestException e) {
+      throw e;
     } catch (Exception e) {
       throw new ServiceUnavailableException(Constants.Service.RUNTIME, e);
     }
-    if (!exists) {
-      throw new BadRequestException("Program run " + programRunId + " is not valid");
-    }
+    return programRunInfo;
   }
 
-  /**
-   * Checks if the given {@link ProgramRunId} is valid.
-   */
-  private boolean isValid(ProgramRunId programRunId) throws IOException, UnauthorizedException {
-    RunRecordDetail runRecord = TransactionRunners.run(txRunner, context -> {
-      return AppMetadataStore.create(context).getRun(programRunId);
-    }, IOException.class);
-
-    if (runRecord != null) {
-      return !runRecord.getStatus().isEndState();
-    }
-    // If it is not found in the local store, which should be very rare, try to fetch the run record remotely.
+  @Nullable
+  private Optional<ProgramRunInfo> getRunRecordStatusForProgramsInNonEndState(ProgramRunId programRunId)
+    throws IOException, UnauthorizedException {
     try {
+      RunRecordDetail runRecord = TransactionRunners.run(txRunner, context -> {
+        return AppMetadataStore.create(context).getRun(programRunId);
+      }, IOException.class);
+
+      if (runRecord != null) {
+        return runRecord.getStatus().isEndState() ? Optional.empty() : getValidRunRecordStatus(runRecord);
+      }
+      // If it is not found in the local store, which should be very rare, try to fetch the run record remotely.
       LOG.info("Remotely fetching program run details for {}", programRunId);
       runRecord = runRecordFetcher.getRunRecordMeta(programRunId);
       // Try to update the local store
       insertRunRecord(programRunId, runRecord);
-      return !runRecord.getStatus().isEndState();
+      return runRecord.getStatus().isEndState() ? Optional.empty() : getValidRunRecordStatus(runRecord);
     } catch (NotFoundException e) {
-      return false;
+      return Optional.empty();
     }
+  }
+
+  private Optional<ProgramRunInfo> getValidRunRecordStatus(RunRecordDetail runRecord) {
+    ProgramRunStatus programRunStatus = runRecord.getStatus();
+    return Optional.of(programRunStatus == ProgramRunStatus.STOPPING
+                         ? new ProgramRunInfo(programRunStatus, String.valueOf(runRecord.getStoppingTs() +
+                                                                                 runRecord.getStoppingTimeoutTs()))
+                         : new ProgramRunInfo(programRunStatus, null));
   }
 
   /**
@@ -145,6 +161,9 @@ public final class DirectRuntimeRequestValidator implements RuntimeRequestValida
           case SUSPENDED:
             store.recordProgramSuspend(programRunId, runRecord.getSourceId(),
                                        Objects.firstNonNull(runRecord.getSuspendTs(), System.currentTimeMillis()));
+            break;
+          case STOPPING:
+            // TODO - will be part of CDAP-18743 along with unit tests
             break;
           case COMPLETED:
           case KILLED:

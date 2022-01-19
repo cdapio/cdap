@@ -40,6 +40,7 @@ import io.cdap.cdap.gateway.handlers.PingHandler;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
+import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
@@ -114,6 +115,7 @@ public class RuntimeServiceRoutingTest {
             if (!expected.equals(authHeader)) {
               throw new UnauthenticatedException("Program run " + programRunId + " is not authorized");
             }
+            return new ProgramRunInfo(ProgramRunStatus.COMPLETED, null);
           });
         }
 

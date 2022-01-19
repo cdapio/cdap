@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.runtime.monitor;
 
 import com.google.common.io.ByteStreams;
 import com.google.common.net.HttpHeaders;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.messaging.Message;
 import io.cdap.cdap.common.BadRequestException;
@@ -27,6 +28,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
+import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.TopicId;
@@ -34,12 +36,13 @@ import io.cdap.common.http.HttpMethod;
 import org.apache.avro.Schema;
 import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
@@ -55,6 +58,7 @@ import javax.ws.rs.core.MediaType;
  */
 public class RuntimeClient {
 
+  private static final Gson GSON = new Gson();
   static final int CHUNK_SIZE = 1 << 15;  // 32K
 
   private final boolean compression;
@@ -115,6 +119,12 @@ public class RuntimeClient {
       }
 
       throwIfError(programRunId, urlConn);
+      try (Reader reader = new InputStreamReader(urlConn.getInputStream(), StandardCharsets.UTF_8)) {
+        ProgramRunInfo responseBody = GSON.fromJson(reader, ProgramRunInfo.class);
+        if (responseBody.getProgramRunStatus() == ProgramRunStatus.STOPPING) {
+          // TODO - CDAP-18744 - terminate the program based on the program endtimestamp payload in response body
+        }
+      }
     } finally {
       closeURLConnection(urlConn);
     }
