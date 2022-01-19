@@ -127,6 +127,141 @@ public abstract class AppMetadataStoreTest {
   }
 
   @Test
+  public void testStoppingStatusPersistence() {
+    ApplicationId application = NamespaceId.DEFAULT.app("app");
+    final ProgramId program = application.program(ProgramType.WORKFLOW, "program");
+    final RunId runId = RunIds.generate(runIdTime.incrementAndGet());
+    final ProgramRunId programRunId = program.run(runId);
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore metadataStoreDataset = AppMetadataStore.create(context);
+      recordProgramStopping(runId, programRunId, metadataStoreDataset);
+      RunRecordDetail runRecordMeta = metadataStoreDataset.getRun(programRunId);
+      Assert.assertEquals(ProgramRunStatus.STOPPING, runRecordMeta.getStatus());
+    });
+  }
+
+  @Test
+  public void testStoppingToCompletedStatePersistence() {
+    ApplicationId application = NamespaceId.DEFAULT.app("app");
+    final ProgramId program = application.program(ProgramType.WORKFLOW, "program");
+    final RunId runId = RunIds.generate(runIdTime.incrementAndGet());
+    final ProgramRunId programRunId = program.run(runId);
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore metadataStoreDataset = AppMetadataStore.create(context);
+      recordProgramStopping(runId, programRunId, metadataStoreDataset);
+      metadataStoreDataset.recordProgramStop(programRunId, 0, ProgramRunStatus.COMPLETED, null,
+                                             AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      RunRecordDetail runRecordMeta = metadataStoreDataset.getRun(programRunId);
+      Assert.assertEquals(ProgramRunStatus.COMPLETED, runRecordMeta.getStatus());
+    });
+  }
+
+  @Test
+  public void testStoppingToKilledStatePersistence() {
+    ApplicationId application = NamespaceId.DEFAULT.app("app");
+    final ProgramId program = application.program(ProgramType.WORKFLOW, "program");
+    final RunId runId = RunIds.generate(runIdTime.incrementAndGet());
+    final ProgramRunId programRunId = program.run(runId);
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore metadataStoreDataset = AppMetadataStore.create(context);
+      recordProgramStopping(runId, programRunId, metadataStoreDataset);
+      metadataStoreDataset.recordProgramStop(programRunId, 0, ProgramRunStatus.KILLED, null,
+                                             AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      RunRecordDetail runRecordMeta = metadataStoreDataset.getRun(programRunId);
+      Assert.assertEquals(ProgramRunStatus.KILLED, runRecordMeta.getStatus());
+    });
+  }
+
+  @Test
+  public void testStoppingToFailedStatePersistence() {
+    ApplicationId application = NamespaceId.DEFAULT.app("app");
+    final ProgramId program = application.program(ProgramType.WORKFLOW, "program");
+    final RunId runId = RunIds.generate(runIdTime.incrementAndGet());
+    final ProgramRunId programRunId = program.run(runId);
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore metadataStoreDataset = AppMetadataStore.create(context);
+      recordProgramStopping(runId, programRunId, metadataStoreDataset);
+      metadataStoreDataset.recordProgramStop(programRunId, 0, ProgramRunStatus.FAILED, null,
+                                             AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      RunRecordDetail runRecordMeta = metadataStoreDataset.getRun(programRunId);
+      Assert.assertEquals(ProgramRunStatus.FAILED, runRecordMeta.getStatus());
+    });
+  }
+
+  @Test
+  public void testStoppingToOtherActiveStatesAreIgnored() {
+    ApplicationId application = NamespaceId.DEFAULT.app("app");
+    final ProgramId program = application.program(ProgramType.WORKFLOW, "program");
+    final RunId runId1 = RunIds.generate(runIdTime.incrementAndGet());
+    final ProgramRunId programRunId1 = program.run(runId1);
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore metadataStoreDataset = AppMetadataStore.create(context);
+      recordProgramStopping(runId1, programRunId1, metadataStoreDataset);
+      metadataStoreDataset.recordProgramProvisioning(programRunId1, Collections.emptyMap(), SINGLETON_PROFILE_MAP,
+                                                     AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
+                                                     ARTIFACT_ID);
+      RunRecordDetail runRecordMeta = metadataStoreDataset.getRun(programRunId1);
+      Assert.assertEquals(ProgramRunStatus.STOPPING, runRecordMeta.getStatus());
+    });
+
+    final RunId runId2 = RunIds.generate(runIdTime.incrementAndGet());
+    final ProgramRunId programRunId2 = program.run(runId1);
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore metadataStoreDataset = AppMetadataStore.create(context);
+      recordProgramStopping(runId2, programRunId2, metadataStoreDataset);
+      metadataStoreDataset.recordProgramProvisioned(programRunId2, 0,
+                                                    AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      RunRecordDetail runRecordMeta = metadataStoreDataset.getRun(programRunId2);
+      Assert.assertEquals(ProgramRunStatus.STOPPING, runRecordMeta.getStatus());
+    });
+
+    final RunId runId3 = RunIds.generate(runIdTime.incrementAndGet());
+    final ProgramRunId programRunId3 = program.run(runId1);
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore metadataStoreDataset = AppMetadataStore.create(context);
+      recordProgramStopping(runId3, programRunId3, metadataStoreDataset);
+      metadataStoreDataset.recordProgramRunning(programRunId3, RunIds.getTime(runId1, TimeUnit.SECONDS),
+                                                null,
+                                                AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      RunRecordDetail runRecordMeta = metadataStoreDataset.getRun(programRunId3);
+      Assert.assertEquals(ProgramRunStatus.STOPPING, runRecordMeta.getStatus());
+    });
+  }
+
+  private void recordProgramStopping(RunId runId1, ProgramRunId programRunId1, AppMetadataStore metadataStoreDataset)
+    throws IOException {
+    recordProvisionAndStart(programRunId1, metadataStoreDataset);
+    metadataStoreDataset.recordProgramRunning(programRunId1, RunIds.getTime(runId1, TimeUnit.SECONDS),
+                                              null,
+                                              AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+    metadataStoreDataset.recordProgramStopping(programRunId1,
+                                               AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
+                                               RunIds.getTime(runId1, TimeUnit.SECONDS),
+                                               RunIds.getTime(runId1, TimeUnit.SECONDS) + 1000);
+  }
+
+  @Test
+  public void testValidStoppingStatusPersistence() {
+    ApplicationId application = NamespaceId.DEFAULT.app("app");
+    final ProgramId program = application.program(ProgramType.WORKFLOW, "program");
+    final RunId runId1 = RunIds.generate(runIdTime.incrementAndGet());
+    final ProgramRunId programRunId1 = program.run(runId1);
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore metadataStoreDataset = AppMetadataStore.create(context);
+      recordProvisionAndStart(programRunId1, metadataStoreDataset);
+      metadataStoreDataset.recordProgramRunning(programRunId1, RunIds.getTime(runId1, TimeUnit.SECONDS),
+                                                null,
+                                                AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      metadataStoreDataset.recordProgramStopping(programRunId1,
+                                                 AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
+                                                 RunIds.getTime(runId1, TimeUnit.SECONDS),
+                                                 0);
+      RunRecordDetail runRecordMeta = metadataStoreDataset.getRun(programRunId1);
+      Assert.assertEquals(ProgramRunStatus.STOPPING, runRecordMeta.getStatus());
+    });
+  }
+
+  @Test
   public void testInvalidStatusPersistence() throws Exception {
     ApplicationId application = NamespaceId.DEFAULT.app("app");
     final ProgramId program = application.program(ProgramType.WORKFLOW, "program");
@@ -452,6 +587,19 @@ public abstract class AppMetadataStoreTest {
         store.recordProgramSuspend(runId, AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
                                    System.currentTimeMillis());
 
+        // one run in stopping state
+        runId = programId.run(RunIds.generate());
+        store.recordProgramProvisioning(runId, Collections.emptyMap(), SINGLETON_PROFILE_MAP,
+                                        AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
+        store.recordProgramProvisioned(runId, 3, AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        twillRunId = UUID.randomUUID().toString();
+        store.recordProgramStart(runId, twillRunId, Collections.emptyMap(),
+                                 AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        store.recordProgramRunning(runId, System.currentTimeMillis(), twillRunId,
+                                   AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        store.recordProgramStopping(runId, AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
+                                    System.currentTimeMillis(), System.currentTimeMillis() + 1000);
+
         // one run in each stopped state
         for (ProgramRunStatus runStatus : ProgramRunStatus.values()) {
           if (!runStatus.isEndState()) {
@@ -475,6 +623,7 @@ public abstract class AppMetadataStoreTest {
     activeStates.add(ProgramRunStatus.STARTING);
     activeStates.add(ProgramRunStatus.RUNNING);
     activeStates.add(ProgramRunStatus.SUSPENDED);
+    activeStates.add(ProgramRunStatus.STOPPING);
 
     // test the instance level method and namespace level method
     TransactionRunners.run(transactionRunner, context -> {

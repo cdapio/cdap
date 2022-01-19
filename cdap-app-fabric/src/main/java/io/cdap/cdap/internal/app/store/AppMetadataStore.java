@@ -128,6 +128,7 @@ public class AppMetadataStore {
     .put(ProgramRunStatus.STARTING, TYPE_RUN_RECORD_ACTIVE)
     .put(ProgramRunStatus.RUNNING, TYPE_RUN_RECORD_ACTIVE)
     .put(ProgramRunStatus.SUSPENDED, TYPE_RUN_RECORD_ACTIVE)
+    .put(ProgramRunStatus.STOPPING, TYPE_RUN_RECORD_ACTIVE)
     .put(ProgramRunStatus.COMPLETED, TYPE_RUN_RECORD_COMPLETED)
     .put(ProgramRunStatus.KILLED, TYPE_RUN_RECORD_COMPLETED)
     .put(ProgramRunStatus.FAILED, TYPE_RUN_RECORD_COMPLETED)
@@ -948,6 +949,54 @@ public class AppMetadataStore {
     writeToStructuredTableWithPrimaryKeys(
       key, meta, getRunRecordsTable(), StoreDefinition.AppMetadataStore.RUN_RECORD_DATA);
     LOG.trace("Recorded {} for program {}", toStatus, programRunId);
+    return meta;
+  }
+
+  /**
+   * Logs stopping of a program run and sets the run status to {@link ProgramRunStatus#STOPPING}.
+   * @param programRunId run id of the program
+   * @param sourceId unique id representing the source of program run status, such as the message id of the program
+   *                 run status notification in TMS. The source id must increase as the recording time of the program
+   *                 run status increases, so that the attempt to persist program run status older than the existing
+   *                 program run status will be ignored
+   * @param stoppingTs Timestamp at which stopping of a program was requested
+   * @param stoppingTimeoutTs Future timestamp at which the program is expected to stop. This happens when
+   *                          a graceful timeout value is passed at the time when stopping event is requested
+   * @return {@link RunRecordDetail} that was persisted, or {@code null} if the update was ignored.
+   */
+  @Nullable
+  public RunRecordDetail recordProgramStopping(ProgramRunId programRunId, byte[] sourceId, long stoppingTs,
+                                               long stoppingTimeoutTs) throws IOException {
+    RunRecordDetail existing = getRun(programRunId);
+    if (existing == null) {
+      LOG.warn("Ignoring unexpected transition of program run {} to program state {} with no existing run record.",
+               programRunId, ProgramRunStatus.STOPPING);
+      return null;
+    }
+    if (!isValid(existing, ProgramRunStatus.STOPPING, existing.getCluster().getStatus(), sourceId)) {
+      // Skip recording running if the existing records are not valid
+      return null;
+    }
+    Map<String, String> systemArgs = existing.getSystemArgs();
+    if (systemArgs != null && systemArgs.containsKey(ProgramOptionConstants.WORKFLOW_NAME)) {
+      // Program was started by Workflow. Add row corresponding to its node state.
+      addWorkflowNodeState(programRunId, systemArgs, ProgramRunStatus.STOPPING, null, sourceId);
+    }
+
+    // Delete the old run record
+    delete(existing);
+    List<Field<?>> key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, programRunId, existing.getStartTs());
+
+    // The existing record's properties already contains the workflowRunId
+    RunRecordDetail meta = RunRecordDetail.builder(existing)
+      .setStatus(ProgramRunStatus.STOPPING)
+      .setStoppingTime(stoppingTs)
+      .setStoppingTimeoutTs(stoppingTimeoutTs)
+      .setSourceId(sourceId)
+      .build();
+    writeToStructuredTableWithPrimaryKeys(
+      key, meta, getRunRecordsTable(), StoreDefinition.AppMetadataStore.RUN_RECORD_DATA);
+    LOG.trace("Recorded {} for program {}", ProgramRunStatus.STOPPING, programRunId);
     return meta;
   }
 
