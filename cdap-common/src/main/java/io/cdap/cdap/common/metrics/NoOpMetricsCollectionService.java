@@ -52,6 +52,11 @@ public class NoOpMetricsCollectionService extends AbstractIdleService implements
       }
 
       @Override
+      public void event(String metricName, long value) {
+        // no-op
+      }
+
+      @Override
       public MetricsContext childContext(Map<String, String> tags) {
         return this;
       }
