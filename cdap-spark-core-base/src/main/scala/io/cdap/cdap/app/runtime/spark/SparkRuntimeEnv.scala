@@ -248,6 +248,7 @@ object SparkRuntimeEnv {
     * @return [[scala.Some]] [[org.apache.spark.SparkContext]] if there is a one
     */
   def stop(): Option[SparkContext] = {
+    LOG.info("---Stop inside RuntimeEnv scala class is called---")
     this.synchronized {
       if (!stopped) {
         stopped = true

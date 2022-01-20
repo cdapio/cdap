@@ -86,6 +86,7 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
 
   @Override
   public void run(JavaSparkExecutionContext sec) throws Exception {
+    LOG.info("---Inside run()---");
     DataStreamsPipelineSpec pipelineSpec = GSON.fromJson(sec.getSpecification().getProperty(Constants.PIPELINEID),
                                                          DataStreamsPipelineSpec.class);
 
@@ -101,6 +102,7 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
 
     String checkpointDir = null;
     JavaSparkContext context = null;
+    LOG.info("---checkpointsDisabled - {}, isPreviewEnabled - {}---", checkpointsDisabled, isPreviewEnabled);
     if (!checkpointsDisabled && !isPreviewEnabled) {
       String pipelineName = sec.getApplicationSpecification().getName();
       String configCheckpointDir = pipelineSpec.getCheckpointDirectory();
@@ -167,19 +169,30 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
           String.format("Unable to create checkpoint directory '%s' for the pipeline.", checkpointDir));
       }
     }
-
+    LOG.info("---Getting streaming context---");
     JavaStreamingContext jssc = run(pipelineSpec, pipelinePhase, sec, checkpointDir, context);
-    jssc.start();
-
+    LOG.info("---Streaming context fetched---");
+    try {
+      jssc.start();
+    } catch (Throwable throwable) {
+      LOG.error("---Something went wrong while starting streaming context - {}---", throwable.getCause());
+    } finally {
+      LOG.info("---Inside finally---");
+    }
+    LOG.info("---Streaming context started---");
     boolean stopped = false;
     try {
+      LOG.info("---Will await termination or timeout now---");
       // most programs will just keep running forever.
       // however, when CDAP stops the program, we get an interrupted exception.
       // at that point, we need to call stop on jssc, otherwise the program will hang and never stop.
       stopped = jssc.awaitTerminationOrTimeout(Long.MAX_VALUE);
     } finally {
+      LOG.info("---Boolean value for stopped is {}---", stopped);
       if (!stopped) {
+        LOG.info("---Before spark context is stopped---");
         jssc.stop(true, pipelineSpec.isStopGracefully());
+        LOG.info("---After spark context is stopped---");
       }
     }
 
@@ -190,26 +203,33 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
                                    JavaSparkExecutionContext sec,
                                    @Nullable String checkpointDir,
                                    @Nullable JavaSparkContext context) throws Exception {
-
+    LOG.info("---creating plugin context---");
     PipelinePluginContext pluginContext = new PipelinePluginContext(sec.getPluginContext(), sec.getMetrics(),
                                                                     pipelineSpec.isStageLoggingEnabled(),
                                                                     pipelineSpec.isProcessTimingEnabled());
+    LOG.info("---creating runtime---");
     PipelineRuntime pipelineRuntime = new SparkPipelineRuntime(sec);
+    LOG.info("---creting evaluator---");
     MacroEvaluator evaluator = new DefaultMacroEvaluator(pipelineRuntime.getArguments(),
                                                          sec.getLogicalStartTime(),
                                                          sec.getSecureStore(),
                                                          sec.getServiceDiscoverer(),
                                                          sec.getNamespace());
+    LOG.info("---creating preparer---");
     SparkStreamingPreparer preparer = new SparkStreamingPreparer(pluginContext, sec.getMetrics(), evaluator,
                                                                  pipelineRuntime, sec);
+    LOG.info("---creating recorder---");
     try {
       SparkFieldLineageRecorder recorder = new SparkFieldLineageRecorder(sec, pipelinePhase, pipelineSpec, preparer);
+      LOG.info("---will call record() now---");
       recorder.record();
+      LOG.info("---called record()---");
     } catch (Exception e) {
       LOG.warn("Failed to emit field lineage operations for streaming pipeline", e);
     }
+    LOG.info("---Will fetch uncombinable sinks---");
     Set<String> uncombinableSinks = preparer.getUncombinableSinks();
-
+    LOG.info("---Fetched uncombinable sinks---");
     // the content in the function might not run due to spark checkpointing, currently just have the lineage logic
     // before anything is run
     Function0<JavaStreamingContext> contextFunction = (Function0<JavaStreamingContext>) () -> {
@@ -232,15 +252,19 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
         runner.runPipeline(phaseSpec, StreamingSource.PLUGIN_TYPE, sec, Collections.emptyMap(),
                            pluginContext, Collections.emptyMap(), uncombinableSinks, shouldConsolidateStages,
                            shouldCacheFunctions);
+        LOG.info("---Ran pipeline---");
       } catch (Exception e) {
+        LOG.info("---Some exception---");
         throw new RuntimeException(e);
       }
       if (checkpointDir != null) {
         jssc.checkpoint(checkpointDir);
         jssc.sparkContext().hadoopConfiguration().set("fs.defaultFS", checkpointDir);
       }
+      LOG.info("---returning jssc---");
       return jssc;
     };
+    LOG.info("---Returning before tertiary operator. Checkpoint dir value - {}---", checkpointDir);
     return checkpointDir == null
       ? contextFunction.call()
       : JavaStreamingContext.getOrCreate(checkpointDir, contextFunction, context.hadoopConfiguration());

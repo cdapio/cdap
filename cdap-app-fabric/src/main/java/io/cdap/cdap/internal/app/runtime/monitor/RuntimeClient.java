@@ -50,6 +50,9 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.function.Consumer;
 import java.util.zip.GZIPOutputStream;
 import javax.ws.rs.core.MediaType;
 
@@ -63,6 +66,7 @@ public class RuntimeClient {
 
   private final boolean compression;
   private final RemoteClient remoteClient;
+  private CompletableFuture<Boolean> future;
 
   @Inject
   public RuntimeClient(CConfiguration cConf, RemoteClientFactory remoteClientFactory) {
@@ -81,6 +85,7 @@ public class RuntimeClient {
     if (schema.getType() != Schema.Type.ARRAY || schema.getElementType().getType() != Schema.Type.BYTES) {
       throw new IllegalStateException("MonitorRequest schema should be an array of bytes");
     }
+    this.future = new CompletableFuture<>();
   }
 
   /**
@@ -122,12 +127,27 @@ public class RuntimeClient {
       try (Reader reader = new InputStreamReader(urlConn.getInputStream(), StandardCharsets.UTF_8)) {
         ProgramRunInfo responseBody = GSON.fromJson(reader, ProgramRunInfo.class);
         if (responseBody.getProgramRunStatus() == ProgramRunStatus.STOPPING) {
-          // TODO - CDAP-18744 - terminate the program based on the program endtimestamp payload in response body
+          // this will trigger controller.stop() in DefaultRuntimeJob
+          future.complete(true);
         }
       }
     } finally {
       closeURLConnection(urlConn);
     }
+  }
+
+  /**
+   * Accepts a consumer that runs in a daemon thread
+   * The consumer is intended to be programController.stop() which stops the program on the client side
+   * @param stopper Consumer that runs in a daemon thread
+   */
+  public void acceptStopProgramCommandAsync(Consumer<Boolean> stopper) {
+    future.thenAcceptAsync(stopper,
+                           command -> {
+                             Thread t = new Thread(command, "stop-program");
+                             t.setDaemon(true);
+                             t.start();
+                           });
   }
 
   /**

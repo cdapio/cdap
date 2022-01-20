@@ -57,6 +57,7 @@ import java.util.Map;
 import java.util.Spliterators;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -142,6 +143,10 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
   @VisibleForTesting
   long getProgramFinishTime() {
     return programFinishTime;
+  }
+
+  public void acceptStopProgramCommandAsync(Consumer<Boolean> stopper) {
+    runtimeClient.acceptStopProgramCommandAsync(stopper);
   }
 
   /**
