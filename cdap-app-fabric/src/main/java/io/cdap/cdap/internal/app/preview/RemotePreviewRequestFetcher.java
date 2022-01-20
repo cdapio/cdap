@@ -24,11 +24,11 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -62,6 +62,10 @@ public class RemotePreviewRequestFetcher implements PreviewRequestFetcher {
     HttpResponse httpResponse = remoteClientInternal.execute(request);
     if (httpResponse.getResponseCode() == 200) {
       PreviewRequest previewRequest = GSON.fromJson(httpResponse.getResponseBodyAsString(), PreviewRequest.class);
+      if (previewRequest != null && previewRequest.getPrincipal() != null) {
+        SecurityRequestContext.setUserId(previewRequest.getPrincipal().getName());
+        SecurityRequestContext.setUserCredential(previewRequest.getPrincipal().getFullCredential());
+      }
       return Optional.ofNullable(previewRequest);
     }
     throw new IOException(String.format("Received status code:%s and body: %s", httpResponse.getResponseCode(),

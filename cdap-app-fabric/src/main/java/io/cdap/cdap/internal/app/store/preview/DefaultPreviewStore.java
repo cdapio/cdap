@@ -45,10 +45,10 @@ import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.security.Principal;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,7 +82,7 @@ public class DefaultPreviewStore implements PreviewStore {
   private static final byte[] WAITING = Bytes.toBytes("w");
   private static final byte[] CONFIG = Bytes.toBytes("c");
   private static final byte[] APPID = Bytes.toBytes("a");
-
+  private static final byte[] PRINCIPAL = Bytes.toBytes("p");
 
   private final AtomicLong counter = new AtomicLong(0L);
 
@@ -233,7 +233,7 @@ public class DefaultPreviewStore implements PreviewStore {
   }
 
   @Override
-  public void add(ApplicationId applicationId, AppRequest appRequest) {
+  public void add(ApplicationId applicationId, AppRequest appRequest, @Nullable Principal principal) {
     // PreviewStore is a singleton and we have to create gson for each operation since gson is not thread safe.
     Gson gson = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
     long timeInSeconds = RunIds.getTime(applicationId.getApplication(), TimeUnit.SECONDS);
@@ -247,6 +247,7 @@ public class DefaultPreviewStore implements PreviewStore {
     try {
       previewQueueTable.putDefaultVersion(mdsKey.getKey(), APPID, Bytes.toBytes(gson.toJson(applicationId)));
       previewQueueTable.putDefaultVersion(mdsKey.getKey(), CONFIG, Bytes.toBytes(gson.toJson(appRequest)));
+      previewQueueTable.putDefaultVersion(mdsKey.getKey(), PRINCIPAL, Bytes.toBytes(gson.toJson(principal)));
       long submitTimeInMillis = RunIds.getTime(applicationId.getApplication(), TimeUnit.MILLISECONDS);
       setPreviewStatus(applicationId, new PreviewStatus(PreviewStatus.Status.WAITING, submitTimeInMillis, null, null,
                                                         null));
@@ -270,6 +271,7 @@ public class DefaultPreviewStore implements PreviewStore {
     try {
       previewQueueTable.deleteDefaultVersion(mdsKey.getKey(), APPID);
       previewQueueTable.deleteDefaultVersion(mdsKey.getKey(), CONFIG);
+      previewQueueTable.deleteDefaultVersion(mdsKey.getKey(), PRINCIPAL);
     } catch (IOException e) {
       throw new RuntimeException(String.format("Failed to remove application with id %s from waiting queue.",
                                                applicationId), e);
@@ -290,7 +292,8 @@ public class DefaultPreviewStore implements PreviewStore {
         Map<byte[], byte[]> columns = indexRow.getColumns();
         AppRequest request = gson.fromJson(Bytes.toString(columns.get(CONFIG)), AppRequest.class);
         ApplicationId applicationId = gson.fromJson(Bytes.toString(columns.get(APPID)), ApplicationId.class);
-        result.add(new PreviewRequest(applicationId, request));
+        Principal principal = gson.fromJson(Bytes.toString(columns.get(PRINCIPAL)), Principal.class);
+        result.add(new PreviewRequest(applicationId, request, principal));
       }
     } catch (IOException e) {
       throw new RuntimeException("Error while listing the waiting preview requests.", e);

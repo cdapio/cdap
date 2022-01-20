@@ -209,7 +209,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     ApplicationId previewApp = namespace.app(RunIds.generate().getId());
     accessEnforcer.enforce(previewApp, authenticationContext.getPrincipal(), ApplicationPermission.PREVIEW);
     ProgramId programId = getProgramIdFromRequest(previewApp, appRequest);
-    PreviewRequest previewRequest = new PreviewRequest(programId, appRequest);
+    PreviewRequest previewRequest = new PreviewRequest(programId, appRequest, authenticationContext.getPrincipal());
 
     if (state() != State.RUNNING) {
       throw new IllegalStateException("Preview service is not running. Cannot start preview for " + programId);
