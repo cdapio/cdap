@@ -249,6 +249,11 @@ public abstract class AggregatedMetricsCollectionService extends AbstractExecuti
     }
 
     @Override
+    public void event(String metricName, long value) {
+      emitters.getUnchecked(tags).getUnchecked(metricName).event(value);
+    }
+
+    @Override
     public MetricsContext childContext(Map<String, String> tags) {
       if (tags.isEmpty()) {
         return this;

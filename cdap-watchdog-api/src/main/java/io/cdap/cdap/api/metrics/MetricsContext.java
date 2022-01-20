@@ -38,4 +38,12 @@ public interface MetricsContext extends MetricsCollector {
    * @return tags that identify the context.
    */
   Map<String, String> getTags();
+
+  /**
+   * Capture an event metric. Typically useful
+   * for high frequency metrics Ex. API response times.
+   * @param metricName name of the metric
+   * @param value corresponding value
+   */
+  void event(String metricName, long value);
 }

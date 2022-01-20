@@ -193,4 +193,9 @@ public class LogProcessorPipelineContext implements Flushable, Syncable, Metrics
   public void gauge(String metricName, long value) {
     metricsContext.gauge(String.format("%s.%s", metricsPrefix, metricName), value);
   }
+
+  @Override
+  public void event(String metricName, long value) {
+    metricsContext.event(String.format("%s.%s", metricsPrefix, metricName), value);
+  }
 }
