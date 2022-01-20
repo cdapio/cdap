@@ -396,6 +396,21 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         recordedRunRecord = appMetadataStore.recordProgramResumed(programRunId, messageIdBytes, resumeTime);
         writeToHeartBeatTable(recordedRunRecord, resumeTime, programHeartbeatTable);
         break;
+      case STOPPING:
+        long stoppingTimestamp = getTimeSeconds(notification.getProperties(), ProgramOptionConstants.STOPPING_TIME);
+        if (stoppingTimestamp == -1) {
+          LOG.warn("Ignore program stopping notification for program {} without {} specified, {}",
+                   programRunId, ProgramOptionConstants.STOPPING_TIME, notification);
+          return;
+        }
+        long gracefulShutdownPeriod = getTimeSeconds(notification.getProperties(), ProgramOptionConstants.GRACEFUL_SHUTDOWN_PERIOD_IN_SECS);
+        // if graceful shutdown timeout period is not specified then wait until program finishes on its own by setting
+        // the timeout timestamp to a very large value.
+        // If not, calculate the timestamp at which the program is to be killed
+        long stoppingTimeoutTs = gracefulShutdownPeriod == -1 ? Long.MAX_VALUE : (stoppingTimestamp + gracefulShutdownPeriod);
+        recordedRunRecord = appMetadataStore.recordProgramStopping(programRunId, messageIdBytes, stoppingTimestamp, stoppingTimeoutTs);
+        writeToHeartBeatTable(recordedRunRecord, stoppingTimestamp, programHeartbeatTable);
+        break;
       case COMPLETED:
       case KILLED:
       case FAILED:
