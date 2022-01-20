@@ -31,12 +31,15 @@ import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
+import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -45,6 +48,8 @@ import javax.inject.Inject;
  * An implementation of ProgramStateWriter that publishes program status events to TMS
  */
 public final class MessagingProgramStateWriter implements ProgramStateWriter {
+
+  private static final Logger LOG = LoggerFactory.getLogger(MessagingProgramStateWriter.class);
 
   private static final Gson GSON =
     ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
@@ -134,6 +139,7 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
   @Override
   public void reject(ProgramRunId programRunId, ProgramOptions programOptions,
                      ProgramDescriptor programDescriptor, String userId, Throwable cause) {
+    printStackTrace();
     ImmutableMap.Builder<String, String> properties = ImmutableMap.<String, String>builder()
       .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
       .put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(programOptions.getUserArguments().asMap()))
@@ -146,6 +152,7 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
   }
 
   private void stop(ProgramRunId programRunId, ProgramRunStatus runStatus, @Nullable Throwable cause) {
+    printStackTrace();
     ImmutableMap.Builder<String, String> properties = ImmutableMap.<String, String>builder()
       .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
       .put(ProgramOptionConstants.END_TIME, String.valueOf(System.currentTimeMillis()))
@@ -156,4 +163,11 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
     programStatePublisher.publish(Notification.Type.PROGRAM_STATUS, properties.build());
   }
 
+  private void printStackTrace() {
+    try {
+      throw new Exception("Call print stack trace");
+    } catch (Exception ex) {
+      LOG.error(">>>> CALL", ex);
+    }
+  }
 }
