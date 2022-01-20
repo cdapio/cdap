@@ -69,7 +69,7 @@ public final class ProgramOptionConstants {
 
   public static final String STOPPING_TIME = "stoppingTime";
 
-  public static final String GRACEFUL_SHUTDOWN_PERIOD_IN_SECS = "gracefulShutdownPeriod";
+  public static final String TERMINATE_TIME = "terminateTime";
 
   public static final String PROGRAM_NAME_IN_WORKFLOW = "programNameInWorkflow";
 

@@ -37,6 +37,11 @@ public class NoOpProgramStateWriter implements ProgramStateWriter {
   }
 
   @Override
+  public void stop(ProgramRunId programRunId, int gracefulShutdownSecs) {
+    // no-op
+  }
+
+  @Override
   public void completed(ProgramRunId programRunId) {
     // no-op
   }

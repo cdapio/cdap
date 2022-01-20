@@ -381,6 +381,28 @@ public class ProgramNotificationSubscriberServiceTest {
     });
     checkProgramStatus(artifactId, runId2, ProgramRunStatus.COMPLETED);
     heartbeatDatasetStatusCheck(stopTime, ProgramRunStatus.COMPLETED);
+
+    ProgramRunId runId3 = programId.run(RunIds.generate());
+    TransactionRunners.run(transactionRunner, context -> {
+      programStateWriter.start(runId3, programOptions, null, programDescriptor);
+    });
+    checkProgramStatus(artifactId, runId3, ProgramRunStatus.STARTING);
+    startTime = System.currentTimeMillis();
+    TransactionRunners.run(transactionRunner, context -> {
+      programStateWriter.running(runId3, null);
+    });
+
+    // perform scan on heart beat store - ensure latest message notification is running
+    checkProgramStatus(artifactId, runId3, ProgramRunStatus.RUNNING);
+    heartbeatDatasetStatusCheck(startTime, ProgramRunStatus.RUNNING);
+    // completed status check
+    stopTime = System.currentTimeMillis();
+
+    TransactionRunners.run(transactionRunner, context -> {
+      programStateWriter.stop(runId3, 10);
+    });
+    checkProgramStatus(artifactId, runId3, ProgramRunStatus.STOPPING);
+    heartbeatDatasetStatusCheck(stopTime, ProgramRunStatus.STOPPING);
   }
 
   private void checkProgramStatus(ArtifactId artifactId, ProgramRunId runId, ProgramRunStatus expectedStatus)

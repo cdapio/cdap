@@ -38,6 +38,7 @@ import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 
@@ -93,6 +94,18 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
       properties.put(ProgramOptionConstants.TWILL_RUN_ID, twillRunId);
     }
     programStatePublisher.publish(Notification.Type.PROGRAM_STATUS, properties.build());
+  }
+
+  @Override
+  public void stop(ProgramRunId programRunId, int gracefulShutdownSecs) {
+    long stoppingTs = System.currentTimeMillis();
+    long terminateTs = stoppingTs + TimeUnit.SECONDS.toMillis(gracefulShutdownSecs);
+    ImmutableMap<String, String> properties = ImmutableMap.<String, String>builder()
+      .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
+      .put(ProgramOptionConstants.STOPPING_TIME, String.valueOf(stoppingTs))
+      .put(ProgramOptionConstants.TERMINATE_TIME, String.valueOf(terminateTs))
+      .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.STOPPING.name()).build();
+    programStatePublisher.publish(Notification.Type.PROGRAM_STATUS, properties);
   }
 
   @Override
