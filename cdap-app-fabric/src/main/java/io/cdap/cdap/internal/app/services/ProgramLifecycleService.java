@@ -874,6 +874,112 @@ public class ProgramLifecycleService {
   }
 
   /**
+   * TODO Add doc
+   * @param programId
+   * @param gracefulShutdownSecs
+   * @param runId
+   * @return
+   * @throws BadRequestException
+   * @throws NotFoundException
+   * @throws IOException
+   * @throws InterruptedException
+   */
+  public List<ProgramRunId> publishStoppingToTms(ProgramId programId, int gracefulShutdownSecs,
+                                                                   @Nullable String runId)
+    throws BadRequestException, NotFoundException, IOException, InterruptedException {
+    accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), ApplicationPermission.EXECUTE);
+    // See if the program is running as per the runtime service
+    Map<RunId, RuntimeInfo> runtimeInfos = findRuntimeInfo(programId, runId);
+    Map<ProgramRunId, RunRecordDetail> activeRunRecords = getActiveRuns(programId, runId);
+    if (runtimeInfos.isEmpty() && activeRunRecords.isEmpty()) {
+      // Error out if no run information from runtime service and from run record
+      Store.ensureProgramExists(programId, store.getApplication(programId.getParent()));
+      throw new BadRequestException(String.format("Program '%s' is not running.", programId));
+    }
+    // Stop the running program based on a combination of runtime info and run record
+    // It's possible that some of them are not yet available from the runtimeService due to timing
+    // differences between the run record was created vs being added to runtimeService
+    // So we retry in a loop for up to 3 seconds max to cater for those cases
+    Set<String> pendingStops = Stream.concat(runtimeInfos.keySet().stream().map(RunId::getId),
+                                             activeRunRecords.keySet().stream().map(ProgramRunId::getRun))
+      .collect(Collectors.toSet());
+    List<ProgramRunId> programRunIds = new ArrayList<>();
+    Stopwatch stopwatch = new Stopwatch().start();
+    Set<ProgramRunId> cancelledProgramRunIds = new HashSet<>();
+    while (!pendingStops.isEmpty() && stopwatch.elapsedTime(TimeUnit.SECONDS) < 3L) {
+      Iterator<String> iterator = pendingStops.iterator();
+      while (iterator.hasNext()) {
+        ProgramRunId activeRunId = programId.run(iterator.next());
+        RunRecordDetail runRecord = activeRunRecords.get(activeRunId);
+        if (runRecord == null) {
+          runRecord = store.getRun(activeRunId);
+        }
+        // Check if the program is actually started from workflow and the workflow is running
+        if (runRecord != null && runRecord.getProperties().containsKey("workflowrunid")
+          && runRecord.getStatus().equals(ProgramRunStatus.RUNNING)) {
+          String workflowRunId = runRecord.getProperties().get("workflowrunid");
+          throw new BadRequestException(String.format("Cannot stop the program '%s' started by the Workflow " +
+                                                        "run '%s'. Please stop the Workflow.", activeRunId,
+                                                      workflowRunId));
+        }
+        RuntimeInfo runtimeInfo = runtimeService.lookup(programId, RunIds.fromString(activeRunId.getRun()));
+        // if there is a runtimeInfo, the run is in the 'starting' state or later
+        if (runtimeInfo != null) {
+          programStateWriter.stop(runtimeInfo.getController().getProgramRunId(), gracefulShutdownSecs);
+          iterator.remove();
+          // if it was in this set, it means we cancelled a task, but it had already sent a PROVISIONED message
+          // by the time we cancelled it. We then waited for it to show up in the runtime service and got here.
+          // We added a future for this run in the lines above, but we don't want to add another duplicate future
+          // at the end of this loop, so remove this run from the cancelled provision runs.
+          cancelledProgramRunIds.remove(activeRunId);
+        } else {
+          // if there is no runtimeInfo, the run could be in the provisioning state.
+          Optional<ProvisioningTaskInfo> cancelledInfo = provisioningService.cancelProvisionTask(activeRunId);
+          cancelledInfo.ifPresent(taskInfo -> {
+            cancelledProgramRunIds.add(activeRunId);
+            // This state check is to handle a race condition where we cancel the provision task, but not in time
+            // to prevent it from sending the PROVISIONED notification.
+
+            // If the notification was sent, but not yet consumed, we are *not* done stopping the run.
+            // We have to wait for the notification to be consumed, which will start the run, and place the controller
+            // in the runtimeService. The next time we loop, we can find it in the runtimeService and tell it to stop.
+            // If the notification was not sent, then we *are* done stopping the run.
+
+            // Therefore, if the state is CREATED, we don't remove it from the iterator so that the run will get
+            // checked again in the next loop, when we may get the controller from the runtimeService to stop it.
+
+            // No other task states have this race condition, as the PROVISIONED notification is only sent
+            // after the state transitions to CREATED. Therefore, it is safe to remove the runId from the iterator,
+            // as we know we are done stopping it.
+            ProvisioningOp.Status taskState = taskInfo.getProvisioningOp().getStatus();
+            if (taskState != ProvisioningOp.Status.CREATED) {
+              iterator.remove();
+            }
+          });
+        }
+      }
+      if (!pendingStops.isEmpty()) {
+        // If not able to stop all of them, it means there were some runs that didn't have a runtime info and
+        // didn't have a provisioning task. This can happen if the run was already finished, or the run transitioned
+        // from the provisioning state to the starting state during this stop operation.
+        // We'll get the active runs again and filter it by the pending stops. Stop will be retried for those.
+        Set<String> finalPendingStops = pendingStops;
+
+        activeRunRecords = getActiveRuns(programId, runId).entrySet().stream()
+          .filter(e -> finalPendingStops.contains(e.getKey().getRun()))
+          .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        pendingStops = activeRunRecords.keySet().stream().map(ProgramRunId::getRun).collect(Collectors.toSet());
+
+        if (!pendingStops.isEmpty()) {
+          TimeUnit.MILLISECONDS.sleep(200);
+        }
+      }
+    }
+    programRunIds.addAll(cancelledProgramRunIds);
+    return programRunIds;
+  }
+
+  /**
    * Save runtime arguments for all future runs of this program. The runtime arguments are saved in the
    * {@link PreferencesService}.
    *

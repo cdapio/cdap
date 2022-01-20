@@ -166,6 +166,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
   private final CompletableFuture<ProgramController> controllerFuture = new CompletableFuture<>();
   private final CountDownLatch runCompletedLatch = new CountDownLatch(1);
   private volatile boolean stopRequested;
+  private RuntimeClientService runtimeClientService;
 
   @Override
   public void run(RuntimeJobEnvironment runtimeJobEnv) throws Exception {
@@ -256,7 +257,6 @@ public class DefaultRuntimeJob implements RuntimeJob {
     }
 
     ProgramStateWriter programStateWriter = injector.getInstance(ProgramStateWriter.class);
-    RuntimeClientService runtimeClientService = injector.getInstance(RuntimeClientService.class);
     CompletableFuture<ProgramController.State> programCompletion = new CompletableFuture<>();
     try {
       ProgramRunner programRunner = injector.getInstance(ProgramRunnerFactory.class).create(programId.getType());
@@ -517,7 +517,8 @@ public class DefaultRuntimeJob implements RuntimeJob {
     if (injector.getInstance(RuntimeMonitorType.class) == RuntimeMonitorType.SSH) {
       services.add(injector.getInstance(TrafficRelayService.class));
     }
-    services.add(injector.getInstance(RuntimeClientService.class));
+    runtimeClientService = injector.getInstance(RuntimeClientService.class);
+    services.add(runtimeClientService);
 
     // Creates a service to emit profile metrics
     ProgramRunId programRunId = injector.getInstance(ProgramRunId.class);

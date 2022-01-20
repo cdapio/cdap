@@ -17,13 +17,10 @@
 package io.cdap.cdap.gateway.handlers;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -298,11 +295,25 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("app-id") String appId,
                                   @PathParam("program-type") String type,
                                   @PathParam("program-id") String programId,
-                                  @PathParam("run-id") String runId) throws Exception {
+                                  @PathParam("run-id") String runId,
+                                  @QueryParam("graceful") String gracefulShutdownSecs) throws Exception {
     ProgramType programType = getProgramType(type);
     ProgramId program = new ProgramId(namespaceId, appId, programType, programId);
-    lifecycleService.stop(program, runId);
-    responder.sendStatus(HttpResponseStatus.OK);
+    int gracefulShutdownSecsInt;
+    try {
+      gracefulShutdownSecsInt = validateAndGetGracefulShutdownSecsInt(gracefulShutdownSecs);
+    } catch (IllegalArgumentException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+      return;
+    }
+    try {
+      lifecycleService.publishStoppingToTms(program, gracefulShutdownSecsInt, runId);
+      responder.sendStatus(HttpResponseStatus.ACCEPTED);
+    } catch (NotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
+    } catch (BadRequestException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    }
   }
 
   @POST
@@ -1271,46 +1282,53 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/stop")
   @AuditPolicy({AuditDetail.REQUEST_BODY, AuditDetail.RESPONSE_BODY})
   public void stopPrograms(FullHttpRequest request, HttpResponder responder,
-                           @PathParam("namespace-id") String namespaceId) throws Exception {
-
+                           @PathParam("namespace-id") String namespaceId,
+                           @QueryParam("graceful") String gracefulShutdownSecs) throws Exception {
+    LOG.info("Stopping all programs in namespace {}", namespaceId);
+    int gracefulShutdownSecsInt;
+    try {
+      gracefulShutdownSecsInt = validateAndGetGracefulShutdownSecsInt(gracefulShutdownSecs);
+    } catch (IllegalArgumentException e) {
+      responder.sendJson(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+      return;
+    }
     List<BatchProgram> programs = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
-
-    List<ListenableFuture<BatchProgramResult>> issuedStops = new ArrayList<>(programs.size());
+    List<BatchProgramResult> output = new ArrayList<>(programs.size());
     for (final BatchProgram program : programs) {
       ProgramId programId = new ProgramId(namespaceId, program.getAppId(), program.getProgramType(),
-                                         program.getProgramId());
+                                          program.getProgramId());
       try {
-        List<ListenableFuture<ProgramRunId>> stops = lifecycleService.issueStop(programId, null);
-        for (ListenableFuture<ProgramRunId> stop : stops) {
-          ListenableFuture<BatchProgramResult> issuedStop =
-            Futures.transform(stop, (Function<ProgramRunId, BatchProgramResult>) input ->
-              new BatchProgramResult(program, HttpResponseStatus.OK.code(), null, input.getRun()));
-          issuedStops.add(issuedStop);
+        List<ProgramRunId> stops = lifecycleService.publishStoppingToTms(programId, gracefulShutdownSecsInt, null);
+        for (ProgramRunId stop : stops) {
+          output.add(new BatchProgramResult(program, HttpResponseStatus.ACCEPTED.code(), null, stop.getRun()));
         }
       } catch (NotFoundException e) {
-        issuedStops.add(Futures.immediateFuture(
-          new BatchProgramResult(program, HttpResponseStatus.NOT_FOUND.code(), e.getMessage())));
+        output.add(new BatchProgramResult(program, HttpResponseStatus.NOT_FOUND.code(), e.getMessage()));
       } catch (BadRequestException e) {
-        issuedStops.add(Futures.immediateFuture(
-          new BatchProgramResult(program, HttpResponseStatus.BAD_REQUEST.code(), e.getMessage())));
+        output.add(new BatchProgramResult(program, HttpResponseStatus.BAD_REQUEST.code(), e.getMessage()));
       }
     }
+    LOG.info("---Output - {}---", output);
+    responder.sendJson(HttpResponseStatus.ACCEPTED, GSON.toJson(output));
+  }
 
-    List<BatchProgramResult> output = new ArrayList<>(programs.size());
-    // need to keep this index in case there is an exception getting the future, since we won't have the program
-    // information in that scenario
-    int i = 0;
-    for (ListenableFuture<BatchProgramResult> issuedStop : issuedStops) {
-      try {
-        output.add(issuedStop.get());
-      } catch (Throwable t) {
-        LOG.warn(t.getMessage(), t);
-        output.add(new BatchProgramResult(programs.get(i), HttpResponseStatus.INTERNAL_SERVER_ERROR.code(),
-                                          t.getMessage()));
+  private int validateAndGetGracefulShutdownSecsInt(String gracefulShutdownSecs) {
+    try {
+      if (gracefulShutdownSecs == null || gracefulShutdownSecs.isEmpty()) {
+        return Integer.parseInt(String.valueOf(Integer.MAX_VALUE));
       }
-      i++;
+      int gracefulShutdownSecsInt = Integer.parseInt(gracefulShutdownSecs);
+      if (gracefulShutdownSecsInt < 0) {
+        throw new IllegalArgumentException(String.format("Invalid graceful shutdown period %s passed. " +
+                                                           "Please specify a value greater than or equal to 0.",
+                                                         gracefulShutdownSecs));
+      }
+      return gracefulShutdownSecsInt;
+    } catch (NumberFormatException e) {
+      LOG.error("Invalid graceful shutdown period %s passed.");
+      throw new IllegalArgumentException(String.format("Invalid graceful shutdown period %s passed. " +
+                                                         "Please specify a valid number", gracefulShutdownSecs));
     }
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(output));
   }
 
   /**

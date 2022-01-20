@@ -92,6 +92,11 @@ public class ProgramStateWriterWithHeartBeat {
     scheduleHeartBeatThread();
   }
 
+  public void stop(int gracefulShutdownSecs) {
+    programStateWriter.stop(programRunId, gracefulShutdownSecs);
+    scheduleHeartBeatThread();
+  }
+
   public void completed() {
     stopHeartbeatThread();
     programStateWriter.completed(programRunId);
