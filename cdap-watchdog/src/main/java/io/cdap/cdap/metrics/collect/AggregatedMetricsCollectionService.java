@@ -190,6 +190,10 @@ public abstract class AggregatedMetricsCollectionService extends AbstractExecuti
             if (metricValue.getType() == MetricType.COUNTER && metricValue.getValue() == 0) {
               continue;
             }
+            if (metricValue.getType() == MetricType.DISTRIBUTION && metricValue.getBucketCounts().length == 0) {
+              continue;
+            }
+
             metricValues.add(metricValue);
           }
 
