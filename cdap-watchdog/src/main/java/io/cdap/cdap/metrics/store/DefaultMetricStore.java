@@ -256,6 +256,11 @@ public class DefaultMetricStore implements MetricStore {
       // todo improve this logic?
       for (MetricValue metric : metricValue.getMetrics()) {
         String measureName = (scope == null ? "system." : scope + ".") + metric.getName();
+        if (metric.getType() == MetricType.DISTRIBUTION) {
+          // TODO save distribution as multiple count metrics
+          // https://cdap.atlassian.net/browse/CDAP-18769
+          continue;
+        }
         MeasureType type = metric.getType() == MetricType.COUNTER ? MeasureType.COUNTER : MeasureType.GAUGE;
         metrics.add(new Measurement(measureName, type, metric.getValue()));
       }
