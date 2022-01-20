@@ -15,19 +15,68 @@
  */
 package io.cdap.cdap.api.metrics;
 
+import java.util.Arrays;
+
 /**
  * Carries the "raw" emitted metric data point: metric name, type, and value
  */
 public class MetricValue {
 
-  private String name;
-  private MetricType type;
-  private long value;
+  private final String name;
+  private final MetricType type;
+  private final long value;
+
+  // following fields to support distribution aka histogram/event metrics
+  /**
+   * Exponential rate at which bucket boundaries grow.
+   * If X is the growth facotr, bucket boundaries will 0-X^0 (i.e. 1),
+   * X^0-X, X-X^2, X^2-X^3, X^3-X^4.
+   */
+  public static final int GROWTH_FACTOR = 2;
+
+  /**
+   * Total buckets = NUM_FINITE_BUCKETS +2 which will be 64. A long number
+   * maybe used as a mask to indicate which buckets have non zero bucket counts
+   */
+  public static final int NUM_FINITE_BUCKETS = 62;
+
+  /**
+   * bucketCounts stores counts of buckets with non zero values.
+   */
+  private final long[] bucketCounts;
+
+  /**
+   * Most of the buckets have zero counts. For efficiency, bucketCounts only
+   * stores non zero bucket count values. The bucketMask stores which
+   * buckets have non-zero bucketCounts.
+   */
+  private final long bucketMask;
+
+  /**
+   * Sum of all the values. If count is zero then this field must be zero.
+   */
+  private final double sum;
 
   public MetricValue (String name, MetricType type, long value) {
+    if (!(type == MetricType.GAUGE || type == MetricType.COUNTER)) {
+      throw new IllegalArgumentException("long value allowed only for GAUGE or COUNTER metrics");
+    }
     this.name = name;
     this.type = type;
     this.value = value;
+    sum = 0;
+    bucketMask = 0;
+    bucketCounts = null;
+  }
+
+  public MetricValue(String name, long[] bucketCounts, long bucketMask,
+                     double sum, double sumOfSquaredDeviation) {
+    this.name = name;
+    this.bucketMask = bucketMask;
+    this.sum = sum;
+    this.type = MetricType.DISTRIBUTION;
+    this.bucketCounts = bucketCounts;
+    value = 0;
   }
 
   public String getName() {
@@ -44,10 +93,41 @@ public class MetricValue {
 
   @Override
   public String toString() {
-    return "MetricValue{" +
-      "name='" + name + '\'' +
-      ", type=" + type +
-      ", value=" + value +
-      '}';
+    if (type != MetricType.DISTRIBUTION) {
+      return "MetricValue{" +
+              "name='" + name + '\'' +
+              ", type=" + type +
+              ", value=" + value +
+              '}';
+    } else {
+      return "MetricValue{" +
+              "name='" + name + '\'' +
+              ", type=" + type +
+              ", sum=" + sum +
+              ", bucketMask=" + bucketMask +
+              ", bucketCounts=" + Arrays.toString(bucketCounts) +
+              '}';
+    }
+  }
+
+  public long[] getBucketCounts() {
+    return bucketCounts;
+  }
+
+  /**
+   * @return Counts for all buckets including buckets with zero counts.
+   * Helper function to publish the distribution metric to other systems such as Cloud Monitoring
+   */
+  public long[] getAllBucketCounts() {
+    // TODO Move to helper class if serialization uses get methods
+    throw new UnsupportedOperationException();
+  }
+
+  public long getBucketMask() {
+    return bucketMask;
+  }
+
+  public double getSum() {
+    return sum;
   }
 }
