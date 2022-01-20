@@ -50,6 +50,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.zip.GZIPOutputStream;
 import javax.ws.rs.core.MediaType;
 
@@ -63,6 +64,7 @@ public class RuntimeClient {
 
   private final boolean compression;
   private final RemoteClient remoteClient;
+  private final CompletableFuture<Void> stopFuture;
 
   @Inject
   public RuntimeClient(CConfiguration cConf, RemoteClientFactory remoteClientFactory) {
@@ -81,6 +83,7 @@ public class RuntimeClient {
     if (schema.getType() != Schema.Type.ARRAY || schema.getElementType().getType() != Schema.Type.BYTES) {
       throw new IllegalStateException("MonitorRequest schema should be an array of bytes");
     }
+    this.stopFuture = new CompletableFuture<>();
   }
 
   /**
@@ -122,12 +125,25 @@ public class RuntimeClient {
       try (Reader reader = new InputStreamReader(urlConn.getInputStream(), StandardCharsets.UTF_8)) {
         ProgramRunInfo responseBody = GSON.fromJson(reader, ProgramRunInfo.class);
         if (responseBody.getProgramRunStatus() == ProgramRunStatus.STOPPING) {
-          // TODO - CDAP-18744 - terminate the program based on the program endtimestamp payload in response body
+          stopFuture.complete(null);
         }
       }
     } finally {
       closeURLConnection(urlConn);
     }
+  }
+
+  /**
+   * Accepts a runnable that runs in a daemon thread
+   * @param stopper Runnable that runs in a daemon thread
+   */
+  public void onProgramStopRequested(Runnable stopper) {
+    stopFuture.thenRunAsync(stopper,
+                           command -> {
+                             Thread t = new Thread(command, "stop-program");
+                             t.setDaemon(true);
+                             t.start();
+                           });
   }
 
   /**
