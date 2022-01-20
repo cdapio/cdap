@@ -121,6 +121,24 @@
       "label": "Master Nodes",
       "properties": [
         {
+          "widget-type": "toggle",
+          "label": "Use prefined Dataproc AutoScaling by CDF",
+          "name": "enableCdfAutoScaling",
+          "description": "Defines whether the Dataproc auto scaling with predefined Auto-Scaling policy by CDF  will be enabled",
+          "widget-attributes": {
+            "default": "false",
+            "on": {
+              "value": "true",
+              "label": "True"
+            },
+            "off": {
+              "value": "false",
+              "label": "False"
+            },
+            "size": "medium"
+          }
+        },
+        {
           "widget-type": "select",
           "label": "Number of masters",
           "name": "masterNumNodes",
