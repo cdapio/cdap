@@ -51,13 +51,15 @@ public class MetricValue {
    * Most of the buckets have zero counts. For efficiency, bucketCounts only
    * stores non zero bucket count values. The bucketMask stores which
    * buckets have non-zero bucketCounts.
+   *
+   * The right most bit i.e. least significant bit (LSB) stands for bucket 0.
    */
   private long bucketMask;
 
   /**
    * If count is zero then this field must be zero. Mean can be easily calculated from sum and count.
    */
-  private double sum;
+  private double mean;
 
   /**
    * The sum of squared deviations from the mean of the values in the population.
@@ -77,7 +79,7 @@ public class MetricValue {
                      double mean, double sumOfSquaredDeviation) {
     this.name = name;
     this.bucketMask = bucketMask;
-    this.sum = mean;
+    this.mean = mean;
     this.sumOfSquaredDeviation = sumOfSquaredDeviation;
     this.type = MetricType.DISTRIBUTION;
     this.bucketCounts = bucketCounts;
@@ -107,7 +109,7 @@ public class MetricValue {
       return "MetricValue{" +
               "name='" + name + '\'' +
               ", type=" + type +
-              ", sum=" + sum +
+              ", mean=" + mean +
               ", sumOfSquaredDeviation=" + sumOfSquaredDeviation +
               ", bucketMask=" + bucketMask +
               ", bucketCounts=" + Arrays.toString(bucketCounts) +
@@ -124,15 +126,25 @@ public class MetricValue {
    * Helper function to publish the distribution metric to other systems such as Cloud Monitoring
    */
   public long[] getAllBucketCounts() {
-    return null;
+    long[] allBucketCounts = new long[NUM_FINITE_BUCKETS + 2];
+    long mask = 1;
+    int index = 0;
+    for (int i = 0; i < allBucketCounts.length; i++) {
+      if ((bucketMask & mask) >= 1) {
+        allBucketCounts[i] = bucketCounts[index];
+        index++;
+      }
+      mask = mask << 1;
+    }
+    return allBucketCounts;
   }
 
   public long getBucketMask() {
     return bucketMask;
   }
 
-  public double getSum() {
-    return sum;
+  public double getMean() {
+    return mean;
   }
 
   public double getSumOfSquaredDeviation() {
