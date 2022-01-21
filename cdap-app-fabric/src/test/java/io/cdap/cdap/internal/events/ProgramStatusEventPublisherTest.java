@@ -1,13 +1,11 @@
 package io.cdap.cdap.internal.events;
 
-import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.events.dummy.DummyEventWriter;
 import io.cdap.cdap.internal.events.dummy.DummyEventWriterExtensionProvider;
 import io.cdap.cdap.proto.Notification;
-import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.events.EventWriter;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -28,14 +26,10 @@ public class ProgramStatusEventPublisherTest extends AppFabricTestBase {
     private static final String MOCKED_NOTIFICATION_FILENAME = "mocked_pipeline_notification.json";
 
     private static EventPublisher eventPublisher;
-    private static TransactionRunner transactionRunner;
-    private static CConfiguration cConfiguration;
 
     @BeforeClass
     public static void setupClass() throws IOException {
         eventPublisher = getInjector().getInstance(ProgramStatusEventPublisher.class);
-        transactionRunner = getInjector().getInstance(TransactionRunner.class);
-        cConfiguration = getInjector().getInstance(CConfiguration.class);
     }
 
     @AfterClass
