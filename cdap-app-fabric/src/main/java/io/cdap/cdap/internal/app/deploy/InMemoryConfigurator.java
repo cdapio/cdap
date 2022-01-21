@@ -45,6 +45,7 @@ import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.lang.CombineClassLoader;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -80,9 +81,8 @@ public final class InMemoryConfigurator implements Configurator {
   private final PluginFinder pluginFinder;
   private final String appClassName;
   private final Id.Artifact artifactId;
-  private final boolean isRuntime;
-  private final Map<String, String> runtimeArguments;
   private final RemoteClientFactory remoteClientFactory;
+  private final AppDeploymentRuntimeInfo runtimeInfo;
 
   // These fields are needed to create the classLoader in the config method
   private final ArtifactRepository artifactRepository;
@@ -107,8 +107,7 @@ public final class InMemoryConfigurator implements Configurator {
     this.impersonator = impersonator;
     this.artifactRepository = artifactRepository;
     this.artifactLocation = deploymentInfo.getArtifactLocation();
-    this.isRuntime = deploymentInfo.isRuntime();
-    this.runtimeArguments = deploymentInfo.getUserArguments();
+    this.runtimeInfo = deploymentInfo.getRuntimeInfo();
     this.remoteClientFactory = remoteClientFactory;
   }
 
@@ -163,7 +162,9 @@ public final class InMemoryConfigurator implements Configurator {
     ) {
 
       RuntimeConfigurer runtimeConfigurer =
-        isRuntime ? new DefaultAppRuntimeConfigurer(appNamespace.getId(), remoteClientFactory, runtimeArguments) : null;
+        runtimeInfo != null ? new DefaultAppRuntimeConfigurer(
+          appNamespace.getId(), remoteClientFactory, runtimeInfo.getUserArguments(),
+          runtimeInfo.getExistingAppSpec()) : null;
       configurer = new DefaultAppConfigurer(
         appNamespace, artifactId, app, configString, pluginFinder, pluginInstantiator, runtimeConfigurer);
 

@@ -20,6 +20,7 @@ package io.cdap.cdap.api.app;
 import io.cdap.cdap.api.ServiceDiscoverer;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * The runtime configurer that can be got when the app is reconfigured before the actual program run
@@ -30,4 +31,11 @@ public interface RuntimeConfigurer extends ServiceDiscoverer {
    * @return A map of user argument key and value
    */
   Map<String, String> getRuntimeArguments();
+
+  /**
+   * @return The app spec generated when the app is initially deployed, null if there is no such spec, for example,
+   * for preview run, there is no existing app spec
+   */
+  @Nullable
+  ApplicationSpecification getDeployedApplicationSpec();
 }

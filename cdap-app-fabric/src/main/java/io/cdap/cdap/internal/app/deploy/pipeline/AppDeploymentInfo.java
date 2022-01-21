@@ -25,7 +25,6 @@ import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import org.apache.twill.filesystem.Location;
 
-import java.util.Collections;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -45,25 +44,24 @@ public class AppDeploymentInfo {
   private final KerberosPrincipalId ownerPrincipal;
   @SerializedName("update-schedules")
   private final boolean updateSchedules;
-  private final boolean isRuntime;
-  private final Map<String, String> userArguments;
+  private final AppDeploymentRuntimeInfo runtimeInfo;
 
   public AppDeploymentInfo(AppDeploymentInfo info, Location artifactLocation) {
     this(info.artifactId, artifactLocation, info.namespaceId, info.applicationClass, info.appName, info.appVersion,
-         info.configString, info.ownerPrincipal, info.updateSchedules, info.isRuntime, Collections.emptyMap());
+         info.configString, info.ownerPrincipal, info.updateSchedules, info.runtimeInfo);
   }
 
   public AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
                            ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
                            @Nullable String configString) {
     this(artifactId, artifactLocation, namespaceId, applicationClass, appName, appVersion, configString, null,
-         true, false, Collections.emptyMap());
+         true, null);
   }
 
   public AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
                            ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
                            @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
-                           boolean updateSchedules, boolean isRuntime, Map<String, String> userArguments) {
+                           boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
     this.artifactId = artifactId;
     this.artifactLocation = artifactLocation;
     this.namespaceId = namespaceId;
@@ -73,8 +71,7 @@ public class AppDeploymentInfo {
     this.configString = configString;
     this.ownerPrincipal = ownerPrincipal;
     this.updateSchedules = updateSchedules;
-    this.isRuntime = isRuntime;
-    this.userArguments = userArguments;
+    this.runtimeInfo = runtimeInfo;
   }
 
   /**
@@ -149,16 +146,10 @@ public class AppDeploymentInfo {
   }
 
   /**
-   * @return true if this deployment happens at runtime before the program run, false otherwise
+   * @return the runtime info if the app is deployed at runtime, null if this is the initial deploy
    */
-  public boolean isRuntime() {
-    return isRuntime;
-  }
-
-  /**
-   * @return the runtime arguments for the app deployment, this is only used when isRuntime is true
-   */
-  public Map<String, String> getUserArguments() {
-    return userArguments;
+  @Nullable
+  public AppDeploymentRuntimeInfo getRuntimeInfo() {
+    return runtimeInfo;
   }
 }
