@@ -136,7 +136,7 @@ public abstract class AbstractProgramController implements ProgramController {
   }
 
   @Override
-  public final ListenableFuture<ProgramController> stop() {
+  public final ListenableFuture<ProgramController>  stop() {
     LOG.trace("Stop program {}", programId);
     if (!state.compareAndSet(State.STARTING, State.STOPPING)
       && !state.compareAndSet(State.ALIVE, State.STOPPING)

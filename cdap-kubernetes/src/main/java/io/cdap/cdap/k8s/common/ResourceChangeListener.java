@@ -24,7 +24,7 @@ package io.cdap.cdap.k8s.common;
 public interface ResourceChangeListener<T> {
 
   /**
-   * Invoked when a resource is added. By default is an no-op.
+   * Invoked when a resource is added. Default is a no-op.
    *
    * @param resource the resource being added
    */
@@ -33,7 +33,7 @@ public interface ResourceChangeListener<T> {
   }
 
   /**
-   * Invoked when a resource is modified. By default is an no-op.
+   * Invoked when a resource is modified. Default is a no-op.
    *
    * @param resource the resource being modified
    */
@@ -42,7 +42,7 @@ public interface ResourceChangeListener<T> {
   }
 
   /**
-   * Invoked when a resource is deleted. By default is an no-op.
+   * Invoked when a resource is deleted. Default is a no-op.
    *
    * @param resource the resource being deleted
    */

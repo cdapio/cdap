@@ -297,8 +297,8 @@ public class KubeTwillRunnerService implements TwillRunnerService {
             } catch (ExecutionException e) {
               // This will never happen
             }
-
             // terminate the job controller
+            LOG.info("### calling terminate on job for run {}", runId);
             controller.terminate();
           }
         } else {
@@ -327,12 +327,24 @@ public class KubeTwillRunnerService implements TwillRunnerService {
         if (runId.equals(metadata.getLabels().get(RUN_ID_LABEL))) {
           // Cancel the scheduled termination
           terminationFuture.cancel(false);
-          controller.terminate();
-          // Cancel the watch
-          try {
-            Uninterruptibles.getUninterruptibly(cancellableFuture).cancel();
-          } catch (ExecutionException e) {
-            // This will never happen
+          LOG.info("### calling terminate on job for run {} because job was deleted", runId);
+          if (resourceType.equals(V1Job.class)) {
+            // Cancel the watch
+            try {
+              Uninterruptibles.getUninterruptibly(cancellableFuture).cancel();
+            } catch (ExecutionException e) {
+              // This will never happen
+            }
+
+            controller.terminate();
+          } else {
+            controller.terminate();
+            // Cancel the watch
+            try {
+              Uninterruptibles.getUninterruptibly(cancellableFuture).cancel();
+            } catch (ExecutionException e) {
+              // This will never happen
+            }
           }
         }
       }

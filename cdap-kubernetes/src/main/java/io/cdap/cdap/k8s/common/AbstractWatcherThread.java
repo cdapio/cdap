@@ -217,8 +217,9 @@ public abstract class AbstractWatcherThread<T> extends Thread implements AutoClo
       // There is only single thread (the run thread) that will call this method,
       // hence if the watch was null outside of this sync block, it will stay as null here.
       String labelSelector = getSelector();
-      LOG.trace("Creating watch with label selector {}", labelSelector);
-      this.watch = watch = createWatchable(resourceType, namespace, labelSelector);
+      LOG.debug("Creating watch with label selector {}", labelSelector);
+      watch = createWatchable(resourceType, namespace, labelSelector);
+      this.watch = watch;
       return watch;
     }
   }

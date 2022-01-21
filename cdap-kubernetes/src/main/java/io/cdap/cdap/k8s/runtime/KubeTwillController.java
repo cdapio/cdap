@@ -69,7 +69,7 @@ class KubeTwillController implements ExtendedTwillController {
   private final String kubeNamespace;
   private final RunId runId;
   private final CompletableFuture<KubeTwillController> completion;
-  private boolean isStopped;
+  private volatile boolean isStopped;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final ApiClient apiClient;
   private final BatchV1Api batchV1Api;
@@ -306,10 +306,13 @@ class KubeTwillController implements ExtendedTwillController {
       // If isStopped is true, this means the kubernetes submitted job was not found. This could happen if the job
       // was submitted and then deleted before getting status/before issuing delete.
       if (isStopped) {
+        LOG.info("### Job status is stopped");
         return TerminationStatus.KILLED;
       }
+      LOG.info("### Job status is succeeded");
       return TerminationStatus.SUCCEEDED;
     } catch (ExecutionException e) {
+      LOG.info("### Job status is failed");
       return TerminationStatus.FAILED;
     }
   }
@@ -532,23 +535,26 @@ class KubeTwillController implements ExtendedTwillController {
 
       // If job has failed, mark future as failed. Else mark it as succeeded.
       if (status != null && status.getFailed() != null) {
+        LOG.info("### k8s job status completed exceptionally.");
         resultFuture.completeExceptionally(new RuntimeException(String.format("Job %s has failed status.", name)));
       } else {
+        LOG.info("### k8s job status completed successfully.");
         resultFuture.complete(name);
       }
 
       // Also attempt to delete the job once status is available
       deleteJob(meta).whenComplete((jName, t) -> {
         if (t != null) {
-          LOG.warn("Failed to delete job {}. Attempt will be retried", jName);
+          LOG.warn("### Failed to delete job {}. Attempt will be retried.", jName, t);
         } else {
-          LOG.trace("Successfully deleted job {}", jName);
+          LOG.debug("### Successfully deleted job {}", jName);
         }
       });
     } catch (ApiException e) {
       if (e.getCode() == 404) {
         // If isStopped is true, this means the kubernetes submitted job was not found. This could happen if the job
         // was submitted and then deleted before getting status/before issuing delete.
+        LOG.info("### kubernetes job {} not found", name);
         isStopped = true;
         resultFuture.complete(name);
       } else {
@@ -575,18 +581,14 @@ class KubeTwillController implements ExtendedTwillController {
           @Override
           public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
             if (statusCode == 404) {
-              // If isStopped is true, this means the kubernetes submitted job was not found.
-              // This could happen if the job was submitted and then deleted before getting status/before issuing
-              // delete.
-              isStopped = true;
+              LOG.info("### kubernetes job {} not found", name);
               resultFuture.complete(name);
-            } else {
-              resultFuture.completeExceptionally(e);
             }
           }
 
           @Override
           public void onSuccess(V1Status result, int statusCode, Map<String, List<String>> responseHeaders) {
+            LOG.info("### kubernetes job {} deleted successfully", name);
             resultFuture.complete(name);
           }
         });
