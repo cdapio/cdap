@@ -46,7 +46,7 @@ public class TetheringStore {
   private final TransactionRunner transactionRunner;
 
   @Inject
-  TetheringStore(TransactionRunner transactionRunner) {
+  public TetheringStore(TransactionRunner transactionRunner) {
     this.transactionRunner = transactionRunner;
   }
 
