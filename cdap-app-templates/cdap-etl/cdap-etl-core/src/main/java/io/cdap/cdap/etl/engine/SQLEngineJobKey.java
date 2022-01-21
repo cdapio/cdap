@@ -24,8 +24,8 @@ import java.util.Objects;
  * A job key is based on the dataset name and the SQL Engine Job Type.
  */
 public class SQLEngineJobKey {
-  private final String datasetName;
-  private final SQLEngineJobType jobType;
+  protected final String datasetName;
+  protected final SQLEngineJobType jobType;
 
   public SQLEngineJobKey(String datasetName, SQLEngineJobType jobType) {
     this.datasetName = datasetName;

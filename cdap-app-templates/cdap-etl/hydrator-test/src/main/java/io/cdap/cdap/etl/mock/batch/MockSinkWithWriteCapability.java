@@ -21,6 +21,8 @@ import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginPropertyField;
 import io.cdap.cdap.etl.api.batch.BatchSink;
+import io.cdap.cdap.etl.api.batch.BatchSinkContext;
+import io.cdap.cdap.etl.api.engine.sql.SQLEngineOutput;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 
 import java.util.Collections;
@@ -28,17 +30,25 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Mock sink that writes records to a Table and has a utility method for getting all records written.
+ * Mock sink that exposes direct write capabilities for the {@link MockSQLEngineWithCapabilities}
  */
 @Plugin(type = BatchSink.PLUGIN_TYPE)
-@Name(MockSink.NAME)
-public class MockSink extends AbstractMockSink {
+@Name(MockSinkWithWriteCapability.NAME)
+public class MockSinkWithWriteCapability extends AbstractMockSink {
 
-  public static final String NAME = "Mock";
+  public static final String NAME = "MockWithWriteCapability";
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
 
-  public MockSink(Config config) {
+  public MockSinkWithWriteCapability(Config config) {
     super(config);
+  }
+
+  @Override
+  public void prepareRun(BatchSinkContext context) throws Exception {
+    super.prepareRun(context);
+    context.addOutput(new SQLEngineOutput(NAME,
+                                          MockSQLEngineWithCapabilities.class.getName(),
+                                          Collections.emptyMap()));
   }
 
   /**
@@ -71,7 +81,7 @@ public class MockSink extends AbstractMockSink {
     properties.put("connectionConfig", new PluginPropertyField("connectionConfig", "", "connectionconfig", true, true,
                                                                false, Collections.singleton("tableName")));
     return PluginClass.builder().setName(NAME).setType(BatchSink.PLUGIN_TYPE)
-      .setDescription("").setClassName(MockSink.class.getName()).setProperties(properties)
+      .setDescription("").setClassName(MockSinkWithWriteCapability.class.getName()).setProperties(properties)
       .setConfigFieldName("config").build();
   }
 }

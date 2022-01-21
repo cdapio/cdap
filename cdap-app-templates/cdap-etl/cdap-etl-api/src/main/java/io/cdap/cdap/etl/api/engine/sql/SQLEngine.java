@@ -35,6 +35,8 @@ import io.cdap.cdap.etl.api.engine.sql.request.SQLPushRequest;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLRelationDefinition;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLTransformDefinition;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLTransformRequest;
+import io.cdap.cdap.etl.api.engine.sql.request.SQLWriteRequest;
+import io.cdap.cdap.etl.api.engine.sql.request.SQLWriteResult;
 import io.cdap.cdap.etl.api.relational.Engine;
 import io.cdap.cdap.etl.api.relational.Relation;
 
@@ -163,6 +165,16 @@ public interface SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT>
    * @return the {@link SQLDataset} instance representing the output of this operation.
    */
   SQLDataset join(SQLJoinRequest joinRequest) throws SQLEngineException;
+
+  /**
+   * Consume a {@link SQLWriteRequest} and write this output into the SQL engine if possible
+   * @param writeRequest write request to consume
+   * @return true if the write request could be consumed, false otherwise
+   * @throws SQLEngineException if the write process fails unexpectedly.
+   */
+  default SQLWriteResult write(SQLWriteRequest writeRequest) throws SQLEngineException {
+    return SQLWriteResult.unsupported(writeRequest.getDatasetName());
+  }
 
   /**
    * Deletes all temporary datasets and cleans up all temporary data from the SQL engine.

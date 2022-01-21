@@ -22,5 +22,6 @@ package io.cdap.cdap.etl.engine;
 public enum SQLEngineJobType {
   PUSH,
   PULL,
-  EXECUTE
+  EXECUTE,
+  WRITE
 }
