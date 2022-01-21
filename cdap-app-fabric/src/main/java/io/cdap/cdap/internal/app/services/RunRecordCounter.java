@@ -55,7 +55,7 @@ public class RunRecordCounter {
   public Count addRequestAndGetCount(ProgramRunId programRunId) {
     int launchingCount;
     synchronized (this) {
-      launchingSet.add(programRunId);
+      addRequest(programRunId);
       launchingCount = launchingSet.size();
     }
 
@@ -71,9 +71,18 @@ public class RunRecordCounter {
       list.stream().filter(r -> isRunning(r.getController().getState().getRunStatus())).count()
       + launchingCount;
 
-    LOG.debug("Adding request with runId {}. Counter now has {} concurrent launching and {} concurrent runs.",
-              programRunId, launchingCount, runsCount);
+    LOG.info("Counter has {} concurrent launching and {} concurrent runs.", launchingCount, runsCount);
     return new Count(launchingCount, runsCount);
+  }
+
+  /**
+   * Add a new inflight launch request.
+   *
+   * @param programRunId run id associated with the launch request
+   */
+  public void addRequest(ProgramRunId programRunId) {
+    launchingSet.add(programRunId);
+    LOG.info("Added request with runId {}.", programRunId);
   }
 
   /**
@@ -83,8 +92,11 @@ public class RunRecordCounter {
    * @param programRunId
    */
   public void removeRequest(ProgramRunId programRunId) {
-    LOG.debug("Removing request with runId {}", programRunId);
-    launchingSet.remove(programRunId);
+    if (launchingSet.contains(programRunId)) {
+      launchingSet.remove(programRunId);
+      LOG.info("Removed request with runId {}. Counter has {} concurrent launching requests.",
+                programRunId, launchingSet.size());
+    }
   }
 
   private boolean isRunning(ProgramRunStatus status) {
