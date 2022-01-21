@@ -64,6 +64,7 @@ import io.cdap.cdap.data2.registry.UsageRegistry;
 import io.cdap.cdap.internal.app.DefaultApplicationUpdateContext;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -642,7 +643,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactId, artifactDetail.getDescriptor().getLocation(),
                                                              appId.getParent(), appClass, appId.getApplication(),
                                                              appId.getVersion(), updatedAppConfig, ownerPrincipal,
-                                                             updateSchedules, false, Collections.emptyMap());
+                                                             updateSchedules, null);
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);
     // TODO: (CDAP-3258) Manager needs MUCH better error handling.
@@ -985,7 +986,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(
       Artifacts.toProtoArtifactId(namespaceId, artifactDetail.getDescriptor().getArtifactId()),
       artifactDetail.getDescriptor().getLocation(), namespaceId, appClass, appName,
-      appVersion, configStr, ownerPrincipal, updateSchedules, isPreview, userProps);
+      appVersion, configStr, ownerPrincipal, updateSchedules,
+      isPreview ? new AppDeploymentRuntimeInfo(null, userProps, Collections.emptyMap()) : null);
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);
     // TODO: (CDAP-3258) Manager needs MUCH better error handling.

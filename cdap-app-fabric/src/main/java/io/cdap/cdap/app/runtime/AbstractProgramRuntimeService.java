@@ -53,6 +53,7 @@ import io.cdap.cdap.common.twill.TwillAppNames;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
@@ -332,7 +333,8 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(
       artifactId, artifactDetail.getDescriptor().getLocation(), programId.getNamespaceId(), appClass,
       existingAppSpec.getName(), existingAppSpec.getAppVersion(), existingAppSpec.getConfiguration(), null, false,
-      true, options.getUserArguments().asMap());
+      new AppDeploymentRuntimeInfo(existingAppSpec, options.getUserArguments().asMap(),
+                                   options.getArguments().asMap()));
     Configurator configurator = this.configuratorFactory.create(deploymentInfo);
     ListenableFuture<ConfigResponse> future = configurator.config();
     ConfigResponse response = future.get(120, TimeUnit.SECONDS);
