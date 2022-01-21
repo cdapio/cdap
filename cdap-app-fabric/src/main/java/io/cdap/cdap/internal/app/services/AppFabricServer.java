@@ -74,6 +74,7 @@ public class AppFabricServer extends AbstractIdleService {
   private final Set<String> handlerHookNames;
   private final ProgramNotificationSubscriberService programNotificationSubscriberService;
   private final RunRecordCorrectorService runRecordCorrectorService;
+  private final RunRecordMonitorService runRecordCounterService;
   private final CoreSchedulerService coreSchedulerService;
   private final ProvisioningService provisioningService;
   private final BootstrapService bootstrapService;
@@ -106,7 +107,8 @@ public class AppFabricServer extends AbstractIdleService {
                          ProvisioningService provisioningService,
                          BootstrapService bootstrapService,
                          SystemAppManagementService systemAppManagementService,
-                         TransactionRunner transactionRunner) {
+                         TransactionRunner transactionRunner,
+                         RunRecordMonitorService runRecordCounterService) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.handlers = handlers;
@@ -125,6 +127,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.bootstrapService = bootstrapService;
     this.systemAppManagementService = systemAppManagementService;
     this.transactionRunner = transactionRunner;
+    this.runRecordCounterService = runRecordCounterService;
   }
 
   /**
@@ -143,7 +146,8 @@ public class AppFabricServer extends AbstractIdleService {
         programRuntimeService.start(),
         programNotificationSubscriberService.start(),
         runRecordCorrectorService.start(),
-        coreSchedulerService.start()
+        coreSchedulerService.start(),
+        runRecordCounterService.start()
       )
     ).get();
 
@@ -194,6 +198,7 @@ public class AppFabricServer extends AbstractIdleService {
     programNotificationSubscriberService.stopAndWait();
     runRecordCorrectorService.stopAndWait();
     provisioningService.stopAndWait();
+    runRecordCounterService.stopAndWait();
   }
 
   private Cancellable startHttpService(NettyHttpService httpService) throws Exception {

@@ -121,6 +121,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   private Set<ProgramCompletionNotifier> programCompletionNotifiers;
   private final CConfiguration cConf;
   private final Store store;
+  private final RunRecordMonitorService runRecordMonitorService;
 
   @Inject
   ProgramNotificationSubscriberService(MessagingService messagingService, CConfiguration cConf,
@@ -129,7 +130,8 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
                                        ProgramLifecycleService programLifecycleService,
                                        ProvisioningService provisioningService,
                                        ProgramStateWriter programStateWriter, TransactionRunner transactionRunner,
-                                       Store store) {
+                                       Store store,
+                                       RunRecordMonitorService runRecordMonitorService) {
     super("program.status", cConf, cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC),
           cConf.getInt(Constants.AppFabric.STATUS_EVENT_FETCH_SIZE),
           cConf.getLong(Constants.AppFabric.STATUS_EVENT_POLL_DELAY_MILLIS),
@@ -142,6 +144,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     this.tasks = new LinkedList<>();
     this.metricsCollectionService = metricsCollectionService;
     this.programCompletionNotifiers = Collections.emptySet();
+    this.runRecordMonitorService = runRecordMonitorService;
     this.cConf = cConf;
     this.store = store;
   }
@@ -160,9 +163,9 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       }
       try {
         if (runRecordDetail.getStatus() == ProgramRunStatus.PENDING) {
-          programLifecycleService.getRunRecordCounter().addRequest(runRecordDetail.getProgramRunId());
+          runRecordMonitorService.addRequest(runRecordDetail.getProgramRunId());
         } else if (runRecordDetail.getStatus() == ProgramRunStatus.STARTING) {
-          programLifecycleService.getRunRecordCounter().addRequest(runRecordDetail.getProgramRunId());
+          runRecordMonitorService.addRequest(runRecordDetail.getProgramRunId());
           // It is unknown what is the state of program runs in STARTING state.
           // A STARTING message is published again to retry STARTING logic.
           ProgramOptions programOptions =
@@ -381,7 +384,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         recordedRunRecord =
           appMetadataStore.recordProgramRunning(programRunId, logicalStartTimeSecs, twillRunId, messageIdBytes);
         writeToHeartBeatTable(recordedRunRecord, logicalStartTimeSecs, programHeartbeatTable);
-        programLifecycleService.getRunRecordCounter().removeRequest(programRunId);
+        runRecordMonitorService.removeRequest(programRunId);
         break;
       case SUSPENDED:
         long suspendTime = getTimeSeconds(notification.getProperties(),
@@ -405,7 +408,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         recordedRunRecord = handleProgramCompletion(appMetadataStore, programHeartbeatTable,
                                                     programRunId, programRunStatus, notification,
                                                     messageIdBytes, runnables);
-        programLifecycleService.getRunRecordCounter().removeRequest(programRunId);
+        runRecordMonitorService.removeRequest(programRunId);
         break;
       case REJECTED:
         ProgramOptions programOptions = ProgramOptions.fromNotification(notification, GSON);
@@ -419,7 +422,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
                               programHeartbeatTable);
         getEmitMetricsRunnable(programRunId, recordedRunRecord, Constants.Metrics.Program.PROGRAM_REJECTED_RUNS,
                                null).ifPresent(runnables::add);
-        programLifecycleService.getRunRecordCounter().removeRequest(programRunId);
+        runRecordMonitorService.removeRequest(programRunId);
         break;
       default:
         // This should not happen

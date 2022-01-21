@@ -104,6 +104,7 @@ import io.cdap.cdap.internal.app.services.LocalRunRecordCorrectorService;
 import io.cdap.cdap.internal.app.services.NoopRunRecordCorrectorService;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.services.RunRecordCorrectorService;
+import io.cdap.cdap.internal.app.services.RunRecordMonitorService;
 import io.cdap.cdap.internal.app.services.ScheduledRunRecordCorrectorService;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.bootstrap.guice.BootstrapModules;
@@ -329,6 +330,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
       bind(ArtifactStore.class).in(Scopes.SINGLETON);
       bind(ProfileService.class).in(Scopes.SINGLETON);
+      bind(RunRecordMonitorService.class).in(Scopes.SINGLETON);
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
       bind(SystemAppManagementService.class).in(Scopes.SINGLETON);
       bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
