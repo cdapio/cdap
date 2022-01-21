@@ -14,14 +14,19 @@
 
 package io.cdap.cdap.internal.app.worker.sidecar;
 
+import com.google.common.collect.Multimap;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.service.worker.RemoteExecutionException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.internal.remote.InternalAuthenticator;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.security.Credential;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
@@ -44,10 +49,13 @@ public class ArtifactLocalizerClient {
 
   private static final Gson GSON = new Gson();
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactLocalizerClient.class);
+
+  private final InternalAuthenticator internalAuthenticator;
   private final String sidecarBaseURL;
 
   @Inject
-  ArtifactLocalizerClient(CConfiguration cConf) {
+  ArtifactLocalizerClient(CConfiguration cConf, InternalAuthenticator internalAuthenticator) {
+    this.internalAuthenticator = internalAuthenticator;
     this.sidecarBaseURL = String
       .format("http://localhost:%d/%s/worker", cConf.getInt(Constants.ArtifactLocalizer.PORT),
               Constants.Gateway.INTERNAL_API_VERSION_3_TOKEN);
@@ -92,6 +100,9 @@ public class ArtifactLocalizerClient {
 
     LOG.debug("Sending request to {}", url);
     HttpRequest httpRequest = HttpRequest.builder(HttpMethod.GET, url).build();
+    Multimap<String, String> headers = httpRequest.getHeaders();
+    internalAuthenticator.applyInternalAuthenticationHeaders(headers::put);
+
     HttpResponse httpResponse = HttpRequests.execute(httpRequest);
 
     if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
