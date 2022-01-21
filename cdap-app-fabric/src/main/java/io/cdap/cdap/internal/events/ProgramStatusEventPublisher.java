@@ -114,7 +114,6 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
   @Override
   protected void processMessages(StructuredTableContext structuredTableContext,
                                  Iterator<ImmutablePair<String, Notification>> messages) {
-    System.out.println("I am processing messages!!");
     List<ProgramStatusEvent> programStatusEvents = new ArrayList<>();
     long publishTime = System.currentTimeMillis();
     messages.forEachRemaining(message -> {
@@ -157,6 +156,6 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
   }
 
   private boolean shouldPublish(ProgramRunStatus programRunStatus) {
-    return programRunStatus == ProgramRunStatus.STARTING;
+    return (programRunStatus == ProgramRunStatus.STARTING) || programRunStatus.isEndState();
   }
 }
