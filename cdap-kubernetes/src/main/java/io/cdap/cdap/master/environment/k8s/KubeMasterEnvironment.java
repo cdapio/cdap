@@ -65,9 +65,10 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
   private static final Logger LOG = LoggerFactory.getLogger(KubeMasterEnvironment.class);
 
+  public static final String SECURITY_CONFIG_NAME = "cdap-security";
   // Contains the list of configuration / secret names coming from the Pod information, which are
   // needed to propagate to deployments created via the KubeTwillRunnerService
-  private static final Set<String> CONFIG_NAMES = ImmutableSet.of("cdap-conf", "hadoop-conf");
+  private static final Set<String> CONFIG_NAMES = ImmutableSet.of("cdap-conf", "hadoop-conf", "cdap-security");
   private static final Set<String> CUSTOM_VOLUME_PREFIX = ImmutableSet.of("cdap-cm-vol-", "cdap-se-vol-");
 
   private static final String MASTER_MAX_INSTANCES = "master.service.max.instances";
