@@ -188,7 +188,13 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
             SecurityContext securityContext = createSecurityContext();
             twillPreparer = ((SecureTwillPreparer) twillPreparer)
               .withSecurityContext(TaskWorkerTwillRunnable.class.getSimpleName(), securityContext);
-            // TODO CDAP-18095: Refactor to be secure-by-default in the future or fail-fast if it is not mounted.
+            // Mount secret in ArtifactLocalizer sidecar which only run trusted code,
+            // so requests originated by ArtifactLocalizer can run with system identity when internal auth
+            // is enabled.
+            twillPreparer = ((SecureTwillPreparer) twillPreparer)
+                .withSecretDisk(ArtifactLocalizerTwillRunnable.class.getSimpleName(),
+                                new SecretDisk(cConf.get(Constants.Twill.Security.MASTER_SECRET_DISK_NAME),
+                                               cConf.get(Constants.Twill.Security.MASTER_SECRET_DISK_PATH)));
             if (cConf.getBoolean(Constants.Twill.Security.WORKER_MOUNT_SECRET)) {
               String secretName = cConf.get(Constants.Twill.Security.WORKER_SECRET_DISK_NAME);
               String secretPath = cConf.get(Constants.Twill.Security.WORKER_SECRET_DISK_PATH);

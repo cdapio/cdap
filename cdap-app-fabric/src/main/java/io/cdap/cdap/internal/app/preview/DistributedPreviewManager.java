@@ -151,9 +151,16 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
 
         Path runDir = Files.createTempDirectory(tmpDir, "preview");
         try {
+          CConfiguration cConfCopy = CConfiguration.copy(cConf);
           Path cConfPath = runDir.resolve("cConf.xml");
+          if (!cConf.getBoolean(Constants.Twill.Security.WORKER_MOUNT_SECRET)) {
+             // Unset the internal certificate path since certificate is stored cdap-security which
+             // is not going to be exposed to preview runner.
+             // TODO: CDAP-18768 this will break preview when certificate checking is enabled.
+             cConfCopy.unset(Constants.Security.SSL.INTERNAL_CERT_PATH);
+           }
           try (Writer writer = Files.newBufferedWriter(cConfPath, StandardCharsets.UTF_8)) {
-            cConf.writeXml(writer);
+            cConfCopy.writeXml(writer);
           }
           Path hConfPath = runDir.resolve("hConf.xml");
           try (Writer writer = Files.newBufferedWriter(hConfPath, StandardCharsets.UTF_8)) {
@@ -218,7 +225,16 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
                 .withSecurityContext(PreviewRunnerTwillRunnable.class.getSimpleName(), securityContext);
             }
 
-            // TODO CDAP-18095: Refactor to be secure-by-default in the future or fail-fast if it is not mounted.
+            if (artifactLocalizerEnabled) {
+              // Mount secret in ArtifactLocalizer sidecar which only runs trusted code,
+              // so requests originated by ArtifactLocalizer can run with system identity when internal auth
+              // is enabled.
+              String secretName = cConf.get(Constants.Twill.Security.MASTER_SECRET_DISK_NAME);
+              String secretPath = cConf.get(Constants.Twill.Security.MASTER_SECRET_DISK_PATH);
+              twillPreparer = ((SecureTwillPreparer) twillPreparer)
+                .withSecretDisk(ArtifactLocalizerTwillRunnable.class.getSimpleName(),
+                                new SecretDisk(secretName, secretPath));
+            }
             if (cConf.getBoolean(Constants.Twill.Security.WORKER_MOUNT_SECRET)) {
               String secretName = cConf.get(Constants.Twill.Security.WORKER_SECRET_DISK_NAME);
               String secretPath = cConf.get(Constants.Twill.Security.WORKER_SECRET_DISK_PATH);
