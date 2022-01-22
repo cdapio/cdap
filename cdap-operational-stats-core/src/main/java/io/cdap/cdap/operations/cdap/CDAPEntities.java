@@ -87,7 +87,7 @@ public class CDAPEntities extends AbstractCDAPStats implements CDAPEntitiesMXBea
     namespaces = namespaceMetas.size();
     artifacts += artifactRepository.getArtifactSummaries(NamespaceId.SYSTEM, false).size();
     for (NamespaceMeta meta : namespaceMetas) {
-      List<ApplicationDetail> apps = appLifecycleService.getApps(meta.getNamespaceId(), detail -> true);
+      List<ApplicationDetail> apps = appLifecycleService.getApps(meta.getNamespaceId());
       this.apps += apps.size();
       for (ApplicationDetail app : apps) {
         programs += app.getPrograms().size();

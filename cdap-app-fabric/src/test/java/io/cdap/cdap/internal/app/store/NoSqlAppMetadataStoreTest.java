@@ -22,6 +22,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
  * Tests {@link AppMetadataStore} using NoSQL.
@@ -38,5 +39,15 @@ public class NoSqlAppMetadataStoreTest extends AppMetadataStoreTest {
   @AfterClass
   public static void tearDown() {
     AppFabricTestHelper.shutdown();
+  }
+
+  @Override @Test(expected = UnsupportedOperationException.class)
+  public void testScanApplicationsReverse() {
+    super.testScanApplicationsReverse();
+  }
+
+  @Override @Test(expected = UnsupportedOperationException.class)
+  public void testScanApplicationsWithNamespaceReverse() {
+    super.testScanApplicationsWithNamespaceReverse();
   }
 }
