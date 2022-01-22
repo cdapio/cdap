@@ -282,7 +282,7 @@
 
   <property>
     <name>twill.security.worker.mount.secret</name>
-    <value>true</value>
+    <value>false</value>
     <description>
       Whether to mount a secret disk in worker runnables.
     </description>

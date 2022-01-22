@@ -17,10 +17,15 @@
 package io.cdap.cdap.master.environment.k8s;
 
 import com.google.common.util.concurrent.Uninterruptibles;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.cdap.cdap.common.app.MainClassLoader;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
-import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.IOModule;
+import io.cdap.cdap.common.internal.remote.InternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
 import io.cdap.cdap.common.options.OptionsParser;
@@ -31,7 +36,11 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnableContext;
+import io.cdap.cdap.security.auth.TokenManager;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.auth.context.SystemAuthenticationContext;
 import io.cdap.cdap.security.auth.context.WorkerAuthenticationContext;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
@@ -50,6 +59,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class MasterEnvironmentMain {
 
   private static final Logger LOG = LoggerFactory.getLogger(MasterEnvironmentMain.class);
+  private static TokenManager tokenManager;
 
   public static void main(String[] args) throws Exception {
     MainClassLoader classLoader = MainClassLoader.createFromContext();
@@ -113,7 +123,8 @@ public class MasterEnvironmentMain {
 
         RemoteClientFactory remoteClientFactory = new RemoteClientFactory(
           masterEnv.getDiscoveryServiceClientSupplier().get(),
-          new DefaultInternalAuthenticator(new WorkerAuthenticationContext()));
+          getInternalAuthenticator(cConf));
+
         MasterEnvironmentRunnableContext runnableContext =
           new DefaultMasterEnvironmentRunnableContext(context.getLocationFactory(), remoteClientFactory);
         @SuppressWarnings("unchecked")
@@ -138,4 +149,35 @@ public class MasterEnvironmentMain {
       shutdownLatch.countDown();
     }
   }
+
+  /**
+   * Return {@link InternalAuthenticator} with
+   *   {@link SystemAuthenticationContext} if cdap-secret is mounted (e.g. when only running system code / trusted code)
+   *   or {@link WorkerAuthenticationContext} if cdap-secret is not mounted (e.g. running untrusted user provided code)
+   */
+  private static InternalAuthenticator getInternalAuthenticator(CConfiguration cConf) {
+    File sConfFile = new File(cConf.get(Constants.Twill.Security.MASTER_SECRET_DISK_PATH));
+    Injector injector;
+    if (sConfFile.exists()) {
+      // cdap-secret is mounted and available, use system authentication context
+      injector = Guice.createInjector(
+        new IOModule(),
+        new ConfigModule(cConf),
+        CoreSecurityRuntimeModule.getDistributedModule(cConf),
+        new AuthenticationContextModules().getMasterModule());
+      if (cConf.getBoolean(Constants.Security.INTERNAL_AUTH_ENABLED)) {
+        tokenManager = injector.getInstance(TokenManager.class);
+        tokenManager.startUp();
+      }
+    } else {
+      // cdap-secret is NOT mounted, use worker authentication context
+      injector = Guice.createInjector(
+        new IOModule(),
+        new ConfigModule(cConf),
+        CoreSecurityRuntimeModule.getDistributedModule(cConf),
+        new AuthenticationContextModules().getMasterWorkerModule());
+    }
+    return injector.getInstance(InternalAuthenticator.class);
+  }
 }
+
