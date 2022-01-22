@@ -324,14 +324,14 @@ public interface Store {
   void scanApplications(int txBatchSize, BiConsumer<ApplicationId, ApplicationSpecification> consumer);
 
   /**
-   * Scans for applications in the specified namespace
+   * Scans for applications according to the parameters passed in request
    *
-   * @param id the namespace to scan application specs from
+   * @param request  parameters defining filters and sorting
    * @param txBatchSize maximum number of applications to scan in one transaction to
    *                    prevent holding a single transaction for too long
    * @param consumer a {@link BiConsumer} to consume each application being scanned
    */
-  void scanApplications(NamespaceId id, int txBatchSize,
+  void scanApplications(ScanApplicationsRequest request, int txBatchSize,
                         BiConsumer<ApplicationId, ApplicationSpecification> consumer);
 
   /**

@@ -18,11 +18,11 @@ package io.cdap.cdap.internal.app.store;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.deploy.Specifications;
@@ -34,6 +34,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import org.apache.twill.api.RunId;
@@ -48,6 +49,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -814,35 +816,179 @@ public abstract class AppMetadataStoreTest {
     }
 
     // Scan all apps
-    Map<ApplicationId, ApplicationMeta> apps = new HashMap<>();
+    Map<ApplicationId, ApplicationMeta> apps = new LinkedHashMap<>();
     TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore store = AppMetadataStore.create(context);
-      store.scanApplications(AppMetadataStore.Cursor.EMPTY, ((cursor, entry) -> {
-        apps.put(entry.getKey(), entry.getValue());
-        return true;
-      }));
+
+      store.scanApplications(ScanApplicationsRequest.builder().build(),
+                             entry -> {
+                               apps.put(entry.getKey(), entry.getValue());
+                               return true;
+                             });
     });
 
     Assert.assertEquals(count, apps.size());
+  }
+
+    @Test
+  public void testScanApplicationsReverse() {
+    ApplicationSpecification appSpec = Specifications.from(new AllProgramsApp());
+
+    // Writes 100 application specs
+    int count = 100;
+    for (int i = 0; i < count; i++) {
+      String appName = "test" + i;
+      TransactionRunners.run(transactionRunner, context -> {
+        AppMetadataStore store = AppMetadataStore.create(context);
+        store.writeApplication(NamespaceId.DEFAULT.getNamespace(), appName, ApplicationId.DEFAULT_VERSION, appSpec);
+      });
+    }
+
+    // Scan all apps
+    Map<ApplicationId, ApplicationMeta> apps = new LinkedHashMap<>();
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+
+      store.scanApplications(ScanApplicationsRequest.builder().build(),
+                             entry -> {
+          apps.put(entry.getKey(), entry.getValue());
+          return true;
+        });
+    });
+
+    Assert.assertEquals(count, apps.size());
+    List<ApplicationId> appIds = new ArrayList<>(apps.keySet());
+    List<ApplicationId> reverseIds = Lists.reverse(appIds);
+
+    // Scan reverse
+    apps.clear();
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+
+      store.scanApplications(ScanApplicationsRequest.builder().setSortOrder(SortOrder.DESC).build(),
+                             entry -> {
+                               apps.put(entry.getKey(), entry.getValue());
+                               return true;
+                             });
+    });
+
+    Assert.assertEquals(reverseIds, new ArrayList<>(apps.keySet()));
+
+    // Scan paged
+    int pageSize = 5;
+    apps.clear();
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+
+      store.scanApplications(ScanApplicationsRequest.builder()
+                               .setScanFrom(appIds.get(pageSize - 1)).build(),
+                             entry -> {
+                               apps.put(entry.getKey(), entry.getValue());
+                               return true;
+                             });
+    });
+
+    Assert.assertEquals(appIds.subList(pageSize, count), new ArrayList<>(apps.keySet()));
+
+    // Scan paged reverse
+    apps.clear();
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+
+      store.scanApplications(ScanApplicationsRequest.builder()
+                               .setSortOrder(SortOrder.DESC)
+                               .setScanFrom(reverseIds.get(pageSize - 1)).build(),
+                             entry -> {
+                               apps.put(entry.getKey(), entry.getValue());
+                               return true;
+                             });
+    });
+
+    Assert.assertEquals(reverseIds.subList(pageSize, count), new ArrayList<>(apps.keySet()));
 
     // Scan by batches
     apps.clear();
-    AtomicReference<AppMetadataStore.Cursor> cursorRef = new AtomicReference<>(AppMetadataStore.Cursor.EMPTY);
-    for (int i = 0; i <= count / 15; i++) {
-      TransactionRunners.run(transactionRunner, context -> {
-        AppMetadataStore store = AppMetadataStore.create(context);
-        store.scanApplications(cursorRef.get(), ((cursor, entry) -> {
-          apps.put(entry.getKey(), entry.getValue());
-          cursorRef.set(cursor);
-          return apps.size() % 15 != 0;
-        }));
-      });
+    {
+      AtomicReference<ScanApplicationsRequest> requestRef = new AtomicReference<>(
+        ScanApplicationsRequest.builder().build());
+      for (int i = 0; i <= count / 15; i++) {
+        TransactionRunners.run(transactionRunner, context -> {
+          AppMetadataStore store = AppMetadataStore.create(context);
+
+          store.scanApplications(requestRef.get(), entry -> {
+            apps.put(entry.getKey(), entry.getValue());
+            ScanApplicationsRequest nextBatchRequest = ScanApplicationsRequest
+              .builder(requestRef.get()).setScanFrom(entry.getKey()).build();
+            requestRef.set(nextBatchRequest);
+            return apps.size() % 15 != 0;
+          });
+        });
+      }
     }
-    Assert.assertEquals(count, apps.size());
+    Assert.assertEquals(appIds, new ArrayList<>(apps.keySet()));
+
+    // Scan paged by batches
+    apps.clear();
+    {
+      AtomicReference<ScanApplicationsRequest> requestRef = new AtomicReference<>(
+        ScanApplicationsRequest.builder()
+          .setScanFrom(appIds.get(pageSize - 1))
+          .build());
+      for (int i = 0; i <= count / 15; i++) {
+        TransactionRunners.run(transactionRunner, context -> {
+          AppMetadataStore store = AppMetadataStore.create(context);
+
+          store.scanApplications(requestRef.get(), entry -> {
+            apps.put(entry.getKey(), entry.getValue());
+            ScanApplicationsRequest nextBatchRequest = ScanApplicationsRequest
+              .builder(requestRef.get()).setScanFrom(entry.getKey()).build();
+            requestRef.set(nextBatchRequest);
+            return apps.size() % 15 != 0;
+          });
+        });
+      }
+    }
+    Assert.assertEquals(appIds.subList(pageSize, count), new ArrayList<>(apps.keySet()));
   }
 
   @Test
   public void testScanApplicationsWithNamespace() {
+    ApplicationSpecification appSpec = Specifications.from(new AllProgramsApp());
+
+    // Writes 100 application specs
+    int count = 100;
+    for (int i = 0; i < count / 2; i++) {
+      String defaultAppName = "test" + (2 * i);
+      TransactionRunners.run(transactionRunner, context -> {
+        AppMetadataStore store = AppMetadataStore.create(context);
+        store.writeApplication(NamespaceId.DEFAULT.getNamespace(),
+                               defaultAppName, ApplicationId.DEFAULT_VERSION, appSpec);
+      });
+
+      String cdapAppName = "test" + (2 * i + 1);
+      TransactionRunners.run(transactionRunner, context -> {
+        AppMetadataStore store = AppMetadataStore.create(context);
+        store.writeApplication(NamespaceId.CDAP.getNamespace(),
+                               cdapAppName, ApplicationId.DEFAULT_VERSION, appSpec);
+      });
+    }
+
+    // Scan all apps
+    Map<ApplicationId, ApplicationMeta> apps = new LinkedHashMap<>();
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+
+      store.scanApplications(ScanApplicationsRequest.builder().setNamespaceId(NamespaceId.DEFAULT).build(),
+                             entry -> {
+                               apps.put(entry.getKey(), entry.getValue());
+                               return true;
+                             });
+    });
+    Assert.assertEquals(count / 2, apps.size());
+  }
+
+  @Test
+  public void testScanApplicationsWithNamespaceReverse() {
     ApplicationSpecification appSpec = Specifications.from(new AllProgramsApp());
 
     // Writes 100 application specs
@@ -864,30 +1010,141 @@ public abstract class AppMetadataStoreTest {
     }
 
     // Scan all apps
-    Map<ApplicationId, ApplicationMeta> apps = new HashMap<>();
+    Map<ApplicationId, ApplicationMeta> apps = new LinkedHashMap<>();
     TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore store = AppMetadataStore.create(context);
-      store.scanApplications(NamespaceId.DEFAULT.getNamespace(), AppMetadataStore.Cursor.EMPTY, ((cursor, entry) -> {
-        apps.put(entry.getKey(), entry.getValue());
-        return true;
-      }));
+
+      store.scanApplications(ScanApplicationsRequest.builder().setNamespaceId(NamespaceId.DEFAULT).build(),
+                             entry -> {
+          apps.put(entry.getKey(), entry.getValue());
+          return true;
+        });
     });
     Assert.assertEquals(count / 2, apps.size());
+    List<ApplicationId> appIds = new ArrayList<>(apps.keySet());
+    List<ApplicationId> reverseIds = Lists.reverse(appIds);
+
+    // Scan reverse
+    apps.clear();
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+
+      store.scanApplications(ScanApplicationsRequest.builder()
+                               .setNamespaceId(NamespaceId.DEFAULT)
+                               .setSortOrder(SortOrder.DESC)
+                               .build(),
+                             entry -> {
+                               apps.put(entry.getKey(), entry.getValue());
+                               return true;
+                             });
+    });
+    Assert.assertEquals(reverseIds, new ArrayList<>(apps.keySet()));
+
+    // Scan paged
+    int pageSize = 5;
+    apps.clear();
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+
+      store.scanApplications(ScanApplicationsRequest.builder()
+                               .setNamespaceId(NamespaceId.DEFAULT)
+                               .setScanFrom(appIds.get(pageSize - 1))
+                               .build(),
+                             entry -> {
+                               apps.put(entry.getKey(), entry.getValue());
+                               return true;
+                             });
+    });
+
+    Assert.assertEquals(appIds.subList(pageSize, count / 2), new ArrayList<>(apps.keySet()));
+
+    // Scan paged reverse
+    apps.clear();
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+
+      store.scanApplications(ScanApplicationsRequest.builder()
+                               .setNamespaceId(NamespaceId.DEFAULT)
+                               .setSortOrder(SortOrder.DESC)
+                               .setScanFrom(reverseIds.get(pageSize - 1))
+                               .build(),
+                             entry -> {
+                               apps.put(entry.getKey(), entry.getValue());
+                               return true;
+                             });
+    });
+    Assert.assertEquals(reverseIds.subList(pageSize, count / 2), new ArrayList<>(apps.keySet()));
 
     // Scan by batches
     apps.clear();
-    AtomicReference<AppMetadataStore.Cursor> cursorRef = new AtomicReference<>(AppMetadataStore.Cursor.EMPTY);
-    for (int i = 0; i <= count / 15; i++) {
-      TransactionRunners.run(transactionRunner, context -> {
-        AppMetadataStore store = AppMetadataStore.create(context);
-        store.scanApplications(NamespaceId.CDAP.getNamespace(), cursorRef.get(), ((cursor, entry) -> {
-          apps.put(entry.getKey(), entry.getValue());
-          cursorRef.set(cursor);
-          return apps.size() % 15 != 0;
-        }));
-      });
+    {
+      AtomicReference<ScanApplicationsRequest> requestRef = new AtomicReference<>(
+        ScanApplicationsRequest.builder().setNamespaceId(NamespaceId.DEFAULT).build());
+      for (int i = 0; i <= count / 15; i++) {
+        TransactionRunners.run(transactionRunner, context -> {
+          AppMetadataStore store = AppMetadataStore.create(context);
+
+          store.scanApplications(requestRef.get(),
+                                 entry -> {
+                                   apps.put(entry.getKey(), entry.getValue());
+                                   ScanApplicationsRequest nextBatchRequest = ScanApplicationsRequest
+                                     .builder(requestRef.get()).setScanFrom(entry.getKey()).build();
+                                   requestRef.set(nextBatchRequest);
+                                   return apps.size() % 15 != 0;
+                                 });
+        });
+      }
     }
-    Assert.assertEquals(count / 2, apps.size());
+    Assert.assertEquals(appIds, new ArrayList<>(apps.keySet()));
+
+    // Scan reverse by batches
+    apps.clear();
+    {
+      AtomicReference<ScanApplicationsRequest> requestRef = new AtomicReference<>(
+        ScanApplicationsRequest.builder()
+          .setNamespaceId(NamespaceId.DEFAULT)
+          .setSortOrder(SortOrder.DESC)
+          .build());
+      for (int i = 0; i <= count / 15; i++) {
+        TransactionRunners.run(transactionRunner, context -> {
+          AppMetadataStore store = AppMetadataStore.create(context);
+
+          store.scanApplications(requestRef.get(),
+                                 entry -> {
+                                   apps.put(entry.getKey(), entry.getValue());
+                                   ScanApplicationsRequest nextBatchRequest = ScanApplicationsRequest
+                                     .builder(requestRef.get()).setScanFrom(entry.getKey()).build();
+                                   requestRef.set(nextBatchRequest);
+                                   return apps.size() % 15 != 0;
+                                 });
+        });
+      }
+    }
+    Assert.assertEquals(reverseIds, new ArrayList<>(apps.keySet()));
+
+    // Scan paged by batches
+    apps.clear();
+    {
+      AtomicReference<ScanApplicationsRequest> requestRef = new AtomicReference<>(
+        ScanApplicationsRequest.builder()
+          .setNamespaceId(NamespaceId.DEFAULT)
+          .setScanFrom(appIds.get(pageSize - 1))
+          .build());
+      for (int i = 0; i <= count / 15; i++) {
+        TransactionRunners.run(transactionRunner, context -> {
+          AppMetadataStore store = AppMetadataStore.create(context);
+
+          store.scanApplications(requestRef.get(), entry -> {
+            apps.put(entry.getKey(), entry.getValue());
+            ScanApplicationsRequest nextBatchRequest = ScanApplicationsRequest
+              .builder(requestRef.get()).setScanFrom(entry.getKey()).build();
+            requestRef.set(nextBatchRequest);
+            return apps.size() % 15 != 0;
+          });
+        });
+      }
+    }
+    Assert.assertEquals(appIds.subList(pageSize, count / 2), new ArrayList<>(apps.keySet()));
   }
 
   @Test

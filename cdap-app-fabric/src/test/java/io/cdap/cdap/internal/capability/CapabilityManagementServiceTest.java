@@ -103,13 +103,11 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
   @After
   public void reset() throws Exception {
     // Reset all relevant stores.
-    for (ApplicationDetail appDetail : applicationLifecycleService
-      .getApps(NamespaceId.SYSTEM, applicationDetail -> true)) {
+    for (ApplicationDetail appDetail : applicationLifecycleService.getApps(NamespaceId.SYSTEM)) {
       programLifecycleService.stopAll(
         new ApplicationId(NamespaceId.SYSTEM.getNamespace(), appDetail.getName(), appDetail.getAppVersion()));
     }
-    for (ApplicationDetail appDetail : applicationLifecycleService
-      .getApps(NamespaceId.DEFAULT, applicationDetail -> true)) {
+    for (ApplicationDetail appDetail : applicationLifecycleService.getApps(NamespaceId.DEFAULT)) {
       programLifecycleService.stopAll(
         new ApplicationId(NamespaceId.DEFAULT.getNamespace(), appDetail.getName(), appDetail.getAppVersion()));
     }

@@ -36,6 +36,7 @@ import io.cdap.cdap.api.workflow.WorkflowNode;
 import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.app.program.ProgramDescriptor;
+import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
@@ -57,6 +58,7 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.WorkflowId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -67,14 +69,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
@@ -93,12 +98,23 @@ public class DefaultStore implements Store {
   // as it is not specifically metadata
   private static final DatasetId WORKFLOW_STATS_INSTANCE_ID = NamespaceId.SYSTEM.dataset("workflow.stats");
   private static final Map<String, String> EMPTY_STRING_MAP = Collections.emptyMap();
+  // If store does not support reverse scanning, we reorder in memory.
+  // This is maximum number of items we will reorder at a time
+  // before repeating the scan. We would need to store so many key in memory to serve the answer
+  private static final int MAX_REORDER_BATCH = 1000;
 
   private TransactionRunner transactionRunner;
+  private final int maxReorderBatch;
 
   @Inject
   public DefaultStore(TransactionRunner transactionRunner) {
+    this(transactionRunner, MAX_REORDER_BATCH);
+  }
+
+  @VisibleForTesting
+  DefaultStore(TransactionRunner transactionRunner, int maxReorderBatch) {
     this.transactionRunner = transactionRunner;
+    this.maxReorderBatch = maxReorderBatch;
   }
 
   /**
@@ -558,19 +574,34 @@ public class DefaultStore implements Store {
 
   @Override
   public void scanApplications(int txBatchSize, BiConsumer<ApplicationId, ApplicationSpecification> consumer) {
+    scanApplications(ScanApplicationsRequest.builder().build(), txBatchSize, consumer);
+  }
 
-    AtomicReference<AppMetadataStore.Cursor> cursorRef = new AtomicReference<>(AppMetadataStore.Cursor.EMPTY);
+  @Override
+  public void scanApplications(ScanApplicationsRequest request, int txBatchSize,
+                               BiConsumer<ApplicationId, ApplicationSpecification> consumer) {
+
+    AtomicReference<ScanApplicationsRequest> requestRef = new AtomicReference<>(request);
 
     while (true) {
       AtomicInteger count = new AtomicInteger();
 
-      TransactionRunners.run(transactionRunner, context -> {
-        getAppMetadataStore(context).scanApplications(cursorRef.get(), (cursor, entry) -> {
-          cursorRef.set(cursor);
-          consumer.accept(entry.getKey(), entry.getValue().getSpec());
-          return count.incrementAndGet() < txBatchSize;
+      try {
+        TransactionRunners.run(transactionRunner, context -> {
+          getAppMetadataStore(context).scanApplications(requestRef.get(), entry -> {
+            ScanApplicationsRequest nextBatchRequest = ScanApplicationsRequest
+              .builder(requestRef.get()).setScanFrom(entry.getKey()).build();
+            requestRef.set(nextBatchRequest);
+            consumer.accept(entry.getKey(), entry.getValue().getSpec());
+            return count.incrementAndGet() < txBatchSize;
+          });
         });
-      });
+      } catch (UnsupportedOperationException e) {
+        if (requestRef.get().getSortOrder() != SortOrder.DESC || count.get() != 0) {
+          throw e;
+        }
+        scanApplicationwWithReorder(requestRef.get(), txBatchSize, consumer);
+      }
 
       if (count.get() == 0) {
         break;
@@ -578,25 +609,46 @@ public class DefaultStore implements Store {
     }
   }
 
-  @Override
-  public void scanApplications(NamespaceId id, int txBatchSize,
-                               BiConsumer<ApplicationId, ApplicationSpecification> consumer) {
-
-    AtomicReference<AppMetadataStore.Cursor> cursorRef = new AtomicReference<>(AppMetadataStore.Cursor.EMPTY);
-
-    while (true) {
-      AtomicInteger count = new AtomicInteger();
-
+  /**
+   * Special case where we are asked to get applications in descending order and the store does not support it.
+   * We scan keys in large batches and serve backwards
+   */
+  private void scanApplicationwWithReorder(ScanApplicationsRequest request,
+                                           int txBatchSize,
+                                           BiConsumer<ApplicationId, ApplicationSpecification> consumer) {
+    AtomicReference<ScanApplicationsRequest> forwardRequest =
+      new AtomicReference<>(ScanApplicationsRequest.builder(request)
+      .setSortOrder(SortOrder.ASC)
+      .setScanFrom(request.getScanTo())
+      .setScanTo(request.getScanFrom())
+      .build());
+    AtomicBoolean needMoreScans = new AtomicBoolean(true);
+    Deque<ApplicationId> ids = new ArrayDeque<>(maxReorderBatch);
+    while (needMoreScans.get()) {
+      needMoreScans.set(false);
       TransactionRunners.run(transactionRunner, context -> {
-        getAppMetadataStore(context).scanApplications(id.getNamespace(), cursorRef.get(), (cursor, entry) -> {
-          cursorRef.set(cursor);
-          consumer.accept(entry.getKey(), entry.getValue().getSpec());
-          return count.incrementAndGet() < txBatchSize;
+        getAppMetadataStore(context).scanApplications(forwardRequest.get(), entry -> {
+          if (ids.size() >= maxReorderBatch) {
+            ids.removeFirst();
+            needMoreScans.set(true);
+          }
+          ids.add(entry.getKey());
+          return true;
         });
       });
-
-      if (count.get() == 0) {
-        break;
+      if (needMoreScans.get()) {
+        forwardRequest.set(ScanApplicationsRequest
+                             .builder(forwardRequest.get())
+                             .setScanTo(ids.getFirst())
+                             .build());
+      }
+      while (!ids.isEmpty()) {
+        TransactionRunners.run(transactionRunner, context -> {
+          for (int i = 0; !ids.isEmpty() && i < txBatchSize; i++) {
+            ApplicationId id = ids.removeLast();
+            consumer.accept(id, getApplicationSpec(getAppMetadataStore(context), id));
+          }
+        });
       }
     }
   }
