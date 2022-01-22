@@ -121,24 +121,6 @@
       "label": "Master Nodes",
       "properties": [
         {
-          "widget-type": "toggle",
-          "label": "Use prefined Dataproc AutoScaling by CDF",
-          "name": "enableCdfAutoScaling",
-          "description": "Defines whether the Dataproc auto scaling with predefined Auto-Scaling policy by CDF  will be enabled",
-          "widget-attributes": {
-            "default": "false",
-            "on": {
-              "value": "true",
-              "label": "True"
-            },
-            "off": {
-              "value": "false",
-              "label": "False"
-            },
-            "size": "medium"
-          }
-        },
-        {
           "widget-type": "select",
           "label": "Number of masters",
           "name": "masterNumNodes",
@@ -236,6 +218,24 @@
     {
       "label": "Worker Nodes",
       "properties": [
+        {
+          "widget-type": "toggle",
+          "label": "Enable Dataproc Autoscaling by CDF",
+          "name": "predefinedAutoScaleEnabled",
+          "description": "Defines whether the Dataproc Cluster will be auto-scaled.",
+          "widget-attributes": {
+            "default": "false",
+            "on": {
+              "value": "true",
+              "label": "True"
+            },
+            "off": {
+              "value": "false",
+              "label": "False"
+            },
+            "size": "medium"
+          }
+        },
         {
           "widget-type": "number",
           "label": "Number of Primary Workers",
