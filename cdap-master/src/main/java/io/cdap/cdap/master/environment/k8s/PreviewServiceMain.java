@@ -141,6 +141,14 @@ public class PreviewServiceMain extends AbstractServiceMain<EnvironmentOptions> 
                              List<? super AutoCloseable> closeableResources,
                              MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
                              EnvironmentOptions options) {
+    CConfiguration cConf = injector.getInstance(CConfiguration.class);
+
+    // When internal auth is enabled, start TokenManager first, so it is ready
+    // for generating and validating tokens needed for communicating with other
+    // system services.
+    if (SecurityUtil.isInternalAuthEnabled(cConf)) {
+      services.add(injector.getInstance(TokenManager.class));
+    }
     services.add(new TwillRunnerServiceWrapper(injector.getInstance(TwillRunnerService.class)));
     services.add(injector.getInstance(PreviewHttpServer.class));
     Binding<ZKClientService> zkBinding = injector.getExistingBinding(Key.get(ZKClientService.class));
@@ -148,12 +156,8 @@ public class PreviewServiceMain extends AbstractServiceMain<EnvironmentOptions> 
       services.add(zkBinding.getProvider().get());
     }
 
-    CConfiguration cConf = injector.getInstance(CConfiguration.class);
     if (cConf.getInt(Constants.Preview.CONTAINER_COUNT) <= 0) {
       services.add(injector.getInstance(PreviewRunnerManager.class));
-    }
-    if (SecurityUtil.isInternalAuthEnabled(cConf)) {
-      services.add(injector.getInstance(TokenManager.class));
     }
   }
 
