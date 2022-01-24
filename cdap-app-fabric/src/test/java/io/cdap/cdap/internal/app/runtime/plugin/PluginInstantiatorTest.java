@@ -20,6 +20,7 @@ import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.internal.app.runtime.ProgramClassLoader;
@@ -50,6 +51,8 @@ public class PluginInstantiatorTest {
     File jarDir = TMP_FOLDER.newFolder();
     ArtifactId artifactId = new ArtifactId("dummy", new ArtifactVersion("1.0"), ArtifactScope.USER);
     CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
+
     ProgramClassLoader programClassLoader = new ProgramClassLoader(cConf, appDir, this.getClass().getClassLoader());
     PluginInstantiator pluginInstantiator = new PluginInstantiator(cConf,
                                                                    programClassLoader,
