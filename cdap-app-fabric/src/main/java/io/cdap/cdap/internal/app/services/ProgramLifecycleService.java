@@ -43,6 +43,7 @@ import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProfileConflictException;
+import io.cdap.cdap.common.TooManyRequestsException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -136,7 +137,9 @@ public class ProgramLifecycleService {
   private final ProgramStateWriter programStateWriter;
   private final CapabilityReader capabilityReader;
   private final int maxConcurrentRuns;
+  private final int maxConcurrentLaunching;
   private final ArtifactRepository artifactRepository;
+  private final RunRecordCounter runRecordCounter;
 
   @Inject
   ProgramLifecycleService(CConfiguration cConf,
@@ -148,6 +151,7 @@ public class ProgramLifecycleService {
                           ProgramStateWriter programStateWriter, CapabilityReader capabilityReader,
                           ArtifactRepository artifactRepository) {
     this.maxConcurrentRuns = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_RUNS);
+    this.maxConcurrentLaunching = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_LAUNCHING);
     this.store = store;
     this.profileService = profileService;
     this.runtimeService = runtimeService;
@@ -160,6 +164,7 @@ public class ProgramLifecycleService {
     this.programStateWriter = programStateWriter;
     this.capabilityReader = capabilityReader;
     this.artifactRepository = artifactRepository;
+    this.runRecordCounter = new RunRecordCounter(runtimeService);
   }
 
   /**
@@ -524,21 +529,41 @@ public class ProgramLifecycleService {
     userId = userId == null ? "" : userId;
 
     checkCapability(programDescriptor);
-    synchronized (this) {
-      if (maxConcurrentRuns > 0 && maxConcurrentRuns <= store.countActiveRuns(maxConcurrentRuns)) {
-        ConflictException e = new ConflictException(
-          String.format("Program %s cannot start because the maximum of %d concurrent runs is exceeded",
+
+    ProgramRunId programRunId = programId.run(runId);
+    RunRecordCounter.Count count = runRecordCounter.addRequestAndGetCount(programRunId);
+
+    boolean done = false;
+    try {
+      if (maxConcurrentRuns >= 0 && maxConcurrentRuns < count.getRunsCount()) {
+        TooManyRequestsException e = new TooManyRequestsException(
+          String.format("Program %s cannot start because the maximum of %d concurrent running runs is allowed",
                         programId, maxConcurrentRuns));
 
-        programStateWriter.reject(programId.run(runId), programOptions, programDescriptor, userId, e);
+        programStateWriter.reject(programRunId, programOptions, programDescriptor, userId, e);
         throw e;
+      }
+
+      if (maxConcurrentLaunching >= 0 && maxConcurrentLaunching < count.getLaunchingCount()) {
+        TooManyRequestsException e = new TooManyRequestsException(
+          String.format("Program %s cannot start because the maximum of %d concurrent provisioning/starting runs" +
+                          " is allowed", programId, maxConcurrentLaunching));
+
+        programStateWriter.reject(programRunId, programOptions, programDescriptor, userId, e);
+        throw e;
+      }
+
+      LOG.info("Attempt to run {} program {} as user {} with arguments {}", programId.getType(), programId.getProgram(),
+               authenticationContext.getPrincipal().getName(), userArgs);
+
+      provisionerNotifier.provisioning(programRunId, programOptions, programDescriptor, userId);
+      done = true;
+    } finally {
+      if (!done) {
+        runRecordCounter.removeRequest(programRunId);
       }
     }
 
-    LOG.info("Attempt to run {} program {} as user {} with arguments {}", programId.getType(), programId.getProgram(),
-             authenticationContext.getPrincipal().getName(), userArgs);
-
-    provisionerNotifier.provisioning(programId.run(runId), programOptions, programDescriptor, userId);
     return runId;
   }
 
@@ -586,6 +611,8 @@ public class ProgramLifecycleService {
    * @param programId the {@link ProgramId} to start/stop
    * @param overrides the arguments to override in the program's configured user arguments before starting
    * @param debug {@code true} if the program is to be started in debug mode, {@code false} otherwise
+   * @param isPreview true if the program is for preview run, for preview run, the app is already deployed with resolved
+   *                  properties, so no need to regenerate app spec again
    * @return {@link ProgramController}
    * @throws ConflictException if the specified program is already running, and if concurrent runs are not allowed
    * @throws NotFoundException if the specified program or the app it belongs to is not found in the specified namespace
@@ -594,7 +621,8 @@ public class ProgramLifecycleService {
    *                               a user requires {@link ApplicationPermission#EXECUTE} on the program
    * @throws Exception if there were other exceptions checking if the current user is authorized to start the program
    */
-  public ProgramController start(ProgramId programId, Map<String, String> overrides, boolean debug) throws Exception {
+  public ProgramController start(ProgramId programId, Map<String, String> overrides, boolean debug,
+                                 boolean isPreview) throws Exception {
     accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), ApplicationPermission.EXECUTE);
     checkConcurrentExecution(programId);
 
@@ -602,6 +630,7 @@ public class ProgramLifecycleService {
     addAppCDAPVersion(programId, sysArgs);
     sysArgs.put(ProgramOptionConstants.SKIP_PROVISIONING, "true");
     sysArgs.put(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName());
+    sysArgs.put(ProgramOptionConstants.IS_PREVIEW, Boolean.toString(isPreview));
     Map<String, String> userArgs = propertiesResolver.getUserProperties(programId);
     if (overrides != null) {
       userArgs.putAll(overrides);
@@ -1228,5 +1257,9 @@ public class ProgramLifecycleService {
       KerberosPrincipalId kid = new KerberosPrincipalId(principal);
       accessEnforcer.enforce(kid, authenticationContext.getPrincipal(), AccessPermission.IMPERSONATE);
     }
+  }
+
+  public RunRecordCounter getRunRecordCounter() {
+    return runRecordCounter;
   }
 }

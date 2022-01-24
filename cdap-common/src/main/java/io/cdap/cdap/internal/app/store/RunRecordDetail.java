@@ -40,7 +40,7 @@ import javax.annotation.Nullable;
  * includes information that should not be exposed to users. {@link RunRecord} contains fields that are exposed
  * to users, so everything else like the Twill runid should go here.
  */
-public final class RunRecordDetail extends RunRecord {
+public class RunRecordDetail extends RunRecord {
 
   // carries the ProgramRunId, but we don't need to serialize it as it is already in the key of the meta data store
   private final transient ProgramRunId programRunId;
@@ -65,14 +65,14 @@ public final class RunRecordDetail extends RunRecord {
 
   // carries the user arguments decoded from properties. No need to serialize since it is from the properties.
   private transient volatile Map<String, String> userArgs;
-
-  private RunRecordDetail(ProgramRunId programRunId, long startTs, @Nullable Long runTs, @Nullable Long stopTs,
-                          @Nullable Long suspendTs, @Nullable Long resumeTs,
-                          ProgramRunStatus status, @Nullable Map<String, String> properties,
-                          @Nullable Map<String, String> systemArgs, @Nullable String twillRunId,
-                          ProgramRunCluster cluster, ProfileId profileId, byte[] sourceId,
-                          @Nullable ArtifactId artifactId, @Nullable String principal) {
-    super(programRunId.getRun(), startTs, runTs, stopTs, suspendTs, resumeTs, status, properties, cluster, profileId);
+  protected RunRecordDetail(ProgramRunId programRunId, long startTs, @Nullable Long runTs, @Nullable Long stopTs,
+                            @Nullable Long suspendTs, @Nullable Long resumeTs,  @Nullable Long stoppingTs,
+                            @Nullable Long stoppingTimeoutTs, ProgramRunStatus status,
+                            @Nullable Map<String, String> properties, @Nullable Map<String, String> systemArgs,
+                            @Nullable String twillRunId, ProgramRunCluster cluster, ProfileId profileId,
+                            byte[] sourceId, @Nullable ArtifactId artifactId, @Nullable String principal) {
+    super(programRunId.getRun(), startTs, runTs, stopTs, suspendTs, resumeTs, stoppingTs, stoppingTimeoutTs,
+          status, properties, cluster, profileId);
     this.programRunId = programRunId;
     this.systemArgs = systemArgs;
     this.twillRunId = twillRunId;
@@ -148,6 +148,8 @@ public final class RunRecordDetail extends RunRecord {
       Objects.equal(this.getStopTs(), that.getStopTs()) &&
       Objects.equal(this.getSuspendTs(), that.getSuspendTs()) &&
       Objects.equal(this.getResumeTs(), that.getResumeTs()) &&
+      Objects.equal(this.getStoppingTs(), that.getStoppingTs()) &&
+      Objects.equal(this.getStoppingTimeoutTs(), that.getStoppingTimeoutTs()) &&
       Objects.equal(this.getStatus(), that.getStatus()) &&
       Objects.equal(this.getProperties(), that.getProperties()) &&
       Objects.equal(this.getTwillRunId(), that.getTwillRunId()) &&
@@ -159,8 +161,8 @@ public final class RunRecordDetail extends RunRecord {
   @Override
   public int hashCode() {
     return Objects.hashCode(getProgramRunId(), getStartTs(), getRunTs(), getStopTs(), getSuspendTs(), getResumeTs(),
-                            getStatus(), getProperties(), getTwillRunId(), Arrays.hashCode(getSourceId()),
-                            getArtifactId(), getPrincipal());
+                            getStoppingTs(), getStoppingTimeoutTs(), getStatus(), getProperties(),
+                            getTwillRunId(), Arrays.hashCode(getSourceId()), getArtifactId(), getPrincipal());
   }
 
   @Override
@@ -172,6 +174,8 @@ public final class RunRecordDetail extends RunRecord {
       .add("stopTs", getStopTs())
       .add("suspendTs", getSuspendTs())
       .add("resumeTs", getResumeTs())
+      .add("stoppingTs", getStoppingTs())
+      .add("stoppingTimeoutTs", getStoppingTimeoutTs())
       .add("status", getStatus())
       .add("twillrunid", getTwillRunId())
       .add("systemArgs", getSystemArgs())
@@ -202,19 +206,33 @@ public final class RunRecordDetail extends RunRecord {
   /**
    * Builds RunRecordMetas.
    */
-  public static class Builder extends RunRecord.Builder<Builder> {
-    private ProgramRunId programRunId;
-    private String twillRunId;
-    private Map<String, String> systemArgs;
-    private byte[] sourceId;
-    private String principal;
-    private ArtifactId artifactId;
+  public static class Builder extends ABuilder<Builder> {
+    protected Builder() {
+    }
 
-    private Builder() {
+    protected Builder(RunRecordDetail record) {
+      super(record);
+    }
+  }
+
+  /**
+   * It is used by children builders to inherit from and build RunRecordMetas.
+   * @param <T> type of builder
+   */
+  @SuppressWarnings("unchecked")
+  public abstract static class ABuilder<T extends ABuilder> extends RunRecord.Builder<T> {
+    protected ProgramRunId programRunId;
+    protected String twillRunId;
+    protected Map<String, String> systemArgs;
+    protected byte[] sourceId;
+    protected String principal;
+    protected ArtifactId artifactId;
+
+    protected ABuilder() {
       systemArgs = new HashMap<>();
     }
 
-    private Builder(RunRecordDetail record) {
+    protected ABuilder(RunRecordDetail record) {
       super(record);
       programRunId = record.getProgramRunId();
       twillRunId = record.getTwillRunId();
@@ -224,37 +242,37 @@ public final class RunRecordDetail extends RunRecord {
       artifactId = record.getArtifactId();
     }
 
-    public Builder setProgramRunId(ProgramRunId programRunId) {
+    public T setProgramRunId(ProgramRunId programRunId) {
       this.programRunId = programRunId;
-      return this;
+      return (T) this;
     }
 
-    public Builder setTwillRunId(@Nullable String twillRunId) {
+    public T setTwillRunId(@Nullable String twillRunId) {
       this.twillRunId = twillRunId;
-      return this;
+      return (T) this;
     }
 
-    public Builder setSystemArgs(@Nullable Map<String, String> systemArgs) {
+    public T setSystemArgs(@Nullable Map<String, String> systemArgs) {
       this.systemArgs.clear();
       if (systemArgs != null) {
         this.systemArgs.putAll(systemArgs);
       }
-      return this;
+      return (T) this;
     }
 
-    public Builder setSourceId(byte[] sourceId) {
+    public T setSourceId(byte[] sourceId) {
       this.sourceId = sourceId;
-      return this;
+      return (T) this;
     }
 
-    public Builder setPrincipal(String principal) {
+    public T setPrincipal(String principal) {
       this.principal = principal;
-      return this;
+      return (T) this;
     }
 
-    public Builder setArtifactId(ArtifactId artifactId) {
+    public T setArtifactId(ArtifactId artifactId) {
       this.artifactId = artifactId;
-      return this;
+      return (T) this;
     }
 
     public RunRecordDetail build() {
@@ -267,9 +285,9 @@ public final class RunRecordDetail extends RunRecord {
       // we are not validating artifactId for null,
       // artifactId could be null for program starts that were recorded pre 5.0 but weren't processed
       // we don't want to throw exception while processing them
-      return new RunRecordDetail(programRunId, startTs, runTs, stopTs, suspendTs, resumeTs,
-                                 status, properties, systemArgs, twillRunId, cluster, profileId,
-                                 sourceId, artifactId, principal);
+      return new RunRecordDetail(programRunId, startTs, runTs, stopTs, suspendTs, resumeTs, stoppingTs,
+                                 stoppingTimeoutTs, status, properties, systemArgs, twillRunId, cluster,
+                                 profileId, sourceId, artifactId, principal);
     }
   }
 }

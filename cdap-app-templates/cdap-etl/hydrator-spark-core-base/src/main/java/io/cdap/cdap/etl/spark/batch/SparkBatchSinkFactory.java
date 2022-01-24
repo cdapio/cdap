@@ -21,23 +21,23 @@ import io.cdap.cdap.api.data.batch.Output;
 import io.cdap.cdap.api.data.batch.OutputFormatProvider;
 import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
+import io.cdap.cdap.etl.api.engine.sql.SQLEngineOutput;
 import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.output.MultiOutputFormat;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.MRJobConfig;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Tuple2;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Handles writes to batch sinks. Maintains a mapping from sinks to their outputs and handles serialization and
@@ -49,12 +49,14 @@ public final class SparkBatchSinkFactory {
   private final Set<String> uncombinableSinks;
   private final Map<String, DatasetInfo> datasetInfos;
   private final Map<String, Set<String>> sinkOutputs;
+  private final Map<String, SQLEngineOutput> sqlOutputs;
 
   public SparkBatchSinkFactory() {
     this.outputFormatProviders = new HashMap<>();
     this.uncombinableSinks = new HashSet<>();
     this.datasetInfos = new HashMap<>();
     this.sinkOutputs = new HashMap<>();
+    this.sqlOutputs = new HashMap<>();
   }
 
   void addOutput(String stageName, Output output) {
@@ -68,6 +70,8 @@ public final class SparkBatchSinkFactory {
                 new NamedOutputFormatProvider(ofpOutput.getName(),
                                               ofpOutput.getOutputFormatProvider().getOutputFormatClassName(),
                                               ofpOutput.getOutputFormatProvider().getOutputFormatConfiguration()));
+    } else if (output instanceof SQLEngineOutput) {
+      addOutput(stageName, output.getAlias(), (SQLEngineOutput) output);
     } else {
       throw new IllegalArgumentException("Unknown output format type: " + output.getClass().getCanonicalName());
     }
@@ -89,6 +93,15 @@ public final class SparkBatchSinkFactory {
     addStageOutput(stageName, alias);
   }
 
+  private void addOutput(String stageName, String alias,
+                         SQLEngineOutput sqlEngineOutput) {
+    if (sqlOutputs.containsKey(stageName)) {
+      throw new IllegalArgumentException("Output already configured: " + alias);
+    }
+    sqlOutputs.put(alias, sqlEngineOutput);
+    addStageOutput(stageName, alias);
+  }
+
   private void addOutput(String stageName, String datasetName, String alias, Map<String, String> datasetArgs) {
     if (outputFormatProviders.containsKey(alias) || datasetInfos.containsKey(alias)) {
       throw new IllegalArgumentException("Output already configured: " + alias);
@@ -103,7 +116,7 @@ public final class SparkBatchSinkFactory {
    */
   public <K, V> Set<String> writeCombinedRDD(JavaPairRDD<String, KeyValue<K, V>> combinedRDD,
                                              JavaSparkExecutionContext sec, Set<String> sinkNames) {
-    Map<String, OutputFormatProvider> outputs = new HashMap<>();
+    Map<String, OutputFormatProvider> outputFormatProviders = new HashMap<>();
     Set<String> lineageNames = new HashSet<>();
     for (String sinkName : sinkNames) {
       Set<String> sinkOutputNames = sinkOutputs.get(sinkName);
@@ -114,8 +127,14 @@ public final class SparkBatchSinkFactory {
       }
 
       for (String outputName : sinkOutputNames) {
-        NamedOutputFormatProvider outputFormatProvider = outputFormatProviders.get(outputName);
+        NamedOutputFormatProvider outputFormatProvider = this.outputFormatProviders.get(outputName);
         if (outputFormatProvider == null) {
+          // Check if this is a SQL engine output. If this is the case, skip this output.
+          SQLEngineOutput sqlEngineOutput = sqlOutputs.get(outputName);
+          if (sqlEngineOutput != null) {
+            continue;
+          }
+
           // should never happen if planner is implemented correctly and dataset based sinks are not
           // grouped with other sinks
           throw new IllegalStateException(
@@ -125,16 +144,20 @@ public final class SparkBatchSinkFactory {
                             " to false in the runtime arguments.", sinkName, Constants.CONSOLIDATE_STAGES));
         }
         lineageNames.add(outputFormatProvider.name);
-        outputs.put(outputName, outputFormatProvider);
+        outputFormatProviders.put(outputName, outputFormatProvider);
       }
     }
 
     Configuration hConf = new Configuration();
     Map<String, Set<String>> groupSinkOutputs = new HashMap<>();
     for (String sink : sinkNames) {
-      groupSinkOutputs.put(sink, sinkOutputs.get(sink));
+      Set<String> outputFormatProvidersForSink =
+        sinkOutputs.get(sink).stream().filter(outputFormatProviders::containsKey).collect(Collectors.toSet());
+      if (!outputFormatProvidersForSink.isEmpty()) {
+        groupSinkOutputs.put(sink, outputFormatProvidersForSink);
+      }
     }
-    MultiOutputFormat.addOutputs(hConf, outputs, groupSinkOutputs);
+    MultiOutputFormat.addOutputs(hConf, outputFormatProviders, groupSinkOutputs);
     hConf.set(MRJobConfig.OUTPUT_FORMAT_CLASS_ATTR, MultiOutputFormat.class.getName());
     RDDUtils.saveHadoopDataset(combinedRDD, hConf);
     return lineageNames;
@@ -191,6 +214,11 @@ public final class SparkBatchSinkFactory {
   private void addStageOutput(String stageName, String outputName) {
     Set<String> outputs = sinkOutputs.computeIfAbsent(stageName, k -> new HashSet<>());
     outputs.add(outputName);
+  }
+
+  public SQLEngineOutput getSQLEngineOutput(String stageName) {
+    return !sinkOutputs.containsKey(stageName) ? null :
+      sinkOutputs.get(stageName).stream().map(sqlOutputs::get).filter(Objects::nonNull).findFirst().orElse(null);
   }
 
   static final class NamedOutputFormatProvider implements OutputFormatProvider {

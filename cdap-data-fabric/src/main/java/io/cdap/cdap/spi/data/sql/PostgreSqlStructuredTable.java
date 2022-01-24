@@ -17,8 +17,13 @@
 package io.cdap.cdap.spi.data.sql;
 
 import com.google.common.base.Joiner;
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.spi.data.InvalidFieldException;
 import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.StructuredTable;
@@ -60,16 +65,18 @@ import javax.annotation.Nullable;
  */
 public class PostgreSqlStructuredTable implements StructuredTable {
   private static final Logger LOG = LoggerFactory.getLogger(PostgreSqlStructuredTable.class);
-  private static final int SCAN_FETCH_SIZE = 100;
+
 
   private final Connection connection;
   private final StructuredTableSchema tableSchema;
   private final FieldValidator fieldValidator;
+  private final int scanFetchSize;
 
-  public PostgreSqlStructuredTable(Connection connection, StructuredTableSchema tableSchema) {
+  public PostgreSqlStructuredTable(Connection connection, StructuredTableSchema tableSchema, int scanFetchSize) {
     this.connection = connection;
     this.tableSchema = tableSchema;
     this.fieldValidator = new FieldValidator(tableSchema);
+    this.scanFetchSize = scanFetchSize;
   }
 
   @Override
@@ -206,7 +213,7 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     // We don't close the statement here because once it is closed, the result set is also closed.
     try {
       PreparedStatement statement = connection.prepareStatement(scanQuery);
-      statement.setFetchSize(SCAN_FETCH_SIZE);
+      statement.setFetchSize(scanFetchSize);
       setStatementFieldByRange(keyRange, statement);
       LOG.trace("SQL statement: {}", statement);
 
@@ -306,7 +313,7 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     query.append(" LIMIT ").append(limit).append(";");
 
     PreparedStatement statement = connection.prepareStatement(query.toString());
-    statement.setFetchSize(SCAN_FETCH_SIZE);
+    statement.setFetchSize(scanFetchSize);
 
     // Set the parameters
     int index = setFields(statement, keyFields.values().stream().flatMap(Collection::stream)::iterator, 1);
@@ -328,7 +335,7 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     // We don't close the statement here because once it is closed, the result set is also closed.
     try {
       PreparedStatement statement = connection.prepareStatement(sql);
-      statement.setFetchSize(SCAN_FETCH_SIZE);
+      statement.setFetchSize(scanFetchSize);
       setField(statement, index, 1);
       LOG.trace("SQL statement: {}", statement);
       ResultSet resultSet = statement.executeQuery();

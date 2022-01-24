@@ -33,6 +33,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.Delegator;
 import io.cdap.cdap.common.twill.TwillAppNames;
+import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -58,6 +59,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -88,8 +90,9 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
                                    // privileges needed for artifacts
                                    @Named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO)
                                      ArtifactRepository noAuthArtifactRepository,
-                                   Impersonator impersonator, ProgramStateWriter programStateWriter) {
-    super(cConf, programRunnerFactory, noAuthArtifactRepository, programStateWriter);
+                                   Impersonator impersonator, ProgramStateWriter programStateWriter,
+                                   ConfiguratorFactory configuratorFactory) {
+    super(cConf, programRunnerFactory, noAuthArtifactRepository, programStateWriter, configuratorFactory);
     this.twillRunner = twillRunner;
     this.store = store;
     this.impersonator = impersonator;
@@ -146,6 +149,8 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         Locations.linkOrCopy(artifactDetail.getDescriptor().getLocation(), targetFile);
         return null;
       });
+    } catch (FileAlreadyExistsException ex) {
+      LOG.warn("Artifact file {} already exists.", targetFile.getAbsolutePath());
     } catch (Exception e) {
       Throwables.propagateIfPossible(e, IOException.class);
       // should not happen

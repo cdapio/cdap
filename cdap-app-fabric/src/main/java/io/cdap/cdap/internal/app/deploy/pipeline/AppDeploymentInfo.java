@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.deploy.pipeline;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.annotations.SerializedName;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.artifact.ApplicationClass;
@@ -26,6 +25,7 @@ import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import org.apache.twill.filesystem.Location;
 
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -44,23 +44,24 @@ public class AppDeploymentInfo {
   private final KerberosPrincipalId ownerPrincipal;
   @SerializedName("update-schedules")
   private final boolean updateSchedules;
+  private final AppDeploymentRuntimeInfo runtimeInfo;
 
   public AppDeploymentInfo(AppDeploymentInfo info, Location artifactLocation) {
     this(info.artifactId, artifactLocation, info.namespaceId, info.applicationClass, info.appName, info.appVersion,
-         info.configString, info.ownerPrincipal, info.updateSchedules);
+         info.configString, info.ownerPrincipal, info.updateSchedules, info.runtimeInfo);
   }
 
-  @VisibleForTesting
   public AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
                            ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
                            @Nullable String configString) {
-    this(artifactId, artifactLocation, namespaceId, applicationClass, appName, appVersion, configString, null, true);
+    this(artifactId, artifactLocation, namespaceId, applicationClass, appName, appVersion, configString, null,
+         true, null);
   }
 
   public AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
                            ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
                            @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
-                           boolean updateSchedules) {
+                           boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
     this.artifactId = artifactId;
     this.artifactLocation = artifactLocation;
     this.namespaceId = namespaceId;
@@ -70,6 +71,7 @@ public class AppDeploymentInfo {
     this.configString = configString;
     this.ownerPrincipal = ownerPrincipal;
     this.updateSchedules = updateSchedules;
+    this.runtimeInfo = runtimeInfo;
   }
 
   /**
@@ -141,5 +143,13 @@ public class AppDeploymentInfo {
    */
   public boolean canUpdateSchedules() {
     return updateSchedules;
+  }
+
+  /**
+   * @return the runtime info if the app is deployed at runtime, null if this is the initial deploy
+   */
+  @Nullable
+  public AppDeploymentRuntimeInfo getRuntimeInfo() {
+    return runtimeInfo;
   }
 }

@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.services.http;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Closeables;
 import com.google.common.io.InputSupplier;
@@ -619,6 +620,24 @@ public abstract class AppFabricTestBase {
     HttpResponse response = doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, namespace));
     assertResponseCode(200, response);
     return readResponse(response, LIST_JSON_OBJECT_TYPE);
+  }
+
+  protected JsonObject getAppListForPaginatedApi(String namespace, int pageSize, String token,
+                                                 String filter) throws Exception {
+    String uri = "apps/?pageSize=" + pageSize;
+
+    if (token != null) {
+      uri += ("&pageToken=" + token);
+    }
+
+    if (!Strings.isNullOrEmpty(filter)) {
+      uri += ("&nameFilter=" + filter);
+    }
+
+    HttpResponse response = doGet(getVersionedAPIPath(uri,
+                                  Constants.Gateway.API_VERSION_3_TOKEN, namespace));
+    assertResponseCode(200, response);
+    return readResponse(response, JsonObject.class);
   }
 
   /**

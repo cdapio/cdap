@@ -56,6 +56,7 @@ public class PostgreSqlStorageProvider implements StorageProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(PostgreSqlStorageProvider.class);
 
+
   private final DataSource dataSource;
   private final StructuredTableAdmin admin;
   private final TransactionRunner txRunner;
@@ -64,8 +65,10 @@ public class PostgreSqlStorageProvider implements StorageProvider {
   PostgreSqlStorageProvider(CConfiguration cConf, SConfiguration sConf,
                             MetricsCollectionService metricsCollectionService) {
     this.dataSource = createDataSource(cConf, sConf, metricsCollectionService);
-    this.admin = new PostgreSqlStructuredTableAdmin(dataSource);
-    this.txRunner = new RetryingSqlTransactionRunner(admin, dataSource, metricsCollectionService, cConf);
+    this.admin = new PostgreSqlStructuredTableAdmin(dataSource,
+        cConf.getInt(Constants.Dataset.DATA_STORAGE_SQL_SCAN_FETCH_SIZE_ROWS));
+    this.txRunner = new RetryingSqlTransactionRunner(admin, dataSource, metricsCollectionService, cConf,
+        cConf.getInt(Constants.Dataset.DATA_STORAGE_SQL_SCAN_FETCH_SIZE_ROWS));
   }
 
   @Override

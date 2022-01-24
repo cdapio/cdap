@@ -30,10 +30,10 @@ import java.util.Set;
 public class ConnectionRegistryMacroEvaluator implements MacroEvaluator {
   public static final String FUNCTION_NAME = "conn";
 
-  private final Set<String> connectionIds;
+  private final Set<String> connectionNames;
 
   public ConnectionRegistryMacroEvaluator() {
-    this.connectionIds = new HashSet<>();
+    this.connectionNames = new HashSet<>();
   }
 
   @Override
@@ -49,14 +49,14 @@ public class ConnectionRegistryMacroEvaluator implements MacroEvaluator {
       throw new InvalidMacroException("Macro '" + FUNCTION_NAME + "' should have exactly 1 arguments");
     }
 
-    connectionIds.add(ConnectionId.getConnectionId(args[0]));
+    connectionNames.add(ConnectionId.getConnectionId(args[0]));
 
     throw new InvalidMacroException("The '" + FUNCTION_NAME
                                       + "' macro function doesn't support evaluating the connection macro " +
                                       "for connection '" + args[0] + "'");
   }
 
-  public Set<String> getConnectionIds() {
-    return connectionIds;
+  public Set<String> getUsedConnections() {
+    return connectionNames;
   }
 }

@@ -309,7 +309,8 @@ class CapabilityApplier {
     String configString = application.getConfig() == null ? null : GSON.toJson(application.getConfig());
     applicationLifecycleService
       .deployApp(applicationId.getParent(), applicationId.getApplication(), applicationId.getVersion(),
-                 application.getArtifact(), configString, NOOP_PROGRAM_TERMINATOR, null, null);
+                 application.getArtifact(), configString, NOOP_PROGRAM_TERMINATOR, null, null, false,
+                 Collections.emptyMap());
   }
 
   @VisibleForTesting

@@ -22,16 +22,18 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 import io.cdap.cdap.api.DatasetConfigurer;
+import io.cdap.cdap.api.app.RuntimeConfigurer;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.plugin.InvalidPluginConfigException;
 import io.cdap.cdap.api.plugin.InvalidPluginProperty;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
+import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Configuration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.api.ErrorTransform;
@@ -57,8 +59,11 @@ import io.cdap.cdap.etl.api.validation.InvalidConfigPropertyException;
 import io.cdap.cdap.etl.api.validation.InvalidStageException;
 import io.cdap.cdap.etl.api.validation.ValidationException;
 import io.cdap.cdap.etl.common.ArtifactSelectorProvider;
+import io.cdap.cdap.etl.common.BasicArguments;
+import io.cdap.cdap.etl.common.ConnectionMacroEvaluator;
 import io.cdap.cdap.etl.common.ConnectionRegistryMacroEvaluator;
 import io.cdap.cdap.etl.common.DefaultAutoJoinerContext;
+import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
 import io.cdap.cdap.etl.common.DefaultPipelineConfigurer;
 import io.cdap.cdap.etl.common.DefaultStageConfigurer;
 import io.cdap.cdap.etl.common.Schemas;
@@ -76,12 +81,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /**
  * This is run at application configure time to take an application config {@link ETLConfig} and call
@@ -103,11 +110,13 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
   private final ConnectionRegistryMacroEvaluator connectionEvaluator;
   private final MacroParserOptions options;
   private final Integer maxPreviewRecordsNumber;
+  // this is used when this configure() is called at runtime
+  @Nullable
+  private final MacroEvaluator runtimeEvaluator;
 
-  protected <T extends PluginConfigurer & DatasetConfigurer> PipelineSpecGenerator(T configurer,
-                                                                                   Set<String> sourcePluginTypes,
-                                                                                   Set<String> sinkPluginTypes,
-                                                                                   Engine engine) {
+  protected <T extends PluginConfigurer & DatasetConfigurer> PipelineSpecGenerator(
+    String namespace, T configurer, @Nullable RuntimeConfigurer runtimeConfigurer, Set<String> sourcePluginTypes,
+    Set<String> sinkPluginTypes, Engine engine) {
     this.pluginConfigurer = configurer;
     this.datasetConfigurer = configurer;
     this.sourcePluginTypes = sourcePluginTypes;
@@ -118,6 +127,15 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
                      .setFunctionWhitelist(ConnectionRegistryMacroEvaluator.FUNCTION_NAME).build();
     CConfiguration cConfiguration = CConfiguration.create();
     this.maxPreviewRecordsNumber = Integer.getInteger(cConfiguration.get(Constants.Preview.MAX_NUM_OF_RECORDS));
+    if (runtimeConfigurer != null) {
+      Map<String, MacroEvaluator> evaluators = Collections.singletonMap(
+        ConnectionMacroEvaluator.FUNCTION_NAME, new ConnectionMacroEvaluator(namespace, runtimeConfigurer));
+      this.runtimeEvaluator = new DefaultMacroEvaluator(
+        new BasicArguments(runtimeConfigurer.getRuntimeArguments()), evaluators, Collections.singleton(
+          ConnectionMacroEvaluator.FUNCTION_NAME));
+    } else {
+      this.runtimeEvaluator = null;
+    }
   }
 
   /**
@@ -216,7 +234,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       .setStageLoggingEnabled(config.isStageLoggingEnabled())
       .setNumOfRecordsPreview(config.getNumOfRecordsPreview())
       .setProperties(pipelineProperties)
-      .addConnectionsUsed(connectionEvaluator.getConnectionIds())
+      .addConnectionsUsed(connectionEvaluator.getUsedConnections())
       .build();
   }
 
@@ -321,7 +339,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
         singlePlugin.configurePipeline(pipelineConfigurer);
         // we don't have StreamingSource dependency so use source plugin types to check type
         // evaluate macros and find out if there is connection used
-        if (sourcePluginTypes.contains(type) || BatchSink.PLUGIN_TYPE.equals(type)) {
+        if ((sourcePluginTypes.contains(type) || BatchSink.PLUGIN_TYPE.equals(type)) && runtimeEvaluator == null) {
           pluginConfigurer.evaluateMacros(etlPlugin.getProperties(), connectionEvaluator, options);
         }
       }
@@ -434,11 +452,18 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
   private Object getPlugin(String stageName, ETLPlugin etlPlugin, TrackedPluginSelector pluginSelector, String type,
                            String pluginName, FailureCollector collector) {
     Object plugin = null;
+    Map<String, String> pluginProperties = etlPlugin.getProperties();
     try {
-      // Call to usePlugin may throw IllegalArgumentException if hte plugin with the same id is already deployed.
+      // if runtime evaluator is not null, evaluate the macros without secure related one to generate a new app
+      // spec
+      if (runtimeEvaluator != null) {
+        pluginProperties = pluginConfigurer.evaluateMacros(etlPlugin.getProperties(), runtimeEvaluator, options);
+      }
+      // Call to usePlugin may throw IllegalArgumentException if the plugin with the same id is already deployed.
       // This would mean there is a bug in the app and this can not be fixed by user. That is why it is not handled as
       // a ValidationFailure.
-      plugin = pluginConfigurer.usePlugin(type, pluginName, stageName, etlPlugin.getPluginProperties(), pluginSelector);
+      plugin = pluginConfigurer.usePlugin(type, pluginName, stageName,
+                                          PluginProperties.builder().addAll(pluginProperties).build(), pluginSelector);
     } catch (InvalidPluginConfigException e) {
       int numFailures = 0;
       for (String missingProperty : e.getMissingProperties()) {

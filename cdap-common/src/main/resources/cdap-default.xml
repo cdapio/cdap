@@ -282,7 +282,7 @@
 
   <property>
     <name>twill.security.worker.mount.secret</name>
-    <value>true</value>
+    <value>false</value>
     <description>
       Whether to mount a secret disk in worker runnables.
     </description>
@@ -456,7 +456,17 @@
     <name>app.max.concurrent.runs</name>
     <value>-1</value>
     <description>
-      Maximum number of concurrent program runs allowed; set to -1 for unlimited
+      Maximum number of concurrent program runs allowed; set to -1 for unlimited.
+      Program runs are those with an active run record.
+    </description>
+  </property>
+
+  <property>
+    <name>app.max.concurrent.launching</name>
+    <value>-1</value>
+    <description>
+      Maximum number of concurrent launching runs allowed; set to -1 for unlimited.
+      Launching runs have an active run record with PENDING or STARTING status.
     </description>
   </property>
 
@@ -890,6 +900,14 @@
       be specified in cdap-security.xml. For non-sensitive properties, it can be
       specified by adding a property with name prefixed with "data.storage.sql.jdbc.property.",
       followed by the sql property name.
+    </description>
+  </property>
+
+  <property>
+    <name>data.storage.sql.scan.size.rows</name>
+    <value>100</value>
+    <description>
+      The number of rows fetched for database reads from PostgreSQL.
     </description>
   </property>
 
@@ -1461,6 +1479,14 @@
     <value>20000</value>
     <description>
       Maximum connection backlog of CDAP Master
+    </description>
+  </property>
+
+  <property>
+    <name>app.streaming.batch.size</name>
+    <value>20</value>
+    <description>
+      Batch size for Batching Consumer for Scan Applications.
     </description>
   </property>
 
@@ -4631,6 +4657,72 @@
   </property>
 
   <!-- Service SupportBundle Configuration -->
+  <property>
+    <name>support.bundle.service.bind.address</name>
+    <value>0.0.0.0</value>
+    <description>
+      SupportBundle HTTP service bind address
+    </description>
+  </property>
+
+  <property>
+    <name>support.bundle.service.bind.port</name>
+    <value>0</value>
+    <description>
+      SupportBundle HTTP service bind port; if 0, binds to a random port
+    </description>
+  </property>
+
+  <property>
+    <name>support.bundle.service.exec.threads</name>
+    <value>${http.service.exec.threads}</value>
+    <description>
+      Number of Netty service executor threads for supportBundle HTTP service
+    </description>
+  </property>
+
+  <property>
+    <name>support.bundle.service.worker.threads</name>
+    <value>${http.service.worker.threads}</value>
+    <description>
+      Number of Netty service IO worker threads for supportBundle HTTP service
+    </description>
+  </property>
+
+  <property>
+    <name>support.bundle.service.memory.mb</name>
+    <value>2048</value>
+    <description>
+      Memory in megabytes for support bundle service. This is
+      explicitly set differently than ${master.service.memory.mb}.
+    </description>
+  </property>
+
+  <property>
+    <name>support.bundle.service.num.cores</name>
+    <value>${master.service.num.cores}</value>
+    <description>
+      Number of virtual cores for the support bundle service
+    </description>
+  </property>
+
+  <property>
+    <name>support.bundle.container.instances</name>
+    <value>1</value>
+    <description>
+      Number of instances for the support bundle service
+    </description>
+  </property>
+
+  <property>
+    <name>support.bundle.max.instances</name>
+    <value>${master.service.max.instances}</value>
+    <description>
+      Maximum number of instances for the support bundle service.
+    </description>
+    <final>true</final>
+  </property>
+
   <property>
     <name>support.bundle.local.data.dir</name>
     <value>${local.data.dir}/support/bundle</value>

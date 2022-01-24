@@ -40,7 +40,6 @@ import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import java.util.Collections;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * Utility functions for common pipeline validation code
@@ -63,7 +62,7 @@ public final class ValidationUtils {
    * @param macroFn           {@link Function} for evaluating macros
    * @return {@link StageValidationResponse} in json format
    */
-  public static StageValidationResponse validate(StageValidationRequest validationRequest,
+  public static StageValidationResponse validate(String namespace, StageValidationRequest validationRequest,
                                                  PluginConfigurer pluginConfigurer,
                                                  Function<Map<String, String>, Map<String, String>> macroFn) {
 
@@ -71,8 +70,8 @@ public final class ValidationUtils {
     ValidatingConfigurer validatingConfigurer = new ValidatingConfigurer(pluginConfigurer);
     // Batch or Streaming doesn't matter for a single stage.
     PipelineSpecGenerator<ETLBatchConfig, BatchPipelineSpec> pipelineSpecGenerator =
-      new BatchPipelineSpecGenerator(validatingConfigurer, Collections.emptySet(), Collections.emptySet(),
-                                     Engine.SPARK);
+      new BatchPipelineSpecGenerator(namespace, validatingConfigurer, null, Collections.emptySet(),
+                                     Collections.emptySet(), Engine.SPARK);
 
     DefaultStageConfigurer stageConfigurer = new DefaultStageConfigurer(stageConfig.getName());
     for (StageSchema stageSchema : validationRequest.getInputSchemas()) {

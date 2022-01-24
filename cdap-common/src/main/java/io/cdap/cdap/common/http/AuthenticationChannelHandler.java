@@ -37,14 +37,19 @@ import org.slf4j.LoggerFactory;
 public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
   private static final Logger LOG = LoggerFactory.getLogger(AuthenticationChannelHandler.class);
 
-  private final boolean enforceAuthenticatedRequests;
+  private static final String EMPTY_USER_ID = "CDAP-empty-user-id";
+  private static final Credential EMPTY_USER_CREDENTIAL = new Credential("CDAP-empty-user-credential",
+                                                                         Credential.CredentialType.INTERNAL);
+  private static final String EMPTY_USER_IP = "CDAP-empty-user-ip";
 
-  private String currentUserId;
+  private final boolean internalAuthEnabled;
+
+  private String currentUserID;
   private Credential currentUserCredential;
   private String currentUserIP;
 
-  public AuthenticationChannelHandler(boolean enforceAuthenticatedRequests) {
-    this.enforceAuthenticatedRequests = enforceAuthenticatedRequests;
+  public AuthenticationChannelHandler(boolean internalAuthEnabled) {
+    this.internalAuthEnabled = internalAuthEnabled;
   }
 
   /**
@@ -54,24 +59,25 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
   @Override
   public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
     SecurityRequestContext.reset();
+    resetCurrentUserInfo();
+
     if (msg instanceof HttpRequest) {
       // TODO: authenticate the user using user id - CDAP-688
       HttpRequest request = (HttpRequest) msg;
-      currentUserId = request.headers().get(Constants.Security.Headers.USER_ID);
-      if (enforceAuthenticatedRequests && currentUserId == null) {
-
-        throw new IllegalArgumentException(String.format("Missing user ID header for request from IP %s",
-                                                         ctx.channel().remoteAddress().toString()));
+      String userID = request.headers().get(Constants.Security.Headers.USER_ID);
+      if (userID != null) {
+        currentUserID = userID;
       }
-      currentUserIP = request.headers().get(Constants.Security.Headers.USER_IP);
+      String userIP = request.headers().get(Constants.Security.Headers.USER_IP);
+      if (userIP != null) {
+        currentUserIP = userIP;
+      }
       String authHeader = request.headers().get(Constants.Security.Headers.RUNTIME_TOKEN);
-      LOG.trace("Got user ID '{}', user IP '{}', and authorization header length '{}'", currentUserId, currentUserIP,
-                authHeader == null ? "NULL" : String.valueOf(authHeader.length()));
       if (authHeader != null) {
         int idx = authHeader.trim().indexOf(' ');
         if (idx < 0) {
-          LOG.error("Invalid Authorization header format for {}@{}", currentUserId, currentUserIP);
-          if (enforceAuthenticatedRequests) {
+          LOG.error("Invalid Authorization header format for {}@{}", currentUserID, currentUserIP);
+          if (internalAuthEnabled) {
             throw new IllegalArgumentException("Invalid Authorization header format");
           }
         } else {
@@ -86,27 +92,19 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
             throw e;
           }
         }
-      } else if (enforceAuthenticatedRequests) {
-        throw new IllegalArgumentException(String.format("Missing Authorization header for request from IP %s",
-                                                         ctx.channel().remoteAddress().toString()));
       }
-
-      SecurityRequestContext.setUserId(currentUserId);
+      LOG.trace("Got user ID '{}' user IP '{}' from IP '{}' and authorization header length '{}'",
+                userID, userIP, ctx.channel().remoteAddress(),
+                authHeader == null ? "NULL" : String.valueOf(authHeader.length()));
+      SecurityRequestContext.setUserId(currentUserID);
+      SecurityRequestContext.setUserCredential(currentUserCredential);
       SecurityRequestContext.setUserIP(currentUserIP);
     } else if (msg instanceof HttpContent) {
-      // TODO: If this is intended to handle chunking, there might be a race condition here which may need investigation
-      if (enforceAuthenticatedRequests) {
-        if (currentUserId == null) {
-          throw new IllegalArgumentException("Missing user ID for HTTP content request");
-        }
-        if (currentUserCredential == null) {
-          throw new IllegalArgumentException("Missing user credential for HTTP content request");
-        }
-      }
-      SecurityRequestContext.setUserId(currentUserId);
+      SecurityRequestContext.setUserId(currentUserID);
       SecurityRequestContext.setUserCredential(currentUserCredential);
       SecurityRequestContext.setUserIP(currentUserIP);
     }
+
     try {
       ctx.fireChannelRead(msg);
     } finally {
@@ -122,5 +120,17 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
     HttpUtil.setContentLength(response, 0);
     HttpUtil.setKeepAlive(response, false);
     ctx.channel().writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+  }
+
+  private void resetCurrentUserInfo() {
+    if (internalAuthEnabled) {
+      currentUserID = EMPTY_USER_ID;
+      currentUserCredential = EMPTY_USER_CREDENTIAL;
+      currentUserIP = EMPTY_USER_IP;
+    } else {
+      currentUserID = null;
+      currentUserCredential = null;
+      currentUserIP = null;
+    }
   }
 }

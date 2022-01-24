@@ -142,7 +142,23 @@ public class WrappedSQLEngineCollection<T, U> implements SQLBackedCollection<U> 
   @Override
   public Runnable createStoreTask(StageSpec stageSpec,
                                   PairFlatMapFunction<U, Object, Object> sinkFunction) {
-    return unwrap().createStoreTask(stageSpec, sinkFunction);
+    return new Runnable() {
+      @Override
+      public void run() {
+        // Run direct store job. If this succeeds, complete execution.
+        if (wrapped.tryStoreDirect(stageSpec)) {
+          return;
+        }
+
+        // Run store task on the unwrapped collection if the direct store task could not be completed.
+        unwrap().createStoreTask(stageSpec, sinkFunction).run();
+      }
+    };
+  }
+
+  @Override
+  public boolean tryStoreDirect(StageSpec stageSpec) {
+    return wrapped.tryStoreDirect(stageSpec);
   }
 
   @Override

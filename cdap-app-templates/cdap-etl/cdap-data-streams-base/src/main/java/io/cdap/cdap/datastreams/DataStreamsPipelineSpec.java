@@ -130,6 +130,10 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
     return new Builder(batchIntervalMillis);
   }
 
+  public static Builder builder(long batchIntervalMillis, String pipelineId) {
+    return new Builder(batchIntervalMillis, pipelineId);
+  }
+
   /**
    * Builder for creating a BatchPipelineSpec.
    */
@@ -143,12 +147,16 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
     private String pipelineId;
 
     public Builder(long batchIntervalMillis) {
+      this(batchIntervalMillis, UUID.randomUUID().toString());
+    }
+
+    public Builder(long batchIntervalMillis, String pipelineId) {
       this.batchIntervalMillis = batchIntervalMillis;
       this.stopGracefully = false;
       this.checkpointsDisabled = false;
       this.isUnitTest = false;
       this.checkpointDirectory = "";
-      this.pipelineId = UUID.randomUUID().toString();
+      this.pipelineId = pipelineId;
     }
 
     public Builder setExtraJavaOpts(String extraJavaOpts) {

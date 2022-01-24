@@ -203,6 +203,8 @@ public class PreviewRunnerModule extends PrivateModule {
         .implement(Configurator.class, InMemoryConfigurator.class)
         .build(ConfiguratorFactory.class)
     );
+    // expose this binding so program runner modules can use
+    expose(ConfiguratorFactory.class);
 
     install(
       new FactoryModuleBuilder()

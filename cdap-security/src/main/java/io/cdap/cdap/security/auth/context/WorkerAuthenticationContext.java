@@ -19,22 +19,30 @@ package io.cdap.cdap.security.auth.context;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 
 /**
  * Authentication context for workers.
  */
 public class WorkerAuthenticationContext implements AuthenticationContext {
-  private static final String WORKER_USER_ID = "worker";
-  private static final String PLACEHOLDER_CREDENTIAL = "placeholder";
+  private static final Principal EMPTY_PRINCIPAL = new Principal("empty-worker-user-id",
+                                                                 Principal.PrincipalType.USER,
+                                                                 new Credential("empty-worker-user-credential",
+                                                                                Credential.CredentialType.INTERNAL));
   /**
-   * Currently only returns a hardcoded set of user ID and credentials to get around the required auth limitation.
-   * TODO CDAP-17772: Implement proper authentication context for workers.
-   *
-   * @return A placeholder principal for workers.
+   * Return {@link Principal} associated with current request stored in {@link SecurityRequestContext}.
+   * Typically, there is always a {@link Principal} as worker normally performs some operations on behalf of
+   * end user, thus the {@link Principal} should capture the credential of end user. But when there is none,
+   * use placeholder values to construct the {@link Principal}.
    */
   @Override
   public Principal getPrincipal() {
-    return new Principal(WORKER_USER_ID, Principal.PrincipalType.USER,
-                         new Credential(PLACEHOLDER_CREDENTIAL, Credential.CredentialType.INTERNAL));
+    // By default, assume the principal comes from a user request and handle accordingly using SecurityRequestContext.
+    String userId = SecurityRequestContext.getUserId();
+    Credential userCredential = SecurityRequestContext.getUserCredential();
+    if (userId != null && userCredential != null) {
+      return new Principal(userId, Principal.PrincipalType.USER, userCredential);
+    }
+    return EMPTY_PRINCIPAL;
   }
 }

@@ -16,29 +16,43 @@
 
 package io.cdap.cdap.datastreams;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.DatasetConfigurer;
+import io.cdap.cdap.api.app.RuntimeConfigurer;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
+import io.cdap.cdap.api.spark.SparkSpecification;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.join.JoinCondition;
 import io.cdap.cdap.etl.api.validation.ValidationException;
+import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.macro.TimeParser;
 import io.cdap.cdap.etl.proto.v2.DataStreamsConfig;
 import io.cdap.cdap.etl.spec.PipelineSpecGenerator;
+import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import org.apache.hadoop.fs.Path;
 
 import java.util.Set;
+import java.util.UUID;
+import javax.annotation.Nullable;
 
 /**
  * Generates specs for data stream pipelines.
  */
 public class DataStreamsPipelineSpecGenerator
   extends PipelineSpecGenerator<DataStreamsConfig, DataStreamsPipelineSpec> {
+  private static final Gson GSON = new GsonBuilder()
+                                     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+                                     .create();
+  private final RuntimeConfigurer runtimeConfigurer;
 
-  <T extends PluginConfigurer & DatasetConfigurer> DataStreamsPipelineSpecGenerator(T configurer,
-                                                                                    Set<String> sourcePluginTypes,
-                                                                                    Set<String> sinkPluginTypes) {
-    super(configurer, sourcePluginTypes, sinkPluginTypes, Engine.SPARK);
+  <T extends PluginConfigurer & DatasetConfigurer> DataStreamsPipelineSpecGenerator(
+    String namespace, T configurer, @Nullable RuntimeConfigurer runtimeConfigurer, Set<String> sourcePluginTypes,
+    Set<String> sinkPluginTypes) {
+    super(namespace, configurer, runtimeConfigurer, sourcePluginTypes, sinkPluginTypes, Engine.SPARK);
+    this.runtimeConfigurer = runtimeConfigurer;
   }
 
   @Override
@@ -50,7 +64,17 @@ public class DataStreamsPipelineSpecGenerator
       throw new IllegalArgumentException(
         String.format("Unable to parse batchInterval '%s'", config.getBatchInterval()));
     }
-    DataStreamsPipelineSpec.Builder specBuilder = DataStreamsPipelineSpec.builder(batchIntervalMillis)
+
+    String pipelineId = UUID.randomUUID().toString();
+    if (runtimeConfigurer != null && runtimeConfigurer.getDeployedApplicationSpec() != null) {
+      SparkSpecification sparkSpec =
+        runtimeConfigurer.getDeployedApplicationSpec().getSpark().get(DataStreamsSparkLauncher.NAME);
+      DataStreamsPipelineSpec spec = GSON.fromJson(sparkSpec.getProperty(Constants.PIPELINEID),
+                                                   DataStreamsPipelineSpec.class);
+      pipelineId = spec.getPipelineId();
+    }
+
+    DataStreamsPipelineSpec.Builder specBuilder = DataStreamsPipelineSpec.builder(batchIntervalMillis, pipelineId)
       .setExtraJavaOpts(config.getExtraJavaOpts())
       .setStopGracefully(config.getStopGracefully())
       .setIsUnitTest(config.isUnitTest())

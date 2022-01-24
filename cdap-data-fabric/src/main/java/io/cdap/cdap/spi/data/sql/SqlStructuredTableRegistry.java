@@ -63,11 +63,13 @@ public class SqlStructuredTableRegistry implements StructuredTableRegistry {
 
   private final DataSource dataSource;
   private final TransactionRunner transactionRunner;
+  private final int scanFetchSize;
   private volatile boolean initialized;
 
   @Inject
-  public SqlStructuredTableRegistry(DataSource dataSource) {
+  public SqlStructuredTableRegistry(DataSource dataSource, int scanFetchSize) {
     this.dataSource = dataSource;
+    this.scanFetchSize = scanFetchSize;
     this.transactionRunner = createTransactionRunner();
   }
 
@@ -214,6 +216,7 @@ public class SqlStructuredTableRegistry implements StructuredTableRegistry {
       };
     // The metrics collection service might not get started at this moment,
     // so inject a NoopMetricsCollectionService.
-    return new SqlTransactionRunner(specAdmin, dataSource, new NoOpMetricsCollectionService(), false);
+    return new SqlTransactionRunner(specAdmin, dataSource, new NoOpMetricsCollectionService(), false,
+        this.scanFetchSize);
   }
 }

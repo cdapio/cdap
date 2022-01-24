@@ -21,6 +21,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
+import io.cdap.cdap.common.internal.remote.NoOpInternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.test.AppJarHelper;
@@ -100,7 +101,7 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
     LocationFactory locationFactory = new LocalLocationFactory(TEMP_FOLDER.newFolder());
 
     ArtifactRepository artifactRepository = getInjector().getInstance(ArtifactRepository.class);
-    ArtifactLocalizerClient client = new ArtifactLocalizerClient(cConf);
+    ArtifactLocalizerClient client = new ArtifactLocalizerClient(cConf, new NoOpInternalAuthenticator());
 
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "some-task", "1.0.0-SNAPSHOT");
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, TaskWorkerServiceTest.TestRunnableClass.class);
@@ -156,7 +157,7 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
   public void testArtifact() throws Exception {
     LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
     ArtifactRepository artifactRepository = getInjector().getInstance(ArtifactRepository.class);
-    ArtifactLocalizerClient client = new ArtifactLocalizerClient(cConf);
+    ArtifactLocalizerClient client = new ArtifactLocalizerClient(cConf, new NoOpInternalAuthenticator());
 
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "some-task", "1.0.0-SNAPSHOT");
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, TaskWorkerServiceTest.TestRunnableClass.class);

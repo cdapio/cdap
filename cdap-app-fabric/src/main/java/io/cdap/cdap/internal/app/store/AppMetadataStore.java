@@ -964,8 +964,9 @@ public class AppMetadataStore {
    * @return {@link RunRecordDetail} that was persisted, or {@code null} if the update was ignored.
    */
   @Nullable
-  public RunRecordDetail recordProgramStop(ProgramRunId programRunId, long stopTs, ProgramRunStatus runStatus,
-                                           @Nullable BasicThrowable failureCause, byte[] sourceId)
+  public RunRecordDetailWithExistingStatus recordProgramStop(ProgramRunId programRunId, long stopTs,
+                                                             ProgramRunStatus runStatus,
+                                                             @Nullable BasicThrowable failureCause, byte[] sourceId)
     throws IOException {
     RunRecordDetail existing = getRun(programRunId);
     if (existing == null) {
@@ -987,7 +988,7 @@ public class AppMetadataStore {
     }
 
     List<Field<?>> key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_COMPLETED, programRunId, existing.getStartTs());
-    RunRecordDetail meta = RunRecordDetail.builder(existing)
+    RunRecordDetailWithExistingStatus meta = RunRecordDetailWithExistingStatus.buildWithExistingStatus(existing)
       .setStopTime(stopTs)
       .setStatus(runStatus)
       .setSourceId(sourceId)

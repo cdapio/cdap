@@ -65,6 +65,7 @@ import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
 import org.apache.tephra.TransactionSystemClient;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -134,6 +135,8 @@ public class DirectRuntimeRequestValidatorTest {
     InMemoryTableService.reset();
   }
 
+  // TODO: CDAP-18743 - add tests with STOPPING status
+
   @Test
   public void testValid() throws BadRequestException {
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").spark("spark").run(RunIds.generate());
@@ -152,7 +155,10 @@ public class DirectRuntimeRequestValidatorTest {
     RuntimeRequestValidator validator = new DirectRuntimeRequestValidator(cConf, txRunner,
                                                                           new MockProgramRunRecordFetcher(),
                                                                           accessEnforcer, authenticationContext);
-    validator.validate(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+    ProgramRunInfo programRunInfo = validator.getProgramRunStatus(programRunId, new DefaultHttpRequest(
+      HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+    // After recording the program start in AppMetaDataStore the expected state is Starting
+    Assert.assertEquals(ProgramRunStatus.STARTING, programRunInfo.getProgramRunStatus());
   }
 
   @Test (expected = BadRequestException.class)
@@ -163,7 +169,7 @@ public class DirectRuntimeRequestValidatorTest {
     RuntimeRequestValidator validator = new DirectRuntimeRequestValidator(cConf, txRunner,
                                                                           new MockProgramRunRecordFetcher(),
                                                                           accessEnforcer, authenticationContext);
-    validator.validate(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+    validator.getProgramRunStatus(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
   }
 
   @Test (expected = UnauthorizedException.class)
@@ -179,7 +185,7 @@ public class DirectRuntimeRequestValidatorTest {
     Mockito.doThrow(new UnauthorizedException("Unauthorized"))
       .when(accessEnforcer).enforce(programRunId, principal, StandardPermission.GET);
 
-    validator.validate(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+    validator.getProgramRunStatus(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
   }
 
   @Test (expected = BadRequestException.class)
@@ -202,18 +208,19 @@ public class DirectRuntimeRequestValidatorTest {
     RuntimeRequestValidator validator = new DirectRuntimeRequestValidator(cConf, txRunner,
                                                                           new MockProgramRunRecordFetcher(),
                                                                           accessEnforcer, authenticationContext);
-    validator.validate(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+    validator.getProgramRunStatus(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
   }
 
   @Test
   public void testFetcher() throws BadRequestException {
     ArtifactId artifactId = new ArtifactId("test", new ArtifactVersion("1.0"), ArtifactScope.USER);
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").spark("spark").run(RunIds.generate());
+    ProgramRunStatus programRunStatus = ProgramRunStatus.RUNNING;
     RunRecordDetail runRecord = RunRecordDetail.builder()
       .setProgramRunId(programRunId)
       .setStartTime(System.currentTimeMillis())
       .setArtifactId(artifactId)
-      .setStatus(ProgramRunStatus.RUNNING)
+      .setStatus(programRunStatus)
       .setSystemArgs(ImmutableMap.of(
         SystemArguments.PROFILE_NAME, "default",
         SystemArguments.PROFILE_PROVISIONER, "native"))
@@ -226,11 +233,15 @@ public class DirectRuntimeRequestValidatorTest {
                                                                           accessEnforcer, authenticationContext);
 
     // The first call should be hitting the run record fetching to fetch the run record.
-    validator.validate(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+    ProgramRunInfo programRunInfo = validator.getProgramRunStatus(programRunId, new DefaultHttpRequest(
+      HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+    Assert.assertEquals(programRunStatus, programRunInfo.getProgramRunStatus());
 
     // The second call will hit the runtime store, so it shouldn't matter what the run record fetch returns
     runRecordFetcher.setRunRecord(null);
-    validator.validate(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+    programRunInfo = validator.getProgramRunStatus(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1,
+                                                                                        HttpMethod.GET, "/"));
+    Assert.assertEquals(programRunStatus, programRunInfo.getProgramRunStatus());
   }
 
   private byte[] createSourceId(int value) {

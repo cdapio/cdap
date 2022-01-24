@@ -135,6 +135,7 @@ public final class Constants {
     public static final String SERVICE_INSTANCE_TABLE_NAME = "cdap.services.instances";
     /** Scheduler queue name to submit the master service app. */
     public static final String SCHEDULER_QUEUE = "master.services.scheduler.queue";
+    public static final String SUPPORT_BUNDLE_SERVICE = "support.bundle.service";
     public static final String METADATA_SERVICE = "metadata.service";
     public static final String MASTER_SERVICES_BIND_ADDRESS = "master.services.bind.address";
     public static final String MASTER_SERVICES_ANNOUNCE_ADDRESS = "master.services.announce.address";
@@ -212,6 +213,7 @@ public final class Constants {
     public static final String REST_PORT = "app.rest.port";
     public static final String PROGRAM_JVM_OPTS = "app.program.jvm.opts";
     public static final String BACKLOG_CONNECTIONS = "app.connection.backlog";
+    public static final String STREAMING_BATCH_SIZE = "app.streaming.batch.size";
     public static final String EXEC_THREADS = "app.exec.threads";
     public static final String BOSS_THREADS = "app.boss.threads";
     public static final String WORKER_THREADS = "app.worker.threads";
@@ -240,6 +242,7 @@ public final class Constants {
 
     public static final String PROGRAM_TRANSACTION_CONTROL = "app.program.transaction.control";
     public static final String MAX_CONCURRENT_RUNS = "app.max.concurrent.runs";
+    public static final String MAX_CONCURRENT_LAUNCHING = "app.max.concurrent.launching";
     public static final String PROGRAM_LAUNCH_THREADS = "app.program.launch.threads";
 
     // A boolean value cConf entry to tell whether a ProgramRunner is running remotely (i.e. not inside app-fabric)
@@ -589,6 +592,7 @@ public final class Constants {
     public static final String DATA_STORAGE_SQL_PASSWORD = "data.storage.sql.jdbc.password";
     public static final String DATA_STORAGE_SQL_PROPERTY_PREFIX = "data.storage.sql.jdbc.property.";
     public static final String DATA_STORAGE_SQL_CONNECTION_SIZE = "data.storage.sql.jdbc.connection.pool.size";
+    public static final String DATA_STORAGE_SQL_SCAN_FETCH_SIZE_ROWS = "data.storage.sql.scan.size.rows";
 
     // used for Guice named bindings
     public static final String TABLE_TYPE = "table.type";
@@ -853,6 +857,7 @@ public final class Constants {
       public static final String PROVISIONER = "prv";
       public static final String SPARK = "sp";
       public static final String STATUS = "st";
+      public static final String CLUSTER_STATUS = "clst";
 
       // who emitted: user vs system (scope is historical name)
       public static final String SCOPE = "scp";
@@ -872,6 +877,7 @@ public final class Constants {
       public static final String PROGRAM = "prg";
       public static final String PROGRAM_TYPE = "prt";
       public static final String PROGRAM_ENTITY = "ent";
+      public static final String EXISTING_STATUS = "exst";
 
       //For task worker
       public static final String CLASS = "clz";
@@ -1792,6 +1798,16 @@ public final class Constants {
   }
 
   public static final class SupportBundle {
+    public static final String SERVICE_DESCRIPTION = "Service to generate support bundle operations.";
+    public static final String SERVICE_BIND_ADDRESS = "support.bundle.service.bind.address";
+    public static final String SERVICE_BIND_PORT = "support.bundle.service.bind.port";
+    public static final String SERVICE_WORKER_THREADS = "support.bundle.service.worker.threads";
+    public static final String SERVICE_EXEC_THREADS = "support.bundle.service.exec.threads";
+    public static final String SERVICE_MEMORY_MB = "support.bundle.service.memory.mb";
+    public static final String SERVICE_NUM_CORES = "support.bundle.service.num.cores";
+    public static final String CONTAINER_INSTANCES = "support.bundle.container.instances";
+    public static final String MAX_INSTANCES = "support.bundle.max.instances";
+    public static final String HANDLERS_NAME = "support.bundle.handlers";
     public static final String MAX_FOLDER_SIZE = "support.bundle.max.folder.size";
     public static final String MAX_THREADS = "support.bundle.max.threads";
     public static final String LOCAL_DATA_DIR = "support.bundle.local.data.dir";

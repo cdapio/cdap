@@ -32,6 +32,7 @@ import io.cdap.cdap.app.deploy.ConfigResponse;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
@@ -108,16 +109,18 @@ public class ConfiguratorTask implements RunnableTask {
     private final ArtifactRepository artifactRepository;
     private final CConfiguration cConf;
     private final ArtifactLocalizerClient artifactLocalizerClient;
+    private final RemoteClientFactory remoteClientFactory;
 
     @Inject
     ConfiguratorTaskRunner(Impersonator impersonator, PluginFinder pluginFinder,
                            ArtifactRepository artifactRepository, CConfiguration cConf,
-                           ArtifactLocalizerClient artifactLocalizerClient) {
+                           ArtifactLocalizerClient artifactLocalizerClient, RemoteClientFactory remoteClientFactory) {
       this.impersonator = impersonator;
       this.pluginFinder = pluginFinder;
       this.artifactRepository = artifactRepository;
       this.cConf = cConf;
       this.artifactLocalizerClient = artifactLocalizerClient;
+      this.remoteClientFactory = remoteClientFactory;
     }
 
     public ConfigResponse configure(AppDeploymentInfo info) throws Exception {
@@ -130,7 +133,8 @@ public class ConfiguratorTask implements RunnableTask {
       // Creates a new deployment info with the newly fetched artifact
       AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(info, artifactLocation);
       InMemoryConfigurator configurator = new InMemoryConfigurator(cConf, pluginFinder, impersonator,
-                                                                   artifactRepository, deploymentInfo);
+                                                                   artifactRepository, remoteClientFactory,
+                                                                   deploymentInfo);
       try {
         return configurator.config().get(120, TimeUnit.SECONDS);
       } catch (ExecutionException e) {

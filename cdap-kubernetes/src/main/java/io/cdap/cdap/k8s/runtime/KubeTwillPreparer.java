@@ -96,6 +96,7 @@ import java.io.OutputStream;
 import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -652,9 +653,16 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
         .endTemplate()
       .endSpec()
       .build();
-
-    batchV1Api.createNamespacedJob(kubeNamespace, job, "true", null, null);
-    LOG.trace("Created Job {} in Kubernetes.", metadata.getName());
+    try {
+      batchV1Api.createNamespacedJob(kubeNamespace, job, "true", null, null);
+      LOG.trace("Created Job {} in Kubernetes.", metadata.getName());
+    } catch (ApiException e) {
+      if (e.getCode() == HttpURLConnection.HTTP_CONFLICT) {
+        LOG.warn("The kubernetes job already exists : {}. Ignoring resubmission of the job." , e.getResponseBody());
+      } else {
+        throw e;
+      }
+    }
     return job.getMetadata();
   }
 
@@ -911,17 +919,13 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     volumeMounts.add(new V1VolumeMount().name("workdir").mountPath(workDir));
     volumeMounts.addAll(Arrays.asList(extraMounts));
 
-    // Add secret disks as secret volume mounts
-    List<V1Volume> secretVolumes = new ArrayList<>();
-    if (secretDiskRunnables.containsKey(runnableName)) {
-      for (SecretDisk secretDisk : secretDiskRunnables.get(runnableName).getSecretDisks()) {
-        String secretName = secretDisk.getName();
-        String mountPath = secretDisk.getPath();
-        secretVolumes.add(new V1Volume().name(secretName).secret(new V1SecretVolumeSource()
-                                                                   .secretName(secretName)));
-        volumeMounts.add(new V1VolumeMount().name(secretName).mountPath(mountPath).readOnly(true));
-      }
-    }
+    // Mount all volumes including cdap-secret for init container as it runs system/trusted code.
+    List<V1VolumeMount> initContainerVolumeMounts = new ArrayList<>(volumeMounts);
+    // Mount all except cdap-secret for main container by default. If requested, cdap-secret will
+    // get mounted later.
+    List<V1VolumeMount> containerVolumeMounts =
+      volumeMounts.stream().filter(v -> !v.getName().equals(KubeMasterEnvironment.SECURITY_CONFIG_NAME))
+        .collect(Collectors.toList());
 
     // Setup the container environment. Inherit everything from the current pod.
     Map<String, String> initContainerEnvirons = podInfo.getContainerEnvironments().stream()
@@ -941,15 +945,14 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       .withServiceAccountName(serviceAccountName)
       .withRuntimeClassName(podInfo.getRuntimeClassName())
       .addAllToVolumes(podInfo.getVolumes())
-      .addAllToVolumes(secretVolumes)
       .addToVolumes(podInfoVolume,
                     new V1Volume().name("workdir").emptyDir(new V1EmptyDirVolumeSource()))
       .withInitContainers(createContainer("file-localizer", podInfo.getContainerImage(),
                                           podInfo.getImagePullPolicy(), workDir, initContainerResourceRequirements,
-                                          volumeMounts, initContainerEnvirons, FileLocalizer.class,
+                                          initContainerVolumeMounts, initContainerEnvirons, FileLocalizer.class,
                                           runtimeConfigLocation.toURI().toString(),
                                           mainRuntimeSpec.getName()))
-      .withContainers(createContainers(runtimeSpecs, workDir, volumeMounts, args))
+      .withContainers(createContainers(runtimeSpecs, workDir, containerVolumeMounts, args))
       .withSecurityContext(podInfo.getSecurityContext())
       .withRestartPolicy(restartPolicy)
       .build();
@@ -965,9 +968,12 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     RuntimeSpecification mainRuntimeSpec = getMainRuntimeSpecification(runtimeSpecs);
     environs.putAll(environments.get(mainRuntimeSpec.getName()));
 
+    List<V1VolumeMount> mounts;
+
+    mounts = addSecreteVolMountIfNeeded(mainRuntimeSpec, volumeMounts);
     containers.add(createContainer(mainRuntimeSpec.getName(), podInfo.getContainerImage(), podInfo.getImagePullPolicy(),
                                    workDir, createResourceRequirements(mainRuntimeSpec.getResourceSpecification()),
-                                   volumeMounts, environs, KubeTwillLauncher.class,
+                                   mounts, environs, KubeTwillLauncher.class,
                                    Stream.concat(Stream.of(mainRuntimeSpec.getName()), args.stream())
                                      .toArray(String[]::new)));
 
@@ -975,9 +981,10 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       RuntimeSpecification spec = runtimeSpecs.get(name);
       // Add all environments for the runnable
       environs.putAll(environments.get(name));
+      mounts = addSecreteVolMountIfNeeded(spec, volumeMounts);
       containers.add(createContainer(name, podInfo.getContainerImage(), podInfo.getImagePullPolicy(), workDir,
                                      createResourceRequirements(spec.getResourceSpecification()),
-                                     volumeMounts, environs, KubeTwillLauncher.class,
+                                     mounts, environs, KubeTwillLauncher.class,
                                      Stream.concat(Stream.of(name), args.stream()).toArray(String[]::new)));
     }
 
@@ -1105,6 +1112,20 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private V1VolumeMount createDiskMount(StatefulDisk disk) {
     return new V1VolumeMount().name(cleanse(disk.getName(), 254)).mountPath(disk.getMountPath());
   }
+
+  private List<V1VolumeMount> addSecreteVolMountIfNeeded(RuntimeSpecification runtimeSpec, List<V1VolumeMount> mounts) {
+    List<V1VolumeMount> updatedMounts = new ArrayList<>(mounts);
+    // Add secret disks as secret volume mounts
+    if (secretDiskRunnables.containsKey(runtimeSpec.getName())) {
+      for (SecretDisk secretDisk : secretDiskRunnables.get(runtimeSpec.getName()).getSecretDisks()) {
+        String secretName = secretDisk.getName();
+        String mountPath = secretDisk.getPath();
+        updatedMounts.add(new V1VolumeMount().name(secretName).mountPath(mountPath).readOnly(true));
+      }
+    }
+    return updatedMounts;
+  }
+
 
   /**
    * Class to hold information about stateful runnable.

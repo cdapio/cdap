@@ -54,14 +54,17 @@ import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.AppFabric;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
+import io.cdap.cdap.common.utils.BatchingConsumer;
 import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.registry.UsageRegistry;
 import io.cdap.cdap.internal.app.DefaultApplicationUpdateContext;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -104,6 +107,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -113,9 +117,11 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -149,6 +155,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final AdminEventPublisher adminEventPublisher;
   private final Impersonator impersonator;
   private final CapabilityReader capabilityReader;
+  private final int batchSize;
 
   @Inject
   ApplicationLifecycleService(CConfiguration cConf,
@@ -163,6 +170,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     this.cConf = cConf;
     this.appUpdateSchedules = cConf.getBoolean(Constants.AppFabric.APP_UPDATE_SCHEDULES,
                                                Constants.AppFabric.DEFAULT_APP_UPDATE_SCHEDULES);
+    this.batchSize = cConf.getInt(AppFabric.STREAMING_BATCH_SIZE);
     this.store = store;
     this.scheduler = scheduler;
     this.usageRegistry = usageRegistry;
@@ -213,31 +221,91 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @return list of all applications in the namespace that satisfy the specified predicate
    */
   public List<ApplicationDetail> getApps(NamespaceId namespace,
-                                         Predicate<ApplicationDetail> predicate) throws Exception {
+      Predicate<ApplicationDetail> predicate) throws Exception {
 
-    Map<ApplicationId, ApplicationSpecification> appSpecs = new LinkedHashMap<>();
-    for (ApplicationSpecification appSpec : store.getAllApplications(namespace)) {
-      appSpecs.put(namespace.app(appSpec.getName(), appSpec.getAppVersion()), appSpec);
-    }
-    Set<? extends EntityId> visible = accessEnforcer.isVisible(appSpecs.keySet(),
-                                                                      authenticationContext.getPrincipal());
-    appSpecs.keySet().removeIf(id -> !visible.contains(id));
-
-    Map<ApplicationId, String> owners = ownerAdmin.getOwnerPrincipals(appSpecs.keySet());
     List<ApplicationDetail> result = new ArrayList<>();
-    for (Map.Entry<ApplicationId, ApplicationSpecification> entry : appSpecs.entrySet()) {
-      ApplicationDetail applicationDetail = ApplicationDetail.fromSpec(entry.getValue(), owners.get(entry.getKey()));
-      try {
-        capabilityReader.checkAllEnabled(entry.getValue());
-      } catch (CapabilityNotAvailableException ex) {
-        LOG.debug("Application {} is ignored due to exception.", applicationDetail.getName(), ex);
-        continue;
-      }
-      if (predicate.test(applicationDetail)) {
-        result.add(enforceApplicationDetailAccess(entry.getKey(), applicationDetail));
-      }
-    }
+    scanApplications(namespace, predicate, d -> result.add(d));
     return result;
+  }
+
+  /**
+   * Scans all applications in the specified namespace, filtered to only include applications with an artifact name
+   * in the set of specified names and an artifact version equal to the specified version. If the specified set
+   * is empty, no filtering is performed on artifact name. If the specified version is null, no filtering is done
+   * on artifact version.
+   *
+   * @param namespace the namespace to scan apps from
+   * @param artifactNames the set of returned artifact names. If empty, all artifact names are returned
+   * @param artifactVersion the artifact version to match. If null, all artifact versions are returned
+   * @param consumer a {@link Consumer} to consume each ApplicationDetail being scanned
+   */
+  public void scanApplications(NamespaceId namespace, Set<String> artifactNames,
+      @Nullable String artifactVersion,
+      Consumer<ApplicationDetail> consumer) {
+
+    Predicate<ApplicationDetail> predicate = getAppPredicate(artifactNames, artifactVersion);
+    scanApplications(namespace, predicate, consumer);
+  }
+
+  /**
+   * Scans all applications in the specified namespace, filtered to only include application details
+   * which satisfy the predicate
+   *
+   * @param namespace the namespace to scan apps from
+   * @param predicate the predicate that must be satisfied  by ApplicationDetail in order to be returned
+   * @param consumer a {@link Consumer} to consume each ApplicationDetail being scanned
+   */
+  public void scanApplications(NamespaceId namespace, Predicate<ApplicationDetail> predicate,
+      Consumer<ApplicationDetail> consumer) {
+    accessEnforcer.enforceOnParent(EntityType.DATASET, namespace,
+        authenticationContext.getPrincipal(), StandardPermission.LIST);
+
+    try (
+        BatchingConsumer<Entry<ApplicationId, ApplicationSpecification>> batchingConsumer = new BatchingConsumer<>(
+            list -> processApplications(list, predicate, consumer), batchSize
+        )
+    ) {
+
+      store.scanApplications(namespace, batchSize,
+          (appId, appSpec) -> {
+            batchingConsumer.accept(new SimpleEntry<>(appId, appSpec));
+          });
+    }
+  }
+
+  private void processApplications(List<Map.Entry<ApplicationId, ApplicationSpecification>> list,
+      Predicate<ApplicationDetail> predicate, Consumer<ApplicationDetail> consumer) {
+
+    Set<ApplicationId> appIds = list.stream().map(Map.Entry::getKey).collect(Collectors.toSet());
+
+    Set<? extends EntityId> visible = accessEnforcer.isVisible(appIds,
+        authenticationContext.getPrincipal());
+
+    list.removeIf(entry -> !visible.contains(entry.getKey()));
+    appIds.removeIf(id -> !visible.contains(id));
+
+    try {
+      Map<ApplicationId, String> owners = ownerAdmin.getOwnerPrincipals(appIds);
+
+      for (Map.Entry<ApplicationId, ApplicationSpecification> entry : list) {
+        ApplicationDetail applicationDetail = ApplicationDetail.fromSpec(entry.getValue(),
+            owners.get(entry.getKey()));
+
+        try {
+          capabilityReader.checkAllEnabled(entry.getValue());
+        } catch (CapabilityNotAvailableException ex) {
+          LOG.debug("Application {} is ignored due to exception.",
+              applicationDetail.getName(), ex);
+          continue;
+        }
+
+        if (predicate.test(applicationDetail)) {
+          consumer.accept(applicationDetail);
+        }
+      }
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   /**
@@ -299,7 +367,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     Set<NamespaceId> namespaces = new HashSet<>();
 
     JsonWriter jsonWriter = new JsonWriter(new OutputStreamWriter(zipOut, StandardCharsets.UTF_8));
-    store.scanApplications(20, (appId, appSpec) -> {
+    store.scanApplications(batchSize, (appId, appSpec) -> {
       // Skip the SYSTEM namespace apps
       if (NamespaceId.SYSTEM.equals(appId.getParent())) {
         return;
@@ -575,7 +643,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactId, artifactDetail.getDescriptor().getLocation(),
                                                              appId.getParent(), appClass, appId.getApplication(),
                                                              appId.getVersion(), updatedAppConfig, ownerPrincipal,
-                                                             updateSchedules);
+                                                             updateSchedules, null);
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);
     // TODO: (CDAP-3258) Manager needs MUCH better error handling.
@@ -616,7 +684,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     ArtifactDetail artifactDetail = artifactRepository.addArtifact(artifactId, jarFile);
     try {
       return deployApp(namespace, appName, null, configStr, programTerminator, artifactDetail, ownerPrincipal,
-                       updateSchedules);
+                       updateSchedules, false, Collections.emptyMap());
     } catch (Exception e) {
       // if we added the artifact, but failed to deploy the application, delete the artifact to bring us back
       // to the state we were in before this call.
@@ -687,7 +755,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                            @Nullable Boolean updateSchedules) throws Exception {
     ArtifactDetail artifactDetail = artifactRepository.getArtifact(artifactId);
     return deployApp(namespace, appName, appVersion, configStr, programTerminator, artifactDetail, ownerPrincipal,
-                     updateSchedules == null ? appUpdateSchedules : updateSchedules);
+                     updateSchedules == null ? appUpdateSchedules : updateSchedules, false, Collections.emptyMap());
   }
 
   /**
@@ -705,6 +773,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @param ownerPrincipal the kerberos principal of the application owner
    * @param updateSchedules specifies if schedules of the workflow have to be updated,
    *                        if null value specified by the property "app.deploy.update.schedules" will be used.
+   * @param isPreview whether the app deployment is for preview
+   * @param userProps the user properties for the app deployment, this is basically used for preview deployment
    * @return information about the deployed application
    * @throws InvalidArtifactException if the artifact does not contain any application classes
    * @throws IOException if there was an IO error reading artifact detail from the meta store
@@ -717,7 +787,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                            @Nullable String configStr,
                                            ProgramTerminator programTerminator,
                                            @Nullable KerberosPrincipalId ownerPrincipal,
-                                           @Nullable Boolean updateSchedules) throws Exception {
+                                           @Nullable Boolean updateSchedules, boolean isPreview,
+                                           Map<String, String> userProps) throws Exception {
     NamespaceId artifactNamespace =
       ArtifactScope.SYSTEM.equals(summary.getScope()) ? NamespaceId.SYSTEM : namespace;
     ArtifactRange range = new ArtifactRange(artifactNamespace.getNamespace(), summary.getName(),
@@ -729,7 +800,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       throw new ArtifactNotFoundException(range.getNamespace(), range.getName());
     }
     return deployApp(namespace, appName, appVersion, configStr, programTerminator, artifactDetail.iterator().next(),
-                     ownerPrincipal, updateSchedules == null ? appUpdateSchedules : updateSchedules);
+                     ownerPrincipal, updateSchedules == null ? appUpdateSchedules : updateSchedules, isPreview,
+                     userProps);
   }
 
   /**
@@ -883,7 +955,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                             ProgramTerminator programTerminator,
                                             ArtifactDetail artifactDetail,
                                             @Nullable KerberosPrincipalId ownerPrincipal,
-                                            boolean updateSchedules) throws Exception {
+                                            boolean updateSchedules, boolean isPreview,
+                                            Map<String, String> userProps) throws Exception {
     // Now to deploy an app, we need ADMIN privilege on the owner principal if it is present, and also ADMIN on the app
     // But since at this point, app name is unknown to us, so the enforcement on the app is happening in the deploy
     // pipeline - LocalArtifactLoaderStage
@@ -913,7 +986,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(
       Artifacts.toProtoArtifactId(namespaceId, artifactDetail.getDescriptor().getArtifactId()),
       artifactDetail.getDescriptor().getLocation(), namespaceId, appClass, appName,
-      appVersion, configStr, ownerPrincipal, updateSchedules);
+      appVersion, configStr, ownerPrincipal, updateSchedules,
+      isPreview ? new AppDeploymentRuntimeInfo(null, userProps, Collections.emptyMap()) : null);
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);
     // TODO: (CDAP-3258) Manager needs MUCH better error handling.

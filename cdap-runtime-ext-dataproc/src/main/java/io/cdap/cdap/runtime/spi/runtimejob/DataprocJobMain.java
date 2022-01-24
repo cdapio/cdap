@@ -140,7 +140,7 @@ public class DataprocJobMain {
       } finally {
         // call destroy() method on envProviderClass
         Method closeMethod = dataprocEnvClass.getMethod("destroy");
-        LOG.info("Invoking destroy() on {}", runtimeJobClassName);
+        LOG.info("Invoking destroy() on {}", dataprocEnvClassName);
         closeMethod.invoke(newDataprocEnvInstance);
       }
 

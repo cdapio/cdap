@@ -38,6 +38,7 @@ import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
+import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.TopicId;
@@ -115,7 +116,8 @@ public class RuntimeClientServerTest {
       new RuntimeServerModule() {
         @Override
         protected void bindRequestValidator() {
-          bind(RuntimeRequestValidator.class).toInstance((programRunId, request) -> { });
+          bind(RuntimeRequestValidator.class).toInstance(
+            (programRunId, request) -> new ProgramRunInfo(ProgramRunStatus.COMPLETED, null));
         }
 
         @Override
