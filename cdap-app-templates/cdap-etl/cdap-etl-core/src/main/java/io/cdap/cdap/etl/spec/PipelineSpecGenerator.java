@@ -30,6 +30,9 @@ import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.plugin.InvalidPluginConfigException;
 import io.cdap.cdap.api.plugin.InvalidPluginProperty;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Configuration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.api.ErrorTransform;
 import io.cdap.cdap.etl.api.FailureCollector;
@@ -55,7 +58,6 @@ import io.cdap.cdap.etl.api.validation.InvalidStageException;
 import io.cdap.cdap.etl.api.validation.ValidationException;
 import io.cdap.cdap.etl.common.ArtifactSelectorProvider;
 import io.cdap.cdap.etl.common.ConnectionRegistryMacroEvaluator;
-import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.DefaultAutoJoinerContext;
 import io.cdap.cdap.etl.common.DefaultPipelineConfigurer;
 import io.cdap.cdap.etl.common.DefaultStageConfigurer;
@@ -100,6 +102,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
   private final Set<String> sinkPluginTypes;
   private final ConnectionRegistryMacroEvaluator connectionEvaluator;
   private final MacroParserOptions options;
+  private final Integer maxPreviewRecordsNumber;
 
   protected <T extends PluginConfigurer & DatasetConfigurer> PipelineSpecGenerator(T configurer,
                                                                                    Set<String> sourcePluginTypes,
@@ -113,6 +116,8 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
     this.connectionEvaluator = new ConnectionRegistryMacroEvaluator();
     this.options = MacroParserOptions.builder().skipInvalidMacros().setEscaping(false)
                      .setFunctionWhitelist(ConnectionRegistryMacroEvaluator.FUNCTION_NAME).build();
+    CConfiguration cConfiguration = CConfiguration.create();
+    this.maxPreviewRecordsNumber = Integer.getInteger(cConfiguration.get(Constants.Preview.MAX_NUM_OF_RECORDS));
   }
 
   /**
@@ -578,6 +583,12 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
           "Invalid pipeline. There are no connections between stages. " +
             "This is only allowed if the pipeline consists of a single action plugin.");
       }
+    }
+
+    // if number of preview records is more than max limit, fail preview
+    if (config.getNumOfRecordsPreview() > Integer.parseInt(Constants.Preview.MAX_NUM_OF_RECORDS)) {
+      throw new IllegalArgumentException(String.format("Number of records for preview exceeds maximum limit of %s",
+                                                       Constants.Preview.MAX_NUM_OF_RECORDS));
     }
 
     Dag dag = new Dag(config.getConnections());
