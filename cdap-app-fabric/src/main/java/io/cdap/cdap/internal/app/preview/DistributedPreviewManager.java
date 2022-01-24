@@ -151,8 +151,18 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
 
         Path runDir = Files.createTempDirectory(tmpDir, "preview");
         try {
+          Boolean artifactLocalizerEnabled = cConf.getBoolean(Constants.Preview.ARTIFACT_LOCALIZER_ENABLED);
+
           CConfiguration cConfCopy = CConfiguration.copy(cConf);
           Path cConfPath = runDir.resolve("cConf.xml");
+          if (artifactLocalizerEnabled) {
+            // Artifact localizer may be enabled for preview runner when we need to restrict the data and metadata
+            // access permission it has (due to it running untrusted code). Artifact and metadata fetching
+            // will be done via AppFab where authorization will be performed.
+            if (cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
+              cConfCopy.setBoolean(Constants.Security.Authorization.ENABLED, false);
+            }
+          }
           if (!cConf.getBoolean(Constants.Twill.Security.WORKER_MOUNT_SECRET)) {
              // Unset the internal certificate path since certificate is stored cdap-security which
              // is not going to be exposed to preview runner.
@@ -166,8 +176,6 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
           try (Writer writer = Files.newBufferedWriter(hConfPath, StandardCharsets.UTF_8)) {
             hConf.writeXml(writer);
           }
-
-          Boolean artifactLocalizerEnabled = cConf.getBoolean(Constants.Preview.ARTIFACT_LOCALIZER_ENABLED);
 
           ResourceSpecification runnerResourceSpec = ResourceSpecification.Builder.with()
             .setVirtualCores(cConf.getInt(Constants.Preview.CONTAINER_CORES))
