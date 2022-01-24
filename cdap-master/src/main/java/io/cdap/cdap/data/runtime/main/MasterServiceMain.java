@@ -76,6 +76,7 @@ import io.cdap.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.explore.service.ExploreServiceUtils;
+import io.cdap.cdap.healthcheck.module.AppFabricHealthCheckModule;
 import io.cdap.cdap.hive.ExploreUtils;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeServer;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
@@ -97,7 +98,6 @@ import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.store.SecureStoreService;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.store.StoreDefinition;
@@ -570,6 +570,7 @@ public class MasterServiceMain extends DaemonMain {
       new MetricsStoreModule(),
       new MessagingClientModule(),
       new ExploreClientModule(),
+      new AppFabricHealthCheckModule(),
       new AuditModule(),
       CoreSecurityRuntimeModule.getDistributedModule(cConf),
       new AuthenticationContextModules().getMasterModule(),

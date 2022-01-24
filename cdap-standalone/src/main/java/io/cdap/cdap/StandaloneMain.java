@@ -70,6 +70,8 @@ import io.cdap.cdap.explore.guice.ExploreRuntimeModule;
 import io.cdap.cdap.explore.service.ExploreServiceUtils;
 import io.cdap.cdap.gateway.router.NettyRouter;
 import io.cdap.cdap.gateway.router.RouterModules;
+import io.cdap.cdap.healthcheck.module.AppFabricHealthCheckModule;
+import io.cdap.cdap.healthcheck.services.AppFabricHealthCheckService;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeServer;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.internal.app.services.SupportBundleInternalService;
@@ -130,6 +132,7 @@ public class StandaloneMain {
   private static final Logger LOG = LoggerFactory.getLogger(StandaloneMain.class);
 
   private final Injector injector;
+  private AppFabricHealthCheckService appFabricHealthCheckService;
   private final UserInterfaceService userInterfaceService;
   private final NettyRouter router;
   private final MetricsQueryService metricsQueryService;
@@ -216,6 +219,7 @@ public class StandaloneMain {
     metadataService = injector.getInstance(MetadataService.class);
     secureStoreService = injector.getInstance(SecureStoreService.class);
     supportBundleInternalService = injector.getInstance(SupportBundleInternalService.class);
+    appFabricHealthCheckService = injector.getInstance(AppFabricHealthCheckService.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       try {
@@ -245,6 +249,8 @@ public class StandaloneMain {
     URLConnections.setDefaultUseCaches(false);
 
     ConfigurationLogger.logImportantConfig(cConf);
+
+    appFabricHealthCheckService.startAndWait();
 
     if (messagingService instanceof Service) {
       ((Service) messagingService).startAndWait();
@@ -325,7 +331,7 @@ public class StandaloneMain {
       if (userInterfaceService != null) {
         userInterfaceService.stopAndWait();
       }
-
+      appFabricHealthCheckService.stopAndWait();
       //  shut down router to stop all incoming traffic
       router.stopAndWait();
 
@@ -547,6 +553,7 @@ public class StandaloneMain {
       new PreviewRunnerManagerModule().getStandaloneModules(),
       new MessagingServerRuntimeModule().getStandaloneModules(),
       new AppFabricServiceRuntimeModule(cConf).getStandaloneModules(),
+      new AppFabricHealthCheckModule(),
       new MonitorHandlerModule(false),
       new RuntimeServerModule(),
       new OperationalStatsModule(),

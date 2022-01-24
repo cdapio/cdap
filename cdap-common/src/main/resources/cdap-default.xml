@@ -4873,4 +4873,38 @@
       The maximum number of records that can be set in preview configuration.
     </description>
   </property>
+
+  <!-- Service App Fabric Health Check Service Configuration -->
+  <property>
+    <name>appfabric.healthcheck.service.bind.address</name>
+    <value>0.0.0.0</value>
+    <description>
+      App Fabric Health Check HTTP service bind address
+    </description>
+  </property>
+
+  <property>
+    <name>appfabric.healthcheck.service.bind.port</name>
+    <value>11025</value>
+    <description>
+      App Fabric Health Check HTTP service bind port; if 0, binds to a random port
+    </description>
+  </property>
+
+
+  <property>
+    <name>jmx.metrics.collector.poll.interval.secs</name>
+    <value>60</value>
+    <description>
+      Interval (in seconds) for polling JMXServer for resource utilization metrics.
+    </description>
+  </property>
+
+  <property>
+    <name>jmx.metrics.collector.server.port</name>
+    <value>11025</value>
+    <description>
+      Port to be exposed on localhost to allow metrics collection using JMX.
+    </description>
+  </property>
 </configuration>

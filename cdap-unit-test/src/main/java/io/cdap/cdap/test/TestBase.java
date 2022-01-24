@@ -87,6 +87,8 @@ import io.cdap.cdap.explore.executor.ExploreExecutorService;
 import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.explore.guice.ExploreRuntimeModule;
 import io.cdap.cdap.gateway.handlers.AuthorizationHandler;
+import io.cdap.cdap.healthcheck.module.AppFabricHealthCheckModule;
+import io.cdap.cdap.healthcheck.services.AppFabricHealthCheckService;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.internal.app.services.SupportBundleInternalService;
 import io.cdap.cdap.internal.capability.CapabilityConfig;
@@ -199,6 +201,7 @@ public class TestBase {
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   static Injector injector;
+  private static AppFabricHealthCheckService appFabricHealthCheckService;
   private static CConfiguration cConf;
   private static int nestedStartCount;
   private static boolean firstInit = true;
@@ -281,6 +284,7 @@ public class TestBase {
       new LocalLocationModule(),
       new InMemoryDiscoveryModule(),
       new AppFabricServiceRuntimeModule(cConf).getInMemoryModules(),
+      new AppFabricHealthCheckModule(),
       new MonitorHandlerModule(false),
       new AuthenticationContextModules().getMasterModule(),
       new AuthorizationModule(),
@@ -415,6 +419,8 @@ public class TestBase {
     }
     supportBundleInternalService = injector.getInstance(SupportBundleInternalService.class);
     supportBundleInternalService.startAndWait();
+    appFabricHealthCheckService = injector.getInstance(AppFabricHealthCheckService.class);
+    appFabricHealthCheckService.startAndWait();
   }
 
   /**
@@ -544,6 +550,7 @@ public class TestBase {
     cConf.set(Constants.Metadata.SERVICE_BIND_ADDRESS, localhost);
     cConf.set(Constants.Preview.ADDRESS, localhost);
     cConf.set(Constants.SupportBundle.SERVICE_BIND_ADDRESS, localhost);
+    cConf.set(Constants.AppFabricHealthCheck.SERVICE_BIND_ADDRESS, localhost);
 
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
@@ -627,6 +634,7 @@ public class TestBase {
     }
     appFabricServer.stopAndWait();
     supportBundleInternalService.stopAndWait();
+    appFabricHealthCheckService.stopAndWait();
   }
 
   protected MetricsManager getMetricsManager() {

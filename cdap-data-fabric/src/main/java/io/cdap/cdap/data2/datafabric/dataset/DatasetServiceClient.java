@@ -45,7 +45,6 @@ import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -386,7 +385,7 @@ public class DatasetServiceClient {
   }
 
   @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
-  private static void append(StringBuilder sb, ThreadInfo threadInfo) {
+  public static void append(StringBuilder sb, ThreadInfo threadInfo) {
     sb.append("\"" + threadInfo.getThreadName() + "\"" +
                 " Id=" + threadInfo.getThreadId() + " " +
                 threadInfo.getThreadState());

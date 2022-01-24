@@ -74,6 +74,8 @@ import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorS
 import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
 import io.cdap.cdap.gateway.handlers.CommonHandlers;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import io.cdap.cdap.healthcheck.handlers.AppFabricHealthCheckHttpHandler;
+import io.cdap.cdap.healthcheck.services.AppFabricHealthCheckService;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
@@ -121,8 +123,6 @@ import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.store.StoreDefinition;
-import io.cdap.cdap.support.handlers.SupportBundleHttpHandler;
-import io.cdap.cdap.support.module.SupportBundleModule;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequestConfig;
 import io.cdap.common.http.HttpRequests;
@@ -223,6 +223,7 @@ public abstract class AppFabricTestBase {
   private static MetricStore metricStore;
   private static RemoteClientFactory remoteClientFactory;
   private static LogQueryService logQueryService;
+  private static AppFabricHealthCheckService appFabricHealthCheckService;
 
   private static HttpRequestConfig httpRequestConfig;
 
@@ -242,11 +243,11 @@ public abstract class AppFabricTestBase {
 //        install(new SupportBundleModule());
         bind(UGIProvider.class).to(CurrentUGIProvider.class);
         bind(MetadataSubscriberService.class).in(Scopes.SINGLETON);
-//        Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
-//          binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));
-//
-//        CommonHandlers.add(handlerBinder);
-//        handlerBinder.addBinding().to(SupportBundleHttpHandler.class);
+        Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
+          binder(), HttpHandler.class, Names.named(Constants.AppFabricHealthCheck.HANDLERS_NAME));
+        CommonHandlers.add(handlerBinder);
+        handlerBinder.addBinding().to(AppFabricHealthCheckHttpHandler.class);
+        bind(AppFabricHealthCheckService.class).in(Scopes.SINGLETON);
       }
     });
   }
@@ -291,6 +292,8 @@ public abstract class AppFabricTestBase {
     metadataSubscriberService.startAndWait();
     logQueryService = injector.getInstance(LogQueryService.class);
     logQueryService.startAndWait();
+    appFabricHealthCheckService = injector.getInstance(AppFabricHealthCheckService.class);
+    appFabricHealthCheckService.startAndWait();
     locationFactory = getInjector().getInstance(LocationFactory.class);
     datasetClient = new DatasetClient(getClientConfig(discoveryClient, Constants.Service.DATASET_MANAGER));
     remoteClientFactory = new RemoteClientFactory(discoveryClient,
@@ -322,6 +325,7 @@ public abstract class AppFabricTestBase {
     metadataSubscriberService.stopAndWait();
     metadataService.stopAndWait();
     logQueryService.stopAndWait();
+    appFabricHealthCheckService.stopAndWait();
     if (messagingService instanceof Service) {
       ((Service) messagingService).stopAndWait();
     }
@@ -363,6 +367,8 @@ public abstract class AppFabricTestBase {
     // reduce the number of dataset executor threads
     cConf.setInt(Constants.Dataset.Executor.WORKER_THREADS, 2);
     cConf.setInt(Constants.Dataset.Executor.EXEC_THREADS, 5);
+    cConf.setInt(Constants.JMXMetricsCollector.SERVER_PORT, 11023);
+    cConf.setInt(Constants.JMXMetricsCollector.POLL_INTERVAL_SECS, 1);
     return cConf;
   }
 

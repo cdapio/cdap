@@ -74,6 +74,8 @@ import io.cdap.cdap.gateway.handlers.VersionHandler;
 import io.cdap.cdap.gateway.handlers.WorkflowHttpHandler;
 import io.cdap.cdap.gateway.handlers.WorkflowStatsSLAHttpHandler;
 import io.cdap.cdap.gateway.handlers.meta.RemotePrivilegesHandler;
+import io.cdap.cdap.healthcheck.handlers.AppFabricHealthCheckHttpHandler;
+import io.cdap.cdap.healthcheck.module.AppFabricHealthCheckModule;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactoryProvider;
 import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
@@ -342,6 +344,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(CoreSchedulerService.class).in(Scopes.SINGLETON);
       bind(Scheduler.class).to(CoreSchedulerService.class);
       install(new SupportBundleModule());
+      install(new AppFabricHealthCheckModule());
       install(new PrivateModule() {
         @Override
         protected void configure() {
@@ -388,6 +391,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(AuthorizationHandler.class);
       handlerBinder.addBinding().to(SecureStoreHandler.class);
       handlerBinder.addBinding().to(SupportBundleHttpHandler.class);
+      handlerBinder.addBinding().to(AppFabricHealthCheckHttpHandler.class);
       handlerBinder.addBinding().to(RemotePrivilegesHandler.class);
       handlerBinder.addBinding().to(OperationalStatsHttpHandler.class);
       handlerBinder.addBinding().to(ProfileHttpHandler.class);
