@@ -25,6 +25,7 @@ import java.util.Set;
 public enum ProgramStatus {
   INITIALIZING,
   RUNNING,
+  STOPPING,
   COMPLETED,
   FAILED,
   KILLED;

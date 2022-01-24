@@ -151,6 +151,14 @@ public class RuntimeProgramStatusSubscriberService extends AbstractNotificationS
                                    Optional.ofNullable(properties.get(ProgramOptionConstants.SUSPEND_TIME))
                                      .map(Long::parseLong).orElse(System.currentTimeMillis()));
         break;
+      case STOPPING:
+        store.recordProgramStopping(programRunId, sourceId,
+                                    Optional.ofNullable(properties.get(ProgramOptionConstants.STOPPING_TIME))
+                                      .map(Long::parseLong).orElse(System.currentTimeMillis()),
+                                    Optional.ofNullable(properties.get(
+                                      ProgramOptionConstants.GRACEFUL_SHUTDOWN_PERIOD_IN_SECS))
+                                      .map(Long::parseLong).orElse(Long.MAX_VALUE));
+        break;
       case RESUMING:
         store.recordProgramResumed(programRunId, sourceId,
                                    Optional.ofNullable(properties.get(ProgramOptionConstants.RESUME_TIME))

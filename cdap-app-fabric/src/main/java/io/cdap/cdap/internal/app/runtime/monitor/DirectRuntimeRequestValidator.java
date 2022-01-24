@@ -163,7 +163,10 @@ public final class DirectRuntimeRequestValidator implements RuntimeRequestValida
                                        Objects.firstNonNull(runRecord.getSuspendTs(), System.currentTimeMillis()));
             break;
           case STOPPING:
-            // TODO - will be part of CDAP-18743 along with unit tests
+            store.recordProgramStopping(programRunId, runRecord.getSourceId(),
+                                        Objects.firstNonNull(runRecord.getStoppingTs(), System.currentTimeMillis()),
+                                        // if StoppingTimeoutTimestamp is null we will shut down gracefully
+                                        Objects.firstNonNull(runRecord.getStoppingTimeoutTs(), Long.MAX_VALUE));
             break;
           case COMPLETED:
           case KILLED:

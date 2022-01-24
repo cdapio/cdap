@@ -135,8 +135,6 @@ public class DirectRuntimeRequestValidatorTest {
     InMemoryTableService.reset();
   }
 
-  // TODO: CDAP-18743 - add tests with STOPPING status
-
   @Test
   public void testValid() throws BadRequestException {
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").spark("spark").run(RunIds.generate());
@@ -242,6 +240,34 @@ public class DirectRuntimeRequestValidatorTest {
     programRunInfo = validator.getProgramRunStatus(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1,
                                                                                         HttpMethod.GET, "/"));
     Assert.assertEquals(programRunStatus, programRunInfo.getProgramRunStatus());
+  }
+
+  @Test
+  public void testValidProgramInStoppingState() throws BadRequestException {
+    ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").spark("spark").run(RunIds.generate());
+
+    // Insert the run
+    TransactionRunners.run(txRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+      store.recordProgramProvisioning(programRunId, Collections.emptyMap(),
+                                      Collections.singletonMap(SystemArguments.PROFILE_NAME, "system:default"),
+                                      createSourceId(1), ARTIFACT_ID);
+      store.recordProgramProvisioned(programRunId, 1, createSourceId(2));
+      store.recordProgramStart(programRunId, null, Collections.emptyMap(), createSourceId(3));
+      store.recordProgramRunning(programRunId, System.currentTimeMillis(), null, createSourceId(3));
+      store.recordProgramStopping(programRunId, createSourceId(3), System.currentTimeMillis(),
+                                  System.currentTimeMillis() + 1000);
+    });
+
+    // Validation should pass
+    RuntimeRequestValidator validator = new DirectRuntimeRequestValidator(cConf, txRunner,
+                                                                          new MockProgramRunRecordFetcher(),
+                                                                          accessEnforcer, authenticationContext);
+    ProgramRunInfo programRunInfo = validator.getProgramRunStatus(programRunId, new DefaultHttpRequest(
+      HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+    // After recording the program start in AppMetaDataStore the expected state is Stopping
+    Assert.assertEquals(ProgramRunStatus.STOPPING, programRunInfo.getProgramRunStatus());
+    Assert.assertNotNull("Payload isn't null when program status is Stopping", programRunInfo.getPayload());
   }
 
   private byte[] createSourceId(int value) {
