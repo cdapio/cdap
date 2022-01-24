@@ -74,6 +74,11 @@ public final class SparkPluginContext implements PluginContext, Externalizable {
   }
 
   @Override
+  public boolean isFeatureEnabled(String name) {
+    return delegate.isFeatureEnabled(name);
+  }
+
+  @Override
   public void writeExternal(ObjectOutput out) throws IOException {
     // no-op
   }

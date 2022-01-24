@@ -174,7 +174,7 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
     Function<Map<String, String>, Map<String, String>> macroFn =
       macroProperties -> getContext().evaluateMacros(namespace, macroProperties, macroEvaluator, macroParserOptions);
     String validationResponse = GSON.toJson(ValidationUtils.validate(
-      validationRequest, getContext().createServicePluginConfigurer(namespace), macroFn));
+      validationRequest, getContext().createServicePluginConfigurer(namespace), macroFn, getContext()));
     responder.sendString(validationResponse);
   }
 

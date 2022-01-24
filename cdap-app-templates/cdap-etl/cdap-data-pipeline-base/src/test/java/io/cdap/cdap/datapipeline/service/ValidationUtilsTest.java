@@ -64,7 +64,10 @@ public class ValidationUtilsTest {
       etlStage, Collections
       .singletonList(testStageSchema), false);
     StageValidationResponse stageValidationResponse = ValidationUtils
-      .validate(validationRequest, getPluginConfigurer(MockSource.PLUGIN_CLASS), properties -> properties);
+      .validate(validationRequest, getPluginConfigurer(MockSource.PLUGIN_CLASS), properties -> properties,
+        name -> {
+          throw new UnsupportedOperationException();
+        });
     Assert.assertTrue(stageValidationResponse.getFailures().isEmpty());
   }
 
@@ -77,7 +80,10 @@ public class ValidationUtilsTest {
       etlStage, Collections
       .singletonList(testStageSchema), false);
     StageValidationResponse stageValidationResponse = ValidationUtils
-      .validate(validationRequest, getPluginConfigurer(MockSource.PLUGIN_CLASS), properties -> properties);
+      .validate(validationRequest, getPluginConfigurer(MockSource.PLUGIN_CLASS), properties -> properties,
+        name -> {
+          throw new UnsupportedOperationException();
+        });
     Assert.assertEquals(1, stageValidationResponse.getFailures().size());
   }
 
@@ -97,7 +103,9 @@ public class ValidationUtilsTest {
           propertiesCopy.put("tableName", testtable);
         }
         return propertiesCopy;
-      });
+      }, name -> {
+            throw new UnsupportedOperationException();
+          });
     Assert.assertTrue(stageValidationResponse.getFailures().isEmpty());
     Assert.assertEquals(testtable, stageValidationResponse.getSpec().getPlugin().getProperties().get("tableName"));
   }

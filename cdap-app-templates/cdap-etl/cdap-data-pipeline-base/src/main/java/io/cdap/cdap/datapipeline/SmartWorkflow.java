@@ -176,7 +176,7 @@ public class SmartWorkflow extends AbstractWorkflow {
                                             ImmutableSet.of(BatchSource.PLUGIN_TYPE),
                                             ImmutableSet.of(BatchSink.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE,
                                                             AlertPublisher.PLUGIN_TYPE),
-                                            config.getEngine()).generateSpec(config);
+                                            config.getEngine(), getConfigurer()).generateSpec(config);
     } catch (ValidationException e) {
       throw new IllegalArgumentException(
         String.format("Failed to configure pipeline: %s",

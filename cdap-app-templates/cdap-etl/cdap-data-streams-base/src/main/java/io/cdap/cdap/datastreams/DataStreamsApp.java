@@ -41,7 +41,8 @@ public class DataStreamsApp extends AbstractApplication<DataStreamsConfig> {
       spec = new DataStreamsPipelineSpecGenerator(getConfigurer(),
                                                   ImmutableSet.of(StreamingSource.PLUGIN_TYPE),
                                                   ImmutableSet.of(BatchSink.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE,
-                                                                  AlertPublisher.PLUGIN_TYPE)).generateSpec(config);
+                                                                  AlertPublisher.PLUGIN_TYPE),
+                                                  getConfigurer()).generateSpec(config);
     } catch (ValidationException e) {
       throw new IllegalArgumentException(
         String.format("Failed to configure pipeline: %s",

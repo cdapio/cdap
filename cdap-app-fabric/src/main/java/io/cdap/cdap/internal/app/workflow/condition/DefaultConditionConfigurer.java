@@ -17,6 +17,7 @@ package io.cdap.cdap.internal.app.workflow.condition;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.workflow.Condition;
 import io.cdap.cdap.api.workflow.ConditionConfigurer;
 import io.cdap.cdap.api.workflow.ConditionSpecification;
@@ -44,8 +45,9 @@ public class DefaultConditionConfigurer extends AbstractConfigurer implements Co
   private Map<String, String> properties;
 
   private DefaultConditionConfigurer(Condition condition, Id.Namespace deployNamespace, Id.Artifact artifactId,
-                                     PluginFinder pluginFinder, PluginInstantiator pluginInstantiator) {
-    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator);
+                                     PluginFinder pluginFinder, PluginInstantiator pluginInstantiator,
+                                     FeatureFlagsProvider featureFlagsProvider) {
+    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator, featureFlagsProvider);
     this.condition = condition;
     this.name = condition.getClass().getSimpleName();
     this.description = "";
@@ -79,9 +81,11 @@ public class DefaultConditionConfigurer extends AbstractConfigurer implements Co
 
   public static ConditionSpecification configureCondition(Condition condition, Id.Namespace deployNamespace,
                                                           Id.Artifact artifactId, PluginFinder pluginFinder,
-                                                          PluginInstantiator pluginInstantiator) {
+                                                          PluginInstantiator pluginInstantiator,
+                                                          FeatureFlagsProvider featureFlagsProvider) {
     DefaultConditionConfigurer configurer = new DefaultConditionConfigurer(condition, deployNamespace, artifactId,
-                                                                           pluginFinder, pluginInstantiator);
+                                                                           pluginFinder, pluginInstantiator,
+                                                                           featureFlagsProvider);
 
     condition.configure(configurer);
     return configurer.createSpecification();

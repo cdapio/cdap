@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.worker;
 
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactManager;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
@@ -38,6 +39,7 @@ import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.DefaultPluginConfigurer;
 import io.cdap.cdap.internal.app.DefaultServicePluginConfigurer;
+import io.cdap.cdap.internal.app.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
@@ -74,6 +76,7 @@ public class DefaultSystemAppTaskContext extends AbstractServiceDiscoverer imple
   private final io.cdap.cdap.proto.id.ArtifactId protoArtifactId;
   private final RemoteClientFactory remoteClientFactory;
   private final ClassLoader artifactClassLoader;
+  private final FeatureFlagsProvider featureFlagsProvider;
 
   DefaultSystemAppTaskContext(CConfiguration cConf, PreferencesFetcher preferencesFetcher, PluginFinder pluginFinder,
                               SecureStore secureStore, String artifactNameSpace, ArtifactId artifactId,
@@ -92,6 +95,7 @@ public class DefaultSystemAppTaskContext extends AbstractServiceDiscoverer imple
     this.pluginsDir = createTempFolder();
     this.instantiator = new PluginInstantiator(cConf, artifactClassLoader, pluginsDir, true);
     this.protoArtifactId = Artifacts.toProtoArtifactId(new NamespaceId(artifactNameSpace), artifactId);
+    this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
   }
 
   private File createTempFolder() {
@@ -102,6 +106,11 @@ public class DefaultSystemAppTaskContext extends AbstractServiceDiscoverer imple
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @Override
+  public boolean isFeatureEnabled(String name) {
+    return featureFlagsProvider.isFeatureEnabled(name);
   }
 
   @Override

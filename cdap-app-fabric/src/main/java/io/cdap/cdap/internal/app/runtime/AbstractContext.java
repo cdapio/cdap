@@ -35,6 +35,7 @@ import io.cdap.cdap.api.data.DatasetInstantiationException;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.lib.PartitionKey;
 import io.cdap.cdap.api.dataset.lib.partitioned.PartitionKeyCodec;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.lineage.field.LineageRecorder;
 import io.cdap.cdap.api.lineage.field.Operation;
 import io.cdap.cdap.api.macro.MacroEvaluator;
@@ -90,6 +91,7 @@ import io.cdap.cdap.data2.metadata.writer.MetadataOperation;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.data2.transaction.RetryingShortTransactionSystemClient;
 import io.cdap.cdap.data2.transaction.Transactions;
+import io.cdap.cdap.internal.app.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.internal.app.preview.DataTracerFactoryProvider;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginClassLoaders;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -134,7 +136,7 @@ import javax.annotation.Nullable;
  */
 public abstract class AbstractContext extends AbstractServiceDiscoverer
   implements SecureStore, LineageDatasetContext, Transactional, SchedulableProgramContext, RuntimeContext,
-  PluginContext, MessagingContext, LineageRecorder, MetadataReader, MetadataWriter, Closeable {
+  PluginContext, MessagingContext, LineageRecorder, MetadataReader, MetadataWriter, Closeable, FeatureFlagsProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractContext.class);
   private static final Gson GSON = TriggeringScheduleInfoAdapter.addTypeAdapters(new GsonBuilder())
@@ -165,6 +167,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final LoggingContext loggingContext;
   private final FieldLineageWriter fieldLineageWriter;
   private final RemoteClientFactory remoteClientFactory;
+  private final FeatureFlagsProvider featureFlagsProvider;
   private volatile ClassLoader programInvocationClassLoader;
   protected final DynamicDatasetCache datasetCache;
   protected final RetryStrategy retryStrategy;
@@ -191,6 +194,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.remoteClientFactory = remoteClientFactory;
     this.programRunId = program.getId().run(ProgramRunners.getRunId(programOptions));
     this.triggeringScheduleInfo = getTriggeringScheduleInfo(programOptions);
+    this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
 
     Map<String, String> runtimeArgs = new HashMap<>(programOptions.getUserArguments().asMap());
     this.logicalStartTime = ProgramRunners.updateLogicalStartTime(runtimeArgs);
@@ -226,7 +230,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
 
     this.pluginInstantiator = pluginInstantiator;
     this.pluginContext = new DefaultPluginContext(pluginInstantiator, program.getId(),
-                                                  program.getApplicationSpecification().getPlugins());
+                                                  program.getApplicationSpecification().getPlugins(),
+                                                  featureFlagsProvider);
 
     KerberosPrincipalId principalId = ProgramRunners.getApplicationPrincipal(programOptions);
     this.admin = new DefaultAdmin(dsFramework, program.getId().getNamespaceId(), secureStoreManager,
@@ -782,6 +787,15 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                                                                                  Collections.emptySet(),
                                                                                  ImmutableSet.copyOf(tags))),
       retryStrategy);
+  }
+
+  /**
+   *
+   * @return Map with feature flags defined in CConf.
+   */
+  @Override
+  public boolean isFeatureEnabled(String name) {
+    return featureFlagsProvider.isFeatureEnabled(name);
   }
 
   /**

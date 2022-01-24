@@ -37,8 +37,9 @@ public class DataStreamsPipelineSpecGenerator
 
   <T extends PluginConfigurer & DatasetConfigurer> DataStreamsPipelineSpecGenerator(T configurer,
                                                                                     Set<String> sourcePluginTypes,
-                                                                                    Set<String> sinkPluginTypes) {
-    super(configurer, sourcePluginTypes, sinkPluginTypes, Engine.SPARK);
+                                                                                    Set<String> sinkPluginTypes,
+                                                                                    FeatureFlagsProvider featureFlagsProvider) {
+    super(configurer, sourcePluginTypes, sinkPluginTypes, Engine.SPARK, featureFlagsProvider);
   }
 
   @Override

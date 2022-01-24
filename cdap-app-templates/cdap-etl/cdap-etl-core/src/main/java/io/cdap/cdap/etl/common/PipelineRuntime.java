@@ -18,6 +18,7 @@ package io.cdap.cdap.etl.common;
 
 import io.cdap.cdap.api.ServiceDiscoverer;
 import io.cdap.cdap.api.customaction.CustomActionContext;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.mapreduce.MapReduceContext;
 import io.cdap.cdap.api.mapreduce.MapReduceTaskContext;
 import io.cdap.cdap.api.metadata.MetadataReader;
@@ -48,36 +49,38 @@ public class PipelineRuntime implements Serializable {
   private final MetadataReader metadataReader;
   private final MetadataWriter metadataWriter;
   private final SecureStore secureStore;
+  private final FeatureFlagsProvider featureFlagProvider;
 
   public PipelineRuntime(SparkClientContext context) {
     this(context.getNamespace(), context.getApplicationSpecification().getName(), context.getLogicalStartTime(),
-         new BasicArguments(context), context.getMetrics(), context, context, context, context, context);
+         new BasicArguments(context), context.getMetrics(), context, context, context, context, context, context);
   }
 
   public PipelineRuntime(CustomActionContext context, Metrics metrics) {
     this(context.getNamespace(), context.getApplicationSpecification().getName(), context.getLogicalStartTime(),
-         new BasicArguments(context), metrics, context, context, context, context, context);
+         new BasicArguments(context), metrics, context, context, context, context, context, context);
   }
 
   public PipelineRuntime(MapReduceTaskContext context, Metrics metrics, BasicArguments arguments) {
     this(context.getNamespace(), context.getApplicationSpecification().getName(), context.getLogicalStartTime(),
-         arguments, metrics, context, context, context);
+         arguments, metrics, context, context, context, null, null, context);
   }
 
   public PipelineRuntime(MapReduceContext context, Metrics metrics) {
     this(context.getNamespace(), context.getApplicationSpecification().getName(), context.getLogicalStartTime(),
-         new BasicArguments(context), metrics, context, context, context, context, context);
+         new BasicArguments(context), metrics, context, context, context, context, context, context);
   }
 
   public PipelineRuntime(WorkflowContext context, Metrics metrics) {
     this(context.getNamespace(), context.getApplicationSpecification().getName(), context.getLogicalStartTime(),
          new BasicArguments(context.getToken(), context.getRuntimeArguments()), metrics, context, context, context,
-         context, context);
+         context, context, context);
   }
 
   public PipelineRuntime(String namespace, String pipelineName, long logicalStartTime, BasicArguments arguments,
                          Metrics metrics, PluginContext pluginContext, ServiceDiscoverer serviceDiscoverer,
-                         SecureStore secureStore, MetadataReader metadataReader, MetadataWriter metadataWriter) {
+                         SecureStore secureStore, MetadataReader metadataReader, MetadataWriter metadataWriter,
+                         FeatureFlagsProvider featureFlagsProvider) {
     this.namespace = namespace;
     this.pipelineName = pipelineName;
     this.logicalStartTime = logicalStartTime;
@@ -88,15 +91,9 @@ public class PipelineRuntime implements Serializable {
     this.metadataReader = metadataReader;
     this.metadataWriter = metadataWriter;
     this.secureStore = secureStore;
+    this.featureFlagProvider = featureFlagsProvider;
   }
-
-  public PipelineRuntime(String namespace, String pipelineName, long logicalStartTime, BasicArguments arguments,
-                         Metrics metrics, PluginContext pluginContext, ServiceDiscoverer serviceDiscoverer,
-                         SecureStore secureStore) {
-    this(namespace, pipelineName, logicalStartTime, arguments, metrics, pluginContext, serviceDiscoverer,
-         secureStore, null, null);
-  }
-
+  
   public String getNamespace() {
     return namespace;
   }
@@ -127,6 +124,10 @@ public class PipelineRuntime implements Serializable {
 
   public SecureStore getSecureStore() {
     return secureStore;
+  }
+
+  public boolean isFeatureEnabled(String name) {
+    return featureFlagProvider.isFeatureEnabled(name);
   }
 
   /**

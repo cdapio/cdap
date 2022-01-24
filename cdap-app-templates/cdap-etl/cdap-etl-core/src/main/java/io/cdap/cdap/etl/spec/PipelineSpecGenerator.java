@@ -26,6 +26,7 @@ import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.plugin.InvalidPluginConfigException;
 import io.cdap.cdap.api.plugin.InvalidPluginProperty;
@@ -100,16 +101,17 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
   private final Set<String> sinkPluginTypes;
   private final ConnectionRegistryMacroEvaluator connectionEvaluator;
   private final MacroParserOptions options;
+  private final FeatureFlagsProvider featureFlagsProvider;
 
   protected <T extends PluginConfigurer & DatasetConfigurer> PipelineSpecGenerator(T configurer,
-                                                                                   Set<String> sourcePluginTypes,
-                                                                                   Set<String> sinkPluginTypes,
-                                                                                   Engine engine) {
+    Set<String> sourcePluginTypes, Set<String> sinkPluginTypes, Engine engine, 
+    FeatureFlagsProvider featureFlagsProvider) {
     this.pluginConfigurer = configurer;
     this.datasetConfigurer = configurer;
     this.sourcePluginTypes = sourcePluginTypes;
     this.sinkPluginTypes = sinkPluginTypes;
     this.engine = engine;
+    this.featureFlagsProvider = featureFlagsProvider;
     this.connectionEvaluator = new ConnectionRegistryMacroEvaluator();
     this.options = MacroParserOptions.builder().skipInvalidMacros().setEscaping(false)
                      .setFunctionWhitelist(ConnectionRegistryMacroEvaluator.FUNCTION_NAME).build();
@@ -152,7 +154,9 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       pluginTypes.put(stageName, stage.getPlugin().getType());
       pluginConfigurers.put(stageName, new DefaultPipelineConfigurer(pluginConfigurer, datasetConfigurer,
                                                                      stageName, engine,
-                                                                     new DefaultStageConfigurer(stageName)));
+                                                                     new DefaultStageConfigurer(stageName),
+                                                                     featureFlagsProvider
+                                                                     ));
     }
     SchemaPropagator schemaPropagator = new SchemaPropagator(pluginConfigurers, validatedPipeline::getOutputs,
                                                              pluginTypes::get);
@@ -737,5 +741,9 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
     for (String output : outputStages) {
       validateSingleInput(currentCondition, output, dag);
     }
+  }
+
+  protected FeatureFlagsProvider getFeatureFlagsProvider() {
+    return featureFlagsProvider;
   }
 }

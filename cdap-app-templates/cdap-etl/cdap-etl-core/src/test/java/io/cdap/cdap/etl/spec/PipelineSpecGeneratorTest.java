@@ -136,7 +136,9 @@ public class PipelineSpecGeneratorTest {
     specGenerator = new BatchPipelineSpecGenerator(pluginConfigurer,
                                                    ImmutableSet.of(BatchSource.PLUGIN_TYPE),
                                                    ImmutableSet.of(BatchSink.PLUGIN_TYPE),
-                                                   Engine.MAPREDUCE);
+                                                   Engine.MAPREDUCE, name -> {
+                                                    throw new UnsupportedOperationException();
+                                                  });
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -820,7 +822,10 @@ public class PipelineSpecGeneratorTest {
       .build();
 
     new BatchPipelineSpecGenerator(pluginConfigurer, ImmutableSet.of(BatchSource.PLUGIN_TYPE),
-                                   ImmutableSet.of(BatchSink.PLUGIN_TYPE), Engine.MAPREDUCE)
+                                   ImmutableSet.of(BatchSink.PLUGIN_TYPE), Engine.MAPREDUCE,
+                                   name -> {
+                                    throw new UnsupportedOperationException();
+                                  })
       .generateSpec(config);
   }
 
@@ -847,7 +852,10 @@ public class PipelineSpecGeneratorTest {
       .build();
 
     PipelineSpec actual = new BatchPipelineSpecGenerator(pluginConfigurer, ImmutableSet.of(BatchSource.PLUGIN_TYPE),
-                                                         ImmutableSet.of(BatchSink.PLUGIN_TYPE), Engine.MAPREDUCE)
+                                                         ImmutableSet.of(BatchSink.PLUGIN_TYPE), Engine.MAPREDUCE,
+                                                         name -> {
+                                                          throw new UnsupportedOperationException();
+                                                        })
       .generateSpec(config);
 
     PipelineSpec expected = BatchPipelineSpec.builder()

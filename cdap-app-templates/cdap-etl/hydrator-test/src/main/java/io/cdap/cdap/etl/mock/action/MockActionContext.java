@@ -57,6 +57,11 @@ public class MockActionContext implements ActionContext {
   }
 
   @Override
+  public boolean isFeatureEnabled(String name) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public long getLogicalStartTime() {
     return 0L;
   }

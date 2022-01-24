@@ -171,4 +171,9 @@ public final class MockAppConfigurer implements ApplicationConfigurer {
   public void createDataset(String datasetName, Class<? extends Dataset> datasetClass) {
 
   }
+
+  @Override
+  public boolean isFeatureEnabled(String name) {
+    throw new UnsupportedOperationException();
+  }
 }
