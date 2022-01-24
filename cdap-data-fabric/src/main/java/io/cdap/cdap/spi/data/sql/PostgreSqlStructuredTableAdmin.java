@@ -52,8 +52,8 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
   private final DataSource dataSource;
 
   @Inject
-  PostgreSqlStructuredTableAdmin(DataSource dataSource) {
-    this(new SqlStructuredTableRegistry(dataSource), dataSource);
+  PostgreSqlStructuredTableAdmin(DataSource dataSource, int scanFetchSize) {
+    this(new SqlStructuredTableRegistry(dataSource, scanFetchSize), dataSource);
   }
 
   PostgreSqlStructuredTableAdmin(StructuredTableRegistry registry, DataSource dataSource) {

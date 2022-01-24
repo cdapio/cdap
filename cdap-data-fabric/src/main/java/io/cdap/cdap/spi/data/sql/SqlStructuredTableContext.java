@@ -36,13 +36,15 @@ public class SqlStructuredTableContext implements StructuredTableContext {
   private final Connection connection;
   private final MetricsCollector metricsCollector;
   private final boolean emitTimeMetrics;
+  private final int scanFetchSize;
 
   public SqlStructuredTableContext(StructuredTableAdmin structuredTableAdmin, Connection connection,
-                                   MetricsCollector metricsCollector, boolean emitTimeMetrics) {
+                                   MetricsCollector metricsCollector, boolean emitTimeMetrics, int scanFetchSize) {
     this.admin = structuredTableAdmin;
     this.connection = connection;
     this.metricsCollector = metricsCollector;
     this.emitTimeMetrics = emitTimeMetrics;
+    this.scanFetchSize = scanFetchSize;
   }
 
   @Override
@@ -50,8 +52,8 @@ public class SqlStructuredTableContext implements StructuredTableContext {
     throws StructuredTableInstantiationException, TableNotFoundException {
 
     try {
-      return new MetricStructuredTable(tableId, new PostgreSqlStructuredTable(connection, admin.getSchema(tableId)),
-                                       metricsCollector, emitTimeMetrics);
+      return new MetricStructuredTable(tableId, new PostgreSqlStructuredTable(connection, admin.getSchema(tableId),
+          scanFetchSize), metricsCollector, emitTimeMetrics);
     } catch (IOException e) {
       throw new StructuredTableInstantiationException(tableId, "Failed to get the table schema", e);
     }
