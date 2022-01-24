@@ -135,9 +135,11 @@ public class PipelineSpecGeneratorTest {
     pluginConfigurer.addMockPlugin(BatchSQLEngine.PLUGIN_TYPE, "mocksqlengine", new MockSQLEngine(), artifactIds);
 
     specGenerator = new BatchPipelineSpecGenerator(NamespaceId.DEFAULT.getNamespace(), pluginConfigurer,
-                                                   null, ImmutableSet.of(BatchSource.PLUGIN_TYPE),
-                                                   ImmutableSet.of(BatchSink.PLUGIN_TYPE),
-                                                   Engine.MAPREDUCE);
+        null, ImmutableSet.of(BatchSource.PLUGIN_TYPE), ImmutableSet.of(BatchSink.PLUGIN_TYPE),
+        Engine.MAPREDUCE, name -> {
+            throw new UnsupportedOperationException();
+          }
+        );
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -869,8 +871,11 @@ public class PipelineSpecGeneratorTest {
       .build();
 
     new BatchPipelineSpecGenerator(NamespaceId.DEFAULT.getNamespace(),
-                                   pluginConfigurer, null, ImmutableSet.of(BatchSource.PLUGIN_TYPE),
-                                   ImmutableSet.of(BatchSink.PLUGIN_TYPE), Engine.MAPREDUCE)
+        pluginConfigurer, null, ImmutableSet.of(BatchSource.PLUGIN_TYPE),
+        ImmutableSet.of(BatchSink.PLUGIN_TYPE), Engine.MAPREDUCE,
+        name -> {
+          throw new UnsupportedOperationException();
+        })
       .generateSpec(config);
   }
 
@@ -896,9 +901,11 @@ public class PipelineSpecGeneratorTest {
       .setNumOfRecordsPreview(100)
       .build();
 
-    PipelineSpec actual = new BatchPipelineSpecGenerator(NamespaceId.DEFAULT.getNamespace(), pluginConfigurer, null,
-                                                         ImmutableSet.of(BatchSource.PLUGIN_TYPE),
-                                                         ImmutableSet.of(BatchSink.PLUGIN_TYPE), Engine.MAPREDUCE)
+    PipelineSpec actual = new BatchPipelineSpecGenerator(NamespaceId.DEFAULT.getNamespace(), pluginConfigurer,
+        null, ImmutableSet.of(BatchSource.PLUGIN_TYPE), ImmutableSet.of(BatchSink.PLUGIN_TYPE),
+        Engine.MAPREDUCE, name -> {
+          throw new UnsupportedOperationException();
+        })
       .generateSpec(config);
 
     PipelineSpec expected = BatchPipelineSpec.builder()

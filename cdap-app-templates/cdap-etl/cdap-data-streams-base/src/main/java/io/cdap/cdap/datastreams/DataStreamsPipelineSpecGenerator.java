@@ -21,6 +21,7 @@ import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.DatasetConfigurer;
 import io.cdap.cdap.api.app.RuntimeConfigurer;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.spark.SparkSpecification;
 import io.cdap.cdap.etl.api.Engine;
@@ -50,8 +51,9 @@ public class DataStreamsPipelineSpecGenerator
 
   <T extends PluginConfigurer & DatasetConfigurer> DataStreamsPipelineSpecGenerator(
     String namespace, T configurer, @Nullable RuntimeConfigurer runtimeConfigurer, Set<String> sourcePluginTypes,
-    Set<String> sinkPluginTypes) {
-    super(namespace, configurer, runtimeConfigurer, sourcePluginTypes, sinkPluginTypes, Engine.SPARK);
+    Set<String> sinkPluginTypes, FeatureFlagsProvider featureFlagsProvider) {
+    super(namespace, configurer, runtimeConfigurer, sourcePluginTypes, sinkPluginTypes,
+          Engine.SPARK, featureFlagsProvider);
     this.runtimeConfigurer = runtimeConfigurer;
   }
 

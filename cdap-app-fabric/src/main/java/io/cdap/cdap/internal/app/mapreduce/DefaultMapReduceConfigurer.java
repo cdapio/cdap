@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.mapreduce;
 
 import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.mapreduce.MapReduce;
 import io.cdap.cdap.api.mapreduce.MapReduceConfigurer;
 import io.cdap.cdap.api.mapreduce.MapReduceSpecification;
@@ -53,8 +54,10 @@ public final class DefaultMapReduceConfigurer extends AbstractConfigurer impleme
   public DefaultMapReduceConfigurer(MapReduce mapReduce, Id.Namespace deployNamespace, Id.Artifact artifactId,
                                     PluginFinder pluginFinder,
                                     PluginInstantiator pluginInstantiator,
-                                    @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
-    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo);
+                                    @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+                                    FeatureFlagsProvider featureFlagsProvider
+                                    ) {
+    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo, featureFlagsProvider);
     this.mapReduce = mapReduce;
     this.name = mapReduce.getClass().getSimpleName();
     this.description = "";

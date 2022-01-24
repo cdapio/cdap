@@ -16,12 +16,14 @@
 
 package io.cdap.cdap.api;
 
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
+
 import java.util.Map;
 
 /**
  * Basic Program Configurer.
  */
-public interface ProgramConfigurer {
+public interface ProgramConfigurer extends FeatureFlagsProvider {
 
   /**
    * Sets the name of the program.

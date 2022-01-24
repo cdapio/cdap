@@ -118,4 +118,9 @@ public class PipelinePluginInstantiator implements PluginContext {
     }
     return null;
   }
+
+  @Override
+  public boolean isFeatureEnabled(String name) {
+    return pluginContext.isFeatureEnabled(name);
+  }
 }

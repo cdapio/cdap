@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.workflow;
 import com.google.common.base.Preconditions;
 import io.cdap.cdap.api.customaction.CustomAction;
 import io.cdap.cdap.api.customaction.CustomActionSpecification;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.schedule.SchedulableProgramType;
 import io.cdap.cdap.api.workflow.ScheduleProgramInfo;
 import io.cdap.cdap.api.workflow.WorkflowActionNode;
@@ -61,11 +62,13 @@ final class WorkflowNodeCreator {
   static WorkflowNode createWorkflowCustomActionNode(CustomAction action, Id.Namespace deployNamespace,
                                                      Id.Artifact artifactId, PluginFinder pluginFinder,
                                                      PluginInstantiator pluginInstantiator,
-                                                     @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
+                                                     @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+                                                     FeatureFlagsProvider featureFlagsProvider) {
     Preconditions.checkArgument(action != null, "CustomAction is null.");
     CustomActionSpecification spec = DefaultCustomActionConfigurer.configureAction(action, deployNamespace, artifactId,
                                                                                    pluginFinder,
-                                                                                   pluginInstantiator, runtimeInfo);
+                                                                                   pluginInstantiator, runtimeInfo,
+                                                                                   featureFlagsProvider);
     return new WorkflowActionNode(spec.getName(), spec);
   }
 }

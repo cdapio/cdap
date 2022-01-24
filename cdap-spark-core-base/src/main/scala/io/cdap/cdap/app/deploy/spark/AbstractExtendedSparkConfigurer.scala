@@ -19,6 +19,7 @@ package io.cdap.cdap.app.deploy.spark
 import java.{lang, util}
 
 import io.cdap.cdap.api.annotation.TransactionControl
+import io.cdap.cdap.api.feature.FeatureFlagsProvider
 import io.cdap.cdap.api.service.http.ServiceHttpEndpoint
 import io.cdap.cdap.api.spark.dynamic.SparkCompiler
 import io.cdap.cdap.api.spark.service.SparkHttpServiceHandler
@@ -46,9 +47,10 @@ abstract class AbstractExtendedSparkConfigurer(spark: Spark,
                                                artifactId: Id.Artifact,
                                                pluginFinder: PluginFinder,
                                                pluginInstantiator: PluginInstantiator,
-                                               runtimeInfo: AppDeploymentRuntimeInfo)
-  extends DefaultSparkConfigurer(spark, deployNamespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo)
-  with ExtendedSparkConfigurer {
+                                               runtimeInfo: AppDeploymentRuntimeInfo,
+                                               featureFlagsProvider: FeatureFlagsProvider)
+  extends DefaultSparkConfigurer(spark, deployNamespace, artifactId, pluginFinder, pluginInstantiator, 
+      runtimeInfo, featureFlagsProvider) with ExtendedSparkConfigurer {
 
   private val handlers = new mutable.ArrayBuffer[SparkHttpServiceHandler]()
 

@@ -149,5 +149,10 @@ public class MockPipelineConfigurer implements PipelineConfigurer, DatasetConfig
   public void createDataset(String s, Class<? extends Dataset> aClass) {
 
   }
+
+  @Override
+  public boolean isFeatureEnabled(String name) {
+    throw new UnsupportedOperationException();
+  }
 }
 

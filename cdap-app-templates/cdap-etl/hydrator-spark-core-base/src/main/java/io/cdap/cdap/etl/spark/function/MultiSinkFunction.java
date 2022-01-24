@@ -88,7 +88,7 @@ public class MultiSinkFunction implements PairFlatMapFunction<RecordInfo<Object>
     this.pipelineRuntime = new PipelineRuntime(
       sec.getNamespace(), sec.getApplicationSpecification().getName(), sec.getLogicalStartTime(),
       new BasicArguments(sec), sec.getMetrics(), sec.getPluginContext(), sec.getServiceDiscoverer(),
-      sec.getSecureStore(), null, null);
+      sec.getSecureStore(), null, null, sec.getPluginContext());
     // create a copy because BatchPhaseSpec contains things that are not serializable while PhaseSpec does not
     this.phaseSpec = new PhaseSpec(phaseSpec.getPhaseName(), phaseSpec.getPhase(), phaseSpec.getConnectorDatasets(),
                                    phaseSpec.isStageLoggingEnabled(), phaseSpec.isProcessTimingEnabled());

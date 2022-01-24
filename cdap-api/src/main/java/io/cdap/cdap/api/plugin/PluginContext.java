@@ -17,6 +17,7 @@
 package io.cdap.cdap.api.plugin;
 
 import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 
@@ -24,7 +25,7 @@ import io.cdap.cdap.api.macro.MacroEvaluator;
  * Provides access to plugin context when a program is executing.
  */
 @Beta
-public interface PluginContext {
+public interface PluginContext extends FeatureFlagsProvider {
 
   /**
    * Gets the {@link PluginProperties} associated with the given plugin id.

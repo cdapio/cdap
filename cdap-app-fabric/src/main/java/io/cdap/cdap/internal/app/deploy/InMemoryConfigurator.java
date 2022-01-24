@@ -30,6 +30,7 @@ import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.app.RuntimeConfigurer;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.app.DefaultAppConfigurer;
 import io.cdap.cdap.app.DefaultAppRuntimeConfigurer;
 import io.cdap.cdap.app.DefaultApplicationContext;
@@ -47,6 +48,7 @@ import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
+import io.cdap.cdap.internal.app.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
@@ -73,6 +75,7 @@ public final class InMemoryConfigurator implements Configurator {
   private final String applicationVersion;
   private final String configString;
   private final File baseUnpackDir;
+
   // this is the namespace that the app will be in, which may be different than the namespace of the artifact.
   // if the artifact is a system artifact, the namespace will be the system namespace.
   private final Id.Namespace appNamespace;
@@ -82,6 +85,7 @@ public final class InMemoryConfigurator implements Configurator {
   private final Id.Artifact artifactId;
   private final RemoteClientFactory remoteClientFactory;
   private final AppDeploymentRuntimeInfo runtimeInfo;
+  private final FeatureFlagsProvider featureFlagsProvider;
 
   // These fields are needed to create the classLoader in the config method
   private final ArtifactRepository artifactRepository;
@@ -108,6 +112,7 @@ public final class InMemoryConfigurator implements Configurator {
     this.artifactLocation = deploymentInfo.getArtifactLocation();
     this.remoteClientFactory = remoteClientFactory;
     this.runtimeInfo = deploymentInfo.getRuntimeInfo();
+    this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
   }
 
   /**
@@ -165,7 +170,8 @@ public final class InMemoryConfigurator implements Configurator {
           appNamespace.getId(), remoteClientFactory, runtimeInfo.getUserArguments(),
           runtimeInfo.getExistingAppSpec()) : null;
       configurer = new DefaultAppConfigurer(
-        appNamespace, artifactId, app, configString, pluginFinder, pluginInstantiator, runtimeConfigurer, runtimeInfo);
+        appNamespace, artifactId, app, configString, pluginFinder, pluginInstantiator, runtimeConfigurer, runtimeInfo,
+        featureFlagsProvider);
 
       T appConfig;
       Type configType = Artifacts.getConfigType(app.getClass());

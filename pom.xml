@@ -2828,6 +2828,7 @@
         <module>cdap-api-spark2_2.11</module>
         <module>cdap-api-spark3_2.12</module>
         <module>cdap-formats</module>
+        <module>cdap-features</module>
         <module>cdap-elastic</module>
         <module>cdap-hbase-compat-base</module>
         <module>cdap-hbase-compat-1.0-cdh5.5.0</module>

@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
@@ -42,19 +43,24 @@ import javax.annotation.Nullable;
 /**
  * Abstract base implementation for application and program configurer.
  */
-public abstract class AbstractConfigurer extends DefaultDatasetConfigurer implements PluginConfigurer {
+public abstract class AbstractConfigurer extends DefaultDatasetConfigurer
+  implements PluginConfigurer, FeatureFlagsProvider {
 
   private final DefaultPluginConfigurer pluginConfigurer;
   private final Map<String, Plugin> extraPlugins;
+  private final FeatureFlagsProvider featureFlagsProvider;
   // this is the namespace that the app will be deployed in, which can be different than the namespace of
   // the artifact. If the artifact is a system artifact, it will have the system namespace.
   protected final Id.Namespace deployNamespace;
 
   protected AbstractConfigurer(Id.Namespace deployNamespace, Id.Artifact artifactId,
                                PluginFinder pluginFinder, PluginInstantiator pluginInstantiator,
-                               @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
+                               @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+                               FeatureFlagsProvider featureFlagsProvider) {
     this.deployNamespace = deployNamespace;
     this.extraPlugins = new HashMap<>();
+    this.featureFlagsProvider = featureFlagsProvider;
+
     if (runtimeInfo != null && ClusterMode.ISOLATED.name().equals(
       runtimeInfo.getSystemArguments().get(ProgramOptionConstants.CLUSTER_MODE))) {
       this.pluginConfigurer = new RemotePluginConfigurer(
@@ -106,5 +112,14 @@ public abstract class AbstractConfigurer extends DefaultDatasetConfigurer implem
   public Map<String, String> evaluateMacros(Map<String, String> properties, MacroEvaluator evaluator,
                                             MacroParserOptions options) throws InvalidMacroException {
     return pluginConfigurer.evaluateMacros(properties, evaluator, options);
+  }
+
+  @Override
+  public boolean isFeatureEnabled(String name) {
+    return featureFlagsProvider.isFeatureEnabled(name);
+  }
+
+  protected final FeatureFlagsProvider getFeatureFlagsProvider() {
+    return featureFlagsProvider;
   }
 }

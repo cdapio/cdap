@@ -18,6 +18,7 @@ package io.cdap.cdap.etl.batch;
 
 import io.cdap.cdap.api.DatasetConfigurer;
 import io.cdap.cdap.api.app.RuntimeConfigurer;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.api.validation.ValidationException;
@@ -40,8 +41,8 @@ public class BatchPipelineSpecGenerator extends PipelineSpecGenerator<ETLBatchCo
   public <T extends PluginConfigurer & DatasetConfigurer> BatchPipelineSpecGenerator(
     String namespace,
     T configurer, @Nullable RuntimeConfigurer runtimeConfigurer, Set<String> sourcePluginTypes,
-    Set<String> sinkPluginTypes, Engine engine) {
-    super(namespace, configurer, runtimeConfigurer, sourcePluginTypes, sinkPluginTypes, engine);
+    Set<String> sinkPluginTypes, Engine engine, FeatureFlagsProvider featureFlagsProvider) {
+    super(namespace, configurer, runtimeConfigurer, sourcePluginTypes, sinkPluginTypes, engine, featureFlagsProvider);
   }
 
   @Override
@@ -52,7 +53,7 @@ public class BatchPipelineSpecGenerator extends PipelineSpecGenerator<ETLBatchCo
       String name = endingAction.getName();
       DefaultPipelineConfigurer pipelineConfigurer =
         new DefaultPipelineConfigurer(pluginConfigurer, datasetConfigurer, name, engine,
-                                      new DefaultStageConfigurer(name));
+                                      new DefaultStageConfigurer(name), getFeatureFlagsProvider());
       StageSpec spec = configureStage(endingAction.getName(), endingAction.getPlugin(), pipelineConfigurer).build();
       specBuilder.addAction(new ActionSpec(name, spec.getPlugin()));
     }
@@ -81,7 +82,7 @@ public class BatchPipelineSpecGenerator extends PipelineSpecGenerator<ETLBatchCo
       new ETLStage(stageName, config.getTransformationPushdown().getPlugin());
     DefaultPipelineConfigurer pipelineConfigurer =
       new DefaultPipelineConfigurer(pluginConfigurer, datasetConfigurer, stageName, engine,
-                                    new DefaultStageConfigurer(stageName));
+                                    new DefaultStageConfigurer(stageName), getFeatureFlagsProvider());
 
     ConfiguredStage configuredStage = configureStage(sqlEngineStage, validateConfig(config), pipelineConfigurer);
     return configuredStage.getStageSpec();
