@@ -56,6 +56,7 @@ import io.cdap.cdap.etl.mock.batch.MockRuntimeDatasetSource;
 import io.cdap.cdap.etl.mock.batch.MockSQLEngine;
 import io.cdap.cdap.etl.mock.batch.MockSQLEngineWithCapabilities;
 import io.cdap.cdap.etl.mock.batch.MockSink;
+import io.cdap.cdap.etl.mock.batch.MockSinkWithWriteCapability;
 import io.cdap.cdap.etl.mock.batch.MockSource;
 import io.cdap.cdap.etl.mock.batch.NodeStatesAction;
 import io.cdap.cdap.etl.mock.batch.NullErrorTransform;
@@ -82,6 +83,7 @@ import io.cdap.cdap.etl.mock.transform.FlattenErrorTransform;
 import io.cdap.cdap.etl.mock.transform.IdentityTransform;
 import io.cdap.cdap.etl.mock.transform.IntValueFilterTransform;
 import io.cdap.cdap.etl.mock.transform.NullFieldSplitterTransform;
+import io.cdap.cdap.etl.mock.transform.PluginValidationTransform;
 import io.cdap.cdap.etl.mock.transform.SleepTransform;
 import io.cdap.cdap.etl.mock.transform.StringValueFilterTransform;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -114,11 +116,13 @@ public class HydratorTestBase extends TestBase {
     MockAction.PLUGIN_CLASS, FileMoveAction.PLUGIN_CLASS, FieldLineageAction.PLUGIN_CLASS,
     StringValueFilterCompute.PLUGIN_CLASS, FlattenErrorTransform.PLUGIN_CLASS, FilterErrorTransform.PLUGIN_CLASS,
     NullFieldSplitterTransform.PLUGIN_CLASS, TMSAlertPublisher.PLUGIN_CLASS, NullAlertTransform.PLUGIN_CLASS,
-    MockCondition.PLUGIN_CLASS, MockSource.PLUGIN_CLASS, MockSink.PLUGIN_CLASS,
+    MockCondition.PLUGIN_CLASS, MockSource.PLUGIN_CLASS,
+    MockSink.PLUGIN_CLASS, MockSinkWithWriteCapability.PLUGIN_CLASS,
     DistinctReducibleAggregator.PLUGIN_CLASS, FieldCountReducibleAggregator.PLUGIN_CLASS,
     FileConnector.PLUGIN_CLASS, IncapableSource.PLUGIN_CLASS, IncapableSink.PLUGIN_CLASS,
     LookupTransform.PLUGIN_CLASS, SleepTransform.PLUGIN_CLASS, NodeStatesAction.PLUGIN_CLASS,
-    DistinctAggregator.PLUGIN_CLASS, NullErrorTransform.PLUGIN_CLASS, ExceptionTransform.PLUGIN_CLASS
+    DistinctAggregator.PLUGIN_CLASS, NullErrorTransform.PLUGIN_CLASS, ExceptionTransform.PLUGIN_CLASS,
+    PluginValidationTransform.PLUGIN_CLASS
   );
   private static final Set<PluginClass> STREAMING_MOCK_PLUGINS = ImmutableSet.of(
     io.cdap.cdap.etl.mock.spark.streaming.MockSource.PLUGIN_CLASS,

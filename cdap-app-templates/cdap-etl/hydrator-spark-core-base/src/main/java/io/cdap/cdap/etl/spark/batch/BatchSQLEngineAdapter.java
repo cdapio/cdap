@@ -25,6 +25,7 @@ import io.cdap.cdap.api.spark.sql.DataFrames;
 import io.cdap.cdap.etl.api.StageMetrics;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngine;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngineException;
+import io.cdap.cdap.etl.api.engine.sql.SQLEngineOutput;
 import io.cdap.cdap.etl.api.engine.sql.capability.PullCapability;
 import io.cdap.cdap.etl.api.engine.sql.capability.PushCapability;
 import io.cdap.cdap.etl.api.engine.sql.dataset.RecordCollection;
@@ -40,6 +41,8 @@ import io.cdap.cdap.etl.api.engine.sql.request.SQLPushRequest;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLRelationDefinition;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLTransformDefinition;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLTransformRequest;
+import io.cdap.cdap.etl.api.engine.sql.request.SQLWriteRequest;
+import io.cdap.cdap.etl.api.engine.sql.request.SQLWriteResult;
 import io.cdap.cdap.etl.api.join.JoinDefinition;
 import io.cdap.cdap.etl.api.join.JoinStage;
 import io.cdap.cdap.etl.api.relational.Engine;
@@ -53,6 +56,7 @@ import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import io.cdap.cdap.etl.engine.SQLEngineJob;
 import io.cdap.cdap.etl.engine.SQLEngineJobKey;
 import io.cdap.cdap.etl.engine.SQLEngineJobType;
+import io.cdap.cdap.etl.engine.SQLEngineWriteJobKey;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.SparkCollection;
 import io.cdap.cdap.etl.spark.function.TransformFromPairFunction;
@@ -359,7 +363,7 @@ public class BatchSQLEngineAdapter implements Closeable {
   @SuppressWarnings("unchecked,raw")
   public SQLEngineJob<SQLDataset> join(String datasetName,
                                        JoinDefinition joinDefinition) {
-    return runJob(datasetName, () -> {
+    return runJob(datasetName, SQLEngineJobType.EXECUTE, () -> {
         Collection<SQLDataset> inputDatasets = getJoinInputDatasets(joinDefinition);
         SQLJoinRequest joinRequest = new SQLJoinRequest(datasetName, joinDefinition, inputDatasets);
 
@@ -372,15 +376,29 @@ public class BatchSQLEngineAdapter implements Closeable {
   }
 
   /**
-   * Kicks off a {@link SQLEngineJobType.EXECUTE} job trat will produce a dataset
+   * Kicks off a job using the SQL engine. This job instance can be used to wait for the completion of this operation.
+   * @param <T> type of result
    * @param datasetName dataset name
    * @param jobFunction actual runnable that will do the work
-   * @param <T> type of result
    * @return job that produces jobFunction result when finished
    */
-  private <T> SQLEngineJob<T> runJob(String datasetName, Supplier<T> jobFunction) {
+  private <T> SQLEngineJob<T> runJob(String datasetName,
+                                     SQLEngineJobType type,
+                                     Supplier<T> jobFunction) {
+    SQLEngineJobKey jobKey = new SQLEngineJobKey(datasetName, type);
+    return runJob(jobKey, jobFunction);
+  }
+
+  /**
+   * Kicks off a job using the SQL engine. This job instance can be used to wait for the completion of this operation.
+   * @param <T> type of result
+   * @param jobKey the job key that is used to reference this job.
+   * @param jobFunction actual runnable that will do the work
+   * @return job that produces jobFunction result when finished
+   */
+  private <T> SQLEngineJob<T> runJob(SQLEngineJobKey jobKey,
+                                     Supplier<T> jobFunction) {
     //If this job already exists, return the existing instance.
-    SQLEngineJobKey jobKey = new SQLEngineJobKey(datasetName, SQLEngineJobType.EXECUTE);
     if (jobs.containsKey(jobKey)) {
       return (SQLEngineJob<T>) jobs.get(jobKey);
     }
@@ -389,9 +407,9 @@ public class BatchSQLEngineAdapter implements Closeable {
 
     Runnable joinTask = () -> {
       try {
-        LOG.debug("Starting job for dataset '{}'", datasetName);
+        LOG.debug("Starting job for dataset '{}'", jobKey.getDatasetName());
         future.complete(jobFunction.get());
-        LOG.debug("Completed job for dataset '{}'", datasetName);
+        LOG.debug("Completed job for dataset '{}'", jobKey.getDatasetName());
       } catch (Throwable t) {
         future.completeExceptionally(t);
       }
@@ -422,6 +440,11 @@ public class BatchSQLEngineAdapter implements Closeable {
     return datasets;
   }
 
+  /**
+   * Function used to fetch the dataset for an input stage.
+   * @param stageName
+   * @return
+   */
   private SQLDataset getDatasetForStage(String stageName) {
     // Wait for the previous push or execute jobs to complete
     SQLEngineJobKey pushJobKey = new SQLEngineJobKey(stageName, SQLEngineJobType.PUSH);
@@ -581,11 +604,24 @@ public class BatchSQLEngineAdapter implements Closeable {
   private void countRecordsIn(SQLDataset dataset,
                               @Nullable StageStatisticsCollector stageStatisticsCollector,
                               StageMetrics stageMetrics) {
+    countRecordsIn(dataset.getNumRows(), stageStatisticsCollector, stageMetrics);
+  }
+
+  /**
+   * Method to aggregate input metrics.
+   *
+   * @param numRows                  the number of input rows
+   * @param stageStatisticsCollector Stage Statistics Collector for this stage
+   * @param stageMetrics             Metrics for this stage
+   */
+  private void countRecordsIn(long numRows,
+                              @Nullable StageStatisticsCollector stageStatisticsCollector,
+                              StageMetrics stageMetrics) {
     // Count input metrics
     if (stageStatisticsCollector != null) {
-      stageStatisticsCollector.incrementInputRecordCount(dataset.getNumRows());
+      stageStatisticsCollector.incrementInputRecordCount(numRows);
     }
-    countStageMetrics(stageMetrics, Constants.Metrics.RECORDS_IN, dataset.getNumRows());
+    countStageMetrics(stageMetrics, Constants.Metrics.RECORDS_IN, numRows);
   }
 
   /**
@@ -598,11 +634,24 @@ public class BatchSQLEngineAdapter implements Closeable {
   private void countRecordsOut(SQLDataset dataset,
                                @Nullable StageStatisticsCollector stageStatisticsCollector,
                                StageMetrics stageMetrics) {
+    countRecordsOut(dataset.getNumRows(), stageStatisticsCollector, stageMetrics);
+  }
+
+  /**
+   * Method to aggregate output metrics.
+   *
+   * @param numRows                  the number of output rows
+   * @param stageStatisticsCollector Stage Statistics Collector for this stage
+   * @param stageMetrics             Metrics for this stage
+   */
+  private void countRecordsOut(long numRows,
+                               @Nullable StageStatisticsCollector stageStatisticsCollector,
+                               StageMetrics stageMetrics) {
     // Count input metrics
     if (stageStatisticsCollector != null) {
-      stageStatisticsCollector.incrementOutputRecordCount(dataset.getNumRows());
+      stageStatisticsCollector.incrementOutputRecordCount(numRows);
     }
-    countStageMetrics(stageMetrics, Constants.Metrics.RECORDS_OUT, dataset.getNumRows());
+    countStageMetrics(stageMetrics, Constants.Metrics.RECORDS_OUT, numRows);
   }
 
   /**
@@ -661,7 +710,7 @@ public class BatchSQLEngineAdapter implements Closeable {
       return Optional.empty();
     }
 
-    return Optional.of(runJob(stageSpec.getName(), () -> {
+    return Optional.of(runJob(stageSpec.getName(), SQLEngineJobType.EXECUTE, () -> {
       Map<String, SQLDataset> inputDatasets = input.keySet().stream().collect(Collectors.toMap(
         Function.identity(),
         name -> getDatasetForStage(name)
@@ -670,5 +719,37 @@ public class BatchSQLEngineAdapter implements Closeable {
         inputDatasets, stageSpec.getName(), pluginContext.getOutputRelation(), stageSpec.getOutputSchema());
       return sqlEngine.transform(sqlContext);
     }));
+  }
+
+  /**
+   * Try to write the output directly to the SQLEngineOutput registered by this engine.
+   * @param datasetName dataset to write
+   * @param sqlEngineOutput output instance created by this engine
+   * @return {@link SQLEngineJob<Boolean>} representing if the write operation succeded.
+   */
+  public SQLEngineJob<Boolean> write(String datasetName, SQLEngineOutput sqlEngineOutput) {
+    String outputDatasetName = sqlEngineOutput.getName();
+    SQLEngineWriteJobKey writeJobKey = new SQLEngineWriteJobKey(datasetName, outputDatasetName, SQLEngineJobType.WRITE);
+    // Run write job
+    return runJob(writeJobKey, () -> {
+      getDatasetForStage(datasetName);
+      LOG.debug("Attempting write for dataset {} into {}", datasetName, sqlEngineOutput);
+      SQLWriteResult writeResult = sqlEngine.write(new SQLWriteRequest(datasetName, sqlEngineOutput));
+      LOG.debug("Write dataset {} into {} was {}",
+                datasetName,
+                sqlEngineOutput,
+                writeResult.isSuccessful() ? "completed" : "refused");
+
+      // If the result was successful, add stage metrics.
+      if (writeResult.isSuccessful()) {
+        DefaultStageMetrics stageMetrics = new DefaultStageMetrics(metrics, outputDatasetName);
+        StageStatisticsCollector statisticsCollector = statsCollectors.get(outputDatasetName);
+
+        countRecordsIn(writeResult.getNumRecords(), statisticsCollector, stageMetrics);
+        countRecordsOut(writeResult.getNumRecords(), statisticsCollector, stageMetrics);
+      }
+
+      return writeResult.isSuccessful();
+    });
   }
 }

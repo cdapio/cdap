@@ -38,7 +38,8 @@ public class DataStreamsApp extends AbstractApplication<DataStreamsConfig> {
 
     DataStreamsPipelineSpec spec;
     try {
-      spec = new DataStreamsPipelineSpecGenerator(getConfigurer(),
+      spec = new DataStreamsPipelineSpecGenerator(getConfigurer().getDeployedNamespace(), getConfigurer(),
+                                                  getConfigurer().getRuntimeConfigurer(),
                                                   ImmutableSet.of(StreamingSource.PLUGIN_TYPE),
                                                   ImmutableSet.of(BatchSink.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE,
                                                                   AlertPublisher.PLUGIN_TYPE)).generateSpec(config);

@@ -17,6 +17,7 @@
 package io.cdap.cdap.datapipeline;
 
 import com.google.gson.Gson;
+import io.cdap.cdap.api.app.RuntimeConfigurer;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.spark.AbstractSpark;
@@ -34,6 +35,7 @@ import org.apache.spark.SparkConf;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 /**
  * A Spark program that instantiates a sparkprogram plugin and executes it. The plugin is a self contained
@@ -46,11 +48,16 @@ public class ExternalSparkProgram extends AbstractSpark {
   static final String PROGRAM_ARGS = "program.args";
   private final BatchPhaseSpec phaseSpec;
   private final StageSpec stageSpec;
+  private final RuntimeConfigurer runtimeConfigurer;
+  private final String deployedNamespace;
   private Spark delegateSpark;
 
-  public ExternalSparkProgram(BatchPhaseSpec phaseSpec, StageSpec stageSpec) {
+  public ExternalSparkProgram(BatchPhaseSpec phaseSpec, StageSpec stageSpec,
+                              @Nullable RuntimeConfigurer runtimeConfigurer, String deployedNamespace) {
     this.phaseSpec = phaseSpec;
     this.stageSpec = stageSpec;
+    this.runtimeConfigurer = runtimeConfigurer;
+    this.deployedNamespace = deployedNamespace;
   }
 
   @Override
@@ -61,7 +68,7 @@ public class ExternalSparkProgram extends AbstractSpark {
 
     // register the plugins at program level so that the program can be failed by the platform early in case of
     // plugin requirements not being meet
-    phaseSpec.getPhase().registerPlugins(getConfigurer());
+    phaseSpec.getPhase().registerPlugins(getConfigurer(), runtimeConfigurer, deployedNamespace);
     PluginSpec pluginSpec = stageSpec.getPlugin();
     PluginProperties pluginProperties = PluginProperties.builder().addAll(pluginSpec.getProperties()).build();
     // use a UUID as plugin ID so that it doesn't clash with anything. Only using the class here to

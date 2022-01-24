@@ -40,6 +40,8 @@ import io.cdap.cdap.proto.artifact.preview.PreviewConfig;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.security.Credential;
+import io.cdap.cdap.proto.security.Principal;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
 import org.junit.Before;
@@ -122,8 +124,7 @@ public class DefaultPreviewRequestQueueTest {
     }
 
     @Override
-    public void add(ApplicationId applicationId, AppRequest appRequest) {
-
+    public void add(ApplicationId applicationId, AppRequest appRequest, @Nullable Principal principal) {
     }
 
     @Override
@@ -158,7 +159,7 @@ public class DefaultPreviewRequestQueueTest {
     Assert.assertFalse(requestOptional.isPresent());
 
     ApplicationId app1 = new ApplicationId("default", RunIds.generate().getId());
-    PreviewRequest request = new PreviewRequest(app1, testRequest);
+    PreviewRequest request = new PreviewRequest(app1, testRequest, null);
     previewRequestQueue.add(request);
 
     requestOptional = previewRequestQueue.poll(pollerInfo);
@@ -167,21 +168,31 @@ public class DefaultPreviewRequestQueueTest {
     ProgramId programId1 = new ProgramId(app1, ProgramType.WORKFLOW, "WordCount");
     Assert.assertEquals(programId1, request.getProgram());
 
+    Principal principal = new Principal("userFoo", Principal.PrincipalType.USER,
+                                        new Credential("userFooCredential", Credential.CredentialType.EXTERNAL));
+    PreviewRequest requestWithPrinciple = new PreviewRequest(app1, testRequest, principal);
+    previewRequestQueue.add(requestWithPrinciple);
+
+    requestOptional = previewRequestQueue.poll(pollerInfo);
+    Assert.assertTrue(requestOptional.isPresent());
+    request = requestOptional.get();
+    Assert.assertTrue(request.getPrincipal().equals(principal));
+
     requestOptional = previewRequestQueue.poll(pollerInfo);
     Assert.assertFalse(requestOptional.isPresent());
 
     ApplicationId app2 = new ApplicationId("default", RunIds.generate().getId());
-    request = new PreviewRequest(app2, testRequest);
+    request = new PreviewRequest(app2, testRequest, null);
     previewRequestQueue.add(request);
     Assert.assertEquals(0, previewRequestQueue.positionOf(app2));
 
     ApplicationId app3 = new ApplicationId("default", RunIds.generate().getId());
-    request = new PreviewRequest(app3, testRequest);
+    request = new PreviewRequest(app3, testRequest, null);
     previewRequestQueue.add(request);
     Assert.assertEquals(1, previewRequestQueue.positionOf(app3));
 
     ApplicationId app4 = new ApplicationId("default", RunIds.generate().getId());
-    request = new PreviewRequest(app4, testRequest);
+    request = new PreviewRequest(app4, testRequest, null);
     boolean exceptionThrown = false;
     try {
       previewRequestQueue.add(request);

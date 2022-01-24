@@ -213,6 +213,7 @@ public final class Constants {
     public static final String REST_PORT = "app.rest.port";
     public static final String PROGRAM_JVM_OPTS = "app.program.jvm.opts";
     public static final String BACKLOG_CONNECTIONS = "app.connection.backlog";
+    public static final String STREAMING_BATCH_SIZE = "app.streaming.batch.size";
     public static final String EXEC_THREADS = "app.exec.threads";
     public static final String BOSS_THREADS = "app.boss.threads";
     public static final String WORKER_THREADS = "app.worker.threads";
@@ -851,6 +852,7 @@ public final class Constants {
       public static final String PROVISIONER = "prv";
       public static final String SPARK = "sp";
       public static final String STATUS = "st";
+      public static final String CLUSTER_STATUS = "clst";
 
       // who emitted: user vs system (scope is historical name)
       public static final String SCOPE = "scp";
@@ -870,6 +872,7 @@ public final class Constants {
       public static final String PROGRAM = "prg";
       public static final String PROGRAM_TYPE = "prt";
       public static final String PROGRAM_ENTITY = "ent";
+      public static final String EXISTING_STATUS = "exst";
 
       //For task worker
       public static final String CLASS = "clz";

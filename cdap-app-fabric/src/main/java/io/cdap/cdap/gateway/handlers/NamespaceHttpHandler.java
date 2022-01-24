@@ -104,7 +104,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
 
     NamespaceMeta metadata = getNamespaceMeta(request);
 
-    if (isReserved(namespaceId)) {
+    if (NamespaceId.isReserved(namespaceId)) {
       throw new BadRequestException(String.format("Cannot create the namespace '%s'. '%s' is a reserved namespace.",
                                                   namespaceId, namespaceId));
     }
@@ -155,12 +155,6 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     NamespaceId namespaceId = new NamespaceId(namespace);
     namespaceAdmin.deleteDatasets(namespaceId);
     responder.sendStatus(HttpResponseStatus.OK);
-  }
-
-  private boolean isReserved(String namespaceId) {
-    return NamespaceId.DEFAULT.getNamespace().equals(namespaceId)
-      || NamespaceId.SYSTEM.getNamespace().equals(namespaceId)
-      || NamespaceId.CDAP.getNamespace().equals(namespaceId);
   }
 
   private NamespaceMeta getNamespaceMeta(FullHttpRequest request) throws BadRequestException {

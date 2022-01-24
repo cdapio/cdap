@@ -189,7 +189,8 @@ public class AbstractProgramRuntimeServiceTest {
 
     final Program program = createDummyProgram();
     final ProgramRuntimeService runtimeService =
-      new AbstractProgramRuntimeService(CConfiguration.create(), runnerFactory, null, new NoOpProgramStateWriter()) {
+      new AbstractProgramRuntimeService(CConfiguration.create(), runnerFactory, null,
+                                        new NoOpProgramStateWriter(), null) {
       @Override
       public ProgramLiveInfo getLiveInfo(ProgramId programId) {
         return new ProgramLiveInfo(programId, "runtime") { };
@@ -409,7 +410,7 @@ public class AbstractProgramRuntimeServiceTest {
                                         @Nullable Program program,
                                         @Nullable ArtifactRepository artifactRepository,
                                         @Nullable RuntimeInfo extraInfo) {
-      super(cConf, programRunnerFactory, artifactRepository, new NoOpProgramStateWriter());
+      super(cConf, programRunnerFactory, artifactRepository, new NoOpProgramStateWriter(), null);
       this.program = program;
       this.extraInfo = extraInfo;
     }

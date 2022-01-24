@@ -120,7 +120,7 @@ public class SystemProgramManagementService extends AbstractRetryableScheduledSe
       Map<String, String> overrides = enabledProgramsMap.get(programId).asMap();
       LOG.debug("Starting program {} with args {}", programId, overrides);
       try {
-        programLifecycleService.start(programId, overrides, false);
+        programLifecycleService.start(programId, overrides, false, false);
       } catch (ConflictException ex) {
         // Ignore if the program is already running.
         LOG.debug("Program {} is already running.", programId);

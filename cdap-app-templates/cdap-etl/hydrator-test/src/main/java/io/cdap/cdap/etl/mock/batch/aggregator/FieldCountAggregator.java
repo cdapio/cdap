@@ -97,10 +97,9 @@ public class FieldCountAggregator extends BatchAggregator<Object, StructuredReco
   @Override
   public void initialize(BatchRuntimeContext context) throws Exception {
     schema = config.getSchema();
-    // should never happen, just done to test App correctness in unit tests
-    if (context.getOutputSchema() != null && !schema.equals(context.getOutputSchema())) {
-      throw new IllegalStateException("Output schema does not match what was set at configure time.");
-    }
+    // here we cannot compare the schema with context.getOutputSchema(). Because in spark streaming,
+    // context.getOutputSchema() is dependent on the stageSpec, which can be outdated due to checkpointing,
+    // the schema in the config should always be up-to-date since it has all the runtime arguments resolved.
   }
 
   /**
