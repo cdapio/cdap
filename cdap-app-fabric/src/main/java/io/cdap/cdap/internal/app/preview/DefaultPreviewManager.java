@@ -47,6 +47,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.guice.preview.PreviewDiscoveryRuntimeModule;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
@@ -92,6 +93,7 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.security.ApplicationPermission;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
 import io.cdap.cdap.security.impersonation.DefaultUGIProvider;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
@@ -291,6 +293,10 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   @VisibleForTesting
   Injector createPreviewInjector() {
     return Guice.createInjector(
+      // Used for internal authorization to generate and validate tokens in system services originated requests.
+      CoreSecurityRuntimeModule.getDistributedModule(previewCConf),
+      // Needed for FileBasedKeyManager when file based core security module is used by CoreSecurityRuntimeModule
+      new IOModule(),
       new ConfigModule(previewCConf, previewHConf, previewSConf),
       new PreviewDataModules().getDataFabricModule(transactionSystemClient, previewLevelDBTableService),
       new PreviewDataModules().getDataSetsModule(datasetFramework),
