@@ -186,8 +186,6 @@ public final class ComputeEngineCredentials extends GoogleCredentials {
         break;
       }
     }
-
-    LOG.error("Failed to fetch GoogleCredentials after {} retries", counter, exception);
     throw new IOException(exception.getMessage(), exception);
   }
 }
