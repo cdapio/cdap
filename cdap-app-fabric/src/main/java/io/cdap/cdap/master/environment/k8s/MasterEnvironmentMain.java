@@ -59,7 +59,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class MasterEnvironmentMain {
 
   private static final Logger LOG = LoggerFactory.getLogger(MasterEnvironmentMain.class);
-  private static TokenManager tokenManager;
 
   public static void main(String[] args) throws Exception {
     MainClassLoader classLoader = MainClassLoader.createFromContext();
@@ -165,10 +164,9 @@ public class MasterEnvironmentMain {
         new ConfigModule(cConf),
         CoreSecurityRuntimeModule.getDistributedModule(cConf),
         new AuthenticationContextModules().getMasterModule());
-      if (cConf.getBoolean(Constants.Security.INTERNAL_AUTH_ENABLED)) {
-        tokenManager = injector.getInstance(TokenManager.class);
-        tokenManager.startUp();
-      }
+      // SystemAuthenticationContext depends on TokenManager service to be available
+      // for generate tokens, thus starting the service here.
+      injector.getInstance(TokenManager.class).startUp();
     } else {
       // cdap-secret is NOT mounted, use worker authentication context
       injector = Guice.createInjector(
