@@ -91,7 +91,7 @@ public final class ComputeEngineCredentials extends GoogleCredentials {
     return cachedComputeEngineCredentials.get(key);
   }
 
-  private AccessToken refreshAccessTokenLocally() throws IOException {
+  private AccessToken getAccessTokenLocally() throws IOException {
     try {
       GoogleCredentials googleCredentials = com.google.auth.oauth2.ComputeEngineCredentials.create();
       return googleCredentials.refreshAccessToken();
@@ -99,34 +99,6 @@ public final class ComputeEngineCredentials extends GoogleCredentials {
       throw new IOException("Unable to get credentials from the environment. "
                               + "Please explicitly set the account key.", e);
     }
-  }
-
-  private AccessToken refreshAccessTokenRemotely(String endPoint) throws IOException {
-    ExponentialBackOff backOff = new ExponentialBackOff.Builder()
-      .setInitialIntervalMillis(MIN_WAIT_TIME_MILLISECOND)
-      .setMaxIntervalMillis(MAX_WAIT_TIME_MILLISECOND).build();
-
-    Exception exception = null;
-    int counter = 0;
-    while (counter < NUMBER_OF_RETRIES) {
-      counter++;
-      try {
-        return fetchAccessToken(endPoint);
-      } catch (Exception ex) {
-        // exception does not get logged since it might get too chatty.
-        exception = ex;
-      }
-
-      try {
-        Thread.sleep(backOff.nextBackOffMillis());
-      } catch (InterruptedException ex) {
-        exception = ex;
-        break;
-      }
-    }
-
-    LOG.error("Failed to fetch GoogleCredentials after {} retries", counter, exception);
-    throw new IOException(exception.getMessage(), exception);
   }
 
   private void disableVerifySSL(HttpsURLConnection connection) throws IOException {
@@ -156,7 +128,7 @@ public final class ComputeEngineCredentials extends GoogleCredentials {
     }
   }
 
-  private AccessToken fetchAccessToken(String endPoint) throws IOException {
+  private AccessToken getAccessTokenRemotely(String endPoint) throws IOException {
     URL url = new URL(endPoint);
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
     if (connection instanceof HttpsURLConnection) {
@@ -187,9 +159,35 @@ public final class ComputeEngineCredentials extends GoogleCredentials {
 
   @Override
   public AccessToken refreshAccessToken() throws IOException {
-    if (endPoint != null) {
-      return refreshAccessTokenRemotely(endPoint);
+    ExponentialBackOff backOff = new ExponentialBackOff.Builder()
+      .setInitialIntervalMillis(MIN_WAIT_TIME_MILLISECOND)
+      .setMaxIntervalMillis(MAX_WAIT_TIME_MILLISECOND).build();
+
+    Exception exception = null;
+    int counter = 0;
+    while (counter < NUMBER_OF_RETRIES) {
+      counter++;
+
+      try {
+        if (endPoint != null) {
+          return getAccessTokenRemotely(endPoint);
+        }
+        return getAccessTokenLocally();
+
+      } catch (Exception ex) {
+        // exception does not get logged since it might get too chatty.
+        exception = ex;
+      }
+
+      try {
+        Thread.sleep(backOff.nextBackOffMillis());
+      } catch (InterruptedException ex) {
+        exception = ex;
+        break;
+      }
     }
-    return refreshAccessTokenLocally();
+
+    LOG.error("Failed to fetch GoogleCredentials after {} retries", counter, exception);
+    throw new IOException(exception.getMessage(), exception);
   }
 }
