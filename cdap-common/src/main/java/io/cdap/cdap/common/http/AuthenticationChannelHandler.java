@@ -62,6 +62,15 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
     resetCurrentUserInfo();
 
     if (msg instanceof HttpRequest) {
+      if (internalAuthEnabled) {
+        // When internal auth is enabled, all requests should typically have user id and credential
+        // associated with them, for instance, end user credential for user originated ones and
+        // internal system credential for system originated requests. If there is none, set
+        // default empty user id and credential.
+        currentUserID = EMPTY_USER_ID;
+        currentUserCredential = EMPTY_USER_CREDENTIAL;
+        currentUserIP = EMPTY_USER_IP;
+      }
       // TODO: authenticate the user using user id - CDAP-688
       HttpRequest request = (HttpRequest) msg;
       String userID = request.headers().get(Constants.Security.Headers.USER_ID);
@@ -100,9 +109,9 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
       SecurityRequestContext.setUserCredential(currentUserCredential);
       SecurityRequestContext.setUserIP(currentUserIP);
     } else if (msg instanceof HttpContent) {
-      SecurityRequestContext.setUserId(currentUserID);
-      SecurityRequestContext.setUserCredential(currentUserCredential);
-      SecurityRequestContext.setUserIP(currentUserIP);
+      // Leave SecurityRequestContext unset (e.g. values are nulls) as no auth headers
+      // are set for chunk requests. Cannot set a default/placeholder value until CDAP-18773
+      // is fixed since we may perform auth checks in the thread processing the last chunk.
     }
 
     try {
@@ -123,14 +132,8 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
   }
 
   private void resetCurrentUserInfo() {
-    if (internalAuthEnabled) {
-      currentUserID = EMPTY_USER_ID;
-      currentUserCredential = EMPTY_USER_CREDENTIAL;
-      currentUserIP = EMPTY_USER_IP;
-    } else {
-      currentUserID = null;
-      currentUserCredential = null;
-      currentUserIP = null;
-    }
+    currentUserID = null;
+    currentUserCredential = null;
+    currentUserIP = null;
   }
 }
