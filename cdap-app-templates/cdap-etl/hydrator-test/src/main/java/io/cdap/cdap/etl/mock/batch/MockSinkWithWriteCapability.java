@@ -47,6 +47,7 @@ public class MockSinkWithWriteCapability extends AbstractMockSink {
   public void prepareRun(BatchSinkContext context) throws Exception {
     super.prepareRun(context);
     context.addOutput(new SQLEngineOutput(NAME,
+                                          NAME,
                                           MockSQLEngineWithCapabilities.class.getName(),
                                           Collections.emptyMap()));
   }

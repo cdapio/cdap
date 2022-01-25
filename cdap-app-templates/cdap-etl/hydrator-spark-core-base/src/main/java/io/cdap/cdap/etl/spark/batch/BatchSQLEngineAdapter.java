@@ -728,8 +728,8 @@ public class BatchSQLEngineAdapter implements Closeable {
    * @return {@link SQLEngineJob<Boolean>} representing if the write operation succeded.
    */
   public SQLEngineJob<Boolean> write(String datasetName, SQLEngineOutput sqlEngineOutput) {
-    String outputDatasetName = sqlEngineOutput.getName();
-    SQLEngineWriteJobKey writeJobKey = new SQLEngineWriteJobKey(datasetName, outputDatasetName, SQLEngineJobType.WRITE);
+    String outputStageName = sqlEngineOutput.getStageName();
+    SQLEngineWriteJobKey writeJobKey = new SQLEngineWriteJobKey(datasetName, outputStageName, SQLEngineJobType.WRITE);
     // Run write job
     return runJob(writeJobKey, () -> {
       getDatasetForStage(datasetName);
@@ -742,8 +742,8 @@ public class BatchSQLEngineAdapter implements Closeable {
 
       // If the result was successful, add stage metrics.
       if (writeResult.isSuccessful()) {
-        DefaultStageMetrics stageMetrics = new DefaultStageMetrics(metrics, outputDatasetName);
-        StageStatisticsCollector statisticsCollector = statsCollectors.get(outputDatasetName);
+        DefaultStageMetrics stageMetrics = new DefaultStageMetrics(metrics, outputStageName);
+        StageStatisticsCollector statisticsCollector = statsCollectors.get(outputStageName);
 
         countRecordsIn(writeResult.getNumRecords(), statisticsCollector, stageMetrics);
         countRecordsOut(writeResult.getNumRecords(), statisticsCollector, stageMetrics);
