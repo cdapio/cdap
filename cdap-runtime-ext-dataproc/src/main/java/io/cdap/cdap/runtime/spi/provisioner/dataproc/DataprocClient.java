@@ -356,18 +356,17 @@ class DataprocClient implements AutoCloseable {
   private static Compute getCompute(DataprocConf conf) throws GeneralSecurityException, IOException {
     HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
     return new Compute.Builder(httpTransport, JacksonFactory.getDefaultInstance(),
-        getHttpRequestInitializerWithTimeouts(conf))
+        getHttpRequestInitializerWithTimeouts(new HttpCredentialsAdapter(conf.getComputeCredential()), conf))
       .setApplicationName("cdap")
       .build();
   }
 
-  private static HttpRequestInitializer getHttpRequestInitializerWithTimeouts(DataprocConf conf) throws IOException {
-    return new HttpCredentialsAdapter(conf.getComputeCredential()) {
-      @Override
-      public void initialize(HttpRequest httpRequest) {
-        httpRequest.setConnectTimeout(conf.getComputeConnectionTimeout());
-        httpRequest.setReadTimeout(conf.getComputeReadTimeout());
-      }
+  private static HttpRequestInitializer getHttpRequestInitializerWithTimeouts(
+      HttpRequestInitializer requestInitializer, DataprocConf conf) {
+    return httpRequest -> {
+      requestInitializer.initialize(httpRequest);
+      httpRequest.setConnectTimeout(conf.getComputeConnectionTimeout());
+      httpRequest.setReadTimeout(conf.getComputeReadTimeout());
     };
   }
 
