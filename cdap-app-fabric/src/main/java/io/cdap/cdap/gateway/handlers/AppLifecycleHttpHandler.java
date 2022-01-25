@@ -634,7 +634,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         } catch (InvalidArtifactException e) {
           responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         } catch (IOException e) {
-          LOG.error("Error reading request body for creating app {}.", appId);
+          e.printStackTrace();
+          LOG.error("Error reading request body for creating app {}. {}", appId, e);
           responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, String.format(
             "Error while reading json request body for app %s.", appId));
         } catch (Exception e) {

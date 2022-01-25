@@ -402,6 +402,11 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    */
   @Override
   public NamespaceMeta get(NamespaceId namespaceId) throws Exception {
+//    for (StackTraceElement ste : Thread.currentThread().getStackTrace()) {
+//      System.out.println(ste);
+//    }
+
+    
     Principal principal = authenticationContext.getPrincipal();
 
     UnauthorizedException lastUnauthorizedException = null;
@@ -409,6 +414,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     // See: CDAP-7387
     if (masterShortUserName == null || !masterShortUserName.equals(principal.getName())) {
       try {
+//        LOG.info("wyzhang: DefaultNamespaceAdmin get enforce princple={}", principal);
         accessEnforcer.enforce(namespaceId, principal, StandardPermission.GET);
       } catch (UnauthorizedException e) {
         lastUnauthorizedException = e;

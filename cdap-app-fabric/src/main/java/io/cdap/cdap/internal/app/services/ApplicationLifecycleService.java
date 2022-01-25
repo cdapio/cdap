@@ -94,6 +94,7 @@ import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import org.slf4j.Logger;
@@ -884,6 +885,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                             ArtifactDetail artifactDetail,
                                             @Nullable KerberosPrincipalId ownerPrincipal,
                                             boolean updateSchedules) throws Exception {
+//    LOG.info("wyzhang: deployApp: userid={} cred={}",
+//             SecurityRequestContext.getUserId(),
+//             SecurityRequestContext.getUserCredential());
     // Now to deploy an app, we need ADMIN privilege on the owner principal if it is present, and also ADMIN on the app
     // But since at this point, app name is unknown to us, so the enforcement on the app is happening in the deploy
     // pipeline - LocalArtifactLoaderStage
@@ -892,9 +896,10 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     KerberosPrincipalId effectiveOwner =
       SecurityUtil.getEffectiveOwner(ownerAdmin, namespaceId,
                                      ownerPrincipal == null ? null : ownerPrincipal.getPrincipal());
-
+//    LOG.info("wyzhang: deployApp: effectiveOwner={}", effectiveOwner);
 
     Principal requestingUser = authenticationContext.getPrincipal();
+//    LOG.info("wyzhang: deployApp: requesting user={}", requestingUser);
     // enforce that the current principal, if not the same as the owner principal, has the admin privilege on the
     // impersonated principal
     if (effectiveOwner != null) {

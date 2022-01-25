@@ -85,4 +85,18 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
       }
     };
   }
+
+  /**
+   * Returns an {@link AbstractModule} containing bindings for a No-Op Access Enforcer. These modules should primarily
+   * be used in workers in which user code is executed which should not have any owned data to enforce access on.
+   */
+  public AbstractModule getWorkerModules() {
+    return new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(AccessEnforcer.class).to(NoOpAccessController.class).in(Scopes.SINGLETON);
+        bind(ContextAccessEnforcer.class).to(DefaultContextAccessEnforcer.class).in(Scopes.SINGLETON);
+      }
+    };
+  }
 }

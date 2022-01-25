@@ -100,9 +100,9 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
       SecurityRequestContext.setUserCredential(currentUserCredential);
       SecurityRequestContext.setUserIP(currentUserIP);
     } else if (msg instanceof HttpContent) {
-      SecurityRequestContext.setUserId(currentUserID);
-      SecurityRequestContext.setUserCredential(currentUserCredential);
-      SecurityRequestContext.setUserIP(currentUserIP);
+      SecurityRequestContext.setUserId(null);
+      SecurityRequestContext.setUserCredential(null);
+      SecurityRequestContext.setUserIP(null);
     }
 
     try {
