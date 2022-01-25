@@ -250,7 +250,7 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
     modules.add(new CoreSecurityRuntimeModule().getInMemoryModules());
     modules.add(new AuthenticationContextModules().getMasterWorkerModule());
     modules.add(new AuthorizationModule());
-    modules.add(new AuthorizationEnforcementModule().getMasterModule());
+    modules.add(new AuthorizationEnforcementModule().getNoOpModules());
     modules.add(Modules.override(
       new DataFabricModules("master").getDistributedModules()).with(new AbstractModule() {
       @Override
