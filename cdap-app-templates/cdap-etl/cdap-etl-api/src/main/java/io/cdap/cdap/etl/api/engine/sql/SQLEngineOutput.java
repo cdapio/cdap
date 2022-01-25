@@ -25,13 +25,24 @@ import java.util.Map;
  * to regular ones
  */
 public class SQLEngineOutput extends Output {
+  private final String stageName;
   private final String sqlEngineClassName;
   private final Map<String, String> arguments;
 
-  public SQLEngineOutput(String name, String sqlEngineClassName, Map<String, String> arguments) {
+  public SQLEngineOutput(String name, String stageName, String sqlEngineClassName, Map<String, String> arguments) {
     super(name);
+    this.stageName = stageName;
     this.sqlEngineClassName = sqlEngineClassName;
     this.arguments = arguments;
+  }
+
+  /**
+   * Gets the stage name for this output. This name is used to allocate metrics to the appropriate sink after the
+   * output is written into the SQL engine
+   * @return the stage name
+   */
+  public String getStageName() {
+    return stageName;
   }
 
   /**
