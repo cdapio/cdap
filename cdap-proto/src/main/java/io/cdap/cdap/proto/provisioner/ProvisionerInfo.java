@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.proto.provisioner;
 
-import io.cdap.cdap.runtime.spi.profile.WorkerCoreInfo;
+import io.cdap.cdap.runtime.spi.profile.TotalProcessingCpusInfo;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -29,14 +29,14 @@ import java.util.stream.Collectors;
  */
 public class ProvisionerInfo {
   private final String name;
-  private String workerCoreLabel;
+  private String totalProcessingCpusLabel;
   private final Set<ProvisionerPropertyValue> properties;
 
   public ProvisionerInfo(String name, Collection<ProvisionerPropertyValue> properties) {
     this.name = name;
     this.properties = Collections.unmodifiableSet(
       properties.stream().filter(Objects::nonNull).collect(Collectors.toSet()));
-    this.workerCoreLabel = WorkerCoreInfo.PrefixLabel.CUSTOM.getValue();
+    this.totalProcessingCpusLabel = TotalProcessingCpusInfo.PrefixLabel.CUSTOM.getValue();
   }
 
   public String getName() {
@@ -47,12 +47,12 @@ public class ProvisionerInfo {
     return properties;
   }
 
-  public String getWorkerCoreLabel() {
-    return workerCoreLabel;
+  public String getTotalProcessingCpusLabel() {
+    return totalProcessingCpusLabel;
   }
 
-  public void setWorkerCoreLabel(String workerCoreLabel) {
-    this.workerCoreLabel = workerCoreLabel;
+  public void setTotalProcessingCpusLabel(String totalProcessingCpusLabel) {
+    this.totalProcessingCpusLabel = totalProcessingCpusLabel;
   }
 
   /**

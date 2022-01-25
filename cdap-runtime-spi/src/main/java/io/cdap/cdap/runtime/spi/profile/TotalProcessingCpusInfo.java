@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.runtime.spi.profile;
 
-public class WorkerCoreInfo {
+public class TotalProcessingCpusInfo {
 
   public enum PrefixLabel {
     FIXED (""),
@@ -34,16 +34,16 @@ public class WorkerCoreInfo {
     }
   }
 
-  private final int maxCores;
+  private final int maxCpus;
   private final PrefixLabel prefixLabel;
 
-  public WorkerCoreInfo(int maxCores, PrefixLabel prefixLabel) {
-    this.maxCores = maxCores;
+  public TotalProcessingCpusInfo(int maxCpus, PrefixLabel prefixLabel) {
+    this.maxCpus = maxCpus;
     this.prefixLabel = prefixLabel;
   }
 
-  public static WorkerCoreInfo getDefault() {
-    return new WorkerCoreInfo(-1, PrefixLabel.CUSTOM);
+  public static TotalProcessingCpusInfo getDefault() {
+    return new TotalProcessingCpusInfo(-1, PrefixLabel.CUSTOM);
   }
 
   public String getFullLabel() {
@@ -53,8 +53,8 @@ public class WorkerCoreInfo {
       sb.append(prefixLabel.getValue()).append(" ");
     }
 
-    if (maxCores > 0) {
-      sb.append(maxCores);
+    if (maxCpus > 0) {
+      sb.append(maxCpus);
     }
     return sb.toString().trim();
   }

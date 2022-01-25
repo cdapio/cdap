@@ -33,7 +33,7 @@ import io.cdap.cdap.proto.profile.ProfileCreateRequest;
 import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
 import io.cdap.cdap.proto.provisioner.ProvisionerPropertyValue;
 import io.cdap.cdap.proto.security.StandardPermission;
-import io.cdap.cdap.runtime.spi.profile.WorkerCoreInfo;
+import io.cdap.cdap.runtime.spi.profile.TotalProcessingCpusInfo;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.http.AbstractHttpHandler;
@@ -279,8 +279,8 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
     } catch (JsonSyntaxException e) {
       throw new BadRequestException("Unable to parse request body. Please make sure it is valid JSON", e);
     }
-    String totalWorkerCoreLabel = generateTotalWorkerCoreLabel(profileCreateRequest.getProvisioner());
-    profileCreateRequest.getProvisioner().setWorkerCoreLabel(totalWorkerCoreLabel);
+    String totalProcessingCpusLabel = getTotalProcessingCpuLabel(profileCreateRequest.getProvisioner());
+    profileCreateRequest.getProvisioner().setTotalProcessingCpusLabel(totalProcessingCpusLabel);
     Profile profile =
       new Profile(profileId.getProfile(), profileCreateRequest.getLabel(), profileCreateRequest.getDescription(),
                   profileId.getScope(), profileCreateRequest.getProvisioner());
@@ -307,11 +307,12 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
     }
   }
 
-  private String generateTotalWorkerCoreLabel(ProvisionerInfo provisionerInfo) throws BadRequestException {
+  private String getTotalProcessingCpuLabel(ProvisionerInfo provisionerInfo) throws BadRequestException {
     Map<String, String> properties = convertProvProperties(provisionerInfo.getProperties());
     try {
-      WorkerCoreInfo workerCoreInfo = provisioningService.getWorkerCoreInfo(provisionerInfo.getName(), properties);
-      return workerCoreInfo.getFullLabel();
+      TotalProcessingCpusInfo totalProcessingCpusInfo = provisioningService
+        .getTotalProcessingCpusInfo(provisionerInfo.getName(), properties);
+      return totalProcessingCpusInfo.getFullLabel();
     } catch (NotFoundException e) {
       throw new BadRequestException(String.format("The specified provisioner %s does not exist, " +
                                                     "thus cannot be associated with a profile",

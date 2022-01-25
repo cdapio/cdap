@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.runtime.spi.provisioner;
 
-import io.cdap.cdap.runtime.spi.profile.WorkerCoreInfo;
+import io.cdap.cdap.runtime.spi.profile.TotalProcessingCpusInfo;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 
 import java.util.Map;
@@ -178,7 +178,7 @@ public interface Provisioner {
    * Calculate the total worker info based on the provisioner
    * If specified provisioner is not yet capable to calculate then return default
    */
-  default WorkerCoreInfo calculateTotalWorkerInfo(Map<String, String> properties) {
-    return WorkerCoreInfo.getDefault();
+  default TotalProcessingCpusInfo calculateTotalProcessingCpusInfo(Map<String, String> properties) {
+    return TotalProcessingCpusInfo.getDefault();
   }
 }

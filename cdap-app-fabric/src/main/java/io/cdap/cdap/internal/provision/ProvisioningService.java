@@ -58,7 +58,7 @@ import io.cdap.cdap.proto.provisioner.ProvisionerDetail;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.SparkCompat;
 import io.cdap.cdap.runtime.spi.VersionInfo;
-import io.cdap.cdap.runtime.spi.profile.WorkerCoreInfo;
+import io.cdap.cdap.runtime.spi.profile.TotalProcessingCpusInfo;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
@@ -584,18 +584,18 @@ public class ProvisioningService extends AbstractIdleService {
   }
 
   /**
-   * Generates the label to display for total worker cores for the specified provisioner.
+   * Generates the label to display for total processing cpus for the specified provisioner.
    *
    * @param provisionerName the name of the provisioner to validate
    * @param properties properties for the specified provisioner
    */
-  public WorkerCoreInfo getWorkerCoreInfo(String provisionerName, Map<String, String> properties)
+  public TotalProcessingCpusInfo getTotalProcessingCpusInfo(String provisionerName, Map<String, String> properties)
     throws NotFoundException {
     Provisioner provisioner = provisionerInfo.get().provisioners.get(provisionerName);
     if (provisioner == null) {
       throw new NotFoundException(String.format("Provisioner '%s' does not exist", provisionerName));
     }
-    return provisioner.calculateTotalWorkerInfo(properties);
+    return provisioner.calculateTotalProcessingCpusInfo(properties);
   }
 
   private Runnable createProvisionTask(ProvisioningTaskInfo taskInfo, Provisioner provisioner) {
