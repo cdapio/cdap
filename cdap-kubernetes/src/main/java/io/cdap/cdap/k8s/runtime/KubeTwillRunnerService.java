@@ -25,6 +25,7 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.kubernetes.client.common.KubernetesObject;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.apis.BatchV1Api;
+import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1Deployment;
 import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1JobStatus;
@@ -112,6 +113,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
   private final String selector;
   private ApiClient apiClient;
   private BatchV1Api batchV1Api;
+  private CoreV1Api coreV1Api;
   private ScheduledExecutorService monitorScheduler;
   private ScheduledExecutorService jobCleanerService;
 
@@ -210,6 +212,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
   public void start() {
     try {
       apiClient = Config.defaultClient();
+      coreV1Api = new CoreV1Api(apiClient);
       batchV1Api = new BatchV1Api(apiClient);
       monitorScheduler = Executors.newSingleThreadScheduledExecutor(
         Threads.createDaemonThreadFactory("kube-monitor-executor"));
@@ -297,6 +300,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
             } catch (ExecutionException e) {
               // This will never happen
             }
+            controller.setJobStatus(((V1Job) resource).getStatus());
             // terminate the job controller
             LOG.info("### calling terminate on job for run {}", runId);
             controller.terminate();
@@ -435,7 +439,9 @@ public class KubeTwillRunnerService implements TwillRunnerService {
     V1JobStatus jobStatus = job.getStatus();
     if (jobStatus != null) {
       Integer active = jobStatus.getActive();
-      return active != null;
+      if(active == null) {
+        return false;
+      }
     }
     return false;
   }
@@ -446,6 +452,12 @@ public class KubeTwillRunnerService implements TwillRunnerService {
   private boolean isJobComplete(V1Job job) {
     V1JobStatus jobStatus = job.getStatus();
     if (jobStatus != null) {
+      if (jobStatus.getFailed() != null) {
+        LOG.info("### job {} is failed", job.getMetadata().getName());
+      }
+      if (jobStatus.getSucceeded() != null) {
+        LOG.info("### job {} is succeeded.", job.getMetadata().getName());
+      }
       return jobStatus.getFailed() != null || jobStatus.getSucceeded() != null;
     }
     return false;

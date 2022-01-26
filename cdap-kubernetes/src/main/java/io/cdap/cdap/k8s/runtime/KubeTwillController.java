@@ -69,12 +69,14 @@ class KubeTwillController implements ExtendedTwillController {
   private final String kubeNamespace;
   private final RunId runId;
   private final CompletableFuture<KubeTwillController> completion;
-  private volatile boolean isStopped;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final ApiClient apiClient;
   private final BatchV1Api batchV1Api;
   private final Type resourceType;
   private final V1ObjectMeta meta;
+
+  private volatile boolean isStopped;
+  private volatile V1JobStatus jobStatus;
 
   KubeTwillController(String kubeNamespace, RunId runId, DiscoveryServiceClient discoveryServiceClient,
                       ApiClient apiClient, Type resourceType, V1ObjectMeta meta) {
@@ -318,6 +320,14 @@ class KubeTwillController implements ExtendedTwillController {
   }
 
   /**
+   * Sets job status before job is terminated.
+   * @param jobStatus status of the job
+   */
+  public void setJobStatus(V1JobStatus jobStatus) {
+    this.jobStatus = jobStatus;
+  }
+
+  /**
    * Creates a label selector that matches all labels in the meta object.
    */
   private String getLabelSelector() {
@@ -489,6 +499,7 @@ class KubeTwillController implements ExtendedTwillController {
    * Cleans up the resources for deployment and stateful set and returns the future.
    */
   private CompletableFuture<KubeTwillController> cleanupResources() {
+    LOG.info("### in cleanup resources");
     CompletableFuture<KubeTwillController> resultFuture;
     CompletionStage<String> completionStage;
     resultFuture = new CompletableFuture<>();
@@ -511,6 +522,7 @@ class KubeTwillController implements ExtendedTwillController {
    * Cleans up the job and returns future with correct job status.
    */
   private CompletableFuture<KubeTwillController> cleanupJob() {
+    LOG.info("### in cleanup job");
     // get job status
     CompletionStage<String> completionStage = deleteJobAndGetCompletionStatus();
     completionStage.whenComplete((name, t) -> {
@@ -530,11 +542,14 @@ class KubeTwillController implements ExtendedTwillController {
     CompletableFuture<String> resultFuture = new CompletableFuture<>();
     String name = meta.getName();
     try {
-      V1Job v1Job = batchV1Api.readNamespacedJob(name, kubeNamespace, null, null, null);
-      V1JobStatus status = v1Job.getStatus();
+      V1JobStatus status = jobStatus;
 
-      // If job has failed, mark future as failed. Else mark it as succeeded.
-      if (status != null && status.getFailed() != null) {
+      if (jobStatus == null) {
+        LOG.info("### job status is null. This means job was deleted.");
+        isStopped = true;
+        resultFuture.complete(name);
+      } else if (jobStatus != null && jobStatus.getFailed() != null) {
+        // If job has failed, mark future as failed. Else mark it as succeeded.
         LOG.info("### k8s job status completed exceptionally.");
         resultFuture.completeExceptionally(new RuntimeException(String.format("Job %s has failed status.", name)));
       } else {
@@ -550,17 +565,8 @@ class KubeTwillController implements ExtendedTwillController {
           LOG.debug("### Successfully deleted job {}", jName);
         }
       });
-    } catch (ApiException e) {
-      if (e.getCode() == 404) {
-        // If isStopped is true, this means the kubernetes submitted job was not found. This could happen if the job
-        // was submitted and then deleted before getting status/before issuing delete.
-        LOG.info("### kubernetes job {} not found", name);
-        isStopped = true;
-        resultFuture.complete(name);
-      } else {
-        LOG.error("Failed to get status for job {}.", name, e);
-        completeExceptionally(resultFuture, e);
-      }
+    } catch (Exception e) {
+      LOG.info("### Got Exception ", e);
     }
 
     return resultFuture;
@@ -573,6 +579,7 @@ class KubeTwillController implements ExtendedTwillController {
     CompletableFuture<String> resultFuture = new CompletableFuture<>();
     String name = meta.getName();
     try {
+      LOG.info("### Calling delete job  for {}", name);
       V1DeleteOptions v1DeleteOptions = new V1DeleteOptions();
       v1DeleteOptions.setPropagationPolicy("Background");
       // Make async call to attempt to delete job. If it fails, KubeJobCleaner should clean it up.
