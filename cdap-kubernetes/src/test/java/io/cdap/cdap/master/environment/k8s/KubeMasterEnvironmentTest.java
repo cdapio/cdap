@@ -208,16 +208,17 @@ public class KubeMasterEnvironmentTest {
 
   @Test
   public void testOnNamespaceCreationWithWorkloadIdentityEnabled() throws Exception {
-    Map<String, String> properties = new HashMap<>();
-    properties.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE);
     String workloadIdentityPool = "test-workload-pool";
     String workloadIdentityGCPServiceAccount = "test-service-account@test-project-id.iam.gserviceaccount.com";
     String workloadIdentityProvider = "https://gkehub.googleapis.com/projects/test-project-id/locations/global/" +
       "memberships/test-cluster";
+    Map<String, String> properties = new HashMap<>();
+    properties.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE);
+    properties.put(KubeMasterEnvironment.WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY,
+                   workloadIdentityGCPServiceAccount);
     kubeMasterEnvironment.setNamespaceCreationEnabled();
     kubeMasterEnvironment.setWorkloadIdentityEnabled();
     kubeMasterEnvironment.setWorkloadIdentityPool(workloadIdentityPool);
-    kubeMasterEnvironment.setWorkloadIdentityGcpServiceAccountName(workloadIdentityGCPServiceAccount);
     kubeMasterEnvironment.setWorkloadIdentityProvider(workloadIdentityProvider);
     when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any(), any(), any()))
       .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
@@ -233,16 +234,17 @@ public class KubeMasterEnvironmentTest {
 
   @Test
   public void testOnNamespaceCreationWithWorkloadIdentityEnabledDoesNotCreateExistingConfigMap() throws Exception {
-    Map<String, String> properties = new HashMap<>();
-    properties.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE);
     String workloadIdentityPool = "test-workload-pool";
     String workloadIdentityGCPServiceAccount = "test-service-account@test-project-id.iam.gserviceaccount.com";
     String workloadIdentityProvider = "https://gkehub.googleapis.com/projects/test-project-id/locations/global/" +
       "memberships/test-cluster";
+    Map<String, String> properties = new HashMap<>();
+    properties.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE);
+    properties.put(KubeMasterEnvironment.WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY,
+                   workloadIdentityGCPServiceAccount);
     kubeMasterEnvironment.setNamespaceCreationEnabled();
     kubeMasterEnvironment.setWorkloadIdentityEnabled();
     kubeMasterEnvironment.setWorkloadIdentityPool(workloadIdentityPool);
-    kubeMasterEnvironment.setWorkloadIdentityGcpServiceAccountName(workloadIdentityGCPServiceAccount);
     kubeMasterEnvironment.setWorkloadIdentityProvider(workloadIdentityProvider);
     when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any(), any(), any()))
       .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
@@ -260,16 +262,17 @@ public class KubeMasterEnvironmentTest {
 
   @Test(expected = IOException.class)
   public void testOnNamespaceCreationWithWorkloadIdentityEnabledReadConfigMapPropagatesException() throws Exception {
-    Map<String, String> properties = new HashMap<>();
-    properties.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE);
     String workloadIdentityPool = "test-workload-pool";
     String workloadIdentityGCPServiceAccount = "test-service-account@test-project-id.iam.gserviceaccount.com";
     String workloadIdentityProvider = "https://gkehub.googleapis.com/projects/test-project-id/locations/global/" +
       "memberships/test-cluster";
+    Map<String, String> properties = new HashMap<>();
+    properties.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE);
+    properties.put(KubeMasterEnvironment.WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY,
+                   workloadIdentityGCPServiceAccount);
     kubeMasterEnvironment.setNamespaceCreationEnabled();
     kubeMasterEnvironment.setWorkloadIdentityEnabled();
     kubeMasterEnvironment.setWorkloadIdentityPool(workloadIdentityPool);
-    kubeMasterEnvironment.setWorkloadIdentityGcpServiceAccountName(workloadIdentityGCPServiceAccount);
     kubeMasterEnvironment.setWorkloadIdentityProvider(workloadIdentityProvider);
     when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any(), any(), any()))
       .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
@@ -281,16 +284,17 @@ public class KubeMasterEnvironmentTest {
 
   @Test(expected = ApiException.class)
   public void testOnNamespaceCreationWithWorkloadIdentityEnabledCreateNamespacePropagatesException() throws Exception {
-    Map<String, String> properties = new HashMap<>();
-    properties.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE);
     String workloadIdentityPool = "test-workload-pool";
     String workloadIdentityGCPServiceAccount = "test-service-account@test-project-id.iam.gserviceaccount.com";
     String workloadIdentityProvider = "https://gkehub.googleapis.com/projects/test-project-id/locations/global/" +
       "memberships/test-cluster";
+    Map<String, String> properties = new HashMap<>();
+    properties.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE);
+    properties.put(KubeMasterEnvironment.WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY,
+                   workloadIdentityGCPServiceAccount);
     kubeMasterEnvironment.setNamespaceCreationEnabled();
     kubeMasterEnvironment.setWorkloadIdentityEnabled();
     kubeMasterEnvironment.setWorkloadIdentityPool(workloadIdentityPool);
-    kubeMasterEnvironment.setWorkloadIdentityGcpServiceAccountName(workloadIdentityGCPServiceAccount);
     kubeMasterEnvironment.setWorkloadIdentityProvider(workloadIdentityProvider);
     when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any(), any(), any()))
       .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
@@ -298,6 +302,30 @@ public class KubeMasterEnvironmentTest {
       .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "config map not found"));
     when(coreV1Api.createNamespacedConfigMap(any(), any(), any(), any(), any())).thenThrow(new ApiException());
     kubeMasterEnvironment.onNamespaceCreation(CDAP_NAMESPACE, properties);
+  }
+
+  @Test
+  public void testOnNamespaceCreationWithWorkloadIdentityEnabledNoServiceAccountPropertyCreatesNoVolumes()
+    throws Exception {
+    String workloadIdentityPool = "test-workload-pool";
+    String workloadIdentityProvider = "https://gkehub.googleapis.com/projects/test-project-id/locations/global/" +
+      "memberships/test-cluster";
+    Map<String, String> properties = new HashMap<>();
+    properties.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE);
+    kubeMasterEnvironment.setNamespaceCreationEnabled();
+    kubeMasterEnvironment.setWorkloadIdentityEnabled();
+    kubeMasterEnvironment.setWorkloadIdentityPool(workloadIdentityPool);
+    kubeMasterEnvironment.setWorkloadIdentityProvider(workloadIdentityProvider);
+    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any(), any(), any()))
+      .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
+    try {
+      kubeMasterEnvironment.onNamespaceCreation(CDAP_NAMESPACE, properties);
+    } catch (Exception e) {
+      Assert.fail("Kubernetes creation should not error if namespace does not exist. Exception: " + e);
+    }
+    verify(coreV1Api, times(0)).createNamespacedConfigMap(any(), any(), any(), any(), any());
+    verify(coreV1Api, times(0)).readNamespacedConfigMap(any(), any(), any(), any(), any());
+
   }
 
   private void assertContainsVolume(V1Pod pod, V1Volume expectedVolume) {
@@ -344,12 +372,10 @@ public class KubeMasterEnvironmentTest {
   @Test
   public void testGenerateSparkConfigWithWorkloadIdentityEnabled() throws Exception {
     String workloadIdentityPool = "test-workload-pool";
-    String workloadIdentityGCPServiceAccount = "test-service-account@test-project-id.iam.gserviceaccount.com";
     String workloadIdentityProvider = "https://gkehub.googleapis.com/projects/test-project-id/locations/global/" +
       "memberships/test-cluster";
     kubeMasterEnvironment.setWorkloadIdentityEnabled();
     kubeMasterEnvironment.setWorkloadIdentityPool(workloadIdentityPool);
-    kubeMasterEnvironment.setWorkloadIdentityGcpServiceAccountName(workloadIdentityGCPServiceAccount);
     kubeMasterEnvironment.setWorkloadIdentityProvider(workloadIdentityProvider);
     kubeMasterEnvironment.setWorkloadIdentityServiceAccountTokenTTLSeconds(172800L);
 

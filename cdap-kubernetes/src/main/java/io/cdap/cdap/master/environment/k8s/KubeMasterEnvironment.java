@@ -150,8 +150,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String RESOURCE_QUOTA_NAME = "cdap-resource-quota";
   private static final String WORKLOAD_IDENTITY_ENABLED = "master.environment.k8s.workload.identity.enabled";
   private static final String WORKLOAD_IDENTITY_POOL = "master.environment.k8s.workload.identity.pool";
-  private static final String WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL
-    = "master.environment.k8s.workload.identity.gcp.service.account.email";
+  @VisibleForTesting
+  static final String WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY = "gcp.service.account.email";
   private static final String WORKLOAD_IDENTITY_PROVIDER = "master.environment.k8s.workload.identity.provider";
   private static final String WORKLOAD_IDENTITY_SERVICE_ACCOUNT_TOKEN_TTL_SECONDS
     = "master.environment.k8s.workload.identity.service.account.token.ttl.seconds";
@@ -201,7 +201,6 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private final Gson gson;
   private boolean workloadIdentityEnabled;
   private String workloadIdentityPool;
-  private String workloadIdentityGCPServiceAccountEmail;
   private String workloadIdentityProvider;
   private long workloadIdentityServiceAccountTokenTTLSeconds;
 
@@ -228,10 +227,6 @@ public class KubeMasterEnvironment implements MasterEnvironment {
       workloadIdentityPool = conf.get(WORKLOAD_IDENTITY_POOL);
       if (workloadIdentityPool == null) {
         missingConfig = WORKLOAD_IDENTITY_POOL;
-      }
-      workloadIdentityGCPServiceAccountEmail = conf.get(WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL);
-      if (workloadIdentityGCPServiceAccountEmail == null) {
-        missingConfig = WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL;
       }
       workloadIdentityProvider = conf.get(WORKLOAD_IDENTITY_PROVIDER);
       if (workloadIdentityProvider == null) {
@@ -392,7 +387,10 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     findOrCreateKubeNamespace(namespace, cdapNamespace);
     updateOrCreateResourceQuota(namespace, cdapNamespace, properties);
     if (workloadIdentityEnabled) {
-      findOrCreateWorkloadIdentityConfigMap(namespace);
+      String workloadIdentityServiceAccountEmail = properties.get(WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY);
+      if (workloadIdentityServiceAccountEmail != null && !workloadIdentityServiceAccountEmail.isEmpty()) {
+        findOrCreateWorkloadIdentityConfigMap(namespace, workloadIdentityServiceAccountEmail);
+      }
     }
   }
 
@@ -805,7 +803,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
    * For details, see steps 6-7 of
    * https://cloud.google.com/anthos/multicluster-management/fleets/workload-identity#impersonate_a_service_account
    */
-  private void findOrCreateWorkloadIdentityConfigMap(String k8sNamespace) throws ApiException, IOException {
+  private void findOrCreateWorkloadIdentityConfigMap(String k8sNamespace, String workloadIdentityGCPServiceAccountEmail)
+    throws ApiException, IOException {
     // Check if workload identity config map already exists
     try {
       coreV1Api.readNamespacedConfigMap(k8sNamespace, WORKLOAD_IDENTITY_CONFIGMAP_NAME, null, false, false);
@@ -896,11 +895,6 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   @VisibleForTesting
   void setWorkloadIdentityPool(String workloadIdentityPool) {
     this.workloadIdentityPool = workloadIdentityPool;
-  }
-
-  @VisibleForTesting
-  void setWorkloadIdentityGcpServiceAccountName(String workloadIdentityGCPServiceAccountName) {
-    this.workloadIdentityGCPServiceAccountEmail = workloadIdentityGCPServiceAccountName;
   }
 
   @VisibleForTesting
