@@ -68,6 +68,7 @@ class KubeJobCleaner implements Runnable {
             try {
               // Rely on k8s garbage collector to delete dependent pods in background while job resource is deleted
               // immediately - https://kubernetes.io/docs/concepts/workloads/controllers/garbage-collection
+              LOG.debug("Cleaning up job {} in kubernetes environment", jobName);
               batchV1Api.deleteNamespacedJob(jobName, kubeNamespace, null, null, null, null, null, v1DeleteOptions);
               jobDeletionCount++;
             } catch (ApiException e) {
