@@ -173,8 +173,8 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       labels.putAll(getSystemLabels());
       labels.putAll(getReuseLabels(context, conf));
       labels.putAll(conf.getClusterLabels());
-      LOG.info("Creating Dataproc cluster {} in project {}, in region {}, with image {}, with labels {}",
-               clusterName, conf.getProjectId(), conf.getRegion(), imageDescription, labels);
+      LOG.info("Creating Dataproc cluster {} in project {}, in region {}, with image {}, with labels {}, endpoint {}",
+               clusterName, conf.getProjectId(), conf.getRegion(), imageDescription, labels, conf.getRootUrl());
 
       boolean privateInstance = Boolean.parseBoolean(getSystemContext().getProperties().get(PRIVATE_INSTANCE));
       ClusterOperationMetadata createOperationMeta = client.createCluster(clusterName, imageVersion,
