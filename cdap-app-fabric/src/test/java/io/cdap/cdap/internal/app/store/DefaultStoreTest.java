@@ -73,6 +73,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -842,6 +843,40 @@ public abstract class DefaultStoreTest {
 
     //All the 6 specs should have been deleted.
     Assert.assertEquals(0, specsToBeVerified.size());
+  }
+
+  @Test
+  public void testScanApplications() {
+    ApplicationSpecification appSpec = Specifications.from(new AllProgramsApp());
+
+    int count = 100;
+    for (int i = 0; i < count; i++) {
+      String appName = "test" + i;
+      store.addApplication(new ApplicationId(NamespaceId.DEFAULT.getNamespace(), appName), appSpec);
+    }
+
+    List<ApplicationId> apps = new ArrayList<ApplicationId>();
+    store.scanApplications(20, (appId, spec) -> apps.add(appId));
+
+    Assert.assertEquals(count, apps.size());
+  }
+
+  @Test
+  public void testScanApplicationsWithNamespace() {
+    ApplicationSpecification appSpec = Specifications.from(new AllProgramsApp());
+
+    int count = 100;
+    for (int i = 0; i < count / 2; i++) {
+      String appName = "test" + (2 * i);
+      store.addApplication(new ApplicationId(NamespaceId.DEFAULT.getNamespace(), appName), appSpec);
+      appName = "test" + (2 * i + 1);
+      store.addApplication(new ApplicationId(NamespaceId.CDAP.getNamespace(), appName), appSpec);
+    }
+
+    List<ApplicationId> apps = new ArrayList<ApplicationId>();
+    store.scanApplications(NamespaceId.CDAP, 20, (appId, spec) -> apps.add(appId));
+
+    Assert.assertEquals(count / 2, apps.size());
   }
 
   @Test

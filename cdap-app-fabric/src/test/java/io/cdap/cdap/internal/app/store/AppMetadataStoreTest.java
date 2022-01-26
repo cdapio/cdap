@@ -842,6 +842,55 @@ public abstract class AppMetadataStoreTest {
   }
 
   @Test
+  public void testScanApplicationsWithNamespace() {
+    ApplicationSpecification appSpec = Specifications.from(new AllProgramsApp());
+
+    // Writes 100 application specs
+    int count = 100;
+    for (int i = 0; i < count / 2; i++) {
+      String defaultAppName = "test" + (2 * i);
+      TransactionRunners.run(transactionRunner, context -> {
+        AppMetadataStore store = AppMetadataStore.create(context);
+        store.writeApplication(NamespaceId.DEFAULT.getNamespace(),
+            defaultAppName, ApplicationId.DEFAULT_VERSION, appSpec);
+      });
+
+      String cdapAppName = "test" + (2 * i + 1);
+      TransactionRunners.run(transactionRunner, context -> {
+        AppMetadataStore store = AppMetadataStore.create(context);
+        store.writeApplication(NamespaceId.CDAP.getNamespace(),
+            cdapAppName, ApplicationId.DEFAULT_VERSION, appSpec);
+      });
+    }
+
+    // Scan all apps
+    Map<ApplicationId, ApplicationMeta> apps = new HashMap<>();
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+      store.scanApplications(NamespaceId.DEFAULT.getNamespace(), AppMetadataStore.Cursor.EMPTY, ((cursor, entry) -> {
+        apps.put(entry.getKey(), entry.getValue());
+        return true;
+      }));
+    });
+    Assert.assertEquals(count / 2, apps.size());
+
+    // Scan by batches
+    apps.clear();
+    AtomicReference<AppMetadataStore.Cursor> cursorRef = new AtomicReference<>(AppMetadataStore.Cursor.EMPTY);
+    for (int i = 0; i <= count / 15; i++) {
+      TransactionRunners.run(transactionRunner, context -> {
+        AppMetadataStore store = AppMetadataStore.create(context);
+        store.scanApplications(NamespaceId.CDAP.getNamespace(), cursorRef.get(), ((cursor, entry) -> {
+          apps.put(entry.getKey(), entry.getValue());
+          cursorRef.set(cursor);
+          return apps.size() % 15 != 0;
+        }));
+      });
+    }
+    Assert.assertEquals(count / 2, apps.size());
+  }
+
+  @Test
   public void testBatchProgramRunCount() throws Exception {
     ProgramId programId1 = NamespaceId.DEFAULT.app("test").workflow("test1");
     ProgramId programId2 = NamespaceId.DEFAULT.app("test").workflow("test2");
