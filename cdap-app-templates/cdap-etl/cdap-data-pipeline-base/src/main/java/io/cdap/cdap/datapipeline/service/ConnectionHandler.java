@@ -24,6 +24,7 @@ import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.annotation.TransactionControl;
 import io.cdap.cdap.api.annotation.TransactionPolicy;
 import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.macro.MacroEvaluator;
@@ -34,6 +35,9 @@ import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import io.cdap.cdap.api.service.http.ServicePluginConfigurer;
 import io.cdap.cdap.api.service.http.SystemHttpServiceContext;
+import io.cdap.cdap.api.service.worker.RemoteExecutionException;
+import io.cdap.cdap.api.service.worker.RemoteTaskException;
+import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.datapipeline.connection.ConnectionStore;
 import io.cdap.cdap.datapipeline.connection.DefaultConnectorConfigurer;
 import io.cdap.cdap.datapipeline.connection.DefaultConnectorContext;
@@ -269,8 +273,9 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
         return;
       }
 
+      String browseRequestString = StandardCharsets.UTF_8.decode(request.getContent()).toString();
       BrowseRequest browseRequest =
-        GSON.fromJson(StandardCharsets.UTF_8.decode(request.getContent()).toString(), BrowseRequest.class);
+        GSON.fromJson(browseRequestString, BrowseRequest.class);
 
       if (browseRequest == null) {
         responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST, "The request body is empty");
@@ -282,20 +287,46 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
         return;
       }
 
-      ServicePluginConfigurer pluginConfigurer =
-        getContext().createServicePluginConfigurer(namespaceSummary.getName());
-      ConnectorConfigurer connectorConfigurer = new DefaultConnectorConfigurer(pluginConfigurer);
-      ConnectorContext connectorContext = new DefaultConnectorContext(new SimpleFailureCollector(), pluginConfigurer);
       Connection conn = store.getConnection(new ConnectionId(namespaceSummary, connection));
 
-      TrackedPluginSelector pluginSelector = new TrackedPluginSelector(
-        new ArtifactSelectorProvider().getPluginSelector(conn.getPlugin().getArtifact()));
-      try (Connector connector = getConnector(pluginConfigurer, conn.getPlugin(), namespaceSummary.getName(),
-                                              pluginSelector)) {
-        connector.configure(connectorConfigurer);
-        responder.sendJson(connector.browse(connectorContext, browseRequest));
+      if (getContext().isRemoteTaskEnabled()) {
+        browseRemotely(namespaceSummary.getName(), browseRequestString, conn, responder);
       }
+      browseLocally(namespaceSummary.getName(), browseRequest, conn, responder);
     });
+  }
+
+  private void browseLocally(String namespace, BrowseRequest browseRequest,
+                             Connection conn, HttpServiceResponder responder) throws IOException {
+    ServicePluginConfigurer pluginConfigurer = getContext().createServicePluginConfigurer(namespace);
+    ConnectorConfigurer connectorConfigurer = new DefaultConnectorConfigurer(pluginConfigurer);
+    ConnectorContext connectorContext = new DefaultConnectorContext(new SimpleFailureCollector(), pluginConfigurer);
+    TrackedPluginSelector pluginSelector = new TrackedPluginSelector(
+      new ArtifactSelectorProvider().getPluginSelector(conn.getPlugin().getArtifact()));
+    try (Connector connector = getConnector(pluginConfigurer, conn.getPlugin(), namespace,
+                                            pluginSelector)) {
+      connector.configure(connectorConfigurer);
+      responder.sendJson(connector.browse(connectorContext, browseRequest));
+    }
+  }
+
+  private void browseRemotely(String namespace, String browseRequest,
+                             Connection conn, HttpServiceResponder responder) throws IOException {
+    RemoteConnectionBrowseRequest connectionBrowseRequest =
+      new RemoteConnectionBrowseRequest(namespace, browseRequest, conn);
+    RunnableTaskRequest runnableTaskRequest =
+      RunnableTaskRequest.getBuilder(RemoteConnectionBrowseTask.class.getName()).
+      withParam(GSON.toJson(connectionBrowseRequest)).
+      build();
+    try {
+      byte[] bytes = getContext().runTask(runnableTaskRequest);
+      responder.sendString(Bytes.toString(bytes));
+    } catch (RemoteExecutionException e) {
+      RemoteTaskException remoteTaskException = e.getCause();
+      responder.sendError(HttpURLConnection.HTTP_INTERNAL_ERROR, remoteTaskException.getMessage());
+    } catch (Exception e) {
+      responder.sendError(HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
+    }
   }
 
   /**
@@ -448,19 +479,6 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
                                  .setEscaping(false)
                                  .setFunctionWhitelist(evaluators.keySet())
                                  .build();
-    Connector connector;
-    try {
-      connector = configurer.usePlugin(pluginInfo.getType(), pluginInfo.getName(), UUID.randomUUID().toString(),
-                                       PluginProperties.builder().addAll(pluginInfo.getProperties()).build(),
-                                       pluginSelector, macroEvaluator, options);
-    } catch (InvalidPluginConfigException e) {
-      throw new ConnectionBadRequestException(
-        String.format("Unable to instantiate connector plugin: %s", e.getMessage()), e);
-    }
-
-    if (connector == null) {
-      throw new ConnectionBadRequestException(String.format("Unable to find connector '%s'", pluginInfo.getName()));
-    }
-    return connector;
+    return ConnectionUtils.getConnector(configurer, pluginInfo, pluginSelector, macroEvaluator, options);
   }
 }
