@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.tethering.runtime.spi.provisioner;
 
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.internal.provision.ProvisionerExtensionLoader;
 import io.cdap.cdap.internal.tethering.runtime.spi.runtimejob.TetheringRuntimeJobManager;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
@@ -33,6 +34,7 @@ import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import java.util.ServiceLoader;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -45,10 +47,15 @@ public class TetheringProvisioner implements Provisioner {
     TETHERING_NAME, "Tethering Provisioner",
     "Runs programs on an existing tethered CDAP instance. Does not provision any resources.");
 
-  private final MessagingService messagingService;
+  private MessagingService messagingService;
 
+  /**
+   * Using method injection instead of constructor injection because {@link ServiceLoader} (used by
+   * {@link ProvisionerExtensionLoader}) requires no-argument constructor for instantiation.
+   */
   @Inject
-  TetheringProvisioner(MessagingService messagingService) {
+  @SuppressWarnings("unused")
+  void setMessagingService(MessagingService messagingService) {
     this.messagingService = messagingService;
   }
 

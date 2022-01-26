@@ -22,14 +22,15 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.lang.ClassPathResources;
 import io.cdap.cdap.common.lang.FilterClassLoader;
 import io.cdap.cdap.extension.AbstractExtensionLoader;
+import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Loads provisioners from the extensions directory.
@@ -42,7 +43,12 @@ public class ProvisionerExtensionLoader extends AbstractExtensionLoader<String, 
 
   private static Set<String> createAllowedResources() {
     try {
-      return ClassPathResources.getResourcesWithDependencies(Provisioner.class.getClassLoader(), Provisioner.class);
+      Set<String> resources = new HashSet<>();
+      ClassLoader provisionerClassLoader = Provisioner.class.getClassLoader();
+      resources.addAll(ClassPathResources.getResourcesWithDependencies(provisionerClassLoader, Provisioner.class));
+      // Allow messaging classes for tethering provisioner
+      resources.addAll(ClassPathResources.getResourcesWithDependencies(provisionerClassLoader, MessagingService.class));
+      return resources;
     } catch (IOException e) {
       throw new RuntimeException("Failed to trace dependencies for provisioner extension. " +
                                    "Usage of provisioner might fail.", e);
@@ -61,17 +67,17 @@ public class ProvisionerExtensionLoader extends AbstractExtensionLoader<String, 
 
   @Override
   protected FilterClassLoader.Filter getExtensionParentClassLoaderFilter() {
-    // filter all non-spi classes to provide isolation from CDAP's classes. For example, dataproc provisioner uses
+    // filter classes to provide isolation from CDAP's classes. For example, dataproc provisioner uses
     // a different guava than CDAP's guava.
     return new FilterClassLoader.Filter() {
       @Override
       public boolean acceptResource(String resource) {
-        return ALLOWED_RESOURCES.contains(resource);
+        return !resource.startsWith("com/google") || ALLOWED_RESOURCES.contains(resource);
       }
 
       @Override
       public boolean acceptPackage(String packageName) {
-        return ALLOWED_PACKAGES.contains(packageName);
+        return !packageName.contains("com.google") || ALLOWED_PACKAGES.contains(packageName);
       }
     };
   }
