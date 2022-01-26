@@ -142,4 +142,10 @@ public final class ProgramOptionConstants {
    * Option for whether the program is in preview mode
    */
   public static final String IS_PREVIEW = "isPreview";
+
+  /**
+   * Option for the application class name for the program, this is needed for isolated mode to regenerate the app
+   * spec
+   */
+  public static final String APPLICATION_CLASS = "applicationClass";
 }

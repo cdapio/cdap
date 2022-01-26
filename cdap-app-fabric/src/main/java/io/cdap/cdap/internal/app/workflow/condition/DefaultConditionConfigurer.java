@@ -22,6 +22,7 @@ import io.cdap.cdap.api.workflow.ConditionConfigurer;
 import io.cdap.cdap.api.workflow.ConditionSpecification;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.app.AbstractConfigurer;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.lang.Reflections;
@@ -33,6 +34,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Default implementation of the {@link ConditionConfigurer}
@@ -44,8 +46,9 @@ public class DefaultConditionConfigurer extends AbstractConfigurer implements Co
   private Map<String, String> properties;
 
   private DefaultConditionConfigurer(Condition condition, Id.Namespace deployNamespace, Id.Artifact artifactId,
-                                     PluginFinder pluginFinder, PluginInstantiator pluginInstantiator) {
-    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator);
+                                     PluginFinder pluginFinder, PluginInstantiator pluginInstantiator,
+                                     @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
+    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo);
     this.condition = condition;
     this.name = condition.getClass().getSimpleName();
     this.description = "";
@@ -79,9 +82,11 @@ public class DefaultConditionConfigurer extends AbstractConfigurer implements Co
 
   public static ConditionSpecification configureCondition(Condition condition, Id.Namespace deployNamespace,
                                                           Id.Artifact artifactId, PluginFinder pluginFinder,
-                                                          PluginInstantiator pluginInstantiator) {
+                                                          PluginInstantiator pluginInstantiator,
+                                                          @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
     DefaultConditionConfigurer configurer = new DefaultConditionConfigurer(condition, deployNamespace, artifactId,
-                                                                           pluginFinder, pluginInstantiator);
+                                                                           pluginFinder, pluginInstantiator,
+                                                                           runtimeInfo);
 
     condition.configure(configurer);
     return configurer.createSpecification();

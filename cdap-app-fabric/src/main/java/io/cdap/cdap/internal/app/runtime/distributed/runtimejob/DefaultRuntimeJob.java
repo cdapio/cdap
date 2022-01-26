@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.runtime.distributed.runtimejob;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.Gson;
@@ -29,9 +30,13 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
+import com.google.inject.name.Names;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.app.deploy.ConfigResponse;
+import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.guice.DefaultProgramRunnerFactory;
 import io.cdap.cdap.app.guice.RemoteExecutionDiscoveryModule;
@@ -60,11 +65,24 @@ import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
+import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
+import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
 import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
+import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
+import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
+import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReader;
+import io.cdap.cdap.internal.app.runtime.artifact.RemoteIsolatedPluginFinder;
 import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedMapReduceProgramRunner;
@@ -119,12 +137,17 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /**
@@ -186,6 +209,54 @@ public class DefaultRuntimeJob implements RuntimeJob {
 
     Deque<Service> coreServices = createCoreServices(injector, systemArgs, cluster);
     startCoreServices(coreServices);
+
+    // regenerate app spec
+    ConfiguratorFactory configuratorFactory = injector.getInstance(ConfiguratorFactory.class);
+
+    try {
+      Map<String, String> systemArguments = new HashMap<>(programOpts.getArguments().asMap());
+      File pluginDir = new File(programOpts.getArguments().getOption(ProgramOptionConstants.PLUGIN_DIR,
+                                                                     DistributedProgramRunner.PLUGIN_DIR));
+      // create a directory to store plugin artifacts if the regeneration of app spec fetches some plugin artifact
+      if (!pluginDir.exists()) {
+        pluginDir.mkdir();
+      }
+
+      if (!programOpts.getArguments().hasOption(ProgramOptionConstants.PLUGIN_DIR)) {
+        systemArguments.put(ProgramOptionConstants.PLUGIN_DIR, DistributedProgramRunner.PLUGIN_DIR);
+      }
+
+      // remember the file names in the artifact folder before app regeneration
+      List<String> pluginFiles = Stream.of(pluginDir.listFiles())
+                                   .filter(File::isFile).map(File::getName)
+                                   .collect(Collectors.toList());
+
+      ApplicationSpecification generatedAppSpec =
+        regenerateAppSpec(systemArguments, programOpts.getUserArguments().asMap(), programId, appSpec,
+                          programDescriptor, configuratorFactory);
+      appSpec = generatedAppSpec != null ? generatedAppSpec : appSpec;
+      programDescriptor = new ProgramDescriptor(programDescriptor.getProgramId(), appSpec);
+
+      List<String> pluginFilesAfter = Stream.of(pluginDir.listFiles())
+                                        .filter(File::isFile).map(File::getName)
+                                        .collect(Collectors.toList());
+
+      if (pluginFilesAfter.isEmpty()) {
+        systemArguments.remove(ProgramOptionConstants.PLUGIN_DIR);
+      }
+
+      // if different, we will need to remove the plugin artifact archive argument from options and let program runner
+      // recreate it from the folders
+      if (!pluginFiles.equals(pluginFilesAfter)) {
+        systemArguments.remove(ProgramOptionConstants.PLUGIN_ARCHIVE);
+      }
+
+      // update program options
+      programOpts = new SimpleProgramOptions(programOpts.getProgramId(), new BasicArguments(systemArguments),
+                                             programOpts.getUserArguments(), programOpts.isDebug());
+    } catch (Exception e) {
+      LOG.warn("Failed to regenerate the app spec for program {}, using the existing app spec", programId, e);
+    }
 
     ProgramStateWriter programStateWriter = injector.getInstance(ProgramStateWriter.class);
     CompletableFuture<ProgramController.State> programCompletion = new CompletableFuture<>();
@@ -251,6 +322,34 @@ public class DefaultRuntimeJob implements RuntimeJob {
       Authenticator.setDefault(null);
       runCompletedLatch.countDown();
     }
+  }
+
+  @Nullable
+  private ApplicationSpecification regenerateAppSpec(
+    Map<String, String> systemArguments, Map<String, String> userArguments, ProgramId programId,
+    ApplicationSpecification existingAppSpec, ProgramDescriptor programDescriptor,
+    ConfiguratorFactory configuratorFactory) throws InterruptedException, ExecutionException, TimeoutException {
+
+    String appClassName = systemArguments.get(ProgramOptionConstants.APPLICATION_CLASS);
+    Location programJarLocation = Locations.toLocation(
+      new File(systemArguments.get(ProgramOptionConstants.PROGRAM_JAR)));
+
+
+    AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(
+      programDescriptor.getArtifactId(), programJarLocation, programId.getNamespaceId(), appClassName,
+      programId.getApplication(), programId.getVersion(), existingAppSpec.getConfiguration(), null, false,
+      new AppDeploymentRuntimeInfo(existingAppSpec, userArguments, systemArguments));
+    Configurator configurator = configuratorFactory.create(deploymentInfo);
+    ListenableFuture<ConfigResponse> future = configurator.config();
+    ConfigResponse response = future.get(120, TimeUnit.SECONDS);
+
+    if (response.getExitCode() == 0) {
+      AppSpecInfo appSpecInfo = response.getAppSpecInfo();
+      if (appSpecInfo != null && appSpecInfo.getAppSpec() != null) {
+        return appSpecInfo.getAppSpec();
+      }
+    }
+    return null;
   }
 
   @Override
@@ -379,6 +478,20 @@ public class DefaultRuntimeJob implements RuntimeJob {
 
         bind(ProgramRunId.class).toInstance(programRunId);
         bind(RuntimeMonitorType.class).toInstance(SystemArguments.getRuntimeMonitorType(cConf, programOpts));
+
+        install(
+          new FactoryModuleBuilder()
+            .implement(Configurator.class, InMemoryConfigurator.class)
+            .build(ConfiguratorFactory.class)
+        );
+
+        bind(String.class)
+          .annotatedWith(Names.named(RemoteIsolatedPluginFinder.ISOLATED_PLUGIN_DIR))
+          .toInstance(programOpts.getArguments().getOption(ProgramOptionConstants.PLUGIN_DIR,
+                                                           DistributedProgramRunner.PLUGIN_DIR));
+        bind(PluginFinder.class).to(RemoteIsolatedPluginFinder.class);
+        bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class).in(Scopes.SINGLETON);
+        bind(ArtifactRepository.class).to(RemoteArtifactRepository.class);
       }
     });
 
