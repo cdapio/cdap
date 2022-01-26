@@ -44,7 +44,7 @@ public class ConnectionUtils {
 
   public static Connector getConnector(ServicePluginConfigurer configurer, PluginInfo pluginInfo,
                                        TrackedPluginSelector pluginSelector, MacroEvaluator macroEvaluator,
-                                       MacroParserOptions options){
+                                       MacroParserOptions options) {
     Connector connector = null;
     try {
       connector = configurer.usePlugin(pluginInfo.getType(), pluginInfo.getName(), UUID.randomUUID().toString(),

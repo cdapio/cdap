@@ -26,7 +26,7 @@ public class RemoteConnectionBrowseRequest {
   // Details of connection
   private Connection connection;
 
-  RemoteConnectionBrowseRequest(String namespace, String browseRequest, Connection connection){
+  RemoteConnectionBrowseRequest(String namespace, String browseRequest, Connection connection) {
     this.namespace = namespace;
     this.browseRequest = browseRequest;
     this.connection = connection;

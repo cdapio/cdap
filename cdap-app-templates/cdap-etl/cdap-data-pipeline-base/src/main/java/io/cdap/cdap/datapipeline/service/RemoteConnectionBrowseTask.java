@@ -48,12 +48,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
 
+/**
+ * {@link RunnableTask} for remote connection browsing
+ */
 public class RemoteConnectionBrowseTask implements RunnableTask {
 
-  private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-    .serializeNulls()
-    .create();
+  private static final Gson GSON = new Gson();
 
   @Override
   public void run(RunnableTaskContext context) throws Exception {
