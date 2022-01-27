@@ -139,7 +139,7 @@ public class ProgramLifecycleService {
   private final int maxConcurrentRuns;
   private final int maxConcurrentLaunching;
   private final ArtifactRepository artifactRepository;
-  private final RunRecordCounter runRecordCounter;
+  private final RunRecordMonitorService runRecordMonitorService;
 
   @Inject
   ProgramLifecycleService(CConfiguration cConf,
@@ -149,7 +149,8 @@ public class ProgramLifecycleService {
                           AuthenticationContext authenticationContext,
                           ProvisionerNotifier provisionerNotifier, ProvisioningService provisioningService,
                           ProgramStateWriter programStateWriter, CapabilityReader capabilityReader,
-                          ArtifactRepository artifactRepository) {
+                          ArtifactRepository artifactRepository,
+                          RunRecordMonitorService runRecordMonitorService) {
     this.maxConcurrentRuns = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_RUNS);
     this.maxConcurrentLaunching = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_LAUNCHING);
     this.store = store;
@@ -164,7 +165,7 @@ public class ProgramLifecycleService {
     this.programStateWriter = programStateWriter;
     this.capabilityReader = capabilityReader;
     this.artifactRepository = artifactRepository;
-    this.runRecordCounter = new RunRecordCounter(runtimeService);
+    this.runRecordMonitorService = runRecordMonitorService;
   }
 
   /**
@@ -531,24 +532,27 @@ public class ProgramLifecycleService {
     checkCapability(programDescriptor);
 
     ProgramRunId programRunId = programId.run(runId);
-    RunRecordCounter.Count count = runRecordCounter.addRequestAndGetCount(programRunId);
+    RunRecordMonitorService.Count count = runRecordMonitorService.addRequestAndGetCount(programRunId);
 
     boolean done = false;
     try {
       if (maxConcurrentRuns >= 0 && maxConcurrentRuns < count.getRunsCount()) {
-        TooManyRequestsException e = new TooManyRequestsException(
+        String msg =
           String.format("Program %s cannot start because the maximum of %d concurrent running runs is allowed",
-                        programId, maxConcurrentRuns));
+                        programId, maxConcurrentRuns);
+        LOG.info(msg);
 
+        TooManyRequestsException e = new TooManyRequestsException(msg);
         programStateWriter.reject(programRunId, programOptions, programDescriptor, userId, e);
         throw e;
       }
 
       if (maxConcurrentLaunching >= 0 && maxConcurrentLaunching < count.getLaunchingCount()) {
-        TooManyRequestsException e = new TooManyRequestsException(
-          String.format("Program %s cannot start because the maximum of %d concurrent provisioning/starting runs" +
-                          " is allowed", programId, maxConcurrentLaunching));
+        String msg = String.format("Program %s cannot start because the maximum of %d concurrent " +
+                                     "provisioning/starting runs is allowed", programId, maxConcurrentLaunching);
+        LOG.info(msg);
 
+        TooManyRequestsException e = new TooManyRequestsException(msg);
         programStateWriter.reject(programRunId, programOptions, programDescriptor, userId, e);
         throw e;
       }
@@ -560,7 +564,7 @@ public class ProgramLifecycleService {
       done = true;
     } finally {
       if (!done) {
-        runRecordCounter.removeRequest(programRunId);
+        runRecordMonitorService.removeRequest(programRunId);
       }
     }
 
@@ -1257,9 +1261,5 @@ public class ProgramLifecycleService {
       KerberosPrincipalId kid = new KerberosPrincipalId(principal);
       accessEnforcer.enforce(kid, authenticationContext.getPrincipal(), AccessPermission.IMPERSONATE);
     }
-  }
-
-  public RunRecordCounter getRunRecordCounter() {
-    return runRecordCounter;
   }
 }
