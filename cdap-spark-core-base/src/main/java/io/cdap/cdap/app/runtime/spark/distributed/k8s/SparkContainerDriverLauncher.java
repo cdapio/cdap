@@ -41,6 +41,7 @@ import io.cdap.cdap.common.internal.remote.InternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizer;
@@ -271,11 +272,11 @@ public class SparkContainerDriverLauncher {
     @Inject
     ArtifactLocalizerClient(DiscoveryServiceClient discoveryServiceClient,
                             InternalAuthenticator internalAuthenticator,
-                            CConfiguration cConf) {
+                            CConfiguration cConf, ArtifactManagerFactory artifactManagerFactory) {
 
       RemoteClientFactory remoteClientFactory =
         new RemoteClientFactory(discoveryServiceClient, internalAuthenticator);
-      this.artifactLocalizer = new ArtifactLocalizer(cConf, remoteClientFactory);
+      this.artifactLocalizer = new ArtifactLocalizer(cConf, remoteClientFactory, artifactManagerFactory);
     }
 
     File localizeArtifact(ArtifactId artifactId, String programNamespace) throws Exception {
