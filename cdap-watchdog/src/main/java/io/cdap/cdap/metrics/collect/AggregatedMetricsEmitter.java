@@ -63,4 +63,8 @@ final class AggregatedMetricsEmitter implements MetricsEmitter {
     this.value.set(value);
     this.gaugeUsed.set(true);
   }
+
+  public void event(long value) {
+    // TODO
+  }
 }

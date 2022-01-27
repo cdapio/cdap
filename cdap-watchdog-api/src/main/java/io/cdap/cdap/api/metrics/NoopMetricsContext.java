@@ -61,4 +61,9 @@ public final class NoopMetricsContext implements MetricsContext {
   public void gauge(String metricName, long value) {
     // no-op
   }
+
+  @Override
+  public void event(String metricName, long value) {
+    // no-op
+  }
 }
