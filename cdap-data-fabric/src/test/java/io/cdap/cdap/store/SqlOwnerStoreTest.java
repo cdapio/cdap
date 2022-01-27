@@ -52,7 +52,8 @@ public class SqlOwnerStoreTest extends OwnerStoreTest {
   public static void setup() throws Exception {
     pg = PostgresInstantiator.createAndStart(TEMP_FOLDER.newFolder());
     DataSource dataSource = pg.getPostgresDatabase();
-    StructuredTableRegistry registry = new SqlStructuredTableRegistry(dataSource);
+    // Setting fetch size to 10 for testing
+    StructuredTableRegistry registry = new SqlStructuredTableRegistry(dataSource, 10);
     registry.initialize();
     StructuredTableAdmin structuredTableAdmin = new PostgresSqlStructuredTableAdmin(registry, dataSource);
     txRunner = new SqlTransactionRunner(structuredTableAdmin, dataSource);

@@ -50,7 +50,8 @@ public class SqlUserConfigStoreTest extends UserConfigStoreTest {
 
     pg = PostgresInstantiator.createAndStart(cConf, TEMP_FOLDER.newFolder());
     DataSource dataSource = pg.getPostgresDatabase();
-    SqlStructuredTableRegistry registry = new SqlStructuredTableRegistry(dataSource);
+    // Setting fetch size to 10 for testing
+    SqlStructuredTableRegistry registry = new SqlStructuredTableRegistry(dataSource, 10);
     registry.initialize();
     admin = new PostgresSqlStructuredTableAdmin(registry, dataSource);
     TransactionRunner transactionRunner = new SqlTransactionRunner(admin, dataSource);

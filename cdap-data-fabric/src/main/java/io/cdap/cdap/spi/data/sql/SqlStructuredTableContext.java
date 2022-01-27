@@ -37,13 +37,15 @@ public class SqlStructuredTableContext implements StructuredTableContext {
   private final Connection connection;
   private final MetricsCollector metricsCollector;
   private final boolean emitTimeMetrics;
+  private final int scanFetchSize;
 
   public SqlStructuredTableContext(StructuredTableAdmin structuredTableAdmin, Connection connection,
-                                   MetricsCollector metricsCollector, boolean emitTimeMetrics) {
+                                   MetricsCollector metricsCollector, boolean emitTimeMetrics, int scanFetchSize) {
     this.admin = structuredTableAdmin;
     this.connection = connection;
     this.metricsCollector = metricsCollector;
     this.emitTimeMetrics = emitTimeMetrics;
+    this.scanFetchSize = scanFetchSize;
   }
 
   @Override
@@ -54,7 +56,8 @@ public class SqlStructuredTableContext implements StructuredTableContext {
       throw new TableNotFoundException(tableId);
     }
     return new MetricStructuredTable(
-      tableId, new PostgresSqlStructuredTable(connection, new StructuredTableSchema(specification)),
+      tableId, new PostgresSqlStructuredTable(connection, new StructuredTableSchema(specification), this.scanFetchSize),
       metricsCollector, emitTimeMetrics);
   }
+
 }

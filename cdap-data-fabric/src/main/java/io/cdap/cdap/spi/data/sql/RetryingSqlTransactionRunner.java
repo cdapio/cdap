@@ -51,7 +51,8 @@ public class RetryingSqlTransactionRunner implements TransactionRunner {
                                       MetricsCollectionService metricsCollectionService, CConfiguration cConf) {
     this.transactionRunner =
       new SqlTransactionRunner(tableAdmin, dataSource, metricsCollectionService,
-                               cConf.getBoolean(Constants.Metrics.STRUCTURED_TABLE_TIME_METRICS_ENABLED));
+                               cConf.getBoolean(Constants.Metrics.STRUCTURED_TABLE_TIME_METRICS_ENABLED),
+                               cConf.getInt(Constants.Dataset.DATA_STORAGE_SQL_SCAN_FETCH_SIZE_ROWS));
     this.metricsCollectionService = metricsCollectionService;
   }
 

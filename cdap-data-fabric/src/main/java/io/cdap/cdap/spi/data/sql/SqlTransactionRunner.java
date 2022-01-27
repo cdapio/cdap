@@ -42,18 +42,21 @@ public class SqlTransactionRunner implements TransactionRunner {
   private final DataSource dataSource;
   private final MetricsCollectionService metricsCollectionService;
   private final boolean emitTimeMetrics;
+  private final int scanFetchSize;
 
   @VisibleForTesting
   public SqlTransactionRunner(StructuredTableAdmin admin, DataSource dataSource) {
-    this(admin, dataSource, new NoOpMetricsCollectionService(), false);
+    this(admin, dataSource, new NoOpMetricsCollectionService(), false, 10);
   }
 
   public SqlTransactionRunner(StructuredTableAdmin tableAdmin, DataSource dataSource,
-                              MetricsCollectionService metricsCollectionService, boolean emitTimeMetrics) {
+                              MetricsCollectionService metricsCollectionService,
+                              boolean emitTimeMetrics, int scanFetchSize) {
     this.admin = tableAdmin;
     this.dataSource = dataSource;
     this.metricsCollectionService = metricsCollectionService;
     this.emitTimeMetrics = emitTimeMetrics;
+    this.scanFetchSize = scanFetchSize;
   }
 
   @Override
@@ -71,7 +74,8 @@ public class SqlTransactionRunner implements TransactionRunner {
       metricsCollector.increment(Constants.Metrics.StructuredTable.TRANSACTION_COUNT, 1L);
       connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
       connection.setAutoCommit(false);
-      runnable.run(new SqlStructuredTableContext(admin, connection, metricsCollector, emitTimeMetrics));
+      runnable.run(new SqlStructuredTableContext(admin, connection, metricsCollector, emitTimeMetrics,
+          this.scanFetchSize));
       connection.commit();
     } catch (Exception e) {
       Throwable cause = e.getCause();

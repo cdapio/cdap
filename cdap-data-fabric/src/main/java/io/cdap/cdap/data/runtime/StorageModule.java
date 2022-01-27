@@ -24,6 +24,7 @@ import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.Dataset;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.common.CachedStructuredTableRegistry;
 import io.cdap.cdap.spi.data.nosql.NoSqlStructuredTableAdmin;
@@ -156,7 +157,8 @@ public class StorageModule extends PrivateModule {
         return new CachedStructuredTableRegistry(registry);
       }
       if (storageImpl.equals(Constants.Dataset.DATA_STORAGE_SQL)) {
-        SqlStructuredTableRegistry registry = injector.getInstance(SqlStructuredTableRegistry.class);
+        SqlStructuredTableRegistry registry = new SqlStructuredTableRegistry(injector.getInstance(DataSource.class),
+            cConf.getInt(Dataset.DATA_STORAGE_SQL_SCAN_FETCH_SIZE_ROWS));
         return new CachedStructuredTableRegistry(registry);
       }
       throw new UnsupportedOperationException(

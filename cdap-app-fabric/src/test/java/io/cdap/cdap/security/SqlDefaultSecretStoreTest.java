@@ -47,7 +47,8 @@ public class SqlDefaultSecretStoreTest extends DefaultSecretStoreTest {
   public static void setup() throws Exception {
     pg = PostgresInstantiator.createAndStart(TEMP_FOLDER.newFolder());
     DataSource dataSource = pg.getPostgresDatabase();
-    SqlStructuredTableRegistry registry = new SqlStructuredTableRegistry(dataSource);
+    // Setting fetch size to 10 for testing
+    SqlStructuredTableRegistry registry = new SqlStructuredTableRegistry(dataSource, 10);
     registry.initialize();
     StructuredTableAdmin structuredTableAdmin =
       new PostgresSqlStructuredTableAdmin(registry, dataSource);

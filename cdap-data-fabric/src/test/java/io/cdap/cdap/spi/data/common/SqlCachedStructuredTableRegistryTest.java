@@ -42,7 +42,8 @@ public class SqlCachedStructuredTableRegistryTest extends CachedStructuredTableR
     EmbeddedPostgres pg = PostgresInstantiator.createAndStart(TEMP_FOLDER.newFolder());
     DataSource dataSource = pg.getPostgresDatabase();
     // TODO: CDAP-14780 Use injector once JDBC driver is wired up in StorageModule
-    sqlRegistry = new SqlStructuredTableRegistry(dataSource);
+    // Setting fetch size to 10 for testing
+    sqlRegistry = new SqlStructuredTableRegistry(dataSource, 10);
     registry = new CachedStructuredTableRegistry(sqlRegistry);
     Assert.assertTrue(registry instanceof CachedStructuredTableRegistry);
   }

@@ -65,7 +65,8 @@ public class SqlProfileServiceTest extends ProfileServiceTest {
 
     pg = PostgresInstantiator.createAndStart(cConf, TEMP_FOLDER.newFolder());
     DataSource dataSource = pg.getPostgresDatabase();
-    SqlStructuredTableRegistry registry = new SqlStructuredTableRegistry(dataSource);
+    // Setting fetch size to 10 for testing
+    SqlStructuredTableRegistry registry = new SqlStructuredTableRegistry(dataSource, 10);
     registry.initialize();
     structuredTableAdmin =
       new PostgresSqlStructuredTableAdmin(registry, dataSource);
