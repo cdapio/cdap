@@ -255,17 +255,20 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         names.add(name);
       }
     }
-    List<ApplicationRecord> apps = applicationLifecycleService.getApps(namespace, names, artifactVersion)
-      .stream()
-      .map(ApplicationRecord::new)
-      .collect(Collectors.toList());
 
     if (Optional.ofNullable(pageSize).orElse(0) != 0) {
-      PaginatedApplicationRecords result = getPaginatedResults(apps, pageToken, pageSize, orderBy,
-                                                               nameFilter);
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(result));
+      List<ApplicationRecord> apps = applicationLifecycleService.getApps(namespace, names, artifactVersion)
+          .stream()
+          .map(ApplicationRecord::new)
+          .collect(Collectors.toList());
+
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(
+          getPaginatedResults(apps, pageToken, pageSize, orderBy, nameFilter)));
     } else {
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(apps));
+      JsonWholeListResponder.respond(GSON, responder,
+          jsonListResponder ->  applicationLifecycleService.scanApplications(namespace, names, artifactVersion,
+              d -> jsonListResponder.send(new ApplicationRecord(d)))
+      );
     }
   }
 
@@ -282,8 +285,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private PaginatedApplicationRecords getPaginatedResults(List<ApplicationRecord> apps,
                                                            String pageToken, Integer pageSize,
-                                                           SortOrder orderBy, String nameFilter
-      ) {
+                                                           SortOrder orderBy, String nameFilter) {
 
     Comparator<ApplicationRecord> compareByApplicationId = (orderBy == SortOrder.DESC)
         ? Comparator.comparing(ApplicationRecord::getName).reversed()
