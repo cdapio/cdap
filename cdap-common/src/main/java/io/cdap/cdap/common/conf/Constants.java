@@ -241,6 +241,10 @@ public final class Constants {
     public static final String PROGRAM_TRANSACTION_CONTROL = "app.program.transaction.control";
     public static final String MAX_CONCURRENT_RUNS = "app.max.concurrent.runs";
     public static final String MAX_CONCURRENT_LAUNCHING = "app.max.concurrent.launching";
+    public static final String MONITOR_RECORD_AGE_THRESHOLD_SECONDS =
+      "run.record.monitor.record.age.threshold.seconds";
+    public static final String MONITOR_CLEANUP_INTERVAL_SECONDS =
+      "run.record.monitor.cleanup.interval.seconds";
     public static final String PROGRAM_LAUNCH_THREADS = "app.program.launch.threads";
 
     // A boolean value cConf entry to tell whether a ProgramRunner is running remotely (i.e. not inside app-fabric)
