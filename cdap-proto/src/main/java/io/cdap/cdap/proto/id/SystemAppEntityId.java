@@ -36,7 +36,7 @@ public class SystemAppEntityId extends NamespacedEntityId implements ParentedId<
   private String appName;
   private transient Integer hashCode;
 
-  protected SystemAppEntityId(String namespace, String type, String name, String appName) {
+  public SystemAppEntityId(String namespace, String appName, String type, String name) {
     super(namespace, EntityType.SYSTEM_APP_ENTITY);
     if (type == null) {
       throw new NullPointerException("System App Entity Type cannot be null.");
@@ -54,14 +54,14 @@ public class SystemAppEntityId extends NamespacedEntityId implements ParentedId<
 
   @Override
   public Iterable<String> toIdParts() {
-    return Collections.unmodifiableList(Arrays.asList(namespace, type, name, appName));
+    return Collections.unmodifiableList(Arrays.asList(namespace, appName, type, name));
   }
 
   @SuppressWarnings("unused")
   public static SystemAppEntityId fromIdParts(Iterable<String> idString) {
     Iterator<String> iterator = idString.iterator();
-    return new SystemAppEntityId(next(iterator, "namespace"), next(iterator, "type"),
-                             next(iterator, "name"), nextAndEnd(iterator, "appName"));
+    return new SystemAppEntityId(next(iterator, "namespace"), next(iterator, "appName"),
+                             next(iterator, "type"), nextAndEnd(iterator, "name"));
   }
 
   @Override
@@ -102,9 +102,9 @@ public class SystemAppEntityId extends NamespacedEntityId implements ParentedId<
     }
     SystemAppEntityId that = (SystemAppEntityId) o;
     return Objects.equals(namespace, that.namespace) &&
+      Objects.equals(appName, that.appName) &&
       Objects.equals(type, that.type) &&
-      Objects.equals(name, that.name) &&
-      Objects.equals(appName, that.appName);
+      Objects.equals(name, that.name);
   }
 
   public static SystemAppEntityId fromString(String string) {

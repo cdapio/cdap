@@ -49,11 +49,13 @@ import io.cdap.cdap.etl.mock.transform.IdentityTransform;
 import io.cdap.cdap.etl.mock.transform.PluginValidationTransform;
 import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 import io.cdap.cdap.etl.proto.connection.ConnectionCreationRequest;
+import io.cdap.cdap.etl.proto.connection.ConnectionId;
 import io.cdap.cdap.etl.proto.connection.ConnectorDetail;
 import io.cdap.cdap.etl.proto.connection.PluginDetail;
 import io.cdap.cdap.etl.proto.connection.PluginInfo;
 import io.cdap.cdap.etl.proto.connection.SampleResponse;
 import io.cdap.cdap.etl.proto.connection.SampleResponseCodec;
+import io.cdap.cdap.etl.proto.connection.SpecGenerationRequest;
 import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
 import io.cdap.cdap.etl.spark.Compat;
@@ -62,9 +64,16 @@ import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.artifact.preview.PreviewConfig;
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.ConnectionEntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.SystemAppEntityId;
+import io.cdap.cdap.proto.security.ApplicationPermission;
+import io.cdap.cdap.proto.security.Authorizable;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.SearchRequest;
 import io.cdap.cdap.spi.metadata.SearchResponse;
@@ -78,6 +87,7 @@ import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -86,6 +96,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -93,6 +104,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -108,6 +120,9 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
   private static final ArtifactId APP_ARTIFACT_ID = NamespaceId.SYSTEM.artifact("cdap-data-pipeline", "6.0.0");
   private static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("cdap-data-pipeline", "6.0.0",
                                                                           ArtifactScope.SYSTEM);
+  public static final String ALICE_NAME = "alice";
+  public static final Principal ALICE_PRINCIPAL = new Principal(ALICE_NAME, Principal.PrincipalType.USER);
+  
   private static final Gson GSON =
     new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
       .registerTypeAdapter(SampleResponse.class, new SampleResponseCodec()).setPrettyPrinting().create();
@@ -115,10 +130,9 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
   private static int startCount = 0;
 
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false,
-                                                                       Constants.Security.Store.PROVIDER, "file",
-                                                                       Constants.AppFabric.SPARK_COMPAT,
-                                                                       Compat.SPARK_COMPAT);
+  public static final TestConfiguration CONFIG =
+    new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false, Constants.Security.Store.PROVIDER, "file",
+                          Constants.AppFabric.SPARK_COMPAT, Compat.SPARK_COMPAT).enableAuthorization(TMP_FOLDER);
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
@@ -143,11 +157,25 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     serviceURI = serviceManager.getServiceURL(1, TimeUnit.MINUTES).toURI();
   }
 
-  @Test
-  public void testBrowseSample() throws Exception {
+  /**
+   * User name to perform calls
+   */
+  private String user;
+  /**
+   * Expected HTTP code from calls
+   */
+  private int expectedCode;
+
+  @Before
+  public void clearState() {
+    user = null;
+    expectedCode = HttpURLConnection.HTTP_OK;
+  }
+
+  private List<BrowseEntity> addFilesInDirectory(File directory) throws IOException {
     List<BrowseEntity> entities = new ArrayList<>();
     // add directory and files, odd to create file, even to create folder
-    File directory = TEMP_FOLDER.newFolder();
+
     for (int i = 0; i < 10; i++) {
       if (i % 2 == 0) {
         File folder = new File(directory, "file" + i);
@@ -169,7 +197,14 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
       }
       entities.add(BrowseEntity.builder(file.getName(), file.getCanonicalPath(), "file").canSample(true).build());
     }
+    return entities;
+  }
 
+  @Test
+  public void testBrowseSample() throws Exception {
+
+    File directory = TEMP_FOLDER.newFolder();
+    List<BrowseEntity> entities = addFilesInDirectory(directory);
     String conn = "BrowseSample";
     addConnection(
       conn, new ConnectionCreationRequest(
@@ -494,16 +529,111 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     deleteDatasetInstance(NamespaceId.DEFAULT.dataset(sinkTableName));
   }
 
+  @Test
+  public void testConnectionAuthorization() throws Exception {
+    File directory = TEMP_FOLDER.newFolder();
+    List<BrowseEntity> entities = addFilesInDirectory(directory);
+    user = ALICE_NAME;
+
+    // Check Alice can't list requests
+    expectedCode = HttpURLConnection.HTTP_FORBIDDEN;
+    listConnections(NamespaceId.DEFAULT.getNamespace());
+
+    // Grant Alice nesessary privileges
+    getAccessController().grant(Authorizable.fromEntityId(NamespaceId.DEFAULT),
+                                ALICE_PRINCIPAL,
+                                EnumSet.of(StandardPermission.GET));
+    getAccessController().grant(Authorizable.fromEntityId(NamespaceId.DEFAULT, EntityType.SYSTEM_APP_ENTITY),
+                                ALICE_PRINCIPAL,
+                                EnumSet.of(StandardPermission.LIST));
+
+    // Check Alice can list requests now
+    expectedCode = HttpURLConnection.HTTP_OK;
+    listConnections(NamespaceId.DEFAULT.getNamespace());
+
+    // Check Bob still can't do it
+    user = "bob";
+    expectedCode = HttpURLConnection.HTTP_FORBIDDEN;
+    listConnections(NamespaceId.DEFAULT.getNamespace());
+
+    // Check Alice can't do it for another namespace
+    user = ALICE_NAME;
+    listConnections("testNamespace");
+
+    // Check Alice still can't create, delete and use connections
+    String conn = "test_connection";
+    ConnectionCreationRequest creationRequest = new ConnectionCreationRequest("", new PluginInfo(
+      FileConnector.NAME, Connector.PLUGIN_TYPE, null, Collections.emptyMap(),
+      // in set up we add "-mocks" as the suffix for the artifact id
+      new ArtifactSelectorConfig("system", APP_ARTIFACT_ID.getArtifact() + "-mocks",
+                                 APP_ARTIFACT_ID.getVersion())));
+    addConnection(conn, creationRequest);
+    deleteConnection(conn);
+    browseConnection(conn, directory.getCanonicalPath(), 10);
+    sampleConnection(conn, entities.get(1).getPath(), 100);
+    getConnectionSpec(conn, directory.getCanonicalPath());
+
+    // Grant Alice permissions to create connection
+    ConnectionEntityId connectionEntityId = new ConnectionEntityId(NamespaceId.DEFAULT.getNamespace(),
+                                                                   ConnectionId.getConnectionId(conn));
+    getAccessController().grant(Authorizable.fromEntityId(connectionEntityId),
+                                ALICE_PRINCIPAL,
+                                EnumSet.of(StandardPermission.CREATE));
+    expectedCode = HttpURLConnection.HTTP_OK;
+    addConnection(conn, creationRequest);
+
+    // Grant Alice permission to use connection
+    getAccessController().grant(Authorizable.fromEntityId(connectionEntityId),
+                                ALICE_PRINCIPAL,
+                                EnumSet.of(ApplicationPermission.PREVIEW));
+    browseConnection(conn, directory.getCanonicalPath(), 10);
+    sampleConnection(conn, entities.get(1).getPath(), 100);
+    getConnectionSpec(conn, directory.getCanonicalPath());
+
+    // but Alice still can't update or delete connection
+    expectedCode = HttpURLConnection.HTTP_FORBIDDEN;
+    addConnection(conn, creationRequest);
+    deleteConnection(conn);
+
+    // Grant Alice permission to delete connection
+    getAccessController().grant(Authorizable.fromEntityId(connectionEntityId),
+                                ALICE_PRINCIPAL,
+                                EnumSet.of(StandardPermission.DELETE));
+    expectedCode = HttpURLConnection.HTTP_OK;
+    deleteConnection(conn);
+  }
+
+  private HttpResponse executeRequest(URL connectionURL, HttpMethod method) throws IOException {
+    return executeRequest(HttpRequest.builder(method, connectionURL));
+  }
+
+  private HttpResponse executeRequest(HttpRequest.Builder builder) throws IOException {
+    if (user != null) {
+      builder.addHeader(io.cdap.cdap.common.conf.Constants.Security.Headers.USER_ID, user);
+    }
+    return HttpRequests.execute(builder.build(), new DefaultHttpRequestConfig(false));
+  }
+
+  private void listConnections(String namespace) throws IOException {
+    String url = URLEncoder.encode(
+      String.format("v1/contexts/%s/connections/", namespace),
+      StandardCharsets.UTF_8.name());
+    URL validatePipelineURL = serviceURI.resolve(url).toURL();
+    HttpResponse response = executeRequest(validatePipelineURL, HttpMethod.GET);
+    Assert.assertEquals("Wrong answer: " + response.getResponseBodyAsString(),
+                        expectedCode, response.getResponseCode());
+  }
+
   private void addConnection(String connection, ConnectionCreationRequest creationRequest) throws IOException {
     String url = URLEncoder.encode(
       String.format("v1/contexts/%s/connections/%s", NamespaceId.DEFAULT.getNamespace(), connection),
       StandardCharsets.UTF_8.name());
     URL validatePipelineURL = serviceURI.resolve(url).toURL();
-    HttpRequest request = HttpRequest.builder(HttpMethod.PUT, validatePipelineURL)
-                            .withBody(GSON.toJson(creationRequest))
-                            .build();
-    HttpResponse response = HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
-    Assert.assertEquals(200, response.getResponseCode());
+    HttpRequest.Builder request = HttpRequest.builder(HttpMethod.PUT, validatePipelineURL)
+      .withBody(GSON.toJson(creationRequest));
+    HttpResponse response = executeRequest(request);
+    Assert.assertEquals("Wrong answer: " + response.getResponseBodyAsString(),
+                        expectedCode, response.getResponseCode());
   }
 
   private void deleteConnection(String connection) throws IOException {
@@ -511,9 +641,9 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
       String.format("v1/contexts/%s/connections/%s", NamespaceId.DEFAULT.getNamespace(),
                     connection), StandardCharsets.UTF_8.name());
     URL validatePipelineURL = serviceURI.resolve(url).toURL();
-    HttpRequest request = HttpRequest.builder(HttpMethod.DELETE, validatePipelineURL).build();
-    HttpResponse response = HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
-    Assert.assertEquals(200, response.getResponseCode());
+    HttpResponse response = executeRequest(validatePipelineURL, HttpMethod.DELETE);
+    Assert.assertEquals("Wrong answer: " + response.getResponseBodyAsString(),
+                        expectedCode, response.getResponseCode());
   }
 
   private BrowseDetail browseConnection(String connection, String path, int limit) throws IOException {
@@ -522,12 +652,13 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
                     connection), StandardCharsets.UTF_8.name());
     URL validatePipelineURL =
       serviceURI.resolve(String.format("%s?path=%s&limit=%s", url, path, limit)).toURL();
-    HttpRequest request = HttpRequest.builder(HttpMethod.POST, validatePipelineURL)
-                            .withBody(GSON.toJson(BrowseRequest.builder(path).setLimit(limit).build()))
-                            .build();
-    HttpResponse response = HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
-    Assert.assertEquals(200, response.getResponseCode());
-    return GSON.fromJson(response.getResponseBodyAsString(), BrowseDetail.class);
+    HttpRequest.Builder request = HttpRequest.builder(HttpMethod.POST, validatePipelineURL)
+      .withBody(GSON.toJson(BrowseRequest.builder(path).setLimit(limit).build()));
+    HttpResponse response = executeRequest(request);
+    Assert.assertEquals("Wrong answer: " + response.getResponseBodyAsString(),
+                        expectedCode, response.getResponseCode());
+    return expectedCode != HttpURLConnection.HTTP_OK ? null :
+      GSON.fromJson(response.getResponseBodyAsString(), BrowseDetail.class);
   }
 
   private SampleResponse sampleConnection(String connection, String path, int limit) throws IOException {
@@ -536,11 +667,26 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
                     connection), StandardCharsets.UTF_8.name());
     URL validatePipelineURL =
       serviceURI.resolve(String.format("%s?path=%s&limit=%s", url, path, limit)).toURL();
-    HttpRequest request = HttpRequest.builder(HttpMethod.POST, validatePipelineURL)
-                            .withBody(GSON.toJson(SampleRequest.builder(limit).setPath(path).build()))
-                            .build();
-    HttpResponse response = HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
-    Assert.assertEquals(200, response.getResponseCode());
-    return GSON.fromJson(response.getResponseBodyAsString(), SampleResponse.class);
+    HttpRequest.Builder request = HttpRequest.builder(HttpMethod.POST, validatePipelineURL)
+      .withBody(GSON.toJson(SampleRequest.builder(limit).setPath(path).build()));
+    HttpResponse response = executeRequest(request);
+    Assert.assertEquals("Wrong answer: " + response.getResponseBodyAsString(),
+                        expectedCode, response.getResponseCode());
+    return expectedCode != HttpURLConnection.HTTP_OK ? null :
+      GSON.fromJson(response.getResponseBodyAsString(), SampleResponse.class);
+  }
+
+  private ConnectorDetail getConnectionSpec(String connection, String path) throws IOException {
+    String url = URLEncoder.encode(
+      String.format("v1/contexts/%s/connections/%s/specification", NamespaceId.DEFAULT.getNamespace(),
+                    connection), StandardCharsets.UTF_8.name());
+    URL validatePipelineURL = serviceURI.resolve(url).toURL();
+    HttpRequest.Builder request = HttpRequest.builder(HttpMethod.POST, validatePipelineURL)
+      .withBody(GSON.toJson(new SpecGenerationRequest(path, Collections.emptyMap())));
+    HttpResponse response = executeRequest(request);
+    Assert.assertEquals("Wrong answer: " + response.getResponseBodyAsString(),
+                        expectedCode, response.getResponseCode());
+    return expectedCode != HttpURLConnection.HTTP_OK ? null :
+      GSON.fromJson(response.getResponseBodyAsString(), ConnectorDetail.class);
   }
 }

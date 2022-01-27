@@ -27,6 +27,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.SecureKeyId;
+import io.cdap.cdap.proto.id.SystemAppEntityId;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -189,6 +190,13 @@ public class AuthorizableTest {
 
     String widcardId = datasetModuleId.toString().replace("est", "*es?t");
     Assert.assertEquals(widcardId, Authorizable.fromString(widcardId).toString());
+  }
+
+  @Test
+  public void testSystemAppEntity() {
+    SystemAppEntityId systemAppEntityId = new SystemAppEntityId("ns", "pipeline", "connection", "test_connection");
+    Authorizable authorizable = Authorizable.fromEntityId(systemAppEntityId);
+    Assert.assertEquals(systemAppEntityId.toString(), authorizable.toString());
   }
 
   private void verifyInvalidString(String invalidString) {
