@@ -119,6 +119,28 @@ public interface StructuredTable extends Closeable {
   CloseableIterator<StructuredRow> scan(Range keyRange, int limit) throws InvalidFieldException, IOException;
 
   /**
+   * Read a set of rows from the table matching the key range.
+   * The rows returned will be sorted on the primary key according to sortOrder parameter.
+   *
+   * @param keyRange key range for the scan
+   * @param limit maximum number of rows to return
+   * @param sortOrder defined primary key sort order. Note that the comparator used is specific to the underlying
+   *                  store and is not nessesarily lexographic.
+   * @return a {@link CloseableIterator} of rows
+   * @throws InvalidFieldException if any of the keys are not part of the table schema, or the types of the value
+   *                               do not match
+   * @throws IOException if there is an error scanning the table
+   * @throws UnsupportedOperationException if sort order is not supported
+   */
+  default CloseableIterator<StructuredRow> scan(Range keyRange, int limit, SortOrder sortOrder)
+    throws InvalidFieldException, IOException {
+    if (sortOrder == SortOrder.ASC) {
+      return scan(keyRange, limit);
+    }
+    throw new UnsupportedOperationException();
+  }
+
+  /**
    * Read a set of rows from the table matching the index.
    * The rows returned will be sorted on the primary key order.
    *

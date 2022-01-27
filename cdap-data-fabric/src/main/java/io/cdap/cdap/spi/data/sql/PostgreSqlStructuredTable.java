@@ -25,6 +25,7 @@ import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.spi.data.InvalidFieldException;
+import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.table.StructuredTableSchema;
@@ -205,10 +206,17 @@ public class PostgreSqlStructuredTable implements StructuredTable {
 
   @Override
   public CloseableIterator<StructuredRow> scan(Range keyRange, int limit) throws InvalidFieldException, IOException {
-    LOG.trace("Table {}: Scan range {} with limit {}", tableSchema.getTableId(), keyRange, limit);
+    return scan(keyRange, limit, SortOrder.ASC);
+  }
+
+  @Override
+  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, SortOrder sortOrder)
+    throws InvalidFieldException, IOException {
+
+    LOG.trace("Table {}: Scan range {} with limit {} order {}", tableSchema.getTableId(), keyRange, limit, sortOrder);
     fieldValidator.validatePrimaryKeys(keyRange.getBegin(), true);
     fieldValidator.validatePrimaryKeys(keyRange.getEnd(), true);
-    String scanQuery = getScanQuery(keyRange, limit);
+    String scanQuery = getScanQuery(keyRange, limit, sortOrder);
 
     // We don't close the statement here because once it is closed, the result set is also closed.
     try {
@@ -761,16 +769,17 @@ public class PostgreSqlStructuredTable implements StructuredTable {
    *
    * @param range the range to scan.
    * @param limit limit number of row
+   * @param sortOrder sort order
    * @return the scan query
    */
-  private String getScanQuery(Range range, int limit) {
+  private String getScanQuery(Range range, int limit, SortOrder sortOrder) {
     StringBuilder queryString = new StringBuilder("SELECT * FROM ").append(tableSchema.getTableId().getName());
     if (!range.getBegin().isEmpty() || !range.getEnd().isEmpty()) {
       queryString.append(" WHERE ");
       appendRange(queryString, range);
     }
 
-    queryString.append(getOrderByClause(tableSchema.getPrimaryKeys()));
+    queryString.append(getOrderByClause(tableSchema.getPrimaryKeys(), sortOrder));
     queryString.append(" LIMIT ").append(limit).append(";");
     return queryString.toString();
   }
@@ -846,9 +855,13 @@ public class PostgreSqlStructuredTable implements StructuredTable {
   }
 
   private String getOrderByClause(List<String> keys) {
+    return getOrderByClause(keys, SortOrder.ASC);
+  }
+
+  private String getOrderByClause(List<String> keys, SortOrder sortOrder) {
     StringJoiner joiner = new StringJoiner(", ", " ORDER BY ", "");
     for (String key : keys) {
-      joiner.add(key);
+      joiner.add(sortOrder == SortOrder.ASC ? key : key + " DESC");
     }
     return joiner.toString();
   }

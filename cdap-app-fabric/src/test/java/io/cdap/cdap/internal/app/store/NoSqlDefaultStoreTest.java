@@ -17,20 +17,56 @@
 package io.cdap.cdap.internal.app.store;
 
 import com.google.inject.Injector;
+import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.spi.data.SortOrder;
+import io.cdap.cdap.spi.data.StructuredTable;
+import io.cdap.cdap.spi.data.StructuredTableContext;
+import io.cdap.cdap.spi.data.table.StructuredTableId;
+import io.cdap.cdap.spi.data.transaction.TransactionException;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TxRunnable;
 import io.cdap.cdap.store.DefaultNamespaceStore;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Test;
+import org.mockito.Mockito;
+
+import static org.mockito.Mockito.when;
 
 public class NoSqlDefaultStoreTest extends DefaultStoreTest {
 
+  private static Injector injector;
+
   @BeforeClass
   public static void beforeClass() {
-    Injector injector = AppFabricTestHelper.getInjector();
+    injector = AppFabricTestHelper.getInjector();
     store = injector.getInstance(DefaultStore.class);
     nsStore = injector.getInstance(DefaultNamespaceStore.class);
     nsAdmin = injector.getInstance(NamespaceAdmin.class);
+  }
+
+  @Test
+  public void testScanApplicationsWithSmallReorderBatch() throws TransactionException {
+    testScanApplications(getDescOrderUnsupportedStore());
+  }
+
+  @Test
+  public void testScanApplicationsWithNamespaceWithSmallReorderBatch() throws TransactionException {
+    testScanApplicationsWithNamespace(getDescOrderUnsupportedStore());
+  }
+
+  /**
+   *
+   * @return store set up so that any try to do a table scan with {@link SortOrder#DESC} would throw and
+   * {@link UnsupportedOperationException}. Store in this case should fall back to resorting in memory.
+   * It will also use a small batch size to test multiple reorder batches
+   */
+  private Store getDescOrderUnsupportedStore() throws TransactionException {
+    TransactionRunner runner = injector.getInstance(TransactionRunner.class);
+    Store store = new DefaultStore(runner, 20);
+    return store;
   }
 
   @AfterClass
