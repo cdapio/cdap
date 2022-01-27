@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.util.HashSet;
+import java.nio.file.Paths;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -61,7 +62,8 @@ public class ArtifactLocalizerService extends AbstractIdleService {
       .build();
 
     this.cacheCleanupInterval = cConf.getInt(Constants.ArtifactLocalizer.CACHE_CLEANUP_INTERVAL_MIN);
-    this.cleaner = new ArtifactLocalizerCleaner(cConf);
+    String cacheDir = cConf.get(Constants.CFG_LOCAL_DATA_DIR);
+    this.cleaner = new ArtifactLocalizerCleaner(Paths.get(cacheDir).resolve("artifacts"), cacheCleanupInterval);
   }
 
   @Override
@@ -69,7 +71,7 @@ public class ArtifactLocalizerService extends AbstractIdleService {
     LOG.debug("Starting ArtifactLocalizerService");
     httpService.start();
     scheduledExecutorService = Executors
-      .newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("artifact-cache-cleaner"));
+      .newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("artifact-localizer-cleaner"));
     scheduledExecutorService.scheduleAtFixedRate(cleaner, cacheCleanupInterval, cacheCleanupInterval, TimeUnit.MINUTES);
 
     artifactLocalizer.preloadArtifacts(
