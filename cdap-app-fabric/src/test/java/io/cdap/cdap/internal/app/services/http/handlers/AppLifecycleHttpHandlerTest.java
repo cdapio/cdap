@@ -54,6 +54,7 @@ import org.jboss.resteasy.util.HttpResponseCodes;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -357,6 +358,134 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response = doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN,
                                                       NONEXISTENT_NAMESPACE));
     Assert.assertEquals(404, response.getResponseCode());
+  }
+
+  @Test
+  public void testListAndGetForPaginatedAPI() throws Exception {
+    for (int i = 0; i < 10; i++) {
+      //deploy with name to testnamespace1
+      String ns1AppName = AllProgramsApp.NAME + i;
+      Id.Namespace ns1 = Id.Namespace.from(TEST_NAMESPACE1);
+      Id.Artifact ns1ArtifactId = Id.Artifact.from(ns1, AllProgramsApp.class.getSimpleName(),
+          "1.0.0-SNAPSHOT");
+
+      HttpResponse response = addAppArtifact(ns1ArtifactId, AllProgramsApp.class);
+      Assert.assertEquals(200, response.getResponseCode());
+      Id.Application appId = Id.Application.from(ns1, ns1AppName);
+      response = deploy(appId,
+          new AppRequest<>(ArtifactSummary.from(ns1ArtifactId.toArtifactId())));
+      Assert.assertEquals(200, response.getResponseCode());
+    }
+
+    int count = 0;
+    String token = null;
+    boolean isLastPage = false;
+    boolean emptyListReceived = false;
+
+    while (!isLastPage) {
+      JsonObject result = getAppListForPaginatedApi(TEST_NAMESPACE1, 3, token, "");
+      int currentResultSize = result.get("applications").getAsJsonArray().size();
+      count += currentResultSize;
+      emptyListReceived = (currentResultSize == 0);
+      token = result.get("nextPageToken") == null ? null : result.get("nextPageToken").getAsString();
+      isLastPage = (token == null);
+    }
+    Assert.assertEquals(10, count);
+    Assert.assertFalse(emptyListReceived);
+
+    //delete app in testnamespace1
+    HttpResponse response = doDelete(getVersionedAPIPath("apps/",
+                                     Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getResponseCode());
+    List<JsonObject> apps = getAppList(TEST_NAMESPACE1);
+    Assert.assertEquals(0, apps.size());
+  }
+
+  @Test
+  public void testListAndGetForPaginatedAPIWithEmptyLastPage() throws Exception {
+    for (int i = 0; i < 9; i++) {
+      //deploy with name to testnamespace1
+      String ns1AppName = AllProgramsApp.NAME + i;
+      Id.Namespace ns1 = Id.Namespace.from(TEST_NAMESPACE1);
+      Id.Artifact ns1ArtifactId = Id.Artifact.from(ns1, AllProgramsApp.class.getSimpleName(),
+          "1.0.0-SNAPSHOT");
+
+      HttpResponse response = addAppArtifact(ns1ArtifactId, AllProgramsApp.class);
+      Assert.assertEquals(200, response.getResponseCode());
+      Id.Application appId = Id.Application.from(ns1, ns1AppName);
+      response = deploy(appId,
+          new AppRequest<>(ArtifactSummary.from(ns1ArtifactId.toArtifactId())));
+      Assert.assertEquals(200, response.getResponseCode());
+    }
+
+    int count = 0;
+    String token = null;
+    boolean isLastPage = false;
+    boolean emptyListReceived = false;
+
+    while (!isLastPage) {
+      JsonObject result = getAppListForPaginatedApi(TEST_NAMESPACE1, 3, token, "");
+      int currentResultSize = result.get("applications").getAsJsonArray().size();
+      count += currentResultSize;
+      emptyListReceived = (currentResultSize == 0);
+      token = result.get("nextPageToken") == null ? null : result.get("nextPageToken").getAsString();
+      isLastPage = (token == null);
+    }
+    Assert.assertEquals(9, count);
+    Assert.assertTrue(emptyListReceived);
+
+    //delete app in testnamespace1
+    HttpResponse response = doDelete(getVersionedAPIPath("apps/",
+        Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getResponseCode());
+    List<JsonObject> apps = getAppList(TEST_NAMESPACE1);
+    Assert.assertEquals(0, apps.size());
+  }
+
+  @Test
+  public void testListAndGetForPaginatedAPIWithFiltering() throws Exception {
+    List<Integer> filteredIndices = new ArrayList<>(Arrays.asList(1, 2, 4, 5, 7, 9));
+    for (int i = 0; i < 10; i++) {
+      //deploy with name to testnamespace1
+      String ns1AppName = AllProgramsApp.NAME + i;
+      if (filteredIndices.contains(i)) {
+        ns1AppName = AllProgramsApp.NAME + "filter" + i;
+      }
+
+      Id.Namespace ns1 = Id.Namespace.from(TEST_NAMESPACE1);
+      Id.Artifact ns1ArtifactId = Id.Artifact.from(ns1, AllProgramsApp.class.getSimpleName(),
+          "1.0.0-SNAPSHOT");
+
+      HttpResponse response = addAppArtifact(ns1ArtifactId, AllProgramsApp.class);
+      Assert.assertEquals(200, response.getResponseCode());
+      Id.Application appId = Id.Application.from(ns1, ns1AppName);
+      response = deploy(appId,
+          new AppRequest<>(ArtifactSummary.from(ns1ArtifactId.toArtifactId())));
+      Assert.assertEquals(200, response.getResponseCode());
+    }
+
+    int count = 0;
+    String token = null;
+    boolean isLastPage = false;
+    boolean emptyListReceived = false;
+
+    while (!isLastPage) {
+      JsonObject result = getAppListForPaginatedApi(TEST_NAMESPACE1, 3, token, "filter");
+      int currentResultSize = result.get("applications").getAsJsonArray().size();
+      count += currentResultSize;
+      emptyListReceived = (currentResultSize == 0);
+      token = result.get("nextPageToken") == null ? null : result.get("nextPageToken").getAsString();
+      isLastPage = (token == null);
+    }
+    Assert.assertEquals(6, count);
+    Assert.assertTrue(emptyListReceived);
+
+    //delete app in testnamespace1
+    HttpResponse response = doDelete(getVersionedAPIPath("apps/",
+        Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getResponseCode());
+    List<JsonObject> apps = getAppList(TEST_NAMESPACE1);
+    Assert.assertEquals(0, apps.size());
   }
 
   @Test
