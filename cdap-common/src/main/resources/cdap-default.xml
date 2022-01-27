@@ -1478,6 +1478,14 @@
   </property>
 
   <property>
+    <name>app.streaming.batch.size</name>
+    <value>20</value>
+    <description>
+      Batch size for Batching Consumer for Scan Applications.
+    </description>
+  </property>
+
+  <property>
     <name>app.exec.threads</name>
     <value>20</value>
     <description>
