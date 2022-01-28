@@ -58,6 +58,7 @@ import io.cdap.cdap.etl.proto.connection.Connection;
 import io.cdap.cdap.etl.proto.connection.ConnectionBadRequestException;
 import io.cdap.cdap.etl.proto.connection.ConnectionCreationRequest;
 import io.cdap.cdap.etl.proto.connection.ConnectionId;
+import io.cdap.cdap.etl.proto.connection.ConnectionNotFoundException;
 import io.cdap.cdap.etl.proto.connection.ConnectorDetail;
 import io.cdap.cdap.etl.proto.connection.PluginDetail;
 import io.cdap.cdap.etl.proto.connection.PluginInfo;
@@ -68,7 +69,13 @@ import io.cdap.cdap.etl.proto.v2.ConnectionConfig;
 import io.cdap.cdap.etl.proto.validation.SimpleFailureCollector;
 import io.cdap.cdap.etl.spec.TrackedPluginSelector;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
+import io.cdap.cdap.proto.element.EntityType;
+import io.cdap.cdap.proto.id.ConnectionEntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.SystemAppEntityId;
+import io.cdap.cdap.proto.security.ApplicationPermission;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -103,6 +110,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
   private ConnectionStore store;
   private ConnectionConfig connectionConfig;
   private Set<String> disabledTypes;
+  private ContextAccessEnforcer contextAccessEnforcer;
 
   public ConnectionHandler(@Nullable ConnectionConfig connectionConfig) {
     this.connectionConfig = connectionConfig;
@@ -117,6 +125,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
   @Override
   public void initialize(SystemHttpServiceContext context) throws Exception {
     super.initialize(context);
+    contextAccessEnforcer = context.getContextAccessEnforcer();
     store = new ConnectionStore(context);
     String disabledTypesStr = context.getSpecification().getProperty(DISABLED_TYPES);
     this.disabledTypes = GSON.fromJson(disabledTypesStr, SET_STRING_TYPE);
@@ -136,6 +145,9 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
                             "Listing connections in system namespace is currently not supported");
         return;
       }
+
+      contextAccessEnforcer.enforceOnParent(EntityType.SYSTEM_APP_ENTITY, new NamespaceId(namespace),
+                                            StandardPermission.LIST);
       responder.sendJson(store.listConnections(namespaceSummary));
     });
   }
@@ -155,6 +167,9 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
                             "Getting connection in system namespace is currently not supported");
         return;
       }
+
+      contextAccessEnforcer.enforce(new ConnectionEntityId(namespace, ConnectionId.getConnectionId(connection)),
+                                    StandardPermission.GET);
       responder.sendJson(store.getConnection(new ConnectionId(namespaceSummary, connection)));
     });
   }
@@ -175,6 +190,9 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
         return;
       }
 
+      ConnectionId connectionId = new ConnectionId(namespaceSummary, connection);
+      checkPutConnectionPermissions(connectionId);
+
       ConnectionCreationRequest creationRequest =
         GSON.fromJson(StandardCharsets.UTF_8.decode(request.getContent()).toString(), ConnectionCreationRequest.class);
       String connType = creationRequest.getPlugin().getName();
@@ -182,7 +200,6 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
         throw new ConnectionBadRequestException(
           String.format("Connection type %s is disabled, connection cannot be created", connType));
       }
-      ConnectionId connectionId = new ConnectionId(namespaceSummary, connection);
 
       long now = System.currentTimeMillis();
       Connection connectionInfo = new Connection(connection, connectionId.getConnectionId(),
@@ -209,8 +226,10 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
                             "Deleting connection in system namespace is currently not supported");
         return;
       }
-
-      store.deleteConnection(new ConnectionId(namespaceSummary, connection));
+      ConnectionId connectionId = new ConnectionId(namespaceSummary, connection);
+      contextAccessEnforcer.enforce(new ConnectionEntityId(namespace, connectionId.getConnectionId()),
+                                    StandardPermission.DELETE);
+      store.deleteConnection(connectionId);
       responder.sendStatus(HttpURLConnection.HTTP_OK);
     });
   }
@@ -269,6 +288,9 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
         return;
       }
 
+      contextAccessEnforcer.enforce(new ConnectionEntityId(namespace, ConnectionId.getConnectionId(connection)),
+                                    ApplicationPermission.PREVIEW);
+
       BrowseRequest browseRequest =
         GSON.fromJson(StandardCharsets.UTF_8.decode(request.getContent()).toString(), BrowseRequest.class);
 
@@ -313,7 +335,8 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
                             "Sampling connection in system namespace is currently not supported");
         return;
       }
-
+      contextAccessEnforcer.enforce(new ConnectionEntityId(namespace, ConnectionId.getConnectionId(connection)),
+                                    ApplicationPermission.PREVIEW);
       SampleRequest sampleRequest =
         GSON.fromJson(StandardCharsets.UTF_8.decode(request.getContent()).toString(), SampleRequest.class);
 
@@ -387,6 +410,9 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
                             "Generating connector spec in system namespace is currently not supported");
         return;
       }
+
+      contextAccessEnforcer.enforce(new ConnectionEntityId(namespace, ConnectionId.getConnectionId(connection)),
+                                    ApplicationPermission.PREVIEW);
 
       SpecGenerationRequest specRequest =
         GSON.fromJson(StandardCharsets.UTF_8.decode(request.getContent()).toString(), SpecGenerationRequest.class);
@@ -462,5 +488,22 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
       throw new ConnectionBadRequestException(String.format("Unable to find connector '%s'", pluginInfo.getName()));
     }
     return connector;
+  }
+
+  private void checkPutConnectionPermissions(ConnectionId connectionId) {
+    boolean connectionExists;
+    try {
+      store.getConnection(connectionId);
+      connectionExists = true;
+    } catch (ConnectionNotFoundException e) {
+      connectionExists = false;
+    }
+    if (connectionExists) {
+      contextAccessEnforcer.enforce(new ConnectionEntityId(connectionId.getNamespace().getName(),
+                                                           connectionId.getConnectionId()), StandardPermission.UPDATE);
+    } else {
+      contextAccessEnforcer.enforce(new ConnectionEntityId(connectionId.getNamespace().getName(),
+                                                           connectionId.getConnectionId()), StandardPermission.CREATE);
+    }
   }
 }

@@ -289,7 +289,17 @@ public class Authorizable {
           entityParts.put(entityType, parts.get(index - 1) + "." + parts.get(index));
         }
         break;
-      default:
+      case SYSTEM_APP_ENTITY:
+        if (parts.size() != 4 && index == (parts.size() - 1)) {
+          throw new IllegalArgumentException("Entity value is missing some parts or containing more parts. " +
+                                               "Expected: <namespace-name>.<app-name>.* or " +
+                                               "<namespace-name>.<app-name>.<entity-type>.<entity-name>, " +
+                                               "given entity: " + parts);
+        }
+        checkParts(EntityType.NAMESPACE, parts, index - 3, entityParts);
+        entityParts.put(entityType, parts.get(index - 2) + "." + parts.get(index - 1) + "." + parts.get(index));
+        break;
+        default:
         // although it should never happen
         throw new IllegalArgumentException(String.format("Entity type %s does not support authorization.", entityType));
     }
