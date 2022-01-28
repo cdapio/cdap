@@ -57,6 +57,7 @@ import com.google.cloud.dataproc.v1.ShieldedInstanceConfig;
 import com.google.cloud.dataproc.v1.SoftwareConfig;
 import com.google.cloud.dataproc.v1.UpdateClusterRequest;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsClient;
 import com.google.protobuf.Duration;
@@ -67,10 +68,13 @@ import io.cdap.cdap.runtime.spi.common.IPRange;
 import io.cdap.cdap.runtime.spi.provisioner.Node;
 import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
+import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.SocketTimeoutException;
 import java.security.GeneralSecurityException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -80,6 +84,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -107,6 +112,9 @@ class DataprocClient implements AutoCloseable {
   private static final int PARTITION_NUM_FACTOR = 32;
   private static final int MIN_INITIAL_PARTITIONS_DEFAULT = 128;
   private static final int MAX_INITIAL_PARTITIONS_DEFAULT = 8192;
+  private static final Set<String> ERROR_INFO_REASONS = ImmutableSet.of(
+    "rateLimitExceeded",
+    "resourceQuotaExceeded");
   private final DataprocConf conf;
   private final ClusterControllerClient client;
   private final Compute compute;
@@ -156,8 +164,8 @@ class DataprocClient implements AutoCloseable {
     }
   }
 
-  private static DataprocClient getDataprocClient(DataprocConf conf,
-                                                  boolean requireNetwork) throws IOException, GeneralSecurityException {
+  private static DataprocClient getDataprocClient(DataprocConf conf, boolean requireNetwork)
+    throws IOException, GeneralSecurityException, RetryableProvisionException {
     ClusterControllerClient client = getClusterControllerClient(conf);
     Compute compute = getCompute(conf);
 
@@ -274,9 +282,16 @@ class DataprocClient implements AutoCloseable {
         String.format("a subnet named '%s", subnet), network, region));
   }
 
-  private static String findNetwork(String project, Compute compute) throws IOException {
-    NetworkList networkList = compute.networks().list(project).execute();
-    List<Network> networks = networkList.getItems();
+  private static String findNetwork(String project, Compute compute) throws IOException, RetryableProvisionException {
+    List<Network> networks;
+    try {
+      NetworkList networkList = compute.networks().list(project).execute();
+      networks = networkList.getItems();
+    } catch (Exception e) {
+      handleRetryableExceptions(e);
+      throw e;
+    }
+
     if (networks == null || networks.isEmpty()) {
       throw new IllegalArgumentException(String.format("Unable to find any networks in project '%s'. "
                                                          + "Please create a network in the project.", project));
@@ -291,8 +306,16 @@ class DataprocClient implements AutoCloseable {
     return networks.iterator().next().getName();
   }
 
-  private static Network getNetworkInfo(String project, String network, Compute compute) throws IOException {
-    Network networkObj = compute.networks().get(project, network).execute();
+  private static Network getNetworkInfo(String project, String network, Compute compute)
+    throws IOException, RetryableProvisionException {
+    Network networkObj;
+    try {
+      networkObj = compute.networks().get(project, network).execute();
+    } catch (Exception e) {
+      handleRetryableExceptions(e);
+      throw e;
+    }
+
     if (networkObj == null) {
       throw new IllegalArgumentException(String.format("Unable to find network '%s' in project '%s'. "
                                                          + "Please specify another network.", network, project));
@@ -882,11 +905,18 @@ class DataprocClient implements AutoCloseable {
    * @return a {@link Collection} of tags that need to be added to the VM to have those firewall rules applies
    * @throws IOException If failed to discover those firewall rules
    */
-  private List<String> getFirewallTargetTags(Network network, boolean useInternalIP) throws IOException {
-    FirewallList firewalls = compute.firewalls().list(conf.getNetworkHostProjectID()).execute();
+  private List<String> getFirewallTargetTags(Network network, boolean useInternalIP)
+    throws IOException, RetryableProvisionException {
+    FirewallList firewalls;
+    try {
+      firewalls = compute.firewalls().list(conf.getNetworkHostProjectID()).execute();
+    } catch (Exception e) {
+      handleRetryableExceptions(e);
+      throw e;
+    }
+
     List<String> tags = new ArrayList<>();
     Set<FirewallPort> requiredPorts = EnumSet.allOf(FirewallPort.class);
-
     // Iterate all firewall rules and see if it has ingress rules for all required firewall port.
     for (Firewall firewall : Optional.ofNullable(firewalls.getItems()).orElse(Collections.emptyList())) {
       // network is a url like https://www.googleapis.com/compute/v1/projects/<project>/<region>/networks/<name>
@@ -1057,6 +1087,33 @@ class DataprocClient implements AutoCloseable {
     }
     throw new DataprocRuntimeException(e);
   }
+
+  //Throws retryable Exception for the cases that are transient in nature
+  private static void handleRetryableExceptions(Exception e) throws RetryableProvisionException {
+    // if there was an SocketTimeoutException ( read time out ) , we can just try again
+    if (e instanceof SocketTimeoutException) {
+      throw new RetryableProvisionException(e);
+    }
+
+    //Attempt retry in case of rate limit errors and service unavailable
+    if (e instanceof GoogleJsonResponseException) {
+      GoogleJsonResponseException gError = ((GoogleJsonResponseException) e);
+      int statusCode = gError.getStatusCode();
+
+      if (statusCode == HttpURLConnection.HTTP_UNAVAILABLE) {
+        throw new RetryableProvisionException(e);
+      }
+
+      if (statusCode == HttpURLConnection.HTTP_FORBIDDEN || statusCode == DataprocUtils.RESOURCE_EXHAUSTED) {
+        boolean isRetryAble = gError.getDetails().getErrors().stream()
+          .anyMatch(errorInfo -> ERROR_INFO_REASONS.contains(errorInfo.getReason()));
+        if (isRetryAble) {
+          throw new RetryableProvisionException(e);
+        }
+      }
+    }
+  }
+
 
   /**
    * Firewall ports that we're concerned about.
