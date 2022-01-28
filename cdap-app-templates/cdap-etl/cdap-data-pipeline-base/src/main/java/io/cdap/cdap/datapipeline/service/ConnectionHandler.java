@@ -34,6 +34,9 @@ import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import io.cdap.cdap.api.service.http.ServicePluginConfigurer;
 import io.cdap.cdap.api.service.http.SystemHttpServiceContext;
+import io.cdap.cdap.api.service.worker.RemoteExecutionException;
+import io.cdap.cdap.api.service.worker.RemoteTaskException;
+import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.datapipeline.connection.ConnectionStore;
 import io.cdap.cdap.datapipeline.connection.DefaultConnectorConfigurer;
 import io.cdap.cdap.datapipeline.connection.DefaultConnectorContext;
@@ -81,6 +84,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -227,30 +231,38 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
         return;
       }
 
-      ConnectionCreationRequest creationRequest =
-        GSON.fromJson(StandardCharsets.UTF_8.decode(request.getContent()).toString(), ConnectionCreationRequest.class);
+      String testRequestString = StandardCharsets.UTF_8.decode(request.getContent()).toString();
+      ConnectionCreationRequest testRequest = GSON.fromJson(testRequestString, ConnectionCreationRequest.class);
 
-      ServicePluginConfigurer pluginConfigurer =
-        getContext().createServicePluginConfigurer(namespaceSummary.getName());
-      ConnectorConfigurer connectorConfigurer = new DefaultConnectorConfigurer(pluginConfigurer);
-      SimpleFailureCollector failureCollector = new SimpleFailureCollector();
-      ConnectorContext connectorContext = new DefaultConnectorContext(failureCollector, pluginConfigurer);
-      TrackedPluginSelector pluginSelector = new TrackedPluginSelector(
-        new ArtifactSelectorProvider().getPluginSelector(creationRequest.getPlugin().getArtifact()));
-      try (Connector connector = getConnector(pluginConfigurer, creationRequest.getPlugin(),
-                                              namespaceSummary.getName(), pluginSelector)) {
-        connector.configure(connectorConfigurer);
-        try {
-          connector.test(connectorContext);
-          failureCollector.getOrThrowException();
-        } catch (ValidationException e) {
-          responder.sendJson(e.getFailures());
-          return;
-        }
+      if (getContext().isRemoteTaskEnabled()) {
+        executeRemotely(namespace, testRequestString, null, RemoteConnectionTestTask.class, responder);
+      } else {
+        testLocally(namespaceSummary.getName(), testRequest, responder);
       }
-
-      responder.sendStatus(HttpURLConnection.HTTP_OK);
     });
+  }
+
+  private void testLocally(String namespace, ConnectionCreationRequest creationRequest,
+                           HttpServiceResponder responder) throws IOException {
+    ServicePluginConfigurer pluginConfigurer =
+      getContext().createServicePluginConfigurer(namespace);
+    ConnectorConfigurer connectorConfigurer = new DefaultConnectorConfigurer(pluginConfigurer);
+    SimpleFailureCollector failureCollector = new SimpleFailureCollector();
+    ConnectorContext connectorContext = new DefaultConnectorContext(failureCollector, pluginConfigurer);
+    TrackedPluginSelector pluginSelector = new TrackedPluginSelector(
+      new ArtifactSelectorProvider().getPluginSelector(creationRequest.getPlugin().getArtifact()));
+    try (Connector connector = getConnector(pluginConfigurer, creationRequest.getPlugin(),
+                                            namespace, pluginSelector)) {
+      connector.configure(connectorConfigurer);
+      try {
+        connector.test(connectorContext);
+        failureCollector.getOrThrowException();
+      } catch (ValidationException e) {
+        responder.sendJson(e.getFailures());
+        return;
+      }
+    }
+    responder.sendStatus(HttpURLConnection.HTTP_OK);
   }
 
   /**
@@ -269,8 +281,8 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
         return;
       }
 
-      BrowseRequest browseRequest =
-        GSON.fromJson(StandardCharsets.UTF_8.decode(request.getContent()).toString(), BrowseRequest.class);
+      String browseRequestString = StandardCharsets.UTF_8.decode(request.getContent()).toString();
+      BrowseRequest browseRequest = GSON.fromJson(browseRequestString, BrowseRequest.class);
 
       if (browseRequest == null) {
         responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST, "The request body is empty");
@@ -282,20 +294,29 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
         return;
       }
 
-      ServicePluginConfigurer pluginConfigurer =
-        getContext().createServicePluginConfigurer(namespaceSummary.getName());
-      ConnectorConfigurer connectorConfigurer = new DefaultConnectorConfigurer(pluginConfigurer);
-      ConnectorContext connectorContext = new DefaultConnectorContext(new SimpleFailureCollector(), pluginConfigurer);
       Connection conn = store.getConnection(new ConnectionId(namespaceSummary, connection));
 
-      TrackedPluginSelector pluginSelector = new TrackedPluginSelector(
-        new ArtifactSelectorProvider().getPluginSelector(conn.getPlugin().getArtifact()));
-      try (Connector connector = getConnector(pluginConfigurer, conn.getPlugin(), namespaceSummary.getName(),
-                                              pluginSelector)) {
-        connector.configure(connectorConfigurer);
-        responder.sendJson(connector.browse(connectorContext, browseRequest));
+      if (getContext().isRemoteTaskEnabled()) {
+        executeRemotely(namespace, browseRequestString, conn, RemoteConnectionBrowseTask.class, responder);
+      } else {
+        browseLocally(namespaceSummary.getName(), browseRequest, conn, responder);
       }
     });
+  }
+
+  private void browseLocally(String namespace, BrowseRequest browseRequest,
+                             Connection conn, HttpServiceResponder responder) throws IOException {
+    ServicePluginConfigurer pluginConfigurer =
+      getContext().createServicePluginConfigurer(namespace);
+    ConnectorConfigurer connectorConfigurer = new DefaultConnectorConfigurer(pluginConfigurer);
+    ConnectorContext connectorContext = new DefaultConnectorContext(new SimpleFailureCollector(), pluginConfigurer);
+
+    TrackedPluginSelector pluginSelector = new TrackedPluginSelector(
+      new ArtifactSelectorProvider().getPluginSelector(conn.getPlugin().getArtifact()));
+    try (Connector connector = getConnector(pluginConfigurer, conn.getPlugin(), namespace, pluginSelector)) {
+      connector.configure(connectorConfigurer);
+      responder.sendJson(connector.browse(connectorContext, browseRequest));
+    }
   }
 
   /**
@@ -314,8 +335,8 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
         return;
       }
 
-      SampleRequest sampleRequest =
-        GSON.fromJson(StandardCharsets.UTF_8.decode(request.getContent()).toString(), SampleRequest.class);
+      String sampleRequestString = StandardCharsets.UTF_8.decode(request.getContent()).toString();
+      SampleRequest sampleRequest = GSON.fromJson(sampleRequestString, SampleRequest.class);
 
       if (sampleRequest == null) {
         responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST, "The request body is empty");
@@ -332,44 +353,46 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
         return;
       }
 
-      ServicePluginConfigurer pluginConfigurer =
-        getContext().createServicePluginConfigurer(namespaceSummary.getName());
-      ConnectorConfigurer connectorConfigurer = new DefaultConnectorConfigurer(pluginConfigurer);
-      ConnectorContext connectorContext = new DefaultConnectorContext(new SimpleFailureCollector(), pluginConfigurer);
       Connection conn = store.getConnection(new ConnectionId(namespaceSummary, connection));
 
-      PluginInfo plugin = conn.getPlugin();
-      // use tracked selector to get exact plugin version that gets selected since the passed version can be null
-      TrackedPluginSelector pluginSelector = new TrackedPluginSelector(
-        new ArtifactSelectorProvider().getPluginSelector(plugin.getArtifact()));
-      try (Connector connector = getConnector(pluginConfigurer, plugin, namespaceSummary.getName(), pluginSelector)) {
-        connector.configure(connectorConfigurer);
-        ConnectorSpecRequest specRequest = ConnectorSpecRequest.builder().setPath(sampleRequest.getPath())
-                                             .setConnection(connection)
-                                             .setProperties(sampleRequest.getProperties()).build();
-        ConnectorSpec spec = connector.generateSpec(connectorContext, specRequest);
-        ConnectorDetail detail = getConnectorDetail(pluginSelector.getSelectedArtifact(), spec);
-
-        if (connector instanceof DirectConnector) {
-          DirectConnector directConnector = (DirectConnector) connector;
-          List<StructuredRecord> sample = directConnector.sample(connectorContext, sampleRequest);
-          responder.sendString(GSON.toJson(
-            new SampleResponse(detail, sample.isEmpty() ? null : sample.get(0).getSchema(), sample)));
-          return;
-        }
-        if (connector instanceof BatchConnector) {
-          LimitingConnector limitingConnector = new LimitingConnector((BatchConnector) connector, pluginConfigurer);
-          List<StructuredRecord> sample = limitingConnector.sample(connectorContext, sampleRequest);
-          responder.sendString(GSON.toJson(
-            new SampleResponse(detail, sample.isEmpty() ? null : sample.get(0).getSchema(), sample)));
-          return;
-        }
-        // should not happen
-        responder.sendError(
-          HttpURLConnection.HTTP_BAD_REQUEST,
-          "Connector is not supported. The supported connector should be DirectConnector or BatchConnector.");
+      if (getContext().isRemoteTaskEnabled()) {
+        executeRemotely(namespace, sampleRequestString, conn, RemoteConnectionSampleTask.class, responder);
+      } else {
+        sampleLocally(namespaceSummary.getName(), sampleRequestString, conn, responder);
       }
     });
+  }
+
+  private void sampleLocally(String namespace, String sampleRequestString,
+                             Connection conn, HttpServiceResponder responder) throws IOException {
+    SampleRequest sampleRequest = GSON.fromJson(sampleRequestString, SampleRequest.class);
+
+    ServicePluginConfigurer pluginConfigurer =
+      getContext().createServicePluginConfigurer(namespace);
+    ConnectorConfigurer connectorConfigurer = new DefaultConnectorConfigurer(pluginConfigurer);
+    ConnectorContext connectorContext = new DefaultConnectorContext(new SimpleFailureCollector(), pluginConfigurer);
+
+    PluginInfo plugin = conn.getPlugin();
+    // use tracked selector to get exact plugin version that gets selected since the passed version can be null
+    TrackedPluginSelector pluginSelector = new TrackedPluginSelector(
+      new ArtifactSelectorProvider().getPluginSelector(plugin.getArtifact()));
+    try (Connector connector = getConnector(pluginConfigurer, plugin, namespace, pluginSelector)) {
+      connector.configure(connectorConfigurer);
+      ConnectorSpecRequest specRequest = ConnectorSpecRequest.builder().setPath(sampleRequest.getPath())
+        .setConnection(conn.getName())
+        .setProperties(sampleRequest.getProperties()).build();
+      ConnectorSpec spec = connector.generateSpec(connectorContext, specRequest);
+      ConnectorDetail detail = getConnectorDetail(pluginSelector.getSelectedArtifact(), spec);
+
+      try {
+        SampleResponse sampleResponse = ConnectionUtils.getSampleResponse(connector, connectorContext, sampleRequest,
+                                                                          detail, pluginConfigurer);
+        responder.sendString(GSON.toJson(sampleResponse));
+      } catch (BadRequestException e) {
+        // should not happen
+        responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
+      }
+    }
   }
 
   /**
@@ -388,8 +411,8 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
         return;
       }
 
-      SpecGenerationRequest specRequest =
-        GSON.fromJson(StandardCharsets.UTF_8.decode(request.getContent()).toString(), SpecGenerationRequest.class);
+      String specGenerationRequestString = StandardCharsets.UTF_8.decode(request.getContent()).toString();
+      SpecGenerationRequest specRequest = GSON.fromJson(specGenerationRequestString, SpecGenerationRequest.class);
 
       if (specRequest == null) {
         responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST, "The request body is empty");
@@ -400,26 +423,35 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
         responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST, "Path is not provided in the sample request");
         return;
       }
-
-      ServicePluginConfigurer pluginConfigurer =
-        getContext().createServicePluginConfigurer(namespaceSummary.getName());
-      ConnectorConfigurer connectorConfigurer = new DefaultConnectorConfigurer(pluginConfigurer);
-      ConnectorContext connectorContext = new DefaultConnectorContext(new SimpleFailureCollector(), pluginConfigurer);
       Connection conn = store.getConnection(new ConnectionId(namespaceSummary, connection));
 
-      // use tracked selector to get exact plugin version that gets selected since the passed version can be null
-      TrackedPluginSelector pluginSelector = new TrackedPluginSelector(
-        new ArtifactSelectorProvider().getPluginSelector(conn.getPlugin().getArtifact()));
-      try (Connector connector = getConnector(pluginConfigurer, conn.getPlugin(), namespaceSummary.getName(),
-                                              pluginSelector)) {
-        connector.configure(connectorConfigurer);
-        ConnectorSpecRequest connectorSpecRequest = ConnectorSpecRequest.builder().setPath(specRequest.getPath())
-                                                      .setConnection(connection)
-                                                      .setProperties(specRequest.getProperties()).build();
-        ConnectorSpec spec = connector.generateSpec(connectorContext, connectorSpecRequest);
-        responder.sendString(GSON.toJson(getConnectorDetail(pluginSelector.getSelectedArtifact(), spec)));
+      if (getContext().isRemoteTaskEnabled()) {
+        executeRemotely(namespace, specGenerationRequestString, conn, RemoteConnectionSpecTask.class, responder);
+      } else {
+        specGenerationLocally(namespaceSummary.getName(), specRequest, conn, responder);
       }
     });
+  }
+
+  private void specGenerationLocally(String namespace, SpecGenerationRequest specRequest,
+                                     Connection conn, HttpServiceResponder responder) throws IOException {
+    ServicePluginConfigurer pluginConfigurer =
+      getContext().createServicePluginConfigurer(namespace);
+    ConnectorConfigurer connectorConfigurer = new DefaultConnectorConfigurer(pluginConfigurer);
+    ConnectorContext connectorContext = new DefaultConnectorContext(new SimpleFailureCollector(), pluginConfigurer);
+
+    // use tracked selector to get exact plugin version that gets selected since the passed version can be null
+    TrackedPluginSelector pluginSelector = new TrackedPluginSelector(
+      new ArtifactSelectorProvider().getPluginSelector(conn.getPlugin().getArtifact()));
+    try (Connector connector = getConnector(pluginConfigurer, conn.getPlugin(), namespace,
+                                            pluginSelector)) {
+      connector.configure(connectorConfigurer);
+      ConnectorSpecRequest connectorSpecRequest = ConnectorSpecRequest.builder().setPath(specRequest.getPath())
+        .setConnection(conn.getName())
+        .setProperties(specRequest.getProperties()).build();
+      ConnectorSpec spec = connector.generateSpec(connectorContext, connectorSpecRequest);
+      responder.sendString(GSON.toJson(getConnectorDetail(pluginSelector.getSelectedArtifact(), spec)));
+    }
   }
 
   private ConnectorDetail getConnectorDetail(ArtifactId artifactId, ConnectorSpec spec) {
@@ -448,19 +480,39 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
                                  .setEscaping(false)
                                  .setFunctionWhitelist(evaluators.keySet())
                                  .build();
-    Connector connector;
-    try {
-      connector = configurer.usePlugin(pluginInfo.getType(), pluginInfo.getName(), UUID.randomUUID().toString(),
-                                       PluginProperties.builder().addAll(pluginInfo.getProperties()).build(),
-                                       pluginSelector, macroEvaluator, options);
-    } catch (InvalidPluginConfigException e) {
-      throw new ConnectionBadRequestException(
-        String.format("Unable to instantiate connector plugin: %s", e.getMessage()), e);
-    }
+    return ConnectionUtils.getConnector(configurer, pluginInfo, pluginSelector, macroEvaluator, options);
+  }
 
-    if (connector == null) {
-      throw new ConnectionBadRequestException(String.format("Unable to find connector '%s'", pluginInfo.getName()));
+  /**
+   * Common method for all remote executions.
+   * Remote request is created, executed and response is added to {@link HttpServiceResponder}
+   * @param namespace namespace string
+   * @param request Serialized request string
+   * @param connection {@link Connection} details if present
+   * @param remoteExecutionTaskClass Remote execution task class
+   * @param responder {@link HttpServiceResponder} for the http request.
+   * @throws IOException
+   */
+  private void executeRemotely(String namespace, String request, @Nullable Connection connection,
+                               Class<? extends RemoteConnectionTaskBase> remoteExecutionTaskClass,
+                               HttpServiceResponder responder) throws IOException {
+    RemoteConnectionRequest remoteRequest = new RemoteConnectionRequest(namespace, request, connection);
+    RunnableTaskRequest runnableTaskRequest =
+      RunnableTaskRequest.getBuilder(remoteExecutionTaskClass.getName()).
+        withParam(GSON.toJson(remoteRequest)).
+        build();
+    try {
+      byte[] bytes = getContext().runTask(runnableTaskRequest);
+      if (bytes == null) {
+        responder.sendStatus(HttpURLConnection.HTTP_OK);
+      } else {
+        responder.sendString(new String(bytes, StandardCharsets.UTF_8));
+      }
+    } catch (RemoteExecutionException e) {
+      RemoteTaskException remoteTaskException = e.getCause();
+      responder.sendError(HttpURLConnection.HTTP_INTERNAL_ERROR, remoteTaskException.getMessage());
+    } catch (Exception e) {
+      responder.sendError(HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
     }
-    return connector;
   }
 }
