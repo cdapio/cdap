@@ -51,6 +51,11 @@ public final class DataprocUtils {
 
   public static final String CDAP_GCS_ROOT = "cdap-job";
 
+  /**
+   * HTTP Status-Code 429: RESOURCE_EXHAUSTED.
+   */
+  public static final int RESOURCE_EXHAUSTED = 403;
+
   private static final Logger LOG = LoggerFactory.getLogger(DataprocUtils.class);
   private static final String GS_PREFIX = "gs://";
 
