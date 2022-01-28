@@ -50,7 +50,7 @@ public class ScheduledRunRecordCorrectorService extends RunRecordCorrectorServic
   ScheduledRunRecordCorrectorService(CConfiguration cConf, Store store, ProgramStateWriter programStateWriter,
                                      ProgramRuntimeService runtimeService, NamespaceAdmin namespaceAdmin,
                                      DatasetFramework datasetFramework) {
-    this(cConf, store, programStateWriter, runtimeService, namespaceAdmin, datasetFramework, 300L, null, false);
+    this(cConf, store, programStateWriter, runtimeService, namespaceAdmin, datasetFramework, 30L, null, false);
   }
 
   ScheduledRunRecordCorrectorService(CConfiguration cConf, Store store, ProgramStateWriter programStateWriter,

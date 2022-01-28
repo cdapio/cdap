@@ -25,6 +25,7 @@ import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreData;
 import io.cdap.cdap.api.security.store.SecureStoreMetadata;
+import io.cdap.cdap.api.service.http.ServicePluginConfigurer;
 import io.cdap.cdap.api.service.worker.SystemAppTaskContext;
 import io.cdap.cdap.app.services.AbstractServiceDiscoverer;
 import io.cdap.cdap.common.NotFoundException;
@@ -35,7 +36,7 @@ import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.common.utils.DirUtils;
-import io.cdap.cdap.internal.app.DefaultPluginConfigurer;
+import io.cdap.cdap.internal.app.DefaultServicePluginConfigurer;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
@@ -71,6 +72,7 @@ public class DefaultSystemAppTaskContext extends AbstractServiceDiscoverer imple
   private final File pluginsDir;
   private final io.cdap.cdap.proto.id.ArtifactId protoArtifactId;
   private final RemoteClientFactory remoteClientFactory;
+  private final ClassLoader artifactClassLoader;
 
   DefaultSystemAppTaskContext(CConfiguration cConf, PreferencesFetcher preferencesFetcher, PluginFinder pluginFinder,
                               SecureStore secureStore, String artifactNameSpace, ArtifactId artifactId,
@@ -84,6 +86,7 @@ public class DefaultSystemAppTaskContext extends AbstractServiceDiscoverer imple
     this.pluginFinder = pluginFinder;
     this.secureStore = secureStore;
     this.remoteClientFactory = remoteClientFactory;
+    this.artifactClassLoader = artifactClassLoader;
     this.artifactManager = artifactManagerFactory.create(new NamespaceId(artifactNameSpace), retryStrategy);
     this.pluginsDir = createTempFolder();
     this.instantiator = new PluginInstantiator(cConf, artifactClassLoader, pluginsDir, true);
@@ -112,7 +115,14 @@ public class DefaultSystemAppTaskContext extends AbstractServiceDiscoverer imple
 
   @Override
   public PluginConfigurer createPluginConfigurer(String namespace) {
-    return new DefaultPluginConfigurer(protoArtifactId, new NamespaceId(namespace), instantiator, pluginFinder);
+    return createServicePluginConfigurer(namespace);
+  }
+
+  @Override
+  public ServicePluginConfigurer createServicePluginConfigurer(String namespace) {
+    return new DefaultServicePluginConfigurer(protoArtifactId, new NamespaceId(namespace),
+                                              instantiator, pluginFinder,
+                                              artifactClassLoader);
   }
 
   @Override
