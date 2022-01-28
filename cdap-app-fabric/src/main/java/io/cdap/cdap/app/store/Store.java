@@ -330,8 +330,9 @@ public interface Store {
    * @param txBatchSize maximum number of applications to scan in one transaction to
    *                    prevent holding a single transaction for too long
    * @param consumer a {@link BiConsumer} to consume each application being scanned
+   * @return if limit was reached (true) or all items were scanned before reaching the limit (false)
    */
-  void scanApplications(ScanApplicationsRequest request, int txBatchSize,
+  boolean scanApplications(ScanApplicationsRequest request, int txBatchSize,
                         BiConsumer<ApplicationId, ApplicationSpecification> consumer);
 
   /**

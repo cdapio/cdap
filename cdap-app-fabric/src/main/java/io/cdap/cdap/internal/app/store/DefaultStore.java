@@ -578,22 +578,23 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void scanApplications(ScanApplicationsRequest request, int txBatchSize,
+  public boolean scanApplications(ScanApplicationsRequest request, int txBatchSize,
                                BiConsumer<ApplicationId, ApplicationSpecification> consumer) {
 
     AtomicReference<ScanApplicationsRequest> requestRef = new AtomicReference<>(request);
+    AtomicReference<ApplicationId> lastKey = new AtomicReference<>();
+    AtomicInteger currentLimit = new AtomicInteger(request.getLimit());
 
-    while (true) {
+    while (currentLimit.get() > 0) {
       AtomicInteger count = new AtomicInteger();
 
       try {
         TransactionRunners.run(transactionRunner, context -> {
           getAppMetadataStore(context).scanApplications(requestRef.get(), entry -> {
-            ScanApplicationsRequest nextBatchRequest = ScanApplicationsRequest
-              .builder(requestRef.get()).setScanFrom(entry.getKey()).build();
-            requestRef.set(nextBatchRequest);
+            lastKey.set(entry.getKey());
+            currentLimit.decrementAndGet();
             consumer.accept(entry.getKey(), entry.getValue().getSpec());
-            return count.incrementAndGet() < txBatchSize;
+            return count.incrementAndGet() < txBatchSize && currentLimit.get() > 0;
           });
         });
       } catch (UnsupportedOperationException e) {
@@ -603,10 +604,18 @@ public class DefaultStore implements Store {
         scanApplicationwWithReorder(requestRef.get(), txBatchSize, consumer);
       }
 
-      if (count.get() == 0) {
+      if (lastKey.get() == null) {
         break;
       }
+      ScanApplicationsRequest nextBatchRequest = ScanApplicationsRequest
+        .builder(requestRef.get())
+        .setScanFrom(lastKey.get())
+        .setLimit(currentLimit.get())
+        .build();
+      requestRef.set(nextBatchRequest);
+      lastKey.set(null);
     }
+    return currentLimit.get() == 0;
   }
 
   /**
@@ -621,13 +630,18 @@ public class DefaultStore implements Store {
       .setSortOrder(SortOrder.ASC)
       .setScanFrom(request.getScanTo())
       .setScanTo(request.getScanFrom())
+      .setLimit(Integer.MAX_VALUE)
       .build());
     AtomicBoolean needMoreScans = new AtomicBoolean(true);
-    Deque<ApplicationId> ids = new ArrayDeque<>(maxReorderBatch);
+    Deque<ApplicationId> ids = new ArrayDeque<>(1 + Math.min(maxReorderBatch, request.getLimit()));
+    AtomicInteger currentLimit = new AtomicInteger(request.getLimit());
     while (needMoreScans.get()) {
       needMoreScans.set(false);
       TransactionRunners.run(transactionRunner, context -> {
         getAppMetadataStore(context).scanApplications(forwardRequest.get(), entry -> {
+          if (ids.size() >= currentLimit.get()) {
+            ids.removeFirst();
+          }
           if (ids.size() >= maxReorderBatch) {
             ids.removeFirst();
             needMoreScans.set(true);
@@ -647,6 +661,7 @@ public class DefaultStore implements Store {
           for (int i = 0; !ids.isEmpty() && i < txBatchSize; i++) {
             ApplicationId id = ids.removeLast();
             consumer.accept(id, getApplicationSpec(getAppMetadataStore(context), id));
+            currentLimit.decrementAndGet();
           }
         });
       }
