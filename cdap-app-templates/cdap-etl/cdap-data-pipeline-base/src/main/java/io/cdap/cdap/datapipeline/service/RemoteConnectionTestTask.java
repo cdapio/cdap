@@ -18,6 +18,8 @@ package io.cdap.cdap.datapipeline.service;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.service.http.ServicePluginConfigurer;
@@ -26,27 +28,31 @@ import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.api.service.worker.SystemAppTaskContext;
 import io.cdap.cdap.datapipeline.connection.DefaultConnectorConfigurer;
 import io.cdap.cdap.datapipeline.connection.DefaultConnectorContext;
-import io.cdap.cdap.etl.api.connector.BrowseDetail;
-import io.cdap.cdap.etl.api.connector.BrowseRequest;
 import io.cdap.cdap.etl.api.connector.Connector;
+import io.cdap.cdap.etl.api.connector.ConnectorConfigurer;
 import io.cdap.cdap.etl.api.connector.ConnectorContext;
+import io.cdap.cdap.etl.api.validation.ValidationException;
 import io.cdap.cdap.etl.common.ArtifactSelectorProvider;
 import io.cdap.cdap.etl.common.BasicArguments;
 import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
 import io.cdap.cdap.etl.common.OAuthMacroEvaluator;
 import io.cdap.cdap.etl.common.SecureStoreMacroEvaluator;
 import io.cdap.cdap.etl.proto.connection.Connection;
+import io.cdap.cdap.etl.proto.connection.ConnectionCreationRequest;
 import io.cdap.cdap.etl.proto.connection.PluginInfo;
 import io.cdap.cdap.etl.proto.validation.SimpleFailureCollector;
 import io.cdap.cdap.etl.spec.TrackedPluginSelector;
+import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
 
 /**
  * {@link RunnableTask} for remote connection browsing
  */
-public class RemoteConnectionBrowseTask implements RunnableTask {
+public class RemoteConnectionTestTask implements RunnableTask {
 
   private static final Gson GSON = new Gson();
 
@@ -55,25 +61,31 @@ public class RemoteConnectionBrowseTask implements RunnableTask {
     //Get SystemAppTaskContext
     SystemAppTaskContext systemAppContext = context.getRunnableTaskSystemAppContext();
     //De serialize all requests
-    RemoteConnectionBrowseRequest connectionBrowseRequest = GSON.fromJson(context.getParam(),
-                                                                          RemoteConnectionBrowseRequest.class);
-    String namespace = connectionBrowseRequest.getNamespace();
-    BrowseRequest browseRequest = GSON.fromJson(connectionBrowseRequest.getBrowseRequest(), BrowseRequest.class);
-    Connection connection = connectionBrowseRequest.getConnection();
+    RemoteConnectionTestRequest remoteConnectionTestRequest =
+      GSON.fromJson(context.getParam(),
+                    RemoteConnectionTestRequest.class);
 
-    //Plugin selector and configurer
+    String namespace = remoteConnectionTestRequest.getNamespace();
+
+    ConnectionCreationRequest connectionCreationRequest =
+      GSON.fromJson(remoteConnectionTestRequest.getConnectionCreationRequest(), ConnectionCreationRequest.class);
+
+    ServicePluginConfigurer pluginConfigurer = systemAppContext.createServicePluginConfigurer(namespace);
+    ConnectorConfigurer connectorConfigurer = new DefaultConnectorConfigurer(pluginConfigurer);
+    SimpleFailureCollector failureCollector = new SimpleFailureCollector();
+    ConnectorContext connectorContext = new DefaultConnectorContext(failureCollector, pluginConfigurer);
     TrackedPluginSelector pluginSelector = new TrackedPluginSelector(
-      new ArtifactSelectorProvider().getPluginSelector(connection.getPlugin().getArtifact()));
-    ServicePluginConfigurer servicePluginConfigurer = systemAppContext.createServicePluginConfigurer(namespace);
-    try (Connector connector = getConnector(systemAppContext, servicePluginConfigurer, connection.getPlugin(),
+      new ArtifactSelectorProvider().getPluginSelector(connectionCreationRequest.getPlugin().getArtifact()));
+    try (Connector connector = getConnector(systemAppContext, pluginConfigurer, connectionCreationRequest.getPlugin(),
                                             namespace, pluginSelector)) {
-    //configure and browse
-      connector.configure(new DefaultConnectorConfigurer(servicePluginConfigurer));
-      ConnectorContext connectorContext = new DefaultConnectorContext(new SimpleFailureCollector(),
-                                                                      servicePluginConfigurer);
-      BrowseDetail browseDetail = connector.browse(connectorContext, browseRequest);
-      //serialize the result as json and write the bytes
-      context.writeResult(GSON.toJson(browseDetail).getBytes());
+      connector.configure(connectorConfigurer);
+      try {
+        connector.test(connectorContext);
+        failureCollector.getOrThrowException();
+      } catch (ValidationException e) {
+        context.writeResult(GSON.toJson(e.getFailures()).getBytes(StandardCharsets.UTF_8));
+        return;
+      }
     }
   }
 

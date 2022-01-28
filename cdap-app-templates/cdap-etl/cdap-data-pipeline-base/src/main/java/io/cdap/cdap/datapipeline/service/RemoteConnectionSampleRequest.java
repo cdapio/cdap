@@ -18,17 +18,16 @@ package io.cdap.cdap.datapipeline.service;
 
 import io.cdap.cdap.etl.proto.connection.Connection;
 
-public class RemoteConnectionBrowseRequest {
+public class RemoteConnectionSampleRequest {
 
   private String namespace;
   //original browse request
-  private String browseRequest;
-  // Details of connection
+  private String sampleRequest;
   private Connection connection;
 
-  RemoteConnectionBrowseRequest(String namespace, String browseRequest, Connection connection) {
+  RemoteConnectionSampleRequest(String namespace, String sampleRequest, Connection connection) {
     this.namespace = namespace;
-    this.browseRequest = browseRequest;
+    this.sampleRequest = sampleRequest;
     this.connection = connection;
   }
 
@@ -36,8 +35,8 @@ public class RemoteConnectionBrowseRequest {
     return namespace;
   }
 
-  public String getBrowseRequest() {
-    return browseRequest;
+  public String getSampleRequest() {
+    return sampleRequest;
   }
 
   public Connection getConnection() {
