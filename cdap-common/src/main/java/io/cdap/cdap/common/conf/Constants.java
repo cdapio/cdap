@@ -943,6 +943,16 @@ public final class Constants {
     }
 
     /**
+     * JVM resource metrics
+     */
+    public static final class JVMResource {
+      public static final String HEAP_USED_MB = "jvm.resource.heap.used.mb";
+      public static final String HEAP_MAX_MB = "jvm.resource.heap.max.mb";
+      public static final String SYSTEM_LOAD_PER_PROCESSOR_SCALED = "jvm.resource.system.load.per.processor.scaled";
+      public static final String THREAD_COUNT = "jvm.resource.thread.count";
+    }
+
+    /**
      * Preview metrics
      */
     public static final class Preview {
@@ -1815,6 +1825,11 @@ public final class Constants {
     public static final String MAX_RETRY_TIMES = "support.bundle.max.retry.times";
     public static final String MAX_THREAD_TIMEOUT = "support.bundle.max.thread.timeout";
     public static final String SYSTEM_LOG_START_TIME = "support.bundle.system.log.start.time";
+  }
+
+  public static final class JMXMetricsCollector {
+    public static final String POLL_INTERVAL_SECS = "jmx.metrics.collector.poll.interval.secs";
+    public static final String SERVER_PORT = "jmx.metrics.collector.server.port";
   }
 
   public static final class Tethering {

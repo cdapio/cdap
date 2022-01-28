@@ -4783,15 +4783,15 @@
     </description>
   </property>
 
- <property>
-   <name>tethering.agent.connection.interval.secs</name>
-   <value>10</value>
-   <description>
-     Interval for connecting to the tethering server.
-   </description>
- </property>
+  <property>
+    <name>tethering.agent.connection.interval.secs</name>
+    <value>10</value>
+    <description>
+      Interval for connecting to the tethering server.
+    </description>
+  </property>
 
-<property>
+  <property>
     <name>tethering.agent.retry.policy.base.delay.ms</name>
     <value>10000</value>
     <description>
@@ -4836,7 +4836,23 @@
     <name>tethering.server.enabled</name>
     <value>false</value>
     <description>
-      Determines if tethering server shouuld be enabled.
+      Determines if tethering server should be enabled.
+    </description>
+  </property>
+
+  <property>
+    <name>jmx.metrics.collector.poll.interval.secs</name>
+    <value>60</value>
+    <description>
+      Interval (in seconds) for polling JMXServer for resource utilization metrics.
+    </description>
+  </property>
+
+  <property>
+    <name>jmx.server.port</name>
+    <value>11022</value>
+    <description>
+      Port to be exposed on localhost to allow metrics collection using JMX.
     </description>
   </property>
 </configuration>

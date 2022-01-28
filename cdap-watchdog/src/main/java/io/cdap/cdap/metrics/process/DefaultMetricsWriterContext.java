@@ -32,7 +32,7 @@ public class DefaultMetricsWriterContext implements MetricsWriterContext {
   private final MetricsContext metricsContext;
   private final Map<String, String> properties;
 
-  DefaultMetricsWriterContext(MetricsContext metricsContext, CConfiguration cConf, String metricsWriterId) {
+  public DefaultMetricsWriterContext(MetricsContext metricsContext, CConfiguration cConf, String metricsWriterId) {
     this.metricsContext = metricsContext;
     String prefix = String.format("%s%s.", Constants.Metrics.METRICS_WRITER_PREFIX, metricsWriterId);
     this.properties = Collections.unmodifiableMap(cConf.getPropsWithPrefix(prefix));
