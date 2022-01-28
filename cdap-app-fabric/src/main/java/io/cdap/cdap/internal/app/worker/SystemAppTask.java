@@ -32,6 +32,7 @@ import io.cdap.cdap.api.service.worker.SystemAppTaskContext;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
 import io.cdap.cdap.common.id.Id;
@@ -49,6 +50,7 @@ import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import io.cdap.cdap.security.impersonation.Impersonator;
@@ -148,6 +150,8 @@ public class SystemAppTask implements RunnableTask {
   @VisibleForTesting
   static Injector createInjector(CConfiguration cConf) {
     return Guice.createInjector(
+      new IOModule(),
+      CoreSecurityRuntimeModule.getDistributedModule(cConf),
       new ConfigModule(cConf),
       new MessagingClientModule(),
       new LocalLocationModule(),
