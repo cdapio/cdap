@@ -25,7 +25,11 @@ import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.app.ProgramType;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.artifact.ArtifactClasses;
+import io.cdap.cdap.api.artifact.ArtifactInfo;
+import io.cdap.cdap.api.artifact.ArtifactManager;
+import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.app.deploy.ConfigResponse;
 import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.common.NotFoundException;
@@ -81,12 +85,16 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.nio.charset.StandardCharsets;
+import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import javax.annotation.Nullable;
+
 
 /**
  * Unit test for {@link RemoteConfigurator} and {@link ConfiguratorTask}.
@@ -123,7 +131,10 @@ public class RemoteConfiguratorTest {
       .setHttpHandlers(
         new TaskWorkerHttpHandlerInternal(cConf, className -> { }, new NoOpMetricsCollectionService()),
         new ArtifactHttpHandlerInternal(new TestArtifactRepository(cConf), namespaceAdmin),
-        new ArtifactLocalizerHttpHandlerInternal(new ArtifactLocalizer(cConf, remoteClientFactory))
+        new ArtifactLocalizerHttpHandlerInternal(new ArtifactLocalizer(cConf, remoteClientFactory,
+                                                                       ((namespaceId, retryStrategy) -> {
+                                                                         return new NoOpArtifactManager();
+                                                                       })))
       )
       .setPort(cConf.getInt(Constants.ArtifactLocalizer.PORT))
       .setChannelPipelineModifier(new ChannelPipelineModifier() {
@@ -280,6 +291,32 @@ public class RemoteConfiguratorTest {
         throw new NotFoundException("Artifact not found " + artifactId);
       }
       return artifactDetail;
+    }
+  }
+
+   private static class NoOpArtifactManager implements ArtifactManager {
+    @Override
+    public List<ArtifactInfo> listArtifacts() throws IOException, AccessException {
+      return Collections.emptyList();
+    }
+
+    @Override
+    public List<ArtifactInfo> listArtifacts(String namespace) throws IOException, AccessException {
+      return Collections.emptyList();
+    }
+
+    @Override
+    public CloseableClassLoader createClassLoader(ArtifactInfo artifactInfo,
+                                                  @Nullable ClassLoader parentClassLoader)
+      throws IOException, AccessException {
+      return null;
+    }
+
+    @Override
+    public CloseableClassLoader createClassLoader(String namespace, ArtifactInfo artifactInfo,
+                                                  @Nullable ClassLoader parentClassLoader)
+      throws IOException, AccessException {
+      return null;
     }
   }
 }
