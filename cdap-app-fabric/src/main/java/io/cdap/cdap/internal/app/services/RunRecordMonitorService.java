@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.services;
 
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -29,6 +30,7 @@ import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -54,12 +56,15 @@ public class RunRecordMonitorService extends AbstractScheduledService {
   private final ProgramRuntimeService runtimeService;
   private final long ageThresholdSec;
   private final CConfiguration cConf;
+  private final MetricsCollectionService metricsCollectionService;
   private ScheduledExecutorService executor;
 
   @Inject
-  public RunRecordMonitorService(CConfiguration cConf, ProgramRuntimeService runtimeService) {
-    this.runtimeService = runtimeService;
+  public RunRecordMonitorService(CConfiguration cConf, ProgramRuntimeService runtimeService,
+                                 MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
+    this.runtimeService = runtimeService;
+    this.metricsCollectionService = metricsCollectionService;
 
     launchingQueue = new PriorityBlockingQueue<>(128, Comparator.comparingLong(
       o -> RunIds.getTime(o.getRun(), TimeUnit.MILLISECONDS)));
@@ -99,10 +104,10 @@ public class RunRecordMonitorService extends AbstractScheduledService {
   }
 
   /**
-   * Add a new inflight launch request and return total number of launching and running program runs.
+   * Add a new in-flight launch request and return total number of launching and running workflows.
    *
    * @param programRunId run id associated with the launch request
-   * @return total number of launching and running program runs.
+   * @return total number of launching and running workflow runs.
    */
   public Count addRequestAndGetCount(ProgramRunId programRunId) throws Exception {
     if (RunIds.getTime(programRunId.getRun(), TimeUnit.MILLISECONDS) == -1) {
@@ -115,43 +120,44 @@ public class RunRecordMonitorService extends AbstractScheduledService {
       launchingCount = launchingQueue.size();
     }
 
-    List<ProgramRuntimeService.RuntimeInfo> list = runtimeService
-      .listAll(ProgramType.WORKFLOW,
-               ProgramType.SERVICE,
-               ProgramType.MAPREDUCE,
-               ProgramType.SPARK,
-               ProgramType.WORKER,
-               ProgramType.CUSTOM_ACTION);
+    int runningCount = getWorkflowsRunningCount();
 
-    int runsCount = (int)
-      list.stream().filter(r -> isRunning(r.getController().getState().getRunStatus())).count()
-      + launchingCount;
-
-    LOG.info("Counter has {} concurrent launching and {} concurrent runs.", launchingCount, runsCount);
-    return new Count(launchingCount, runsCount);
+    LOG.info("Counter has {} concurrent launching and {} running workflows.", launchingCount, runningCount);
+    return new Count(launchingCount, runningCount);
   }
 
   /**
-   * Add a new inflight launch request.
+   * Add a new in-flight launch request.
    *
    * @param programRunId run id associated with the launch request
    */
   public void addRequest(ProgramRunId programRunId) {
     launchingQueue.add(programRunId);
+    emitMetrics(Constants.Metrics.FlowControl.WORKFLOWS_LAUNCHING_COUNT, launchingQueue.size());
     LOG.info("Added request with runId {}.", programRunId);
   }
 
   /**
-   * Remove the request with the provided programRunId when the request is no longer lunching.
-   * I.e., not in-flight, not {@link ProgramRunStatus#PENDING} and not {@link ProgramRunStatus#STARTING}
+   * Remove the request with the provided programRunId when the request is no longer launching.
+   * I.e., not in-flight, not in {@link ProgramRunStatus#PENDING} and not in {@link ProgramRunStatus#STARTING}
    *
-   * @param programRunId
+   * @param programRunId      of the request to be removed from launching queue.
+   * @param emitRunningChange if true, also updates {@link Constants.Metrics.FlowControl#WORKFLOWS_RUNNING_COUNT}
    */
-  public void removeRequest(ProgramRunId programRunId) {
+  public void removeRequest(ProgramRunId programRunId, boolean emitRunningChange) {
     if (launchingQueue.remove(programRunId)) {
       LOG.info("Removed request with runId {}. Counter has {} concurrent launching requests.",
                programRunId, launchingQueue.size());
+      emitMetrics(Constants.Metrics.FlowControl.WORKFLOWS_LAUNCHING_COUNT, launchingQueue.size());
     }
+
+    if (emitRunningChange) {
+      emitMetrics(Constants.Metrics.FlowControl.WORKFLOWS_RUNNING_COUNT, getWorkflowsRunningCount());
+    }
+  }
+
+  private void emitMetrics(String metricName, long value) {
+    metricsCollectionService.getContext(Collections.emptyMap()).gauge(metricName, value);
   }
 
   private void cleanupQueue() {
@@ -166,9 +172,16 @@ public class RunRecordMonitorService extends AbstractScheduledService {
       // Queue head might have already been removed. So instead of calling poll, we call remove.
       if (launchingQueue.remove(programRunId)) {
         LOG.info("Removing request with runId {} due to expired retention time.", programRunId);
+        emitMetrics(Constants.Metrics.FlowControl.WORKFLOWS_LAUNCHING_COUNT, launchingQueue.size());
       }
-
     }
+  }
+
+  private int getWorkflowsRunningCount() {
+    List<ProgramRuntimeService.RuntimeInfo> list = runtimeService
+      .listAll(ProgramType.WORKFLOW);
+
+    return (int) list.stream().filter(r -> isRunning(r.getController().getState().getRunStatus())).count();
   }
 
   private boolean isRunning(ProgramRunStatus status) {
@@ -190,24 +203,23 @@ public class RunRecordMonitorService extends AbstractScheduledService {
     private final int launchingCount;
 
     /**
-     * {@link this#launchingCount} +
      * Total number of run records with {@link ProgramRunStatus#RUNNING status +
      * Total number of run records with {@link ProgramRunStatus#SUSPENDED} status +
      * Total number of run records with {@link ProgramRunStatus#RESUMING} status
      */
-    private final int runsCount;
+    private final int runningCount;
 
-    Count(int launchingCount, int runsCount) {
+    Count(int launchingCount, int runningCount) {
       this.launchingCount = launchingCount;
-      this.runsCount = runsCount;
+      this.runningCount = runningCount;
     }
 
     public int getLaunchingCount() {
       return launchingCount;
     }
 
-    public int getRunsCount() {
-      return runsCount;
+    public int getRunningCount() {
+      return runningCount;
     }
   }
 }

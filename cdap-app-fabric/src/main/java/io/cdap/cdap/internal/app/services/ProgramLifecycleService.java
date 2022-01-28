@@ -536,9 +536,9 @@ public class ProgramLifecycleService {
 
     boolean done = false;
     try {
-      if (maxConcurrentRuns >= 0 && maxConcurrentRuns < count.getRunsCount()) {
+      if (maxConcurrentRuns >= 0 && maxConcurrentRuns < count.getLaunchingCount() + count.getRunningCount()) {
         String msg =
-          String.format("Program %s cannot start because the maximum of %d concurrent running runs is allowed",
+          String.format("Program %s cannot start because the maximum of %d outstanding runs is allowed",
                         programId, maxConcurrentRuns);
         LOG.info(msg);
 
@@ -564,7 +564,7 @@ public class ProgramLifecycleService {
       done = true;
     } finally {
       if (!done) {
-        runRecordMonitorService.removeRequest(programRunId);
+        runRecordMonitorService.removeRequest(programRunId, false);
       }
     }
 

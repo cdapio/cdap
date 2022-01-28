@@ -384,7 +384,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         recordedRunRecord =
           appMetadataStore.recordProgramRunning(programRunId, logicalStartTimeSecs, twillRunId, messageIdBytes);
         writeToHeartBeatTable(recordedRunRecord, logicalStartTimeSecs, programHeartbeatTable);
-        runRecordMonitorService.removeRequest(programRunId);
+        runRecordMonitorService.removeRequest(programRunId, true);
         break;
       case SUSPENDED:
         long suspendTime = getTimeSeconds(notification.getProperties(),
@@ -408,7 +408,6 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         recordedRunRecord = handleProgramCompletion(appMetadataStore, programHeartbeatTable,
                                                     programRunId, programRunStatus, notification,
                                                     messageIdBytes, runnables);
-        runRecordMonitorService.removeRequest(programRunId);
         break;
       case REJECTED:
         ProgramOptions programOptions = ProgramOptions.fromNotification(notification, GSON);
@@ -422,7 +421,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
                               programHeartbeatTable);
         getEmitMetricsRunnable(programRunId, recordedRunRecord, Constants.Metrics.Program.PROGRAM_REJECTED_RUNS,
                                null).ifPresent(runnables::add);
-        runRecordMonitorService.removeRequest(programRunId);
+        runRecordMonitorService.removeRequest(programRunId, true);
         break;
       default:
         // This should not happen
@@ -512,6 +511,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       runnables.add(() -> {
         programCompletionNotifiers.forEach(notifier -> notifier.onProgramCompleted(programRunId,
                                                                                    recordedRunRecord.getStatus()));
+        runRecordMonitorService.removeRequest(programRunId, true);
       });
     }
     return recordedRunRecord;
