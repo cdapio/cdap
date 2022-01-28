@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.services;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
@@ -45,6 +46,8 @@ import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.deploy.ManagerFactory;
+import io.cdap.cdap.app.store.ApplicationFilter;
+import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.ArtifactAlreadyExistsException;
@@ -121,7 +124,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -209,21 +211,34 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   public List<ApplicationDetail> getApps(NamespaceId namespace, Set<String> artifactNames,
                                          @Nullable String artifactVersion) throws Exception {
-    return getApps(namespace, getAppPredicate(artifactNames, artifactVersion));
+    return getApps(namespace, getAppFilters(artifactNames, artifactVersion));
   }
 
   /**
-   * Get all applications in the specified namespace that satisfy the specified predicate.
+   * Get all applications in the specified namespace
    *
    * @param namespace the namespace to get apps from
-   * @param predicate the predicate that must be satisfied in order to be returned
    * @return list of all applications in the namespace that satisfy the specified predicate
    */
-  public List<ApplicationDetail> getApps(NamespaceId namespace,
-      Predicate<ApplicationDetail> predicate) throws Exception {
+  public List<ApplicationDetail> getApps(NamespaceId namespace) throws Exception {
 
     List<ApplicationDetail> result = new ArrayList<>();
-    scanApplications(namespace, predicate, d -> result.add(d));
+    scanApplications(namespace, Collections.emptyList(), d -> result.add(d));
+    return result;
+  }
+
+  /**
+   * Get all applications in the specified namespace that satisfy the specified filters.
+   *
+   * @param namespace the namespace to get apps from
+   * @param filters the filters that must be satisfied in order to be returned
+   * @return list of all applications in the namespace that satisfy the specified filters
+   */
+  public List<ApplicationDetail> getApps(NamespaceId namespace,
+      List<ApplicationFilter> filters) throws Exception {
+
+    List<ApplicationDetail> result = new ArrayList<>();
+    scanApplications(namespace, filters, d -> result.add(d));
     return result;
   }
 
@@ -242,38 +257,41 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       @Nullable String artifactVersion,
       Consumer<ApplicationDetail> consumer) {
 
-    Predicate<ApplicationDetail> predicate = getAppPredicate(artifactNames, artifactVersion);
-    scanApplications(namespace, predicate, consumer);
+    List<ApplicationFilter> filters = getAppFilters(artifactNames, artifactVersion);
+    scanApplications(namespace, filters, consumer);
   }
 
   /**
    * Scans all applications in the specified namespace, filtered to only include application details
-   * which satisfy the predicate
+   * which satisfy the filters
    *
    * @param namespace the namespace to scan apps from
-   * @param predicate the predicate that must be satisfied  by ApplicationDetail in order to be returned
+   * @param filters the filters that must be satisfied  by ApplicationDetail in order to be returned
    * @param consumer a {@link Consumer} to consume each ApplicationDetail being scanned
    */
-  public void scanApplications(NamespaceId namespace, Predicate<ApplicationDetail> predicate,
+  public void scanApplications(NamespaceId namespace, List<ApplicationFilter> filters,
       Consumer<ApplicationDetail> consumer) {
     accessEnforcer.enforceOnParent(EntityType.DATASET, namespace,
         authenticationContext.getPrincipal(), StandardPermission.LIST);
 
     try (
         BatchingConsumer<Entry<ApplicationId, ApplicationSpecification>> batchingConsumer = new BatchingConsumer<>(
-            list -> processApplications(list, predicate, consumer), batchSize
+            list -> processApplications(list, consumer), batchSize
         )
     ) {
 
-      store.scanApplications(namespace, batchSize,
-          (appId, appSpec) -> {
-            batchingConsumer.accept(new SimpleEntry<>(appId, appSpec));
-          });
+      ScanApplicationsRequest request = ScanApplicationsRequest.builder()
+        .setNamespaceId(namespace)
+        .addFilters(filters)
+        .build();
+      store.scanApplications(request, batchSize, (appId, appSpec) -> {
+              batchingConsumer.accept(new SimpleEntry<>(appId, appSpec));
+            });
     }
   }
 
   private void processApplications(List<Map.Entry<ApplicationId, ApplicationSpecification>> list,
-      Predicate<ApplicationDetail> predicate, Consumer<ApplicationDetail> consumer) {
+      Consumer<ApplicationDetail> consumer) {
 
     Set<ApplicationId> appIds = list.stream().map(Map.Entry::getKey).collect(Collectors.toSet());
 
@@ -298,9 +316,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
           continue;
         }
 
-        if (predicate.test(applicationDetail)) {
-          consumer.accept(applicationDetail);
-        }
+        consumer.accept(applicationDetail);
       }
     } catch (IOException e) {
       throw Throwables.propagate(e);
@@ -1100,48 +1116,21 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     return applicationDetail;
   }
 
-  // get filter for app specs by artifact name and version. if they are null, it means don't filter.
-  private Predicate<ApplicationDetail> getAppPredicate(Set<String> artifactNames, @Nullable String artifactVersion) {
-    if (artifactNames.isEmpty() && artifactVersion == null) {
-      return r -> true;
-    } else if (artifactNames.isEmpty()) {
-      return new ArtifactVersionPredicate(artifactVersion);
-    } else if (artifactVersion == null) {
-      return new ArtifactNamesPredicate(artifactNames);
-    } else {
-      return new ArtifactNamesPredicate(artifactNames).and(new ArtifactVersionPredicate(artifactVersion));
-    }
-  }
-
   /**
-   * Returns true if the application artifact is in a whitelist of names
+   * Creates list of scan filters for artifact names / version
+   * @param artifactNames allow set of artifact names. All artifacts are allowed if empty
+   * @param artifactVersion allowed artifact version. Any version is allowed if null
+   * @return list of 0,1 or 2 filters
    */
-  private static class ArtifactNamesPredicate implements Predicate<ApplicationDetail> {
-    private final Set<String> names;
-
-    ArtifactNamesPredicate(Set<String> names) {
-      this.names = names;
+  private List<ApplicationFilter> getAppFilters(Set<String> artifactNames, @Nullable String artifactVersion) {
+    ImmutableList.Builder<ApplicationFilter> builder = ImmutableList.builder();
+    if (!artifactNames.isEmpty()) {
+      builder.add(new ApplicationFilter.ArtifactNamesInFilter(artifactNames));
     }
-
-    @Override
-    public boolean test(ApplicationDetail input) {
-      return names.contains(input.getArtifact().getName());
+    if (artifactVersion != null) {
+      builder.add(new ApplicationFilter.ArtifactVersionFilter(artifactVersion));
     }
+    return builder.build();
   }
 
-  /**
-   * Returns true if the application artifact is a specific version
-   */
-  private static class ArtifactVersionPredicate implements Predicate<ApplicationDetail> {
-    private final String version;
-
-    ArtifactVersionPredicate(String version) {
-      this.version = version;
-    }
-
-    @Override
-    public boolean test(ApplicationDetail input) {
-      return version.equals(input.getArtifact().getVersion());
-    }
-  }
 }

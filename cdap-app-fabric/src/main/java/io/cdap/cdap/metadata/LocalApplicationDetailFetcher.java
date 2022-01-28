@@ -83,8 +83,7 @@ public class LocalApplicationDetailFetcher implements ApplicationDetailFetcher {
       if (!namespaceQueryAdmin.exists(namespaceId)) {
         throw new NamespaceNotFoundException(namespaceId);
       }
-      Predicate<ApplicationDetail> predicate = (detail) -> true;
-      detailList = applicationLifecycleService.getApps(namespaceId, predicate);
+      detailList = applicationLifecycleService.getApps(namespaceId);
     } catch (Exception e) {
       Throwables.propagateIfPossible(e, NamespaceNotFoundException.class, IOException.class);
       throw new IOException(e);

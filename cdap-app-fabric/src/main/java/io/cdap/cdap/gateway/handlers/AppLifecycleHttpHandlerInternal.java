@@ -93,7 +93,7 @@ public class AppLifecycleHttpHandlerInternal extends AbstractAppFabricHttpHandle
       throw new NamespaceNotFoundException(namespaceId);
     }
     responder.sendJson(HttpResponseStatus.OK,
-                       GSON.toJson(applicationLifecycleService.getApps(namespaceId, detail -> true)));
+                       GSON.toJson(applicationLifecycleService.getApps(namespaceId)));
   }
 
   /**
