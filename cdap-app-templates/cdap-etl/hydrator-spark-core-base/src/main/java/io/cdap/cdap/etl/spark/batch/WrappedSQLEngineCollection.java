@@ -31,6 +31,7 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -162,11 +163,38 @@ public class WrappedSQLEngineCollection<T, U> implements SQLBackedCollection<U> 
   }
 
   @Override
+  public Set<String> tryMultiStoreDirect(PhaseSpec phaseSpec, Set<String> sinks) {
+    return wrapped.tryMultiStoreDirect(phaseSpec, sinks);
+  }
+
+  @Override
   public Runnable createMultiStoreTask(PhaseSpec phaseSpec,
                                        Set<String> group,
                                        Set<String> sinks,
                                        Map<String, StageStatisticsCollector> collectors) {
-    return unwrap().createMultiStoreTask(phaseSpec, group, sinks, collectors);
+    return new Runnable() {
+      @Override
+      public void run() {
+        // Copy all sinks and groups into a ConcurrentHashSet set
+        Set<String> remainingGroups = new HashSet<>(group);
+        Set<String> remainingSinks = new HashSet<>(sinks);
+
+        // Invoke multi store direct task on wrapped collection
+        Set<String> consumedSinks = wrapped.tryMultiStoreDirect(phaseSpec, sinks);
+
+        // Removed all consumed sinks by the Multi store task from this group.
+        remainingGroups.removeAll(consumedSinks);
+        remainingSinks.removeAll(consumedSinks);
+
+        // If all sinks were consumed, there is no more output to write.
+        if (remainingSinks.isEmpty()) {
+          return;
+        }
+
+        // Delegate all remaining sinks and group stages to the original multi store task.
+        unwrap().createMultiStoreTask(phaseSpec, remainingGroups, remainingSinks, collectors).run();
+      }
+    };
   }
 
   @Override
