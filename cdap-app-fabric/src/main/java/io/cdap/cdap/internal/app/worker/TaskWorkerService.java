@@ -20,12 +20,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import io.cdap.cdap.api.artifact.ApplicationClass;
-import io.cdap.cdap.api.artifact.ArtifactInfo;
-import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.worker.RunnableTask;
-import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
@@ -33,9 +29,7 @@ import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.security.HttpsEnabler;
-import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
-import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
@@ -46,8 +40,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -100,59 +92,12 @@ public class TaskWorkerService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    preloadArtifacts();
-
     LOG.debug("Starting TaskWorkerService");
     httpService.start();
     bindAddress = httpService.getBindAddress();
     cancelDiscovery = discoveryService.register(
       ResolvingDiscoverable.of(URIScheme.createDiscoverable(Constants.Service.TASK_WORKER, httpService)));
     LOG.debug("Starting TaskWorkerService has completed");
-  }
-
-  /**
-   * Preloading artifacts by running a {@link SystemAppTask} for each of the artifact.
-   */
-  private void preloadArtifacts() {
-    Set<String> artifacts = new HashSet<>(cConf.getTrimmedStringCollection(Constants.TaskWorker.PRELOAD_ARTIFACTS));
-    if (artifacts.isEmpty()) {
-      return;
-    }
-
-    try {
-      ArtifactManager artifactManager = artifactManagerFactory.create(
-        NamespaceId.SYSTEM, RetryStrategies.fromConfiguration(cConf, Constants.Service.TASK_WORKER + "."));
-
-      for (ArtifactInfo info : artifactManager.listArtifacts()) {
-        if (artifacts.contains(info.getName()) && info.getParents().isEmpty()) {
-          String className = info.getClasses().getApps().stream()
-            .findFirst()
-            .map(ApplicationClass::getClassName)
-            .orElse(null);
-
-          LOG.debug("Preloading artifact {}:{}-{}", info.getScope(), info.getName(), info.getVersion());
-
-          // Launch a dummy system app task with invalid RunnableTask (since we don't know the task class name)
-          // We'll catch the Exception and ignore it.
-          String systemAppClassName = SystemAppTask.class.getName();
-          RunnableTaskRequest taskRequest = RunnableTaskRequest.getBuilder(systemAppClassName)
-            .withParam(GSON.toJson(RunnableTaskRequest.getBuilder(className).build()))
-            .withNamespace(NamespaceId.SYSTEM.getNamespace())
-            .withArtifact(NamespaceId.SYSTEM.artifact(info.getName(), info.getVersion()).toApiArtifactId())
-            .build();
-
-          try {
-            taskLauncher.launchRunnableTask(taskRequest);
-          } catch (Exception e) {
-            // Ignored
-            LOG.trace("Expected exception", e);
-          }
-        }
-      }
-    } catch (Exception e) {
-      // It is non-fatal for the service to start, hence we just log.
-      LOG.warn("Failed to preload artifacts {}", artifacts, e);
-    }
   }
 
   @Override

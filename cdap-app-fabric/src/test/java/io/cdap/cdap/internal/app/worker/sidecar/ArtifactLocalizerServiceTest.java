@@ -17,6 +17,10 @@
 package io.cdap.cdap.internal.app.worker.sidecar;
 
 import com.google.common.io.Files;
+import io.cdap.cdap.api.artifact.ArtifactInfo;
+import io.cdap.cdap.api.artifact.ArtifactManager;
+import io.cdap.cdap.api.artifact.CloseableClassLoader;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
@@ -45,7 +49,9 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Unit test for {@link ArtifactLocalizerService}.
@@ -75,8 +81,9 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
     RemoteClientFactory remoteClientFactory =
       new RemoteClientFactory(discoveryClient, new DefaultInternalAuthenticator(new AuthenticationTestContext()));
     ArtifactLocalizerService artifactLocalizerService = new ArtifactLocalizerService(
-      cConf, new ArtifactLocalizer(cConf, remoteClientFactory));
-
+      cConf, new ArtifactLocalizer(cConf, remoteClientFactory, (namespaceId, retryStrategy)-> {
+        return new NoOpArtifactManager();
+    }));
     // start the service
     artifactLocalizerService.startAndWait();
 
@@ -195,5 +202,31 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
     //Make sure the two paths arent the same and that the old one is gone
     Assert.assertNotEquals(artifactPath, newArtifactPath);
     Assert.assertTrue(newArtifactPath.exists());
+  }
+
+  private class NoOpArtifactManager implements ArtifactManager {
+    @Override
+    public List<ArtifactInfo> listArtifacts() throws IOException, AccessException {
+      return Collections.emptyList();
+    }
+
+    @Override
+    public List<ArtifactInfo> listArtifacts(String namespace) throws IOException, AccessException {
+      return Collections.emptyList();
+    }
+
+    @Override
+    public CloseableClassLoader createClassLoader(ArtifactInfo artifactInfo,
+                                                  @Nullable ClassLoader parentClassLoader)
+      throws IOException, AccessException {
+      return null;
+    }
+
+    @Override
+    public CloseableClassLoader createClassLoader(String namespace, ArtifactInfo artifactInfo,
+                                                  @Nullable ClassLoader parentClassLoader)
+      throws IOException, AccessException {
+      return null;
+    }
   }
 }
