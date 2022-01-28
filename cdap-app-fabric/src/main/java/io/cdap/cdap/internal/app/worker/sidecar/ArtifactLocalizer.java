@@ -17,6 +17,9 @@ package io.cdap.cdap.internal.app.worker.sidecar;
 import com.google.common.io.CharStreams;
 import com.google.common.net.HttpHeaders;
 import com.google.inject.Inject;
+import io.cdap.cdap.api.artifact.ApplicationClass;
+import io.cdap.cdap.api.artifact.ArtifactInfo;
+import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
@@ -32,6 +35,7 @@ import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.FileUtils;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.common.http.HttpMethod;
@@ -55,6 +59,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -91,12 +96,17 @@ public class ArtifactLocalizer {
 
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactLocalizer.class);
 
+  private final CConfiguration cConf;
+  private final ArtifactManagerFactory artifactManagerFactory;
   private final RemoteClient remoteClient;
   private final RetryStrategy retryStrategy;
   private final String dataDir;
 
   @Inject
-  public ArtifactLocalizer(CConfiguration cConf, RemoteClientFactory remoteClientFactory) {
+  public ArtifactLocalizer(CConfiguration cConf, RemoteClientFactory remoteClientFactory,
+                           ArtifactManagerFactory artifactManagerFactory) {
+    this.cConf = cConf;
+    this.artifactManagerFactory = artifactManagerFactory;
   // TODO (CDAP-18047) verify SSL cert should be enabled.
     this.remoteClient = remoteClientFactory.createRemoteClient(Constants.Service.APP_FABRIC_HTTP,
                                                                RemoteClientFactory.NO_VERIFY_HTTP_REQUEST_CONFIG,
@@ -318,5 +328,28 @@ public class ArtifactLocalizer {
    */
   private File getUnpackLocalPath(ArtifactId artifactId, long lastModifiedTimestamp) {
     return getLocalPath("unpacked", artifactId).resolve(String.valueOf(lastModifiedTimestamp)).toFile();
+  }
+
+  public void preloadArtifacts(Set<String> artifactNames) throws IOException, ArtifactNotFoundException {
+    ArtifactManager artifactManager = artifactManagerFactory.create(
+      NamespaceId.SYSTEM, RetryStrategies.fromConfiguration(cConf, Constants.Service.TASK_WORKER + "."));
+
+    for (ArtifactInfo info : artifactManager.listArtifacts()) {
+      if (artifactNames.contains(info.getName()) && info.getParents().isEmpty()) {
+        String className = info.getClasses().getApps().stream()
+          .findFirst()
+          .map(ApplicationClass::getClassName)
+          .orElse(null);
+
+        LOG.info("Preloading artifact {}:{}-{}", info.getScope(), info.getName(), info.getVersion());
+
+        ArtifactId artifactId = NamespaceId.SYSTEM.artifact(info.getName(), info.getVersion());
+        try {
+          fetchArtifact(artifactId);
+        } catch (Exception e) {
+          LOG.debug("Failed to preload artifact {}", artifactId);
+        }
+      }
+    }
   }
 }
