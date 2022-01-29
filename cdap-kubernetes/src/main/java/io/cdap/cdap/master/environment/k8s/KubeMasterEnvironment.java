@@ -151,7 +151,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String WORKLOAD_IDENTITY_ENABLED = "master.environment.k8s.workload.identity.enabled";
   private static final String WORKLOAD_IDENTITY_POOL = "master.environment.k8s.workload.identity.pool";
   @VisibleForTesting
-  static final String WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY = "gcp.service.account.email";
+  static final String WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY =
+    "workload.identity.gcp.service.account.email";
   private static final String WORKLOAD_IDENTITY_PROVIDER = "master.environment.k8s.workload.identity.provider";
   private static final String WORKLOAD_IDENTITY_SERVICE_ACCOUNT_TOKEN_TTL_SECONDS
     = "master.environment.k8s.workload.identity.service.account.token.ttl.seconds";
