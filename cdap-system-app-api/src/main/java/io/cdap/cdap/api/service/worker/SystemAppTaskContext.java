@@ -23,6 +23,7 @@ import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.api.service.http.ServicePluginConfigurer;
 
 import java.io.IOException;
 import java.util.Map;
@@ -50,6 +51,13 @@ public interface SystemAppTaskContext extends ServiceDiscoverer, SecureStore, Au
    * @return a dynamic plugin configurer that must be closed
    */
   PluginConfigurer createPluginConfigurer(String namespace) throws IOException;
+
+  /**
+   * Create a {@link ServicePluginConfigurer} that can be used to instantiate plugins with macro evaluation
+   * @param namespace the namespace for user scoped plugins.
+   * @return a plugin configurer specifically for service.
+   */
+  ServicePluginConfigurer createServicePluginConfigurer(String namespace);
 
   /**
    * Evaluates macros using provided macro evaluator with the provided parsing options.
