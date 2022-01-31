@@ -42,4 +42,9 @@ class NoopDataTracer implements DataTracer {
   public boolean isEnabled() {
     return false;
   }
+
+  @Override
+  public int getMaximumTracedRecords() {
+    return 0;
+  }
 }
