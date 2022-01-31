@@ -4639,4 +4639,12 @@
       The response body if request-blocking is enabled.
     </description>
   </property>
+
+  <property>
+    <name>preview.max.num.records</name>
+    <value>5000</value>
+    <description>
+      The maximum number of records that can be set in preview configuration.
+    </description>
+  </property>
 </configuration>
