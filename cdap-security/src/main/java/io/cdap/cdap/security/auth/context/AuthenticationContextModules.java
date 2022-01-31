@@ -115,11 +115,18 @@ public class AuthenticationContextModules {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        String username = getUsername();
-        bind(AuthenticationContext.class)
-          .toInstance(new ProgramContainerAuthenticationContext(new Principal(username,
-                                                                              Principal.PrincipalType.USER,
-                                                                              loadRemoteCredentials(cConf))));
+        Credential remoteCredentials = loadRemoteCredentials(cConf);
+        if (remoteCredentials != null) {
+          String username = getUsername();
+          bind(AuthenticationContext.class)
+            .toInstance(new ProgramContainerAuthenticationContext(new Principal(username,
+                                                                                Principal.PrincipalType.USER,
+                                                                                loadRemoteCredentials(cConf))));
+        } else {
+          bind(new TypeLiteral<Class<? extends AuthenticationContext>>() { })
+            .toInstance(WorkerAuthenticationContext.class);
+          bind(AuthenticationContext.class).toProvider(MasterAuthenticationContextProvider.class);
+        }
         bind(InternalAuthenticator.class).toProvider(InternalAuthenticatorProvider.class);
       }
     };
