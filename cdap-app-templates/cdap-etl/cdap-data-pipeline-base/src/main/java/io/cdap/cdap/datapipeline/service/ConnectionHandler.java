@@ -78,7 +78,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
-import javax.ws.rs.BadRequestException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -398,7 +397,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
         SampleResponse sampleResponse = ConnectionUtils.getSampleResponse(connector, connectorContext, sampleRequest,
                                                                           detail, pluginConfigurer);
         responder.sendString(GSON.toJson(sampleResponse));
-      } catch (BadRequestException e) {
+      } catch (ConnectionBadRequestException e) {
         // should not happen
         responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
       }
@@ -539,7 +538,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
 
   private int getExceptionCode(String exceptionClass, String exceptionMessage, String namespace) {
     if (IllegalArgumentException.class.getName().equals(exceptionClass)
-      || BadRequestException.class.getName().equals(exceptionClass)) {
+      || ConnectionBadRequestException.class.getName().equals(exceptionClass)) {
       return HttpURLConnection.HTTP_BAD_REQUEST;
     }
     return HttpURLConnection.HTTP_INTERNAL_ERROR;
