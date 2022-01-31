@@ -24,6 +24,7 @@ import io.cdap.cdap.api.Predicate;
 import io.cdap.cdap.api.customaction.CustomAction;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.schedule.SchedulableProgramType;
 import io.cdap.cdap.api.workflow.Condition;
 import io.cdap.cdap.api.workflow.ConditionSpecification;
@@ -72,11 +73,13 @@ public class DefaultWorkflowConfigurer extends AbstractConfigurer
   private String description;
   private Map<String, String> properties;
 
+
   public DefaultWorkflowConfigurer(Workflow workflow, DatasetConfigurer datasetConfigurer,
                                    Id.Namespace deployNamespace, Id.Artifact artifactId,
                                    PluginFinder pluginFinder, PluginInstantiator pluginInstantiator,
-                                   @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
-    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo);
+                                   @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+                                   FeatureFlagsProvider featureFlagsProvider) {
+    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo, featureFlagsProvider);
     this.className = workflow.getClass().getName();
     this.name = workflow.getClass().getSimpleName();
     this.description = "";
@@ -116,25 +119,27 @@ public class DefaultWorkflowConfigurer extends AbstractConfigurer
   @Override
   public void addAction(CustomAction action) {
     nodes.add(WorkflowNodeCreator.createWorkflowCustomActionNode(action, deployNamespace, artifactId,
-                                                                 pluginFinder, pluginInstantiator, runtimeInfo));
+                                                                 pluginFinder, pluginInstantiator, 
+                                                                 runtimeInfo, getFeatureFlagsProvider()));
   }
 
   @Override
   public WorkflowForkConfigurer<? extends WorkflowConfigurer> fork() {
     return new DefaultWorkflowForkConfigurer<>(this, deployNamespace, artifactId, pluginFinder,
-                                               pluginInstantiator, runtimeInfo);
+                                               pluginInstantiator, runtimeInfo, getFeatureFlagsProvider());
   }
 
   @Override
   public WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(Predicate<WorkflowContext> predicate) {
     return new DefaultWorkflowConditionConfigurer<>(predicate, this, deployNamespace, artifactId,
-                                                    pluginFinder, pluginInstantiator, runtimeInfo);
+                                                    pluginFinder, pluginInstantiator, runtimeInfo,
+                                                    getFeatureFlagsProvider());
   }
 
   @Override
   public WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(Condition condition) {
     return new DefaultWorkflowConditionConfigurer<>(condition, this, deployNamespace, artifactId, pluginFinder,
-                                                    pluginInstantiator, runtimeInfo);
+                                                    pluginInstantiator, runtimeInfo, getFeatureFlagsProvider());
   }
 
   private void checkArgument(boolean condition, String template, Object...args) {
@@ -239,8 +244,7 @@ public class DefaultWorkflowConfigurer extends AbstractConfigurer
                                        List<WorkflowNode> elseBranch) {
     Preconditions.checkArgument(condition != null, "Condition is null.");
     ConditionSpecification spec = DefaultConditionConfigurer.configureCondition(condition, deployNamespace,
-                                                                                artifactId, pluginFinder,
-                                                                                pluginInstantiator, runtimeInfo);
+        artifactId, pluginFinder, pluginInstantiator, runtimeInfo, getFeatureFlagsProvider());
     nodes.add(new WorkflowConditionNode(spec.getName(), spec, ifBranch, elseBranch));
   }
 }

@@ -18,6 +18,7 @@ package io.cdap.cdap.app.deploy.spark
 
 import java.net.URL
 
+import io.cdap.cdap.api.feature.FeatureFlagsProvider
 import io.cdap.cdap.api.spark.Spark
 import io.cdap.cdap.api.spark.dynamic.SparkCompiler
 import io.cdap.cdap.app.runtime.spark.dynamic.{DefaultSparkCompiler, URLAdder}
@@ -36,9 +37,10 @@ class DefaultExtendedSparkConfigurer(spark: Spark,
                                      artifactId: Id.Artifact,
                                      pluginFinder: PluginFinder,
                                      pluginInstantiator: PluginInstantiator,
-                                     runtimeInfo: AppDeploymentRuntimeInfo)
+                                     runtimeInfo: AppDeploymentRuntimeInfo,
+                                     featureFlagsProvider: FeatureFlagsProvider)
   extends AbstractExtendedSparkConfigurer(spark, deployNamespace, artifactId, pluginFinder,
-    pluginInstantiator, runtimeInfo) {
+    pluginInstantiator, runtimeInfo, featureFlagsProvider) {
 
   override def createSparkCompiler(settings: Settings): SparkCompiler = {
     return new DefaultSparkCompiler(settings, new URLAdder {

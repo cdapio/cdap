@@ -192,6 +192,8 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
 
   override def getApplicationSpecification: ApplicationSpecification = runtimeContext.getApplicationSpecification
 
+  override def isFeatureEnabled(name: String): Boolean = runtimeContext.isFeatureEnabled(name)
+
   override def getClusterName: String = runtimeContext.getClusterName
 
   override def getRuntimeArguments: util.Map[String, String] = runtimeContext.getRuntimeArguments

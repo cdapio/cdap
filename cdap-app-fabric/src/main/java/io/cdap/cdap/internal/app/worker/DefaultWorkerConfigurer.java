@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.worker;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.worker.Worker;
 import io.cdap.cdap.api.worker.WorkerConfigurer;
 import io.cdap.cdap.api.worker.WorkerSpecification;
@@ -51,8 +52,9 @@ public class DefaultWorkerConfigurer extends AbstractConfigurer implements Worke
   public DefaultWorkerConfigurer(Worker worker, Id.Namespace deployNamespace, Id.Artifact artifactId,
                                  PluginFinder pluginFinder,
                                  PluginInstantiator pluginInstantiator,
-                                 @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
-    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo);
+                                 @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+                                 FeatureFlagsProvider featureFlagsProvider) {
+    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo, featureFlagsProvider);
     this.worker = worker;
     this.name = worker.getClass().getSimpleName();
     this.description = "";

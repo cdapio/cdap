@@ -119,6 +119,15 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
     return delegate.getInputContext();
   }
 
+  /**
+   *
+   * @return a map of feature flag names and if they are enabled.
+   */
+  @Override
+  public boolean isFeatureEnabled(String name) {
+    return delegate.isFeatureEnabled(name);
+  }
+
   @Override
   public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
     return delegate.getDataset(name);

@@ -24,6 +24,7 @@ import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.api.SystemTableConfigurer;
 import io.cdap.cdap.api.annotation.TransactionControl;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.service.Service;
 import io.cdap.cdap.api.service.ServiceConfigurer;
 import io.cdap.cdap.api.service.ServiceSpecification;
@@ -71,8 +72,9 @@ public class DefaultServiceConfigurer extends AbstractConfigurer implements Syst
   public DefaultServiceConfigurer(Service service, Id.Namespace namespace, Id.Artifact artifactId,
                                   PluginFinder pluginFinder, PluginInstantiator pluginInstantiator,
                                   DefaultSystemTableConfigurer systemTableConfigurer,
-                                  @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
-    super(namespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo);
+                                  @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+                                  FeatureFlagsProvider featureFlagsProvider) {
+    super(namespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo, featureFlagsProvider);
     this.className = service.getClass().getName();
     this.name = service.getClass().getSimpleName();
     this.description = "";
@@ -133,7 +135,8 @@ public class DefaultServiceConfigurer extends AbstractConfigurer implements Syst
     Map<String, HttpServiceHandlerSpecification> handleSpecs = Maps.newHashMap();
     for (HttpServiceHandler handler : handlers) {
       DefaultHttpServiceHandlerConfigurer configurer = new DefaultHttpServiceHandlerConfigurer(
-        handler, deployNamespace, artifactId, pluginFinder, pluginInstantiator, systemTableConfigurer, runtimeInfo);
+        handler, deployNamespace, artifactId, pluginFinder, pluginInstantiator, systemTableConfigurer, 
+        runtimeInfo, getFeatureFlagsProvider());
       handler.configure(configurer);
       HttpServiceHandlerSpecification spec = configurer.createSpecification();
       Preconditions.checkArgument(!handleSpecs.containsKey(spec.getName()),

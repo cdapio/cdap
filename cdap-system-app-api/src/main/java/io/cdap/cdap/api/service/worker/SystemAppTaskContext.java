@@ -18,6 +18,7 @@ package io.cdap.cdap.api.service.worker;
 
 import io.cdap.cdap.api.ServiceDiscoverer;
 import io.cdap.cdap.api.artifact.ArtifactManager;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
@@ -31,7 +32,7 @@ import java.util.Map;
 /**
  * System App context for a remote task
  */
-public interface SystemAppTaskContext extends ServiceDiscoverer, SecureStore, AutoCloseable {
+public interface SystemAppTaskContext extends ServiceDiscoverer, SecureStore, AutoCloseable, FeatureFlagsProvider {
 
   /**
    * Fetch preferences for the given namespace.

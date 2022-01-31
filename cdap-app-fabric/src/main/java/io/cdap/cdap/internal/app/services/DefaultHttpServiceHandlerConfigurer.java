@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.services;
 
 import io.cdap.cdap.api.SystemTableConfigurer;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.service.http.HttpServiceConfigurer;
 import io.cdap.cdap.api.service.http.HttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceHandlerSpecification;
@@ -64,8 +65,9 @@ public class DefaultHttpServiceHandlerConfigurer extends AbstractConfigurer impl
                                              PluginFinder pluginFinder,
                                              PluginInstantiator pluginInstantiator,
                                              SystemTableConfigurer systemTableConfigurer,
-                                             @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
-    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo);
+                                             @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+                                             FeatureFlagsProvider featureFlagsProvider) {
+    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo, featureFlagsProvider);
     this.handler = handler;
     this.name = handler.getClass().getSimpleName();
     this.properties = new HashMap<>();

@@ -56,6 +56,8 @@ class DefaultJavaSparkExecutionContext(sec: SparkExecutionContext) extends JavaS
 
   override def getSpecification: SparkSpecification = sec.getSpecification
 
+  override def isFeatureEnabled(name: String): Boolean = sec.isFeatureEnabled(name)
+
   override def getMetrics: Metrics = sec.getMetrics
 
   override def getServiceDiscoverer: ServiceDiscoverer = sec.getServiceDiscoverer
