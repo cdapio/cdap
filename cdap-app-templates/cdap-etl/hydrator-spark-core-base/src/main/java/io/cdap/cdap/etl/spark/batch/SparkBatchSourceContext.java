@@ -43,7 +43,8 @@ public class SparkBatchSourceContext extends SparkSubmitterContext implements Ba
 
   public SparkBatchSourceContext(SparkBatchSourceFactory sourceFactory, SparkClientContext sparkContext,
                                  PipelineRuntime pipelineRuntime, DatasetContext datasetContext, StageSpec stageSpec) {
-    super(sparkContext, pipelineRuntime, datasetContext, stageSpec);
+    super(sparkContext, pipelineRuntime, datasetContext, StageSpec.
+      createCopy(stageSpec, sparkContext.getDataTracer(stageSpec.getName()).getMaximumTracedRecords()));
     this.sourceFactory = sourceFactory;
     this.isPreviewEnabled = sparkContext.getDataTracer(stageSpec.getName()).isEnabled();
   }
