@@ -45,7 +45,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import javax.ws.rs.BadRequestException;
 
 public final class ConnectionUtils {
 
@@ -94,7 +93,7 @@ public final class ConnectionUtils {
       List<StructuredRecord> sample = limitingConnector.sample(connectorContext, sampleRequest);
       return new SampleResponse(detail, sample.isEmpty() ? null : sample.get(0).getSchema(), sample);
     }
-    throw new BadRequestException("Connector is not supported. " +
+    throw new ConnectionBadRequestException("Connector is not supported. " +
                                     "The supported connector should be DirectConnector or BatchConnector.");
   }
 
