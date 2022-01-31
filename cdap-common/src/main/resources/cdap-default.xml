@@ -2449,6 +2449,16 @@
     </description>
   </property>
 
+  <property>
+    <name>metadata.messaging.publish.size.limit</name>
+    <value>2147483647</value>
+    <description>
+      The maximum number of characters for a JSON string representation of a
+      lineage to be published. If the lineage exceeds this size it will not be
+      published.
+    </description>
+  </property>
+
   <!-- Metrics Configuration -->
 
   <property>
