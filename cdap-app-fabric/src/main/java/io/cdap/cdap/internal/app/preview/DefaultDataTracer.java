@@ -23,6 +23,8 @@ import io.cdap.cdap.api.preview.DataTracer;
 import io.cdap.cdap.app.preview.PreviewDataPublisher;
 import io.cdap.cdap.app.preview.PreviewMessage;
 import io.cdap.cdap.app.store.preview.PreviewStore;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.store.preview.PreviewJsonSerializer;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -37,11 +39,16 @@ class DefaultDataTracer implements DataTracer {
   private final String tracerName;
   private final ApplicationId applicationId;
   private final PreviewDataPublisher previewDataPublisher;
+  private final CConfiguration cConf;
+  private final int maximumTracedRecords;
 
-  DefaultDataTracer(ApplicationId applicationId, String tracerName, PreviewDataPublisher previewDataPublisher) {
+  DefaultDataTracer(ApplicationId applicationId, String tracerName, PreviewDataPublisher previewDataPublisher,
+                    CConfiguration cConf) {
     this.tracerName = tracerName;
     this.applicationId = applicationId;
     this.previewDataPublisher = previewDataPublisher;
+    this.cConf = cConf;
+    this.maximumTracedRecords = cConf.getInt(Constants.Preview.MAX_NUM_OF_RECORDS);
   }
 
   @Override
@@ -59,5 +66,10 @@ class DefaultDataTracer implements DataTracer {
   @Override
   public boolean isEnabled() {
     return true;
+  }
+
+  @Override
+  public int getMaximumTracedRecords() {
+    return maximumTracedRecords;
   }
 }

@@ -368,6 +368,7 @@ public final class Constants {
     public static final String EXEC_THREADS = "preview.exec.threads";
     public static final String BOSS_THREADS = "preview.boss.threads";
     public static final String WORKER_THREADS = "preview.worker.threads";
+    public static final String MAX_NUM_OF_RECORDS = "preview.max.num.records";
 
     public static final String POLLER_COUNT = "preview.poller.count";
     public static final String REQUEST_POLL_DELAY_MILLIS = "preview.request.poll.delay.millis";
