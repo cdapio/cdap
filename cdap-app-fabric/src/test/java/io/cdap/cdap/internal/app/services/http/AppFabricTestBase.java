@@ -32,8 +32,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
-import com.google.inject.multibindings.Multibinder;
-import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.ProgramStatus;
@@ -64,6 +62,7 @@ import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.service.HealthCheckService;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.test.PluginJarHelper;
@@ -72,10 +71,7 @@ import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
-import io.cdap.cdap.gateway.handlers.CommonHandlers;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import io.cdap.cdap.healthcheck.handlers.AppFabricHealthCheckHttpHandler;
-import io.cdap.cdap.healthcheck.services.AppFabricHealthCheckService;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
@@ -127,7 +123,6 @@ import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequestConfig;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
-import io.cdap.http.HttpHandler;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.tephra.TransactionManager;
@@ -223,7 +218,7 @@ public abstract class AppFabricTestBase {
   private static MetricStore metricStore;
   private static RemoteClientFactory remoteClientFactory;
   private static LogQueryService logQueryService;
-  private static AppFabricHealthCheckService appFabricHealthCheckService;
+  private static HealthCheckService appFabricHealthCheckService;
 
   private static HttpRequestConfig httpRequestConfig;
 
@@ -243,11 +238,6 @@ public abstract class AppFabricTestBase {
 //        install(new SupportBundleModule());
         bind(UGIProvider.class).to(CurrentUGIProvider.class);
         bind(MetadataSubscriberService.class).in(Scopes.SINGLETON);
-        Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
-          binder(), HttpHandler.class, Names.named(Constants.AppFabricHealthCheck.HANDLERS_NAME));
-        CommonHandlers.add(handlerBinder);
-        handlerBinder.addBinding().to(AppFabricHealthCheckHttpHandler.class);
-        bind(AppFabricHealthCheckService.class).in(Scopes.SINGLETON);
       }
     });
   }
@@ -292,8 +282,6 @@ public abstract class AppFabricTestBase {
     metadataSubscriberService.startAndWait();
     logQueryService = injector.getInstance(LogQueryService.class);
     logQueryService.startAndWait();
-    appFabricHealthCheckService = injector.getInstance(AppFabricHealthCheckService.class);
-    appFabricHealthCheckService.startAndWait();
     locationFactory = getInjector().getInstance(LocationFactory.class);
     datasetClient = new DatasetClient(getClientConfig(discoveryClient, Constants.Service.DATASET_MANAGER));
     remoteClientFactory = new RemoteClientFactory(discoveryClient,
@@ -301,6 +289,12 @@ public abstract class AppFabricTestBase {
     metadataClient = new MetadataClient(getClientConfig(discoveryClient, Constants.Service.METADATA_SERVICE));
     metadataServiceClient = new DefaultMetadataServiceClient(remoteClientFactory);
     metricStore = injector.getInstance(MetricStore.class);
+
+    String host = cConf.get(Constants.AppFabricHealthCheck.SERVICE_BIND_ADDRESS);
+    int port = cConf.getInt(Constants.AppFabricHealthCheck.SERVICE_BIND_PORT);
+    appFabricHealthCheckService = injector.getInstance(HealthCheckService.class);
+    appFabricHealthCheckService.initiate(host, port, Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE);
+    appFabricHealthCheckService.startAndWait();
 
     Scheduler programScheduler = injector.getInstance(Scheduler.class);
     // Wait for the scheduler to be functional.
@@ -325,11 +319,11 @@ public abstract class AppFabricTestBase {
     metadataSubscriberService.stopAndWait();
     metadataService.stopAndWait();
     logQueryService.stopAndWait();
-    appFabricHealthCheckService.stopAndWait();
     if (messagingService instanceof Service) {
       ((Service) messagingService).stopAndWait();
     }
     Closeables.closeQuietly(metadataStorage);
+    appFabricHealthCheckService.stopAndWait();
   }
 
   protected static CConfiguration createBasicCConf() throws IOException {

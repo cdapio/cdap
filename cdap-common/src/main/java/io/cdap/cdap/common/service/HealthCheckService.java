@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.healthcheck.services;
+package io.cdap.cdap.common.service;
 
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -39,25 +39,35 @@ import java.util.Set;
 /**
  *
  */
-public class AppFabricHealthCheckService extends AbstractIdleService {
+public class HealthCheckService extends AbstractIdleService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AppFabricHealthCheckService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(HealthCheckService.class);
 
   private final DiscoveryService discoveryService;
+  private final CConfiguration cConf;
+  private final SConfiguration sConf;
+  private final Set<HttpHandler> handlers;
+  private String serviceName;
 
-  private final NettyHttpService httpService;
   private Cancellable cancelDiscovery;
+  private NettyHttpService httpService;
 
   @Inject
-  public AppFabricHealthCheckService(CConfiguration cConf, SConfiguration sConf, DiscoveryService discoveryService,
-                                     @Named(Constants.AppFabricHealthCheck.HANDLERS_NAME) Set<HttpHandler> handlers) {
+  public HealthCheckService(CConfiguration cConf, SConfiguration sConf, DiscoveryService discoveryService,
+                            @Named(Constants.HealthCheck.HANDLERS_NAME) Set<HttpHandler> handlers) {
     this.discoveryService = discoveryService;
+    this.cConf = cConf;
+    this.sConf = sConf;
+    this.handlers = handlers;
+  }
 
+  public void initiate(String host, int port, String serviceName) {
+    this.serviceName = serviceName;
     NettyHttpService.Builder builder =
-      new CommonNettyHttpServiceBuilder(cConf, Constants.Service.APP_FABRIC_HEALTH_CHECK_SERVICE).setHttpHandlers(
+      new CommonNettyHttpServiceBuilder(cConf, serviceName).setHttpHandlers(
           handlers)
-        .setHost(cConf.get(Constants.AppFabricHealthCheck.SERVICE_BIND_ADDRESS))
-        .setPort(cConf.getInt(Constants.AppFabricHealthCheck.SERVICE_BIND_PORT));
+        .setHost(host)
+        .setPort(port);
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
@@ -73,7 +83,7 @@ public class AppFabricHealthCheckService extends AbstractIdleService {
     InetSocketAddress socketAddress = httpService.getBindAddress();
     LOG.debug("AppFabricHealthCheckService service running at {}", socketAddress);
     cancelDiscovery = discoveryService.register(ResolvingDiscoverable.of(
-      URIScheme.createDiscoverable(Constants.Service.APP_FABRIC_HEALTH_CHECK_SERVICE, httpService)));
+      URIScheme.createDiscoverable(serviceName, httpService)));
 
   }
 

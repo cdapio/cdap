@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,8 @@
 package io.cdap.cdap.support.task.factory;
 
 import com.google.inject.Inject;
-import io.cdap.cdap.metadata.RemoteAppFabricHealthCheckFetcher;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.metadata.RemoteHealthCheckFetcher;
 import io.cdap.cdap.support.SupportBundleTaskConfiguration;
 import io.cdap.cdap.support.task.SupportBundleK8sHealthCheckTask;
 
@@ -27,15 +28,19 @@ import io.cdap.cdap.support.task.SupportBundleK8sHealthCheckTask;
  */
 public class SupportBundleK8sHealthCheckTaskFactory implements SupportBundleTaskFactory {
 
-  private final RemoteAppFabricHealthCheckFetcher remoteAppFabricHealthCheckFetcher;
+  private final CConfiguration cConfiguration;
+  private final RemoteHealthCheckFetcher remoteHealthCheckFetcher;
 
   @Inject
-  public SupportBundleK8sHealthCheckTaskFactory(RemoteAppFabricHealthCheckFetcher remoteAppFabricHealthCheckFetcher) {
-    this.remoteAppFabricHealthCheckFetcher = remoteAppFabricHealthCheckFetcher;
+  public SupportBundleK8sHealthCheckTaskFactory(CConfiguration cConfiguration,
+                                                RemoteHealthCheckFetcher remoteHealthCheckFetcher) {
+    this.cConfiguration = cConfiguration;
+    this.remoteHealthCheckFetcher = remoteHealthCheckFetcher;
   }
 
   @Override
   public SupportBundleK8sHealthCheckTask create(SupportBundleTaskConfiguration taskConfiguration) {
-    return new SupportBundleK8sHealthCheckTask(taskConfiguration.getBasePath(), remoteAppFabricHealthCheckFetcher);
+    return new SupportBundleK8sHealthCheckTask(cConfiguration, taskConfiguration.getBasePath(),
+                                               remoteHealthCheckFetcher);
   }
 }

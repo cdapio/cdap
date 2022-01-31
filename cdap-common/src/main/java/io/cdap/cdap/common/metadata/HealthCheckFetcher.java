@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,25 +14,25 @@
  * the License.
  */
 
-package io.cdap.cdap.metadata;
+package io.cdap.cdap.common.metadata;
 
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * Interface for fetching {@code AppFabricHealthCheck}
  */
-public interface AppFabricHealthCheckFetcher {
+public interface HealthCheckFetcher {
 
   /**
    * Get the app fabric health check
+   * @param serviceName the name of the current service
    * @return the health check data response
    * @throws IOException if failed to get {@code ApplicationDetail}
    * @throws NotFoundException if the application or namespace identified by the supplied id doesn't exist
    */
-  Optional<Map<String, Object>> getHealthDetails() throws IOException, NotFoundException, UnauthorizedException;
+  Map<String, Object> getHealthDetails(String serviceName) throws IOException, NotFoundException, UnauthorizedException;
 }

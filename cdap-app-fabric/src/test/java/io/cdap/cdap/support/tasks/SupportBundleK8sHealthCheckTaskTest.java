@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,11 +26,11 @@ import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.metadata.RemoteHealthCheckFetcher;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.app.store.DefaultStore;
-import io.cdap.cdap.metadata.RemoteAppFabricHealthCheckFetcher;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.RunRecord;
@@ -45,8 +45,6 @@ import io.cdap.cdap.support.task.factory.SupportBundleSystemLogTaskFactory;
 import io.cdap.cdap.support.task.factory.SupportBundleTaskFactory;
 import io.cdap.common.http.HttpResponse;
 import org.apache.twill.api.RunId;
-import org.iq80.leveldb.shaded.guava.util.concurrent.MoreExecutors;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -54,34 +52,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.Reader;
-import java.lang.management.ManagementFactory;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.rmi.registry.LocateRegistry;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-import javax.management.MBeanServer;
-import javax.management.remote.JMXConnectorServer;
-import javax.management.remote.JMXConnectorServerFactory;
-import javax.management.remote.JMXServiceURL;
 
 public class SupportBundleK8sHealthCheckTaskTest extends AppFabricTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(SupportBundleK8sHealthCheckTaskTest.class);
-  private static final int SERVER_PORT = 11023;
   private static final NamespaceId namespaceId = NamespaceId.DEFAULT;
 
   private static Store store;
-  private static JMXConnectorServer svr;
   private static CConfiguration configuration;
-  private static RemoteAppFabricHealthCheckFetcher remoteAppFabricHealthCheckFetcher;
-  private static ExecutorService executorService;
+  private static RemoteHealthCheckFetcher remoteHealthCheckFetcher;
   private static Set<SupportBundleTaskFactory> supportBundleTaskFactorySet;
   private static String workflowName;
   private static String application;
@@ -92,6 +80,8 @@ public class SupportBundleK8sHealthCheckTaskTest extends AppFabricTestBase {
   public static void setup() throws Exception {
     Injector injector = getInjector();
     JsonArray podInfoList = new JsonArray();
+    List<String> healthCheckServiceNameList = new ArrayList<>();
+    healthCheckServiceNameList.add("health-check-appfabric-service");
     JsonObject pod1 = new JsonObject();
     pod1.addProperty("name", "appfabric");
     pod1.addProperty("status", "running");
@@ -115,15 +105,16 @@ public class SupportBundleK8sHealthCheckTaskTest extends AppFabricTestBase {
     configuration.set(Constants.AppFabricHealthCheck.POD_INFO, podInfoList.toString());
     configuration.set(Constants.AppFabricHealthCheck.NODE_INFO, nodeInfoList.toString());
     configuration.set(Constants.AppFabricHealthCheck.EVENT_INFO, eventInfoList.toString());
+    configuration.set(Constants.AppFabricHealthCheck.SERVICE_NAME_WITH_POD, Constants.AppFabricHealthCheck.POD_INFO);
+    configuration.set(Constants.AppFabricHealthCheck.SERVICE_NAME_WITH_NODE, Constants.AppFabricHealthCheck.NODE_INFO);
+    configuration.set(Constants.AppFabricHealthCheck.SERVICE_NAME_WITH_EVENT,
+                      Constants.AppFabricHealthCheck.EVENT_INFO);
+    configuration.setStrings(Constants.HealthCheck.SERVICE_NAME_LIST,
+                             healthCheckServiceNameList.toArray(new String[healthCheckServiceNameList.size()]));
 
     store = injector.getInstance(DefaultStore.class);
-    remoteAppFabricHealthCheckFetcher = injector.getInstance(RemoteAppFabricHealthCheckFetcher.class);
+    remoteHealthCheckFetcher = injector.getInstance(RemoteHealthCheckFetcher.class);
 
-    svr = createJMXConnectorServer(SERVER_PORT);
-    svr.start();
-    Assert.assertTrue(svr.isActive());
-
-    executorService = MoreExecutors.newDirectExecutorService();
     supportBundleTaskFactorySet = new HashSet<>();
     supportBundleTaskFactorySet.add(injector.getInstance(SupportBundlePipelineInfoTaskFactory.class));
     supportBundleTaskFactorySet.add(injector.getInstance(SupportBundleSystemLogTaskFactory.class));
@@ -131,19 +122,6 @@ public class SupportBundleK8sHealthCheckTaskTest extends AppFabricTestBase {
     workflowName = AppWithWorkflow.SampleWorkflow.NAME;
     application = AppWithWorkflow.NAME;
     programType = ProgramType.valueOfCategoryName("workflows");
-  }
-
-  @AfterClass
-  public static void teardownClass() throws IOException {
-    svr.stop();
-  }
-
-  private static JMXConnectorServer createJMXConnectorServer(int port) throws IOException {
-    LocateRegistry.createRegistry(port);
-    MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-    JMXServiceURL url =
-      new JMXServiceURL(String.format("service:jmx:rmi://localhost/jndi/rmi://localhost:%d/jmxrmi", port));
-    return JMXConnectorServerFactory.newJMXConnectorServer(url, null, mbs);
   }
 
   @Test
@@ -156,12 +134,13 @@ public class SupportBundleK8sHealthCheckTaskTest extends AppFabricTestBase {
     File uuidFile = new File(tempFolder, uuid);
 
     SupportBundleK8sHealthCheckTask supportBundleK8sHealthCheckTask =
-      new SupportBundleK8sHealthCheckTask(uuidFile, remoteAppFabricHealthCheckFetcher);
+      new SupportBundleK8sHealthCheckTask(configuration, uuidFile, remoteHealthCheckFetcher);
     supportBundleK8sHealthCheckTask.collect();
 
     File healthCheckFolder = new File(uuidFile, "health-check");
+    File appFabricHealthCheckFolder = new File(healthCheckFolder, "health-check-appfabric-service");
 
-    File healthCheckPodFile = new File(healthCheckFolder, "supportbundle-pod-info.txt");
+    File healthCheckPodFile = new File(appFabricHealthCheckFolder, "supportbundle-pod-info.txt");
     try (Reader reader = Files.newBufferedReader(healthCheckPodFile.toPath(), StandardCharsets.UTF_8)) {
       JsonObject podInfo = GSON.fromJson(reader, JsonObject.class);
       Assert.assertEquals("failed", podInfo.get("status").getAsString());
@@ -170,7 +149,7 @@ public class SupportBundleK8sHealthCheckTaskTest extends AppFabricTestBase {
       Assert.fail();
     }
 
-    File healthCheckNodeFile = new File(healthCheckFolder, "appfabric-node-info.txt");
+    File healthCheckNodeFile = new File(appFabricHealthCheckFolder, "appfabric-node-info.txt");
     try (Reader reader = Files.newBufferedReader(healthCheckNodeFile.toPath(), StandardCharsets.UTF_8)) {
       JsonObject nodeInfo = GSON.fromJson(reader, JsonObject.class);
       Assert.assertEquals("running", nodeInfo.get("status").getAsString());
@@ -179,7 +158,7 @@ public class SupportBundleK8sHealthCheckTaskTest extends AppFabricTestBase {
       Assert.fail();
     }
 
-    File healthCheckEventFile = new File(healthCheckFolder, "supportbundle-event-info.txt");
+    File healthCheckEventFile = new File(appFabricHealthCheckFolder, "supportbundle-event-info.txt");
     try (Reader reader = Files.newBufferedReader(healthCheckEventFile.toPath(), StandardCharsets.UTF_8)) {
       JsonObject eventInfo = GSON.fromJson(reader, JsonObject.class);
       Assert.assertEquals("running", eventInfo.get("status").getAsString());

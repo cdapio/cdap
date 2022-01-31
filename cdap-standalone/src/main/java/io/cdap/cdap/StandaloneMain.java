@@ -45,6 +45,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.HealthCheckModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
@@ -52,6 +53,7 @@ import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.io.URLConnections;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
+import io.cdap.cdap.common.service.HealthCheckService;
 import io.cdap.cdap.common.startup.ConfigurationLogger;
 import io.cdap.cdap.common.twill.NoopTwillRunnerService;
 import io.cdap.cdap.common.utils.DirUtils;
@@ -70,8 +72,6 @@ import io.cdap.cdap.explore.guice.ExploreRuntimeModule;
 import io.cdap.cdap.explore.service.ExploreServiceUtils;
 import io.cdap.cdap.gateway.router.NettyRouter;
 import io.cdap.cdap.gateway.router.RouterModules;
-import io.cdap.cdap.healthcheck.module.AppFabricHealthCheckModule;
-import io.cdap.cdap.healthcheck.services.AppFabricHealthCheckService;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeServer;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.internal.app.services.SupportBundleInternalService;
@@ -132,7 +132,7 @@ public class StandaloneMain {
   private static final Logger LOG = LoggerFactory.getLogger(StandaloneMain.class);
 
   private final Injector injector;
-  private AppFabricHealthCheckService appFabricHealthCheckService;
+  private final HealthCheckService appFabricHealthCheckService;
   private final UserInterfaceService userInterfaceService;
   private final NettyRouter router;
   private final MetricsQueryService metricsQueryService;
@@ -219,7 +219,10 @@ public class StandaloneMain {
     metadataService = injector.getInstance(MetadataService.class);
     secureStoreService = injector.getInstance(SecureStoreService.class);
     supportBundleInternalService = injector.getInstance(SupportBundleInternalService.class);
-    appFabricHealthCheckService = injector.getInstance(AppFabricHealthCheckService.class);
+    String host = cConf.get(Constants.AppFabricHealthCheck.SERVICE_BIND_ADDRESS);
+    int port = cConf.getInt(Constants.AppFabricHealthCheck.SERVICE_BIND_PORT);
+    appFabricHealthCheckService = injector.getInstance(HealthCheckService.class);
+    appFabricHealthCheckService.initiate(host, port, Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE);
 
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       try {
@@ -519,6 +522,7 @@ public class StandaloneMain {
     cConf.set(Constants.Metadata.SERVICE_BIND_ADDRESS, localhost);
     cConf.set(Constants.Preview.ADDRESS, localhost);
     cConf.set(Constants.SupportBundle.SERVICE_BIND_ADDRESS, localhost);
+    cConf.set(Constants.AppFabricHealthCheck.SERVICE_BIND_ADDRESS, localhost);
 
     return ImmutableList.of(
       new ConfigModule(cConf, hConf),
@@ -553,7 +557,7 @@ public class StandaloneMain {
       new PreviewRunnerManagerModule().getStandaloneModules(),
       new MessagingServerRuntimeModule().getStandaloneModules(),
       new AppFabricServiceRuntimeModule(cConf).getStandaloneModules(),
-      new AppFabricHealthCheckModule(),
+      new HealthCheckModule(),
       new MonitorHandlerModule(false),
       new RuntimeServerModule(),
       new OperationalStatsModule(),

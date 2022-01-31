@@ -66,11 +66,13 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.HealthCheckModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.common.service.HealthCheckService;
 import io.cdap.cdap.common.test.TestRunner;
 import io.cdap.cdap.common.twill.NoopTwillRunnerService;
 import io.cdap.cdap.common.utils.OSDetector;
@@ -87,8 +89,6 @@ import io.cdap.cdap.explore.executor.ExploreExecutorService;
 import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.explore.guice.ExploreRuntimeModule;
 import io.cdap.cdap.gateway.handlers.AuthorizationHandler;
-import io.cdap.cdap.healthcheck.module.AppFabricHealthCheckModule;
-import io.cdap.cdap.healthcheck.services.AppFabricHealthCheckService;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.internal.app.services.SupportBundleInternalService;
 import io.cdap.cdap.internal.capability.CapabilityConfig;
@@ -201,7 +201,6 @@ public class TestBase {
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   static Injector injector;
-  private static AppFabricHealthCheckService appFabricHealthCheckService;
   private static CConfiguration cConf;
   private static int nestedStartCount;
   private static boolean firstInit = true;
@@ -232,6 +231,7 @@ public class TestBase {
   private static AppFabricServer appFabricServer;
   private static SupportBundleInternalService supportBundleInternalService;
   private static PreferencesService preferencesService;
+  private static HealthCheckService appFabricHealthCheckService;
 
   // This list is to record ApplicationManager create inside @Test method
   private static final List<ApplicationManager> applicationManagers = new ArrayList<>();
@@ -284,7 +284,7 @@ public class TestBase {
       new LocalLocationModule(),
       new InMemoryDiscoveryModule(),
       new AppFabricServiceRuntimeModule(cConf).getInMemoryModules(),
-      new AppFabricHealthCheckModule(),
+      new HealthCheckModule(),
       new MonitorHandlerModule(false),
       new AuthenticationContextModules().getMasterModule(),
       new AuthorizationModule(),
@@ -419,7 +419,11 @@ public class TestBase {
     }
     supportBundleInternalService = injector.getInstance(SupportBundleInternalService.class);
     supportBundleInternalService.startAndWait();
-    appFabricHealthCheckService = injector.getInstance(AppFabricHealthCheckService.class);
+
+    String host = cConf.get(Constants.AppFabricHealthCheck.SERVICE_BIND_ADDRESS);
+    int port = cConf.getInt(Constants.AppFabricHealthCheck.SERVICE_BIND_PORT);
+    appFabricHealthCheckService = injector.getInstance(HealthCheckService.class);
+    appFabricHealthCheckService.initiate(host, port, Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE);
     appFabricHealthCheckService.startAndWait();
   }
 

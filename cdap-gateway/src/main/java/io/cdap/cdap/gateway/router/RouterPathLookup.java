@@ -54,7 +54,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
   public static final RouteDestination SUPPORT_BUNDLE_SERVICE =
     new RouteDestination(Constants.Service.SUPPORT_BUNDLE_SERVICE);
   public static final RouteDestination APP_FABRIC_HEALTH_CHECK_SERVICE =
-    new RouteDestination(Constants.Service.APP_FABRIC_HEALTH_CHECK_SERVICE);
+    new RouteDestination(Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE);
   public static final RouteDestination DONT_ROUTE = new RouteDestination(Constants.Router.DONT_ROUTE_SERVICE);
 
   /**
@@ -179,7 +179,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
         case Constants.Service.MESSAGING_SERVICE: return MESSAGING;
         case Constants.Service.RUNTIME: return RUNTIME;
         case Constants.Service.SUPPORT_BUNDLE_SERVICE: return SUPPORT_BUNDLE_SERVICE;
-        case Constants.Service.APP_FABRIC_HEALTH_CHECK_SERVICE: return APP_FABRIC_HEALTH_CHECK_SERVICE;
+        case Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE: return APP_FABRIC_HEALTH_CHECK_SERVICE;
         default: return null;
       }
     } else if (uriParts.length == 7 && uriParts[3].equals("data") && uriParts[4].equals("datasets") &&

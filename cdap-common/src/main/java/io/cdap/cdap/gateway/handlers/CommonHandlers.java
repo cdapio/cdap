@@ -27,6 +27,7 @@ public class CommonHandlers {
   public static void add(Multibinder<HttpHandler> handlerBinder) {
     handlerBinder.addBinding().to(PingHandler.class);
     handlerBinder.addBinding().to(StackHandler.class);
+    handlerBinder.addBinding().to(HealthCheckHttpHandler.class);
   }
 
 }

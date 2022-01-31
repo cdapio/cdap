@@ -385,7 +385,7 @@ public class DatasetServiceClient {
   }
 
   @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
-  public static void append(StringBuilder sb, ThreadInfo threadInfo) {
+  private static void append(StringBuilder sb, ThreadInfo threadInfo) {
     sb.append("\"" + threadInfo.getThreadName() + "\"" +
                 " Id=" + threadInfo.getThreadId() + " " +
                 threadInfo.getThreadState());

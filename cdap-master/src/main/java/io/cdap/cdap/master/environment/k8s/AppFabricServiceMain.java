@@ -37,6 +37,7 @@ import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
+import io.cdap.cdap.common.service.HealthCheckService;
 import io.cdap.cdap.common.service.RetryOnStartFailureService;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
@@ -49,8 +50,6 @@ import io.cdap.cdap.data2.metadata.writer.MessagingMetadataPublisher;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.explore.guice.ExploreClientModule;
-import io.cdap.cdap.healthcheck.module.AppFabricHealthCheckModule;
-import io.cdap.cdap.healthcheck.services.AppFabricHealthCheckService;
 import io.cdap.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
@@ -69,16 +68,14 @@ import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.store.SecureStoreService;
-import io.kubernetes.client.ApiClient;
-import io.kubernetes.client.ApiException;
-import io.kubernetes.client.apis.CoreV1Api;
-import io.kubernetes.client.models.V1Event;
-import io.kubernetes.client.models.V1EventList;
-import io.kubernetes.client.models.V1Node;
-import io.kubernetes.client.models.V1NodeList;
-import io.kubernetes.client.models.V1ObjectMeta;
-import io.kubernetes.client.models.V1Pod;
-import io.kubernetes.client.models.V1PodList;
+import io.kubernetes.client.openapi.ApiClient;
+import io.kubernetes.client.openapi.ApiException;
+import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.openapi.models.V1Node;
+import io.kubernetes.client.openapi.models.V1NodeList;
+import io.kubernetes.client.openapi.models.V1ObjectMeta;
+import io.kubernetes.client.openapi.models.V1Pod;
+import io.kubernetes.client.openapi.models.V1PodList;
 import io.kubernetes.client.util.Config;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.TwillRunnerService;
@@ -110,35 +107,45 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
   }
 
   @Override
-  protected List<Module> getServiceModules(MasterEnvironment masterEnv, EnvironmentOptions options,
-                                           CConfiguration cConf) {
+  protected List<Module> getServiceModules(MasterEnvironment masterEnv,
+                                           EnvironmentOptions options, CConfiguration cConf) {
     return Arrays.asList(
       // Always use local table implementations, which use LevelDB.
       // In K8s, there won't be HBase and the cdap-site should be set to use SQL store for StructuredTable.
       new DataSetServiceModules().getStandaloneModules(),
       // The Dataset set modules are only needed to satisfy dependency injection
-      new DataSetsModules().getStandaloneModules(), new MetricsStoreModule(), new MessagingClientModule(),
-      new ExploreClientModule(), new AppFabricHealthCheckModule(), new AuditModule(), new AuthorizationModule(),
+      new DataSetsModules().getStandaloneModules(),
+      new MetricsStoreModule(),
+      new MessagingClientModule(),
+      new ExploreClientModule(),
+      new AuditModule(),
+      new AuthorizationModule(),
       new AuthorizationEnforcementModule().getMasterModule(),
       Modules.override(new AppFabricServiceRuntimeModule(cConf).getDistributedModules()).with(new AbstractModule() {
         @Override
         protected void configure() {
           bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
         }
-      }), new ProgramRunnerRuntimeModule().getDistributedModules(true), new MonitorHandlerModule(false),
-      new SecureStoreServerModule(), new OperationalStatsModule(), getDataFabricModule(), new DFSLocationModule(),
+      }),
+      new ProgramRunnerRuntimeModule().getDistributedModules(true),
+      new MonitorHandlerModule(false),
+      new SecureStoreServerModule(),
+      new OperationalStatsModule(),
+      getDataFabricModule(),
+      new DFSLocationModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(TwillRunnerService.class).toProvider(new SupplierProviderBridge<>(masterEnv.getTwillRunnerSupplier()))
-            .in(Scopes.SINGLETON);
+          bind(TwillRunnerService.class).toProvider(
+            new SupplierProviderBridge<>(masterEnv.getTwillRunnerSupplier())).in(Scopes.SINGLETON);
           bind(TwillRunner.class).to(TwillRunnerService.class);
 
           // TODO (CDAP-14677): find a better way to inject metadata publisher
           bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
           bind(MetadataServiceClient.class).to(DefaultMetadataServiceClient.class);
         }
-      });
+      }
+    );
   }
 
   @Override
@@ -157,16 +164,24 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
     services.add(injector.getInstance(ServiceStore.class));
 
     try {
-      services.add(injector.getInstance(AppFabricHealthCheckService.class));
+      String host = cConf.get(Constants.AppFabricHealthCheck.SERVICE_BIND_ADDRESS);
+      int port = cConf.getInt(Constants.AppFabricHealthCheck.SERVICE_BIND_PORT);
+      HealthCheckService healthCheckService = injector.getInstance(HealthCheckService.class);
+      healthCheckService.initiate(host, port, Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE);
+      services.add(healthCheckService);
+
       ApiClient client = Config.defaultClient();
       CoreV1Api coreApi = new CoreV1Api(client);
       KubeMasterEnvironment kubeMasterEnv = (KubeMasterEnvironment) MasterEnvironments.getMasterEnvironment();
       JsonArray podArray = getPodInfoArray(coreApi, kubeMasterEnv);
       JsonArray nodeArray = getNodeInfoArray(coreApi);
-      JsonArray eventArray = getEventInfoArray(coreApi, kubeMasterEnv);
+//      JsonArray eventArray = getEventInfoArray(coreApi, kubeMasterEnv);
       cConf.set(Constants.AppFabricHealthCheck.POD_INFO, podArray.toString());
       cConf.set(Constants.AppFabricHealthCheck.NODE_INFO, nodeArray.toString());
-      cConf.set(Constants.AppFabricHealthCheck.EVENT_INFO, eventArray.toString());
+      cConf.set(Constants.AppFabricHealthCheck.EVENT_INFO, "eventArray.toString()");
+      cConf.set(Constants.AppFabricHealthCheck.SERVICE_NAME_WITH_POD, Constants.AppFabricHealthCheck.POD_INFO);
+      cConf.set(Constants.AppFabricHealthCheck.SERVICE_NAME_WITH_NODE, Constants.AppFabricHealthCheck.NODE_INFO);
+      cConf.set(Constants.AppFabricHealthCheck.SERVICE_NAME_WITH_EVENT, Constants.AppFabricHealthCheck.EVENT_INFO);
     } catch (IOException e) {
       LOG.error("Can not get api client ", e);
     }
@@ -177,8 +192,8 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
 
 
     // Start both the remote TwillRunnerService and regular TwillRunnerService
-    TwillRunnerService remoteTwillRunner =
-      injector.getInstance(Key.get(TwillRunnerService.class, Constants.AppFabric.RemoteExecution.class));
+    TwillRunnerService remoteTwillRunner = injector.getInstance(Key.get(TwillRunnerService.class,
+                                                                        Constants.AppFabric.RemoteExecution.class));
     services.add(new TwillRunnerServiceWrapper(remoteTwillRunner));
     services.add(new TwillRunnerServiceWrapper(injector.getInstance(TwillRunnerService.class)));
     services.add(new RetryOnStartFailureService(() -> injector.getInstance(DatasetService.class),
@@ -196,7 +211,105 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
   @Nullable
   @Override
   protected LoggingContext getLoggingContext(EnvironmentOptions options) {
-    return new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(), Constants.Logging.COMPONENT_NAME,
+    return new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
+                                     Constants.Logging.COMPONENT_NAME,
                                      Constants.Service.APP_FABRIC_HTTP);
   }
+
+  private JsonArray getPodInfoArray(CoreV1Api coreApi, KubeMasterEnvironment kubeMasterEnv) {
+    JsonArray podArray = new JsonArray();
+    try {
+      if (kubeMasterEnv != null) {
+        PodInfo podInfo = kubeMasterEnv.getPodInfo();
+        String labelSelector = podInfo.getLabels()
+          .entrySet()
+          .stream()
+          .map(e -> e.getKey() + "=" + e.getValue())
+          .collect(Collectors.joining(","));
+        V1PodList podList =
+          coreApi.listNamespacedPod(podInfo.getNamespace(), null, null, null, null, labelSelector, null, null, null,
+                                    null, null);
+        Set<String> activePods = podList.getItems()
+          .stream()
+          .map(V1Pod::getMetadata)
+          .filter(Objects::nonNull)
+          .map(V1ObjectMeta::getName)
+          .collect(Collectors.toSet());
+        for (V1Pod pod : podList.getItems()) {
+          if (pod.getMetadata() == null || !activePods.contains(pod.getMetadata().getName())) {
+            continue;
+          }
+          String podName = pod.getMetadata().getName();
+          JsonObject podObject = new JsonObject();
+          podObject.addProperty("name", podName);
+          podObject.addProperty("status", pod.getStatus().getMessage());
+          String podLog =
+            coreApi.readNamespacedPodLog(pod.getMetadata().getName(), pod.getMetadata().getNamespace(), null, null,
+                                         null, null, null, null, null, null, null);
+
+          podObject.addProperty("podLog", podLog);
+          podArray.add(podObject);
+        }
+      }
+    } catch (ApiException e) {
+      LOG.error("Can not obtain api client ", e);
+    }
+    return podArray;
+  }
+
+  private JsonArray getNodeInfoArray(CoreV1Api coreApi) {
+    JsonArray nodeArray = new JsonArray();
+    try {
+      V1NodeList nodeList = coreApi.listNode(null, null, null, null, null, null, null, null, null, null);
+      Set<String> activeNodes = nodeList.getItems()
+        .stream()
+        .map(V1Node::getMetadata)
+        .filter(Objects::nonNull)
+        .map(V1ObjectMeta::getName)
+        .collect(Collectors.toSet());
+      for (V1Node node : nodeList.getItems()) {
+        if (node.getMetadata() == null || !activeNodes.contains(node.getMetadata().getName())) {
+          continue;
+        }
+        String nodeName = node.getMetadata().getName();
+        JsonObject nodeObject = new JsonObject();
+        nodeObject.addProperty("name", nodeName);
+        nodeObject.addProperty("status", node.getStatus().getConditions().get(0).getStatus());
+        nodeArray.add(nodeObject);
+      }
+    } catch (ApiException e) {
+      LOG.error("Can not obtain api client ", e);
+    }
+    return nodeArray;
+  }
+
+//  private JsonArray getEventInfoArray(CoreV1Api coreApi, KubeMasterEnvironment kubeMasterEnv) {
+//    JsonArray eventArray = new JsonArray();
+//    try {
+//      if (kubeMasterEnv != null) {
+//        PodInfo podInfo = kubeMasterEnv.getPodInfo();
+//        String nameSpace = podInfo.getNamespace();
+//        V1EventList eventList = coreApi.listNamespacedEvent(nameSpace, null, null, null, null, null, null);
+//        Set<String> activeEvents = eventList.getItems()
+//          .stream()
+//          .map(V1Event::getMetadata)
+//          .filter(Objects::nonNull)
+//          .map(V1ObjectMeta::getName)
+//          .collect(Collectors.toSet());
+//        for (V1Event event : eventList.getItems()) {
+//          if (event.getMetadata() == null || !activeEvents.contains(event.getMetadata().getName())) {
+//            continue;
+//          }
+//          String eventName = event.getMetadata().getName();
+//          JsonObject eventObject = new JsonObject();
+//          eventObject.addProperty("name", eventName);
+//          eventObject.addProperty("status", event.getMessage());
+//          eventArray.add(eventObject);
+//        }
+//      }
+//    } catch (ApiException e) {
+//      LOG.error("Can not obtain api client ", e);
+//    }
+//    return eventArray;
+//  }
 }

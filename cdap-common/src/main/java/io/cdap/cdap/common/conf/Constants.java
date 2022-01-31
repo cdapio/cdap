@@ -114,7 +114,6 @@ public final class Constants {
    */
   public static final class Service {
     public static final String APP_FABRIC_HTTP = "appfabric";
-    public static final String APP_FABRIC_HEALTH_CHECK_SERVICE = "appfabric.healthcheck.service";
     public static final String TRANSACTION = "transaction";
     public static final String TRANSACTION_HTTP = "transaction.http";
     public static final String METRICS = "metrics";
@@ -1845,6 +1844,7 @@ public final class Constants {
 
   public static final class AppFabricHealthCheck {
     public static final String SERVICE_DESCRIPTION = "Service to generate health check for app fabric operation.";
+    public static final String APP_FABRIC_HEALTH_CHECK_SERVICE = "health.check.appfabric.service";
     public static final String SERVICE_BIND_ADDRESS = "appfabric.healthcheck.service.bind.address";
     public static final String SERVICE_BIND_PORT = "appfabric.healthcheck.service.bind.port";
     public static final String HANDLERS_NAME = "appfabric.healthcheck.handlers";
@@ -1873,5 +1873,10 @@ public final class Constants {
   public static final class JMXMetricsCollector {
     public static final String POLL_INTERVAL_SECS = "jmx.metrics.collector.poll.interval.secs";
     public static final String SERVER_PORT = "jmx.metrics.collector.server.port";
+  }
+
+  public static final class HealthCheck {
+    public static final String HANDLERS_NAME = "healthcheck.handlers";
+    public static final String SERVICE_NAME_LIST = "healthcheck.service_name_list";
   }
 }

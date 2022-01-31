@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,13 +14,13 @@
  * the License.
  */
 
-package io.cdap.cdap.healthcheck.handlers;
+package io.cdap.cdap.gateway.handlers;
 
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import io.cdap.cdap.healthcheck.implementation.AppFabricHealthCheckImplementation;
+import io.cdap.cdap.common.implementation.HealthCheckImplementation;
+import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import javax.enterprise.context.ApplicationScoped;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 /**
  * App Fabric Health Check HTTP Handler.
@@ -39,21 +40,21 @@ import javax.ws.rs.Path;
 @Liveness
 @ApplicationScoped
 @Path(Constants.Gateway.API_VERSION_3)
-public class AppFabricHealthCheckHttpHandler extends AbstractAppFabricHttpHandler {
+public class HealthCheckHttpHandler extends AbstractHttpHandler {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AppFabricHealthCheckHttpHandler.class);
+  private static final Logger LOG = LoggerFactory.getLogger(HealthCheckHttpHandler.class);
   private static final Gson GSON = new Gson();
-  private final AppFabricHealthCheckImplementation appFabricHealthCheckImplementation;
+  private final HealthCheckImplementation healthCheckImplementation;
 
   @Inject
-  AppFabricHealthCheckHttpHandler(AppFabricHealthCheckImplementation appFabricHealthCheckImplementation) {
-    this.appFabricHealthCheckImplementation = appFabricHealthCheckImplementation;
+  HealthCheckHttpHandler(HealthCheckImplementation appFabricHealthCheckImplementation) {
+    this.healthCheckImplementation = appFabricHealthCheckImplementation;
   }
 
   @GET
-  @Path("/appfabric/health")
-  public void call(HttpRequest request, HttpResponder responder) {
-    HealthCheckResponse healthCheckResponse = appFabricHealthCheckImplementation.collect();
+  @Path("/{service-name}/health")
+  public void call(HttpRequest request, HttpResponder responder, @PathParam("service-name") String serviceName) {
+    HealthCheckResponse healthCheckResponse = healthCheckImplementation.collect(serviceName);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(healthCheckResponse.getData()));
   }
 }

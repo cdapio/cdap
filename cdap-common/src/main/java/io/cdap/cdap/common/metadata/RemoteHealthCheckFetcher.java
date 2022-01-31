@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,17 +14,15 @@
  * the License.
  */
 
-package io.cdap.cdap.metadata;
+package io.cdap.cdap.common.metadata;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
-import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
@@ -32,33 +30,37 @@ import io.cdap.common.http.HttpResponse;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
 /**
  * Fetch app fabric health check via internal REST API calls
  */
-public class RemoteAppFabricHealthCheckFetcher implements AppFabricHealthCheckFetcher {
-  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
+public class RemoteHealthCheckFetcher implements HealthCheckFetcher {
+  private static final Gson GSON = new Gson();
 
-  private final RemoteClient remoteClient;
+  private final RemoteClientFactory remoteClientFactory;
+  private RemoteClient remoteClient;
 
   @Inject
-  public RemoteAppFabricHealthCheckFetcher(RemoteClientFactory remoteClientFactory) {
-    this.remoteClient = remoteClientFactory.createRemoteClient(Constants.Service.APP_FABRIC_HEALTH_CHECK_SERVICE,
-                                                               new DefaultHttpRequestConfig(false),
-                                                               Constants.Gateway.API_VERSION_3);
+  public RemoteHealthCheckFetcher(RemoteClientFactory remoteClientFactory) {
+    this.remoteClientFactory = remoteClientFactory;
   }
 
   /**
    * Get the application detail for the given application id
    */
-  public Optional<Map<String, Object>> getHealthDetails() throws IOException, NotFoundException, UnauthorizedException {
-    String url = "appfabric/health";
+  public Map<String, Object> getHealthDetails(String serviceName)
+    throws IOException, NotFoundException, UnauthorizedException {
+    remoteClient = remoteClientFactory.createRemoteClient(serviceName, new DefaultHttpRequestConfig(false),
+                                                          Constants.Gateway.API_VERSION_3);
+    String url = String.format("/%s/health", serviceName);
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
     HttpResponse httpResponse;
     httpResponse = execute(requestBuilder.build());
-    return GSON.fromJson(httpResponse.getResponseBodyAsString(), Optional.class);
+    Optional<Map<String, Object>> healthData = GSON.fromJson(httpResponse.getResponseBodyAsString(), Optional.class);
+    return healthData.orElseGet(HashMap::new);
   }
 
   private HttpResponse execute(HttpRequest request) throws IOException, NotFoundException, UnauthorizedException {
