@@ -132,6 +132,7 @@ public final class Constants {
     public static final String TASK_WORKER = "task.worker";
     public static final String ARTIFACT_LOCALIZER = "artifact.localizer";
     public static final String SYSTEM_METRICS_EXPORTER = "system.metrics.exporter";
+    public static final String ARTIFACT_CACHE = "artifact.cache";
 
     public static final String SERVICE_INSTANCE_TABLE_NAME = "cdap.services.instances";
     /** Scheduler queue name to submit the master service app. */
@@ -144,6 +145,7 @@ public final class Constants {
     public static final String SECURE_STORE_SERVICE = "secure.store.service";
     public static final String LOG_BUFFER_SERVICE = "log.buffer.service";
     public static final String REMOTE_AGENT_SERVICE = "remote.agent.service";
+    public static final String ARTIFACT_CACHE_SERVICE = "artifact.cache.service";
   }
 
   /**
@@ -1862,5 +1864,22 @@ public final class Constants {
     public static final int DEFAULT_CONNECTION_TIMEOUT_SECONDS = 60;
 
     public static final String CLIENT_AUTHENTICATOR_CLASS = "tethering.client.authenticator.class";
+  }
+
+  public static final class ArtifactCache {
+
+    /**
+     * Artifact cache service clean up configurations
+     */
+    public static final String CACHE_CLEANUP_INTERVAL_MIN = "artifact.cache.cache.cleanup.interval.min";
+    public static final String LOCAL_DATA_DIR = "artifact.cache.local.data.dir";
+
+    /**
+     * Artifact cache http handler configuration
+     */
+    public static final String ADDRESS = "artifact.cache.bind.address";
+    public static final String PORT = "artifact.cache.bind.port";
+    public static final String BOSS_THREADS = "artifact.cache.boss.threads";
+    public static final String WORKER_THREADS = "artifact.cache.worker.threads";
   }
 }
