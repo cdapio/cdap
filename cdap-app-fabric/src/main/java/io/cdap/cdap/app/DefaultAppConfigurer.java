@@ -103,9 +103,8 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   @VisibleForTesting
   public DefaultAppConfigurer(Id.Namespace namespace, Id.Artifact artifactId, Application app) {
     this(namespace, artifactId, app, "", null, null, null, null,
-            name -> {
-      throw new UnsupportedOperationException();
-    });
+         new FeatureFlagsProvider() {
+         });
   }
 
   public DefaultAppConfigurer(Id.Namespace namespace, Id.Artifact artifactId, Application app, String configuration,

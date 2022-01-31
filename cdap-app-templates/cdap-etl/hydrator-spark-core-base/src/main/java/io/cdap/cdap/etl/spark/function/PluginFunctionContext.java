@@ -140,7 +140,7 @@ public class PluginFunctionContext implements Serializable {
                                                           arguments, metrics, pluginContext,
                                                           serviceDiscoverer, secureStore,
                                                           null, null,
-                                                          name -> getPluginContext().isFeatureEnabled(name));
+                                                          getPluginContext());
     return new SparkBatchRuntimeContext(pipelineRuntime, stageSpec);
   }
 
