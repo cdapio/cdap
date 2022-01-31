@@ -58,6 +58,8 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.net.URI;
@@ -73,6 +75,9 @@ import javax.annotation.Nullable;
  * Mapreduce job runtime context
  */
 final class BasicMapReduceContext extends AbstractContext implements MapReduceContext {
+
+  private static final Logger LOG = LoggerFactory.getLogger(WrapperUtil.class);
+  private static final String CDAP_PACKAGE_PREFIX = "io.cdap.cdap.";
 
   private final MapReduceSpecification spec;
   private final WorkflowProgramInfo workflowProgramInfo;
@@ -223,6 +228,11 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
                                              "Add the output as a DatasetOutput.");
       }
       providedOutput = new ProvidedOutput(output, outputFormatProvider);
+    } else if (output.getClass().getCanonicalName().startsWith(CDAP_PACKAGE_PREFIX)) {
+      // Skip unsupported outputs from within CDAP packages.
+      // This is used to ignore unsupported outputs in MapReduce (such as the SQL Engine Output for Spark).
+      LOG.info("Unsupported output in MapReduce: {}", output.getClass().getCanonicalName());
+      return;
     } else {
       // shouldn't happen unless user defines their own Output class
       throw new IllegalArgumentException(String.format("Output %s has unknown output class %s",
