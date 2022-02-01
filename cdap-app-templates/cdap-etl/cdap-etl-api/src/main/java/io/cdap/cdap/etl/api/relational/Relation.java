@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.etl.api.relational;
 
+import io.cdap.cdap.etl.api.aggregation.DeduplicateAggregationDefinition;
+import io.cdap.cdap.etl.api.aggregation.GroupByAggregationDefinition;
+
 import java.util.Map;
 
 /**
@@ -69,4 +72,22 @@ public interface Relation {
    * @return a new relation with same set of columns, but only rows where filter value is true
    */
   Relation filter(Expression filter);
+
+  /**
+   * Allows to perform a group by based on an aggregation definition.
+   * @param aggregationDefinition specifies the details for the group by operation.
+   * @return a new relation after the grouping is performed.
+   */
+  default Relation groupBy(GroupByAggregationDefinition aggregationDefinition) {
+    throw new UnsupportedOperationException();
+  }
+
+  /**
+   * Allows to perform a deduplicate operation based on an aggregation definition.
+   * @param aggregationDefinition specifies the details for the deduplicate operation.
+   * @return a new relation after deduplication of rows.
+   */
+  default Relation deduplicate(DeduplicateAggregationDefinition aggregationDefinition) {
+    throw new UnsupportedOperationException();
+  }
 }

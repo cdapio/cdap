@@ -36,6 +36,7 @@ import io.cdap.cdap.etl.api.engine.sql.SQLEngine;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDataset;
 import io.cdap.cdap.etl.api.join.JoinDefinition;
 import io.cdap.cdap.etl.api.join.JoinStage;
+import io.cdap.cdap.etl.api.relational.Engine;
 import io.cdap.cdap.etl.batch.BatchPhaseSpec;
 import io.cdap.cdap.etl.batch.PipelinePluginInstantiator;
 import io.cdap.cdap.etl.batch.connector.SingleConnectorFactory;
@@ -353,5 +354,9 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
       Collections.singletonList(relationalEngine),
       super.getRelationalEngines(stageData)
     );
+  }
+
+  public Engine getSQLRelationalEngine() {
+    return sqlEngineAdapter.getSQLRelationalEngine();
   }
 }
