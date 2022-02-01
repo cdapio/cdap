@@ -132,6 +132,11 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
                              List<? super AutoCloseable> closeableResources,
                              MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
                              EnvironmentOptions options) {
+    CConfiguration cConf = injector.getInstance(CConfiguration.class);
+    if (SecurityUtil.isInternalAuthEnabled(cConf)) {
+      services.add(injector.getInstance(TokenManager.class));
+    }
+
     closeableResources.add(injector.getInstance(AccessControllerInstantiator.class));
     services.add(injector.getInstance(OperationalStatsService.class));
     services.add(injector.getInstance(SecureStoreService.class));
@@ -152,12 +157,8 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
                                                 RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS)));
     services.add(injector.getInstance(AppFabricServer.class));
 
-    CConfiguration cConf = injector.getInstance(CConfiguration.class);
     if (cConf.getBoolean(Constants.TaskWorker.POOL_ENABLE)) {
       services.add(injector.getInstance(TaskWorkerServiceLauncher.class));
-    }
-    if (SecurityUtil.isInternalAuthEnabled(cConf)) {
-      services.add(injector.getInstance(TokenManager.class));
     }
 
     // Optionally adds the master environment task
