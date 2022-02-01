@@ -213,7 +213,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
    * If cluster reuse is enabled & possible tries to find a cluster to reuse.
    * @param client data proc client
    * @param context provisioner contex
-   * @param conf dataproc configuration
+   * @param conf PredefinedAutoScalingPolicyfiguration
    * @return a cluster ready to reuse or null if none available.
    */
   @Nullable
