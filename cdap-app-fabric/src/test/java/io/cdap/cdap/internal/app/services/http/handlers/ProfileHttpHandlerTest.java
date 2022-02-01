@@ -21,6 +21,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.provision.MockProvisioner;
+import io.cdap.cdap.internal.provision.MockProvisionerWithCpus;
 import io.cdap.cdap.proto.EntityScope;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -416,4 +417,23 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
       deleteSystemProfile(profile.getName(), HttpURLConnection.HTTP_OK);
     });
   }
+
+  @Test
+  public void testPutAndGetProfileWithTotalCPUSImplementedProvisioner() throws Exception {
+    // put a profile with the mock provisioner with total cpus method implemented
+    Profile expected = new Profile("MyProfile", "label", "my profile for testing",
+                                   new ProvisionerInfo(MockProvisionerWithCpus.NAME, PROPERTY_SUMMARIES));
+    ProfileId expectedProfileId = NamespaceId.DEFAULT.profile(expected.getName());
+    putProfile(expectedProfileId, expected, HttpURLConnection.HTTP_OK);
+
+    // get the profile
+    Profile actual = getProfile(expectedProfileId, HttpURLConnection.HTTP_OK).get();
+
+    expected.getProvisioner().setTotalProcessingCpusLabel(MockProvisionerWithCpus.TEST_LABEL);
+    Assert.assertEquals(expected, actual);
+
+    disableProfile(expectedProfileId, HttpURLConnection.HTTP_OK);
+    deleteProfile(expectedProfileId, HttpURLConnection.HTTP_OK);
+  }
+
 }

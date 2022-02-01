@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,19 +16,16 @@
 
 package io.cdap.cdap.internal.provision;
 
-import com.google.common.collect.ImmutableMap;
-import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
-
 import java.util.Map;
+import java.util.Optional;
 
-/**
- * Provides provisioners for unit tests.
- */
-public class MockProvisionerProvider implements ProvisionerProvider {
+public class MockProvisionerWithCpus extends MockProvisioner {
+
+  public static final String NAME = "PROVISIONER_WITH_CPUS";
+  public static final String TEST_LABEL = "Upto 8";
 
   @Override
-  public Map<String, Provisioner> loadProvisioners() {
-    return ImmutableMap.of(MockProvisioner.NAME, new MockProvisioner(),
-                           MockProvisionerWithCpus.NAME, new MockProvisionerWithCpus());
+  public Optional<String> getTotalProcessingCpusLabel(Map<String, String> properties) {
+    return Optional.of(TEST_LABEL);
   }
 }

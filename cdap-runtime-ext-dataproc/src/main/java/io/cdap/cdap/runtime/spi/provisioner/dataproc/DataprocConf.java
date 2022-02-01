@@ -82,6 +82,10 @@ final class DataprocConf {
   static final int CLUSTER_REUSE_THRESHOLD_MINUTES_DEFAULT = 3;
   static final String CLUSTER_IDLE_TTL_MINUTES = "idleTTL";
   static final int CLUSTER_IDLE_TTL_MINUTES_DEFAULT = 30;
+  static final String PREDEFINED_AUTOSCALE_ENABLED = "predefinedAutoScaleEnabled";
+  static final String WORKER_NUM_NODES = "workerNumNodes";
+  static final String SECONDARY_WORKER_NUM_NODES = "secondaryWorkerNumNodes";
+  static final String AUTOSCALING_POLICY = "autoScalingPolicy";
 
   private final String accountKey;
   private final String region;
@@ -143,6 +147,7 @@ final class DataprocConf {
   private final boolean clusterReuseEnabled;
   private final long clusterReuseThresholdMinutes;
   private final String clusterReuseKey;
+  private final boolean predefinedAutoScaleEnabled;
 
   DataprocConf(DataprocConf conf, String network, String subnet) {
     this(conf.accountKey, conf.region, conf.zone, conf.projectId, conf.networkHostProjectID, network, subnet,
@@ -156,7 +161,7 @@ final class DataprocConf {
          conf.clusterMetaData, conf.clusterLabels, conf.networkTags, conf.initActions, conf.runtimeJobManagerEnabled,
          conf.clusterProperties, conf.autoScalingPolicy, conf.idleTTLMinutes, conf.tokenEndpoint,
          conf.secureBootEnabled, conf.vTpmEnabled, conf.integrityMonitoringEnabled, conf.clusterReuseEnabled,
-         conf.clusterReuseThresholdMinutes, conf.clusterReuseKey);
+         conf.clusterReuseThresholdMinutes, conf.clusterReuseKey, conf.predefinedAutoScaleEnabled);
   }
 
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
@@ -177,7 +182,8 @@ final class DataprocConf {
                        Map<String, String> clusterProperties, @Nullable String autoScalingPolicy, int idleTTLMinutes,
                        @Nullable String tokenEndpoint, boolean secureBootEnabled, boolean vTpmEnabled,
                        boolean integrityMonitoringEnabled, boolean clusterReuseEnabled,
-                       long clusterReuseThresholdMinutes, @Nullable String clusterReuseKey) {
+                       long clusterReuseThresholdMinutes, @Nullable String clusterReuseKey,
+                       boolean predefinedAutoScaleEnabled) {
     this.accountKey = accountKey;
     this.region = region;
     this.zone = zone;
@@ -228,6 +234,7 @@ final class DataprocConf {
     this.secureBootEnabled = secureBootEnabled;
     this.vTpmEnabled = vTpmEnabled;
     this.integrityMonitoringEnabled = integrityMonitoringEnabled;
+    this.predefinedAutoScaleEnabled = predefinedAutoScaleEnabled;
   }
 
   String getRegion() {
@@ -294,6 +301,11 @@ final class DataprocConf {
   }
 
   int getTotalWorkerCPUs() {
+    if (predefinedAutoScaleEnabled) {
+      return workerCPUs *
+        (PredefinedAutoScaling.getMaxSecondaryWorkerInstances() + PredefinedAutoScaling.getPrimaryWorkerInstances());
+    }
+
     return workerCPUs * (workerNumNodes + secondaryWorkerNumNodes);
   }
 
@@ -425,6 +437,10 @@ final class DataprocConf {
     return clusterReuseThresholdMinutes;
   }
 
+  public boolean isPredefinedAutoScaleEnabled() {
+    return predefinedAutoScaleEnabled;
+  }
+
   /**
    * @return a key that should be used along with the profile name to filter clusters with the same configuration.
    * Always returns a value if cluster reuse is enabled, returns null otherwise.
@@ -534,13 +550,26 @@ final class DataprocConf {
       throw new IllegalArgumentException(
         String.format("Invalid config 'masterNumNodes' = %d. Master nodes must be either 1 or 3.", masterNumNodes));
     }
-    int workerNumNodes = getInt(properties, "workerNumNodes", 2);
+
+    int workerNumNodes = getInt(properties, WORKER_NUM_NODES, 2);
+    int secondaryWorkerNumNodes = getInt(properties, SECONDARY_WORKER_NUM_NODES, 0);
+    String autoScalingPolicy = getString(properties, AUTOSCALING_POLICY);
+
+    boolean predefinedAutoScaleEnabled =
+      Boolean.parseBoolean(properties.getOrDefault(PREDEFINED_AUTOSCALE_ENABLED, "false"));
+
+    if (predefinedAutoScaleEnabled) {
+      workerNumNodes = PredefinedAutoScaling.getPrimaryWorkerInstances();
+      secondaryWorkerNumNodes = PredefinedAutoScaling.getMinSecondaryWorkerInstances();
+      autoScalingPolicy = ""; // The policy will be created while cluster provisioning
+    }
+
     if (workerNumNodes == 1) {
       throw new IllegalArgumentException(
         "Invalid config 'workerNumNodes' = 1. Worker nodes must either be zero for a single node cluster, " +
           "or at least 2 for a multi node cluster.");
     }
-    int secondaryWorkerNumNodes = getInt(properties, "secondaryWorkerNumNodes", 0);
+
     if (secondaryWorkerNumNodes < 0) {
       throw new IllegalArgumentException(
         String.format("Invalid config 'secondaryWorkerNumNodes' = %d. The value must be 0 or greater.",
@@ -613,7 +642,6 @@ final class DataprocConf {
 
     String initActions = getString(properties, "initActions");
     boolean runtimeJobManagerEnabled = Boolean.parseBoolean(properties.get(RUNTIME_JOB_MANAGER));
-    String autoScalingPolicy = getString(properties, "autoScalingPolicy");
     int idleTTL = getInt(properties, CLUSTER_IDLE_TTL_MINUTES, CLUSTER_IDLE_TTL_MINUTES_DEFAULT);
 
     String tokenEndpoint = getString(properties, TOKEN_ENDPOINT_KEY);
@@ -655,7 +683,8 @@ final class DataprocConf {
                             publicKey, imageVersion, customImageUri, clusterMetaData, clusterLabels, networkTags,
                             initActions, runtimeJobManagerEnabled, clusterProps, autoScalingPolicy, idleTTL,
                             tokenEndpoint, secureBootEnabled, vTpmEnabled, integrityMonitoringEnabled,
-                            clusterReuseEnabled, clusterReuseThresholdMinutes, clusterReuseKey);
+                            clusterReuseEnabled, clusterReuseThresholdMinutes, clusterReuseKey,
+                            predefinedAutoScaleEnabled);
   }
 
   // the UI never sends nulls, it only sends empty strings.

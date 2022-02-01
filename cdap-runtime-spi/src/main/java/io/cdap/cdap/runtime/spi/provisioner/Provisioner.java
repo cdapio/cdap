@@ -171,4 +171,13 @@ public interface Provisioner {
   default Optional<RuntimeJobManager> getRuntimeJobManager(ProvisionerContext context) {
     return Optional.empty();
   }
+
+
+  /**
+   * Calculate the total no of CPUs available for processing based on the provisioner
+   * If specified provisioner is not yet capable to calculate then return default
+   */
+  default Optional<String> getTotalProcessingCpusLabel(Map<String, String> properties) {
+    return Optional.empty();
+  }
 }

@@ -46,8 +46,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
 import javax.ws.rs.DELETE;
@@ -88,7 +90,9 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
     NamespaceId namespaceId = NamespaceId.SYSTEM;
     accessEnforcer.enforceOnParent(EntityType.PROFILE, namespaceId, authenticationContext.getPrincipal(),
                                    StandardPermission.LIST);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profileService.getProfiles(namespaceId, true)));
+    List<Profile> profiles = verifyCpuLabelsProfiles(profileService.getProfiles(namespaceId, true),
+                                                     NamespaceId.SYSTEM);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profiles));
   }
 
   @GET
@@ -97,7 +101,8 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
                                @PathParam("profile-name") String profileName) throws Exception {
     ProfileId profileId = getValidatedProfile(NamespaceId.SYSTEM, profileName);
     accessEnforcer.enforce(profileId, authenticationContext.getPrincipal(), StandardPermission.GET);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profileService.getProfile(profileId)));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(
+      verifyCpuLabelsProfile(profileService.getProfile(profileId), profileId)));
   }
 
   @PUT
@@ -156,7 +161,8 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
       accessEnforcer.enforceOnParent(EntityType.PROFILE, NamespaceId.SYSTEM, authenticationContext.getPrincipal(),
                                      StandardPermission.LIST);
     }
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profileService.getProfiles(namespace, include)));
+    List<Profile> profiles = verifyCpuLabelsProfiles(profileService.getProfiles(namespace, include), namespace);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profiles));
   }
 
   /**
@@ -169,7 +175,8 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
                          @PathParam("profile-name") String profileName) throws Exception {
     ProfileId profileId = getValidatedProfile(namespaceId, profileName);
     accessEnforcer.enforce(profileId, authenticationContext.getPrincipal(), StandardPermission.GET);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profileService.getProfile(profileId)));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(
+      verifyCpuLabelsProfile(profileService.getProfile(profileId), profileId)));
   }
 
   /**
@@ -269,6 +276,30 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
     }
   }
 
+  private List<Profile> verifyCpuLabelsProfiles(List<Profile> profileList, NamespaceId namespaceId)
+    throws BadRequestException,
+    MethodNotAllowedException {
+    List<Profile> verifiedProfiles = new ArrayList<>();
+    for (Profile profile : profileList) {
+      ProfileId profileId = getValidatedProfile(namespaceId, profile.getName());
+      verifiedProfiles.add(verifyCpuLabelsProfile(profile, profileId));
+    }
+    return verifiedProfiles;
+  }
+
+  private Profile verifyCpuLabelsProfile(Profile profile, ProfileId profileId) throws BadRequestException,
+    MethodNotAllowedException {
+    if (profile.getProvisioner().getTotalProcessingCpusLabel() == null) {
+        String label = getTotalProcessingCpusLabel(profile.getProvisioner());
+        profile.getProvisioner().setTotalProcessingCpusLabel(label);
+        //Native profile updates are not allowed
+        if (!profileId.equals(ProfileId.NATIVE)) {
+          profileService.saveProfile(profileId, profile);
+        }
+    }
+    return profile;
+  }
+
   private void writeProfile(ProfileId profileId, FullHttpRequest request)
     throws BadRequestException, IOException, MethodNotAllowedException {
     ProfileCreateRequest profileCreateRequest;
@@ -278,6 +309,8 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
     } catch (JsonSyntaxException e) {
       throw new BadRequestException("Unable to parse request body. Please make sure it is valid JSON", e);
     }
+    String totalProcessingCpusLabel = getTotalProcessingCpusLabel(profileCreateRequest.getProvisioner());
+    profileCreateRequest.getProvisioner().setTotalProcessingCpusLabel(totalProcessingCpusLabel);
     Profile profile =
       new Profile(profileId.getProfile(), profileCreateRequest.getLabel(), profileCreateRequest.getDescription(),
                   profileId.getScope(), profileCreateRequest.getProvisioner());
@@ -291,16 +324,8 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
       throw new BadRequestException(e.getMessage());
     }
     ProvisionerInfo provisionerInfo = request.getProvisioner();
-    Map<String, String> properties = new HashMap<>();
-    Collection<ProvisionerPropertyValue> provisionerProperties = provisionerInfo.getProperties();
-    if (provisionerProperties != null) {
-      for (ProvisionerPropertyValue value : provisionerProperties) {
-        if (value == null) {
-          continue;
-        }
-        properties.put(value.getName(), value.getValue());
-      }
-    }
+    Map<String, String> properties =  convertProvisionerProperties(provisionerInfo.getProperties());
+
     try {
       provisioningService.validateProperties(provisionerInfo.getName(), properties);
     } catch (NotFoundException e) {
@@ -310,6 +335,30 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
     } catch (IllegalArgumentException e) {
       throw new BadRequestException(e.getMessage(), e);
     }
+  }
+
+  private String getTotalProcessingCpusLabel(ProvisionerInfo provisionerInfo) throws BadRequestException {
+    Map<String, String> properties = convertProvisionerProperties(provisionerInfo.getProperties());
+    try {
+      return provisioningService.getTotalProcessingCpusLabel(provisionerInfo.getName(), properties);
+    } catch (NotFoundException e) {
+      throw new BadRequestException(String.format("The specified provisioner %s does not exist, " +
+                                                    "thus cannot be associated with a profile",
+                                                  provisionerInfo.getName()), e);
+    }
+  }
+
+  private Map<String, String> convertProvisionerProperties(Collection<ProvisionerPropertyValue> provisionerProperties) {
+    Map<String, String> properties = new HashMap<>();
+    if (provisionerProperties != null) {
+      for (ProvisionerPropertyValue value : provisionerProperties) {
+        if (value == null) {
+          continue;
+        }
+        properties.put(value.getName(), value.getValue());
+      }
+    }
+    return properties;
   }
 
   private void checkPutProfilePermissions(ProfileId profileId) {

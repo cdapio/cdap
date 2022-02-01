@@ -99,6 +99,33 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
     if (networkTags.size() > 64) {
       throw new IllegalArgumentException("Exceed Max number of tags. Only Max of 64 allowed. ");
     }
+
+    if (conf.isPredefinedAutoScaleEnabled()) {
+      //If predefined auto-scaling is enabled, then user should not send values for the following
+      if (properties.containsKey(DataprocConf.WORKER_NUM_NODES) ||
+        properties.containsKey(DataprocConf.SECONDARY_WORKER_NUM_NODES) ||
+        properties.containsKey(DataprocConf.AUTOSCALING_POLICY)) {
+        throw new IllegalArgumentException(
+          String.format("Invalid configs : %s, %s, %s. These are not allowed when %s is enabled ",
+                        DataprocConf.WORKER_NUM_NODES, DataprocConf.SECONDARY_WORKER_NUM_NODES,
+                        DataprocConf.AUTOSCALING_POLICY , DataprocConf.PREDEFINED_AUTOSCALE_ENABLED));
+      }
+    }
+  }
+
+  @Override
+  public Optional<String> getTotalProcessingCpusLabel(Map<String, String> properties) {
+    DataprocConf conf = DataprocConf.create(properties);
+    StringBuilder label = new StringBuilder();
+
+    if (conf.isPredefinedAutoScaleEnabled()) {
+      label.append(DataprocUtils.WORKER_CPU_PREFIX).append(" ");
+    } else if (conf.getAutoScalingPolicy() != null && !conf.getAutoScalingPolicy().isEmpty()) {
+      //Return default implementation, as this is an user auto-scaling policy for which we do not have details
+      return super.getTotalProcessingCpusLabel(properties);
+    }
+    label.append(conf.getTotalWorkerCPUs());
+    return Optional.of(label.toString());
   }
 
   @Override
