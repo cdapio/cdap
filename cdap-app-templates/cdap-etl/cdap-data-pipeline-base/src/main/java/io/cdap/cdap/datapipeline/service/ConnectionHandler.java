@@ -479,12 +479,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
         build();
     try {
       byte[] bytes = getContext().runTask(runnableTaskRequest);
-      if (bytes == null) {
-        responder.sendStatus(HttpURLConnection.HTTP_OK);
-      } else {
-        //convert the bytes received from remote worker to UTF-8 string
-        responder.sendString(new String(bytes, StandardCharsets.UTF_8));
-      }
+      responder.sendString(new String(bytes, StandardCharsets.UTF_8));
     } catch (RemoteExecutionException e) {
       //TODO CDAP-18787 - Handle other exceptions
       RemoteTaskException remoteTaskException = e.getCause();
