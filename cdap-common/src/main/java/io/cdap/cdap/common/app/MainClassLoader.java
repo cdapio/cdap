@@ -25,6 +25,7 @@ import io.cdap.cdap.common.lang.CombineClassLoader;
 import io.cdap.cdap.common.lang.FilterClassLoader;
 import io.cdap.cdap.common.lang.GuavaClassRewriter;
 import io.cdap.cdap.common.lang.InterceptableClassLoader;
+import io.cdap.cdap.common.leveldb.LevelDBClassRewriter;
 import io.cdap.cdap.common.security.AuthEnforceRewriter;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.asm.Classes;
@@ -55,6 +56,7 @@ public class MainClassLoader extends InterceptableClassLoader {
   private final GuavaClassRewriter guavaClassRewriter;
   private final DatasetClassRewriter datasetRewriter;
   private final AuthEnforceRewriter authEnforceRewriter;
+  private final LevelDBClassRewriter levelDBClassRewriter;
   private final Function<String, URL> resourceLookup;
   private final Map<String, Boolean> cache;
 
@@ -140,6 +142,7 @@ public class MainClassLoader extends InterceptableClassLoader {
     this.guavaClassRewriter = new GuavaClassRewriter();
     this.datasetRewriter = new DatasetClassRewriter();
     this.authEnforceRewriter = new AuthEnforceRewriter();
+    this.levelDBClassRewriter = new LevelDBClassRewriter();
     this.resourceLookup = ClassLoaders.createClassResourceLookup(this);
     this.cache = new HashMap<>();
   }
@@ -170,6 +173,10 @@ public class MainClassLoader extends InterceptableClassLoader {
       rewrittenCode = authEnforceRewriter.rewriteClass(
         className, rewrittenCode == null ? input : new ByteArrayInputStream(rewrittenCode));
     }
+
+    if (levelDBClassRewriter.needRewrite(className)) {
+      rewrittenCode = levelDBClassRewriter.rewriteClass(className, input);
+    }
     return rewrittenCode;
   }
 
@@ -195,6 +202,7 @@ public class MainClassLoader extends InterceptableClassLoader {
 
   private boolean isRewriteNeeded(String className) throws IOException {
     return guavaClassRewriter.needRewrite(className)
+      || levelDBClassRewriter.needRewrite(className)
       || isDatasetRewriteNeeded(className)
       || isAuthRewriteNeeded(className);
   }
