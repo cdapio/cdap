@@ -24,6 +24,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.NonCustomLocationUnitTestModule;
+import io.cdap.cdap.common.test.TestRunner;
 import io.cdap.cdap.data.runtime.DataFabricLevelDBModule;
 import io.cdap.cdap.data.runtime.TransactionMetricsModule;
 import io.cdap.cdap.data2.util.TableId;
@@ -33,15 +34,20 @@ import io.cdap.cdap.security.authorization.AuthorizationTestModule;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBIterator;
 import org.iq80.leveldb.impl.DbImpl;
+import org.iq80.leveldb.impl.FileMetaData;
+import org.iq80.leveldb.impl.SnapshotImpl;
+import org.iq80.leveldb.util.SizeOf;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -49,6 +55,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
+@RunWith(TestRunner.class)
 public class LevelDBTableServiceTest {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -183,6 +190,30 @@ public class LevelDBTableServiceTest {
 
     // Verify that the table on-disk size is the same as initial size when it is empty.
     Assert.assertEquals(emptyTableDiskSize, currentTableDiskSize);
+  }
+
+  @Test
+  public void testFileMetaDataSize() throws IOException {
+    String tableName = "cdap_default.testMetaSize";
+    TableId tableId = TableId.from("default", "testMetaSize");
+
+    // Create a table and write some data and compact to get big array refs in metadata (without fix)
+    service.ensureTableExists(tableName);
+    DB table = service.getTable(tableName);
+    DbImpl tableImpl = (DbImpl) table;
+    writeSome(service, tableName, 8 * 1024, 1024, false);
+    tableImpl.flushMemTable();
+    service.compact(tableName);
+    // Check MetaData keys array sizes
+    SnapshotImpl snapshot = (SnapshotImpl) tableImpl.getSnapshot();
+    Collection<FileMetaData> fileMetaDatas = snapshot.getVersion().getFiles().values();
+    Assert.assertFalse(fileMetaDatas.isEmpty());
+    for (FileMetaData fileMetaData : fileMetaDatas) {
+      Assert.assertEquals(fileMetaData.getLargest().getUserKey().length(),
+                          fileMetaData.getLargest().getUserKey().getRawArray().length);
+      Assert.assertEquals(fileMetaData.getSmallest().getUserKey().length(),
+                          fileMetaData.getSmallest().getUserKey().getRawArray().length);
+    }
   }
 
   private void writeSome(LevelDBTableService service, String tableName,
