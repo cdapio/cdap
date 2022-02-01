@@ -209,6 +209,15 @@
       <artifactId>sshd-core</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.iq80.leveldb</groupId>
+      <artifactId>leveldb</artifactId>
+      <!-- leveldb 0.12 has conflicting guava 20 as a dependency. The uber jar shades guava -->
+      <classifier>uber</classifier>
+      <!-- This dependency is used for LevelDB rewriting only.
+           Rewriting would happen only if LevelDB is actually available -->
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
       <groupId>org.apache.avro</groupId>
       <artifactId>avro</artifactId>
       <version>1.8.2</version>
