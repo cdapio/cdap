@@ -21,18 +21,33 @@ import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /**
  * Information about a provisioner name and properties.
  */
 public class ProvisionerInfo {
+
+  public static final String DEFAULT_PROCESSING_CPUS_LABEL = "custom";
   private final String name;
   private final Set<ProvisionerPropertyValue> properties;
+  private String totalProcessingCpusLabel;
 
   public ProvisionerInfo(String name, Collection<ProvisionerPropertyValue> properties) {
+    this(name, null, properties);
+  }
+
+  public ProvisionerInfo(String name, @Nullable String totalProcessingCpusLabel,
+                         Collection<ProvisionerPropertyValue> properties) {
     this.name = name;
     this.properties = Collections.unmodifiableSet(
       properties.stream().filter(Objects::nonNull).collect(Collectors.toSet()));
+
+    if (totalProcessingCpusLabel == null || totalProcessingCpusLabel.isEmpty()) {
+      this.totalProcessingCpusLabel = DEFAULT_PROCESSING_CPUS_LABEL;
+    } else {
+      this.totalProcessingCpusLabel = totalProcessingCpusLabel;
+    }
   }
 
   public String getName() {
@@ -41,6 +56,14 @@ public class ProvisionerInfo {
 
   public Set<ProvisionerPropertyValue> getProperties() {
     return properties;
+  }
+
+  public String getTotalProcessingCpusLabel() {
+    return totalProcessingCpusLabel;
+  }
+
+  public void setTotalProcessingCpusLabel(String totalProcessingCpusLabel) {
+    this.totalProcessingCpusLabel = totalProcessingCpusLabel;
   }
 
   /**
@@ -67,6 +90,7 @@ public class ProvisionerInfo {
     ProvisionerInfo that = (ProvisionerInfo) o;
 
     return Objects.equals(name, that.name) &&
+      Objects.equals(totalProcessingCpusLabel, that.totalProcessingCpusLabel) &&
       Objects.equals(properties, that.properties);
   }
 
@@ -79,6 +103,7 @@ public class ProvisionerInfo {
   public String toString() {
     return "ProvisionerInfo{" +
       "name='" + name + '\'' +
+      "totalProcessingCpusLabel='" + totalProcessingCpusLabel + '\'' +
       ", properties=" + properties +
       '}';
   }

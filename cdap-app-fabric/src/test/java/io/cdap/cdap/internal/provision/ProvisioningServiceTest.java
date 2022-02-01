@@ -28,6 +28,7 @@ import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.ProgramOptions;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -163,7 +164,7 @@ public class ProvisioningServiceTest {
   @Test
   public void testGetSpecs() {
     Collection<ProvisionerDetail> specs = provisioningService.getProvisionerDetails();
-    Assert.assertEquals(1, specs.size());
+    Assert.assertEquals(2, specs.size());
 
     ProvisionerSpecification spec = new MockProvisioner().getSpec();
     ProvisionerDetail expected = new ProvisionerDetail(spec.getName(), spec.getLabel(),
@@ -463,6 +464,16 @@ public class ProvisioningServiceTest {
     // test empty
     pluginGroupedByRequirement = provisioningService.groupByRequirement(Collections.emptySet());
     Assert.assertTrue(pluginGroupedByRequirement.isEmpty());
+  }
+
+  @Test
+  public void testGetTotalProcessingCpusLabel() throws NotFoundException {
+    String defaultLabel = provisioningService.getTotalProcessingCpusLabel(MockProvisioner.NAME, new HashMap<>());
+    Assert.assertEquals(ProvisionerInfo.DEFAULT_PROCESSING_CPUS_LABEL, defaultLabel);
+
+    String implementedLabel = provisioningService.getTotalProcessingCpusLabel(MockProvisionerWithCpus.NAME,
+                                                                              new HashMap<>());
+    Assert.assertEquals(MockProvisionerWithCpus.TEST_LABEL, implementedLabel);
   }
 
   /**
