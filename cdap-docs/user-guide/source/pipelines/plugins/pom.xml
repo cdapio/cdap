@@ -653,7 +653,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.14.1</version>
+        <version>3.0.0-M5</version>
         <configuration>
           <argLine>@{argLine}  -Xmx3g -Djava.awt.headless=true -XX:+UseG1GC -Djava.net.preferIPv4Stack=true</argLine>
           <redirectTestOutputToFile>${surefire.redirectTestOutputToFile}</redirectTestOutputToFile>
@@ -677,7 +677,7 @@
           <dependency>
             <groupId>org.apache.maven.surefire</groupId>
             <artifactId>surefire-junit47</artifactId>
-            <version>2.14</version>
+            <version>3.0.0-M5</version>
           </dependency>
         </dependencies>
       </plugin>
