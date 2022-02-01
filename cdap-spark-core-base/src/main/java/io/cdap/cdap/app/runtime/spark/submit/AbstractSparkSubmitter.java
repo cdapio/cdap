@@ -229,6 +229,8 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
 
     String archives = Joiner.on(',').join(Iterables.transform(archivesIterable, RESOURCE_TO_PATH));
     String files = Joiner.on(',').join(Iterables.transform(filesIterable, RESOURCE_TO_PATH));
+    builder.add("--conf").add("spark.kerberos.keytab=/home/cdap/hive.keytab");
+    builder.add("--conf").add("spark.kerberos.principal=hive/kerberos-local-m");
 
     if (!Strings.isNullOrEmpty(archives)) {
       builder.add("--archives").add(archives);
