@@ -38,6 +38,6 @@ public class SparkPipelineRuntime extends PipelineRuntime {
   public SparkPipelineRuntime(JavaSparkExecutionContext sec, long batchTime) {
     super(sec.getNamespace(), sec.getApplicationSpecification().getName(), batchTime,
           new BasicArguments(sec), sec.getMetrics(), sec.getPluginContext(), sec.getServiceDiscoverer(),
-          sec.getSecureStore(), null, null, sec);
+          sec.getSecureStore(), null, null, sec.getPluginContext());
   }
 }

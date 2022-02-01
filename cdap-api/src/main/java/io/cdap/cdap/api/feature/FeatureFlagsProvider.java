@@ -31,5 +31,7 @@ public interface FeatureFlagsProvider {
    * @throws NullPointerException if feature flag name is not defined
    * @throws IllegalArgumentException if the feature flag is not a valid {@code boolean}
    */
-  boolean isFeatureEnabled(String name);
+  default boolean isFeatureEnabled(String name) {
+    throw new UnsupportedOperationException();
+  }
 }

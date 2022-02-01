@@ -17,6 +17,7 @@
 package io.cdap.cdap.datapipeline.service;
 
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
@@ -44,6 +45,9 @@ import java.util.Map;
  */
 public class ValidationUtilsTest {
 
+  private static final FeatureFlagsProvider MOCK_FEATURE_FLAGS_PROVIDER = new FeatureFlagsProvider() {
+  };
+
   @Test
   public void testValidateNoException() {
     Schema testSchema = Schema.recordOf("a", Schema.Field.of("a", Schema.of(Schema.Type.STRING)));
@@ -55,9 +59,7 @@ public class ValidationUtilsTest {
     StageValidationResponse stageValidationResponse = ValidationUtils
       .validate(NamespaceId.DEFAULT.getNamespace(),
                 validationRequest, getPluginConfigurer(MockSource.PLUGIN_CLASS),
-                properties -> properties, name -> {
-            throw new UnsupportedOperationException();
-          });
+                properties -> properties, MOCK_FEATURE_FLAGS_PROVIDER);
     Assert.assertTrue(stageValidationResponse.getFailures().isEmpty());
   }
 
@@ -71,10 +73,8 @@ public class ValidationUtilsTest {
       .singletonList(testStageSchema), false);
     StageValidationResponse stageValidationResponse = ValidationUtils
       .validate(NamespaceId.DEFAULT.getNamespace(),
-          validationRequest, getPluginConfigurer(MockSource.PLUGIN_CLASS), properties -> properties,
-          name -> {
-            throw new UnsupportedOperationException();
-          });
+                validationRequest, getPluginConfigurer(MockSource.PLUGIN_CLASS),
+                properties -> properties, MOCK_FEATURE_FLAGS_PROVIDER);
     Assert.assertEquals(1, stageValidationResponse.getFailures().size());
   }
 
@@ -95,9 +95,7 @@ public class ValidationUtilsTest {
           propertiesCopy.put("tableName", testtable);
         }
         return propertiesCopy;
-      }, name -> {
-            throw new UnsupportedOperationException();
-          });
+      }, MOCK_FEATURE_FLAGS_PROVIDER);
     Assert.assertTrue(stageValidationResponse.getFailures().isEmpty());
     Assert.assertEquals(testtable, stageValidationResponse.getSpec().getPlugin().getProperties().get("tableName"));
   }
