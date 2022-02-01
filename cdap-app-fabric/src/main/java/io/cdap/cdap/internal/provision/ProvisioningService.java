@@ -582,6 +582,24 @@ public class ProvisioningService extends AbstractIdleService {
     provisioner.validateProperties(properties);
   }
 
+  /**
+   * Generates the label to display for total no of CPUs available for processing for the specified provisioner.
+   *
+   * @param provisionerName the name of the provisioner to validate
+   * @param properties properties for the specified provisioner
+   */
+  public String getTotalProcessingCpusLabel(String provisionerName, Map<String, String> properties)
+    throws NotFoundException {
+    Provisioner provisioner = provisionerInfo.get().provisioners.get(provisionerName);
+    if (provisioner == null) {
+      throw new NotFoundException(String.format("Provisioner '%s' does not exist", provisionerName));
+    }
+
+    Optional<String> label = provisioner.getTotalProcessingCpusLabel(properties);
+    return label.filter(s -> !s.isEmpty()).orElse(
+      io.cdap.cdap.proto.provisioner.ProvisionerInfo.DEFAULT_PROCESSING_CPUS_LABEL);
+  }
+
   private Runnable createProvisionTask(ProvisioningTaskInfo taskInfo, Provisioner provisioner) {
     ProgramRunId programRunId = taskInfo.getProgramRunId();
     ProgramOptions programOptions = taskInfo.getProgramOptions();
