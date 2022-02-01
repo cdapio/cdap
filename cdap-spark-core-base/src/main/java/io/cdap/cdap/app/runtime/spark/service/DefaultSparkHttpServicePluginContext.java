@@ -264,6 +264,10 @@ public class DefaultSparkHttpServicePluginContext implements SparkHttpServicePlu
     Closeables.closeQuietly(pluginInstantiator);
   }
 
+  @Override
+  public boolean isFeatureEnabled(String name) {
+    return runtimeContext.isFeatureEnabled(name);
+  }
   /**
    * Checks if a plugin of the given id can be configured through this context object.
    */

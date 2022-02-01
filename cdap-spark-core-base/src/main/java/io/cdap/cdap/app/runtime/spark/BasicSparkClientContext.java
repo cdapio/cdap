@@ -101,6 +101,11 @@ final class BasicSparkClientContext implements SparkClientContext {
   }
 
   @Override
+  public boolean isFeatureEnabled(String name) {
+    return sparkRuntimeContext.isFeatureEnabled(name);
+  }
+
+  @Override
   public Metrics getMetrics() {
     return sparkRuntimeContext;
   }

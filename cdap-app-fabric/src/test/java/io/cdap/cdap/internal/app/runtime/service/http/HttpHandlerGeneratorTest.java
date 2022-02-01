@@ -655,6 +655,11 @@ public class HttpHandlerGeneratorTest {
   private static class NoOpHttpServiceContext implements HttpServiceContext {
 
     @Override
+    public boolean isFeatureEnabled(String name) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
     public HttpServiceHandlerSpecification getSpecification() {
       return null;
     }

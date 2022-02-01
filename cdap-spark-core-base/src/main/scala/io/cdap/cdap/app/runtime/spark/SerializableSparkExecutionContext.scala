@@ -50,6 +50,8 @@ class SerializableSparkExecutionContext(val delegate: SparkExecutionContext) ext
 
   override def getRunId = delegate.getRunId
 
+  override def isFeatureEnabled(name: String): Boolean = delegate.isFeatureEnabled(name)
+
   override def getNamespace = delegate.getNamespace
 
   override def getRuntimeArguments = delegate.getRuntimeArguments

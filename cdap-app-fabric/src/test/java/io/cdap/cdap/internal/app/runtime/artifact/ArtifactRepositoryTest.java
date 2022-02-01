@@ -29,6 +29,7 @@ import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.macro.Macros;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.api.plugin.InvalidPluginConfigException;
@@ -568,7 +569,9 @@ public class ArtifactRepositoryTest {
           String pluginId = "5";
           PluginContext pluginContext = new DefaultPluginContext(instantiator,
                                                                  NamespaceId.DEFAULT.app("abc").worker("w"),
-                                                                 ImmutableMap.of(pluginId, pluginInfo));
+                                                                 ImmutableMap.of(pluginId, pluginInfo),
+                                                                 new FeatureFlagsProvider() {
+                                                                 });
           PluginProperties resolvedProperties = pluginContext.getPluginProperties(pluginId, testMacroEvaluator);
           Map<String, String> expected = new HashMap<>();
           expected.put("class.name", TEST_EMPTY_CLASS);

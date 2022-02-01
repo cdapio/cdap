@@ -24,6 +24,7 @@ import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.api.ErrorTransform;
 import io.cdap.cdap.etl.api.MultiOutputPipelineConfigurable;
@@ -101,11 +102,13 @@ public class PipelineSpecGeneratorTest {
   private static final ETLPlugin MOCK_SPLITTER = new ETLPlugin("mocksplit", SplitterTransform.PLUGIN_TYPE, EMPTY_MAP);
   private static final ETLPlugin MOCK_SQL_ENGINE = new ETLPlugin("mocksqlengine", BatchSQLEngine.PLUGIN_TYPE,
                                                                  EMPTY_MAP);
+  private static final FeatureFlagsProvider MOCK_FEATURE_FLAGS_PROVIDER = new FeatureFlagsProvider() {
+  };
   private static final ArtifactId ARTIFACT_ID =
     new ArtifactId("plugins", new ArtifactVersion("1.0.0"), ArtifactScope.USER);
   private static JoinDefinition joinDefinition;
   private static BatchPipelineSpecGenerator specGenerator;
-
+  
   @BeforeClass
   public static void setupTests() {
     // populate some mock plugins.
@@ -136,7 +139,7 @@ public class PipelineSpecGeneratorTest {
     specGenerator = new BatchPipelineSpecGenerator(pluginConfigurer,
                                                    ImmutableSet.of(BatchSource.PLUGIN_TYPE),
                                                    ImmutableSet.of(BatchSink.PLUGIN_TYPE),
-                                                   Engine.MAPREDUCE);
+                                                   Engine.MAPREDUCE, MOCK_FEATURE_FLAGS_PROVIDER);
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -820,7 +823,8 @@ public class PipelineSpecGeneratorTest {
       .build();
 
     new BatchPipelineSpecGenerator(pluginConfigurer, ImmutableSet.of(BatchSource.PLUGIN_TYPE),
-                                   ImmutableSet.of(BatchSink.PLUGIN_TYPE), Engine.MAPREDUCE)
+                                   ImmutableSet.of(BatchSink.PLUGIN_TYPE), Engine.MAPREDUCE,
+                                   MOCK_FEATURE_FLAGS_PROVIDER)
       .generateSpec(config);
   }
 
@@ -847,7 +851,8 @@ public class PipelineSpecGeneratorTest {
       .build();
 
     PipelineSpec actual = new BatchPipelineSpecGenerator(pluginConfigurer, ImmutableSet.of(BatchSource.PLUGIN_TYPE),
-                                                         ImmutableSet.of(BatchSink.PLUGIN_TYPE), Engine.MAPREDUCE)
+                                                         ImmutableSet.of(BatchSink.PLUGIN_TYPE), Engine.MAPREDUCE,
+                                                         MOCK_FEATURE_FLAGS_PROVIDER)
       .generateSpec(config);
 
     PipelineSpec expected = BatchPipelineSpec.builder()

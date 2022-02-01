@@ -19,6 +19,7 @@ package io.cdap.cdap.datapipeline.service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.api.validation.ValidationException;
@@ -65,14 +66,15 @@ public final class ValidationUtils {
    */
   public static StageValidationResponse validate(StageValidationRequest validationRequest,
                                                  PluginConfigurer pluginConfigurer,
-                                                 Function<Map<String, String>, Map<String, String>> macroFn) {
+                                                 Function<Map<String, String>, Map<String, String>> macroFn,
+                                                 FeatureFlagsProvider featureFlagsProvider) {
 
     ETLStage stageConfig = validationRequest.getStage();
-    ValidatingConfigurer validatingConfigurer = new ValidatingConfigurer(pluginConfigurer);
+    ValidatingConfigurer validatingConfigurer = new ValidatingConfigurer(pluginConfigurer, featureFlagsProvider);
     // Batch or Streaming doesn't matter for a single stage.
     PipelineSpecGenerator<ETLBatchConfig, BatchPipelineSpec> pipelineSpecGenerator =
       new BatchPipelineSpecGenerator(validatingConfigurer, Collections.emptySet(), Collections.emptySet(),
-                                     Engine.SPARK);
+                                     Engine.SPARK, featureFlagsProvider);
 
     DefaultStageConfigurer stageConfigurer = new DefaultStageConfigurer(stageConfig.getName());
     for (StageSchema stageSchema : validationRequest.getInputSchemas()) {
@@ -80,7 +82,8 @@ public final class ValidationUtils {
       stageConfigurer.addInputStage(stageSchema.getStage());
     }
     DefaultPipelineConfigurer pipelineConfigurer =
-      new DefaultPipelineConfigurer(validatingConfigurer, stageConfig.getName(), Engine.SPARK, stageConfigurer);
+      new DefaultPipelineConfigurer(validatingConfigurer, stageConfig.getName(), Engine.SPARK,
+                                    stageConfigurer, featureFlagsProvider);
 
     // evaluate macros
     Map<String, String> evaluatedProperties = macroFn.apply(stageConfig.getPlugin().getProperties());

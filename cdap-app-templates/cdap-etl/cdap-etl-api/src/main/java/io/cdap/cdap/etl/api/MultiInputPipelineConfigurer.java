@@ -18,6 +18,7 @@ package io.cdap.cdap.etl.api;
 
 import io.cdap.cdap.api.DatasetConfigurer;
 import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 
 import java.util.Map;
@@ -28,7 +29,7 @@ import java.util.Map;
  * Similar to {@link PipelineConfigurer} except it exposes {@link MultiInputStageConfigurer}
  */
 @Beta
-public interface MultiInputPipelineConfigurer extends PluginConfigurer, DatasetConfigurer {
+public interface MultiInputPipelineConfigurer extends PluginConfigurer, DatasetConfigurer, FeatureFlagsProvider {
 
   /**
    * Get multi input stage configurer for the pipeline stage

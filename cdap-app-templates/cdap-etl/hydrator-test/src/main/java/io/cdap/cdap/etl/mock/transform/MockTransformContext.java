@@ -75,6 +75,11 @@ public class MockTransformContext implements TransformContext {
   }
 
   @Override
+  public boolean isFeatureEnabled(String name) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public PluginProperties getPluginProperties() {
     return pluginProperties;
   }

@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.spark;
 
 import com.google.common.base.Preconditions;
 import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.spark.Spark;
 import io.cdap.cdap.api.spark.SparkConfigurer;
 import io.cdap.cdap.api.spark.SparkHttpServiceHandlerSpecification;
@@ -52,8 +53,9 @@ public class DefaultSparkConfigurer extends AbstractConfigurer implements SparkC
   private Resources executorResources;
 
   public DefaultSparkConfigurer(Spark spark, Id.Namespace deployNamespace, Id.Artifact artifactId,
-                                PluginFinder pluginFinder, PluginInstantiator pluginInstantiator) {
-    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator);
+                                PluginFinder pluginFinder, PluginInstantiator pluginInstantiator,
+                                FeatureFlagsProvider featureFlagsProvider) {
+    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator, featureFlagsProvider);
     this.spark = spark;
     this.name = spark.getClass().getSimpleName();
     this.description = "";
