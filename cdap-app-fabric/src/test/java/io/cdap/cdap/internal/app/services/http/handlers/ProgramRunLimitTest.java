@@ -61,7 +61,8 @@ public class ProgramRunLimitTest extends AppFabricTestBase {
 
   @Category(SlowTests.class)
   @Test
-  public void testConcurrentProgramRunningLimit() throws Exception {
+  public void testConcurrentServiceLaunchingAndRunningLimit() throws Exception {
+    // Launching/running a new service should NOT be controlled by flow-control mechanism. 
     // deploy, check the status
     deploy(AppWithServicesAndWorker.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
 
@@ -82,18 +83,14 @@ public class ProgramRunLimitTest extends AppFabricTestBase {
     startProgram(pingService);
     waitState(pingService, RUNNING);
 
-    // start the worker and check that it is rejected
-    startProgram(noOpWorker, 429);
-    Tasks.waitFor(1, () -> getProgramRuns(noOpWorker, ProgramRunStatus.ALL).size(), 10, TimeUnit.SECONDS);
-    Assert.assertEquals(ProgramRunStatus.REJECTED, getProgramRuns(noOpWorker, ProgramRunStatus.ALL).get(0).getStatus());
+    // starting the worker should succeed
+    startProgram(noOpWorker);
+    Tasks.waitFor(1, () -> getProgramRuns(noOpWorker, ProgramRunStatus.COMPLETED).size(), 10, TimeUnit.SECONDS);
 
     // stop one service
     stopProgram(noOpService);
     waitState(noOpService, STOPPED);
 
-    // starting the worker should now succeed
-    startProgram(noOpWorker, 200);
-    Tasks.waitFor(1, () -> getProgramRuns(noOpWorker, ProgramRunStatus.COMPLETED).size(), 10, TimeUnit.SECONDS);
 
     // stop other service
     stopProgram(pingService);
@@ -102,7 +99,7 @@ public class ProgramRunLimitTest extends AppFabricTestBase {
 
   @Category(XSlowTests.class)
   @Test
-  public void testConcurrentProgramLaunchingAndRunningLimit() throws Exception {
+  public void testConcurrentWorkflowLaunchingAndRunningLimit() throws Exception {
     // Deploy, check the status
     deploy(AppWithWorkflow.class, 200);
 
