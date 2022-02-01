@@ -31,17 +31,20 @@ public class ProvisionerDetail {
   private final String description;
   @SerializedName("configuration-groups")
   private final List<Object> configurationGroups;
+  @SerializedName("filters")
+  private final List<Object> filters;
   @SerializedName("icon")
   private final Object icon;
   @SerializedName("beta")
   private final boolean beta;
 
   public ProvisionerDetail(String name, String label, String description, List<Object> configurationGroups,
-                           @Nullable Object icon, boolean beta) {
+                           @Nullable List<Object> filters, @Nullable Object icon, boolean beta) {
     this.name = name;
     this.label = label;
     this.description = description;
     this.configurationGroups = configurationGroups;
+    this.filters = filters;
     this.icon = icon;
     this.beta = beta;
   }
@@ -72,12 +75,13 @@ public class ProvisionerDetail {
       Objects.equals(label, that.label) &&
       Objects.equals(description, that.description) &&
       Objects.equals(configurationGroups, that.configurationGroups) &&
+      Objects.equals(filters, that.filters) &&
       Objects.equals(icon, that.icon) &&
       Objects.equals(beta, that.beta);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, label, description, configurationGroups, icon, beta);
+    return Objects.hash(name, label, description, configurationGroups, filters, icon, beta);
   }
 }

@@ -540,10 +540,11 @@ public class ProvisioningService extends AbstractIdleService {
       }
       ProvisionerSpecification spec = provisioner.getSpec();
       ProvisionerConfig config = provisionerConfigs.getOrDefault(provisionerName,
-                                                                 new ProvisionerConfig(new ArrayList<>(), null, false));
+                                                                 new ProvisionerConfig(new ArrayList<>(), null,
+                                                                                       null, false));
       details.put(provisionerName, new ProvisionerDetail(spec.getName(), spec.getLabel(), spec.getDescription(),
-                                                         config.getConfigurationGroups(), config.getIcon(),
-                                                         config.isBeta()));
+                                                         config.getConfigurationGroups(), config.getFilters(),
+                                                         config.getIcon(), config.isBeta()));
     }
     provisionerInfo.set(new ProvisionerInfo(provisioners, details));
   }
