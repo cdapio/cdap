@@ -46,6 +46,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.FileContextProvider;
+import io.cdap.cdap.common.guice.HealthCheckModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
 import io.cdap.cdap.common.guice.ZKClientModule;
@@ -53,6 +54,7 @@ import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.common.io.URLConnections;
 import io.cdap.cdap.common.logging.LoggerLogHandler;
 import io.cdap.cdap.common.runtime.DaemonMain;
+import io.cdap.cdap.common.service.HealthCheckService;
 import io.cdap.cdap.common.service.RetryOnStartFailureService;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.Services;
@@ -81,9 +83,6 @@ import io.cdap.cdap.internal.app.runtime.monitor.RuntimeServer;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
-import io.cdap.cdap.master.environment.MasterEnvironments;
-import io.cdap.cdap.master.environment.k8s.KubeMasterEnvironment;
-import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.startup.ServiceResourceKeys;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -103,12 +102,6 @@ import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.store.StoreDefinition;
-import io.kubernetes.client.openapi.ApiClient;
-import io.kubernetes.client.openapi.ApiException;
-import io.kubernetes.client.openapi.apis.CoreV1Api;
-import io.kubernetes.client.openapi.models.V1Service;
-import io.kubernetes.client.openapi.models.V1ServiceList;
-import io.kubernetes.client.util.Config;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileAlreadyExistsException;
 import org.apache.hadoop.fs.FileContext;
@@ -177,8 +170,6 @@ public class MasterServiceMain extends DaemonMain {
 
   private static final long MAX_BACKOFF_TIME_MS = TimeUnit.MILLISECONDS.convert(10, TimeUnit.MINUTES);
   private static final long SUCCESSFUL_RUN_DURATION_MS = TimeUnit.MILLISECONDS.convert(20, TimeUnit.MINUTES);
-  private static final String INSTANCE_LABEL = "master.environment.k8s.instance.label";
-  private static final String DEFAULT_INSTANCE_LABEL = "cdap.instance";
 
   // Maximum time to try looking up the existing twill application
   private static final long LOOKUP_ATTEMPT_TIMEOUT_MS = 2000;
@@ -281,7 +272,6 @@ public class MasterServiceMain extends DaemonMain {
     // Tries to create the ZK root node (which can be namespaced through the zk connection string)
     Futures.getUnchecked(ZKOperations.ignoreError(zkClient.create("/", null, CreateMode.PERSISTENT),
                                                   KeeperException.NodeExistsException.class, null));
-    createHealthCheckServiceNameList();
     electionInfoService.startAndWait();
     leaderElection.startAndWait();
   }
@@ -594,6 +584,7 @@ public class MasterServiceMain extends DaemonMain {
       new SupportBundleServiceModule(),
       new RuntimeServerModule(),
       new OperationalStatsModule(),
+      new HealthCheckModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -697,6 +688,13 @@ public class MasterServiceMain extends DaemonMain {
       services.add(new RetryOnStartFailureService(() -> injector.getInstance(DatasetService.class),
                                                   RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS)));
       services.add(injector.getInstance(AppFabricServer.class));
+
+
+      String host = cConf.get(Constants.AppFabricHealthCheck.SERVICE_BIND_ADDRESS);
+      int port = cConf.getInt(Constants.AppFabricHealthCheck.SERVICE_BIND_PORT);
+      HealthCheckService healthCheckService = injector.getInstance(HealthCheckService.class);
+      healthCheckService.initiate(host, port, Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE);
+      services.add(healthCheckService);
 
       executor = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("master-runner"));
 
@@ -1147,39 +1145,5 @@ public class MasterServiceMain extends DaemonMain {
 
       return file;
     }
-  }
-
-  private void createHealthCheckServiceNameList() throws IOException, ApiException {
-    List<String> healthCheckServiceNameList = new ArrayList<>();
-    ApiClient client = Config.defaultClient();
-    CoreV1Api coreApi = new CoreV1Api(client);
-    KubeMasterEnvironment kubeMasterEnv = (KubeMasterEnvironment) MasterEnvironments.getMasterEnvironment();
-    PodInfo podInfo = kubeMasterEnv.getPodInfo();
-    String namespace = podInfo.getNamespace();
-    Map<String, String> podLabels = podInfo.getLabels();
-
-    // Get the instance label to setup prefix for K8s services
-    String instanceLabel = cConf.get(INSTANCE_LABEL);
-    if (instanceLabel == null) {
-      instanceLabel = cConf.get(DEFAULT_INSTANCE_LABEL);
-    }
-    String instanceName = podLabels.get(instanceLabel);
-    if (instanceName == null) {
-      throw new IllegalStateException("Missing instance label '" + instanceLabel + "' from pod labels.");
-    }
-
-    // Services are publish to K8s with a prefix
-    String resourcePrefix = "cdap-" + instanceName + "-";
-    String discoveryName = "health-check";
-    V1ServiceList healthCheckServiceList = coreApi.listNamespacedService(namespace, null, null, null, null,
-                                                                         "cdap.service="
-                                                                           + resourcePrefix + discoveryName, 1, null,
-                                                                         null, null, null);
-
-    for (V1Service healthCheckService : healthCheckServiceList.getItems()) {
-      healthCheckServiceNameList.add(healthCheckService.getMetadata().getName());
-    }
-    cConf.setStrings(Constants.HealthCheck.SERVICE_NAME_LIST,
-                     healthCheckServiceNameList.toArray(new String[healthCheckServiceNameList.size()]));
   }
 }

@@ -1847,7 +1847,6 @@ public final class Constants {
     public static final String APP_FABRIC_HEALTH_CHECK_SERVICE = "health.check.appfabric.service";
     public static final String SERVICE_BIND_ADDRESS = "appfabric.healthcheck.service.bind.address";
     public static final String SERVICE_BIND_PORT = "appfabric.healthcheck.service.bind.port";
-    public static final String HANDLERS_NAME = "appfabric.healthcheck.handlers";
   }
 
   public static final class Tethering {
@@ -1868,11 +1867,6 @@ public final class Constants {
     public static final int DEFAULT_CONNECTION_TIMEOUT_SECONDS = 60;
 
     public static final String CLIENT_AUTHENTICATOR_CLASS = "tethering.client.authenticator.class";
-  }
-
-  public static final class JMXMetricsCollector {
-    public static final String POLL_INTERVAL_SECS = "jmx.metrics.collector.poll.interval.secs";
-    public static final String SERVER_PORT = "jmx.metrics.collector.server.port";
   }
 
   public static final class HealthCheck {

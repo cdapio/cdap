@@ -41,6 +41,6 @@ public class SupportBundleK8sHealthCheckTaskFactory implements SupportBundleTask
   @Override
   public SupportBundleK8sHealthCheckTask create(SupportBundleTaskConfiguration taskConfiguration) {
     return new SupportBundleK8sHealthCheckTask(cConfiguration, taskConfiguration.getBasePath(),
-                                               remoteHealthCheckFetcher);
+                                               taskConfiguration.getNamespaces(), remoteHealthCheckFetcher);
   }
 }

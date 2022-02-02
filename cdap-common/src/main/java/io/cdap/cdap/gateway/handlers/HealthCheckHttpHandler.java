@@ -29,10 +29,12 @@ import org.eclipse.microprofile.health.Liveness;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import javax.enterprise.context.ApplicationScoped;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
  * App Fabric Health Check HTTP Handler.
@@ -52,9 +54,12 @@ public class HealthCheckHttpHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/{service-name}/health")
-  public void call(HttpRequest request, HttpResponder responder, @PathParam("service-name") String serviceName) {
-    HealthCheckResponse healthCheckResponse = healthCheckImplementation.collect(serviceName);
+  @Path("/{namespace}/health")
+  public void call(HttpRequest request, HttpResponder responder, @PathParam("namespace") String namespace,
+                   @Nullable @QueryParam("podLabelSelector") String podLabelSelector,
+                   @Nullable @QueryParam("nodeFieldSelector") String nodeFieldSelector) {
+    HealthCheckResponse healthCheckResponse =
+      healthCheckImplementation.collect(namespace, podLabelSelector, nodeFieldSelector);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(healthCheckResponse.getData()));
   }
 }

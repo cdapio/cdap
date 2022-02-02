@@ -17,7 +17,6 @@
 package io.cdap.cdap.support.tasks;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.inject.Injector;
 import io.cdap.cdap.AppWithWorkflow;
@@ -44,9 +43,18 @@ import io.cdap.cdap.support.task.factory.SupportBundlePipelineInfoTaskFactory;
 import io.cdap.cdap.support.task.factory.SupportBundleSystemLogTaskFactory;
 import io.cdap.cdap.support.task.factory.SupportBundleTaskFactory;
 import io.cdap.common.http.HttpResponse;
+import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.openapi.models.V1NodeList;
+import io.kubernetes.client.openapi.models.V1ObjectMeta;
+import io.kubernetes.client.openapi.models.V1Pod;
+import io.kubernetes.client.openapi.models.V1PodList;
+import io.kubernetes.client.openapi.models.V1PodStatus;
+import io.kubernetes.client.openapi.models.V1Service;
+import io.kubernetes.client.openapi.models.V1ServiceList;
 import org.apache.twill.api.RunId;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,6 +64,8 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -63,6 +73,16 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+
+/**
+ * Test for {@link SupportBundleK8sHealthCheckTask}. The test is disabled by default since it requires a running
+ * kubernetes cluster for the test to run. This class is kept for development purpose.
+ */
+@Ignore
 public class SupportBundleK8sHealthCheckTaskTest extends AppFabricTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(SupportBundleK8sHealthCheckTaskTest.class);
   private static final NamespaceId namespaceId = NamespaceId.DEFAULT;
@@ -74,43 +94,46 @@ public class SupportBundleK8sHealthCheckTaskTest extends AppFabricTestBase {
   private static String workflowName;
   private static String application;
   private static ProgramType programType;
+  private static CoreV1Api coreV1Api;
   private int sourceId;
 
   @BeforeClass
   public static void setup() throws Exception {
+    coreV1Api = mock(CoreV1Api.class);
     Injector injector = getInjector();
-    JsonArray podInfoList = new JsonArray();
+
     List<String> healthCheckServiceNameList = new ArrayList<>();
     healthCheckServiceNameList.add("health-check-appfabric-service");
-    JsonObject pod1 = new JsonObject();
-    pod1.addProperty("name", "appfabric");
-    pod1.addProperty("status", "running");
-    podInfoList.add(pod1);
-    JsonObject pod2 = new JsonObject();
-    pod2.addProperty("name", "supportbundle");
-    pod2.addProperty("status", "failed");
-    podInfoList.add(pod2);
-    JsonArray nodeInfoList = new JsonArray();
-    JsonObject node1 = new JsonObject();
-    node1.addProperty("name", "appfabric");
-    node1.addProperty("status", "running");
-    nodeInfoList.add(node1);
-    JsonArray eventInfoList = new JsonArray();
-    JsonObject event1 = new JsonObject();
-    event1.addProperty("name", "supportbundle");
-    event1.addProperty("status", "running");
-    eventInfoList.add(event1);
+    V1PodList v1PodList = new V1PodList();
+    V1Pod v1Pod = new V1Pod();
+    V1PodStatus v1PodStatus = new V1PodStatus();
+    v1PodStatus.setMessage("failed");
+    v1Pod.setStatus(v1PodStatus);
+    V1ObjectMeta v1ObjectMeta1 = new V1ObjectMeta();
+    Map<String, String> podLabels = new HashMap<>();
+    podLabels.put("cdap.instance", "bundle-test-v0");
+    v1ObjectMeta1.setName("supportbundle");
+    v1ObjectMeta1.setLabels(podLabels);
+    v1Pod.setMetadata(v1ObjectMeta1);
+    v1PodList.addItemsItem(v1Pod);
+
+    V1ServiceList v1ServiceList = new V1ServiceList();
+    V1Service v1Service = new V1Service();
+    V1ObjectMeta v1ObjectMeta2 = new V1ObjectMeta();
+    v1ObjectMeta2.setName(Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE);
+    v1Service.setMetadata(v1ObjectMeta2);
+    v1ServiceList.addItemsItem(v1Service);
+    when(coreV1Api.listNamespacedPod(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(),
+                                     any())).thenReturn(v1PodList);
+    when(coreV1Api.readNamespacedPodLog(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(),
+                                        any())).thenReturn("");
+    when(coreV1Api.listNode(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(
+      new V1NodeList());
+    when(coreV1Api.listNamespacedService(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(),
+                                         any())).thenReturn(v1ServiceList);
 
     configuration = injector.getInstance(CConfiguration.class);
-    configuration.set(Constants.AppFabricHealthCheck.POD_INFO, podInfoList.toString());
-    configuration.set(Constants.AppFabricHealthCheck.NODE_INFO, nodeInfoList.toString());
-    configuration.set(Constants.AppFabricHealthCheck.EVENT_INFO, eventInfoList.toString());
-    configuration.set(Constants.AppFabricHealthCheck.SERVICE_NAME_WITH_POD, Constants.AppFabricHealthCheck.POD_INFO);
-    configuration.set(Constants.AppFabricHealthCheck.SERVICE_NAME_WITH_NODE, Constants.AppFabricHealthCheck.NODE_INFO);
-    configuration.set(Constants.AppFabricHealthCheck.SERVICE_NAME_WITH_EVENT,
-                      Constants.AppFabricHealthCheck.EVENT_INFO);
-    configuration.setStrings(Constants.HealthCheck.SERVICE_NAME_LIST,
-                             healthCheckServiceNameList.toArray(new String[healthCheckServiceNameList.size()]));
+    configuration.set("cdap.instance", "cdap.instance");
 
     store = injector.getInstance(DefaultStore.class);
     remoteHealthCheckFetcher = injector.getInstance(RemoteHealthCheckFetcher.class);
@@ -134,7 +157,8 @@ public class SupportBundleK8sHealthCheckTaskTest extends AppFabricTestBase {
     File uuidFile = new File(tempFolder, uuid);
 
     SupportBundleK8sHealthCheckTask supportBundleK8sHealthCheckTask =
-      new SupportBundleK8sHealthCheckTask(configuration, uuidFile, remoteHealthCheckFetcher);
+      new SupportBundleK8sHealthCheckTask(configuration, uuidFile, Arrays.asList(namespaceId),
+                                          remoteHealthCheckFetcher);
     supportBundleK8sHealthCheckTask.collect();
 
     File healthCheckFolder = new File(uuidFile, "health-check");
@@ -146,24 +170,6 @@ public class SupportBundleK8sHealthCheckTaskTest extends AppFabricTestBase {
       Assert.assertEquals("failed", podInfo.get("status").getAsString());
     } catch (Exception e) {
       LOG.error("Can not read healthCheckPod file ", e);
-      Assert.fail();
-    }
-
-    File healthCheckNodeFile = new File(appFabricHealthCheckFolder, "appfabric-node-info.txt");
-    try (Reader reader = Files.newBufferedReader(healthCheckNodeFile.toPath(), StandardCharsets.UTF_8)) {
-      JsonObject nodeInfo = GSON.fromJson(reader, JsonObject.class);
-      Assert.assertEquals("running", nodeInfo.get("status").getAsString());
-    } catch (Exception e) {
-      LOG.error("Can not read healthCheckNode file ", e);
-      Assert.fail();
-    }
-
-    File healthCheckEventFile = new File(appFabricHealthCheckFolder, "supportbundle-event-info.txt");
-    try (Reader reader = Files.newBufferedReader(healthCheckEventFile.toPath(), StandardCharsets.UTF_8)) {
-      JsonObject eventInfo = GSON.fromJson(reader, JsonObject.class);
-      Assert.assertEquals("running", eventInfo.get("status").getAsString());
-    } catch (Exception e) {
-      LOG.error("Can not read healthCheckEvent file ", e);
       Assert.fail();
     }
   }

@@ -17,8 +17,6 @@
 package io.cdap.cdap.master.environment.k8s;
 
 import com.google.common.util.concurrent.Service;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import com.google.inject.AbstractModule;
 import com.google.inject.Binding;
 import com.google.inject.Injector;
@@ -54,7 +52,6 @@ import io.cdap.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.internal.app.worker.TaskWorkerServiceLauncher;
-import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
@@ -68,28 +65,15 @@ import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.store.SecureStoreService;
-import io.kubernetes.client.openapi.ApiClient;
-import io.kubernetes.client.openapi.ApiException;
-import io.kubernetes.client.openapi.apis.CoreV1Api;
-import io.kubernetes.client.openapi.models.V1Node;
-import io.kubernetes.client.openapi.models.V1NodeList;
-import io.kubernetes.client.openapi.models.V1ObjectMeta;
-import io.kubernetes.client.openapi.models.V1Pod;
-import io.kubernetes.client.openapi.models.V1PodList;
-import io.kubernetes.client.util.Config;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -163,28 +147,11 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
     services.add(injector.getInstance(DatasetOpExecutorService.class));
     services.add(injector.getInstance(ServiceStore.class));
 
-    try {
-      String host = cConf.get(Constants.AppFabricHealthCheck.SERVICE_BIND_ADDRESS);
-      int port = cConf.getInt(Constants.AppFabricHealthCheck.SERVICE_BIND_PORT);
-      HealthCheckService healthCheckService = injector.getInstance(HealthCheckService.class);
-      healthCheckService.initiate(host, port, Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE);
-      services.add(healthCheckService);
-
-      ApiClient client = Config.defaultClient();
-      CoreV1Api coreApi = new CoreV1Api(client);
-      KubeMasterEnvironment kubeMasterEnv = (KubeMasterEnvironment) MasterEnvironments.getMasterEnvironment();
-      JsonArray podArray = getPodInfoArray(coreApi, kubeMasterEnv);
-      JsonArray nodeArray = getNodeInfoArray(coreApi);
-//      JsonArray eventArray = getEventInfoArray(coreApi, kubeMasterEnv);
-      cConf.set(Constants.AppFabricHealthCheck.POD_INFO, podArray.toString());
-      cConf.set(Constants.AppFabricHealthCheck.NODE_INFO, nodeArray.toString());
-      cConf.set(Constants.AppFabricHealthCheck.EVENT_INFO, "eventArray.toString()");
-      cConf.set(Constants.AppFabricHealthCheck.SERVICE_NAME_WITH_POD, Constants.AppFabricHealthCheck.POD_INFO);
-      cConf.set(Constants.AppFabricHealthCheck.SERVICE_NAME_WITH_NODE, Constants.AppFabricHealthCheck.NODE_INFO);
-      cConf.set(Constants.AppFabricHealthCheck.SERVICE_NAME_WITH_EVENT, Constants.AppFabricHealthCheck.EVENT_INFO);
-    } catch (IOException e) {
-      LOG.error("Can not get api client ", e);
-    }
+    String host = cConf.get(Constants.AppFabricHealthCheck.SERVICE_BIND_ADDRESS);
+    int port = cConf.getInt(Constants.AppFabricHealthCheck.SERVICE_BIND_PORT);
+    HealthCheckService healthCheckService = injector.getInstance(HealthCheckService.class);
+    healthCheckService.initiate(host, port, Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE);
+    services.add(healthCheckService);
     Binding<ZKClientService> zkBinding = injector.getExistingBinding(Key.get(ZKClientService.class));
     if (zkBinding != null) {
       services.add(zkBinding.getProvider().get());
@@ -215,101 +182,4 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
                                      Constants.Logging.COMPONENT_NAME,
                                      Constants.Service.APP_FABRIC_HTTP);
   }
-
-  private JsonArray getPodInfoArray(CoreV1Api coreApi, KubeMasterEnvironment kubeMasterEnv) {
-    JsonArray podArray = new JsonArray();
-    try {
-      if (kubeMasterEnv != null) {
-        PodInfo podInfo = kubeMasterEnv.getPodInfo();
-        String labelSelector = podInfo.getLabels()
-          .entrySet()
-          .stream()
-          .map(e -> e.getKey() + "=" + e.getValue())
-          .collect(Collectors.joining(","));
-        V1PodList podList =
-          coreApi.listNamespacedPod(podInfo.getNamespace(), null, null, null, null, labelSelector, null, null, null,
-                                    null, null);
-        Set<String> activePods = podList.getItems()
-          .stream()
-          .map(V1Pod::getMetadata)
-          .filter(Objects::nonNull)
-          .map(V1ObjectMeta::getName)
-          .collect(Collectors.toSet());
-        for (V1Pod pod : podList.getItems()) {
-          if (pod.getMetadata() == null || !activePods.contains(pod.getMetadata().getName())) {
-            continue;
-          }
-          String podName = pod.getMetadata().getName();
-          JsonObject podObject = new JsonObject();
-          podObject.addProperty("name", podName);
-          podObject.addProperty("status", pod.getStatus().getMessage());
-          String podLog =
-            coreApi.readNamespacedPodLog(pod.getMetadata().getName(), pod.getMetadata().getNamespace(), null, null,
-                                         null, null, null, null, null, null, null);
-
-          podObject.addProperty("podLog", podLog);
-          podArray.add(podObject);
-        }
-      }
-    } catch (ApiException e) {
-      LOG.error("Can not obtain api client ", e);
-    }
-    return podArray;
-  }
-
-  private JsonArray getNodeInfoArray(CoreV1Api coreApi) {
-    JsonArray nodeArray = new JsonArray();
-    try {
-      V1NodeList nodeList = coreApi.listNode(null, null, null, null, null, null, null, null, null, null);
-      Set<String> activeNodes = nodeList.getItems()
-        .stream()
-        .map(V1Node::getMetadata)
-        .filter(Objects::nonNull)
-        .map(V1ObjectMeta::getName)
-        .collect(Collectors.toSet());
-      for (V1Node node : nodeList.getItems()) {
-        if (node.getMetadata() == null || !activeNodes.contains(node.getMetadata().getName())) {
-          continue;
-        }
-        String nodeName = node.getMetadata().getName();
-        JsonObject nodeObject = new JsonObject();
-        nodeObject.addProperty("name", nodeName);
-        nodeObject.addProperty("status", node.getStatus().getConditions().get(0).getStatus());
-        nodeArray.add(nodeObject);
-      }
-    } catch (ApiException e) {
-      LOG.error("Can not obtain api client ", e);
-    }
-    return nodeArray;
-  }
-
-//  private JsonArray getEventInfoArray(CoreV1Api coreApi, KubeMasterEnvironment kubeMasterEnv) {
-//    JsonArray eventArray = new JsonArray();
-//    try {
-//      if (kubeMasterEnv != null) {
-//        PodInfo podInfo = kubeMasterEnv.getPodInfo();
-//        String nameSpace = podInfo.getNamespace();
-//        V1EventList eventList = coreApi.listNamespacedEvent(nameSpace, null, null, null, null, null, null);
-//        Set<String> activeEvents = eventList.getItems()
-//          .stream()
-//          .map(V1Event::getMetadata)
-//          .filter(Objects::nonNull)
-//          .map(V1ObjectMeta::getName)
-//          .collect(Collectors.toSet());
-//        for (V1Event event : eventList.getItems()) {
-//          if (event.getMetadata() == null || !activeEvents.contains(event.getMetadata().getName())) {
-//            continue;
-//          }
-//          String eventName = event.getMetadata().getName();
-//          JsonObject eventObject = new JsonObject();
-//          eventObject.addProperty("name", eventName);
-//          eventObject.addProperty("status", event.getMessage());
-//          eventArray.add(eventObject);
-//        }
-//      }
-//    } catch (ApiException e) {
-//      LOG.error("Can not obtain api client ", e);
-//    }
-//    return eventArray;
-//  }
 }

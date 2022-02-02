@@ -51,11 +51,23 @@ public class RemoteHealthCheckFetcher implements HealthCheckFetcher {
   /**
    * Get the application detail for the given application id
    */
-  public Map<String, Object> getHealthDetails(String serviceName)
+  public Map<String, Object> getHealthDetails(String serviceName, String namespace, String instanceName,
+                                              String podLabelSelector, String nodeFieldSelector)
     throws IOException, NotFoundException, UnauthorizedException {
-    remoteClient = remoteClientFactory.createRemoteClient(serviceName, new DefaultHttpRequestConfig(false),
+    /* Need to get the substring inside the serviceName:
+    EX: serviceName = "cdap-bundle-test-v7-health-check-appfabric-service",
+        instanceName = "bundle-test-v7",   instanceNameLength = length("bundle-test-v7-")
+        updatedServiceName = "health.check.appfabric.service"
+        The same as Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE
+    */
+    int instanceNameLength = instanceName.length() + 1;
+    String updatedServiceName =
+      serviceName.substring(serviceName.lastIndexOf(instanceName) + instanceNameLength).replace("-", ".");
+
+    remoteClient = remoteClientFactory.createRemoteClient(updatedServiceName, new DefaultHttpRequestConfig(false),
                                                           Constants.Gateway.API_VERSION_3);
-    String url = String.format("/%s/health", serviceName);
+
+    String url = String.format("/%s/health?podLabel=%s&nodeField=%s", namespace, podLabelSelector, nodeFieldSelector);
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
     HttpResponse httpResponse;
     httpResponse = execute(requestBuilder.build());

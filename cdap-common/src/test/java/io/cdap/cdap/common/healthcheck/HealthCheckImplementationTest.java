@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.common.healthcheck;
 
-import com.google.gson.JsonArray;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -25,13 +24,31 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.HealthCheckModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.implementation.HealthCheckImplementation;
+import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.openapi.models.V1NodeList;
+import io.kubernetes.client.openapi.models.V1ObjectMeta;
+import io.kubernetes.client.openapi.models.V1PodList;
+import io.kubernetes.client.openapi.models.V1Service;
+import io.kubernetes.client.openapi.models.V1ServiceList;
 import org.eclipse.microprofile.health.HealthCheckResponse;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+/**
+ * Test for {@link HealthCheckImplementation}. The test is disabled by default since it requires a running
+ * kubernetes cluster for the test to run. This class is kept for development purpose.
+ */
+@Ignore
 public class HealthCheckImplementationTest {
+  private static final String CDAP_NAMESPACE = "TEST_CDAP_Namespace";
   private static HealthCheckImplementation healthCheckImplementation;
+  private static CoreV1Api coreV1Api;
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -39,25 +56,36 @@ public class HealthCheckImplementationTest {
 
     Injector injector =
       Guice.createInjector(new ConfigModule(cConf), new HealthCheckModule(), new InMemoryDiscoveryModule());
-    JsonArray podInfoList = new JsonArray();
-    JsonArray nodeInfoList = new JsonArray();
-    JsonArray eventInfoList = new JsonArray();
-
-    cConf.set(Constants.AppFabricHealthCheck.POD_INFO, podInfoList.toString());
-    cConf.set(Constants.AppFabricHealthCheck.NODE_INFO, nodeInfoList.toString());
-    cConf.set(Constants.AppFabricHealthCheck.EVENT_INFO, eventInfoList.toString());
-    cConf.set(Constants.AppFabricHealthCheck.SERVICE_NAME_WITH_POD, Constants.AppFabricHealthCheck.POD_INFO);
-    cConf.set(Constants.AppFabricHealthCheck.SERVICE_NAME_WITH_NODE, Constants.AppFabricHealthCheck.NODE_INFO);
-    cConf.set(Constants.AppFabricHealthCheck.SERVICE_NAME_WITH_EVENT, Constants.AppFabricHealthCheck.EVENT_INFO);
 
     healthCheckImplementation = injector.getInstance(HealthCheckImplementation.class);
+
+    coreV1Api = mock(CoreV1Api.class);
   }
 
 
   @Test
   public void testSupportBundleK8sHealthCheckTask() throws Exception {
+    String podLabelSelectorName = "cdap.container.Logs=bundle-test-v11";
+    String nodeFieldSelectorName = "metadata.name=gke-bundle-test-v11-default-pool-42f08219-dt5b";
     HealthCheckResponse healthCheckResponse =
-      healthCheckImplementation.collect(Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE);
+      healthCheckImplementation.collect(Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE,
+                                        podLabelSelectorName, nodeFieldSelectorName);
+
+    V1ServiceList v1ServiceList = new V1ServiceList();
+    V1Service v1Service = new V1Service();
+    V1ObjectMeta v1ObjectMeta = new V1ObjectMeta();
+    v1ObjectMeta.setName(Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE);
+    v1Service.setMetadata(v1ObjectMeta);
+    v1ServiceList.addItemsItem(v1Service);
+    when(coreV1Api.listNamespacedPod(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(),
+                                     any())).thenReturn(new V1PodList());
+    when(coreV1Api.readNamespacedPodLog(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(),
+                                        any())).thenReturn("");
+    when(coreV1Api.listNode(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(
+      new V1NodeList());
+    when(coreV1Api.listNamespacedService(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(),
+                                         any())).thenReturn(v1ServiceList);
+
     Assert.assertNotNull(healthCheckResponse.getData());
   }
 }
