@@ -158,8 +158,11 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final CapabilityReader capabilityReader;
   private final int batchSize;
 
+  /**
+   * Construct the ApplicationLifeCycleService with service factory and cConf coming from guice injection.
+   */
   @Inject
-  ApplicationLifecycleService(CConfiguration cConf,
+  public ApplicationLifecycleService(CConfiguration cConf,
                               Store store, Scheduler scheduler, UsageRegistry usageRegistry,
                               PreferencesService preferencesService, MetricsSystemClient metricsSystemClient,
                               OwnerAdmin ownerAdmin, ArtifactRepository artifactRepository,
