@@ -90,7 +90,7 @@
       <artifactId>google-cloud-storage</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.twill</groupId>
+      <groupId>io.cdap.twill</groupId>
       <artifactId>twill-yarn</artifactId>
       <exclusions>
         <!-- Exclude hadoop jars from twill yarn -->
@@ -105,7 +105,7 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>org.apache.twill</groupId>
+      <groupId>io.cdap.twill</groupId>
       <artifactId>twill-core</artifactId>
     </dependency>
     <dependency>

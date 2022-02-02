@@ -229,7 +229,7 @@
       </dependency>
 
       <dependency>
-        <groupId>org.apache.twill</groupId>
+        <groupId>io.cdap.twill</groupId>
         <artifactId>twill-core</artifactId>
         <version>${twill.version}</version>
         <exclusions>

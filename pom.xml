@@ -174,7 +174,7 @@
     <tez.version>0.8.4</tez.version>
     <tink.version>1.6.0</tink.version>
     <thrift.version>0.9.3</thrift.version>
-    <twill.version>0.14.0</twill.version>
+    <twill.version>1.0.0-SNAPSHOT</twill.version>
     <unboundid.version>2.3.6</unboundid.version>
     <zookeeper.version>3.4.5</zookeeper.version>
     <opentable.version>0.13.1</opentable.version>
@@ -225,7 +225,7 @@
         <version>${rs-api.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.twill</groupId>
+        <groupId>io.cdap.twill</groupId>
         <artifactId>twill-api</artifactId>
         <version>${twill.version}</version>
       </dependency>
@@ -279,6 +279,14 @@
           <exclusion>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.twill</groupId>
+            <artifactId>twill-common</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.twill</groupId>
+            <artifactId>twill-core</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -495,12 +503,12 @@
         <version>${commons.cli.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.twill</groupId>
+        <groupId>io.cdap.twill</groupId>
         <artifactId>twill-common</artifactId>
         <version>${twill.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.twill</groupId>
+        <groupId>io.cdap.twill</groupId>
         <artifactId>twill-core</artifactId>
         <version>${twill.version}</version>
         <exclusions>
@@ -519,17 +527,17 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>org.apache.twill</groupId>
+        <groupId>io.cdap.twill</groupId>
         <artifactId>twill-discovery-api</artifactId>
         <version>${twill.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.twill</groupId>
+        <groupId>io.cdap.twill</groupId>
         <artifactId>twill-discovery-core</artifactId>
         <version>${twill.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.twill</groupId>
+        <groupId>io.cdap.twill</groupId>
         <artifactId>twill-yarn</artifactId>
         <version>${twill.version}</version>
         <exclusions>
@@ -592,7 +600,7 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>org.apache.twill</groupId>
+        <groupId>io.cdap.twill</groupId>
         <artifactId>twill-zookeeper</artifactId>
         <version>${twill.version}</version>
         <exclusions>
