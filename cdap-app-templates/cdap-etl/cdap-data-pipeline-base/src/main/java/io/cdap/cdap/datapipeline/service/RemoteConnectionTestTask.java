@@ -26,6 +26,7 @@ import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.cdap.etl.api.connector.ConnectorConfigurer;
 import io.cdap.cdap.etl.api.connector.ConnectorContext;
 import io.cdap.cdap.etl.api.validation.ValidationException;
+import io.cdap.cdap.etl.common.ArtifactSelectorProvider;
 import io.cdap.cdap.etl.proto.connection.Connection;
 import io.cdap.cdap.etl.proto.connection.ConnectionCreationRequest;
 import io.cdap.cdap.etl.proto.validation.SimpleFailureCollector;
@@ -39,14 +40,16 @@ public class RemoteConnectionTestTask extends RemoteConnectionTaskBase {
   private static final Gson GSON = new Gson();
 
   @Override
-  public String execute(SystemAppTaskContext systemAppContext, Connection connection,
-                        ServicePluginConfigurer pluginConfigurer, TrackedPluginSelector pluginSelector,
-                        String namespace, String request) throws Exception {
-    ConnectionCreationRequest connectionCreationRequest = GSON.fromJson(request, ConnectionCreationRequest.class);
-
+  public String execute(SystemAppTaskContext systemAppContext, RemoteConnectionRequest request) throws Exception {
+    String namespace = request.getNamespace();
+    ConnectionCreationRequest connectionCreationRequest = GSON.fromJson(request.getRequest(),
+                                                                        ConnectionCreationRequest.class);
+    ServicePluginConfigurer pluginConfigurer = systemAppContext.createServicePluginConfigurer(namespace);
     ConnectorConfigurer connectorConfigurer = new DefaultConnectorConfigurer(pluginConfigurer);
     SimpleFailureCollector failureCollector = new SimpleFailureCollector();
     ConnectorContext connectorContext = new DefaultConnectorContext(failureCollector, pluginConfigurer);
+    TrackedPluginSelector pluginSelector = new TrackedPluginSelector(
+      new ArtifactSelectorProvider().getPluginSelector(connectionCreationRequest.getPlugin().getArtifact()));
     try (Connector connector = getConnector(systemAppContext, pluginConfigurer, connectionCreationRequest.getPlugin(),
                                             namespace, pluginSelector)) {
       connector.configure(connectorConfigurer);
