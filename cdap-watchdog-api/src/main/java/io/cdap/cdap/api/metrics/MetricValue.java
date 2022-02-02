@@ -38,23 +38,12 @@ public class MetricValue {
    * Total buckets = NUM_FINITE_BUCKETS +2 which will be 64. A long number
    * maybe used as a mask to indicate which buckets have non zero bucket counts
    */
-  public static final int NUM_FINITE_BUCKETS = 62;
+  public static final int NUM_FINITE_BUCKETS = Long.SIZE - 2;
 
-  /**
-   * bucketCounts stores counts of buckets with non zero values.
-   */
   private final long[] bucketCounts;
 
-  /**
-   * Most of the buckets have zero counts. For efficiency, bucketCounts only
-   * stores non zero bucket count values. The bucketMask stores which
-   * buckets have non-zero bucketCounts.
-   */
   private final long bucketMask;
 
-  /**
-   * Sum of all the values. If count is zero then this field must be zero.
-   */
   private final double sum;
 
   public MetricValue (String name, MetricType type, long value) {
@@ -70,7 +59,10 @@ public class MetricValue {
   }
 
   public MetricValue(String name, long[] bucketCounts, long bucketMask,
-                     double sum, double sumOfSquaredDeviation) {
+                     double sum) {
+    if (bucketCounts == null) {
+      throw new IllegalArgumentException("bucketCounts should not be null");
+    }
     this.name = name;
     this.bucketMask = bucketMask;
     this.sum = sum;
@@ -88,6 +80,9 @@ public class MetricValue {
   }
 
   public long getValue() {
+    if (type != MetricType.COUNTER && type != MetricType.GAUGE) {
+      throw new IllegalStateException("getValue allowed for only COUNTER or GAUGE metrics");
+    }
     return value;
   }
 
@@ -110,7 +105,13 @@ public class MetricValue {
     }
   }
 
+  /**
+   * bucketCounts stores counts of buckets with non zero values.
+   */
   public long[] getBucketCounts() {
+    if (type != MetricType.DISTRIBUTION) {
+      throw new IllegalStateException("getBucketCounts allowed only for Distribution Metric");
+    }
     return bucketCounts;
   }
 
@@ -119,15 +120,49 @@ public class MetricValue {
    * Helper function to publish the distribution metric to other systems such as Cloud Monitoring
    */
   public long[] getAllBucketCounts() {
-    // TODO Move to helper class if serialization uses get methods
-    throw new UnsupportedOperationException();
+    if (type != MetricType.DISTRIBUTION) {
+      throw new IllegalStateException("getAllBucketCounts allowed only for Distribution Metric");
+    }
+
+    long[] allBucketCounts = new long[NUM_FINITE_BUCKETS + 2];
+    long mask = 1;
+    int index = 0;
+    if (bucketCounts != null) {
+      for (int i = 0; i < allBucketCounts.length; i++) {
+        if ((bucketMask & mask) >= 1) {
+          allBucketCounts[i] = bucketCounts[index];
+          index++;
+        }
+        mask = mask << 1;
+      }
+    }
+    return allBucketCounts;
   }
 
+  /**
+   * Most of the buckets have zero counts. For efficiency, bucketCounts only
+   * stores non zero bucket count values. The bucketMask stores which
+   * buckets have non-zero bucketCounts.
+   *
+   * The right most bit i.e. least significant bit (LSB) stands for bucket 0 with range -infinity to 0.
+   *
+   * Note that, except the LSB, most of the range is for positive values.
+   * @return bucketmask
+   */
   public long getBucketMask() {
+    if (type != MetricType.DISTRIBUTION) {
+      throw new IllegalStateException("getBucketMask allowed only for Distribution Metric");
+    }
     return bucketMask;
   }
 
+  /**
+   * Sum of all the values. If count is zero then this field must be zero.
+   */
   public double getSum() {
+    if (type != MetricType.DISTRIBUTION) {
+      throw new IllegalStateException("getSum allowed only for Distribution Metric");
+    }
     return sum;
   }
 }
