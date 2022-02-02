@@ -52,16 +52,8 @@ public abstract class RemoteConnectionTaskBase implements RunnableTask {
     //De serialize all requests
     RemoteConnectionRequest connectionRequest = GSON.fromJson(context.getParam(),
                                                               RemoteConnectionRequest.class);
-    String namespace = connectionRequest.getNamespace();
-    Connection connection = connectionRequest.getConnection();
 
-    //Plugin selector and configurer
-    TrackedPluginSelector pluginSelector = new TrackedPluginSelector(
-      new ArtifactSelectorProvider().getPluginSelector(connection.getPlugin().getArtifact()));
-    ServicePluginConfigurer servicePluginConfigurer = systemAppContext.createServicePluginConfigurer(namespace);
-    //serialize the result as json and write the bytes
-    String executedResult = execute(systemAppContext, connection, servicePluginConfigurer, pluginSelector, namespace,
-                                    connectionRequest.getRequest());
+    String executedResult = execute(systemAppContext, connectionRequest);
     context.writeResult(executedResult.getBytes(StandardCharsets.UTF_8));
   }
 
@@ -69,18 +61,12 @@ public abstract class RemoteConnectionTaskBase implements RunnableTask {
    * execute method for specific tasks to implement
    *
    * @param systemAppContext        {@link SystemAppTaskContext}
-   * @param connection              {@link Connection}
-   * @param servicePluginConfigurer {@link ServicePluginConfigurer}
-   * @param pluginSelector          {@link TrackedPluginSelector}
-   * @param namespace               namespace string
-   * @param request                 request string
+   * @param request                 {@link RemoteConnectionRequest}
    * @return executed response as string
    * @throws Exception
    */
-  public abstract String execute(SystemAppTaskContext systemAppContext, Connection connection,
-                                 ServicePluginConfigurer servicePluginConfigurer, TrackedPluginSelector pluginSelector,
-                                 String namespace, String request) throws Exception;
-
+  public abstract String execute(SystemAppTaskContext systemAppContext,
+                                 RemoteConnectionRequest request) throws Exception;
   /**
    * Returns {@link Connector} after evaluating macros
    *

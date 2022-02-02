@@ -28,6 +28,7 @@ import io.cdap.cdap.etl.api.connector.ConnectorContext;
 import io.cdap.cdap.etl.api.connector.ConnectorSpec;
 import io.cdap.cdap.etl.api.connector.ConnectorSpecRequest;
 import io.cdap.cdap.etl.api.connector.SampleRequest;
+import io.cdap.cdap.etl.common.ArtifactSelectorProvider;
 import io.cdap.cdap.etl.proto.connection.Connection;
 import io.cdap.cdap.etl.proto.connection.ConnectorDetail;
 import io.cdap.cdap.etl.proto.connection.SampleResponse;
@@ -45,12 +46,16 @@ public class RemoteConnectionSampleTask extends RemoteConnectionTaskBase {
       .registerTypeAdapter(SampleResponse.class, new SampleResponseCodec()).setPrettyPrinting().create();
 
   @Override
-  public String execute(SystemAppTaskContext systemAppContext, Connection connection,
-                        ServicePluginConfigurer pluginConfigurer, TrackedPluginSelector pluginSelector,
-                        String namespace, String request) throws Exception {
+  public String execute(SystemAppTaskContext systemAppContext, RemoteConnectionRequest request) throws Exception {
+    String namespace = request.getNamespace();
+    Connection connection = request.getConnection();
+    //Plugin selector and configurer
+    TrackedPluginSelector pluginSelector = new TrackedPluginSelector(
+      new ArtifactSelectorProvider().getPluginSelector(connection.getPlugin().getArtifact()));
+    ServicePluginConfigurer pluginConfigurer = systemAppContext.createServicePluginConfigurer(namespace);
 
     ConnectorContext connectorContext = ConnectionUtils.getConnectorContext(pluginConfigurer);
-    SampleRequest sampleRequest = GSON.fromJson(request, SampleRequest.class);
+    SampleRequest sampleRequest = GSON.fromJson(request.getRequest(), SampleRequest.class);
     try (Connector connector = getConnector(systemAppContext, pluginConfigurer, connection.getPlugin(),
                                             namespace, pluginSelector)) {
       connector.configure(new DefaultConnectorConfigurer(pluginConfigurer));

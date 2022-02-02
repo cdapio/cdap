@@ -51,11 +51,16 @@ public class RemoteConnectionBrowseTask extends RemoteConnectionTaskBase {
   private static final Gson GSON = new Gson();
 
   @Override
-  public String execute(SystemAppTaskContext systemAppContext, Connection connection,
-                        ServicePluginConfigurer servicePluginConfigurer, TrackedPluginSelector pluginSelector,
-                        String namespace, String request) throws Exception {
+  public String execute(SystemAppTaskContext systemAppContext,
+                        RemoteConnectionRequest request) throws Exception {
+    String namespace = request.getNamespace();
+    Connection connection = request.getConnection();
+    //Plugin selector and configurer
+    TrackedPluginSelector pluginSelector = new TrackedPluginSelector(
+      new ArtifactSelectorProvider().getPluginSelector(connection.getPlugin().getArtifact()));
+    ServicePluginConfigurer servicePluginConfigurer = systemAppContext.createServicePluginConfigurer(namespace);
 
-    BrowseRequest browseRequest = GSON.fromJson(request, BrowseRequest.class);
+    BrowseRequest browseRequest = GSON.fromJson(request.getRequest(), BrowseRequest.class);
     try (Connector connector = getConnector(systemAppContext, servicePluginConfigurer, connection.getPlugin(),
                                             namespace, pluginSelector)) {
       //configure and browse
