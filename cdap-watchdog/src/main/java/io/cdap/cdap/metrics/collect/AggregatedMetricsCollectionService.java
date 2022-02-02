@@ -190,6 +190,10 @@ public abstract class AggregatedMetricsCollectionService extends AbstractExecuti
             if (metricValue.getType() == MetricType.COUNTER && metricValue.getValue() == 0) {
               continue;
             }
+            if (metricValue.getType() == MetricType.DISTRIBUTION && metricValue.getBucketCounts().length == 0) {
+              continue;
+            }
+
             metricValues.add(metricValue);
           }
 
@@ -246,6 +250,11 @@ public abstract class AggregatedMetricsCollectionService extends AbstractExecuti
     @Override
     public Map<String, String> getTags() {
       return tags;
+    }
+
+    @Override
+    public void event(String metricName, long value) {
+      emitters.getUnchecked(tags).getUnchecked(metricName).event(value);
     }
 
     @Override
