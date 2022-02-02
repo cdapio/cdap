@@ -4647,4 +4647,11 @@
       The maximum number of records that can be set in preview configuration.
     </description>
   </property>
+  <property>
+    <name>feature.replication.transformations.enabled</name>
+    <value>false</value>
+    <description>
+      Enables transformations to be run on replication.
+    </description>
+  </property>
 </configuration>
