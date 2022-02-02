@@ -28,19 +28,28 @@ import javax.annotation.Nullable;
 public class ProvisionerConfig {
   @SerializedName("configuration-groups")
   private final List<Object> configurationGroups;
+  @SerializedName("filters")
+  private final List<Object> filters;
   @SerializedName("icon")
   private final Object icon;
   @SerializedName("beta")
   private final boolean beta;
 
-  public ProvisionerConfig(List<Object> configurationGroups, @Nullable Object icon, boolean beta) {
+  public ProvisionerConfig(List<Object> configurationGroups, @Nullable List<Object> filters, @Nullable Object icon,
+                           boolean beta) {
     this.configurationGroups = configurationGroups;
+    this.filters = filters;
     this.icon = icon;
     this.beta = beta;
   }
 
   public List<Object> getConfigurationGroups() {
     return configurationGroups;
+  }
+
+  @Nullable
+  public List<Object> getFilters() {
+    return filters;
   }
 
   @Nullable
@@ -63,12 +72,12 @@ public class ProvisionerConfig {
     ProvisionerConfig that = (ProvisionerConfig) o;
 
     return Objects.equals(configurationGroups, that.configurationGroups) &&
-      Objects.equals(configurationGroups, that.configurationGroups) &&
+      Objects.equals(filters, that.filters) &&
       Objects.equals(beta, that.beta);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(configurationGroups, icon, beta);
+    return Objects.hash(configurationGroups, filters, icon, beta);
   }
 }
