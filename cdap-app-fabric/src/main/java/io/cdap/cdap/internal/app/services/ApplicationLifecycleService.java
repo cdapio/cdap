@@ -273,7 +273,27 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @param consumer a {@link Consumer} to consume each ApplicationDetail being scanned
    */
   public void scanApplications(NamespaceId namespace, List<ApplicationFilter> filters,
-      Consumer<ApplicationDetail> consumer) {
+                               Consumer<ApplicationDetail> consumer) {
+    scanApplications(ScanApplicationsRequest.builder()
+      .setNamespaceId(namespace)
+      .addFilters(filters)
+      .build(), consumer);
+  }
+
+  /**
+   * Scans all applications in the specified namespace, filtered to only include application details
+   * which satisfy the filters
+   *
+   * @param request application scan request. Must name namespace filled
+   * @param consumer a {@link Consumer} to consume each ApplicationDetail being scanned
+   * @return if limit was reached (true) or all items were scanned before reaching the limit (false)
+   * @throws IllegalArgumentException if scan request does not have namespace specified
+   */
+  public boolean scanApplications(ScanApplicationsRequest request, Consumer<ApplicationDetail> consumer) {
+    NamespaceId namespace = request.getNamespaceId();
+    if (namespace == null) {
+      throw new IllegalStateException("Application scan request without namespace");
+    }
     accessEnforcer.enforceOnParent(EntityType.DATASET, namespace,
         authenticationContext.getPrincipal(), StandardPermission.LIST);
 
@@ -283,11 +303,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         )
     ) {
 
-      ScanApplicationsRequest request = ScanApplicationsRequest.builder()
-        .setNamespaceId(namespace)
-        .addFilters(filters)
-        .build();
-      store.scanApplications(request, batchSize, (appId, appSpec) -> {
+      return store.scanApplications(request, batchSize, (appId, appSpec) -> {
               batchingConsumer.accept(new SimpleEntry<>(appId, appSpec));
             });
     }
@@ -1125,7 +1141,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @param artifactVersion allowed artifact version. Any version is allowed if null
    * @return list of 0,1 or 2 filters
    */
-  private List<ApplicationFilter> getAppFilters(Set<String> artifactNames, @Nullable String artifactVersion) {
+  public List<ApplicationFilter> getAppFilters(Set<String> artifactNames, @Nullable String artifactVersion) {
     ImmutableList.Builder<ApplicationFilter> builder = ImmutableList.builder();
     if (!artifactNames.isEmpty()) {
       builder.add(new ApplicationFilter.ArtifactNamesInFilter(artifactNames));
