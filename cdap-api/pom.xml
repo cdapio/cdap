@@ -60,7 +60,7 @@
       <artifactId>tephra-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.twill</groupId>
+      <groupId>io.cdap.twill</groupId>
       <artifactId>twill-api</artifactId>
     </dependency>
     <dependency>
