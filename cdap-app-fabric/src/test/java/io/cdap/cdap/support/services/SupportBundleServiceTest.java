@@ -27,6 +27,7 @@ import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.SupportBundle;
+import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
@@ -44,7 +45,6 @@ import io.cdap.cdap.support.status.SupportBundleConfiguration;
 import io.cdap.cdap.support.status.SupportBundleStatus;
 import io.cdap.cdap.support.status.SupportBundleTaskStatus;
 import io.cdap.common.http.HttpResponse;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.api.RunId;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -57,6 +57,7 @@ import java.io.FileWriter;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -134,22 +135,21 @@ public class SupportBundleServiceTest extends AppFabricTestBase {
 
   @Test
   public void testDeleteOldBundle() throws Exception {
+    int maxFileNeedtoGenerate = 8;
     File tempFolder = new File(configuration.get(Constants.SupportBundle.LOCAL_DATA_DIR));
-    createNamespace("default");
-    String path = String.format("%s/support/bundle?namespace=default", Constants.Gateway.API_VERSION_3);
     String expectedDeletedUuid = "";
-    for (int i = 0; i < 8; i++) {
-      HttpResponse response = doPost(path);
-      Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
-      String uuid = response.getResponseBodyAsString();
+    for (int i = 0; i < maxFileNeedtoGenerate; i++) {
+      String uuid = UUID.randomUUID().toString();
       File uuidFile = new File(tempFolder, uuid);
-      File statusFile = new File(uuidFile, SupportBundleFileNames.STATUS_FILE_NAME);
-      Tasks.waitFor(true, statusFile::exists, 60, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
+      DirUtils.mkdirs(uuidFile);
       if (i == 4) {
         expectedDeletedUuid = uuid;
         updateStatusToFail(tempFolder, uuid);
+      } else {
+        updateStatusToFinished(tempFolder, uuid);
       }
     }
+    supportBundleService.deleteOldFoldersIfExceedLimit(tempFolder);
     //Exceed the maximum number of folder allows in bundle
     File expectedDeletedBundle = new File(tempFolder.getPath(), expectedDeletedUuid);
     Assert.assertFalse(expectedDeletedBundle.exists());
@@ -180,6 +180,22 @@ public class SupportBundleServiceTest extends AppFabricTestBase {
     SupportBundleStatus supportBundleStatus = SupportBundleStatus.builder()
       .setBundleId(uuid)
       .setStatus(CollectionState.FAILED)
+      .setParameters(null)
+      .setStartTimestamp(System.currentTimeMillis())
+      .build();
+    try (FileWriter statusFile = new FileWriter(new File(bundleFile, SupportBundleFileNames.STATUS_FILE_NAME))) {
+      GSON.toJson(supportBundleStatus, statusFile);
+    } catch (Exception e) {
+      LOG.error("Can not update status file ", e);
+      Assert.fail();
+    }
+  }
+
+  private void updateStatusToFinished(File tempFolder, String uuid) {
+    File bundleFile = new File(tempFolder, uuid);
+    SupportBundleStatus supportBundleStatus = SupportBundleStatus.builder()
+      .setBundleId(uuid)
+      .setStatus(CollectionState.FINISHED)
       .setParameters(null)
       .setStartTimestamp(System.currentTimeMillis())
       .build();
