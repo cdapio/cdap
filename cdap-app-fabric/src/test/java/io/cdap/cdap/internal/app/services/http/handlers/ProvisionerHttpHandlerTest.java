@@ -44,12 +44,13 @@ public class ProvisionerHttpHandlerTest extends AppFabricTestBase {
     // in unit test, we have the mock provisioners currently
     ProvisionerSpecification spec = new MockProvisioner().getSpec();
     ProvisionerDetail expected = new ProvisionerDetail(spec.getName(), spec.getLabel(),
-                                                       spec.getDescription(), new ArrayList<>(), null, false);
+                                                       spec.getDescription(), new ArrayList<>(), null, null,
+                                                       false);
 
     ProvisionerSpecification specWithCpus = new MockProvisionerWithCpus().getSpec();
     ProvisionerDetail expectedWithCpus = new ProvisionerDetail(specWithCpus.getName(), specWithCpus.getLabel(),
-                                                       specWithCpus.getDescription(), new ArrayList<>(), null, false);
-
+                                                       specWithCpus.getDescription(), new ArrayList<>(), null, null,
+                                                               false);
     List<ProvisionerDetail> details = listProvisioners();
     Assert.assertEquals(ImmutableList.of(expected, expectedWithCpus), details);
 

@@ -216,8 +216,26 @@
       ]
     },
     {
-      "label": "Worker Nodes",
+      "label": "Number of cluster workers",
       "properties": [
+        {
+          "widget-type": "toggle",
+          "label": "Enable Predefined Dataproc Autoscaling",
+          "name": "enablePredefinedAutoScaling",
+          "description": "Defines whether the Dataproc auto scaling with predefined AutoScaling policy by CDF will be enabled",
+          "widget-attributes": {
+            "default": "false",
+            "on": {
+              "value": "true",
+              "label": "True"
+            },
+            "off": {
+              "value": "false",
+              "label": "False"
+            },
+            "size": "medium"
+          }
+        },
         {
           "widget-type": "number",
           "label": "Number of Primary Workers",
@@ -240,6 +258,20 @@
             "size": "medium"
           }
         },
+        {
+          "widget-type": "textbox",
+          "label": "Autoscaling Policy",
+          "name": "autoScalingPolicy",
+          "description": "Specify the Autoscaling Policy id (name) or the resource URI",
+          "widget-attributes": {
+            "placeholder": "projects/<gcp-project-id>/regions/<region>/autoscalingPolicies/<policy-name>"
+          }
+        }
+      ]
+    },
+    {
+      "label": "Worker Nodes",
+      "properties": [
         {
           "widget-type": "select",
           "label": "Worker Machine Type",
@@ -446,15 +478,6 @@
           }
         },
         {
-          "widget-type": "textbox",
-          "label": "Autoscaling Policy",
-          "name": "autoScalingPolicy",
-          "description": "Specify the Autoscaling Policy id (name) or the resource URI",
-          "widget-attributes": {
-            "placeholder": "projects/<gcp-project-id>/regions/<region>/autoscalingPolicies/<policy-name>"
-          }
-        },
-        {
           "name": "initActions",
           "label": "Initialization Actions",
           "widget-type": "csv",
@@ -635,6 +658,30 @@
             "default": "2",
             "size": "small"
           }
+        }
+      ]
+    }
+  ],
+  "filters": [
+    {
+      "name": "Toggle condition for enabling autoscaling",
+      "condition": {
+        "property": "enablePredefinedAutoScaling",
+        "operator": "equal to",
+        "value": "false"
+      },
+      "show": [
+        {
+          "name": "workerNumNodes",
+          "type": "property"
+        },
+        {
+          "name": "secondaryWorkerNumNodes",
+          "type": "property"
+        },
+        {
+          "name": "autoScalingPolicy",
+          "type": "property"
         }
       ]
     }
