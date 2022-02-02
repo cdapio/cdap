@@ -67,7 +67,7 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.apache.twill</groupId>
+      <groupId>io.cdap.twill</groupId>
       <artifactId>twill-api</artifactId>
       <scope>provided</scope>
     </dependency>
@@ -148,15 +148,15 @@
           <artifactId>fastutil</artifactId>
         </exclusion>
         <exclusion>
-          <groupId>org.apache.twill</groupId>
+          <groupId>io.cdap.twill</groupId>
           <artifactId>twill-core</artifactId>
         </exclusion>
         <exclusion>
-          <groupId>org.apache.twill</groupId>
+          <groupId>io.cdap.twill</groupId>
           <artifactId>twill-discovery-core</artifactId>
         </exclusion>
         <exclusion>
-          <groupId>org.apache.twill</groupId>
+          <groupId>io.cdap.twill</groupId>
           <artifactId>twill-zookeeper</artifactId>
         </exclusion>
       </exclusions>

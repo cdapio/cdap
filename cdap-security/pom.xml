@@ -79,7 +79,7 @@
       <artifactId>logback-classic</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.twill</groupId>
+      <groupId>io.cdap.twill</groupId>
       <artifactId>twill-zookeeper</artifactId>
     </dependency>
     <dependency>
