@@ -737,18 +737,11 @@
                   <resources>
                     <resource>
                       <directory>
-                        ${project.parent.basedir}/cdap-app-fabric/target
+                        ${project.parent.basedir}/cdap-runtime-ext-tethering/target/libexec
                       </directory>
                       <includes>
                         <include>*.jar</include>
-                      </includes>
-                    </resource>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-app-fabric/src/main/resources
-                      </directory>
-                      <includes>
-                        <include>tethering.json</include>
+                        <include>*.json</include>
                       </includes>
                     </resource>
                   </resources>

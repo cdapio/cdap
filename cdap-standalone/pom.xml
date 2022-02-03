@@ -695,17 +695,11 @@
                       </includes>
                     </resource>
                     <resource>
-                      <directory>${project.parent.basedir}/cdap-app-fabric/target</directory>
+                      <directory>${project.parent.basedir}/cdap-runtime-ext-tethering/target/libexec</directory>
                       <targetPath>ext/runtimeproviders/tethering</targetPath>
                       <includes>
                         <include>*.jar</include>
-                      </includes>
-                    </resource>
-                    <resource>
-                      <directory>${project.parent.basedir}/cdap-app-fabric/src/main/resources</directory>
-                      <targetPath>ext/runtimeproviders/tethering</targetPath>
-                      <includes>
-                        <include>tethering.json</include>
+                        <include>*.json</include>
                       </includes>
                     </resource>
                     <!-- copy secure store extensions -->

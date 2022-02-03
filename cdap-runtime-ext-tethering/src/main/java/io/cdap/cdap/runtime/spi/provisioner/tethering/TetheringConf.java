@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.tethering.runtime.spi.provisioner;
+package io.cdap.cdap.runtime.spi.provisioner.tethering;
 
 import java.util.Map;
 

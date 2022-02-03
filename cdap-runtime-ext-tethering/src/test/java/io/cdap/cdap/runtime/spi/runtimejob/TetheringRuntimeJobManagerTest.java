@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.tethering.runtime.spi.runtimejob;
+package io.cdap.cdap.runtime.spi.runtimejob;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
@@ -36,13 +36,13 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.internal.tethering.TetheringControlMessage;
-import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringConf;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.runtime.spi.provisioner.tethering.TetheringConf;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;

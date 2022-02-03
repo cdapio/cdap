@@ -14,12 +14,10 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.tethering.runtime.spi.provisioner;
+package io.cdap.cdap.runtime.spi.provisioner.tethering;
 
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.internal.provision.ProvisionerExtensionLoader;
-import io.cdap.cdap.internal.tethering.runtime.spi.runtimejob.TetheringRuntimeJobManager;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
@@ -30,6 +28,7 @@ import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
+import io.cdap.cdap.runtime.spi.runtimejob.TetheringRuntimeJobManager;
 
 import java.util.Collections;
 import java.util.Map;
@@ -50,8 +49,8 @@ public class TetheringProvisioner implements Provisioner {
   private MessagingService messagingService;
 
   /**
-   * Using method injection instead of constructor injection because {@link ServiceLoader} (used by
-   * {@link ProvisionerExtensionLoader}) requires no-argument constructor for instantiation.
+   * Using method injection instead of constructor injection because {@link ServiceLoader}
+   * requires no-argument constructor for instantiation.
    */
   @Inject
   @SuppressWarnings("unused")

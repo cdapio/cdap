@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.tethering.runtime.spi.runtimejob;
+package io.cdap.cdap.runtime.spi.runtimejob;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
@@ -25,17 +25,13 @@ import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.tethering.TetheringControlMessage;
-import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringConf;
-import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringProvisioner;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
-import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobDetail;
-import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobInfo;
-import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
-import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobStatus;
+import io.cdap.cdap.runtime.spi.provisioner.tethering.TetheringConf;
+import io.cdap.cdap.runtime.spi.provisioner.tethering.TetheringProvisioner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
