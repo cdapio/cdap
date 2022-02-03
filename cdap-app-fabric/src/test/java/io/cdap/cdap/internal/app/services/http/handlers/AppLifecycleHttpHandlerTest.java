@@ -77,6 +77,7 @@ import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.common.http.HttpResponse;
 import org.jboss.resteasy.util.HttpResponseCodes;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -96,6 +97,11 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   @BeforeClass
   public static void beforeClass() throws Throwable {
     initializeAndStartServices(createBasicCConf());
+  }
+
+  @Before
+  public void resetMock() {
+    Mockito.reset(getInjector().getInstance(ApplicationLifecycleService.class));
   }
 
   protected static void initializeAndStartServices(CConfiguration cConf) throws Exception {
@@ -647,7 +653,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     String exceptionMessage = "sample_exception";
     Mockito.doThrow(new RuntimeException(exceptionMessage))
         .when(getInjector().getInstance(ApplicationLifecycleService.class))
-        .scanApplications(Mockito.any(), Mockito.any(), Mockito.any());
+        .scanApplications(Mockito.any(), Mockito.any());
 
     //deploy without name to testnamespace1
     deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
@@ -656,8 +662,6 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response = getAppListResponseWhenFailingWithException(TEST_NAMESPACE1);
     Assert.assertEquals(500, response.getResponseCode());
     Assert.assertEquals(exceptionMessage, response.getResponseBodyAsString());
-
-    Mockito.reset(getInjector().getInstance(ApplicationLifecycleService.class));
   }
 
   /**

@@ -306,13 +306,15 @@ public class AppMetadataStore {
     }
 
     StructuredTable table = getApplicationSpecificationTable();
+    int limit = request.getLimit();
     try (CloseableIterator<StructuredRow> iterator = table.scan(range, Integer.MAX_VALUE, request.getSortOrder())) {
       boolean keepScanning = true;
-      while (iterator.hasNext() && keepScanning) {
+      while (iterator.hasNext() && keepScanning && limit > 0) {
         StructuredRow row = iterator.next();
         AppScanEntry scanEntry = new AppScanEntry(row);
         if (scanEntryPredicate.test(scanEntry)) {
           keepScanning = func.apply(scanEntry);
+          limit--;
         }
       }
     }
