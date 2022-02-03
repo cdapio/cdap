@@ -322,7 +322,12 @@ public class StageSpec implements Serializable {
   /**
    * Returns a copy of the StageSpec object with {@link StageSpec#maxPreviewRecords} field updated
    */
-  public static StageSpec createCopy(StageSpec stageSpec, int newMaxPreviewRecords) {
+  public static StageSpec createCopy(StageSpec stageSpec, int newMaxPreviewRecords, boolean isPreviewEnabled) {
+    // if not a preview run, don't modify stageSpec
+    if (!isPreviewEnabled) {
+      return stageSpec;
+    }
+
     if (newMaxPreviewRecords < stageSpec.getMaxPreviewRecords()) {
       LOG.warn("Max preview records exceeds allowed limit. Setting maximum preview records to {} instead of {} ",
                newMaxPreviewRecords, stageSpec.maxPreviewRecords);
