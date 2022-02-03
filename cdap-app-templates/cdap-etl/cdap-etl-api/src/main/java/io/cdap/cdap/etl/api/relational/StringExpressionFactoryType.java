@@ -19,7 +19,7 @@ package io.cdap.cdap.etl.api.relational;
 /**
  * This enum lists expression factory types that compile expressions from {@link String}
  */
-public enum StringExpressionFactory implements ExpressionFactoryType<String> {
+public enum StringExpressionFactoryType implements ExpressionFactoryType<String> {
   /**
    * Expression factories of this type will take SQL String expressions
    */

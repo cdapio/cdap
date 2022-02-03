@@ -21,7 +21,6 @@ import com.google.gson.Gson;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.spark.sql.DataFrames;
-import io.cdap.cdap.etl.api.Field;
 import io.cdap.cdap.etl.api.engine.sql.dataset.RecordCollection;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDataset;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDatasetDescription;
