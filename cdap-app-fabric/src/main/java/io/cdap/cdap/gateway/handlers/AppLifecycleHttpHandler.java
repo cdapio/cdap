@@ -73,6 +73,9 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.BodyConsumer;
 import io.cdap.http.ChunkResponder;
@@ -99,7 +102,6 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -144,13 +146,17 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final NamespacePathLocator namespacePathLocator;
   private final ApplicationLifecycleService applicationLifecycleService;
   private final File tmpDir;
+  private final AccessEnforcer accessEnforcer;
+  private final AuthenticationContext authenticationContext;
 
   @Inject
   AppLifecycleHttpHandler(CConfiguration configuration,
                           ProgramRuntimeService runtimeService,
                           NamespaceQueryAdmin namespaceQueryAdmin,
                           NamespacePathLocator namespacePathLocator,
-                          ApplicationLifecycleService applicationLifecycleService) {
+                          ApplicationLifecycleService applicationLifecycleService,
+                          AccessEnforcer accessEnforcer,
+                          AuthenticationContext authenticationContext) {
     this.configuration = configuration;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.runtimeService = runtimeService;
@@ -158,6 +164,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.applicationLifecycleService = applicationLifecycleService;
     this.tmpDir = new File(new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR)),
                            configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    this.accessEnforcer = accessEnforcer;
+    this.authenticationContext = authenticationContext;
   }
 
   /**
@@ -647,6 +655,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   // the other behavior requires a BodyConsumer and only have one method per path is allowed,
   // so we have to use a BodyConsumer
   private BodyConsumer deployAppFromArtifact(final ApplicationId appId) throws IOException {
+    accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.CREATE);
 
     // createTempFile() needs a prefix of at least 3 characters
     return new AbstractBodyConsumer(File.createTempFile("apprequest-" + appId, ".json", tmpDir)) {
@@ -748,6 +757,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     final KerberosPrincipalId finalOwnerPrincipalId = ownerPrincipalId;
+
+    accessEnforcer.enforce(new ApplicationId(namespace.getNamespace(), appId),
+                           authenticationContext.getPrincipal(),
+                           StandardPermission.CREATE);
+
     return new AbstractBodyConsumer(File.createTempFile("app-", ".jar", tempDir)) {
 
       @Override
