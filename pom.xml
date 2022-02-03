@@ -177,7 +177,7 @@
     <twill.version>1.0.0-SNAPSHOT</twill.version>
     <unboundid.version>2.3.6</unboundid.version>
     <zookeeper.version>3.4.5</zookeeper.version>
-    <opentable.version>0.13.1</opentable.version>
+    <embedded-postgres.version>1.3.1</embedded-postgres.version>
     <dbcp.version>2.6.0</dbcp.version>
     <jacoco.version>0.8.6</jacoco.version>
 
@@ -1716,9 +1716,16 @@
         <scope>test</scope>
       </dependency>
       <dependency>
-        <groupId>com.opentable.components</groupId>
-        <artifactId>otj-pg-embedded</artifactId>
-        <version>${opentable.version}</version>
+        <groupId>io.zonky.test.postgres</groupId>
+        <artifactId>embedded-postgres-binaries-bom</artifactId>
+        <version>11.14.0</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>io.zonky.test</groupId>
+        <artifactId>embedded-postgres</artifactId>
+        <version>${embedded-postgres.version}</version>
         <scope>test</scope>
       </dependency>
       <dependency>

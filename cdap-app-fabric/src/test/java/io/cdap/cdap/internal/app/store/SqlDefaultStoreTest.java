@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.store;
 
 import com.google.inject.Injector;
-import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
@@ -33,6 +32,7 @@ import io.cdap.cdap.spi.data.sql.PostgresInstantiator;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.store.DefaultNamespaceStore;
 import io.cdap.cdap.store.StoreDefinition;
+import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
