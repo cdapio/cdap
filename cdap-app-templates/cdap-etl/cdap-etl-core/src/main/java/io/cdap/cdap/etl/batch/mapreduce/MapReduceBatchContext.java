@@ -61,7 +61,8 @@ public class MapReduceBatchContext extends AbstractBatchContext
   public MapReduceBatchContext(MapReduceContext context, PipelineRuntime pipelineRuntime, StageSpec stageSpec,
                                Set<String> connectorDatasets, DatasetContext datasetContext) {
     super(pipelineRuntime, StageSpec.createCopy(stageSpec, context.getDataTracer(stageSpec.getName()).
-              getMaximumTracedRecords()), datasetContext, context.getAdmin());
+              getMaximumTracedRecords(), context.getDataTracer(stageSpec.getName()).isEnabled()),
+          datasetContext, context.getAdmin());
     this.mrContext = context;
     this.outputNames = new HashSet<>();
     this.inputNames = new HashSet<>();
