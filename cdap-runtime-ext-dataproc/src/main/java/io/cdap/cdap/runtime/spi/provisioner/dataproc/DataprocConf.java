@@ -85,7 +85,7 @@ final class DataprocConf {
   static final int CLUSTER_REUSE_THRESHOLD_MINUTES_DEFAULT = 3;
   static final String CLUSTER_IDLE_TTL_MINUTES = "idleTTL";
   static final int CLUSTER_IDLE_TTL_MINUTES_DEFAULT = 30;
-  static final String PREDEFINED_AUTOSCALE_ENABLED = "predefinedAutoScaleEnabled";
+  static final String PREDEFINED_AUTOSCALE_ENABLED = "enablePredefinedAutoScaling";
   static final String WORKER_NUM_NODES = "workerNumNodes";
   static final String SECONDARY_WORKER_NUM_NODES = "secondaryWorkerNumNodes";
   static final String AUTOSCALING_POLICY = "autoScalingPolicy";
@@ -150,7 +150,7 @@ final class DataprocConf {
   private final boolean clusterReuseEnabled;
   private final long clusterReuseThresholdMinutes;
   private final String clusterReuseKey;
-  private final boolean predefinedAutoScaleEnabled;
+  private final boolean enablePredefinedAutoScaling;
 
   DataprocConf(DataprocConf conf, String network, String subnet) {
     this(conf.accountKey, conf.region, conf.zone, conf.projectId, conf.networkHostProjectID, network, subnet,
@@ -164,7 +164,7 @@ final class DataprocConf {
          conf.clusterMetaData, conf.clusterLabels, conf.networkTags, conf.initActions, conf.runtimeJobManagerEnabled,
          conf.clusterProperties, conf.autoScalingPolicy, conf.idleTTLMinutes, conf.tokenEndpoint,
          conf.secureBootEnabled, conf.vTpmEnabled, conf.integrityMonitoringEnabled, conf.clusterReuseEnabled,
-         conf.clusterReuseThresholdMinutes, conf.clusterReuseKey, conf.predefinedAutoScaleEnabled);
+         conf.clusterReuseThresholdMinutes, conf.clusterReuseKey, conf.enablePredefinedAutoScaling);
   }
 
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
@@ -186,7 +186,7 @@ final class DataprocConf {
                        @Nullable String tokenEndpoint, boolean secureBootEnabled, boolean vTpmEnabled,
                        boolean integrityMonitoringEnabled, boolean clusterReuseEnabled,
                        long clusterReuseThresholdMinutes, @Nullable String clusterReuseKey,
-                       boolean predefinedAutoScaleEnabled) {
+                       boolean enablePredefinedAutoScaling) {
     this.accountKey = accountKey;
     this.region = region;
     this.zone = zone;
@@ -237,7 +237,7 @@ final class DataprocConf {
     this.secureBootEnabled = secureBootEnabled;
     this.vTpmEnabled = vTpmEnabled;
     this.integrityMonitoringEnabled = integrityMonitoringEnabled;
-    this.predefinedAutoScaleEnabled = predefinedAutoScaleEnabled;
+    this.enablePredefinedAutoScaling = enablePredefinedAutoScaling;
   }
 
   String getRegion() {
@@ -304,7 +304,7 @@ final class DataprocConf {
   }
 
   int getTotalWorkerCPUs() {
-    if (predefinedAutoScaleEnabled) {
+    if (enablePredefinedAutoScaling) {
       return workerCPUs *
         (PredefinedAutoScaling.getMaxSecondaryWorkerInstances() + PredefinedAutoScaling.getPrimaryWorkerInstances());
     }
@@ -441,7 +441,7 @@ final class DataprocConf {
   }
 
   public boolean isPredefinedAutoScaleEnabled() {
-    return predefinedAutoScaleEnabled;
+    return enablePredefinedAutoScaling;
   }
 
   /**
@@ -558,10 +558,10 @@ final class DataprocConf {
     int secondaryWorkerNumNodes = getInt(properties, SECONDARY_WORKER_NUM_NODES, 0);
     String autoScalingPolicy = getString(properties, AUTOSCALING_POLICY);
 
-    boolean predefinedAutoScaleEnabled =
+    boolean enablePredefinedAutoScaling =
       Boolean.parseBoolean(properties.getOrDefault(PREDEFINED_AUTOSCALE_ENABLED, "false"));
 
-    if (predefinedAutoScaleEnabled) {
+    if (enablePredefinedAutoScaling) {
       if (properties.containsKey(DataprocConf.WORKER_NUM_NODES) ||
         properties.containsKey(DataprocConf.SECONDARY_WORKER_NUM_NODES) ||
         properties.containsKey(DataprocConf.AUTOSCALING_POLICY)) {
@@ -695,7 +695,7 @@ final class DataprocConf {
                             initActions, runtimeJobManagerEnabled, clusterProps, autoScalingPolicy, idleTTL,
                             tokenEndpoint, secureBootEnabled, vTpmEnabled, integrityMonitoringEnabled,
                             clusterReuseEnabled, clusterReuseThresholdMinutes, clusterReuseKey,
-                            predefinedAutoScaleEnabled);
+                            enablePredefinedAutoScaling);
   }
 
   // the UI never sends nulls, it only sends empty strings.
