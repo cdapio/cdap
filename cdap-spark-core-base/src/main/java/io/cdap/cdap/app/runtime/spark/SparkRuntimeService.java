@@ -107,6 +107,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.jar.JarEntry;
@@ -424,13 +425,16 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
   @Override
   protected void shutDown() throws Exception {
-    // Try to get from the submission future to see if the job completed successfully.
-    ListenableFuture<RunId> jobCompletion = completion.get();
+    LOG.info("### in shutdown");
     ProgramState state = new ProgramState(ProgramStatus.COMPLETED, null);
     try {
+      // Try to get from the submission future to see if the job completed successfully.
+      ListenableFuture<RunId> jobCompletion = completion.get();
+      LOG.info("### completion completed");
       jobCompletion.get();
+      LOG.info("### job completion completed");
     } catch (Exception e) {
-      if (jobCompletion.isCancelled()) {
+      if (e instanceof CancellationException) {
         state = new ProgramState(ProgramStatus.KILLED, null);
       } else {
         state = new ProgramState(ProgramStatus.FAILED, Throwables.getRootCause(e).getMessage());
@@ -438,6 +442,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     }
 
     try {
+      LOG.info("### destroying");
       destroy(state);
     } finally {
       cleanupTask.run();

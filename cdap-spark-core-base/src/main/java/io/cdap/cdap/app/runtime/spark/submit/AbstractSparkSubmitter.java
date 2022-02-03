@@ -33,6 +33,7 @@ import io.cdap.cdap.app.runtime.spark.SparkMainWrapper;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeContext;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
+import io.cdap.cdap.master.spi.twill.Completable;
 import org.apache.spark.deploy.SparkSubmit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +43,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -109,10 +111,19 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
         try {
           String[] submitArgs = Iterables.toArray(Iterables.concat(args, extraArgs), String.class);
           submit(runtimeContext, submitArgs);
-          onCompleted(true);
+          boolean state = hasSparkJobSucceded();
+          LOG.info("### hasSparkJobSucceded() {}", state);
+          if (!state) {
+            LOG.info("### throwing exception");
+            throw new Exception("Spark driver returned error state");
+          }
+          onCompleted(state);
+          LOG.info("### after complted successfully");
           resultFuture.set(result);
         } catch (Throwable t) {
+          LOG.info("### caught exception", t);
           onCompleted(false);
+          LOG.info("### after complted unsuccessfully");
           resultFuture.setException(t);
         } finally {
           completion.countDown();
@@ -143,6 +154,13 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
    */
   protected List<String> beforeSubmit() {
     return Collections.emptyList();
+  }
+
+  /**
+   * Returns true if spark job has succeeded.
+   */
+  protected boolean hasSparkJobSucceded() throws Exception {
+    return true;
   }
 
   protected void onCompleted(boolean succeeded) {

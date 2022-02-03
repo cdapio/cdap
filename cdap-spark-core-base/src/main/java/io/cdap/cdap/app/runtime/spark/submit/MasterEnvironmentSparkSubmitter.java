@@ -22,7 +22,6 @@ import io.cdap.cdap.app.runtime.spark.SparkRuntimeEnv;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeUtils;
 import io.cdap.cdap.app.runtime.spark.distributed.SparkExecutionService;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
@@ -34,6 +33,8 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -42,16 +43,18 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Master environment spark submitter.
  */
 public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
+  private static final Logger LOG = LoggerFactory.getLogger(MasterEnvironmentSparkSubmitter.class);
   private final SparkExecutionService sparkExecutionService;
   private final MasterEnvironment masterEnv;
+  private final CConfiguration cConf;
   private SparkConfig sparkConfig;
   private List<LocalizeResource> resources;
-  private final CConfiguration cConf;
 
   /**
    * Master environment spark submitter constructor.
@@ -125,6 +128,17 @@ public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
     // Just stop the execution service and block on that.
     // It will wait until the "completed" call from the Spark driver.
     sparkExecutionService.stopAndWait();
+  }
+
+  protected boolean hasSparkJobSucceded() {
+    try {
+      Boolean aBoolean = generateOrGetSparkConfig().getSubmitFuture().get(30, TimeUnit.SECONDS);
+      LOG.info("### Got {}", aBoolean);
+      return aBoolean;
+    } catch (Exception e) {
+      new Exception("Exception while getting spark driver status");
+    }
+    return false;
   }
 
   @Override

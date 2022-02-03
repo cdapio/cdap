@@ -126,21 +126,26 @@ public abstract class AbstractWatcherThread<T> extends Thread implements AutoClo
         // The hasNext() will block until there are new data or watch is closed
         while (!stopped && watch.hasNext()) {
           Watch.Response<T> response = watch.next();
-
-          switch (response.type) {
-            case ADDED:
-              resourceAdded(response.object);
-              break;
-            case MODIFIED:
-              resourceModified(response.object);
-              break;
-            case DELETED: {
-              resourceDeleted(response.object);
-              break;
+          if (response == null) {
+            LOG.info("### response is null");
+          } else {
+            LOG.info("### Response {}", response.type);
+            switch (response.type) {
+              case ADDED:
+                resourceAdded(response.object);
+                break;
+              case MODIFIED:
+                resourceModified(response.object);
+                break;
+              case DELETED: {
+                resourceDeleted(response.object);
+                break;
+              }
+              default:
+                LOG.trace("Ignore watch type {}", response.type);
             }
-            default:
-              LOG.trace("Ignore watch type {}", response.type);
           }
+
         }
 
         // Reset the watch so that a new one will be created in the next iteration.
@@ -217,7 +222,7 @@ public abstract class AbstractWatcherThread<T> extends Thread implements AutoClo
       // There is only single thread (the run thread) that will call this method,
       // hence if the watch was null outside of this sync block, it will stay as null here.
       String labelSelector = getSelector();
-      LOG.trace("Creating watch with label selector {}", labelSelector);
+      LOG.debug("### Creating watch with label selector {}", labelSelector);
       this.watch = watch = createWatchable(resourceType, namespace, labelSelector);
       return watch;
     }

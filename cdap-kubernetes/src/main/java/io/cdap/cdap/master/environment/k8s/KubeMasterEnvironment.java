@@ -18,6 +18,8 @@ package io.cdap.cdap.master.environment.k8s;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
+import com.google.gson.reflect.TypeToken;
+import io.cdap.cdap.k8s.common.AbstractWatcherThread;
 import io.cdap.cdap.k8s.discovery.KubeDiscoveryService;
 import io.cdap.cdap.k8s.runtime.KubeTwillRunnerService;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
@@ -49,10 +51,13 @@ import io.kubernetes.client.openapi.models.V1PodSpecBuilder;
 import io.kubernetes.client.openapi.models.V1Volume;
 import io.kubernetes.client.openapi.models.V1VolumeMount;
 import io.kubernetes.client.util.Config;
+import io.kubernetes.client.util.Watch;
+import io.kubernetes.client.util.Watchable;
 import io.kubernetes.client.util.Yaml;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,6 +68,7 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -76,6 +82,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
@@ -87,8 +94,8 @@ import java.util.zip.GZIPOutputStream;
  * Implementation of {@link MasterEnvironment} to provide the environment for running in Kubernetes.
  */
 public class KubeMasterEnvironment implements MasterEnvironment {
-  public static final String DISABLE_POD_DELETION = "disablePodDeletion";
   private static final Logger LOG = LoggerFactory.getLogger(KubeMasterEnvironment.class);
+  public static final String DISABLE_POD_DELETION = "disablePodDeletion";
 
   // Contains the list of configuration / secret names coming from the Pod information, which are
   // needed to propagate to deployments created via the KubeTwillRunnerService
@@ -143,6 +150,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   // In memory state for holding configmap name. Used to delete this configmap upon master environment destroy.
   private String configMapName;
   private CoreV1Api coreV1Api;
+  private AbstractWatcherThread<V1Pod> sparkDriverWatcher;
 
   @Override
   public void initialize(MasterEnvironmentContext context) throws IOException, ApiException {
@@ -221,6 +229,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
         LOG.warn("Error cleaning up configmap {}, it will be retried. {} ", configMapName, e.getResponseBody(), e);
       }
     }
+    //sparkDriverWatcher.close();
     discoveryService.close();
     LOG.info("Kubernetes environment destroyed");
   }
@@ -259,6 +268,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
   @Override
   public SparkConfig generateSparkSubmitConfig(SparkSubmitContext sparkSubmitContext) throws Exception {
+    LOG.info("### generate spark submit config");
     // Get k8s master path for spark submit
     String master = getMasterPath();
 
@@ -272,10 +282,27 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     // Add spark pod labels. This will be same as job labels
     populateLabels(sparkConfMap);
 
+    // Start watch for driver pod. Check CDAP-18511 for details.
+    Map<String, String> labels = podInfo.getLabels();
+    // Label added by kubernetes
+    labels.put("spark-role", "driver");
+    labels.put("cdap.container", "spark-kubernetes-driver");
+    String labelSelector = labels.entrySet().stream().map(e -> e.getKey() + "=" + e.getValue())
+      .collect(Collectors.joining(","));
+    CompletableFuture<Boolean> submitFuture = new CompletableFuture<>();
+
+    sparkDriverWatcher = new PodWatcherThread("kube-pods-watch", podInfo.getNamespace(), submitFuture,
+                                              coreV1Api, labelSelector);
+
+    // Add listener to watch pod status to the watcher
+    sparkDriverWatcher.start();
+
+    LOG.info("### Starting spark driver watcher");
+
     // Kube Master environment would always contain spark job jar file.
     // https://github.com/cdapio/cdap/blob/develop/cdap-spark-core3_2.12/src/k8s/Dockerfile#L46
     return new SparkConfig("k8s://" + master,
-                           URI.create("local:/opt/cdap/cdap-spark-core/cdap-spark-core.jar"),
+                           URI.create("local:/opt/cdap/cdap-spark-core/cdap-spark-core.jar"), submitFuture,
                            sparkConfMap);
   }
 
@@ -552,5 +579,60 @@ public class KubeMasterEnvironment implements MasterEnvironment {
       }
     }
     return sparkConfs;
+  }
+
+  private static class PodWatcherThread extends AbstractWatcherThread<V1Pod> {
+    private final CompletableFuture<Boolean> submitFuture;
+    private final CoreV1Api coreV1Api;
+    private final String labelSelector;
+
+    PodWatcherThread(String threadName, String namespace, CompletableFuture<Boolean> submitFuture,
+                     CoreV1Api coreV1Api, String labelSelector) {
+      super(threadName, namespace);
+      this.submitFuture = submitFuture;
+      this.coreV1Api = coreV1Api;
+      this.labelSelector = labelSelector;
+    }
+
+    @Override
+    public void resourceAdded(V1Pod resource) {
+      LOG.info("### Spark driver pod added {}", resource.getMetadata().getName());
+    }
+
+    @Override
+    public void resourceModified(V1Pod resource) {
+      LOG.info("### Spark driver pod updated {}", resource.getMetadata().getName());
+      if (resource.getStatus().getPhase().equalsIgnoreCase("Succeeded")) {
+        LOG.info("### Returning true for driver pod state");
+        submitFuture.complete(true);
+      } else if (resource.getStatus().getPhase().equalsIgnoreCase("Failed") ||
+        resource.getStatus().getPhase().equalsIgnoreCase("Unknown")) {
+        LOG.info("### Returning false for driver pod state");
+        submitFuture.complete(false);
+      }
+    }
+
+    @Override
+    public void resourceDeleted(V1Pod resource) {
+      LOG.info("Spark driver pod deleted {}", resource.getMetadata().getName());
+    }
+
+    @Nullable
+    @Override
+    protected String getSelector() {
+      return labelSelector;
+    }
+
+    @Override
+    protected Watchable<V1Pod> createWatchable(Type resourceType, String namespace,
+                                               @Nullable String labelSelector) throws ApiException {
+      LOG.info("### In create watchable {}", resourceType);
+      return
+        Watch.createWatch(
+          coreV1Api.getApiClient(),
+          coreV1Api.listNamespacedPodCall(
+            namespace, null, null, null, null, labelSelector, 1, null, null, null, true, null),
+          TypeToken.getParameterized(Watch.Response.class, resourceType).getType());
+    }
   }
 }

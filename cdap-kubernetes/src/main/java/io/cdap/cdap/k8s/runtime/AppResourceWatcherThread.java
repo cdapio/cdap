@@ -30,6 +30,8 @@ import io.kubernetes.client.util.Watch;
 import io.kubernetes.client.util.Watchable;
 import okhttp3.Call;
 import org.apache.twill.common.Cancellable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -43,7 +45,8 @@ import javax.annotation.Nullable;
  *
  * @param <T> type of Kubernetes resource for which state changes to be monitored
  */
-abstract class AppResourceWatcherThread<T> extends AbstractWatcherThread<T> {
+public abstract class AppResourceWatcherThread<T> extends AbstractWatcherThread<T> {
+  private static final Logger LOG = LoggerFactory.getLogger(AppResourceWatcherThread.class);
 
   /**
    * Creates a {@link AppResourceWatcherThread} for watching {@link V1Deployment} events.
@@ -83,7 +86,7 @@ abstract class AppResourceWatcherThread<T> extends AbstractWatcherThread<T> {
     this.listeners = new ConcurrentLinkedQueue<>();
   }
 
-  Cancellable addListener(ResourceChangeListener<T> listener) {
+  public Cancellable addListener(ResourceChangeListener<T> listener) {
     // Wrap the listener for removal
     ResourceChangeListener<T> wrappedListener = wrapListener(listener);
     listeners.add(wrappedListener);
@@ -94,12 +97,17 @@ abstract class AppResourceWatcherThread<T> extends AbstractWatcherThread<T> {
   @Override
   protected Watchable<T> createWatchable(Type resourceType, String namespace,
                                          @Nullable String labelSelector) throws IOException, ApiException {
-    ApiClient apiClient = getApiClient();
-    CustomObjectsApi api = new CustomObjectsApi(apiClient);
-    Call call = api.listNamespacedCustomObjectCall(group, version, namespace, plural, null, null, null,
-                                                   labelSelector, null, null, null, true, null);
-    return Watch.createWatch(apiClient, call, TypeToken.getParameterized(Watch.Response.class,
-                                                                         resourceType).getType());
+    try {
+      ApiClient apiClient = getApiClient();
+      CustomObjectsApi api = new CustomObjectsApi(apiClient);
+      Call call = api.listNamespacedCustomObjectCall(group, version, namespace, plural, null, null, null,
+                                                     labelSelector, null, null, null, true, null);
+      return Watch.createWatch(apiClient, call, TypeToken.getParameterized(Watch.Response.class,
+                                                                           resourceType).getType());
+    } catch (ApiException e) {
+      LOG.error("### error in watch. {}, {}", e.getCode(), e.getResponseBody());
+      throw e;
+    }
   }
 
   @Nullable

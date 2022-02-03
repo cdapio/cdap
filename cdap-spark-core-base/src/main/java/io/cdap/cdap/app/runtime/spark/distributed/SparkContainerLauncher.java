@@ -145,6 +145,9 @@ public final class SparkContainerLauncher {
     // Get the SparkRuntimeContext to initialize all necessary services and logging context
     // Need to do it using the SparkRunnerClassLoader through reflection.
     Class<?> sparkRuntimeContextProviderClass = classLoader.loadClass(SparkRuntimeContextProvider.class.getName());
+    if (true) {
+      throw new Exception("### vini exception");
+    }
     if (masterEnvName != null) {
       sparkRuntimeContextProviderClass.getMethod("setMasterEnvName", String.class).invoke(null, masterEnvName);
     }
@@ -176,6 +179,9 @@ public final class SparkContainerLauncher {
       try {
         log(logger, "info", "Launch main class {}.main({})", mainClassName, Arrays.toString(args));
         classLoader.loadClass(mainClassName).getMethod("main", String[].class).invoke(null, new Object[]{args});
+        if (true) {
+          throw new Exception("### vini exception");
+        }
         log(logger, "info", "Main method returned {}", mainClassName);
       } finally {
         stopGatewayServer.run();
