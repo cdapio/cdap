@@ -39,6 +39,9 @@ public class DefaultInternalAuthenticator implements InternalAuthenticator {
   @Override
   public void applyInternalAuthenticationHeaders(BiConsumer<String, String> headerSetter) {
     Principal principal = authenticationContext.getPrincipal();
+    System.out.println("wyzhang: DefaultInternalAuthenictor is " + authenticationContext.getClass().getName());
+    System.out.println("wyzhang: DefaultInternalAuthenictor principal " +
+                         authenticationContext.getPrincipal().toString());
     String userID = null;
     Credential internalCredentials = null;
     if (principal != null) {

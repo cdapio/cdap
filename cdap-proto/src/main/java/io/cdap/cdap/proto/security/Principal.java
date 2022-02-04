@@ -116,10 +116,10 @@ public class Principal {
   @Override
   public String toString() {
     return "Principal{" +
-      "name='" + name + '\'' +
-      ", type=" + type +
-      ", kerberosPrincipal=" + kerberosPrincipal +
-      ", credential=" + credential +
+      "name='" + (name == null ? "NULL" : name) + '\'' +
+      ", type=" + (type == null ? "NULL" : type) +
+      ", kerberosPrincipal=" + (kerberosPrincipal == null ? "NULL" : kerberosPrincipal) +
+      ", credential=" + (credential == null ? "NULL" : credential) +
       '}';
   }
 }
