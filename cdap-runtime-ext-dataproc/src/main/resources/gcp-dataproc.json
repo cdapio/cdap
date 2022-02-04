@@ -667,8 +667,8 @@
       "name": "Toggle condition for enabling autoscaling",
       "condition": {
         "property": "enablePredefinedAutoScaling",
-        "operator": "equal to",
-        "value": "false"
+        "operator": "not equal to",
+        "value": "true"
       },
       "show": [
         {
