@@ -99,6 +99,8 @@ public class DatasetServiceClient {
   @Nullable
   public DatasetMeta getInstance(String instanceName)
     throws DatasetManagementException, UnauthorizedException {
+    LOG.warn("Authentication Context: {}, Principal: {}", authenticationContext.getClass().getCanonicalName(),
+             authenticationContext.getPrincipal());
 
     HttpResponse response = doGet("datasets/" + instanceName);
     if (HttpResponseStatus.NOT_FOUND.code() == response.getResponseCode()) {
