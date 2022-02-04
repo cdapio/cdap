@@ -385,6 +385,8 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
           appMetadataStore.recordProgramRunning(programRunId, logicalStartTimeSecs, twillRunId, messageIdBytes);
         writeToHeartBeatTable(recordedRunRecord, logicalStartTimeSecs, programHeartbeatTable);
         runRecordMonitorService.removeRequest(programRunId, true);
+        long startDelayTime = logicalStartTimeSecs - RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS);
+        emitStartingTimeMetric(programRunId, startDelayTime);
         break;
       case SUSPENDED:
         long suspendTime = getTimeSeconds(notification.getProperties(),
@@ -770,6 +772,13 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     MetricsContext metricsContext = ProgramRunners.createProgramMetricsContext(programRunId, tags,
                                                                                metricsCollectionService);
     metricsContext.gauge(Constants.Metrics.Program.RUN_TIME_SECONDS, runTime);
+  }
+
+  private void emitStartingTimeMetric(ProgramRunId programRunId, long startDelayTime) {
+    Map<String, String> tags = Collections.emptyMap();
+    MetricsContext metricsContext = ProgramRunners.createProgramMetricsContext(programRunId, tags,
+                                                                               metricsCollectionService);
+    metricsContext.gauge(Constants.Metrics.Program.PROGRAM_STARTING_DELAY_SECONDS, startDelayTime);
   }
 
   /**
