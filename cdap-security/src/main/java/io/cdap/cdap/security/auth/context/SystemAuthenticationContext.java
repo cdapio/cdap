@@ -27,6 +27,8 @@ import io.cdap.cdap.security.auth.UserIdentity;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Base64;
@@ -36,6 +38,8 @@ import java.util.Collections;
  * Authentication context for master services which utilize internal authentication.
  */
 public class SystemAuthenticationContext implements AuthenticationContext {
+  private static final Logger LOG = LoggerFactory.getLogger(SystemAuthenticationContext.class);
+
   public static final String SYSTEM_IDENTITY = "system";
   // Default expiration time of 5 minutes.
   private static final long DEFAULT_EXPIRATION = 300000;
@@ -54,8 +58,11 @@ public class SystemAuthenticationContext implements AuthenticationContext {
     // By default, assume the principal comes from a user request and handle accordingly using SecurityRequestContext.
     String userId = SecurityRequestContext.getUserId();
     Credential userCredential = SecurityRequestContext.getUserCredential();
-    if (userId != null) {
+    if (userId != null && userCredential != null) {
       return new Principal(userId, Principal.PrincipalType.USER, userCredential);
+    } else if ((userId != null && userCredential == null) || (userId == null && userCredential != null)) {
+      LOG.warn("Unexpected SecurityRequestContext, one of userID and credential is NULL"
+               "userId = {} credential = {}", userId, userCredential);
     }
 
     // Use internal identity if user ID is null.
