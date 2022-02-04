@@ -130,6 +130,7 @@ public class RemoteClient {
       setAuthHeader(headers::put, HttpHeaders.AUTHORIZATION, authenticator.getType(), authenticator.getCredentials());
     }
 
+    System.out.println("wyzhang: RemoteClient execute req = " + request.getMethod() + " " + request.getURL());
     System.out.println("wyzhang: RemoteClient execute internalAuthenticator is " +
                          internalAuthenticator.getClass().getName());
     System.out.println("wyzhang: before apply internal auth header");
