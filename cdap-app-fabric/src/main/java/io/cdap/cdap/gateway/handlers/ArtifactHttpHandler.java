@@ -67,9 +67,13 @@ import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 import io.cdap.cdap.proto.artifact.ArtifactSummaryProperties;
 import io.cdap.cdap.proto.artifact.PluginInfo;
 import io.cdap.cdap.proto.artifact.PluginSummary;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.Ids;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.BodyConsumer;
@@ -135,15 +139,20 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final CapabilityReader capabilityReader;
   private final File tmpDir;
+  private final AccessEnforcer accessEnforcer;
+  private final AuthenticationContext authenticationContext;
 
   @Inject
   ArtifactHttpHandler(CConfiguration cConf, ArtifactRepository artifactRepository,
-                      NamespaceQueryAdmin namespaceQueryAdmin, CapabilityReader capabilityReader) {
+                      NamespaceQueryAdmin namespaceQueryAdmin, CapabilityReader capabilityReader,
+                      AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext) {
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.artifactRepository = artifactRepository;
     this.capabilityReader = capabilityReader;
     this.tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    this.accessEnforcer = accessEnforcer;
+    this.authenticationContext = authenticationContext;
   }
 
   @POST
@@ -666,6 +675,10 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
         throw new BadRequestException(String.format("Invalid PluginClasses '%s'.", pluginClasses), e);
       }
     }
+
+    accessEnforcer.enforce(new ApplicationId(namespace.getNamespace(), artifactName),
+                           authenticationContext.getPrincipal(),
+                           StandardPermission.CREATE);
 
     try {
       // copy the artifact contents to local tmp directory

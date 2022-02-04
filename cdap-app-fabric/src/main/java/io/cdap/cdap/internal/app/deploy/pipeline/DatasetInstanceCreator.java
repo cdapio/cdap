@@ -71,7 +71,7 @@ final class DatasetInstanceCreator {
           }
         });
       if (existingSpec == null) {
-        LOG.info("Adding dataset instance: {}", instanceName);
+        LOG.info("wyzhang: Adding dataset instance: {}", instanceName);
         AuthorizationUtil.authorizeAs(authorizingUser, new Callable<Void>() {
           @Override
           public Void call() throws Exception {

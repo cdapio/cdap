@@ -306,9 +306,9 @@ public class DatasetServiceClient {
     throws DatasetManagementException, UnauthorizedException {
     HttpRequest request = addUserIdHeader(requestBuilder).build();
     try {
-      LOG.trace("Executing {} {}", request.getMethod(), request.getURL().getPath());
+      LOG.info("wyzhang: DatasetServiceClient before {} {}", request.getMethod(), request.getURL().getPath());
       HttpResponse response = remoteClient.execute(request);
-      LOG.trace("Executed {} {}", request.getMethod(), request.getURL().getPath());
+      LOG.info("wyzhang: DatasetServiceClient after {} {}", request.getMethod(), request.getURL().getPath());
       return response;
     } catch (ServiceUnavailableException e) { // thrown by RemoteClient in case of ConnectException
       logThreadDump();
@@ -370,6 +370,7 @@ public class DatasetServiceClient {
         userId = currUserShortName;
       }
     }
+    LOG.info("wyzhang: DatasetServiceClient addUserIdHeader {}", userId);
     return builder.addHeader(Constants.Security.Headers.USER_ID, userId);
   }
 

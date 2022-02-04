@@ -52,6 +52,7 @@ public class CreateDatasetInstancesStage extends AbstractStage<ApplicationDeploy
    */
   @Override
   public void process(ApplicationDeployable input) throws Exception {
+    System.out.println("wyzhang; CreateDatasetInstnacesState start");
     // create dataset instances
     ApplicationSpecification specification = input.getSpecification();
     NamespaceId namespaceId = input.getApplicationId().getParent();

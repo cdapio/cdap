@@ -40,7 +40,9 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.util.Collection;
 import java.util.EnumSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import javax.annotation.Nullable;
@@ -95,6 +97,18 @@ public class RemoteClient {
     headerSetter.accept(header, String.format("%s %s", credentialType, credentialValue));
   }
 
+  void printHeader(HttpRequest request) {
+    Multimap<String, String> headers = request.getHeaders();
+    Set<String> keys = headers.keySet();
+    for (String keyprint : keys) {
+        System.out.println("Key = " + keyprint);
+        Collection<String> values = headers.get(keyprint);
+        for(String value : values){
+            System.out.println("Value= "+ value);
+        }
+    }
+  }
+
   /**
    * Perform the request, returning the response. If there was a ConnectException while making the request,
    * a ServiceUnavailableException is thrown.
@@ -117,7 +131,13 @@ public class RemoteClient {
       setAuthHeader(headers::put, HttpHeaders.AUTHORIZATION, authenticator.getType(), authenticator.getCredentials());
     }
 
+    System.out.println("wyzhang: RemoteClient execute internalAuthenticator is " +
+                         internalAuthenticator.getClass().getName());
+    System.out.println("wyzhang: before apply internal auth header");
+    printHeader(request);
     internalAuthenticator.applyInternalAuthenticationHeaders(headers::put);
+    System.out.println("wyzhang: after apply internal auth header");
+    printHeader(request);
 
     httpRequest = new HttpRequest(request.getMethod(), rewrittenURL, headers,
                       request.getBody(), request.getBodyLength());
