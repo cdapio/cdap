@@ -453,6 +453,11 @@ public class ProgramLifecycleService {
     checkConcurrentExecution(programId);
 
     Map<String, String> sysArgs = propertiesResolver.getSystemProperties(programId);
+    LOG.info("wyzhang: program life cycle service start {}", programId);
+    for (Map.Entry<String, String> e : sysArgs.entrySet()) {
+      LOG.info("wyzhang: program life cycle service sys arg  {} - {}", e.getKey(), e.getValue());
+    }
+
     Map<String, String> userArgs = propertiesResolver.getUserProperties(programId);
     if (overrides != null) {
       userArgs.putAll(overrides);

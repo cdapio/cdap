@@ -275,6 +275,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
 
     AuthenticationContextModules authModules = new AuthenticationContextModules();
     String principal = programOpts.getArguments().getOption(ProgramOptionConstants.PRINCIPAL);
+    System.out.println("wyzhang: DistributedProgramContainerModule principle=" + principal);
     if (principal == null) {
       modules.add(authModules.getProgramContainerModule(cConf));
     } else {
