@@ -45,7 +45,6 @@ import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,8 +98,6 @@ public class DatasetServiceClient {
   @Nullable
   public DatasetMeta getInstance(String instanceName)
     throws DatasetManagementException, UnauthorizedException {
-    LOG.warn("Authentication Context: {}, Principal: {}", authenticationContext.getClass().getCanonicalName(),
-             authenticationContext.getPrincipal());
 
     HttpResponse response = doGet("datasets/" + instanceName);
     if (HttpResponseStatus.NOT_FOUND.code() == response.getResponseCode()) {
@@ -306,6 +303,8 @@ public class DatasetServiceClient {
 
   private HttpResponse doRequest(HttpRequest.Builder requestBuilder)
     throws DatasetManagementException, UnauthorizedException {
+    LOG.warn("Authentication Context: {}, Principal: {}", authenticationContext.getClass().getCanonicalName(),
+             authenticationContext.getPrincipal());
     HttpRequest request = addUserIdHeader(requestBuilder).build();
     try {
       LOG.trace("Executing {} {}", request.getMethod(), request.getURL().getPath());
