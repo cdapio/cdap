@@ -18,6 +18,8 @@ package io.cdap.cdap.master.environment.k8s;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
+import com.google.gson.reflect.TypeToken;
+import io.cdap.cdap.k8s.common.AbstractWatcherThread;
 import io.cdap.cdap.k8s.discovery.KubeDiscoveryService;
 import io.cdap.cdap.k8s.runtime.KubeTwillRunnerService;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
@@ -49,8 +51,11 @@ import io.kubernetes.client.openapi.models.V1PodSpecBuilder;
 import io.kubernetes.client.openapi.models.V1Volume;
 import io.kubernetes.client.openapi.models.V1VolumeMount;
 import io.kubernetes.client.util.Config;
+import io.kubernetes.client.util.Watch;
+import io.kubernetes.client.util.Watchable;
 import io.kubernetes.client.util.Yaml;
 import org.apache.twill.api.TwillRunnerService;
+import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
@@ -63,6 +68,7 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -76,12 +82,14 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPOutputStream;
+import javax.annotation.Nullable;
 
 /**
  * Implementation of {@link MasterEnvironment} to provide the environment for running in Kubernetes.
@@ -143,6 +151,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   // In memory state for holding configmap name. Used to delete this configmap upon master environment destroy.
   private String configMapName;
   private CoreV1Api coreV1Api;
+  private Cancellable podWatcherCancellable;
 
   @Override
   public void initialize(MasterEnvironmentContext context) throws IOException, ApiException {
@@ -221,6 +230,9 @@ public class KubeMasterEnvironment implements MasterEnvironment {
         LOG.warn("Error cleaning up configmap {}, it will be retried. {} ", configMapName, e.getResponseBody(), e);
       }
     }
+    if (podWatcherCancellable != null) {
+      podWatcherCancellable.cancel();
+    }
     discoveryService.close();
     LOG.info("Kubernetes environment destroyed");
   }
@@ -272,11 +284,13 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     // Add spark pod labels. This will be same as job labels
     populateLabels(sparkConfMap);
 
+    CompletableFuture<Boolean> podStatusFuture = new CompletableFuture<>();
+    this.podWatcherCancellable = watchForPodStatus(podStatusFuture);
+
     // Kube Master environment would always contain spark job jar file.
     // https://github.com/cdapio/cdap/blob/develop/cdap-spark-core3_2.12/src/k8s/Dockerfile#L46
-    return new SparkConfig("k8s://" + master,
-                           URI.create("local:/opt/cdap/cdap-spark-core/cdap-spark-core.jar"),
-                           sparkConfMap);
+    return new SparkConfig("k8s://" + master, URI.create("local:/opt/cdap/cdap-spark-core/cdap-spark-core.jar"),
+                           sparkConfMap, podStatusFuture);
   }
 
   /**
@@ -552,5 +566,72 @@ public class KubeMasterEnvironment implements MasterEnvironment {
       }
     }
     return sparkConfs;
+  }
+
+  private Cancellable watchForPodStatus(CompletableFuture<Boolean> podStatusFuture) {
+    // Start watch for driver pod. This is added because of bug in spark implementation for driver pod status.
+    // Check CDAP-18511 for details.
+    Map<String, String> labels = podInfo.getLabels();
+    // Spark label added by kubernetes
+    labels.put("spark-role", "driver");
+    String labelSelector = labels.entrySet().stream().map(e -> e.getKey() + "=" + e.getValue())
+      .collect(Collectors.joining(","));
+
+    PodWatcherThread watcherThread = new PodWatcherThread(podInfo.getNamespace(), podStatusFuture,
+                                                          coreV1Api, labelSelector);
+
+    watcherThread.start();
+    watcherThread.setDaemon(true);
+    watcherThread.start();
+
+    return watcherThread::close;
+  }
+
+  private static class PodWatcherThread extends AbstractWatcherThread<V1Pod> {
+    private final CompletableFuture<Boolean> podStatusFuture;
+    private final CoreV1Api coreV1Api;
+    private final String labelSelector;
+
+    PodWatcherThread(String namespace, CompletableFuture<Boolean> podStatusFuture,
+                     CoreV1Api coreV1Api, String labelSelector) {
+      super("kube-pod-watcher", namespace);
+      this.podStatusFuture = podStatusFuture;
+      this.coreV1Api = coreV1Api;
+      this.labelSelector = labelSelector;
+    }
+
+    @Override
+    public void resourceModified(V1Pod resource) {
+      if (resource.getStatus() != null && resource.getStatus().getPhase() != null) {
+        if (resource.getStatus().getPhase().equalsIgnoreCase("Succeeded")) {
+          podStatusFuture.complete(true);
+        } else if (resource.getStatus().getPhase().equalsIgnoreCase("Failed") ||
+          resource.getStatus().getPhase().equalsIgnoreCase("Unknown")) {
+          podStatusFuture.complete(false);
+        }
+      }
+    }
+
+    @Override
+    public void resourceDeleted(V1Pod resource) {
+      podStatusFuture.cancel(true);
+    }
+
+    @Nullable
+    @Override
+    protected String getSelector() {
+      return labelSelector;
+    }
+
+    @Override
+    protected Watchable<V1Pod> createWatchable(Type resourceType, String namespace,
+                                               @Nullable String labelSelector) throws ApiException {
+      return
+        Watch.createWatch(
+          coreV1Api.getApiClient(),
+          coreV1Api.listNamespacedPodCall(
+            namespace, null, null, null, null, labelSelector, 1, null, null, null, true, null),
+          TypeToken.getParameterized(Watch.Response.class, resourceType).getType());
+    }
   }
 }

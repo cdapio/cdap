@@ -34,8 +34,6 @@ import io.cdap.cdap.app.runtime.spark.SparkRuntimeContext;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
 import org.apache.spark.deploy.SparkSubmit;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.util.Arrays;
@@ -54,8 +52,6 @@ import javax.annotation.Nullable;
  * Provides common implementation for different {@link SparkSubmitter}.
  */
 public abstract class AbstractSparkSubmitter implements SparkSubmitter {
-
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractSparkSubmitter.class);
 
   // Filter for getting archive resources only
   private static final Predicate<LocalizeResource> ARCHIVE_FILTER = new Predicate<LocalizeResource>() {
@@ -109,7 +105,11 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
         try {
           String[] submitArgs = Iterables.toArray(Iterables.concat(args, extraArgs), String.class);
           submit(runtimeContext, submitArgs);
-          onCompleted(true);
+          boolean state = hasSparkDriverSucceeded();
+          if (!state) {
+            throw new Exception("Spark driver returned error state");
+          }
+          onCompleted(state);
           resultFuture.set(result);
         } catch (Throwable t) {
           onCompleted(false);
@@ -143,6 +143,13 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
    */
   protected List<String> beforeSubmit() {
     return Collections.emptyList();
+  }
+
+  /**
+   * Returns true if spark driver has succeeded.
+   */
+  protected boolean hasSparkDriverSucceeded() throws Exception {
+    return true;
   }
 
   protected void onCompleted(boolean succeeded) {
