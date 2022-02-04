@@ -915,6 +915,7 @@ public final class Constants {
       public static final String PROGRAM_REJECTED_RUNS = "program.rejected.runs";
       public static final String PROGRAM_NODE_MINUTES = "program.node.minutes";
       public static final String PROGRAM_PROVISIONING_DELAY_SECONDS = "program.provisioning.delay.seconds";
+      public static final String PROGRAM_STARTING_DELAY_SECONDS = "program.starting.delay.seconds";
       public static final String RUN_TIME_SECONDS = "program.run.seconds";
       public static final String APPLICATION_COUNT = "application.count";
       public static final String NAMESPACE_COUNT = "namespace.count";
