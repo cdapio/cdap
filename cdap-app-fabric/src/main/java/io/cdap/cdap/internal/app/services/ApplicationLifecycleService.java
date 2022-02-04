@@ -203,22 +203,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   }
 
   /**
-   * Get all applications in the specified namespace, filtered to only include applications with an artifact name
-   * in the set of specified names and an artifact version equal to the specified version. If the specified set
-   * is empty, no filtering is performed on artifact name. If the specified version is null, no filtering is done
-   * on artifact version.
-   *
-   * @param namespace the namespace to get apps from
-   * @param artifactNames the set of valid artifact names. If empty, all artifact names are valid
-   * @param artifactVersion the artifact version to match. If null, all artifact versions are valid
-   * @return list of all applications in the namespace that match the specified artifact names and version
-   */
-  public List<ApplicationDetail> getApps(NamespaceId namespace, Set<String> artifactNames,
-                                         @Nullable String artifactVersion) throws Exception {
-    return getApps(namespace, getAppFilters(artifactNames, artifactVersion));
-  }
-
-  /**
    * Get all applications in the specified namespace
    *
    * @param namespace the namespace to get apps from
@@ -228,21 +212,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     List<ApplicationDetail> result = new ArrayList<>();
     scanApplications(namespace, Collections.emptyList(), d -> result.add(d));
-    return result;
-  }
-
-  /**
-   * Get all applications in the specified namespace that satisfy the specified filters.
-   *
-   * @param namespace the namespace to get apps from
-   * @param filters the filters that must be satisfied in order to be returned
-   * @return list of all applications in the namespace that satisfy the specified filters
-   */
-  public List<ApplicationDetail> getApps(NamespaceId namespace,
-      List<ApplicationFilter> filters) throws Exception {
-
-    List<ApplicationDetail> result = new ArrayList<>();
-    scanApplications(namespace, filters, d -> result.add(d));
     return result;
   }
 
