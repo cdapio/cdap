@@ -60,9 +60,10 @@ public class SystemAuthenticationContext implements AuthenticationContext {
     Credential userCredential = SecurityRequestContext.getUserCredential();
     if (userId != null && userCredential != null) {
       return new Principal(userId, Principal.PrincipalType.USER, userCredential);
-    } else if ((userId != null && userCredential == null) || (userId == null && userCredential != null)) {
-      LOG.warn("Unexpected SecurityRequestContext, one of userID and credential is NULL"
-               "userId = {} credential = {}", userId, userCredential);
+    } else if (userId != null && userCredential == null) {
+      LOG.warn("Unexpected SecurityRequestContext state, userId = {} while userCredential = NULL", userId);
+    } else if (userId == null && userCredential != null) {
+      LOG.warn("Unexpected SecurityRequestContext state, userId = NULL while userCredential = {}", userCredential);
     }
 
     // Use internal identity if user ID is null.
