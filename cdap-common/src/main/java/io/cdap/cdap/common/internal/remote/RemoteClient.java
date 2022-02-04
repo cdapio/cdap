@@ -97,8 +97,7 @@ public class RemoteClient {
     headerSetter.accept(header, String.format("%s %s", credentialType, credentialValue));
   }
 
-  void printHeader(HttpRequest request) {
-    Multimap<String, String> headers = request.getHeaders();
+  void printHeader(Multimap<String, String> headers) {
     Set<String> keys = headers.keySet();
     for (String keyprint : keys) {
         System.out.println("Key = " + keyprint);
@@ -134,10 +133,10 @@ public class RemoteClient {
     System.out.println("wyzhang: RemoteClient execute internalAuthenticator is " +
                          internalAuthenticator.getClass().getName());
     System.out.println("wyzhang: before apply internal auth header");
-    printHeader(request);
+    printHeader(headers);
     internalAuthenticator.applyInternalAuthenticationHeaders(headers::put);
     System.out.println("wyzhang: after apply internal auth header");
-    printHeader(request);
+    printHeader(headers);
 
     httpRequest = new HttpRequest(request.getMethod(), rewrittenURL, headers,
                       request.getBody(), request.getBodyLength());
