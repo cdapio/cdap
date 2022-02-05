@@ -176,6 +176,7 @@ public class ArtifactLocalizer {
    * @throws ArtifactNotFoundException If the given artifact does not exist
    */
   private File fetchArtifact(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
+    LOG.debug("wyzhang: fetch artifact {}", artifactId);
     Long lastModifiedTimestamp = getCurrentLastModifiedTimestamp(artifactId);
     String namespaceId = artifactId.getNamespace();
     ArtifactScope scope = ArtifactScope.USER;

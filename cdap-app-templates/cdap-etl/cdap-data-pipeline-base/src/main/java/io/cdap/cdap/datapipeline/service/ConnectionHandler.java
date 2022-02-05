@@ -221,6 +221,8 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
       String testRequestString = StandardCharsets.UTF_8.decode(request.getContent()).toString();
       ConnectionCreationRequest testRequest = GSON.fromJson(testRequestString, ConnectionCreationRequest.class);
 
+
+      System.out.println("wyzhang: ConnectionHandler test namespace : " + namespace);
       if (getContext().isRemoteTaskEnabled()) {
         executeRemotely(namespace, testRequestString, null, RemoteConnectionTestTask.class, responder);
       } else {

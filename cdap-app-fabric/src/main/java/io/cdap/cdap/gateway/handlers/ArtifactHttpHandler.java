@@ -243,6 +243,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                                   @QueryParam("order") @DefaultValue("UNORDERED") String order)
     throws Exception {
 
+    LOG.info("wyzhang: ArtifactHttpHandler getArtifactVeresion ns={} artifact={} scope={}",
+             namespaceId, artifactName, scope);
     NamespaceId namespace = validateAndGetScopedNamespace(Ids.namespace(namespaceId), scope);
 
     ArtifactRange range = versionRange == null ? null :
@@ -274,7 +276,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                               @PathParam("artifact-version") String artifactVersion,
                               @QueryParam("scope") @DefaultValue("user") String scope)
     throws Exception {
-
+    LOG.info("wyzhang: ArtifactHttpHandler getArtifactInfo ns={} artifact={} scope={}",
+             namespaceId, artifactName, scope);
     NamespaceId namespace = validateAndGetScopedNamespace(Ids.namespace(namespaceId), scope);
     ArtifactId artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 

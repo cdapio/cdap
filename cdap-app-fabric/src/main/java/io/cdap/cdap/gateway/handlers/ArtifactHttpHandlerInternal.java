@@ -122,6 +122,8 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
 
     NamespaceId namespace = validateAndGetScopedNamespace(Ids.namespace(namespaceId), scope);
     ArtifactId artifactId = new ArtifactId(namespace.getNamespace(), artifactName, artifactVersion);
+    LOG.info("wyzhang: download artifact ns={}, artifact={} scope={}, namespace = {}, artifactid = {}",
+             namespaceId, artifactName, scope, namespace, artifactId);
     ArtifactDetail artifactDetail = artifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId));
     Location location = artifactDetail.getDescriptor().getLocation();
 
