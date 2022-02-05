@@ -238,6 +238,9 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
    */
   private NamespaceId validateAndGetScopedNamespace(NamespaceId namespace, ArtifactScope scope)
     throws NamespaceNotFoundException {
+    if (ArtifactScope.SYSTEM.equals(scope)) {
+      return NamespaceId.SYSTEM;
+    }
 
     try {
       namespaceQueryAdmin.get(namespace);
@@ -249,7 +252,6 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
       // Hence, this should never happen.
       throw Throwables.propagate(e);
     }
-
-    return ArtifactScope.SYSTEM.equals(scope) ? NamespaceId.SYSTEM : namespace;
+    return namespace;
   }
 }
