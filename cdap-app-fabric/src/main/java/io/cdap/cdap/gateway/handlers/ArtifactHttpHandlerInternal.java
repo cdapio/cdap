@@ -238,21 +238,20 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
    */
   private NamespaceId validateAndGetScopedNamespace(NamespaceId namespace, ArtifactScope scope)
     throws NamespaceNotFoundException {
+    if (ArtifactScope.SYSTEM.equals(scope)) {
+      return NamespaceId.SYSTEM;
+    }
 
     try {
       namespaceQueryAdmin.get(namespace);
     } catch (NamespaceNotFoundException e) {
-      // don't throw if the namespace is system, the admin will not find it
-      if (!namespace.equals(NamespaceId.SYSTEM)) {
         throw e;
-      }
     } catch (Exception e) {
       // This can only happen when NamespaceAdmin uses HTTP to interact with namespaces.
       // Within AppFabric, NamespaceAdmin is bound to DefaultNamespaceAdmin which directly interacts with MDS.
       // Hence, this should never happen.
       throw Throwables.propagate(e);
     }
-
-    return ArtifactScope.SYSTEM.equals(scope) ? NamespaceId.SYSTEM : namespace;
+    return namespace;
   }
 }
