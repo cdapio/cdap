@@ -28,7 +28,7 @@ import java.net.URI;
  */
 public class TaskWorkerTwillApplication implements TwillApplication {
 
-  static final String NAME = "task.worker";
+  public static final String NAME = "task.worker";
 
   private final URI cConfFileURI;
   private final URI hConfFileURI;

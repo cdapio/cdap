@@ -435,6 +435,14 @@ public final class Constants {
     public static final String METRIC_PREFIX = "task.worker.";
   }
 
+
+  /**
+   * System pods.
+   */
+  public static final class SystemService {
+    public static final String POOL_ENABLE = "task.system.pool.enable";
+  }
+
   /**
    * Artifact localizer.
    */
