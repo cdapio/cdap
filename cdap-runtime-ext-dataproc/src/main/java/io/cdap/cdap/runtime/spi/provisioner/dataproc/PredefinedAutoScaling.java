@@ -123,11 +123,12 @@ public class PredefinedAutoScaling {
         boolean yarnDiff = !existingPolicy.getBasicAlgorithm().getYarnConfig()
           .equals(generatedPolicy.getBasicAlgorithm().getYarnConfig());
         boolean workerDiff = !existingPolicy.getWorkerConfig().equals(generatedPolicy.getWorkerConfig());
-        boolean secondaryWorkerDiff = !existingPolicy.getWorkerConfig().equals(generatedPolicy.getWorkerConfig());
+        boolean secondaryWorkerDiff = !existingPolicy.getSecondaryWorkerConfig()
+          .equals(generatedPolicy.getSecondaryWorkerConfig());
 
-        if (yarnDiff && workerDiff && secondaryWorkerDiff) {
+        if (yarnDiff || workerDiff || secondaryWorkerDiff) {
           LOG.warn("The predefined auto-scaling policy {} already exists and is having a different configuration" +
-                     "as compared to CDAP's chosen configuration", existingPolicy.getName());
+                     "as compared to CDF/CDAP's chosen configuration", existingPolicy.getName());
         }
       } catch (NotFoundException e) {
         createPolicy = true;
