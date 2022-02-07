@@ -70,7 +70,6 @@ import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.ConnectionEntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.SystemAppEntityId;
-import io.cdap.cdap.proto.security.ApplicationPermission;
 import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
@@ -585,7 +584,7 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     // Grant Alice permission to use connection
     getAccessController().grant(Authorizable.fromEntityId(connectionEntityId),
                                 ALICE_PRINCIPAL,
-                                EnumSet.of(ApplicationPermission.PREVIEW));
+                                EnumSet.of(StandardPermission.USE));
     browseConnection(conn, directory.getCanonicalPath(), 10);
     sampleConnection(conn, entities.get(1).getPath(), 100);
     getConnectionSpec(conn, directory.getCanonicalPath());

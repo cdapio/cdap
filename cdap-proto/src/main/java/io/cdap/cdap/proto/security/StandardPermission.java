@@ -52,6 +52,10 @@ public enum StandardPermission implements Permission {
    * Permission to delete specific entity.
    */
   DELETE,
+  /**
+   * Permission to use specific entity.
+   */
+  USE
   ;
 
   @Override
