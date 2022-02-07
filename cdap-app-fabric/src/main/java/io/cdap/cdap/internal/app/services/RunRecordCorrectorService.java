@@ -204,14 +204,6 @@ public abstract class RunRecordCorrectorService extends AbstractIdleService {
         return false;
       }
 
-      // Don't fix ClusterMode.ISOLATED runs that are not in STARTING state, since the runtime monitor should handle it.
-      // For programs in STARTING state, if it doesn't transit to other state, we should consider it as stuck.
-      String clusterMode = record.getSystemArgs().get(ProgramOptionConstants.CLUSTER_MODE);
-      // Use equals instead of valueOf to handle null for old records and also potential future name change
-      if (record.getStatus() != ProgramRunStatus.STARTING && ClusterMode.ISOLATED.name().equals(clusterMode)) {
-        return false;
-      }
-
       // When a program starts, a STARTING state will be record into the Store and it can happen before
       // the insertion of RuntimeInfo into the ProgramRuntimeService, since writing to Store and launching program
       // happens asynchronously.
@@ -233,6 +225,22 @@ public abstract class RunRecordCorrectorService extends AbstractIdleService {
         if (runtimeService.list(workflowProgramId).containsKey(RunIds.fromString(workflowRunId))) {
           return false;
         }
+
+        // Verify the store, if the workflow status is already in end state, correct the underlying program
+        RunRecordDetail workflowRun = store.getRun(workflowProgramId.run(workflowRunId));
+        // the null check if just to avoid the NPE warning, it should never be null
+        if (timeSinceStart > startTimeoutSecs && (workflowRun == null || workflowRun.getStatus().isEndState())) {
+          return true;
+        }
+      }
+
+      // Don't fix ClusterMode.ISOLATED runs that are not in STARTING state, since the runtime monitor should handle it.
+      // For programs in STARTING state, if it doesn't transit to other state, we should consider it as stuck.
+      String clusterMode = record.getSystemArgs().get(ProgramOptionConstants.CLUSTER_MODE);
+      // Use equals instead of valueOf to handle null for old records and also potential future name change
+      ProgramRunStatus status = record.getStatus();
+      if (status != ProgramRunStatus.STARTING && ClusterMode.ISOLATED.name().equals(clusterMode)) {
+        return false;
       }
 
       // Check if it is not actually running.

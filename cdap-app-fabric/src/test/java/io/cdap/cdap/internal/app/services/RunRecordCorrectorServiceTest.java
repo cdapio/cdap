@@ -20,6 +20,7 @@ import io.cdap.cdap.WorkflowAppWithLocalDataset;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.runtime.AbstractProgramRuntimeService;
 import io.cdap.cdap.app.runtime.NoOpProgramStateWriter;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
@@ -90,6 +91,75 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
   }
 
   @Test
+  public void testFixUnderlyingProgramInWorkflow() throws Exception {
+    AtomicInteger sourceId = new AtomicInteger(0);
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
+
+    // set up a workflow
+    Map<String, String> wfSystemArg = ImmutableMap.of(
+      ProgramOptionConstants.CLUSTER_MODE, ClusterMode.ISOLATED.name(),
+      SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName());
+    ProgramRunId wfId = NamespaceId.DEFAULT.app("test").workflow("testWF").run(randomRunId());
+    store.setProvisioning(wfId, Collections.emptyMap(), wfSystemArg,
+                          Bytes.toBytes(sourceId.getAndIncrement()), artifactId);
+    store.setProvisioned(wfId, 0, Bytes.toBytes(sourceId.getAndIncrement()));
+    store.setStart(wfId, null, Collections.emptyMap(), Bytes.toBytes(sourceId.getAndIncrement()));
+    store.setRunning(wfId, System.currentTimeMillis(), null, Bytes.toBytes(sourceId.getAndIncrement()));
+
+    // set up a spark program inside workflow, and in ISOLATED mode
+    Map<String, String> spSystemArgs = ImmutableMap.of(
+      ProgramOptionConstants.CLUSTER_MODE, ClusterMode.ISOLATED.name(),
+      SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+      ProgramOptionConstants.WORKFLOW_NAME, wfId.getProgram(),
+      ProgramOptionConstants.WORKFLOW_RUN_ID, wfId.getRun(),
+      ProgramOptionConstants.WORKFLOW_NODE_ID, "spark");
+
+    ProgramRunId spId = NamespaceId.DEFAULT.app("test").spark("phase-1").run(randomRunId());
+    store.setProvisioning(spId, Collections.emptyMap(), spSystemArgs,
+                          Bytes.toBytes(sourceId.getAndIncrement()), artifactId);
+    store.setProvisioned(spId, 0, Bytes.toBytes(sourceId.getAndIncrement()));
+    store.setStart(spId, null, Collections.emptyMap(), Bytes.toBytes(sourceId.getAndIncrement()));
+    store.setRunning(spId, System.currentTimeMillis(), null, Bytes.toBytes(sourceId.getAndIncrement()));
+
+    // mark the workflow as finished
+    store.setStop(wfId, System.currentTimeMillis(), ProgramRunStatus.COMPLETED,
+                  Bytes.toBytes(sourceId.getAndIncrement()));
+
+    ProgramStateWriter programStateWriter = new NoOpProgramStateWriter() {
+      @Override
+      public void error(ProgramRunId programRunId, Throwable failureCause) {
+        store.setStop(programRunId, System.currentTimeMillis(),
+                      ProgramRunStatus.FAILED, new BasicThrowable(failureCause),
+                      Bytes.toBytes(sourceId.getAndIncrement()));
+      }
+    };
+
+    ProgramRuntimeService noOpRuntimeSerivce = new AbstractProgramRuntimeService(
+      cConf, null, null, new NoOpProgramStateWriter(), null) {
+
+      @Override
+      public ProgramLiveInfo getLiveInfo(ProgramId programId) {
+        return new NotRunningProgramLiveInfo(programId);
+      }
+
+      @Override
+      public Map<RunId, RuntimeInfo> list(ProgramId program) {
+        return Collections.emptyMap();
+      }
+    };
+    // Create a run record fixer.
+    // Set the start buffer time to -1 so that it fixes right away.
+    RunRecordCorrectorService fixer = new RunRecordCorrectorService(cConf, store, programStateWriter,
+                                                                    noOpRuntimeSerivce,
+                                                                    namespaceAdmin, datasetFramework,
+                                                                    -1L, 5) { };
+    fixer.fixRunRecords();
+
+    // check the record is fixed for spark program
+    Assert.assertEquals(ProgramRunStatus.FAILED, store.getRun(spId).getStatus());
+  }
+
+  @Test
   public void testFixProgram() throws Exception {
     final AtomicInteger sourceId = new AtomicInteger(0);
 
@@ -114,7 +184,7 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
       expectedStates.put(workerId, ProgramRunStatus.FAILED);
     }
 
-    // Write a flow with suspend state
+    // Write a service with suspend state
     ProgramRunId flowId = new NamespaceId("ns").app("test").service("flow").run(randomRunId());
     store.setProvisioning(flowId, Collections.emptyMap(), SINGLETON_PROFILE_MAP,
                           Bytes.toBytes(sourceId.getAndIncrement()), artifactId);
