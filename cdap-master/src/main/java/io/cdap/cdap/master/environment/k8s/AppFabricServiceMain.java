@@ -51,6 +51,7 @@ import io.cdap.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.internal.app.worker.TaskWorkerServiceLauncher;
+import io.cdap.cdap.internal.app.worker.system.SystemServiceLauncher;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
@@ -159,6 +160,10 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
 
     if (cConf.getBoolean(Constants.TaskWorker.POOL_ENABLE)) {
       services.add(injector.getInstance(TaskWorkerServiceLauncher.class));
+    }
+
+    if (cConf.getBoolean(Constants.SystemService.POOL_ENABLE)) {
+      services.add(injector.getInstance(SystemServiceLauncher.class));
     }
 
     // Optionally adds the master environment task

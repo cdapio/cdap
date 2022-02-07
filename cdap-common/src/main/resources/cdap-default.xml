@@ -4596,6 +4596,15 @@
     </description>
   </property>
 
+  <!-- System pods Configuration  -->
+  <property>
+    <name>task.system.pool.enable</name>
+    <value>false</value>
+    <description>
+      If true, task system pods will be created with twill application
+    </description>
+  </property>
+
   <property>
     <name>artifact.localizer.container.num.cores</name>
     <value>1</value>

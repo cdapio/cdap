@@ -447,6 +447,52 @@ public final class Constants {
     public static final String METRIC_PREFIX = "task.worker.";
   }
 
+
+  /**
+   * System pods.
+   */
+  public static final class SystemService {
+
+    /**
+     * Task worker pool configuration
+     */
+    public static final String CONTAINER_COUNT = "task.worker.container.count";
+    public static final String POOL_CHECK_INTERVAL = "task.worker.pool.check.interval";
+    public static final String POOL_ENABLE = "task.worker.pool.enable";
+    public static final String COMPRESSION_ENABLED = "task.worker.compression.enabled";
+    public static final String PRELOAD_ARTIFACTS = "task.worker.preload.artifacts";
+
+    /**
+     * Task worker container configurations
+     */
+    public static final String LOCAL_DATA_DIR = "task.worker.local.data.dir";
+    public static final String CONTAINER_DISK_SIZE_GB = "task.worker.container.disk.size.gb";
+    public static final String CONTAINER_MEMORY_MB = "task.worker.container.memory.mb";
+    public static final String CONTAINER_CORES = "task.worker.container.num.cores";
+    public static final String CONTAINER_CPU_MULTIPLIER = "task.worker.container.cpu.multiplier";
+    public static final String CONTAINER_MEMORY_MULTIPLIER = "task.worker.container.memory.multiplier";
+    public static final String CONTAINER_HEAP_RESERVED_RATIO = "task.worker.container.java.heap.memory.ratio";
+    public static final String CONTAINER_PRIORITY_CLASS_NAME = "task.worker.container.priority.class.name";
+    public static final String CONTAINER_KILL_AFTER_REQUEST_COUNT =
+        "task.worker.container.kill.after.request.count";
+    public static final String CONTAINER_KILL_AFTER_DURATION_SECOND =
+        "task.worker.container.kill.after.duration.second";
+    public static final String CONTAINER_RUN_AS_USER = "task.worker.container.run.as.user";
+    public static final String CONTAINER_RUN_AS_GROUP = "task.worker.container.run.as.group";
+    public static final String CONTAINER_DISK_READONLY = "task.worker.container.disk.readonly";
+
+    /**
+     * Task worker http handler configuration
+     */
+    public static final String ADDRESS = "task.worker.bind.address";
+    public static final String PORT = "task.worker.bind.port";
+    public static final String EXEC_THREADS = "task.worker.exec.threads";
+    public static final String BOSS_THREADS = "task.worker.boss.threads";
+    public static final String WORKER_THREADS = "task.worker.worker.threads";
+    public static final String METADATA_SERVICE_END_POINT = "task.worker.metadata.service.endpoint";
+    public static final String METRIC_PREFIX = "task.worker.";
+  }
+
   /**
    * Artifact localizer.
    */
