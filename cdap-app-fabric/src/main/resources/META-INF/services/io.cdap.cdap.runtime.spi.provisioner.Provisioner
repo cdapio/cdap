@@ -14,4 +14,4 @@
 # the License.
 #
 
-io.cdap.cdap.runtime.spi.provisioner.tethering.TetheringProvisioner
+io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringProvisioner
