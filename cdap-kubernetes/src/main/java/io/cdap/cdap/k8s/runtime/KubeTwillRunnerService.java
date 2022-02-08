@@ -308,6 +308,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
               // This will never happen
             }
 
+            controller.setJobStatus(((V1Job) resource).getStatus());
             // terminate the job controller
             controller.terminate();
           }
@@ -337,13 +338,13 @@ public class KubeTwillRunnerService implements TwillRunnerService {
         if (runId.equals(metadata.getLabels().get(RUN_ID_LABEL))) {
           // Cancel the scheduled termination
           terminationFuture.cancel(false);
-          controller.terminate();
           // Cancel the watch
           try {
             Uninterruptibles.getUninterruptibly(cancellableFuture).cancel();
           } catch (ExecutionException e) {
             // This will never happen
           }
+          controller.terminate();
         }
       }
     });
