@@ -145,7 +145,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     AuthenticationContext authenticationContext = injector.getInstance(AuthenticationContext.class);
     RemoteClientFactory remoteClientFactory = injector.getInstance(RemoteClientFactory.class);
 
-    framework = new RemoteDatasetFramework(cConf, registryFactory, authenticationContext, remoteClientFactory);
+    framework = createFramework(authenticationContext, remoteClientFactory);
     SystemDatasetInstantiatorFactory datasetInstantiatorFactory =
       new SystemDatasetInstantiatorFactory(locationFactory, framework, cConf);
 
@@ -189,6 +189,14 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
       () -> discoveryServiceClient.discover(Constants.Service.DATASET_MANAGER));
     Preconditions.checkNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS),
                                "%s service is not up after 5 seconds", service);
+  }
+
+  /**
+   * This method allows to replace / mock remote clients
+   */
+  protected RemoteDatasetFramework createFramework(AuthenticationContext authenticationContext,
+                                                   RemoteClientFactory remoteClientFactory) {
+    return new RemoteDatasetFramework(cConf, registryFactory, authenticationContext, remoteClientFactory);
   }
 
   // Note: Cannot have these system namespace restrictions in system namespace since we use it internally in
