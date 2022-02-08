@@ -20,8 +20,6 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -44,7 +42,6 @@ import javax.annotation.Nullable;
  */
 final class DataprocConf {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DataprocConf.class);
   static final String CLOUD_PLATFORM_SCOPE = "https://www.googleapis.com/auth/cloud-platform";
 
   static final String TOKEN_ENDPOINT_KEY = "token.endpoint";
@@ -562,14 +559,6 @@ final class DataprocConf {
       Boolean.parseBoolean(properties.getOrDefault(PREDEFINED_AUTOSCALE_ENABLED, "false"));
 
     if (enablePredefinedAutoScaling) {
-      if (properties.containsKey(DataprocConf.WORKER_NUM_NODES) ||
-        properties.containsKey(DataprocConf.SECONDARY_WORKER_NUM_NODES) ||
-        properties.containsKey(DataprocConf.AUTOSCALING_POLICY)) {
-        LOG.warn("The configs : {}, {}, {} will not be considered when {} is enabled ", DataprocConf.WORKER_NUM_NODES,
-                                DataprocConf.SECONDARY_WORKER_NUM_NODES, DataprocConf.AUTOSCALING_POLICY ,
-                                DataprocConf.PREDEFINED_AUTOSCALE_ENABLED);
-      }
-
       workerNumNodes = PredefinedAutoScaling.getPrimaryWorkerInstances();
       secondaryWorkerNumNodes = PredefinedAutoScaling.getMinSecondaryWorkerInstances();
       autoScalingPolicy = ""; // The policy will be created while cluster provisioning
