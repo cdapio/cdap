@@ -347,17 +347,16 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     // add some bad json object to the property
     addConnection(
       sourceConnName, new ConnectionCreationRequest(
-        "", new PluginInfo("test", "dummy", null, ImmutableMap.of("tableName", "${srcTable}",
+        "", new PluginInfo("test", "dummy", null, ImmutableMap.of("tableName", srcTableName,
                                                                   "key1", "${badval}"),
                            new ArtifactSelectorConfig())));
     addConnection(
       sinkConnName, new ConnectionCreationRequest(
-        "", new PluginInfo("test", "dummy", null, ImmutableMap.of("tableName", "${sinkTable}",
+        "", new PluginInfo("test", "dummy", null, ImmutableMap.of("tableName", sinkTableName,
                                                                   "key1", "${badval}"),
                            new ArtifactSelectorConfig())));
     // add json string to the runtime arguments to ensure plugin can get instantiated under such condition
-    Map<String, String> runtimeArguments = ImmutableMap.of("badval", "{\"a\" : 1}", "srcTable", srcTableName,
-                                                           "sinkTable", sinkTableName);
+    Map<String, String> runtimeArguments = Collections.singletonMap("badval", "{\"a\" : 1}");
 
     // source -> sink
     ETLBatchConfig config = ETLBatchConfig.builder()
@@ -405,12 +404,17 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     List<StructuredRecord> outputRecords = MockSink.readOutput(sinkTable);
     Assert.assertEquals(ImmutableSet.of(dwayne, samuel), new HashSet<>(outputRecords));
 
-    // in 6.5 we cannot update the connections, so update the runtime arguments so the connection value will get
-    // updated
+    // modify the connection to use a new table name for source and sink
     String newSrcTableName = "new" + srcTableName;
     String newSinkTableName = "new" + sinkTableName;
-    runtimeArguments = ImmutableMap.of("badval", "{\"a\" : 1}", "srcTable", newSrcTableName,
-                                       "sinkTable", newSinkTableName);
+    addConnection(
+      sourceConnName, new ConnectionCreationRequest(
+        "", new PluginInfo("test", "dummy", null, Collections.singletonMap("tableName", newSrcTableName),
+                           new ArtifactSelectorConfig())));
+    addConnection(
+      sinkConnName, new ConnectionCreationRequest(
+        "", new PluginInfo("test", "dummy", null, Collections.singletonMap("tableName", newSinkTableName),
+                           new ArtifactSelectorConfig())));
 
     addDatasetInstance(NamespaceId.DEFAULT.dataset(newSrcTableName), Table.class.getName());
     StructuredRecord newRecord1 = StructuredRecord.builder(schema).set("name", "john").build();
