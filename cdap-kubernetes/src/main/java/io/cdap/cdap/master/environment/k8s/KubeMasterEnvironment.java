@@ -182,6 +182,17 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String DEFAULT_POD_LABELS_FILE = "pod.labels.properties";
   private static final long DEFAULT_POD_KILLER_DELAY_MILLIS = TimeUnit.HOURS.toMillis(1L);
 
+  // Environment Property Names used by JMX metrics collector to tag metrics.
+  // Names better be short to reduce the serialized metric value size.
+  // Common prefix is added to properties to help main services identify tags relevant to
+  // environment properties.
+  // Name of the CDAP service running in this pod. Eg: appfabric, messaging, metrics etc.
+  private static final String COMPONENT_ENV_PROPERTY =
+    MasterEnvironmentContext.ENVIRONMENT_PROPERTY_PREFIX + "cmp";
+  // Name of the Kubernetes namespace this pod is deployed in. Eg: default
+  private static final String NAMESPACE_ENV_PROPERTY =
+    MasterEnvironmentContext.ENVIRONMENT_PROPERTY_PREFIX + "ns";
+
   private static final Pattern LABEL_PATTERN = Pattern.compile("(cdap\\..+?)=\"(.*)\"");
 
   private KubeDiscoveryService discoveryService;
@@ -269,6 +280,11 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     if (instanceName == null) {
       throw new IllegalStateException("Missing instance label '" + instanceLabel + "' from pod labels.");
     }
+
+    // Add Environment Related conf properties
+    String componentName = getComponentName(podInfo.getLabels().get(instanceLabel), podInfo.getName());
+    conf.put(COMPONENT_ENV_PROPERTY, componentName);
+    conf.put(NAMESPACE_ENV_PROPERTY, podInfo.getNamespace());
 
     // Services are publish to K8s with a prefix
     String resourcePrefix = "cdap-" + instanceName + "-";
@@ -401,6 +417,26 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     if (namespaceCreationEnabled && namespace != null && !namespace.isEmpty()) {
       deleteKubeNamespace(namespace, cdapNamespace);
     }
+  }
+
+  /**
+   *  <p>Parses k8s pod name to find name of CDAP service running in this pod by removing prefix "cdap-"
+   *  and instance name from the pod name. Eg: pod name "cdap-abc-metrics-0" and instance name "abc"
+   *  will return component name "metrics-0". </p>
+   * @param instanceName Name of CDAP instance
+   * @param podName Name of K8s pod in which this service is running
+   * @return componentName after parsing pod name
+   */
+  @VisibleForTesting
+  static String getComponentName(String instanceName, String podName) {
+    String componentName = podName;
+    // remove prefix "cdap-"
+    componentName = componentName.replaceFirst("^(cdap-)", "");
+    // remove instance name
+    componentName = componentName.replaceFirst(Pattern.quote(instanceName), "");
+    // Strip "-" from from beginning.
+    componentName = componentName.replaceAll("^-+", "");
+    return componentName;
   }
 
   /**

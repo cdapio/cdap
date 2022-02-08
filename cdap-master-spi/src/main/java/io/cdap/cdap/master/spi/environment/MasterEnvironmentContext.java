@@ -24,6 +24,12 @@ import java.util.Map;
  * Context object available to {@link MasterEnvironment} for access to CDAP resources.
  */
 public interface MasterEnvironmentContext {
+  /**
+   * Prefix added to environment properties returned by <code>getConfigurations</code>.
+   * This prefix can be used by main services to filter out all environment specific config properties
+   * which are set by {@link MasterEnvironment} implementations.
+   */
+  String ENVIRONMENT_PROPERTY_PREFIX = "environment.property.";
 
   /**
    * Returns the {@link LocationFactory} used by the CDAP.

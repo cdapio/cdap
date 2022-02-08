@@ -417,4 +417,32 @@ public class KubeMasterEnvironmentTest {
     assertContainersContainVolumeMount(executorPod, expectedWorkloadIdentityProjectedVolumeMount);
     assertContainersContainEnvVar(executorPod, expectedGoogleApplicationCredentialsEnvVar);
   }
+
+  @Test
+  public void testGetComponentName() {
+    // Ensure valid pod names are parsed correctly
+    String gotName = KubeMasterEnvironment.getComponentName(
+      "instance-abc", "cdap-instance-abc-appfabric-0");
+    Assert.assertEquals("appfabric-0", gotName);
+
+    gotName = KubeMasterEnvironment.getComponentName(
+      "123", "cdap-123-appfabric-23");
+    Assert.assertEquals("appfabric-23", gotName);
+
+    gotName = KubeMasterEnvironment.getComponentName(
+      "cdap", "cdap-cdap-appfabric-0");
+    Assert.assertEquals("appfabric-0", gotName);
+
+    gotName = KubeMasterEnvironment.getComponentName(
+      "", "cdap-test-metrics-0");
+    Assert.assertEquals("test-metrics-0", gotName);
+
+    gotName = KubeMasterEnvironment.getComponentName(
+      "test-cdap", "cdap-test-cdap-preview-runner-b5786a15-e8f4-47-0cebad7d67-0");
+    Assert.assertEquals("preview-runner-b5786a15-e8f4-47-0cebad7d67-0", gotName);
+
+    gotName = KubeMasterEnvironment.getComponentName(
+      "dap", "cdap-dap-preview-runner-b5786a15-e8f4-47-0cebad7d67-0");
+    Assert.assertEquals("preview-runner-b5786a15-e8f4-47-0cebad7d67-0", gotName);
+  }
 }

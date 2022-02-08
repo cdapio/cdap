@@ -131,6 +131,7 @@ public final class Constants {
     public static final String AUTHENTICATION = "authentication";
     public static final String TASK_WORKER = "task.worker";
     public static final String ARTIFACT_LOCALIZER = "artifact.localizer";
+    public static final String SYSTEM_METRICS_EXPORTER = "system.metrics.exporter";
 
     public static final String SERVICE_INSTANCE_TABLE_NAME = "cdap.services.instances";
     /** Scheduler queue name to submit the master service app. */
