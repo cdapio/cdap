@@ -30,17 +30,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
 
 /**
- * Default implementation of the ProvsionerConfigProvider. It expects a json file for from each module dir and
+ * Default implementation of the ProvisionerConfigProvider. It expects a json file for from each module dir and
  * expects a "configuration-groups" in the json file. "icon" and "beta" fields are optional.
  */
 public class DefaultProvisionerConfigProvider implements ProvisionerConfigProvider {
@@ -55,6 +57,10 @@ public class DefaultProvisionerConfigProvider implements ProvisionerConfigProvid
     this.extDirs = ImmutableList.copyOf(Splitter.on(';').omitEmptyStrings().trimResults().split(extDirectory));
   }
 
+  /**
+   * First tries to load configs by searching through each module in the extensions directory. Then uses system
+   * classloader to find the remaining json files.
+   */
   @Override
   public Map<String, ProvisionerConfig> loadProvisionerConfigs(Set<String> provisioners) {
     Map<String, ProvisionerConfig> results = new HashMap<>();
@@ -90,12 +96,26 @@ public class DefaultProvisionerConfigProvider implements ProvisionerConfigProvid
           try (Reader reader = Files.newReader(configFile, Charsets.UTF_8)) {
             results.put(provisionerName, GSON.fromJson(new JsonReader(reader), ProvisionerConfig.class));
           } catch (Exception e) {
-            LOG.warn("Exception reading JSON config file for provisioner {}. Ignoring file.",
-                     provisionerName, e);
+            LOG.warn("Exception reading JSON config file for provisioner {}. Ignoring file.", provisionerName, e);
           }
         }
       }
     }
+
+    ClassLoader cl = ClassLoader.getSystemClassLoader();
+    Set<String> remainingProvisioners = new HashSet<>(provisioners);
+    remainingProvisioners.removeAll(results.keySet());
+    remainingProvisioners.remove(NativeProvisioner.SPEC.getName());
+
+    for (String provisionerName : remainingProvisioners) {
+      String name = provisionerName.concat(".json");
+      try (InputStreamReader reader = new InputStreamReader(cl.getResourceAsStream(name))) {
+        results.put(provisionerName, GSON.fromJson(new JsonReader(reader), ProvisionerConfig.class));
+      } catch (Exception e) {
+        LOG.warn("Exception reading JSON config file for provisioner {}. Ignoring file.", provisionerName, e);
+      }
+    }
+
     return Collections.unmodifiableMap(results);
   }
 }
