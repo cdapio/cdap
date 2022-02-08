@@ -53,9 +53,10 @@ public class TetheringClientHandler extends AbstractHttpHandler {
     String content = request.content().toString(StandardCharsets.UTF_8);
     TetheringCreationRequest tetheringCreationRequest = GSON.fromJson(content, TetheringCreationRequest.class);
     List<NamespaceAllocation> namespaces = tetheringCreationRequest.getNamespaceAllocations();
-    PeerMetadata peerMetadata = new PeerMetadata(namespaces, tetheringCreationRequest.getMetadata());
+    PeerMetadata peerMetadata = new PeerMetadata(namespaces, tetheringCreationRequest.getMetadata(),
+                                                 tetheringCreationRequest.getDescription());
     PeerInfo peerInfo = new PeerInfo(tetheringCreationRequest.getPeer(), tetheringCreationRequest.getEndpoint(),
-                                     TetheringStatus.PENDING, peerMetadata);
+                                     TetheringStatus.PENDING, peerMetadata, System.currentTimeMillis());
     store.addPeer(peerInfo);
     responder.sendStatus(HttpResponseStatus.OK);
   }

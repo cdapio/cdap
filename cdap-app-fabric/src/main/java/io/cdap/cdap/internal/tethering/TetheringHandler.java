@@ -122,6 +122,6 @@ public class TetheringHandler extends AbstractHttpHandler {
       connectionStatus = TetheringConnectionStatus.ACTIVE;
     }
     return new PeerState(peerInfo.getName(), peerInfo.getEndpoint(), peerInfo.getTetheringStatus(),
-                         peerInfo.getMetadata(), connectionStatus);
+                         peerInfo.getMetadata(), peerInfo.getRequestTime(), connectionStatus);
   }
 }

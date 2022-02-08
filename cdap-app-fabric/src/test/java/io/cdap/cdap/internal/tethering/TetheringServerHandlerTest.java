@@ -72,6 +72,8 @@ public class TetheringServerHandlerTest {
   private static final List<NamespaceAllocation> NAMESPACES = ImmutableList.of(
     new NamespaceAllocation("testns1", "1", "2Gi"),
     new NamespaceAllocation("testns2", null, null));
+  private static final String DESCRIPTION = "my tethering";
+  private static final long REQUEST_TIME = System.currentTimeMillis();
   private static TetheringStore tetheringStore;
   private static MessagingService messagingService;
   private static CConfiguration cConf;
@@ -143,39 +145,45 @@ public class TetheringServerHandlerTest {
   @Test
   public void testAcceptTether() throws IOException, InterruptedException {
     // Tethering is initiated by peer
-    createTethering("xyz", NAMESPACES);
+    createTethering("xyz", NAMESPACES, REQUEST_TIME, DESCRIPTION);
     // Tethering status should be PENDING
-    expectTetheringStatus("xyz", TetheringStatus.PENDING, NAMESPACES, TetheringConnectionStatus.INACTIVE);
+    expectTetheringStatus("xyz", TetheringStatus.PENDING, NAMESPACES, REQUEST_TIME, DESCRIPTION,
+                          TetheringConnectionStatus.INACTIVE);
 
     // Duplicate tether initiation should be ignored
-    createTethering("xyz", NAMESPACES);
+    createTethering("xyz", NAMESPACES, REQUEST_TIME, DESCRIPTION);
     // Tethering status should be PENDING
-    expectTetheringStatus("xyz", TetheringStatus.PENDING, NAMESPACES, TetheringConnectionStatus.INACTIVE);
+    expectTetheringStatus("xyz", TetheringStatus.PENDING, NAMESPACES, REQUEST_TIME, DESCRIPTION,
+                          TetheringConnectionStatus.INACTIVE);
 
     // Server should respond with 404 because tether is still pending.
     expectTetheringControlResponse("xyz", HttpResponseStatus.NOT_FOUND);
 
     // User accepts tethering
     acceptTethering();
-    expectTetheringStatus("xyz", TetheringStatus.ACCEPTED, NAMESPACES, TetheringConnectionStatus.ACTIVE);
+    expectTetheringStatus("xyz", TetheringStatus.ACCEPTED, NAMESPACES, REQUEST_TIME, DESCRIPTION,
+                          TetheringConnectionStatus.ACTIVE);
 
     // Duplicate accept tethering should be ignored
     acceptTethering();
     expectTetheringControlResponse("xyz", HttpResponseStatus.OK);
-    expectTetheringStatus("xyz", TetheringStatus.ACCEPTED, NAMESPACES, TetheringConnectionStatus.ACTIVE);
+    expectTetheringStatus("xyz", TetheringStatus.ACCEPTED, NAMESPACES, REQUEST_TIME, DESCRIPTION,
+                          TetheringConnectionStatus.ACTIVE);
 
     // Reject tethering should be ignored
     rejectTethering();
     expectTetheringControlResponse("xyz", HttpResponseStatus.OK);
 
     // Tethering initiation should be ignored
-    createTethering("xyz", NAMESPACES);
+    createTethering("xyz", NAMESPACES, REQUEST_TIME, DESCRIPTION);
     expectTetheringControlResponse("xyz", HttpResponseStatus.OK);
-    expectTetheringStatus("xyz", TetheringStatus.ACCEPTED, NAMESPACES, TetheringConnectionStatus.ACTIVE);
+    expectTetheringStatus("xyz", TetheringStatus.ACCEPTED, NAMESPACES, REQUEST_TIME, DESCRIPTION,
+                          TetheringConnectionStatus.ACTIVE);
 
     // Wait until we don't receive any control messages from the peer for upto the timeout interval.
     Thread.sleep(cConf.getInt(Constants.Tethering.CONNECTION_TIMEOUT_SECONDS) * 1000);
-    expectTetheringStatus("xyz", TetheringStatus.ACCEPTED, NAMESPACES, TetheringConnectionStatus.INACTIVE);
+    expectTetheringStatus("xyz", TetheringStatus.ACCEPTED, NAMESPACES, REQUEST_TIME, DESCRIPTION,
+                          TetheringConnectionStatus.INACTIVE);
 
     // Delete tethering
     deleteTethering();
@@ -184,26 +192,30 @@ public class TetheringServerHandlerTest {
   @Test
   public void testRejectTether() throws IOException, InterruptedException {
     // Tethering is initiated by peer
-    createTethering("xyz", NAMESPACES);
+    createTethering("xyz", NAMESPACES, REQUEST_TIME, null);
     // Tethering status should be PENDING
-    expectTetheringStatus("xyz", TetheringStatus.PENDING, NAMESPACES, TetheringConnectionStatus.INACTIVE);
+    expectTetheringStatus("xyz", TetheringStatus.PENDING, NAMESPACES, REQUEST_TIME, null,
+                          TetheringConnectionStatus.INACTIVE);
 
     // User rejects tethering
     rejectTethering();
     // Server should return 403 when tethering is rejected.
     expectTetheringControlResponse("xyz", HttpResponseStatus.FORBIDDEN);
-    expectTetheringStatus("xyz", TetheringStatus.REJECTED, NAMESPACES, TetheringConnectionStatus.ACTIVE);
+    expectTetheringStatus("xyz", TetheringStatus.REJECTED, NAMESPACES, REQUEST_TIME, null,
+                          TetheringConnectionStatus.ACTIVE);
 
 
     // Duplicate reject tethering should be ignored
     rejectTethering();
     expectTetheringControlResponse("xyz", HttpResponseStatus.FORBIDDEN);
-    expectTetheringStatus("xyz", TetheringStatus.REJECTED, NAMESPACES, TetheringConnectionStatus.ACTIVE);
+    expectTetheringStatus("xyz", TetheringStatus.REJECTED, NAMESPACES, REQUEST_TIME, null,
+                          TetheringConnectionStatus.ACTIVE);
 
     // Accept tethering should be ignored
     acceptTethering();
     expectTetheringControlResponse("xyz", HttpResponseStatus.FORBIDDEN);
-    expectTetheringStatus("xyz", TetheringStatus.REJECTED, NAMESPACES, TetheringConnectionStatus.ACTIVE);
+    expectTetheringStatus("xyz", TetheringStatus.REJECTED, NAMESPACES, REQUEST_TIME, null,
+                          TetheringConnectionStatus.ACTIVE);
 
     // Delete tethering
     deleteTethering();
@@ -220,7 +232,7 @@ public class TetheringServerHandlerTest {
   @Test
   public void testInvalidAction() throws IOException {
     // Create tethering
-    createTethering("xyz", NAMESPACES);
+    createTethering("xyz", NAMESPACES, REQUEST_TIME, DESCRIPTION);
 
     TetheringActionRequest invalidAction = new TetheringActionRequest("foo");
     // Perform invalid action, should get BAD_REQUEST error
@@ -238,7 +250,7 @@ public class TetheringServerHandlerTest {
   @Test
   public void testTetheringTopic() throws IOException, TopicNotFoundException {
     // Create tethering
-    createTethering("xyz", NAMESPACES);
+    createTethering("xyz", NAMESPACES, REQUEST_TIME, null);
 
     TopicId topic = new TopicId(NamespaceId.SYSTEM.getNamespace(),
                                 topicPrefix + "xyz");
@@ -260,7 +272,7 @@ public class TetheringServerHandlerTest {
   @Test
   public void testInvalidMessageId() throws IOException {
     // Create tethering
-    createTethering("xyz", NAMESPACES);
+    createTethering("xyz", NAMESPACES, REQUEST_TIME, DESCRIPTION);
 
     // User accepts tethering
     acceptTethering();
@@ -284,8 +296,10 @@ public class TetheringServerHandlerTest {
     Assert.assertEquals(status.code(), response.getResponseCode());
   }
 
-  private void createTethering(String peerName, List<NamespaceAllocation> namespaces) throws IOException {
-    TetheringConnectionRequest tetheringRequest = new TetheringConnectionRequest(namespaces);
+  private void createTethering(String peerName, List<NamespaceAllocation> namespaces,
+                               long requestTime,
+                               @Nullable String description) throws IOException {
+    TetheringConnectionRequest tetheringRequest = new TetheringConnectionRequest(namespaces, requestTime, description);
     doHttpRequest(HttpMethod.PUT, "tethering/connections/" + peerName, GSON.toJson(tetheringRequest));
   }
 
@@ -296,13 +310,16 @@ public class TetheringServerHandlerTest {
   }
 
   private void expectTetheringStatus(String peerName, TetheringStatus tetheringStatus,
-                                     List<NamespaceAllocation> namespaces, TetheringConnectionStatus connectionStatus)
+                                     List<NamespaceAllocation> namespaces,
+                                     long requestTime,
+                                     @Nullable String description,
+                                     TetheringConnectionStatus connectionStatus)
     throws IOException {
     List<PeerState> peerStateList = getTetheringStatus();
     Assert.assertEquals(1, peerStateList.size());
-    PeerMetadata expectedPeerMetadata = new PeerMetadata(namespaces, Collections.emptyMap());
+    PeerMetadata expectedPeerMetadata = new PeerMetadata(namespaces, Collections.emptyMap(), description);
     PeerState expectedPeerInfo = new PeerState(peerName, null, tetheringStatus,
-                                               expectedPeerMetadata, connectionStatus);
+                                               expectedPeerMetadata, requestTime, connectionStatus);
     Assert.assertEquals(expectedPeerInfo, peerStateList.get(0));
   }
 

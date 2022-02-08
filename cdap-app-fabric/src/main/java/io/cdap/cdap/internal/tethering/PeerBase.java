@@ -26,12 +26,15 @@ public class PeerBase {
   private final String endpoint;
   private final TetheringStatus tetheringStatus;
   private final PeerMetadata metadata;
+  private final long requestTime;
 
-  public PeerBase(String name, @Nullable String endpoint, TetheringStatus tetheringStatus, PeerMetadata metadata) {
+  public PeerBase(String name, @Nullable String endpoint, TetheringStatus tetheringStatus, PeerMetadata metadata,
+                  long requestTime) {
     this.name = name;
     this.endpoint = endpoint;
     this.tetheringStatus = tetheringStatus;
     this.metadata = metadata;
+    this.requestTime = requestTime;
   }
 
   public String getName() {
@@ -51,6 +54,10 @@ public class PeerBase {
     return metadata;
   }
 
+  long getRequestTime() {
+    return requestTime;
+  }
+
   @Override
   public boolean equals(Object other) {
     if (this == other) {
@@ -63,11 +70,12 @@ public class PeerBase {
     return Objects.equals(this.name, that.name) &&
       Objects.equals(this.endpoint, that.endpoint) &&
       Objects.equals(this.tetheringStatus, that.tetheringStatus) &&
-      Objects.equals(this.metadata, that.metadata);
+      Objects.equals(this.metadata, that.metadata) &&
+      Objects.equals(this.requestTime, that.requestTime);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, endpoint, tetheringStatus, metadata);
+    return Objects.hash(name, endpoint, tetheringStatus, metadata, requestTime);
   }
 }
