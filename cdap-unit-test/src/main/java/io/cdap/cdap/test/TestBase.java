@@ -66,11 +66,13 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.HealthCheckModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.common.service.HealthCheckService;
 import io.cdap.cdap.common.test.TestRunner;
 import io.cdap.cdap.common.twill.NoopTwillRunnerService;
 import io.cdap.cdap.common.utils.OSDetector;
@@ -228,6 +230,7 @@ public class TestBase {
   private static LineageAdmin lineageAdmin;
   private static AppFabricServer appFabricServer;
   private static SupportBundleInternalService supportBundleInternalService;
+  private static HealthCheckService appFabricHealthCheckService;
   private static PreferencesService preferencesService;
 
   // This list is to record ApplicationManager create inside @Test method
@@ -305,6 +308,7 @@ public class TestBase {
       new PreviewManagerModule(false),
       new PreviewRunnerManagerModule().getInMemoryModules(),
       new SupportBundleServiceModule(),
+      new HealthCheckModule(),
       new MockProvisionerModule(),
       new AbstractModule() {
         @Override
@@ -415,6 +419,12 @@ public class TestBase {
     }
     supportBundleInternalService = injector.getInstance(SupportBundleInternalService.class);
     supportBundleInternalService.startAndWait();
+
+    String host = cConf.get(Constants.Service.MASTER_SERVICES_BIND_ADDRESS);
+    int port = cConf.getInt(Constants.AppFabricHealthCheck.SERVICE_BIND_PORT);
+    appFabricHealthCheckService = injector.getInstance(HealthCheckService.class);
+    appFabricHealthCheckService.initiate(host, port, Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE);
+    appFabricHealthCheckService.startAndWait();
   }
 
   /**
@@ -627,6 +637,7 @@ public class TestBase {
     }
     appFabricServer.stopAndWait();
     supportBundleInternalService.stopAndWait();
+    appFabricHealthCheckService.stopAndWait();
   }
 
   protected MetricsManager getMetricsManager() {

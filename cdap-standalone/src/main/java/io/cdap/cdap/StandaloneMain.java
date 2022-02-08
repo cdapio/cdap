@@ -52,6 +52,7 @@ import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.io.URLConnections;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
+import io.cdap.cdap.common.service.HealthCheckService;
 import io.cdap.cdap.common.startup.ConfigurationLogger;
 import io.cdap.cdap.common.twill.NoopTwillRunnerService;
 import io.cdap.cdap.common.utils.DirUtils;
@@ -160,6 +161,7 @@ public class StandaloneMain {
 
   private ExternalAuthenticationServer externalAuthenticationServer;
   private ExploreExecutorService exploreExecutorService;
+  private HealthCheckService appFabricHealthCheckService;
 
 
   private StandaloneMain(List<Module> modules, CConfiguration cConf) {
@@ -306,6 +308,12 @@ public class StandaloneMain {
 
     supportBundleInternalService.startAndWait();
 
+    String host = cConf.get(Constants.Service.MASTER_SERVICES_BIND_ADDRESS);
+    int port = cConf.getInt(Constants.AppFabricHealthCheck.SERVICE_BIND_PORT);
+    appFabricHealthCheckService = injector.getInstance(HealthCheckService.class);
+    appFabricHealthCheckService.initiate(host, port, Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE);
+    appFabricHealthCheckService.startAndWait();
+
     String protocol = sslEnabled ? "https" : "http";
     int dashboardPort = sslEnabled ?
       cConf.getInt(Constants.Dashboard.SSL_BIND_PORT) :
@@ -346,6 +354,7 @@ public class StandaloneMain {
       previewHttpServer.stopAndWait();
       // app fabric will also stop all programs
       appFabricServer.stopAndWait();
+      appFabricHealthCheckService.stopAndWait();
       runtimeServer.stopAndWait();
       // all programs are stopped: dataset service, metrics, transactions can stop now
       datasetService.stopAndWait();

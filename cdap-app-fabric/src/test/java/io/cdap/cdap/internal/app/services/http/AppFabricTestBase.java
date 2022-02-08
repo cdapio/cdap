@@ -32,8 +32,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
-import com.google.inject.multibindings.Multibinder;
-import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.ProgramStatus;
@@ -72,7 +70,6 @@ import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
-import io.cdap.cdap.gateway.handlers.CommonHandlers;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
@@ -121,13 +118,10 @@ import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.store.StoreDefinition;
-import io.cdap.cdap.support.handlers.SupportBundleHttpHandler;
-import io.cdap.cdap.support.module.SupportBundleModule;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequestConfig;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
-import io.cdap.http.HttpHandler;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.tephra.TransactionManager;
@@ -239,14 +233,8 @@ public abstract class AppFabricTestBase {
       @Override
       protected void configure() {
         // needed because we set Kerberos to true in DefaultNamespaceAdminTest
-//        install(new SupportBundleModule());
         bind(UGIProvider.class).to(CurrentUGIProvider.class);
         bind(MetadataSubscriberService.class).in(Scopes.SINGLETON);
-//        Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
-//          binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));
-//
-//        CommonHandlers.add(handlerBinder);
-//        handlerBinder.addBinding().to(SupportBundleHttpHandler.class);
       }
     });
   }

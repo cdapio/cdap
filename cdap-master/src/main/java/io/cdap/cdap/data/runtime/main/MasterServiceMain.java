@@ -53,6 +53,7 @@ import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.common.io.URLConnections;
 import io.cdap.cdap.common.logging.LoggerLogHandler;
 import io.cdap.cdap.common.runtime.DaemonMain;
+import io.cdap.cdap.common.service.HealthCheckService;
 import io.cdap.cdap.common.service.RetryOnStartFailureService;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.Services;
@@ -97,7 +98,6 @@ import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.store.SecureStoreService;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.store.StoreDefinition;
@@ -686,6 +686,11 @@ public class MasterServiceMain extends DaemonMain {
       services.add(new RetryOnStartFailureService(() -> injector.getInstance(DatasetService.class),
                                                   RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS)));
       services.add(injector.getInstance(AppFabricServer.class));
+      String host = cConf.get(Constants.Service.MASTER_SERVICES_BIND_ADDRESS);
+      int port = cConf.getInt(Constants.AppFabricHealthCheck.SERVICE_BIND_PORT);
+      HealthCheckService healthCheckService = injector.getInstance(HealthCheckService.class);
+      healthCheckService.initiate(host, port, Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE);
+      services.add(healthCheckService);
 
       executor = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("master-runner"));
 

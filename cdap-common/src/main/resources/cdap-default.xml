@@ -5057,4 +5057,13 @@
       The interval (in minutes) that the cleanup service will delete old artifact cache files.
     </description>
   </property>
+
+  <!-- Service App Fabric Health Check Service Port Configuration -->
+  <property>
+    <name>appfabric.healthcheck.service.bind.port</name>
+    <value>0</value>
+    <description>
+      App Fabric Health Check HTTP service bind port; if 0, binds to a random port
+    </description>
+  </property>
 </configuration>
