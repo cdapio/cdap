@@ -100,16 +100,11 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       throw new IllegalArgumentException("Exceed Max number of tags. Only Max of 64 allowed. ");
     }
 
-    if (conf.isPredefinedAutoScaleEnabled()) {
-      //If predefined auto-scaling is enabled, then user should not send values for the following
-      if (properties.containsKey(DataprocConf.WORKER_NUM_NODES) ||
-        properties.containsKey(DataprocConf.SECONDARY_WORKER_NUM_NODES) ||
-        properties.containsKey(DataprocConf.AUTOSCALING_POLICY)) {
-        throw new IllegalArgumentException(
-          String.format("Invalid configs : %s, %s, %s. These are not allowed when %s is enabled ",
-                        DataprocConf.WORKER_NUM_NODES, DataprocConf.SECONDARY_WORKER_NUM_NODES,
-                        DataprocConf.AUTOSCALING_POLICY , DataprocConf.PREDEFINED_AUTOSCALE_ENABLED));
-      }
+    if (!isAutoscalingFieldsValid(conf, properties)) {
+      throw new IllegalArgumentException(
+        String.format("Invalid configs : %s, %s, %s. These are not allowed when %s is enabled ",
+                      DataprocConf.WORKER_NUM_NODES, DataprocConf.SECONDARY_WORKER_NUM_NODES,
+                      DataprocConf.AUTOSCALING_POLICY , DataprocConf.PREDEFINED_AUTOSCALE_ENABLED));
     }
   }
 
@@ -131,6 +126,11 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
   @Override
   public Cluster createCluster(ProvisionerContext context) throws Exception {
     DataprocConf conf = DataprocConf.create(createContextProperties(context));
+    if (!isAutoscalingFieldsValid(conf, createContextProperties(context))) {
+      LOG.warn("The configs : {}, {}, {} will not be considered when {} is enabled ", DataprocConf.WORKER_NUM_NODES,
+               DataprocConf.SECONDARY_WORKER_NUM_NODES, DataprocConf.AUTOSCALING_POLICY ,
+               DataprocConf.PREDEFINED_AUTOSCALE_ENABLED);
+    }
 
     if (context.getRuntimeMonitorType() == RuntimeMonitorType.SSH || !conf.isRuntimeJobManagerEnabled()) {
       // Generates and set the ssh key if it does not have one.
@@ -503,4 +503,17 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
     }
     return CLUSTER_PREFIX + cleanedAppName + "-" + programRunInfo.getRun();
   }
+
+  private boolean isAutoscalingFieldsValid(DataprocConf conf, Map<String, String> properties) {
+    if (conf.isPredefinedAutoScaleEnabled()) {
+      //If predefined auto-scaling is enabled, then user should not send values for the following
+      if (properties.containsKey(DataprocConf.WORKER_NUM_NODES) ||
+        properties.containsKey(DataprocConf.SECONDARY_WORKER_NUM_NODES) ||
+        properties.containsKey(DataprocConf.AUTOSCALING_POLICY)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
 }
