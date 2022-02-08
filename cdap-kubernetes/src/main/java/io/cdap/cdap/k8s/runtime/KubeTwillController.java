@@ -75,9 +75,11 @@ class KubeTwillController implements ExtendedTwillController {
   private final BatchV1Api batchV1Api;
   private final Type resourceType;
   private final V1ObjectMeta meta;
+  private final CompletableFuture<Void> startupTaskFuture;
 
   KubeTwillController(String kubeNamespace, RunId runId, DiscoveryServiceClient discoveryServiceClient,
-                      ApiClient apiClient, Type resourceType, V1ObjectMeta meta) {
+                      ApiClient apiClient, Type resourceType, V1ObjectMeta meta,
+                      CompletableFuture<Void> startupTaskCompletion) {
     this.kubeNamespace = kubeNamespace;
     this.runId = runId;
     this.completion = new CompletableFuture<>();
@@ -86,6 +88,7 @@ class KubeTwillController implements ExtendedTwillController {
     this.batchV1Api = new BatchV1Api(apiClient);
     this.resourceType = resourceType;
     this.meta = meta;
+    this.startupTaskFuture = startupTaskCompletion;
   }
 
   @Override
@@ -245,7 +248,12 @@ class KubeTwillController implements ExtendedTwillController {
 
   @Override
   public void onRunning(Runnable runnable, Executor executor) {
-    executor.execute(runnable);
+    if (resourceType.equals(V1Job.class)) {
+      // Make sure to wait for startupTaskFuture to complete before marking runnable as running
+      startupTaskFuture.thenRunAsync(runnable, executor);
+    } else {
+      executor.execute(runnable);
+    }
   }
 
   @Override
@@ -312,6 +320,13 @@ class KubeTwillController implements ExtendedTwillController {
     } catch (ExecutionException e) {
       return TerminationStatus.FAILED;
     }
+  }
+
+  /**
+   * Returns started future.
+   */
+  public CompletableFuture<Void> getStartedFuture() {
+    return startupTaskFuture;
   }
 
   /**
