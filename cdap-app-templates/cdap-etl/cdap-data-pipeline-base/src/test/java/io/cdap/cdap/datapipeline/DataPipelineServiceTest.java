@@ -194,10 +194,10 @@ public class DataPipelineServiceTest extends HydratorTestBase {
 
     // test the properties can still be correctly set if the connection property get evaluated to a json object
     addConnection(
-      "testconn1", new ConnectionCreationRequest("", new PluginInfo("test", "dummy", null,
-                                                                    ImmutableMap.of("tableName", "aaa",
-                                                                                    "key1", "${badval}"),
-                                                                    new ArtifactSelectorConfig())));
+      "testconn", new ConnectionCreationRequest("", new PluginInfo("test", "dummy", null,
+                                                                   ImmutableMap.of("tableName", "aaa",
+                                                                                   "key1", "${badval}"),
+                                                                   new ArtifactSelectorConfig())));
     getPreferencesService().setProperties(NamespaceId.DEFAULT, Collections.singletonMap("badval", "{\"a\" : 1}"));
     // test it can still pass validation
     actual = sendRequest(new StageValidationRequest(stage, Collections.emptyList(), true));
