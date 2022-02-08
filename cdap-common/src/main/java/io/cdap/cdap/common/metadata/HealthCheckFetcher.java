@@ -28,18 +28,14 @@ import java.util.Map;
 public interface HealthCheckFetcher {
 
   /**
-   * Get the app fabric health check
+   * Get the health check
    *
    * @param serviceName the name of the current service
-   * @param namespace the current namespace
    * @param instanceName the current instance name
-   * @param podLabelSelector the label to identify the pod
-   * @param nodeFieldSelector the label to identify the node
    * @return the health check data response
    * @throws IOException       if failed to get {@code ApplicationDetail}
    * @throws NotFoundException if the application or namespace identified by the supplied id doesn't exist
    */
-  Map<String, Object> getHealthDetails(String serviceName, String namespace, String instanceName,
-                                       String podLabelSelector, String nodeFieldSelector)
+  Map<String, Object> getHealthDetails(String serviceName, String instanceName)
     throws IOException, NotFoundException, UnauthorizedException;
 }

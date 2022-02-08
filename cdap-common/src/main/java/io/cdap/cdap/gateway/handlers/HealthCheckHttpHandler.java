@@ -25,21 +25,16 @@ import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.eclipse.microprofile.health.HealthCheckResponse;
-import org.eclipse.microprofile.health.Liveness;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import javax.enterprise.context.ApplicationScoped;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
 
 /**
- * App Fabric Health Check HTTP Handler.
+ * Health Check HTTP Handler.
  */
-@Liveness
 @ApplicationScoped
 @Path(Constants.Gateway.API_VERSION_3)
 public class HealthCheckHttpHandler extends AbstractHttpHandler {
@@ -54,12 +49,9 @@ public class HealthCheckHttpHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/{namespace}/health")
-  public void call(HttpRequest request, HttpResponder responder, @PathParam("namespace") String namespace,
-                   @Nullable @QueryParam("podLabelSelector") String podLabelSelector,
-                   @Nullable @QueryParam("nodeFieldSelector") String nodeFieldSelector) {
-    HealthCheckResponse healthCheckResponse =
-      healthCheckImplementation.collect(namespace, podLabelSelector, nodeFieldSelector);
+  @Path("/health")
+  public void call(HttpRequest request, HttpResponder responder) {
+    HealthCheckResponse healthCheckResponse = healthCheckImplementation.collect();
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(healthCheckResponse.getData()));
   }
 }
