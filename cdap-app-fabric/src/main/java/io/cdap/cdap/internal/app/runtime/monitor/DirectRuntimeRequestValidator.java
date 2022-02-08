@@ -130,7 +130,7 @@ public final class DirectRuntimeRequestValidator implements RuntimeRequestValida
     ProgramRunStatus programRunStatus = runRecord.getStatus();
     return Optional.of(programRunStatus == ProgramRunStatus.STOPPING
                          ? new ProgramRunInfo(programRunStatus, String.valueOf(runRecord.getStoppingTs() +
-                                                                                 runRecord.getStoppingTimeoutTs()))
+                                                                                 runRecord.getTerminateTs()))
                          : new ProgramRunInfo(programRunStatus, null));
   }
 
@@ -165,8 +165,8 @@ public final class DirectRuntimeRequestValidator implements RuntimeRequestValida
           case STOPPING:
             store.recordProgramStopping(programRunId, runRecord.getSourceId(),
                                         Objects.firstNonNull(runRecord.getStoppingTs(), System.currentTimeMillis()),
-                                        // if StoppingTimeoutTimestamp is null we will shut down gracefully
-                                        Objects.firstNonNull(runRecord.getStoppingTimeoutTs(), Long.MAX_VALUE));
+                                        // if terminate timestamp is null we will shut down gracefully
+                                        Objects.firstNonNull(runRecord.getTerminateTs(), Long.MAX_VALUE));
             break;
           case COMPLETED:
           case KILLED:

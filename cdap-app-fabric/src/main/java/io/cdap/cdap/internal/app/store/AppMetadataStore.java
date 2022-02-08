@@ -984,14 +984,14 @@ public class AppMetadataStore {
    *                 run status notification in TMS. The source id must increase as the recording time of the program
    *                 run status increases, so that the attempt to persist program run status older than the existing
    *                 program run status will be ignored
-   * @param stoppingTs Timestamp at which stopping of a program was requested
-   * @param stoppingTimeoutTs Future timestamp at which the program is expected to stop. This happens when
+   * @param stoppingTsSecs Timestamp at which stopping of a program was requested
+   * @param terminateTsSecs Future timestamp at which the program is expected to stop. This happens when
    *                          a graceful timeout value is passed at the time when stopping event is requested
    * @return {@link RunRecordDetail} that was persisted, or {@code null} if the update was ignored.
    */
   @Nullable
-  public RunRecordDetail recordProgramStopping(ProgramRunId programRunId, byte[] sourceId, long stoppingTs,
-                                               long stoppingTimeoutTs) throws IOException {
+  public RunRecordDetail recordProgramStopping(ProgramRunId programRunId, byte[] sourceId, long stoppingTsSecs,
+                                               long terminateTsSecs) throws IOException {
     RunRecordDetail existing = getRun(programRunId);
     if (existing == null) {
       LOG.warn("Ignoring unexpected transition of program run {} to program state {} with no existing run record.",
@@ -1015,8 +1015,8 @@ public class AppMetadataStore {
     // The existing record's properties already contains the workflowRunId
     RunRecordDetail meta = RunRecordDetail.builder(existing)
       .setStatus(ProgramRunStatus.STOPPING)
-      .setStoppingTime(stoppingTs)
-      .setStoppingTimeoutTs(stoppingTimeoutTs)
+      .setStoppingTime(stoppingTsSecs)
+      .setTerminateTs(terminateTsSecs)
       .setSourceId(sourceId)
       .build();
     writeToStructuredTableWithPrimaryKeys(

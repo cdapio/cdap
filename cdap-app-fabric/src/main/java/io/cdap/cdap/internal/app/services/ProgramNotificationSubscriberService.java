@@ -404,6 +404,19 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         recordedRunRecord = appMetadataStore.recordProgramResumed(programRunId, messageIdBytes, resumeTime);
         writeToHeartBeatTable(recordedRunRecord, resumeTime, programHeartbeatTable);
         break;
+      case STOPPING:
+        Map<String, String> notificationProperties = notification.getProperties();
+        long stoppingTsSecs = getTimeSeconds(notificationProperties, ProgramOptionConstants.STOPPING_TIME);
+        if (stoppingTsSecs == -1L) {
+          LOG.warn("Ignore program stopping notification for program {} without {} specified, {}",
+                   programRunId, ProgramOptionConstants.STOPPING_TIME, notification);
+          return;
+        }
+        long terminateTsSecs = getTimeSeconds(notificationProperties, ProgramOptionConstants.TERMINATE_TIME);
+        recordedRunRecord = appMetadataStore.recordProgramStopping(programRunId, messageIdBytes, stoppingTsSecs,
+                                                                   terminateTsSecs);
+        writeToHeartBeatTable(recordedRunRecord, stoppingTsSecs, programHeartbeatTable);
+        break;
       case COMPLETED:
       case KILLED:
       case FAILED:

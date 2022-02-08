@@ -48,6 +48,17 @@ public interface ProgramStateWriter {
   void running(ProgramRunId programRunId, @Nullable String twillRunId);
 
   /**
+   * Updates the program run's status to be {@link ProgramRunStatus#STOPPING} at the start time given by the
+   * {@link ProgramRunId}
+   *
+   * @param programRunId the id of the program run
+   * @param gracefulShutdownSecs time duration in seconds to wait for program to be terminated
+   *                             on its own before issuing kill. The value should be Integer.MAX_VALUE
+   *                             if kill shouldn't be issued.
+   */
+  void stop(ProgramRunId programRunId, int gracefulShutdownSecs);
+
+  /**
    * Updates the program run's status to be completed
    *
    * @param programRunId the id of the program run

@@ -56,11 +56,11 @@ public class RunRecord {
   @SerializedName("stopping")
   private final Long stoppingTs;
 
-  // the future timestamp at which the program
-  // must be stopped
+  // the timestamp at which the program
+  // must be stopped, ideally in the future
   @Nullable
-  @SerializedName("stopping-timeout")
-  private final Long stoppingTimeoutTs;
+  @SerializedName("terminate")
+  private final Long terminateTs;
 
   @SerializedName("status")
   private final ProgramRunStatus status;
@@ -79,7 +79,7 @@ public class RunRecord {
    */
   @Deprecated
   public RunRecord(String pid, long startTs, @Nullable Long runTs, @Nullable Long stopTs, @Nullable Long suspendTs,
-                   @Nullable Long resumeTs, @Nullable Long stoppingTs, @Nullable Long stoppingTimeoutTs,
+                   @Nullable Long resumeTs, @Nullable Long stoppingTs, @Nullable Long terminateTs,
                    ProgramRunStatus status, @Nullable Map<String, String> properties, ProgramRunCluster cluster,
                    ProfileId profileId) {
     this.pid = pid;
@@ -89,7 +89,7 @@ public class RunRecord {
     this.suspendTs = suspendTs;
     this.resumeTs = resumeTs;
     this.stoppingTs = stoppingTs;
-    this.stoppingTimeoutTs = stoppingTimeoutTs;
+    this.terminateTs = terminateTs;
     this.status = status;
     this.properties = properties == null ? Collections.emptyMap() :
       Collections.unmodifiableMap(new LinkedHashMap<>(properties));
@@ -103,7 +103,7 @@ public class RunRecord {
   public RunRecord(RunRecord otherRunRecord) {
     this(otherRunRecord.getPid(), otherRunRecord.getStartTs(), otherRunRecord.getRunTs(), otherRunRecord.getStopTs(),
          otherRunRecord.getSuspendTs(), otherRunRecord.getResumeTs(), otherRunRecord.getStoppingTs(),
-         otherRunRecord.getStoppingTimeoutTs(), otherRunRecord.getStatus(), otherRunRecord.getProperties(),
+         otherRunRecord.getTerminateTs(), otherRunRecord.getStatus(), otherRunRecord.getProperties(),
          otherRunRecord.getCluster(), otherRunRecord.getProfileId());
   }
 
@@ -141,8 +141,8 @@ public class RunRecord {
   }
 
   @Nullable
-  public Long getStoppingTimeoutTs() {
-    return stoppingTimeoutTs;
+  public Long getTerminateTs() {
+    return terminateTs;
   }
 
   public ProgramRunStatus getStatus() {
@@ -181,7 +181,7 @@ public class RunRecord {
       Objects.equals(this.suspendTs, that.suspendTs) &&
       Objects.equals(this.resumeTs, that.resumeTs) &&
       Objects.equals(this.stoppingTs, that.stoppingTs) &&
-      Objects.equals(this.stoppingTimeoutTs, that.stoppingTimeoutTs) &&
+      Objects.equals(this.terminateTs, that.terminateTs) &&
       Objects.equals(this.status, that.status) &&
       Objects.equals(this.properties, that.properties) &&
       Objects.equals(this.cluster, that.cluster) &&
@@ -190,7 +190,7 @@ public class RunRecord {
 
   @Override
   public int hashCode() {
-    return Objects.hash(pid, startTs, runTs, stopTs, suspendTs, resumeTs, stoppingTs, stoppingTimeoutTs, status,
+    return Objects.hash(pid, startTs, runTs, stopTs, suspendTs, resumeTs, stoppingTs, terminateTs, status,
                         properties, cluster, profileId);
   }
 
@@ -204,7 +204,7 @@ public class RunRecord {
       ", suspendTs=" + suspendTs +
       ", resumeTs=" + resumeTs +
       ", stoppingTs=" + stoppingTs +
-      ", stoppingTimeout=" + stoppingTimeoutTs +
+      ", terminateTs=" + terminateTs +
       ", status=" + status +
       ", properties=" + properties +
       ", cluster=" + cluster +
@@ -242,7 +242,7 @@ public class RunRecord {
     protected Long suspendTs;
     protected Long resumeTs;
     protected Long stoppingTs;
-    protected Long stoppingTimeoutTs;
+    protected Long terminateTs;
     protected Map<String, String> properties;
     protected ProgramRunCluster cluster;
     protected ProfileId profileId;
@@ -259,7 +259,7 @@ public class RunRecord {
       suspendTs = other.getSuspendTs();
       resumeTs = other.getResumeTs();
       stoppingTs = other.getStoppingTs();
-      stoppingTimeoutTs = other.getStoppingTimeoutTs();
+      terminateTs = other.getTerminateTs();
       stopTs = other.getStopTs();
       properties = new HashMap<>(other.getProperties());
       cluster = other.getCluster();
@@ -306,8 +306,8 @@ public class RunRecord {
       return (T) this;
     }
 
-    public T setStoppingTimeoutTs(Long stoppingTimeoutTs) {
-      this.stoppingTimeoutTs = stoppingTimeoutTs;
+    public T setTerminateTs(Long terminateTs) {
+      this.terminateTs = terminateTs;
       return (T) this;
     }
 
@@ -340,7 +340,7 @@ public class RunRecord {
       if (status == null) {
         throw new IllegalArgumentException("Run record status must be specified.");
       }
-      return new RunRecord(pid, startTs, runTs, stopTs, suspendTs, resumeTs, stoppingTs, stoppingTimeoutTs,
+      return new RunRecord(pid, startTs, runTs, stopTs, suspendTs, resumeTs, stoppingTs, terminateTs,
                            status, properties, cluster, profileId);
     }
   }
