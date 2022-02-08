@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.metrics.jmx;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
@@ -61,8 +60,7 @@ public class JMXMetricsCollector extends AbstractScheduledService {
   private static final long MAX_PORT = (1 << 16) - 1;
   private static final long SYSTEM_LOAD_SCALING_FACTOR = 100;
   private static final String SERVICE_URL_FORMAT = "service:jmx:rmi:///jndi/rmi://%s:%s/jmxrmi";
-  private final String componentName;
-  private final String k8sNamespace;
+  private final Map<String, String> metricTags;
   private final CConfiguration cConf;
   private final MetricsPublisher metricsPublisher;
   private final JMXServiceURL serviceUrl;
@@ -71,8 +69,7 @@ public class JMXMetricsCollector extends AbstractScheduledService {
   @Inject
   public JMXMetricsCollector(CConfiguration cConf,
                              MetricsPublisher metricsPublisher,
-                             @Assisted String componentName,
-                             @Assisted String k8sNamespace) throws MalformedURLException {
+                             @Assisted Map<String, String> metricTags) throws MalformedURLException {
     this.cConf = cConf;
     int serverPort = cConf.getInt(Constants.JMXMetricsCollector.SERVER_PORT);
     if (serverPort < 0 || serverPort > MAX_PORT) {
@@ -81,12 +78,7 @@ public class JMXMetricsCollector extends AbstractScheduledService {
         Constants.JMXMetricsCollector.SERVER_PORT, serverPort));
     }
     String serverUrl = String.format(SERVICE_URL_FORMAT, "localhost", serverPort);
-    this.componentName = componentName;
-    if (componentName == null) {
-      throw new IllegalArgumentException(
-        "Not collecting resource usage metrics from JMX as componentName is null.");
-    }
-    this.k8sNamespace = k8sNamespace;
+    this.metricTags = metricTags;
     this.metricsPublisher = metricsPublisher;
     this.serviceUrl = new JMXServiceURL(serverUrl);
   }
@@ -110,9 +102,6 @@ public class JMXMetricsCollector extends AbstractScheduledService {
 
   @Override
   protected void runOneIteration() {
-    Map<String, String> metricsTags = ImmutableMap.of(
-      Constants.Metrics.Tag.NAMESPACE, this.k8sNamespace,
-      Constants.Metrics.Tag.COMPONENT, componentName);
     Collection<MetricValue> metrics = new ArrayList<>();
 
     try (JMXConnector jmxConnector = JMXConnectorFactory.connect(serviceUrl, null)) {
@@ -125,7 +114,7 @@ public class JMXMetricsCollector extends AbstractScheduledService {
       return;
     }
     try {
-      this.metricsPublisher.publish(metrics, metricsTags);
+      this.metricsPublisher.publish(metrics, this.metricTags);
     } catch (Exception e) {
       LOG.warn("Error occurred while publishing resource usage metrics.", e);
     }
