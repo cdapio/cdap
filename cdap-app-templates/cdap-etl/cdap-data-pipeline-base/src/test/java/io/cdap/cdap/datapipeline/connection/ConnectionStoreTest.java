@@ -77,7 +77,7 @@ public class ConnectionStoreTest extends SystemAppTestBase {
       new PluginInfo("GCS", "connector", "Google Cloud Platform",
                      ImmutableMap.of("project", "abc", "serviceAccount", "secrect.json"),
                      new ArtifactSelectorConfig("SYSTEM", "google-cloud", "1.0.0")));
-    connectionStore.saveConnection(connectionId, updated, false);
+    connectionStore.saveConnection(connectionId, updated, true);
     Connection actual = connectionStore.getConnection(connectionId);
     Assert.assertEquals(updated, actual);
 
@@ -173,6 +173,19 @@ public class ConnectionStoreTest extends SystemAppTestBase {
     // use a different name but evaluate to same id, with overwrite to false, it should fail to update
     try {
       connectionId = new ConnectionId(namespace, "my conn");
+      connection = new Connection(
+        "my conn", "GCS", "GCS connection", false, false, 0L, 0L,
+        new PluginInfo("GCS", "connector", "Google Cloud Platform", ImmutableMap.of("project", "abc"),
+                       new ArtifactSelectorConfig("SYSTEM", "google-cloud", "1.0.0")));
+      connectionStore.saveConnection(connectionId, connection, false);
+      Assert.fail();
+    } catch (ConnectionConflictException e) {
+      // expected
+    }
+
+    // update the same name should also fail
+    try {
+      connectionId = new ConnectionId(namespace, "my_conn");
       connection = new Connection(
         "my conn", "GCS", "GCS connection", false, false, 0L, 0L,
         new PluginInfo("GCS", "connector", "Google Cloud Platform", ImmutableMap.of("project", "abc"),
