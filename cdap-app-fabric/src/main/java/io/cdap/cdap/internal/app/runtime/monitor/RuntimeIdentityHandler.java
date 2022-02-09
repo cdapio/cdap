@@ -20,8 +20,8 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.AuditLogEntry;
 import io.cdap.cdap.common.utils.Networks;
+import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
-import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandler;
@@ -31,14 +31,15 @@ import io.netty.handler.codec.http.HttpRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.HttpURLConnection;
-
 /**
  * A {@link ChannelInboundHandler} for properly propagating runtime identity to calls to other system services.
  */
 public class RuntimeIdentityHandler extends ChannelInboundHandlerAdapter {
   private static final Logger AUDIT_LOGGER = LoggerFactory
     .getLogger(Constants.RuntimeMonitor.MONITOR_AUDIT_LOGGER_NAME);
+
+  private static final String EMPTY_RUNTIME_TOKEN =
+    String.format("%s %s", Credential.CREDENTIAL_TYPE_INTERNAL, "empty-runtime-token");
 
   private final boolean enforceAuthenticatedRequests;
   private final boolean auditLogEnabled;
@@ -66,8 +67,7 @@ public class RuntimeIdentityHandler extends ChannelInboundHandlerAdapter {
       request.headers().remove(Constants.Security.Headers.USER_IP);
     }
     if (enforceAuthenticatedRequests && !request.headers().contains(Constants.Security.Headers.RUNTIME_TOKEN)) {
-      auditLogIfNeeded(request, ctx.channel(), HttpURLConnection.HTTP_FORBIDDEN);
-      throw new UnauthorizedException("Runtime token is not found");
+      request.headers().set(Constants.Security.Headers.RUNTIME_TOKEN, EMPTY_RUNTIME_TOKEN);
     }
     ctx.fireChannelRead(msg);
   }
