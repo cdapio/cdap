@@ -22,7 +22,6 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
-import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -44,10 +43,6 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
 
   private final boolean internalAuthEnabled;
 
-  private String currentUserID;
-  private Credential currentUserCredential;
-  private String currentUserIP;
-
   public AuthenticationChannelHandler(boolean internalAuthEnabled) {
     this.internalAuthEnabled = internalAuthEnabled;
   }
@@ -59,9 +54,16 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
   @Override
   public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
     SecurityRequestContext.reset();
-    resetCurrentUserInfo();
 
+    // Only set SecurityRequestContext for the HttpRequest but not for subsequence chunks.
+    // We cannot set a default/placeholder value until CDAP-18773
+    // is fixed since we may perform auth checks in the thread processing the last chunk.
     if (msg instanceof HttpRequest) {
+
+      String currentUserID = null;
+      Credential currentUserCredential = null;
+      String currentUserIP = null;
+
       if (internalAuthEnabled) {
         // When internal auth is enabled, all requests should typically have user id and credential
         // associated with them, for instance, end user credential for user originated ones and
@@ -103,15 +105,10 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
         }
       }
       LOG.trace("Got user ID '{}' user IP '{}' from IP '{}' and authorization header length '{}'",
-                userID, userIP, ctx.channel().remoteAddress(),
-                authHeader == null ? "NULL" : String.valueOf(authHeader.length()));
+                userID, userIP, ctx.channel().remoteAddress(), authHeader == null ? "NULL" : authHeader.length());
       SecurityRequestContext.setUserId(currentUserID);
       SecurityRequestContext.setUserCredential(currentUserCredential);
       SecurityRequestContext.setUserIP(currentUserIP);
-    } else if (msg instanceof HttpContent) {
-      // Leave SecurityRequestContext unset (e.g. values are nulls) as no auth headers
-      // are set for chunk requests. Cannot set a default/placeholder value until CDAP-18773
-      // is fixed since we may perform auth checks in the thread processing the last chunk.
     }
 
     try {
@@ -129,11 +126,5 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
     HttpUtil.setContentLength(response, 0);
     HttpUtil.setKeepAlive(response, false);
     ctx.channel().writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
-  }
-
-  private void resetCurrentUserInfo() {
-    currentUserID = null;
-    currentUserCredential = null;
-    currentUserIP = null;
   }
 }
