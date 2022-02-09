@@ -20,6 +20,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.AuditLogEntry;
 import io.cdap.cdap.common.utils.Networks;
+import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.netty.channel.Channel;
@@ -40,7 +41,8 @@ public class RuntimeIdentityHandler extends ChannelInboundHandlerAdapter {
   private static final Logger AUDIT_LOGGER = LoggerFactory
     .getLogger(Constants.RuntimeMonitor.MONITOR_AUDIT_LOGGER_NAME);
 
-  private static final String EMPTY_RUNTIME_TOKEN = "empty-runtime-token";
+  private static final String EMPTY_RUNTIME_TOKEN =
+    String.format("%s %s", Credential.CredentialType.INTERNAL, "empty-runtime-token");
 
   private final boolean enforceAuthenticatedRequests;
   private final boolean auditLogEnabled;
