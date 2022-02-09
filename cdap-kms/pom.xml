@@ -25,7 +25,7 @@
     <version>6.7.0-SNAPSHOT</version>
   </parent>
   <properties>
-    <hadoop.common.version>2.6.0</hadoop.common.version>
+    <hadoop.common.version>2.10.1</hadoop.common.version>
   </properties>
   <artifactId>cdap-kms</artifactId>
   <name>CDAP KMS</name>
