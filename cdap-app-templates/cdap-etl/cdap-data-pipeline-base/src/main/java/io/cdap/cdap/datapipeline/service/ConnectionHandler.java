@@ -63,6 +63,8 @@ import io.cdap.cdap.etl.proto.validation.SimpleFailureCollector;
 import io.cdap.cdap.etl.spec.TrackedPluginSelector;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -94,6 +96,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
   private ConnectionStore store;
   private ConnectionConfig connectionConfig;
   private Set<String> disabledTypes;
+  private ContextAccessEnforcer contextAccessEnforcer;
 
   public ConnectionHandler(@Nullable ConnectionConfig connectionConfig) {
     this.connectionConfig = connectionConfig;
@@ -108,6 +111,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
   @Override
   public void initialize(SystemHttpServiceContext context) throws Exception {
     super.initialize(context);
+    contextAccessEnforcer = context.getContextAccessEnforcer();
     store = new ConnectionStore(context);
     String disabledTypesStr = context.getSpecification().getProperty(DISABLED_TYPES);
     this.disabledTypes = GSON.fromJson(disabledTypesStr, SET_STRING_TYPE);
@@ -160,6 +164,9 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
                                @PathParam("context") String namespace,
                                @PathParam("connection") String connection) {
     respond(namespace, responder, namespaceSummary -> {
+      // TODO(CDAP-18763): Add proper system app entity enforcement.
+      // NOTE: This is currently a placeholder for proper enforcement performed using system app entities.
+      contextAccessEnforcer.enforce(new NamespaceId(namespace), StandardPermission.UPDATE);
       if (namespaceSummary.getName().equalsIgnoreCase(NamespaceId.SYSTEM.getNamespace())) {
         responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST,
                             "Creating connection in system namespace is currently not supported");
@@ -195,6 +202,9 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
                                @PathParam("context") String namespace,
                                @PathParam("connection") String connection) {
     respond(namespace, responder, namespaceSummary -> {
+      // TODO(CDAP-18763): Add proper system app entity enforcement.
+      // NOTE: This is currently a placeholder for proper enforcement performed using system app entities.
+      contextAccessEnforcer.enforce(new NamespaceId(namespace), StandardPermission.UPDATE);
       if (namespaceSummary.getName().equalsIgnoreCase(NamespaceId.SYSTEM.getNamespace())) {
         responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST,
                             "Deleting connection in system namespace is currently not supported");
@@ -212,6 +222,9 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
   public void testConnection(HttpServiceRequest request, HttpServiceResponder responder,
                              @PathParam("context") String namespace) {
     respond(namespace, responder, namespaceSummary -> {
+      // TODO(CDAP-18763): Add proper system app entity enforcement.
+      // NOTE: This is currently a placeholder for proper enforcement performed using system app entities.
+      contextAccessEnforcer.enforce(new NamespaceId(namespace), StandardPermission.UPDATE);
       if (namespaceSummary.getName().equalsIgnoreCase(NamespaceId.SYSTEM.getNamespace())) {
         responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST,
                             "Creating connection in system namespace is currently not supported");
