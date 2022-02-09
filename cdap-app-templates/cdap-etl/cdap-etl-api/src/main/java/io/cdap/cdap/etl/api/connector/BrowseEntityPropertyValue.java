@@ -32,7 +32,8 @@ public class BrowseEntityPropertyValue {
     DATE_LOCAL_ISO,
     TIMESTAMP_MILLIS,
     NUMBER,
-    SIZE_BYTES
+    SIZE_BYTES,
+    SAMPLE_DEFAULT
   }
 
 
