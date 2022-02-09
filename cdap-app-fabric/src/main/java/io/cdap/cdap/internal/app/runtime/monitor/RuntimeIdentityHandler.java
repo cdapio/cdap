@@ -42,7 +42,7 @@ public class RuntimeIdentityHandler extends ChannelInboundHandlerAdapter {
     .getLogger(Constants.RuntimeMonitor.MONITOR_AUDIT_LOGGER_NAME);
 
   private static final String EMPTY_RUNTIME_TOKEN =
-    String.format("%s %s", Credential.CredentialType.INTERNAL, "empty-runtime-token");
+    String.format("%s %s", Credential.CREDENTIAL_TYPE_INTERNAL, "empty-runtime-token");
 
   private final boolean enforceAuthenticatedRequests;
   private final boolean auditLogEnabled;
