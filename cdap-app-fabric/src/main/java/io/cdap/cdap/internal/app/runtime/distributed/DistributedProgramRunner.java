@@ -248,8 +248,15 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
         if (DistributedProgramRunner.this instanceof LongRunningDistributedProgramRunner) {
           twillConfigs.put(Configs.Keys.YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL,
                            cConf.get(Constants.AppFabric.YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL));
+        } else {
+          // For non long running program type, set the max attempts to 1 to avoid YARN retry.
+          // If the AM container dies, the program execution will be marked as failure.
+          // Note that this setting is only applicable to the Twill YARN application
+          // (e.g. workflow, Spark client, MR client, etc), but not to the actual Spark / MR job.
+          twillConfigs.put(Configs.Keys.YARN_MAX_APP_ATTEMPTS, Integer.toString(1));
         }
-        // Add the one from the runtime arguments
+
+        // Add twill configurations coming from the runtime arguments
         twillConfigs.putAll(SystemArguments.getTwillApplicationConfigs(userArgs));
         twillPreparer.withConfiguration(twillConfigs);
 
