@@ -20,6 +20,7 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
+import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -92,8 +93,13 @@ public class AppLifecycleHttpHandlerInternal extends AbstractAppFabricHttpHandle
     if (!namespaceQueryAdmin.exists(namespaceId)) {
       throw new NamespaceNotFoundException(namespaceId);
     }
-    responder.sendJson(HttpResponseStatus.OK,
-                       GSON.toJson(applicationLifecycleService.getApps(namespaceId)));
+
+    ScanApplicationsRequest scanApplicationsRequest =
+        ScanApplicationsRequest.builder().setNamespaceId(namespaceId).build();
+    JsonWholeListResponder.respond(GSON, responder,
+        jsonListResponder -> applicationLifecycleService.scanApplications(scanApplicationsRequest,
+            d -> jsonListResponder.send(d))
+        );
   }
 
   /**
