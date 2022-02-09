@@ -63,6 +63,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -117,7 +119,7 @@ public class RuntimeClientServerTest {
         @Override
         protected void bindRequestValidator() {
           bind(RuntimeRequestValidator.class).toInstance(
-            (programRunId, request) -> new ProgramRunInfo(ProgramRunStatus.COMPLETED, null));
+            (programRunId, request) -> new ProgramRunInfo(ProgramRunStatus.STOPPING, null));
         }
 
         @Override
@@ -213,6 +215,21 @@ public class RuntimeClientServerTest {
 
     List<String> expected = messages.stream().map(Message::getPayloadAsString).collect(Collectors.toList());
     Assert.assertEquals(expected, logEntries);
+  }
+
+  @Test
+  public void testFutureIsNotBlockingWhenValueIsSet() throws Exception {
+    CountDownLatch countDownLatch = new CountDownLatch(1);
+    runtimeClient.onProgramStopRequested(() -> countDownLatch.countDown());
+    // Now call sendMessages which will set the future
+    ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").workflow("workflow").run(RunIds.generate());
+    TopicId topicId = NamespaceId.SYSTEM.topic("topic");
+    List<Message> messages = new ArrayList<>();
+    messages.add(createMessage(Math.max(1, RuntimeClient.CHUNK_SIZE / 4)));
+    runtimeClient.sendMessages(programRunId, topicId, messages.iterator());
+
+    // Assert that future is not blocking anymore
+    Assert.assertTrue(countDownLatch.await(5, TimeUnit.SECONDS));
   }
 
   @Test (timeout = 2000L)

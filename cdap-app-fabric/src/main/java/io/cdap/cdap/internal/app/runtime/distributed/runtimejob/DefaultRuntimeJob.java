@@ -259,6 +259,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
     }
 
     ProgramStateWriter programStateWriter = injector.getInstance(ProgramStateWriter.class);
+    RuntimeClientService runtimeClientService = injector.getInstance(RuntimeClientService.class);
     CompletableFuture<ProgramController.State> programCompletion = new CompletableFuture<>();
     try {
       ProgramRunner programRunner = injector.getInstance(ProgramRunnerFactory.class).create(programId.getType());
@@ -267,6 +268,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
       try (Program program = createProgram(cConf, programRunner, programDescriptor, programOpts)) {
         ProgramController controller = programRunner.run(program, programOpts);
         controllerFuture.complete(controller);
+        runtimeClientService.onProgramStopRequested(() -> controller.stop());
 
         controller.addListener(new AbstractListener() {
           @Override

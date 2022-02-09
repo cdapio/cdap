@@ -145,6 +145,14 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
   }
 
   /**
+   * Accepts a Runnable and passes it to RuntimeClient
+   * @param stopper a Runnable
+   */
+  public void onProgramStopRequested(Runnable stopper) {
+    runtimeClient.onProgramStopRequested(stopper);
+  }
+
+  /**
    * Creates an instance of {@link TopicRelayer} based on the topic.
    */
   private TopicRelayer createTopicRelayer(CConfiguration cConf, String topic) {
