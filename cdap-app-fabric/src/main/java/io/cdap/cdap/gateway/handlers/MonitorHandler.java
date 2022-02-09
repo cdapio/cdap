@@ -178,6 +178,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
       MasterServiceManager masterServiceManager = serviceManagementMap.get(service);
       if (masterServiceManager.isServiceEnabled()) {
         String status = masterServiceManager.isServiceAvailable() ? STATUSOK : STATUSNOTOK;
+        LOG.info("wyzhang: system services status: {} {}", service, status);
         result.put(service, status);
       }
     }

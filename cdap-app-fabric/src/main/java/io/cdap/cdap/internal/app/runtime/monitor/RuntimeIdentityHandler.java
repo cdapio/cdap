@@ -40,6 +40,8 @@ public class RuntimeIdentityHandler extends ChannelInboundHandlerAdapter {
   private static final Logger AUDIT_LOGGER = LoggerFactory
     .getLogger(Constants.RuntimeMonitor.MONITOR_AUDIT_LOGGER_NAME);
 
+  private static final String EMPTY_RUNTIME_TOKEN = "empty-runtime-token";
+
   private final boolean enforceAuthenticatedRequests;
   private final boolean auditLogEnabled;
 
@@ -66,9 +68,11 @@ public class RuntimeIdentityHandler extends ChannelInboundHandlerAdapter {
       request.headers().remove(Constants.Security.Headers.USER_IP);
     }
     if (enforceAuthenticatedRequests && !request.headers().contains(Constants.Security.Headers.RUNTIME_TOKEN)) {
-      auditLogIfNeeded(request, ctx.channel(), HttpURLConnection.HTTP_FORBIDDEN);
-      throw new UnauthorizedException("Runtime token is not found");
+      System.out.println("wyzhang: RuntimeIdentityHandler channel read no runtime token: " + request.uri());
+      request.headers().set(Constants.Security.Headers.RUNTIME_TOKEN, EMPTY_RUNTIME_TOKEN);
     }
+    System.out.println("wyzhang: RuntimeIdentityHandler channel read req=" + request.uri() + " token=" +
+                       request.headers().get(Constants.Security.Headers.RUNTIME_TOKEN));
     ctx.fireChannelRead(msg);
   }
 
