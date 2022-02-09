@@ -524,7 +524,7 @@ public class ProvisioningService extends AbstractIdleService {
   private void initializeProvisioners() {
     Map<String, Provisioner> provisioners = provisionerProvider.loadProvisioners();
     Map<String, ProvisionerConfig> provisionerConfigs =
-      provisionerConfigProvider.loadProvisionerConfigs(provisioners.keySet());
+      provisionerConfigProvider.loadProvisionerConfigs(provisioners.values());
     LOG.debug("Provisioners = {}", provisioners);
     Map<String, ProvisionerDetail> details = new HashMap<>(provisioners.size());
     for (Map.Entry<String, Provisioner> provisionerEntry : provisioners.entrySet()) {

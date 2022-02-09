@@ -694,20 +694,6 @@
                         <include>*.json</include>
                       </includes>
                     </resource>
-                    <resource>
-                      <directory>${project.parent.basedir}/cdap-app-fabric/target</directory>
-                      <targetPath>ext/runtimeproviders/tethering</targetPath>
-                      <includes>
-                        <include>*.jar</include>
-                      </includes>
-                    </resource>
-                    <resource>
-                      <directory>${project.parent.basedir}/cdap-app-fabric/src/main/resources</directory>
-                      <targetPath>ext/runtimeproviders/tethering</targetPath>
-                      <includes>
-                        <include>tethering.json</include>
-                      </includes>
-                    </resource>
                     <!-- copy secure store extensions -->
                     <resource>
                       <directory>${project.parent.basedir}/cdap-securestore-ext-cloudkms/target/libexec</directory>

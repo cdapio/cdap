@@ -726,34 +726,6 @@
                   </resources>
                 </configuration>
               </execution>
-              <execution>
-                <id>copy-runtime-tethering</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration combine.self="override">
-                  <outputDirectory>${stage.runtime.providers.ext.dir}/tethering</outputDirectory>
-                  <resources>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-app-fabric/target
-                      </directory>
-                      <includes>
-                        <include>*.jar</include>
-                      </includes>
-                    </resource>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-app-fabric/src/main/resources
-                      </directory>
-                      <includes>
-                        <include>tethering.json</include>
-                      </includes>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
 
               <!-- Copy secure store extensions-->
               <execution>

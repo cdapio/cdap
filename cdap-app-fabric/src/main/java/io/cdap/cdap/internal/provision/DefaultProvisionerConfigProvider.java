@@ -16,28 +16,28 @@
 
 package io.cdap.cdap.internal.provision;
 
-import com.google.common.base.Charsets;
-import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
-import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonReader;
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.Reader;
-import java.util.ArrayList;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import javax.inject.Inject;
+import javax.annotation.Nullable;
 
 /**
  * Default implementation of the ProvsionerConfigProvider. It expects a json file for from each module dir and
@@ -47,55 +47,70 @@ public class DefaultProvisionerConfigProvider implements ProvisionerConfigProvid
   private static final Logger LOG = LoggerFactory.getLogger(DefaultProvisionerConfigProvider.class);
   private static final Gson GSON = new GsonBuilder().create();
 
-  private List<String> extDirs;
-
-  @Inject
-  public DefaultProvisionerConfigProvider(CConfiguration cConf) {
-    String extDirectory = cConf.get(Constants.Provisioner.EXTENSIONS_DIR);
-    this.extDirs = ImmutableList.copyOf(Splitter.on(';').omitEmptyStrings().trimResults().split(extDirectory));
-  }
-
   @Override
-  public Map<String, ProvisionerConfig> loadProvisionerConfigs(Set<String> provisioners) {
+  public Map<String, ProvisionerConfig> loadProvisionerConfigs(Collection<Provisioner> provisioners) {
     Map<String, ProvisionerConfig> results = new HashMap<>();
 
-    for (String dir : extDirs) {
-      File extDir = new File(dir);
-      if (!extDir.isDirectory()) {
-        continue;
-      }
+    for (Provisioner provisioner : provisioners) {
+      String provisionerName = provisioner.getSpec().getName();
 
-      List<File> files = new ArrayList<>(DirUtils.listFiles(extDir));
-      Collections.sort(files);
-      for (File moduleDir : files) {
-        if (!moduleDir.isDirectory()) {
+      try (Reader reader = openConfigReader(provisioner)) {
+        if (reader == null) {
           continue;
         }
-
-        List<File> jsonFiles =
-          DirUtils.listFiles(moduleDir,
-                             file -> {
-                               String name = file.getName();
-                               return !file.isDirectory() && name.endsWith(".json")
-                                 && provisioners.contains(name.substring(0, name.lastIndexOf('.')));
-                             });
-        if (jsonFiles.isEmpty()) {
-          LOG.info("Not able to find JSON config file for module {}", moduleDir);
-          continue;
-        }
-
-        for (File configFile : jsonFiles) {
-          String name = configFile.getName();
-          String provisionerName = name.substring(0, name.lastIndexOf('.'));
-          try (Reader reader = Files.newReader(configFile, Charsets.UTF_8)) {
-            results.put(provisionerName, GSON.fromJson(new JsonReader(reader), ProvisionerConfig.class));
-          } catch (Exception e) {
-            LOG.warn("Exception reading JSON config file for provisioner {}. Ignoring file.",
-                     provisionerName, e);
-          }
-        }
+        results.put(provisionerName, GSON.fromJson(new JsonReader(reader), ProvisionerConfig.class));
+      } catch (Exception e) {
+        LOG.warn("Exception reading JSON config file for provisioner {}. Ignoring file.", provisionerName, e);
       }
     }
+
     return Collections.unmodifiableMap(results);
+  }
+
+  /**
+   * Find the json config file with name [provisioner_name].json under the provisioner ext directory.
+   * The ext directory can be found by the classloader of the provisioner.
+   * If the json config file is not found in the ext directory, try to locate it from the provisioner classloader.
+   *
+   * @param provisioner the {@link Provisioner}
+   * @return a {@link Reader} for reading the config file, or {@code null} if the config file cannot be located
+   */
+  @Nullable
+  private Reader openConfigReader(Provisioner provisioner) throws IOException, URISyntaxException {
+    Class<? extends Provisioner> provisionerClass = provisioner.getClass();
+    URL classPathURL = ClassLoaders.getClassPathURL(provisionerClass);
+
+    // This shouldn't happen as we should be able to find the class from its own classloader
+    if (classPathURL == null) {
+      LOG.warn("Unable to find provisioner class {} from its own classloader", provisionerClass);
+      return null;
+    }
+
+    // Find the json config file with name [provisioner_name].json under the provisioner ext directory.
+    // The ext directory can be found by the classloader of the provisioner.
+    // See AbstractExtensionLoader class for the directory structure
+    String provisionerName = provisioner.getSpec().getName();
+    File configFileDir = new File(classPathURL.toURI());
+
+    // If the class is loaded from a (jar) file,
+    // then the .json config file is expected to be at the parent directory of it.
+    if (Files.isRegularFile(configFileDir.toPath())) {
+      configFileDir = configFileDir.getParentFile();
+    }
+
+    Path configFilePath = new File(configFileDir, provisionerName + ".json").toPath();
+    if (Files.isRegularFile(configFilePath)) {
+      return Files.newBufferedReader(configFilePath, StandardCharsets.UTF_8);
+    }
+
+    // If we cannot find the config file in the filesystem, try to look for the json config from the classloader itself.
+    // This is the case when the .json is packaged inside the jar (e.g. system provisioners).
+    URL resource = provisionerClass.getClassLoader().getResource(provisionerName + ".json");
+    if (resource != null) {
+      return new InputStreamReader(resource.openStream(), StandardCharsets.UTF_8);
+    }
+
+    LOG.debug("Unable to find JSON config file {} for provisioner {}", configFilePath, provisionerName);
+    return null;
   }
 }

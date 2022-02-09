@@ -98,7 +98,7 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
   }
 
   @SuppressWarnings("unchecked")
-  public AbstractExtensionLoader(String extDirs) {
+  protected AbstractExtensionLoader(String extDirs) {
     this.extDirs = ImmutableList.copyOf(Splitter.on(';').omitEmptyStrings().trimResults().split(extDirs));
     Type type = TypeToken.of(getClass()).getSupertype(AbstractExtensionLoader.class).getType();
     // type should always be an instance of ParameterizedType
@@ -157,7 +157,7 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
     // Also put everything from system classloader
     putEntriesIfAbsent(result, getAllExtensions(systemExtensionLoader));
 
-    allExtensions = result;
+    allExtensions = Collections.unmodifiableMap(result);
     return allExtensions;
   }
 
@@ -189,6 +189,17 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
         return true;
       }
     };
+  }
+
+  /**
+   * Prepares the given system {@link EXTENSION}. A system extension is loaded from the same classloader as the
+   * class of the {@link EXTENSION_TYPE}, which typically allows it to have access to CDAP system class.
+   *
+   * @param extension the extension instance
+   * @return an extension instance
+   */
+  protected EXTENSION prepareSystemExtension(EXTENSION extension) {
+    return extension;
   }
 
   private void putEntriesIfAbsent(Map<EXTENSION_TYPE, EXTENSION> result, Map<EXTENSION_TYPE, EXTENSION> entries) {
@@ -251,10 +262,13 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
     Map<EXTENSION_TYPE, EXTENSION> extensions = new HashMap<>();
     Iterator<EXTENSION> iterator = serviceLoader.iterator();
     // Cannot use for each loop here, because we want to catch exceptions during iterator.next().
-    //noinspection WhileLoopReplaceableByForEach
     while (iterator.hasNext()) {
       try {
         EXTENSION extension = iterator.next();
+        if (serviceLoader == systemExtensionLoader) {
+          extension = prepareSystemExtension(extension);
+        }
+
         for (EXTENSION_TYPE type : getSupportedTypesForProvider(extension)) {
           if (extensions.containsKey(type)) {
             LOG.info("Ignoring extension {} for type {}", extension, type);
