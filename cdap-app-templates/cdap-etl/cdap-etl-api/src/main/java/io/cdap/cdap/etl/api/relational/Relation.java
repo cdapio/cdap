@@ -79,7 +79,7 @@ public interface Relation {
    * @return a new relation after the grouping is performed.
    */
   default Relation groupBy(GroupByAggregationDefinition aggregationDefinition) {
-    throw new UnsupportedOperationException();
+    return new InvalidRelation("GroupBy is unsupported");
   }
 
   /**
@@ -88,6 +88,6 @@ public interface Relation {
    * @return a new relation after deduplication of rows.
    */
   default Relation deduplicate(DeduplicateAggregationDefinition aggregationDefinition) {
-    throw new UnsupportedOperationException();
+    return new InvalidRelation("Deduplicate is unsupported");
   }
 }
