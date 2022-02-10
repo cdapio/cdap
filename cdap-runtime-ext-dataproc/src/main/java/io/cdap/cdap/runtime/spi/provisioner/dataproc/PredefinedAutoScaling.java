@@ -157,7 +157,7 @@ public class PredefinedAutoScaling {
     throws IOException {
     CredentialsProvider credentialsProvider = FixedCredentialsProvider.create(dataprocConf.getDataprocCredentials());
 
-    String regionalEndpoint = dataprocConf.getRegion() + DataprocClient.DATAPROC_GOOGLEAPIS_COM_443;
+    String regionalEndpoint = dataprocConf.getRegion() + "-" + dataprocConf.getRootUrl();
 
     AutoscalingPolicyServiceSettings autoscalingPolicyServiceSettings = AutoscalingPolicyServiceSettings.newBuilder()
       .setCredentialsProvider(credentialsProvider)

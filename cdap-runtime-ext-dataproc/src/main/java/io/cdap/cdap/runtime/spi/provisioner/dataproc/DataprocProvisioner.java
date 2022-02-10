@@ -173,8 +173,8 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       labels.putAll(getSystemLabels());
       labels.putAll(getReuseLabels(context, conf));
       labels.putAll(conf.getClusterLabels());
-      LOG.info("Creating Dataproc cluster {} in project {}, in region {}, with image {}, with labels {}",
-               clusterName, conf.getProjectId(), conf.getRegion(), imageDescription, labels);
+      LOG.info("Creating Dataproc cluster {} in project {}, in region {}, with image {}, with labels {}, endpoint {}",
+               clusterName, conf.getProjectId(), conf.getRegion(), imageDescription, labels, conf.getRootUrl());
 
       boolean privateInstance = Boolean.parseBoolean(getSystemContext().getProperties().get(PRIVATE_INSTANCE));
       ClusterOperationMetadata createOperationMeta = client.createCluster(clusterName, imageVersion,
@@ -454,7 +454,10 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       DataprocConf.IMAGE_VERSION,
       DataprocConf.CLUSTER_META_DATA,
       DataprocConf.SERVICE_ACCOUNT,
-      DataprocConf.CLUSTER_IDLE_TTL_MINUTES
+      DataprocConf.CLUSTER_IDLE_TTL_MINUTES,
+      DataprocConf.ROOT_URL,
+      DataprocConf.COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT,
+      DataprocConf.COMPUTE_HTTP_REQUEST_READ_TIMEOUT
     ).contains(property);
   }
 
