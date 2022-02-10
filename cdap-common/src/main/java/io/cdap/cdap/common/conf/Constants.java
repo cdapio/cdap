@@ -932,8 +932,8 @@ public final class Constants {
      * Flow control metrics
      */
     public static final class FlowControl {
-      public static final String WORKFLOWS_LAUNCHING_COUNT = "flowcontrol.workflows.launching.count";
-      public static final String WORKFLOWS_RUNNING_COUNT = "flowcontrol.workflows.running.count";
+      public static final String LAUNCHING_COUNT = "flowcontrol.launching.count";
+      public static final String RUNNING_COUNT = "flowcontrol.running.count";
     }
 
     /**
