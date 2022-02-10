@@ -57,6 +57,7 @@ public class RunRecordMonitorService extends AbstractScheduledService {
   private final long ageThresholdSec;
   private final CConfiguration cConf;
   private final MetricsCollectionService metricsCollectionService;
+  private final int maxConcurrentRuns;
   private ScheduledExecutorService executor;
 
   @Inject
@@ -66,9 +67,10 @@ public class RunRecordMonitorService extends AbstractScheduledService {
     this.runtimeService = runtimeService;
     this.metricsCollectionService = metricsCollectionService;
 
-    launchingQueue = new PriorityBlockingQueue<>(128, Comparator.comparingLong(
+    this.launchingQueue = new PriorityBlockingQueue<>(128, Comparator.comparingLong(
       o -> RunIds.getTime(o.getRun(), TimeUnit.MILLISECONDS)));
-    ageThresholdSec = cConf.getLong(Constants.AppFabric.MONITOR_RECORD_AGE_THRESHOLD_SECONDS);
+    this.ageThresholdSec = cConf.getLong(Constants.AppFabric.MONITOR_RECORD_AGE_THRESHOLD_SECONDS);
+    this.maxConcurrentRuns = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_RUNS);
   }
 
   @Override
@@ -189,9 +191,28 @@ public class RunRecordMonitorService extends AbstractScheduledService {
     List<ProgramRuntimeService.RuntimeInfo> list = runtimeService
       .listAll(ProgramType.WORKFLOW, ProgramType.WORKER, ProgramType.SPARK, ProgramType.MAPREDUCE);
 
+    int launchingCount = launchingQueue.size();
+
+    // We use program controllers (instead of querying metadata store) to count the total number of programs in
+    // running state.
+    // A program controller is created when a launch request is in the middle of starting state.
+    // Therefore, the returning running count is NOT precise.
+    int impreciseRunningCount = (int) list.stream()
+      .filter(r -> isRunning(r.getController().getState().getRunStatus()))
+      .count();
+
+    if (maxConcurrentRuns < 0 || (launchingCount + impreciseRunningCount < maxConcurrentRuns)) {
+      // It is safe to return the imprecise value since either flow control for runs is disabled (i.e., -1) or
+      // flow control will not reject an incoming request yet.
+      return impreciseRunningCount;
+    }
+
+    // Flow control is at the threshold. We return the precise count.
     return (int) list.stream()
       .filter(r ->
-                isRunning(r.getController().getState().getRunStatus()))
+                isRunning(r.getController().getState().getRunStatus())
+                  && !launchingQueue.contains(r.getController().getProgramRunId())
+      )
       .count();
   }
 
