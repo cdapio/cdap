@@ -160,7 +160,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       CredentialsProvider credentialsProvider = FixedCredentialsProvider.create(credentials);
       this.jobControllerClient = client = JobControllerClient.create(
         JobControllerSettings.newBuilder().setCredentialsProvider(credentialsProvider)
-          .setEndpoint(region + endpoint).build());
+          .setEndpoint(region + "-" + endpoint).build());
     }
     return client;
   }

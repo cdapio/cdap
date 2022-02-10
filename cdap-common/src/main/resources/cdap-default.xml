@@ -4913,4 +4913,20 @@
       The maximum number of records that can be set in preview configuration.
     </description>
   </property>
+
+  <property>
+    <name>provisioner.system.properties.gcp-dataproc.root.url</name>
+    <value>dataproc.googleapis.com:443</value>
+    <description>
+      The default Root URL for Dataproc.
+    </description>
+  </property>
+
+  <property>
+    <name>provisioner.system.properties.gcp-existing-dataproc.root.url</name>
+    <value>dataproc.googleapis.com:443</value>
+    <description>
+      The default Root URL for Dataproc.
+    </description>
+  </property>
 </configuration>
