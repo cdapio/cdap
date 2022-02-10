@@ -141,7 +141,8 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
     store.updatePeerTimestamp(peerInfo.getName());
 
     TetheringConnectionRequest tetherRequest = new TetheringConnectionRequest(
-      peerInfo.getMetadata().getNamespaceAllocations());
+      peerInfo.getMetadata().getNamespaceAllocations(), peerInfo.getRequestTime(),
+      peerInfo.getMetadata().getDescription());
     try {
       URI endpoint = new URI(peerInfo.getEndpoint()).resolve(TetheringClientHandler.CREATE_TETHER + instanceName);
       HttpResponse response = TetheringUtils.sendHttpRequest(HttpMethod.PUT,

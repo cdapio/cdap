@@ -1021,6 +1021,7 @@ public final class StoreDefinition {
     public static final String PEER_NAME_FIELD = "name";
     public static final String PEER_URI_FIELD = "uri";
     public static final String TETHERING_STATE_FIELD = "state";
+    public static final String REQUEST_TIME_FIELD = "request_time";
     public static final String LAST_CONNECTION_TIME_FIELD = "last_connection_time";
     public static final String PEER_METADATA_FIELD = "metadata";
 
@@ -1030,6 +1031,7 @@ public final class StoreDefinition {
         .withFields(Fields.stringType(PEER_NAME_FIELD),
                     Fields.stringType(PEER_URI_FIELD),
                     Fields.stringType(TETHERING_STATE_FIELD),
+                    Fields.longType(REQUEST_TIME_FIELD),
                     Fields.longType(LAST_CONNECTION_TIME_FIELD),
                     Fields.stringType(PEER_METADATA_FIELD))
         .withPrimaryKeys(PEER_NAME_FIELD)

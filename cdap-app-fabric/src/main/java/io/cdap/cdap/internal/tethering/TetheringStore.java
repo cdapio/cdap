@@ -71,6 +71,7 @@ public class TetheringStore {
       fields.add(Fields.stringField(StoreDefinition.TetheringStore.PEER_URI_FIELD, peerInfo.getEndpoint()));
       fields.add(Fields.stringField(StoreDefinition.TetheringStore.TETHERING_STATE_FIELD,
                                     peerInfo.getTetheringStatus().toString()));
+      fields.add(Fields.longField(StoreDefinition.TetheringStore.REQUEST_TIME_FIELD, peerInfo.getRequestTime()));
       fields.add(Fields.longField(StoreDefinition.TetheringStore.LAST_CONNECTION_TIME_FIELD, 0L));
       fields.add(Fields.stringField(StoreDefinition.TetheringStore.PEER_METADATA_FIELD,
                                     GSON.toJson(peerInfo.getMetadata())));
@@ -203,6 +204,7 @@ public class TetheringStore {
     PeerMetadata peerMetadata = GSON.fromJson(row.getString(StoreDefinition.TetheringStore.PEER_METADATA_FIELD),
                                               PeerMetadata.class);
     long lastConnectionTime = row.getLong(StoreDefinition.TetheringStore.LAST_CONNECTION_TIME_FIELD);
-    return new PeerInfo(peerName, endpoint, tetheringStatus, peerMetadata, lastConnectionTime);
+    long requestTime = row.getLong(StoreDefinition.TetheringStore.REQUEST_TIME_FIELD);
+    return new PeerInfo(peerName, endpoint, tetheringStatus, peerMetadata, requestTime, lastConnectionTime);
   }
 }

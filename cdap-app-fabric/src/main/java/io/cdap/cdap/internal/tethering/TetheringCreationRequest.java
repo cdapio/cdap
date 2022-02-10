@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.tethering;
 
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Tethering request that's sent to the client.
@@ -31,13 +32,16 @@ public class TetheringCreationRequest {
   private final List<NamespaceAllocation> namespaceAllocations;
   // Metadata associated with this tethering
   private final Map<String, String> metadata;
+  // Text that describes this tethering
+  private final String description;
 
-  public TetheringCreationRequest(String peer, String endpoint,
-                                  List<NamespaceAllocation> namespaceAllocations, Map<String, String> metadata) {
+  public TetheringCreationRequest(String peer, String endpoint, List<NamespaceAllocation> namespaceAllocations,
+                                  Map<String, String> metadata, @Nullable String description) {
     this.peer = peer;
     this.endpoint = endpoint;
     this.namespaceAllocations = namespaceAllocations;
     this.metadata = metadata;
+    this.description = description;
   }
 
   public String getPeer() {
@@ -54,6 +58,11 @@ public class TetheringCreationRequest {
 
   public Map<String, String> getMetadata() {
     return metadata;
+  }
+
+  @Nullable
+  public String getDescription() {
+    return description;
   }
 
 }

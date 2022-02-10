@@ -151,9 +151,11 @@ public class TetheringServerHandler extends AbstractHttpHandler {
     }
 
     // We don't need to keep track of the client metadata on the server side.
-    PeerMetadata peerMetadata = new PeerMetadata(tetherRequest.getNamespaceAllocations(), Collections.emptyMap());
+    PeerMetadata peerMetadata = new PeerMetadata(tetherRequest.getNamespaceAllocations(), Collections.emptyMap(),
+                                                 tetherRequest.getDescription());
     // We don't store the peer endpoint on the server side because the connection is initiated by the client.
-    PeerInfo peerInfo = new PeerInfo(peer, null, TetheringStatus.PENDING, peerMetadata);
+    PeerInfo peerInfo = new PeerInfo(peer, null, TetheringStatus.PENDING, peerMetadata,
+                                     tetherRequest.getRequestTime());
     try {
       store.addPeer(peerInfo);
     } catch (PeerAlreadyExistsException pae) {
