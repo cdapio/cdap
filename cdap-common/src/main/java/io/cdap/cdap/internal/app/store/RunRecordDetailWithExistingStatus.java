@@ -61,12 +61,7 @@ public final class RunRecordDetailWithExistingStatus extends RunRecordDetail {
   }
 
   public static class Builder extends RunRecordDetail.ABuilder<Builder> {
-    private ProgramRunStatus existingStatus;
-
-    public Builder setExistingStatus(ProgramRunStatus existingStatus) {
-      this.existingStatus = existingStatus;
-      return this;
-    }
+    private final ProgramRunStatus existingStatus;
 
     private Builder(RunRecordDetail record) {
       super(record);

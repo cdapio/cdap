@@ -86,6 +86,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -491,20 +492,39 @@ public class AppMetadataStore {
     ApplicationId appId = programRunId.getParent().getParent();
     ProgramRunId workflowRunId = appId.workflow(workflowName).run(workflowRun);
 
-    WorkflowNodeStateDetail nodeStateDetail = new WorkflowNodeStateDetail(workflowNodeId,
-                                                                          ProgramRunStatus.toNodeStatus(status),
-                                                                          programRunId.getRun(), failureCause);
-    List<Field<?>> fields = getWorkflowPrimaryKeys(workflowRunId, nodeStateDetail.getNodeId());
-    writeToStructuredTableWithPrimaryKeys(fields, nodeStateDetail, getWorkflowNodeStateTable(),
-                                          StoreDefinition.AppMetadataStore.NODE_STATE_DATA);
-
     // Get the run record of the Workflow which started this program
     List<Field<?>> runRecordFields = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, workflowRunId,
                                                                   RunIds.getTime(workflowRun, TimeUnit.SECONDS));
 
-    Optional<StructuredRow> row = getRunRecordsTable().read(runRecordFields);
-    if (row.isPresent()) {
-      RunRecordDetail record = deserializeRunRecordMeta(row.get());
+    RunRecordDetail record = getRunRecordsTable().read(runRecordFields)
+      .map(AppMetadataStore::deserializeRunRecordMeta)
+      .orElse(null);
+
+    // If the workflow is gone, just ignore the update
+    if (record == null) {
+      return;
+    }
+
+    List<Field<?>> primaryKeys = getWorkflowPrimaryKeys(workflowRunId, workflowNodeId);
+    WorkflowNodeStateDetail nodeState = getWorkflowNodeStateTable().read(primaryKeys)
+      .map(r -> r.getString(StoreDefinition.AppMetadataStore.NODE_STATE_DATA))
+      .map(f -> GSON.fromJson(f, WorkflowNodeStateDetail.class))
+      .orElse(null);
+
+    // Update the workflow node state table if
+    // - the program state is STARTING (if there is an existing record,
+    //                                  this means this is from a latter attempt of the same node)
+    // - the node state does not exist or
+    // - the program runId is the same as the existing workflow state
+    if (status == ProgramRunStatus.STARTING
+        || nodeState == null
+        || programRunId.getRun().equals(nodeState.getRunId())) {
+      WorkflowNodeStateDetail nodeStateDetail = new WorkflowNodeStateDetail(workflowNodeId,
+                                                                            ProgramRunStatus.toNodeStatus(status),
+                                                                            programRunId.getRun(), failureCause);
+      writeToStructuredTableWithPrimaryKeys(primaryKeys, nodeStateDetail, getWorkflowNodeStateTable(),
+                                            StoreDefinition.AppMetadataStore.NODE_STATE_DATA);
+
       // Update the parent Workflow run record by adding node id and program run id in the properties
       Map<String, String> properties = new HashMap<>(record.getProperties());
       properties.put(workflowNodeId, programRunId.getRun());
@@ -817,8 +837,7 @@ public class AppMetadataStore {
    */
   @Nullable
   public RunRecordDetail recordProgramStart(ProgramRunId programRunId, @Nullable String twillRunId,
-                                            Map<String, String> systemArgs, byte[] sourceId)
-    throws IOException {
+                                            Map<String, String> systemArgs, byte[] sourceId) throws IOException {
     RunRecordDetail existing = getRun(programRunId);
     RunRecordDetail meta;
 
@@ -1245,8 +1264,28 @@ public class AppMetadataStore {
    * @return map of run id to run record meta
    */
   public Map<ProgramRunId, RunRecordDetail> getActiveRuns(ProgramId programId) throws IOException {
+    Map<ProgramRunId, RunRecordDetail> result = new LinkedHashMap<>();
+    scanActiveRuns(programId, r -> {
+      result.put(r.getProgramRunId(), r);
+    });
+    return result;
+  }
+
+  /**
+   * Scans active runs of the given program, active runs means program run with status STARTING, PENDING,
+   * RUNNING or SUSPENDED. This method is similar to the {@link #getActiveRuns(ProgramId)}, but consuming
+   * results in a streaming fashion
+   *
+   * @param programId given program
+   * @param consumer a {@link Consumer} for processing the {@link RunRecordDetail} of each active run.
+   */
+  public void scanActiveRuns(ProgramId programId, Consumer<RunRecordDetail> consumer) throws IOException {
     List<Field<?>> prefix = getRunRecordProgramPrefix(TYPE_RUN_RECORD_ACTIVE, programId);
-    return getRuns(Range.singleton(prefix), ProgramRunStatus.ALL, Integer.MAX_VALUE, null, null);
+
+    try (CloseableIterator<RunRecordDetail> iterator = queryProgramRuns(Range.singleton(prefix),
+                                                                        null, null, Integer.MAX_VALUE)) {
+      iterator.forEachRemaining(consumer);
+    }
   }
 
   /**
