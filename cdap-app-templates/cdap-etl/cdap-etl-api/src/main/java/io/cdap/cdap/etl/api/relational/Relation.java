@@ -27,67 +27,72 @@ import java.util.Map;
  * rather a set of transformation calls that will be delegated to the underlying engine.
  */
 public interface Relation {
-  /**
-   *
-   * @return if this relation is valid. If any operation requested is not supported,
-   * it will return an invalid relation.
-   * @see #getValidationError() on operation problem details
-   */
-  boolean isValid();
+    /**
+     * @return if this relation is valid. If any operation requested is not supported,
+     * it will return an invalid relation.
+     * @see #getValidationError() on operation problem details
+     */
+    boolean isValid();
 
-  /**
-   * @return validation error if relation is not valid
-   * @see #isValid()
-   */
-  String getValidationError();
+    /**
+     * @return validation error if relation is not valid
+     * @see #isValid()
+     */
+    String getValidationError();
 
-  /**
-   * Allows to add or replace column for a relation. This operation does not
-   * change number of rows.
-   * @param column name of the column to add / replace
-   * @param value value to set to the column
-   * @return a new relation with a column added or replaced
-   */
-  Relation setColumn(String column, Expression value);
+    /**
+     * Allows to add or replace column for a relation. This operation does not
+     * change number of rows.
+     *
+     * @param column name of the column to add / replace
+     * @param value  value to set to the column
+     * @return a new relation with a column added or replaced
+     */
+    Relation setColumn(String column, Expression value);
 
-  /**
-   * Allows to drop existing column on a relation. This operation does not
-   * change number of rows.
-   * @param column name of the column to drop
-   * @return a new relation that does not have the column
-   */
-  Relation dropColumn(String column);
+    /**
+     * Allows to drop existing column on a relation. This operation does not
+     * change number of rows.
+     *
+     * @param column name of the column to drop
+     * @return a new relation that does not have the column
+     */
+    Relation dropColumn(String column);
 
-  /**
-   * Allows to completely replace set of column with a new one. This operation does not
-   * change number of rows.
-   * @param columns map of column names to value expressions to form new column set
-   * @return a new relation with required columns
-   */
-  Relation select(Map<String, Expression> columns);
+    /**
+     * Allows to completely replace set of column with a new one. This operation does not
+     * change number of rows.
+     *
+     * @param columns map of column names to value expressions to form new column set
+     * @return a new relation with required columns
+     */
+    Relation select(Map<String, Expression> columns);
 
-  /**
-   * Allows to filter relation rows based on a boolean expression
-   * @param filter boolean expression to use as a filter
-   * @return a new relation with same set of columns, but only rows where filter value is true
-   */
-  Relation filter(Expression filter);
+    /**
+     * Allows to filter relation rows based on a boolean expression
+     *
+     * @param filter boolean expression to use as a filter
+     * @return a new relation with same set of columns, but only rows where filter value is true
+     */
+    Relation filter(Expression filter);
 
-  /**
-   * Allows to perform a group by based on an aggregation definition.
-   * @param aggregationDefinition specifies the details for the group by operation.
-   * @return a new relation after the grouping is performed.
-   */
-  default Relation groupBy(GroupByAggregationDefinition aggregationDefinition) {
-    throw new UnsupportedOperationException();
-  }
+    /**
+     * Allows to perform a group by based on an aggregation definition.
+     *
+     * @param aggregationDefinition specifies the details for the group by operation.
+     * @return a new relation after the grouping is performed.
+     */
+    default Relation groupBy(GroupByAggregationDefinition aggregationDefinition) {
+        return new InvalidRelation("GroupBy is unsupported");
+    }
 
-  /**
-   * Allows to perform a deduplicate operation based on an aggregation definition.
-   * @param aggregationDefinition specifies the details for the deduplicate operation.
-   * @return a new relation after deduplication of rows.
-   */
-  default Relation deduplicate(DeduplicateAggregationDefinition aggregationDefinition) {
-    throw new UnsupportedOperationException();
-  }
+    /**
+     * Allows to perform a deduplicate operation based on an aggregation definition.
+     *
+     * @param aggregationDefinition specifies the details for the deduplicate operation.
+     * @return a new relation after deduplication of rows.
+     */
+    default Relation deduplicate(DeduplicateAggregationDefinition aggregationDefinition) {
+        return new InvalidRelation("Deduplicate is unsupported");
+    }
 }

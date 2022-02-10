@@ -29,6 +29,7 @@ import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.security.AccessException;
@@ -39,6 +40,7 @@ import io.cdap.cdap.api.service.worker.RemoteExecutionException;
 import io.cdap.cdap.api.service.worker.RemoteTaskException;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.etl.api.batch.BatchSource;
+import io.cdap.cdap.etl.api.validation.ValidationFailure;
 import io.cdap.cdap.etl.batch.BatchPipelineSpec;
 import io.cdap.cdap.etl.common.BasicArguments;
 import io.cdap.cdap.etl.common.ConnectionMacroEvaluator;
@@ -49,6 +51,7 @@ import io.cdap.cdap.etl.proto.v2.spec.PipelineSpec;
 import io.cdap.cdap.etl.proto.v2.spec.PluginSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.proto.v2.validation.StageValidationRequest;
+import io.cdap.cdap.etl.proto.v2.validation.StageValidationResponse;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import org.slf4j.Logger;
@@ -58,7 +61,9 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import javax.ws.rs.GET;
@@ -158,24 +163,35 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
         return;
       }
     }
+    List<ValidationFailure> failures = new ArrayList<>();
+    try {
+      Map<String, MacroEvaluator> evaluators = ImmutableMap.of(
+              SecureStoreMacroEvaluator.FUNCTION_NAME, new SecureStoreMacroEvaluator(namespace, getContext()),
+              OAuthMacroEvaluator.FUNCTION_NAME, new OAuthMacroEvaluator(getContext()),
+              ConnectionMacroEvaluator.FUNCTION_NAME, new ConnectionMacroEvaluator(namespace, getContext())
+      );
+      MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(arguments), evaluators,
+              DefaultMacroEvaluator.MAP_FUNCTIONS);
+      MacroParserOptions macroParserOptions = MacroParserOptions.builder()
+              .skipInvalidMacros()
+              .setEscaping(false)
+              .setFunctionWhitelist(evaluators.keySet())
+              .build();
+      Function<Map<String, String>, Map<String, String>> macroFn =
+              macroProperties -> getContext().evaluateMacros(namespace, macroProperties, macroEvaluator,
+                      macroParserOptions);
 
-    Map<String, MacroEvaluator> evaluators = ImmutableMap.of(
-      SecureStoreMacroEvaluator.FUNCTION_NAME, new SecureStoreMacroEvaluator(namespace, getContext()),
-      OAuthMacroEvaluator.FUNCTION_NAME, new OAuthMacroEvaluator(getContext()),
-      ConnectionMacroEvaluator.FUNCTION_NAME, new ConnectionMacroEvaluator(namespace, getContext())
-    );
-    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(arguments), evaluators,
-                                                              DefaultMacroEvaluator.MAP_FUNCTIONS);
-    MacroParserOptions macroParserOptions = MacroParserOptions.builder()
-      .skipInvalidMacros()
-      .setEscaping(false)
-      .setFunctionWhitelist(evaluators.keySet())
-      .build();
-    Function<Map<String, String>, Map<String, String>> macroFn =
-      macroProperties -> getContext().evaluateMacros(namespace, macroProperties, macroEvaluator, macroParserOptions);
-    String validationResponse = GSON.toJson(ValidationUtils.validate(
-      namespace, validationRequest, getContext().createServicePluginConfigurer(namespace), macroFn, getContext()));
+      StageValidationResponse stageValidationResponse = ValidationUtils.validate(
+              namespace, validationRequest, getContext().createServicePluginConfigurer(namespace), macroFn,
+              getContext());
+      failures.addAll(stageValidationResponse.getFailures());
+
+    } catch (InvalidMacroException e) {
+      failures.add(new ValidationFailure(e.getMessage()));
+    }
+    String validationResponse = GSON.toJson(failures);
     responder.sendString(validationResponse);
+
   }
 
   @POST
