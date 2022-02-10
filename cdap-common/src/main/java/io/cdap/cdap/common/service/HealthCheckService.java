@@ -37,7 +37,8 @@ import java.net.InetSocketAddress;
 import java.util.Set;
 
 /**
- *
+ * Health check service is a common service which will be used to create in each stateful and stateless pod to do a
+ * heap info and thread dump gathering
  */
 public class HealthCheckService extends AbstractIdleService {
 
@@ -78,10 +79,10 @@ public class HealthCheckService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    LOG.debug("Starting AppFabricHealthCheckService Service");
+    LOG.debug("Starting health check Service");
     httpService.start();
     InetSocketAddress socketAddress = httpService.getBindAddress();
-    LOG.debug("AppFabricHealthCheckService service running at {}", socketAddress);
+    LOG.debug("HealthCheckService service running at {}", socketAddress);
     cancelDiscovery = discoveryService.register(ResolvingDiscoverable.of(
       URIScheme.createDiscoverable(serviceName, httpService)));
 
@@ -89,9 +90,9 @@ public class HealthCheckService extends AbstractIdleService {
 
   @Override
   protected void shutDown() throws Exception {
-    LOG.debug("Shutting down SupportBundleInternal Service");
+    LOG.debug("Shutting down health check Service");
     cancelDiscovery.cancel();
     httpService.stop();
-    LOG.debug("SupportBundleInternal HTTP service stopped");
+    LOG.debug("Health check HTTP service stopped");
   }
 }

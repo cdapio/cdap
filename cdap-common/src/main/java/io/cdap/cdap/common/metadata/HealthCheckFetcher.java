@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- * Interface for fetching {@code AppFabricHealthCheck}
+ * Interface for fetching {@code HealthCheck}
  */
 public interface HealthCheckFetcher {
 

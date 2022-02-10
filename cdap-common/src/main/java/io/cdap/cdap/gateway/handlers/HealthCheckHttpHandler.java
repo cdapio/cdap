@@ -44,8 +44,8 @@ public class HealthCheckHttpHandler extends AbstractHttpHandler {
   private final HealthCheckImplementation healthCheckImplementation;
 
   @Inject
-  HealthCheckHttpHandler(HealthCheckImplementation appFabricHealthCheckImplementation) {
-    this.healthCheckImplementation = appFabricHealthCheckImplementation;
+  HealthCheckHttpHandler(HealthCheckImplementation healthCheckImplementation) {
+    this.healthCheckImplementation = healthCheckImplementation;
   }
 
   @GET
