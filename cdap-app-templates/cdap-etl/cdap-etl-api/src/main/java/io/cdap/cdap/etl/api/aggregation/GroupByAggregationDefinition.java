@@ -21,13 +21,15 @@ import io.cdap.cdap.etl.api.relational.Expression;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 
 /**
  * Specifies how a group by operation should be executed.
  */
 public class GroupByAggregationDefinition extends AggregationDefinition {
-  private GroupByAggregationDefinition(List<Expression> groupByExpressions, List<Expression> selectExpressions) {
+  private GroupByAggregationDefinition(List<Expression> groupByExpressions,
+                                       Map<String, Expression> selectExpressions) {
     super(groupByExpressions, selectExpressions);
   }
 
@@ -44,11 +46,11 @@ public class GroupByAggregationDefinition extends AggregationDefinition {
    */
   public static class Builder {
     private List<Expression> groupByExpressions;
-    private List<Expression> selectExpressions;
+    private Map<String, Expression> selectExpressions;
 
     public Builder() {
       groupByExpressions = Collections.emptyList();
-      selectExpressions = Collections.emptyList();
+      selectExpressions = Collections.emptyMap();
     }
 
     /**
@@ -78,7 +80,7 @@ public class GroupByAggregationDefinition extends AggregationDefinition {
      * @param selectExpressions list of {@link Expression}s to select.
      * @return a {@link Builder} with the currently built {@link GroupByAggregationDefinition}.
      */
-    public Builder select(List<Expression> selectExpressions) {
+    public Builder select(Map<String, Expression> selectExpressions) {
       this.selectExpressions = selectExpressions;
       return this;
     }
@@ -86,11 +88,13 @@ public class GroupByAggregationDefinition extends AggregationDefinition {
     /**
      * Sets the list of expressions to select to the specified expressions.
      * Any existing list of select expressions is overwritten.
-     * @param selectExpressions {@link Expression}s to select.
+     * @param key the key to use for this expression
+     * @param expression expression to use
      * @return a {@link Builder} with the currently built {@link GroupByAggregationDefinition}.
      */
-    public Builder select(Expression... selectExpressions) {
-      return select(Arrays.asList(selectExpressions));
+    public Builder select(String key, Expression expression) {
+      this.selectExpressions.put(key, expression);
+      return this;
     }
 
     /**

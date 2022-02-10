@@ -24,7 +24,9 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -34,7 +36,7 @@ public class GroupByAggregationDefinitionTest {
   @Test
   public void testDefinitionBuild() {
     List<Expression> groupByExpressions = new ArrayList<>();
-    List<Expression> selectExpressions = new ArrayList<>();
+    Map<String, Expression> selectExpressions = new HashMap<>();
     ExpressionFactory<String> factory = new ExpressionFactory<String>() {
       @Override
       public ExpressionFactoryType<String> getType() {
@@ -64,8 +66,8 @@ public class GroupByAggregationDefinitionTest {
 
     groupByExpressions.add(factory.compile("department"));
     groupByExpressions.add(factory.compile("managerId"));
-    selectExpressions.add(factory.compile("count(*)"));
-    selectExpressions.add(factory.compile("sum(salary)"));
+    selectExpressions.put("num_employees", factory.compile("count(*)"));
+    selectExpressions.put("total_salaries", factory.compile("sum(salary)"));
 
     GroupByAggregationDefinition definition = GroupByAggregationDefinition.builder()
       .groupBy(groupByExpressions)

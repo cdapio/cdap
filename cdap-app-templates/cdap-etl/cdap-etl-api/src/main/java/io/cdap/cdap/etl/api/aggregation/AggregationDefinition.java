@@ -21,6 +21,7 @@ import io.cdap.cdap.etl.api.relational.Expression;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Specifies how an aggregation should be executed.
@@ -28,24 +29,24 @@ import java.util.List;
 @Beta
 public abstract class AggregationDefinition {
   private final List<Expression> groupByExpressions;
-  private final List<Expression> selectExpressions;
+  private final Map<String, Expression> selectExpressions;
 
   /**
    * Creates a default {@link AggregationDefinition} object with empty lists for group by and select expressions.
    */
   protected AggregationDefinition() {
     groupByExpressions = Collections.emptyList();
-    selectExpressions = Collections.emptyList();
+    selectExpressions = Collections.emptyMap();
   }
 
   /**
    * Creates an {@link AggregationDefinition} object with the specified lists of expression for grouping and selection.
    * @param groupByExpressions A {@link List} of {@link Expression} objects for grouping.
-   * @param selectExpressions A {@link List} of {@link Expression} objects for selection.
+   * @param selectExpressions A {@link Map} with {@link String} keys and {@link Expression} values for selection.
    */
-  protected AggregationDefinition(List<Expression> groupByExpressions, List<Expression> selectExpressions) {
+  protected AggregationDefinition(List<Expression> groupByExpressions, Map<String, Expression> selectExpressions) {
     this.groupByExpressions = Collections.unmodifiableList(groupByExpressions);
-    this.selectExpressions = Collections.unmodifiableList(selectExpressions);
+    this.selectExpressions = Collections.unmodifiableMap(selectExpressions);
   }
 
   /**
@@ -58,9 +59,9 @@ public abstract class AggregationDefinition {
 
   /**
    * Get the list of expressions which are to be selected.
-   * @return {@link List} of {@link Expression} objects to be selected.
+   * @return {@link Map} with {@link String} keys and {@link Expression} values to be selected.
    */
-  public List<Expression> getSelectExpressions() {
+  public Map<String, Expression> getSelectExpressions() {
     return selectExpressions;
   }
 }
