@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -39,7 +40,7 @@ public class DeduplicateAggregationDefinition extends AggregationDefinition {
   List<FilterExpression> filterExpressions;
 
   private DeduplicateAggregationDefinition(List<Expression> groupByExpressions,
-                                           List<Expression> selectExpressions,
+                                           Map<String, Expression> selectExpressions,
                                            List<FilterExpression> filterExpressions) {
     super(groupByExpressions, selectExpressions);
     this.filterExpressions = filterExpressions;
@@ -129,12 +130,12 @@ public class DeduplicateAggregationDefinition extends AggregationDefinition {
    */
   public static class Builder {
     private List<Expression> groupByExpressions;
-    private List<Expression> selectExpressions;
+    private Map<String, Expression> selectExpressions;
     List<FilterExpression> filterExpressions;
 
     public Builder() {
       groupByExpressions = Collections.emptyList();
-      selectExpressions = Collections.emptyList();
+      selectExpressions = Collections.emptyMap();
       filterExpressions = new ArrayList<>();
     }
 
@@ -167,7 +168,7 @@ public class DeduplicateAggregationDefinition extends AggregationDefinition {
      * @param selectExpressions list of {@link Expression}s to select.
      * @return a {@link Builder} with the currently built {@link DeduplicateAggregationDefinition}.
      */
-    public Builder select(List<Expression> selectExpressions) {
+    public Builder select(Map<String, Expression> selectExpressions) {
       this.selectExpressions = selectExpressions;
       return this;
     }
@@ -175,11 +176,13 @@ public class DeduplicateAggregationDefinition extends AggregationDefinition {
     /**
      * Sets the list of expressions to select to the specified expressions.
      * Any existing list of select expressions is overwritten.
-     * @param selectExpressions {@link Expression}s to select.
+     * @param key the key to use for this expression
+     * @param expression expression to use
      * @return a {@link Builder} with the currently built {@link DeduplicateAggregationDefinition}.
      */
-    public Builder select(Expression... selectExpressions) {
-      return select(Arrays.asList(selectExpressions));
+    public Builder select(String key, Expression expression) {
+      this.selectExpressions.put(key, expression);
+      return this;
     }
 
     /**
@@ -200,8 +203,7 @@ public class DeduplicateAggregationDefinition extends AggregationDefinition {
      * The filter function is applied to the respective filter expression for all the records for which the values
      * of the dedup expressions specified in <code>dedupOn</code> is the same, and the resultant row is extracted
      * by the dedup operation.
-     * @param filterExpressions a {@link List} of {@link SimpleEntry} pairs of
-     *                          an {@link Expression} and a {@link FilterFunction}.
+     * @param filterExpressions a {@link List} of {@link FilterExpression}.
      * @return a {@link Builder} with the currently built {@link DeduplicateAggregationDefinition}.
      */
     public Builder filterDuplicatesBy(List<FilterExpression> filterExpressions) {

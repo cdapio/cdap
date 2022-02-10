@@ -24,7 +24,9 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -34,7 +36,7 @@ public class DeduplicateAggregationDefinitionTest {
   @Test
   public void testDefinitionBuild() {
     List<Expression> dedupExpressions = new ArrayList<>();
-    List<Expression> selectExpressions = new ArrayList<>();
+    Map<String, Expression> selectExpressions = new HashMap<>();
     List<DeduplicateAggregationDefinition.FilterExpression> filterExpressions = new ArrayList<>();
 
     ExpressionFactory<String> factory = new ExpressionFactory<String>() {
@@ -68,9 +70,9 @@ public class DeduplicateAggregationDefinitionTest {
       ageExpression, DeduplicateAggregationDefinition.FilterFunction.MIN));
 
     dedupExpressions.add(factory.compile("firstName"));
-    selectExpressions.add(factory.compile("employeeId"));
-    selectExpressions.add(factory.compile("firstName"));
-    selectExpressions.add(factory.compile("lastName"));
+    selectExpressions.put("employeeId", factory.compile("employeeId"));
+    selectExpressions.put("firstName", factory.compile("firstName"));
+    selectExpressions.put("lastName", factory.compile("lastName"));
 
     DeduplicateAggregationDefinition definition = DeduplicateAggregationDefinition.builder()
       .dedupOn(dedupExpressions)
