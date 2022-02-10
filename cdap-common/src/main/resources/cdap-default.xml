@@ -4913,4 +4913,21 @@
       The maximum number of records that can be set in preview configuration.
     </description>
   </property>
+
+  <!-- Service App Fabric Health Check Service Configuration -->
+  <property>
+    <name>appfabric.healthcheck.service.bind.address</name>
+    <value>0.0.0.0</value>
+    <description>
+      App Fabric Health Check HTTP service bind address
+    </description>
+  </property>
+
+  <property>
+    <name>appfabric.healthcheck.service.bind.port</name>
+    <value>0</value>
+    <description>
+      App Fabric Health Check HTTP service bind port; if 0, binds to a random port
+    </description>
+  </property>
 </configuration>

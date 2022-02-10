@@ -35,6 +35,7 @@ import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
+import io.cdap.cdap.common.service.HealthCheckService;
 import io.cdap.cdap.common.service.RetryOnStartFailureService;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
@@ -67,6 +68,8 @@ import io.cdap.cdap.security.store.SecureStoreService;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.zookeeper.ZKClientService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
@@ -77,6 +80,8 @@ import javax.annotation.Nullable;
  * The main class to run app-fabric and other supporting services.
  */
 public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(AppFabricServiceMain.class);
 
   /**
    * Main entry point
@@ -136,12 +141,17 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
     if (SecurityUtil.isInternalAuthEnabled(cConf)) {
       services.add(injector.getInstance(TokenManager.class));
     }
-
     closeableResources.add(injector.getInstance(AccessControllerInstantiator.class));
     services.add(injector.getInstance(OperationalStatsService.class));
     services.add(injector.getInstance(SecureStoreService.class));
     services.add(injector.getInstance(DatasetOpExecutorService.class));
     services.add(injector.getInstance(ServiceStore.class));
+
+    String host = cConf.get(Constants.AppFabricHealthCheck.SERVICE_BIND_ADDRESS);
+    int port = cConf.getInt(Constants.AppFabricHealthCheck.SERVICE_BIND_PORT);
+    HealthCheckService healthCheckService = injector.getInstance(HealthCheckService.class);
+    healthCheckService.initiate(host, port, Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE);
+    services.add(healthCheckService);
     Binding<ZKClientService> zkBinding = injector.getExistingBinding(Key.get(ZKClientService.class));
     if (zkBinding != null) {
       services.add(zkBinding.getProvider().get());
@@ -172,5 +182,4 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
                                      Constants.Logging.COMPONENT_NAME,
                                      Constants.Service.APP_FABRIC_HTTP);
   }
-
 }

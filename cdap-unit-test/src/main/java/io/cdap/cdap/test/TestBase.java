@@ -66,11 +66,13 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.HealthCheckModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.common.service.HealthCheckService;
 import io.cdap.cdap.common.test.TestRunner;
 import io.cdap.cdap.common.twill.NoopTwillRunnerService;
 import io.cdap.cdap.common.utils.OSDetector;
@@ -229,6 +231,7 @@ public class TestBase {
   private static AppFabricServer appFabricServer;
   private static SupportBundleInternalService supportBundleInternalService;
   private static PreferencesService preferencesService;
+  private static HealthCheckService appFabricHealthCheckService;
 
   // This list is to record ApplicationManager create inside @Test method
   private static final List<ApplicationManager> applicationManagers = new ArrayList<>();
@@ -281,6 +284,7 @@ public class TestBase {
       new LocalLocationModule(),
       new InMemoryDiscoveryModule(),
       new AppFabricServiceRuntimeModule(cConf).getInMemoryModules(),
+      new HealthCheckModule(),
       new MonitorHandlerModule(false),
       new AuthenticationContextModules().getMasterModule(),
       new AuthorizationModule(),
@@ -415,6 +419,12 @@ public class TestBase {
     }
     supportBundleInternalService = injector.getInstance(SupportBundleInternalService.class);
     supportBundleInternalService.startAndWait();
+
+    String host = cConf.get(Constants.AppFabricHealthCheck.SERVICE_BIND_ADDRESS);
+    int port = cConf.getInt(Constants.AppFabricHealthCheck.SERVICE_BIND_PORT);
+    appFabricHealthCheckService = injector.getInstance(HealthCheckService.class);
+    appFabricHealthCheckService.initiate(host, port, Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE);
+    appFabricHealthCheckService.startAndWait();
   }
 
   /**
@@ -544,6 +554,7 @@ public class TestBase {
     cConf.set(Constants.Metadata.SERVICE_BIND_ADDRESS, localhost);
     cConf.set(Constants.Preview.ADDRESS, localhost);
     cConf.set(Constants.SupportBundle.SERVICE_BIND_ADDRESS, localhost);
+    cConf.set(Constants.AppFabricHealthCheck.SERVICE_BIND_ADDRESS, localhost);
 
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
@@ -627,6 +638,7 @@ public class TestBase {
     }
     appFabricServer.stopAndWait();
     supportBundleInternalService.stopAndWait();
+    appFabricHealthCheckService.stopAndWait();
   }
 
   protected MetricsManager getMetricsManager() {

@@ -53,6 +53,8 @@ public final class RouterPathLookup extends AbstractHttpHandler {
   public static final RouteDestination RUNTIME = new RouteDestination(Constants.Service.RUNTIME);
   public static final RouteDestination SUPPORT_BUNDLE_SERVICE =
     new RouteDestination(Constants.Service.SUPPORT_BUNDLE_SERVICE);
+  public static final RouteDestination APP_FABRIC_HEALTH_CHECK_SERVICE =
+    new RouteDestination(Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE);
   public static final RouteDestination DONT_ROUTE = new RouteDestination(Constants.Router.DONT_ROUTE_SERVICE);
 
   /**
@@ -177,6 +179,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
         case Constants.Service.MESSAGING_SERVICE: return MESSAGING;
         case Constants.Service.RUNTIME: return RUNTIME;
         case Constants.Service.SUPPORT_BUNDLE_SERVICE: return SUPPORT_BUNDLE_SERVICE;
+        case Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE: return APP_FABRIC_HEALTH_CHECK_SERVICE;
         default: return null;
       }
     } else if (uriParts.length == 7 && uriParts[3].equals("data") && uriParts[4].equals("datasets") &&
@@ -196,6 +199,9 @@ public final class RouterPathLookup extends AbstractHttpHandler {
     } else if (beginsWith(uriParts, "v3", "support", "bundle")) {
       //Support Bundle Handler Path /v3/support/bundle
       return SUPPORT_BUNDLE_SERVICE;
+    } else if (beginsWith(uriParts, "v3", "appfabric", "health")) {
+      //Support Bundle Handler Path /v3/support/bundle
+      return APP_FABRIC_HEALTH_CHECK_SERVICE;
     } else if ((uriParts.length == 3) && uriParts[1].equals("metadata-internals")) {
       // we don't want to expose endpoints for direct metadata mutation from CDAP master
       // /v3/metadata-internals/{mutation-type}

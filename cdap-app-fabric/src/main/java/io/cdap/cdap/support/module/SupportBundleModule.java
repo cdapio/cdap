@@ -20,6 +20,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import io.cdap.cdap.common.conf.Constants.SupportBundle;
+import io.cdap.cdap.support.task.factory.SupportBundleK8sHealthCheckTaskFactory;
 import io.cdap.cdap.support.task.factory.SupportBundlePipelineInfoTaskFactory;
 import io.cdap.cdap.support.task.factory.SupportBundleSystemLogTaskFactory;
 import io.cdap.cdap.support.task.factory.SupportBundleTaskFactory;
@@ -35,5 +36,6 @@ public class SupportBundleModule extends AbstractModule {
       binder(), SupportBundleTaskFactory.class, Names.named(SupportBundle.TASK_FACTORY));
     supportBundleTaskFactoryMultibinder.addBinding().to(SupportBundlePipelineInfoTaskFactory.class);
     supportBundleTaskFactoryMultibinder.addBinding().to(SupportBundleSystemLogTaskFactory.class);
+    supportBundleTaskFactoryMultibinder.addBinding().to(SupportBundleK8sHealthCheckTaskFactory.class);
   }
 }
