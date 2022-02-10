@@ -41,7 +41,7 @@ public final class WorkflowProgramInfo implements WorkflowInfo, Serializable {
   private final String workflowRunId;
   private final String programNameInWorkflow;
   private final BasicWorkflowToken workflowToken;
-  private boolean consolidateFieldOperations;
+  private final boolean consolidateFieldOperations;
 
   /**
    * Optionally creates a {@link WorkflowProgramInfo} from the given arguments. If the arguments don't contain

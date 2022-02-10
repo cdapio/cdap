@@ -839,10 +839,16 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
         long newValue = persistedValue + ((IncrementValue) val).getValue();
         persisted.put(key, Bytes.toBytes(newValue));
       } else if (val instanceof PutValue) {
-        // overwrite the current
-        // NOTE: we want to copy value's byte array because it may be leaked to table's client and we don't want client
-        // to affect the buffer by changing it in place
-        persisted.put(key, copy(((PutValue) val).getValue()));
+        byte[] value = unwrapDeleteIfNeeded(((PutValue) val).getValue());
+        // If the value is null, it is a deletion marker.
+        if (value == null) {
+          persisted.remove(key);
+        } else {
+          // overwrite the current
+          // NOTE: we want to copy value's byte array because it may be leaked to table's client and
+          // we don't want client to affect the buffer by changing it in place
+          persisted.put(key, copy(value));
+        }
       }
       // unknown type?!
     }
@@ -1016,38 +1022,45 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
         return null;
       }
       reportRead(1);
-      int order;
-      if (currentKey == null) {
-        // exhausted buffer is the same as persisted scan row coming first
-        order = 1;
-      } else if (currentRow == null) {
-        // exhausted persisted scanner is the same as buffer row coming first
-        order = -1;
-      } else {
-        order = Bytes.compareTo(currentKey, currentRow.getRow());
+      Row result = null;
+      while (result == null && (currentKey != null || currentRow != null)) {
+        int order;
+        if (currentKey == null) {
+          // exhausted buffer is the same as persisted scan row coming first
+          order = 1;
+        } else if (currentRow == null) {
+          // exhausted persisted scanner is the same as buffer row coming first
+          order = -1;
+        } else {
+          order = Bytes.compareTo(currentKey, currentRow.getRow());
+        }
+
+        if (order > 0) {
+          // persisted row comes first or buffer is empty
+          result = currentRow;
+          currentRow = persistedScanner.next();
+        } else {
+          Map<byte[], byte[]> columns;
+          if (order < 0) {
+            // buffer row comes first or persisted scanner is empty
+            columns = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+          } else {
+            // if currentKey and currentRow are equal, load columns from persisted storage and advance.
+            columns = currentRow.getColumns();
+            currentRow = persistedScanner.next();
+          }
+
+          mergeToPersisted(columns, getFromBuffer(buffer, currentKey), null);
+
+          // If there is no column values available after merging, it is the same as no result for the given row.
+          // This is because we use null to represent delete marker.
+          if (!columns.isEmpty()) {
+            result = new Result(copy(currentKey), columns);
+          }
+          currentKey = keyIter.hasNext() ? keyIter.next() : null;
+        }
       }
 
-      Row result;
-      if (order > 0) {
-        // persisted row comes first or buffer is empty
-        result = currentRow;
-        currentRow = persistedScanner.next();
-      } else if (order < 0) {
-        // buffer row comes first or persisted scanner is empty
-        Map<byte[], byte[]> persistedRow = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-        mergeToPersisted(persistedRow, getFromBuffer(buffer, currentKey), null);
-        result = new Result(copy(currentKey), persistedRow);
-
-        currentKey = keyIter.hasNext() ? keyIter.next() : null;
-      } else {
-        // if currentKey and currentRow are equal, merge and advance both
-        Map<byte[], byte[]> persisted = currentRow.getColumns();
-        mergeToPersisted(persisted, getFromBuffer(buffer, currentKey), null);
-        result = new Result(currentRow.getRow(), persisted);
-
-        currentRow = persistedScanner.next();
-        currentKey = keyIter.hasNext() ? keyIter.next() : null;
-      }
       return result;
     }
 
