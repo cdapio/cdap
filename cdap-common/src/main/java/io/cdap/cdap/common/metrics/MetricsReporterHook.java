@@ -24,6 +24,7 @@ import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.HttpHeaderNames;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.http.AbstractHandlerHook;
 import io.cdap.http.HttpResponder;
@@ -71,7 +72,9 @@ public class MetricsReporterHook extends AbstractHandlerHook {
     try {
       MetricsContext collector = collectorCache.get(createContext(handlerInfo));
       collector.increment("request.received", 1);
-      request.headers().add(HttpHeaderNames.CDAP_REQ_TIMESTAMP_HDR, System.nanoTime());
+      if (Feature.API_RESPONSE_TIMES.isEnabled(null)) {
+        request.headers().add(HttpHeaderNames.CDAP_REQ_TIMESTAMP_HDR, System.nanoTime());
+      }
     } catch (Throwable e) {
       LOG.error("Got exception while getting collector", e);
     }
