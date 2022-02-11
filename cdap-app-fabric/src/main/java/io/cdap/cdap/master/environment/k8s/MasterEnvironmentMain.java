@@ -135,9 +135,9 @@ public class MasterEnvironmentMain {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
           if (!completed.get()) {
             runnable.stop();
-            Optional.ofNullable(tokenManager).ifPresent(TokenManager::stopAndWait);
             Uninterruptibles.awaitUninterruptibly(shutdownLatch, 30, TimeUnit.SECONDS);
           }
+          Optional.ofNullable(tokenManager).ifPresent(TokenManager::stopAndWait);
         }));
         runnable.run(runnableArgs);
         completed.set(true);
