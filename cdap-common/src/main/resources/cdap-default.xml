@@ -2777,7 +2777,7 @@
 
   <property>
     <name>metrics.processor.queue.size</name>
-    <value>20000</value>
+    <value>1000</value>
     <description>
       Maximum size of a queue where the metrics processor temporarily stores
       newly-fetched metrics in-memory before persisting them
