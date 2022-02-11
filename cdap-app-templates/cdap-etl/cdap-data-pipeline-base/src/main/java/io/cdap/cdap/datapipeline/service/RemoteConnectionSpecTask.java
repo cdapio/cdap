@@ -61,7 +61,9 @@ public class RemoteConnectionSpecTask extends RemoteConnectionTaskBase {
         .setConnection(connection.getName())
         .setProperties(specRequest.getProperties()).build();
       ConnectorSpec spec = connector.generateSpec(connectorContext, connectorSpecRequest);
-      return GSON.toJson(ConnectionUtils.getConnectorDetail(pluginSelector.getSelectedArtifact(), spec));
+      ConnectorSpec newSpec = ConnectionUtils.filterSpecWithPluginNameAndType(spec, specRequest.getPluginName(),
+                                                                              specRequest.getPluginType());
+      return GSON.toJson(ConnectionUtils.getConnectorDetail(pluginSelector.getSelectedArtifact(), newSpec));
     }
   }
 }

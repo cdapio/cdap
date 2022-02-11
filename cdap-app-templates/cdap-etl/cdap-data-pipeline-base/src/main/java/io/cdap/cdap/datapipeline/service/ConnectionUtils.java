@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.datapipeline.service;
 
+import com.google.common.base.Strings;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.macro.MacroEvaluator;
@@ -30,6 +31,7 @@ import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.cdap.etl.api.connector.ConnectorContext;
 import io.cdap.cdap.etl.api.connector.ConnectorSpec;
 import io.cdap.cdap.etl.api.connector.DirectConnector;
+import io.cdap.cdap.etl.api.connector.PluginSpec;
 import io.cdap.cdap.etl.api.connector.SampleRequest;
 import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 import io.cdap.cdap.etl.proto.connection.ConnectionBadRequestException;
@@ -45,6 +47,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 public final class ConnectionUtils {
 
@@ -120,5 +123,35 @@ public final class ConnectionUtils {
   public static ConnectorContext getConnectorContext(ServicePluginConfigurer pluginConfigurer) {
     SimpleFailureCollector failureCollector = new SimpleFailureCollector();
     return new DefaultConnectorContext(failureCollector, pluginConfigurer);
+  }
+
+  /**
+   * Returns {@link ConnectorSpec}
+   *
+   * @return filtered {@link ConnectorSpec} on the basis of plugin name and type
+   */
+  public static ConnectorSpec filterSpecWithPluginNameAndType(ConnectorSpec spec, @Nullable String pluginName,
+                                                              @Nullable String pluginType) {
+    if (Strings.isNullOrEmpty(pluginName) && Strings.isNullOrEmpty(pluginType)) {
+      return spec;
+    }
+    ConnectorSpec.Builder specBuilder = ConnectorSpec.builder();
+    specBuilder.setSchema(spec.getSchema());
+    for (PluginSpec pluginSpec : spec.getRelatedPlugins()) {
+      if (Strings.isNullOrEmpty(pluginName) && pluginType.equalsIgnoreCase(pluginSpec.getType())) {
+        specBuilder.addRelatedPlugin(pluginSpec);
+        continue;
+      }
+
+      if (Strings.isNullOrEmpty(pluginType) && pluginName.equalsIgnoreCase(pluginSpec.getName())) {
+        specBuilder.addRelatedPlugin(pluginSpec);
+        continue;
+      }
+
+      if (pluginType.equalsIgnoreCase(pluginSpec.getType()) && pluginName.equalsIgnoreCase(pluginSpec.getName())) {
+        specBuilder.addRelatedPlugin(pluginSpec);
+      }
+    }
+    return specBuilder.build();
   }
 }
