@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.common.service;
+package io.cdap.cdap.internal.app.services;
 
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
