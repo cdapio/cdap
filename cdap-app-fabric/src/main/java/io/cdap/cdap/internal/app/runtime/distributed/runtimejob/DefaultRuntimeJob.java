@@ -265,7 +265,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
       try (Program program = createProgram(cConf, programRunner, programDescriptor, programOpts)) {
         ProgramController controller = programRunner.run(program, programOpts);
         controllerFuture.complete(controller);
-        runtimeClientService.onProgramStopRequested(() -> controller.stop());
+        runtimeClientService.onProgramStopRequested(controller::stop);
 
         controller.addListener(new AbstractListener() {
           @Override
