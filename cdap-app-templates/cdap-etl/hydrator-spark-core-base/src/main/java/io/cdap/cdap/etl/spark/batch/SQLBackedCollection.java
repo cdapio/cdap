@@ -16,9 +16,11 @@
 
 package io.cdap.cdap.etl.spark.batch;
 
+import io.cdap.cdap.etl.common.PhaseSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.SparkCollection;
-import org.apache.spark.api.java.function.PairFlatMapFunction;
+
+import java.util.Set;
 
 /**
  * Interface to denote collections where the underlying records are stored in a SQL engine.
@@ -33,4 +35,13 @@ public interface SQLBackedCollection<T> extends SparkCollection<T> {
    * @return boolean specifying if this attempt was successful or not.
    */
   boolean tryStoreDirect(StageSpec stageSpec);
+
+  /**
+   * Method used to store results from the SQL engine into a multi output sink implemented in the same engine without
+   * having to read records into Spark.
+   * @param phaseSpec phase specification
+   * @param sinks Sinks in this group
+   * @return set of stages which have been stored directly
+   */
+  Set<String> tryMultiStoreDirect(PhaseSpec phaseSpec, Set<String> sinks);
 }
