@@ -61,6 +61,9 @@ public class ConsoleSettingsHttpHandler extends AbstractHttpHandler {
   @Path("/")
   @GET
   public void get(HttpRequest request, HttpResponder responder) throws Exception {
+    // The current behavior that only the creator should see the corresponding plugin template when RBAC is enabled is
+    // correct. But the customers has been used to the old behavior that plugin template is exposed to all users in the
+    // same namespace when RBAC is enabled. Revert the behavior to meet customers' requests.
     String userId = "";
     Config userConfig;
     try {
