@@ -28,7 +28,7 @@ import java.util.Map;
  * By default, features default to enabled after they are introduced, and disabled before they were introduced
  */
 public enum Feature {
-  ;
+  API_RESPONSE_TIMES("6.6.0");
 
   private final PlatformInfo.Version versionIntroduced;
   private final boolean defaultAfterIntroduction;

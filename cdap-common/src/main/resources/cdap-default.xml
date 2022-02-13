@@ -4929,4 +4929,12 @@
       The default Root URL for Dataproc.
     </description>
   </property>
+
+  <property>
+    <name>feature.api.response.times.enabled</name>
+    <value>true</value>
+    <description>
+      Enable publishing of API response times as a distribution metric.
+    </description>
+  </property>
 </configuration>
