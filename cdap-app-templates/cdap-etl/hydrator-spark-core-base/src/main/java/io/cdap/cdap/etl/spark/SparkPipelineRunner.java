@@ -61,6 +61,7 @@ import io.cdap.cdap.etl.common.PipelinePhase;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.Schemas;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
+import io.cdap.cdap.etl.common.plugin.PluginWrapper;
 import io.cdap.cdap.etl.planner.CombinerDag;
 import io.cdap.cdap.etl.planner.Dag;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
@@ -454,6 +455,11 @@ public abstract class SparkPipelineRunner {
     Map<String, SparkCollection<Object>> inputDataCollections, Object plugin) {
 
     Optional<EmittedRecords.Builder> declarativeBuilder = Optional.empty();
+
+    // If this is a wrapped plugin instance, get the underlying implementation.
+    while (plugin instanceof PluginWrapper) {
+      plugin = ((PluginWrapper<?>) plugin).getWrapped();
+    }
 
     if (plugin instanceof RelationalTransform) {
       RelationalTransform transform = (RelationalTransform) plugin;

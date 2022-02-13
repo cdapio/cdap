@@ -26,7 +26,7 @@ import java.util.concurrent.Callable;
  * Wrapper around {@link PostAction} that makes sure logging, classloading, and other pipeline capabilities
  * are setup correctly.
  */
-public class WrappedPostAction extends PostAction {
+public class WrappedPostAction extends PostAction implements PluginWrapper<PostAction> {
   private final PostAction postAction;
   private final Caller caller;
 
@@ -49,5 +49,10 @@ public class WrappedPostAction extends PostAction {
       postAction.run(context);
       return null;
     });
+  }
+
+  @Override
+  public PostAction getWrapped() {
+    return postAction;
   }
 }

@@ -31,7 +31,7 @@ import java.util.concurrent.Callable;
  * @param <IN> type of input
  * @param <OUT> type of output
  */
-public class WrappedTransform<IN, OUT> extends Transform<IN, OUT> {
+public class WrappedTransform<IN, OUT> extends Transform<IN, OUT> implements PluginWrapper<Transform<IN, OUT>> {
   private final Transform<IN, OUT> transform;
   private final Caller caller;
   private final OperationTimer operationTimer;
@@ -93,5 +93,10 @@ public class WrappedTransform<IN, OUT> extends Transform<IN, OUT> {
     } finally {
       operationTimer.reset();
     }
+  }
+
+  @Override
+  public Transform<IN, OUT> getWrapped() {
+    return transform;
   }
 }
