@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.api.relational;
 
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.TransformContext;
 
 import java.util.Set;
@@ -43,6 +44,19 @@ public interface RelationalTranformContext {
    * @return set of all input relation names
    */
   Set<String> getInputRelationNames();
+
+  /**
+   * Gets schema for input stage
+   * @param inputStage input name
+   * @return relation corresponding to the given input
+   */
+  Schema getInputSchema(String inputStage);
+
+  /**
+   * Gets the output schema for this transform context
+   * @return output schema
+   */
+  Schema getOutputSchema();
 
   /**
    * sets the primary output relation for the transform
