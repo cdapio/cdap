@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.spark.batch;
 
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.relational.Engine;
 import io.cdap.cdap.etl.api.relational.Relation;
 import io.cdap.cdap.etl.api.relational.RelationalTranformContext;
@@ -30,12 +31,19 @@ import java.util.Set;
 public class BasicRelationalTransformContext implements RelationalTranformContext {
   private final Engine engine;
   private final Map<String, Relation> inputMap;
+  private final Map<String, Schema> inputSchemas;
+  private final Schema outputSchema;
   private Relation outputRelation;
 
 
-  public BasicRelationalTransformContext(Engine engine, Map<String, Relation> inputMap) {
+  public BasicRelationalTransformContext(Engine engine,
+                                         Map<String, Relation> inputMap,
+                                         Map<String, Schema> inputSchemas,
+                                         Schema outputSchema) {
     this.engine = engine;
     this.inputMap = inputMap;
+    this.inputSchemas = inputSchemas;
+    this.outputSchema = outputSchema;
   }
 
   @Override
@@ -51,6 +59,16 @@ public class BasicRelationalTransformContext implements RelationalTranformContex
   @Override
   public Set<String> getInputRelationNames() {
     return Collections.unmodifiableSet(inputMap.keySet());
+  }
+
+  @Override
+  public Schema getInputSchema(String inputStage) {
+    return inputSchemas.get(inputStage);
+  }
+
+  @Override
+  public Schema getOutputSchema() {
+    return outputSchema;
   }
 
   @Override

@@ -678,15 +678,14 @@ public class BatchSQLEngineAdapter implements Closeable {
    * @return resulting collection or empty optional if tranform can't be done with this engine
    */
   public Optional<SQLEngineJob<SQLDataset>> tryRelationalTransform(StageSpec stageSpec,
-                                                          RelationalTransform transform,
-                                                          Map<String, SparkCollection<Object>> input) {
+                                                                   RelationalTransform transform,
+                                                                   Map<String, SparkCollection<Object>> input) {
     Map<String, Relation> inputRelations = input.entrySet().stream().collect(Collectors.toMap(
       Map.Entry::getKey,
       e -> sqlEngine.getRelation(new SQLRelationDefinition(e.getKey(), stageSpec.getInputSchemas().get(e.getKey())))
     ));
     BasicRelationalTransformContext pluginContext = new BasicRelationalTransformContext(
-      getSQLRelationalEngine(),
-      inputRelations);
+      getSQLRelationalEngine(), inputRelations, stageSpec.getInputSchemas(), stageSpec.getOutputSchema());
     if (!transform.transform(pluginContext)) {
       //Plugin was not able to do relational tranform with this engine
       return Optional.empty();
