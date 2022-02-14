@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.cdap.cdap.internal.app.feature;
+package io.cdap.cdap.common.feature;
 
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.common.conf.CConfiguration;
