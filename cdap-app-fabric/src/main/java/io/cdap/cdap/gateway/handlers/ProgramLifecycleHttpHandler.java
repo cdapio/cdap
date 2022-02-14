@@ -222,7 +222,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       throw new NotFoundException(programId);
     }
     RunRecordDetail runRecordMeta = store.getRun(run);
-    if (runRecordMeta == null) {
+    if (runRecordMeta == null || isTetheredRunRecord(runRecordMeta)) {
       throw new NotFoundException(run);
     }
 
@@ -434,7 +434,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     ProgramRunStatus runStatus = (status == null) ? ProgramRunStatus.ALL :
       ProgramRunStatus.valueOf(status.toUpperCase());
 
-    List<RunRecord> records = lifecycleService.getRunRecords(program, runStatus, start, end, resultLimit);
+    List<RunRecord> records = lifecycleService.getRunRecords(program, runStatus, start, end, resultLimit)
+      .stream().filter(record -> !isTetheredRunRecord(record)).collect(Collectors.toList());
 
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(records));
   }
@@ -468,7 +469,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     ProgramType programType = getProgramType(type);
     ProgramId progId = new ApplicationId(namespaceId, appName, appVersion).program(programType, programName);
     RunRecordDetail runRecordMeta = store.getRun(progId.run(runid));
-    if (runRecordMeta != null) {
+    if (runRecordMeta != null && !isTetheredRunRecord(runRecordMeta)) {
       RunRecord runRecord = RunRecord.builder(runRecordMeta).build();
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(runRecord));
       return;
@@ -1994,5 +1995,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (Exception e) {
       throw new BadRequestException(String.format("Invalid program type '%s'", programType), e);
     }
+  }
+
+  /**
+   * Used to filter out RunRecords initiated by a tethered instance
+   */
+  private boolean isTetheredRunRecord(RunRecord runRecord) {
+    return runRecord.getPeerName() != null;
   }
 }

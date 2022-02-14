@@ -70,9 +70,10 @@ public class RunRecordDetail extends RunRecord {
                             @Nullable Long terminateTs, ProgramRunStatus status,
                             @Nullable Map<String, String> properties, @Nullable Map<String, String> systemArgs,
                             @Nullable String twillRunId, ProgramRunCluster cluster, ProfileId profileId,
-                            byte[] sourceId, @Nullable ArtifactId artifactId, @Nullable String principal) {
+                            @Nullable String peerName, byte[] sourceId, @Nullable ArtifactId artifactId,
+                            @Nullable String principal) {
     super(programRunId.getRun(), startTs, runTs, stopTs, suspendTs, resumeTs, stoppingTs, terminateTs,
-          status, properties, cluster, profileId);
+          status, properties, cluster, profileId, peerName);
     this.programRunId = programRunId;
     this.systemArgs = systemArgs;
     this.twillRunId = twillRunId;
@@ -152,16 +153,17 @@ public class RunRecordDetail extends RunRecord {
       Objects.equal(this.getTerminateTs(), that.getTerminateTs()) &&
       Objects.equal(this.getStatus(), that.getStatus()) &&
       Objects.equal(this.getProperties(), that.getProperties()) &&
+      Objects.equal(this.getPeerName(), that.getPeerName()) &&
       Objects.equal(this.getTwillRunId(), that.getTwillRunId()) &&
       Arrays.equals(this.getSourceId(), that.getSourceId()) &&
       Objects.equal(this.getArtifactId(), that.getArtifactId()) &&
-      Objects.equal(this.principal, that.principal);
+      Objects.equal(this.getPrincipal(), that.getPrincipal());
   }
 
   @Override
   public int hashCode() {
     return Objects.hashCode(getProgramRunId(), getStartTs(), getRunTs(), getStopTs(), getSuspendTs(), getResumeTs(),
-                            getStoppingTs(), getTerminateTs(), getStatus(), getProperties(),
+                            getStoppingTs(), getTerminateTs(), getStatus(), getProperties(), getPeerName(),
                             getTwillRunId(), Arrays.hashCode(getSourceId()), getArtifactId(), getPrincipal());
   }
 
@@ -182,6 +184,7 @@ public class RunRecordDetail extends RunRecord {
       .add("properties", getProperties())
       .add("cluster", getCluster())
       .add("profile", getProfileId())
+      .add("peerName", getPeerName())
       .add("sourceId", getSourceId() == null ? null : Bytes.toHexString(getSourceId()))
       .add("artifactId", getArtifactId())
       .add("principal", getPrincipal())
@@ -287,7 +290,7 @@ public class RunRecordDetail extends RunRecord {
       // we don't want to throw exception while processing them
       return new RunRecordDetail(programRunId, startTs, runTs, stopTs, suspendTs, resumeTs, stoppingTs,
                                  terminateTs, status, properties, systemArgs, twillRunId, cluster,
-                                 profileId, sourceId, artifactId, principal);
+                                 profileId, peerName, sourceId, artifactId, principal);
     }
   }
 }

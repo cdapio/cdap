@@ -148,4 +148,9 @@ public final class ProgramOptionConstants {
    * spec
    */
   public static final String APPLICATION_CLASS = "applicationClass";
+
+  /**
+   * Option for name of tethered peer, if any, that has initiated the program run
+   */
+  public static final String PEER_NAME = "peer";
 }
