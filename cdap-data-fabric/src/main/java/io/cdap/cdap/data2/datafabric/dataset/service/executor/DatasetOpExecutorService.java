@@ -67,7 +67,7 @@ public class DatasetOpExecutorService extends AbstractIdleService {
       .setHttpHandlers(handlers)
       .setHost(cConf.get(Constants.Dataset.Executor.ADDRESS))
       .setPort(cConf.getInt(Constants.Dataset.Executor.PORT))
-      .setHandlerHooks(Collections.singleton(new MetricsReporterHook(metricsCollectionService,
+      .setHandlerHooks(Collections.singleton(new MetricsReporterHook(cConf, metricsCollectionService,
                                                                      Constants.Service.DATASET_EXECUTOR)))
       .setWorkerThreadPoolSize(workerThreads)
       .setExecThreadPoolSize(execThreads)

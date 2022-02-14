@@ -66,7 +66,7 @@ public class MetricsQueryService extends AbstractIdleService {
 
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.METRICS)
       .setHttpHandlers(handlers)
-      .setHandlerHooks(Collections.singleton(new MetricsReporterHook(metricsCollectionService,
+      .setHandlerHooks(Collections.singleton(new MetricsReporterHook(cConf, metricsCollectionService,
                                                                      Constants.Service.METRICS)))
       .setHost(address)
       .setPort(cConf.getInt(Constants.Metrics.PORT))

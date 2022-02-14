@@ -58,7 +58,7 @@ public class TransactionHttpService extends AbstractIdleService {
     String address = cConf.get(Constants.Transaction.Container.ADDRESS);
 
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TRANSACTION_HTTP)
-      .setHandlerHooks(Collections.singleton(new MetricsReporterHook(metricsCollectionService,
+      .setHandlerHooks(Collections.singleton(new MetricsReporterHook(cConf, metricsCollectionService,
                                                                      Constants.Service.TRANSACTION_HTTP)))
       .setHttpHandlers(handlers)
       .setHost(address);

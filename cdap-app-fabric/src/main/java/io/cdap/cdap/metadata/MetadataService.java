@@ -60,7 +60,7 @@ public class MetadataService extends AbstractIdleService {
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.METADATA_SERVICE)
       .setHttpHandlers(handlers)
       .setExceptionHandler(new HttpExceptionHandler())
-      .setHandlerHooks(Collections.singleton(new MetricsReporterHook(metricsCollectionService,
+      .setHandlerHooks(Collections.singleton(new MetricsReporterHook(cConf, metricsCollectionService,
                                                                      Constants.Service.METADATA_SERVICE)))
       .setHost(cConf.get(Constants.Metadata.SERVICE_BIND_ADDRESS))
       .setPort(cConf.getInt(Constants.Metadata.SERVICE_BIND_PORT))

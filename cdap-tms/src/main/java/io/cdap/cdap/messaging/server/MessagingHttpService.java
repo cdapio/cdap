@@ -67,7 +67,7 @@ public class MessagingHttpService extends AbstractIdleService {
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.MESSAGING_SERVICE)
       .setHost(cConf.get(Constants.MessagingSystem.HTTP_SERVER_BIND_ADDRESS))
       .setPort(cConf.getInt(Constants.MessagingSystem.HTTP_SERVER_BIND_PORT))
-      .setHandlerHooks(Collections.singleton(new MetricsReporterHook(metricsCollectionService,
+      .setHandlerHooks(Collections.singleton(new MetricsReporterHook(cConf, metricsCollectionService,
                                                                      Constants.Service.MESSAGING_SERVICE)))
       .setWorkerThreadPoolSize(cConf.getInt(Constants.MessagingSystem.HTTP_SERVER_WORKER_THREADS))
       .setExecThreadPoolSize(cConf.getInt(Constants.MessagingSystem.HTTP_SERVER_EXECUTOR_THREADS))

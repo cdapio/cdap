@@ -70,7 +70,7 @@ public class PreviewHttpServer extends AbstractIdleService {
       .setBossThreadPoolSize(cConf.getInt(Constants.Preview.BOSS_THREADS))
       .setWorkerThreadPoolSize(cConf.getInt(Constants.Preview.WORKER_THREADS))
       .setHandlerHooks(Collections.singletonList(
-        new MetricsReporterHook(metricsCollectionService, Constants.Service.PREVIEW_HTTP)));
+        new MetricsReporterHook(cConf, metricsCollectionService, Constants.Service.PREVIEW_HTTP)));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);

@@ -60,7 +60,7 @@ public class RuntimeServer extends AbstractIdleService {
                 DiscoveryService discoveryService, MetricsCollectionService metricsCollectionService) {
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.RUNTIME)
       .setHttpHandlers(handlers)
-      .setHandlerHooks(Collections.singleton(new MetricsReporterHook(metricsCollectionService,
+      .setHandlerHooks(Collections.singleton(new MetricsReporterHook(cConf, metricsCollectionService,
                                                                      Constants.Service.RUNTIME)))
       .setChannelPipelineModifier(new ChannelPipelineModifier() {
         @Override

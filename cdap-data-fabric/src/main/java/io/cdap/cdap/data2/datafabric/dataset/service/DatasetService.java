@@ -107,7 +107,7 @@ public class DatasetService extends AbstractService {
 
     this.httpService = builder
       .setHttpHandlers(datasetTypeHandler, datasetInstanceHandler)
-      .setHandlerHooks(Collections.singleton(new MetricsReporterHook(metricsCollectionService,
+      .setHandlerHooks(Collections.singleton(new MetricsReporterHook(cConf, metricsCollectionService,
                                                                      Constants.Service.DATASET_MANAGER)))
       .setHost(cConf.get(Constants.Service.MASTER_SERVICES_BIND_ADDRESS))
       .setPort(cConf.getInt(Constants.Dataset.Manager.PORT))

@@ -166,7 +166,7 @@ public class AppFabricServer extends AbstractIdleService {
 
     // Create handler hooks
     List<MetricsReporterHook> handlerHooks = handlerHookNames.stream()
-      .map(name -> new MetricsReporterHook(metricsCollectionService, name))
+      .map(name -> new MetricsReporterHook(cConf, metricsCollectionService, name))
       .collect(Collectors.toList());
 
     // Run http service on random port

@@ -55,7 +55,7 @@ public class LogSaverStatusService extends AbstractIdleService {
     this.discoveryService = discoveryService;
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.LOGSAVER)
       .setHttpHandlers(handlers)
-      .setHandlerHooks(Collections.singleton(new MetricsReporterHook(metricsCollectionService,
+      .setHandlerHooks(Collections.singleton(new MetricsReporterHook(cConf, metricsCollectionService,
                                                                      Constants.Service.LOGSAVER)))
       .setHost(cConf.get(Constants.LogSaver.ADDRESS));
 

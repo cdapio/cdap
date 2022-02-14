@@ -55,7 +55,7 @@ public class LogQueryService extends AbstractIdleService {
     this.discoveryService = discoveryService;
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.LOG_QUERY)
       .setHttpHandlers(handlers)
-      .setHandlerHooks(Collections.singleton(new MetricsReporterHook(metricsCollectionService,
+      .setHandlerHooks(Collections.singleton(new MetricsReporterHook(cConf, metricsCollectionService,
                                                                      Constants.Service.LOG_QUERY)))
       .setHost(cConf.get(Constants.LogQuery.ADDRESS))
       .setPort(cConf.getInt(Constants.LogQuery.PORT));
