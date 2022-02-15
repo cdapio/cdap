@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
  * @param <T> Event detail type
  */
 public interface Event<T> {
+
   /**
    * Returns {@link EventType} for the event
    *

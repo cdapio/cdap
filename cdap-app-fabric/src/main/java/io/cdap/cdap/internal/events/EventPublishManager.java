@@ -20,7 +20,9 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.spi.events.EventWriter;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -28,29 +30,39 @@ import java.util.Set;
  */
 public class EventPublishManager extends AbstractIdleService {
 
-  private boolean publishEnabled;
-  private Set<EventPublisher> eventPublishers;
+  private final boolean publishEnabled;
+  private final Set<EventPublisher> eventPublishers;
+  private final EventWriterProvider eventWriterProvider;
 
   @Inject
-  EventPublishManager(CConfiguration cConf, Set<EventPublisher> eventPublishers) {
+  EventPublishManager(CConfiguration cConf, Set<EventPublisher> eventPublishers,
+                      EventWriterProvider eventWriterProvider) {
     this.publishEnabled = cConf.getBoolean(Constants.Event.PUBLISH_ENABLED);
     this.eventPublishers = eventPublishers;
+    this.eventWriterProvider = eventWriterProvider;
   }
 
   @Override
   protected void startUp() throws Exception {
     if (!publishEnabled) {
-      return;
+      return; // If publish is not enabled not to start
     }
     eventPublishers.forEach(eventPublisher -> {
-      String eventWriterPath = eventPublisher.getEventWriterPath();
-      //TODO - load classes from the path
-
+      // Loading the event writers from provider
+      Map<String, EventWriter> eventWriterMap = this.eventWriterProvider.loadEventWriters();
+      // Initialize the event publisher with all the event writers provided by provider
+      eventPublisher.initialize(eventWriterMap.values());
+      eventPublisher.startPublish();
     });
   }
 
   @Override
   protected void shutDown() throws Exception {
-
+    if (!publishEnabled) {
+      return; // If publish is not enable not to shutdown
+    }
+    eventPublishers.forEach(eventPublisher -> {
+      eventPublisher.stopPublish();
+    });
   }
 }

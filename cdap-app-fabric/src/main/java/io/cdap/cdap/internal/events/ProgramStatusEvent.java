@@ -32,7 +32,8 @@ public class ProgramStatusEvent implements Event<ProgramStatusEventDetails> {
   private final String projectName;
   private final ProgramStatusEventDetails programStatusEventDetails;
 
-  public ProgramStatusEvent(long publishTime, String version, String instanceName, @Nullable String projectName,
+  public ProgramStatusEvent(long publishTime, String version, String instanceName,
+                            @Nullable String projectName,
                             ProgramStatusEventDetails programStatusEventDetails) {
     this.publishTime = publishTime;
     this.version = version;
@@ -69,5 +70,16 @@ public class ProgramStatusEvent implements Event<ProgramStatusEventDetails> {
   @Override
   public ProgramStatusEventDetails getEventDetails() {
     return programStatusEventDetails;
+  }
+
+  @Override
+  public String toString() {
+    return "ProgramStatusEvent{" +
+      "publishTime=" + publishTime +
+      ", version='" + version + '\'' +
+      ", instanceName='" + instanceName + '\'' +
+      ", projectName='" + projectName + '\'' +
+      ", programStatusEventDetails=" + programStatusEventDetails.toString() +
+      '}';
   }
 }

@@ -38,7 +38,8 @@ public class ProgramStatusEventDetails {
   @Nullable
   private final Collection<PluginMetrics> pluginMetrics;
 
-  private ProgramStatusEventDetails(String runID, String programName, String namespace, String status, long eventTime,
+  private ProgramStatusEventDetails(String runID, String programName, String namespace,
+                                    String status, long eventTime,
                                     @Nullable Map<String, String> userArgs, @Nullable Map<String, String> systemArgs,
                                     @Nullable String error,
                                     @Nullable Collection<PluginMetrics> pluginMetrics) {
@@ -53,17 +54,29 @@ public class ProgramStatusEventDetails {
     this.pluginMetrics = pluginMetrics;
   }
 
-  public static Builder getBuilder(String runID, String programName, String namespace, String status, long eventTime) {
+  public static Builder getBuilder(String runID, String programName, String namespace,
+                                   String status, long eventTime) {
     return new Builder(runID, programName, namespace, status, eventTime);
+  }
+
+  @Override
+  public String toString() {
+    return "ProgramStatusEventDetails{" +
+      "runID='" + runID + '\'' +
+      ", programName='" + programName + '\'' +
+      ", namespace='" + namespace + '\'' +
+      ", status='" + status + '\'' +
+      ", eventTime=" + eventTime +
+      '}';
   }
 
   static class Builder {
 
-    private String runID;
-    private String programName;
-    private String namespace;
-    private String status;
-    private long eventTime;
+    private final String runID;
+    private final String programName;
+    private final String namespace;
+    private final String status;
+    private final long eventTime;
     private Map<String, String> userArgs;
     private Map<String, String> systemArgs;
     private String error;
@@ -98,7 +111,8 @@ public class ProgramStatusEventDetails {
     }
 
     public ProgramStatusEventDetails build() {
-      return new ProgramStatusEventDetails(runID, programName, namespace, status, eventTime, userArgs, systemArgs,
+      return new ProgramStatusEventDetails(runID, programName, namespace, status, eventTime,
+                                           userArgs, systemArgs,
                                            error, pluginMetrics);
     }
 
