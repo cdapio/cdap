@@ -174,7 +174,7 @@
     <tez.version>0.8.4</tez.version>
     <tink.version>1.6.0</tink.version>
     <thrift.version>0.9.3</thrift.version>
-    <twill.version>1.0.0-SNAPSHOT</twill.version>
+    <twill.version>1.0.0</twill.version>
     <unboundid.version>2.3.6</unboundid.version>
     <zookeeper.version>3.4.5</zookeeper.version>
     <opentable.version>0.13.1</opentable.version>
