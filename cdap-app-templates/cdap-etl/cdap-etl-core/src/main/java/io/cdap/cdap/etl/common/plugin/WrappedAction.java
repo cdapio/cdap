@@ -26,7 +26,7 @@ import java.util.concurrent.Callable;
  * Wrapper around {@link Action} that makes sure logging, classloading, and other pipeline capabilities
  * are setup correctly.
  */
-public class WrappedAction extends Action {
+public class WrappedAction extends Action implements PluginWrapper<Action> {
   private final Action action;
   private final Caller caller;
 
@@ -49,5 +49,10 @@ public class WrappedAction extends Action {
       action.run(context);
       return null;
     });
+  }
+
+  @Override
+  public Action getWrapped() {
+    return action;
   }
 }

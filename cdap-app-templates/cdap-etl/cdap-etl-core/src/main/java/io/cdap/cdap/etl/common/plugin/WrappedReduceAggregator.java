@@ -35,7 +35,8 @@ import java.util.concurrent.Callable;
  * @param <OUT> output object type
  */
 public class WrappedReduceAggregator<GROUP_KEY, GROUP_VALUE, AGG_VALUE, OUT>
-  extends BatchReducibleAggregator<GROUP_KEY, GROUP_VALUE, AGG_VALUE, OUT> {
+  extends BatchReducibleAggregator<GROUP_KEY, GROUP_VALUE, AGG_VALUE, OUT>
+  implements PluginWrapper<BatchReducibleAggregator<GROUP_KEY, GROUP_VALUE, AGG_VALUE, OUT>> {
   private final BatchReducibleAggregator<GROUP_KEY, GROUP_VALUE, AGG_VALUE, OUT> aggregator;
   private final Caller caller;
   private final OperationTimer operationTimer;
@@ -143,5 +144,10 @@ public class WrappedReduceAggregator<GROUP_KEY, GROUP_VALUE, AGG_VALUE, OUT>
     } finally {
       operationTimer.reset();
     }
+  }
+
+  @Override
+  public BatchReducibleAggregator<GROUP_KEY, GROUP_VALUE, AGG_VALUE, OUT> getWrapped() {
+    return aggregator;
   }
 }
