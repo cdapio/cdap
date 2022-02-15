@@ -113,7 +113,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -142,6 +147,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Key in json paginated applications list response.
    */
   public static final String APP_LIST_PAGINATED_KEY = "applications";
+
+  private static final int UPGRADE_THREAD_NUMBER = 10;
 
   /**
    * Runtime program service for running and managing programs.
@@ -495,7 +502,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Upgrades a lis of existing application to use latest version of application artifact and plugin artifacts.
+   * Upgrades a lis of existing application to use the latest version of application artifact and plugin artifacts.
    *
    * <pre>
    * {@code
@@ -517,36 +524,51 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("namespace-id") String namespaceId,
                                   @QueryParam("artifactScope") Set<String> artifactScopes,
                                   @QueryParam("allowSnapshot") boolean allowSnapshot) throws Exception {
-    // TODO: (CDAP-16910) Improve batch API performance as each application upgrade is an event independent of each
-    //  other.
-
     List<ApplicationId> appIds = decodeAndValidateBatchApplicationRecord(validateNamespace(namespaceId), request);
     Set<ArtifactScope> allowedArtifactScopes = getArtifactScopes(artifactScopes);
     try (ChunkResponder chunkResponder = responder.sendChunkStart(HttpResponseStatus.OK)) {
       ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
       try (JsonWriter jsonWriter = new JsonWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8))) {
         jsonWriter.beginArray();
+        List<Future<?>> futureList = new ArrayList<>();
+        Lock lock = new ReentrantLock();
+        ExecutorService executor = Executors.newFixedThreadPool(UPGRADE_THREAD_NUMBER, Executors.defaultThreadFactory());
         for (ApplicationId appId : appIds) {
-          ApplicationUpdateDetail updateDetail;
-          try {
-            applicationLifecycleService.upgradeApplication(appId, allowedArtifactScopes, allowSnapshot);
-            updateDetail = new ApplicationUpdateDetail(appId);
-          } catch (UnsupportedOperationException e) {
-            String errorMessage = String.format("Application %s does not support upgrade.", appId);
-            updateDetail = new ApplicationUpdateDetail(appId, new NotImplementedException(errorMessage));
-          } catch (InvalidArtifactException | NotFoundException e) {
-            updateDetail = new ApplicationUpdateDetail(appId, e);
-          } catch (Exception e) {
-            updateDetail =
+          Future<?> future = executor.submit(() -> {
+            ApplicationUpdateDetail updateDetail;
+            try {
+              applicationLifecycleService.upgradeApplication(appId, allowedArtifactScopes, allowSnapshot);
+              updateDetail = new ApplicationUpdateDetail(appId);
+            } catch (UnsupportedOperationException e) {
+              String errorMessage = String.format("Application %s does not support upgrade.", appId);
+              updateDetail = new ApplicationUpdateDetail(appId, new NotImplementedException(errorMessage));
+            } catch (InvalidArtifactException | NotFoundException e) {
+              updateDetail = new ApplicationUpdateDetail(appId, e);
+            } catch (Exception e) {
+              updateDetail =
                 new ApplicationUpdateDetail(appId, new ServiceException("Upgrade failed due to internal error.", e,
-                                            HttpResponseStatus.INTERNAL_SERVER_ERROR));
-            LOG.error("Application upgrade failed with exception", e);
-          }
-          GSON.toJson(updateDetail, ApplicationUpdateDetail.class, jsonWriter);
-          jsonWriter.flush();
-          chunkResponder.sendChunk(Unpooled.wrappedBuffer(outputStream.toByteArray()));
-          outputStream.reset();
-          chunkResponder.flush();
+                                                                        HttpResponseStatus.INTERNAL_SERVER_ERROR));
+              LOG.error("Application upgrade failed with exception", e);
+            }
+
+            lock.lock();
+            try {
+              GSON.toJson(updateDetail, ApplicationUpdateDetail.class, jsonWriter);
+              jsonWriter.flush();
+              chunkResponder.sendChunk(Unpooled.wrappedBuffer(outputStream.toByteArray()));
+              outputStream.reset();
+              chunkResponder.flush();
+            } catch (Exception e) {
+              throw new RuntimeException(e);
+            } finally {
+              lock.unlock();
+            }
+          });
+          futureList.add(future);
+        }
+        executor.shutdown();
+        for (Future<?> future : futureList) {
+          future.get();
         }
         jsonWriter.endArray();
       }
