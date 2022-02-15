@@ -419,6 +419,16 @@
   </property>
 
   <property>
+    <name>app.artifact.parallelism.max</name>
+    <value>50</value>
+    <description>
+      Maximum parallelism of system artifact loading. This can be a resource-consuming process, e.g. with
+      repository on GCS upload can use 64MB buffer, so we need to ensure app fabric is not overwhelmed during
+      the process.
+    </description>
+  </property>
+
+  <property>
     <name>app.bind.port</name>
     <value>0</value>
     <description>
