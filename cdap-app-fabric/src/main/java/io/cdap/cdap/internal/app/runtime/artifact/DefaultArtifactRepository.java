@@ -101,6 +101,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
   private final ArtifactConfigReader configReader;
   private final MetadataServiceClient metadataServiceClient;
   private final Impersonator impersonator;
+  private final int maxArtifactLoadParallelism;
 
   @VisibleForTesting
   @Inject
@@ -114,6 +115,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, programRunnerFactory);
     this.artifactInspector = new DefaultArtifactInspector(cConf, artifactClassLoaderFactory, impersonator);
     this.systemArtifactDirs = new HashSet<>();
+    this.maxArtifactLoadParallelism = cConf.getInt(Constants.AppFabric.SYSTEM_ARTIFACTS_MAX_PARALLELISM);
     String systemArtifactsDir = cConf.get(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR);
     if (!Strings.isNullOrEmpty(systemArtifactsDir)) {
       String sparkDirStr = SparkCompatReader.get(cConf).getCompat();
@@ -395,7 +397,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
 
     if (!remainingArtifacts.isEmpty()) {
       ExecutorService executorService =
-        Executors.newFixedThreadPool(remainingArtifacts.size(),
+        Executors.newFixedThreadPool(Math.min(maxArtifactLoadParallelism, remainingArtifacts.size()),
                                      Threads.createDaemonThreadFactory("system-artifact-loader-%d"));
       try {
         // loop until there is no change
