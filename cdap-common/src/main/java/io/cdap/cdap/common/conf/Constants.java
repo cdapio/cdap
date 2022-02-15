@@ -227,6 +227,7 @@ public final class Constants {
     public static final String LOCAL_DATASET_DELETER_INITIAL_DELAY_SECONDS
       = "app.program.local.dataset.deleter.initial.delay";
     public static final String SYSTEM_ARTIFACTS_DIR = "app.artifact.dir";
+    public static final String SYSTEM_ARTIFACTS_MAX_PARALLELISM = "app.artifact.parallelism.max";
     public static final String PROGRAM_EXTRA_CLASSPATH = "app.program.extra.classpath";
     public static final String SPARK_YARN_CLIENT_REWRITE = "app.program.spark.yarn.client.rewrite.enabled";
     public static final String SPARK_EVENT_LOGS_ENABLED = "app.program.spark.event.logs.enabled";
