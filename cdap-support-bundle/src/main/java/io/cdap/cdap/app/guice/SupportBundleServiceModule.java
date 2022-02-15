@@ -31,6 +31,7 @@ import io.cdap.cdap.handlers.HealthCheckHttpHandler;
 import io.cdap.cdap.internal.app.services.HealthCheckService;
 import io.cdap.cdap.internal.app.services.SupportBundleInternalService;
 import io.cdap.cdap.support.handlers.SupportBundleHttpHandler;
+import io.cdap.cdap.support.module.SupportBundleModule;
 import io.cdap.cdap.support.task.factory.SupportBundlePipelineInfoTaskFactory;
 import io.cdap.cdap.support.task.factory.SupportBundleSystemLogTaskFactory;
 import io.cdap.cdap.support.task.factory.SupportBundleTaskFactory;
@@ -57,6 +58,7 @@ public final class SupportBundleServiceModule extends AbstractModule {
       binder(), SupportBundleTaskFactory.class, Names.named(SupportBundle.TASK_FACTORY));
     supportBundleTaskFactoryMultibinder.addBinding().to(SupportBundlePipelineInfoTaskFactory.class);
     supportBundleTaskFactoryMultibinder.addBinding().to(SupportBundleSystemLogTaskFactory.class);
+    install(new HealthCheckModule());
   }
 
   @Provides

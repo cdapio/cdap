@@ -24,6 +24,10 @@ public enum InstancePermission implements Permission {
    * Permission to tether other clusters with a CDAP instance
    */
   TETHER,
+  /**
+   * Permission to gather health check information from JVM
+   */
+  HEALTH_CHECK,
   ;
 
   @Override
