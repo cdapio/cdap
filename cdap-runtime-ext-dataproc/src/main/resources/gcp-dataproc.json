@@ -216,61 +216,7 @@
       ]
     },
     {
-      "label": "Number of cluster workers",
-      "properties": [
-        {
-          "widget-type": "toggle",
-          "label": "Enable Predefined Dataproc Autoscaling",
-          "name": "enablePredefinedAutoScaling",
-          "description": "Defines whether the Dataproc auto scaling with predefined AutoScaling policy by CDF will be enabled",
-          "widget-attributes": {
-            "default": "false",
-            "on": {
-              "value": "true",
-              "label": "True"
-            },
-            "off": {
-              "value": "false",
-              "label": "False"
-            },
-            "size": "medium"
-          }
-        },
-        {
-          "widget-type": "number",
-          "label": "Number of Primary Workers",
-          "name": "workerNumNodes",
-          "description": "Worker nodes contain a YARN NodeManager and a HDFS DataNode.",
-          "widget-attributes": {
-            "default": 2,
-            "min": 1,
-            "size": "medium"
-          }
-        },
-        {
-          "widget-type": "number",
-          "label": "Number of Secondary Workers",
-          "name": "secondaryWorkerNumNodes",
-          "description": "Secondary worker nodes contain a YARN NodeManager but not a HDFS DataNode. This is normally set to 0 unless an autoscale policy requires it to be higher.",
-          "widget-attributes": {
-            "default": 0,
-            "min": 0,
-            "size": "medium"
-          }
-        },
-        {
-          "widget-type": "textbox",
-          "label": "Autoscaling Policy",
-          "name": "autoScalingPolicy",
-          "description": "Specify the Autoscaling Policy id (name) or the resource URI",
-          "widget-attributes": {
-            "placeholder": "projects/<gcp-project-id>/regions/<region>/autoscalingPolicies/<policy-name>"
-          }
-        }
-      ]
-    },
-    {
-      "label": "Worker Nodes",
+      "label": "Worker node configuration",
       "properties": [
         {
           "widget-type": "select",
@@ -349,6 +295,60 @@
                 "label": "SSD Persistent Disk"
               }
             ]
+          }
+        }
+      ]
+    },
+    {
+      "label": "Number of cluster workers",
+      "properties": [
+        {
+          "widget-type": "toggle",
+          "label": "Use predefined Autoscaling",
+          "name": "enablePredefinedAutoScaling",
+          "description": "Automates cluster resource management for processing. This is a recommended autoscaling policy.",
+          "widget-attributes": {
+            "default": "false",
+            "on": {
+              "value": "true",
+              "label": "True"
+            },
+            "off": {
+              "value": "false",
+              "label": "False"
+            },
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "number",
+          "label": "Number of primary workers",
+          "name": "workerNumNodes",
+          "description": "Worker nodes contain a YARN NodeManager and a HDFS DataNode.",
+          "widget-attributes": {
+            "default": 2,
+            "min": 1,
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "number",
+          "label": "Number of secondary workers",
+          "name": "secondaryWorkerNumNodes",
+          "description": "Secondary worker nodes contain a YARN NodeManager but not a HDFS DataNode. This is normally set to 0 unless an autoscale policy requires it to be higher.",
+          "widget-attributes": {
+            "default": 0,
+            "min": 0,
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Autoscaling policy",
+          "name": "autoScalingPolicy",
+          "description": "Specify the Autoscaling Policy id (name) or the resource URI",
+          "widget-attributes": {
+            "placeholder": "projects/<gcp-project-id>/regions/<region>/autoscalingPolicies/<policy-name>"
           }
         }
       ]

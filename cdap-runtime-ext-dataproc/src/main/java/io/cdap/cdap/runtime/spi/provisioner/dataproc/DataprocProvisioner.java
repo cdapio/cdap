@@ -119,7 +119,9 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       //Return default implementation, as this is an user auto-scaling policy for which we do not have details
       return super.getTotalProcessingCpusLabel(properties);
     }
-    label.append(conf.getTotalWorkerCPUs());
+
+    int totalCpus = conf.getTotalWorkerCPUs() > 0 ? conf.getTotalWorkerCPUs() : conf.getTotalMasterCpus();
+    label.append(totalCpus);
     return Optional.of(label.toString());
   }
 

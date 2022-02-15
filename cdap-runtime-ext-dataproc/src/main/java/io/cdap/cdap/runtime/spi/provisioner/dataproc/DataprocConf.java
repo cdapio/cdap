@@ -292,6 +292,10 @@ final class DataprocConf {
     return masterDiskType;
   }
 
+  int getTotalMasterCpus() {
+    return masterCPUs * masterNumNodes;
+  }
+
   int getWorkerNumNodes() {
     return workerNumNodes;
   }
