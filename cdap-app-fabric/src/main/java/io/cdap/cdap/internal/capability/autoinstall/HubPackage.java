@@ -129,6 +129,7 @@ public class HubPackage {
    * @param tmpDir temporary directory where plugin jar is downloaded from the hub
    */
   public void installPlugin(URL url, ArtifactRepository artifactRepository, File tmpDir) throws Exception {
+    LOG.info("wyzhang: install plugin start");
     // Deserialize spec.json
     URL specURL = new URL(url.getProtocol(), url.getHost(), url.getPort(),
                           url.getPath() + "/packages/" + name + "/" + version + "/spec.json");
@@ -182,6 +183,7 @@ public class HubPackage {
         }
       }).build();
       HttpClients.executeStreamingRequest(request);
+      LOG.info("wyzhang: install plugin execute streaming request done");
 
       Set<ArtifactRange> parentArtifacts = new HashSet<>();
       for (String parent : parents) {
@@ -194,6 +196,7 @@ public class HubPackage {
         }
       }
 
+      LOG.info("wyzhang: install plugin : add artifact start");
       // add the artifact to the repo
       io.cdap.cdap.proto.id.ArtifactId artifactId = NamespaceId.DEFAULT.artifact(name, version);
       Id.Artifact artifact = Id.Artifact.fromEntityId(artifactId);
@@ -202,7 +205,10 @@ public class HubPackage {
                                        destination, parentArtifacts, ImmutableSet.of());
       } catch (ArtifactAlreadyExistsException e) {
         LOG.debug("Artifact artifact {}-{} already exists", name, version);
+      } catch (Exception e) {
+        LOG.info("wyzhang: install plugin : add artifact exception {}", e);
       }
+      LOG.info("wyzhang: install plugin : add artifact done");
 
       Map<String, String> properties = GSON.fromJson(jsonObj.get("properties"), new TypeToken<Map<String, String>>() {
       }.getType());
@@ -211,6 +217,7 @@ public class HubPackage {
       if (!java.nio.file.Files.deleteIfExists(Paths.get(destination.getPath()))) {
         LOG.warn("Failed to cleanup file {}", destination);
       }
+      LOG.info("wyzhang: install plugin done");
     }
   }
 
