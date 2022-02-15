@@ -28,7 +28,7 @@ import javax.annotation.Nullable;
  */
 public class ProvisionerInfo {
 
-  public static final String DEFAULT_PROCESSING_CPUS_LABEL = "custom";
+  public static final String DEFAULT_PROCESSING_CPUS_LABEL = "Custom";
   private final String name;
   private final Set<ProvisionerPropertyValue> properties;
   private String totalProcessingCpusLabel;
