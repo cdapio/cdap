@@ -34,6 +34,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
+import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.internal.tethering.TetheringControlMessage;
 import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringConf;
@@ -46,7 +47,9 @@ import io.cdap.cdap.proto.id.TopicId;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -68,13 +71,18 @@ public class TetheringRuntimeJobManagerTest {
   private static TetheringRuntimeJobManager runtimeJobManager;
   private static TopicId topicId;
 
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+
   @BeforeClass
   public static void setUp() throws IOException, TopicAlreadyExistsException {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.Tethering.TOPIC_PREFIX, "prefix-");
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new InMemoryDiscoveryModule(),
+      new LocalLocationModule(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
       new AbstractModule() {
         @Override

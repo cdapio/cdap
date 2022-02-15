@@ -1853,6 +1853,10 @@ public final class Constants {
      */
     public static final String TOPIC_PREFIX = "tethering.topic.prefix";
     /**
+     * TMS topic used on tethering client for received control messages.
+     */
+    public static final String TETHERING_TOPIC = "tethering.topic";
+    /**
      * Interval for connecting to the server.
      */
     public static final String CONNECTION_INTERVAL = "tethering.connection.interval.secs";

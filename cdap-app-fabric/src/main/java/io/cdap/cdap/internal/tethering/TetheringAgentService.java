@@ -18,12 +18,20 @@ package io.cdap.cdap.internal.tethering;
 
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
+import io.cdap.cdap.api.messaging.MessagePublisher;
+import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
+import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RemoteAuthenticator;
 import io.cdap.cdap.common.service.AbstractRetryableScheduledService;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.common.http.HttpMethod;
@@ -37,6 +45,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,9 +68,13 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
   private final String instanceName;
   private final TransactionRunner transactionRunner;
   private final Map<String, String> lastMessageIds;
+  private final TopicId topic;
+  private final MessagingService messagingService;
+  private final MessagePublisher messagePublisher;
 
   @Inject
-  TetheringAgentService(CConfiguration cConf, TransactionRunner transactionRunner, TetheringStore store) {
+  TetheringAgentService(CConfiguration cConf, TransactionRunner transactionRunner, TetheringStore store,
+                        MessagingService messagingService) {
     super(RetryStrategies.fromConfiguration(cConf, "tethering.agent."));
     this.connectionInterval = TimeUnit.SECONDS.toMillis(cConf.getLong(Constants.Tethering.CONNECTION_INTERVAL));
     this.cConf = cConf;
@@ -69,10 +82,13 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
     this.store = store;
     this.instanceName = cConf.get(Constants.INSTANCE_NAME);
     this.lastMessageIds = new HashMap<>();
+    this.topic = new TopicId(NamespaceId.SYSTEM.getNamespace(), cConf.get(Constants.Tethering.TETHERING_TOPIC));
+    this.messagingService = messagingService;
+    this.messagePublisher = new MultiThreadMessagingContext(messagingService).getMessagePublisher();
   }
 
   @Override
-  protected void doStartUp() throws InstantiationException, IllegalAccessException {
+  protected void doStartUp() throws InstantiationException, IllegalAccessException, IOException {
     Class<? extends RemoteAuthenticator> authClass = cConf.getClass(Constants.Tethering.CLIENT_AUTHENTICATOR_CLASS,
                                                                     null,
                                                                     RemoteAuthenticator.class);
@@ -80,6 +96,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
       RemoteAuthenticator.setDefaultAuthenticator(authClass.newInstance());
     }
     initializeMessageIds();
+    createTetheringTopic();
   }
 
   @Override
@@ -178,6 +195,13 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
     });
   }
 
+  private void createTetheringTopic() throws IOException {
+    try {
+      messagingService.createTopic(new TopicMetadata(topic, Collections.emptyMap()));
+    } catch (TopicAlreadyExistsException e) {
+      LOG.debug("Topic {} already exists", topic);
+    }
+  }
 
   private void handleForbidden(PeerInfo peerInfo) throws IOException {
     // Set tethering status to rejected.
@@ -192,10 +216,10 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
       // Update last connection timestamp.
       store.updatePeerTimestamp(peerInfo.getName());
     }
-    processTetherControlResponse(resp.getResponseBodyAsString(StandardCharsets.UTF_8), peerInfo);
+    processTetheringControlResponse(resp.getResponseBodyAsString(StandardCharsets.UTF_8), peerInfo);
   }
 
-  private void processTetherControlResponse(String message, PeerInfo peerInfo) {
+  private void processTetheringControlResponse(String message, PeerInfo peerInfo) throws IOException {
     TetheringControlResponse[] responses = GSON.fromJson(message, TetheringControlResponse[].class);
     for (TetheringControlResponse response : responses) {
       TetheringControlMessage controlMessage = response.getControlMessage();
@@ -205,7 +229,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
           break;
         case RUN_PIPELINE:
         case STOP_PIPELINE:
-          // TODO: CDAP-18740 - add processing logic
+          publishTetheringControlMessage(controlMessage);
           break;
       }
     }
@@ -213,6 +237,17 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
     if (responses.length > 0) {
       String lastMessageId = responses[responses.length - 1].getLastMessageId();
       lastMessageIds.put(peerInfo.getName(), lastMessageId);
+    }
+  }
+
+  /**
+   * Persist received TetheringControlMessages to {@link Constants.Tethering#TETHERING_TOPIC}
+   */
+  private void publishTetheringControlMessage(TetheringControlMessage message) throws IOException {
+    try {
+      messagePublisher.publish(topic.getNamespace(), topic.getTopic(), StandardCharsets.UTF_8, GSON.toJson(message));
+    } catch (TopicNotFoundException | IOException e) {
+      throw new IOException(String.format("Failed to publish message to topic %s", topic.getTopic()), e);
     }
   }
 }

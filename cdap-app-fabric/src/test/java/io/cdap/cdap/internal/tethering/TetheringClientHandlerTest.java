@@ -159,7 +159,7 @@ public class TetheringClientHandlerTest {
           .build()).build();
 
     tetheringAgentService = new TetheringAgentService(cConf, injector.getInstance(TransactionRunner.class),
-                                                      tetheringStore);
+                                                      tetheringStore, injector.getInstance(MessagingService.class));
     Assert.assertEquals(Service.State.RUNNING, tetheringAgentService.startAndWait());
   }
 
