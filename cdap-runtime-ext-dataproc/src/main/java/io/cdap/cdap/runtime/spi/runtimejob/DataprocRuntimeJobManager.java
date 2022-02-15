@@ -35,6 +35,7 @@ import com.google.cloud.dataproc.v1beta2.ListJobsRequest;
 import com.google.cloud.dataproc.v1beta2.SubmitJobRequest;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
+import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageException;
 import com.google.cloud.storage.StorageOptions;
@@ -321,11 +322,18 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     BlobId blobId = BlobId.of(bucket, targetFilePath);
     BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("application/octet-stream").build();
 
+
+    LOG.debug("Uploading a file of size {} bytes from {} to gs://{}/{} ", localFile.getSize(), localFile.getURI(),
+              bucket, targetFilePath);
+    Bucket bucketObj = getStorageClient().get(bucket);
+    if (bucketObj != null) {
+      LOG.debug("File's Location type : {} and Location : {}. ", bucketObj.getLocationType(), bucketObj.getLocation());
+    }
     try (InputStream inputStream = openStream(localFile.getURI());
          WriteChannel writer = getStorageClient().writer(blobInfo)) {
       ByteStreams.copy(inputStream, Channels.newOutputStream(writer));
     }
-    LOG.debug("Uploaded file from {} to gs://{}/{}.", localFile.getURI(), bucket, targetFilePath);
+    LOG.debug("Successfully Uploaded file : {}.", localFile.getURI());
 
     return new DefaultLocalFile(localFile.getName(), URI.create(String.format("gs://%s/%s", bucket, targetFilePath)),
                                 localFile.getLastModified(), localFile.getSize(),
