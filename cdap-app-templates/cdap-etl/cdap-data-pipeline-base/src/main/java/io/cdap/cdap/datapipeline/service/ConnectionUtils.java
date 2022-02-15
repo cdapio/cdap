@@ -138,13 +138,17 @@ public final class ConnectionUtils {
     ConnectorSpec.Builder specBuilder = ConnectorSpec.builder();
     specBuilder.setSchema(spec.getSchema());
     for (PluginSpec pluginSpec : spec.getRelatedPlugins()) {
-      if (Strings.isNullOrEmpty(pluginName) && pluginType.equalsIgnoreCase(pluginSpec.getType())) {
-        specBuilder.addRelatedPlugin(pluginSpec);
+      if (Strings.isNullOrEmpty(pluginName)) {
+        if (pluginType.equalsIgnoreCase(pluginSpec.getType())) {
+          specBuilder.addRelatedPlugin(pluginSpec);
+        }
         continue;
       }
 
-      if (Strings.isNullOrEmpty(pluginType) && pluginName.equalsIgnoreCase(pluginSpec.getName())) {
-        specBuilder.addRelatedPlugin(pluginSpec);
+      if (Strings.isNullOrEmpty(pluginType)) {
+        if (pluginName.equalsIgnoreCase(pluginSpec.getName())) {
+          specBuilder.addRelatedPlugin(pluginSpec);
+        }
         continue;
       }
 
