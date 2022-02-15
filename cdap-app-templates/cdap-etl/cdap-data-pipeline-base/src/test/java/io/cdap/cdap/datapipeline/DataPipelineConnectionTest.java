@@ -111,6 +111,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /**
  * Test for data pipeline using connections
@@ -574,7 +575,7 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     deleteConnection(conn);
     browseConnection(conn, directory.getCanonicalPath(), 10);
     sampleConnection(conn, entities.get(1).getPath(), 100);
-    getConnectionSpec(conn, directory.getCanonicalPath());
+    getConnectionSpec(conn, directory.getCanonicalPath(), null, null);
 
     // Grant Alice permissions to create connection
     ConnectionEntityId connectionEntityId = new ConnectionEntityId(NamespaceId.DEFAULT.getNamespace(),
@@ -591,7 +592,7 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
                                 EnumSet.of(StandardPermission.USE));
     browseConnection(conn, directory.getCanonicalPath(), 10);
     sampleConnection(conn, entities.get(1).getPath(), 100);
-    getConnectionSpec(conn, directory.getCanonicalPath());
+    getConnectionSpec(conn, directory.getCanonicalPath(), null, null);
 
     // but Alice still can't update or delete connection
     expectedCode = HttpURLConnection.HTTP_FORBIDDEN;
@@ -679,17 +680,40 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
       GSON.fromJson(response.getResponseBodyAsString(), SampleResponse.class);
   }
 
-  private ConnectorDetail getConnectionSpec(String connection, String path) throws IOException {
+  private ConnectorDetail getConnectionSpec(String connection, String path, @Nullable String pluginName,
+                                            @Nullable String pluginType) throws IOException {
     String url = URLEncoder.encode(
       String.format("v1/contexts/%s/connections/%s/specification", NamespaceId.DEFAULT.getNamespace(),
                     connection), StandardCharsets.UTF_8.name());
     URL validatePipelineURL = serviceURI.resolve(url).toURL();
     HttpRequest.Builder request = HttpRequest.builder(HttpMethod.POST, validatePipelineURL)
-      .withBody(GSON.toJson(new SpecGenerationRequest(path, Collections.emptyMap())));
+      .withBody(GSON.toJson(new SpecGenerationRequest(path, Collections.emptyMap(), pluginName, pluginType)));
     HttpResponse response = executeRequest(request);
     Assert.assertEquals("Wrong answer: " + response.getResponseBodyAsString(),
                         expectedCode, response.getResponseCode());
     return expectedCode != HttpURLConnection.HTTP_OK ? null :
       GSON.fromJson(response.getResponseBodyAsString(), ConnectorDetail.class);
+  }
+
+  @Test
+  public void testConnectionSpec() throws Exception {
+    File directory = TEMP_FOLDER.newFolder();
+    String conn = "test_connection2";
+    ConnectionCreationRequest creationRequest = new ConnectionCreationRequest("", new PluginInfo(
+      FileConnector.NAME, Connector.PLUGIN_TYPE, null, Collections.emptyMap(),
+      // in set up we add "-mocks" as the suffix for the artifact id
+      new ArtifactSelectorConfig("system", APP_ARTIFACT_ID.getArtifact() + "-mocks",
+                                 APP_ARTIFACT_ID.getVersion())));
+    addConnection(conn, creationRequest);
+    ConnectorDetail connectorDetail = getConnectionSpec(conn, directory.getCanonicalPath(), null, null);
+    Assert.assertTrue(connectorDetail.getRelatedPlugins().size() > 1);
+
+    connectorDetail = getConnectionSpec(conn, directory.getCanonicalPath(), "dummyPlugin", "batchsource");
+    Assert.assertEquals(connectorDetail.getRelatedPlugins().size(), 0);
+
+    connectorDetail = getConnectionSpec(conn, directory.getCanonicalPath(), "", "batchsource");
+    Assert.assertEquals(connectorDetail.getRelatedPlugins().size(), 1);
+
+    deleteConnection(conn);
   }
 }

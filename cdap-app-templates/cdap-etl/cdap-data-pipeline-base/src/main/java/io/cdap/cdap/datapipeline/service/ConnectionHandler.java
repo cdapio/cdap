@@ -460,7 +460,10 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
         .setConnection(conn.getName())
         .setProperties(specRequest.getProperties()).build();
       ConnectorSpec spec = connector.generateSpec(connectorContext, connectorSpecRequest);
-      responder.sendString(GSON.toJson(ConnectionUtils.getConnectorDetail(pluginSelector.getSelectedArtifact(), spec)));
+      ConnectorSpec newSpec = ConnectionUtils.filterSpecWithPluginNameAndType(spec, specRequest.getPluginName(),
+                                                                              specRequest.getPluginType());
+      responder.sendString(GSON.toJson(ConnectionUtils.getConnectorDetail(pluginSelector.getSelectedArtifact(),
+                                                                          newSpec)));
     }
   }
 
