@@ -116,7 +116,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
   public static final String PROGRAM_OPTIONS_FILE_NAME = "program.options.json";
   public static final String PLUGIN_DIR = "artifacts";
   public static final String PLUGIN_ARCHIVE = "artifacts_archive.jar";
-
+  public static final String LOGBACK_FILE_NAME = "logback.xml";
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedProgramRunner.class);
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
@@ -124,7 +124,6 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
     .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
     .create();
   private static final String HADOOP_CONF_FILE_NAME = "hConf.xml";
-  private static final String LOGBACK_FILE_NAME = "logback.xml";
 
   protected final CConfiguration cConf;
   protected final Configuration hConf;
