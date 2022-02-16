@@ -130,6 +130,7 @@ public final class Constants {
     public static final String RUNTIME = "runtime";
     public static final String AUTHENTICATION = "authentication";
     public static final String TASK_WORKER = "task.worker";
+    public static final String SYSTEM_WORKER = "system.worker";
     public static final String ARTIFACT_LOCALIZER = "artifact.localizer";
     public static final String SYSTEM_METRICS_EXPORTER = "system.metrics.exporter";
     public static final String ARTIFACT_CACHE = "artifact.cache";
@@ -460,6 +461,15 @@ public final class Constants {
     public static final String CONTAINER_MEMORY_MB = "system.worker.container.memory.mb";
     public static final String CONTAINER_CORES = "system.worker.container.num.cores";
     public static final String CONTAINER_COUNT = "system.worker.container.count";
+    public static final String LOCAL_DATA_DIR = "task.worker.local.data.dir";
+
+    /**
+     * System worker http handler configuration
+     */
+    public static final String ADDRESS = "system.worker.bind.address";
+    public static final String PORT = "system.worker.bind.port";
+    public static final String REQUEST_LIMIT = "system.worker.request.limit";
+    public static final String METRIC_PREFIX = "task.worker.";
   }
 
   /**
@@ -994,6 +1004,15 @@ public final class Constants {
         "client." + Constants.TaskWorker.METRIC_PREFIX + "request.count";
       public static final String CLIENT_REQUEST_LATENCY_MS =
         "client." + Constants.TaskWorker.METRIC_PREFIX + "request.latency.millis";
+    }
+
+    public static final class SystemWorker {
+      public static final String REQUEST_COUNT = Constants.SystemWorker.METRIC_PREFIX + "request.count";
+      public static final String REQUEST_LATENCY_MS = Constants.SystemWorker.METRIC_PREFIX + "request.latency.millis";
+      public static final String CLIENT_REQUEST_COUNT =
+          "client." + Constants.SystemWorker.METRIC_PREFIX + "request.count";
+      public static final String CLIENT_REQUEST_LATENCY_MS =
+          "client." + Constants.SystemWorker.METRIC_PREFIX + "request.latency.millis";
     }
 
     /**
