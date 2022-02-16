@@ -30,6 +30,10 @@ public class SpecGenerationRequest {
   private final String pluginType;
   private final Map<String, String> properties;
 
+  public SpecGenerationRequest(String path, Map<String, String> properties) {
+    this(path, properties, null, null);
+  }
+
   public SpecGenerationRequest(String path, Map<String, String> properties,
                                @Nullable String pluginName, @Nullable String pluginType) {
     this.path = path;
