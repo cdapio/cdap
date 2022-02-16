@@ -43,8 +43,8 @@ import java.nio.file.Path;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class SystemServiceLauncher extends AbstractScheduledService {
-  private static final Logger LOG = LoggerFactory.getLogger(SystemServiceLauncher.class);
+public class SystemWorkerServiceLauncher extends AbstractScheduledService {
+  private static final Logger LOG = LoggerFactory.getLogger(SystemWorkerServiceLauncher.class);
   private final CConfiguration cConf;
   private final Configuration hConf;
 
@@ -54,7 +54,7 @@ public class SystemServiceLauncher extends AbstractScheduledService {
   private ScheduledExecutorService executor;
 
   @Inject
-  public SystemServiceLauncher(CConfiguration cConf, Configuration hConf,
+  public SystemWorkerServiceLauncher(CConfiguration cConf, Configuration hConf,
       TwillRunner twillRunner) {
     this.cConf = cConf;
     this.hConf = hConf;
@@ -126,9 +126,9 @@ public class SystemServiceLauncher extends AbstractScheduledService {
           }
 
           ResourceSpecification systemResourceSpec = ResourceSpecification.Builder.with()
-              .setVirtualCores(cConf.getInt(Constants.TaskWorker.CONTAINER_CORES))
-              .setMemory(cConf.getInt(Constants.TaskWorker.CONTAINER_MEMORY_MB), ResourceSpecification.SizeUnit.MEGA)
-              .setInstances(cConf.getInt(Constants.TaskWorker.CONTAINER_COUNT))
+              .setVirtualCores(cConf.getInt(Constants.SystemWorker.CONTAINER_CORES))
+              .setMemory(cConf.getInt(Constants.SystemWorker.CONTAINER_MEMORY_MB), ResourceSpecification.SizeUnit.MEGA)
+              .setInstances(cConf.getInt(Constants.SystemWorker.CONTAINER_COUNT))
               .build();
 
           ResourceSpecification artifactLocalizerResourceSpec = ResourceSpecification.Builder.with()
@@ -138,7 +138,7 @@ public class SystemServiceLauncher extends AbstractScheduledService {
               .setInstances(cConf.getInt(Constants.TaskWorker.CONTAINER_COUNT))
               .build();
 
-          LOG.info("Starting TaskWorker pool with {} instances", systemResourceSpec.getInstances());
+          LOG.info("Starting SystemWorker pool with {} instances", systemResourceSpec.getInstances());
 
           TwillPreparer twillPreparer = twillRunner.prepare(
               new TaskWorkerTwillApplication(cConfPath.toUri(), hConfPath.toUri(), systemResourceSpec,
@@ -163,7 +163,7 @@ public class SystemServiceLauncher extends AbstractScheduledService {
           throw e;
         }
       } catch (Exception e) {
-        LOG.warn(String.format("Failed to launch TaskWorker pool, retry in %d",
+        LOG.warn(String.format("Failed to launch SystemWorker pool, retry in %d",
             cConf.getInt(Constants.TaskWorker.POOL_CHECK_INTERVAL)), e);
       }
     }

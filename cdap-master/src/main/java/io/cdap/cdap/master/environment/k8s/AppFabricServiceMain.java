@@ -31,6 +31,7 @@ import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.app.store.ServiceStore;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.SystemWorker;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
 import io.cdap.cdap.common.logging.LoggingContext;
@@ -51,7 +52,7 @@ import io.cdap.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.internal.app.worker.TaskWorkerServiceLauncher;
-import io.cdap.cdap.internal.app.worker.system.SystemServiceLauncher;
+import io.cdap.cdap.internal.app.worker.system.SystemWorkerServiceLauncher;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
@@ -162,8 +163,8 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
       services.add(injector.getInstance(TaskWorkerServiceLauncher.class));
     }
 
-    if (cConf.getBoolean(Constants.SystemService.POOL_ENABLE)) {
-      services.add(injector.getInstance(SystemServiceLauncher.class));
+    if (cConf.getBoolean(SystemWorker.POOL_ENABLE)) {
+      services.add(injector.getInstance(SystemWorkerServiceLauncher.class));
     }
 
     // Optionally adds the master environment task

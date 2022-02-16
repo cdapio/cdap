@@ -451,8 +451,11 @@ public final class Constants {
   /**
    * System pods.
    */
-  public static final class SystemService {
-    public static final String POOL_ENABLE = "task.system.pool.enable";
+  public static final class SystemWorker {
+    public static final String POOL_ENABLE = "system.worker.pool.enable";
+    public static final String CONTAINER_MEMORY_MB = "system.worker.container.memory.mb";
+    public static final String CONTAINER_CORES = "system.worker.container.num.cores";
+    public static final String CONTAINER_COUNT = "system.worker.container.count";
   }
 
   /**
