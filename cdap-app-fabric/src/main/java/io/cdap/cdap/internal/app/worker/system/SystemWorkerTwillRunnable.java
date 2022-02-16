@@ -32,6 +32,7 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
 import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.guice.ZKDiscoveryModule;
@@ -39,7 +40,6 @@ import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.internal.app.worker.SystemAppModule;
-import io.cdap.cdap.internal.app.worker.TaskWorkerService;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
@@ -69,12 +69,15 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+/**
+ * The {@link TwillRunnable} for running {@link SystemWorkerService}.
+ */
 
 public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
 
   private static final Logger LOG = LoggerFactory.getLogger(SystemWorkerTwillRunnable.class);
 
-  private TaskWorkerService taskWorker;
+  private SystemWorkerService systemWorker;
   private LogAppenderInitializer logAppenderInitializer;
   private MetricsCollectionService metricsCollectionService;
 
@@ -89,6 +92,7 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
     CoreSecurityModule coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf);
 
     modules.add(new ConfigModule(cConf, hConf));
+    modules.add(RemoteAuthenticatorModules.getDefaultModule());
     modules.add(new LocalLocationModule());
     modules.add(new IOModule());
     modules.add(new AuthenticationContextModules().getMasterWorkerModule());
@@ -141,7 +145,7 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
   @Override
   public void run() {
     CompletableFuture<Service.State> future = new CompletableFuture<>();
-    taskWorker.addListener(new ServiceListenerAdapter() {
+    systemWorker.addListener(new ServiceListenerAdapter() {
       @Override
       public void terminated(Service.State from) {
         future.complete(from);
@@ -153,8 +157,8 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
       }
     }, Threads.SAME_THREAD_EXECUTOR);
 
-    LOG.debug("Starting task worker");
-    taskWorker.start();
+    LOG.debug("Starting system worker");
+    systemWorker.start();
 
     try {
       Uninterruptibles.getUninterruptibly(future);
@@ -166,10 +170,10 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
 
   @Override
   public void stop() {
-    LOG.info("Stopping task worker");
+    LOG.info("Stopping system worker");
     Optional.ofNullable(metricsCollectionService).map(MetricsCollectionService::stop);
-    if (taskWorker != null) {
-      taskWorker.stop();
+    if (systemWorker != null) {
+      systemWorker.stop();
     }
   }
 
@@ -184,7 +188,7 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
     CConfiguration cConf = CConfiguration.create(new File(getArgument("cConf")).toURI().toURL());
 
     // Overwrite the app fabric temp directory with the task worker temp directory
-    cConf.set(Constants.CFG_LOCAL_DATA_DIR, cConf.get(Constants.TaskWorker.LOCAL_DATA_DIR));
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, cConf.get(Constants.SystemWorker.LOCAL_DATA_DIR));
 
     Configuration hConf = new Configuration();
     hConf.clear();
@@ -203,6 +207,6 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
         Constants.Logging.COMPONENT_NAME,
         SystemWorkerTwillApplication.NAME);
     LoggingContextAccessor.setLoggingContext(loggingContext);
-    taskWorker = injector.getInstance(TaskWorkerService.class);
+    systemWorker = injector.getInstance(SystemWorkerService.class);
   }
 }
