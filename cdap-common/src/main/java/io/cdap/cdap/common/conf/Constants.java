@@ -1870,7 +1870,7 @@ public final class Constants {
 
     public static final String CLIENT_AUTHENTICATOR_CLASS = "tethering.client.authenticator.class";
   }
-
+  
   public static final class ArtifactCache {
 
     /**
@@ -1886,5 +1886,9 @@ public final class Constants {
     public static final String PORT = "artifact.cache.bind.port";
     public static final String BOSS_THREADS = "artifact.cache.boss.threads";
     public static final String WORKER_THREADS = "artifact.cache.worker.threads";
+  }
+
+  public static final class HealthCheck {
+    public static final String HANDLERS_NAME = "healthcheck.handlers";
   }
 }
