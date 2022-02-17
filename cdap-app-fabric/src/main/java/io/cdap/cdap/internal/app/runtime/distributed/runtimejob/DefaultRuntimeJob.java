@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2020-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -444,6 +444,10 @@ public class DefaultRuntimeJob implements RuntimeJob {
                              ProgramOptions programOpts) {
     List<Module> modules = new ArrayList<>();
     modules.add(new ConfigModule(cConf));
+
+    RuntimeMonitorType runtimeMonitorType = SystemArguments.getRuntimeMonitorType(cConf, programOpts);
+    modules.add(RuntimeMonitors.getRemoteAuthenticatorModule(runtimeMonitorType, programOpts));
+
     modules.add(new IOModule());
     modules.add(new TMSLogAppenderModule());
     modules.add(new RemoteExecutionDiscoveryModule());
@@ -476,7 +480,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
         bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
 
         bind(ProgramRunId.class).toInstance(programRunId);
-        bind(RuntimeMonitorType.class).toInstance(SystemArguments.getRuntimeMonitorType(cConf, programOpts));
+        bind(RuntimeMonitorType.class).toInstance(runtimeMonitorType);
 
         install(
           new FactoryModuleBuilder()

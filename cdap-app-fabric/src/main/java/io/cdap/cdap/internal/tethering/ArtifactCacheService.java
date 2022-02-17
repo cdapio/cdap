@@ -22,6 +22,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerCleaner;
+import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
@@ -47,9 +48,10 @@ public class ArtifactCacheService extends AbstractIdleService {
   private ScheduledExecutorService scheduledExecutorService;
 
   @Inject
-  public ArtifactCacheService(CConfiguration cConf, ArtifactCache cache, TetheringStore store) {
+  public ArtifactCacheService(CConfiguration cConf, ArtifactCache cache, TetheringStore store,
+                              RemoteAuthenticator remoteAuthenticator) {
     httpService = new CommonNettyHttpServiceBuilder(cConf, "artifact.cache")
-      .setHttpHandlers(new ArtifactCacheHttpHandlerInternal(cache, store))
+      .setHttpHandlers(new ArtifactCacheHttpHandlerInternal(cache, store, remoteAuthenticator))
       .setHost(cConf.get(Constants.ArtifactCache.ADDRESS))
       .setPort(cConf.getInt(Constants.ArtifactCache.PORT))
       .setBossThreadPoolSize(cConf.getInt(Constants.ArtifactCache.BOSS_THREADS))

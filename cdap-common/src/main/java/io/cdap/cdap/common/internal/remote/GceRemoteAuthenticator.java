@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2020-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,11 +14,12 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.runtime.monitor;
+package io.cdap.cdap.common.internal.remote;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import io.cdap.cdap.common.internal.remote.RemoteAuthenticator;
+import io.cdap.cdap.proto.security.Credential;
+import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
@@ -29,24 +30,22 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * A {@link RemoteAuthenticator} that authenticate remote calls using Google Cloud token acquired from GCE metadata.
- *
- * TODO (CDAP-16583): Move it to extension loader
  */
-@SuppressWarnings("unused")
-public class GceRemoteAuthenticator extends RemoteAuthenticator {
+public class GceRemoteAuthenticator implements RemoteAuthenticator {
+  public static final String GCE_REMOTE_AUTHENTICATOR_NAME = "gce-remote-authenticator";
 
   private static final Gson GSON = new Gson();
 
   private volatile AccessToken accessToken;
 
   @Override
-  public String getType() throws IOException {
-    return getAccessToken().getType();
+  public String getName() {
+    return GCE_REMOTE_AUTHENTICATOR_NAME;
   }
 
   @Override
-  public String getCredentials() throws IOException {
-    return getAccessToken().getToken();
+  public Credential getCredentials() throws IOException {
+    return new Credential(getAccessToken().getToken(), Credential.CredentialType.EXTERNAL_BEARER);
   }
 
   /**

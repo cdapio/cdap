@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020-2021 Cask Data, Inc.
+ * Copyright © 2020-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,6 +25,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.internal.remote.InternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
@@ -42,6 +43,7 @@ import io.cdap.cdap.security.auth.context.SystemAuthenticationContext;
 import io.cdap.cdap.security.auth.context.WorkerAuthenticationContext;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
+import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -124,7 +126,7 @@ public class MasterEnvironmentMain {
 
         RemoteClientFactory remoteClientFactory = new RemoteClientFactory(
           masterEnv.getDiscoveryServiceClientSupplier().get(),
-          getInternalAuthenticator(cConf));
+          getInternalAuthenticator(cConf), getRemoteAuthenticator(cConf));
 
         MasterEnvironmentRunnableContext runnableContext =
           new DefaultMasterEnvironmentRunnableContext(context.getLocationFactory(), remoteClientFactory);
@@ -180,6 +182,18 @@ public class MasterEnvironmentMain {
         new AuthenticationContextModules().getMasterWorkerModule());
     }
     return injector.getInstance(InternalAuthenticator.class);
+  }
+
+  /**
+   * Returns a new {@link RemoteAuthenticator} via injection.
+   * @return A new {@link RemoteAuthenticator} instance.
+   */
+  private static RemoteAuthenticator getRemoteAuthenticator(CConfiguration cConf) {
+    Injector injector = Guice.createInjector(
+      new ConfigModule(cConf),
+      RemoteAuthenticatorModules.getDefaultModule()
+    );
+    return injector.getInstance(RemoteAuthenticator.class);
   }
 }
 

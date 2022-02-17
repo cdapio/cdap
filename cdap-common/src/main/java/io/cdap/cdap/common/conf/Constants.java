@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2021 Cask Data, Inc.
+ * Copyright © 2014-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -1124,8 +1124,8 @@ public final class Constants {
     // If it is missing from the configuration, SSH tunnel will be used.
     public static final String MONITOR_URL = "app.program.runtime.monitor.url";
     public static final String MONITOR_TYPE_PREFIX = "app.program.runtime.monitor.type.";
-    public static final String MONITOR_URL_AUTHENTICATOR_CLASS_PREFIX =
-      "app.program.runtime.monitor.url.authenticator.class.";
+    public static final String MONITOR_URL_AUTHENTICATOR_NAME_PREFIX =
+      "app.program.runtime.monitor.url.authenticator.name.";
     public static final String MONITOR_AUDIT_LOG_ENABLED = "app.program.runtime.monitor.audit.log.enabled";
     public static final String MONITOR_AUDIT_LOGGER_NAME = "http-access";
 
@@ -1710,6 +1710,14 @@ public final class Constants {
   }
 
   /**
+   * Constants for remote authenticators.
+   */
+  public static final class RemoteAuthenticator {
+    public static final String REMOTE_AUTHENTICATOR_NAME = "remote.authenticator.name";
+    public static final String EXTENSIONS_DIR = "remote.authenticator.extensions.dir";
+  }
+
+  /**
    * Constants for Replication
    */
   public static final class Replication {
@@ -1912,7 +1920,7 @@ public final class Constants {
     public static final String CONNECTION_TIMEOUT_SECONDS = "tethering.connection.timeout.seconds";
     public static final int DEFAULT_CONNECTION_TIMEOUT_SECONDS = 60;
 
-    public static final String CLIENT_AUTHENTICATOR_CLASS = "tethering.client.authenticator.class";
+    public static final String CLIENT_AUTHENTICATOR_NAME = "tethering.client.authenticator.name";
   }
   
   public static final class ArtifactCache {

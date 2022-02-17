@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2021-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,7 +23,6 @@ import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.internal.remote.RemoteAuthenticator;
 import io.cdap.cdap.common.service.AbstractRetryableScheduledService;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
@@ -32,6 +31,7 @@ import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.common.http.HttpMethod;
@@ -71,10 +71,11 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
   private final TopicId topic;
   private final MessagingService messagingService;
   private final MessagePublisher messagePublisher;
+  private final RemoteAuthenticator remoteAuthenticator;
 
   @Inject
   TetheringAgentService(CConfiguration cConf, TransactionRunner transactionRunner, TetheringStore store,
-                        MessagingService messagingService) {
+                        MessagingService messagingService, RemoteAuthenticator remoteAuthenticator) {
     super(RetryStrategies.fromConfiguration(cConf, "tethering.agent."));
     this.connectionInterval = TimeUnit.SECONDS.toMillis(cConf.getLong(Constants.Tethering.CONNECTION_INTERVAL));
     this.cConf = cConf;
@@ -85,16 +86,11 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
     this.topic = new TopicId(NamespaceId.SYSTEM.getNamespace(), cConf.get(Constants.Tethering.TETHERING_TOPIC));
     this.messagingService = messagingService;
     this.messagePublisher = new MultiThreadMessagingContext(messagingService).getMessagePublisher();
+    this.remoteAuthenticator = remoteAuthenticator;
   }
 
   @Override
   protected void doStartUp() throws InstantiationException, IllegalAccessException, IOException {
-    Class<? extends RemoteAuthenticator> authClass = cConf.getClass(Constants.Tethering.CLIENT_AUTHENTICATOR_CLASS,
-                                                                    null,
-                                                                    RemoteAuthenticator.class);
-    if (authClass != null) {
-      RemoteAuthenticator.setDefaultAuthenticator(authClass.newInstance());
-    }
     initializeMessageIds();
     createTetheringTopic();
   }
@@ -120,7 +116,8 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
         if (lastMessageId != null) {
           uri = uri + "?messageId=" + URLEncoder.encode(lastMessageId, "UTF-8");
         }
-        HttpResponse resp = TetheringUtils.sendHttpRequest(HttpMethod.GET, new URI(peer.getEndpoint())
+        HttpResponse resp = TetheringUtils.sendHttpRequest(remoteAuthenticator, HttpMethod.GET,
+                                                           new URI(peer.getEndpoint())
           .resolve(uri));
         switch (resp.getResponseCode()) {
           case HttpURLConnection.HTTP_OK:
@@ -162,9 +159,8 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
       peerInfo.getMetadata().getDescription());
     try {
       URI endpoint = new URI(peerInfo.getEndpoint()).resolve(TetheringClientHandler.CREATE_TETHER + instanceName);
-      HttpResponse response = TetheringUtils.sendHttpRequest(HttpMethod.PUT,
-                                                             endpoint,
-                                                             GSON.toJson(tetherRequest));
+      HttpResponse response = TetheringUtils.sendHttpRequest(remoteAuthenticator, HttpMethod.PUT,
+                                                             endpoint, GSON.toJson(tetherRequest));
       if (response.getResponseCode() != 200) {
         LOG.error("Failed to initiate tether with peer {}, response body: {}, code: {}",
                   peerInfo.getName(), response.getResponseBody(), response.getResponseCode());

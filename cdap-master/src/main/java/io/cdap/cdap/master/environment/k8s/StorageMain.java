@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,6 +28,7 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.data.runtime.ConstantTransactionSystemClient;
@@ -70,6 +71,7 @@ public class StorageMain {
     CoreSecurityModule coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf);
     List<Module> modules = new ArrayList<>(Arrays.asList(
       new ConfigModule(cConf),
+      RemoteAuthenticatorModules.getDefaultModule(),
       new SystemDatasetRuntimeModule().getStandaloneModules(),
       // We actually only need the MetadataStore createIndex.
       // But due to the DataSetsModules, we need to pull in more modules.

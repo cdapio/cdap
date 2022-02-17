@@ -77,7 +77,7 @@ public class ArtifactCacheServiceTest extends AppFabricTestBase {
     cConf = createCConf();
     tetheringStore = getInjector().getInstance(TetheringStore.class);
     ArtifactCache artifactCache = new ArtifactCache(cConf);
-    artifactCacheService = new ArtifactCacheService(cConf, artifactCache, tetheringStore);
+    artifactCacheService = new ArtifactCacheService(cConf, artifactCache, tetheringStore, null);
     artifactCacheService.startAndWait();
     getInjector().getInstance(ArtifactRepository.class).clear(NamespaceId.DEFAULT);
     Id.Artifact.from(Id.Namespace.DEFAULT, "some-task", "1.0.0-SNAPSHOT");

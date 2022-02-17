@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2021-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,14 +18,18 @@ package io.cdap.cdap.security.auth.context;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.PrivateModule;
+import com.google.inject.Provider;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
+import io.cdap.cdap.common.internal.remote.NoOpRemoteAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.proto.security.Credential;
+import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequestConfig;
 import io.cdap.http.AbstractHttpHandler;
@@ -42,23 +46,37 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.net.HttpURLConnection;
+import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 /**
- * Tests for verifying internal authentication for the {@link io.cdap.cdap.common.internal.remote.RemoteClient}.
+ * Tests for verifying authentication for the {@link io.cdap.cdap.common.internal.remote.RemoteClient}.
  */
-public class RemoteClientInternalAuthenticatorTest {
+public class RemoteClientAuthenticatorTest {
   private static final String TEST_SERVICE = "test";
 
   private static TestHttpHandler testHttpHandler;
   private static NettyHttpService httpService;
   private static Injector injector;
+  private static MockRemoteAuthenticatorProvider mockRemoteAuthenticatorProvider;
 
   @BeforeClass
   public static void setup() throws Exception {
+    mockRemoteAuthenticatorProvider = new MockRemoteAuthenticatorProvider();
+
     // Setup Guice injector.
     injector = Guice.createInjector(new ConfigModule(), new InMemoryDiscoveryModule(),
+                                    new PrivateModule() {
+                                      @Override
+                                      protected void configure() {
+                                        bind(RemoteAuthenticator.class).toProvider(mockRemoteAuthenticatorProvider);
+                                        expose(RemoteAuthenticator.class);
+                                      }
+                                    },
                                     new AuthenticationContextModules().getNoOpModule());
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
     DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
@@ -122,6 +140,32 @@ public class RemoteClientInternalAuthenticatorTest {
                         headers.get(Constants.Security.Headers.RUNTIME_TOKEN));
   }
 
+  @Test
+  public void testRemoteClientWithRemoteAuthenticatorIncludesAuthorizationHeader() throws Exception {
+    String mockAuthenticatorName = "mock-remote-authenticator";
+    Credential expectedCredential = new Credential("test-credential", Credential.CredentialType.EXTERNAL_BEARER);
+
+    RemoteAuthenticator mockRemoteAuthenticator = mock(RemoteAuthenticator.class);
+    when(mockRemoteAuthenticator.getName()).thenReturn(mockAuthenticatorName);
+    when(mockRemoteAuthenticator.getCredentials()).thenReturn(expectedCredential);
+    mockRemoteAuthenticatorProvider.setAuthenticator(mockRemoteAuthenticator);
+
+    RemoteClientFactory remoteClientFactory = injector.getInstance(RemoteClientFactory.class);
+    RemoteClient remoteClient = remoteClientFactory
+      .createRemoteClient(TEST_SERVICE, new HttpRequestConfig(15000, 15000, false), "/");
+
+    HttpURLConnection conn = remoteClient.openConnection(HttpMethod.GET, "");
+    int responseCode = conn.getResponseCode();
+
+    // Verify that the request received the expected headers.
+    HttpHeaders headers = testHttpHandler.getRequest().headers();
+
+    Assert.assertEquals(HttpResponseStatus.OK.code(), responseCode);
+    Assert.assertEquals(String.format("%s %s", expectedCredential.getType().getQualifiedName(),
+                                      expectedCredential.getValue()),
+                        headers.get(javax.ws.rs.core.HttpHeaders.AUTHORIZATION));
+  }
+
   /**
    * HTTP handler for testing.
    */
@@ -137,6 +181,24 @@ public class RemoteClientInternalAuthenticatorTest {
 
     public HttpRequest getRequest() {
       return request;
+    }
+  }
+
+  /**
+   * A {@link RemoteAuthenticator} provider for testing.
+   */
+  private static final class MockRemoteAuthenticatorProvider implements Provider<RemoteAuthenticator> {
+
+    private RemoteAuthenticator remoteAuthenticator = new NoOpRemoteAuthenticator();
+
+    public void setAuthenticator(RemoteAuthenticator remoteAuthenticator) {
+      this.remoteAuthenticator = remoteAuthenticator;
+    }
+
+    @Override
+    @Nullable
+    public RemoteAuthenticator get() {
+      return remoteAuthenticator;
     }
   }
 }

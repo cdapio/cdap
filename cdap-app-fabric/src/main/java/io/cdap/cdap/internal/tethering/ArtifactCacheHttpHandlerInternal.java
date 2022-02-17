@@ -29,6 +29,7 @@ import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import io.cdap.common.http.HttpRequestConfig;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
@@ -50,9 +51,13 @@ public class ArtifactCacheHttpHandlerInternal extends AbstractHttpHandler {
                                                                          new BasicThrowableCodec()).create();
   private final ArtifactCache cache;
   private final TetheringStore tetheringStore;
-  public ArtifactCacheHttpHandlerInternal(ArtifactCache cache, TetheringStore tetheringStore) {
+  private final RemoteAuthenticator remoteAuthenticator;
+
+  public ArtifactCacheHttpHandlerInternal(ArtifactCache cache, TetheringStore tetheringStore,
+                                          RemoteAuthenticator remoteAuthenticator) {
     this.cache = cache;
     this.tetheringStore = tetheringStore;
+    this.remoteAuthenticator = remoteAuthenticator;
   }
 
   @GET
@@ -66,7 +71,8 @@ public class ArtifactCacheHttpHandlerInternal extends AbstractHttpHandler {
     try {
       String endpoint = tetheringStore.getPeer(peer).getEndpoint();
       RemoteClientFactory factory = new RemoteClientFactory(new NoOpDiscoveryServiceClient(endpoint),
-                                                            new NoOpInternalAuthenticator());
+                                                            new NoOpInternalAuthenticator(),
+                                                            remoteAuthenticator);
       HttpRequestConfig config = new DefaultHttpRequestConfig(true);
       RemoteClient remoteClient = factory.createRemoteClient("", config,
                                                              Constants.Gateway.INTERNAL_API_VERSION_3);
