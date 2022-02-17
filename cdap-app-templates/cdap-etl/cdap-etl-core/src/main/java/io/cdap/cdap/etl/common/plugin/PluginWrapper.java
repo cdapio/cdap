@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,14 +14,17 @@
  * the License.
  */
 
-package io.cdap.cdap.etl.api.relational;
+package io.cdap.cdap.etl.common.plugin;
 
 /**
- * This enum lists expression factory types that compile expressions from {@link String}
+ * Interface used to denote plugin wrappers. This interface exposes a method that can be used to get the wrapped
+ * plugin instance.
+ * @param <T> type of the plugin wrapped by this instance.
  */
-public enum StringExpressionFactory implements ExpressionFactoryType<String> {
+public interface PluginWrapper<T> {
   /**
-   * Expression factories of this type will take SQL String expressions
+   * Gets the wrapper plugin instance
+   * @return wrapped plugin instance
    */
-  SQL;
+  T getWrapped();
 }

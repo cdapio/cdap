@@ -85,6 +85,7 @@ jobs:
           -Dsonar.pullrequest.key=${{ steps.validate_pr.outputs.pr-key }}
           -Dsonar.pullrequest.branch=${{ steps.validate_pr.outputs.pr-branch }}
           -Dsonar.pullrequest.base=${{ steps.validate_pr.outputs.pr-base }}
+          -Dsonar.branch.name=${{ github.event.workflow_run.head_branch }}
       - name: Archive build artifacts
         uses: actions/upload-artifact@v2.2.2
         if: always()

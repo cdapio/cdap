@@ -66,7 +66,6 @@ import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.ConnectionEntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.security.ApplicationPermission;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 
@@ -196,7 +195,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
                                                  connType,
                                                  creationRequest.getDescription(), false, false,
                                                  now, now, creationRequest.getPlugin());
-      store.saveConnection(connectionId, connectionInfo, false);
+      store.saveConnection(connectionId, connectionInfo, creationRequest.overWrite());
       responder.sendStatus(HttpURLConnection.HTTP_OK);
     });
   }
@@ -287,7 +286,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
       }
 
       contextAccessEnforcer.enforce(new ConnectionEntityId(namespace, ConnectionId.getConnectionId(connection)),
-                                    ApplicationPermission.PREVIEW);
+                                    StandardPermission.USE);
       String browseRequestString = StandardCharsets.UTF_8.decode(request.getContent()).toString();
       BrowseRequest browseRequest = GSON.fromJson(browseRequestString, BrowseRequest.class);
 
@@ -343,7 +342,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
       }
 
       contextAccessEnforcer.enforce(new ConnectionEntityId(namespace, ConnectionId.getConnectionId(connection)),
-                                    ApplicationPermission.PREVIEW);
+                                    StandardPermission.USE);
       String sampleRequestString = StandardCharsets.UTF_8.decode(request.getContent()).toString();
       SampleRequest sampleRequest = GSON.fromJson(sampleRequestString, SampleRequest.class);
 
@@ -421,7 +420,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
       }
 
       contextAccessEnforcer.enforce(new ConnectionEntityId(namespace, ConnectionId.getConnectionId(connection)),
-                                    ApplicationPermission.PREVIEW);
+                                    StandardPermission.USE);
       String specGenerationRequestString = StandardCharsets.UTF_8.decode(request.getContent()).toString();
       SpecGenerationRequest specRequest = GSON.fromJson(specGenerationRequestString, SpecGenerationRequest.class);
 
@@ -461,7 +460,10 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
         .setConnection(conn.getName())
         .setProperties(specRequest.getProperties()).build();
       ConnectorSpec spec = connector.generateSpec(connectorContext, connectorSpecRequest);
-      responder.sendString(GSON.toJson(ConnectionUtils.getConnectorDetail(pluginSelector.getSelectedArtifact(), spec)));
+      ConnectorSpec newSpec = ConnectionUtils.filterSpecWithPluginNameAndType(spec, specRequest.getPluginName(),
+                                                                              specRequest.getPluginType());
+      responder.sendString(GSON.toJson(ConnectionUtils.getConnectorDetail(pluginSelector.getSelectedArtifact(),
+                                                                          newSpec)));
     }
   }
 

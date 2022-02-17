@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.spark.batch;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
@@ -39,9 +40,19 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.apache.spark.sql.SQLContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 /**
@@ -51,6 +62,7 @@ import javax.annotation.Nullable;
  * @param <T> type of records stored in this {@link SparkCollection}.
  */
 public class SQLEngineCollection<T> implements SQLBackedCollection<T> {
+  private static final Logger LOG = LoggerFactory.getLogger(SQLEngineCollection.class);
   private final JavaSparkExecutionContext sec;
   private final JavaSparkContext jsc;
   private final SQLContext sqlContext;
@@ -182,6 +194,7 @@ public class SQLEngineCollection<T> implements SQLBackedCollection<T> {
     return pull().compute(stageSpec, compute);
   }
 
+  @Override
   public boolean tryStoreDirect(StageSpec stageSpec) {
     SQLEngineOutput sqlEngineOutput = sinkFactory.getSQLEngineOutput(stageSpec.getName());
     if (sqlEngineOutput != null) {
@@ -191,6 +204,55 @@ public class SQLEngineCollection<T> implements SQLBackedCollection<T> {
       return writeJob.waitFor();
     }
     return false;
+  }
+
+  @Override
+  public Set<String> tryMultiStoreDirect(PhaseSpec phaseSpec, Set<String> sinks) {
+    // Set to store names of all consumed sinks.
+    Set<String> directStoreSinks = new HashSet<>();
+
+    // Create list to store all tasks.
+    List<Future<String>> directStoreFutures = new ArrayList<>(sinks.size());
+
+    // Try to run the direct store task on all sink stages.
+    for (String sinkName : sinks) {
+      StageSpec stageSpec = phaseSpec.getPhase().getStage(sinkName);
+
+      // Check if we are able to write this output directly
+      if (stageSpec != null) {
+        // Create an async task that is used to wait for the direct store task to complete.
+        Supplier<String> task = () -> {
+          // If the direct store task succeeds, we return the sink name. Otherwise, return null.
+          if (tryStoreDirect(stageSpec)) {
+            return sinkName;
+          }
+          return null;
+        };
+        // We submit these in parallel to prevent blocking for each store task to complete in sequence.
+        Future<String> future = CompletableFuture.supplyAsync(task);
+        directStoreFutures.add(future);
+      }
+    }
+
+    // Wait for all the direct store tasks for this group, if any.
+    for (Future<String> supplier : directStoreFutures) {
+      try {
+        // Get sink name from supplier
+        String sinkName = supplier.get();
+
+        // If the sink name is not null, it means this stage was consumed successfully.
+        if (sinkName != null) {
+          directStoreSinks.add(sinkName);
+        }
+      } catch (InterruptedException e) {
+        throw Throwables.propagate(e);
+      } catch (ExecutionException e) {
+        // We don't propagate this exception as the regular sink workflow can continue.
+        LOG.warn("Execution exception when executing Direct store task. Sink will proceed with default output.", e);
+      }
+    }
+
+    return directStoreSinks;
   }
 
   @Override

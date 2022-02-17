@@ -37,25 +37,27 @@ public class ScanApplicationsRequest {
   private final ApplicationId scanTo;
   private final List<ApplicationFilter> filters;
   private final SortOrder sortOrder;
+  private final int limit;
 
   /**
-   *
    * @param namespaceId  namespace to return applications for or null for all namespaces
    * @param scanFrom     application id to start scan from (exclusive)
    * @param scanTo       application id to stop scan at (exclusive)
    * @param filters      additional filters to apply
    * @param sortOrder    sort order of the results
+   * @param limit        maximum number of records to return
    */
   private ScanApplicationsRequest(@Nullable NamespaceId namespaceId,
                                   @Nullable ApplicationId scanFrom,
                                   @Nullable ApplicationId scanTo,
                                   List<ApplicationFilter> filters,
-                                  SortOrder sortOrder) {
+                                  SortOrder sortOrder, int limit) {
     this.namespaceId = namespaceId;
     this.scanFrom = scanFrom;
     this.scanTo = scanTo;
     this.filters = filters;
     this.sortOrder = sortOrder;
+    this.limit = limit;
   }
 
   /**
@@ -103,14 +105,23 @@ public class ScanApplicationsRequest {
     return sortOrder;
   }
 
+  /**
+   *
+   * @return maximum number of records to read
+   */
+  public int getLimit() {
+    return limit;
+  }
+
   @Override
   public String toString() {
     return "ScanApplicationsRequest{" +
       "namespaceId=" + namespaceId +
-      "scanFrom=" + scanFrom +
-      "scanTo=" + scanTo +
-      "filters=" + filters +
-      "sortOrder=" + sortOrder +
+      ", scanFrom=" + scanFrom +
+      ", scanTo=" + scanTo +
+      ", filters=" + filters +
+      ", sortOrder=" + sortOrder +
+      ", limit=" + limit +
       '}';
   }
 
@@ -140,6 +151,7 @@ public class ScanApplicationsRequest {
     private ApplicationId scanTo;
     private List<ApplicationFilter> filters = new ArrayList<>();
     private SortOrder sortOrder = SortOrder.ASC;
+    private int limit = Integer.MAX_VALUE;
 
     private Builder() {
     }
@@ -150,6 +162,7 @@ public class ScanApplicationsRequest {
       this.scanTo = request.scanTo;
       this.filters = request.filters;
       this.sortOrder = request.sortOrder;
+      this.limit = request.limit;
     }
 
     /**
@@ -209,10 +222,18 @@ public class ScanApplicationsRequest {
 
     /**
      *
+     * @param limit maximum number of records to scan
+     */
+    public Builder setLimit(int limit) {
+      this.limit = limit;
+      return this;
+    }
+    /**
+     *
      * @return new {@link ScanApplicationsRequest}
      */
     public ScanApplicationsRequest build() {
-      return new ScanApplicationsRequest(namespaceId, scanFrom, scanTo, filters, sortOrder);
+      return new ScanApplicationsRequest(namespaceId, scanFrom, scanTo, filters, sortOrder, limit);
     }
   }
 }

@@ -49,16 +49,16 @@ public interface ExpressionFactory<T> {
    * Provides fully qualified name to be used in expressions for a given dataset.
    * Available with {@link CoreExpressionCapabilities#CAN_GET_QUALIFIED_DATASET_NAME}
    */
-  default String getQualifiedDataSetName(Relation dataSet) {
-    throw new UnsupportedOperationException();
+  default ExtractableExpression<T> getQualifiedDataSetName(Relation dataSet) {
+    return new InvalidExtractableExpression<T>("Method getQualifiedDataSetName not implemented");
   }
 
   /**
    * Provides fully qualified column name to be used in expressions for a given dataset column.
    * Available with {@link CoreExpressionCapabilities#CAN_GET_QUALIFIED_COLUMN_NAME}
    */
-  default String getQualifiedColumnName(Relation dataSet, String column) {
-    throw new UnsupportedOperationException();
+  default ExtractableExpression<T> getQualifiedColumnName(Relation dataSet, String column) {
+    return new InvalidExtractableExpression<T>("Method getQualifiedColumnName not implemented");
   }
 
   /**
@@ -67,6 +67,6 @@ public interface ExpressionFactory<T> {
    * Available with {@link CoreExpressionCapabilities#CAN_SET_DATASET_ALIAS}
    */
   default Relation setDataSetAlias(Relation dataSet, String alias) {
-    throw new UnsupportedOperationException();
+    return new InvalidRelation("Method setDataSetAlias not implemented.");
   }
 }

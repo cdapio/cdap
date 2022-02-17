@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.tethering;
 
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Tethering request sent from the {@link TetheringAgentService} to
@@ -24,12 +25,27 @@ import java.util.List;
  */
 public class TetheringConnectionRequest {
   private final List<NamespaceAllocation> namespaceAllocations;
+  private final long requestTime;
+  private final String description;
 
-  public TetheringConnectionRequest(List<NamespaceAllocation> namespaceAllocations) {
+  public TetheringConnectionRequest(List<NamespaceAllocation> namespaceAllocations,
+                                    long requestTime,
+                                    @Nullable String description) {
     this.namespaceAllocations = namespaceAllocations;
+    this.requestTime = requestTime;
+    this.description = description;
   }
 
   public List<NamespaceAllocation> getNamespaceAllocations() {
     return namespaceAllocations;
+  }
+
+  public long getRequestTime() {
+    return requestTime;
+  }
+
+  @Nullable
+  public String getDescription() {
+    return description;
   }
 }

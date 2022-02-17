@@ -33,7 +33,9 @@ import java.util.concurrent.Callable;
  * @param <IN> the type of error record
  * @param <OUT> the type of output record
  */
-public class WrappedErrorTransform<IN, OUT> extends ErrorTransform<IN, OUT> {
+public class WrappedErrorTransform<IN, OUT>
+  extends ErrorTransform<IN, OUT>
+  implements PluginWrapper<ErrorTransform<IN, OUT>> {
   private final ErrorTransform<IN, OUT> transform;
   private final Caller caller;
   private final OperationTimer operationTimer;
@@ -90,4 +92,8 @@ public class WrappedErrorTransform<IN, OUT> extends ErrorTransform<IN, OUT> {
     }
   }
 
+  @Override
+  public ErrorTransform<IN, OUT> getWrapped() {
+    return transform;
+  }
 }

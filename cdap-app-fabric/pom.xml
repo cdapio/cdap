@@ -218,11 +218,10 @@
       <artifactId>jul-to-slf4j</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.opentable.components</groupId>
-      <artifactId>otj-pg-embedded</artifactId>
-      <scope>test</scope>
+      <groupId>io.zonky.test</groupId>
+      <artifactId>embedded-postgres</artifactId>
     </dependency>
-   <dependency>
+    <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-minikdc</artifactId>
     </dependency>

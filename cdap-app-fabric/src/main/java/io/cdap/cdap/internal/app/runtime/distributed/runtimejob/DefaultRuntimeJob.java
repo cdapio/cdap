@@ -147,7 +147,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /**
@@ -217,19 +216,17 @@ public class DefaultRuntimeJob implements RuntimeJob {
       Map<String, String> systemArguments = new HashMap<>(programOpts.getArguments().asMap());
       File pluginDir = new File(programOpts.getArguments().getOption(ProgramOptionConstants.PLUGIN_DIR,
                                                                      DistributedProgramRunner.PLUGIN_DIR));
-      // create a directory to store plugin artifacts if the regeneration of app spec fetches some plugin artifact
-      if (!pluginDir.exists()) {
-        pluginDir.mkdir();
-      }
+      // create a directory to store plugin artifacts for the regeneration of app spec to fetch plugin artifacts
+      DirUtils.mkdirs(pluginDir);
 
       if (!programOpts.getArguments().hasOption(ProgramOptionConstants.PLUGIN_DIR)) {
         systemArguments.put(ProgramOptionConstants.PLUGIN_DIR, DistributedProgramRunner.PLUGIN_DIR);
       }
 
       // remember the file names in the artifact folder before app regeneration
-      List<String> pluginFiles = Stream.of(pluginDir.listFiles())
-                                   .filter(File::isFile).map(File::getName)
-                                   .collect(Collectors.toList());
+      List<String> pluginFiles = DirUtils.listFiles(pluginDir, File::isFile).stream()
+        .map(File::getName)
+        .collect(Collectors.toList());
 
       ApplicationSpecification generatedAppSpec =
         regenerateAppSpec(systemArguments, programOpts.getUserArguments().asMap(), programId, appSpec,
@@ -237,9 +234,9 @@ public class DefaultRuntimeJob implements RuntimeJob {
       appSpec = generatedAppSpec != null ? generatedAppSpec : appSpec;
       programDescriptor = new ProgramDescriptor(programDescriptor.getProgramId(), appSpec);
 
-      List<String> pluginFilesAfter = Stream.of(pluginDir.listFiles())
-                                        .filter(File::isFile).map(File::getName)
-                                        .collect(Collectors.toList());
+      List<String> pluginFilesAfter = DirUtils.listFiles(pluginDir, File::isFile).stream()
+        .map(File::getName)
+        .collect(Collectors.toList());
 
       if (pluginFilesAfter.isEmpty()) {
         systemArguments.remove(ProgramOptionConstants.PLUGIN_DIR);
@@ -259,6 +256,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
     }
 
     ProgramStateWriter programStateWriter = injector.getInstance(ProgramStateWriter.class);
+    RuntimeClientService runtimeClientService = injector.getInstance(RuntimeClientService.class);
     CompletableFuture<ProgramController.State> programCompletion = new CompletableFuture<>();
     try {
       ProgramRunner programRunner = injector.getInstance(ProgramRunnerFactory.class).create(programId.getType());
@@ -267,6 +265,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
       try (Program program = createProgram(cConf, programRunner, programDescriptor, programOpts)) {
         ProgramController controller = programRunner.run(program, programOpts);
         controllerFuture.complete(controller);
+        runtimeClientService.onProgramStopRequested(controller::stop);
 
         controller.addListener(new AbstractListener() {
           @Override

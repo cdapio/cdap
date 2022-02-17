@@ -34,7 +34,9 @@ import java.util.concurrent.Callable;
  * @param <KEY_OUT> type of output key
  * @param <VAL_OUT> type of output value
  */
-public class WrappedBatchSink<IN, KEY_OUT, VAL_OUT> extends BatchSink<IN, KEY_OUT, VAL_OUT> {
+public class WrappedBatchSink<IN, KEY_OUT, VAL_OUT>
+  extends BatchSink<IN, KEY_OUT, VAL_OUT>
+  implements PluginWrapper<BatchSink<IN, KEY_OUT, VAL_OUT>> {
   private final BatchSink<IN, KEY_OUT, VAL_OUT> batchSink;
   private final Caller caller;
   private final OperationTimer operationTimer;
@@ -98,5 +100,10 @@ public class WrappedBatchSink<IN, KEY_OUT, VAL_OUT> extends BatchSink<IN, KEY_OU
       batchSink.onRunFinish(succeeded, context);
       return null;
     });
+  }
+
+  @Override
+  public BatchSink<IN, KEY_OUT, VAL_OUT> getWrapped() {
+    return batchSink;
   }
 }

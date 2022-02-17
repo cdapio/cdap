@@ -19,7 +19,6 @@ package io.cdap.cdap.etl.common.plugin;
 import io.cdap.cdap.etl.api.MultiOutputEmitter;
 import io.cdap.cdap.etl.api.MultiOutputPipelineConfigurer;
 import io.cdap.cdap.etl.api.SplitterTransform;
-import io.cdap.cdap.etl.api.StageSubmitterContext;
 import io.cdap.cdap.etl.api.TransformContext;
 
 import java.util.concurrent.Callable;
@@ -31,7 +30,9 @@ import java.util.concurrent.Callable;
  * @param <T> type of input record
  * @param <E> type of error records emitted. Usually the same as the input record type
  */
-public class WrappedSplitterTransform<T, E> extends SplitterTransform<T, E> {
+public class WrappedSplitterTransform<T, E>
+  extends SplitterTransform<T, E>
+  implements PluginWrapper<SplitterTransform<T, E>> {
 
   private final SplitterTransform<T, E> transform;
   private final Caller caller;
@@ -79,5 +80,10 @@ public class WrappedSplitterTransform<T, E> extends SplitterTransform<T, E> {
     } finally {
       operationTimer.reset();
     }
+  }
+
+  @Override
+  public SplitterTransform<T, E> getWrapped() {
+    return transform;
   }
 }

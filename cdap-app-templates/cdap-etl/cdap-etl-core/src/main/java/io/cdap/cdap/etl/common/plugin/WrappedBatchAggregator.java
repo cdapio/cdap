@@ -34,7 +34,9 @@ import java.util.concurrent.Callable;
  * @param <GROUP_VALUE> group value type. Must be a supported type
  * @param <OUT> output object type
  */
-public class WrappedBatchAggregator<GROUP_KEY, GROUP_VALUE, OUT> extends BatchAggregator<GROUP_KEY, GROUP_VALUE, OUT> {
+public class WrappedBatchAggregator<GROUP_KEY, GROUP_VALUE, OUT>
+  extends BatchAggregator<GROUP_KEY, GROUP_VALUE, OUT>
+  implements PluginWrapper<BatchAggregator<GROUP_KEY, GROUP_VALUE, OUT>> {
   private final BatchAggregator<GROUP_KEY, GROUP_VALUE, OUT> aggregator;
   private final Caller caller;
   private final OperationTimer operationTimer;
@@ -113,5 +115,10 @@ public class WrappedBatchAggregator<GROUP_KEY, GROUP_VALUE, OUT> extends BatchAg
     } finally {
       operationTimer.reset();
     }
+  }
+
+  @Override
+  public BatchAggregator<GROUP_KEY, GROUP_VALUE, OUT> getWrapped() {
+    return aggregator;
   }
 }

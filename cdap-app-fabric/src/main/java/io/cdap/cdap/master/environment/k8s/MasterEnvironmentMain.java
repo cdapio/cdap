@@ -49,6 +49,7 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -136,6 +137,7 @@ public class MasterEnvironmentMain {
             runnable.stop();
             Uninterruptibles.awaitUninterruptibly(shutdownLatch, 30, TimeUnit.SECONDS);
           }
+          Optional.ofNullable(tokenManager).ifPresent(TokenManager::stopAndWait);
         }));
         runnable.run(runnableArgs);
         completed.set(true);
@@ -167,7 +169,7 @@ public class MasterEnvironmentMain {
         new AuthenticationContextModules().getMasterModule());
       if (cConf.getBoolean(Constants.Security.INTERNAL_AUTH_ENABLED)) {
         tokenManager = injector.getInstance(TokenManager.class);
-        tokenManager.startUp();
+        tokenManager.startAndWait();
       }
     } else {
       // cdap-secret is NOT mounted, use worker authentication context

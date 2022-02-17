@@ -131,6 +131,8 @@ public final class Constants {
     public static final String AUTHENTICATION = "authentication";
     public static final String TASK_WORKER = "task.worker";
     public static final String ARTIFACT_LOCALIZER = "artifact.localizer";
+    public static final String SYSTEM_METRICS_EXPORTER = "system.metrics.exporter";
+    public static final String ARTIFACT_CACHE = "artifact.cache";
 
     public static final String SERVICE_INSTANCE_TABLE_NAME = "cdap.services.instances";
     /** Scheduler queue name to submit the master service app. */
@@ -143,6 +145,7 @@ public final class Constants {
     public static final String SECURE_STORE_SERVICE = "secure.store.service";
     public static final String LOG_BUFFER_SERVICE = "log.buffer.service";
     public static final String REMOTE_AGENT_SERVICE = "remote.agent.service";
+    public static final String ARTIFACT_CACHE_SERVICE = "artifact.cache.service";
   }
 
   /**
@@ -229,6 +232,7 @@ public final class Constants {
     public static final String LOCAL_DATASET_DELETER_INITIAL_DELAY_SECONDS
       = "app.program.local.dataset.deleter.initial.delay";
     public static final String SYSTEM_ARTIFACTS_DIR = "app.artifact.dir";
+    public static final String SYSTEM_ARTIFACTS_MAX_PARALLELISM = "app.artifact.parallelism.max";
     public static final String PROGRAM_EXTRA_CLASSPATH = "app.program.extra.classpath";
     public static final String SPARK_YARN_CLIENT_REWRITE = "app.program.spark.yarn.client.rewrite.enabled";
     public static final String SPARK_EVENT_LOGS_ENABLED = "app.program.spark.event.logs.enabled";
@@ -931,8 +935,8 @@ public final class Constants {
      * Flow control metrics
      */
     public static final class FlowControl {
-      public static final String WORKFLOWS_LAUNCHING_COUNT = "flowcontrol.workflows.launching.count";
-      public static final String WORKFLOWS_RUNNING_COUNT = "flowcontrol.workflows.running.count";
+      public static final String LAUNCHING_COUNT = "flowcontrol.launching.count";
+      public static final String RUNNING_COUNT = "flowcontrol.running.count";
     }
 
     /**
@@ -945,6 +949,7 @@ public final class Constants {
       public static final String PROGRAM_REJECTED_RUNS = "program.rejected.runs";
       public static final String PROGRAM_NODE_MINUTES = "program.node.minutes";
       public static final String PROGRAM_PROVISIONING_DELAY_SECONDS = "program.provisioning.delay.seconds";
+      public static final String PROGRAM_STARTING_DELAY_SECONDS = "program.starting.delay.seconds";
       public static final String RUN_TIME_SECONDS = "program.run.seconds";
       public static final String APPLICATION_COUNT = "application.count";
       public static final String NAMESPACE_COUNT = "namespace.count";
@@ -1849,6 +1854,10 @@ public final class Constants {
      */
     public static final String TOPIC_PREFIX = "tethering.topic.prefix";
     /**
+     * TMS topic used on tethering client for received control messages.
+     */
+    public static final String TETHERING_TOPIC = "tethering.topic";
+    /**
      * Interval for connecting to the server.
      */
     public static final String CONNECTION_INTERVAL = "tethering.connection.interval.secs";
@@ -1860,5 +1869,26 @@ public final class Constants {
     public static final int DEFAULT_CONNECTION_TIMEOUT_SECONDS = 60;
 
     public static final String CLIENT_AUTHENTICATOR_CLASS = "tethering.client.authenticator.class";
+  }
+  
+  public static final class ArtifactCache {
+
+    /**
+     * Artifact cache service clean up configurations
+     */
+    public static final String CACHE_CLEANUP_INTERVAL_MIN = "artifact.cache.cache.cleanup.interval.min";
+    public static final String LOCAL_DATA_DIR = "artifact.cache.local.data.dir";
+
+    /**
+     * Artifact cache http handler configuration
+     */
+    public static final String ADDRESS = "artifact.cache.bind.address";
+    public static final String PORT = "artifact.cache.bind.port";
+    public static final String BOSS_THREADS = "artifact.cache.boss.threads";
+    public static final String WORKER_THREADS = "artifact.cache.worker.threads";
+  }
+
+  public static final class HealthCheck {
+    public static final String HANDLERS_NAME = "healthcheck.handlers";
   }
 }
