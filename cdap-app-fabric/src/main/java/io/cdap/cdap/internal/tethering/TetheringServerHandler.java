@@ -31,8 +31,12 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
+import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.proto.security.InstancePermission;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HandlerContext;
 import io.cdap.http.HttpResponder;
@@ -67,14 +71,19 @@ public class TetheringServerHandler extends AbstractHttpHandler {
   private final MessagingService messagingService;
   private final MultiThreadMessagingContext messagingContext;
   private final String topicPrefix;
+  private final AccessEnforcer accessEnforcer;
+  private final AuthenticationContext authenticationContext;
 
   @Inject
-  TetheringServerHandler(CConfiguration cConf, TetheringStore store, MessagingService messagingService) {
+  TetheringServerHandler(CConfiguration cConf, TetheringStore store, MessagingService messagingService,
+                         AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext) {
     this.cConf = cConf;
     this.store = store;
     this.messagingService = messagingService;
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.topicPrefix = cConf.get(Constants.Tethering.TOPIC_PREFIX);
+    this.accessEnforcer = accessEnforcer;
+    this.authenticationContext = authenticationContext;
   }
 
   @Override
@@ -136,6 +145,8 @@ public class TetheringServerHandler extends AbstractHttpHandler {
   public void createTethering(FullHttpRequest request, HttpResponder responder, @PathParam("peer") String peer)
     throws NotImplementedException, IOException {
     checkTetheringServerEnabled();
+
+    accessEnforcer.enforce(InstanceId.SELF, authenticationContext.getPrincipal(), InstancePermission.TETHER);
 
     String content = request.content().toString(StandardCharsets.UTF_8);
     TetheringConnectionRequest tetherRequest = GSON.fromJson(content, TetheringConnectionRequest.class);

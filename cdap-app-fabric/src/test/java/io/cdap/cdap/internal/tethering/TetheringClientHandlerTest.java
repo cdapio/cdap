@@ -40,6 +40,11 @@ import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data.runtime.TransactionExecutorModule;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.authorization.AuthorizationTestModule;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.store.StoreDefinition;
@@ -103,6 +108,9 @@ public class TetheringClientHandlerTest {
       new InMemoryDiscoveryModule(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
       new StorageModule(),
+      new AuthorizationTestModule(),
+      new AuthorizationEnforcementModule().getInMemoryModules(),
+      new AuthenticationContextModules().getMasterModule(),
       new PrivateModule() {
         @Override
         protected void configure() {
@@ -145,8 +153,10 @@ public class TetheringClientHandlerTest {
     cConf.set(Constants.INSTANCE_NAME, CLIENT_INSTANCE);
 
     MessagingService messagingService = injector.getInstance(MessagingService.class);
+    AccessEnforcer accessEnforcer = injector.getInstance(AccessEnforcer.class);
+    AuthenticationContext authenticationContext = injector.getInstance(AuthenticationContext.class);
     clientService = new CommonNettyHttpServiceBuilder(conf, getClass().getSimpleName() + "_client")
-      .setHttpHandlers(new TetheringClientHandler(tetheringStore),
+      .setHttpHandlers(new TetheringClientHandler(tetheringStore, accessEnforcer, authenticationContext),
                        new TetheringHandler(cConf, tetheringStore, messagingService))
       .build();
     clientService.start();

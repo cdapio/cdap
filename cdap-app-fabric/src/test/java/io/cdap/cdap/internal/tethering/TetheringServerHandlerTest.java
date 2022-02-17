@@ -44,6 +44,11 @@ import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.authorization.AuthorizationTestModule;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.store.StoreDefinition;
@@ -104,6 +109,9 @@ public class TetheringServerHandlerTest {
       new LocalLocationModule(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
       new StorageModule(),
+      new AuthorizationTestModule(),
+      new AuthorizationEnforcementModule().getInMemoryModules(),
+      new AuthenticationContextModules().getMasterModule(),
       new PrivateModule() {
         @Override
         protected void configure() {
@@ -136,10 +144,12 @@ public class TetheringServerHandlerTest {
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
     cConf.setBoolean(Constants.Tethering.TETHERING_SERVER_ENABLED, true);
     cConf.setInt(Constants.Tethering.CONNECTION_TIMEOUT_SECONDS, 1);
+    AccessEnforcer accessEnforcer = injector.getInstance(AccessEnforcer.class);
+    AuthenticationContext authenticationContext = injector.getInstance(AuthenticationContext.class);
     service = new CommonNettyHttpServiceBuilder(CConfiguration.create(), getClass().getSimpleName())
-      .setHttpHandlers(new TetheringServerHandler(cConf, tetheringStore, messagingService),
-                       new TetheringHandler(cConf, tetheringStore, messagingService))
-      .build();
+      .setHttpHandlers(
+        new TetheringServerHandler(cConf, tetheringStore, messagingService, accessEnforcer, authenticationContext),
+        new TetheringHandler(cConf, tetheringStore, messagingService)).build();
     service.start();
     config = ClientConfig.builder()
       .setConnectionConfig(
