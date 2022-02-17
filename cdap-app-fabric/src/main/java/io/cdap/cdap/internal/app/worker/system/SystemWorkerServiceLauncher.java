@@ -21,8 +21,6 @@ import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.DirUtils;
-import io.cdap.cdap.internal.app.worker.TaskWorkerTwillApplication;
-import io.cdap.cdap.internal.app.worker.TaskWorkerTwillRunnable;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerTwillRunnable;
 import io.cdap.cdap.master.spi.twill.DependentTwillPreparer;
 import org.apache.hadoop.conf.Configuration;
@@ -95,7 +93,7 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
 
   public void run() {
     TwillController activeController = null;
-    for (TwillController controller : twillRunner.lookup(TaskWorkerTwillApplication.NAME)) {
+    for (TwillController controller : twillRunner.lookup(SystemWorkerTwillApplication.NAME)) {
       // If detected more than one controller, terminate those extra controllers.
       if (activeController != null) {
         controller.terminate();
@@ -110,10 +108,10 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
             cConf.get(Constants.AppFabric.TEMP_DIR)).toPath();
         Files.createDirectories(tmpDir);
 
-        Path runDir = Files.createTempDirectory(tmpDir, "task.worker.launcher");
+        Path runDir = Files.createTempDirectory(tmpDir, "system.worker.launcher");
         try {
           // Unset the internal certificate path since certificate is stored cdap-security which
-          // is not exposed (i.e. mounted in k8s) to TaskWorkerService.
+          // is not exposed (i.e. mounted in k8s) to SystemWorkerService.
           CConfiguration cConfCopy = CConfiguration.copy(cConf);
           cConfCopy.unset(Constants.Security.SSL.INTERNAL_CERT_PATH);
           Path cConfPath = runDir.resolve("cConf.xml");
@@ -141,7 +139,7 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
           LOG.info("Starting SystemWorker pool with {} instances", systemResourceSpec.getInstances());
 
           TwillPreparer twillPreparer = twillRunner.prepare(
-              new TaskWorkerTwillApplication(cConfPath.toUri(), hConfPath.toUri(), systemResourceSpec,
+              new SystemWorkerTwillApplication(cConfPath.toUri(), hConfPath.toUri(), systemResourceSpec,
                   artifactLocalizerResourceSpec));
 
           String priorityClass = cConf.get(Constants.TaskWorker.CONTAINER_PRIORITY_CLASS_NAME);
@@ -151,7 +149,7 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
 
           if (twillPreparer instanceof DependentTwillPreparer) {
             twillPreparer = ((DependentTwillPreparer) twillPreparer)
-                .dependentRunnableNames(TaskWorkerTwillRunnable.class.getSimpleName(),
+                .dependentRunnableNames(SystemWorkerTwillApplication.class.getSimpleName(),
                     ArtifactLocalizerTwillRunnable.class.getSimpleName());
           }
 
