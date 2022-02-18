@@ -20,8 +20,7 @@ import com.google.gson.Gson;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.security.InstancePermission;
-import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -42,15 +41,12 @@ public class TetheringClientHandler extends AbstractHttpHandler {
   static final String CREATE_TETHER = "/v3/tethering/connections/";
 
   private final TetheringStore store;
-  private final AccessEnforcer accessEnforcer;
-  private final AuthenticationContext authenticationContext;
+  private final ContextAccessEnforcer contextAccessEnforcer;
 
   @Inject
-  TetheringClientHandler(TetheringStore store, AccessEnforcer accessEnforcer,
-                         AuthenticationContext authenticationContext) {
+  TetheringClientHandler(TetheringStore store, ContextAccessEnforcer contextAccessEnforcer) {
     this.store = store;
-    this.accessEnforcer = accessEnforcer;
-    this.authenticationContext = authenticationContext;
+    this.contextAccessEnforcer = contextAccessEnforcer;
   }
 
   /**
@@ -59,7 +55,7 @@ public class TetheringClientHandler extends AbstractHttpHandler {
   @PUT
   @Path("/tethering/create")
   public void createTethering(FullHttpRequest request, HttpResponder responder) throws Exception {
-    accessEnforcer.enforce(InstanceId.SELF, authenticationContext.getPrincipal(), InstancePermission.TETHER);
+    contextAccessEnforcer.enforce(InstanceId.SELF, InstancePermission.TETHER);
     String content = request.content().toString(StandardCharsets.UTF_8);
     TetheringCreationRequest tetheringCreationRequest = GSON.fromJson(content, TetheringCreationRequest.class);
     List<NamespaceAllocation> namespaces = tetheringCreationRequest.getNamespaceAllocations();

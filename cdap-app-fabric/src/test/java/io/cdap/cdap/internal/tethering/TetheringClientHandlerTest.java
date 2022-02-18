@@ -40,11 +40,18 @@ import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data.runtime.TransactionExecutorModule;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
+import io.cdap.cdap.proto.id.InstanceId;
+import io.cdap.cdap.proto.security.Authorizable;
+import io.cdap.cdap.proto.security.InstancePermission;
+import io.cdap.cdap.proto.security.Permission;
+import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.authorization.AuthorizationTestModule;
-import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.security.authorization.DefaultContextAccessEnforcer;
+import io.cdap.cdap.security.authorization.InMemoryAccessController;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.store.StoreDefinition;
@@ -66,6 +73,9 @@ import org.junit.Test;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -96,6 +106,12 @@ public class TetheringClientHandlerTest {
   private ClientConfig clientConfig;
   private MockTetheringServerHandler serverHandler;
   private TetheringAgentService tetheringAgentService;
+
+  // User having tethering permissions
+  private static final Principal MASTER_PRINCIPAL = new Principal("master", Principal.PrincipalType.USER);
+  // User not having tethering permissions
+  private static final Principal UNPRIVILEGED_PRINCIPAL = new Principal("unprivileged",
+                                                                        Principal.PrincipalType.USER);
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -152,11 +168,17 @@ public class TetheringClientHandlerTest {
     cConf.setInt(Constants.Tethering.CONNECTION_TIMEOUT_SECONDS, 5);
     cConf.set(Constants.INSTANCE_NAME, CLIENT_INSTANCE);
 
+    List<Permission> tetheringPermissions = Arrays.asList(InstancePermission.TETHER);
+    InMemoryAccessController inMemoryAccessController = new InMemoryAccessController();
+    inMemoryAccessController.grant(Authorizable.fromEntityId(InstanceId.SELF), MASTER_PRINCIPAL,
+                                   Collections.unmodifiableSet(new HashSet<>(tetheringPermissions)));
+    ContextAccessEnforcer contextAccessEnforcer =
+      new DefaultContextAccessEnforcer(new AuthenticationTestContext(), inMemoryAccessController);
+    AuthenticationTestContext.actAsPrincipal(MASTER_PRINCIPAL);
+
     MessagingService messagingService = injector.getInstance(MessagingService.class);
-    AccessEnforcer accessEnforcer = injector.getInstance(AccessEnforcer.class);
-    AuthenticationContext authenticationContext = injector.getInstance(AuthenticationContext.class);
     clientService = new CommonNettyHttpServiceBuilder(conf, getClass().getSimpleName() + "_client")
-      .setHttpHandlers(new TetheringClientHandler(tetheringStore, accessEnforcer, authenticationContext),
+      .setHttpHandlers(new TetheringClientHandler(tetheringStore, contextAccessEnforcer),
                        new TetheringHandler(cConf, tetheringStore, messagingService))
       .build();
     clientService.start();
@@ -342,6 +364,29 @@ public class TetheringClientHandlerTest {
       .build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getResponseCode());
+  }
+
+  @Test
+  public void testTetheringPermissions() throws IOException, InterruptedException {
+    Map<String, String> metadata = ImmutableMap.of("project", PROJECT, "location", LOCATION);
+    TetheringCreationRequest tetheringRequest = new TetheringCreationRequest(SERVER_INSTANCE,
+                                                                             serverConfig.getConnectionConfig()
+                                                                               .getURI().toString(),
+                                                                             NAMESPACES,
+                                                                             metadata,
+                                                                             DESCRIPTION);
+    HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.PUT, clientConfig.resolveURL("tethering/create"))
+      .withBody(GSON.toJson(tetheringRequest));
+
+    // Unprivileged user trying to tether
+    AuthenticationTestContext.actAsPrincipal(UNPRIVILEGED_PRINCIPAL);
+    HttpResponse response = HttpRequests.execute(builder.build());
+    Assert.assertEquals(HttpResponseStatus.FORBIDDEN.code(), response.getResponseCode());
+
+    // Privileged user trying to tether
+    AuthenticationTestContext.actAsPrincipal(MASTER_PRINCIPAL);
+    response = HttpRequests.execute(builder.build());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
   }
 
   private void deleteTethering(String instance) throws IOException {

@@ -35,8 +35,7 @@ import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.proto.security.InstancePermission;
-import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HandlerContext;
 import io.cdap.http.HttpResponder;
@@ -71,19 +70,17 @@ public class TetheringServerHandler extends AbstractHttpHandler {
   private final MessagingService messagingService;
   private final MultiThreadMessagingContext messagingContext;
   private final String topicPrefix;
-  private final AccessEnforcer accessEnforcer;
-  private final AuthenticationContext authenticationContext;
+  private final ContextAccessEnforcer contextAccessEnforcer;
 
   @Inject
   TetheringServerHandler(CConfiguration cConf, TetheringStore store, MessagingService messagingService,
-                         AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext) {
+                         ContextAccessEnforcer contextAccessEnforcer) {
     this.cConf = cConf;
     this.store = store;
     this.messagingService = messagingService;
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.topicPrefix = cConf.get(Constants.Tethering.TOPIC_PREFIX);
-    this.accessEnforcer = accessEnforcer;
-    this.authenticationContext = authenticationContext;
+    this.contextAccessEnforcer = contextAccessEnforcer;
   }
 
   @Override
@@ -146,7 +143,7 @@ public class TetheringServerHandler extends AbstractHttpHandler {
     throws NotImplementedException, IOException {
     checkTetheringServerEnabled();
 
-    accessEnforcer.enforce(InstanceId.SELF, authenticationContext.getPrincipal(), InstancePermission.TETHER);
+    contextAccessEnforcer.enforce(InstanceId.SELF, InstancePermission.TETHER);
 
     String content = request.content().toString(StandardCharsets.UTF_8);
     TetheringConnectionRequest tetherRequest = GSON.fromJson(content, TetheringConnectionRequest.class);
