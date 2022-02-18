@@ -82,12 +82,14 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -117,6 +119,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
   public static final String PLUGIN_DIR = "artifacts";
   public static final String PLUGIN_ARCHIVE = "artifacts_archive.jar";
   public static final String LOGBACK_FILE_NAME = "logback.xml";
+  public static final String TETHER_CONF_FILE_NAME = "cdap-tether.xml";
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedProgramRunner.class);
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
@@ -174,6 +177,10 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
     File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                                    cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
     try {
+      // For runs from a tethered instance, load additional resources that were saved locally
+      if (oldOptions.getArguments().hasOption(ProgramOptionConstants.PEER_NAME)) {
+        loadLocalResources(program, cConf, ProgramRunners.getRunId(oldOptions).getId());
+      }
       ProgramLaunchConfig launchConfig = new ProgramLaunchConfig();
       if (clusterMode == ClusterMode.ISOLATED) {
         // For isolated mode, the hadoop classes comes from the hadoop classpath in the target cluster directly
@@ -368,6 +375,30 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
     } catch (Exception e) {
       deleteDirectory(tempDir);
       throw Throwables.propagate(e);
+    }
+  }
+
+  /**
+   * For programs initiated by a tethered peer, load additional resources that were saved locally based by runId
+   */
+  private void loadLocalResources(Program program, CConfiguration cConf, String runId)
+    throws URISyntaxException, IOException {
+    File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                           cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    for (File file : DirUtils.listFiles(new File(tmpDir, runId))) {
+      if (file.getName().equals(LOGBACK_FILE_NAME)) {
+        // replace existing logback.xml file
+        URI logbackURI = getLogBackURI(program);
+        if (logbackURI != null) {
+          try (InputStream input = logbackURI.toURL().openStream()) {
+            Files.copy(input, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+          }
+        }
+      } else if (file.getName().equals(TETHER_CONF_FILE_NAME)) {
+        // add additional cConf entries
+        cConf.addResource(file.toURI().toString());
+        cConf.reloadConfiguration();
+      }
     }
   }
 
