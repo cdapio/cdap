@@ -26,6 +26,7 @@ import com.google.cloud.dataproc.v1.AutoscalingPolicyServiceClient;
 import com.google.cloud.dataproc.v1.AutoscalingPolicyServiceSettings;
 import com.google.cloud.dataproc.v1.BasicAutoscalingAlgorithm;
 import com.google.cloud.dataproc.v1.BasicYarnAutoscalingConfig;
+import com.google.cloud.dataproc.v1.ClusterControllerSettings;
 import com.google.cloud.dataproc.v1.InstanceGroupAutoscalingPolicyConfig;
 import com.google.cloud.dataproc.v1.RegionName;
 import com.google.common.annotations.VisibleForTesting;
@@ -34,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Optional;
 
 /**
  * Dataproc's Auto-Scaling policy Operations and configurations to be used when a pipeline is enabled with
@@ -157,7 +159,9 @@ public class PredefinedAutoScaling {
     throws IOException {
     CredentialsProvider credentialsProvider = FixedCredentialsProvider.create(dataprocConf.getDataprocCredentials());
 
-    String regionalEndpoint = dataprocConf.getRegion() + "-" + dataprocConf.getRootUrl();
+    String rootUrl = Optional.ofNullable(dataprocConf.getRootUrl())
+        .orElse(ClusterControllerSettings.getDefaultEndpoint());
+    String regionalEndpoint = dataprocConf.getRegion() + "-" + rootUrl;
 
     AutoscalingPolicyServiceSettings autoscalingPolicyServiceSettings = AutoscalingPolicyServiceSettings.newBuilder()
       .setCredentialsProvider(credentialsProvider)

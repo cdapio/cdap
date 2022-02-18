@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
+import com.google.cloud.dataproc.v1.ClusterControllerSettings;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import com.google.common.base.Strings;
@@ -173,11 +174,15 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
       Map<String, String> systemLabels = getSystemLabels();
       return Optional.of(
         new DataprocRuntimeJobManager(new DataprocClusterInfo(context, clusterName, conf.getDataprocCredentials(),
-                                                              conf.getRootUrl(),
+                                                              getRootUrl(conf),
                                                               projectId, region, bucket, systemLabels)));
     } catch (Exception e) {
       throw new RuntimeException("Error while getting credentials for dataproc. ", e);
     }
+  }
+
+  protected String getRootUrl(DataprocConf conf) {
+    return Optional.ofNullable(conf.getRootUrl()).orElse(ClusterControllerSettings.getDefaultEndpoint());
   }
 
   @Override
@@ -194,7 +199,9 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
       return true;
     }
     return ImmutableSet.of(DataprocConf.RUNTIME_JOB_MANAGER, BUCKET, DataprocConf.TOKEN_ENDPOINT_KEY,
-                           DataprocConf.ENCRYPTION_KEY_NAME).contains(property);
+                           DataprocConf.ENCRYPTION_KEY_NAME, DataprocConf.ROOT_URL,
+                           DataprocConf.COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT,
+                           DataprocConf.COMPUTE_HTTP_REQUEST_READ_TIMEOUT).contains(property);
   }
 
   /**
