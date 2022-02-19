@@ -49,7 +49,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
@@ -57,8 +56,9 @@ import javax.annotation.Nullable;
 
 /**
  * Spark Collection representing records stored in a SQL engine.
- *
+ * <p>
  * Records will be pulled into Spark and operations delegated to an RDDCollection as needed.
+ *
  * @param <T> type of records stored in this {@link SparkCollection}.
  */
 public class SQLEngineCollection<T> implements SQLBackedCollection<T> {
@@ -118,18 +118,22 @@ public class SQLEngineCollection<T> implements SQLBackedCollection<T> {
   }
 
   /**
-   * If an operation needs to be executed outside of the scope of a SQL Engine, we will need to pull this SQL
-   * collection into an RDDCollection and delegate the operation to the RDD collection.
-   * @return (@link RDDCollection} representing the records pulled from the SQL Engine.
+   * If an operation needs to be executed outside of the scope of a SQL Engine, we will need to pull this SQL collection
+   * into an RDDCollection and delegate the operation to the RDD collection.
+   *
+   * @return (@ link RDDCollection } representing the records pulled from the SQL Engine.
    */
   @SuppressWarnings("raw")
   private SparkCollection<T> pull() {
-    if (localCollection == null) {
-      SQLEngineJob<JavaRDD<T>> pullJob = adapter.pull(job);
-      adapter.waitForJobAndHandleException(pullJob);
-      JavaRDD<T> rdd = pullJob.waitFor();
-      localCollection =
-        new RDDCollection<>(sec, functionCacheFactory, jsc, sqlContext, datasetContext, sinkFactory, rdd);
+    // Ensure the local collection is only generated once across multiple threads
+    synchronized (this) {
+      if (localCollection == null) {
+        SQLEngineJob<JavaRDD<T>> pullJob = adapter.pull(job);
+        adapter.waitForJobAndHandleException(pullJob);
+        JavaRDD<T> rdd = pullJob.waitFor();
+        localCollection =
+          new RDDCollection<>(sec, functionCacheFactory, jsc, sqlContext, datasetContext, sinkFactory, rdd);
+      }
     }
     return localCollection;
   }
@@ -257,18 +261,24 @@ public class SQLEngineCollection<T> implements SQLBackedCollection<T> {
 
   @Override
   public Runnable createStoreTask(StageSpec stageSpec, PairFlatMapFunction<T, Object, Object> sinkFunction) {
-    return pull().createStoreTask(stageSpec, sinkFunction);
+    return () -> pull().createStoreTask(stageSpec, sinkFunction).run();
   }
 
   @Override
   public Runnable createMultiStoreTask(PhaseSpec phaseSpec, Set<String> group, Set<String> sinks,
                                        Map<String, StageStatisticsCollector> collectors) {
-    return pull().createMultiStoreTask(phaseSpec, group, sinks, collectors);
+    return () -> pull().createMultiStoreTask(phaseSpec, group, sinks, collectors).run();
   }
 
   @Override
   public Runnable createStoreTask(StageSpec stageSpec, SparkSink<T> sink) throws Exception {
-    return pull().createStoreTask(stageSpec, sink);
+    return () -> {
+      try {
+        pull().createStoreTask(stageSpec, sink).run();
+      } catch (Exception e) {
+        Throwables.propagate(e);
+      }
+    };
   }
 
   @Override
