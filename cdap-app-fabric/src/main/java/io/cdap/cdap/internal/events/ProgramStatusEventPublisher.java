@@ -157,8 +157,7 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
   }
 
   private boolean shouldPublish(ProgramRunStatus programRunStatus, ProgramRunId programRunId) {
-    return !NamespaceId.SYSTEM.equals(programRunId.getNamespaceId())
-      && (programRunStatus == ProgramRunStatus.STARTING || programRunStatus.isEndState());
+    return !NamespaceId.SYSTEM.equals(programRunId.getNamespaceId());
   }
 
   private ProgramStatusEventDetails.Builder populateErrorDetails(
