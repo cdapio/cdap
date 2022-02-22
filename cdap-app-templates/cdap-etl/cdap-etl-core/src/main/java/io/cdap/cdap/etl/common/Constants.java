@@ -74,6 +74,39 @@ public final class Constants {
     public static final String AGG_GROUPS = "aggregator.groups";
     public static final String JOIN_KEYS = "joiner.keys";
     public static final String DRAFT_COUNT = "draft.count";
+
+    public static final class Connection {
+      public static final String CONNECTION_COUNT = "connections.count";
+      public static final String CONNECTION_DELETED_COUNT = "connections.deleted.count";
+      public static final String CONNECTION_GET_COUNT = "connections.get.count";
+      public static final String CONNECTION_BROWSE_COUNT = "connections.browse.count";
+      public static final String CONNECTION_SAMPLE_COUNT = "connections.sample.count";
+      public static final String CONNECTION_SPEC_COUNT = "connections.spec.count";
+
+      public static String getCountMetric(String connType) {
+        return String.format("connections.%s.count", connType);
+      }
+
+      public static String getDeletedMetric(String connType) {
+        return String.format("connections.%s.deleted.count", connType);
+      }
+
+      public static String getConnGetMetric(String connType) {
+        return String.format("connections.%s.get.count", connType);
+      }
+
+      public static String getBrowseMetric(String connType) {
+        return String.format("connections.%s.browse.count", connType);
+      }
+
+      public static String getSampleMetric(String connType) {
+        return String.format("connections.%s.sample.count", connType);
+      }
+
+      public static String getSpecMetric(String connType) {
+        return String.format("connections.%s.spec.count", connType);
+      }
+    }
   }
 
   /**
