@@ -41,7 +41,8 @@ public class EventWriterExtensionProvider extends AbstractExtensionLoader<String
 
   @Inject
   public EventWriterExtensionProvider(CConfiguration cConf) {
-    super(cConf.get(Constants.Event.EVENTS_WRITER_EXTENSIONS_DIR));
+    super(cConf.get(Constants.Event.EVENTS_WRITER_EXTENSIONS_DIR) != null
+            ? cConf.get(Constants.Event.EVENTS_WRITER_EXTENSIONS_DIR) : "");
   }
 
   private static Set<String> createAllowedResources() {
