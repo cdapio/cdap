@@ -38,7 +38,7 @@ import java.util.concurrent.TimeUnit;
  * Class which contains common logic about retry logic
  */
 abstract class AbstractServiceRetryableMacroEvaluator implements MacroEvaluator {
-  private static final long TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(30);
+  private static final long TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(600);
   private static final long RETRY_BASE_DELAY_MILLIS = 200L;
   private static final long RETRY_MAX_DELAY_MILLIS = TimeUnit.SECONDS.toMillis(5);
   private static final double RETRY_DELAY_MULTIPLIER = 1.2d;
