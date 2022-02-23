@@ -36,6 +36,7 @@ import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
@@ -81,10 +82,12 @@ public class DispatchTask implements RunnableTask {
       .create();
 
   private final CConfiguration cConf;
+  private final SConfiguration sConf;
 
   @Inject
-  DispatchTask(CConfiguration cConf) {
+  DispatchTask(CConfiguration cConf, SConfiguration sConf) {
     this.cConf = cConf;
+    this.sConf = sConf;
   }
 
   @Override
@@ -93,7 +96,7 @@ public class DispatchTask implements RunnableTask {
       AppLaunchInfo appLaunchInfo = GSON.fromJson(context.getParam(), AppLaunchInfo.class);
       LOG.error("AppLaunchInfo: {}", appLaunchInfo);
       Injector injector = Guice.createInjector(
-          new ConfigModule(cConf),
+          new ConfigModule(cConf, sConf),
           new LocalLocationModule(),
           new ConfiguratorTaskModule(),
           new DispatchTaskModule(),
