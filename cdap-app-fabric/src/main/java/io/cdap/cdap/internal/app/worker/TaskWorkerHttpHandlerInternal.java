@@ -25,6 +25,7 @@ import io.cdap.cdap.api.service.worker.RunnableTaskParam;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.common.http.HttpRequest;
@@ -98,10 +99,10 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
    */
   private final AtomicBoolean mustRestart = new AtomicBoolean(false);
 
-  public TaskWorkerHttpHandlerInternal(CConfiguration cConf, Consumer<String> stopper,
+  public TaskWorkerHttpHandlerInternal(CConfiguration cConf, SConfiguration sConf, Consumer<String> stopper,
                                        MetricsCollectionService metricsCollectionService) {
     int killAfterRequestCount = cConf.getInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
-    this.runnableTaskLauncher = new RunnableTaskLauncher(cConf);
+    this.runnableTaskLauncher = new RunnableTaskLauncher(cConf, sConf);
     this.metricsCollectionService = metricsCollectionService;
     this.metadataServiceEndpoint = cConf.get(Constants.TaskWorker.METADATA_SERVICE_END_POINT);
     this.stopper = (terminate, taskDetails) -> {
