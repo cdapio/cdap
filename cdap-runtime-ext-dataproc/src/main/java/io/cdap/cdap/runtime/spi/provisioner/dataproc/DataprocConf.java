@@ -89,9 +89,9 @@ final class DataprocConf {
   static final String AUTOSCALING_POLICY = "autoScalingPolicy";
 
   public static final String COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT = "compute.request.connection.timeout.millis";
-  public static final int COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT_DEFAULT = 20000;
+  private static final int COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT_DEFAULT = 20000;
   public static final String COMPUTE_HTTP_REQUEST_READ_TIMEOUT = "compute.request.read.timeout.millis";
-  public static final int COMPUTE_HTTP_REQUEST_READ_TIMEOUT_DEFAULT = 20000;
+  private static final int COMPUTE_HTTP_REQUEST_READ_TIMEOUT_DEFAULT = 20000;
 
 
   private final String accountKey;
