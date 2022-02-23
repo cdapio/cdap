@@ -22,6 +22,7 @@ import com.google.gson.GsonBuilder;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.name.Named;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.plugin.Requirements;
@@ -34,6 +35,7 @@ import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
@@ -57,6 +59,7 @@ import io.cdap.cdap.security.guice.DistributedCoreSecurityModule;
 import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import io.cdap.cdap.security.impersonation.Impersonator;
+import java.net.InetAddress;
 import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -128,6 +131,8 @@ public class DispatchTask implements RunnableTask {
     private final ConfiguratorFactory configuratorFactory;
     private final Impersonator impersonator;
     private final ArtifactRepository artifactRepository;
+    private ProgramRunnerFactory remoteProgramRunnerFactory;
+    private InetAddress host;
 
     @Inject
     DispatchTaskRunner(CConfiguration cConf,
@@ -142,10 +147,28 @@ public class DispatchTask implements RunnableTask {
       this.artifactRepository = artifactRepository;
     }
 
+    /**
+     * Optional guice injection for the {@link ProgramRunnerFactory} used for remote execution. It is
+     * optional because in unit-test we don't have need for that.
+     */
+    @Inject(optional = true)
+    void setRemoteProgramRunnerFactory(
+        @Constants.AppFabric.RemoteExecution ProgramRunnerFactory runnerFactory) {
+      LOG.error("Injecting RemotePRF: {}", runnerFactory);
+      this.remoteProgramRunnerFactory = runnerFactory;
+    }
+
+    @Inject(optional = true)
+    void setHostname(@Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress host) {
+      this.host = host;
+    }
+
     public DispatchResponse dispatch(AppLaunchInfo appLaunchInfo) throws Exception {
       LOG.error("AppLaunchInfo: {}", GSON.toJson(appLaunchInfo));
       InMemoryDispatcher dispatcher = new InMemoryDispatcher(cConf, programRunnerFactory,
           configuratorFactory, impersonator, artifactRepository, appLaunchInfo);
+      dispatcher.setRemoteProgramRunnerFactory(remoteProgramRunnerFactory);
+      dispatcher.setHostname(host);
       try {
         return dispatcher.dispatch().get(120, TimeUnit.SECONDS);
       } catch (Exception e) {
