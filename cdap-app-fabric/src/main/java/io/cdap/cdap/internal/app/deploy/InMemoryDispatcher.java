@@ -135,6 +135,7 @@ public class InMemoryDispatcher implements Dispatcher {
   @Inject(optional = true)
   void setRemoteProgramRunnerFactory(
       @Constants.AppFabric.RemoteExecution ProgramRunnerFactory runnerFactory) {
+    LOG.error("Injecting RemotePRF: {}", runnerFactory);
     this.remoteProgramRunnerFactory = runnerFactory;
   }
 

@@ -115,6 +115,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
    */
   @Inject(optional = true)
   void setRemoteProgramRunnerFactory(@Constants.AppFabric.RemoteExecution ProgramRunnerFactory runnerFactory) {
+    LOG.error("Injecting RemotePRF: {}", runnerFactory);
     this.remoteProgramRunnerFactory = runnerFactory;
   }
 
