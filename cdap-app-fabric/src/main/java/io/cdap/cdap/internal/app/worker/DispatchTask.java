@@ -1,0 +1,159 @@
+/*
+ * Copyright © 2022 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package io.cdap.cdap.internal.app.worker;
+
+import com.google.common.base.Throwables;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
+import io.cdap.cdap.api.artifact.ApplicationClass;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.plugin.Requirements;
+import io.cdap.cdap.api.service.worker.RunnableTask;
+import io.cdap.cdap.api.service.worker.RunnableTaskContext;
+import io.cdap.cdap.app.deploy.DispatchResponse;
+import io.cdap.cdap.app.guice.RemoteExecutionProgramRunnerModule;
+import io.cdap.cdap.app.runtime.Arguments;
+import io.cdap.cdap.app.runtime.ProgramOptions;
+import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
+import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.IOModule;
+import io.cdap.cdap.common.guice.LocalLocationModule;
+import io.cdap.cdap.common.guice.ZKClientModule;
+import io.cdap.cdap.data.runtime.StorageModule;
+import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
+import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
+import io.cdap.cdap.internal.app.deploy.InMemoryDispatcher;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppLaunchInfo;
+import io.cdap.cdap.internal.app.runtime.artifact.ApplicationClassCodec;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.RequirementsCodec;
+import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
+import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
+import io.cdap.cdap.internal.io.SchemaTypeAdapter;
+import io.cdap.cdap.internal.provision.ProvisionerModule;
+import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.metrics.guice.DistributedMetricsClientModule;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.guice.DistributedCoreSecurityModule;
+import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
+import io.cdap.cdap.security.guice.SecureStoreClientModule;
+import io.cdap.cdap.security.impersonation.Impersonator;
+import org.apache.twill.api.RunId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeUnit;
+
+public class DispatchTask implements RunnableTask {
+
+  private static final Logger LOG = LoggerFactory.getLogger(DispatchTask.class);
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(
+          new GsonBuilder())
+      .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+      .registerTypeAdapter(ApplicationClass.class, new ApplicationClassCodec())
+      .registerTypeAdapter(Requirements.class, new RequirementsCodec())
+      .registerTypeAdapter(RunId.class, new RunIds.RunIdCodec())
+      .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
+      .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
+      .create();
+
+  private final CConfiguration cConf;
+
+  @Inject
+  DispatchTask(CConfiguration cConf) {
+    this.cConf = cConf;
+  }
+
+  @Override
+  public void run(RunnableTaskContext context) throws Exception {
+    try {
+      AppLaunchInfo appLaunchInfo = GSON.fromJson(context.getParam(), AppLaunchInfo.class);
+      LOG.error("AppLaunchInfo: {}", appLaunchInfo);
+      Injector injector = Guice.createInjector(
+          new ConfigModule(cConf),
+          new LocalLocationModule(),
+          new ConfiguratorTaskModule(),
+          new DispatchTaskModule(),
+          new AuthenticationContextModules().getMasterWorkerModule(),
+          new ExternalAuthenticationModule(),
+          new RemoteExecutionProgramRunnerModule(),
+          new SecureStoreClientModule(),
+          new IOModule(),
+          new ProvisionerModule(),
+          // new DistributedMetricsClientModule(),
+          new MessagingClientModule(),
+          new DistributedCoreSecurityModule(),
+          new StorageModule(),
+          new ZKClientModule()
+      );
+      LOG.error("Injector: {}", injector);
+      DispatchTaskRunner taskRunner = injector.getInstance(DispatchTaskRunner.class);
+      LOG.error("TaskRunner: {}", taskRunner);
+      DispatchResponse response = taskRunner.dispatch(appLaunchInfo);
+      LOG.error("DispatchResponse: {}", response);
+      if (response.getExitCode() == 0 && response.isSuccessfulLaunch()) {
+        context.setTerminateOnComplete(true);
+      }
+      String result = GSON.toJson(response);
+      context.writeResult(result.getBytes(StandardCharsets.UTF_8));
+    } catch (Exception e) {
+      LOG.error("Exception: ", e);
+    }
+  }
+
+  private static class DispatchTaskRunner {
+
+    private final CConfiguration cConf;
+    private final ProgramRunnerFactory programRunnerFactory;
+    private final ConfiguratorFactory configuratorFactory;
+    private final Impersonator impersonator;
+    private final ArtifactRepository artifactRepository;
+
+    @Inject
+    DispatchTaskRunner(CConfiguration cConf,
+        ProgramRunnerFactory programRunnerFactory,
+        ConfiguratorFactory configuratorFactory,
+        Impersonator impersonator,
+        ArtifactRepository artifactRepository) {
+      this.cConf = cConf;
+      this.programRunnerFactory = programRunnerFactory;
+      this.configuratorFactory = configuratorFactory;
+      this.impersonator = impersonator;
+      this.artifactRepository = artifactRepository;
+    }
+
+    public DispatchResponse dispatch(AppLaunchInfo appLaunchInfo) throws Exception {
+      LOG.error("AppLaunchInfo: {}", GSON.toJson(appLaunchInfo));
+      InMemoryDispatcher dispatcher = new InMemoryDispatcher(cConf, programRunnerFactory,
+          configuratorFactory, impersonator, artifactRepository, appLaunchInfo);
+      try {
+        return dispatcher.dispatch().get(120, TimeUnit.SECONDS);
+      } catch (Exception e) {
+        // We don't need the ExecutionException being reported back to the RemoteTaskExecutor, hence only
+        // propagating the actual cause.
+        Throwables.propagateIfPossible(e.getCause(), Exception.class);
+        throw Throwables.propagate(e.getCause());
+      }
+    }
+  }
+}

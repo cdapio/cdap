@@ -55,20 +55,20 @@ public class ConfiguratorTaskModule extends AbstractModule {
       .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
 
     // Bind ProgramRunner
-    MapBinder<ProgramType, ProgramRunner> runnerFactoryBinder =
-      MapBinder.newMapBinder(binder(), ProgramType.class, ProgramRunner.class);
+    // MapBinder<ProgramType, ProgramRunner> runnerFactoryBinder =
+    //   MapBinder.newMapBinder(binder(), ProgramType.class, ProgramRunner.class);
     bind(ProgramStateWriter.class).to(NoOpProgramStateWriter.class);
-    bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.LOCAL);
+    // bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.LOCAL);
     bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
 
     bind(PluginFinder.class).to(RemoteWorkerPluginFinder.class);
     bind(UGIProvider.class).to(CurrentUGIProvider.class);
 
-    bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class).in(Scopes.SINGLETON);
+    // bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class).in(Scopes.SINGLETON);
     bind(NamespaceQueryAdmin.class).to(RemoteNamespaceQueryClient.class);
     bind(MetadataServiceClient.class).to(DefaultMetadataServiceClient.class);
 
-    bind(ArtifactRepository.class).to(RemoteArtifactRepository.class);
+    // bind(ArtifactRepository.class).to(RemoteArtifactRepository.class);
   }
 }
 

@@ -481,35 +481,39 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
    * service.
    */
   private boolean createControllerIfNeeded(RunRecordDetail runRecordDetail) {
+    TwillController twillController = createTwillControllerFromRunRecord(runRecordDetail);
+    return twillController != null;
+  }
+
+  public TwillController createTwillControllerFromRunRecord(RunRecordDetail runRecordDetail) {
     // Controller only needs to be created for program runs in RUNNING or SUSPENDED state.
     // Program runs in PENDING and STARTING state will eventually start and controller will be created later.
     if (runRecordDetail.getStatus() != ProgramRunStatus.RUNNING
-      && runRecordDetail.getStatus() != ProgramRunStatus.SUSPENDED) {
+        && runRecordDetail.getStatus() != ProgramRunStatus.SUSPENDED) {
       LOG.debug("Skip creating controller for run {} with status {}", runRecordDetail.getProgramRunId(),
-                runRecordDetail.getStatus());
-      return false;
+          runRecordDetail.getStatus());
+      return null;
     }
 
     Map<String, String> systemArgs = runRecordDetail.getSystemArgs();
     try {
       ClusterMode clusterMode = ClusterMode.valueOf(systemArgs.getOrDefault(ProgramOptionConstants.CLUSTER_MODE,
-                                                                            ClusterMode.ON_PREMISE.name()));
+          ClusterMode.ON_PREMISE.name()));
       if (clusterMode != ClusterMode.ISOLATED) {
         LOG.debug("Ignore run {} of non supported cluster mode {}", runRecordDetail.getProgramRunId(), clusterMode);
-        return false;
+        return null;
       }
     } catch (IllegalArgumentException e) {
       LOG.warn("Ignore run record with an invalid cluster mode", e);
-      return false;
+      return null;
     }
 
     ProgramOptions programOpts = new SimpleProgramOptions(runRecordDetail.getProgramRunId().getParent(),
-                                                          new BasicArguments(runRecordDetail.getSystemArgs()),
-                                                          new BasicArguments(runRecordDetail.getUserArgs()));
+        new BasicArguments(runRecordDetail.getSystemArgs()),
+        new BasicArguments(runRecordDetail.getUserArgs()));
     // Creates a controller via the controller factory.
     // Since there is no startup start needed, the timeout is arbitrarily short
-    new ControllerFactory(runRecordDetail.getProgramRunId(), programOpts).create(null, 5, TimeUnit.SECONDS);
-    return true;
+    return new ControllerFactory(runRecordDetail.getProgramRunId(), programOpts).create(null, 5, TimeUnit.SECONDS);
   }
 
   private final class ControllerFactory implements TwillControllerFactory {

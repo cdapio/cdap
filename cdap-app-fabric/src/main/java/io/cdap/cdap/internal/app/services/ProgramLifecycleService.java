@@ -684,7 +684,6 @@ public class ProgramLifecycleService {
   ProgramController startInternal(ProgramDescriptor programDescriptor,
                                   ProgramOptions programOptions, ProgramRunId programRunId) {
     RunId runId = RunIds.fromString(programRunId.getRun());
-
     synchronized (this) {
       RuntimeInfo runtimeInfo = runtimeService.lookup(programRunId.getParent(), runId);
       if (runtimeInfo != null) {
