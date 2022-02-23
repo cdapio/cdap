@@ -65,6 +65,7 @@ import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.impersonation.Impersonator;
+import java.util.Objects;
 import org.apache.twill.api.RunId;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
@@ -136,7 +137,9 @@ public class InMemoryDispatcher implements Dispatcher {
 
   @Inject(optional = true)
   public void setHostname(@Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress host) {
-    this.hostname = host.getCanonicalHostName();
+    if (Objects.nonNull(host)) {
+      this.hostname = host.getCanonicalHostName();
+    }
   }
 
   @Override
