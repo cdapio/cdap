@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerTwillRunnable;
 import io.cdap.cdap.master.spi.twill.DependentTwillPreparer;
@@ -56,6 +57,7 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
 
   private final CConfiguration cConf;
   private final Configuration hConf;
+  private final SConfiguration sConf;
 
   private final TwillRunner twillRunner;
   private TwillController twillController;
@@ -63,10 +65,11 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
   private ScheduledExecutorService executor;
 
   @Inject
-  public TaskWorkerServiceLauncher(CConfiguration cConf, Configuration hConf,
+  public TaskWorkerServiceLauncher(CConfiguration cConf, Configuration hConf, SConfiguration sConf,
                                    TwillRunner twillRunner) {
     this.cConf = cConf;
     this.hConf = hConf;
+    this.sConf = sConf;
     this.twillRunner = twillRunner;
   }
 
@@ -140,6 +143,10 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
           try (Writer writer = Files.newBufferedWriter(hConfPath, StandardCharsets.UTF_8)) {
             hConf.writeXml(writer);
           }
+          Path sConfPath = runDir.resolve("sConf.xml");
+          try (Writer writer = Files.newBufferedWriter(sConfPath, StandardCharsets.UTF_8)) {
+            sConf.writeXml(writer);
+          }
 
           ResourceSpecification taskworkerResourceSpec = ResourceSpecification.Builder.with()
             .setVirtualCores(cConf.getInt(Constants.TaskWorker.CONTAINER_CORES))
@@ -157,8 +164,8 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
           LOG.info("Starting TaskWorker pool with {} instances", taskworkerResourceSpec.getInstances());
 
           TwillPreparer twillPreparer = twillRunner.prepare(
-            new TaskWorkerTwillApplication(cConfPath.toUri(), hConfPath.toUri(), taskworkerResourceSpec,
-                                           artifactLocalizerResourceSpec));
+            new TaskWorkerTwillApplication(cConfPath.toUri(), hConfPath.toUri(), sConfPath.toUri(),
+                                           taskworkerResourceSpec, artifactLocalizerResourceSpec));
 
           String priorityClass = cConf.get(Constants.TaskWorker.CONTAINER_PRIORITY_CLASS_NAME);
           if (priorityClass != null) {
