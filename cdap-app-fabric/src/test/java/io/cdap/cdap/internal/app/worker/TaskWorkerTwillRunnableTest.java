@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.worker;
 
 import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import io.cdap.cdap.internal.app.runtime.distributed.MockMasterEnvironment;
@@ -34,7 +35,8 @@ public class TaskWorkerTwillRunnableTest {
   @Test
   public void testInjector() {
     MasterEnvironments.setMasterEnvironment(new MockMasterEnvironment());
-    Injector injector = TaskWorkerTwillRunnable.createInjector(CConfiguration.create(), new Configuration());
+    Injector injector = TaskWorkerTwillRunnable.createInjector(CConfiguration.create(), new Configuration(),
+        SConfiguration.create());
     injector.getInstance(ArtifactManagerFactory.class).create(NamespaceId.SYSTEM, RetryStrategies.noRetry());
   }
 }

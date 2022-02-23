@@ -49,6 +49,7 @@ import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
@@ -135,18 +136,18 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
   private static final Key<TwillRunnerService> TWILL_RUNNER_SERVICE_KEY =
       Key.get(TwillRunnerService.class, Constants.AppFabric.RemoteExecution.class);
 
-  public TaskWorkerTwillRunnable(String cConfFileName, String hConfFileName) {
-    super(ImmutableMap.of("cConf", cConfFileName, "hConf", hConfFileName));
+  public TaskWorkerTwillRunnable(String cConfFileName, String hConfFileName, String sConfFileName) {
+    super(ImmutableMap.of("cConf", cConfFileName, "hConf", hConfFileName, "sConf", sConfFileName));
   }
 
   @VisibleForTesting
-  static Injector createInjector(CConfiguration cConf, Configuration hConf) {
+  static Injector createInjector(CConfiguration cConf, Configuration hConf, SConfiguration sConf) {
     List<Module> modules = new ArrayList<>();
 
     CoreSecurityModule coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf);
     // modules.add(new AppFabricServiceRuntimeModule(cConf));
     modules.add(new TwillModule());
-    modules.add(new ConfigModule(cConf, hConf));
+    modules.add(new ConfigModule(cConf, hConf, sConf));
     modules.add(RemoteAuthenticatorModules.getDefaultModule());
     modules.add(new LocalLocationModule());
     modules.add(new IOModule());
@@ -335,7 +336,9 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
     hConf.clear();
     hConf.addResource(new File(getArgument("hConf")).toURI().toURL());
 
-    Injector injector = createInjector(cConf, hConf);
+    SConfiguration sConf = SConfiguration.create(new File(getArgument("sConf")));
+
+    Injector injector = createInjector(cConf, hConf, sConf);
 
     // Initialize logging context
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
