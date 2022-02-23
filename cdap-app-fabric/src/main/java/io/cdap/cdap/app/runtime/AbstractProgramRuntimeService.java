@@ -16,59 +16,37 @@
 package io.cdap.cdap.app.runtime;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Joiner;
-import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
-import io.cdap.cdap.api.app.ApplicationSpecification;
-import io.cdap.cdap.api.artifact.ApplicationClass;
-import io.cdap.cdap.api.common.RuntimeArguments;
-import io.cdap.cdap.api.plugin.Plugin;
-import io.cdap.cdap.app.deploy.ConfigResponse;
-import io.cdap.cdap.app.deploy.Configurator;
+import io.cdap.cdap.app.deploy.DispatchResponse;
+import io.cdap.cdap.app.deploy.Dispatcher;
 import io.cdap.cdap.app.guice.ClusterMode;
-import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.program.ProgramDescriptor;
-import io.cdap.cdap.app.program.Programs;
-import io.cdap.cdap.common.ArtifactNotFoundException;
+import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.id.Id;
-import io.cdap.cdap.common.io.Locations;
-import io.cdap.cdap.common.lang.jar.BundleJarUtil;
-import io.cdap.cdap.common.lang.jar.ClassLoaderFolder;
 import io.cdap.cdap.common.twill.TwillAppNames;
-import io.cdap.cdap.common.utils.DirUtils;
-import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
-import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
-import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo;
-import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
+import io.cdap.cdap.internal.app.deploy.DispatcherFactory;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppLaunchInfo;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
-import io.cdap.cdap.internal.app.runtime.BasicArguments;
-import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
-import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
+import io.cdap.cdap.internal.app.runtime.distributed.DistributedProgramRuntimeService;
+import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkflowProgramRunner;
+import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionTwillRunnerService;
 import io.cdap.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.InMemoryProgramLiveInfo;
 import io.cdap.cdap.proto.NotRunningProgramLiveInfo;
 import io.cdap.cdap.proto.ProgramLiveInfo;
 import io.cdap.cdap.proto.ProgramType;
-import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.twill.api.ResourceReport;
@@ -77,32 +55,21 @@ import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.common.Threads;
-import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -114,34 +81,32 @@ import javax.annotation.Nullable;
 public abstract class AbstractProgramRuntimeService extends AbstractIdleService implements ProgramRuntimeService {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractProgramRuntimeService.class);
-  private static final String CLUSTER_SCOPE = "cluster";
-  private static final String APPLICATION_SCOPE = "app";
   private static final EnumSet<ProgramController.State> COMPLETED_STATES = EnumSet.of(ProgramController.State.COMPLETED,
                                                                                       ProgramController.State.KILLED,
                                                                                       ProgramController.State.ERROR);
   private final CConfiguration cConf;
+  private final DispatcherFactory dispatcherFactory;
+  private final Store store;
   private final ReadWriteLock runtimeInfosLock;
   private final Table<ProgramType, RunId, RuntimeInfo> runtimeInfos;
   private final ProgramRunnerFactory programRunnerFactory;
-  private final ArtifactRepository noAuthArtifactRepository;
   private final ProgramStateWriter programStateWriter;
-  private final ConfiguratorFactory configuratorFactory;
   private ProgramRunnerFactory remoteProgramRunnerFactory;
   private TwillRunnerService remoteTwillRunnerService;
   private ExecutorService executor;
 
   protected AbstractProgramRuntimeService(CConfiguration cConf,
                                           ProgramRunnerFactory programRunnerFactory,
-                                          ArtifactRepository noAuthArtifactRepository,
                                           ProgramStateWriter programStateWriter,
-                                          ConfiguratorFactory configuratorFactory) {
+                                          DispatcherFactory dispatcherFactory,
+                                          Store store) {
     this.cConf = cConf;
+    this.dispatcherFactory = dispatcherFactory;
+    this.store = store;
     this.runtimeInfosLock = new ReentrantReadWriteLock();
     this.runtimeInfos = HashBasedTable.create();
     this.programRunnerFactory = programRunnerFactory;
-    this.noAuthArtifactRepository = noAuthArtifactRepository;
     this.programStateWriter = programStateWriter;
-    this.configuratorFactory = configuratorFactory;
   }
 
   /**
@@ -164,59 +129,40 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
   @Override
   public final RuntimeInfo run(ProgramDescriptor programDescriptor, ProgramOptions options, RunId runId) {
+    AppLaunchInfo appLaunchInfo = new AppLaunchInfo(programDescriptor, options, runId,
+        this instanceof DistributedProgramRuntimeService);
     ProgramId programId = programDescriptor.getProgramId();
     ProgramRunId programRunId = programId.run(runId);
-    ClusterMode clusterMode = ProgramRunners.getClusterMode(options);
-
-    // Creates the ProgramRunner based on the cluster mode
-    ProgramRunner runner = (clusterMode == ClusterMode.ON_PREMISE
-      ? programRunnerFactory
-      : Optional.ofNullable(remoteProgramRunnerFactory).orElseThrow(UnsupportedOperationException::new)
-    ).create(programId.getType());
-
-    File tempDir = createTempDirectory(programId, runId);
-    AtomicReference<Runnable> cleanUpTaskRef = new AtomicReference<>(createCleanupTask(tempDir, runner));
     DelayedProgramController controller = new DelayedProgramController(programRunId);
-    RuntimeInfo runtimeInfo = createRuntimeInfo(controller, programId, () -> cleanUpTaskRef.get().run());
+    RuntimeInfo runtimeInfo = createRuntimeInfo(controller, programId, () -> {
+    });
     updateRuntimeInfo(runtimeInfo);
+    ProgramRunner runner = (ProgramRunners.getClusterMode(options) == ClusterMode.ON_PREMISE
+        ? programRunnerFactory
+        : Optional.ofNullable(remoteProgramRunnerFactory)
+            .orElseThrow(UnsupportedOperationException::new)
+    ).create(programId.getType());
 
     executor.execute(() -> {
       try {
-        // Get the artifact details and save it into the program options.
-        ArtifactId artifactId = programDescriptor.getArtifactId();
-        ArtifactDetail artifactDetail = getArtifactDetail(artifactId);
-        ApplicationSpecification appSpec = programDescriptor.getApplicationSpecification();
-        ProgramDescriptor newProgramDescriptor = programDescriptor;
-
-        boolean isPreview = Boolean.valueOf(
-          options.getArguments().getOption(ProgramOptionConstants.IS_PREVIEW, "false"));
-        // do the app spec regeneration if the mode is on premise, for isolated mode, the regeneration is done on the
-        // runtime environment before the program launch
-        // for preview we already have a resolved app spec, so no need to regenerate the app spec again
-        if (!isPreview && appSpec != null && ClusterMode.ON_PREMISE.equals(clusterMode)) {
-          try {
-            ApplicationSpecification generatedAppSpec =
-              regenerateAppSpec(artifactDetail, programId, artifactId, appSpec, options);
-            appSpec = generatedAppSpec != null ? generatedAppSpec : appSpec;
-            newProgramDescriptor = new ProgramDescriptor(programDescriptor.getProgramId(), appSpec);
-          } catch (Exception e) {
-            LOG.warn("Failed to regenerate the app spec for program {}, using the existing app spec", programId);
-          }
+        Dispatcher dispatcher = this.dispatcherFactory.create(appLaunchInfo);
+        ListenableFuture<DispatchResponse> future = dispatcher.dispatch();
+        if (!future.get().isSuccessfulLaunch()) {
+          throw new Exception("Failed");
         }
-
-        ProgramOptions runtimeProgramOptions = updateProgramOptions(
-          artifactId, programId, options, runId, clusterMode,
-          Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(), null));
-
-        // Take a snapshot of all the plugin artifacts used by the program
-        ProgramOptions optionsWithPlugins = createPluginSnapshot(runtimeProgramOptions, programId, tempDir,
-                                                                 newProgramDescriptor.getApplicationSpecification());
-
-        // Create and run the program
-        Program executableProgram = createProgram(cConf, runner, newProgramDescriptor, artifactDetail, tempDir);
-        cleanUpTaskRef.set(createCleanupTask(cleanUpTaskRef.get(), executableProgram));
-
-        controller.setProgramController(runner.run(executableProgram, optionsWithPlugins));
+        RunRecordDetail runRecordDetail = store.getRun(programRunId);
+        TwillController twillController = null;
+        if (remoteTwillRunnerService instanceof RemoteExecutionTwillRunnerService
+            && runRecordDetail != null) {
+          twillController = ((RemoteExecutionTwillRunnerService) remoteTwillRunnerService)
+              .createTwillControllerFromRunRecord(runRecordDetail);
+        }
+        ProgramController programController = null;
+        if (runner instanceof DistributedWorkflowProgramRunner) {
+          programController = ((DistributedWorkflowProgramRunner) runner)
+              .createProgramController(programRunId, twillController);
+        }
+        controller.setProgramController(programController);
       } catch (Exception e) {
         controller.failed(e);
         programStateWriter.error(programRunId, e);
@@ -230,228 +176,6 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   public ProgramLiveInfo getLiveInfo(ProgramId programId) {
     return isRunning(programId) ? new InMemoryProgramLiveInfo(programId)
       : new NotRunningProgramLiveInfo(programId);
-  }
-
-  protected ArtifactDetail getArtifactDetail(ArtifactId artifactId) throws Exception {
-    return noAuthArtifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId));
-  }
-
-  /**
-   * Creates a {@link Program} for the given {@link ProgramRunner} from the given program jar {@link Location}.
-   */
-  protected Program createProgram(CConfiguration cConf, ProgramRunner programRunner,
-                                  ProgramDescriptor programDescriptor,
-                                  ArtifactDetail artifactDetail, final File tempDir) throws IOException {
-
-    Location programJarLocation = artifactDetail.getDescriptor().getLocation();
-    ClassLoaderFolder classLoaderFolder;
-    try {
-      // If the program jar is not a directory, take a snapshot of the jar file to avoid mutation.
-      if (!programJarLocation.isDirectory()) {
-        File targetFile = new File(tempDir, "program.jar");
-        try {
-          programJarLocation = Locations.toLocation(Locations.linkOrCopyOverwrite(programJarLocation,
-                                                                         targetFile));
-        } catch (FileAlreadyExistsException ex) {
-          LOG.warn("Program file {} already exists and can not be replaced.", targetFile.getAbsolutePath());
-        }
-    }
-      // Unpack the JAR file
-      classLoaderFolder = BundleJarUtil.prepareClassLoaderFolder(
-        programJarLocation, () -> Files.createTempDirectory(tempDir.toPath(), "unpacked").toFile());
-    } catch (IOException ioe) {
-      throw ioe;
-    } catch (Exception e) {
-      // should not happen
-      throw Throwables.propagate(e);
-    }
-    return Programs.create(cConf, programRunner, programDescriptor, programJarLocation, classLoaderFolder.getDir());
-  }
-
-  private Runnable createCleanupTask(final Object... resources) {
-    AtomicBoolean executed = new AtomicBoolean();
-    return () -> {
-      if (!executed.compareAndSet(false, true)) {
-        return;
-      }
-      List<Object> resourceList = new ArrayList<>(Arrays.asList(resources));
-      Collections.reverse(resourceList);
-      for (Object resource : resourceList) {
-        if (resource == null) {
-          continue;
-        }
-
-        try {
-          if (resource instanceof File) {
-            File file = (File) resource;
-            if (file.isDirectory()) {
-              DirUtils.deleteDirectoryContents(file);
-            } else {
-              file.delete();
-            }
-          } else if (resource instanceof Closeable) {
-            Closeables.closeQuietly((Closeable) resource);
-          } else if (resource instanceof Runnable) {
-            ((Runnable) resource).run();
-          }
-        } catch (Throwable t) {
-          LOG.warn("Exception when cleaning up resource {}", resource, t);
-        }
-      }
-    };
-  }
-
-  /**
-   * Creates a local temporary directory for this program run.
-   */
-  private File createTempDirectory(ProgramId programId, RunId runId) {
-    File tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
-    File dir = new File(tempDir, String.format("%s.%s.%s.%s.%s",
-                                               programId.getType().name().toLowerCase(),
-                                               programId.getNamespace(), programId.getApplication(),
-                                               programId.getProgram(), runId.getId()));
-    dir.mkdirs();
-    return dir;
-  }
-
-  /**
-   * Regenerates the app spec before the program start
-   *
-   * @return the regenerated app spec, or null if there is any exception generating the app spec.
-   */
-  @Nullable
-  private ApplicationSpecification regenerateAppSpec(
-    ArtifactDetail artifactDetail, ProgramId programId, ArtifactId artifactId,
-    ApplicationSpecification existingAppSpec,
-    ProgramOptions options) throws InterruptedException, ExecutionException, TimeoutException {
-    ApplicationClass appClass = Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(), null);
-    if (appClass == null) {
-      // This should never happen.
-      throw new IllegalStateException(String.format(
-        "No application class found in artifact '%s' in namespace '%s'.",
-        artifactDetail.getDescriptor().getArtifactId(), programId.getNamespace()));
-    }
-
-    AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(
-      artifactId, artifactDetail.getDescriptor().getLocation(), programId.getNamespaceId(), appClass,
-      existingAppSpec.getName(), existingAppSpec.getAppVersion(), existingAppSpec.getConfiguration(), null, false,
-      new AppDeploymentRuntimeInfo(existingAppSpec, options.getUserArguments().asMap(),
-                                   options.getArguments().asMap()));
-    Configurator configurator = this.configuratorFactory.create(deploymentInfo);
-    ListenableFuture<ConfigResponse> future = configurator.config();
-    ConfigResponse response = future.get(120, TimeUnit.SECONDS);
-    
-    if (response.getExitCode() == 0) {
-      AppSpecInfo appSpecInfo = response.getAppSpecInfo();
-      if (appSpecInfo != null && appSpecInfo.getAppSpec() != null) {
-        return appSpecInfo.getAppSpec();
-      }
-    }
-    return null;
-  }
-
-  /**
-   * Return the copy of the {@link ProgramOptions} including locations of plugin artifacts in it.
-   * @param options the {@link ProgramOptions} in which the locations of plugin artifacts needs to be included
-   * @param programId Id of the Program
-   * @param tempDir Temporary Directory to create the plugin artifact snapshot
-   * @param appSpec program's Application Specification
-   * @return the copy of the program options with locations of plugin artifacts included in them
-   */
-  private ProgramOptions createPluginSnapshot(ProgramOptions options, ProgramId programId, File tempDir,
-                                              @Nullable ApplicationSpecification appSpec) throws Exception {
-    // appSpec is null in an unit test
-    if (appSpec == null) {
-      return options;
-    }
-
-    Set<String> files = Sets.newHashSet();
-    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    builder.putAll(options.getArguments().asMap());
-    for (Map.Entry<String, Plugin> pluginEntry : appSpec.getPlugins().entrySet()) {
-      Plugin plugin = pluginEntry.getValue();
-      File destFile = new File(tempDir, Artifacts.getFileName(plugin.getArtifactId()));
-      // Skip if the file has already been copied.
-      if (!files.add(destFile.getName())) {
-        continue;
-      }
-
-      try {
-        ArtifactId artifactId = Artifacts.toProtoArtifactId(programId.getNamespaceId(), plugin.getArtifactId());
-        copyArtifact(artifactId, noAuthArtifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId)), destFile);
-      } catch (ArtifactNotFoundException e) {
-        throw new IllegalArgumentException(String.format("Artifact %s could not be found", plugin.getArtifactId()), e);
-      }
-    }
-    LOG.debug("Plugin artifacts of {} copied to {}", programId, tempDir.getAbsolutePath());
-    builder.put(ProgramOptionConstants.PLUGIN_DIR, tempDir.getAbsolutePath());
-    return new SimpleProgramOptions(options.getProgramId(), new BasicArguments(builder.build()),
-                                    options.getUserArguments(), options.isDebug());
-  }
-
-  /**
-   * Copies the artifact jar to the given target file.
-   *
-   * @param artifactId artifact id of the artifact to be copied
-   * @param artifactDetail detail information of the artifact to be copied
-   * @param targetFile target file to copy to
-   * @throws IOException if the copying failed
-   */
-  protected void copyArtifact(ArtifactId artifactId,
-                              ArtifactDetail artifactDetail, File targetFile) throws IOException {
-    Locations.linkOrCopy(artifactDetail.getDescriptor().getLocation(), targetFile);
-  }
-
-  protected Map<String, String> getExtraProgramOptions() {
-    return Collections.emptyMap();
-  }
-
-  /**
-   * Updates the given {@link ProgramOptions} and return a new instance.
-   * It copies the {@link ProgramOptions}. Then it adds all entries returned by {@link #getExtraProgramOptions()}
-   * followed by adding the {@link RunId} to the system arguments.
-   *
-   * Also scope resolution will be performed on the user arguments on the application and program.
-   *
-   * @param programId the program id
-   * @param options The {@link ProgramOptions} in which the RunId to be included
-   * @param runId   The RunId to be included
-   * @param clusterMode clustermode for the program run
-   * @param applicationClass application class for the program
-   * @return the copy of the program options with RunId included in them
-   */
-  private ProgramOptions updateProgramOptions(ArtifactId artifactId, ProgramId programId,
-                                              ProgramOptions options, RunId runId, ClusterMode clusterMode,
-                                              ApplicationClass applicationClass) {
-    // Build the system arguments
-    Map<String, String> systemArguments = new HashMap<>(options.getArguments().asMap());
-    // don't add these system arguments if they're already there
-    // this can happen if this is a program within a workflow, and the workflow already added these arguments
-    for (Map.Entry<String, String> extraOption : getExtraProgramOptions().entrySet()) {
-      systemArguments.putIfAbsent(extraOption.getKey(), extraOption.getValue());
-    }
-    systemArguments.putIfAbsent(ProgramOptionConstants.RUN_ID, runId.getId());
-    systemArguments.putIfAbsent(ProgramOptionConstants.ARTIFACT_ID, Joiner.on(':').join(artifactId.toIdParts()));
-    if (clusterMode == ClusterMode.ISOLATED) {
-      systemArguments.putIfAbsent(ProgramOptionConstants.APPLICATION_CLASS, applicationClass.getClassName());
-    }
-
-    // Resolves the user arguments
-    // First resolves at the cluster scope if the cluster.name is not empty
-    String clusterName = options.getArguments().getOption(Constants.CLUSTER_NAME);
-    Map<String, String> userArguments = options.getUserArguments().asMap();
-    if (!Strings.isNullOrEmpty(clusterName)) {
-      userArguments = RuntimeArguments.extractScope(CLUSTER_SCOPE, clusterName, userArguments);
-    }
-    // Then resolves at the application scope
-    userArguments = RuntimeArguments.extractScope(APPLICATION_SCOPE, programId.getApplication(), userArguments);
-    // Then resolves at the program level
-    userArguments = RuntimeArguments.extractScope(programId.getType().getScope(), programId.getProgram(),
-                                                  userArguments);
-
-    return new SimpleProgramOptions(options.getProgramId(), new BasicArguments(systemArguments),
-                                    new BasicArguments(userArguments), options.isDebug());
   }
 
   protected RuntimeInfo createRuntimeInfo(ProgramController controller, ProgramId programId, Runnable cleanUpTask) {
