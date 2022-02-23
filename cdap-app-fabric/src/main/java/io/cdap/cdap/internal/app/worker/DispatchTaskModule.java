@@ -25,6 +25,7 @@ import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Names;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.deploy.Configurator;
+import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.guice.DefaultProgramRunnerFactory;
 import io.cdap.cdap.app.runtime.NoOpProgramStateWriter;
 import io.cdap.cdap.app.runtime.ProgramRunner;
@@ -32,6 +33,7 @@ import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
 import io.cdap.cdap.app.runtime.ProgramRuntimeProvider.Mode;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
@@ -50,15 +52,21 @@ import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReader
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedMapReduceProgramRunner;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkerProgramRunner;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkflowProgramRunner;
+import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionTwillRunnerService;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
+import org.apache.twill.api.TwillRunner;
+import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 public class DispatchTaskModule extends AbstractModule {
+
+  private static final Key<TwillRunnerService> TWILL_RUNNER_SERVICE_KEY =
+      Key.get(TwillRunnerService.class, Constants.AppFabric.RemoteExecution.class);
 
   @Override
   protected void configure() {
@@ -98,13 +106,35 @@ public class DispatchTaskModule extends AbstractModule {
 
     bind(ConfiguratorFactory.class).toProvider(ConfiguratorFactoryProvider.class);
 
+    // RemoteExecutionProgramRunnerModule
+
+    bind(TWILL_RUNNER_SERVICE_KEY).to(RemoteExecutionTwillRunnerService.class).in(Scopes.SINGLETON);
+
+    // Bind ProgramRunnerFactory and expose it with the RemoteExecution annotation
+    Key<ProgramRunnerFactory> programRunnerFactoryKey = Key.get(ProgramRunnerFactory.class,
+        Constants.AppFabric.RemoteExecution.class);
+    // ProgramRunnerFactory should be in distributed mode
+    bind(programRunnerFactoryKey).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
+
+    // The following are bindings are for ProgramRunners. They are private to this module and only
+    // available to the remote execution ProgramRunnerFactory exposed.
+
+    // No need to publish program state for remote execution runs since they will publish states and get
+    // collected back via the runtime monitoring
+    bindConstant().annotatedWith(Names.named(DefaultProgramRunnerFactory.PUBLISH_PROGRAM_STATE)).to(false);
+    // TwillRunner used by the ProgramRunner is the remote execution one
+    bind(TwillRunner.class).annotatedWith(Constants.AppFabric.ProgramRunner.class).to(TWILL_RUNNER_SERVICE_KEY);
+    // ProgramRunnerFactory used by ProgramRunner is the remote execution one.
+    bind(ProgramRunnerFactory.class)
+        .annotatedWith(Constants.AppFabric.ProgramRunner.class)
+        .to(programRunnerFactoryKey);
+
+    // A private Map binding of ProgramRunner for ProgramRunnerFactory to use
     MapBinder<ProgramType, ProgramRunner> defaultProgramRunnerBinder = MapBinder.newMapBinder(
         binder(), ProgramType.class, ProgramRunner.class);
 
-    defaultProgramRunnerBinder.addBinding(ProgramType.MAPREDUCE).to(
-        DistributedMapReduceProgramRunner.class);
-    defaultProgramRunnerBinder.addBinding(ProgramType.WORKFLOW).to(
-        DistributedWorkflowProgramRunner.class);
+    defaultProgramRunnerBinder.addBinding(ProgramType.MAPREDUCE).to(DistributedMapReduceProgramRunner.class);
+    defaultProgramRunnerBinder.addBinding(ProgramType.WORKFLOW).to(DistributedWorkflowProgramRunner.class);
     defaultProgramRunnerBinder.addBinding(ProgramType.WORKER).to(DistributedWorkerProgramRunner.class);
   }
 }

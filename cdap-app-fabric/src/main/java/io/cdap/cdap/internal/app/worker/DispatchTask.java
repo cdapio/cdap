@@ -96,7 +96,7 @@ public class DispatchTask implements RunnableTask {
           new DispatchTaskModule(),
           new AuthenticationContextModules().getMasterWorkerModule(),
           new ExternalAuthenticationModule(),
-          new RemoteExecutionProgramRunnerModule(),
+          // new RemoteExecutionProgramRunnerModule(),
           new SecureStoreClientModule(),
           new IOModule(),
           new ProvisionerModule(),
