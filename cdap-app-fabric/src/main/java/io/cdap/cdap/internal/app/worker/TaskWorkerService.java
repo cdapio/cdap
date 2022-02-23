@@ -67,7 +67,7 @@ public class TaskWorkerService extends AbstractIdleService {
     this.cConf = cConf;
     this.discoveryService = discoveryService;
     this.artifactManagerFactory = artifactManagerFactory;
-    this.taskLauncher = new RunnableTaskLauncher(cConf);
+    this.taskLauncher = new RunnableTaskLauncher(cConf, sConf);
     this.metricsCollectionService = metricsCollectionService;
 
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TASK_WORKER)
@@ -82,7 +82,7 @@ public class TaskWorkerService extends AbstractIdleService {
           pipeline.addAfter("compressor", "decompressor", new HttpContentDecompressor());
         }
       })
-      .setHttpHandlers(new TaskWorkerHttpHandlerInternal(cConf, this::stopService, metricsCollectionService));
+      .setHttpHandlers(new TaskWorkerHttpHandlerInternal(cConf, sConf, this::stopService, metricsCollectionService));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);

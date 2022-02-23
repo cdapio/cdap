@@ -24,6 +24,7 @@ import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.SConfiguration;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -41,7 +42,7 @@ public class RunnableTaskLauncherTest {
     RunnableTaskRequest request = RunnableTaskRequest.getBuilder(TestRunnableTask.class.getName()).
       withParam(want).build();
 
-    RunnableTaskLauncher launcher = new RunnableTaskLauncher(CConfiguration.create());
+    RunnableTaskLauncher launcher = new RunnableTaskLauncher(CConfiguration.create(), SConfiguration.create());
     ByteBuffer got = launcher.launchRunnableTask(request).getResult();
     Assert.assertEquals(want, StandardCharsets.UTF_8.decode(got).toString());
   }
