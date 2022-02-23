@@ -123,20 +123,20 @@ public class InMemoryDispatcher implements Dispatcher {
     this.isDistributed = appLaunchInfo.isDistributed();
   }
 
-  @Inject(optional = true)
-  void setHostname(@Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname) {
-    this.hostname = hostname.getCanonicalHostName();
-  }
-
   /**
    * Optional guice injection for the {@link ProgramRunnerFactory} used for remote execution. It is
    * optional because in unit-test we don't have need for that.
    */
   @Inject(optional = true)
-  void setRemoteProgramRunnerFactory(
+  public void setRemoteProgramRunnerFactory(
       @Constants.AppFabric.RemoteExecution ProgramRunnerFactory runnerFactory) {
     LOG.error("Injecting RemotePRF: {}", runnerFactory);
     this.remoteProgramRunnerFactory = runnerFactory;
+  }
+
+  @Inject(optional = true)
+  public void setHostname(@Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress host) {
+    this.hostname = host.getCanonicalHostName();
   }
 
   @Override
