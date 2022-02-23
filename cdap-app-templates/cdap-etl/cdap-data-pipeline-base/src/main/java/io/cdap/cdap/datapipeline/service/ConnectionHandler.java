@@ -166,8 +166,11 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
       contextAccessEnforcer.enforce(new ConnectionEntityId(namespace, ConnectionId.getConnectionId(connection)),
                                     StandardPermission.GET);
       Connection conn = store.getConnection(new ConnectionId(namespaceSummary, connection));
-      metrics.count(Constants.Metrics.Connection.CONNECTION_GET_COUNT, 1);
-      metrics.count(Constants.Metrics.Connection.getConnGetMetric(conn.getConnectionType()), 1);
+      Metrics child = metrics.child(ImmutableMap.of(Constants.Metrics.Tag.APP_ENTITY_TYPE,
+                                                    Constants.CONNECTION_SERVICE_NAME,
+                                                    Constants.Metrics.Tag.APP_ENTITY_TYPE_NAME,
+                                                    conn.getConnectionType()));
+      child.count(Constants.Metrics.Connection.CONNECTION_GET_COUNT, 1);
       responder.sendJson(conn);
     });
   }
@@ -205,8 +208,11 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
                                                  creationRequest.getDescription(), false, false,
                                                  now, now, creationRequest.getPlugin());
       store.saveConnection(connectionId, connectionInfo, creationRequest.overWrite());
-      metrics.count(Constants.Metrics.Connection.CONNECTION_COUNT, 1);
-      metrics.count(Constants.Metrics.Connection.getCountMetric(connectionInfo.getConnectionType()), 1);
+      Metrics child = metrics.child(ImmutableMap.of(Constants.Metrics.Tag.APP_ENTITY_TYPE,
+                                                    Constants.CONNECTION_SERVICE_NAME,
+                                                    Constants.Metrics.Tag.APP_ENTITY_TYPE_NAME,
+                                                    connectionInfo.getConnectionType()));
+      child.count(Constants.Metrics.Connection.CONNECTION_COUNT, 1);
       responder.sendStatus(HttpURLConnection.HTTP_OK);
     });
   }
@@ -231,8 +237,11 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
                                     StandardPermission.DELETE);
       Connection oldConnection = store.getConnection(connectionId);
       store.deleteConnection(connectionId);
-      metrics.count(Constants.Metrics.Connection.CONNECTION_DELETED_COUNT, 1);
-      metrics.count(Constants.Metrics.Connection.getDeletedMetric(oldConnection.getConnectionType()), 1);
+      Metrics child = metrics.child(ImmutableMap.of(Constants.Metrics.Tag.APP_ENTITY_TYPE,
+                                                    Constants.CONNECTION_SERVICE_NAME,
+                                                    Constants.Metrics.Tag.APP_ENTITY_TYPE_NAME,
+                                                    oldConnection.getConnectionType()));
+      child.count(Constants.Metrics.Connection.CONNECTION_DELETED_COUNT, 1);
       responder.sendStatus(HttpURLConnection.HTTP_OK);
     });
   }
@@ -321,8 +330,11 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
       } else {
         browseLocally(namespaceSummary.getName(), browseRequest, conn, responder);
       }
-      metrics.count(Constants.Metrics.Connection.CONNECTION_BROWSE_COUNT, 1);
-      metrics.count(Constants.Metrics.Connection.getBrowseMetric(conn.getConnectionType()), 1);
+      Metrics child = metrics.child(ImmutableMap.of(Constants.Metrics.Tag.APP_ENTITY_TYPE,
+                                                    Constants.CONNECTION_SERVICE_NAME,
+                                                    Constants.Metrics.Tag.APP_ENTITY_TYPE_NAME,
+                                                    conn.getConnectionType()));
+      child.count(Constants.Metrics.Connection.CONNECTION_BROWSE_COUNT, 1);
     });
   }
 
@@ -384,11 +396,13 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
       } else {
         sampleLocally(namespaceSummary.getName(), sampleRequestString, conn, responder);
       }
-      metrics.count(Constants.Metrics.Connection.CONNECTION_SAMPLE_COUNT, 1);
-      metrics.count(Constants.Metrics.Connection.getSampleMetric(conn.getConnectionType()), 1);
+      Metrics child = metrics.child(ImmutableMap.of(Constants.Metrics.Tag.APP_ENTITY_TYPE,
+                                                    Constants.CONNECTION_SERVICE_NAME,
+                                                    Constants.Metrics.Tag.APP_ENTITY_TYPE_NAME,
+                                                    conn.getConnectionType()));
+      child.count(Constants.Metrics.Connection.CONNECTION_SAMPLE_COUNT, 1);
       // sample will also generate the spec, so add the metric for it
-      metrics.count(Constants.Metrics.Connection.CONNECTION_SPEC_COUNT, 1);
-      metrics.count(Constants.Metrics.Connection.getSpecMetric(conn.getConnectionType()), 1);
+      child.count(Constants.Metrics.Connection.CONNECTION_SPEC_COUNT, 1);
     });
   }
 
@@ -462,8 +476,11 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
         specGenerationLocally(namespaceSummary.getName(), specRequest, conn, responder);
       }
 
-      metrics.count(Constants.Metrics.Connection.CONNECTION_SPEC_COUNT, 1);
-      metrics.count(Constants.Metrics.Connection.getSpecMetric(conn.getConnectionType()), 1);
+      Metrics child = metrics.child(ImmutableMap.of(Constants.Metrics.Tag.APP_ENTITY_TYPE,
+                                                    Constants.CONNECTION_SERVICE_NAME,
+                                                    Constants.Metrics.Tag.APP_ENTITY_TYPE_NAME,
+                                                    conn.getConnectionType()));
+      child.count(Constants.Metrics.Connection.CONNECTION_SPEC_COUNT, 1);
     });
   }
 

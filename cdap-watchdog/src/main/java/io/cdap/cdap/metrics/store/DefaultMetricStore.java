@@ -137,7 +137,8 @@ public class DefaultMetricStore implements MetricStore {
                        Constants.Metrics.Tag.SERVICE, Constants.Metrics.Tag.DATASET,
                        Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.HANDLER,
                        Constants.Metrics.Tag.METHOD, Constants.Metrics.Tag.INSTANCE_ID,
-                       Constants.Metrics.Tag.THREAD),
+                       Constants.Metrics.Tag.THREAD, Constants.Metrics.Tag.APP_ENTITY_TYPE,
+                       Constants.Metrics.Tag.APP_ENTITY_TYPE_NAME),
       // i.e. for service only
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.SERVICE)));
