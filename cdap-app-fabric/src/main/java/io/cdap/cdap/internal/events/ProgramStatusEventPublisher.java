@@ -133,7 +133,8 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
         return;
       }
       ProgramStatusEventDetails.Builder builder = ProgramStatusEventDetails
-        .getBuilder(programRunId.getRun(), programRunId.getProgram(), programRunId.getNamespace(),
+        .getBuilder(programRunId.getRun(), programRunId.getApplication(), programRunId.getProgram(),
+                    programRunId.getNamespace(),
                     programStatus,
                     RunIds.getTime(programRunId.getRun(), TimeUnit.MILLISECONDS));
       String userArgsString = properties.get(ProgramOptionConstants.USER_OVERRIDES);

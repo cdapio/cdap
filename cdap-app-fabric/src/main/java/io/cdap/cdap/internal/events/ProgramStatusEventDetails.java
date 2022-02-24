@@ -16,7 +16,11 @@
 
 package io.cdap.cdap.internal.events;
 
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+
+import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
@@ -26,6 +30,7 @@ public class ProgramStatusEventDetails {
 
   private final String runID;
   private final String programName;
+  private final String applicationName;
   private final String namespace;
   private final String status;
   private final long eventTime;
@@ -34,11 +39,15 @@ public class ProgramStatusEventDetails {
   @Nullable
   private final Map<String, String> systemArgs;
   private final String error;
+  @Nullable
+  private final String workflowId;
 
-  private ProgramStatusEventDetails(String runID, String programName, String namespace,
+
+  private ProgramStatusEventDetails(String runID, String programName, String namespace, String applicationName,
                                     String status, long eventTime,
                                     @Nullable Map<String, String> userArgs, @Nullable Map<String, String> systemArgs,
-                                    @Nullable String error) {
+                                    @Nullable String error,
+                                    @Nullable String workflowId) {
     this.runID = runID;
     this.programName = programName;
     this.namespace = namespace;
@@ -47,11 +56,13 @@ public class ProgramStatusEventDetails {
     this.userArgs = userArgs;
     this.systemArgs = systemArgs;
     this.error = error;
+    this.workflowId = workflowId;
+    this.applicationName = applicationName;
   }
 
-  public static Builder getBuilder(String runID, String programName, String namespace,
+  public static Builder getBuilder(String runID, String applicationName, String programName, String namespace,
                                    String status, long eventTime) {
-    return new Builder(runID, programName, namespace, status, eventTime);
+    return new Builder(runID, applicationName, programName, namespace, status, eventTime);
   }
 
   @Override
@@ -59,9 +70,14 @@ public class ProgramStatusEventDetails {
     return "ProgramStatusEventDetails{" +
       "runID='" + runID + '\'' +
       ", programName='" + programName + '\'' +
+      ", applicationName='" + applicationName + '\'' +
       ", namespace='" + namespace + '\'' +
       ", status='" + status + '\'' +
       ", eventTime=" + eventTime +
+      ", userArgs=" + userArgs +
+      ", systemArgs=" + systemArgs +
+      ", error='" + error + '\'' +
+      ", workflowId='" + workflowId + '\'' +
       '}';
   }
 
@@ -69,19 +85,22 @@ public class ProgramStatusEventDetails {
 
     private final String runID;
     private final String programName;
+    private final String applicationName;
     private final String namespace;
     private final String status;
     private final long eventTime;
     private Map<String, String> userArgs;
     private Map<String, String> systemArgs;
     private String error;
+    private String workflowId;
 
-    Builder(String runID, String programName, String namespace, String status, long eventTime) {
+    Builder(String runID, String applicationName, String programName, String namespace, String status, long eventTime) {
       this.runID = runID;
       this.programName = programName;
       this.namespace = namespace;
       this.status = status;
       this.eventTime = eventTime;
+      this.applicationName = applicationName;
     }
 
     public Builder withUserArgs(Map<String, String> userArgs) {
@@ -91,6 +110,9 @@ public class ProgramStatusEventDetails {
 
     public Builder withSystemArgs(Map<String, String> systemArgs) {
       this.systemArgs = systemArgs;
+      if (Objects.nonNull(systemArgs)) {
+        this.workflowId = systemArgs.getOrDefault(ProgramOptionConstants.WORKFLOW_RUN_ID, "");
+      }
       return this;
     }
 
@@ -99,10 +121,13 @@ public class ProgramStatusEventDetails {
       return this;
     }
 
+
     public ProgramStatusEventDetails build() {
-      return new ProgramStatusEventDetails(runID, programName, namespace, status, eventTime,
+      return new ProgramStatusEventDetails(runID, programName, namespace, applicationName, status, eventTime,
                                            userArgs, systemArgs,
-                                           error);
+                                           error, workflowId);
     }
+
   }
+
 }
