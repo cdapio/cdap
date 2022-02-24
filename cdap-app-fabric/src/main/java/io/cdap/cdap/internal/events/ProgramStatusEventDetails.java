@@ -41,7 +41,6 @@ public class ProgramStatusEventDetails {
   @Nullable
   private final String workflowId;
 
-
   private ProgramStatusEventDetails(String runID, String programName, String namespace, String applicationName,
                                     String status, long eventTime,
                                     @Nullable Map<String, String> userArgs, @Nullable Map<String, String> systemArgs,
