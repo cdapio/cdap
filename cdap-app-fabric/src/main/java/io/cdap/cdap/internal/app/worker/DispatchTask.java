@@ -109,7 +109,6 @@ public class DispatchTask implements RunnableTask {
           new ProvisionerModule(),
           // new DistributedMetricsClientModule(),
           new MessagingClientModule(),
-          new DistributedCoreSecurityModule(),
           new StorageModule(),
           new ZKClientModule(),
           CoreSecurityRuntimeModule.getDistributedModule(cConf)
