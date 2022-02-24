@@ -111,7 +111,8 @@ public class RemoteTaskExecutorTest {
 
   @Test
   public void testFailedMetrics() throws Exception {
-    RemoteTaskExecutor remoteTaskExecutor = new RemoteTaskExecutor(cConf, mockMetricsCollector, remoteClientFactory);
+    RemoteTaskExecutor remoteTaskExecutor = new RemoteTaskExecutor(cConf, mockMetricsCollector, remoteClientFactory,
+        RemoteTaskExecutor.Type.TASK_WORKER);
     RunnableTaskRequest runnableTaskRequest = RunnableTaskRequest.getBuilder(InValidRunnableClass.class.getName()).
       withParam("param").build();
     try {
@@ -132,7 +133,8 @@ public class RemoteTaskExecutorTest {
 
   @Test
   public void testSuccessMetrics() throws Exception {
-    RemoteTaskExecutor remoteTaskExecutor = new RemoteTaskExecutor(cConf, mockMetricsCollector, remoteClientFactory);
+    RemoteTaskExecutor remoteTaskExecutor = new RemoteTaskExecutor(cConf, mockMetricsCollector, remoteClientFactory,
+        RemoteTaskExecutor.Type.TASK_WORKER);
     RunnableTaskRequest runnableTaskRequest = RunnableTaskRequest.getBuilder(ValidRunnableClass.class.getName()).
       withParam("param").build();
     remoteTaskExecutor.runTask(runnableTaskRequest);
@@ -151,7 +153,8 @@ public class RemoteTaskExecutorTest {
   public void testRetryMetrics() throws Exception {
     // Remove the service registration
     registered.cancel();
-    RemoteTaskExecutor remoteTaskExecutor = new RemoteTaskExecutor(cConf, mockMetricsCollector, remoteClientFactory);
+    RemoteTaskExecutor remoteTaskExecutor = new RemoteTaskExecutor(cConf, mockMetricsCollector, remoteClientFactory,
+        RemoteTaskExecutor.Type.TASK_WORKER);
     RunnableTaskRequest runnableTaskRequest = RunnableTaskRequest.getBuilder(ValidRunnableClass.class.getName()).
       withParam("param").build();
     try {
