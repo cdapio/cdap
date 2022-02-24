@@ -27,8 +27,6 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import org.apache.twill.api.RunId;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
 import java.net.NetworkInterface;
@@ -54,7 +52,6 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public final class RunIds {
   private static final Random RANDOM = new Random();
-  private static final Logger LOG = LoggerFactory.getLogger(RunIds.class);
 
   // Number of 100ns intervals since 15 October 1582 00:00:000000000 until UNIX epoch
   private static final long NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L;
@@ -73,10 +70,7 @@ public final class RunIds {
     @Override
     public RunId deserialize(JsonElement json, Type typeOfT,
                              JsonDeserializationContext context) throws JsonParseException {
-      String x = GSON.toJson(json).replaceAll("\"", "");
-      LOG.error("Temp: {}", json.toString());
-      LOG.error("Run Id deserialize: {}", x);
-      return RunIds.fromString(x);
+      return RunIds.fromString(GSON.toJson(json).replaceAll("\"", ""));
     }
 
     @Override

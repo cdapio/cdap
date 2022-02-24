@@ -131,7 +131,6 @@ public class InMemoryDispatcher implements Dispatcher {
   @Inject(optional = true)
   public void setRemoteProgramRunnerFactory(
       @Constants.AppFabric.RemoteExecution ProgramRunnerFactory runnerFactory) {
-    LOG.error("Injecting RemotePRF: {}", runnerFactory);
     this.remoteProgramRunnerFactory = runnerFactory;
   }
 
@@ -158,9 +157,6 @@ public class InMemoryDispatcher implements Dispatcher {
       ProgramId programId = programDescriptor.getProgramId();
       ClusterMode clusterMode = ProgramRunners.getClusterMode(options);
 
-      LOG.error("ClusterMode: {}", clusterMode);
-      LOG.error("PRF: {}", programRunnerFactory);
-      LOG.error("RemotePRF: {}", remoteProgramRunnerFactory);
       // Creates the ProgramRunner based on the cluster mode
       ProgramRunner runner = (clusterMode == ClusterMode.ON_PREMISE ? programRunnerFactory
           : Optional.ofNullable(remoteProgramRunnerFactory)
