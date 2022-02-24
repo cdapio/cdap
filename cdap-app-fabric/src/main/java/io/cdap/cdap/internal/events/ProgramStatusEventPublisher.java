@@ -139,7 +139,7 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
                     RunIds.getTime(programRunId.getRun(), TimeUnit.MILLISECONDS));
       String userArgsString = properties.get(ProgramOptionConstants.USER_OVERRIDES);
       String sysArgsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
-      Type argsMapType = new TypeToken<Map<String, String>>() {}.getType();
+      Type argsMapType = new TypeToken<Map<String, String>>() { }.getType();
       builder = builder
         .withUserArgs(GSON.fromJson(userArgsString, argsMapType))
         .withSystemArgs(GSON.fromJson(sysArgsString, argsMapType));
