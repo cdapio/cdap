@@ -57,6 +57,7 @@ import io.cdap.cdap.internal.provision.ProvisionerModule;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.metrics.guice.DistributedMetricsClientModule;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.guice.DistributedCoreSecurityModule;
 import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
@@ -110,7 +111,8 @@ public class DispatchTask implements RunnableTask {
           new MessagingClientModule(),
           new DistributedCoreSecurityModule(),
           new StorageModule(),
-          new ZKClientModule()
+          new ZKClientModule(),
+          CoreSecurityRuntimeModule.getDistributedModule(cConf)
       );
       LOG.error("Injector: {}", injector);
       DispatchTaskRunner taskRunner = injector.getInstance(DispatchTaskRunner.class);
