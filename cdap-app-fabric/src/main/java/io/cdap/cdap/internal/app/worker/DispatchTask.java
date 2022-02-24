@@ -38,6 +38,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.guice.ZKClientModule;
@@ -94,10 +95,9 @@ public class DispatchTask implements RunnableTask {
   public void run(RunnableTaskContext context) throws Exception {
     try {
       AppLaunchInfo appLaunchInfo = GSON.fromJson(context.getParam(), AppLaunchInfo.class);
-      LOG.error("AppLaunchInfo: {}", appLaunchInfo);
       Injector injector = Guice.createInjector(
           new ConfigModule(cConf, sConf),
-          new LocalLocationModule(),
+          new DFSLocationModule(),
           new ConfiguratorTaskModule(),
           new DispatchTaskModule(),
           new AuthenticationContextModules().getMasterWorkerModule(),
@@ -114,9 +114,7 @@ public class DispatchTask implements RunnableTask {
       );
       LOG.error("Injector: {}", injector);
       DispatchTaskRunner taskRunner = injector.getInstance(DispatchTaskRunner.class);
-      LOG.error("TaskRunner: {}", taskRunner);
       DispatchResponse response = taskRunner.dispatch(appLaunchInfo);
-      LOG.error("DispatchResponse: {}", response);
       if (response.getExitCode() == 0 && response.isSuccessfulLaunch()) {
         context.setTerminateOnComplete(true);
       }
@@ -157,7 +155,6 @@ public class DispatchTask implements RunnableTask {
     @Inject(optional = true)
     void setRemoteProgramRunnerFactory(
         @Constants.AppFabric.RemoteExecution ProgramRunnerFactory runnerFactory) {
-      LOG.error("Injecting RemotePRF: {}", runnerFactory);
       this.remoteProgramRunnerFactory = runnerFactory;
     }
 
@@ -167,7 +164,6 @@ public class DispatchTask implements RunnableTask {
     }
 
     public DispatchResponse dispatch(AppLaunchInfo appLaunchInfo) throws Exception {
-      LOG.error("AppLaunchInfo: {}", GSON.toJson(appLaunchInfo));
       InMemoryDispatcher dispatcher = new InMemoryDispatcher(cConf, programRunnerFactory,
           configuratorFactory, impersonator, artifactRepository, appLaunchInfo);
       dispatcher.setRemoteProgramRunnerFactory(remoteProgramRunnerFactory);
