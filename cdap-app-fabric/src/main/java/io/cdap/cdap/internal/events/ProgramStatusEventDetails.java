@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.events;
 
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -121,13 +120,10 @@ public class ProgramStatusEventDetails {
       return this;
     }
 
-
     public ProgramStatusEventDetails build() {
       return new ProgramStatusEventDetails(runID, programName, namespace, applicationName, status, eventTime,
                                            userArgs, systemArgs,
                                            error, workflowId);
     }
-
   }
-
 }

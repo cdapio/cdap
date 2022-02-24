@@ -26,6 +26,10 @@ public class DefaultEventWriterContext implements EventWriterContext {
 
   private final Map<String, String> properties;
 
+  /**
+   * @param cConf An instance of an injected ${@link CConfiguration}.
+   * @param eventsWriterId Id of the event writer extension. E.g.: pub_sub_event_writerA
+   */
   DefaultEventWriterContext(CConfiguration cConf, String eventsWriterId) {
     String prefix = String.format("%s.%s.", Constants.Event.EVENTS_WRITER_PREFIX, eventsWriterId);
     this.properties = Collections.unmodifiableMap(cConf.getPropsWithPrefix(prefix));
