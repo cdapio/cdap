@@ -88,6 +88,7 @@ public class FileBasedKeyManager extends MapBackedKeyManager {
       keyFileLastModified = Files.getLastModifiedTime(keyFile).toMillis();
       KeyIdentifier key = keyIdentifierCodec.decode(Files.readAllBytes(keyFile));
       this.currentKey = key;
+      LOG.error("CurrentKey: {}", this.currentKey);
       allKeys.put(key.getKeyId(), key);
 
       LOG.debug("Key {} read from file {}", key.getKeyId(), keyFile);

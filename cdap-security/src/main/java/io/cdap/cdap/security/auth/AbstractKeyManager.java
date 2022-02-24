@@ -161,6 +161,7 @@ public abstract class AbstractKeyManager extends AbstractIdleService implements 
   @Override
   public final DigestId generateMAC(byte[] message) throws InvalidKeyException {
     KeyIdentifier signingKey = currentKey;
+    LOG.error("SigningKey: {}", signingKey);
     byte[] digest = generateMAC(signingKey.getKey(), message);
     return new DigestId(signingKey.getKeyId(), digest);
   }
