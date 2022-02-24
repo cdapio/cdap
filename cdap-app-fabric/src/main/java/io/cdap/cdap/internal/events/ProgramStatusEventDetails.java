@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.events;
 
-import java.util.Collection;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -35,14 +34,11 @@ public class ProgramStatusEventDetails {
   @Nullable
   private final Map<String, String> systemArgs;
   private final String error;
-  @Nullable
-  private final Collection<PluginMetrics> pluginMetrics;
 
   private ProgramStatusEventDetails(String runID, String programName, String namespace,
                                     String status, long eventTime,
                                     @Nullable Map<String, String> userArgs, @Nullable Map<String, String> systemArgs,
-                                    @Nullable String error,
-                                    @Nullable Collection<PluginMetrics> pluginMetrics) {
+                                    @Nullable String error) {
     this.runID = runID;
     this.programName = programName;
     this.namespace = namespace;
@@ -51,7 +47,6 @@ public class ProgramStatusEventDetails {
     this.userArgs = userArgs;
     this.systemArgs = systemArgs;
     this.error = error;
-    this.pluginMetrics = pluginMetrics;
   }
 
   public static Builder getBuilder(String runID, String programName, String namespace,
@@ -80,7 +75,6 @@ public class ProgramStatusEventDetails {
     private Map<String, String> userArgs;
     private Map<String, String> systemArgs;
     private String error;
-    private Collection<PluginMetrics> pluginMetrics;
 
     Builder(String runID, String programName, String namespace, String status, long eventTime) {
       this.runID = runID;
@@ -105,17 +99,10 @@ public class ProgramStatusEventDetails {
       return this;
     }
 
-    public Builder withPluginMetrics(Collection<PluginMetrics> pluginMetrics) {
-      this.pluginMetrics = pluginMetrics;
-      return this;
-    }
-
     public ProgramStatusEventDetails build() {
       return new ProgramStatusEventDetails(runID, programName, namespace, status, eventTime,
                                            userArgs, systemArgs,
-                                           error, pluginMetrics);
+                                           error);
     }
-
   }
-
 }
