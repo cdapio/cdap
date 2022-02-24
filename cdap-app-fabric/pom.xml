@@ -108,6 +108,11 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-event-writer-spi</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.apache.tephra</groupId>
       <artifactId>tephra-api</artifactId>
     </dependency>

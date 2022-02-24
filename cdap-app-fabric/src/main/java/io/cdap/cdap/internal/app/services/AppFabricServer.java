@@ -35,6 +35,7 @@ import io.cdap.cdap.common.metrics.MetricsReporterHook;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.bootstrap.BootstrapService;
+import io.cdap.cdap.internal.events.EventPublishManager;
 import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.internal.sysapp.SystemAppManagementService;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -83,6 +84,7 @@ public class AppFabricServer extends AbstractIdleService {
   private final SConfiguration sConf;
   private final boolean sslEnabled;
   private final TransactionRunner transactionRunner;
+  private final EventPublishManager eventPublishManager;
 
   private Cancellable cancelHttpService;
   private Set<HttpHandler> handlers;
@@ -108,6 +110,7 @@ public class AppFabricServer extends AbstractIdleService {
                          BootstrapService bootstrapService,
                          SystemAppManagementService systemAppManagementService,
                          TransactionRunner transactionRunner,
+                         EventPublishManager eventPublishManager,
                          RunRecordMonitorService runRecordCounterService) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
@@ -127,6 +130,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.bootstrapService = bootstrapService;
     this.systemAppManagementService = systemAppManagementService;
     this.transactionRunner = transactionRunner;
+    this.eventPublishManager = eventPublishManager;
     this.runRecordCounterService = runRecordCounterService;
   }
 
@@ -147,6 +151,7 @@ public class AppFabricServer extends AbstractIdleService {
         programNotificationSubscriberService.start(),
         runRecordCorrectorService.start(),
         coreSchedulerService.start(),
+        eventPublishManager.start(),
         runRecordCounterService.start()
       )
     ).get();
@@ -198,6 +203,7 @@ public class AppFabricServer extends AbstractIdleService {
     programNotificationSubscriberService.stopAndWait();
     runRecordCorrectorService.stopAndWait();
     provisioningService.stopAndWait();
+    eventPublishManager.stopAndWait();
     runRecordCounterService.stopAndWait();
   }
 
