@@ -82,30 +82,18 @@ public final class Constants {
       public static final String CONNECTION_BROWSE_COUNT = "connections.browse.count";
       public static final String CONNECTION_SAMPLE_COUNT = "connections.sample.count";
       public static final String CONNECTION_SPEC_COUNT = "connections.spec.count";
+    }
 
-      public static String getCountMetric(String connType) {
-        return String.format("connections.%s.count", connType);
-      }
+    /**
+     * NOTES:
+     * tag names must be unique (keeping all possible here helps to ensure that)
+     * tag names better be short to reduce the serialized metric value size
+     */
+    public static final class Tag {
 
-      public static String getDeletedMetric(String connType) {
-        return String.format("connections.%s.deleted.count", connType);
-      }
-
-      public static String getConnGetMetric(String connType) {
-        return String.format("connections.%s.get.count", connType);
-      }
-
-      public static String getBrowseMetric(String connType) {
-        return String.format("connections.%s.browse.count", connType);
-      }
-
-      public static String getSampleMetric(String connType) {
-        return String.format("connections.%s.sample.count", connType);
-      }
-
-      public static String getSpecMetric(String connType) {
-        return String.format("connections.%s.spec.count", connType);
-      }
+      //For app entity
+      public static final String APP_ENTITY_TYPE = "aet";
+      public static final String APP_ENTITY_TYPE_NAME = "tpe";
     }
   }
 

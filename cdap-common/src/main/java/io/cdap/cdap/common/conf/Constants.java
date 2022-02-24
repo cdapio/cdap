@@ -849,6 +849,9 @@ public final class Constants {
       public static final String APP = "app";
 
       public static final String SERVICE = "srv";
+      //For app entity
+      public static final String APP_ENTITY_TYPE = "aet";
+      public static final String APP_ENTITY_TYPE_NAME = "tpe";
 
       public static final String WORKER = "wrk";
 

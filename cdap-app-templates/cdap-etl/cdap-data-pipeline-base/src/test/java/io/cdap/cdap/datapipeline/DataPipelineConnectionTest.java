@@ -103,6 +103,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -225,14 +226,22 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
       new ArtifactSelectorConfig("system", APP_ARTIFACT_ID.getArtifact() + "-mocks",
                                  APP_ARTIFACT_ID.getVersion())));
 
+    Map<String, String> tagsFile = new HashMap<>(SERVICE_TAGS);
+    tagsFile.put(Constants.Metrics.Tag.APP_ENTITY_TYPE, Constants.CONNECTION_SERVICE_NAME);
+    tagsFile.put(Constants.Metrics.Tag.APP_ENTITY_TYPE_NAME, FileConnector.NAME);
+
+    Map<String, String> tagsDummy = new HashMap<>(SERVICE_TAGS);
+    tagsDummy.put(Constants.Metrics.Tag.APP_ENTITY_TYPE, Constants.CONNECTION_SERVICE_NAME);
+    tagsDummy.put(Constants.Metrics.Tag.APP_ENTITY_TYPE_NAME, "dummy");
+
     // this is needed because studio service is running through the entire tests, so we need to ensure old
     // metrics emitted by other tests do not affect this one
     long existingMetricsTotal = getMetricsManager().getTotalMetric(
       SERVICE_TAGS, "user." + Constants.Metrics.Connection.CONNECTION_COUNT);
     long existingMetricsFile = getMetricsManager().getTotalMetric(
-      SERVICE_TAGS, "user." + Constants.Metrics.Connection.getCountMetric(FileConnector.NAME));
+      tagsFile, "user." + Constants.Metrics.Connection.CONNECTION_COUNT);
     long existingMetricsDummy = getMetricsManager().getTotalMetric(
-      SERVICE_TAGS, "user." + Constants.Metrics.Connection.getCountMetric("dummy"));
+      tagsDummy, "user." + Constants.Metrics.Connection.CONNECTION_COUNT);
 
     // add 5 file connections, add 5 dummy connections without the artifact
     for (int i = 0; i < 5; i++) {
@@ -244,9 +253,9 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     }
 
     // validate 10 conns added, 5 for file, 5 for dummy
-    validateMetrics(io.cdap.cdap.etl.common.Constants.Metrics.Connection.CONNECTION_COUNT, existingMetricsTotal, 10L);
-    validateMetrics(Constants.Metrics.Connection.getCountMetric(FileConnector.NAME), existingMetricsFile, 5L);
-    validateMetrics(Constants.Metrics.Connection.getCountMetric("dummy"), existingMetricsDummy, 5L);
+    validateMetrics(SERVICE_TAGS, Constants.Metrics.Connection.CONNECTION_COUNT, existingMetricsTotal, 10L);
+    validateMetrics(tagsFile, Constants.Metrics.Connection.CONNECTION_COUNT, existingMetricsFile, 5L);
+    validateMetrics(tagsDummy, Constants.Metrics.Connection.CONNECTION_COUNT, existingMetricsDummy, 5L);
 
     // add 5 more dummy connections
     for (int i = 10; i < 15; i++) {
@@ -254,17 +263,17 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     }
 
     // validate 15 conns added, 5 files, 10 dummy
-    validateMetrics(io.cdap.cdap.etl.common.Constants.Metrics.Connection.CONNECTION_COUNT, existingMetricsTotal, 15L);
-    validateMetrics(Constants.Metrics.Connection.getCountMetric(FileConnector.NAME), existingMetricsFile, 5L);
-    validateMetrics(Constants.Metrics.Connection.getCountMetric("dummy"), existingMetricsDummy, 10L);
+    validateMetrics(SERVICE_TAGS, Constants.Metrics.Connection.CONNECTION_COUNT, existingMetricsTotal, 15L);
+    validateMetrics(tagsFile, Constants.Metrics.Connection.CONNECTION_COUNT, existingMetricsFile, 5L);
+    validateMetrics(tagsDummy, Constants.Metrics.Connection.CONNECTION_COUNT, existingMetricsDummy, 10L);
 
     // get old get metrics number
     existingMetricsTotal = getMetricsManager().getTotalMetric(
       SERVICE_TAGS, "user." + Constants.Metrics.Connection.CONNECTION_GET_COUNT);
     existingMetricsFile = getMetricsManager().getTotalMetric(
-      SERVICE_TAGS, "user." + Constants.Metrics.Connection.getConnGetMetric(FileConnector.NAME));
+      tagsFile, "user." + Constants.Metrics.Connection.CONNECTION_GET_COUNT);
     existingMetricsDummy = getMetricsManager().getTotalMetric(
-      SERVICE_TAGS, "user." + Constants.Metrics.Connection.getConnGetMetric("dummy"));
+      tagsDummy, "user." + Constants.Metrics.Connection.CONNECTION_GET_COUNT);
 
     // get these 15 conns
     for (int i = 0; i < 15; i++) {
@@ -272,16 +281,16 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     }
 
     // validate 15 get metrics for these connections, 5 for file, 10 for dummy
-    validateMetrics(Constants.Metrics.Connection.CONNECTION_GET_COUNT,
+    validateMetrics(SERVICE_TAGS, Constants.Metrics.Connection.CONNECTION_GET_COUNT,
                     existingMetricsTotal, 15L);
-    validateMetrics(Constants.Metrics.Connection.getConnGetMetric(FileConnector.NAME), existingMetricsFile, 5L);
-    validateMetrics(Constants.Metrics.Connection.getCountMetric("dummy"), existingMetricsDummy, 10L);
+    validateMetrics(tagsFile, Constants.Metrics.Connection.CONNECTION_GET_COUNT, existingMetricsFile, 5L);
+    validateMetrics(tagsDummy, Constants.Metrics.Connection.CONNECTION_GET_COUNT, existingMetricsDummy, 10L);
 
     // get old browse number
     existingMetricsTotal = getMetricsManager().getTotalMetric(
       SERVICE_TAGS, "user." + Constants.Metrics.Connection.CONNECTION_BROWSE_COUNT);
     existingMetricsFile = getMetricsManager().getTotalMetric(
-      SERVICE_TAGS, "user." + Constants.Metrics.Connection.getBrowseMetric(FileConnector.NAME));
+      tagsFile, "user." + Constants.Metrics.Connection.CONNECTION_BROWSE_COUNT);
     // browse each file connection twice
     for (int i = 0; i < 5; i++) {
       browseConnection("conn" + i, directory.getCanonicalPath(), 10);
@@ -289,53 +298,54 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     }
 
     // validate 10 browse metrics are emitted for file
-    validateMetrics(Constants.Metrics.Connection.CONNECTION_BROWSE_COUNT,
+    validateMetrics(SERVICE_TAGS, Constants.Metrics.Connection.CONNECTION_BROWSE_COUNT,
                     existingMetricsTotal, 10L);
-    validateMetrics(Constants.Metrics.Connection.getBrowseMetric(FileConnector.NAME), existingMetricsFile, 10L);
+    validateMetrics(tagsFile, Constants.Metrics.Connection.CONNECTION_BROWSE_COUNT,
+                    existingMetricsFile, 10L);
 
     existingMetricsTotal = getMetricsManager().getTotalMetric(
       SERVICE_TAGS, "user." + Constants.Metrics.Connection.CONNECTION_SAMPLE_COUNT);
     existingMetricsFile = getMetricsManager().getTotalMetric(
-      SERVICE_TAGS, "user." + Constants.Metrics.Connection.getSampleMetric(FileConnector.NAME));
+      tagsFile, "user." + Constants.Metrics.Connection.CONNECTION_SAMPLE_COUNT);
 
     long existingMetricsSpecTotal = getMetricsManager().getTotalMetric(
       SERVICE_TAGS, "user." + Constants.Metrics.Connection.CONNECTION_SPEC_COUNT);
     long existingMetricsSpecFile = getMetricsManager().getTotalMetric(
-      SERVICE_TAGS, "user." + Constants.Metrics.Connection.getSpecMetric(FileConnector.NAME));
+      tagsFile, "user." + Constants.Metrics.Connection.CONNECTION_SPEC_COUNT);
     // sample each file connection
     for (int i = 0; i < 5; i++) {
       sampleConnection("conn" + i, entities.get(1).getPath(), 10);
     }
 
     // validate 5 sample and spec metrics are emitted for file
-    validateMetrics(Constants.Metrics.Connection.CONNECTION_SAMPLE_COUNT,
+    validateMetrics(SERVICE_TAGS, Constants.Metrics.Connection.CONNECTION_SAMPLE_COUNT,
                     existingMetricsTotal, 5L);
-    validateMetrics(Constants.Metrics.Connection.getSampleMetric(FileConnector.NAME), existingMetricsFile, 5L);
-    validateMetrics(Constants.Metrics.Connection.CONNECTION_SPEC_COUNT,
+    validateMetrics(tagsFile, Constants.Metrics.Connection.CONNECTION_SAMPLE_COUNT, existingMetricsFile, 5L);
+    validateMetrics(SERVICE_TAGS, Constants.Metrics.Connection.CONNECTION_SPEC_COUNT,
                     existingMetricsSpecTotal, 5L);
-    validateMetrics(Constants.Metrics.Connection.getSpecMetric(FileConnector.NAME), existingMetricsSpecFile, 5L);
+    validateMetrics(tagsFile, Constants.Metrics.Connection.CONNECTION_SPEC_COUNT, existingMetricsSpecFile, 5L);
 
     // get existing delete number
     existingMetricsTotal = getMetricsManager().getTotalMetric(
       SERVICE_TAGS, "user." + Constants.Metrics.Connection.CONNECTION_DELETED_COUNT);
     existingMetricsFile = getMetricsManager().getTotalMetric(
-      SERVICE_TAGS, "user." + Constants.Metrics.Connection.getDeletedMetric(FileConnector.NAME));
+      tagsFile, "user." + Constants.Metrics.Connection.CONNECTION_DELETED_COUNT);
     existingMetricsDummy = getMetricsManager().getTotalMetric(
-      SERVICE_TAGS, "user." + Constants.Metrics.Connection.getDeletedMetric("dummy"));
+      tagsDummy, "user." + Constants.Metrics.Connection.CONNECTION_DELETED_COUNT);
     // delete all connections
     for (int i = 0; i < 15; i++) {
       deleteConnection("conn" + i);
     }
 
     // validate 15 delete metrics for these connections, 5 for file, 10 for dummy
-    validateMetrics(Constants.Metrics.Connection.CONNECTION_DELETED_COUNT, existingMetricsTotal, 15L);
-    validateMetrics(Constants.Metrics.Connection.getDeletedMetric(FileConnector.NAME), existingMetricsFile, 5L);
-    validateMetrics(Constants.Metrics.Connection.getDeletedMetric("dummy"), existingMetricsDummy, 10L);
+    validateMetrics(SERVICE_TAGS, Constants.Metrics.Connection.CONNECTION_DELETED_COUNT, existingMetricsTotal, 15L);
+    validateMetrics(tagsFile, Constants.Metrics.Connection.CONNECTION_DELETED_COUNT, existingMetricsFile, 5L);
+    validateMetrics(tagsDummy, Constants.Metrics.Connection.CONNECTION_DELETED_COUNT, existingMetricsDummy, 10L);
   }
 
-  private void validateMetrics(String metricName, long existingNumber,
+  private void validateMetrics(Map<String, String> tags, String metricName, long existingNumber,
                                long expected) throws InterruptedException, ExecutionException, TimeoutException {
-    getMetricsManager().waitForExactMetricCount(SERVICE_TAGS, "user." + metricName,
+    getMetricsManager().waitForExactMetricCount(tags, "user." + metricName,
                                                 expected + existingNumber, 20L, TimeUnit.SECONDS);
   }
 
