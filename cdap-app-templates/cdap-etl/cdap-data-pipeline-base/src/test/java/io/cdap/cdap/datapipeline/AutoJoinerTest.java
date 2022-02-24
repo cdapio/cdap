@@ -30,6 +30,7 @@ import io.cdap.cdap.etl.api.join.JoinField;
 import io.cdap.cdap.etl.mock.batch.MockExternalSource;
 import io.cdap.cdap.etl.mock.batch.MockSQLEngine;
 import io.cdap.cdap.etl.mock.batch.MockSQLEngineWithCapabilities;
+import io.cdap.cdap.etl.mock.batch.MockSQLEngineWithStageSettings;
 import io.cdap.cdap.etl.mock.batch.MockSink;
 import io.cdap.cdap.etl.mock.batch.MockSinkWithWriteCapability;
 import io.cdap.cdap.etl.mock.batch.MockSource;
@@ -282,6 +283,33 @@ public class AutoJoinerTest extends HydratorTestBase {
                                                      expected, expectedSchema, Engine.SPARK);
   }
 
+  @Test
+  public void testBroadcastJoinUsingSQLEngineWithIncludedStages() throws Exception {
+    Schema expectedSchema = Schema.recordOf("purchases.users",
+                                            Schema.Field.of("purchases_region", Schema.of(Schema.Type.STRING)),
+                                            Schema.Field.of("purchases_purchase_id", Schema.of(Schema.Type.INT)),
+                                            Schema.Field.of("purchases_user_id", Schema.of(Schema.Type.INT)),
+                                            Schema.Field.of("users_region", Schema.of(Schema.Type.STRING)),
+                                            Schema.Field.of("users_user_id", Schema.of(Schema.Type.INT)),
+                                            Schema.Field.of("users_name", Schema.of(Schema.Type.STRING)));
+    Set<StructuredRecord> expected = new HashSet<>();
+    expected.add(StructuredRecord.builder(expectedSchema)
+                   .set("purchases_region", "us")
+                   .set("purchases_purchase_id", 123)
+                   .set("purchases_user_id", 0)
+                   .set("users_region", "us")
+                   .set("users_user_id", 0)
+                   .set("users_name", "alice").build());
+
+    testSimpleAutoJoinUsingSQLEngineWithStageSettings(Arrays.asList("users", "purchases"),
+                                                      Collections.singletonList("users"),
+                                                      expected,
+                                                      expectedSchema,
+                                                      "",
+                                                      "join",
+                                                      Engine.SPARK);
+  }
+
 
   @Test
   public void testAutoInnerJoin() throws Exception {
@@ -327,6 +355,33 @@ public class AutoJoinerTest extends HydratorTestBase {
                                      expectedSchema, Engine.SPARK);
     testSimpleAutoJoinUsingSQLEngineWithCapabilities(Arrays.asList("users", "purchases"), Collections.emptyList(),
                                                      expected, expectedSchema, Engine.SPARK);
+  }
+
+  @Test
+  public void testAutoInnerJoinUsingSQLEngineWithExcludedStages() throws Exception {
+    Schema expectedSchema = Schema.recordOf("purchases.users",
+                                            Schema.Field.of("purchases_region", Schema.of(Schema.Type.STRING)),
+                                            Schema.Field.of("purchases_purchase_id", Schema.of(Schema.Type.INT)),
+                                            Schema.Field.of("purchases_user_id", Schema.of(Schema.Type.INT)),
+                                            Schema.Field.of("users_region", Schema.of(Schema.Type.STRING)),
+                                            Schema.Field.of("users_user_id", Schema.of(Schema.Type.INT)),
+                                            Schema.Field.of("users_name", Schema.of(Schema.Type.STRING)));
+    Set<StructuredRecord> expected = new HashSet<>();
+    expected.add(StructuredRecord.builder(expectedSchema)
+                   .set("purchases_region", "us")
+                   .set("purchases_purchase_id", 123)
+                   .set("purchases_user_id", 0)
+                   .set("users_region", "us")
+                   .set("users_user_id", 0)
+                   .set("users_name", "alice").build());
+
+    testSimpleAutoJoinUsingSQLEngineWithStageSettings(Arrays.asList("users", "purchases"),
+                                                      Collections.singletonList("users"),
+                                                      expected,
+                                                      expectedSchema,
+                                                      "",
+                                                      "join",
+                                                      Engine.SPARK);
   }
 
   @Test
@@ -836,6 +891,100 @@ public class AutoJoinerTest extends HydratorTestBase {
     } else {
       // Ensure no records are written to the SQL engine if the join contains a broadcast.
       Assert.assertEquals(0, MockSQLEngine.countLinesInDirectory(joinOutputDir));
+    }
+  }
+
+  private void testSimpleAutoJoinUsingSQLEngineWithStageSettings(List<String> required, List<String> broadcast,
+                                                                 Set<StructuredRecord> expected,
+                                                                 Schema expectedSchema,
+                                                                 String includedStages,
+                                                                 String excludedStages,
+                                                                 Engine engine) throws Exception {
+    File joinInputDir = TMP_FOLDER.newFolder();
+    File joinOutputDir = TMP_FOLDER.newFolder();
+
+    // Write input to simulate the join operation results
+    // If any of the sides of the operation is a join, then we don't need to write as the SQL engine won't be used.
+    if (broadcast.isEmpty()) {
+      String joinFile = "join-file1.txt";
+      MockSQLEngine.writeInput(new File(joinInputDir, joinFile).getAbsolutePath(), expected);
+    }
+
+    /*
+         users ------|
+                     |--> join --> sink
+         purchases --|
+
+
+         joinOn: users.region = purchases.region and users.user_id = purchases.user_id
+     */
+    String userInput = UUID.randomUUID().toString();
+    String purchaseInput = UUID.randomUUID().toString();
+    String output = UUID.randomUUID().toString();
+    String sqlEnginePlugin = UUID.randomUUID().toString();
+    ETLBatchConfig config = ETLBatchConfig.builder()
+      .setPushdownEnabled(true)
+      .setTransformationPushdown(
+        new ETLTransformationPushdown(MockSQLEngineWithStageSettings.getPlugin(sqlEnginePlugin,
+                                                                               joinInputDir.getAbsolutePath(),
+                                                                               joinOutputDir.getAbsolutePath(),
+                                                                               expectedSchema,
+                                                                               includedStages,
+                                                                               excludedStages)))
+      .addStage(new ETLStage("users", MockSource.getPlugin(userInput, USER_SCHEMA)))
+      .addStage(new ETLStage("purchases", MockSource.getPlugin(purchaseInput, PURCHASE_SCHEMA)))
+      .addStage(new ETLStage("join", MockAutoJoiner.getPlugin(Arrays.asList("purchases", "users"),
+                                                              Arrays.asList("region", "user_id"),
+                                                              required, broadcast, Collections.emptyList(), true)))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(output)))
+      .addConnection("users", "join")
+      .addConnection("purchases", "join")
+      .addConnection("join", "sink")
+      .setEngine(engine)
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
+    ApplicationId appId = NamespaceId.DEFAULT.app(UUID.randomUUID().toString());
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    // write input data
+    List<StructuredRecord> userData = Arrays.asList(USER_ALICE, USER_ALYCE, USER_BOB);
+    DataSetManager<Table> inputManager = getDataset(userInput);
+    MockSource.writeInput(inputManager, userData);
+
+    List<StructuredRecord> purchaseData = new ArrayList<>();
+    purchaseData.add(StructuredRecord.builder(PURCHASE_SCHEMA)
+                       .set("region", "us")
+                       .set("user_id", 0)
+                       .set("purchase_id", 123).build());
+    purchaseData.add(StructuredRecord.builder(PURCHASE_SCHEMA)
+                       .set("region", "us")
+                       .set("user_id", 2)
+                       .set("purchase_id", 456).build());
+    inputManager = getDataset(purchaseInput);
+    MockSource.writeInput(inputManager, purchaseData);
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    Map<String, String> args = Collections.singletonMap(MockAutoJoiner.PARTITIONS_ARGUMENT, "1");
+    workflowManager.startAndWaitForGoodRun(args, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+
+    DataSetManager<Table> outputManager = getDataset(output);
+    List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);
+
+    Assert.assertEquals(expected, new HashSet<>(outputRecords));
+
+    validateMetric(5, appId, "join.records.in");
+    validateMetric(expected.size(), appId, "join.records.out");
+
+    // If a broadcast stage is set to execute in the engine, the engine must execute the stage
+    if (!includedStages.isEmpty() && !broadcast.isEmpty()) {
+      // Ensure all records were written to the SQL engine
+      Assert.assertEquals(5, MockSQLEngineWithStageSettings.countLinesInDirectory(joinOutputDir));
+    } else if (!excludedStages.isEmpty()) {
+      // Ensure no records are written to the SQL engine if the join contains a broadcast.
+      Assert.assertEquals(0, MockSQLEngineWithStageSettings.countLinesInDirectory(joinOutputDir));
+    } else {
+      Assert.fail("Should never happen");
     }
   }
 
@@ -1933,15 +2082,15 @@ public class AutoJoinerTest extends HydratorTestBase {
 
     List<StructuredRecord> ageData = new ArrayList<>();
     ageData.add(StructuredRecord.builder(AGE_SCHEMA)
-                       .set("region", "us")
-                       .set("user_id", 10)
-                       .set("age", 20)
-                       .build());
+                  .set("region", "us")
+                  .set("user_id", 10)
+                  .set("age", 20)
+                  .build());
     ageData.add(StructuredRecord.builder(AGE_SCHEMA)
-                       .set("region", "us")
-                       .set("user_id", 1)
-                       .set("age", 30)
-                       .build());
+                  .set("region", "us")
+                  .set("user_id", 1)
+                  .set("age", 30)
+                  .build());
     inputManager = getDataset(ageInput);
     MockSource.writeInput(inputManager, ageData);
 
@@ -1962,17 +2111,17 @@ public class AutoJoinerTest extends HydratorTestBase {
       for (StructuredRecord sr : outputRecords) {
         actual.add(StructuredRecord.builder(expectedSchema)
                      .set("ages_region", sr.get("ages_region"))
-                     .set("ages_age",  sr.get("ages_age"))
-                     .set("ages_user_id",  sr.get("ages_user_id"))
+                     .set("ages_age", sr.get("ages_age"))
+                     .set("ages_user_id", sr.get("ages_user_id"))
                      .set("purchases_region", sr.get("purchases_region"))
-                     .set("purchases_purchase_id",  sr.get("purchases_purchase_id"))
-                     .set("purchases_user_id",  sr.get("purchases_user_id"))
-                     .set("users_region",  sr.get("users_region"))
-                     .set("users_user_id",  sr.get("users_user_id"))
-                     .set("users_name",  sr.get("users_name"))
-                     .set("interests_region",  sr.get("interests_region"))
-                     .set("interests_user_id",  sr.get("interests_user_id"))
-                     .set("interests_interest",  sr.get("interests_interest")).build());
+                     .set("purchases_purchase_id", sr.get("purchases_purchase_id"))
+                     .set("purchases_user_id", sr.get("purchases_user_id"))
+                     .set("users_region", sr.get("users_region"))
+                     .set("users_user_id", sr.get("users_user_id"))
+                     .set("users_name", sr.get("users_name"))
+                     .set("interests_region", sr.get("interests_region"))
+                     .set("interests_user_id", sr.get("interests_user_id"))
+                     .set("interests_interest", sr.get("interests_interest")).build());
       }
     }
 

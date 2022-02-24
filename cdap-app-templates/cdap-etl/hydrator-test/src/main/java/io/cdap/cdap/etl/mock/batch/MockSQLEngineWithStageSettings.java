@@ -19,6 +19,7 @@ package io.cdap.cdap.etl.mock.batch;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
@@ -47,24 +48,28 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Mock SQL engine that can be used to test join pipelines.
  */
 @Plugin(type = BatchSQLEngine.PLUGIN_TYPE)
-@Name(MockSQLEngine.NAME)
-public class MockSQLEngine extends BatchSQLEngine<Object, Object, Object, Object>
+@Name(MockSQLEngineWithStageSettings.NAME)
+public class MockSQLEngineWithStageSettings extends BatchSQLEngine<Object, Object, Object, Object>
   implements SQLEngine<Object, Object, Object, Object>, Serializable {
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
-  public static final String NAME = "MockSQLEngine";
+  public static final String NAME = "MockSQLEngineWithStageSettings";
   private static final Gson GSON = new Gson();
-  private final MockSQLEngine.Config config;
+  private final MockSQLEngineWithStageSettings.Config config;
   boolean calledPrepareRun = false;
   boolean calledOnRunFinish = false;
 
-  public MockSQLEngine(MockSQLEngine.Config config) {
+  public MockSQLEngineWithStageSettings(MockSQLEngineWithStageSettings.Config config) {
     this.config = config;
   }
 
@@ -76,6 +81,8 @@ public class MockSQLEngine extends BatchSQLEngine<Object, Object, Object, Object
     private String inputDirName;
     private String outputDirName;
     private String outputSchema;
+    private String includedStages;
+    private String excludedStages;
   }
 
   @Override
@@ -140,6 +147,24 @@ public class MockSQLEngine extends BatchSQLEngine<Object, Object, Object, Object
   }
 
   @Override
+  public Set<String> getIncludedStageNames() {
+    if (Strings.isNullOrEmpty(config.includedStages)) {
+      return Collections.emptySet();
+    }
+
+    return Stream.of(config.includedStages.split(",")).collect(Collectors.toSet());
+  }
+
+  @Override
+  public Set<String> getExcludedStageNames() {
+    if (Strings.isNullOrEmpty(config.excludedStages)) {
+      return Collections.emptySet();
+    }
+
+    return Stream.of(config.excludedStages.split(",")).collect(Collectors.toSet());
+  }
+
+  @Override
   public void cleanup(String datasetName) throws SQLEngineException {
     if (!calledPrepareRun) {
       throw new SQLEngineException("prepareRun not called");
@@ -152,12 +177,16 @@ public class MockSQLEngine extends BatchSQLEngine<Object, Object, Object, Object
   public static ETLPlugin getPlugin(String name,
                                     String inputDirName,
                                     String outputDirName,
-                                    Schema outputSchema) {
+                                    Schema outputSchema,
+                                    String includedStages,
+                                    String excludedStages) {
     Map<String, String> properties = new HashMap<>();
     properties.put("name", name);
     properties.put("inputDirName", inputDirName);
     properties.put("outputDirName", outputDirName);
     properties.put("outputSchema", GSON.toJson(outputSchema));
+    properties.put("includedStages", includedStages);
+    properties.put("excludedStages", excludedStages);
     return new ETLPlugin(NAME, BatchSQLEngine.PLUGIN_TYPE, properties, null);
   }
 
@@ -167,7 +196,9 @@ public class MockSQLEngine extends BatchSQLEngine<Object, Object, Object, Object
     properties.put("inputDirName", new PluginPropertyField("inputDirName", "", "string", true, false));
     properties.put("outputDirName", new PluginPropertyField("outputDirName", "", "string", true, false));
     properties.put("outputSchema", new PluginPropertyField("outputSchema", "", "string", true, false));
-    return new PluginClass(BatchSQLEngine.PLUGIN_TYPE, NAME, "", MockSQLEngine.class.getName(),
+    properties.put("includedStages", new PluginPropertyField("includedStages", "", "string", true, false));
+    properties.put("excludedStages", new PluginPropertyField("excludedStages", "", "string", true, false));
+    return new PluginClass(BatchSQLEngine.PLUGIN_TYPE, NAME, "", MockSQLEngineWithStageSettings.class.getName(),
                            "config", properties);
   }
 
@@ -175,7 +206,7 @@ public class MockSQLEngine extends BatchSQLEngine<Object, Object, Object, Object
    * Used to write the input records for the pipeline run. Should be called after the pipeline has been created.
    *
    * @param fileName file to write the records into
-   * @param records records that should be the input for the pipeline
+   * @param records  records that should be the input for the pipeline
    */
   public static void writeInput(String fileName,
                                 Iterable<StructuredRecord> records) throws Exception {
@@ -194,6 +225,7 @@ public class MockSQLEngine extends BatchSQLEngine<Object, Object, Object, Object
 
   /**
    * Counts all lines in a directory used for Hadoop as output
+   *
    * @param directory File specitying the directory
    * @return
    * @throws IOException
