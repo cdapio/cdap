@@ -155,6 +155,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
     modules.add(new CoreSecurityModule() {
       @Override
       protected void bindKeyManager(Binder binder) {
+        LOG.debug("Going to bind KeyManager in Injector!!!");
         binder.bind(KeyManager.class).to(FileBasedKeyManager.class).in(Scopes.SINGLETON);
         expose(KeyManager.class);
       }

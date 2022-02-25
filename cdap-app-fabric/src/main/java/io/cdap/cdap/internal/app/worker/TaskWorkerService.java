@@ -54,6 +54,7 @@ public class TaskWorkerService extends AbstractIdleService {
   private final NettyHttpService httpService;
   private Cancellable cancelDiscovery;
   private InetSocketAddress bindAddress;
+  private final KeyManager keyManager;
 
   @Inject
   TaskWorkerService(CConfiguration cConf,
@@ -62,6 +63,7 @@ public class TaskWorkerService extends AbstractIdleService {
                     KeyManager keyManager,
                     MetricsCollectionService metricsCollectionService) {
     this.discoveryService = discoveryService;
+    this.keyManager = keyManager;
     LOG.debug("KeyManager in TaskWorkerService: {}", keyManager.toString());
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TASK_WORKER)
       .setHost(cConf.get(Constants.TaskWorker.ADDRESS))
@@ -87,6 +89,7 @@ public class TaskWorkerService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LOG.debug("Starting TaskWorkerService");
+    keyManager.startAndWait();
     httpService.start();
     bindAddress = httpService.getBindAddress();
     cancelDiscovery = discoveryService.register(
