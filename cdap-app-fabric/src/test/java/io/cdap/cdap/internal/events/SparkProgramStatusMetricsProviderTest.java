@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.internal.events;
 
-import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.common.conf.CConfiguration;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -27,17 +27,21 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.stream.Collectors;
 
-public class SparkProgramStatusMetricsProviderTest extends AppFabricTestBase {
+/**
+ * Test for {@link SparkProgramStatusMetricsProvider}
+ */
+public class SparkProgramStatusMetricsProviderTest {
 
   private static SparkProgramStatusMetricsProvider metricsProvider;
   private final String mockedRunId = "6354a561-886c-11ec-8688-42010a8e0035";
   private final String mockedAttemptId = "1";
-  private final String mockedApplicationJson = "mocked_spark_application_response.json";
+  private final String mockedApplicationJson = "mocked_spark_applications_response.json";
   private final String mockedStagesJson = "mocked_spark_stages_response.json";
 
   @BeforeClass
   public static void setupClass() throws IOException {
-    metricsProvider = getInjector().getInstance(SparkProgramStatusMetricsProvider.class);
+    CConfiguration cConf = CConfiguration.create();
+    metricsProvider = new SparkProgramStatusMetricsProvider(cConf);
   }
 
   @Test

@@ -18,14 +18,13 @@ package io.cdap.cdap.internal.events;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonParser;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.internal.events.http.SparkApplicationsResponse;
+import io.cdap.cdap.internal.events.http.SparkApplicationsStagesResponse;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.common.http.HttpRequest;
@@ -44,34 +43,29 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.StreamSupport;
+import java.util.Optional;
 import javax.inject.Inject;
 
 /**
  * Implementation for {@link MetricsProvider}. Retrieves metrics for a Spark program execution.
  */
 public class SparkProgramStatusMetricsProvider implements MetricsProvider {
+  private static final Logger logger = LoggerFactory.getLogger(SparkProgramStatusMetricsProvider.class);
+  private static final Gson gson = new Gson();
 
-  //Pending on actual location
-  private final String sparkBaseUrlConfiguration = "spark.metrics.host";
   private final String sparkApplicationsEndpoint = "/api/v1/applications";
-  //2 min max for retries strategies expressed in seconds
-  private final long maxTimeRetries = 120;
-
-  private final Logger logger = LoggerFactory.getLogger(SparkProgramStatusMetricsProvider.class);
-  private final JsonParser jsonParser = new JsonParser();
-  private final Gson gson = new Gson();
 
   private final CConfiguration cConf;
   private final HttpRequestConfig httpRequestConfig;
+  private final Integer maxTerminationMinutes;
 
   @Inject
   public SparkProgramStatusMetricsProvider(CConfiguration cConf) {
-    int connectionTimeout = cConf.getInt(Constants.HTTP_CLIENT_CONNECTION_TIMEOUT_MS);
-    int readTimeout = cConf.getInt(Constants.HTTP_CLIENT_READ_TIMEOUT_MS);
-    httpRequestConfig = new HttpRequestConfig(connectionTimeout, readTimeout, false);
+    int connectionTimeoutMs = cConf.getInt(Constants.HTTP_CLIENT_CONNECTION_TIMEOUT_MS);
+    int readTimeoutMs = cConf.getInt(Constants.HTTP_CLIENT_READ_TIMEOUT_MS);
 
+    this.httpRequestConfig = new HttpRequestConfig(connectionTimeoutMs, readTimeoutMs, false);
+    this.maxTerminationMinutes = cConf.getInt(Constants.Spark.SPARK_METRICS_PROVIDER_MAX_TERMINATION_MINUTES, 5);
     this.cConf = cConf;
   }
 
@@ -81,7 +75,7 @@ public class SparkProgramStatusMetricsProvider implements MetricsProvider {
       return ExecutionMetrics.emptyMetrics();
     }
     String runIdStr = runId.getRun();
-    String sparkHistoricBaseURL = cConf.get(sparkBaseUrlConfiguration);
+    String sparkHistoricBaseURL = cConf.get(Constants.Spark.SPARK_METRICS_PROVIDER_HOST);
     String applicationsURL = String.format("%s%s?minEndDate=%s", sparkHistoricBaseURL,
                                            sparkApplicationsEndpoint, generateMaxTerminationDateParam());
     return Retries.supplyWithRetries(() -> {
@@ -89,35 +83,27 @@ public class SparkProgramStatusMetricsProvider implements MetricsProvider {
       HttpResponse applicationResponse;
       try {
         applicationResponse = doGet(applicationsURL);
+        String attemptId = extractAttemptId(applicationResponse.getResponseBodyAsString(), runIdStr);
+        if (Objects.nonNull(attemptId) && !attemptId.isEmpty()) {
+          HttpResponse stagesResponse;
+          String stagesURL = String.format("%s/%s/%s/%s/stages", sparkHistoricBaseURL,
+                                           sparkApplicationsEndpoint, runIdStr, attemptId);
+          stagesResponse = doGet(stagesURL);
+          metrics = extractMetrics(stagesResponse.getResponseBodyAsString());
+          if (Objects.isNull(metrics)) {
+            logger.error("Error during metrics extraction");
+            return ExecutionMetrics.emptyMetrics();
+          } else {
+            return metrics;
+          }
+        } else {
+          throw new RetryableException("Error during attemptId extraction");
+        }
       } catch (IOException e) {
-        logger.warn("Error retrieving application response, retrying...", e);
+        logger.warn("Error retrieving application response", e);
         throw new RetryableException(e);
       }
-      String attemptId = extractAttemptId(applicationResponse.getResponseBodyAsString(), runIdStr);
-      if (Objects.nonNull(attemptId) && !attemptId.isEmpty()) {
-        HttpResponse stagesResponse;
-        String stagesURL = String.format("%s/%s/%s/%s/stages", sparkHistoricBaseURL,
-                                         sparkApplicationsEndpoint, runIdStr, attemptId);
-        try {
-          stagesResponse = doGet(stagesURL);
-        } catch (IOException e) {
-          logger.warn("Error retrieving stages response, retrying...", e);
-          throw new RetryableException(e);
-        }
-        metrics = extractMetrics(stagesResponse.getResponseBodyAsString());
-        if (Objects.isNull(metrics)) {
-          logger.warn("Error during metrics extraction, retrying...");
-          throw new RetryableException();
-        } else {
-          return metrics;
-        }
-      } else {
-        logger.warn("Error during attemptId extraction, retrying...");
-        throw new RetryableException();
-      }
-    }, RetryStrategies.timeLimit(maxTimeRetries, TimeUnit.SECONDS,
-                                 RetryStrategies.exponentialDelay(
-                                   5, 20, TimeUnit.SECONDS)));
+    }, RetryStrategies.fromConfiguration(this.cConf, Constants.Spark.SPARK_METRICS_PROVIDER_RETRY_STRATEGY_PREFIX));
   }
 
   private HttpResponse doGet(String url) throws IOException {
@@ -128,34 +114,36 @@ public class SparkProgramStatusMetricsProvider implements MetricsProvider {
 
   @VisibleForTesting
   protected String extractAttemptId(String responseBody, String runId) {
-    final String[] attemptId = new String[1];
     SparkApplicationsResponse[] responses = gson.fromJson(responseBody, SparkApplicationsResponse[].class);
-    Arrays.stream(responses).filter(app -> runId.equals(app.getId()))
+    Optional<SparkApplicationsResponse.Attempt> attempt = Arrays.stream(responses)
+      .filter(app -> runId.equals(app.getId()))
       .findFirst().flatMap(app -> Arrays.stream(app.getAttempts())
         .sorted(Comparator.comparingLong(SparkApplicationsResponse.Attempt::getEndTimeEpoch))
         .filter(SparkApplicationsResponse.Attempt::isCompleted)
-        .findFirst()).ifPresent(attempt -> attemptId[0] = attempt.getAttemptId());
+        .findFirst());
 
-    return attemptId[0];
+    if (attempt.isPresent()) {
+      return attempt.get().getAttemptId();
+    } else {
+      return null;
+    }
   }
 
   @VisibleForTesting
   protected ExecutionMetrics extractMetrics(String responseBody) {
-    JsonArray jsonStagesResponse = jsonParser.parse(responseBody)
-      .getAsJsonArray();
-
-    return StreamSupport.stream(jsonStagesResponse.spliterator(), false)
-      .filter(stage -> "COMPLETED".equals(stage.getAsJsonObject().get("status").getAsString()))
+    SparkApplicationsStagesResponse[] stagesResponse = gson.fromJson(responseBody,
+                                                                     SparkApplicationsStagesResponse[].class);
+    return Arrays.stream(stagesResponse).filter(stage -> "COMPLETE".equals(stage.getStatus()))
       .map(stage -> new ExecutionMetrics(
-        stage.getAsJsonObject().get("inputRecords").getAsInt(),
-        stage.getAsJsonObject().get("outputRecords").getAsInt(),
-        stage.getAsJsonObject().get("inputBytes").getAsLong(),
-        stage.getAsJsonObject().get("outputBytes").getAsLong()
-      )).findFirst().orElseGet(ExecutionMetrics::nullMetrics);
+        stage.getInputRecords(),
+        stage.getOutputRecords(),
+        stage.getInputBytes(),
+        stage.getOutputBytes()
+      )).findFirst().orElseGet(ExecutionMetrics::emptyMetrics);
   }
 
   private String generateMaxTerminationDateParam() {
-    LocalDateTime targetDate = LocalDateTime.now().minus(Duration.from(Duration.ofMinutes(5)));
+    LocalDateTime targetDate = LocalDateTime.now().minus(Duration.from(Duration.ofMinutes(this.maxTerminationMinutes)));
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSz")
       .withZone(ZoneId.systemDefault());
     return targetDate.format(formatter);

@@ -80,6 +80,7 @@ public class ProgramStatusEventDetails {
       ", userArgs=" + userArgs + '\'' +
       ", systemArgs=" + systemArgs + '\'' +
       ", error='" + error + '\'' +
+      ", pipelineMetrics=" + pipelineMetrics + '\'' +
       ", workflowId='" + workflowId + '\'' +
       '}';
   }
@@ -135,7 +136,5 @@ public class ProgramStatusEventDetails {
                                            userArgs, systemArgs,
                                            error, pipelineMetrics, workflowId);
     }
-
   }
-
 }

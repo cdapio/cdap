@@ -1799,18 +1799,16 @@ public final class Constants {
     public static final String EVENTS_WRITER_PREFIX = "event.writer";
 
     public static final String EVENTS_WRITER_EXTENSIONS_DIR = "events.writer.extensions.dir";
+  }
 
-    public static final String PROGRAM_STATUS_RECORD_EVENT_TOPIC = "program.status.record.event.topic";
+  /**
+   * Constans for Spark Metrics Provider
+   */
 
-    public static final String EVENTS_WRITER_PUBSUB_PROJECT = "event.writer.pub_sub_event_writer.project";
-
-    public static final String EVENTS_WRITER_PUBSUB_SA_PATH = "event.writer.pub_sub_event_writer.service_account_path";
-
-    public static final String EVENTS_WRITER_PUBSUB_TOPIC = "event.writer.pub_sub_event_writer.topic";
-
-    public static final String EVENTS_WRITER_PUBSUB_PROXY_HOST = "event.writer.pub_sub_event_writer.proxy_host";
-
-    public static final String EVENTS_WRITER_PUBSUB_PROXY_PORT = "event.writer.pub_sub_event_writer.proxy_port";
+  public static final class Spark {
+    public static final String SPARK_METRICS_PROVIDER_HOST = "spark.metrics.host";
+    public static final String SPARK_METRICS_PROVIDER_MAX_TERMINATION_MINUTES = "spark.metrics.max.termination.minutes";
+    public static final String SPARK_METRICS_PROVIDER_RETRY_STRATEGY_PREFIX = "spark.metrics.strategy.";
   }
 
   /**

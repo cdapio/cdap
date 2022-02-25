@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.events;
 
+import com.google.common.base.Objects;
+
 /**
  * Metric details model for a single pipeline execution.
  */
@@ -37,10 +39,6 @@ public class ExecutionMetrics {
     return new ExecutionMetrics(0, 0, 0, 0);
   }
 
-  public static ExecutionMetrics nullMetrics() {
-    return null;
-  }
-
   public int getInputRows() {
     return inputRows;
   }
@@ -55,5 +53,23 @@ public class ExecutionMetrics {
 
   public long getOutputBytes() {
     return outputBytes;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ExecutionMetrics that = (ExecutionMetrics) o;
+    return inputRows == that.inputRows && outputRows == that.outputRows
+      && inputBytes == that.inputBytes && outputBytes == that.outputBytes;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(inputRows, outputRows, inputBytes, outputBytes);
   }
 }
