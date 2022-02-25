@@ -30,6 +30,7 @@ import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
+import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.security.auth.KeyManager;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
@@ -55,15 +56,18 @@ public class TaskWorkerService extends AbstractIdleService {
   private Cancellable cancelDiscovery;
   private InetSocketAddress bindAddress;
   private final KeyManager keyManager;
+  private final ProvisioningService provisioningService;
 
   @Inject
   TaskWorkerService(CConfiguration cConf,
                     SConfiguration sConf,
                     DiscoveryService discoveryService,
                     KeyManager keyManager,
+                    ProvisioningService provisioningService,
                     MetricsCollectionService metricsCollectionService) {
     this.discoveryService = discoveryService;
     this.keyManager = keyManager;
+    this.provisioningService = provisioningService;
     LOG.debug("KeyManager in TaskWorkerService: {}", keyManager.toString());
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TASK_WORKER)
       .setHost(cConf.get(Constants.TaskWorker.ADDRESS))
@@ -90,6 +94,7 @@ public class TaskWorkerService extends AbstractIdleService {
   protected void startUp() throws Exception {
     LOG.debug("Starting TaskWorkerService");
     keyManager.startAndWait();
+    provisioningService.startAndWait();
     httpService.start();
     bindAddress = httpService.getBindAddress();
     cancelDiscovery = discoveryService.register(
