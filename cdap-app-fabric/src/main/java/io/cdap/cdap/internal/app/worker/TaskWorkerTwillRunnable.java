@@ -158,11 +158,6 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
       @Override
       protected void bindKeyManager(Binder binder) {
         binder.bind(KeyManager.class).to(FileBasedKeyManager.class).in(Scopes.SINGLETON);
-        try {
-          LOG.debug("KeyManager while binding {}", binder.getProvider(KeyManager.class).get().toString());
-        } catch (Exception e) {
-          LOG.error("Doesn't work this way", e);
-        }
         expose(KeyManager.class);
       }
     });
@@ -354,6 +349,11 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
     SConfiguration sConf = SConfiguration.create(new File(getArgument("sConf")));
 
     Injector injector = createInjector(cConf, hConf, sConf);
+    try {
+      LOG.debug("KeyManager while binding {}", injector.getProvider(KeyManager.class).get().toString());
+    } catch (Exception e) {
+      LOG.error("Doesn't work this way", e);
+    }
 
     // Initialize logging context
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
