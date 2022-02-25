@@ -196,7 +196,8 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
               String secretName = cConf.get(Constants.Twill.Security.WORKER_SECRET_DISK_NAME);
               String secretPath = cConf.get(Constants.Twill.Security.WORKER_SECRET_DISK_PATH);
               twillPreparer = ((SecureTwillPreparer) twillPreparer)
-                  .withSecretDisk(TaskWorkerTwillRunnable.class.getSimpleName(), new SecretDisk(secretName, secretPath));
+                  .withSecretDisk(TaskWorkerTwillRunnable.class.getSimpleName(),
+                      new SecretDisk(secretName, secretPath));
             } else {
               SecurityContext securityContext = createSecurityContext();
               twillPreparer = ((SecureTwillPreparer) twillPreparer)
