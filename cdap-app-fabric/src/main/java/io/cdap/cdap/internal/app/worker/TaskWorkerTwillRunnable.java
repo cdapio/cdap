@@ -61,7 +61,10 @@ import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.common.namespace.guice.NamespaceQueryAdminModule;
 import io.cdap.cdap.data.runtime.StorageModule;
+import io.cdap.cdap.data.security.DefaultSecretStore;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactoryProvider;
 import io.cdap.cdap.internal.app.deploy.DispatcherFactory;
@@ -70,6 +73,7 @@ import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
 import io.cdap.cdap.internal.app.deploy.InMemoryDispatcher;
 import io.cdap.cdap.internal.app.deploy.RemoteConfigurator;
 import io.cdap.cdap.internal.app.deploy.RemoteDispatcher;
+import io.cdap.cdap.internal.app.namespace.DefaultNamespaceAdmin;
 import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -95,6 +99,7 @@ import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.securestore.spi.SecretStore;
 import io.cdap.cdap.security.auth.FileBasedKeyManager;
 import io.cdap.cdap.security.auth.KeyManager;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
@@ -169,6 +174,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
     modules.add(new ProvisionerModule());
     modules.add(new StorageModule());
     modules.add(new AuthorizationEnforcementModule().getDistributedModules());
+    // modules.add(new NamespaceQueryAdminModule());
     modules.add(new AbstractModule() {
       @Override
       protected void configure() {
@@ -248,6 +254,10 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
         Multibinder<ProgramCompletionNotifier> multiBinder = Multibinder.newSetBinder(binder(),
             ProgramCompletionNotifier.class);
         multiBinder.addBinding().toProvider(ProgramCompletionNotifierProvider.class);
+
+        // Bindings to get Provisioning Service working
+        bind(SecretStore.class).to(DefaultSecretStore.class).in(Scopes.SINGLETON);
+        bind(NamespaceQueryAdmin.class).to(DefaultNamespaceAdmin.class);
       }
     });
 
