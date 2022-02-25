@@ -69,7 +69,6 @@ import java.io.IOException;
 public class SystemAppTask implements RunnableTask {
 
   private static final Logger LOG = LoggerFactory.getLogger(SystemAppTask.class);
-  private static final Gson GSON = new Gson();
 
   private final CConfiguration cConf;
 

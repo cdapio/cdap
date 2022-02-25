@@ -136,8 +136,6 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
   private TaskWorkerService taskWorker;
   private LogAppenderInitializer logAppenderInitializer;
   private MetricsCollectionService metricsCollectionService;
-  private static final Key<TwillRunnerService> TWILL_RUNNER_SERVICE_KEY =
-      Key.get(TwillRunnerService.class, Constants.AppFabric.RemoteExecution.class);
 
   public TaskWorkerTwillRunnable(String cConfFileName, String hConfFileName, String sConfFileName) {
     super(ImmutableMap.of("cConf", cConfFileName, "hConf", hConfFileName, "sConf", sConfFileName));
@@ -209,11 +207,13 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
         );
         bind(ConfiguratorFactory.class).toProvider(ConfiguratorFactoryProvider.class);
 
+        Key<TwillRunnerService> twillRunnerServiceKey =
+            Key.get(TwillRunnerService.class, Constants.AppFabric.RemoteExecution.class);
 
         // Bind the TwillRunner for remote execution used in isolated cluster.
         // The binding is added in here instead of in TwillModule is because this module can be used
         // in standalone env as well and it doesn't require YARN.
-        bind(TWILL_RUNNER_SERVICE_KEY).to(RemoteExecutionTwillRunnerService.class).in(Scopes.SINGLETON);
+        bind(twillRunnerServiceKey).to(RemoteExecutionTwillRunnerService.class).in(Scopes.SINGLETON);
 
         // Bind ProgramRunnerFactory and expose it with the RemoteExecution annotation
         Key<ProgramRunnerFactory> programRunnerFactoryKey = Key.get(ProgramRunnerFactory.class,
@@ -231,7 +231,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
         // collected back via the runtime monitoring
         bindConstant().annotatedWith(Names.named(DefaultProgramRunnerFactory.PUBLISH_PROGRAM_STATE)).to(false);
         // TwillRunner used by the ProgramRunner is the remote execution one
-        bind(TwillRunner.class).annotatedWith(Constants.AppFabric.ProgramRunner.class).to(TWILL_RUNNER_SERVICE_KEY);
+        bind(TwillRunner.class).annotatedWith(Constants.AppFabric.ProgramRunner.class).to(twillRunnerServiceKey);
         // ProgramRunnerFactory used by ProgramRunner is the remote execution one.
         bind(ProgramRunnerFactory.class)
             .annotatedWith(Constants.AppFabric.ProgramRunner.class)
