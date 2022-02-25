@@ -62,7 +62,7 @@ public class TaskWorkerService extends AbstractIdleService {
                     KeyManager keyManager,
                     MetricsCollectionService metricsCollectionService) {
     this.discoveryService = discoveryService;
-    LOG.debug("KeyManager in TaskWorkerService: {}", keyManager);
+    LOG.debug("KeyManager in TaskWorkerService: {}", keyManager.toString());
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TASK_WORKER)
       .setHost(cConf.get(Constants.TaskWorker.ADDRESS))
       .setPort(cConf.getInt(Constants.TaskWorker.PORT))

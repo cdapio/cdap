@@ -101,7 +101,7 @@ public class DispatchTask implements RunnableTask {
   @Override
   public void run(RunnableTaskContext context) throws Exception {
     try {
-      LOG.debug("KeyManager reference for DispatchTask: {}", keyManager);
+      LOG.debug("KeyManager reference for DispatchTask: {}", keyManager.toString());
       AppLaunchInfo appLaunchInfo = GSON.fromJson(context.getParam(), AppLaunchInfo.class);
       Injector injector = Guice.createInjector(
           new ConfigModule(cConf, sConf),
