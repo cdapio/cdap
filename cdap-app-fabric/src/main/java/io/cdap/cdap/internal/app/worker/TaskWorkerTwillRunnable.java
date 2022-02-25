@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.AbstractModule;
+import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -94,6 +95,8 @@ import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.auth.FileBasedKeyManager;
+import io.cdap.cdap.security.auth.KeyManager;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.CoreSecurityModule;
@@ -143,14 +146,21 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
   static Injector createInjector(CConfiguration cConf, Configuration hConf, SConfiguration sConf) {
     List<Module> modules = new ArrayList<>();
 
-    CoreSecurityModule coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf);
+    // CoreSecurityModule coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf);
     // modules.add(new AppFabricServiceRuntimeModule(cConf));
     modules.add(new TwillModule());
     modules.add(new ConfigModule(cConf, hConf, sConf));
     modules.add(new LocalLocationModule());
     modules.add(new IOModule());
     modules.add(new AuthenticationContextModules().getMasterWorkerModule());
-    modules.add(coreSecurityModule);
+    // modules.add(coreSecurityModule);
+    modules.add(new CoreSecurityModule() {
+      @Override
+      protected void bindKeyManager(Binder binder) {
+        binder.bind(KeyManager.class).to(FileBasedKeyManager.class).in(Scopes.SINGLETON);
+        expose(KeyManager.class);
+      }
+    });
     modules.add(new MessagingClientModule());
     // modules.add(new SystemAppModule());
     modules.add(new MetricsClientRuntimeModule().getDistributedModules());
@@ -261,9 +271,9 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
       });
       modules.add(new RemoteLogAppenderModule());
 
-      if (coreSecurityModule.requiresZKClient()) {
-        modules.add(new ZKClientModule());
-      }
+      // if (coreSecurityModule.requiresZKClient()) {
+      //   modules.add(new ZKClientModule());
+      // }
     }
 
     return Guice.createInjector(modules);

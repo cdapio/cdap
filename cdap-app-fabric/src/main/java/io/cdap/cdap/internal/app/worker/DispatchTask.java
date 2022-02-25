@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.worker;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -56,10 +57,13 @@ import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.metrics.guice.DistributedMetricsClientModule;
+import io.cdap.cdap.security.auth.KeyManager;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.guice.CoreSecurityModule;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.guice.DistributedCoreSecurityModule;
 import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
+import io.cdap.cdap.security.guice.FileBasedCoreSecurityModule;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import org.apache.twill.api.RunId;
@@ -111,7 +115,15 @@ public class DispatchTask implements RunnableTask {
           new MessagingClientModule(),
           new StorageModule(),
           new ZKClientModule(),
-          CoreSecurityRuntimeModule.getDistributedModule(cConf)
+          new CoreSecurityModule() {
+            @Override
+            protected void bindKeyManager(Binder binder) {
+              // Do nothing
+              // bind(KeyManager.class).toInstance();
+            }
+          }
+          // new FileBasedCoreSecurityModule()
+          // CoreSecurityRuntimeModule.getDistributedModule(cConf)
       );
       LOG.debug("Injector: {}", injector);
       DispatchTaskRunner taskRunner = injector.getInstance(DispatchTaskRunner.class);
