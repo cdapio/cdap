@@ -92,6 +92,7 @@ public class FileBasedKeyManager extends MapBackedKeyManager {
       allKeys.put(key.getKeyId(), key);
 
       LOG.debug("Key {} read from file {}", key.getKeyId(), keyFile);
+      LOG.debug("KeyManager: {}", this);
     } else {
       // Create a new key and write to the file.
       KeyIdentifier key = generateKey();

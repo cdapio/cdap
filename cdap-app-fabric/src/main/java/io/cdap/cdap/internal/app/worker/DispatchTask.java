@@ -113,7 +113,7 @@ public class DispatchTask implements RunnableTask {
           new ZKClientModule(),
           CoreSecurityRuntimeModule.getDistributedModule(cConf)
       );
-      LOG.error("Injector: {}", injector);
+      LOG.debug("Injector: {}", injector);
       DispatchTaskRunner taskRunner = injector.getInstance(DispatchTaskRunner.class);
       DispatchResponse response = taskRunner.dispatch(appLaunchInfo);
       if (response.getExitCode() == 0 && response.isSuccessfulLaunch()) {
