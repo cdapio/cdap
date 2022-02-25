@@ -1802,6 +1802,16 @@ public final class Constants {
   }
 
   /**
+   * Constans for Spark Metrics Provider
+   */
+
+  public static final class Spark {
+    public static final String SPARK_METRICS_PROVIDER_HOST = "spark.metrics.host";
+    public static final String SPARK_METRICS_PROVIDER_MAX_TERMINATION_MINUTES = "spark.metrics.max.termination.minutes";
+    public static final String SPARK_METRICS_PROVIDER_RETRY_STRATEGY_PREFIX = "spark.metrics.strategy.";
+  }
+
+  /**
    * Constants for Twill.
    */
   public static final class Twill {

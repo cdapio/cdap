@@ -1,5 +1,5 @@
 /*
- * Copyright © 2022 Cask Data, Inc.
+ * Copyright © 2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,12 +40,15 @@ public class ProgramStatusEventDetails {
   @Nullable
   private final String error;
   @Nullable
+  private final ExecutionMetrics pipelineMetrics;
+  @Nullable
   private final String workflowId;
 
   private ProgramStatusEventDetails(String runID, String programName, String namespace, String applicationName,
                                     String status, long eventTime,
                                     @Nullable Map<String, String> userArgs, @Nullable Map<String, String> systemArgs,
                                     @Nullable String error,
+                                    @Nullable ExecutionMetrics pipelineMetrics,
                                     @Nullable String workflowId) {
     this.runID = runID;
     this.programName = programName;
@@ -55,6 +58,7 @@ public class ProgramStatusEventDetails {
     this.userArgs = userArgs;
     this.systemArgs = systemArgs;
     this.error = error;
+    this.pipelineMetrics = pipelineMetrics;
     this.workflowId = workflowId;
     this.applicationName = applicationName;
   }
@@ -76,6 +80,7 @@ public class ProgramStatusEventDetails {
       ", userArgs=" + userArgs + '\'' +
       ", systemArgs=" + systemArgs + '\'' +
       ", error='" + error + '\'' +
+      ", pipelineMetrics=" + pipelineMetrics + '\'' +
       ", workflowId='" + workflowId + '\'' +
       '}';
   }
@@ -92,6 +97,7 @@ public class ProgramStatusEventDetails {
     private Map<String, String> systemArgs;
     private String error;
     private String workflowId;
+    private ExecutionMetrics pipelineMetrics;
 
     Builder(String runID, String applicationName, String programName, String namespace, String status, long eventTime) {
       this.runID = runID;
@@ -120,10 +126,15 @@ public class ProgramStatusEventDetails {
       return this;
     }
 
+    public Builder withPipelineMetrics(ExecutionMetrics pipelineMetrics) {
+      this.pipelineMetrics = pipelineMetrics;
+      return this;
+    }
+
     public ProgramStatusEventDetails build() {
       return new ProgramStatusEventDetails(runID, programName, namespace, applicationName, status, eventTime,
                                            userArgs, systemArgs,
-                                           error, workflowId);
+                                           error, pipelineMetrics, workflowId);
     }
   }
 }

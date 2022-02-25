@@ -57,13 +57,15 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
   private final String instanceName;
   private final String projectName;
   private final CConfiguration cConf;
+  private final MetricsProvider metricsProvider;
   private Collection<EventWriter> eventWriters;
 
   @Inject
   protected ProgramStatusEventPublisher(String name, CConfiguration cConf,
                                         MessagingService messagingService,
                                         MetricsCollectionService metricsCollectionService,
-                                        TransactionRunner transactionRunner) {
+                                        TransactionRunner transactionRunner,
+                                        MetricsProvider metricsProvider) {
     super(name, cConf,
           cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC),
           cConf.getInt(Constants.Event.PROGRAM_STATUS_FETCH_SIZE),
@@ -73,6 +75,7 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
     this.cConf = cConf;
     this.instanceName = cConf.get(Constants.Event.INSTANCE_NAME);
     this.projectName = cConf.get(Constants.Event.PROJECT_NAME);
+    this.metricsProvider = metricsProvider;
   }
 
   @Override
@@ -129,7 +132,7 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
       ProgramRunId programRunId = GSON.fromJson(programRun, ProgramRunId.class);
 
       //Should event publish happen for this status
-      if (!shouldPublish(programRunStatus, programRunId)) {
+      if (!shouldPublish(programRunId)) {
         return;
       }
       ProgramStatusEventDetails.Builder builder = ProgramStatusEventDetails
@@ -144,7 +147,7 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
         .withUserArgs(GSON.fromJson(userArgsString, argsMapType))
         .withSystemArgs(GSON.fromJson(sysArgsString, argsMapType));
       if (programRunStatus.isEndState()) {
-        builder = populateErrorDetails(builder, properties, programRunStatus);
+        builder = populateErrorDetailsAndMetrics(builder, properties, programRunStatus, programRunId);
       }
       ProgramStatusEventDetails programStatusEventDetails = builder.build();
       ProgramStatusEvent programStatusEvent = new ProgramStatusEvent(publishTime, EVENT_VERSION,
@@ -156,18 +159,18 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
     this.eventWriters.forEach(eventWriter -> eventWriter.write(programStatusEvents));
   }
 
-  private boolean shouldPublish(ProgramRunStatus programRunStatus, ProgramRunId programRunId) {
+  private boolean shouldPublish(ProgramRunId programRunId) {
     return !NamespaceId.SYSTEM.equals(programRunId.getNamespaceId());
   }
 
-  private ProgramStatusEventDetails.Builder populateErrorDetails(
+  private ProgramStatusEventDetails.Builder populateErrorDetailsAndMetrics(
     ProgramStatusEventDetails.Builder builder, Map<String, String> properties,
-    ProgramRunStatus status) {
-    if (status == ProgramRunStatus.KILLED) {
-      return builder;
-    }
+    ProgramRunStatus status, ProgramRunId runId) {
     if (properties.containsKey(ProgramOptionConstants.PROGRAM_ERROR)) {
       builder = builder.withError(properties.get(ProgramOptionConstants.PROGRAM_ERROR));
+    }
+    if (status.isEndState()) {
+      builder = builder.withPipelineMetrics(metricsProvider.retrieveMetrics(runId));
     }
     return builder;
   }
