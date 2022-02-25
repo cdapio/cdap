@@ -39,10 +39,12 @@ import io.cdap.cdap.app.deploy.Dispatcher;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.guice.DefaultProgramRunnerFactory;
+import io.cdap.cdap.app.guice.NamespaceAdminModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.app.guice.RemoteExecutionProgramRunnerModule;
 import io.cdap.cdap.app.guice.RemoteExecutionProgramRunnerModule.ProgramCompletionNotifierProvider;
 import io.cdap.cdap.app.guice.TwillModule;
+import io.cdap.cdap.app.guice.UnsupportedExploreClient;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
@@ -61,10 +63,14 @@ import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
+import io.cdap.cdap.common.namespace.DefaultNamespacePathLocator;
+import io.cdap.cdap.common.namespace.NamespacePathLocator;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.namespace.guice.NamespaceQueryAdminModule;
+import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.security.DefaultSecretStore;
+import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactoryProvider;
 import io.cdap.cdap.internal.app.deploy.DispatcherFactory;
@@ -74,6 +80,9 @@ import io.cdap.cdap.internal.app.deploy.InMemoryDispatcher;
 import io.cdap.cdap.internal.app.deploy.RemoteConfigurator;
 import io.cdap.cdap.internal.app.deploy.RemoteDispatcher;
 import io.cdap.cdap.internal.app.namespace.DefaultNamespaceAdmin;
+import io.cdap.cdap.internal.app.namespace.DistributedStorageProviderNamespaceAdmin;
+import io.cdap.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
+import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -175,6 +184,8 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
     modules.add(new StorageModule());
     modules.add(new AuthorizationEnforcementModule().getDistributedModules());
     // modules.add(new NamespaceQueryAdminModule());
+    modules.add(new NamespaceAdminModule().getDistributedModules());
+    modules.add(new DataSetServiceModules().getDistributedModules());
     modules.add(new AbstractModule() {
       @Override
       protected void configure() {
@@ -257,7 +268,8 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
 
         // Bindings to get Provisioning Service working
         bind(SecretStore.class).to(DefaultSecretStore.class).in(Scopes.SINGLETON);
-        bind(NamespaceQueryAdmin.class).to(DefaultNamespaceAdmin.class);
+        bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
+        bind(ExploreClient.class).to(UnsupportedExploreClient.class);
       }
     });
 

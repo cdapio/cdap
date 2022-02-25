@@ -159,7 +159,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
               .createTwillControllerFromRunRecord(runRecordDetail);
         }
         ProgramController programController = null;
-        if (runner instanceof DistributedWorkflowProgramRunner) {
+        if (runner instanceof DistributedWorkflowProgramRunner && twillController != null) {
           programController = ((DistributedWorkflowProgramRunner) runner)
               .createProgramController(programRunId, twillController);
         }
