@@ -128,7 +128,6 @@ public class DispatchTask implements RunnableTask {
           // new FileBasedCoreSecurityModule()
           // CoreSecurityRuntimeModule.getDistributedModule(cConf)
       );
-      LOG.debug("Injector: {}", injector);
       DispatchTaskRunner taskRunner = injector.getInstance(DispatchTaskRunner.class);
       DispatchResponse response = taskRunner.dispatch(appLaunchInfo);
       if (response.getExitCode() == 0 && response.isSuccessfulLaunch()) {
