@@ -18,6 +18,7 @@ package io.cdap.cdap.proto.id;
 import io.cdap.cdap.proto.element.EntityType;
 
 import java.util.Collections;
+import java.util.Iterator;
 
 /**
  * Uniquely identifies a support bundle entity.
@@ -42,6 +43,12 @@ public class SupportBundleEntityId extends EntityId {
   @Override
   public Iterable<String> toIdParts() {
     return Collections.singletonList(supportBundleName);
+  }
+
+  @SuppressWarnings("unused")
+  public static SupportBundleEntityId fromIdParts(Iterable<String> idString) {
+    Iterator<String> iterator = idString.iterator();
+    return new SupportBundleEntityId(nextAndEnd(iterator, "supportBundle"));
   }
 }
 
