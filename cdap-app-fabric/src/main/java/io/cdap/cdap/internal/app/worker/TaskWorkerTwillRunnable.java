@@ -284,7 +284,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
   @Override
   public void initialize(TwillContext context) {
     super.initialize(context);
-    LOG.debug("Starting Task Worker!!!!!");
+    LOG.debug("Starting Task Worker doInit()");
     try {
       doInitialize(context);
     } catch (Exception e) {
@@ -292,6 +292,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
       Throwables.propagateIfPossible(e);
       throw new RuntimeException(e);
     }
+    LOG.debug("Ending Task Worker doInit()");
   }
 
   @Override
