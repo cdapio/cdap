@@ -51,7 +51,6 @@ public class TaskWorkerService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerService.class);
 
   private final DiscoveryService discoveryService;
-  private final KeyManager keyManager;
   private final NettyHttpService httpService;
   private Cancellable cancelDiscovery;
   private InetSocketAddress bindAddress;
@@ -63,8 +62,7 @@ public class TaskWorkerService extends AbstractIdleService {
                     KeyManager keyManager,
                     MetricsCollectionService metricsCollectionService) {
     this.discoveryService = discoveryService;
-    this.keyManager = keyManager;
-
+    LOG.debug("KeyManager in TaskWorkerService: {}", keyManager);
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TASK_WORKER)
       .setHost(cConf.get(Constants.TaskWorker.ADDRESS))
       .setPort(cConf.getInt(Constants.TaskWorker.PORT))
