@@ -92,7 +92,7 @@ public class FileBasedKeyManager extends MapBackedKeyManager {
       allKeys.put(key.getKeyId(), key);
 
       LOG.debug("Key {} read from file {}", key.getKeyId(), keyFile);
-      LOG.debug("KeyManager: {}", ((Object) this).toString());
+      LOG.debug("KeyManager: {}", this);
     } else {
       // Create a new key and write to the file.
       KeyIdentifier key = generateKey();
@@ -116,5 +116,10 @@ public class FileBasedKeyManager extends MapBackedKeyManager {
     } catch (Exception e) {
       LOG.warn("Failed to check and reload key file. Will be retried", e);
     }
+  }
+
+  @Override
+  public String toString() {
+    return getClass().getName() + "@" + Integer.toHexString(hashCode());
   }
 }
