@@ -26,13 +26,13 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
+import com.google.inject.Scopes;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.MonitorHandlerModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.app.guice.RuntimeServerModule;
-import io.cdap.cdap.app.guice.SupportBundleServiceModule;
 import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.preview.PreviewHttpServer;
 import io.cdap.cdap.app.preview.PreviewManagerModule;
@@ -73,7 +73,6 @@ import io.cdap.cdap.gateway.router.NettyRouter;
 import io.cdap.cdap.gateway.router.RouterModules;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeServer;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
-import io.cdap.cdap.internal.app.services.SupportBundleInternalService;
 import io.cdap.cdap.logging.LoggingUtil;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.framework.LogPipelineLoader;
@@ -106,6 +105,8 @@ import io.cdap.cdap.security.store.SecureStoreService;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.store.StoreDefinition;
+import io.cdap.cdap.support.app.guice.SupportBundleServiceModule;
+import io.cdap.cdap.support.internal.app.services.SupportBundleInternalService;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.counters.Limits;
 import org.apache.tephra.inmemory.InMemoryTransactionService;
@@ -218,6 +219,11 @@ public class StandaloneMain {
     metadataService = injector.getInstance(MetadataService.class);
     secureStoreService = injector.getInstance(SecureStoreService.class);
     supportBundleInternalService = injector.getInstance(SupportBundleInternalService.class);
+    appFabricHealthCheckService = injector.getInstance(HealthCheckService.class);
+    appFabricHealthCheckService.helper(
+      Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE,
+      cConf,
+      Constants.Service.MASTER_SERVICES_BIND_ADDRESS);
 
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       try {
@@ -308,10 +314,6 @@ public class StandaloneMain {
 
     supportBundleInternalService.startAndWait();
 
-    String host = cConf.get(Constants.Service.MASTER_SERVICES_BIND_ADDRESS);
-    int port = cConf.getInt(Constants.AppFabricHealthCheck.SERVICE_BIND_PORT);
-    appFabricHealthCheckService = injector.getInstance(HealthCheckService.class);
-    appFabricHealthCheckService.initiate(host, port, Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE);
     appFabricHealthCheckService.startAndWait();
 
     String protocol = sslEnabled ? "https" : "http";
@@ -566,6 +568,7 @@ public class StandaloneMain {
         protected void configure() {
           // Needed by MonitorHandlerModuler
           bind(TwillRunner.class).to(NoopTwillRunnerService.class);
+          bind(HealthCheckService.class).in(Scopes.SINGLETON);
         }
       }
     );

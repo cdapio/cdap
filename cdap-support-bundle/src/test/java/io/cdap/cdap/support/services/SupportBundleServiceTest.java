@@ -28,23 +28,22 @@ import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.conf.Constants.SupportBundle;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
-import io.cdap.cdap.internal.app.services.SupportBundleService;
 import io.cdap.cdap.internal.app.store.DefaultStore;
-import io.cdap.cdap.lib.SupportBundleFileNames;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
-import io.cdap.cdap.status.CollectionState;
-import io.cdap.cdap.status.SupportBundleConfiguration;
-import io.cdap.cdap.status.SupportBundleStatus;
-import io.cdap.cdap.status.SupportBundleTaskStatus;
+import io.cdap.cdap.support.internal.app.services.SupportBundleService;
+import io.cdap.cdap.support.lib.SupportBundleFileNames;
+import io.cdap.cdap.support.status.CollectionState;
+import io.cdap.cdap.support.status.SupportBundleConfiguration;
+import io.cdap.cdap.support.status.SupportBundleStatus;
+import io.cdap.cdap.support.status.SupportBundleTaskStatus;
 import io.cdap.common.http.HttpResponse;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1NodeList;
@@ -162,7 +161,7 @@ public class SupportBundleServiceTest extends SupportBundleTestBase {
 
     String uuid = supportBundleService.generateSupportBundle(supportBundleConfiguration);
     Assert.assertNotNull(uuid);
-    File tempFolder = new File(configuration.get(SupportBundle.LOCAL_DATA_DIR));
+    File tempFolder = new File(configuration.get(Constants.SupportBundle.LOCAL_DATA_DIR));
     File uuidFile = new File(tempFolder, uuid);
 
     Tasks.waitFor(CollectionState.FINISHED, () -> {
@@ -186,7 +185,7 @@ public class SupportBundleServiceTest extends SupportBundleTestBase {
   @Test
   public void testDeleteOldBundle() throws Exception {
     int maxFileNeedtoGenerate = 8;
-    File tempFolder = new File(configuration.get(SupportBundle.LOCAL_DATA_DIR));
+    File tempFolder = new File(configuration.get(Constants.SupportBundle.LOCAL_DATA_DIR));
     String expectedDeletedUuid = "";
     for (int i = 0; i < maxFileNeedtoGenerate; i++) {
       String uuid = UUID.randomUUID().toString();
