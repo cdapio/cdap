@@ -89,11 +89,13 @@ public class DispatchTask implements RunnableTask {
 
   private final CConfiguration cConf;
   private final SConfiguration sConf;
+  private final KeyManager keyManager;
 
   @Inject
-  DispatchTask(CConfiguration cConf, SConfiguration sConf) {
+  DispatchTask(CConfiguration cConf, SConfiguration sConf, KeyManager keyManager) {
     this.cConf = cConf;
     this.sConf = sConf;
+    this.keyManager = keyManager;
   }
 
   @Override
@@ -119,7 +121,7 @@ public class DispatchTask implements RunnableTask {
             @Override
             protected void bindKeyManager(Binder binder) {
               // Do nothing
-              // bind(KeyManager.class).toInstance();
+              bind(KeyManager.class).toInstance(keyManager);
             }
           }
           // new FileBasedCoreSecurityModule()

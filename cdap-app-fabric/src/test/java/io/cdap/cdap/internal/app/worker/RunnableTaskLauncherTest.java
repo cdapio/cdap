@@ -42,7 +42,7 @@ public class RunnableTaskLauncherTest {
     RunnableTaskRequest request = RunnableTaskRequest.getBuilder(TestRunnableTask.class.getName()).
       withParam(want).build();
 
-    RunnableTaskLauncher launcher = new RunnableTaskLauncher(CConfiguration.create(), SConfiguration.create());
+    RunnableTaskLauncher launcher = new RunnableTaskLauncher(CConfiguration.create(), SConfiguration.create(), null);
     ByteBuffer got = launcher.launchRunnableTask(request).getResult();
     Assert.assertEquals(want, StandardCharsets.UTF_8.decode(got).toString());
   }
