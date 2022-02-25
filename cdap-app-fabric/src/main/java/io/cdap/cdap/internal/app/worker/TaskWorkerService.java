@@ -30,6 +30,7 @@ import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
+import io.cdap.cdap.security.auth.KeyManager;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
@@ -48,27 +49,21 @@ import java.util.concurrent.TimeUnit;
 public class TaskWorkerService extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerService.class);
-  private static final Gson GSON = new Gson();
 
-  private final CConfiguration cConf;
   private final DiscoveryService discoveryService;
+  private final KeyManager keyManager;
   private final NettyHttpService httpService;
-  private final ArtifactManagerFactory artifactManagerFactory;
-  private final RunnableTaskLauncher taskLauncher;
   private Cancellable cancelDiscovery;
   private InetSocketAddress bindAddress;
-  private MetricsCollectionService metricsCollectionService;
 
   @Inject
   TaskWorkerService(CConfiguration cConf,
                     SConfiguration sConf,
                     DiscoveryService discoveryService,
-                    ArtifactManagerFactory artifactManagerFactory, MetricsCollectionService metricsCollectionService) {
-    this.cConf = cConf;
+                    KeyManager keyManager,
+                    MetricsCollectionService metricsCollectionService) {
     this.discoveryService = discoveryService;
-    this.artifactManagerFactory = artifactManagerFactory;
-    this.taskLauncher = new RunnableTaskLauncher(cConf, sConf);
-    this.metricsCollectionService = metricsCollectionService;
+    this.keyManager = keyManager;
 
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TASK_WORKER)
       .setHost(cConf.get(Constants.TaskWorker.ADDRESS))
@@ -82,7 +77,8 @@ public class TaskWorkerService extends AbstractIdleService {
           pipeline.addAfter("compressor", "decompressor", new HttpContentDecompressor());
         }
       })
-      .setHttpHandlers(new TaskWorkerHttpHandlerInternal(cConf, sConf, this::stopService, metricsCollectionService));
+      .setHttpHandlers(new TaskWorkerHttpHandlerInternal(cConf, sConf, this::stopService,
+          metricsCollectionService, keyManager));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
