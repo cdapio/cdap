@@ -354,6 +354,24 @@ public class BatchSQLEngineAdapter implements Closeable {
   }
 
   /**
+   * Defines which stages should be pushed down even when the platform doesn't select these stages for push down.
+   *
+   * @return Set containing stage names to push down to the SQL Engine
+   */
+  public Set<String> getIncludedStageNames() {
+    return sqlEngine.getIncludedStageNames();
+  }
+
+  /**
+   * Defines which stages should not be pushed down even when the platform determines the stage must be pushed down
+   *
+   * @return Set containing stage names to exclude from pushing down to the SQL Engine
+   */
+  public Set<String> getExcludedStageNames() {
+    return sqlEngine.getExcludedStageNames();
+  }
+
+  /**
    * Executes a Join operation in the SQL engine
    *
    * @param datasetName    the dataset name to use to store the result of the join operation
@@ -705,19 +723,33 @@ public class BatchSQLEngineAdapter implements Closeable {
       return Optional.empty();
     }
 
-    // Validate trasnformation definition with engine
+    // Ensure input and output schemas for this stage are supported by the engine
+    if (stageSpec.getInputSchemas().values().stream().anyMatch(s -> !sqlEngine.supportsInputSchema(s))) {
+      return Optional.empty();
+    }
+    if (!sqlEngine.supportsOutputSchema(stageSpec.getOutputSchema())) {
+      return Optional.empty();
+    }
+
+    // Validate transformation definition with engine
     SQLTransformDefinition transformDefinition = new SQLTransformDefinition(stageName,
                                                                             pluginContext.getOutputRelation(),
                                                                             stageSpec.getOutputSchema(),
                                                                             Collections.emptyMap(),
-                                                                            Collections.emptyMap()
-    );
+                                                                            Collections.emptyMap());
     if (!sqlEngine.canTransform(transformDefinition)) {
       return Optional.empty();
     }
 
     return Optional.of(runJob(stageSpec.getName(), SQLEngineJobType.EXECUTE, () -> {
-      // Initialize metrics collectorx
+      // Push all stages that need to be pushed to execute this aggregation
+      input.forEach((name, collection) -> {
+        if (!exists(name)) {
+          push(name, stageSpec.getInputSchemas().get(name), collection);
+        }
+      });
+
+      // Initialize metrics collector
       DefaultStageMetrics stageMetrics = new DefaultStageMetrics(metrics, stageName);
       StageStatisticsCollector statisticsCollector = statsCollectors.get(stageName);
 

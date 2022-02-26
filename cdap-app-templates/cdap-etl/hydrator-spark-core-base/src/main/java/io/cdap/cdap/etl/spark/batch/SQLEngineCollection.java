@@ -200,7 +200,15 @@ public class SQLEngineCollection<T> implements SQLBackedCollection<T> {
 
   @Override
   public boolean tryStoreDirect(StageSpec stageSpec) {
-    SQLEngineOutput sqlEngineOutput = sinkFactory.getSQLEngineOutput(stageSpec.getName());
+    String stageName = stageSpec.getName();
+
+    // Check if this stage should be excluded from executing in the SQL engine
+    if (adapter.getExcludedStageNames().contains(stageName)) {
+      return false;
+    }
+
+    // Get SQLEngineOutput instance for this stage
+    SQLEngineOutput sqlEngineOutput = sinkFactory.getSQLEngineOutput(stageName);
     if (sqlEngineOutput != null) {
       //Try writing directly
       SQLEngineJob<Boolean> writeJob = adapter.write(datasetName, sqlEngineOutput);

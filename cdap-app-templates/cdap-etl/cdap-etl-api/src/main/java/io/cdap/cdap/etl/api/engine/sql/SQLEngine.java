@@ -19,6 +19,7 @@ package io.cdap.cdap.etl.api.engine.sql;
 import io.cdap.cdap.api.RuntimeContext;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.PipelineConfigurable;
 import io.cdap.cdap.etl.api.SubmitterLifecycle;
 import io.cdap.cdap.etl.api.engine.sql.capability.PullCapability;
@@ -228,4 +229,38 @@ public interface SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT>
   default Set<PushCapability> getPushCapabilities() {
     return Collections.emptySet();
   }
+
+  /**
+   * Check if the supplied input schema is supported by the SQL engine
+   * @param schema input schema to validate
+   * @return boolean specifying if the input schema is supported.
+   */
+  default boolean supportsInputSchema(Schema schema) {
+    return true;
+  }
+
+  /**
+   * Check if the supplied output schema is supported by the SQL engine
+   * @param schema output schema to validate
+   * @return boolean specifying if the output schema is supported.
+   */
+  default boolean supportsOutputSchema(Schema schema) {
+    return true;
+  }
+
+  /**
+   * Defines which stages should be pushed down even when the platform doesn't select these stages for push down.
+   * @return Set containing stage names to push down to the SQL Engine
+   */
+  default Set<String> getIncludedStageNames() {
+    return Collections.emptySet();
+  };
+
+  /**
+   * Defines which stages should not be pushed down even when the platform determines the stage must be pushed down
+   * @return Set containing stage names to exclude from pushing down to the SQL Engine
+   */
+  default Set<String> getExcludedStageNames() {
+    return Collections.emptySet();
+  };
 }
