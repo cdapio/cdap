@@ -185,7 +185,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
     modules.add(new AuthorizationEnforcementModule().getDistributedModules());
     // modules.add(new NamespaceQueryAdminModule());
     modules.add(new NamespaceAdminModule().getDistributedModules());
-    modules.add(new DataSetServiceModules().getDistributedModules());
+//    modules.add(new DataSetServiceModules().getDistributedModules());
     modules.add(new AbstractModule() {
       @Override
       protected void configure() {
