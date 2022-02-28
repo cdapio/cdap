@@ -14,15 +14,15 @@ public class SystemWorkerTwillApplication implements TwillApplication {
 
   private final URI cConfFileURI;
   private final URI hConfFileURI;
-  private final ResourceSpecification taskWorkerResourceSpec;
+  private final ResourceSpecification systemWorkerResourceSpec;
   private final ResourceSpecification artifactLocalizerResourceSpec;
 
   public SystemWorkerTwillApplication(URI cConfFileURI, URI hConfFileURI,
-      ResourceSpecification taskWorkerResourceSpec,
+      ResourceSpecification systemWorkerResourceSpec,
       ResourceSpecification artifactLocalizerResourceSpec) {
     this.cConfFileURI = cConfFileURI;
     this.hConfFileURI = hConfFileURI;
-    this.taskWorkerResourceSpec = taskWorkerResourceSpec;
+    this.systemWorkerResourceSpec = systemWorkerResourceSpec;
     this.artifactLocalizerResourceSpec = artifactLocalizerResourceSpec;
   }
 
@@ -31,7 +31,7 @@ public class SystemWorkerTwillApplication implements TwillApplication {
     return TwillSpecification.Builder.with()
         .setName(NAME)
         .withRunnable()
-        .add(new TaskWorkerTwillRunnable("cConf.xml", "hConf.xml"), taskWorkerResourceSpec)
+        .add(new SystemWorkerTwillRunnable("cConf.xml", "hConf.xml"), systemWorkerResourceSpec)
         .withLocalFiles()
         .add("cConf.xml", cConfFileURI)
         .add("hConf.xml", hConfFileURI)
