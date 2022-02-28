@@ -79,6 +79,7 @@ import io.cdap.cdap.common.namespace.guice.NamespaceQueryAdminModule;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.data.runtime.DataSetServiceModules.DatasetMdsProvider;
 import io.cdap.cdap.data.runtime.DataSetsModules;
+import io.cdap.cdap.data.runtime.MetadataStorageProvider;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data.security.DefaultSecretStore;
@@ -88,6 +89,18 @@ import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
 import io.cdap.cdap.data2.dataset2.module.lib.inmemory.InMemoryMetricsTableModule;
 import io.cdap.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
+import io.cdap.cdap.data2.metadata.AuditMetadataStorage;
+import io.cdap.cdap.data2.metadata.lineage.DefaultLineageStoreReader;
+import io.cdap.cdap.data2.metadata.lineage.LineageStoreReader;
+import io.cdap.cdap.data2.metadata.lineage.field.DefaultFieldLineageReader;
+import io.cdap.cdap.data2.metadata.lineage.field.FieldLineageReader;
+import io.cdap.cdap.data2.metadata.writer.BasicLineageWriter;
+import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
+import io.cdap.cdap.data2.metadata.writer.LineageWriter;
+import io.cdap.cdap.data2.metadata.writer.LineageWriterDatasetFramework;
+import io.cdap.cdap.data2.registry.BasicUsageRegistry;
+import io.cdap.cdap.data2.registry.UsageRegistry;
+import io.cdap.cdap.data2.registry.UsageWriter;
 import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactoryProvider;
@@ -154,8 +167,11 @@ import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
+import io.cdap.cdap.security.impersonation.OwnerStore;
 import io.cdap.cdap.security.impersonation.RemoteUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
+import io.cdap.cdap.spi.metadata.MetadataStorage;
+import io.cdap.cdap.store.DefaultOwnerStore;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.TwillContext;
@@ -197,6 +213,9 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
   private TaskWorkerService taskWorker;
   private LogAppenderInitializer logAppenderInitializer;
   private MetricsCollectionService metricsCollectionService;
+
+  public static final String BASE_DATASET_FRAMEWORK = "basicDatasetFramework";
+  public static final String SPI_BASE_IMPL = "spiBaseImplementation";
 
   public TaskWorkerTwillRunnable(String cConfFileName, String hConfFileName, String sConfFileName) {
     super(ImmutableMap.of("cConf", cConfFileName, "hConf", hConfFileName, "sConf", sConfFileName));
@@ -348,6 +367,24 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
         bind(SecretStore.class).to(DefaultSecretStore.class).in(Scopes.SINGLETON);
         bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
         bind(ExploreClient.class).to(UnsupportedExploreClient.class);
+
+        // DataSetsModules bindings
+        bind(MetadataStorage.class).annotatedWith(Names.named(SPI_BASE_IMPL))
+            .toProvider(MetadataStorageProvider.class).in(Scopes.SINGLETON);
+        bind(MetadataStorage.class).to(AuditMetadataStorage.class).in(Scopes.SINGLETON);
+        bind(DatasetFramework.class)
+            .annotatedWith(Names.named(BASE_DATASET_FRAMEWORK))
+            .to(RemoteDatasetFramework.class);
+        bind(LineageStoreReader.class).to(DefaultLineageStoreReader.class);
+        bind(FieldLineageReader.class).to(DefaultFieldLineageReader.class);
+        bind(LineageWriter.class).to(BasicLineageWriter.class);
+        bind(FieldLineageWriter.class).to(BasicLineageWriter.class);
+        bind(UsageRegistry.class).to(BasicUsageRegistry.class).in(Scopes.SINGLETON);
+        bind(UsageWriter.class).to(BasicUsageRegistry.class).in(Scopes.SINGLETON);
+        bind(BasicUsageRegistry.class).in(Scopes.SINGLETON);
+        bind(DatasetFramework.class).to(LineageWriterDatasetFramework.class);
+        bind(DefaultOwnerStore.class).in(Scopes.SINGLETON);
+        bind(OwnerStore.class).to(DefaultOwnerStore.class);
       }
 
       /**

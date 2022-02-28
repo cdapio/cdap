@@ -158,31 +158,3 @@ public class DataSetsModules extends RuntimeModule {
   }
 }
 
-// TODO (CDAP-14918): Move binding for MetadataStorage out of DatasetsModules,
-// TODO (CDAP-14918): so that data-fabric does not need to depend on metadata.
-class MetadataStorageProvider implements Provider<MetadataStorage> {
-
-  private final Injector injector;
-  private final CConfiguration cConf;
-
-  @Inject
-  MetadataStorageProvider(CConfiguration cConf, Injector injector) {
-    this.cConf = cConf;
-    this.injector = injector;
-  }
-
-  @Override
-  public MetadataStorage get() {
-    String config = cConf.get(Constants.Metadata.STORAGE_PROVIDER_IMPLEMENTATION,
-                              Constants.Metadata.STORAGE_PROVIDER_NOSQL);
-    if (Constants.Metadata.STORAGE_PROVIDER_NOSQL.equalsIgnoreCase(config)) {
-      return injector.getInstance(DatasetMetadataStorage.class);
-    }
-    if (Constants.Metadata.STORAGE_PROVIDER_ELASTICSEARCH.equalsIgnoreCase(config)) {
-      return injector.getInstance(ElasticsearchMetadataStorage.class);
-    }
-    throw new IllegalArgumentException("Unsupported MetadataStorage '" + config + "'. Only '" +
-                                         Constants.Metadata.STORAGE_PROVIDER_NOSQL + "' and '" +
-                                         Constants.Metadata.STORAGE_PROVIDER_ELASTICSEARCH + "' are allowed.");
-  }
-}
