@@ -31,7 +31,6 @@ import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.app.preview.PreviewManager;
 import io.cdap.cdap.app.preview.PreviewStatus;
-import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.etl.api.Engine;
@@ -41,6 +40,7 @@ import io.cdap.cdap.etl.api.connector.BrowseEntity;
 import io.cdap.cdap.etl.api.connector.BrowseRequest;
 import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.cdap.etl.api.connector.SampleRequest;
+import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.mock.batch.MockSink;
 import io.cdap.cdap.etl.mock.batch.MockSource;
 import io.cdap.cdap.etl.mock.connector.FileConnector;
@@ -69,8 +69,6 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.ConnectionEntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.id.SystemAppEntityId;
-import io.cdap.cdap.proto.security.ApplicationPermission;
 import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
@@ -105,13 +103,17 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /**
  * Test for data pipeline using connections
@@ -120,6 +122,10 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
   private static final ArtifactId APP_ARTIFACT_ID = NamespaceId.SYSTEM.artifact("cdap-data-pipeline", "6.0.0");
   private static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("cdap-data-pipeline", "6.0.0",
                                                                           ArtifactScope.SYSTEM);
+  private static final Map<String, String> SERVICE_TAGS = ImmutableMap.of(
+    io.cdap.cdap.common.conf.Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getEntityName(),
+    io.cdap.cdap.common.conf.Constants.Metrics.Tag.APP, "pipeline",
+    io.cdap.cdap.common.conf.Constants.Metrics.Tag.SERVICE, io.cdap.cdap.etl.common.Constants.STUDIO_SERVICE_NAME);
   public static final String ALICE_NAME = "alice";
   public static final Principal ALICE_PRINCIPAL = new Principal(ALICE_NAME, Principal.PrincipalType.USER);
   
@@ -131,8 +137,10 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
 
   @ClassRule
   public static final TestConfiguration CONFIG =
-    new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false, Constants.Security.Store.PROVIDER, "file",
-                          Constants.AppFabric.SPARK_COMPAT, Compat.SPARK_COMPAT).enableAuthorization(TMP_FOLDER);
+    new TestConfiguration(io.cdap.cdap.common.conf.Constants.Explore.EXPLORE_ENABLED, false,
+                          io.cdap.cdap.common.conf.Constants.Security.Store.PROVIDER, "file",
+                          io.cdap.cdap.common.conf.Constants.AppFabric.SPARK_COMPAT,
+                          Compat.SPARK_COMPAT).enableAuthorization(TMP_FOLDER);
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
@@ -198,6 +206,147 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
       entities.add(BrowseEntity.builder(file.getName(), file.getCanonicalPath(), "file").canSample(true).build());
     }
     return entities;
+  }
+
+  @Test
+  public void testConnectionMetrics() throws Exception {
+    File directory = TEMP_FOLDER.newFolder();
+    List<BrowseEntity> entities = addFilesInDirectory(directory);
+    ConnectionCreationRequest connRequest = new ConnectionCreationRequest(
+      "", new PluginInfo(
+      FileConnector.NAME, Connector.PLUGIN_TYPE, null, Collections.emptyMap(),
+      // in set up we add "-mocks" as the suffix for the artifact id
+      new ArtifactSelectorConfig("system", APP_ARTIFACT_ID.getArtifact() + "-mocks",
+                                 APP_ARTIFACT_ID.getVersion())));
+
+    ConnectionCreationRequest dummyRequest = new ConnectionCreationRequest(
+      "", new PluginInfo(
+      "dummy", Connector.PLUGIN_TYPE, null, Collections.emptyMap(),
+      // in set up we add "-mocks" as the suffix for the artifact id
+      new ArtifactSelectorConfig("system", APP_ARTIFACT_ID.getArtifact() + "-mocks",
+                                 APP_ARTIFACT_ID.getVersion())));
+
+    Map<String, String> tagsFile = new HashMap<>(SERVICE_TAGS);
+    tagsFile.put(Constants.Metrics.Tag.APP_ENTITY_TYPE, Constants.CONNECTION_SERVICE_NAME);
+    tagsFile.put(Constants.Metrics.Tag.APP_ENTITY_TYPE_NAME, FileConnector.NAME);
+
+    Map<String, String> tagsDummy = new HashMap<>(SERVICE_TAGS);
+    tagsDummy.put(Constants.Metrics.Tag.APP_ENTITY_TYPE, Constants.CONNECTION_SERVICE_NAME);
+    tagsDummy.put(Constants.Metrics.Tag.APP_ENTITY_TYPE_NAME, "dummy");
+
+    // this is needed because studio service is running through the entire tests, so we need to ensure old
+    // metrics emitted by other tests do not affect this one
+    long existingMetricsTotal = getMetricsManager().getTotalMetric(
+      SERVICE_TAGS, "user." + Constants.Metrics.Connection.CONNECTION_COUNT);
+    long existingMetricsFile = getMetricsManager().getTotalMetric(
+      tagsFile, "user." + Constants.Metrics.Connection.CONNECTION_COUNT);
+    long existingMetricsDummy = getMetricsManager().getTotalMetric(
+      tagsDummy, "user." + Constants.Metrics.Connection.CONNECTION_COUNT);
+
+    // add 5 file connections, add 5 dummy connections without the artifact
+    for (int i = 0; i < 5; i++) {
+      addConnection("conn" + i, connRequest);
+    }
+
+    for (int i = 5; i < 10; i++) {
+      addConnection("conn" + i, dummyRequest);
+    }
+
+    // validate 10 conns added, 5 for file, 5 for dummy
+    validateMetrics(SERVICE_TAGS, Constants.Metrics.Connection.CONNECTION_COUNT, existingMetricsTotal, 10L);
+    validateMetrics(tagsFile, Constants.Metrics.Connection.CONNECTION_COUNT, existingMetricsFile, 5L);
+    validateMetrics(tagsDummy, Constants.Metrics.Connection.CONNECTION_COUNT, existingMetricsDummy, 5L);
+
+    // add 5 more dummy connections
+    for (int i = 10; i < 15; i++) {
+      addConnection("conn" + i, dummyRequest);
+    }
+
+    // validate 15 conns added, 5 files, 10 dummy
+    validateMetrics(SERVICE_TAGS, Constants.Metrics.Connection.CONNECTION_COUNT, existingMetricsTotal, 15L);
+    validateMetrics(tagsFile, Constants.Metrics.Connection.CONNECTION_COUNT, existingMetricsFile, 5L);
+    validateMetrics(tagsDummy, Constants.Metrics.Connection.CONNECTION_COUNT, existingMetricsDummy, 10L);
+
+    // get old get metrics number
+    existingMetricsTotal = getMetricsManager().getTotalMetric(
+      SERVICE_TAGS, "user." + Constants.Metrics.Connection.CONNECTION_GET_COUNT);
+    existingMetricsFile = getMetricsManager().getTotalMetric(
+      tagsFile, "user." + Constants.Metrics.Connection.CONNECTION_GET_COUNT);
+    existingMetricsDummy = getMetricsManager().getTotalMetric(
+      tagsDummy, "user." + Constants.Metrics.Connection.CONNECTION_GET_COUNT);
+
+    // get these 15 conns
+    for (int i = 0; i < 15; i++) {
+      getConnection("conn" + i);
+    }
+
+    // validate 15 get metrics for these connections, 5 for file, 10 for dummy
+    validateMetrics(SERVICE_TAGS, Constants.Metrics.Connection.CONNECTION_GET_COUNT,
+                    existingMetricsTotal, 15L);
+    validateMetrics(tagsFile, Constants.Metrics.Connection.CONNECTION_GET_COUNT, existingMetricsFile, 5L);
+    validateMetrics(tagsDummy, Constants.Metrics.Connection.CONNECTION_GET_COUNT, existingMetricsDummy, 10L);
+
+    // get old browse number
+    existingMetricsTotal = getMetricsManager().getTotalMetric(
+      SERVICE_TAGS, "user." + Constants.Metrics.Connection.CONNECTION_BROWSE_COUNT);
+    existingMetricsFile = getMetricsManager().getTotalMetric(
+      tagsFile, "user." + Constants.Metrics.Connection.CONNECTION_BROWSE_COUNT);
+    // browse each file connection twice
+    for (int i = 0; i < 5; i++) {
+      browseConnection("conn" + i, directory.getCanonicalPath(), 10);
+      browseConnection("conn" + i, directory.getCanonicalPath(), 10);
+    }
+
+    // validate 10 browse metrics are emitted for file
+    validateMetrics(SERVICE_TAGS, Constants.Metrics.Connection.CONNECTION_BROWSE_COUNT,
+                    existingMetricsTotal, 10L);
+    validateMetrics(tagsFile, Constants.Metrics.Connection.CONNECTION_BROWSE_COUNT,
+                    existingMetricsFile, 10L);
+
+    existingMetricsTotal = getMetricsManager().getTotalMetric(
+      SERVICE_TAGS, "user." + Constants.Metrics.Connection.CONNECTION_SAMPLE_COUNT);
+    existingMetricsFile = getMetricsManager().getTotalMetric(
+      tagsFile, "user." + Constants.Metrics.Connection.CONNECTION_SAMPLE_COUNT);
+
+    long existingMetricsSpecTotal = getMetricsManager().getTotalMetric(
+      SERVICE_TAGS, "user." + Constants.Metrics.Connection.CONNECTION_SPEC_COUNT);
+    long existingMetricsSpecFile = getMetricsManager().getTotalMetric(
+      tagsFile, "user." + Constants.Metrics.Connection.CONNECTION_SPEC_COUNT);
+    // sample each file connection
+    for (int i = 0; i < 5; i++) {
+      sampleConnection("conn" + i, entities.get(1).getPath(), 10);
+    }
+
+    // validate 5 sample and spec metrics are emitted for file
+    validateMetrics(SERVICE_TAGS, Constants.Metrics.Connection.CONNECTION_SAMPLE_COUNT,
+                    existingMetricsTotal, 5L);
+    validateMetrics(tagsFile, Constants.Metrics.Connection.CONNECTION_SAMPLE_COUNT, existingMetricsFile, 5L);
+    validateMetrics(SERVICE_TAGS, Constants.Metrics.Connection.CONNECTION_SPEC_COUNT,
+                    existingMetricsSpecTotal, 5L);
+    validateMetrics(tagsFile, Constants.Metrics.Connection.CONNECTION_SPEC_COUNT, existingMetricsSpecFile, 5L);
+
+    // get existing delete number
+    existingMetricsTotal = getMetricsManager().getTotalMetric(
+      SERVICE_TAGS, "user." + Constants.Metrics.Connection.CONNECTION_DELETED_COUNT);
+    existingMetricsFile = getMetricsManager().getTotalMetric(
+      tagsFile, "user." + Constants.Metrics.Connection.CONNECTION_DELETED_COUNT);
+    existingMetricsDummy = getMetricsManager().getTotalMetric(
+      tagsDummy, "user." + Constants.Metrics.Connection.CONNECTION_DELETED_COUNT);
+    // delete all connections
+    for (int i = 0; i < 15; i++) {
+      deleteConnection("conn" + i);
+    }
+
+    // validate 15 delete metrics for these connections, 5 for file, 10 for dummy
+    validateMetrics(SERVICE_TAGS, Constants.Metrics.Connection.CONNECTION_DELETED_COUNT, existingMetricsTotal, 15L);
+    validateMetrics(tagsFile, Constants.Metrics.Connection.CONNECTION_DELETED_COUNT, existingMetricsFile, 5L);
+    validateMetrics(tagsDummy, Constants.Metrics.Connection.CONNECTION_DELETED_COUNT, existingMetricsDummy, 10L);
+  }
+
+  private void validateMetrics(Map<String, String> tags, String metricName, long existingNumber,
+                               long expected) throws InterruptedException, ExecutionException, TimeoutException {
+    getMetricsManager().waitForExactMetricCount(tags, "user." + metricName,
+                                                expected + existingNumber, 20L, TimeUnit.SECONDS);
   }
 
   @Test
@@ -348,17 +497,16 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     // add some bad json object to the property
     addConnection(
       sourceConnName, new ConnectionCreationRequest(
-        "", new PluginInfo("test", "dummy", null, ImmutableMap.of("tableName", "${srcTable}",
+        "", new PluginInfo("test", "dummy", null, ImmutableMap.of("tableName", srcTableName,
                                                                   "key1", "${badval}"),
                            new ArtifactSelectorConfig())));
     addConnection(
       sinkConnName, new ConnectionCreationRequest(
-        "", new PluginInfo("test", "dummy", null, ImmutableMap.of("tableName", "${sinkTable}",
+        "", new PluginInfo("test", "dummy", null, ImmutableMap.of("tableName", sinkTableName,
                                                                   "key1", "${badval}"),
                            new ArtifactSelectorConfig())));
     // add json string to the runtime arguments to ensure plugin can get instantiated under such condition
-    Map<String, String> runtimeArguments = ImmutableMap.of("badval", "{\"a\" : 1}", "srcTable", srcTableName,
-                                                           "sinkTable", sinkTableName);
+    Map<String, String> runtimeArguments = Collections.singletonMap("badval", "{\"a\" : 1}");
 
     // source -> sink
     ETLBatchConfig config = ETLBatchConfig.builder()
@@ -406,12 +554,17 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     List<StructuredRecord> outputRecords = MockSink.readOutput(sinkTable);
     Assert.assertEquals(ImmutableSet.of(dwayne, samuel), new HashSet<>(outputRecords));
 
-    // in 6.5 we cannot update the connections, so update the runtime arguments so the connection value will get
-    // updated
+    // modify the connection to use a new table name for source and sink
     String newSrcTableName = "new" + srcTableName;
     String newSinkTableName = "new" + sinkTableName;
-    runtimeArguments = ImmutableMap.of("badval", "{\"a\" : 1}", "srcTable", newSrcTableName,
-                                       "sinkTable", newSinkTableName);
+    addConnection(
+      sourceConnName, new ConnectionCreationRequest(
+        "", new PluginInfo("test", "dummy", null, Collections.singletonMap("tableName", newSrcTableName),
+                           new ArtifactSelectorConfig())));
+    addConnection(
+      sinkConnName, new ConnectionCreationRequest(
+        "", new PluginInfo("test", "dummy", null, Collections.singletonMap("tableName", newSinkTableName),
+                           new ArtifactSelectorConfig())));
 
     addDatasetInstance(NamespaceId.DEFAULT.dataset(newSrcTableName), Table.class.getName());
     StructuredRecord newRecord1 = StructuredRecord.builder(schema).set("name", "john").build();
@@ -571,7 +724,7 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     deleteConnection(conn);
     browseConnection(conn, directory.getCanonicalPath(), 10);
     sampleConnection(conn, entities.get(1).getPath(), 100);
-    getConnectionSpec(conn, directory.getCanonicalPath());
+    getConnectionSpec(conn, directory.getCanonicalPath(), null, null);
 
     // Grant Alice permissions to create connection
     ConnectionEntityId connectionEntityId = new ConnectionEntityId(NamespaceId.DEFAULT.getNamespace(),
@@ -585,10 +738,10 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     // Grant Alice permission to use connection
     getAccessController().grant(Authorizable.fromEntityId(connectionEntityId),
                                 ALICE_PRINCIPAL,
-                                EnumSet.of(ApplicationPermission.PREVIEW));
+                                EnumSet.of(StandardPermission.USE));
     browseConnection(conn, directory.getCanonicalPath(), 10);
     sampleConnection(conn, entities.get(1).getPath(), 100);
-    getConnectionSpec(conn, directory.getCanonicalPath());
+    getConnectionSpec(conn, directory.getCanonicalPath(), null, null);
 
     // but Alice still can't update or delete connection
     expectedCode = HttpURLConnection.HTTP_FORBIDDEN;
@@ -636,6 +789,16 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
                         expectedCode, response.getResponseCode());
   }
 
+  private void getConnection(String connection) throws IOException {
+    String url = URLEncoder.encode(
+      String.format("v1/contexts/%s/connections/%s", NamespaceId.DEFAULT.getNamespace(),
+                    connection), StandardCharsets.UTF_8.name());
+    URL validatePipelineURL = serviceURI.resolve(url).toURL();
+    HttpResponse response = executeRequest(validatePipelineURL, HttpMethod.GET);
+    Assert.assertEquals("Wrong answer: " + response.getResponseBodyAsString(),
+                        expectedCode, response.getResponseCode());
+  }
+
   private void deleteConnection(String connection) throws IOException {
     String url = URLEncoder.encode(
       String.format("v1/contexts/%s/connections/%s", NamespaceId.DEFAULT.getNamespace(),
@@ -676,17 +839,40 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
       GSON.fromJson(response.getResponseBodyAsString(), SampleResponse.class);
   }
 
-  private ConnectorDetail getConnectionSpec(String connection, String path) throws IOException {
+  private ConnectorDetail getConnectionSpec(String connection, String path, @Nullable String pluginName,
+                                            @Nullable String pluginType) throws IOException {
     String url = URLEncoder.encode(
       String.format("v1/contexts/%s/connections/%s/specification", NamespaceId.DEFAULT.getNamespace(),
                     connection), StandardCharsets.UTF_8.name());
     URL validatePipelineURL = serviceURI.resolve(url).toURL();
     HttpRequest.Builder request = HttpRequest.builder(HttpMethod.POST, validatePipelineURL)
-      .withBody(GSON.toJson(new SpecGenerationRequest(path, Collections.emptyMap())));
+      .withBody(GSON.toJson(new SpecGenerationRequest(path, Collections.emptyMap(), pluginName, pluginType)));
     HttpResponse response = executeRequest(request);
     Assert.assertEquals("Wrong answer: " + response.getResponseBodyAsString(),
                         expectedCode, response.getResponseCode());
     return expectedCode != HttpURLConnection.HTTP_OK ? null :
       GSON.fromJson(response.getResponseBodyAsString(), ConnectorDetail.class);
+  }
+
+  @Test
+  public void testConnectionSpec() throws Exception {
+    File directory = TEMP_FOLDER.newFolder();
+    String conn = "test_connection2";
+    ConnectionCreationRequest creationRequest = new ConnectionCreationRequest("", new PluginInfo(
+      FileConnector.NAME, Connector.PLUGIN_TYPE, null, Collections.emptyMap(),
+      // in set up we add "-mocks" as the suffix for the artifact id
+      new ArtifactSelectorConfig("system", APP_ARTIFACT_ID.getArtifact() + "-mocks",
+                                 APP_ARTIFACT_ID.getVersion())));
+    addConnection(conn, creationRequest);
+    ConnectorDetail connectorDetail = getConnectionSpec(conn, directory.getCanonicalPath(), null, null);
+    Assert.assertTrue(connectorDetail.getRelatedPlugins().size() > 1);
+
+    connectorDetail = getConnectionSpec(conn, directory.getCanonicalPath(), "dummyPlugin", "batchsource");
+    Assert.assertEquals(connectorDetail.getRelatedPlugins().size(), 0);
+
+    connectorDetail = getConnectionSpec(conn, directory.getCanonicalPath(), "", "batchsource");
+    Assert.assertEquals(connectorDetail.getRelatedPlugins().size(), 1);
+
+    deleteConnection(conn);
   }
 }

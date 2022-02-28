@@ -27,6 +27,8 @@ import io.cdap.cdap.security.auth.UserIdentity;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Base64;
@@ -36,6 +38,8 @@ import java.util.Collections;
  * Authentication context for master services which utilize internal authentication.
  */
 public class SystemAuthenticationContext implements AuthenticationContext {
+  private static final Logger LOG = LoggerFactory.getLogger(SystemAuthenticationContext.class);
+
   public static final String SYSTEM_IDENTITY = "system";
   // Default expiration time of 5 minutes.
   private static final long DEFAULT_EXPIRATION = 300000;
@@ -51,15 +55,26 @@ public class SystemAuthenticationContext implements AuthenticationContext {
 
   @Override
   public Principal getPrincipal() {
-    // By default, assume the principal comes from a user request and handle accordingly using SecurityRequestContext.
+    // Normally userID and userCredentials should be either null or non-null.
+    // For non-null, they are either user or internal user credentials, so propagated as is.
+    // For null, it means system originated requests, user and generate a credential as internal user.
+    //
+    // It is possible that userID is non-null while userCredential is null, this can happen when we want
+    // to launch programs as a userID that is stored in program options' system args. As user credential
+    // is currently not stored there, we cannot launch program as the targeted user, instead we run program
+    // using system internal identity. We rely on authorization being performed at http handler level upon
+    // receiving request.
+
     String userId = SecurityRequestContext.getUserId();
     Credential userCredential = SecurityRequestContext.getUserCredential();
-    if (userId != null) {
+    if (userId != null && userCredential != null) {
       return new Principal(userId, Principal.PrincipalType.USER, userCredential);
+    } else if (userId != null && userCredential == null) {
+      LOG.warn("Unexpected SecurityRequestContext state, userId = {} while userCredential = NULL", userId);
+    } else if (userId == null && userCredential != null) {
+      LOG.warn("Unexpected SecurityRequestContext state, userId = NULL while userCredential = {}", userCredential);
     }
 
-    // Use internal identity if user ID is null.
-    // If user ID is null, the service is not handling a user request, so we assume it is an internal request.
     try {
       userId = UserGroupInformation.getCurrentUser().getShortUserName();
     } catch (IOException e) {

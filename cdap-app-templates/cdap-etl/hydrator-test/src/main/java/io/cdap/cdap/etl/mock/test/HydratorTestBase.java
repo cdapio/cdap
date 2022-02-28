@@ -55,6 +55,7 @@ import io.cdap.cdap.etl.mock.batch.MockRuntimeDatasetSink;
 import io.cdap.cdap.etl.mock.batch.MockRuntimeDatasetSource;
 import io.cdap.cdap.etl.mock.batch.MockSQLEngine;
 import io.cdap.cdap.etl.mock.batch.MockSQLEngineWithCapabilities;
+import io.cdap.cdap.etl.mock.batch.MockSQLEngineWithStageSettings;
 import io.cdap.cdap.etl.mock.batch.MockSink;
 import io.cdap.cdap.etl.mock.batch.MockSinkWithWriteCapability;
 import io.cdap.cdap.etl.mock.batch.MockSource;
@@ -107,7 +108,7 @@ public class HydratorTestBase extends TestBase {
   private static final Set<PluginClass> BATCH_MOCK_PLUGINS = ImmutableSet.of(
     FieldCountAggregator.PLUGIN_CLASS, IdentityAggregator.PLUGIN_CLASS, GroupFilterAggregator.PLUGIN_CLASS,
     MockJoiner.PLUGIN_CLASS, MockAutoJoiner.PLUGIN_CLASS, MockSQLEngine.PLUGIN_CLASS,
-    MockSQLEngineWithCapabilities.PLUGIN_CLASS, DupeFlagger.PLUGIN_CLASS,
+    MockSQLEngineWithCapabilities.PLUGIN_CLASS, MockSQLEngineWithStageSettings.PLUGIN_CLASS, DupeFlagger.PLUGIN_CLASS,
     MockRuntimeDatasetSink.PLUGIN_CLASS, MockRuntimeDatasetSource.PLUGIN_CLASS,
     MockExternalSource.PLUGIN_CLASS, MockExternalSink.PLUGIN_CLASS,
     DoubleTransform.PLUGIN_CLASS, AllErrorTransform.PLUGIN_CLASS, IdentityTransform.PLUGIN_CLASS,
@@ -171,8 +172,10 @@ public class HydratorTestBase extends TestBase {
                       BATCH_MOCK_PLUGINS,
                       io.cdap.cdap.etl.mock.batch.MockSource.class,
                       io.cdap.cdap.etl.mock.batch.MockSink.class,
-                      MockExternalSource.class, MockExternalSink.class, MockSQLEngine.class,
+                      MockExternalSource.class, MockExternalSink.class,
+                      MockSQLEngine.class,
                       MockSQLEngineWithCapabilities.class,
+                      MockSQLEngineWithStageSettings.class,
                       DoubleTransform.class, AllErrorTransform.class, IdentityTransform.class,
                       IntValueFilterTransform.class, StringValueFilterTransform.class,
                       FieldCountAggregator.class, FieldsPrefixTransform.class,

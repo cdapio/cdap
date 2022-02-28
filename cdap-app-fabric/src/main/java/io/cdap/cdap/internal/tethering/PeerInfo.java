@@ -25,13 +25,14 @@ import javax.annotation.Nullable;
 public class PeerInfo extends PeerBase {
   private final long lastConnectionTime;
 
-  public PeerInfo(String name, @Nullable String endpoint, TetheringStatus tetheringStatus, PeerMetadata metadata) {
-    this(name, endpoint, tetheringStatus, metadata, 0);
+  public PeerInfo(String name, @Nullable String endpoint, TetheringStatus tetheringStatus, PeerMetadata metadata,
+                  long requestTime) {
+    this(name, endpoint, tetheringStatus, metadata, requestTime, 0);
   }
 
   public PeerInfo(String name, @Nullable String endpoint, TetheringStatus tetheringStatus,
-                  PeerMetadata metadata, long lastConnectionTime) {
-    super(name, endpoint, tetheringStatus, metadata);
+                  PeerMetadata metadata, long requestTime, long lastConnectionTime) {
+    super(name, endpoint, tetheringStatus, metadata, requestTime);
     this.lastConnectionTime = lastConnectionTime;
   }
 

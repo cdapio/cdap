@@ -18,6 +18,9 @@ package io.cdap.cdap.internal.tethering;
 
 import com.google.gson.Gson;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.id.InstanceId;
+import io.cdap.cdap.proto.security.InstancePermission;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -38,10 +41,12 @@ public class TetheringClientHandler extends AbstractHttpHandler {
   static final String CREATE_TETHER = "/v3/tethering/connections/";
 
   private final TetheringStore store;
+  private final ContextAccessEnforcer contextAccessEnforcer;
 
   @Inject
-  TetheringClientHandler(TetheringStore store) {
+  TetheringClientHandler(TetheringStore store, ContextAccessEnforcer contextAccessEnforcer) {
     this.store = store;
+    this.contextAccessEnforcer = contextAccessEnforcer;
   }
 
   /**
@@ -50,12 +55,14 @@ public class TetheringClientHandler extends AbstractHttpHandler {
   @PUT
   @Path("/tethering/create")
   public void createTethering(FullHttpRequest request, HttpResponder responder) throws Exception {
+    contextAccessEnforcer.enforce(InstanceId.SELF, InstancePermission.TETHER);
     String content = request.content().toString(StandardCharsets.UTF_8);
     TetheringCreationRequest tetheringCreationRequest = GSON.fromJson(content, TetheringCreationRequest.class);
     List<NamespaceAllocation> namespaces = tetheringCreationRequest.getNamespaceAllocations();
-    PeerMetadata peerMetadata = new PeerMetadata(namespaces, tetheringCreationRequest.getMetadata());
+    PeerMetadata peerMetadata = new PeerMetadata(namespaces, tetheringCreationRequest.getMetadata(),
+                                                 tetheringCreationRequest.getDescription());
     PeerInfo peerInfo = new PeerInfo(tetheringCreationRequest.getPeer(), tetheringCreationRequest.getEndpoint(),
-                                     TetheringStatus.PENDING, peerMetadata);
+                                     TetheringStatus.PENDING, peerMetadata, System.currentTimeMillis());
     store.addPeer(peerInfo);
     responder.sendStatus(HttpResponseStatus.OK);
   }

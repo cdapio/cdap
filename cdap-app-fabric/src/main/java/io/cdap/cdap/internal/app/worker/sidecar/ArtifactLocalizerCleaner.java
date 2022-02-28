@@ -14,8 +14,6 @@
 
 package io.cdap.cdap.internal.app.worker.sidecar;
 
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.FileUtils;
 import org.slf4j.Logger;
@@ -39,15 +37,15 @@ public class ArtifactLocalizerCleaner implements Runnable {
   private final Path cacheDir;
   private final int cacheCleanupInterval;
 
-  public ArtifactLocalizerCleaner(CConfiguration cConf) {
-    cacheDir = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR));
-    cacheCleanupInterval = cConf.getInt(Constants.ArtifactLocalizer.CACHE_CLEANUP_INTERVAL_MIN);
+  public ArtifactLocalizerCleaner(Path cacheDir, int cacheCleanupInterval) {
+    this.cacheDir = cacheDir;
+    this.cacheCleanupInterval = cacheCleanupInterval;
   }
 
   @Override
   public void run() {
     try {
-      cleanupArtifactCache(cacheDir.resolve("artifacts").toFile());
+      cleanupArtifactCache(cacheDir.toFile());
     } catch (Exception e) {
       LOG.warn("ArtifactLocalizerService failed to clean up cache. Will retry again in {} minutes: {}",
                cacheCleanupInterval, e);

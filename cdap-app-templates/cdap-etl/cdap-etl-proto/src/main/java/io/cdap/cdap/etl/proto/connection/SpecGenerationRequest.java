@@ -19,17 +19,27 @@ package io.cdap.cdap.etl.proto.connection;
 
 import java.util.Map;
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * Spec generation request expected from a http request
  */
 public class SpecGenerationRequest {
   private final String path;
+  private final String pluginName;
+  private final String pluginType;
   private final Map<String, String> properties;
 
   public SpecGenerationRequest(String path, Map<String, String> properties) {
+    this(path, properties, null, null);
+  }
+
+  public SpecGenerationRequest(String path, Map<String, String> properties,
+                               @Nullable String pluginName, @Nullable String pluginType) {
     this.path = path;
     this.properties = properties;
+    this.pluginType = pluginType;
+    this.pluginName = pluginName;
   }
 
   public String getPath() {
@@ -38,6 +48,16 @@ public class SpecGenerationRequest {
 
   public Map<String, String> getProperties() {
     return properties;
+  }
+
+  @Nullable
+  public String getPluginName() {
+    return pluginName;
+  }
+
+  @Nullable
+  public String getPluginType() {
+    return pluginType;
   }
 
   @Override
@@ -52,7 +72,9 @@ public class SpecGenerationRequest {
 
     SpecGenerationRequest that = (SpecGenerationRequest) o;
     return Objects.equals(path, that.path) &&
-             Objects.equals(properties, that.properties);
+      Objects.equals(properties, that.properties) &&
+      Objects.equals(pluginName, that.pluginName) &&
+      Objects.equals(pluginType, that.pluginType);
   }
 
   @Override

@@ -74,6 +74,27 @@ public final class Constants {
     public static final String AGG_GROUPS = "aggregator.groups";
     public static final String JOIN_KEYS = "joiner.keys";
     public static final String DRAFT_COUNT = "draft.count";
+
+    public static final class Connection {
+      public static final String CONNECTION_COUNT = "connections.count";
+      public static final String CONNECTION_DELETED_COUNT = "connections.deleted.count";
+      public static final String CONNECTION_GET_COUNT = "connections.get.count";
+      public static final String CONNECTION_BROWSE_COUNT = "connections.browse.count";
+      public static final String CONNECTION_SAMPLE_COUNT = "connections.sample.count";
+      public static final String CONNECTION_SPEC_COUNT = "connections.spec.count";
+    }
+
+    /**
+     * NOTES:
+     * tag names must be unique (keeping all possible here helps to ensure that)
+     * tag names better be short to reduce the serialized metric value size
+     */
+    public static final class Tag {
+
+      //For app entity
+      public static final String APP_ENTITY_TYPE = "aet";
+      public static final String APP_ENTITY_TYPE_NAME = "tpe";
+    }
   }
 
   /**

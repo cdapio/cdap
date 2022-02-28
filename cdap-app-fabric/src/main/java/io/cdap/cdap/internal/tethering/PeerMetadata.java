@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.tethering;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * Metadata about a tethered peer.
@@ -27,10 +28,14 @@ public class PeerMetadata {
   private final List<NamespaceAllocation> namespaceAllocations;
   // metadata associated with the peer. ex: project, region when peer is located
   private final Map<String, String> metadata;
+  // Text that describes this tethering
+  private final String description;
 
-  public PeerMetadata(List<NamespaceAllocation> namespaceAllocations, Map<String, String> metadata) {
+  public PeerMetadata(List<NamespaceAllocation> namespaceAllocations, Map<String, String> metadata,
+                      @Nullable String description) {
     this.namespaceAllocations = namespaceAllocations;
     this.metadata = metadata;
+    this.description = description;
   }
 
   public List<NamespaceAllocation> getNamespaceAllocations() {
@@ -39,6 +44,11 @@ public class PeerMetadata {
 
   public Map<String, String> getMetadata() {
     return metadata;
+  }
+
+  @Nullable
+  public String getDescription() {
+    return description;
   }
 
   @Override
@@ -51,11 +61,12 @@ public class PeerMetadata {
     }
     PeerMetadata that = (PeerMetadata) other;
     return Objects.equals(this.namespaceAllocations, that.namespaceAllocations) &&
-      Objects.equals(this.metadata, that.metadata);
+      Objects.equals(this.metadata, that.metadata) &&
+      Objects.equals(this.description, that.description);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(namespaceAllocations, metadata);
+    return Objects.hash(namespaceAllocations, metadata, description);
   }
 }

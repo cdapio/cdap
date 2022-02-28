@@ -510,6 +510,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, TEST_NAMESPACE1,
                                                Constants.Metrics.Tag.APP, SLEEP_WORKFLOW_APP_ID);
     Assert.assertTrue(getTotalMetric(Constants.Metrics.Program.RUN_TIME_SECONDS, tags) > 0);
+    Assert.assertTrue(getTotalMetric(Constants.Metrics.Program.PROGRAM_STARTING_DELAY_SECONDS, tags) > 0);
 
     historyStatusWithRetry(sleepWorkflow1.toEntityId(), ProgramRunStatus.COMPLETED, 2);
     deleteApp(sleepWorkflow1.getApplication(), 200);

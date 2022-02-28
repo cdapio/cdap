@@ -458,7 +458,9 @@ public class MetricsQueryHelper {
   private Map<String, String> tagNamesToHuman(Map<String, String> tagValues) {
     Map<String, String> humanTagValues = Maps.newHashMap();
     for (Map.Entry<String, String> tag : tagValues.entrySet()) {
-      humanTagValues.put(tagNameToHuman.get(tag.getKey()), tag.getValue());
+      String tagName = tagNameToHuman.get(tag.getKey());
+      tagName = tagName != null ? tagName : tag.getKey();
+      humanTagValues.put(tagName, tag.getValue());
     }
     return humanTagValues;
   }

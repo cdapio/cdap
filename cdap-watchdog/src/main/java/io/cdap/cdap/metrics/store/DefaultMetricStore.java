@@ -137,7 +137,8 @@ public class DefaultMetricStore implements MetricStore {
                        Constants.Metrics.Tag.SERVICE, Constants.Metrics.Tag.DATASET,
                        Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.HANDLER,
                        Constants.Metrics.Tag.METHOD, Constants.Metrics.Tag.INSTANCE_ID,
-                       Constants.Metrics.Tag.THREAD),
+                       Constants.Metrics.Tag.THREAD, Constants.Metrics.Tag.APP_ENTITY_TYPE,
+                       Constants.Metrics.Tag.APP_ENTITY_TYPE_NAME),
       // i.e. for service only
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.SERVICE)));
@@ -256,6 +257,11 @@ public class DefaultMetricStore implements MetricStore {
       // todo improve this logic?
       for (MetricValue metric : metricValue.getMetrics()) {
         String measureName = (scope == null ? "system." : scope + ".") + metric.getName();
+        if (metric.getType() == MetricType.DISTRIBUTION) {
+          // TODO save distribution as multiple count metrics
+          // https://cdap.atlassian.net/browse/CDAP-18769
+          continue;
+        }
         MeasureType type = metric.getType() == MetricType.COUNTER ? MeasureType.COUNTER : MeasureType.GAUGE;
         metrics.add(new Measurement(measureName, type, metric.getValue()));
       }

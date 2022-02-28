@@ -90,7 +90,6 @@ public abstract class RemoteConnectionTaskBase implements RunnableTask {
     MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(arguments), evaluators,
                                                               Collections.singleton(OAuthMacroEvaluator.FUNCTION_NAME));
     MacroParserOptions options = MacroParserOptions.builder()
-      .skipInvalidMacros()
       .setEscaping(false)
       .setFunctionWhitelist(evaluators.keySet())
       .build();

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.metrics.jmx;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.metrics.MetricsPublisher;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -32,6 +33,7 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.MalformedURLException;
 import java.rmi.registry.LocateRegistry;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -50,8 +52,6 @@ import static org.mockito.Mockito.verify;
  */
 public class JMXMetricsCollectorTest {
   private static final int SERVER_PORT = 11023;
-  private static final String COMPONENT_NAME = "test-service";
-  private static final String K8S_NAMESPACE = "default";
   private static JMXConnectorServer svr;
   @Mock
   private MetricsPublisher publisher;
@@ -86,15 +86,8 @@ public class JMXMetricsCollectorTest {
     CConfiguration cConf = CConfiguration.create();
     cConf.setInt(Constants.JMXMetricsCollector.SERVER_PORT, -1);
     cConf.setInt(Constants.JMXMetricsCollector.POLL_INTERVAL_SECS, 1);
-    new JMXMetricsCollector(cConf, publisher, COMPONENT_NAME, K8S_NAMESPACE);
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testMissingComponentName() throws Exception {
-    CConfiguration cConf = CConfiguration.create();
-    cConf.setInt(Constants.JMXMetricsCollector.SERVER_PORT, SERVER_PORT);
-    cConf.setInt(Constants.JMXMetricsCollector.POLL_INTERVAL_SECS, 1);
-    new JMXMetricsCollector(cConf, publisher, null, K8S_NAMESPACE);
+    Map<String, String> metricTags = ImmutableMap.of("key1", "value1", "key2", "value2");
+    new JMXMetricsCollector(cConf, publisher, metricTags);
   }
 
   @Test
@@ -103,7 +96,8 @@ public class JMXMetricsCollectorTest {
     CConfiguration cConf = CConfiguration.create();
     cConf.setInt(Constants.JMXMetricsCollector.SERVER_PORT, SERVER_PORT);
     cConf.setInt(Constants.JMXMetricsCollector.POLL_INTERVAL_SECS, 1);
-    JMXMetricsCollector jmxMetrics = new JMXMetricsCollector(cConf, publisher, COMPONENT_NAME, K8S_NAMESPACE);
+    Map<String, String> metricTags = ImmutableMap.of("key1", "value1", "key2", "value2");
+    JMXMetricsCollector jmxMetrics = new JMXMetricsCollector(cConf, publisher, metricTags);
     jmxMetrics.startAndWait();
     verify(publisher, times(1)).initialize();
     // Poll should run at 0, 1. 2 secs buffer.

@@ -25,8 +25,8 @@ public class PeerState extends PeerBase {
   private final TetheringConnectionStatus connectionStatus;
 
   public PeerState(String name, String endpoint, TetheringStatus tetheringStatus, PeerMetadata metadata,
-                   TetheringConnectionStatus connectionStatus) {
-    super(name, endpoint, tetheringStatus, metadata);
+                   long requestTime, TetheringConnectionStatus connectionStatus) {
+    super(name, endpoint, tetheringStatus, metadata, requestTime);
     this.connectionStatus = connectionStatus;
   }
 

@@ -597,7 +597,7 @@ public class PluginInstantiator implements Closeable {
           // if child property is required and it is missing, add it to missing properties and continue
           if (childProperty.isRequired() && !macroFields.contains(child) &&
                 !properties.getProperties().containsKey(child)) {
-            missingProperties.add(name);
+            missingProperties.add(child);
             missing = true;
             continue;
           }

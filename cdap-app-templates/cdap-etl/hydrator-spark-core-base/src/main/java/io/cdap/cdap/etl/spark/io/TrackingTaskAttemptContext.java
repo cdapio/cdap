@@ -40,11 +40,11 @@ import java.net.URI;
 /**
  * Implementation of {@link TaskAttemptContext} that support bytes read/written counter.
  */
-final class TrackingTaskAttemptContext implements TaskAttemptContext {
+public final class TrackingTaskAttemptContext implements TaskAttemptContext {
 
   private final TaskAttemptContext delegate;
 
-  TrackingTaskAttemptContext(TaskAttemptContext delegate) {
+  public TrackingTaskAttemptContext(TaskAttemptContext delegate) {
     this.delegate = delegate;
   }
 

@@ -22,6 +22,12 @@ import java.util.Map;
  * Context passed to {@link MetricsWriter#initialize(MetricsWriterContext)}.
  */
 public interface MetricsWriterContext {
+
+  /**
+   * CDAP version label
+   */
+  String CDAP_VERSION = "cdap.version";
+
   /**
    * Properties are derived from the CDAP configuration. Configuration file path will be
    * added as an entry in the  properties.

@@ -17,12 +17,12 @@
 package io.cdap.cdap.operations.cdap;
 
 import com.google.inject.Injector;
+import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.operations.OperationalStats;
-import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
 
@@ -86,12 +86,18 @@ public class CDAPEntities extends AbstractCDAPStats implements CDAPEntitiesMXBea
     List<NamespaceMeta> namespaceMetas = nsQueryAdmin.list();
     namespaces = namespaceMetas.size();
     artifacts += artifactRepository.getArtifactSummaries(NamespaceId.SYSTEM, false).size();
+
     for (NamespaceMeta meta : namespaceMetas) {
-      List<ApplicationDetail> apps = appLifecycleService.getApps(meta.getNamespaceId());
-      this.apps += apps.size();
-      for (ApplicationDetail app : apps) {
-        programs += app.getPrograms().size();
-      }
+      ScanApplicationsRequest scanApplicationsRequest =
+          ScanApplicationsRequest.builder().setNamespaceId(meta.getNamespaceId()).build();
+
+      appLifecycleService.scanApplications(scanApplicationsRequest,
+          d -> {
+              this.apps++;
+              programs += d.getPrograms().size();
+            }
+          );
+
       artifacts += artifactRepository.getArtifactSummaries(meta.getNamespaceId(), false).size();
       datasets += dsFramework.getInstances(meta.getNamespaceId()).size();
     }

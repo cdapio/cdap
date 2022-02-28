@@ -100,16 +100,11 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       throw new IllegalArgumentException("Exceed Max number of tags. Only Max of 64 allowed. ");
     }
 
-    if (conf.isPredefinedAutoScaleEnabled()) {
-      //If predefined auto-scaling is enabled, then user should not send values for the following
-      if (properties.containsKey(DataprocConf.WORKER_NUM_NODES) ||
-        properties.containsKey(DataprocConf.SECONDARY_WORKER_NUM_NODES) ||
-        properties.containsKey(DataprocConf.AUTOSCALING_POLICY)) {
-        throw new IllegalArgumentException(
-          String.format("Invalid configs : %s, %s, %s. These are not allowed when %s is enabled ",
-                        DataprocConf.WORKER_NUM_NODES, DataprocConf.SECONDARY_WORKER_NUM_NODES,
-                        DataprocConf.AUTOSCALING_POLICY , DataprocConf.PREDEFINED_AUTOSCALE_ENABLED));
-      }
+    if (!isAutoscalingFieldsValid(conf, properties)) {
+      throw new IllegalArgumentException(
+        String.format("Invalid configs : %s, %s, %s. These are not allowed when %s is enabled ",
+                      DataprocConf.WORKER_NUM_NODES, DataprocConf.SECONDARY_WORKER_NUM_NODES,
+                      DataprocConf.AUTOSCALING_POLICY , DataprocConf.PREDEFINED_AUTOSCALE_ENABLED));
     }
   }
 
@@ -124,13 +119,20 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       //Return default implementation, as this is an user auto-scaling policy for which we do not have details
       return super.getTotalProcessingCpusLabel(properties);
     }
-    label.append(conf.getTotalWorkerCPUs());
+
+    int totalCpus = conf.getTotalWorkerCPUs() > 0 ? conf.getTotalWorkerCPUs() : conf.getTotalMasterCpus();
+    label.append(totalCpus);
     return Optional.of(label.toString());
   }
 
   @Override
   public Cluster createCluster(ProvisionerContext context) throws Exception {
     DataprocConf conf = DataprocConf.create(createContextProperties(context));
+    if (!isAutoscalingFieldsValid(conf, createContextProperties(context))) {
+      LOG.warn("The configs : {}, {}, {} will not be considered when {} is enabled ", DataprocConf.WORKER_NUM_NODES,
+               DataprocConf.SECONDARY_WORKER_NUM_NODES, DataprocConf.AUTOSCALING_POLICY ,
+               DataprocConf.PREDEFINED_AUTOSCALE_ENABLED);
+    }
 
     if (context.getRuntimeMonitorType() == RuntimeMonitorType.SSH || !conf.isRuntimeJobManagerEnabled()) {
       // Generates and set the ssh key if it does not have one.
@@ -173,8 +175,8 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       labels.putAll(getSystemLabels());
       labels.putAll(getReuseLabels(context, conf));
       labels.putAll(conf.getClusterLabels());
-      LOG.info("Creating Dataproc cluster {} in project {}, in region {}, with image {}, with labels {}",
-               clusterName, conf.getProjectId(), conf.getRegion(), imageDescription, labels);
+      LOG.info("Creating Dataproc cluster {} in project {}, in region {}, with image {}, with labels {}, endpoint {}",
+               clusterName, conf.getProjectId(), conf.getRegion(), imageDescription, labels, getRootUrl(conf));
 
       boolean privateInstance = Boolean.parseBoolean(getSystemContext().getProperties().get(PRIVATE_INSTANCE));
       ClusterOperationMetadata createOperationMeta = client.createCluster(clusterName, imageVersion,
@@ -503,4 +505,17 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
     }
     return CLUSTER_PREFIX + cleanedAppName + "-" + programRunInfo.getRun();
   }
+
+  private boolean isAutoscalingFieldsValid(DataprocConf conf, Map<String, String> properties) {
+    if (conf.isPredefinedAutoScaleEnabled()) {
+      //If predefined auto-scaling is enabled, then user should not send values for the following
+      if (properties.containsKey(DataprocConf.WORKER_NUM_NODES) ||
+        properties.containsKey(DataprocConf.SECONDARY_WORKER_NUM_NODES) ||
+        properties.containsKey(DataprocConf.AUTOSCALING_POLICY)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
 }

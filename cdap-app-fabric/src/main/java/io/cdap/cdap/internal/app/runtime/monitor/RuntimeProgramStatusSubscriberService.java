@@ -28,7 +28,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
-import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.services.AbstractNotificationSubscriberService;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.messaging.MessagingService;
@@ -43,7 +42,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
@@ -156,7 +154,7 @@ public class RuntimeProgramStatusSubscriberService extends AbstractNotificationS
                                     Optional.ofNullable(properties.get(ProgramOptionConstants.STOPPING_TIME))
                                       .map(Long::parseLong).orElse(System.currentTimeMillis()),
                                     Optional.ofNullable(properties.get(
-                                      ProgramOptionConstants.GRACEFUL_SHUTDOWN_PERIOD_IN_SECS))
+                                      ProgramOptionConstants.TERMINATE_TIME))
                                       .map(Long::parseLong).orElse(Long.MAX_VALUE));
         break;
       case RESUMING:

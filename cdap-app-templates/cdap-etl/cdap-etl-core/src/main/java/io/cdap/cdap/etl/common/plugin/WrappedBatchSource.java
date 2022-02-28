@@ -33,7 +33,9 @@ import java.util.concurrent.Callable;
  * @param <VAL_IN> the input value type
  * @param <OUT> the output type
  */
-public class WrappedBatchSource<KEY_IN, VAL_IN, OUT> extends BatchSource<KEY_IN, VAL_IN, OUT> {
+public class WrappedBatchSource<KEY_IN, VAL_IN, OUT>
+  extends BatchSource<KEY_IN, VAL_IN, OUT>
+  implements PluginWrapper<BatchSource<KEY_IN, VAL_IN, OUT>> {
   private final BatchSource<KEY_IN, VAL_IN, OUT> batchSource;
   private final Caller caller;
   private final OperationTimer operationTimer;
@@ -96,5 +98,10 @@ public class WrappedBatchSource<KEY_IN, VAL_IN, OUT> extends BatchSource<KEY_IN,
       batchSource.configurePipeline(pipelineConfigurer);
       return null;
     });
+  }
+
+  @Override
+  public BatchSource<KEY_IN, VAL_IN, OUT> getWrapped() {
+    return batchSource;
   }
 }

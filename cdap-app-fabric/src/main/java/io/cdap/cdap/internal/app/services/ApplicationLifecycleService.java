@@ -159,8 +159,11 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final CapabilityReader capabilityReader;
   private final int batchSize;
 
+  /**
+   * Construct the ApplicationLifeCycleService with service factory and cConf coming from guice injection.
+   */
   @Inject
-  ApplicationLifecycleService(CConfiguration cConf,
+  public ApplicationLifecycleService(CConfiguration cConf,
                               Store store, Scheduler scheduler, UsageRegistry usageRegistry,
                               PreferencesService preferencesService, MetricsSystemClient metricsSystemClient,
                               OwnerAdmin ownerAdmin, ArtifactRepository artifactRepository,
@@ -200,22 +203,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   }
 
   /**
-   * Get all applications in the specified namespace, filtered to only include applications with an artifact name
-   * in the set of specified names and an artifact version equal to the specified version. If the specified set
-   * is empty, no filtering is performed on artifact name. If the specified version is null, no filtering is done
-   * on artifact version.
-   *
-   * @param namespace the namespace to get apps from
-   * @param artifactNames the set of valid artifact names. If empty, all artifact names are valid
-   * @param artifactVersion the artifact version to match. If null, all artifact versions are valid
-   * @return list of all applications in the namespace that match the specified artifact names and version
-   */
-  public List<ApplicationDetail> getApps(NamespaceId namespace, Set<String> artifactNames,
-                                         @Nullable String artifactVersion) throws Exception {
-    return getApps(namespace, getAppFilters(artifactNames, artifactVersion));
-  }
-
-  /**
    * Get all applications in the specified namespace
    *
    * @param namespace the namespace to get apps from
@@ -225,21 +212,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     List<ApplicationDetail> result = new ArrayList<>();
     scanApplications(namespace, Collections.emptyList(), d -> result.add(d));
-    return result;
-  }
-
-  /**
-   * Get all applications in the specified namespace that satisfy the specified filters.
-   *
-   * @param namespace the namespace to get apps from
-   * @param filters the filters that must be satisfied in order to be returned
-   * @return list of all applications in the namespace that satisfy the specified filters
-   */
-  public List<ApplicationDetail> getApps(NamespaceId namespace,
-      List<ApplicationFilter> filters) throws Exception {
-
-    List<ApplicationDetail> result = new ArrayList<>();
-    scanApplications(namespace, filters, d -> result.add(d));
     return result;
   }
 
@@ -271,7 +243,27 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @param consumer a {@link Consumer} to consume each ApplicationDetail being scanned
    */
   public void scanApplications(NamespaceId namespace, List<ApplicationFilter> filters,
-      Consumer<ApplicationDetail> consumer) {
+                               Consumer<ApplicationDetail> consumer) {
+    scanApplications(ScanApplicationsRequest.builder()
+      .setNamespaceId(namespace)
+      .addFilters(filters)
+      .build(), consumer);
+  }
+
+  /**
+   * Scans all applications in the specified namespace, filtered to only include application details
+   * which satisfy the filters
+   *
+   * @param request application scan request. Must name namespace filled
+   * @param consumer a {@link Consumer} to consume each ApplicationDetail being scanned
+   * @return if limit was reached (true) or all items were scanned before reaching the limit (false)
+   * @throws IllegalArgumentException if scan request does not have namespace specified
+   */
+  public boolean scanApplications(ScanApplicationsRequest request, Consumer<ApplicationDetail> consumer) {
+    NamespaceId namespace = request.getNamespaceId();
+    if (namespace == null) {
+      throw new IllegalStateException("Application scan request without namespace");
+    }
     accessEnforcer.enforceOnParent(EntityType.DATASET, namespace,
         authenticationContext.getPrincipal(), StandardPermission.LIST);
 
@@ -281,11 +273,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         )
     ) {
 
-      ScanApplicationsRequest request = ScanApplicationsRequest.builder()
-        .setNamespaceId(namespace)
-        .addFilters(filters)
-        .build();
-      store.scanApplications(request, batchSize, (appId, appSpec) -> {
+      return store.scanApplications(request, batchSize, (appId, appSpec) -> {
               batchingConsumer.accept(new SimpleEntry<>(appId, appSpec));
             });
     }
@@ -1129,7 +1117,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @param artifactVersion allowed artifact version. Any version is allowed if null
    * @return list of 0,1 or 2 filters
    */
-  private List<ApplicationFilter> getAppFilters(Set<String> artifactNames, @Nullable String artifactVersion) {
+  public List<ApplicationFilter> getAppFilters(Set<String> artifactNames, @Nullable String artifactVersion) {
     ImmutableList.Builder<ApplicationFilter> builder = ImmutableList.builder();
     if (!artifactNames.isEmpty()) {
       builder.add(new ApplicationFilter.ArtifactNamesInFilter(artifactNames));

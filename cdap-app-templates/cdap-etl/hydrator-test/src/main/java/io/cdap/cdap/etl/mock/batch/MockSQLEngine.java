@@ -149,7 +149,10 @@ public class MockSQLEngine extends BatchSQLEngine<Object, Object, Object, Object
     }
   }
 
-  public static ETLPlugin getPlugin(String name, String inputDirName, String outputDirName, Schema outputSchema) {
+  public static ETLPlugin getPlugin(String name,
+                                    String inputDirName,
+                                    String outputDirName,
+                                    Schema outputSchema) {
     Map<String, String> properties = new HashMap<>();
     properties.put("name", name);
     properties.put("inputDirName", inputDirName);

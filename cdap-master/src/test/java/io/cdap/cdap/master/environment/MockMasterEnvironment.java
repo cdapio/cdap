@@ -28,6 +28,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ZKDiscoveryService;
 import org.apache.twill.zookeeper.ZKClientService;
 
+import java.util.Map;
 import java.util.function.Supplier;
 
 /**
@@ -46,6 +47,11 @@ public class MockMasterEnvironment implements MasterEnvironment {
 
     discoveryService = new ZKDiscoveryService(zkClient);
     twillRunnerService = new NoopTwillRunnerService();
+    Map<String, String> conf = context.getConfigurations();
+    // Add conf properties for SystemMetricsExporterServiceMain
+    String prefix = MasterEnvironmentContext.ENVIRONMENT_PROPERTY_PREFIX;
+    conf.put(prefix + "key1", "value1");
+    conf.put(prefix + "key2", "value2");
   }
 
   @Override

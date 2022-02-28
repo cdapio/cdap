@@ -59,10 +59,10 @@ import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramRunClusterStatus;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
-import io.cdap.cdap.proto.WorkflowNodeStateDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
+import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.reporting.ProgramHeartbeatTable;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
@@ -80,6 +80,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -385,6 +386,8 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
           appMetadataStore.recordProgramRunning(programRunId, logicalStartTimeSecs, twillRunId, messageIdBytes);
         writeToHeartBeatTable(recordedRunRecord, logicalStartTimeSecs, programHeartbeatTable);
         runRecordMonitorService.removeRequest(programRunId, true);
+        long startDelayTime = logicalStartTimeSecs - RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS);
+        emitStartingTimeMetric(programRunId, startDelayTime);
         break;
       case SUSPENDED:
         long suspendTime = getTimeSeconds(notification.getProperties(),
@@ -401,6 +404,19 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         // can be -1.
         recordedRunRecord = appMetadataStore.recordProgramResumed(programRunId, messageIdBytes, resumeTime);
         writeToHeartBeatTable(recordedRunRecord, resumeTime, programHeartbeatTable);
+        break;
+      case STOPPING:
+        Map<String, String> notificationProperties = notification.getProperties();
+        long stoppingTsSecs = getTimeSeconds(notificationProperties, ProgramOptionConstants.STOPPING_TIME);
+        if (stoppingTsSecs == -1L) {
+          LOG.warn("Ignore program stopping notification for program {} without {} specified, {}",
+                   programRunId, ProgramOptionConstants.STOPPING_TIME, notification);
+          return;
+        }
+        long terminateTsSecs = getTimeSeconds(notificationProperties, ProgramOptionConstants.TERMINATE_TIME);
+        recordedRunRecord = appMetadataStore.recordProgramStopping(programRunId, messageIdBytes, stoppingTsSecs,
+                                                                   terminateTsSecs);
+        writeToHeartBeatTable(recordedRunRecord, stoppingTsSecs, programHeartbeatTable);
         break;
       case COMPLETED:
       case KILLED:
@@ -545,32 +561,49 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       return;
     }
 
-    // Loop over workflow node states and alter program states that are not in end state
-    // We can do this because under normal operation, all inner program should be completed before the workflow
-    // and the message ordering should preserve that.
-    for (WorkflowNodeStateDetail nodeState : appMetadataStore.getWorkflowNodeStates(programRunId)) {
-      WorkflowNode workflowNode = workflowSpec.getNodeIdMap().get(nodeState.getNodeId());
+    // For all MR and Spark nodes, we need to update the inner program run status if they are not in end state yet.
+    for (WorkflowNode workflowNode : workflowSpec.getNodeIdMap().values()) {
       if (!(workflowNode instanceof WorkflowActionNode)) {
         continue;
       }
 
-      // For MR and Spark, we need to update the states if they are not in end state yet.
       ScheduleProgramInfo programInfo = ((WorkflowActionNode) workflowNode).getProgram();
-      if (!WORKFLOW_INNER_PROGRAM_TYPES.containsKey(programInfo.getProgramType())
-        || nodeState.getNodeStatus().isEndState()) {
+      if (!WORKFLOW_INNER_PROGRAM_TYPES.containsKey(programInfo.getProgramType())) {
         continue;
       }
-      ProgramRunId innerProgramRunId = appId
-        .program(WORKFLOW_INNER_PROGRAM_TYPES.get(programInfo.getProgramType()), programInfo.getProgramName())
-        .run(nodeState.getRunId());
 
-      Map<String, String> notificationProps = new HashMap<>(notification.getProperties());
-      notificationProps.put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(innerProgramRunId));
+      // Get all active runs of the inner program. If the parent workflow runId is the same as this one,
+      // set a terminal state for the inner program run.
+      ProgramId innerProgramId = appId.program(WORKFLOW_INNER_PROGRAM_TYPES.get(programInfo.getProgramType()),
+                                               programInfo.getProgramName());
 
-      Notification innerNotification = new Notification(Notification.Type.PROGRAM_STATUS, notificationProps);
+      Map<ProgramRunId, Notification> innerProgramNotifications = new LinkedHashMap<>();
+      
+      appMetadataStore.scanActiveRuns(innerProgramId, runRecord -> {
+        Map<String, String> systemArgs = runRecord.getSystemArgs();
+        String workflowName = systemArgs.get(ProgramOptionConstants.WORKFLOW_NAME);
+        String workflowRun = systemArgs.get(ProgramOptionConstants.WORKFLOW_RUN_ID);
 
-      handleProgramEvent(innerProgramRunId, programRunStatus, innerNotification,
-                         sourceId, appMetadataStore, programHeartbeatTable, runnables);
+        if (workflowName == null || workflowRun == null) {
+          return;
+        }
+
+        ProgramRunId workflowRunId = appId.program(ProgramType.WORKFLOW, workflowName).run(workflowRun);
+        if (!programRunId.equals(workflowRunId)) {
+          return;
+        }
+
+        Map<String, String> notificationProps = new HashMap<>(notification.getProperties());
+        notificationProps.put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(runRecord.getProgramRunId()));
+
+        innerProgramNotifications.put(runRecord.getProgramRunId(),
+                                      new Notification(Notification.Type.PROGRAM_STATUS, notificationProps));
+      });
+
+      for (Map.Entry<ProgramRunId, Notification> entry : innerProgramNotifications.entrySet()) {
+        handleProgramEvent(entry.getKey(), programRunStatus, entry.getValue(),
+                           sourceId, appMetadataStore, programHeartbeatTable, runnables);
+      }
     }
   }
 
@@ -770,6 +803,13 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     MetricsContext metricsContext = ProgramRunners.createProgramMetricsContext(programRunId, tags,
                                                                                metricsCollectionService);
     metricsContext.gauge(Constants.Metrics.Program.RUN_TIME_SECONDS, runTime);
+  }
+
+  private void emitStartingTimeMetric(ProgramRunId programRunId, long startDelayTime) {
+    Map<String, String> tags = Collections.emptyMap();
+    MetricsContext metricsContext = ProgramRunners.createProgramMetricsContext(programRunId, tags,
+                                                                               metricsCollectionService);
+    metricsContext.gauge(Constants.Metrics.Program.PROGRAM_STARTING_DELAY_SECONDS, startDelayTime);
   }
 
   /**

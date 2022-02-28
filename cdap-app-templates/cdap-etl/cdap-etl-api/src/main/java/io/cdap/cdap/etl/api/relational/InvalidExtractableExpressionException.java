@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,24 +14,17 @@
  * the License.
  */
 
-package io.cdap.cdap.etl.api.aggregation;
+package io.cdap.cdap.etl.api.relational;
 
-import io.cdap.cdap.etl.api.Field;
-
-public class GroupByField extends Field {
-  public GroupByField(String fieldName) {
-    super(fieldName);
+/**
+ * This exception is thrown when {@link ExtractableExpression#extract()} is called on an invalid expression.
+ */
+public class InvalidExtractableExpressionException extends RuntimeException {
+  public InvalidExtractableExpressionException() {
+    super("ExtractableExpression is not valid");
   }
 
-  public GroupByField(String fieldName, String alias) {
-    super(fieldName, alias);
-  }
-
-  @Override
-  public String toString() {
-    return "GroupByField{" +
-      "field='" + fieldName + '\'' +
-      ", alias='" + alias + '\'' +
-      '}';
+  public InvalidExtractableExpressionException(String message) {
+    super(message);
   }
 }

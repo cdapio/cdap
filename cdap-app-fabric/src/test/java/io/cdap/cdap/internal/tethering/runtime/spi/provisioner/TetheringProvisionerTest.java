@@ -16,22 +16,67 @@
 
 package io.cdap.cdap.internal.tethering.runtime.spi.provisioner;
 
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.app.runtime.NoOpProgramStateWriter;
+import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.internal.guice.AppFabricTestModule;
-import io.cdap.cdap.internal.provision.ProvisioningService;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
+import io.cdap.cdap.common.guice.LocalLocationModule;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.data.runtime.StorageModule;
+import io.cdap.cdap.internal.provision.ProvisionerConfig;
+import io.cdap.cdap.internal.provision.ProvisionerConfigProvider;
+import io.cdap.cdap.internal.provision.ProvisionerModule;
+import io.cdap.cdap.internal.provision.ProvisionerProvider;
+import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
+import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
+import io.cdap.cdap.security.FakeSecureStore;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+import java.util.Map;
 
 public class TetheringProvisionerTest {
 
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+
   @Test
-  public void testGuiceInjector() {
-    Injector injector = Guice.createInjector(new AppFabricTestModule(CConfiguration.create()));
-    Assert.assertNotNull(injector.getInstance(ProvisioningService.class));
-    Assert.assertNotNull(injector.getInstance(MessagingService.class));
-    Assert.assertNotNull(injector.getInstance(TetheringProvisioner.class));
+  public void testGuiceInjector() throws Exception {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
+
+    Injector injector = Guice.createInjector(
+      new ConfigModule(cConf),
+      new LocalLocationModule(),
+      new InMemoryDiscoveryModule(),
+      new StorageModule(),
+      new ProvisionerModule(),
+      new MessagingServerRuntimeModule().getInMemoryModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
+          bind(SecureStore.class).toInstance(FakeSecureStore.builder().build());
+          bind(ProgramStateWriter.class).to(NoOpProgramStateWriter.class);
+        }
+      }
+    );
+
+    ProvisionerProvider provisionerProvider = injector.getInstance(ProvisionerProvider.class);
+    Map<String, Provisioner> provisioners = provisionerProvider.loadProvisioners();
+    Assert.assertNotNull(provisioners.get(TetheringProvisioner.TETHERING_NAME));
+
+    ProvisionerConfigProvider configProvider = injector.getInstance(ProvisionerConfigProvider.class);
+    Map<String, ProvisionerConfig> configs = configProvider.loadProvisionerConfigs(provisioners.values());
+    Assert.assertNotNull(configs.get(TetheringProvisioner.TETHERING_NAME));
   }
 }

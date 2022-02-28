@@ -20,6 +20,7 @@ package io.cdap.cdap.gateway.handlers;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Iterables;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -36,6 +37,8 @@ import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
+import io.cdap.cdap.app.store.ApplicationFilter;
+import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.ArtifactAlreadyExistsException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
@@ -56,7 +59,6 @@ import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;
 import io.cdap.cdap.common.utils.DirUtils;
-import io.cdap.cdap.data2.metadata.dataset.SortInfo.SortOrder;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -66,14 +68,17 @@ import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.ApplicationUpdateDetail;
 import io.cdap.cdap.proto.BatchApplicationDetail;
-import io.cdap.cdap.proto.PaginatedApplicationRecords;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.http.BodyConsumer;
 import io.cdap.http.ChunkResponder;
 import io.cdap.http.HttpResponder;
@@ -98,9 +103,9 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -108,7 +113,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -133,6 +138,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
     .create();
   private static final Logger LOG = LoggerFactory.getLogger(AppLifecycleHttpHandler.class);
+  /**
+   * Key in json paginated applications list response.
+   */
+  public static final String APP_LIST_PAGINATED_KEY = "applications";
 
   /**
    * Runtime program service for running and managing programs.
@@ -144,13 +153,17 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final NamespacePathLocator namespacePathLocator;
   private final ApplicationLifecycleService applicationLifecycleService;
   private final File tmpDir;
+  private final AccessEnforcer accessEnforcer;
+  private final AuthenticationContext authenticationContext;
 
   @Inject
   AppLifecycleHttpHandler(CConfiguration configuration,
                           ProgramRuntimeService runtimeService,
                           NamespaceQueryAdmin namespaceQueryAdmin,
                           NamespacePathLocator namespacePathLocator,
-                          ApplicationLifecycleService applicationLifecycleService) {
+                          ApplicationLifecycleService applicationLifecycleService,
+                          AccessEnforcer accessEnforcer,
+                          AuthenticationContext authenticationContext) {
     this.configuration = configuration;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.runtimeService = runtimeService;
@@ -158,6 +171,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.applicationLifecycleService = applicationLifecycleService;
     this.tmpDir = new File(new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR)),
                            configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    this.accessEnforcer = accessEnforcer;
+    this.authenticationContext = authenticationContext;
   }
 
   /**
@@ -176,7 +191,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       return deployAppFromArtifact(applicationId);
     } catch (Exception ex) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: {}" + ex.getMessage());
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
       return null;
     }
   }
@@ -255,53 +270,53 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         names.add(name);
       }
     }
-    List<ApplicationRecord> apps = applicationLifecycleService.getApps(namespace, names, artifactVersion)
-      .stream()
-      .map(ApplicationRecord::new)
-      .collect(Collectors.toList());
 
     if (Optional.ofNullable(pageSize).orElse(0) != 0) {
-      PaginatedApplicationRecords result = getPaginatedResults(apps, pageToken, pageSize, orderBy,
-                                                               nameFilter);
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(result));
+      JsonPaginatedListResponder.respond(GSON, responder, APP_LIST_PAGINATED_KEY, jsonListResponder -> {
+        AtomicReference<ApplicationRecord> lastRecord = new AtomicReference<>(null);
+        ScanApplicationsRequest scanRequest = getScanRequest(namespaceId, artifactVersion, pageToken, pageSize,
+                                                                 orderBy, nameFilter, names);
+        boolean pageLimitReached = applicationLifecycleService.scanApplications(scanRequest, appDetail -> {
+          ApplicationRecord record = new ApplicationRecord(appDetail);
+          jsonListResponder.send(record);
+          lastRecord.set(record);
+        });
+        ApplicationRecord record = lastRecord.get();
+        return !pageLimitReached  || record == null ? null :
+          record.getName() + EntityId.IDSTRING_PART_SEPARATOR + record.getAppVersion();
+      });
     } else {
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(apps));
+      ScanApplicationsRequest scanRequest = getScanRequest(namespaceId, artifactVersion, pageToken, null,
+                                                           orderBy, nameFilter, names);
+      JsonWholeListResponder.respond(GSON, responder,
+          jsonListResponder ->  applicationLifecycleService.scanApplications(scanRequest,
+              d -> jsonListResponder.send(new ApplicationRecord(d)))
+      );
     }
   }
 
-  /**
-   * TODO: This is a temporary implementation, will be deprecated after
-   * https://cdap.atlassian.net/browse/CDAP-18603 is fully implemented.
-   * Returns paginated result for getApps, also includes nextPageToken
-   *
-   * @param apps the applications obtained from the Store
-   * @param pageToken the next pageToken to return the paginated results from
-   * @param pageSize the total number of application records to display on the result page
-   * @param orderBy  ASC for ascending order, DESC for descending order
-   * @param nameFilter filter applications whose name contains nameFilter
-   */
-  private PaginatedApplicationRecords getPaginatedResults(List<ApplicationRecord> apps,
-                                                           String pageToken, Integer pageSize,
-                                                           SortOrder orderBy, String nameFilter
-      ) {
-
-    Comparator<ApplicationRecord> compareByApplicationId = (orderBy == SortOrder.DESC)
-        ? Comparator.comparing(ApplicationRecord::getName).reversed()
-        : Comparator.comparing(ApplicationRecord::getName);
-
-    Integer offset = (Strings.isNullOrEmpty(pageToken)) ? 0 : Integer.parseInt(pageToken);
-
-    List<ApplicationRecord> result = apps.stream()
-        .filter(record -> Strings.isNullOrEmpty(nameFilter) ||
-            record.getName().toLowerCase().contains(nameFilter.toLowerCase()))
-        .sorted(compareByApplicationId)
-        .skip(offset)
-        .limit(pageSize)
-        .collect(Collectors.toList());
-
-    String nextPageToken = (result.size() < pageSize) ? null : Integer.toString(offset + pageSize);
-
-    return new PaginatedApplicationRecords(result, nextPageToken);
+  private ScanApplicationsRequest getScanRequest(String namespaceId, String artifactVersion, String pageToken,
+                                                 Integer pageSize, SortOrder orderBy, String nameFilter,
+                                                 Set<String> names) {
+    ScanApplicationsRequest.Builder builder = ScanApplicationsRequest.builder();
+    builder.setNamespaceId(new NamespaceId(namespaceId));
+    if (pageSize != null) {
+      builder.setLimit(pageSize);
+    }
+    if (nameFilter != null && !nameFilter.isEmpty()) {
+      builder.addFilter(new ApplicationFilter.ApplicationIdContainsFilter(nameFilter));
+    }
+    builder.addFilters(applicationLifecycleService.getAppFilters(names, artifactVersion));
+    if (orderBy != null) {
+      builder.setSortOrder(orderBy);
+    }
+    if (pageToken != null && !pageToken.isEmpty()) {
+      builder.setScanFrom(ApplicationId.fromIdParts(Iterables.concat(
+        Collections.singleton(namespaceId),
+        Arrays.asList(EntityId.IDSTRING_PART_SEPARATOR_PATTERN.split(pageToken))
+      )));
+    }
+    return builder.build();
   }
 
   /**
@@ -645,6 +660,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   // the other behavior requires a BodyConsumer and only have one method per path is allowed,
   // so we have to use a BodyConsumer
   private BodyConsumer deployAppFromArtifact(final ApplicationId appId) throws IOException {
+    // Perform auth checks outside BodyConsumer as only the first http request containing auth header
+    // to populate SecurityRequestContext while http chunk doesn't. BodyConsumer runs in the thread
+    // that processes the last http chunk.
+    accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.CREATE);
 
     // createTempFile() needs a prefix of at least 3 characters
     return new AbstractBodyConsumer(File.createTempFile("apprequest-" + appId, ".json", tmpDir)) {

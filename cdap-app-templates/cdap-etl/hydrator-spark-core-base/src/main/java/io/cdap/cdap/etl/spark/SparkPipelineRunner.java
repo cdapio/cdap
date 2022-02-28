@@ -61,6 +61,7 @@ import io.cdap.cdap.etl.common.PipelinePhase;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.Schemas;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
+import io.cdap.cdap.etl.common.plugin.PluginWrapper;
 import io.cdap.cdap.etl.planner.CombinerDag;
 import io.cdap.cdap.etl.planner.Dag;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
@@ -455,9 +456,14 @@ public abstract class SparkPipelineRunner {
 
     Optional<EmittedRecords.Builder> declarativeBuilder = Optional.empty();
 
+    // If this is a wrapped plugin instance, get the underlying implementation.
+    while (plugin instanceof PluginWrapper) {
+      plugin = ((PluginWrapper<?>) plugin).getWrapped();
+    }
+
     if (plugin instanceof RelationalTransform) {
       RelationalTransform transform = (RelationalTransform) plugin;
-      for (SparkCollectionRelationalEngine engine : getRelationalEngines(stageData)) {
+      for (SparkCollectionRelationalEngine engine : getRelationalEngines(stageSpec, stageData)) {
         if (!transform.canUseEngine(engine.getRelationalEngine())) {
           continue;
         }
@@ -478,7 +484,8 @@ public abstract class SparkPipelineRunner {
    * @param stageData input collection
    * @return list of engines to try
    */
-  protected Iterable<SparkCollectionRelationalEngine> getRelationalEngines(SparkCollection<Object> stageData) {
+  protected Iterable<SparkCollectionRelationalEngine> getRelationalEngines(StageSpec stageSpec,
+                                                                           SparkCollection<Object> stageData) {
     //TODO CDAP-18608: Add Spark engine here
     return Collections.emptyList();
   }

@@ -40,6 +40,18 @@ import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data.runtime.TransactionExecutorModule;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
+import io.cdap.cdap.proto.id.InstanceId;
+import io.cdap.cdap.proto.security.Authorizable;
+import io.cdap.cdap.proto.security.InstancePermission;
+import io.cdap.cdap.proto.security.Permission;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.authorization.AuthorizationTestModule;
+import io.cdap.cdap.security.authorization.DefaultContextAccessEnforcer;
+import io.cdap.cdap.security.authorization.InMemoryAccessController;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.store.StoreDefinition;
@@ -61,8 +73,12 @@ import org.junit.Test;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 public class TetheringClientHandlerTest {
   private static final Gson GSON = new Gson();
@@ -74,9 +90,11 @@ public class TetheringClientHandlerTest {
     new NamespaceAllocation(NAMESPACE_1, "1", "1Gi"),
     new NamespaceAllocation(NAMESPACE_2, "2", "2Gi"),
     new NamespaceAllocation(NAMESPACE_3, null, null));
+  public static final String DESCRIPTION = "my tethering";
   public static final String SERVER_INSTANCE = "my-instance";
   public static final String PROJECT = "my-project";
-  public static final String  LOCATION = "us-west1";
+  public static final String LOCATION = "us-west1";
+  private static final long REQUEST_TIME = System.currentTimeMillis();
   private static CConfiguration cConf;
   private static TetheringStore tetheringStore;
   private static Injector injector;
@@ -89,6 +107,12 @@ public class TetheringClientHandlerTest {
   private MockTetheringServerHandler serverHandler;
   private TetheringAgentService tetheringAgentService;
 
+  // User having tethering permissions
+  private static final Principal MASTER_PRINCIPAL = new Principal("master", Principal.PrincipalType.USER);
+  // User not having tethering permissions
+  private static final Principal UNPRIVILEGED_PRINCIPAL = new Principal("unprivileged",
+                                                                        Principal.PrincipalType.USER);
+
   @BeforeClass
   public static void setup() throws Exception {
     cConf = CConfiguration.create();
@@ -100,6 +124,9 @@ public class TetheringClientHandlerTest {
       new InMemoryDiscoveryModule(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
       new StorageModule(),
+      new AuthorizationTestModule(),
+      new AuthorizationEnforcementModule().getInMemoryModules(),
+      new AuthenticationContextModules().getMasterModule(),
       new PrivateModule() {
         @Override
         protected void configure() {
@@ -141,9 +168,17 @@ public class TetheringClientHandlerTest {
     cConf.setInt(Constants.Tethering.CONNECTION_TIMEOUT_SECONDS, 5);
     cConf.set(Constants.INSTANCE_NAME, CLIENT_INSTANCE);
 
+    List<Permission> tetheringPermissions = Arrays.asList(InstancePermission.TETHER);
+    InMemoryAccessController inMemoryAccessController = new InMemoryAccessController();
+    inMemoryAccessController.grant(Authorizable.fromEntityId(InstanceId.SELF), MASTER_PRINCIPAL,
+                                   Collections.unmodifiableSet(new HashSet<>(tetheringPermissions)));
+    ContextAccessEnforcer contextAccessEnforcer =
+      new DefaultContextAccessEnforcer(new AuthenticationTestContext(), inMemoryAccessController);
+    AuthenticationTestContext.actAsPrincipal(MASTER_PRINCIPAL);
+
     MessagingService messagingService = injector.getInstance(MessagingService.class);
     clientService = new CommonNettyHttpServiceBuilder(conf, getClass().getSimpleName() + "_client")
-      .setHttpHandlers(new TetheringClientHandler(tetheringStore),
+      .setHttpHandlers(new TetheringClientHandler(tetheringStore, contextAccessEnforcer),
                        new TetheringHandler(cConf, tetheringStore, messagingService))
       .build();
     clientService.start();
@@ -156,7 +191,7 @@ public class TetheringClientHandlerTest {
           .build()).build();
 
     tetheringAgentService = new TetheringAgentService(cConf, injector.getInstance(TransactionRunner.class),
-                                                      tetheringStore);
+                                                      tetheringStore, injector.getInstance(MessagingService.class));
     Assert.assertEquals(Service.State.RUNNING, tetheringAgentService.startAndWait());
   }
 
@@ -171,9 +206,9 @@ public class TetheringClientHandlerTest {
     throws InterruptedException, IOException, PeerNotFoundException, PeerAlreadyExistsException {
     Map<String, String> metadata = ImmutableMap.of("project", PROJECT,
                                                    "location", LOCATION);
-    PeerMetadata peerMetadata = new PeerMetadata(NAMESPACES, metadata);
+    PeerMetadata peerMetadata = new PeerMetadata(NAMESPACES, metadata, DESCRIPTION);
     PeerInfo peer = new PeerInfo(SERVER_INSTANCE, serverConfig.getConnectionConfig().getURI().toString(),
-                                 TetheringStatus.PENDING, peerMetadata);
+                                 TetheringStatus.PENDING, peerMetadata, REQUEST_TIME);
 
     // Server returns 404 before tethering has been accepted by admin on server side.
     serverHandler.setResponseStatus(HttpResponseStatus.NOT_FOUND);
@@ -195,7 +230,7 @@ public class TetheringClientHandlerTest {
     serverHandler.setResponseStatus(HttpResponseStatus.NOT_FOUND);
 
     // Client initiates tethering with the server
-    createTethering(SERVER_INSTANCE, PROJECT, LOCATION, NAMESPACES);
+    createTethering(SERVER_INSTANCE, PROJECT, LOCATION, NAMESPACES, REQUEST_TIME, DESCRIPTION);
 
     // Server accepts tethering
     serverHandler.setResponseStatus(HttpResponseStatus.OK);
@@ -203,28 +238,28 @@ public class TetheringClientHandlerTest {
     String serverEndpoint = serverConfig.getConnectionConfig().getURI().toString();
     // Tethering state should transition to accepted on the client.
     waitForTetheringStatus(TetheringStatus.ACCEPTED, SERVER_INSTANCE, serverEndpoint,
-                           PROJECT, LOCATION, NAMESPACES, true);
+                           PROJECT, LOCATION, NAMESPACES, DESCRIPTION, true);
 
     // Duplicate tethering request should be fail.
-    createTethering(SERVER_INSTANCE, PROJECT, LOCATION, NAMESPACES, TetheringStatus.ACCEPTED,
-                    HttpResponseStatus.BAD_REQUEST);
+    createTethering(SERVER_INSTANCE, PROJECT, LOCATION, NAMESPACES, REQUEST_TIME, DESCRIPTION,
+                    TetheringStatus.ACCEPTED, HttpResponseStatus.BAD_REQUEST);
 
     // Tethering rejection should be ignored when tether is accepted.
     serverHandler.setResponseStatus(HttpResponseStatus.FORBIDDEN);
     waitForTetheringStatus(TetheringStatus.ACCEPTED, SERVER_INSTANCE, serverEndpoint,
-                           PROJECT, LOCATION, NAMESPACES, true);
+                           PROJECT, LOCATION, NAMESPACES, DESCRIPTION, true);
 
     // Make server respond with 500 error for control messages.
     serverHandler.setResponseStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     Thread.sleep(cConf.getInt(Constants.Tethering.CONNECTION_TIMEOUT_SECONDS) * 1000);
     // Control channel state should become inactive
     waitForTetheringStatus(TetheringStatus.ACCEPTED, SERVER_INSTANCE, serverEndpoint,
-                           PROJECT, LOCATION, NAMESPACES, false);
+                           PROJECT, LOCATION, NAMESPACES, DESCRIPTION, false);
     // Stop returning an error from the server.
     serverHandler.setResponseStatus(HttpResponseStatus.OK);
     // Control channel should become active
     waitForTetheringStatus(TetheringStatus.ACCEPTED, SERVER_INSTANCE, serverEndpoint,
-                           PROJECT, LOCATION, NAMESPACES, true);
+                           PROJECT, LOCATION, NAMESPACES, DESCRIPTION, true);
 
     // cleanup
     deleteTethering(SERVER_INSTANCE);
@@ -236,29 +271,31 @@ public class TetheringClientHandlerTest {
     serverHandler.setResponseStatus(HttpResponseStatus.NOT_FOUND);
 
     // Client initiate tethering with the server
-    createTethering(SERVER_INSTANCE, PROJECT, LOCATION, NAMESPACES);
+    createTethering(SERVER_INSTANCE, PROJECT, LOCATION, NAMESPACES, REQUEST_TIME, null);
 
     // Duplicate tethering request should fail
-    createTethering(SERVER_INSTANCE, PROJECT, LOCATION, NAMESPACES, HttpResponseStatus.BAD_REQUEST);
+    createTethering(SERVER_INSTANCE, PROJECT, LOCATION, NAMESPACES, REQUEST_TIME, null,
+                    HttpResponseStatus.BAD_REQUEST);
 
     String serverEndpoint = serverConfig.getConnectionConfig().getURI().toString();
     // Control channel should be active at this point.
     waitForTetheringStatus(TetheringStatus.PENDING, SERVER_INSTANCE, serverEndpoint,
-                           PROJECT, LOCATION, NAMESPACES, true);
+                           PROJECT, LOCATION, NAMESPACES, null, true);
 
     // Server rejects tethering
     serverHandler.setResponseStatus(HttpResponseStatus.FORBIDDEN);
     // Tethering state should be updated to rejected
     waitForTetheringStatus(TetheringStatus.REJECTED, SERVER_INSTANCE, serverEndpoint,
-                           PROJECT, LOCATION, NAMESPACES, true);
+                           PROJECT, LOCATION, NAMESPACES, null, true);
 
     // Server sends unexpected 200. It should be ignored.
     serverHandler.setResponseStatus(HttpResponseStatus.OK);
     waitForTetheringStatus(TetheringStatus.REJECTED, SERVER_INSTANCE, serverEndpoint,
-                           PROJECT, LOCATION, NAMESPACES, true);
+                           PROJECT, LOCATION, NAMESPACES, null, true);
 
     // Tethering request should be fail as tethering has already been rejected.
-    createTethering(SERVER_INSTANCE, PROJECT, LOCATION, NAMESPACES, TetheringStatus.REJECTED,
+    createTethering(SERVER_INSTANCE, PROJECT, LOCATION, NAMESPACES, REQUEST_TIME, null,
+                    TetheringStatus.REJECTED,
                     HttpResponseStatus.BAD_REQUEST);
 
     // cleanup
@@ -278,7 +315,7 @@ public class TetheringClientHandlerTest {
     serverHandler.setResponseStatus(HttpResponseStatus.NOT_FOUND);
 
     // Client initiate tethering with the server
-    createTethering(SERVER_INSTANCE, PROJECT, LOCATION, NAMESPACES);
+    createTethering(SERVER_INSTANCE, PROJECT, LOCATION, NAMESPACES, REQUEST_TIME, DESCRIPTION);
 
     // Tethering status for the peer should be returned.
     request = HttpRequest.builder(HttpMethod.GET,
@@ -305,7 +342,7 @@ public class TetheringClientHandlerTest {
     serverHandler.setResponseStatus(HttpResponseStatus.NOT_FOUND);
 
     // Client initiate tethering with the server
-    createTethering(SERVER_INSTANCE, PROJECT, LOCATION, NAMESPACES);
+    createTethering(SERVER_INSTANCE, PROJECT, LOCATION, NAMESPACES, REQUEST_TIME, DESCRIPTION);
 
     // Delete tethering on the client.
     deleteTethering(SERVER_INSTANCE);
@@ -329,6 +366,29 @@ public class TetheringClientHandlerTest {
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getResponseCode());
   }
 
+  @Test
+  public void testTetheringPermissions() throws IOException, InterruptedException {
+    Map<String, String> metadata = ImmutableMap.of("project", PROJECT, "location", LOCATION);
+    TetheringCreationRequest tetheringRequest = new TetheringCreationRequest(SERVER_INSTANCE,
+                                                                             serverConfig.getConnectionConfig()
+                                                                               .getURI().toString(),
+                                                                             NAMESPACES,
+                                                                             metadata,
+                                                                             DESCRIPTION);
+    HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.PUT, clientConfig.resolveURL("tethering/create"))
+      .withBody(GSON.toJson(tetheringRequest));
+
+    // Unprivileged user trying to tether
+    AuthenticationTestContext.actAsPrincipal(UNPRIVILEGED_PRINCIPAL);
+    HttpResponse response = HttpRequests.execute(builder.build());
+    Assert.assertEquals(HttpResponseStatus.FORBIDDEN.code(), response.getResponseCode());
+
+    // Privileged user trying to tether
+    AuthenticationTestContext.actAsPrincipal(MASTER_PRINCIPAL);
+    response = HttpRequests.execute(builder.build());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
+  }
+
   private void deleteTethering(String instance) throws IOException {
     HttpRequest request = HttpRequest.builder(HttpMethod.DELETE,
                                               clientConfig.resolveURL("tethering/connections/" + instance))
@@ -338,38 +398,45 @@ public class TetheringClientHandlerTest {
   }
 
   private void createTethering(String instance, String project, String location,
-                               List<NamespaceAllocation> namespaceAllocations)
+                               List<NamespaceAllocation> namespaceAllocations,
+                               long requestTime, @Nullable String description)
     throws IOException, InterruptedException {
-    createTethering(instance, project, location, namespaceAllocations,
+    createTethering(instance, project, location, namespaceAllocations, requestTime, description,
                     TetheringStatus.PENDING);
   }
 
   private void createTethering(String instance, String project, String location,
                                List<NamespaceAllocation> namespaceAllocations,
+                               long requestTime,
+                               @Nullable String description,
                                HttpResponseStatus expectedResponseStatus)
     throws IOException, InterruptedException {
-    createTethering(instance, project, location, namespaceAllocations,
+    createTethering(instance, project, location, namespaceAllocations, requestTime, description,
                     TetheringStatus.PENDING, expectedResponseStatus);
   }
 
   private void createTethering(String instance, String project, String location,
-                               List<NamespaceAllocation> namespaceAllocations, TetheringStatus expectedTetheringStatus)
+                               List<NamespaceAllocation> namespaceAllocations, long requestTime,
+                               @Nullable String description, TetheringStatus expectedTetheringStatus)
     throws IOException, InterruptedException {
-    createTethering(instance, project, location, namespaceAllocations, expectedTetheringStatus, HttpResponseStatus.OK);
+    createTethering(instance, project, location, namespaceAllocations, requestTime, description,
+                    expectedTetheringStatus, HttpResponseStatus.OK);
   }
 
 
   private void createTethering(String instance, String project, String location,
-                               List<NamespaceAllocation> namespaceAllocations, TetheringStatus expectedTetheringStatus,
+                               List<NamespaceAllocation> namespaceAllocations, long requestTime,
+                               @Nullable String description, TetheringStatus expectedTetheringStatus,
                                HttpResponseStatus expectedResponseStatus)
     throws IOException, InterruptedException {
     // Send tethering request
     Map<String, String> metadata = ImmutableMap.of("project", project, "location", location);
     TetheringCreationRequest tetheringRequest = new TetheringCreationRequest(instance,
-                                                                          serverConfig.getConnectionConfig().getURI()
-                                                                      .toString(),
-                                                                          NAMESPACES,
-                                                                          metadata);
+                                                                             serverConfig.getConnectionConfig()
+                                                                               .getURI().toString(),
+                                                                             namespaceAllocations,
+                                                                             metadata,
+                                                                             description);
     HttpRequest request = HttpRequest.builder(HttpMethod.PUT, clientConfig.resolveURL("tethering/create"))
       .withBody(GSON.toJson(tetheringRequest))
       .build();
@@ -377,12 +444,12 @@ public class TetheringClientHandlerTest {
     Assert.assertEquals(expectedResponseStatus.code(), response.getResponseCode());
 
     waitForTetheringStatus(expectedTetheringStatus, tetheringRequest.getPeer(), tetheringRequest.getEndpoint(),
-                           project, location, namespaceAllocations, true);
+                           project, location, namespaceAllocations, tetheringRequest.getDescription(), true);
   }
 
   private void waitForTetheringStatus(TetheringStatus tetheringStatus, String instanceName, String endpoint,
                                       String project, String location, List<NamespaceAllocation> namespaces,
-                                      boolean expectActive)
+                                      @Nullable String description, boolean expectActive)
     throws IOException, InterruptedException {
     List<PeerState> peers = new ArrayList<>();
     for (int retry = 0; retry < 5; ++retry) {
@@ -408,6 +475,7 @@ public class TetheringClientHandlerTest {
     Assert.assertEquals(project, peer.getMetadata().getMetadata().get("project"));
     Assert.assertEquals(location, peer.getMetadata().getMetadata().get("location"));
     Assert.assertEquals(namespaces, peer.getMetadata().getNamespaceAllocations());
+    Assert.assertEquals(description, peer.getMetadata().getDescription());
     Assert.assertEquals(expectActive, peer.isActive());
   }
 

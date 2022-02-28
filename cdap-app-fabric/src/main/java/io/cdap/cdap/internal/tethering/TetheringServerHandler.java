@@ -31,8 +31,11 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
+import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.proto.security.InstancePermission;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HandlerContext;
 import io.cdap.http.HttpResponder;
@@ -67,14 +70,17 @@ public class TetheringServerHandler extends AbstractHttpHandler {
   private final MessagingService messagingService;
   private final MultiThreadMessagingContext messagingContext;
   private final String topicPrefix;
+  private final ContextAccessEnforcer contextAccessEnforcer;
 
   @Inject
-  TetheringServerHandler(CConfiguration cConf, TetheringStore store, MessagingService messagingService) {
+  TetheringServerHandler(CConfiguration cConf, TetheringStore store, MessagingService messagingService,
+                         ContextAccessEnforcer contextAccessEnforcer) {
     this.cConf = cConf;
     this.store = store;
     this.messagingService = messagingService;
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.topicPrefix = cConf.get(Constants.Tethering.TOPIC_PREFIX);
+    this.contextAccessEnforcer = contextAccessEnforcer;
   }
 
   @Override
@@ -137,6 +143,8 @@ public class TetheringServerHandler extends AbstractHttpHandler {
     throws NotImplementedException, IOException {
     checkTetheringServerEnabled();
 
+    contextAccessEnforcer.enforce(InstanceId.SELF, InstancePermission.TETHER);
+
     String content = request.content().toString(StandardCharsets.UTF_8);
     TetheringConnectionRequest tetherRequest = GSON.fromJson(content, TetheringConnectionRequest.class);
     TopicId topicId = new TopicId(NamespaceId.SYSTEM.getNamespace(),
@@ -151,9 +159,11 @@ public class TetheringServerHandler extends AbstractHttpHandler {
     }
 
     // We don't need to keep track of the client metadata on the server side.
-    PeerMetadata peerMetadata = new PeerMetadata(tetherRequest.getNamespaceAllocations(), Collections.emptyMap());
+    PeerMetadata peerMetadata = new PeerMetadata(tetherRequest.getNamespaceAllocations(), Collections.emptyMap(),
+                                                 tetherRequest.getDescription());
     // We don't store the peer endpoint on the server side because the connection is initiated by the client.
-    PeerInfo peerInfo = new PeerInfo(peer, null, TetheringStatus.PENDING, peerMetadata);
+    PeerInfo peerInfo = new PeerInfo(peer, null, TetheringStatus.PENDING, peerMetadata,
+                                     tetherRequest.getRequestTime());
     try {
       store.addPeer(peerInfo);
     } catch (PeerAlreadyExistsException pae) {

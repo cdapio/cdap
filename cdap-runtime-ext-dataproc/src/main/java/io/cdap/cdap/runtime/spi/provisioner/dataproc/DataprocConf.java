@@ -66,6 +66,7 @@ final class DataprocConf {
   // Dataproc will pass it to GCE when creating the GCE cluster.
   // It can be overridden by profile runtime arguments (system.profile.properties.serviceAccount)
   static final String SERVICE_ACCOUNT = "serviceAccount";
+  static final String ROOT_URL = "root.url";
 
   static final Pattern CLUSTER_PROPERTIES_PATTERN = Pattern.compile("^[a-zA-Z0-9\\-]+:");
   static final int MAX_NETWORK_TAGS = 64;
@@ -82,10 +83,16 @@ final class DataprocConf {
   static final int CLUSTER_REUSE_THRESHOLD_MINUTES_DEFAULT = 3;
   static final String CLUSTER_IDLE_TTL_MINUTES = "idleTTL";
   static final int CLUSTER_IDLE_TTL_MINUTES_DEFAULT = 30;
-  static final String PREDEFINED_AUTOSCALE_ENABLED = "predefinedAutoScaleEnabled";
+  static final String PREDEFINED_AUTOSCALE_ENABLED = "enablePredefinedAutoScaling";
   static final String WORKER_NUM_NODES = "workerNumNodes";
   static final String SECONDARY_WORKER_NUM_NODES = "secondaryWorkerNumNodes";
   static final String AUTOSCALING_POLICY = "autoScalingPolicy";
+
+  public static final String COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT = "compute.request.connection.timeout.millis";
+  private static final int COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT_DEFAULT = 20000;
+  public static final String COMPUTE_HTTP_REQUEST_READ_TIMEOUT = "compute.request.read.timeout.millis";
+  private static final int COMPUTE_HTTP_REQUEST_READ_TIMEOUT_DEFAULT = 20000;
+
 
   private final String accountKey;
   private final String region;
@@ -96,6 +103,7 @@ final class DataprocConf {
   private final String subnet;
   private final String imageVersion;
   private final String customImageUri;
+  private final String rootUrl;
 
   private final int masterNumNodes;
   private final int masterCPUs;
@@ -147,7 +155,10 @@ final class DataprocConf {
   private final boolean clusterReuseEnabled;
   private final long clusterReuseThresholdMinutes;
   private final String clusterReuseKey;
-  private final boolean predefinedAutoScaleEnabled;
+  private final boolean enablePredefinedAutoScaling;
+
+  private final int computeReadTimeout;
+  private final int computeConnectionTimeout;
 
   DataprocConf(DataprocConf conf, String network, String subnet) {
     this(conf.accountKey, conf.region, conf.zone, conf.projectId, conf.networkHostProjectID, network, subnet,
@@ -161,7 +172,8 @@ final class DataprocConf {
          conf.clusterMetaData, conf.clusterLabels, conf.networkTags, conf.initActions, conf.runtimeJobManagerEnabled,
          conf.clusterProperties, conf.autoScalingPolicy, conf.idleTTLMinutes, conf.tokenEndpoint,
          conf.secureBootEnabled, conf.vTpmEnabled, conf.integrityMonitoringEnabled, conf.clusterReuseEnabled,
-         conf.clusterReuseThresholdMinutes, conf.clusterReuseKey, conf.predefinedAutoScaleEnabled);
+         conf.clusterReuseThresholdMinutes, conf.clusterReuseKey, conf.enablePredefinedAutoScaling,
+         conf.computeReadTimeout, conf.computeConnectionTimeout, conf.rootUrl);
   }
 
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
@@ -183,7 +195,8 @@ final class DataprocConf {
                        @Nullable String tokenEndpoint, boolean secureBootEnabled, boolean vTpmEnabled,
                        boolean integrityMonitoringEnabled, boolean clusterReuseEnabled,
                        long clusterReuseThresholdMinutes, @Nullable String clusterReuseKey,
-                       boolean predefinedAutoScaleEnabled) {
+                       boolean enablePredefinedAutoScaling, int computeReadTimeout, int computeConnectionTimeout,
+                       @Nullable String rootUrl) {
     this.accountKey = accountKey;
     this.region = region;
     this.zone = zone;
@@ -234,7 +247,10 @@ final class DataprocConf {
     this.secureBootEnabled = secureBootEnabled;
     this.vTpmEnabled = vTpmEnabled;
     this.integrityMonitoringEnabled = integrityMonitoringEnabled;
-    this.predefinedAutoScaleEnabled = predefinedAutoScaleEnabled;
+    this.enablePredefinedAutoScaling = enablePredefinedAutoScaling;
+    this.computeReadTimeout = computeReadTimeout;
+    this.computeConnectionTimeout = computeConnectionTimeout;
+    this.rootUrl = rootUrl;
   }
 
   String getRegion() {
@@ -276,6 +292,10 @@ final class DataprocConf {
     return masterDiskType;
   }
 
+  int getTotalMasterCpus() {
+    return masterCPUs * masterNumNodes;
+  }
+
   int getWorkerNumNodes() {
     return workerNumNodes;
   }
@@ -301,7 +321,7 @@ final class DataprocConf {
   }
 
   int getTotalWorkerCPUs() {
-    if (predefinedAutoScaleEnabled) {
+    if (enablePredefinedAutoScaling) {
       return workerCPUs *
         (PredefinedAutoScaling.getMaxSecondaryWorkerInstances() + PredefinedAutoScaling.getPrimaryWorkerInstances());
     }
@@ -438,7 +458,19 @@ final class DataprocConf {
   }
 
   public boolean isPredefinedAutoScaleEnabled() {
-    return predefinedAutoScaleEnabled;
+    return enablePredefinedAutoScaling;
+  }
+
+  public int getComputeReadTimeout() {
+    return computeReadTimeout;
+  }
+
+  public int getComputeConnectionTimeout() {
+    return computeConnectionTimeout;
+  }
+
+  public String getRootUrl() {
+    return rootUrl;
   }
 
   /**
@@ -555,10 +587,10 @@ final class DataprocConf {
     int secondaryWorkerNumNodes = getInt(properties, SECONDARY_WORKER_NUM_NODES, 0);
     String autoScalingPolicy = getString(properties, AUTOSCALING_POLICY);
 
-    boolean predefinedAutoScaleEnabled =
+    boolean enablePredefinedAutoScaling =
       Boolean.parseBoolean(properties.getOrDefault(PREDEFINED_AUTOSCALE_ENABLED, "false"));
 
-    if (predefinedAutoScaleEnabled) {
+    if (enablePredefinedAutoScaling) {
       workerNumNodes = PredefinedAutoScaling.getPrimaryWorkerInstances();
       secondaryWorkerNumNodes = PredefinedAutoScaling.getMinSecondaryWorkerInstances();
       autoScalingPolicy = ""; // The policy will be created while cluster provisioning
@@ -670,6 +702,11 @@ final class DataprocConf {
         throw new IllegalStateException("SHA-1 algorithm is not available for cluster reuse", e);
       }
     }
+    int computeReadTimeout = getInt(properties, COMPUTE_HTTP_REQUEST_READ_TIMEOUT,
+                                    COMPUTE_HTTP_REQUEST_READ_TIMEOUT_DEFAULT);
+    int computeConnectionTimeout = getInt(properties, COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT,
+                                          COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT_DEFAULT);
+    String rootUrl = getString(properties, ROOT_URL);
 
     return new DataprocConf(accountKey, region, zone, projectId, networkHostProjectID, network, subnet,
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
@@ -684,7 +721,7 @@ final class DataprocConf {
                             initActions, runtimeJobManagerEnabled, clusterProps, autoScalingPolicy, idleTTL,
                             tokenEndpoint, secureBootEnabled, vTpmEnabled, integrityMonitoringEnabled,
                             clusterReuseEnabled, clusterReuseThresholdMinutes, clusterReuseKey,
-                            predefinedAutoScaleEnabled);
+                            enablePredefinedAutoScaling, computeReadTimeout, computeConnectionTimeout, rootUrl);
   }
 
   // the UI never sends nulls, it only sends empty strings.

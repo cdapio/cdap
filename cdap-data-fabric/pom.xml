@@ -213,14 +213,17 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.opentable.components</groupId>
-      <artifactId>otj-pg-embedded</artifactId>
-      <scope>test</scope>
+      <groupId>io.zonky.test</groupId>
+      <artifactId>embedded-postgres</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka_2.11</artifactId>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
     </dependency>
   </dependencies>
 
