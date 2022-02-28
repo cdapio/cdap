@@ -81,6 +81,7 @@ public class TaskWorkerService extends AbstractIdleService {
     this.timeSchedulerService = timeSchedulerService;
     this.programRuntimeService = programRuntimeService;
     LOG.debug("KeyManager in TaskWorkerService: {}", keyManager.toString());
+    LOG.debug("Provisioning Service in TaskWorkerService: {}", provisioningService.toString());
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TASK_WORKER)
       .setHost(cConf.get(Constants.TaskWorker.ADDRESS))
       .setPort(cConf.getInt(Constants.TaskWorker.PORT))

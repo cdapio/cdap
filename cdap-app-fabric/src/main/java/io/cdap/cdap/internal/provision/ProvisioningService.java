@@ -178,6 +178,11 @@ public class ProvisioningService extends AbstractIdleService {
   }
 
   @Override
+  public String toString() {
+    return getClass().getName() + "@" + Integer.toHexString(hashCode());
+  }
+
+  @Override
   protected void shutDown() throws Exception {
     LOG.info("Stopping {}", getClass().getSimpleName());
     try {
@@ -528,7 +533,6 @@ public class ProvisioningService extends AbstractIdleService {
     Map<String, ProvisionerConfig> provisionerConfigs =
       provisionerConfigProvider.loadProvisionerConfigs(provisioners.values());
     LOG.debug("Provisioners = {}", provisioners);
-    LOG.debug("Provisioner Configs: {}", GSON.toJson(provisionerConfigs));
     Map<String, ProvisionerDetail> details = new HashMap<>(provisioners.size());
     for (Map.Entry<String, Provisioner> provisionerEntry : provisioners.entrySet()) {
       String provisionerName = provisionerEntry.getKey();
@@ -549,7 +553,6 @@ public class ProvisioningService extends AbstractIdleService {
                                                          config.getConfigurationGroups(), config.getFilters(),
                                                          config.getIcon(), config.isBeta()));
     }
-    LOG.debug("Provisioner Details: {}", GSON.toJson(details));
     provisionerInfo.set(new ProvisionerInfo(provisioners, details));
     LOG.debug("Provisioner Info during startup: {}", provisionerInfo.get());
   }
