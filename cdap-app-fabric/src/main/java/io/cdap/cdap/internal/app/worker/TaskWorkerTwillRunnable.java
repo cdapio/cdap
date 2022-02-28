@@ -37,6 +37,7 @@ import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import io.cdap.cdap.api.artifact.ArtifactManager;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.deploy.Dispatcher;
@@ -83,6 +84,8 @@ import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data.security.DefaultSecretStore;
 import io.cdap.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.data2.dataset2.module.lib.inmemory.InMemoryMetricsTableModule;
+import io.cdap.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactoryProvider;
@@ -287,6 +290,11 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
         bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS"))
             .toProvider(DatasetMdsProvider.class).in(Singleton.class);
         bind(PipelineFactory.class).to(SynchronousPipelineFactory.class);
+        MapBinder<String, DatasetModule> mapBinder = MapBinder.newMapBinder(
+            binder(), String.class, DatasetModule.class, Constants.Dataset.Manager.DefaultDatasetModules.class);
+        // NOTE: order is important due to dependencies between modules
+        mapBinder.addBinding("orderedTable-memory").toInstance(new InMemoryTableModule());
+        mapBinder.addBinding("metricsTable-memory").toInstance(new InMemoryMetricsTableModule());
 
         Key<TwillRunnerService> twillRunnerServiceKey =
             Key.get(TwillRunnerService.class, Constants.AppFabric.RemoteExecution.class);
