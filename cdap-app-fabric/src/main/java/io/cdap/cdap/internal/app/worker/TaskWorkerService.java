@@ -94,7 +94,7 @@ public class TaskWorkerService extends AbstractIdleService {
         }
       })
       .setHttpHandlers(new TaskWorkerHttpHandlerInternal(cConf, sConf, this::stopService,
-          metricsCollectionService, keyManager));
+          metricsCollectionService, keyManager, provisioningService));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);

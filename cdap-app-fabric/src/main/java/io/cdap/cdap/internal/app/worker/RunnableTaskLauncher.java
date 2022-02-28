@@ -29,14 +29,11 @@ import io.cdap.cdap.security.auth.KeyManager;
  * RunnableTaskLauncher launches a {@link RunnableTask} by loading its class and calling its run method.
  */
 public class RunnableTaskLauncher {
-  private final CConfiguration cConf;
-  private final SConfiguration sConf;
-  private final KeyManager keyManager;
 
-  public RunnableTaskLauncher(CConfiguration cConf, SConfiguration sConf, KeyManager keyManager) {
-    this.cConf = cConf;
-    this.sConf = sConf;
-    this.keyManager = keyManager;
+  private final RunnableTaskModule.Builder builder;
+
+  public RunnableTaskLauncher(RunnableTaskModule.Builder builder) {
+    this.builder = builder;
   }
 
   public RunnableTaskContext launchRunnableTask(RunnableTaskRequest request) throws Exception {
@@ -47,7 +44,7 @@ public class RunnableTaskLauncher {
 
     Class<?> clazz = classLoader.loadClass(request.getClassName());
 
-    Injector injector = Guice.createInjector(new RunnableTaskModule(cConf, sConf, keyManager));
+    Injector injector = Guice.createInjector(builder.build());
     Object obj = injector.getInstance(clazz);
 
     if (!(obj instanceof RunnableTask)) {

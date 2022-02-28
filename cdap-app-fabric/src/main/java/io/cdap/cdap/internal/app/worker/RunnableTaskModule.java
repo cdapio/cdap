@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.worker;
 import com.google.inject.AbstractModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.security.auth.KeyManager;
 
 /**
@@ -29,11 +30,13 @@ public class RunnableTaskModule extends AbstractModule {
   private final CConfiguration cConf;
   private final SConfiguration sConf;
   private final KeyManager keyManager;
+  private final ProvisioningService provisioningService;
 
-  public RunnableTaskModule(CConfiguration cConf, SConfiguration sConf, KeyManager keyManager) {
-    this.cConf = cConf;
-    this.sConf = sConf;
-    this.keyManager = keyManager;
+  private RunnableTaskModule(Builder builder) {
+    this.cConf = builder.cConf;
+    this.sConf = builder.sConf;
+    this.keyManager = builder.keyManager;
+    this.provisioningService = builder.provisioningService;
   }
 
   @Override
@@ -41,5 +44,38 @@ public class RunnableTaskModule extends AbstractModule {
     bind(CConfiguration.class).toInstance(cConf);
     bind(SConfiguration.class).toInstance(sConf);
     bind(KeyManager.class).toInstance(keyManager);
+    bind(ProvisioningService.class).toInstance(provisioningService);
+  }
+
+  public static class Builder {
+
+    private CConfiguration cConf;
+    private SConfiguration sConf;
+    private KeyManager keyManager;
+    private ProvisioningService provisioningService;
+
+    public Builder cConf(CConfiguration cConf) {
+      this.cConf = cConf;
+      return this;
+    }
+
+    public Builder sConf(SConfiguration sConf) {
+      this.sConf = sConf;
+      return this;
+    }
+
+    public Builder keyManager(KeyManager keyManager) {
+      this.keyManager = keyManager;
+      return this;
+    }
+
+    public Builder provisioningService(ProvisioningService provisioningService) {
+      this.provisioningService = provisioningService;
+      return this;
+    }
+
+    public RunnableTaskModule build() {
+      return new RunnableTaskModule(this);
+    }
   }
 }
