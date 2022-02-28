@@ -402,6 +402,7 @@ public class ProvisioningService extends AbstractIdleService {
     Map<String, String> systemArgs = programOptions.getArguments().asMap();
     String name = SystemArguments.getProfileProvisioner(systemArgs);
     Provisioner provisioner = provisionerInfo.get().provisioners.get(name);
+    LOG.debug("Provisioner Info during run: {}", GSON.toJson(provisionerInfo.get()));
     LOG.debug("Provisioner in action: {}", provisioner);
     String user = programOptions.getArguments().getOption(ProgramOptionConstants.USER_ID);
     Map<String, String> properties = SystemArguments.getProfileProperties(systemArgs);
@@ -523,12 +524,11 @@ public class ProvisioningService extends AbstractIdleService {
    * will be removed. Loaded provisioners will be initialized.
    */
   private void initializeProvisioners() {
-    Gson gson = new Gson();
     Map<String, Provisioner> provisioners = provisionerProvider.loadProvisioners();
     Map<String, ProvisionerConfig> provisionerConfigs =
       provisionerConfigProvider.loadProvisionerConfigs(provisioners.values());
     LOG.debug("Provisioners = {}", provisioners);
-    LOG.debug("Provisioner Configs: {}", gson.toJson(provisionerConfigs));
+    LOG.debug("Provisioner Configs: {}", GSON.toJson(provisionerConfigs));
     Map<String, ProvisionerDetail> details = new HashMap<>(provisioners.size());
     for (Map.Entry<String, Provisioner> provisionerEntry : provisioners.entrySet()) {
       String provisionerName = provisionerEntry.getKey();
@@ -549,8 +549,9 @@ public class ProvisioningService extends AbstractIdleService {
                                                          config.getConfigurationGroups(), config.getFilters(),
                                                          config.getIcon(), config.isBeta()));
     }
-    LOG.debug("Provisioner Details: {}", gson.toJson(details));
+    LOG.debug("Provisioner Details: {}", GSON.toJson(details));
     provisionerInfo.set(new ProvisionerInfo(provisioners, details));
+    LOG.debug("Provisioner Info during startup: {}", GSON.toJson(provisionerInfo.get()));
   }
 
   /**
