@@ -22,6 +22,7 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.worker.RunnableTask;
+import io.cdap.cdap.app.guice.ImpersonatedTwillRunnerService;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -85,6 +86,10 @@ public class TaskWorkerService extends AbstractIdleService {
     this.programRuntimeService = programRuntimeService;
     this.twillRunnerService = twillRunnerService;
     LOG.debug("TwillRunnerService in TaskWorkerService: {}", twillRunnerService);
+    if (twillRunnerService instanceof ImpersonatedTwillRunnerService) {
+      LOG.debug("TwillRunnerService in TaskWorkerService internal: {}",
+          ((ImpersonatedTwillRunnerService) twillRunnerService).delegate);
+    }
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TASK_WORKER)
       .setHost(cConf.get(Constants.TaskWorker.ADDRESS))
       .setPort(cConf.getInt(Constants.TaskWorker.PORT))
@@ -98,7 +103,7 @@ public class TaskWorkerService extends AbstractIdleService {
         }
       })
       .setHttpHandlers(new TaskWorkerHttpHandlerInternal(cConf, sConf, this::stopService,
-          metricsCollectionService, keyManager, provisioningService));
+          metricsCollectionService, keyManager, provisioningService, twillRunnerService));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);

@@ -21,6 +21,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.security.auth.KeyManager;
+import org.apache.twill.api.TwillRunnerService;
 
 /**
  * Module for Runnable tasks.
@@ -31,12 +32,14 @@ public class RunnableTaskModule extends AbstractModule {
   private final SConfiguration sConf;
   private final KeyManager keyManager;
   private final ProvisioningService provisioningService;
+  private final TwillRunnerService twillRunnerService;
 
   private RunnableTaskModule(Builder builder) {
     this.cConf = builder.cConf;
     this.sConf = builder.sConf;
     this.keyManager = builder.keyManager;
     this.provisioningService = builder.provisioningService;
+    this.twillRunnerService = builder.twillRunnerService;
   }
 
   @Override
@@ -45,6 +48,7 @@ public class RunnableTaskModule extends AbstractModule {
     bind(SConfiguration.class).toInstance(sConf);
     bind(KeyManager.class).toInstance(keyManager);
     bind(ProvisioningService.class).toInstance(provisioningService);
+    bind(TwillRunnerService.class).toInstance(twillRunnerService);
   }
 
   public static class Builder {
@@ -53,6 +57,7 @@ public class RunnableTaskModule extends AbstractModule {
     private SConfiguration sConf;
     private KeyManager keyManager;
     private ProvisioningService provisioningService;
+    private TwillRunnerService twillRunnerService;
 
     public Builder cConf(CConfiguration cConf) {
       this.cConf = cConf;
@@ -71,6 +76,11 @@ public class RunnableTaskModule extends AbstractModule {
 
     public Builder provisioningService(ProvisioningService provisioningService) {
       this.provisioningService = provisioningService;
+      return this;
+    }
+
+    public Builder twillRunnerService(TwillRunnerService twillRunnerService) {
+      this.twillRunnerService = twillRunnerService;
       return this;
     }
 

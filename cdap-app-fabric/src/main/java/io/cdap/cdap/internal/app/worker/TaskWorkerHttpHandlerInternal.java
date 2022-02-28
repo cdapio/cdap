@@ -43,6 +43,7 @@ import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -106,7 +107,8 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       Consumer<String> stopper,
       MetricsCollectionService metricsCollectionService,
       KeyManager keyManager,
-      ProvisioningService provisioningService) {
+      ProvisioningService provisioningService,
+      TwillRunnerService twillRunnerService) {
     int killAfterRequestCount = cConf.getInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
     this.runnableTaskLauncher = new RunnableTaskLauncher(new RunnableTaskModule.Builder().cConf(cConf).sConf(sConf)
         .keyManager(keyManager).provisioningService(provisioningService));
