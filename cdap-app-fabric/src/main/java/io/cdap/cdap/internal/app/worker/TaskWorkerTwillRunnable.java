@@ -110,6 +110,8 @@ import io.cdap.cdap.internal.app.runtime.distributed.DistributedProgramRuntimeSe
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkerProgramRunner;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkflowProgramRunner;
 import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionTwillRunnerService;
+import io.cdap.cdap.internal.app.runtime.schedule.DistributedTimeSchedulerService;
+import io.cdap.cdap.internal.app.runtime.schedule.TimeSchedulerService;
 import io.cdap.cdap.internal.app.services.ProgramCompletionNotifier;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.capability.CapabilityModule;
@@ -121,6 +123,8 @@ import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
+import io.cdap.cdap.metadata.PreferencesFetcher;
+import io.cdap.cdap.metadata.RemotePreferencesFetcherInternal;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -259,6 +263,8 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
         bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
         bind(CoreSchedulerService.class).in(Scopes.SINGLETON);
         bind(Scheduler.class).to(CoreSchedulerService.class);
+        bind(TimeSchedulerService.class).to(DistributedTimeSchedulerService.class).in(Scopes.SINGLETON);
+        bind(PreferencesFetcher.class).to(RemotePreferencesFetcherInternal.class).in(Scopes.SINGLETON);
 
         Key<TwillRunnerService> twillRunnerServiceKey =
             Key.get(TwillRunnerService.class, Constants.AppFabric.RemoteExecution.class);
@@ -275,7 +281,6 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
         bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.DISTRIBUTED);
         bind(programRunnerFactoryKey).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
         bind(ProgramRuntimeService.class).to(DistributedProgramRuntimeService.class).in(Scopes.SINGLETON);
-        bind(DatasetFramework.class).to(RemoteDatasetFramework.class).in(Singleton.class);
 
         // The following are bindings are for ProgramRunners. They are private to this module and only
         // available to the remote execution ProgramRunnerFactory exposed.
