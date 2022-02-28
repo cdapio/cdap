@@ -110,10 +110,7 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
 
         Path runDir = Files.createTempDirectory(tmpDir, "system.worker.launcher");
         try {
-          // Unset the internal certificate path since certificate is stored cdap-security which
-          // is not exposed (i.e. mounted in k8s) to SystemWorkerService.
           CConfiguration cConfCopy = CConfiguration.copy(cConf);
-          cConfCopy.unset(Constants.Security.SSL.INTERNAL_CERT_PATH);
           Path cConfPath = runDir.resolve("cConf.xml");
           try (Writer writer = Files.newBufferedWriter(cConfPath, StandardCharsets.UTF_8)) {
             cConfCopy.writeXml(writer);
