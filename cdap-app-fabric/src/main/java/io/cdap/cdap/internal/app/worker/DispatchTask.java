@@ -73,6 +73,7 @@ import io.cdap.cdap.security.guice.FileBasedCoreSecurityModule;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import org.apache.twill.api.RunId;
+import org.apache.twill.api.TwillRunnerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -110,8 +111,6 @@ public class DispatchTask implements RunnableTask {
   @Override
   public void run(RunnableTaskContext context) throws Exception {
     try {
-      LOG.debug("KeyManager reference for DispatchTask: {}", keyManager.toString());
-      LOG.debug("ProvisioningService reference for DispatchTask: {}", provisioningService.toString());
       AppLaunchInfo appLaunchInfo = GSON.fromJson(context.getParam(), AppLaunchInfo.class);
       Injector injector = Guice.createInjector(
           new ConfigModule(cConf, sConf),
@@ -172,12 +171,14 @@ public class DispatchTask implements RunnableTask {
         ProgramRunnerFactory programRunnerFactory,
         ConfiguratorFactory configuratorFactory,
         Impersonator impersonator,
-        ArtifactRepository artifactRepository) {
+        ArtifactRepository artifactRepository,
+        TwillRunnerService twillRunnerService) {
       this.cConf = cConf;
       this.programRunnerFactory = programRunnerFactory;
       this.configuratorFactory = configuratorFactory;
       this.impersonator = impersonator;
       this.artifactRepository = artifactRepository;
+      LOG.debug("TwillRunnerService in DispatchTask: {}", twillRunnerService);
     }
 
     /**

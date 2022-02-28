@@ -39,6 +39,7 @@ import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpContentDecompressor;
+import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
@@ -63,6 +64,7 @@ public class TaskWorkerService extends AbstractIdleService {
   private final CoreSchedulerService coreSchedulerService;
   private final TimeSchedulerService timeSchedulerService;
   private final ProgramRuntimeService programRuntimeService;
+  private final TwillRunnerService twillRunnerService;
 
   @Inject
   TaskWorkerService(CConfiguration cConf,
@@ -73,15 +75,16 @@ public class TaskWorkerService extends AbstractIdleService {
                     MetricsCollectionService metricsCollectionService,
                     CoreSchedulerService coreSchedulerService,
                     TimeSchedulerService timeSchedulerService,
-                    ProgramRuntimeService programRuntimeService) {
+                    ProgramRuntimeService programRuntimeService,
+                    TwillRunnerService twillRunnerService) {
     this.discoveryService = discoveryService;
     this.keyManager = keyManager;
     this.provisioningService = provisioningService;
     this.coreSchedulerService = coreSchedulerService;
     this.timeSchedulerService = timeSchedulerService;
     this.programRuntimeService = programRuntimeService;
-    LOG.debug("KeyManager in TaskWorkerService: {}", keyManager.toString());
-    LOG.debug("Provisioning Service in TaskWorkerService: {}", provisioningService.toString());
+    this.twillRunnerService = twillRunnerService;
+    LOG.debug("TwillRunnerService in TaskWorkerService: {}", twillRunnerService);
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TASK_WORKER)
       .setHost(cConf.get(Constants.TaskWorker.ADDRESS))
       .setPort(cConf.getInt(Constants.TaskWorker.PORT))
@@ -111,6 +114,7 @@ public class TaskWorkerService extends AbstractIdleService {
     coreSchedulerService.startAndWait();
     timeSchedulerService.startAndWait();
     programRuntimeService.startAndWait();
+    twillRunnerService.start();
     httpService.start();
     bindAddress = httpService.getBindAddress();
     cancelDiscovery = discoveryService.register(

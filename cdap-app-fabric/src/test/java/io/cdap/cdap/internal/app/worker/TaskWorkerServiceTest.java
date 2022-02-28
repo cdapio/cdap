@@ -87,7 +87,7 @@ public class TaskWorkerServiceTest {
 
     TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, sConf, new InMemoryDiscoveryService(),
                                                                 null, null, new NoOpMetricsCollectionService(),
-        null, null, null);
+        null, null, null, null);
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service
     taskWorkerService.startAndWait();
@@ -111,7 +111,7 @@ public class TaskWorkerServiceTest {
 
     TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, sConf, new InMemoryDiscoveryService(),
                                                                 null, null, new NoOpMetricsCollectionService(),
-        null, null, null);
+        null, null, null, null);
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service
     taskWorkerService.startAndWait();
@@ -129,7 +129,7 @@ public class TaskWorkerServiceTest {
 
     TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, sConf, new InMemoryDiscoveryService(),
                                                                 null, null, new NoOpMetricsCollectionService(),
-        null, null, null);
+        null, null, null, null);
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service
     taskWorkerService.startAndWait();
@@ -162,7 +162,7 @@ public class TaskWorkerServiceTest {
 
     TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, sConf, new InMemoryDiscoveryService(),
                                                                 null, null, new NoOpMetricsCollectionService(),
-        null, null, null);
+        null, null, null, null);
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service
     taskWorkerService.startAndWait();
