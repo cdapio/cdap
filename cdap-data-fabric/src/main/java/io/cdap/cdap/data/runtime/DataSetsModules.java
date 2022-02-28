@@ -118,7 +118,6 @@ public class DataSetsModules extends RuntimeModule {
       protected void configure() {
         bind(DatasetDefinitionRegistryFactory.class)
           .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
-        expose(DatasetDefinitionRegistryFactory.class);
 
         bind(MetadataStorage.class).annotatedWith(Names.named(SPI_BASE_IMPL))
           .toProvider(MetadataStorageProvider.class).in(Scopes.SINGLETON);

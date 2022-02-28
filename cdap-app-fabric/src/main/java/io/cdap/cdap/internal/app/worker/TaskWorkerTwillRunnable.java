@@ -83,7 +83,9 @@ import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data.security.DefaultSecretStore;
 import io.cdap.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
+import io.cdap.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
 import io.cdap.cdap.data2.dataset2.module.lib.inmemory.InMemoryMetricsTableModule;
 import io.cdap.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import io.cdap.cdap.explore.client.ExploreClient;
@@ -295,6 +297,8 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
         // NOTE: order is important due to dependencies between modules
         mapBinder.addBinding("orderedTable-memory").toInstance(new InMemoryTableModule());
         mapBinder.addBinding("metricsTable-memory").toInstance(new InMemoryMetricsTableModule());
+        bind(DatasetDefinitionRegistryFactory.class)
+            .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
 
         Key<TwillRunnerService> twillRunnerServiceKey =
             Key.get(TwillRunnerService.class, Constants.AppFabric.RemoteExecution.class);
