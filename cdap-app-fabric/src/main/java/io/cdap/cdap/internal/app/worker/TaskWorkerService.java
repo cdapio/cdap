@@ -22,6 +22,7 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.worker.RunnableTask;
+import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
@@ -30,7 +31,9 @@ import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
+import io.cdap.cdap.internal.app.runtime.schedule.TimeSchedulerService;
 import io.cdap.cdap.internal.provision.ProvisioningService;
+import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.security.auth.KeyManager;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
@@ -57,6 +60,9 @@ public class TaskWorkerService extends AbstractIdleService {
   private InetSocketAddress bindAddress;
   private final KeyManager keyManager;
   private final ProvisioningService provisioningService;
+  private final CoreSchedulerService coreSchedulerService;
+  private final TimeSchedulerService timeSchedulerService;
+  private final ProgramRuntimeService programRuntimeService;
 
   @Inject
   TaskWorkerService(CConfiguration cConf,
@@ -64,10 +70,16 @@ public class TaskWorkerService extends AbstractIdleService {
                     DiscoveryService discoveryService,
                     KeyManager keyManager,
                     ProvisioningService provisioningService,
-                    MetricsCollectionService metricsCollectionService) {
+                    MetricsCollectionService metricsCollectionService,
+                    CoreSchedulerService coreSchedulerService,
+                    TimeSchedulerService timeSchedulerService,
+                    ProgramRuntimeService programRuntimeService) {
     this.discoveryService = discoveryService;
     this.keyManager = keyManager;
     this.provisioningService = provisioningService;
+    this.coreSchedulerService = coreSchedulerService;
+    this.timeSchedulerService = timeSchedulerService;
+    this.programRuntimeService = programRuntimeService;
     LOG.debug("KeyManager in TaskWorkerService: {}", keyManager.toString());
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TASK_WORKER)
       .setHost(cConf.get(Constants.TaskWorker.ADDRESS))
@@ -95,6 +107,9 @@ public class TaskWorkerService extends AbstractIdleService {
     LOG.debug("Starting TaskWorkerService");
     keyManager.startAndWait();
     provisioningService.startAndWait();
+    coreSchedulerService.startAndWait();
+    timeSchedulerService.startAndWait();
+    programRuntimeService.startAndWait();
     httpService.start();
     bindAddress = httpService.getBindAddress();
     cancelDiscovery = discoveryService.register(
