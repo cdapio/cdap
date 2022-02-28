@@ -402,7 +402,7 @@ public class ProvisioningService extends AbstractIdleService {
     Map<String, String> systemArgs = programOptions.getArguments().asMap();
     String name = SystemArguments.getProfileProvisioner(systemArgs);
     Provisioner provisioner = provisionerInfo.get().provisioners.get(name);
-    LOG.debug("Provisioner Info during run: {}", GSON.toJson(provisionerInfo.get()));
+    LOG.debug("Provisioner Info during run: {}", provisionerInfo.get());
     LOG.debug("Provisioner in action: {}", provisioner);
     String user = programOptions.getArguments().getOption(ProgramOptionConstants.USER_ID);
     Map<String, String> properties = SystemArguments.getProfileProperties(systemArgs);
@@ -551,7 +551,7 @@ public class ProvisioningService extends AbstractIdleService {
     }
     LOG.debug("Provisioner Details: {}", GSON.toJson(details));
     provisionerInfo.set(new ProvisionerInfo(provisioners, details));
-    LOG.debug("Provisioner Info during startup: {}", GSON.toJson(provisionerInfo.get()));
+    LOG.debug("Provisioner Info during startup: {}", provisionerInfo.get());
   }
 
   /**
