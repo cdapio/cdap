@@ -358,8 +358,8 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
       }
 
       /**
-       * Create a quartz scheduler. Quartz factory method is not used, because inflexible in allowing custom jobstore and
-       * turning off check for new versions.
+       * Create a quartz scheduler. Quartz factory method is not used, because inflexible in allowing custom
+       * jobstore and turning off check for new versions.
        *
        * @param store JobStore.
        * @param cConf CConfiguration.
