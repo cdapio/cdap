@@ -76,6 +76,7 @@ import io.cdap.cdap.common.namespace.NamespacePathLocator;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.namespace.guice.NamespaceQueryAdminModule;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
+import io.cdap.cdap.data.runtime.DataSetServiceModules.DatasetMdsProvider;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
@@ -120,6 +121,7 @@ import io.cdap.cdap.internal.app.runtime.schedule.store.TriggerMisfireLogger;
 import io.cdap.cdap.internal.app.services.ProgramCompletionNotifier;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.capability.CapabilityModule;
+import io.cdap.cdap.internal.pipeline.SynchronousPipelineFactory;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
@@ -131,6 +133,7 @@ import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.metadata.RemotePreferencesFetcherInternal;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
+import io.cdap.cdap.pipeline.PipelineFactory;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
@@ -281,6 +284,9 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
         bind(Scheduler.class).to(CoreSchedulerService.class);
         bind(TimeSchedulerService.class).to(DistributedTimeSchedulerService.class).in(Scopes.SINGLETON);
         bind(PreferencesFetcher.class).to(RemotePreferencesFetcherInternal.class).in(Scopes.SINGLETON);
+        bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS"))
+            .toProvider(DatasetMdsProvider.class).in(Singleton.class);
+        bind(PipelineFactory.class).to(SynchronousPipelineFactory.class);
 
         Key<TwillRunnerService> twillRunnerServiceKey =
             Key.get(TwillRunnerService.class, Constants.AppFabric.RemoteExecution.class);

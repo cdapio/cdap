@@ -203,7 +203,7 @@ public class DataSetServiceModules extends RuntimeModule {
     };
   }
 
-  private static final class DatasetMdsProvider implements Provider<DatasetFramework> {
+  public static final class DatasetMdsProvider implements Provider<DatasetFramework> {
     private final DatasetDefinitionRegistryFactory registryFactory;
     private final Map<String, DatasetModule> defaultModules;
 
