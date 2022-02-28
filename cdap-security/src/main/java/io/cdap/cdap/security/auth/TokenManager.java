@@ -60,7 +60,6 @@ public class TokenManager extends AbstractIdleService {
    * @return A token containing the verified identify and a digest of its contents.
    */
   public AccessToken signIdentifier(UserIdentity identifier) {
-    LOG.debug("KeyManager Reference: {}", keyManager.toString());
     try {
       KeyManager.DigestId digest = keyManager.generateMAC(identifierCodec.encode(identifier));
       return new AccessToken(identifier, digest.getId(), digest.getDigest());

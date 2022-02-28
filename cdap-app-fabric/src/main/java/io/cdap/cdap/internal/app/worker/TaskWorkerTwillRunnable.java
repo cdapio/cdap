@@ -28,6 +28,7 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
+import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
@@ -36,6 +37,8 @@ import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.deploy.Dispatcher;
+import io.cdap.cdap.app.deploy.Manager;
+import io.cdap.cdap.app.deploy.ManagerFactory;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.guice.DefaultProgramRunnerFactory;
@@ -70,6 +73,7 @@ import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.namespace.guice.NamespaceQueryAdminModule;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.data.runtime.StorageModule;
+import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data.security.DefaultSecretStore;
 import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
@@ -78,8 +82,11 @@ import io.cdap.cdap.internal.app.deploy.DispatcherFactory;
 import io.cdap.cdap.internal.app.deploy.DispatcherFactoryProvider;
 import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
 import io.cdap.cdap.internal.app.deploy.InMemoryDispatcher;
+import io.cdap.cdap.internal.app.deploy.LocalApplicationManager;
 import io.cdap.cdap.internal.app.deploy.RemoteConfigurator;
 import io.cdap.cdap.internal.app.deploy.RemoteDispatcher;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
+import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.namespace.DefaultNamespaceAdmin;
 import io.cdap.cdap.internal.app.namespace.DistributedStorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
@@ -99,6 +106,7 @@ import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkflowProgramR
 import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionTwillRunnerService;
 import io.cdap.cdap.internal.app.services.ProgramCompletionNotifier;
 import io.cdap.cdap.internal.app.store.DefaultStore;
+import io.cdap.cdap.internal.capability.CapabilityModule;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
@@ -106,9 +114,12 @@ import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.scheduler.CoreSchedulerService;
+import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.securestore.spi.SecretStore;
 import io.cdap.cdap.security.auth.FileBasedKeyManager;
 import io.cdap.cdap.security.auth.KeyManager;
@@ -118,6 +129,8 @@ import io.cdap.cdap.security.guice.CoreSecurityModule;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
+import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
+import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.RemoteUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import org.apache.hadoop.conf.Configuration;
@@ -188,6 +201,9 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
     // modules.add(new NamespaceQueryAdminModule());
     modules.add(new NamespaceAdminModule().getDistributedModules());
     modules.add(new DataSetServiceModules().getDistributedModules());
+    modules.add(new SystemDatasetRuntimeModule().getDistributedModules());
+    modules.add(new MetadataReaderWriterModules().getDistributedModules());
+    modules.add(new CapabilityModule());
     modules.add(new AbstractModule() {
       @Override
       protected void configure() {
@@ -224,6 +240,19 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
                 .build(Key.get(ConfiguratorFactory.class, Names.named("remote")))
         );
         bind(ConfiguratorFactory.class).toProvider(ConfiguratorFactoryProvider.class);
+
+        install(
+            new FactoryModuleBuilder()
+                .implement(new TypeLiteral<Manager<AppDeploymentInfo, ApplicationWithPrograms>>() {
+                           },
+                    new TypeLiteral<LocalApplicationManager<AppDeploymentInfo, ApplicationWithPrograms>>() {
+                    })
+                .build(new TypeLiteral<ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms>>() {
+                })
+        );
+        bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+        bind(CoreSchedulerService.class).in(Scopes.SINGLETON);
+        bind(Scheduler.class).to(CoreSchedulerService.class);
 
         Key<TwillRunnerService> twillRunnerServiceKey =
             Key.get(TwillRunnerService.class, Constants.AppFabric.RemoteExecution.class);
