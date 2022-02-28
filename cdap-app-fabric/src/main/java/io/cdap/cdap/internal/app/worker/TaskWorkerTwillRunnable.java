@@ -28,6 +28,7 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
+import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
@@ -51,6 +52,7 @@ import io.cdap.cdap.app.guice.UnsupportedExploreClient;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
+import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -72,9 +74,12 @@ import io.cdap.cdap.common.namespace.NamespacePathLocator;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.namespace.guice.NamespaceQueryAdminModule;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
+import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data.security.DefaultSecretStore;
+import io.cdap.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactoryProvider;
@@ -101,6 +106,7 @@ import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactManager;
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReader;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedMapReduceProgramRunner;
+import io.cdap.cdap.internal.app.runtime.distributed.DistributedProgramRuntimeService;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkerProgramRunner;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkflowProgramRunner;
 import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionTwillRunnerService;
@@ -201,7 +207,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
     // modules.add(new NamespaceQueryAdminModule());
     modules.add(new NamespaceAdminModule().getDistributedModules());
     // modules.add(new DataSetServiceModules().getDistributedModules());
-    modules.add(new SystemDatasetRuntimeModule().getDistributedModules());
+    modules.add(new DataSetsModules().getDistributedModules());
     modules.add(new MetadataReaderWriterModules().getDistributedModules());
     modules.add(new CapabilityModule());
     modules.add(new AbstractModule() {
@@ -268,6 +274,8 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
         // ProgramRunnerFactory should be in distributed mode
         bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.DISTRIBUTED);
         bind(programRunnerFactoryKey).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
+        bind(ProgramRuntimeService.class).to(DistributedProgramRuntimeService.class).in(Scopes.SINGLETON);
+        bind(DatasetFramework.class).to(RemoteDatasetFramework.class).in(Singleton.class);
 
         // The following are bindings are for ProgramRunners. They are private to this module and only
         // available to the remote execution ProgramRunnerFactory exposed.
