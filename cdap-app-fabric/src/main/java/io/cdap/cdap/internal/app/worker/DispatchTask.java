@@ -23,6 +23,7 @@ import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.Scopes;
 import com.google.inject.name.Named;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.data.schema.Schema;
@@ -54,7 +55,12 @@ import io.cdap.cdap.internal.app.runtime.artifact.RequirementsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
+import io.cdap.cdap.internal.provision.DefaultProvisionerConfigProvider;
+import io.cdap.cdap.internal.provision.ProvisionerConfigProvider;
+import io.cdap.cdap.internal.provision.ProvisionerExtensionLoader;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
+import io.cdap.cdap.internal.provision.ProvisionerProvider;
+import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.metrics.guice.DistributedMetricsClientModule;
 import io.cdap.cdap.security.auth.KeyManager;
@@ -90,18 +96,22 @@ public class DispatchTask implements RunnableTask {
   private final CConfiguration cConf;
   private final SConfiguration sConf;
   private final KeyManager keyManager;
+  private final ProvisioningService provisioningService;
 
   @Inject
-  DispatchTask(CConfiguration cConf, SConfiguration sConf, KeyManager keyManager) {
+  DispatchTask(CConfiguration cConf, SConfiguration sConf, KeyManager keyManager,
+      ProvisioningService provisioningService) {
     this.cConf = cConf;
     this.sConf = sConf;
     this.keyManager = keyManager;
+    this.provisioningService = provisioningService;
   }
 
   @Override
   public void run(RunnableTaskContext context) throws Exception {
     try {
       LOG.debug("KeyManager reference for DispatchTask: {}", keyManager.toString());
+      LOG.debug("ProvisioningService reference for DispatchTask: {}", provisioningService.toString());
       AppLaunchInfo appLaunchInfo = GSON.fromJson(context.getParam(), AppLaunchInfo.class);
       Injector injector = Guice.createInjector(
           new ConfigModule(cConf, sConf),
@@ -113,7 +123,14 @@ public class DispatchTask implements RunnableTask {
           // new RemoteExecutionProgramRunnerModule(),
           new SecureStoreClientModule(),
           new IOModule(),
-          new ProvisionerModule(),
+          new ProvisionerModule() {
+            @Override
+            protected void configure() {
+              bind(ProvisioningService.class).toInstance(provisioningService);
+              bind(ProvisionerProvider.class).to(ProvisionerExtensionLoader.class);
+              bind(ProvisionerConfigProvider.class).to(DefaultProvisionerConfigProvider.class);
+            }
+          },
           // new DistributedMetricsClientModule(),
           new MessagingClientModule(),
           new StorageModule(),
