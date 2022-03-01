@@ -111,7 +111,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       TwillRunnerService twillRunnerService) {
     int killAfterRequestCount = cConf.getInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
     this.runnableTaskLauncher = new RunnableTaskLauncher(new RunnableTaskModule.Builder().cConf(cConf).sConf(sConf)
-        .keyManager(keyManager).provisioningService(provisioningService));
+        .keyManager(keyManager).provisioningService(provisioningService).twillRunnerService(twillRunnerService));
     this.metricsCollectionService = metricsCollectionService;
     this.metadataServiceEndpoint = cConf.get(Constants.TaskWorker.METADATA_SERVICE_END_POINT);
     this.stopper = (terminate, taskDetails) -> {
