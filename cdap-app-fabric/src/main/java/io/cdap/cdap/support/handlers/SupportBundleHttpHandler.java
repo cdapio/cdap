@@ -20,13 +20,15 @@ import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.element.EntityType;
+import io.cdap.cdap.proto.id.InstanceId;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.support.services.SupportBundleService;
 import io.cdap.cdap.support.status.SupportBundleConfiguration;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import javax.ws.rs.DefaultValue;
@@ -40,12 +42,13 @@ import javax.ws.rs.QueryParam;
 @Path(Constants.Gateway.API_VERSION_3)
 public class SupportBundleHttpHandler extends AbstractAppFabricHttpHandler {
 
-  private static final Logger LOG = LoggerFactory.getLogger(SupportBundleHttpHandler.class);
   private final SupportBundleService bundleService;
+  private final ContextAccessEnforcer contextAccessEnforcer;
 
   @Inject
-  SupportBundleHttpHandler(SupportBundleService supportBundleService) {
+  SupportBundleHttpHandler(SupportBundleService supportBundleService, ContextAccessEnforcer contextAccessEnforcer) {
     this.bundleService = supportBundleService;
+    this.contextAccessEnforcer = contextAccessEnforcer;
   }
 
   /**
@@ -65,10 +68,11 @@ public class SupportBundleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @Nullable @QueryParam("application") String application,
                                   @Nullable @QueryParam("programType") @DefaultValue("workflows") String programType,
                                   @Nullable @QueryParam("programId") @DefaultValue("DataPipelineWorkflow")
-                                      String programName,
-                                  @Nullable @QueryParam("run") String run,
+                                    String programName, @Nullable @QueryParam("run") String run,
                                   @Nullable @QueryParam("maxRunsPerProgram") @DefaultValue("1")
-                                      Integer maxRunsPerProgram) throws Exception {
+                                    Integer maxRunsPerProgram) throws Exception {
+    /** ensure the user has authentication to create supportBundle */
+    contextAccessEnforcer.enforceOnParent(EntityType.SUPPORT_BUNDLE, InstanceId.SELF, StandardPermission.CREATE);
     // Establishes the support bundle configuration
     SupportBundleConfiguration bundleConfig =
       new SupportBundleConfiguration(namespace, application, run, ProgramType.valueOfCategoryName(programType),
