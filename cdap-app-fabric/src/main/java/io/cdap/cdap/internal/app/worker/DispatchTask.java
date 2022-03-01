@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.worker;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
@@ -99,14 +100,16 @@ public class DispatchTask implements RunnableTask {
   private final SConfiguration sConf;
   private final KeyManager keyManager;
   private final ProvisioningService provisioningService;
+  private final TwillRunnerService twillRunnerService;
 
   @Inject
   DispatchTask(CConfiguration cConf, SConfiguration sConf, KeyManager keyManager,
-      ProvisioningService provisioningService) {
+      ProvisioningService provisioningService, TwillRunnerService twillRunnerService) {
     this.cConf = cConf;
     this.sConf = sConf;
     this.keyManager = keyManager;
     this.provisioningService = provisioningService;
+    this.twillRunnerService = twillRunnerService;
   }
 
   @Override
@@ -140,6 +143,12 @@ public class DispatchTask implements RunnableTask {
             protected void bindKeyManager(Binder binder) {
               // Do nothing
               bind(KeyManager.class).toInstance(keyManager);
+            }
+          },
+          new AbstractModule() {
+            @Override
+            protected void configure() {
+              bind(TwillRunnerService.class).toInstance(twillRunnerService);
             }
           }
           // new FileBasedCoreSecurityModule()
