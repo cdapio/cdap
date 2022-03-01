@@ -30,10 +30,10 @@ import io.cdap.cdap.security.auth.KeyManager;
  */
 public class RunnableTaskLauncher {
 
-  private final RunnableTaskModule.Builder builder;
+  private final RunnableTaskModule module;
 
-  public RunnableTaskLauncher(RunnableTaskModule.Builder builder) {
-    this.builder = builder;
+  public RunnableTaskLauncher(RunnableTaskModule module) {
+    this.module = module;
   }
 
   public RunnableTaskContext launchRunnableTask(RunnableTaskRequest request) throws Exception {
@@ -44,7 +44,7 @@ public class RunnableTaskLauncher {
 
     Class<?> clazz = classLoader.loadClass(request.getClassName());
 
-    Injector injector = Guice.createInjector(builder.build());
+    Injector injector = Guice.createInjector(module);
     Object obj = injector.getInstance(clazz);
 
     if (!(obj instanceof RunnableTask)) {
