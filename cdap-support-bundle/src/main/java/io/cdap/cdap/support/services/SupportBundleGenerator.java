@@ -17,7 +17,11 @@
 package io.cdap.cdap.support.services;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import io.cdap.cdap.common.NamespaceNotFoundException;
@@ -41,12 +45,15 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
+import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -60,11 +67,14 @@ public class SupportBundleGenerator {
 
   private static final Logger LOG = LoggerFactory.getLogger(SupportBundleGenerator.class);
   private static final Gson GSON = new Gson();
-
+  private static final Type MAP_TYPE = new TypeToken<Map<String, Boolean>>() {
+  }.getType();
   private final Set<SupportBundleTaskFactory> taskFactories;
   private final CConfiguration cConf;
   private final RemoteNamespaceQueryClient namespaceQueryClient;
   private final String localDir;
+  private final List<String> serviceList;
+  private final List<String> listOfFileNames;
 
   @Inject
   SupportBundleGenerator(CConfiguration cConf, RemoteNamespaceQueryClient namespaceQueryClient,
@@ -73,6 +83,13 @@ public class SupportBundleGenerator {
     this.namespaceQueryClient = namespaceQueryClient;
     this.localDir = cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR);
     this.taskFactories = taskFactories;
+    this.serviceList = Arrays.asList(Constants.Service.APP_FABRIC_HTTP, Constants.Service.DATASET_EXECUTOR,
+                                     Constants.Service.EXPLORE_HTTP_USER_SERVICE, Constants.Service.LOGSAVER,
+                                     Constants.Service.MESSAGING_SERVICE, Constants.Service.METADATA_SERVICE,
+                                     Constants.Service.METRICS, Constants.Service.METRICS_PROCESSOR,
+                                     Constants.Service.RUNTIME, Constants.Service.TRANSACTION, "pipeline");
+    this.listOfFileNames = new ArrayList<>(serviceList);
+    listOfFileNames.addAll(Arrays.asList("applicationFile", "runtimelog", "runtimeinfo"));
   }
 
   /**
@@ -150,6 +167,80 @@ public class SupportBundleGenerator {
       File oldFilesDirectory = getOldestFolder(baseDirectory);
       DirUtils.deleteDirectoryContents(oldFilesDirectory);
     }
+  }
+
+  /**
+   * Deletes old folders after certain number of folders exist
+   */
+  public void deleteOldFolders(File oldFilesDirectory) {
+    String[] entries = oldFilesDirectory.list();
+    if (entries != null && entries.length > 0) {
+      for (String s : entries) {
+        File currentFile = new File(oldFilesDirectory.getPath(), s);
+        // Recursive the full directory and delete all old files
+        if (currentFile.isDirectory()) {
+          deleteOldFolders(currentFile);
+        } else {
+          currentFile.delete();
+        }
+      }
+    }
+    oldFilesDirectory.delete();
+  }
+
+  public JsonObject getSingleBundleJson(File uuidFile) throws IOException {
+    JsonObject singleBundleJson = new JsonObject();
+    singleBundleJson.addProperty("bundleId", uuidFile.getName());
+    String basePath = cConf.get(Constants.CFG_LOCAL_DATA_SUPPORT_BUNDLE_DIR) + "/" + uuidFile.getName();
+    File statusFile = new File(basePath + "/status.json");
+    if (!statusFile.exists()) {
+      JsonArray pipelinesArray = new JsonArray();
+      File[] pipelineFiles =
+        uuidFile.listFiles((dir, name) -> !name.startsWith(".") && !dir.isHidden() && dir.isDirectory());
+      if (pipelineFiles != null && pipelineFiles.length > 0) {
+        for (File pipelineFile : pipelineFiles) {
+          if (!pipelineFile.getAbsoluteFile().getName().equals("system-log")) {
+            File statusFileUnderPipeline = new File(pipelineFile.getPath() + "/status.json");
+            if (statusFileUnderPipeline.exists()) {
+              JsonObject singlePipelineJson = new JsonObject();
+              singlePipelineJson.addProperty("application_name", pipelineFile.getAbsoluteFile().getName());
+              readStatusJson(statusFileUnderPipeline, singlePipelineJson);
+              pipelinesArray.add(singlePipelineJson);
+            }
+          }
+        }
+      }
+      singleBundleJson.add("pipelines", pipelinesArray);
+    } else {
+      readStatusJson(statusFile, singleBundleJson);
+    }
+    return singleBundleJson;
+  }
+
+  public void readStatusJson(File statusFile, JsonObject jsonFile) throws IOException {
+    try (Reader reader = Files.newBufferedReader(statusFile.toPath(), StandardCharsets.UTF_8)) {
+      Map<String, Boolean> statusMap = GSON.fromJson(reader, MAP_TYPE);
+      for (String fileName : listOfFileNames) {
+        jsonFile.addProperty(fileName, statusMap.getOrDefault(fileName, false));
+      }
+    }
+  }
+
+  public JsonObject getFilesName(File file) {
+    JsonObject singlePipelineJson = new JsonObject();
+    singlePipelineJson.addProperty("application_name", file.getAbsoluteFile().getName());
+    if (file.isDirectory()) {
+      File[] dataFiles = file.listFiles((dir, name) -> !name.startsWith(".") && !dir.isHidden() && dir.isDirectory());
+      if (dataFiles != null && dataFiles.length > 0) {
+        JsonArray fileArray = new JsonArray();
+        for (File dataFile : dataFiles) {
+          JsonPrimitive fileJson = new JsonPrimitive(dataFile.getName());
+          fileArray.add(fileJson);
+        }
+        singlePipelineJson.add("file_names", fileArray);
+      }
+    }
+    return singlePipelineJson;
   }
 
   /**

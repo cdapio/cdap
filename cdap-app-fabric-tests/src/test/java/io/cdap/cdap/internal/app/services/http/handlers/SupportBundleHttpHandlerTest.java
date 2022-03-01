@@ -92,7 +92,6 @@ public class SupportBundleHttpHandlerTest extends AppFabricTestBase {
         String.format("%s/support/bundle?need-system-log=true", Constants.Gateway.API_VERSION_3);
     HttpResponse response = doPost(path);
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
-    Assert.assertTrue(response.getResponseBodyAsString().startsWith("Support Bundle"));
 
     String bodyResponse = response.getResponseBodyAsString();
     if (bodyResponse.startsWith("Support Bundle")) {
