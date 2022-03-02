@@ -54,6 +54,7 @@ import io.cdap.cdap.app.guice.NamespaceAdminModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.app.guice.RemoteExecutionProgramRunnerModule;
 import io.cdap.cdap.app.guice.RemoteExecutionProgramRunnerModule.ProgramCompletionNotifierProvider;
+import io.cdap.cdap.app.guice.RemoteTwillModule;
 import io.cdap.cdap.app.guice.TwillModule;
 import io.cdap.cdap.app.guice.UnsupportedExploreClient;
 import io.cdap.cdap.app.runtime.ProgramRunner;
@@ -273,56 +274,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
     modules.add(new MetadataReaderWriterModules().getDistributedModules());
     modules.add(new CapabilityModule());
     // TwillModule
-    modules.add(new PrivateModule() {
-      @Override
-      protected void configure() {
-        bind(TwillRunnerService.class).toProvider(TwillRunnerServiceProvider.class).in(Scopes.SINGLETON);
-        bind(TwillRunner.class).to(TwillRunnerService.class);
-        expose(TwillRunnerService.class);
-        expose(TwillRunner.class);
-      }
-
-      final class TwillRunnerServiceProvider implements Provider<TwillRunnerService> {
-        private final CConfiguration cConf;
-        private final Configuration hConf;
-        private final LocationFactory locationFactory;
-        private final Impersonator impersonator;
-        private final TokenSecureStoreRenewer secureStoreRenewer;
-        private final ProvisioningService provisioningService;
-        private final DiscoveryServiceClient discoveryServiceClient;
-        private final ProgramStateWriter programStateWriter;
-        private final TransactionRunner transactionRunner;
-        private final AccessTokenCodec accessTokenCodec;
-        private final TokenManager tokenManager;
-
-        @Inject
-        TwillRunnerServiceProvider(CConfiguration cConf, Configuration hConf, Impersonator impersonator,
-            LocationFactory locationFactory, TokenSecureStoreRenewer secureStoreRenewer,
-            ProvisioningService provisioningService, DiscoveryServiceClient discoveryServiceClient,
-            ProgramStateWriter programStateWriter, TransactionRunner transactionRunner,
-            AccessTokenCodec accessTokenCodec, TokenManager tokenManager) {
-          this.cConf = cConf;
-          this.hConf = hConf;
-          this.locationFactory = locationFactory;
-          this.impersonator = impersonator;
-          this.secureStoreRenewer = secureStoreRenewer;
-          this.provisioningService = provisioningService;
-          this.discoveryServiceClient = discoveryServiceClient;
-          this.programStateWriter = programStateWriter;
-          this.transactionRunner = transactionRunner;
-          this.accessTokenCodec = accessTokenCodec;
-          this.tokenManager = tokenManager;
-        }
-
-        @Override
-        public TwillRunnerService get() {
-          RemoteExecutionTwillRunnerService runner = new RemoteExecutionTwillRunnerService(cConf, hConf,
-              discoveryServiceClient, locationFactory, provisioningService, programStateWriter,
-              transactionRunner, accessTokenCodec, tokenManager);
-          return new ImpersonatedTwillRunnerService(hConf, runner, impersonator, secureStoreRenewer);
-        }
-      }
-    });
+    modules.add(new RemoteTwillModule());
     modules.add(new AbstractModule() {
       @Override
       protected void configure() {
