@@ -25,9 +25,12 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
 import com.google.inject.Guice;
+import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
+import com.google.inject.PrivateModule;
+import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
@@ -46,6 +49,7 @@ import io.cdap.cdap.app.deploy.ManagerFactory;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.guice.DefaultProgramRunnerFactory;
+import io.cdap.cdap.app.guice.ImpersonatedTwillRunnerService;
 import io.cdap.cdap.app.guice.NamespaceAdminModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.app.guice.RemoteExecutionProgramRunnerModule;
@@ -141,6 +145,7 @@ import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.capability.CapabilityModule;
 import io.cdap.cdap.internal.pipeline.SynchronousPipelineFactory;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
+import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
@@ -157,8 +162,11 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.securestore.spi.SecretStore;
+import io.cdap.cdap.security.TokenSecureStoreRenewer;
+import io.cdap.cdap.security.auth.AccessTokenCodec;
 import io.cdap.cdap.security.auth.FileBasedKeyManager;
 import io.cdap.cdap.security.auth.KeyManager;
+import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.CoreSecurityModule;
@@ -166,14 +174,18 @@ import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
+import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.OwnerStore;
 import io.cdap.cdap.security.impersonation.RemoteUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.store.DefaultOwnerStore;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.AbstractTwillRunnable;
+import org.apache.twill.api.Configs;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillRunner;
@@ -181,7 +193,10 @@ import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.LocationFactories;
+import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.ServiceListenerAdapter;
+import org.apache.twill.yarn.YarnTwillRunnerService;
 import org.quartz.SchedulerException;
 import org.quartz.core.JobRunShellFactory;
 import org.quartz.core.QuartzScheduler;
@@ -227,7 +242,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
 
     // CoreSecurityModule coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf);
     // modules.add(new AppFabricServiceRuntimeModule(cConf));
-    modules.add(new TwillModule());
+    // modules.add(new TwillModule());
     modules.add(new ConfigModule(cConf, hConf, sConf));
     modules.add(RemoteAuthenticatorModules.getDefaultModule());
     modules.add(new LocalLocationModule());
@@ -257,6 +272,57 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
     // modules.add(new DataSetsModules().getDistributedModules());
     modules.add(new MetadataReaderWriterModules().getDistributedModules());
     modules.add(new CapabilityModule());
+    // TwillModule
+    modules.add(new PrivateModule() {
+      @Override
+      protected void configure() {
+        bind(TwillRunnerService.class).toProvider(TwillRunnerServiceProvider.class).in(Scopes.SINGLETON);
+        bind(TwillRunner.class).to(TwillRunnerService.class);
+        expose(TwillRunnerService.class);
+        expose(TwillRunner.class);
+      }
+
+      final class TwillRunnerServiceProvider implements Provider<TwillRunnerService> {
+        private final CConfiguration cConf;
+        private final Configuration hConf;
+        private final LocationFactory locationFactory;
+        private final Impersonator impersonator;
+        private final TokenSecureStoreRenewer secureStoreRenewer;
+        private final ProvisioningService provisioningService;
+        private final DiscoveryServiceClient discoveryServiceClient;
+        private final ProgramStateWriter programStateWriter;
+        private final TransactionRunner transactionRunner;
+        private final AccessTokenCodec accessTokenCodec;
+        private final TokenManager tokenManager;
+
+        @Inject
+        TwillRunnerServiceProvider(CConfiguration cConf, Configuration hConf, Impersonator impersonator,
+            LocationFactory locationFactory, TokenSecureStoreRenewer secureStoreRenewer,
+            ProvisioningService provisioningService, DiscoveryServiceClient discoveryServiceClient,
+            ProgramStateWriter programStateWriter, TransactionRunner transactionRunner,
+            AccessTokenCodec accessTokenCodec, TokenManager tokenManager) {
+          this.cConf = cConf;
+          this.hConf = hConf;
+          this.locationFactory = locationFactory;
+          this.impersonator = impersonator;
+          this.secureStoreRenewer = secureStoreRenewer;
+          this.provisioningService = provisioningService;
+          this.discoveryServiceClient = discoveryServiceClient;
+          this.programStateWriter = programStateWriter;
+          this.transactionRunner = transactionRunner;
+          this.accessTokenCodec = accessTokenCodec;
+          this.tokenManager = tokenManager;
+        }
+
+        @Override
+        public TwillRunnerService get() {
+          RemoteExecutionTwillRunnerService runner = new RemoteExecutionTwillRunnerService(cConf, hConf,
+              discoveryServiceClient, locationFactory, provisioningService, programStateWriter,
+              transactionRunner, accessTokenCodec, tokenManager);
+          return new ImpersonatedTwillRunnerService(hConf, runner, impersonator, secureStoreRenewer);
+        }
+      }
+    });
     modules.add(new AbstractModule() {
       @Override
       protected void configure() {

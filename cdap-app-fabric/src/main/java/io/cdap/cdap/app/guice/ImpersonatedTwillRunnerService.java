@@ -51,8 +51,9 @@ public final class ImpersonatedTwillRunnerService implements TwillRunnerService 
   private final Impersonator impersonator;
   private final TokenSecureStoreRenewer secureStoreRenewer;
 
-  ImpersonatedTwillRunnerService(Configuration hConf, TwillRunnerService delegate, Impersonator impersonator,
-                                 TokenSecureStoreRenewer secureStoreRenewer) {
+  public ImpersonatedTwillRunnerService(Configuration hConf, TwillRunnerService delegate,
+      Impersonator impersonator,
+      TokenSecureStoreRenewer secureStoreRenewer) {
     this.hConf = hConf;
     this.delegate = delegate;
     this.impersonator = impersonator;

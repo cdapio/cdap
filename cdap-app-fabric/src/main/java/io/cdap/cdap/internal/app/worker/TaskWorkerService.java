@@ -119,7 +119,7 @@ public class TaskWorkerService extends AbstractIdleService {
     coreSchedulerService.startAndWait();
     timeSchedulerService.startAndWait();
     programRuntimeService.startAndWait();
-    // twillRunnerService.start();
+    twillRunnerService.start();
     httpService.start();
     bindAddress = httpService.getBindAddress();
     cancelDiscovery = discoveryService.register(

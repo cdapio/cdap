@@ -153,14 +153,14 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
   private ScheduledExecutorService scheduler;
 
   @Inject
-  RemoteExecutionTwillRunnerService(CConfiguration cConf, Configuration hConf,
-                                    DiscoveryServiceClient discoveryServiceClient,
-                                    LocationFactory locationFactory,
-                                    ProvisioningService provisioningService,
-                                    ProgramStateWriter programStateWriter,
-                                    TransactionRunner transactionRunner,
-                                    AccessTokenCodec accessTokenCodec,
-                                    TokenManager tokenManager) {
+  public RemoteExecutionTwillRunnerService(CConfiguration cConf, Configuration hConf,
+      DiscoveryServiceClient discoveryServiceClient,
+      LocationFactory locationFactory,
+      ProvisioningService provisioningService,
+      ProgramStateWriter programStateWriter,
+      TransactionRunner transactionRunner,
+      AccessTokenCodec accessTokenCodec,
+      TokenManager tokenManager) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
