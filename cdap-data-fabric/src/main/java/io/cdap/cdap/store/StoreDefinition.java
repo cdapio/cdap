@@ -381,6 +381,7 @@ public final class StoreDefinition {
     public static final String RUN_STATUS = "run_status";
     public static final String RUN_START_TIME = "run_start_time";
     public static final String RUN_RECORD_DATA = "run_record_data";
+    public static final String PEER_NAME = "peer_name";
     public static final String WORKFLOW_DATA = "workflow_data";
     public static final String COUNT_TYPE = "count_type";
     public static final String COUNTS = "counts";
@@ -425,7 +426,8 @@ public final class StoreDefinition {
                     Fields.stringType(PROGRAM_FIELD),
                     Fields.longType(RUN_START_TIME),
                     Fields.stringType(RUN_FIELD),
-                    Fields.stringType(RUN_RECORD_DATA))
+                    Fields.stringType(RUN_RECORD_DATA),
+                    Fields.stringType(PEER_NAME))
         .withPrimaryKeys(RUN_STATUS, NAMESPACE_FIELD, APPLICATION_FIELD, VERSION_FIELD, PROGRAM_TYPE_FIELD,
                          PROGRAM_FIELD, RUN_START_TIME, RUN_FIELD)
         .build();
