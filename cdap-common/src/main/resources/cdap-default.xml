@@ -4716,6 +4716,39 @@
     </description>
   </property>
 
+  <!-- System pods Configuration  -->
+  <property>
+    <name>system.worker.pool.enable</name>
+    <value>false</value>
+    <description>
+      If true, task system pods will be created with twill application
+    </description>
+  </property>
+
+  <property>
+    <name>system.worker.container.count</name>
+    <value>2</value>
+    <description>
+      Number of system worker containers for task execution.
+    </description>
+  </property>
+
+  <property>
+    <name>system.worker.container.num.cores</name>
+    <value>1</value>
+    <description>
+      Number of virtual cores for the system worker.
+    </description>
+  </property>
+
+  <property>
+    <name>system.worker.container.memory.mb</name>
+    <value>400</value>
+    <description>
+      Memory in megabytes for each system worker.
+    </description>
+  </property>
+
   <property>
     <name>artifact.localizer.container.num.cores</name>
     <value>1</value>

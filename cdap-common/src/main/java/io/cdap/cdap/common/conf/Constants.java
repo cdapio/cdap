@@ -451,6 +451,17 @@ public final class Constants {
     public static final String METRIC_PREFIX = "task.worker.";
   }
 
+
+  /**
+   * System pods.
+   */
+  public static final class SystemWorker {
+    public static final String POOL_ENABLE = "system.worker.pool.enable";
+    public static final String CONTAINER_MEMORY_MB = "system.worker.container.memory.mb";
+    public static final String CONTAINER_CORES = "system.worker.container.num.cores";
+    public static final String CONTAINER_COUNT = "system.worker.container.count";
+  }
+
   /**
    * Artifact localizer.
    */
