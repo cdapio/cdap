@@ -204,6 +204,12 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
     });
     LOG.debug("RemoteExecutionTwillRunnerService Executor in init: {}", scheduler);
     LOG.debug("RemoteExecutionTwillRunnerService init end");
+    LOG.debug("RemoteExecutionTwillRunnerService reference: {}", this);
+  }
+
+  @Override
+  public String toString() {
+    return getClass().getName() + "@" + Integer.toHexString(hashCode());
   }
 
   @Override
@@ -626,6 +632,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
                                                                                      processController,
                                                                                      scheduler, remoteExecutionService);
       startupTaskCompletion.thenAccept(o -> remoteExecutionService.start());
+      LOG.debug("RemoteExecutionTwillRunnerService reference in createController: {}", this);
       LOG.debug("RemoteExecutionTwillRunnerService Executor in createController: {}", scheduler);
 
       // On this controller termination, make sure it is removed from the controllers map and have resources released.
