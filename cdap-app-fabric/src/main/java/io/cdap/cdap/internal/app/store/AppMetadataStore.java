@@ -585,7 +585,7 @@ public class AppMetadataStore {
       .setSystemArgs(systemArgs)
       .setCluster(cluster)
       .setProfileId(profileId.get())
-      .setPeerName(systemArgs.get(ProgramOptionConstants.PEER_NAME))
+      // .setPeerName(systemArgs.get(ProgramOptionConstants.PEER_NAME))
       .setSourceId(sourceId)
       .setArtifactId(artifactId)
       .setPrincipal(systemArgs.get(ProgramOptionConstants.PRINCIPAL))
