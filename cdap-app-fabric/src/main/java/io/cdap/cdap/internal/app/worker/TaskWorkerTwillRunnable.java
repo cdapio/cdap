@@ -124,6 +124,7 @@ import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.CoreSecurityModule;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
+import io.cdap.cdap.security.guice.FileBasedCoreSecurityModule;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.RemoteUGIProvider;
@@ -324,7 +325,13 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
     });
     modules.add(new RemoteLogAppenderModule());
 
-    CoreSecurityModule coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf);
+    CoreSecurityModule coreSecurityModule = new FileBasedCoreSecurityModule() {
+      @Override
+      protected void bindKeyManager(Binder binder) {
+        binder.bind(KeyManager.class).to(FileBasedKeyManager.class).in(Scopes.SINGLETON);
+        expose(KeyManager.class);
+      }
+    };
     modules.add(coreSecurityModule);
     if (coreSecurityModule.requiresZKClient()) {
       modules.add(new ZKClientModule());
