@@ -42,6 +42,7 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -108,6 +109,7 @@ public class DispatchTask implements RunnableTask {
           new DFSLocationModule(),
           new ConfiguratorTaskModule(),
           new DispatchTaskModule(),
+          RemoteAuthenticatorModules.getDefaultModule(),
           new AuthenticationContextModules().getMasterWorkerModule(),
           new ExternalAuthenticationModule(),
           // new RemoteExecutionProgramRunnerModule(),
