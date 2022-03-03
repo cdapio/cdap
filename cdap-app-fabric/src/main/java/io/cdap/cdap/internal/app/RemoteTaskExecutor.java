@@ -63,6 +63,9 @@ public class RemoteTaskExecutor {
 
   private static final Gson GSON = new Gson();
   private static final String TASK_WORKER_URL = "/worker/run";
+  private static final String SYSTEM_WORKER_URL = "/system/run";
+
+  private String workerUrl;
   private static final Logger LOG = LoggerFactory.getLogger(RemoteTaskExecutor.class);
 
   private final boolean compression;
@@ -71,13 +74,18 @@ public class RemoteTaskExecutor {
   private final MetricsCollectionService metricsCollectionService;
 
   public RemoteTaskExecutor(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
-                            RemoteClientFactory remoteClientFactory) {
+                            RemoteClientFactory remoteClientFactory, Type workerType) {
     this.compression = cConf.getBoolean(Constants.TaskWorker.COMPRESSION_ENABLED);
     this.remoteClient = remoteClientFactory.createRemoteClient(Constants.Service.TASK_WORKER,
                                                                new DefaultHttpRequestConfig(false),
                                                                Constants.Gateway.INTERNAL_API_VERSION_3);
     this.retryStrategy = RetryStrategies.fromConfiguration(cConf, Constants.Service.TASK_WORKER + ".");
     this.metricsCollectionService = metricsCollectionService;
+    if (workerType == Type.TASK_WORKER) {
+      this.workerUrl = TASK_WORKER_URL;
+    } else {
+      this.workerUrl = SYSTEM_WORKER_URL;
+    }
   }
 
   /**
@@ -97,7 +105,7 @@ public class RemoteTaskExecutor {
       return Retries.callWithRetries((retryContext) -> {
         try {
           HttpRequest.Builder requestBuilder = remoteClient
-            .requestBuilder(HttpMethod.POST, TASK_WORKER_URL)
+            .requestBuilder(HttpMethod.POST, workerUrl)
             .withBody(requestBody.duplicate());
           if (compression) {
             requestBuilder.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
@@ -201,5 +209,15 @@ public class RemoteTaskExecutor {
     }
 
     throw new IllegalArgumentException("Unsupported content encoding " + encoding);
+  }
+
+  /*
+   Use task worker for executing an unsecured logic (e.g., deploying a pipeline which contains user code) remotely on
+   a task worker pod.
+   Use system worker pod for executing secure logic remotely on a system worker pod.
+   */
+  public enum Type {
+    SYSTEM_WORKER,
+    TASK_WORKER
   }
 }
