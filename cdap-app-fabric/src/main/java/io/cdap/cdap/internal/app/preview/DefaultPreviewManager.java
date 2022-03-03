@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2021 Cask Data, Inc.
+ * Copyright © 2016-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -49,6 +49,7 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.preview.PreviewDiscoveryRuntimeModule;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
@@ -296,6 +297,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
       // Needed for FileBasedKeyManager when file based core security module is used by CoreSecurityRuntimeModule
       new IOModule(),
       new ConfigModule(previewCConf, previewHConf, previewSConf),
+      RemoteAuthenticatorModules.getDefaultModule(),
       new PreviewDataModules().getDataFabricModule(transactionSystemClient, previewLevelDBTableService),
       new PreviewDataModules().getDataSetsModule(datasetFramework),
       new AuthenticationContextModules().getMasterModule(),

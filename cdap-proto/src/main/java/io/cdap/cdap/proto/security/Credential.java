@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2021-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@ package io.cdap.cdap.proto.security;
  * Encapsulating class for credentials passing through CDAP.
  */
 public class Credential {
+  public static final String CREDENTIAL_TYPE_EXTERNAL_BEARER = "Bearer";
   public static final String CREDENTIAL_TYPE_INTERNAL = "CDAP-Internal";
   public static final String CREDENTIAL_TYPE_EXTERNAL = "CDAP-External";
   public static final String CREDENTIAL_TYPE_EXTERNAL_ENCRYPTED = "CDAP-External-Encrypted";
@@ -40,7 +41,13 @@ public class Credential {
      * External encrypted credentials are credentials which should be decrypted prior to being checked by the
      * access enforcer extension.
      */
-    EXTERNAL_ENCRYPTED(CREDENTIAL_TYPE_EXTERNAL_ENCRYPTED);
+    EXTERNAL_ENCRYPTED(CREDENTIAL_TYPE_EXTERNAL_ENCRYPTED),
+    /**
+     * External credentials which conform to RFC 6750 Bearer Token Scheme. This should typically only be used when
+     * passing tokens outside of CDAP using the Authorization header.
+     * See https://www.rfc-editor.org/rfc/rfc6750 for details.
+     */
+    EXTERNAL_BEARER(CREDENTIAL_TYPE_EXTERNAL_BEARER);
 
     private final String qualifiedName;
 

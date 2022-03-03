@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2021-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,8 @@
 package io.cdap.cdap.internal.tethering;
 
 import com.google.common.net.HttpHeaders;
-import io.cdap.cdap.common.internal.remote.RemoteAuthenticator;
+import io.cdap.cdap.proto.security.Credential;
+import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequestConfig;
@@ -38,13 +39,14 @@ public final class TetheringUtils {
   private TetheringUtils() {
   }
 
-  public static HttpResponse sendHttpRequest(HttpMethod method, URI endpoint) throws IOException {
-    return sendHttpRequest(method, endpoint, null);
+  public static HttpResponse sendHttpRequest(RemoteAuthenticator remoteAuthenticator, HttpMethod method,
+                                             URI endpoint) throws IOException {
+    return sendHttpRequest(remoteAuthenticator, method, endpoint, null);
   }
 
-  public static HttpResponse sendHttpRequest(HttpMethod method, URI endpoint, @Nullable String content)
-    throws IOException {
-   HttpRequest.Builder builder;
+  public static HttpResponse sendHttpRequest(RemoteAuthenticator remoteAuthenticator, HttpMethod method,
+                                             URI endpoint, @Nullable String content) throws IOException {
+    HttpRequest.Builder builder;
     switch (method) {
       case GET:
         builder = HttpRequest.get(endpoint.toURL());
@@ -66,10 +68,12 @@ public final class TetheringUtils {
     }
 
     // Add Authorization header.
-    RemoteAuthenticator authenticator = RemoteAuthenticator.getDefaultAuthenticator();
-    if (authenticator != null) {
-      builder.addHeader(HttpHeaders.AUTHORIZATION,
-                        String.format("%s %s", authenticator.getType(), authenticator.getCredentials()));
+    if (remoteAuthenticator != null) {
+      Credential credential = remoteAuthenticator.getCredentials();
+      if (credential != null) {
+        builder.addHeader(HttpHeaders.AUTHORIZATION,
+                          String.format("%s %s", credential.getType().getQualifiedName(), credential.getValue()));
+      }
     }
     return HttpRequests.execute(builder.build(), new HttpRequestConfig(TIMEOUT_MS, TIMEOUT_MS));
   }

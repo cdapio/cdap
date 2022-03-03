@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019-2021 Cask Data, Inc.
+ * Copyright © 2019-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,6 +33,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
 import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.logging.LoggingContext;
@@ -157,6 +158,7 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
 
     List<Module> modules = new ArrayList<>();
     modules.add(new ConfigModule(cConf, hConf, sConf));
+    modules.add(RemoteAuthenticatorModules.getDefaultModule());
     modules.add(new PreviewConfigModule(cConf, hConf, sConf));
     modules.add(new IOModule());
     modules.add(new MetricsClientRuntimeModule().getDistributedModules());

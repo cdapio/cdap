@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2019 Cask Data, Inc.
+ * Copyright © 2017-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -43,6 +43,7 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.data.runtime.DataFabricModules;
@@ -323,6 +324,7 @@ public class JobQueueDebugger extends AbstractIdleService {
 
     return Guice.createInjector(
       new ConfigModule(cConf, HBaseConfiguration.create()),
+      RemoteAuthenticatorModules.getDefaultModule(),
       new IOModule(),
       new ZKClientModule(),
       new ZKDiscoveryModule(),

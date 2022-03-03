@@ -25,6 +25,7 @@ import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.data.runtime.StorageModule;
@@ -54,6 +55,8 @@ public class ArtifactCacheServiceMain extends AbstractServiceMain<EnvironmentOpt
                                            EnvironmentOptions options, CConfiguration cConf) {
     return Arrays.asList(
       new ConfigModule(cConf),
+      // TODO CDAP-18879: Check if configurable remote authenticator bindings are necessary here.
+      RemoteAuthenticatorModules.getDefaultModule(Constants.Tethering.CLIENT_AUTHENTICATOR_NAME),
       new StorageModule(),
       new PrivateModule() {
         @Override

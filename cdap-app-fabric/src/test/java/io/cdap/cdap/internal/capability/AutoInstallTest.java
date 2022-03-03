@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2021-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -78,8 +78,7 @@ public class AutoInstallTest {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     cConf.setInt(Constants.Capability.AUTO_INSTALL_THREADS, 5);
     ArtifactRepository artifactRepository = PowerMockito.mock(ArtifactRepository.class);
-    RemoteClientFactory remoteClientFactory = new RemoteClientFactory(null,
-                                                                      new NoOpInternalAuthenticator());
+    RemoteClientFactory remoteClientFactory = new RemoteClientFactory(null, new NoOpInternalAuthenticator());
     CapabilityApplier capabilityApplier = new CapabilityApplier(null, null,
                                                                 null, null, null,
                                                                 artifactRepository, cConf, remoteClientFactory);

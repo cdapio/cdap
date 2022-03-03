@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2021-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,6 +28,7 @@ import io.cdap.cdap.app.guice.NamespaceAdminModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.data.runtime.StorageModule;
@@ -47,8 +48,7 @@ import javax.annotation.Nullable;
 /**
  * Main class for running remote agent service in Kubernetes.
  */
-public class
-TetheringAgentServiceMain extends AbstractServiceMain<EnvironmentOptions> {
+public class TetheringAgentServiceMain extends AbstractServiceMain<EnvironmentOptions> {
   /**
    * Main entry point
    */
@@ -61,6 +61,8 @@ TetheringAgentServiceMain extends AbstractServiceMain<EnvironmentOptions> {
                                            EnvironmentOptions options, CConfiguration cConf) {
     return Arrays.asList(
       new ConfigModule(cConf),
+      // TODO CDAP-18879: Fix RemoteAuthenticator bindings to separate internal and remote HTTP calls.
+      RemoteAuthenticatorModules.getDefaultModule(Constants.Tethering.CLIENT_AUTHENTICATOR_NAME),
       new SystemDatasetRuntimeModule().getStandaloneModules(),
       new TransactionModules().getSingleNodeModules(),
       new NamespaceAdminModule().getStandaloneModules(),

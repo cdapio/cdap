@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2021-2022 Cask Data, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
@@ -32,6 +32,7 @@ import io.cdap.cdap.app.deploy.ConfigResponse;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -79,6 +80,7 @@ public class ConfiguratorTask implements RunnableTask {
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
+      RemoteAuthenticatorModules.getDefaultModule(),
       new LocalLocationModule(),
       new ConfiguratorTaskModule(),
       new AuthenticationContextModules().getMasterWorkerModule()
