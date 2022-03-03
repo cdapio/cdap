@@ -29,11 +29,13 @@ import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.proto.ProgramType;
 import org.apache.twill.api.RunId;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,8 +63,10 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
                                 @Named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO)
                                   ArtifactRepository noAuthArtifactRepository,
                                 @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname,
-                                ProgramStateWriter programStateWriter, ConfiguratorFactory configuratorFactory) {
-    super(cConf, programRunnerFactory, noAuthArtifactRepository, programStateWriter, configuratorFactory);
+                                ProgramStateWriter programStateWriter, ConfiguratorFactory configuratorFactory,
+                                LocationFactory locationFactory, RemoteClientFactory remoteClientFactory) {
+    super(cConf, programRunnerFactory, noAuthArtifactRepository, programStateWriter, configuratorFactory,
+          locationFactory, remoteClientFactory);
     this.hostname = hostname.getCanonicalHostName();
   }
 

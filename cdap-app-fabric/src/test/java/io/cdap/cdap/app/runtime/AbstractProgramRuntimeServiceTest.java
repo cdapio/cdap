@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.app.runtime;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
@@ -29,10 +30,13 @@ import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
@@ -45,8 +49,12 @@ import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import org.apache.twill.api.RunId;
+import org.apache.twill.discovery.InMemoryDiscoveryService;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -190,7 +198,7 @@ public class AbstractProgramRuntimeServiceTest {
     final Program program = createDummyProgram();
     final ProgramRuntimeService runtimeService =
       new AbstractProgramRuntimeService(CConfiguration.create(), runnerFactory, null,
-                                        new NoOpProgramStateWriter(), null) {
+                                        new NoOpProgramStateWriter(), null, null, null) {
       @Override
       public ProgramLiveInfo getLiveInfo(ProgramId programId) {
         return new ProgramLiveInfo(programId, "runtime") { };
@@ -255,6 +263,33 @@ public class AbstractProgramRuntimeServiceTest {
         runtimeService.stopAndWait();
       }
 
+    } finally {
+      runtimeService.stopAndWait();
+    }
+  }
+
+  @Test (timeout = 5000)
+  public void testTetheredRun() throws IOException, ExecutionException, InterruptedException, TimeoutException {
+    ProgramRunnerFactory runnerFactory = createProgramRunnerFactory();
+    Program program = createDummyProgram();
+    InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
+    RemoteClientFactory remoteClientFactory = new RemoteClientFactory(
+      discoveryService, new DefaultInternalAuthenticator(new AuthenticationTestContext()));
+    LocationFactory locationFactory = new LocalLocationFactory(TEMP_FOLDER.newFolder());
+    ProgramRuntimeService runtimeService = new TestProgramRuntimeService(CConfiguration.create(),
+                                                                         runnerFactory, program, null, null,
+                                                                         locationFactory, remoteClientFactory);
+    runtimeService.startAndWait();
+    try {
+      ProgramDescriptor descriptor = new ProgramDescriptor(program.getId(), null,
+                                                           NamespaceId.DEFAULT.artifact("test", "1.0"));
+      Arguments sysArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.PEER_NAME, "mypeer"));
+      Arguments userArgs = new BasicArguments(Collections.emptyMap());
+      ProgramController controller = runtimeService.run(descriptor,
+                                                        new SimpleProgramOptions(program.getId(), sysArgs, userArgs),
+                                                        RunIds.generate()).getController();
+      Tasks.waitFor(ProgramController.State.COMPLETED, controller::getState,
+                    5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     } finally {
       runtimeService.stopAndWait();
     }
@@ -410,7 +445,19 @@ public class AbstractProgramRuntimeServiceTest {
                                         @Nullable Program program,
                                         @Nullable ArtifactRepository artifactRepository,
                                         @Nullable RuntimeInfo extraInfo) {
-      super(cConf, programRunnerFactory, artifactRepository, new NoOpProgramStateWriter(), null);
+      super(cConf, programRunnerFactory, artifactRepository, new NoOpProgramStateWriter(), null, null, null);
+      this.program = program;
+      this.extraInfo = extraInfo;
+    }
+
+    protected TestProgramRuntimeService(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
+                                        @Nullable Program program,
+                                        @Nullable ArtifactRepository artifactRepository,
+                                        @Nullable RuntimeInfo extraInfo,
+                                        LocationFactory locationFactory,
+                                        RemoteClientFactory remoteClientFactory) {
+      super(cConf, programRunnerFactory, artifactRepository, new NoOpProgramStateWriter(), null,
+            locationFactory, remoteClientFactory);
       this.program = program;
       this.extraInfo = extraInfo;
     }

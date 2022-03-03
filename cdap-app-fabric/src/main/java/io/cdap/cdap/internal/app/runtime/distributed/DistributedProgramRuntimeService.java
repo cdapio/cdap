@@ -30,6 +30,7 @@ import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.Delegator;
 import io.cdap.cdap.common.twill.TwillAppNames;
@@ -54,12 +55,15 @@ import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunResources;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.common.Threads;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -91,8 +95,11 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
                                    @Named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO)
                                      ArtifactRepository noAuthArtifactRepository,
                                    Impersonator impersonator, ProgramStateWriter programStateWriter,
-                                   ConfiguratorFactory configuratorFactory) {
-    super(cConf, programRunnerFactory, noAuthArtifactRepository, programStateWriter, configuratorFactory);
+                                   ConfiguratorFactory configuratorFactory,
+                                   LocationFactory locationFactory,
+                                   RemoteClientFactory remoteClientFactory) {
+    super(cConf, programRunnerFactory, noAuthArtifactRepository, programStateWriter, configuratorFactory,
+          locationFactory, remoteClientFactory);
     this.twillRunner = twillRunner;
     this.store = store;
     this.impersonator = impersonator;
@@ -147,6 +154,22 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     try {
       impersonator.doAs(artifactId, () -> {
         Locations.linkOrCopy(artifactDetail.getDescriptor().getLocation(), targetFile);
+        return null;
+      });
+    } catch (FileAlreadyExistsException ex) {
+      LOG.warn("Artifact file {} already exists.", targetFile.getAbsolutePath());
+    } catch (Exception e) {
+      Throwables.propagateIfPossible(e, IOException.class);
+      // should not happen
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  protected void copyArtifact(ArtifactId artifactId, InputStream in, File targetFile) throws IOException {
+    try {
+      impersonator.doAs(artifactId, () -> {
+        Files.copy(in, targetFile.toPath());
         return null;
       });
     } catch (FileAlreadyExistsException ex) {
