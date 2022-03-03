@@ -143,7 +143,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
         : Optional.ofNullable(remoteProgramRunnerFactory)
             .orElseThrow(UnsupportedOperationException::new)
     ).create(programId.getType());
-
+    LOG.debug("Starting Pipeline dispatch");
     executor.execute(() -> {
       try {
         Dispatcher dispatcher = this.dispatcherFactory.create(appLaunchInfo);
