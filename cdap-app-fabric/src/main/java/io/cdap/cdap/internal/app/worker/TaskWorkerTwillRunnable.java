@@ -144,140 +144,141 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
   @VisibleForTesting
   static Injector createInjector(CConfiguration cConf, Configuration hConf, SConfiguration sConf) {
     List<Module> modules = new ArrayList<>();
-
+    modules.add(new AppFabricServiceRuntimeModule(cConf).getDistributedModules());
+    modules.add(new ConfigModule(cConf, hConf, sConf));
     // CoreSecurityModule coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf);
     // modules.add(new AppFabricServiceRuntimeModule(cConf));
-    modules.add(new TwillModule());
-    modules.add(new ConfigModule(cConf, hConf, sConf));
-    modules.add(RemoteAuthenticatorModules.getDefaultModule());
-    modules.add(new LocalLocationModule());
-    modules.add(new IOModule());
-    modules.add(new AuthenticationContextModules().getMasterWorkerModule());
-    // modules.add(coreSecurityModule);
-    modules.add(new CoreSecurityModule() {
-      @Override
-      protected void bindKeyManager(Binder binder) {
-        LOG.debug("Going to bind KeyManager in Injector!!!");
-        binder.bind(KeyManager.class).to(FileBasedKeyManager.class).in(Scopes.SINGLETON);
-        expose(KeyManager.class);
-      }
-    });
-    modules.add(new MessagingClientModule());
-    // modules.add(new SystemAppModule());
-    modules.add(new MetricsClientRuntimeModule().getDistributedModules());
-    // modules.add(new RemoteExecutionProgramRunnerModule());
-    // modules.add(new ProgramRunnerRuntimeModule().getDistributedModules());
-    modules.add(new SecureStoreServerModule());
-    modules.add(new ProvisionerModule());
-    modules.add(new StorageModule());
-    modules.add(new AuthorizationEnforcementModule().getDistributedModules());
-    modules.add(new AbstractModule() {
-      @Override
-      protected void configure() {
-        bind(Store.class).to(DefaultStore.class);
-        bind(UGIProvider.class).to(CurrentUGIProvider.class).in(Scopes.SINGLETON);
-        bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class).in(Scopes.SINGLETON);
-        bind(ArtifactRepository.class).to(RemoteArtifactRepository.class);
-        bind(PluginFinder.class).to(LocalPluginFinder.class);
-        bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class).in(Scopes.SINGLETON);
-        bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
-        install(new FactoryModuleBuilder()
-            .implement(ArtifactManager.class, RemoteArtifactManager.class)
-            .build(ArtifactManagerFactory.class));
-        install(
-            new FactoryModuleBuilder()
-                .implement(Dispatcher.class, InMemoryDispatcher.class)
-                .build(Key.get(DispatcherFactory.class, Names.named("local")))
-        );
-        install(
-            new FactoryModuleBuilder()
-                .implement(Dispatcher.class, RemoteDispatcher.class)
-                .build(Key.get(DispatcherFactory.class, Names.named("remote")))
-        );
-        bind(DispatcherFactory.class).toProvider(DispatcherFactoryProvider.class);
-
-        install(
-            new FactoryModuleBuilder()
-                .implement(Configurator.class, InMemoryConfigurator.class)
-                .build(Key.get(ConfiguratorFactory.class, Names.named("local")))
-        );
-        install(
-            new FactoryModuleBuilder()
-                .implement(Configurator.class, RemoteConfigurator.class)
-                .build(Key.get(ConfiguratorFactory.class, Names.named("remote")))
-        );
-        bind(ConfiguratorFactory.class).toProvider(ConfiguratorFactoryProvider.class);
-
-        Key<TwillRunnerService> twillRunnerServiceKey =
-            Key.get(TwillRunnerService.class, Constants.AppFabric.RemoteExecution.class);
-
-        // Bind the TwillRunner for remote execution used in isolated cluster.
-        // The binding is added in here instead of in TwillModule is because this module can be used
-        // in standalone env as well and it doesn't require YARN.
-        bind(twillRunnerServiceKey).to(RemoteExecutionTwillRunnerService.class).in(Scopes.SINGLETON);
-
-        // Bind ProgramRunnerFactory and expose it with the RemoteExecution annotation
-        Key<ProgramRunnerFactory> programRunnerFactoryKey = Key.get(ProgramRunnerFactory.class,
-            Constants.AppFabric.RemoteExecution.class);
-        // ProgramRunnerFactory should be in distributed mode
-        bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.DISTRIBUTED);
-        bind(programRunnerFactoryKey).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
-
-        // The following are bindings are for ProgramRunners. They are private to this module and only
-        // available to the remote execution ProgramRunnerFactory exposed.
-
-        // This set of program runners are for isolated mode
-        bind(ClusterMode.class).toInstance(ClusterMode.ISOLATED);
-        // No need to publish program state for remote execution runs since they will publish states and get
-        // collected back via the runtime monitoring
-        bindConstant().annotatedWith(Names.named(DefaultProgramRunnerFactory.PUBLISH_PROGRAM_STATE)).to(false);
-        // TwillRunner used by the ProgramRunner is the remote execution one
-        bind(TwillRunner.class).annotatedWith(Constants.AppFabric.ProgramRunner.class).to(twillRunnerServiceKey);
-        // ProgramRunnerFactory used by ProgramRunner is the remote execution one.
-        bind(ProgramRunnerFactory.class)
-            .annotatedWith(Constants.AppFabric.ProgramRunner.class)
-            .to(programRunnerFactoryKey);
-
-        // A private Map binding of ProgramRunner for ProgramRunnerFactory to use
-        MapBinder<ProgramType, ProgramRunner> defaultProgramRunnerBinder = MapBinder.newMapBinder(
-            binder(), ProgramType.class, ProgramRunner.class);
-
-        defaultProgramRunnerBinder.addBinding(ProgramType.MAPREDUCE).to(
-            DistributedMapReduceProgramRunner.class);
-        defaultProgramRunnerBinder.addBinding(ProgramType.WORKFLOW).to(
-            DistributedWorkflowProgramRunner.class);
-        defaultProgramRunnerBinder.addBinding(ProgramType.WORKER).to(DistributedWorkerProgramRunner.class);
-        Multibinder<ProgramCompletionNotifier> multiBinder = Multibinder.newSetBinder(binder(),
-            ProgramCompletionNotifier.class);
-        multiBinder.addBinding().toProvider(ProgramCompletionNotifierProvider.class);
-      }
-    });
-
-    // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
-    MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
-
-    if (masterEnv == null) {
-      modules.add(new ZKClientModule());
-      modules.add(new ZKDiscoveryModule());
-      modules.add(new KafkaClientModule());
-      modules.add(new KafkaLogAppenderModule());
-    } else {
-      modules.add(new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(DiscoveryService.class)
-              .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
-          bind(DiscoveryServiceClient.class)
-              .toProvider(
-                  new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
-        }
-      });
-      modules.add(new RemoteLogAppenderModule());
-
-      // if (coreSecurityModule.requiresZKClient()) {
-      //   modules.add(new ZKClientModule());
-      // }
-    }
+    // modules.add(new TwillModule());
+    // modules.add(new ConfigModule(cConf, hConf, sConf));
+    // modules.add(RemoteAuthenticatorModules.getDefaultModule());
+    // modules.add(new LocalLocationModule());
+    // modules.add(new IOModule());
+    // modules.add(new AuthenticationContextModules().getMasterWorkerModule());
+    // // modules.add(coreSecurityModule);
+    // modules.add(new CoreSecurityModule() {
+    //   @Override
+    //   protected void bindKeyManager(Binder binder) {
+    //     LOG.debug("Going to bind KeyManager in Injector!!!");
+    //     binder.bind(KeyManager.class).to(FileBasedKeyManager.class).in(Scopes.SINGLETON);
+    //     expose(KeyManager.class);
+    //   }
+    // });
+    // modules.add(new MessagingClientModule());
+    // // modules.add(new SystemAppModule());
+    // modules.add(new MetricsClientRuntimeModule().getDistributedModules());
+    // // modules.add(new RemoteExecutionProgramRunnerModule());
+    // // modules.add(new ProgramRunnerRuntimeModule().getDistributedModules());
+    // modules.add(new SecureStoreServerModule());
+    // modules.add(new ProvisionerModule());
+    // modules.add(new StorageModule());
+    // modules.add(new AuthorizationEnforcementModule().getDistributedModules());
+    // modules.add(new AbstractModule() {
+    //   @Override
+    //   protected void configure() {
+    //     bind(Store.class).to(DefaultStore.class);
+    //     bind(UGIProvider.class).to(CurrentUGIProvider.class).in(Scopes.SINGLETON);
+    //     bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class).in(Scopes.SINGLETON);
+    //     bind(ArtifactRepository.class).to(RemoteArtifactRepository.class);
+    //     bind(PluginFinder.class).to(LocalPluginFinder.class);
+    //     bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class).in(Scopes.SINGLETON);
+    //     bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
+    //     install(new FactoryModuleBuilder()
+    //         .implement(ArtifactManager.class, RemoteArtifactManager.class)
+    //         .build(ArtifactManagerFactory.class));
+    //     install(
+    //         new FactoryModuleBuilder()
+    //             .implement(Dispatcher.class, InMemoryDispatcher.class)
+    //             .build(Key.get(DispatcherFactory.class, Names.named("local")))
+    //     );
+    //     install(
+    //         new FactoryModuleBuilder()
+    //             .implement(Dispatcher.class, RemoteDispatcher.class)
+    //             .build(Key.get(DispatcherFactory.class, Names.named("remote")))
+    //     );
+    //     bind(DispatcherFactory.class).toProvider(DispatcherFactoryProvider.class);
+    //
+    //     install(
+    //         new FactoryModuleBuilder()
+    //             .implement(Configurator.class, InMemoryConfigurator.class)
+    //             .build(Key.get(ConfiguratorFactory.class, Names.named("local")))
+    //     );
+    //     install(
+    //         new FactoryModuleBuilder()
+    //             .implement(Configurator.class, RemoteConfigurator.class)
+    //             .build(Key.get(ConfiguratorFactory.class, Names.named("remote")))
+    //     );
+    //     bind(ConfiguratorFactory.class).toProvider(ConfiguratorFactoryProvider.class);
+    //
+    //     Key<TwillRunnerService> twillRunnerServiceKey =
+    //         Key.get(TwillRunnerService.class, Constants.AppFabric.RemoteExecution.class);
+    //
+    //     // Bind the TwillRunner for remote execution used in isolated cluster.
+    //     // The binding is added in here instead of in TwillModule is because this module can be used
+    //     // in standalone env as well and it doesn't require YARN.
+    //     bind(twillRunnerServiceKey).to(RemoteExecutionTwillRunnerService.class).in(Scopes.SINGLETON);
+    //
+    //     // Bind ProgramRunnerFactory and expose it with the RemoteExecution annotation
+    //     Key<ProgramRunnerFactory> programRunnerFactoryKey = Key.get(ProgramRunnerFactory.class,
+    //         Constants.AppFabric.RemoteExecution.class);
+    //     // ProgramRunnerFactory should be in distributed mode
+    //     bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.DISTRIBUTED);
+    //     bind(programRunnerFactoryKey).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
+    //
+    //     // The following are bindings are for ProgramRunners. They are private to this module and only
+    //     // available to the remote execution ProgramRunnerFactory exposed.
+    //
+    //     // This set of program runners are for isolated mode
+    //     bind(ClusterMode.class).toInstance(ClusterMode.ISOLATED);
+    //     // No need to publish program state for remote execution runs since they will publish states and get
+    //     // collected back via the runtime monitoring
+    //     bindConstant().annotatedWith(Names.named(DefaultProgramRunnerFactory.PUBLISH_PROGRAM_STATE)).to(false);
+    //     // TwillRunner used by the ProgramRunner is the remote execution one
+    //     bind(TwillRunner.class).annotatedWith(Constants.AppFabric.ProgramRunner.class).to(twillRunnerServiceKey);
+    //     // ProgramRunnerFactory used by ProgramRunner is the remote execution one.
+    //     bind(ProgramRunnerFactory.class)
+    //         .annotatedWith(Constants.AppFabric.ProgramRunner.class)
+    //         .to(programRunnerFactoryKey);
+    //
+    //     // A private Map binding of ProgramRunner for ProgramRunnerFactory to use
+    //     MapBinder<ProgramType, ProgramRunner> defaultProgramRunnerBinder = MapBinder.newMapBinder(
+    //         binder(), ProgramType.class, ProgramRunner.class);
+    //
+    //     defaultProgramRunnerBinder.addBinding(ProgramType.MAPREDUCE).to(
+    //         DistributedMapReduceProgramRunner.class);
+    //     defaultProgramRunnerBinder.addBinding(ProgramType.WORKFLOW).to(
+    //         DistributedWorkflowProgramRunner.class);
+    //     defaultProgramRunnerBinder.addBinding(ProgramType.WORKER).to(DistributedWorkerProgramRunner.class);
+    //     Multibinder<ProgramCompletionNotifier> multiBinder = Multibinder.newSetBinder(binder(),
+    //         ProgramCompletionNotifier.class);
+    //     multiBinder.addBinding().toProvider(ProgramCompletionNotifierProvider.class);
+    //   }
+    // });
+    //
+    // // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
+    // MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
+    //
+    // if (masterEnv == null) {
+    //   modules.add(new ZKClientModule());
+    //   modules.add(new ZKDiscoveryModule());
+    //   modules.add(new KafkaClientModule());
+    //   modules.add(new KafkaLogAppenderModule());
+    // } else {
+    //   modules.add(new AbstractModule() {
+    //     @Override
+    //     protected void configure() {
+    //       bind(DiscoveryService.class)
+    //           .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
+    //       bind(DiscoveryServiceClient.class)
+    //           .toProvider(
+    //               new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
+    //     }
+    //   });
+    //   modules.add(new RemoteLogAppenderModule());
+    //
+    //   // if (coreSecurityModule.requiresZKClient()) {
+    //   //   modules.add(new ZKClientModule());
+    //   // }
+    // }
 
     return Guice.createInjector(modules);
   }
