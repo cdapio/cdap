@@ -439,7 +439,8 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
    */
   private void initializeControllers(long startMillis) {
     int limit = cConf.getInt(Constants.RuntimeMonitor.INIT_BATCH_SIZE);
-    RetryStrategy retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.runtime.monitor.");
+    RetryStrategy retryStrategy = RetryStrategies.fromConfiguration(cConf,
+                                                                    Constants.Service.RUNTIME_MONITOR_RETRY_PREFIX);
     AtomicReference<AppMetadataStore.Cursor> cursorRef = new AtomicReference<>(AppMetadataStore.Cursor.EMPTY);
     AtomicInteger count = new AtomicInteger();
     AtomicBoolean completed = new AtomicBoolean();

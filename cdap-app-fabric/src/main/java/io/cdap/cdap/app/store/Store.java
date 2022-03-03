@@ -108,6 +108,17 @@ public interface Store {
   void setRunning(ProgramRunId id, long runTime, @Nullable String twillRunId, byte[] sourceId);
 
   /**
+   * Logs stopping of a program run and persists program status to {@link ProgramRunStatus#STOPPING}.
+   *
+   * @param id run id of the program
+   * @param sourceId id of the source of program run status, which is proportional to the timestamp of
+   *                 when the current program run status is reached
+   * @param stoppingTime stopping timestamp in seconds
+   * @param terminateTs timestamp at which program should be in an end state calculated using graceful shutdown period
+   */
+  void setStopping(ProgramRunId id, byte[] sourceId, long stoppingTime, long terminateTs);
+
+  /**
    * Logs end of program run and sets the run status to one of: {@link ProgramRunStatus#COMPLETED},
    * or {@link ProgramRunStatus#KILLED}.
    *

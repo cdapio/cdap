@@ -147,6 +147,7 @@ public final class Constants {
     public static final String LOG_BUFFER_SERVICE = "log.buffer.service";
     public static final String REMOTE_AGENT_SERVICE = "remote.agent.service";
     public static final String ARTIFACT_CACHE_SERVICE = "artifact.cache.service";
+    public static final String RUNTIME_MONITOR_RETRY_PREFIX = "system.runtime.monitor.";
   }
 
   /**
@@ -232,6 +233,8 @@ public final class Constants {
     public static final String LOCAL_DATASET_DELETER_INTERVAL_SECONDS = "app.program.local.dataset.deleter.interval";
     public static final String LOCAL_DATASET_DELETER_INITIAL_DELAY_SECONDS
       = "app.program.local.dataset.deleter.initial.delay";
+    public static final String PROGRAM_TERMINATOR_INTERVAL_SECS = "app.program.terminator.interval.secs";
+    public static final String PROGRAM_TERMINATOR_TX_BATCH_SIZE = "app.program.terminator.tx.batch.size";
     public static final String SYSTEM_ARTIFACTS_DIR = "app.artifact.dir";
     public static final String SYSTEM_ARTIFACTS_MAX_PARALLELISM = "app.artifact.parallelism.max";
     public static final String PROGRAM_EXTRA_CLASSPATH = "app.program.extra.classpath";

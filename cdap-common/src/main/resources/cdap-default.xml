@@ -563,6 +563,25 @@
   </property>
 
   <property>
+    <name>app.program.terminator.interval.secs</name>
+    <value>300</value>
+    <description>
+      Interval in seconds of how often the program terminator thread will run;
+      this value should be greater than 0
+    </description>
+  </property>
+
+  <property>
+    <name>app.program.terminator.tx.batch.size</name>
+    <value>1000</value>
+    <description>
+      Number of run records being fetched per transaction for checking
+      if a program in stopping state is active beyond its terminateTime.
+      This value is directly proportional to the ${data.tx.timeout} setting.
+    </description>
+  </property>
+
+  <property>
     <name>app.program.runtime.extensions.dir</name>
     <value>/opt/cdap/master/ext/runtimes</value>
     <description>

@@ -155,7 +155,8 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     super.doStartUp();
 
     int batchSize = cConf.getInt(Constants.RuntimeMonitor.INIT_BATCH_SIZE);
-    RetryStrategy retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.runtime.monitor.");
+    RetryStrategy retryStrategy = RetryStrategies.fromConfiguration(cConf,
+                                                                    Constants.Service.RUNTIME_MONITOR_RETRY_PREFIX);
     long startTs = System.currentTimeMillis();
 
     Retries.runWithRetries(() -> store.scanActiveRuns(batchSize, (runRecordDetail) -> {
