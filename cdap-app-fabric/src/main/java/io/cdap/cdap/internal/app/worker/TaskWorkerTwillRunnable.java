@@ -46,6 +46,7 @@ import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.app.guice.RemoteExecutionProgramRunnerModule;
 import io.cdap.cdap.app.guice.RemoteExecutionProgramRunnerModule.ProgramCompletionNotifierProvider;
 import io.cdap.cdap.app.guice.TwillModule;
+import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
@@ -306,7 +307,30 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
     //   // }
     // }
 
-    List<Module> modules = new ArrayList<>(Arrays.asList(
+    List<Module> modules = new ArrayList<>();
+    modules.add(new ConfigModule(cConf, hConf, sConf));
+    modules.add(RemoteAuthenticatorModules.getDefaultModule());
+    modules.add(new PreviewConfigModule(cConf, hConf, sConf));
+    modules.add(new IOModule());
+    modules.add(new MetricsClientRuntimeModule().getDistributedModules());
+    modules.add(new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(DiscoveryService.class)
+            .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
+        bind(DiscoveryServiceClient.class)
+            .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
+      }
+    });
+    modules.add(new RemoteLogAppenderModule());
+
+    CoreSecurityModule coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf);
+    modules.add(coreSecurityModule);
+    if (coreSecurityModule.requiresZKClient()) {
+      modules.add(new ZKClientModule());
+    }
+    modules.add(new AuthenticationContextModules().getMasterModule());
+    modules.addAll(Arrays.asList(
         // Always use local table implementations, which use LevelDB.
         // In K8s, there won't be HBase and the cdap-site should be set to use SQL store for StructuredTable.
         new DataSetServiceModules().getStandaloneModules(),
