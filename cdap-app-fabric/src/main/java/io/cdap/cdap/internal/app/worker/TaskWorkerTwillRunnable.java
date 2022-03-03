@@ -146,6 +146,8 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
     List<Module> modules = new ArrayList<>();
     modules.add(new AppFabricServiceRuntimeModule(cConf).getDistributedModules());
     modules.add(new ConfigModule(cConf, hConf, sConf));
+    modules.add(new LocalLocationModule());
+    modules.add(RemoteAuthenticatorModules.getDefaultModule());
     // CoreSecurityModule coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf);
     // modules.add(new AppFabricServiceRuntimeModule(cConf));
     // modules.add(new TwillModule());
@@ -254,31 +256,31 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
     //   }
     // });
     //
-    // // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
-    // MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
-    //
-    // if (masterEnv == null) {
-    //   modules.add(new ZKClientModule());
-    //   modules.add(new ZKDiscoveryModule());
-    //   modules.add(new KafkaClientModule());
-    //   modules.add(new KafkaLogAppenderModule());
-    // } else {
-    //   modules.add(new AbstractModule() {
-    //     @Override
-    //     protected void configure() {
-    //       bind(DiscoveryService.class)
-    //           .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
-    //       bind(DiscoveryServiceClient.class)
-    //           .toProvider(
-    //               new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
-    //     }
-    //   });
-    //   modules.add(new RemoteLogAppenderModule());
-    //
-    //   // if (coreSecurityModule.requiresZKClient()) {
-    //   //   modules.add(new ZKClientModule());
-    //   // }
-    // }
+    // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
+    MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
+
+    if (masterEnv == null) {
+      modules.add(new ZKClientModule());
+      modules.add(new ZKDiscoveryModule());
+      modules.add(new KafkaClientModule());
+      modules.add(new KafkaLogAppenderModule());
+    } else {
+      modules.add(new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(DiscoveryService.class)
+              .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
+          bind(DiscoveryServiceClient.class)
+              .toProvider(
+                  new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
+        }
+      });
+      modules.add(new RemoteLogAppenderModule());
+
+      // if (coreSecurityModule.requiresZKClient()) {
+      //   modules.add(new ZKClientModule());
+      // }
+    }
 
     return Guice.createInjector(modules);
   }
