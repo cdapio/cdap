@@ -32,13 +32,16 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
+import com.google.inject.util.Modules;
 import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.deploy.Dispatcher;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
+import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.guice.DefaultProgramRunnerFactory;
+import io.cdap.cdap.app.guice.MonitorHandlerModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.app.guice.RemoteExecutionProgramRunnerModule;
 import io.cdap.cdap.app.guice.RemoteExecutionProgramRunnerModule.ProgramCompletionNotifierProvider;
@@ -52,6 +55,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
@@ -62,7 +66,19 @@ import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
+import io.cdap.cdap.data.runtime.ConstantTransactionSystemClient;
+import io.cdap.cdap.data.runtime.DataSetServiceModules;
+import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data.runtime.StorageModule;
+import io.cdap.cdap.data.runtime.TransactionExecutorModule;
+import io.cdap.cdap.data2.audit.AuditModule;
+import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
+import io.cdap.cdap.data2.metadata.writer.MessagingMetadataPublisher;
+import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
+import io.cdap.cdap.data2.transaction.DelegatingTransactionSystemClientService;
+import io.cdap.cdap.data2.transaction.TransactionSystemClientService;
+import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactoryProvider;
 import io.cdap.cdap.internal.app.deploy.DispatcherFactory;
@@ -71,6 +87,8 @@ import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
 import io.cdap.cdap.internal.app.deploy.InMemoryDispatcher;
 import io.cdap.cdap.internal.app.deploy.RemoteConfigurator;
 import io.cdap.cdap.internal.app.deploy.RemoteDispatcher;
+import io.cdap.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
+import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -87,6 +105,7 @@ import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionTwill
 import io.cdap.cdap.internal.app.services.ProgramCompletionNotifier;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
+import io.cdap.cdap.internal.tethering.TetheringClientSubscriberService;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
@@ -94,6 +113,8 @@ import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
+import io.cdap.cdap.metrics.guice.MetricsStoreModule;
+import io.cdap.cdap.operations.guice.OperationalStatsModule;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.FileBasedKeyManager;
@@ -106,7 +127,9 @@ import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.RemoteUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
+import java.util.Arrays;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnable;
@@ -143,11 +166,12 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
 
   @VisibleForTesting
   static Injector createInjector(CConfiguration cConf, Configuration hConf, SConfiguration sConf) {
-    List<Module> modules = new ArrayList<>();
-    modules.add(new AppFabricServiceRuntimeModule(cConf).getDistributedModules());
-    modules.add(new ConfigModule(cConf, hConf, sConf));
-    modules.add(new LocalLocationModule());
-    modules.add(RemoteAuthenticatorModules.getDefaultModule());
+    // List<Module> modules = new ArrayList<>();
+
+    // modules.add(new AppFabricServiceRuntimeModule(cConf).getDistributedModules());
+    // modules.add(new ConfigModule(cConf, hConf, sConf));
+    // modules.add(new LocalLocationModule());
+    // modules.add(RemoteAuthenticatorModules.getDefaultModule());
     // CoreSecurityModule coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf);
     // modules.add(new AppFabricServiceRuntimeModule(cConf));
     // modules.add(new TwillModule());
@@ -256,33 +280,92 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
     //   }
     // });
     //
-    // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
+    // // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
     MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
+    //
+    // if (masterEnv == null) {
+    //   modules.add(new ZKClientModule());
+    //   modules.add(new ZKDiscoveryModule());
+    //   modules.add(new KafkaClientModule());
+    //   modules.add(new KafkaLogAppenderModule());
+    // } else {
+    //   modules.add(new AbstractModule() {
+    //     @Override
+    //     protected void configure() {
+    //       bind(DiscoveryService.class)
+    //           .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
+    //       bind(DiscoveryServiceClient.class)
+    //           .toProvider(
+    //               new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
+    //     }
+    //   });
+    //   modules.add(new RemoteLogAppenderModule());
+    //
+    //   // if (coreSecurityModule.requiresZKClient()) {
+    //   //   modules.add(new ZKClientModule());
+    //   // }
+    // }
 
-    if (masterEnv == null) {
-      modules.add(new ZKClientModule());
-      modules.add(new ZKDiscoveryModule());
-      modules.add(new KafkaClientModule());
-      modules.add(new KafkaLogAppenderModule());
-    } else {
-      modules.add(new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(DiscoveryService.class)
-              .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
-          bind(DiscoveryServiceClient.class)
-              .toProvider(
-                  new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
+    List<Module> modules = new ArrayList<>(Arrays.asList(
+        // Always use local table implementations, which use LevelDB.
+        // In K8s, there won't be HBase and the cdap-site should be set to use SQL store for StructuredTable.
+        new DataSetServiceModules().getStandaloneModules(),
+        // The Dataset set modules are only needed to satisfy dependency injection
+        new DataSetsModules().getStandaloneModules(),
+        new MetricsStoreModule(),
+        new MessagingClientModule(),
+        new ExploreClientModule(),
+        new AuditModule(),
+        new AuthorizationModule(),
+        new AuthorizationEnforcementModule().getMasterModule(),
+        Modules.override(new AppFabricServiceRuntimeModule(cConf).getDistributedModules())
+            .with(new AbstractModule() {
+              @Override
+              protected void configure() {
+                bind(StorageProviderNamespaceAdmin.class).to(
+                    LocalStorageProviderNamespaceAdmin.class);
+              }
+            }),
+        new ProgramRunnerRuntimeModule().getDistributedModules(true),
+        new MonitorHandlerModule(false),
+        new SecureStoreServerModule(),
+        new OperationalStatsModule(),
+        getDataFabricModule(),
+        new DFSLocationModule(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(TwillRunnerService.class).toProvider(
+                    new SupplierProviderBridge<>(masterEnv.getTwillRunnerSupplier()))
+                .in(Scopes.SINGLETON);
+            bind(TwillRunner.class).to(TwillRunnerService.class);
+
+            // TODO (CDAP-14677): find a better way to inject metadata publisher
+            bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
+            bind(MetadataServiceClient.class).to(DefaultMetadataServiceClient.class);
+
+            bind(TetheringClientSubscriberService.class).in(Scopes.SINGLETON);
+          }
         }
-      });
-      modules.add(new RemoteLogAppenderModule());
-
-      // if (coreSecurityModule.requiresZKClient()) {
-      //   modules.add(new ZKClientModule());
-      // }
-    }
+    ));
 
     return Guice.createInjector(modules);
+  }
+
+  static Module getDataFabricModule() {
+    return new AbstractModule() {
+      @Override
+      protected void configure() {
+        install(new StorageModule());
+        install(new TransactionExecutorModule());
+
+        // Bind transaction system to a constant one, basically no transaction, with every write become
+        // visible immediately.
+        // TODO: Ideally we shouldn't need this at all. However, it is needed now to satisfy dependencies
+        bind(TransactionSystemClientService.class).to(DelegatingTransactionSystemClientService.class);
+        bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class);
+      }
+    };
   }
 
   @Override
