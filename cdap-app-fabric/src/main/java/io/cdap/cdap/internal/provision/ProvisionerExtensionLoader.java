@@ -26,9 +26,11 @@ import io.cdap.cdap.extension.AbstractExtensionLoader;
 import io.cdap.cdap.gateway.handlers.ConsoleSettingsHttpHandler;
 import io.cdap.cdap.proto.provisioner.ProvisionerDetail;
 import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
-
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSystemContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,8 +38,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Loads provisioners from the extensions directory.
