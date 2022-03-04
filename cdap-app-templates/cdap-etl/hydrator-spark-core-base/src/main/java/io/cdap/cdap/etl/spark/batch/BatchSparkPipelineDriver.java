@@ -198,12 +198,14 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
         sec.getRuntimeArguments().getOrDefault(Constants.CONSOLIDATE_STAGES, Boolean.TRUE.toString()));
       boolean shouldCacheFunctions = Boolean.parseBoolean(
         sec.getRuntimeArguments().getOrDefault(Constants.CACHE_FUNCTIONS, Boolean.TRUE.toString()));
+      boolean shouldDisablePushdown = Boolean.parseBoolean(
+        sec.getRuntimeArguments().getOrDefault(Constants.DISABLE_ELT_PUSHDOWN, Boolean.FALSE.toString()));
       boolean isPreviewEnabled =
         phaseSpec.getPhase().size() == 0
           || sec.getDataTracer(phaseSpec.getPhase().iterator().next().getName()).isEnabled();
 
       // Initialize SQL engine instance if needed.
-      if (!isPreviewEnabled && phaseSpec.getSQLEngineStageSpec() != null) {
+      if (!isPreviewEnabled && phaseSpec.getSQLEngineStageSpec() != null && !shouldDisablePushdown) {
         String sqlEngineStage = SQLEngineUtils.buildStageName(phaseSpec.getSQLEngineStageSpec().getPlugin().getName());
 
         // Instantiate SQL engine and prepare run.

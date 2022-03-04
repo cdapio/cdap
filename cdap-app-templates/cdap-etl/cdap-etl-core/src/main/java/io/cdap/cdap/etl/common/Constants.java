@@ -38,6 +38,7 @@ public final class Constants {
   public static final String CACHE_FUNCTIONS = "spark.cdap.pipeline.functioncache.enable";
   public static final String DATASET_KRYO_ENABLED = "spark.cdap.pipeline.dataset.kryo.enable";
   public static final String DATASET_AGGREGATE_ENABLED = "spark.cdap.pipeline.aggregate.dataset.enable";
+  public static final String DISABLE_ELT_PUSHDOWN = "cdap.pipeline.pushdown.disable";
   public static final String DATASET_AGGREGATE_IGNORE_PARTITIONS =
     "spark.cdap.pipeline.aggregate.dataset.partitions.ignore";
   public static final String DEFAULT_CACHING_STORAGE_LEVEL = "DISK_ONLY";

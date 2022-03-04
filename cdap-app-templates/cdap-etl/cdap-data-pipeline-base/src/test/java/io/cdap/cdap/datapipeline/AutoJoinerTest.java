@@ -46,7 +46,6 @@ import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.runtime.spi.SparkCompat;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
 import io.cdap.cdap.test.TestConfiguration;
@@ -355,6 +354,30 @@ public class AutoJoinerTest extends HydratorTestBase {
                                      expectedSchema, Engine.SPARK);
     testSimpleAutoJoinUsingSQLEngineWithCapabilities(Arrays.asList("users", "purchases"), Collections.emptyList(),
                                                      expected, expectedSchema, Engine.SPARK);
+  }
+
+  @Test
+  public void testAutoInnerJoinUsingSQLEngineWithEngineDisabledViaRuntimeArgs() throws Exception {
+    Schema expectedSchema = Schema.recordOf("purchases.users",
+                                            Schema.Field.of("purchases_region", Schema.of(Schema.Type.STRING)),
+                                            Schema.Field.of("purchases_purchase_id", Schema.of(Schema.Type.INT)),
+                                            Schema.Field.of("purchases_user_id", Schema.of(Schema.Type.INT)),
+                                            Schema.Field.of("users_region", Schema.of(Schema.Type.STRING)),
+                                            Schema.Field.of("users_user_id", Schema.of(Schema.Type.INT)),
+                                            Schema.Field.of("users_name", Schema.of(Schema.Type.STRING)));
+    Set<StructuredRecord> expected = new HashSet<>();
+    expected.add(StructuredRecord.builder(expectedSchema)
+                   .set("purchases_region", "us")
+                   .set("purchases_purchase_id", 123)
+                   .set("purchases_user_id", 0)
+                   .set("users_region", "us")
+                   .set("users_user_id", 0)
+                   .set("users_name", "alice").build());
+
+    testSimpleAutoJoinUsingSQLEngineWithDisabledRuntimeArgument(Arrays.asList("users", "purchases"), expected,
+                                                                expectedSchema, Engine.SPARK, false);
+    testSimpleAutoJoinUsingSQLEngineWithDisabledRuntimeArgument(Arrays.asList("users", "purchases"), expected,
+                                                                expectedSchema, Engine.SPARK, true);
   }
 
   @Test
@@ -726,7 +749,7 @@ public class AutoJoinerTest extends HydratorTestBase {
     File joinOutputDir = TMP_FOLDER.newFolder();
 
     // Write input to simulate the join operation results
-    // If any of the sides of the operation is a join, then we don't need to write as the SQL engine won't be used.
+    // If any of the sides of the operation is a broadcast, then we don't need to write as the SQL engine won't be used.
     if (broadcast.isEmpty()) {
       String joinFile = "join-file1.txt";
       MockSQLEngine.writeInput(new File(joinInputDir, joinFile).getAbsolutePath(), expected);
@@ -802,6 +825,98 @@ public class AutoJoinerTest extends HydratorTestBase {
     } else {
       // Ensure no records are written to the SQL engine if the join contains a broadcast.
       Assert.assertEquals(0, MockSQLEngine.countLinesInDirectory(joinOutputDir));
+    }
+  }
+
+  private void testSimpleAutoJoinUsingSQLEngineWithDisabledRuntimeArgument(List<String> required,
+                                                                           Set<StructuredRecord> expected,
+                                                                           Schema expectedSchema,
+                                                                           Engine engine,
+                                                                           Boolean disabledArgValue) throws Exception {
+
+    File joinInputDir = TMP_FOLDER.newFolder();
+    File joinOutputDir = TMP_FOLDER.newFolder();
+
+    // Write input to simulate the join operation results
+    // If the disabled flat is set, then we don't need to write as the SQL engine won't be used.
+    if (!disabledArgValue) {
+      String joinFile = "join-file1.txt";
+      MockSQLEngine.writeInput(new File(joinInputDir, joinFile).getAbsolutePath(), expected);
+    }
+
+    /*
+         users ------|
+                     |--> join --> sink
+         purchases --|
+
+
+         joinOn: users.region = purchases.region and users.user_id = purchases.user_id
+     */
+    String userInput = UUID.randomUUID().toString();
+    String purchaseInput = UUID.randomUUID().toString();
+    String output = UUID.randomUUID().toString();
+    String sqlEnginePlugin = UUID.randomUUID().toString();
+    ETLBatchConfig config = ETLBatchConfig.builder()
+      .setPushdownEnabled(true)
+      .setTransformationPushdown(
+        new ETLTransformationPushdown(MockSQLEngine.getPlugin(sqlEnginePlugin,
+                                                              joinInputDir.getAbsolutePath(),
+                                                              joinOutputDir.getAbsolutePath(),
+                                                              expectedSchema)))
+      .addStage(new ETLStage("users", MockSource.getPlugin(userInput, USER_SCHEMA)))
+      .addStage(new ETLStage("purchases", MockSource.getPlugin(purchaseInput, PURCHASE_SCHEMA)))
+      .addStage(new ETLStage("join", MockAutoJoiner.getPlugin(Arrays.asList("purchases", "users"),
+                                                              Arrays.asList("region", "user_id"),
+                                                              required, Collections.emptyList(),
+                                                              Collections.emptyList(), true)))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(output)))
+      .addConnection("users", "join")
+      .addConnection("purchases", "join")
+      .addConnection("join", "sink")
+      .setEngine(engine)
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
+    ApplicationId appId = NamespaceId.DEFAULT.app(UUID.randomUUID().toString());
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    // write input data
+    List<StructuredRecord> userData = Arrays.asList(USER_ALICE, USER_ALYCE, USER_BOB);
+    DataSetManager<Table> inputManager = getDataset(userInput);
+    MockSource.writeInput(inputManager, userData);
+
+    List<StructuredRecord> purchaseData = new ArrayList<>();
+    purchaseData.add(StructuredRecord.builder(PURCHASE_SCHEMA)
+                       .set("region", "us")
+                       .set("user_id", 0)
+                       .set("purchase_id", 123).build());
+    purchaseData.add(StructuredRecord.builder(PURCHASE_SCHEMA)
+                       .set("region", "us")
+                       .set("user_id", 2)
+                       .set("purchase_id", 456).build());
+    inputManager = getDataset(purchaseInput);
+    MockSource.writeInput(inputManager, purchaseData);
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    Map<String, String> args = new HashMap<>();
+    args.put(MockAutoJoiner.PARTITIONS_ARGUMENT, "1");
+    args.put(io.cdap.cdap.etl.common.Constants.DISABLE_ELT_PUSHDOWN, disabledArgValue.toString());
+    workflowManager.startAndWaitForGoodRun(args, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+
+    DataSetManager<Table> outputManager = getDataset(output);
+    List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);
+
+    Assert.assertEquals(expected, new HashSet<>(outputRecords));
+
+    validateMetric(5, appId, "join.records.in");
+    validateMetric(expected.size(), appId, "join.records.out");
+
+    if (disabledArgValue) {
+      // Ensure this run did not execute in the SQL engine
+      Assert.assertEquals(0, MockSQLEngine.countLinesInDirectory(joinOutputDir));
+    } else {
+      // Ensure this run executed on the SQL engine
+      Assert.assertEquals(5, MockSQLEngine.countLinesInDirectory(joinOutputDir));
     }
   }
 
@@ -904,7 +1019,7 @@ public class AutoJoinerTest extends HydratorTestBase {
     File joinOutputDir = TMP_FOLDER.newFolder();
 
     // Write input to simulate the join operation results
-    // If any of the sides of the operation is a join, then we don't need to write as the SQL engine won't be used.
+    // If any of the sides of the operation is a broadcast, then we don't need to write as the SQL engine won't be used.
     if (broadcast.isEmpty()) {
       String joinFile = "join-file1.txt";
       MockSQLEngine.writeInput(new File(joinInputDir, joinFile).getAbsolutePath(), expected);
