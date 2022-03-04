@@ -56,6 +56,7 @@ import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
+import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.metrics.guice.DistributedMetricsClientModule;
 import io.cdap.cdap.security.auth.KeyManager;
@@ -91,12 +92,15 @@ public class DispatchTask implements RunnableTask {
   private final CConfiguration cConf;
   private final SConfiguration sConf;
   private final KeyManager keyManager;
+  private final ProvisioningService provisioningService;
 
   @Inject
-  DispatchTask(CConfiguration cConf, SConfiguration sConf, KeyManager keyManager) {
+  DispatchTask(CConfiguration cConf, SConfiguration sConf, KeyManager keyManager,
+      ProvisioningService provisioningService) {
     this.cConf = cConf;
     this.sConf = sConf;
     this.keyManager = keyManager;
+    this.provisioningService = provisioningService;
   }
 
   @Override
@@ -115,7 +119,12 @@ public class DispatchTask implements RunnableTask {
           // new RemoteExecutionProgramRunnerModule(),
           new SecureStoreClientModule(),
           new IOModule(),
-          new ProvisionerModule(),
+          new ProvisionerModule() {
+            @Override
+            protected void configure() {
+              bind(ProvisioningService.class).toInstance(provisioningService);
+            }
+          },
           // new DistributedMetricsClientModule(),
           new MessagingClientModule(),
           new StorageModule(),
@@ -123,7 +132,6 @@ public class DispatchTask implements RunnableTask {
           new CoreSecurityModule() {
             @Override
             protected void bindKeyManager(Binder binder) {
-              // Do nothing
               bind(KeyManager.class).toInstance(keyManager);
             }
           }
