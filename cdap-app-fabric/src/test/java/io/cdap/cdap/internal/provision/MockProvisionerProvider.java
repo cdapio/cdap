@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.provision;
 
 import com.google.common.collect.ImmutableMap;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 
 import java.util.Map;
@@ -26,9 +27,19 @@ import java.util.Map;
  */
 public class MockProvisionerProvider implements ProvisionerProvider {
 
+  // @Override
+  // public Map<String, Provisioner> loadProvisioners() {
+  //   return ImmutableMap.of(MockProvisioner.NAME, new MockProvisioner(),
+  //                          MockProvisionerWithCpus.NAME, new MockProvisionerWithCpus());
+  // }
+
   @Override
-  public Map<String, Provisioner> loadProvisioners() {
-    return ImmutableMap.of(MockProvisioner.NAME, new MockProvisioner(),
-                           MockProvisionerWithCpus.NAME, new MockProvisionerWithCpus());
+  public void initializeProvisioners(CConfiguration cConf) {
+
+  }
+
+  @Override
+  public ProvisionerInfo getProvisionerInfo() {
+    return null;
   }
 }

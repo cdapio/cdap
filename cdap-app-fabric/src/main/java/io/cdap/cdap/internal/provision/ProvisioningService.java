@@ -115,9 +115,7 @@ public class ProvisioningService extends AbstractIdleService {
   private static final Type PLUGIN_REQUIREMENT_SET_TYPE = new TypeToken<Set<PluginRequirement>>() { }.getType();
 
   private final CConfiguration cConf;
-  private final AtomicReference<ProvisionerInfo> provisionerInfo;
   private final ProvisionerProvider provisionerProvider;
-  private final ProvisionerConfigProvider provisionerConfigProvider;
   private final ProvisionerNotifier provisionerNotifier;
   private final LocationFactory locationFactory;
   private final SparkCompat sparkCompat;
@@ -132,16 +130,13 @@ public class ProvisioningService extends AbstractIdleService {
 
   @Inject
   ProvisioningService(CConfiguration cConf, ProvisionerProvider provisionerProvider,
-                      ProvisionerConfigProvider provisionerConfigProvider,
-                      ProvisionerNotifier provisionerNotifier, LocationFactory locationFactory,
-                      SecureStore secureStore, ProgramStateWriter programStateWriter,
-                      ProvisionerStore provisionerStore, TransactionRunner transactionRunner,
-                      MetricsCollectionService metricsCollectionService) {
+      ProvisionerNotifier provisionerNotifier, LocationFactory locationFactory,
+      SecureStore secureStore, ProgramStateWriter programStateWriter,
+      ProvisionerStore provisionerStore, TransactionRunner transactionRunner,
+      MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
     this.provisionerProvider = provisionerProvider;
-    this.provisionerConfigProvider = provisionerConfigProvider;
     this.provisionerNotifier = provisionerNotifier;
-    this.provisionerInfo = new AtomicReference<>(new ProvisionerInfo(new HashMap<>(), new HashMap<>()));
     this.locationFactory = locationFactory;
     this.sparkCompat = SparkCompatReader.get(cConf);
     this.secureStore = secureStore;
@@ -173,7 +168,7 @@ public class ProvisioningService extends AbstractIdleService {
     contextExecutor.allowCoreThreadTimeOut(true);
     this.contextExecutor = contextExecutor;
 
-    initializeProvisioners();
+    provisionerProvider.initializeProvisioners(cConf);
     resumeTasks(taskStateCleanup);
   }
 
@@ -208,7 +203,7 @@ public class ProvisioningService extends AbstractIdleService {
                                         Cluster cluster, String userId) throws Exception {
     Map<String, String> systemArgs = programOptions.getArguments().asMap();
     String name = SystemArguments.getProfileProvisioner(systemArgs);
-    Provisioner provisioner = provisionerInfo.get().provisioners.get(name);
+    Provisioner provisioner = provisionerProvider.getProvisionerInfo().provisioners.get(name);
 
     // If there is no provisioner available, we can't do anything further, hence returning NOT_EXISTS
     if (provisioner == null) {
@@ -270,7 +265,7 @@ public class ProvisioningService extends AbstractIdleService {
 
       ProvisioningOp provisioningOp = provisioningTaskInfo.getProvisioningOp();
       String provisionerName = provisioningTaskInfo.getProvisionerName();
-      Provisioner provisioner = provisionerInfo.get().provisioners.get(provisionerName);
+      Provisioner provisioner = provisionerProvider.getProvisionerInfo().provisioners.get(provisionerName);
 
       if (provisioner == null) {
         // can happen if CDAP is shut down in the middle of a task, and a provisioner is removed
@@ -349,7 +344,7 @@ public class ProvisioningService extends AbstractIdleService {
     ProgramOptions programOptions = provisionRequest.getProgramOptions();
     Map<String, String> args = programOptions.getArguments().asMap();
     String name = SystemArguments.getProfileProvisioner(args);
-    Provisioner provisioner = provisionerInfo.get().provisioners.get(name);
+    Provisioner provisioner = provisionerProvider.getProvisionerInfo().provisioners.get(name);
     // any errors seen here will transition the state straight to deprovisioned since no cluster create was attempted
     if (provisioner == null) {
       runWithProgramLogging(
@@ -401,7 +396,7 @@ public class ProvisioningService extends AbstractIdleService {
   public Optional<RuntimeJobManager> getRuntimeJobManager(ProgramRunId programRunId, ProgramOptions programOptions) {
     Map<String, String> systemArgs = programOptions.getArguments().asMap();
     String name = SystemArguments.getProfileProvisioner(systemArgs);
-    Provisioner provisioner = provisionerInfo.get().provisioners.get(name);
+    Provisioner provisioner = provisionerProvider.getProvisionerInfo().provisioners.get(name);
     String user = programOptions.getArguments().getOption(ProgramOptionConstants.USER_ID);
     Map<String, String> properties = SystemArguments.getProfileProperties(systemArgs);
     ProvisionerContext context = createContext(cConf, programOptions, programRunId, user, properties, null);
@@ -447,7 +442,7 @@ public class ProvisioningService extends AbstractIdleService {
       return () -> taskCleanup.accept(programRunId);
     }
 
-    Provisioner provisioner = provisionerInfo.get().provisioners.get(existing.getProvisionerName());
+    Provisioner provisioner = provisionerProvider.getProvisionerInfo().provisioners.get(existing.getProvisionerName());
     if (provisioner == null) {
       runWithProgramLogging(programRunId, existing.getProgramOptions().getArguments().asMap(),
                             () -> LOG.error("Could not deprovision the cluster because provisioner {} does not exist. "
@@ -518,42 +513,10 @@ public class ProvisioningService extends AbstractIdleService {
   }
 
   /**
-   * Reloads provisioners in the extension directory. Any new provisioners will be added and any deleted provisioners
-   * will be removed. Loaded provisioners will be initialized.
-   */
-  private void initializeProvisioners() {
-    Map<String, Provisioner> provisioners = provisionerProvider.loadProvisioners();
-    Map<String, ProvisionerConfig> provisionerConfigs =
-      provisionerConfigProvider.loadProvisionerConfigs(provisioners.values());
-    LOG.debug("Provisioners = {}", provisioners);
-    Map<String, ProvisionerDetail> details = new HashMap<>(provisioners.size());
-    for (Map.Entry<String, Provisioner> provisionerEntry : provisioners.entrySet()) {
-      String provisionerName = provisionerEntry.getKey();
-      Provisioner provisioner = provisionerEntry.getValue();
-      ProvisionerSystemContext provisionerSystemContext = new DefaultSystemProvisionerContext(cConf, provisionerName);
-      try {
-        provisioner.initialize(provisionerSystemContext);
-      } catch (RuntimeException e) {
-        LOG.warn("Error initializing the {} provisioner. It will not be available for use.", provisionerName, e);
-        provisioners.remove(provisionerName);
-        continue;
-      }
-      ProvisionerSpecification spec = provisioner.getSpec();
-      ProvisionerConfig config = provisionerConfigs.getOrDefault(provisionerName,
-                                                                 new ProvisionerConfig(new ArrayList<>(), null,
-                                                                                       null, false));
-      details.put(provisionerName, new ProvisionerDetail(spec.getName(), spec.getLabel(), spec.getDescription(),
-                                                         config.getConfigurationGroups(), config.getFilters(),
-                                                         config.getIcon(), config.isBeta()));
-    }
-    provisionerInfo.set(new ProvisionerInfo(provisioners, details));
-  }
-
-  /**
    * @return unmodifiable collection of all provisioner specs
    */
   public Collection<ProvisionerDetail> getProvisionerDetails() {
-    return provisionerInfo.get().details.values();
+    return provisionerProvider.getProvisionerInfo().details.values();
   }
 
   /**
@@ -564,7 +527,7 @@ public class ProvisioningService extends AbstractIdleService {
    */
   @Nullable
   public ProvisionerDetail getProvisionerDetail(String name) {
-    return provisionerInfo.get().details.get(name);
+    return provisionerProvider.getProvisionerInfo().details.get(name);
   }
 
   /**
@@ -576,7 +539,7 @@ public class ProvisioningService extends AbstractIdleService {
    * @throws IllegalArgumentException if the properties are invalid
    */
   public void validateProperties(String provisionerName, Map<String, String> properties) throws NotFoundException {
-    Provisioner provisioner = provisionerInfo.get().provisioners.get(provisionerName);
+    Provisioner provisioner = provisionerProvider.getProvisionerInfo().provisioners.get(provisionerName);
     if (provisioner == null) {
       throw new NotFoundException(String.format("Provisioner '%s' does not exist", provisionerName));
     }
@@ -591,7 +554,7 @@ public class ProvisioningService extends AbstractIdleService {
    */
   public String getTotalProcessingCpusLabel(String provisionerName, Map<String, String> properties)
     throws NotFoundException {
-    Provisioner provisioner = provisionerInfo.get().provisioners.get(provisionerName);
+    Provisioner provisioner = provisionerProvider.getProvisionerInfo().provisioners.get(provisionerName);
     if (provisioner == null) {
       throw new NotFoundException(String.format("Provisioner '%s' does not exist", provisionerName));
     }
@@ -910,18 +873,5 @@ public class ProvisioningService extends AbstractIdleService {
       }
     }
     return Optional.empty();
-  }
-
-  /**
-   * Just a container for provisioner instances and specs, so that they can be updated atomically.
-   */
-  private static class ProvisionerInfo {
-    private final Map<String, Provisioner> provisioners;
-    private final Map<String, ProvisionerDetail> details;
-
-    private ProvisionerInfo(Map<String, Provisioner> provisioners, Map<String, ProvisionerDetail> details) {
-      this.provisioners = Collections.unmodifiableMap(provisioners);
-      this.details = Collections.unmodifiableMap(details);
-    }
   }
 }

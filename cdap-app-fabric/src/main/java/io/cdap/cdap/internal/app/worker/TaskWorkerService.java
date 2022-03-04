@@ -30,6 +30,7 @@ import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
+import io.cdap.cdap.internal.provision.ProvisionerProvider;
 import io.cdap.cdap.security.auth.KeyManager;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
@@ -55,15 +56,19 @@ public class TaskWorkerService extends AbstractIdleService {
   private Cancellable cancelDiscovery;
   private InetSocketAddress bindAddress;
   private final KeyManager keyManager;
+  private final ProvisionerProvider provisionerProvider;
+  private final CConfiguration cConf;
 
   @Inject
   TaskWorkerService(CConfiguration cConf,
                     SConfiguration sConf,
                     DiscoveryService discoveryService,
                     KeyManager keyManager,
-                    MetricsCollectionService metricsCollectionService) {
+                    MetricsCollectionService metricsCollectionService,
+                    ProvisionerProvider provisionerProvider) {
     this.discoveryService = discoveryService;
     this.keyManager = keyManager;
+    this.provisionerProvider = provisionerProvider;
     LOG.debug("KeyManager in TaskWorkerService: {}", keyManager.toString());
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TASK_WORKER)
       .setHost(cConf.get(Constants.TaskWorker.ADDRESS))
@@ -84,12 +89,14 @@ public class TaskWorkerService extends AbstractIdleService {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
     }
     this.httpService = builder.build();
+    this.cConf = cConf;
   }
 
   @Override
   protected void startUp() throws Exception {
     LOG.debug("Starting TaskWorkerService");
     keyManager.startAndWait();
+    provisionerProvider.initializeProvisioners(cConf);
     httpService.start();
     bindAddress = httpService.getBindAddress();
     cancelDiscovery = discoveryService.register(
