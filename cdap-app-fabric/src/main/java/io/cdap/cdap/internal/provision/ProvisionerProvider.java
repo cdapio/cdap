@@ -17,6 +17,9 @@
 package io.cdap.cdap.internal.provision;
 
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
+
+import java.util.Map;
 
 /**
  * Provides provisioners.
@@ -27,5 +30,5 @@ public interface ProvisionerProvider {
 
   ProvisionerInfo getProvisionerInfo();
 
-
+  Map<String, Provisioner> loadProvisioners();
 }

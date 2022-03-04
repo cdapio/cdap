@@ -106,7 +106,7 @@ public class ProvisionerExtensionLoader extends AbstractExtensionLoader<String, 
    */
   @Override
   public void initializeProvisioners(CConfiguration cConf) {
-    Map<String, Provisioner> provisioners = getAll();
+    Map<String, Provisioner> provisioners = loadProvisioners();
     Map<String, ProvisionerConfig> provisionerConfigs =
         provisionerConfigProvider.loadProvisionerConfigs(provisioners.values());
     LOG.debug("Provisioners = {}", provisioners);
@@ -138,5 +138,10 @@ public class ProvisionerExtensionLoader extends AbstractExtensionLoader<String, 
   @Override
   public ProvisionerInfo getProvisionerInfo() {
     return provisionerInfo.get();
+  }
+
+  @Override
+  public Map<String, Provisioner> loadProvisioners() {
+    return getAll();
   }
 }

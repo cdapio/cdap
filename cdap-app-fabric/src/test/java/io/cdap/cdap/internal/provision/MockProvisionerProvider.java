@@ -27,11 +27,11 @@ import java.util.Map;
  */
 public class MockProvisionerProvider implements ProvisionerProvider {
 
-  // @Override
-  // public Map<String, Provisioner> loadProvisioners() {
-  //   return ImmutableMap.of(MockProvisioner.NAME, new MockProvisioner(),
-  //                          MockProvisionerWithCpus.NAME, new MockProvisionerWithCpus());
-  // }
+  @Override
+  public Map<String, Provisioner> loadProvisioners() {
+    return ImmutableMap.of(MockProvisioner.NAME, new MockProvisioner(),
+                           MockProvisionerWithCpus.NAME, new MockProvisionerWithCpus());
+  }
 
   @Override
   public void initializeProvisioners(CConfiguration cConf) {
