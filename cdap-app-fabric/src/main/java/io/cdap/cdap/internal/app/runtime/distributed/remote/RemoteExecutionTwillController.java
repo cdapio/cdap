@@ -148,24 +148,18 @@ class RemoteExecutionTwillController implements TwillController {
       return CompletableFuture.completedFuture(this);
     }
 
+    // graceful stop messages are handled by the RemoteClient.
+    // It will shut itself down, so this just needs to return a future that completes when the
+    // remote process is no longer running
     CompletableFuture<TwillController> result = completion.thenApply(r -> r);
     scheduler.execute(() -> {
       try {
-        remoteProcessController.terminate();
-
         // Poll for completion
-        long killTimeMillis = System.currentTimeMillis() + gracefulShutdownMillis + pollCompletedMillis * 5;
         scheduler.schedule(new Runnable() {
           @Override
           public void run() {
             try {
               if (!remoteProcessController.isRunning()) {
-                completion.complete(RemoteExecutionTwillController.this);
-                return;
-              }
-              // If the process is still running, kills it if it reaches the kill time.
-              if (System.currentTimeMillis() >= killTimeMillis) {
-                remoteProcessController.kill();
                 completion.complete(RemoteExecutionTwillController.this);
                 return;
               }

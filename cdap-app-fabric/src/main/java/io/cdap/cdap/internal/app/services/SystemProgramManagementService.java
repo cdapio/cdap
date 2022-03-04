@@ -133,7 +133,7 @@ public class SystemProgramManagementService extends AbstractRetryableScheduledSe
   private void stopProgram(ProgramRunId programRunId) {
     LOG.debug("Stopping program run {} ", programRunId);
     try {
-      programLifecycleService.stop(programRunId.getParent(), programRunId.getRun());
+      programLifecycleService.stop(programRunId.getParent(), programRunId.getRun(), 30);
     } catch (Exception ex) {
       LOG.warn("Could not stop program run {} , will be retried .", programRunId, ex);
     }

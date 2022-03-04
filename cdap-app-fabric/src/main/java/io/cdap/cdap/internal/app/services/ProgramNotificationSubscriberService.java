@@ -654,7 +654,15 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         return Optional.of(provisioningService.provision(provisionRequest, context));
       case PROVISIONED:
         Cluster cluster = GSON.fromJson(properties.get(ProgramOptionConstants.CLUSTER), Cluster.class);
-        appMetadataStore.recordProgramProvisioned(programRunId, cluster.getNodes().size(), messageIdBytes);
+        RunRecordDetail runRecord =
+          appMetadataStore.recordProgramProvisioned(programRunId, cluster.getNodes().size(), messageIdBytes);
+        // if the run was stopped right before provisioning completes, it is possible for the state
+        // to transition to stopping or killed, but not in time to cancel the provisioning.
+        // In that case, we end up with a provisioned message, but we don't want to start the program.
+        if (runRecord == null || runRecord.getStatus() == ProgramRunStatus.STOPPING
+          || runRecord.getStatus() == ProgramRunStatus.KILLED) {
+          break;
+        }
 
         // Update the ProgramOptions system arguments to include information needed for program execution
         Map<String, String> systemArgs = new HashMap<>(programOptions.getArguments().asMap());

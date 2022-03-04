@@ -141,6 +141,12 @@ public abstract class AbstractTwillProgramController extends AbstractProgramCont
     Futures.getUnchecked(twillController.terminate());
   }
 
+  @Override
+  public void kill() {
+    stopRequested = true;
+    twillController.kill();
+  }
+
   protected final TwillController getTwillController() {
     return twillController;
   }
