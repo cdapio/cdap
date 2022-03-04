@@ -320,6 +320,7 @@ public abstract class AppFabricTestBase {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.Service.MASTER_SERVICES_BIND_ADDRESS, InetAddress.getLoopbackAddress().getHostAddress());
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
+    cConf.set(Constants.SupportBundle.LOCAL_DATA_DIR, tmpFolder.newFolder("supportBundleData").getAbsolutePath());
     cConf.set(Constants.AppFabric.OUTPUT_DIR, tmpFolder.newFolder("output").getAbsolutePath());
     cConf.setInt(Constants.Capability.AUTO_INSTALL_THREADS, 5);
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);

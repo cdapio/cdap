@@ -146,7 +146,7 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
             remoteMetricsSystemClient, runRecordList);
     SupportBundlePipelineRunLogTask supportBundlePipelineRunLogTask =
         new SupportBundlePipelineRunLogTask(appFolderPath, programId, remoteLogsFetcher, runRecordList);
-
+    
     String runtimeInfoClassName = supportBundleRuntimeInfoTask.getClass().getName();
     String runtimeInfoTaskName =
         uuid.concat(": ").concat(runtimeInfoClassName).concat(": ").concat(appDetail.getName());
@@ -158,7 +158,6 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
         uuid.concat(": ").concat(runtimeLogClassName).concat(": ").concat(appDetail.getName());
     supportBundleJob.executeTask(supportBundlePipelineRunLogTask, basePath.getPath(), runtimeLogTaskName,
         runtimeLogClassName);
-
   }
 
   private Iterable<RunRecord> getRunRecords(ProgramId programId) throws NotFoundException, IOException {

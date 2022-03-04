@@ -33,10 +33,16 @@ import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.support.SupportBundleTaskConfiguration;
 import io.cdap.cdap.support.job.SupportBundleJob;
+import io.cdap.cdap.support.lib.SupportBundleFile;
 import io.cdap.cdap.support.lib.SupportBundleFileNames;
+import io.cdap.cdap.support.lib.SupportBundleFiles;
+import io.cdap.cdap.support.lib.SupportBundleOverallStatus;
+import io.cdap.cdap.support.lib.SupportBundlePipelineStatus;
+import io.cdap.cdap.support.lib.SupportBundleTaskType;
 import io.cdap.cdap.support.status.CollectionState;
 import io.cdap.cdap.support.status.SupportBundleConfiguration;
 import io.cdap.cdap.support.status.SupportBundleStatus;
+import io.cdap.cdap.support.status.SupportBundleTaskStatus;
 import io.cdap.cdap.support.task.factory.SupportBundleTaskFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -105,14 +111,13 @@ public class SupportBundleGenerator {
     } else {
       namespaces.add(validNamespace(namespace));
     }
-
+    // Puts all the files under the uuid path
+    File baseDirectory = new File(localDir);
+    DirUtils.mkdirs(baseDirectory);
     String uuid = UUID.randomUUID().toString();
     File uuidPath = new File(localDir, uuid);
     DirUtils.mkdirs(uuidPath);
 
-    // Puts all the files under the uuid path
-    File baseDirectory = new File(localDir);
-    DirUtils.mkdirs(baseDirectory);
     deleteOldFoldersIfExceedLimit(baseDirectory);
 
     SupportBundleStatus supportBundleStatus = SupportBundleStatus.builder()
@@ -203,59 +208,61 @@ public class SupportBundleGenerator {
     oldFilesDirectory.delete();
   }
 
-  public JsonObject getSingleBundleJson(File uuidFile) throws IOException {
-    JsonObject singleBundleJson = new JsonObject();
-    singleBundleJson.addProperty("bundleId", uuidFile.getName());
-    String basePath = cConf.get(Constants.CFG_LOCAL_DATA_SUPPORT_BUNDLE_DIR) + "/" + uuidFile.getName();
-    File statusFile = new File(basePath + "/status.json");
-    if (!statusFile.exists()) {
-      JsonArray pipelinesArray = new JsonArray();
-      File[] pipelineFiles =
-        uuidFile.listFiles((dir, name) -> !name.startsWith(".") && !dir.isHidden() && dir.isDirectory());
-      if (pipelineFiles != null && pipelineFiles.length > 0) {
-        for (File pipelineFile : pipelineFiles) {
-          if (!pipelineFile.getAbsoluteFile().getName().equals("system-log")) {
-            File statusFileUnderPipeline = new File(pipelineFile.getPath() + "/status.json");
-            if (statusFileUnderPipeline.exists()) {
-              JsonObject singlePipelineJson = new JsonObject();
-              singlePipelineJson.addProperty("application_name", pipelineFile.getAbsoluteFile().getName());
-              readStatusJson(statusFileUnderPipeline, singlePipelineJson);
-              pipelinesArray.add(singlePipelineJson);
-            }
-          }
+  public SupportBundleOverallStatus getSingleBundleJson(String uuid) throws IOException {
+    File baseDirectory = new File(cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR));
+    File uuidFile = new File(baseDirectory, uuid);
+    if (!baseDirectory.exists()) {
+      LOG.debug("No content in Support Bundle.");
+      return null;
+    }
+    if (!uuidFile.exists()) {
+      LOG.debug(String.format("No such uuid '%s' in Support Bundle.", uuid));
+      return null;
+    }
+
+    SupportBundleOverallStatus supportBundleOverallStatus = new SupportBundleOverallStatus(uuidFile.getName());
+    File statusFile = new File(uuidFile, "status.json");
+    if (statusFile.exists()) {
+      SupportBundleStatus supportBundleStatus = getBundleStatus(uuidFile);
+      supportBundleOverallStatus.setBundleStatus(supportBundleStatus.getStatus());
+      Set<SupportBundleTaskStatus> supportBundleTaskStatusSet = supportBundleStatus.getTasks();
+      SupportBundlePipelineStatus supportBundlePipelineStatus = new SupportBundlePipelineStatus();
+      for (SupportBundleTaskStatus supportBundleTaskStatus : supportBundleTaskStatusSet) {
+        int lastIndexOfDot = supportBundleTaskStatus.getType().lastIndexOf(".");
+        SupportBundleTaskType taskType =
+          SupportBundleTaskType.valueOf(supportBundleTaskStatus.getType().substring(lastIndexOfDot + 1));
+        switch (taskType) {
+          case SUPPORT_BUNDLE_SYSTEM_LOG_TASK:
+            supportBundlePipelineStatus.setSystemLogTaskStatus(supportBundleTaskStatus.getStatus());
+            break;
+          case SUPPORT_BUNDLE_PIPELINE_INFO_TASK:
+            supportBundlePipelineStatus.setPipelineInfoTaskStatus(supportBundleTaskStatus.getStatus());
+            break;
+          case SUPPORT_BUNDLE_RUNTIME_INFO_TASK:
+            supportBundlePipelineStatus.setRuntimeInfoTaskStatus(supportBundleTaskStatus.getStatus());
+            break;
+          case SUPPORT_BUNDLE_RUNTIME_LOG_TASK:
+            supportBundlePipelineStatus.setRuntimeLogTaskStatus(supportBundleTaskStatus.getStatus());
+            break;
         }
       }
-      singleBundleJson.add("pipelines", pipelinesArray);
-    } else {
-      readStatusJson(statusFile, singleBundleJson);
+      supportBundleOverallStatus.setSupportBundlePipelineStatus(supportBundlePipelineStatus);
     }
-    return singleBundleJson;
+    return supportBundleOverallStatus;
   }
 
-  public void readStatusJson(File statusFile, JsonObject jsonFile) throws IOException {
-    try (Reader reader = Files.newBufferedReader(statusFile.toPath(), StandardCharsets.UTF_8)) {
-      Map<String, Boolean> statusMap = GSON.fromJson(reader, MAP_TYPE);
-      for (String fileName : listOfFileNames) {
-        jsonFile.addProperty(fileName, statusMap.getOrDefault(fileName, false));
-      }
-    }
-  }
-
-  public JsonObject getFilesName(File file) {
-    JsonObject singlePipelineJson = new JsonObject();
-    singlePipelineJson.addProperty("application_name", file.getAbsoluteFile().getName());
+  public SupportBundleFiles getFilesName(File file) {
+    SupportBundleFiles supportBundleFiles = new SupportBundleFiles(file.getAbsoluteFile().getName());
     if (file.isDirectory()) {
       File[] dataFiles = file.listFiles((dir, name) -> !name.startsWith(".") && !dir.isHidden() && dir.isDirectory());
       if (dataFiles != null && dataFiles.length > 0) {
-        JsonArray fileArray = new JsonArray();
         for (File dataFile : dataFiles) {
-          JsonPrimitive fileJson = new JsonPrimitive(dataFile.getName());
-          fileArray.add(fileJson);
+          SupportBundleFile supportBundleFile = new SupportBundleFile(dataFile.getName());
+          supportBundleFiles.getSupportBundleFileList().add(supportBundleFile);
         }
-        singlePipelineJson.add("file_names", fileArray);
       }
     }
-    return singlePipelineJson;
+    return supportBundleFiles;
   }
 
   /**
