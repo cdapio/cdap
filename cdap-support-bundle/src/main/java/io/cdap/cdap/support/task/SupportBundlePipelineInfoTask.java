@@ -137,7 +137,7 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
         String runtimeInfoTaskName =
           uuid.concat(": ").concat(runtimeInfoClassName).concat(": ").concat(appDetail.getName());
         supportBundleJob.executeTask(supportBundleRuntimeInfoTask, basePath.getPath(), runtimeInfoTaskName,
-                                     runtimeInfoTaskName);
+                                     runtimeInfoClassName);
 
         String runtimeLogClassName = supportBundlePipelineRunLogTask.getClass().getName();
         String runtimeLogTaskName =

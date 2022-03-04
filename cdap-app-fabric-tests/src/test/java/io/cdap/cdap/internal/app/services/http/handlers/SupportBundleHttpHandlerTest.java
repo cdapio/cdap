@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2021 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,9 @@ import io.cdap.cdap.WorkflowApp;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
@@ -33,6 +35,7 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.support.services.SupportBundleService;
 import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.api.RunId;
@@ -42,6 +45,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.File;
 import java.net.HttpURLConnection;
 import java.util.List;
 import java.util.Map;
@@ -49,32 +53,32 @@ import java.util.concurrent.TimeUnit;
 
 /** Monitor handler tests. */
 public class SupportBundleHttpHandlerTest extends AppFabricTestBase {
-
   private static final ApplicationId WORKFLOW_APP = NamespaceId.DEFAULT.app("WorkflowApp");
   private static final String STOPPED = "STOPPED";
   private static final String RUNNING = "RUNNING";
+  private static CConfiguration configuration;
+  private static SupportBundleService supportBundleService;
   private static Store store;
   private int sourceId;
 
   @BeforeClass
   public static void setup() {
     store = getInjector().getInstance(DefaultStore.class);
+    supportBundleService = getInjector().getInstance(SupportBundleService.class);
+    configuration = getInjector().getInstance(CConfiguration.class);
   }
 
   @Test
   public void testCreateSupportBundleWithValidNamespace() throws Exception {
     createNamespace("default");
     String path =
-        String.format("%s/support/bundle?namespaceId=default", Constants.Gateway.API_VERSION_3);
+        String.format("%s/support/bundle?namespace=default", Constants.Gateway.API_VERSION_3);
     HttpResponse response = doPost(path);
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
 
     String bodyResponse = response.getResponseBodyAsString();
-    if (bodyResponse.startsWith("Support Bundle")) {
-      String uuid =
-        bodyResponse
-          .substring(bodyResponse.indexOf("Bundle") + 6, bodyResponse.indexOf("generated"))
-          .trim();
+    if (bodyResponse != null) {
+      String uuid = bodyResponse;
       // Delete this File
       String supportBundleDeleteFile = String.format("support/bundle/%s", uuid);
       HttpResponse supportBundleDeleteFileResponse =
@@ -94,11 +98,8 @@ public class SupportBundleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
 
     String bodyResponse = response.getResponseBodyAsString();
-    if (bodyResponse.startsWith("Support Bundle")) {
-      String uuid =
-        bodyResponse
-          .substring(bodyResponse.indexOf("Bundle") + 6, bodyResponse.indexOf("generated"))
-          .trim();
+    if (bodyResponse != null) {
+      String uuid = bodyResponse;
       // Delete this File
       String supportBundleDeleteFile = String.format("support/bundle/%s", uuid);
       HttpResponse supportBundleDeleteFileResponse =
@@ -150,7 +151,7 @@ public class SupportBundleHttpHandlerTest extends AppFabricTestBase {
 
     String supportBundleCreateUrl =
         String.format(
-            "support/bundle?namespace-id=%s&app-id=%s&workflow-name=%s&run-id=%s&need-system-log=true",
+            "support/bundle?namespace=%s&application=%s&programId=%s&run=%s",
             WORKFLOW_APP.getNamespaceId().getNamespace(),
             WORKFLOW_APP.getApplication(),
             WorkflowApp.FunWorkflow.NAME,
@@ -161,11 +162,17 @@ public class SupportBundleHttpHandlerTest extends AppFabricTestBase {
             String.format("/%s/%s", Constants.Gateway.API_VERSION_3_TOKEN, supportBundleCreateUrl));
 
     String bodyResponse = supportBundleCreateResponse.getResponseBodyAsString();
-    if (bodyResponse.startsWith("Support Bundle")) {
-      String uuid =
-        bodyResponse
-          .substring(bodyResponse.indexOf("Bundle") + 6, bodyResponse.indexOf("generated"))
-          .trim();
+    if (bodyResponse != null) {
+      String uuid = bodyResponse;
+      File tempFolder = new File(configuration.get(Constants.SupportBundle.LOCAL_DATA_DIR));
+      File uuidFile = new File(tempFolder, uuid);
+
+      File folderDirectory = new File(uuidFile, WORKFLOW_APP.getApplication());
+      File runFileDirectory = new File(folderDirectory, runs.get(0).getPid() + ".json");
+      Tasks.waitFor(true, () -> {
+        return runFileDirectory.exists();
+      }, 60, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
+
       String supportBundleGetUrl =
         String.format(
           "support/bundle/%s/files?folder-name=%s&data-file-name=%s",
@@ -192,7 +199,7 @@ public class SupportBundleHttpHandlerTest extends AppFabricTestBase {
 
       supportBundleGetFilesResponse =
         doGet(String.format("/%s/%s", Constants.Gateway.API_VERSION_3_TOKEN, supportBundleGetUrl));
-      Assert.assertEquals(String.format("No such uuid %s in Support Bundle.", uuid),
+      Assert.assertEquals(String.format("No such uuid '%s' in Support Bundle.", uuid),
                           supportBundleGetFilesResponse.getResponseBodyAsString());
     }
   }

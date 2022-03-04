@@ -5024,6 +5024,14 @@
   </property>
 
   <property>
+    <name>support.bundle.temp.dir</name>
+    <value>/tmp</value>
+    <description>
+      Support Bundle Temp directory
+    </description>
+  </property>
+
+  <property>
     <name>tethering.agent.connection.interval.secs</name>
     <value>10</value>
     <description>
