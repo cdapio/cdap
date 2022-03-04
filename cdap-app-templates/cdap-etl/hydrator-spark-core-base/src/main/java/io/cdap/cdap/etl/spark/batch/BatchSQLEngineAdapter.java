@@ -239,7 +239,7 @@ public class BatchSQLEngineAdapter implements Closeable {
     Runnable pullTask = () -> {
       try {
         LOG.debug("Starting pull for dataset '{}'", job.getDatasetName());
-        waitForJobAndHandleExceptionInternal(job);
+        waitForJobAndThrowException(job);
         JavaRDD<T> result = pullInternal(job.waitFor());
         LOG.debug("Completed pull for dataset '{}'", job.getDatasetName());
         future.complete(result);
@@ -473,11 +473,11 @@ public class BatchSQLEngineAdapter implements Closeable {
 
     if (jobs.containsKey(pushJobKey)) {
       SQLEngineJob<SQLDataset> job = (SQLEngineJob<SQLDataset>) jobs.get(pushJobKey);
-      waitForJobAndHandleExceptionInternal(job);
+      waitForJobAndThrowException(job);
       return job.waitFor();
     } else if (jobs.containsKey(execJobKey)) {
       SQLEngineJob<SQLDataset> job = (SQLEngineJob<SQLDataset>) jobs.get(execJobKey);
-      waitForJobAndHandleExceptionInternal(job);
+      waitForJobAndThrowException(job);
       return job.waitFor();
     } else {
       throw new IllegalArgumentException("No SQL Engine job exists for stage " + stageName);
@@ -555,13 +555,12 @@ public class BatchSQLEngineAdapter implements Closeable {
   /**
    * Method used to handle execution exceptions from a job.
    * <p>
-   * Any error during execution will be wrapped in a SQL exception if needed, and the SQL Engine Adapter will be shut
-   * down.
+   * Any error during execution will be wrapped in a {@link SQLEngineException} if needed.
    *
    * @param job the job to wait for.
    * @throws SQLEngineException if the internal task threw an exception.
    */
-  private void waitForJobAndHandleExceptionInternal(SQLEngineJob<?> job) throws SQLEngineException {
+  public void waitForJobAndThrowException(SQLEngineJob<?> job) throws SQLEngineException {
     SQLEngineException ex = null;
 
     try {
@@ -602,7 +601,7 @@ public class BatchSQLEngineAdapter implements Closeable {
    */
   public void waitForJobAndHandleException(SQLEngineJob<?> job) throws SQLEngineException {
     try {
-      waitForJobAndHandleExceptionInternal(job);
+      waitForJobAndThrowException(job);
     } catch (SQLEngineException e) {
       // If an exception is thrown, stop this SQL engine adapter (including all tasks) and cleanup existing datasets
       // from the SQL engine.
