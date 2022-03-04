@@ -22,7 +22,7 @@ import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.support.services.SupportBundleService;
+import io.cdap.cdap.support.internal.app.services.SupportBundleService;
 import io.cdap.cdap.support.status.SupportBundleConfiguration;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;

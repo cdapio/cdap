@@ -233,14 +233,8 @@ public abstract class AppFabricTestBase {
       @Override
       protected void configure() {
         // needed because we set Kerberos to true in DefaultNamespaceAdminTest
-//        install(new SupportBundleModule());
         bind(UGIProvider.class).to(CurrentUGIProvider.class);
         bind(MetadataSubscriberService.class).in(Scopes.SINGLETON);
-//        Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
-//          binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));
-//
-//        CommonHandlers.add(handlerBinder);
-//        handlerBinder.addBinding().to(SupportBundleHttpHandler.class);
       }
     });
   }
