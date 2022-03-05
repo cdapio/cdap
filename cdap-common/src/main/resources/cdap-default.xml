@@ -5054,7 +5054,7 @@
   
   <property>
     <name>feature.replication.transformations.enabled</name>
-    <value>false</value>
+    <value>true</value>
     <description>
       Enables transformations to be run on replication.
     </description>
