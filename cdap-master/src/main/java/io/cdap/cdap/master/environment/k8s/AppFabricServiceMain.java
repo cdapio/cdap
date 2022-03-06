@@ -174,7 +174,7 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
       services.add(injector.getInstance(TaskWorkerServiceLauncher.class));
     }
 
-    if (cConf.getBoolean(SystemWorker.POOL_ENABLE)) {
+    if (cConf.getBoolean(Constants.SystemWorker.POOL_ENABLE)) {
       services.add(injector.getInstance(SystemWorkerServiceLauncher.class));
     }
 
