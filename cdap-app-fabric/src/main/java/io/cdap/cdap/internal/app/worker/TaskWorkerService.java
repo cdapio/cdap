@@ -54,6 +54,7 @@ public class TaskWorkerService extends AbstractIdleService {
 
   private final DiscoveryService discoveryService;
   private final NettyHttpService httpService;
+  private final TwillRunnerService twillRunnerService;
   private Cancellable cancelDiscovery;
   private InetSocketAddress bindAddress;
   private final KeyManager keyManager;
@@ -71,6 +72,7 @@ public class TaskWorkerService extends AbstractIdleService {
     this.discoveryService = discoveryService;
     this.keyManager = keyManager;
     this.provisionerProvider = provisionerProvider;
+    this.twillRunnerService = twillRunnerService;
     LOG.debug("KeyManager in TaskWorkerService: {}", keyManager.toString());
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TASK_WORKER)
       .setHost(cConf.get(Constants.TaskWorker.ADDRESS))
@@ -99,6 +101,7 @@ public class TaskWorkerService extends AbstractIdleService {
     LOG.debug("Starting TaskWorkerService");
     keyManager.startAndWait();
     provisionerProvider.initializeProvisioners(cConf);
+    twillRunnerService.start();
     httpService.start();
     bindAddress = httpService.getBindAddress();
     cancelDiscovery = discoveryService.register(
