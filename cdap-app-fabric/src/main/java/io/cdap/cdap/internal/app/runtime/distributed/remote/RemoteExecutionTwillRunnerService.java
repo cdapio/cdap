@@ -249,6 +249,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
 
   @Override
   public TwillPreparer prepare(TwillApplication application) {
+    LOG.debug("RemoteExecutionTwillRunnerService Executor in prepare: {}", scheduler);
     CConfiguration cConfCopy = CConfiguration.copy(cConf);
     Configuration hConfCopy = new Configuration(hConf);
 
