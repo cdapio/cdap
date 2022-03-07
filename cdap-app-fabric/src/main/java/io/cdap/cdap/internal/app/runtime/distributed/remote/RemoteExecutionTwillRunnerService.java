@@ -531,6 +531,8 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
     private final ProgramOptions programOpts;
 
     private ControllerFactory(ProgramRunId programRunId, ProgramOptions programOpts) {
+      LOG.debug("Code flow for Dispatch");
+      LOG.debug("RemoteExecutionTwillRunnerService Executor in code flow: {}", scheduler);
       this.programRunId = programRunId;
       this.programOpts = programOpts;
     }
@@ -548,7 +550,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
         CompletableFuture<Void> startupTaskCompletion = new CompletableFuture<>();
         RemoteProcessController processController = createRemoteProcessController(programRunId, programOpts);
         try {
-          LOG.debug("RemoteExecutionTwillRunnerService create reference: {}", this);
+          LOG.debug("RemoteExecutionTwillRunnerService create reference: {}", super.toString());
           controller = createController(programRunId, programOpts, processController, startupTaskCompletion);
         } catch (Exception e) {
           throw new RuntimeException("Failed to create controller for " + programRunId, e);
