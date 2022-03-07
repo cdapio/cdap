@@ -249,6 +249,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
 
   @Override
   public TwillPreparer prepare(TwillApplication application) {
+    LOG.debug("RemoteExecutionTwillRunnerService prepare reference: {}", this);
     LOG.debug("RemoteExecutionTwillRunnerService Executor in prepare: {}", scheduler);
     CConfiguration cConfCopy = CConfiguration.copy(cConf);
     Configuration hConfCopy = new Configuration(hConf);
@@ -640,11 +641,11 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
       LOG.debug("RemoteExecutionTwillRunnerService Executor in createController: {}", scheduler);
 
       // On this controller termination, make sure it is removed from the controllers map and have resources released.
-      // controller.onTerminated(() -> {
-      //   if (controllers.remove(programRunId, controller)) {
-      //     controller.complete();
-      //   }
-      // }, scheduler);
+      controller.onTerminated(() -> {
+        if (controllers.remove(programRunId, controller)) {
+          controller.complete();
+        }
+      }, scheduler);
       return controller;
     }
 
