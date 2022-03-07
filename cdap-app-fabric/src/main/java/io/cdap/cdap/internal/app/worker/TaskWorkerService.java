@@ -36,6 +36,7 @@ import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpContentDecompressor;
+import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
@@ -65,7 +66,8 @@ public class TaskWorkerService extends AbstractIdleService {
                     DiscoveryService discoveryService,
                     KeyManager keyManager,
                     MetricsCollectionService metricsCollectionService,
-                    ProvisionerProvider provisionerProvider) {
+                    ProvisionerProvider provisionerProvider,
+                    TwillRunnerService twillRunnerService) {
     this.discoveryService = discoveryService;
     this.keyManager = keyManager;
     this.provisionerProvider = provisionerProvider;
@@ -83,7 +85,7 @@ public class TaskWorkerService extends AbstractIdleService {
         }
       })
       .setHttpHandlers(new TaskWorkerHttpHandlerInternal(cConf, sConf, this::stopService,
-          metricsCollectionService, keyManager, provisionerProvider));
+          metricsCollectionService, keyManager, provisionerProvider, twillRunnerService));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);

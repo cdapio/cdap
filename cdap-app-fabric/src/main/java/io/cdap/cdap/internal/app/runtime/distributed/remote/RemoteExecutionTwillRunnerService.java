@@ -153,14 +153,14 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
   private ScheduledExecutorService scheduler;
 
   @Inject
-  RemoteExecutionTwillRunnerService(CConfiguration cConf, Configuration hConf,
-                                    DiscoveryServiceClient discoveryServiceClient,
-                                    LocationFactory locationFactory,
-                                    ProvisioningService provisioningService,
-                                    ProgramStateWriter programStateWriter,
-                                    TransactionRunner transactionRunner,
-                                    AccessTokenCodec accessTokenCodec,
-                                    TokenManager tokenManager) {
+  public RemoteExecutionTwillRunnerService(CConfiguration cConf, Configuration hConf,
+      DiscoveryServiceClient discoveryServiceClient,
+      LocationFactory locationFactory,
+      ProvisioningService provisioningService,
+      ProgramStateWriter programStateWriter,
+      TransactionRunner transactionRunner,
+      AccessTokenCodec accessTokenCodec,
+      TokenManager tokenManager) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
@@ -177,6 +177,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
 
   @Override
   public void start() {
+    LOG.debug("RemoteExecutionTwillRunnerService init start");
     try {
       // Use local directory for caching generated jar files
       Path tempDir = Files.createDirectories(Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
@@ -201,6 +202,14 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
         initializeControllers(startMillis);
       }
     });
+    LOG.debug("RemoteExecutionTwillRunnerService Executor in init: {}", scheduler);
+    LOG.debug("RemoteExecutionTwillRunnerService init end");
+    LOG.debug("RemoteExecutionTwillRunnerService reference: {}", this);
+  }
+
+  @Override
+  public String toString() {
+    return getClass().getName() + "@" + Integer.toHexString(hashCode());
   }
 
   @Override
@@ -539,6 +548,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
         CompletableFuture<Void> startupTaskCompletion = new CompletableFuture<>();
         RemoteProcessController processController = createRemoteProcessController(programRunId, programOpts);
         try {
+          LOG.debug("RemoteExecutionTwillRunnerService create reference: {}", this);
           controller = createController(programRunId, programOpts, processController, startupTaskCompletion);
         } catch (Exception e) {
           throw new RuntimeException("Failed to create controller for " + programRunId, e);
@@ -623,6 +633,8 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
                                                                                      processController,
                                                                                      scheduler, remoteExecutionService);
       startupTaskCompletion.thenAccept(o -> remoteExecutionService.start());
+      LOG.debug("RemoteExecutionTwillRunnerService reference in createController: {}", this);
+      LOG.debug("RemoteExecutionTwillRunnerService Executor in createController: {}", scheduler);
 
       // On this controller termination, make sure it is removed from the controllers map and have resources released.
       controller.onTerminated(() -> {

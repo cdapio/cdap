@@ -20,7 +20,9 @@ import com.google.inject.AbstractModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.internal.provision.ProvisionerProvider;
+import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.security.auth.KeyManager;
+import org.apache.twill.api.TwillRunnerService;
 
 /**
  * Module for Runnable tasks.
@@ -31,13 +33,14 @@ public class RunnableTaskModule extends AbstractModule {
   private final SConfiguration sConf;
   private final KeyManager keyManager;
   private final ProvisionerProvider provisionerProvider;
+  private final TwillRunnerService twillRunnerService;
 
-  public RunnableTaskModule(CConfiguration cConf, SConfiguration sConf, KeyManager keyManager,
-      ProvisionerProvider provisionerProvider) {
-    this.cConf = cConf;
-    this.sConf = sConf;
-    this.keyManager = keyManager;
-    this.provisionerProvider = provisionerProvider;
+  private RunnableTaskModule(Builder builder) {
+    this.cConf = builder.cConf;
+    this.sConf = builder.sConf;
+    this.keyManager = builder.keyManager;
+    this.provisionerProvider = builder.provisionerProvider;
+    this.twillRunnerService = builder.twillRunnerService;
   }
 
   @Override
@@ -46,5 +49,44 @@ public class RunnableTaskModule extends AbstractModule {
     bind(SConfiguration.class).toInstance(sConf);
     bind(KeyManager.class).toInstance(keyManager);
     bind(ProvisionerProvider.class).toInstance(provisionerProvider);
+    bind(TwillRunnerService.class).toInstance(twillRunnerService);
+  }
+
+  public static class Builder {
+
+    private CConfiguration cConf;
+    private SConfiguration sConf;
+    private KeyManager keyManager;
+    private ProvisionerProvider provisionerProvider;
+    private TwillRunnerService twillRunnerService;
+
+    public Builder cConf(CConfiguration cConf) {
+      this.cConf = cConf;
+      return this;
+    }
+
+    public Builder sConf(SConfiguration sConf) {
+      this.sConf = sConf;
+      return this;
+    }
+
+    public Builder keyManager(KeyManager keyManager) {
+      this.keyManager = keyManager;
+      return this;
+    }
+
+    public Builder provisionerProvider(ProvisionerProvider provisionerProvider) {
+      this.provisionerProvider = provisionerProvider;
+      return this;
+    }
+
+    public Builder twillRunnerService(TwillRunnerService twillRunnerService) {
+      this.twillRunnerService = twillRunnerService;
+      return this;
+    }
+
+    public RunnableTaskModule build() {
+      return new RunnableTaskModule(this);
+    }
   }
 }

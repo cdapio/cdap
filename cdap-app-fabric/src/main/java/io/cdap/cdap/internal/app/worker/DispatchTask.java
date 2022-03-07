@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.worker;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
@@ -31,6 +32,7 @@ import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.app.deploy.DispatchResponse;
+import io.cdap.cdap.app.guice.ImpersonatedTwillRunnerService;
 import io.cdap.cdap.app.guice.RemoteExecutionProgramRunnerModule;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramOptions;
@@ -74,6 +76,7 @@ import io.cdap.cdap.security.guice.FileBasedCoreSecurityModule;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import org.apache.twill.api.RunId;
+import org.apache.twill.api.TwillRunnerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,14 +101,16 @@ public class DispatchTask implements RunnableTask {
   private final SConfiguration sConf;
   private final KeyManager keyManager;
   private final ProvisionerProvider provisionerProvider;
+  private final TwillRunnerService twillRunnerService;
 
   @Inject
   DispatchTask(CConfiguration cConf, SConfiguration sConf, KeyManager keyManager,
-      ProvisionerProvider provisionerProvider) {
+      ProvisionerProvider provisionerProvider, TwillRunnerService twillRunnerService) {
     this.cConf = cConf;
     this.sConf = sConf;
     this.keyManager = keyManager;
     this.provisionerProvider = provisionerProvider;
+    this.twillRunnerService = twillRunnerService;
   }
 
   @Override
@@ -141,6 +146,12 @@ public class DispatchTask implements RunnableTask {
             protected void bindKeyManager(Binder binder) {
               bind(KeyManager.class).toInstance(keyManager);
             }
+          },
+          new AbstractModule() {
+            @Override
+            protected void configure() {
+              bind(TwillRunnerService.class).toInstance(twillRunnerService);
+            }
           }
           // new FileBasedCoreSecurityModule()
           // CoreSecurityRuntimeModule.getDistributedModule(cConf)
@@ -172,12 +183,18 @@ public class DispatchTask implements RunnableTask {
         ProgramRunnerFactory programRunnerFactory,
         ConfiguratorFactory configuratorFactory,
         Impersonator impersonator,
-        ArtifactRepository artifactRepository) {
+        ArtifactRepository artifactRepository,
+        TwillRunnerService twillRunnerService) {
       this.cConf = cConf;
       this.programRunnerFactory = programRunnerFactory;
       this.configuratorFactory = configuratorFactory;
       this.impersonator = impersonator;
       this.artifactRepository = artifactRepository;
+      LOG.debug("TwillRunnerService in DispatchTask: {}", twillRunnerService);
+      if (twillRunnerService instanceof ImpersonatedTwillRunnerService) {
+        LOG.debug("TwillRunnerService in DispatchTask internal: {}",
+            ((ImpersonatedTwillRunnerService) twillRunnerService).delegate);
+      }
     }
 
     /**
