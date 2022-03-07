@@ -23,6 +23,7 @@ import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.Scopes;
 import com.google.inject.name.Named;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.data.schema.Schema;
@@ -55,7 +56,11 @@ import io.cdap.cdap.internal.app.runtime.artifact.RequirementsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
+import io.cdap.cdap.internal.provision.DefaultProvisionerConfigProvider;
+import io.cdap.cdap.internal.provision.ProvisionerConfigProvider;
+import io.cdap.cdap.internal.provision.ProvisionerExtensionLoader;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
+import io.cdap.cdap.internal.provision.ProvisionerProvider;
 import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.metrics.guice.DistributedMetricsClientModule;
@@ -92,15 +97,15 @@ public class DispatchTask implements RunnableTask {
   private final CConfiguration cConf;
   private final SConfiguration sConf;
   private final KeyManager keyManager;
-  private final ProvisioningService provisioningService;
+  private final ProvisionerProvider provisionerProvider;
 
   @Inject
   DispatchTask(CConfiguration cConf, SConfiguration sConf, KeyManager keyManager,
-      ProvisioningService provisioningService) {
+      ProvisionerProvider provisionerProvider) {
     this.cConf = cConf;
     this.sConf = sConf;
     this.keyManager = keyManager;
-    this.provisioningService = provisioningService;
+    this.provisionerProvider = provisionerProvider;
   }
 
   @Override
@@ -122,7 +127,9 @@ public class DispatchTask implements RunnableTask {
           new ProvisionerModule() {
             @Override
             protected void configure() {
-              bind(ProvisioningService.class).toInstance(provisioningService);
+              bind(ProvisioningService.class).in(Scopes.SINGLETON);
+              bind(ProvisionerProvider.class).toInstance(provisionerProvider);
+              bind(ProvisionerConfigProvider.class).to(DefaultProvisionerConfigProvider.class);
             }
           },
           // new DistributedMetricsClientModule(),

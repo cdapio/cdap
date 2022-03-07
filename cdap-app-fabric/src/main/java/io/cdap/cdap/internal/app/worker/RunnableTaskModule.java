@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.worker;
 import com.google.inject.AbstractModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.internal.provision.ProvisionerProvider;
 import io.cdap.cdap.security.auth.KeyManager;
 
 /**
@@ -29,11 +30,14 @@ public class RunnableTaskModule extends AbstractModule {
   private final CConfiguration cConf;
   private final SConfiguration sConf;
   private final KeyManager keyManager;
+  private final ProvisionerProvider provisionerProvider;
 
-  public RunnableTaskModule(CConfiguration cConf, SConfiguration sConf, KeyManager keyManager) {
+  public RunnableTaskModule(CConfiguration cConf, SConfiguration sConf, KeyManager keyManager,
+      ProvisionerProvider provisionerProvider) {
     this.cConf = cConf;
     this.sConf = sConf;
     this.keyManager = keyManager;
+    this.provisionerProvider = provisionerProvider;
   }
 
   @Override
@@ -41,5 +45,6 @@ public class RunnableTaskModule extends AbstractModule {
     bind(CConfiguration.class).toInstance(cConf);
     bind(SConfiguration.class).toInstance(sConf);
     bind(KeyManager.class).toInstance(keyManager);
+    bind(ProvisionerProvider.class).toInstance(provisionerProvider);
   }
 }

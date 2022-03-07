@@ -132,7 +132,8 @@ public class RemoteConfiguratorTest {
                                                   new DefaultInternalAuthenticator(new AuthenticationTestContext()));
     httpService = new CommonNettyHttpServiceBuilder(cConf, "test")
       .setHttpHandlers(
-        new TaskWorkerHttpHandlerInternal(cConf, sConf, className -> { }, new NoOpMetricsCollectionService(), null),
+        new TaskWorkerHttpHandlerInternal(cConf, sConf, className -> { }, new NoOpMetricsCollectionService(), null,
+            null),
         new ArtifactHttpHandlerInternal(new TestArtifactRepository(cConf), namespaceAdmin),
         new ArtifactLocalizerHttpHandlerInternal(new ArtifactLocalizer(cConf, remoteClientFactory,
                                                                        ((namespaceId, retryStrategy) -> {
