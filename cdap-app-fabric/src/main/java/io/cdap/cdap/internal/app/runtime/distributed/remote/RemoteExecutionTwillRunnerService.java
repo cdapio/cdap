@@ -640,11 +640,11 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
       LOG.debug("RemoteExecutionTwillRunnerService Executor in createController: {}", scheduler);
 
       // On this controller termination, make sure it is removed from the controllers map and have resources released.
-      controller.onTerminated(() -> {
-        if (controllers.remove(programRunId, controller)) {
-          controller.complete();
-        }
-      }, scheduler);
+      // controller.onTerminated(() -> {
+      //   if (controllers.remove(programRunId, controller)) {
+      //     controller.complete();
+      //   }
+      // }, scheduler);
       return controller;
     }
 
