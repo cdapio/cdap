@@ -27,6 +27,7 @@ import io.cdap.cdap.internal.events.http.SparkApplicationsResponse;
 import io.cdap.cdap.internal.events.http.SparkApplicationsStagesResponse;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.spi.events.ExecutionMetrics;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequestConfig;
 import io.cdap.common.http.HttpRequests;
