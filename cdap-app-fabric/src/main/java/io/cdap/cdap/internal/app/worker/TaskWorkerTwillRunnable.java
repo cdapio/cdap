@@ -368,10 +368,10 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
         new AbstractModule() {
           @Override
           protected void configure() {
-            bind(TwillRunnerService.class).toProvider(
-                    new SupplierProviderBridge<>(masterEnv.getTwillRunnerSupplier()))
-                .in(Scopes.SINGLETON);
-            bind(TwillRunner.class).to(TwillRunnerService.class);
+            // bind(TwillRunnerService.class).toProvider(
+            //         new SupplierProviderBridge<>(masterEnv.getTwillRunnerSupplier()))
+            //     .in(Scopes.SINGLETON);
+            // bind(TwillRunner.class).to(TwillRunnerService.class);
 
             // TODO (CDAP-14677): find a better way to inject metadata publisher
             bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
