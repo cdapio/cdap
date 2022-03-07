@@ -45,6 +45,7 @@ import io.cdap.cdap.app.guice.MonitorHandlerModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.app.guice.RemoteExecutionProgramRunnerModule;
 import io.cdap.cdap.app.guice.RemoteExecutionProgramRunnerModule.ProgramCompletionNotifierProvider;
+import io.cdap.cdap.app.guice.RemoteTwillModule;
 import io.cdap.cdap.app.guice.TwillModule;
 import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.runtime.ProgramRunner;
@@ -309,6 +310,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
     // }
 
     List<Module> modules = new ArrayList<>();
+    modules.add(new RemoteTwillModule());
     modules.add(new ConfigModule(cConf, hConf, sConf));
     modules.add(RemoteAuthenticatorModules.getDefaultModule());
     modules.add(new PreviewConfigModule(cConf, hConf, sConf));
