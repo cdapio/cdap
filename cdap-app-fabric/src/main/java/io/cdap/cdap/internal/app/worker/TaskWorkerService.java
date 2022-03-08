@@ -59,8 +59,7 @@ public class TaskWorkerService extends AbstractIdleService {
   private Cancellable cancelDiscovery;
   private InetSocketAddress bindAddress;
   private final KeyManager keyManager;
-  private final ProvisionerProvider provisionerProvider;
-  private final CConfiguration cConf;
+  private final ProvisioningService provisioningService;
 
   @Inject
   TaskWorkerService(CConfiguration cConf,
@@ -68,15 +67,13 @@ public class TaskWorkerService extends AbstractIdleService {
                     DiscoveryService discoveryService,
                     KeyManager keyManager,
                     MetricsCollectionService metricsCollectionService,
-                    ProvisionerProvider provisionerProvider,
                     TwillRunnerService twillRunnerService,
                     ProvisioningService provisioningService) {
     this.discoveryService = discoveryService;
     this.keyManager = keyManager;
-    this.provisionerProvider = provisionerProvider;
     this.twillRunnerService = twillRunnerService;
+    this.provisioningService = provisioningService;
     LOG.debug("KeyManager in TaskWorkerService: {}", keyManager.toString());
-    LOG.debug("ProvisionerProvider in TaskWorkerService: {}", provisionerProvider.toString());
     LOG.debug("ProvisioningService in TaskWorkerService: {}", provisioningService.toString());
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TASK_WORKER)
       .setHost(cConf.get(Constants.TaskWorker.ADDRESS))
@@ -97,15 +94,13 @@ public class TaskWorkerService extends AbstractIdleService {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
     }
     this.httpService = builder.build();
-    this.cConf = cConf;
   }
 
   @Override
   protected void startUp() throws Exception {
     LOG.debug("Starting TaskWorkerService");
-    LOG.debug("ProvisionerProvider in TaskWorkerService startup: {}", provisionerProvider);
     keyManager.startAndWait();
-    provisionerProvider.initializeProvisioners(cConf);
+    provisioningService.initializeProvisioners();
     twillRunnerService.start();
     httpService.start();
     bindAddress = httpService.getBindAddress();

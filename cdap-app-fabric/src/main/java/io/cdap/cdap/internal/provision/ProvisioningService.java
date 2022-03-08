@@ -173,9 +173,12 @@ public class ProvisioningService extends AbstractIdleService {
       Threads.createDaemonThreadFactory("provisioning-context-%d"));
     contextExecutor.allowCoreThreadTimeOut(true);
     this.contextExecutor = contextExecutor;
-
-    provisionerProvider.initializeProvisioners(cConf);
+    initializeProvisioners();
     resumeTasks(taskStateCleanup);
+  }
+
+  public void initializeProvisioners() {
+    provisionerProvider.initializeProvisioners(cConf);
   }
 
   @Override

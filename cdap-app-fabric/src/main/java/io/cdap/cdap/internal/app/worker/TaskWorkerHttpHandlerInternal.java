@@ -103,8 +103,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
    */
   private final AtomicBoolean mustRestart = new AtomicBoolean(false);
 
-  public TaskWorkerHttpHandlerInternal(CConfiguration cConf, SConfiguration sConf,
-      Consumer<String> stopper,
+  public TaskWorkerHttpHandlerInternal(CConfiguration cConf, SConfiguration sConf, Consumer<String> stopper,
       MetricsCollectionService metricsCollectionService, KeyManager keyManager,
       ProvisioningService provisioningService, TwillRunnerService twillRunnerService) {
     int killAfterRequestCount = cConf.getInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
