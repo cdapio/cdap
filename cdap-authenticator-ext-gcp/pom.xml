@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2019 Cask Data, Inc.
+  Copyright © 2022 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -18,40 +18,27 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
   <parent>
     <artifactId>cdap</artifactId>
     <groupId>io.cdap.cdap</groupId>
     <version>6.7.0-SNAPSHOT</version>
   </parent>
-  <artifactId>cdap-kubernetes</artifactId>
-  <name>CDAP Kubernetes</name>
+  <modelVersion>4.0.0</modelVersion>
+
+  <artifactId>cdap-authenticator-ext-gcp</artifactId>
+  <name>CDAP Google Cloud Platform Remote Authenticator Extension</name>
   <packaging>jar</packaging>
 
   <properties>
-    <k8s.version>12.0.1</k8s.version>
-    <!-- Needs to bump the okhttp version for fixing https://github.com/square/okhttp/issues/4029 that hangs on exit -->
-    <okhttp.version>4.9.1</okhttp.version>
-    <!-- Needs to define the gson and guava versions to override the one from dependency management in cdap pom.xml -->
-    <gson.version>2.8.6</gson.version>
-    <guava.version>25.1-jre</guava.version>
+    <gcpoauth2.version>1.5.3</gcpoauth2.version>
   </properties>
 
   <dependencies>
+    <!-- CDAP Platform Dependencies -->
     <dependency>
       <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-master-spi</artifactId>
+      <artifactId>cdap-security-spi</artifactId>
       <version>${project.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.cdap.twill</groupId>
-      <artifactId>twill-api</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.cdap.twill</groupId>
-      <artifactId>twill-discovery-api</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -59,58 +46,24 @@
       <artifactId>slf4j-api</artifactId>
       <scope>provided</scope>
     </dependency>
+
+    <!-- Authenticator Dependencies -->
     <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
+      <groupId>com.google.auth</groupId>
+      <artifactId>google-auth-library-oauth2-http</artifactId>
+      <version>${gcpoauth2.version}</version>
     </dependency>
-    <dependency>
-      <groupId>io.kubernetes</groupId>
-      <artifactId>client-java</artifactId>
-      <version>${k8s.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.squareup.okhttp3</groupId>
-      <artifactId>okhttp</artifactId>
-      <version>${okhttp.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.squareup.okhttp3</groupId>
-      <artifactId>logging-interceptor</artifactId>
-      <version>${okhttp.version}</version>
-    </dependency>
+
+    <!-- Test Dependencies -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-classic</artifactId>
       <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-core</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.cdap.twill</groupId>
-      <artifactId>twill-core</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>*</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
       <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-proto</artifactId>
-      <version>${project.version}</version>
     </dependency>
   </dependencies>
 
@@ -164,5 +117,4 @@
       </build>
     </profile>
   </profiles>
-
 </project>

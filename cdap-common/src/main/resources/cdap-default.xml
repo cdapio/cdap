@@ -4416,7 +4416,7 @@
   <!-- Authenticator Configuration -->
   <property>
     <name>remote.authenticator.extensions.dir</name>
-    <value>/opt/cdap/master/ext/authenticator</value>
+    <value>/opt/cdap/master/ext/authenticators</value>
     <description>
       Semicolon-separated list of local directories that are scanned for CDAP remote authenticator extensions.
     </description>
