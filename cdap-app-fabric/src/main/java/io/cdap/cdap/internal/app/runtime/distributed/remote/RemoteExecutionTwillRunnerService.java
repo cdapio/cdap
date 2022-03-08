@@ -178,6 +178,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
   @Override
   public void start() {
     LOG.debug("RemoteExecutionTwillRunnerService init start");
+    LOG.debug("ProvisioningService in RemoteExecutionTwillRunnerService: {}", provisioningService.toString());
     try {
       // Use local directory for caching generated jar files
       Path tempDir = Files.createDirectories(Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
