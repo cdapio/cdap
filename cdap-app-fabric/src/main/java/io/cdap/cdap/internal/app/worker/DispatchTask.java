@@ -150,6 +150,8 @@ public class DispatchTask implements RunnableTask {
           new AbstractModule() {
             @Override
             protected void configure() {
+              bind(TwillRunnerService.class).annotatedWith(Constants.AppFabric.ProgramRunner.class)
+                  .toInstance(twillRunnerService);
               bind(TwillRunnerService.class).annotatedWith(Constants.AppFabric.RemoteExecution.class)
                   .toInstance(twillRunnerService);
             }
