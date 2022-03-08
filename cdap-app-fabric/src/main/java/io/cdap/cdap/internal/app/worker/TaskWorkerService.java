@@ -76,6 +76,7 @@ public class TaskWorkerService extends AbstractIdleService {
     this.provisionerProvider = provisionerProvider;
     this.twillRunnerService = twillRunnerService;
     LOG.debug("KeyManager in TaskWorkerService: {}", keyManager.toString());
+    LOG.debug("ProvisionerProvider in TaskWorkerService: {}", provisionerProvider.toString());
     LOG.debug("ProvisioningService in TaskWorkerService: {}", provisioningService.toString());
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TASK_WORKER)
       .setHost(cConf.get(Constants.TaskWorker.ADDRESS))

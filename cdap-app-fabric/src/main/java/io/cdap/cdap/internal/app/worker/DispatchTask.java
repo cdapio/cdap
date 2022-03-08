@@ -201,7 +201,7 @@ public class DispatchTask implements RunnableTask {
         LOG.debug("TwillRunnerService in DispatchTask internal: {}",
             ((ImpersonatedTwillRunnerService) twillRunnerService).delegate);
       }
-      LOG.debug("ProvisioningService in DispatchTask: {}", provisioningService);
+      LOG.debug("ProvisioningService in DispatchTaskRunner: {}", provisioningService);
     }
 
     /**

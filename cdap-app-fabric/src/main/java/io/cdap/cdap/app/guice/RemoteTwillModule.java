@@ -34,8 +34,12 @@ import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RemoteTwillModule extends PrivateModule {
+
+  private static final Logger LOG = LoggerFactory.getLogger(RemoteTwillModule.class);
 
   @Override
   protected void configure() {
@@ -77,6 +81,7 @@ public class RemoteTwillModule extends PrivateModule {
       this.transactionRunner = transactionRunner;
       this.accessTokenCodec = accessTokenCodec;
       this.tokenManager = tokenManager;
+      LOG.debug("ProvisioningService in RemoteTwillModule: {}", provisioningService.toString());
     }
 
     @Override
