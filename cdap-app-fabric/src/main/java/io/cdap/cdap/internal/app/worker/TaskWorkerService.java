@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.app.worker;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.worker.RunnableTask;
@@ -29,8 +28,6 @@ import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.security.HttpsEnabler;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
-import io.cdap.cdap.internal.provision.ProvisionerProvider;
 import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.security.auth.KeyManager;
 import io.cdap.http.ChannelPipelineModifier;
@@ -100,7 +97,7 @@ public class TaskWorkerService extends AbstractIdleService {
   protected void startUp() throws Exception {
     LOG.debug("Starting TaskWorkerService");
     keyManager.startAndWait();
-    provisioningService.initializeProvisioners();
+    provisioningService.initializeProvisionersAndExecutors();
     twillRunnerService.start();
     httpService.start();
     bindAddress = httpService.getBindAddress();

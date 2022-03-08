@@ -63,8 +63,6 @@ import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
 import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
-import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
-import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSystemContext;
 import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import io.cdap.cdap.runtime.spi.ssh.SSHContext;
@@ -83,7 +81,6 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -99,7 +96,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -162,22 +158,20 @@ public class ProvisioningService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting {}", getClass().getSimpleName());
-
-    this.taskExecutor = new KeyedExecutor<>(
-      Executors.newScheduledThreadPool(cConf.getInt(Constants.Provisioner.EXECUTOR_THREADS),
-                                       Threads.createDaemonThreadFactory("provisioning-task-%d")));
-
-    int maxPoolSize = cConf.getInt(Constants.Provisioner.CONTEXT_EXECUTOR_THREADS);
-    ThreadPoolExecutor contextExecutor = new ThreadPoolExecutor(
-      maxPoolSize, maxPoolSize, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<>(),
-      Threads.createDaemonThreadFactory("provisioning-context-%d"));
-    contextExecutor.allowCoreThreadTimeOut(true);
-    this.contextExecutor = contextExecutor;
-    initializeProvisioners();
+    initializeProvisionersAndExecutors();
     resumeTasks(taskStateCleanup);
   }
 
-  public void initializeProvisioners() {
+  public void initializeProvisionersAndExecutors() {
+    this.taskExecutor = new KeyedExecutor<>(
+        Executors.newScheduledThreadPool(cConf.getInt(Constants.Provisioner.EXECUTOR_THREADS),
+            Threads.createDaemonThreadFactory("provisioning-task-%d")));
+    int maxPoolSize = cConf.getInt(Constants.Provisioner.CONTEXT_EXECUTOR_THREADS);
+    ThreadPoolExecutor contextExecutor = new ThreadPoolExecutor(
+        maxPoolSize, maxPoolSize, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<>(),
+        Threads.createDaemonThreadFactory("provisioning-context-%d"));
+    contextExecutor.allowCoreThreadTimeOut(true);
+    this.contextExecutor = contextExecutor;
     provisionerProvider.initializeProvisioners(cConf);
   }
 
