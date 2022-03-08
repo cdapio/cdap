@@ -134,6 +134,7 @@ public class ProvisioningService extends AbstractIdleService {
       SecureStore secureStore, ProgramStateWriter programStateWriter,
       ProvisionerStore provisionerStore, TransactionRunner transactionRunner,
       MetricsCollectionService metricsCollectionService) {
+    LOG.debug("ProvisionerProvider in ProvisioningService: {}", provisionerProvider.toString());
     this.cConf = cConf;
     this.provisionerProvider = provisionerProvider;
     this.provisionerNotifier = provisionerNotifier;

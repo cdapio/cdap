@@ -103,7 +103,7 @@ public class TaskWorkerService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LOG.debug("Starting TaskWorkerService");
-    LOG.debug("ProvisionerProvider in TaskWorkerService: {}", provisionerProvider);
+    LOG.debug("ProvisionerProvider in TaskWorkerService startup: {}", provisionerProvider);
     keyManager.startAndWait();
     provisionerProvider.initializeProvisioners(cConf);
     twillRunnerService.start();

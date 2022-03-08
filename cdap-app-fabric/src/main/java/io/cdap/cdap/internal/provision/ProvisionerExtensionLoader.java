@@ -109,6 +109,7 @@ public class ProvisionerExtensionLoader extends AbstractExtensionLoader<String, 
     Map<String, Provisioner> provisioners = loadProvisioners();
     Map<String, ProvisionerConfig> provisionerConfigs =
         provisionerConfigProvider.loadProvisionerConfigs(provisioners.values());
+    LOG.debug("ProvisionerProvider in initializeProvisioners: {}", this);
     LOG.debug("Provisioners = {}", provisioners);
     Map<String, ProvisionerDetail> details = new HashMap<>(provisioners.size());
     for (Map.Entry<String, Provisioner> provisionerEntry : provisioners.entrySet()) {
