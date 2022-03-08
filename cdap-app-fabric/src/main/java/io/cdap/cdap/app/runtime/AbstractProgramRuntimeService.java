@@ -153,6 +153,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
         }
         RunRecordDetail runRecordDetail = store.getRun(programRunId);
         LOG.debug("RunRecordDetail: {}", runRecordDetail);
+        LOG.debug("TwillRunnerService: {}", remoteTwillRunnerService);
         TwillController twillController = null;
         if (remoteTwillRunnerService instanceof RemoteExecutionTwillRunnerService
             && runRecordDetail != null) {
