@@ -108,7 +108,7 @@ public class DispatchTaskModule extends AbstractModule {
 
     // RemoteExecutionProgramRunnerModule
 
-    bind(TWILL_RUNNER_SERVICE_KEY).to(RemoteExecutionTwillRunnerService.class).in(Scopes.SINGLETON);
+    // bind(TWILL_RUNNER_SERVICE_KEY).to(RemoteExecutionTwillRunnerService.class).in(Scopes.SINGLETON);
     bind(ClusterMode.class).toInstance(ClusterMode.ISOLATED);
 
     // Bind ProgramRunnerFactory and expose it with the RemoteExecution annotation
