@@ -50,6 +50,7 @@ public class FileSecureStoreServiceTest {
 
   private static final String NAMESPACE1 = "default";
   private static final String NAMESPACE2 = "namespace2";
+  private static final String CAPS_NAMESPACE2 = "NAMESPACE2";
   private static final String KEY1 = "key1";
   private static final String VALUE1 = "value1";
   private static final String DESCRIPTION1 = "This is the first key.";
@@ -87,7 +88,13 @@ public class FileSecureStoreServiceTest {
       .setName(NAMESPACE2)
       .build();
     namespaceClient.create(namespaceMeta);
-    FileSecureStoreService fileSecureStoreService = new FileSecureStoreService(conf, sConf, namespaceClient);
+    namespaceMeta = new NamespaceMeta.Builder()
+      .setName(CAPS_NAMESPACE2)
+      .build();
+    namespaceClient.create(namespaceMeta);
+    FileSecureStoreService fileSecureStoreService = new FileSecureStoreService(conf, sConf, namespaceClient,
+                                                                               FileSecureStoreService.CURRENT_CODEC
+                                                                                 .newInstance());
     secureStoreManager = fileSecureStoreService;
     secureStore = fileSecureStoreService;
   }
@@ -203,5 +210,20 @@ public class FileSecureStoreServiceTest {
     metadatas.sort(Comparator.comparing(SecureStoreMetadata::getName));
     Assert.assertEquals(KEY1, metadatas.get(0).getName());
     Assert.assertNull(metadatas.get(0).getDescription());
+  }
+
+  @Test
+  public void testCaseInsensitiveKeystoreSupportsCaseSensitivity() throws Exception {
+    populateStore();
+    secureStoreManager.put(NAMESPACE2, KEY1, VALUE1, DESCRIPTION1, PROPERTIES_1);
+    secureStoreManager.put(CAPS_NAMESPACE2, KEY1, VALUE1, DESCRIPTION1, PROPERTIES_1);
+
+    List<SecureStoreMetadata> metadatas = secureStore.list(NAMESPACE2);
+    metadatas.sort(Comparator.comparing(SecureStoreMetadata::getName));
+    verifyList(metadatas, ImmutableMap.of(KEY1, DESCRIPTION1));
+
+    metadatas = secureStore.list(CAPS_NAMESPACE2);
+    metadatas.sort(Comparator.comparing(SecureStoreMetadata::getName));
+    verifyList(metadatas, ImmutableMap.of(KEY1, DESCRIPTION1));
   }
 }
