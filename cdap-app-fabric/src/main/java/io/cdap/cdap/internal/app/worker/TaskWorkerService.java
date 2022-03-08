@@ -31,6 +31,7 @@ import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import io.cdap.cdap.internal.provision.ProvisionerProvider;
+import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.security.auth.KeyManager;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
@@ -68,12 +69,14 @@ public class TaskWorkerService extends AbstractIdleService {
                     KeyManager keyManager,
                     MetricsCollectionService metricsCollectionService,
                     ProvisionerProvider provisionerProvider,
-                    TwillRunnerService twillRunnerService) {
+                    TwillRunnerService twillRunnerService,
+                    ProvisioningService provisioningService) {
     this.discoveryService = discoveryService;
     this.keyManager = keyManager;
     this.provisionerProvider = provisionerProvider;
     this.twillRunnerService = twillRunnerService;
     LOG.debug("KeyManager in TaskWorkerService: {}", keyManager.toString());
+    LOG.debug("ProvisioningService in TaskWorkerService: {}", provisioningService.toString());
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TASK_WORKER)
       .setHost(cConf.get(Constants.TaskWorker.ADDRESS))
       .setPort(cConf.getInt(Constants.TaskWorker.PORT))
@@ -87,7 +90,7 @@ public class TaskWorkerService extends AbstractIdleService {
         }
       })
       .setHttpHandlers(new TaskWorkerHttpHandlerInternal(cConf, sConf, this::stopService,
-          metricsCollectionService, keyManager, provisionerProvider, twillRunnerService));
+          metricsCollectionService, keyManager, provisioningService, twillRunnerService));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
@@ -99,6 +102,7 @@ public class TaskWorkerService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LOG.debug("Starting TaskWorkerService");
+    LOG.debug("ProvisionerProvider in TaskWorkerService: {}", provisionerProvider);
     keyManager.startAndWait();
     provisionerProvider.initializeProvisioners(cConf);
     twillRunnerService.start();

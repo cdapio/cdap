@@ -27,6 +27,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.internal.provision.ProvisionerProvider;
+import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.cdap.security.auth.KeyManager;
@@ -105,10 +106,10 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   public TaskWorkerHttpHandlerInternal(CConfiguration cConf, SConfiguration sConf,
       Consumer<String> stopper,
       MetricsCollectionService metricsCollectionService, KeyManager keyManager,
-      ProvisionerProvider provisionerProvider, TwillRunnerService twillRunnerService) {
+      ProvisioningService provisioningService, TwillRunnerService twillRunnerService) {
     int killAfterRequestCount = cConf.getInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
     this.runnableTaskLauncher = new RunnableTaskLauncher(new RunnableTaskModule.Builder().cConf(cConf).sConf(sConf)
-        .keyManager(keyManager).provisionerProvider(provisionerProvider).twillRunnerService(twillRunnerService)
+        .keyManager(keyManager).provisioningService(provisioningService).twillRunnerService(twillRunnerService)
         .build());
     this.metricsCollectionService = metricsCollectionService;
     this.metadataServiceEndpoint = cConf.get(Constants.TaskWorker.METADATA_SERVICE_END_POINT);

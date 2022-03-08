@@ -86,7 +86,8 @@ public class TaskWorkerServiceTest {
     SConfiguration sConf = createSConf();
 
     TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, sConf, new InMemoryDiscoveryService(),
-                                                                null, new NoOpMetricsCollectionService(), null, null);
+                                                                null, new NoOpMetricsCollectionService(), null, null,
+        null);
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service
     taskWorkerService.startAndWait();
@@ -109,7 +110,8 @@ public class TaskWorkerServiceTest {
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, 5);
 
     TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, sConf, new InMemoryDiscoveryService(),
-                                                                null, new NoOpMetricsCollectionService(), null, null);
+                                                                null, new NoOpMetricsCollectionService(), null, null,
+        null);
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service
     taskWorkerService.startAndWait();
@@ -126,7 +128,8 @@ public class TaskWorkerServiceTest {
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, 2);
 
     TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, sConf, new InMemoryDiscoveryService(),
-                                                                null, new NoOpMetricsCollectionService(), null, null);
+                                                                null, new NoOpMetricsCollectionService(), null, null,
+        null);
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service
     taskWorkerService.startAndWait();
@@ -158,7 +161,8 @@ public class TaskWorkerServiceTest {
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, 0);
 
     TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, sConf, new InMemoryDiscoveryService(),
-                                                                null, new NoOpMetricsCollectionService(), null, null);
+                                                                null, new NoOpMetricsCollectionService(), null, null,
+        null);
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service
     taskWorkerService.startAndWait();

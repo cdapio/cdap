@@ -100,24 +100,24 @@ public class DispatchTask implements RunnableTask {
   private final CConfiguration cConf;
   private final SConfiguration sConf;
   private final KeyManager keyManager;
-  private final ProvisionerProvider provisionerProvider;
   private final TwillRunnerService twillRunnerService;
+  private final ProvisioningService provisioningService;
 
   @Inject
   DispatchTask(CConfiguration cConf, SConfiguration sConf, KeyManager keyManager,
-      ProvisionerProvider provisionerProvider, TwillRunnerService twillRunnerService) {
+      TwillRunnerService twillRunnerService, ProvisioningService provisioningService) {
     this.cConf = cConf;
     this.sConf = sConf;
     this.keyManager = keyManager;
-    this.provisionerProvider = provisionerProvider;
     this.twillRunnerService = twillRunnerService;
+    this.provisioningService = provisioningService;
   }
 
   @Override
   public void run(RunnableTaskContext context) throws Exception {
     try {
       LOG.debug("KeyManager reference for DispatchTask: {}", keyManager.toString());
-      LOG.debug("ProvisionerProvider reference for DispatchTask: {}", provisionerProvider.toString());
+      LOG.debug("ProvisioningService reference for DispatchTask: {}", provisioningService.toString());
       AppLaunchInfo appLaunchInfo = GSON.fromJson(context.getParam(), AppLaunchInfo.class);
       Injector injector = Guice.createInjector(
           new ConfigModule(cConf, sConf),
@@ -130,14 +130,14 @@ public class DispatchTask implements RunnableTask {
           // new RemoteExecutionProgramRunnerModule(),
           new SecureStoreClientModule(),
           new IOModule(),
-          new ProvisionerModule() {
-            @Override
-            protected void configure() {
-              bind(ProvisioningService.class).in(Scopes.SINGLETON);
-              bind(ProvisionerProvider.class).toInstance(provisionerProvider);
-              bind(ProvisionerConfigProvider.class).to(DefaultProvisionerConfigProvider.class);
-            }
-          },
+          // new ProvisionerModule() {
+          //   @Override
+          //   protected void configure() {
+          //     bind(ProvisioningService.class).in(Scopes.SINGLETON);
+          //     bind(ProvisionerProvider.class).toInstance(provisionerProvider);
+          //     bind(ProvisionerConfigProvider.class).to(DefaultProvisionerConfigProvider.class);
+          //   }
+          // },
           // new DistributedMetricsClientModule(),
           new MessagingClientModule(),
           new StorageModule(),
@@ -155,6 +155,7 @@ public class DispatchTask implements RunnableTask {
                   .toInstance(twillRunnerService);
               bind(TwillRunnerService.class).annotatedWith(Constants.AppFabric.RemoteExecution.class)
                   .toInstance(twillRunnerService);
+              bind(ProvisioningService.class).toInstance(provisioningService);
             }
           }
           // new FileBasedCoreSecurityModule()
@@ -189,8 +190,7 @@ public class DispatchTask implements RunnableTask {
         Impersonator impersonator,
         ArtifactRepository artifactRepository,
         @Constants.AppFabric.ProgramRunner TwillRunnerService twillRunnerService,
-        ProvisioningService provisioningService,
-        ProvisionerProvider provisionerProvider) {
+        ProvisioningService provisioningService) {
       this.cConf = cConf;
       this.programRunnerFactory = programRunnerFactory;
       this.configuratorFactory = configuratorFactory;
@@ -202,7 +202,6 @@ public class DispatchTask implements RunnableTask {
             ((ImpersonatedTwillRunnerService) twillRunnerService).delegate);
       }
       LOG.debug("ProvisioningService in DispatchTask: {}", provisioningService);
-      LOG.debug("ProvisionerProvider in DispatchTask: {}", provisionerProvider);
     }
 
     /**
