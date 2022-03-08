@@ -394,6 +394,7 @@ public class ProvisioningService extends AbstractIdleService {
    * @return an object of runtime job manager
    */
   public Optional<RuntimeJobManager> getRuntimeJobManager(ProgramRunId programRunId, ProgramOptions programOptions) {
+    LOG.debug("ProvisionerProvider reference for code flow: {}", provisionerProvider.toString());
     Map<String, String> systemArgs = programOptions.getArguments().asMap();
     String name = SystemArguments.getProfileProvisioner(systemArgs);
     Provisioner provisioner = provisionerProvider.getProvisionerInfo().provisioners.get(name);
