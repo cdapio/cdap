@@ -185,7 +185,7 @@ public class DispatchTask implements RunnableTask {
         ConfiguratorFactory configuratorFactory,
         Impersonator impersonator,
         ArtifactRepository artifactRepository,
-        TwillRunnerService twillRunnerService) {
+        @Constants.AppFabric.ProgramRunner TwillRunnerService twillRunnerService) {
       this.cConf = cConf;
       this.programRunnerFactory = programRunnerFactory;
       this.configuratorFactory = configuratorFactory;
