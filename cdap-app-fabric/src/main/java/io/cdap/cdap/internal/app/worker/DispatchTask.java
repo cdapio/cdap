@@ -188,7 +188,9 @@ public class DispatchTask implements RunnableTask {
         ConfiguratorFactory configuratorFactory,
         Impersonator impersonator,
         ArtifactRepository artifactRepository,
-        @Constants.AppFabric.ProgramRunner TwillRunnerService twillRunnerService) {
+        @Constants.AppFabric.ProgramRunner TwillRunnerService twillRunnerService,
+        ProvisioningService provisioningService,
+        ProvisionerProvider provisionerProvider) {
       this.cConf = cConf;
       this.programRunnerFactory = programRunnerFactory;
       this.configuratorFactory = configuratorFactory;
@@ -199,6 +201,8 @@ public class DispatchTask implements RunnableTask {
         LOG.debug("TwillRunnerService in DispatchTask internal: {}",
             ((ImpersonatedTwillRunnerService) twillRunnerService).delegate);
       }
+      LOG.debug("ProvisioningService in DispatchTask: {}", provisioningService);
+      LOG.debug("ProvisionerProvider in DispatchTask: {}", provisionerProvider);
     }
 
     /**

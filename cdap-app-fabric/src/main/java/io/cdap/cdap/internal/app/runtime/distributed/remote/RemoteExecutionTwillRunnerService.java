@@ -357,7 +357,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
       secretFiles.put(Constants.Security.Authentication.RUNTIME_TOKEN_FILE,
                       generateAndSaveRuntimeToken(programRunId, keysDirLocation));
     }
-
+    LOG.debug("ProvisioningService reference for code flow: {}", provisioningService.toString());
     RuntimeJobManager jobManager = provisioningService.getRuntimeJobManager(programRunId, programOpts).orElse(null);
     // Use RuntimeJobManager to launch the remote process if it is supported
     if (jobManager != null) {

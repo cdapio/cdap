@@ -154,6 +154,11 @@ public class ProvisioningService extends AbstractIdleService {
   }
 
   @Override
+  public String toString() {
+    return getClass().getName() + "@" + Integer.toHexString(hashCode());
+  }
+
+  @Override
   protected void startUp() throws Exception {
     LOG.info("Starting {}", getClass().getSimpleName());
 
