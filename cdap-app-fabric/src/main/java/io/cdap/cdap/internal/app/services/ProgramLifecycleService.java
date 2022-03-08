@@ -532,7 +532,8 @@ public class ProgramLifecycleService {
     checkCapability(programDescriptor);
 
     ProgramRunId programRunId = programId.run(runId);
-    RunRecordMonitorService.Count count = runRecordMonitorService.addRequestAndGetCount(programRunId);
+    // RunRecordMonitorService.Count count = runRecordMonitorService.addRequestAndGetCount(programRunId);
+    RunRecordMonitorService.Count count = new RunRecordMonitorService.Count(0, 0);
 
     boolean done = false;
     try {

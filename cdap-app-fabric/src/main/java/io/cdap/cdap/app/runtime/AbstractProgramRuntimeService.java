@@ -152,16 +152,21 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
           throw new Exception("Failed");
         }
         RunRecordDetail runRecordDetail = store.getRun(programRunId);
+        LOG.debug("RunRecordDetail: {}", runRecordDetail);
         TwillController twillController = null;
         if (remoteTwillRunnerService instanceof RemoteExecutionTwillRunnerService
             && runRecordDetail != null) {
+          LOG.debug("Creating TwillController");
           twillController = ((RemoteExecutionTwillRunnerService) remoteTwillRunnerService)
               .createTwillControllerFromRunRecord(runRecordDetail);
+          LOG.debug("TwillController: {}", twillController);
         }
         ProgramController programController = null;
         if (runner instanceof DistributedWorkflowProgramRunner && twillController != null) {
+          LOG.debug("Creating ProgramController");
           programController = ((DistributedWorkflowProgramRunner) runner)
               .createProgramController(programRunId, twillController);
+          LOG.debug("ProgramController: {}", programController);
         }
         controller.setProgramController(programController);
       } catch (Exception e) {
