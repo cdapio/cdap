@@ -467,6 +467,12 @@ public class SmartWorkflow extends AbstractWorkflow {
         updateTokenWithTriggeringProperties(scheduleInfo, propertiesMapping, context.getToken());
       }
     }
+    spec = GSON.fromJson(context.getWorkflowSpecification().getProperty(Constants.PIPELINE_SPEC_KEY),
+                         BatchPipelineSpec.class);
+    if (spec.getEngine() == Engine.MAPREDUCE) {
+      WRAPPERLOGGER.warn("Pipeline '{}' is using Mapreduce engine which is planned to be deprecated. " +
+                           "Please use Spark engine.", context.getApplicationSpecification().getName());
+    }
     PipelineRuntime pipelineRuntime = new PipelineRuntime(context, workflowMetrics);
     WRAPPERLOGGER.info("Pipeline '{}' is started by user '{}' with arguments {}",
                        context.getApplicationSpecification().getName(),
