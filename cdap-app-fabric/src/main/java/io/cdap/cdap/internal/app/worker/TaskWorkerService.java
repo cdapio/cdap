@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.worker;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -65,11 +66,13 @@ public class TaskWorkerService extends AbstractIdleService {
                     KeyManager keyManager,
                     MetricsCollectionService metricsCollectionService,
                     TwillRunnerService twillRunnerService,
-                    ProvisioningService provisioningService) {
+                    ProvisioningService provisioningService,
+                    Injector injector) {
     this.discoveryService = discoveryService;
     this.keyManager = keyManager;
     this.twillRunnerService = twillRunnerService;
     this.provisioningService = provisioningService;
+    LOG.debug("Injector in TaskWorkerService: {}", injector);
     LOG.debug("KeyManager in TaskWorkerService: {}", keyManager.toString());
     LOG.debug("ProvisioningService in TaskWorkerService: {}", provisioningService.toString());
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TASK_WORKER)

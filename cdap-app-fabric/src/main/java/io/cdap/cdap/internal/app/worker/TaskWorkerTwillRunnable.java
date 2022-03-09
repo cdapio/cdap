@@ -420,6 +420,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
         Constants.Logging.COMPONENT_NAME,
         TaskWorkerTwillApplication.NAME);
     LoggingContextAccessor.setLoggingContext(loggingContext);
+    LOG.debug("Injector in TaskWorkerTwillRunnable: {}", injector);
     taskWorker = injector.getInstance(TaskWorkerService.class);
   }
 }
