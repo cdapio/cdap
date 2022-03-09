@@ -30,7 +30,6 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
-import io.cdap.cdap.app.guice.ImpersonatedTwillRunnerService;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramOptions;
@@ -189,10 +188,6 @@ public class LaunchDispatchTask implements RunnableTask {
       this.impersonator = impersonator;
       this.artifactRepository = artifactRepository;
       LOG.debug("TwillRunnerService in LaunchDispatchTask: {}", twillRunnerService);
-      if (twillRunnerService instanceof ImpersonatedTwillRunnerService) {
-        LOG.debug("TwillRunnerService in LaunchDispatchTask internal: {}",
-            ((ImpersonatedTwillRunnerService) twillRunnerService).delegate);
-      }
       LOG.debug("ProvisioningService in DispatchTaskRunner: {}", provisioningService);
     }
 
