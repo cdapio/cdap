@@ -14,14 +14,17 @@
  * the License.
  */
 
-package io.cdap.cdap.app.guice;
+package io.cdap.cdap.internal.app.worker.guice;
 
+import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
-import com.google.inject.PrivateModule;
+import com.google.inject.Key;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
+import io.cdap.cdap.app.guice.ImpersonatedTwillRunnerService;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionTwillRunnerService;
 import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.security.TokenSecureStoreRenewer;
@@ -37,17 +40,18 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RemoteTwillModule extends PrivateModule {
+public class RemoteTwillModule extends AbstractModule {
 
   private static final Logger LOG = LoggerFactory.getLogger(RemoteTwillModule.class);
 
   @Override
   protected void configure() {
-    bind(TwillRunnerService.class).toProvider(TwillRunnerServiceProvider.class)
-        .in(Scopes.SINGLETON);
-    bind(TwillRunner.class).to(TwillRunnerService.class);
-    expose(TwillRunnerService.class);
-    expose(TwillRunner.class);
+    Key<TwillRunnerService> twillRunnerServiceKey = Key.get(TwillRunnerService.class,
+        Constants.AppFabric.ProgramRunner.class);
+    bind(twillRunnerServiceKey).toProvider(TwillRunnerServiceProvider.class).in(Scopes.SINGLETON);
+    bind(TwillRunner.class).to(twillRunnerServiceKey);
+    bind(TwillRunnerService.class).annotatedWith(Constants.AppFabric.RemoteExecution.class)
+        .to(twillRunnerServiceKey);
   }
 
   static final class TwillRunnerServiceProvider implements Provider<TwillRunnerService> {
