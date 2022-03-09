@@ -161,19 +161,7 @@ public class ProvisioningService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting {}", getClass().getSimpleName());
-
-    this.taskExecutor = new KeyedExecutor<>(
-      Executors.newScheduledThreadPool(cConf.getInt(Constants.Provisioner.EXECUTOR_THREADS),
-                                       Threads.createDaemonThreadFactory("provisioning-task-%d")));
-
-    int maxPoolSize = cConf.getInt(Constants.Provisioner.CONTEXT_EXECUTOR_THREADS);
-    ThreadPoolExecutor contextExecutor = new ThreadPoolExecutor(
-      maxPoolSize, maxPoolSize, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<>(),
-      Threads.createDaemonThreadFactory("provisioning-context-%d"));
-    contextExecutor.allowCoreThreadTimeOut(true);
-    this.contextExecutor = contextExecutor;
-
-    initializeProvisioners();
+    initializeProvisionersAndExecutors();
     resumeTasks(taskStateCleanup);
   }
 
@@ -521,7 +509,18 @@ public class ProvisioningService extends AbstractIdleService {
    * Reloads provisioners in the extension directory. Any new provisioners will be added and any deleted provisioners
    * will be removed. Loaded provisioners will be initialized.
    */
-  private void initializeProvisioners() {
+  public void initializeProvisionersAndExecutors() {
+    this.taskExecutor = new KeyedExecutor<>(
+        Executors.newScheduledThreadPool(cConf.getInt(Constants.Provisioner.EXECUTOR_THREADS),
+            Threads.createDaemonThreadFactory("provisioning-task-%d")));
+
+    int maxPoolSize = cConf.getInt(Constants.Provisioner.CONTEXT_EXECUTOR_THREADS);
+    ThreadPoolExecutor contextExecutor = new ThreadPoolExecutor(
+        maxPoolSize, maxPoolSize, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<>(),
+        Threads.createDaemonThreadFactory("provisioning-context-%d"));
+    contextExecutor.allowCoreThreadTimeOut(true);
+    this.contextExecutor = contextExecutor;
+
     Map<String, Provisioner> provisioners = provisionerProvider.loadProvisioners();
     Map<String, ProvisionerConfig> provisionerConfigs =
       provisionerConfigProvider.loadProvisionerConfigs(provisioners.values());
