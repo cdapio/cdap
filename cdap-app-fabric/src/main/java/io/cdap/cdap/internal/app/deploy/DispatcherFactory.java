@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.internal.app.deploy;
 
-import io.cdap.cdap.app.deploy.Dispatcher;
+import io.cdap.cdap.app.deploy.LaunchDispatcher;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppLaunchInfo;
 
 public interface DispatcherFactory {
-  Dispatcher create(AppLaunchInfo appLaunchInfo);
+  LaunchDispatcher create(AppLaunchInfo appLaunchInfo);
 }

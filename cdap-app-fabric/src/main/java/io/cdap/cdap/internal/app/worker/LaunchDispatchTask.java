@@ -24,17 +24,15 @@ import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
-import com.google.inject.Scopes;
 import com.google.inject.name.Named;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
-import io.cdap.cdap.app.deploy.DispatchResponse;
 import io.cdap.cdap.app.guice.ImpersonatedTwillRunnerService;
-import io.cdap.cdap.app.guice.RemoteExecutionProgramRunnerModule;
 import io.cdap.cdap.app.runtime.Arguments;
+import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.common.app.RunIds;
@@ -44,13 +42,13 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.IOModule;
-import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
-import io.cdap.cdap.internal.app.deploy.InMemoryDispatcher;
+import io.cdap.cdap.internal.app.deploy.InMemoryLaunchDispatcher;
+import io.cdap.cdap.internal.app.deploy.LaunchDispatchResponse;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppLaunchInfo;
 import io.cdap.cdap.internal.app.runtime.artifact.ApplicationClassCodec;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -58,21 +56,12 @@ import io.cdap.cdap.internal.app.runtime.artifact.RequirementsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
-import io.cdap.cdap.internal.provision.DefaultProvisionerConfigProvider;
-import io.cdap.cdap.internal.provision.ProvisionerConfigProvider;
-import io.cdap.cdap.internal.provision.ProvisionerExtensionLoader;
-import io.cdap.cdap.internal.provision.ProvisionerModule;
-import io.cdap.cdap.internal.provision.ProvisionerProvider;
 import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
-import io.cdap.cdap.metrics.guice.DistributedMetricsClientModule;
 import io.cdap.cdap.security.auth.KeyManager;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.guice.CoreSecurityModule;
-import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
-import io.cdap.cdap.security.guice.DistributedCoreSecurityModule;
 import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
-import io.cdap.cdap.security.guice.FileBasedCoreSecurityModule;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import org.apache.twill.api.RunId;
@@ -82,11 +71,11 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.TimeUnit;
+import java.util.Objects;
 
-public class DispatchTask implements RunnableTask {
+public class LaunchDispatchTask implements RunnableTask {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DispatchTask.class);
+  private static final Logger LOG = LoggerFactory.getLogger(LaunchDispatchTask.class);
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(
           new GsonBuilder())
       .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
@@ -104,7 +93,7 @@ public class DispatchTask implements RunnableTask {
   private final ProvisioningService provisioningService;
 
   @Inject
-  DispatchTask(CConfiguration cConf, SConfiguration sConf, KeyManager keyManager,
+  LaunchDispatchTask(CConfiguration cConf, SConfiguration sConf, KeyManager keyManager,
       TwillRunnerService twillRunnerService, ProvisioningService provisioningService) {
     this.cConf = cConf;
     this.sConf = sConf;
@@ -116,8 +105,9 @@ public class DispatchTask implements RunnableTask {
   @Override
   public void run(RunnableTaskContext context) throws Exception {
     try {
-      LOG.debug("KeyManager reference for DispatchTask: {}", keyManager.toString());
-      LOG.debug("ProvisioningService reference for DispatchTask: {}", provisioningService.toString());
+      LOG.debug("KeyManager reference for LaunchDispatchTask: {}", keyManager.toString());
+      LOG.debug("ProvisioningService reference for LaunchDispatchTask: {}",
+          provisioningService.toString());
       AppLaunchInfo appLaunchInfo = GSON.fromJson(context.getParam(), AppLaunchInfo.class);
       Injector injector = Guice.createInjector(
           new ConfigModule(cConf, sConf),
@@ -153,7 +143,8 @@ public class DispatchTask implements RunnableTask {
             protected void configure() {
               bind(TwillRunnerService.class).annotatedWith(Constants.AppFabric.ProgramRunner.class)
                   .toInstance(twillRunnerService);
-              bind(TwillRunnerService.class).annotatedWith(Constants.AppFabric.RemoteExecution.class)
+              bind(TwillRunnerService.class).annotatedWith(
+                      Constants.AppFabric.RemoteExecution.class)
                   .toInstance(twillRunnerService);
               bind(ProvisioningService.class).toInstance(provisioningService);
             }
@@ -162,9 +153,10 @@ public class DispatchTask implements RunnableTask {
           // CoreSecurityRuntimeModule.getDistributedModule(cConf)
       );
       DispatchTaskRunner taskRunner = injector.getInstance(DispatchTaskRunner.class);
-      DispatchResponse response = taskRunner.dispatch(appLaunchInfo);
-      if (response.getExitCode() == 0 && response.isSuccessfulLaunch()) {
-        context.setTerminateOnComplete(true);
+      ProgramController programController = taskRunner.dispatch(appLaunchInfo);
+      LaunchDispatchResponse response = null;
+      if (Objects.nonNull(programController)) {
+        response = new LaunchDispatchResponse(true);
       }
       String result = GSON.toJson(response);
       context.writeResult(result.getBytes(StandardCharsets.UTF_8));
@@ -196,17 +188,17 @@ public class DispatchTask implements RunnableTask {
       this.configuratorFactory = configuratorFactory;
       this.impersonator = impersonator;
       this.artifactRepository = artifactRepository;
-      LOG.debug("TwillRunnerService in DispatchTask: {}", twillRunnerService);
+      LOG.debug("TwillRunnerService in LaunchDispatchTask: {}", twillRunnerService);
       if (twillRunnerService instanceof ImpersonatedTwillRunnerService) {
-        LOG.debug("TwillRunnerService in DispatchTask internal: {}",
+        LOG.debug("TwillRunnerService in LaunchDispatchTask internal: {}",
             ((ImpersonatedTwillRunnerService) twillRunnerService).delegate);
       }
       LOG.debug("ProvisioningService in DispatchTaskRunner: {}", provisioningService);
     }
 
     /**
-     * Optional guice injection for the {@link ProgramRunnerFactory} used for remote execution. It is
-     * optional because in unit-test we don't have need for that.
+     * Optional guice injection for the {@link ProgramRunnerFactory} used for remote execution. It
+     * is optional because in unit-test we don't have need for that.
      */
     @Inject(optional = true)
     void setRemoteProgramRunnerFactory(
@@ -219,13 +211,14 @@ public class DispatchTask implements RunnableTask {
       this.host = host;
     }
 
-    public DispatchResponse dispatch(AppLaunchInfo appLaunchInfo) throws Exception {
-      InMemoryDispatcher dispatcher = new InMemoryDispatcher(cConf, programRunnerFactory,
-          configuratorFactory, impersonator, artifactRepository, appLaunchInfo);
+    public ProgramController dispatch(AppLaunchInfo appLaunchInfo) throws Exception {
+      InMemoryLaunchDispatcher dispatcher = new InMemoryLaunchDispatcher(cConf,
+          programRunnerFactory, configuratorFactory, impersonator, artifactRepository,
+          appLaunchInfo);
       dispatcher.setRemoteProgramRunnerFactory(remoteProgramRunnerFactory);
       dispatcher.setHostname(host);
       try {
-        return dispatcher.dispatch().get(120, TimeUnit.SECONDS);
+        return dispatcher.dispatchPipelineLaunch();
       } catch (Exception e) {
         // We don't need the ExecutionException being reported back to the RemoteTaskExecutor, hence only
         // propagating the actual cause.
