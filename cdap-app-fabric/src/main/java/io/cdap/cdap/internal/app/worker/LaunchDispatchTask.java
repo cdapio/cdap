@@ -19,9 +19,6 @@ package io.cdap.cdap.internal.app.worker;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.inject.AbstractModule;
-import com.google.inject.Binder;
-import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.name.Named;
@@ -37,13 +34,6 @@ import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.conf.SConfiguration;
-import io.cdap.cdap.common.guice.ConfigModule;
-import io.cdap.cdap.common.guice.DFSLocationModule;
-import io.cdap.cdap.common.guice.IOModule;
-import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
-import io.cdap.cdap.common.guice.ZKClientModule;
-import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
 import io.cdap.cdap.internal.app.deploy.InMemoryLaunchDispatcher;
@@ -56,12 +46,6 @@ import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.internal.provision.ProvisioningService;
-import io.cdap.cdap.messaging.guice.MessagingClientModule;
-import io.cdap.cdap.security.auth.KeyManager;
-import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
-import io.cdap.cdap.security.guice.CoreSecurityModule;
-import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
-import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillRunnerService;
@@ -85,75 +69,17 @@ public class LaunchDispatchTask implements RunnableTask {
       .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
       .create();
 
-  private final CConfiguration cConf;
-  private final SConfiguration sConf;
-  private final KeyManager keyManager;
-  private final TwillRunnerService twillRunnerService;
-  private final ProvisioningService provisioningService;
   private final Injector injector;
 
   @Inject
-  LaunchDispatchTask(CConfiguration cConf, SConfiguration sConf, KeyManager keyManager,
-      TwillRunnerService twillRunnerService, ProvisioningService provisioningService,
-      Injector injector) {
-    this.cConf = cConf;
-    this.sConf = sConf;
-    this.keyManager = keyManager;
-    this.twillRunnerService = twillRunnerService;
-    this.provisioningService = provisioningService;
+  LaunchDispatchTask(Injector injector) {
     this.injector = injector;
   }
 
   @Override
   public void run(RunnableTaskContext context) throws Exception {
     try {
-      LOG.debug("KeyManager reference for LaunchDispatchTask: {}", keyManager.toString());
-      LOG.debug("ProvisioningService reference for LaunchDispatchTask: {}",
-          provisioningService.toString());
       AppLaunchInfo appLaunchInfo = GSON.fromJson(context.getParam(), AppLaunchInfo.class);
-      // Injector injector = Guice.createInjector(
-      //     new ConfigModule(cConf, sConf),
-      //     new DFSLocationModule(),
-      //     new ConfiguratorTaskModule(),
-      //     new DispatchTaskModule(),
-      //     RemoteAuthenticatorModules.getDefaultModule(),
-      //     new AuthenticationContextModules().getMasterWorkerModule(),
-      //     new ExternalAuthenticationModule(),
-      //     // new RemoteExecutionProgramRunnerModule(),
-      //     new SecureStoreClientModule(),
-      //     new IOModule(),
-      //     // new ProvisionerModule() {
-      //     //   @Override
-      //     //   protected void configure() {
-      //     //     bind(ProvisioningService.class).in(Scopes.SINGLETON);
-      //     //     bind(ProvisionerProvider.class).toInstance(provisionerProvider);
-      //     //     bind(ProvisionerConfigProvider.class).to(DefaultProvisionerConfigProvider.class);
-      //     //   }
-      //     // },
-      //     // new DistributedMetricsClientModule(),
-      //     new MessagingClientModule(),
-      //     new StorageModule(),
-      //     new ZKClientModule(),
-      //     new CoreSecurityModule() {
-      //       @Override
-      //       protected void bindKeyManager(Binder binder) {
-      //         bind(KeyManager.class).toInstance(keyManager);
-      //       }
-      //     },
-      //     new AbstractModule() {
-      //       @Override
-      //       protected void configure() {
-      //         bind(TwillRunnerService.class).annotatedWith(Constants.AppFabric.ProgramRunner.class)
-      //             .toInstance(twillRunnerService);
-      //         bind(TwillRunnerService.class).annotatedWith(
-      //                 Constants.AppFabric.RemoteExecution.class)
-      //             .toInstance(twillRunnerService);
-      //         bind(ProvisioningService.class).toInstance(provisioningService);
-      //       }
-      //     }
-      //     // new FileBasedCoreSecurityModule()
-      //     // CoreSecurityRuntimeModule.getDistributedModule(cConf)
-      // );
       DispatchTaskRunner taskRunner = injector.getInstance(DispatchTaskRunner.class);
       ProgramController programController = taskRunner.dispatch(appLaunchInfo);
       LaunchDispatchResponse response = null;

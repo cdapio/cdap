@@ -16,12 +16,10 @@
 
 package io.cdap.cdap.internal.app.worker;
 
-import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
-import io.cdap.cdap.common.conf.CConfiguration;
 
 /**
  * RunnableTaskLauncher launches a {@link RunnableTask} by loading its class and calling its run method.

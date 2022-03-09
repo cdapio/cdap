@@ -45,22 +45,22 @@ public class RemoteTwillModule extends AbstractModule {
     private final Configuration hConf;
     private final Impersonator impersonator;
     private final TokenSecureStoreRenewer secureStoreRenewer;
-    private final TwillRunnerService twillRunnerService;
+    private final TwillRunnerService remoteExecutionTwillRunnerService;
 
     @Inject
     TwillRunnerServiceProvider(Configuration hConf, Impersonator impersonator,
         TokenSecureStoreRenewer secureStoreRenewer,
-        @Constants.AppFabric.RemoteExecution TwillRunnerService twillRunnerService) {
+        @Constants.AppFabric.RemoteExecution TwillRunnerService remoteExecutionTwillRunnerService) {
       this.hConf = hConf;
       this.impersonator = impersonator;
       this.secureStoreRenewer = secureStoreRenewer;
-      this.twillRunnerService = twillRunnerService;
+      this.remoteExecutionTwillRunnerService = remoteExecutionTwillRunnerService;
     }
 
     @Override
     public TwillRunnerService get() {
-      return new ImpersonatedTwillRunnerService(hConf, twillRunnerService, impersonator,
-          secureStoreRenewer);
+      return new ImpersonatedTwillRunnerService(hConf, remoteExecutionTwillRunnerService,
+          impersonator, secureStoreRenewer);
     }
   }
 
