@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.worker;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
@@ -103,13 +104,10 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
    */
   private final AtomicBoolean mustRestart = new AtomicBoolean(false);
 
-  public TaskWorkerHttpHandlerInternal(CConfiguration cConf, SConfiguration sConf, Consumer<String> stopper,
-      MetricsCollectionService metricsCollectionService, KeyManager keyManager,
-      ProvisioningService provisioningService, TwillRunnerService twillRunnerService) {
+  public TaskWorkerHttpHandlerInternal(CConfiguration cConf, Consumer<String> stopper,
+      MetricsCollectionService metricsCollectionService, Injector injector) {
     int killAfterRequestCount = cConf.getInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
-    this.runnableTaskLauncher = new RunnableTaskLauncher(new RunnableTaskModule.Builder().cConf(cConf).sConf(sConf)
-        .keyManager(keyManager).provisioningService(provisioningService).twillRunnerService(twillRunnerService)
-        .build());
+    this.runnableTaskLauncher = new RunnableTaskLauncher(injector);
     this.metricsCollectionService = metricsCollectionService;
     this.metadataServiceEndpoint = cConf.get(Constants.TaskWorker.METADATA_SERVICE_END_POINT);
     this.stopper = (terminate, taskDetails) -> {

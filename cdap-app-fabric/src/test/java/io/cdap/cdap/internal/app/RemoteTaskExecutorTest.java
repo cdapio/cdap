@@ -58,7 +58,6 @@ public class RemoteTaskExecutorTest {
 
   private static RemoteClientFactory remoteClientFactory;
   private static CConfiguration cConf;
-  private static SConfiguration sConf;
   private static NettyHttpService httpService;
   private static InMemoryDiscoveryService discoveryService;
 
@@ -69,14 +68,13 @@ public class RemoteTaskExecutorTest {
   @BeforeClass
   public static void init() throws Exception {
     cConf = CConfiguration.create();
-    sConf = SConfiguration.create();
     discoveryService = new InMemoryDiscoveryService();
     remoteClientFactory = new RemoteClientFactory(discoveryService,
                                                   new DefaultInternalAuthenticator(new AuthenticationTestContext()));
     httpService = new CommonNettyHttpServiceBuilder(cConf, "test")
       .setHttpHandlers(
-        new TaskWorkerHttpHandlerInternal(cConf, sConf, className -> {
-        }, new NoOpMetricsCollectionService(), null, null, null)
+        new TaskWorkerHttpHandlerInternal(cConf, className -> {
+        }, new NoOpMetricsCollectionService(), null)
       )
       .setChannelPipelineModifier(new ChannelPipelineModifier() {
         @Override

@@ -90,15 +90,18 @@ public class LaunchDispatchTask implements RunnableTask {
   private final KeyManager keyManager;
   private final TwillRunnerService twillRunnerService;
   private final ProvisioningService provisioningService;
+  private final Injector injector;
 
   @Inject
   LaunchDispatchTask(CConfiguration cConf, SConfiguration sConf, KeyManager keyManager,
-      TwillRunnerService twillRunnerService, ProvisioningService provisioningService) {
+      TwillRunnerService twillRunnerService, ProvisioningService provisioningService,
+      Injector injector) {
     this.cConf = cConf;
     this.sConf = sConf;
     this.keyManager = keyManager;
     this.twillRunnerService = twillRunnerService;
     this.provisioningService = provisioningService;
+    this.injector = injector;
   }
 
   @Override
@@ -108,49 +111,49 @@ public class LaunchDispatchTask implements RunnableTask {
       LOG.debug("ProvisioningService reference for LaunchDispatchTask: {}",
           provisioningService.toString());
       AppLaunchInfo appLaunchInfo = GSON.fromJson(context.getParam(), AppLaunchInfo.class);
-      Injector injector = Guice.createInjector(
-          new ConfigModule(cConf, sConf),
-          new DFSLocationModule(),
-          new ConfiguratorTaskModule(),
-          new DispatchTaskModule(),
-          RemoteAuthenticatorModules.getDefaultModule(),
-          new AuthenticationContextModules().getMasterWorkerModule(),
-          new ExternalAuthenticationModule(),
-          // new RemoteExecutionProgramRunnerModule(),
-          new SecureStoreClientModule(),
-          new IOModule(),
-          // new ProvisionerModule() {
-          //   @Override
-          //   protected void configure() {
-          //     bind(ProvisioningService.class).in(Scopes.SINGLETON);
-          //     bind(ProvisionerProvider.class).toInstance(provisionerProvider);
-          //     bind(ProvisionerConfigProvider.class).to(DefaultProvisionerConfigProvider.class);
-          //   }
-          // },
-          // new DistributedMetricsClientModule(),
-          new MessagingClientModule(),
-          new StorageModule(),
-          new ZKClientModule(),
-          new CoreSecurityModule() {
-            @Override
-            protected void bindKeyManager(Binder binder) {
-              bind(KeyManager.class).toInstance(keyManager);
-            }
-          },
-          new AbstractModule() {
-            @Override
-            protected void configure() {
-              bind(TwillRunnerService.class).annotatedWith(Constants.AppFabric.ProgramRunner.class)
-                  .toInstance(twillRunnerService);
-              bind(TwillRunnerService.class).annotatedWith(
-                      Constants.AppFabric.RemoteExecution.class)
-                  .toInstance(twillRunnerService);
-              bind(ProvisioningService.class).toInstance(provisioningService);
-            }
-          }
-          // new FileBasedCoreSecurityModule()
-          // CoreSecurityRuntimeModule.getDistributedModule(cConf)
-      );
+      // Injector injector = Guice.createInjector(
+      //     new ConfigModule(cConf, sConf),
+      //     new DFSLocationModule(),
+      //     new ConfiguratorTaskModule(),
+      //     new DispatchTaskModule(),
+      //     RemoteAuthenticatorModules.getDefaultModule(),
+      //     new AuthenticationContextModules().getMasterWorkerModule(),
+      //     new ExternalAuthenticationModule(),
+      //     // new RemoteExecutionProgramRunnerModule(),
+      //     new SecureStoreClientModule(),
+      //     new IOModule(),
+      //     // new ProvisionerModule() {
+      //     //   @Override
+      //     //   protected void configure() {
+      //     //     bind(ProvisioningService.class).in(Scopes.SINGLETON);
+      //     //     bind(ProvisionerProvider.class).toInstance(provisionerProvider);
+      //     //     bind(ProvisionerConfigProvider.class).to(DefaultProvisionerConfigProvider.class);
+      //     //   }
+      //     // },
+      //     // new DistributedMetricsClientModule(),
+      //     new MessagingClientModule(),
+      //     new StorageModule(),
+      //     new ZKClientModule(),
+      //     new CoreSecurityModule() {
+      //       @Override
+      //       protected void bindKeyManager(Binder binder) {
+      //         bind(KeyManager.class).toInstance(keyManager);
+      //       }
+      //     },
+      //     new AbstractModule() {
+      //       @Override
+      //       protected void configure() {
+      //         bind(TwillRunnerService.class).annotatedWith(Constants.AppFabric.ProgramRunner.class)
+      //             .toInstance(twillRunnerService);
+      //         bind(TwillRunnerService.class).annotatedWith(
+      //                 Constants.AppFabric.RemoteExecution.class)
+      //             .toInstance(twillRunnerService);
+      //         bind(ProvisioningService.class).toInstance(provisioningService);
+      //       }
+      //     }
+      //     // new FileBasedCoreSecurityModule()
+      //     // CoreSecurityRuntimeModule.getDistributedModule(cConf)
+      // );
       DispatchTaskRunner taskRunner = injector.getInstance(DispatchTaskRunner.class);
       ProgramController programController = taskRunner.dispatch(appLaunchInfo);
       LaunchDispatchResponse response = null;

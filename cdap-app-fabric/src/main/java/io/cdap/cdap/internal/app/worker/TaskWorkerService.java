@@ -72,7 +72,6 @@ public class TaskWorkerService extends AbstractIdleService {
     this.keyManager = keyManager;
     this.twillRunnerService = twillRunnerService;
     this.provisioningService = provisioningService;
-    LOG.debug("Injector in TaskWorkerService: {}", injector);
     LOG.debug("KeyManager in TaskWorkerService: {}", keyManager.toString());
     LOG.debug("ProvisioningService in TaskWorkerService: {}", provisioningService.toString());
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TASK_WORKER)
@@ -87,8 +86,8 @@ public class TaskWorkerService extends AbstractIdleService {
           pipeline.addAfter("compressor", "decompressor", new HttpContentDecompressor());
         }
       })
-      .setHttpHandlers(new TaskWorkerHttpHandlerInternal(cConf, sConf, this::stopService,
-          metricsCollectionService, keyManager, provisioningService, twillRunnerService));
+      .setHttpHandlers(new TaskWorkerHttpHandlerInternal(cConf, this::stopService,
+          metricsCollectionService, injector));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);

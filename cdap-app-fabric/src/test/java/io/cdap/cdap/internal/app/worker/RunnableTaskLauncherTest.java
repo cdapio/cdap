@@ -17,6 +17,8 @@
 package io.cdap.cdap.internal.app.worker;
 
 import com.google.gson.Gson;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
@@ -24,7 +26,6 @@ import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.SConfiguration;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -42,8 +43,13 @@ public class RunnableTaskLauncherTest {
     RunnableTaskRequest request = RunnableTaskRequest.getBuilder(TestRunnableTask.class.getName()).
       withParam(want).build();
 
-    RunnableTaskLauncher launcher = new RunnableTaskLauncher(new RunnableTaskModule.Builder()
-        .cConf(CConfiguration.create()).sConf(SConfiguration.create()).build());
+    RunnableTaskLauncher launcher = new RunnableTaskLauncher(Guice.createInjector(
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(CConfiguration.class).toInstance(CConfiguration.create());
+          }
+        }));
     ByteBuffer got = launcher.launchRunnableTask(request).getResult();
     Assert.assertEquals(want, StandardCharsets.UTF_8.decode(got).toString());
   }

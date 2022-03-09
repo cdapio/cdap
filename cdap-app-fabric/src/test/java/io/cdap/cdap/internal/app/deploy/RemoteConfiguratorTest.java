@@ -109,7 +109,6 @@ public class RemoteConfiguratorTest {
   private static final Map<ArtifactId, ArtifactDetail> artifacts = new HashMap<>();
 
   private static CConfiguration cConf;
-  private static SConfiguration sConf;
   private static NettyHttpService httpService;
   private static RemoteClientFactory remoteClientFactory;
   private static MetricsCollectionService metricsCollectionService;
@@ -119,7 +118,6 @@ public class RemoteConfiguratorTest {
     cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
-    sConf = SConfiguration.create();
 
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     MasterEnvironments.setMasterEnvironment(new TestMasterEnvironment(discoveryService));
@@ -132,8 +130,7 @@ public class RemoteConfiguratorTest {
                                                   new DefaultInternalAuthenticator(new AuthenticationTestContext()));
     httpService = new CommonNettyHttpServiceBuilder(cConf, "test")
       .setHttpHandlers(
-        new TaskWorkerHttpHandlerInternal(cConf, sConf, className -> { }, new NoOpMetricsCollectionService(), null,
-            null, null),
+        new TaskWorkerHttpHandlerInternal(cConf, className -> { }, new NoOpMetricsCollectionService(), null),
         new ArtifactHttpHandlerInternal(new TestArtifactRepository(cConf), namespaceAdmin),
         new ArtifactLocalizerHttpHandlerInternal(new ArtifactLocalizer(cConf, remoteClientFactory,
                                                                        ((namespaceId, retryStrategy) -> {
