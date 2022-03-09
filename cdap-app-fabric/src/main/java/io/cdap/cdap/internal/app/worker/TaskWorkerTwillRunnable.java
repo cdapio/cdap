@@ -310,17 +310,19 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
         new MonitorHandlerModule(false),
         new SecureStoreServerModule(),
         new OperationalStatsModule(),
-        getDataFabricModule(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            install(new StorageModule());
+            install(new TransactionExecutorModule());
+            bind(TransactionSystemClientService.class).to(DelegatingTransactionSystemClientService.class);
+            bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class);
+          }
+        },
         new DFSLocationModule(),
         new AbstractModule() {
           @Override
           protected void configure() {
-            // bind(TwillRunnerService.class).toProvider(
-            //         new SupplierProviderBridge<>(masterEnv.getTwillRunnerSupplier()))
-            //     .in(Scopes.SINGLETON);
-            // bind(TwillRunner.class).to(TwillRunnerService.class);
-
-            // TODO (CDAP-14677): find a better way to inject metadata publisher
             bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
             bind(MetadataServiceClient.class).to(DefaultMetadataServiceClient.class);
 
@@ -330,22 +332,6 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
     ));
 
     return Guice.createInjector(modules);
-  }
-
-  static Module getDataFabricModule() {
-    return new AbstractModule() {
-      @Override
-      protected void configure() {
-        install(new StorageModule());
-        install(new TransactionExecutorModule());
-
-        // Bind transaction system to a constant one, basically no transaction, with every write become
-        // visible immediately.
-        // TODO: Ideally we shouldn't need this at all. However, it is needed now to satisfy dependencies
-        bind(TransactionSystemClientService.class).to(DelegatingTransactionSystemClientService.class);
-        bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class);
-      }
-    };
   }
 
   @Override

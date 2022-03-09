@@ -43,7 +43,7 @@ import org.apache.twill.api.TwillRunnerService;
 /**
  * Guice module for {@link ProgramRunnerFactory} used for program execution in {@link ClusterMode#ISOLATED} mode.
  */
-public final class RemoteExecutionProgramRunnerModule extends AbstractModule {
+final class RemoteExecutionProgramRunnerModule extends AbstractModule {
 
   private static final Key<TwillRunnerService> TWILL_RUNNER_SERVICE_KEY =
     Key.get(TwillRunnerService.class, Constants.AppFabric.RemoteExecution.class);
@@ -109,7 +109,7 @@ public final class RemoteExecutionProgramRunnerModule extends AbstractModule {
   /**
    * Provider for {@link ProgramCompletionNotifier}, which is optionally implemented by {@link TwillRunnerService}.
    */
-  public static final class ProgramCompletionNotifierProvider implements Provider<ProgramCompletionNotifier> {
+  private static final class ProgramCompletionNotifierProvider implements Provider<ProgramCompletionNotifier> {
 
     private final Injector injector;
 

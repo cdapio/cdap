@@ -27,7 +27,6 @@ import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.app.deploy.LaunchDispatcher;
 import io.cdap.cdap.app.guice.ClusterMode;
-import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramOptions;
@@ -124,8 +123,7 @@ public class RemoteLaunchDispatcher implements LaunchDispatcher {
     if (!response.isSuccessfulLaunch()) {
       throw new Exception("Failed");
     }
-    ProgramDescriptor programDescriptor = appLaunchInfo.getProgramDescriptor();
-    ProgramId programId = programDescriptor.getProgramId();
+    ProgramId programId = appLaunchInfo.getProgramDescriptor().getProgramId();
     ProgramRunId programRunId = programId.run(appLaunchInfo.getRunId());
     ProgramRunner runner = (
         ProgramRunners.getClusterMode(appLaunchInfo.getProgramOptions()) == ClusterMode.ON_PREMISE

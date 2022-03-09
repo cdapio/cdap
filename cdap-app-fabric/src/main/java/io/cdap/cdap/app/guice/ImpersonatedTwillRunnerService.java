@@ -47,7 +47,7 @@ import java.util.stream.StreamSupport;
 public final class ImpersonatedTwillRunnerService implements TwillRunnerService {
 
   private final Configuration hConf;
-  public final TwillRunnerService delegate;
+  private final TwillRunnerService delegate;
   private final Impersonator impersonator;
   private final TokenSecureStoreRenewer secureStoreRenewer;
 
