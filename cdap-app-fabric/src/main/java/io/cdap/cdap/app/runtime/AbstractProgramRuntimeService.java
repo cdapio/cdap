@@ -22,11 +22,9 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
-import io.cdap.cdap.app.deploy.DispatchResponse;
-import io.cdap.cdap.app.deploy.Dispatcher;
+import io.cdap.cdap.app.deploy.LaunchDispatcher;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.store.Store;
@@ -86,7 +84,6 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
                                                                                       ProgramController.State.ERROR);
   private final CConfiguration cConf;
   private final DispatcherFactory dispatcherFactory;
-  private final Store store;
   private final ReadWriteLock runtimeInfosLock;
   private final Table<ProgramType, RunId, RuntimeInfo> runtimeInfos;
   private final ProgramRunnerFactory programRunnerFactory;
@@ -98,11 +95,9 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   protected AbstractProgramRuntimeService(CConfiguration cConf,
                                           ProgramRunnerFactory programRunnerFactory,
                                           ProgramStateWriter programStateWriter,
-                                          DispatcherFactory dispatcherFactory,
-                                          Store store) {
+                                          DispatcherFactory dispatcherFactory) {
     this.cConf = cConf;
     this.dispatcherFactory = dispatcherFactory;
-    this.store = store;
     this.runtimeInfosLock = new ReentrantReadWriteLock();
     this.runtimeInfos = HashBasedTable.create();
     this.programRunnerFactory = programRunnerFactory;
@@ -115,7 +110,6 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
    */
   @Inject(optional = true)
   void setRemoteProgramRunnerFactory(@Constants.AppFabric.RemoteExecution ProgramRunnerFactory runnerFactory) {
-    LOG.error("Injecting RemotePRF: {}", runnerFactory);
     this.remoteProgramRunnerFactory = runnerFactory;
   }
 
@@ -138,38 +132,11 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     RuntimeInfo runtimeInfo = createRuntimeInfo(controller, programId, () -> {
     });
     updateRuntimeInfo(runtimeInfo);
-    ProgramRunner runner = (ProgramRunners.getClusterMode(options) == ClusterMode.ON_PREMISE
-        ? programRunnerFactory
-        : Optional.ofNullable(remoteProgramRunnerFactory)
-            .orElseThrow(UnsupportedOperationException::new)
-    ).create(programId.getType());
     LOG.debug("Starting Pipeline dispatch");
     executor.execute(() -> {
       try {
-        Dispatcher dispatcher = this.dispatcherFactory.create(appLaunchInfo);
-        ListenableFuture<DispatchResponse> future = dispatcher.dispatch();
-        if (!future.get().isSuccessfulLaunch()) {
-          throw new Exception("Failed");
-        }
-        RunRecordDetail runRecordDetail = store.getRun(programRunId);
-        LOG.debug("RunRecordDetail: {}", runRecordDetail);
-        LOG.debug("TwillRunnerService: {}", remoteTwillRunnerService);
-        TwillController twillController = null;
-        if (remoteTwillRunnerService instanceof RemoteExecutionTwillRunnerService
-            && runRecordDetail != null) {
-          LOG.debug("Creating TwillController");
-          twillController = ((RemoteExecutionTwillRunnerService) remoteTwillRunnerService)
-              .createTwillControllerFromRunRecord(runRecordDetail);
-          LOG.debug("TwillController: {}", twillController);
-        }
-        ProgramController programController = null;
-        if (runner instanceof DistributedWorkflowProgramRunner && twillController != null) {
-          LOG.debug("Creating ProgramController");
-          programController = ((DistributedWorkflowProgramRunner) runner)
-              .createProgramController(programRunId, twillController);
-          LOG.debug("ProgramController: {}", programController);
-        }
-        controller.setProgramController(programController);
+        LaunchDispatcher launchDispatcher = this.dispatcherFactory.create(appLaunchInfo);
+        controller.setProgramController(launchDispatcher.dispatchPipelineLaunch());
       } catch (Exception e) {
         controller.failed(e);
         programStateWriter.error(programRunId, e);

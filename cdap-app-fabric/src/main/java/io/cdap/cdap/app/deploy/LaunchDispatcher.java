@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.app.deploy;
 
-public interface DispatchResponse {
+import io.cdap.cdap.app.runtime.ProgramController;
 
-  int getExitCode();
+public interface LaunchDispatcher {
 
-  Boolean isSuccessfulLaunch();
+  ProgramController dispatchPipelineLaunch() throws Exception;
 
 }

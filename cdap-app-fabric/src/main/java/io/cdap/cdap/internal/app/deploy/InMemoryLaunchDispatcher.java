@@ -24,7 +24,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.name.Named;
@@ -34,12 +33,12 @@ import io.cdap.cdap.api.common.RuntimeArguments;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.app.deploy.ConfigResponse;
 import io.cdap.cdap.app.deploy.Configurator;
-import io.cdap.cdap.app.deploy.DispatchResponse;
-import io.cdap.cdap.app.deploy.Dispatcher;
+import io.cdap.cdap.app.deploy.LaunchDispatcher;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.program.Programs;
+import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
@@ -92,11 +91,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
-public class InMemoryDispatcher implements Dispatcher {
+public class InMemoryLaunchDispatcher implements LaunchDispatcher {
 
   private static final String CLUSTER_SCOPE = "cluster";
   private static final String APPLICATION_SCOPE = "app";
-  private static final Logger LOG = LoggerFactory.getLogger(InMemoryDispatcher.class);
+  private static final Logger LOG = LoggerFactory.getLogger(InMemoryLaunchDispatcher.class);
 
   private final CConfiguration cConf;
   private final Impersonator impersonator;
@@ -109,7 +108,7 @@ public class InMemoryDispatcher implements Dispatcher {
   private final boolean isDistributed;
 
   @Inject
-  public InMemoryDispatcher(CConfiguration cConf,
+  public InMemoryLaunchDispatcher(CConfiguration cConf,
       ProgramRunnerFactory programRunnerFactory,
       ConfiguratorFactory configuratorFactory,
       Impersonator impersonator,
@@ -142,77 +141,64 @@ public class InMemoryDispatcher implements Dispatcher {
   }
 
   @Override
-  public ListenableFuture<DispatchResponse> dispatch() {
-    SettableFuture<DispatchResponse> result = SettableFuture.create();
-    result.set(dispatchPipeline());
-    return result;
-  }
+  public ProgramController dispatchPipelineLaunch() throws Exception {
+    LOG.error("Start pipeline launch");
+    ProgramDescriptor programDescriptor = appLaunchInfo.getProgramDescriptor();
+    RunId runId = appLaunchInfo.getRunId();
+    ProgramOptions options = appLaunchInfo.getProgramOptions();
+    ProgramId programId = programDescriptor.getProgramId();
+    ClusterMode clusterMode = ProgramRunners.getClusterMode(options);
 
-  public DispatchResponse dispatchPipeline() {
-    try {
-      LOG.error("Start pipeline launch");
-      ProgramDescriptor programDescriptor = appLaunchInfo.getProgramDescriptor();
-      RunId runId = appLaunchInfo.getRunId();
-      ProgramOptions options = appLaunchInfo.getProgramOptions();
-      ProgramId programId = programDescriptor.getProgramId();
-      ClusterMode clusterMode = ProgramRunners.getClusterMode(options);
+    // Creates the ProgramRunner based on the cluster mode
+    ProgramRunner runner = (clusterMode == ClusterMode.ON_PREMISE ? programRunnerFactory
+        : Optional.ofNullable(remoteProgramRunnerFactory)
+            .orElseThrow(UnsupportedOperationException::new)
+    ).create(programId.getType());
 
-      // Creates the ProgramRunner based on the cluster mode
-      ProgramRunner runner = (clusterMode == ClusterMode.ON_PREMISE ? programRunnerFactory
-          : Optional.ofNullable(remoteProgramRunnerFactory)
-              .orElseThrow(UnsupportedOperationException::new)
-      ).create(programId.getType());
+    File tempDir = createTempDirectory(programId, runId);
+    AtomicReference<Runnable> cleanUpTaskRef = new AtomicReference<>(
+        createCleanupTask(tempDir, runner));
 
-      File tempDir = createTempDirectory(programId, runId);
-      AtomicReference<Runnable> cleanUpTaskRef = new AtomicReference<>(
-          createCleanupTask(tempDir, runner));
+    // Get the artifact details and save it into the program options.
+    ArtifactId artifactId = programDescriptor.getArtifactId();
+    ArtifactDetail artifactDetail = getArtifactDetail(artifactId);
+    ApplicationSpecification appSpec = programDescriptor.getApplicationSpecification();
+    ProgramDescriptor newProgramDescriptor = programDescriptor;
 
-      // Get the artifact details and save it into the program options.
-      ArtifactId artifactId = programDescriptor.getArtifactId();
-      ArtifactDetail artifactDetail = getArtifactDetail(artifactId);
-      ApplicationSpecification appSpec = programDescriptor.getApplicationSpecification();
-      ProgramDescriptor newProgramDescriptor = programDescriptor;
-
-      boolean isPreview = Boolean.parseBoolean(
-          options.getArguments().getOption(ProgramOptionConstants.IS_PREVIEW, "false"));
-      // do the app spec regeneration if the mode is on premise, for isolated mode, the regeneration is done on the
-      // runtime environment before the program launch
-      // for preview we already have a resolved app spec, so no need to regenerate the app spec again
-      if (!isPreview && appSpec != null && ClusterMode.ON_PREMISE.equals(clusterMode)) {
-        try {
-          ApplicationSpecification generatedAppSpec =
-              regenerateAppSpec(artifactDetail, programId, artifactId, appSpec, options);
-          appSpec = generatedAppSpec != null ? generatedAppSpec : appSpec;
-          newProgramDescriptor = new ProgramDescriptor(programDescriptor.getProgramId(), appSpec);
-        } catch (Exception e) {
-          LOG.warn("Failed to regenerate the app spec for program {}, using the existing app spec",
-              programId);
-        }
+    boolean isPreview = Boolean.parseBoolean(
+        options.getArguments().getOption(ProgramOptionConstants.IS_PREVIEW, "false"));
+    // do the app spec regeneration if the mode is on premise, for isolated mode, the regeneration is done on the
+    // runtime environment before the program launch
+    // for preview we already have a resolved app spec, so no need to regenerate the app spec again
+    if (!isPreview && appSpec != null && ClusterMode.ON_PREMISE.equals(clusterMode)) {
+      try {
+        ApplicationSpecification generatedAppSpec =
+            regenerateAppSpec(artifactDetail, programId, artifactId, appSpec, options);
+        appSpec = generatedAppSpec != null ? generatedAppSpec : appSpec;
+        newProgramDescriptor = new ProgramDescriptor(programDescriptor.getProgramId(), appSpec);
+      } catch (Exception e) {
+        LOG.warn("Failed to regenerate the app spec for program {}, using the existing app spec",
+            programId);
       }
-
-      ProgramOptions runtimeProgramOptions = updateProgramOptions(artifactId, programId, options,
-          runId,
-          clusterMode, Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(), null));
-
-      // Take a snapshot of all the plugin artifacts used by the program
-      ProgramOptions optionsWithPlugins = createPluginSnapshot(runtimeProgramOptions, programId,
-          tempDir,
-          newProgramDescriptor.getApplicationSpecification());
-
-      // Create and run the program
-      Program executableProgram = createProgram(cConf, runner, newProgramDescriptor, artifactDetail,
-          tempDir);
-      cleanUpTaskRef.set(createCleanupTask(cleanUpTaskRef.get(), executableProgram));
-      LOG.error("Runner: {}", runner);
-      LOG.error("ExecutableProgram: {}", executableProgram);
-      LOG.error("OptionsWithPlugins: {}", optionsWithPlugins);
-      runner.run(executableProgram, optionsWithPlugins);
-    } catch (Exception e) {
-      LOG.error("Exception while trying to run program", e);
-      return new DefaultDispatchResponse(1, null);
     }
-    LOG.debug("Launch successful!");
-    return new DefaultDispatchResponse(0, true);
+
+    ProgramOptions runtimeProgramOptions = updateProgramOptions(artifactId, programId, options,
+        runId,
+        clusterMode, Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(), null));
+
+    // Take a snapshot of all the plugin artifacts used by the program
+    ProgramOptions optionsWithPlugins = createPluginSnapshot(runtimeProgramOptions, programId,
+        tempDir,
+        newProgramDescriptor.getApplicationSpecification());
+
+    // Create and run the program
+    Program executableProgram = createProgram(cConf, runner, newProgramDescriptor, artifactDetail,
+        tempDir);
+    cleanUpTaskRef.set(createCleanupTask(cleanUpTaskRef.get(), executableProgram));
+    LOG.error("Runner: {}", runner);
+    LOG.error("ExecutableProgram: {}", executableProgram);
+    LOG.error("OptionsWithPlugins: {}", optionsWithPlugins);
+    return runner.run(executableProgram, optionsWithPlugins);
   }
 
   /**

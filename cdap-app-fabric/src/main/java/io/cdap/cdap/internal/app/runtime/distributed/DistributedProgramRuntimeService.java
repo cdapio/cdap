@@ -76,7 +76,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
                                    TwillRunner twillRunner, Store store,
                                    ProgramStateWriter programStateWriter,
                                    DispatcherFactory dispatcherFactory) {
-    super(cConf, programRunnerFactory, programStateWriter, dispatcherFactory, store);
+    super(cConf, programRunnerFactory, programStateWriter, dispatcherFactory);
     this.twillRunner = twillRunner;
     this.store = store;
     this.programStateWriter = programStateWriter;

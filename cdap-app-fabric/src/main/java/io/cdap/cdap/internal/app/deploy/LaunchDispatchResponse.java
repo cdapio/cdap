@@ -14,12 +14,17 @@
  * the License.
  */
 
-package io.cdap.cdap.app.deploy;
+package io.cdap.cdap.internal.app.deploy;
 
-import com.google.common.util.concurrent.ListenableFuture;
+public class LaunchDispatchResponse {
 
-public interface Dispatcher {
+  private final Boolean isSuccessfulLaunch;
 
-  ListenableFuture<DispatchResponse> dispatch();
+  public LaunchDispatchResponse(Boolean isSuccessfulLaunch) {
+    this.isSuccessfulLaunch = isSuccessfulLaunch;
+  }
 
+  public Boolean isSuccessfulLaunch() {
+    return isSuccessfulLaunch;
+  }
 }

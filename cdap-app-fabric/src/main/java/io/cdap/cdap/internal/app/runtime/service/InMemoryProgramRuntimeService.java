@@ -49,7 +49,7 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
   InMemoryProgramRuntimeService(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
                                 ProgramStateWriter programStateWriter,
                                 DispatcherFactory dispatcherFactory) {
-    super(cConf, programRunnerFactory, programStateWriter, dispatcherFactory, null);
+    super(cConf, programRunnerFactory, programStateWriter, dispatcherFactory);
   }
 
   @Override
