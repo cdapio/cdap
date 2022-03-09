@@ -189,27 +189,11 @@ public class AbstractProgramRuntimeServiceTest {
 
     final Program program = createDummyProgram();
     final ProgramRuntimeService runtimeService =
-      new AbstractProgramRuntimeService(CConfiguration.create(), runnerFactory, null,
-                                        new NoOpProgramStateWriter(), null) {
+      new AbstractProgramRuntimeService(CConfiguration.create(), runnerFactory,
+                                        new NoOpProgramStateWriter(), null, null) {
       @Override
       public ProgramLiveInfo getLiveInfo(ProgramId programId) {
         return new ProgramLiveInfo(programId, "runtime") { };
-      }
-
-      @Override
-      protected Program createProgram(CConfiguration cConf, ProgramRunner programRunner,
-                                      ProgramDescriptor programDescriptor,
-                                      ArtifactDetail artifactDetail, File tempDir) throws IOException {
-        return program;
-      }
-
-      @Override
-      protected ArtifactDetail getArtifactDetail(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
-        io.cdap.cdap.api.artifact.ArtifactId id = new io.cdap.cdap.api.artifact.ArtifactId(
-          "dummy", new ArtifactVersion("1.0"), ArtifactScope.USER);
-        return new ArtifactDetail(new ArtifactDescriptor(NamespaceId.DEFAULT.getEntityName(),
-                                                         id, Locations.toLocation(TEMP_FOLDER.newFile())),
-                                  new ArtifactMeta(ArtifactClasses.builder().build()));
       }
     };
 
@@ -410,7 +394,7 @@ public class AbstractProgramRuntimeServiceTest {
                                         @Nullable Program program,
                                         @Nullable ArtifactRepository artifactRepository,
                                         @Nullable RuntimeInfo extraInfo) {
-      super(cConf, programRunnerFactory, artifactRepository, new NoOpProgramStateWriter(), null);
+      super(cConf, programRunnerFactory, new NoOpProgramStateWriter(), null, null);
       this.program = program;
       this.extraInfo = extraInfo;
     }
@@ -432,25 +416,6 @@ public class AbstractProgramRuntimeServiceTest {
         return extraInfo;
       }
       return null;
-    }
-
-    @Override
-    protected Program createProgram(CConfiguration cConf, ProgramRunner programRunner,
-                                    ProgramDescriptor programDescriptor,
-                                    ArtifactDetail artifactDetail, File tempDir) {
-      if (program == null) {
-        throw new IllegalArgumentException("No program is available");
-      }
-      return program;
-    }
-
-    @Override
-    protected ArtifactDetail getArtifactDetail(ArtifactId artifactId) throws IOException {
-      io.cdap.cdap.api.artifact.ArtifactId id = new io.cdap.cdap.api.artifact.ArtifactId(
-        "dummy", new ArtifactVersion("1.0"), ArtifactScope.USER);
-      return new ArtifactDetail(new ArtifactDescriptor(NamespaceId.DEFAULT.getNamespace(),
-                                                       id, Locations.toLocation(TEMP_FOLDER.newFile())),
-                                new ArtifactMeta(ArtifactClasses.builder().build()));
     }
   }
 }

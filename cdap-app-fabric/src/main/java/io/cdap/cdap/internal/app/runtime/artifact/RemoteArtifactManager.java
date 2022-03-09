@@ -49,7 +49,6 @@ import org.apache.twill.filesystem.LocationFactory;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
-import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
@@ -68,21 +67,24 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
   private final NamespaceId namespaceId;
   private final RetryStrategy retryStrategy;
   private final RemoteClient remoteClientInternal;
-  private final ArtifactLocalizerClient artifactLocalizerClient;
+  private ArtifactLocalizerClient artifactLocalizerClient;
 
   @Inject
   RemoteArtifactManager(CConfiguration cConf, LocationFactory locationFactory, @Assisted NamespaceId namespaceId,
-                        @Assisted RetryStrategy retryStrategy, RemoteClientFactory remoteClientFactory,
-                        Optional<ArtifactLocalizerClient> optionalArtifactLocalizerClient) {
+                        @Assisted RetryStrategy retryStrategy, RemoteClientFactory remoteClientFactory) {
     super(cConf);
     this.locationFactory = locationFactory;
     this.namespaceId = namespaceId;
     this.retryStrategy = retryStrategy;
-    this.artifactLocalizerClient = optionalArtifactLocalizerClient.orElse(null);
     this.remoteClientInternal = remoteClientFactory.createRemoteClient(
       Constants.Service.APP_FABRIC_HTTP,
       new DefaultHttpRequestConfig(false),
       String.format("%s", Constants.Gateway.INTERNAL_API_VERSION_3));
+  }
+
+  @Inject(optional = true)
+  void setArtifactLocalizerClient(@Nullable ArtifactLocalizerClient artifactLocalizerClient) {
+    this.artifactLocalizerClient = artifactLocalizerClient;
   }
 
   /**

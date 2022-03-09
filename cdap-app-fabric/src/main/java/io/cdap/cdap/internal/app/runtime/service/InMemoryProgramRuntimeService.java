@@ -20,25 +20,18 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
-import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.runtime.AbstractProgramRuntimeService;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
-import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.deploy.DispatcherFactory;
 import io.cdap.cdap.proto.ProgramType;
 import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetAddress;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -52,23 +45,11 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
 
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryProgramRuntimeService.class);
 
-  private final String hostname;
-
   @Inject
   InMemoryProgramRuntimeService(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
-                                // for running a program, we only need EXECUTE on the program, there should be
-                                // no privileges needed for artifacts
-                                @Named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO)
-                                  ArtifactRepository noAuthArtifactRepository,
-                                @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname,
-                                ProgramStateWriter programStateWriter, ConfiguratorFactory configuratorFactory) {
-    super(cConf, programRunnerFactory, noAuthArtifactRepository, programStateWriter, configuratorFactory);
-    this.hostname = hostname.getCanonicalHostName();
-  }
-
-  @Override
-  protected Map<String, String> getExtraProgramOptions() {
-    return Collections.singletonMap(ProgramOptionConstants.HOST, hostname);
+                                ProgramStateWriter programStateWriter,
+                                DispatcherFactory dispatcherFactory) {
+    super(cConf, programRunnerFactory, programStateWriter, dispatcherFactory, null);
   }
 
   @Override

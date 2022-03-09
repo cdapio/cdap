@@ -25,7 +25,7 @@ import io.cdap.cdap.security.auth.KeyManager;
  * Configures dependency injection with all security class implementations required to run in a distributed
  * environment.
  */
-final class DistributedCoreSecurityModule extends CoreSecurityModule {
+public final class DistributedCoreSecurityModule extends CoreSecurityModule {
 
   @Override
   public boolean requiresZKClient() {

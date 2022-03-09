@@ -35,6 +35,7 @@ import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.app.deploy.Configurator;
+import io.cdap.cdap.app.deploy.Dispatcher;
 import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.deploy.ManagerFactory;
 import io.cdap.cdap.app.mapreduce.DistributedMRJobInfoFetcher;
@@ -77,9 +78,13 @@ import io.cdap.cdap.gateway.handlers.WorkflowStatsSLAHttpHandler;
 import io.cdap.cdap.gateway.handlers.meta.RemotePrivilegesHandler;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactoryProvider;
+import io.cdap.cdap.internal.app.deploy.DispatcherFactory;
+import io.cdap.cdap.internal.app.deploy.DispatcherFactoryProvider;
 import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
+import io.cdap.cdap.internal.app.deploy.InMemoryDispatcher;
 import io.cdap.cdap.internal.app.deploy.LocalApplicationManager;
 import io.cdap.cdap.internal.app.deploy.RemoteConfigurator;
+import io.cdap.cdap.internal.app.deploy.RemoteDispatcher;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.namespace.DistributedStorageProviderNamespaceAdmin;
@@ -336,6 +341,19 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       );
 
       bind(ConfiguratorFactory.class).toProvider(ConfiguratorFactoryProvider.class);
+
+      install(
+          new FactoryModuleBuilder()
+              .implement(Dispatcher.class, InMemoryDispatcher.class)
+              .build(Key.get(DispatcherFactory.class, Names.named("local")))
+      );
+      install(
+          new FactoryModuleBuilder()
+              .implement(Dispatcher.class, RemoteDispatcher.class)
+              .build(Key.get(DispatcherFactory.class, Names.named("remote")))
+      );
+
+      bind(DispatcherFactory.class).toProvider(DispatcherFactoryProvider.class);
 
       bind(Store.class).to(DefaultStore.class);
       bind(SecretStore.class).to(DefaultSecretStore.class).in(Scopes.SINGLETON);

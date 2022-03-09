@@ -585,7 +585,7 @@ public class AppMetadataStore {
       .setSystemArgs(systemArgs)
       .setCluster(cluster)
       .setProfileId(profileId.get())
-      .setPeerName(systemArgs.get(ProgramOptionConstants.PEER_NAME))
+      // .setPeerName(systemArgs.get(ProgramOptionConstants.PEER_NAME))
       .setSourceId(sourceId)
       .setArtifactId(artifactId)
       .setPrincipal(systemArgs.get(ProgramOptionConstants.PRINCIPAL))
@@ -798,7 +798,7 @@ public class AppMetadataStore {
       .setProperties(getRecordProperties(systemArgs, runtimeArgs))
       .setSystemArgs(systemArgs)
       .setProfileId(profileId.orElse(null))
-      .setPeerName(systemArgs.get(ProgramOptionConstants.PEER_NAME))
+      // .setPeerName(systemArgs.get(ProgramOptionConstants.PEER_NAME))
       .setArtifactId(artifactId)
       .setSourceId(sourceId)
       .setPrincipal(systemArgs.get(ProgramOptionConstants.PRINCIPAL))
@@ -1859,7 +1859,7 @@ public class AppMetadataStore {
   private void writeToRunRecordTableWithPrimaryKeys(List<Field<?>> keys, RunRecordDetail meta) throws IOException {
     StructuredTable table = getRunRecordsTable();
     keys.add(Fields.stringField(StoreDefinition.AppMetadataStore.RUN_RECORD_DATA, GSON.toJson(meta)));
-    keys.add(Fields.stringField(StoreDefinition.AppMetadataStore.PEER_NAME, meta.getPeerName()));
+    // keys.add(Fields.stringField(StoreDefinition.AppMetadataStore.PEER_NAME, meta.getPeerName()));
     table.upsert(keys);
   }
 

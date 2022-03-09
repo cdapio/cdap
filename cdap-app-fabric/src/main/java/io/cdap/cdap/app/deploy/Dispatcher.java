@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,21 +14,12 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.provision;
+package io.cdap.cdap.app.deploy;
 
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
+import com.google.common.util.concurrent.ListenableFuture;
 
-import java.util.Map;
+public interface Dispatcher {
 
-/**
- * Provides provisioners.
- */
-public interface ProvisionerProvider {
+  ListenableFuture<DispatchResponse> dispatch();
 
-  void initializeProvisioners(CConfiguration cConf);
-
-  ProvisionerInfo getProvisionerInfo();
-
-  Map<String, Provisioner> loadProvisioners();
 }

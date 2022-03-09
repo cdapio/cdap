@@ -84,6 +84,7 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
                                    @Constants.AppFabric.ProgramRunner TwillRunner twillRunner,
                                    @Constants.AppFabric.ProgramRunner ProgramRunnerFactory programRunnerFactory) {
     super(cConf, hConf, impersonator, clusterMode, twillRunner);
+    LOG.debug("RemoteExecutionTwillRunnerService reference in DistributedWorkflowProgramRunner: {}", twillRunner);
     this.programRunnerFactory = programRunnerFactory;
   }
 

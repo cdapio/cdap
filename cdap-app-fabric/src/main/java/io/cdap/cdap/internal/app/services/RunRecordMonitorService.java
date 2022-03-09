@@ -226,7 +226,7 @@ public class RunRecordMonitorService extends AbstractScheduledService {
     return false;
   }
 
-  class Count {
+  public static class Count {
     /**
      * Total number of launch requests that have been accepted but still missing in metadata store +
      * total number of run records with {@link ProgramRunStatus#PENDING} status +
@@ -241,7 +241,7 @@ public class RunRecordMonitorService extends AbstractScheduledService {
      */
     private final int runningCount;
 
-    Count(int launchingCount, int runningCount) {
+    public Count(int launchingCount, int runningCount) {
       this.launchingCount = launchingCount;
       this.runningCount = runningCount;
     }

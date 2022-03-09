@@ -49,6 +49,9 @@ public final class ConfigModule extends AbstractModule {
     this(cConf, new Configuration(), SConfiguration.create());
   }
 
+  public ConfigModule(CConfiguration cConf, SConfiguration sConf) {
+    this(cConf, new Configuration(), sConf);
+  }
 
   public ConfigModule(CConfiguration cConf, Configuration hConf) {
     this(cConf, hConf, SConfiguration.create());

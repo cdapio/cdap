@@ -19,6 +19,7 @@ package io.cdap.cdap.common.app;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.common.primitives.Longs;
+import com.google.gson.Gson;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
@@ -59,6 +60,8 @@ public final class RunIds {
 
   private static final AtomicLong COUNTER = new AtomicLong();
 
+  private static final Gson GSON = new Gson();
+
   /**
    * Serialization and deserialization of RunId as Json.
    */
@@ -67,7 +70,7 @@ public final class RunIds {
     @Override
     public RunId deserialize(JsonElement json, Type typeOfT,
                              JsonDeserializationContext context) throws JsonParseException {
-      return RunIds.fromString(json.getAsString());
+      return RunIds.fromString(GSON.toJson(json).replaceAll("\"", ""));
     }
 
     @Override

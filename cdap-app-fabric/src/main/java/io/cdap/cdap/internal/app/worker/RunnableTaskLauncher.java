@@ -22,15 +22,18 @@ import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.security.auth.KeyManager;
 
 /**
  * RunnableTaskLauncher launches a {@link RunnableTask} by loading its class and calling its run method.
  */
 public class RunnableTaskLauncher {
-  private final CConfiguration cConf;
 
-  public RunnableTaskLauncher(CConfiguration cConf) {
-    this.cConf = cConf;
+  private final RunnableTaskModule module;
+
+  public RunnableTaskLauncher(RunnableTaskModule module) {
+    this.module = module;
   }
 
   public RunnableTaskContext launchRunnableTask(RunnableTaskRequest request) throws Exception {
@@ -41,7 +44,7 @@ public class RunnableTaskLauncher {
 
     Class<?> clazz = classLoader.loadClass(request.getClassName());
 
-    Injector injector = Guice.createInjector(new RunnableTaskModule(cConf));
+    Injector injector = Guice.createInjector(module);
     Object obj = injector.getInstance(clazz);
 
     if (!(obj instanceof RunnableTask)) {

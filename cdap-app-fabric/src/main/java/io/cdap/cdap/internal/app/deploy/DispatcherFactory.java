@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,21 +14,11 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.provision;
+package io.cdap.cdap.internal.app.deploy;
 
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
+import io.cdap.cdap.app.deploy.Dispatcher;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppLaunchInfo;
 
-import java.util.Map;
-
-/**
- * Provides provisioners.
- */
-public interface ProvisionerProvider {
-
-  void initializeProvisioners(CConfiguration cConf);
-
-  ProvisionerInfo getProvisionerInfo();
-
-  Map<String, Provisioner> loadProvisioners();
+public interface DispatcherFactory {
+  Dispatcher create(AppLaunchInfo appLaunchInfo);
 }

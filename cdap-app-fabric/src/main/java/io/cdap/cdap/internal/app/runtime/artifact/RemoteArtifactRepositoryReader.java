@@ -91,7 +91,6 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
     httpResponse = execute(requestBuilder.build());
     ArtifactDetail detail = GSON.fromJson(httpResponse.getResponseBodyAsString(), ARTIFACT_DETAIL_TYPE);
-    
     return new ArtifactDetail(new ArtifactDescriptor(detail.getDescriptor().getNamespace(),
                                                      detail.getDescriptor().getArtifactId(),
                                                      getArtifactLocation(detail.getDescriptor())),

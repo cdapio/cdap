@@ -49,9 +49,9 @@ public class SystemAppModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    MapBinder.newMapBinder(binder(), ProgramType.class, ProgramRunner.class);
+    // MapBinder.newMapBinder(binder(), ProgramType.class, ProgramRunner.class);
     bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class);
-    bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.LOCAL);
+    // bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.LOCAL);
     bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
 
     bind(UGIProvider.class).to(CurrentUGIProvider.class).in(Scopes.SINGLETON);
