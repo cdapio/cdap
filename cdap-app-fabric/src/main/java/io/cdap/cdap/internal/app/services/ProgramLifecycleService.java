@@ -532,7 +532,8 @@ public class ProgramLifecycleService {
     checkCapability(programDescriptor);
 
     ProgramRunId programRunId = programId.run(runId);
-    RunRecordMonitorService.Count count = runRecordMonitorService.addRequestAndGetCount(programRunId);
+    // RunRecordMonitorService.Count count = runRecordMonitorService.addRequestAndGetCount(programRunId);
+    RunRecordMonitorService.Count count = new RunRecordMonitorService.Count(0, 0);
 
     boolean done = false;
     try {
@@ -684,7 +685,6 @@ public class ProgramLifecycleService {
   ProgramController startInternal(ProgramDescriptor programDescriptor,
                                   ProgramOptions programOptions, ProgramRunId programRunId) {
     RunId runId = RunIds.fromString(programRunId.getRun());
-
     synchronized (this) {
       RuntimeInfo runtimeInfo = runtimeService.lookup(programRunId.getParent(), runId);
       if (runtimeInfo != null) {

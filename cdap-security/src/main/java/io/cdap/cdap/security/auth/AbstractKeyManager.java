@@ -83,6 +83,7 @@ public abstract class AbstractKeyManager extends AbstractIdleService implements 
       }
     };
     doInit();
+    LOG.error("Key after doInit: {}", currentKey);
   }
 
   /**

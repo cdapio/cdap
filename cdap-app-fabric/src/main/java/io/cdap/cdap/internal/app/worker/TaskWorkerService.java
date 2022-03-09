@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.app.worker;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.worker.RunnableTask;
@@ -29,11 +28,13 @@ import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.security.HttpsEnabler;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
+import io.cdap.cdap.internal.provision.ProvisioningService;
+import io.cdap.cdap.security.auth.KeyManager;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpContentDecompressor;
+import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
@@ -48,28 +49,29 @@ import java.util.concurrent.TimeUnit;
 public class TaskWorkerService extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerService.class);
-  private static final Gson GSON = new Gson();
 
-  private final CConfiguration cConf;
   private final DiscoveryService discoveryService;
   private final NettyHttpService httpService;
-  private final ArtifactManagerFactory artifactManagerFactory;
-  private final RunnableTaskLauncher taskLauncher;
+  private final TwillRunnerService twillRunnerService;
   private Cancellable cancelDiscovery;
   private InetSocketAddress bindAddress;
-  private MetricsCollectionService metricsCollectionService;
+  private final KeyManager keyManager;
+  private final ProvisioningService provisioningService;
 
   @Inject
   TaskWorkerService(CConfiguration cConf,
                     SConfiguration sConf,
                     DiscoveryService discoveryService,
-                    ArtifactManagerFactory artifactManagerFactory, MetricsCollectionService metricsCollectionService) {
-    this.cConf = cConf;
+                    KeyManager keyManager,
+                    MetricsCollectionService metricsCollectionService,
+                    TwillRunnerService twillRunnerService,
+                    ProvisioningService provisioningService) {
     this.discoveryService = discoveryService;
-    this.artifactManagerFactory = artifactManagerFactory;
-    this.taskLauncher = new RunnableTaskLauncher(cConf);
-    this.metricsCollectionService = metricsCollectionService;
-
+    this.keyManager = keyManager;
+    this.twillRunnerService = twillRunnerService;
+    this.provisioningService = provisioningService;
+    LOG.debug("KeyManager in TaskWorkerService: {}", keyManager.toString());
+    LOG.debug("ProvisioningService in TaskWorkerService: {}", provisioningService.toString());
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TASK_WORKER)
       .setHost(cConf.get(Constants.TaskWorker.ADDRESS))
       .setPort(cConf.getInt(Constants.TaskWorker.PORT))
@@ -82,7 +84,8 @@ public class TaskWorkerService extends AbstractIdleService {
           pipeline.addAfter("compressor", "decompressor", new HttpContentDecompressor());
         }
       })
-      .setHttpHandlers(new TaskWorkerHttpHandlerInternal(cConf, this::stopService, metricsCollectionService));
+      .setHttpHandlers(new TaskWorkerHttpHandlerInternal(cConf, sConf, this::stopService,
+          metricsCollectionService, keyManager, provisioningService, twillRunnerService));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
@@ -93,6 +96,9 @@ public class TaskWorkerService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LOG.debug("Starting TaskWorkerService");
+    keyManager.startAndWait();
+    provisioningService.initializeProvisionersAndExecutors();
+    twillRunnerService.start();
     httpService.start();
     bindAddress = httpService.getBindAddress();
     cancelDiscovery = discoveryService.register(

@@ -37,7 +37,7 @@ import io.cdap.cdap.metrics.process.RemoteMetricsSystemClient;
  * It requires bindings for {@link MessagingService} and bindings defined in
  * {@link IOModule}.
  */
-final class DistributedMetricsClientModule extends PrivateModule {
+public final class DistributedMetricsClientModule extends PrivateModule {
 
   private static final TypeToken<MetricValues> METRIC_RECORD_TYPE = TypeToken.of(MetricValues.class);
 

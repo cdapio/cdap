@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,21 +14,27 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.provision;
+package io.cdap.cdap.internal.app.deploy;
 
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
+import io.cdap.cdap.app.deploy.DispatchResponse;
 
-import java.util.Map;
+public class DefaultDispatchResponse implements DispatchResponse {
 
-/**
- * Provides provisioners.
- */
-public interface ProvisionerProvider {
+  private final int exit;
+  private final Boolean isSuccessfulLaunch;
 
-  void initializeProvisioners(CConfiguration cConf);
+  public DefaultDispatchResponse(int exit, Boolean isSuccessfulLaunch) {
+    this.exit = exit;
+    this.isSuccessfulLaunch = isSuccessfulLaunch;
+  }
 
-  ProvisionerInfo getProvisionerInfo();
+  @Override
+  public int getExitCode() {
+    return exit;
+  }
 
-  Map<String, Provisioner> loadProvisioners();
+  @Override
+  public Boolean isSuccessfulLaunch() {
+    return isSuccessfulLaunch;
+  }
 }

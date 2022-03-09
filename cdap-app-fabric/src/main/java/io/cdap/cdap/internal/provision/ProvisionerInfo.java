@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,30 +16,23 @@
 
 package io.cdap.cdap.internal.provision;
 
-import com.google.common.collect.ImmutableMap;
-import io.cdap.cdap.common.conf.CConfiguration;
+
+import io.cdap.cdap.proto.provisioner.ProvisionerDetail;
 import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 
+import java.util.Collections;
 import java.util.Map;
 
 /**
- * Provides provisioners for unit tests.
+ * Just a container for provisioner instances and specs, so that they can be updated atomically.
  */
-public class MockProvisionerProvider implements ProvisionerProvider {
+public class ProvisionerInfo {
 
-  @Override
-  public Map<String, Provisioner> loadProvisioners() {
-    return ImmutableMap.of(MockProvisioner.NAME, new MockProvisioner(),
-                           MockProvisionerWithCpus.NAME, new MockProvisionerWithCpus());
-  }
+  public final Map<String, Provisioner> provisioners;
+  public final Map<String, ProvisionerDetail> details;
 
-  @Override
-  public void initializeProvisioners(CConfiguration cConf) {
-
-  }
-
-  @Override
-  public ProvisionerInfo getProvisionerInfo() {
-    return null;
+  ProvisionerInfo(Map<String, Provisioner> provisioners, Map<String, ProvisionerDetail> details) {
+    this.provisioners = Collections.unmodifiableMap(provisioners);
+    this.details = Collections.unmodifiableMap(details);
   }
 }

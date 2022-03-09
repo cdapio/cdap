@@ -37,6 +37,7 @@ public class TokenManager extends AbstractIdleService {
 
   @Inject
   public TokenManager(KeyManager keyManager, Codec<UserIdentity> identifierCodec) {
+    LOG.debug("KeyManager in TokenManager constructor: {}", keyManager.toString());
     this.keyManager = keyManager;
     this.identifierCodec = identifierCodec;
   }

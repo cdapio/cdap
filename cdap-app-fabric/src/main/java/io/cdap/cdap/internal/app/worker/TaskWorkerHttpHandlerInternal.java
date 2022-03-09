@@ -25,8 +25,12 @@ import io.cdap.cdap.api.service.worker.RunnableTaskParam;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.internal.provision.ProvisionerProvider;
+import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
+import io.cdap.cdap.security.auth.KeyManager;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
@@ -40,6 +44,7 @@ import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -98,10 +103,13 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
    */
   private final AtomicBoolean mustRestart = new AtomicBoolean(false);
 
-  public TaskWorkerHttpHandlerInternal(CConfiguration cConf, Consumer<String> stopper,
-                                       MetricsCollectionService metricsCollectionService) {
+  public TaskWorkerHttpHandlerInternal(CConfiguration cConf, SConfiguration sConf, Consumer<String> stopper,
+      MetricsCollectionService metricsCollectionService, KeyManager keyManager,
+      ProvisioningService provisioningService, TwillRunnerService twillRunnerService) {
     int killAfterRequestCount = cConf.getInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
-    this.runnableTaskLauncher = new RunnableTaskLauncher(cConf);
+    this.runnableTaskLauncher = new RunnableTaskLauncher(new RunnableTaskModule.Builder().cConf(cConf).sConf(sConf)
+        .keyManager(keyManager).provisioningService(provisioningService).twillRunnerService(twillRunnerService)
+        .build());
     this.metricsCollectionService = metricsCollectionService;
     this.metadataServiceEndpoint = cConf.get(Constants.TaskWorker.METADATA_SERVICE_END_POINT);
     this.stopper = (terminate, taskDetails) -> {

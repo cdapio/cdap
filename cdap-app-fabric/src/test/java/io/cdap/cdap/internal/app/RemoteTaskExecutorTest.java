@@ -24,6 +24,7 @@ import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
@@ -57,6 +58,7 @@ public class RemoteTaskExecutorTest {
 
   private static RemoteClientFactory remoteClientFactory;
   private static CConfiguration cConf;
+  private static SConfiguration sConf;
   private static NettyHttpService httpService;
   private static InMemoryDiscoveryService discoveryService;
 
@@ -67,13 +69,14 @@ public class RemoteTaskExecutorTest {
   @BeforeClass
   public static void init() throws Exception {
     cConf = CConfiguration.create();
+    sConf = SConfiguration.create();
     discoveryService = new InMemoryDiscoveryService();
     remoteClientFactory = new RemoteClientFactory(discoveryService,
                                                   new DefaultInternalAuthenticator(new AuthenticationTestContext()));
     httpService = new CommonNettyHttpServiceBuilder(cConf, "test")
       .setHttpHandlers(
-        new TaskWorkerHttpHandlerInternal(cConf, className -> {
-        }, new NoOpMetricsCollectionService())
+        new TaskWorkerHttpHandlerInternal(cConf, sConf, className -> {
+        }, new NoOpMetricsCollectionService(), null, null, null)
       )
       .setChannelPipelineModifier(new ChannelPipelineModifier() {
         @Override

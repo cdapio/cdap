@@ -22,13 +22,42 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.AbstractModule;
+import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Module;
+import com.google.inject.Scopes;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.multibindings.MapBinder;
+import com.google.inject.multibindings.Multibinder;
+import com.google.inject.name.Names;
+import com.google.inject.util.Modules;
+import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.app.deploy.Configurator;
+import io.cdap.cdap.app.deploy.Dispatcher;
+import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
+import io.cdap.cdap.app.guice.AuthorizationModule;
+import io.cdap.cdap.app.guice.ClusterMode;
+import io.cdap.cdap.app.guice.DefaultProgramRunnerFactory;
+import io.cdap.cdap.app.guice.MonitorHandlerModule;
+import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
+import io.cdap.cdap.app.guice.RemoteExecutionProgramRunnerModule;
+import io.cdap.cdap.app.guice.RemoteExecutionProgramRunnerModule.ProgramCompletionNotifierProvider;
+import io.cdap.cdap.app.guice.RemoteTwillModule;
+import io.cdap.cdap.app.guice.TwillModule;
+import io.cdap.cdap.app.preview.PreviewConfigModule;
+import io.cdap.cdap.app.runtime.ProgramRunner;
+import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
+import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
+import io.cdap.cdap.app.runtime.ProgramStateWriter;
+import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
@@ -39,6 +68,46 @@ import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
+import io.cdap.cdap.data.runtime.ConstantTransactionSystemClient;
+import io.cdap.cdap.data.runtime.DataSetServiceModules;
+import io.cdap.cdap.data.runtime.DataSetsModules;
+import io.cdap.cdap.data.runtime.StorageModule;
+import io.cdap.cdap.data.runtime.TransactionExecutorModule;
+import io.cdap.cdap.data2.audit.AuditModule;
+import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
+import io.cdap.cdap.data2.metadata.writer.MessagingMetadataPublisher;
+import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
+import io.cdap.cdap.data2.transaction.DelegatingTransactionSystemClientService;
+import io.cdap.cdap.data2.transaction.TransactionSystemClientService;
+import io.cdap.cdap.explore.guice.ExploreClientModule;
+import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
+import io.cdap.cdap.internal.app.deploy.ConfiguratorFactoryProvider;
+import io.cdap.cdap.internal.app.deploy.DispatcherFactory;
+import io.cdap.cdap.internal.app.deploy.DispatcherFactoryProvider;
+import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
+import io.cdap.cdap.internal.app.deploy.InMemoryDispatcher;
+import io.cdap.cdap.internal.app.deploy.RemoteConfigurator;
+import io.cdap.cdap.internal.app.deploy.RemoteDispatcher;
+import io.cdap.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
+import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
+import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
+import io.cdap.cdap.internal.app.runtime.artifact.LocalPluginFinder;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
+import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactManager;
+import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReader;
+import io.cdap.cdap.internal.app.runtime.distributed.DistributedMapReduceProgramRunner;
+import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkerProgramRunner;
+import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkflowProgramRunner;
+import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionTwillRunnerService;
+import io.cdap.cdap.internal.app.services.ProgramCompletionNotifier;
+import io.cdap.cdap.internal.app.store.DefaultStore;
+import io.cdap.cdap.internal.provision.ProvisionerModule;
+import io.cdap.cdap.internal.tethering.TetheringClientSubscriberService;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
@@ -46,14 +115,28 @@ import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
+import io.cdap.cdap.metrics.guice.MetricsStoreModule;
+import io.cdap.cdap.operations.guice.OperationalStatsModule;
+import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.auth.FileBasedKeyManager;
+import io.cdap.cdap.security.auth.KeyManager;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.CoreSecurityModule;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
+import io.cdap.cdap.security.guice.FileBasedCoreSecurityModule;
+import io.cdap.cdap.security.guice.SecureStoreServerModule;
+import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
+import io.cdap.cdap.security.impersonation.RemoteUGIProvider;
+import io.cdap.cdap.security.impersonation.UGIProvider;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnable;
+import org.apache.twill.api.TwillRunner;
+import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -63,6 +146,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -79,58 +163,248 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
   private LogAppenderInitializer logAppenderInitializer;
   private MetricsCollectionService metricsCollectionService;
 
-  public TaskWorkerTwillRunnable(String cConfFileName, String hConfFileName) {
-    super(ImmutableMap.of("cConf", cConfFileName, "hConf", hConfFileName));
+  public TaskWorkerTwillRunnable(String cConfFileName, String hConfFileName, String sConfFileName) {
+    super(ImmutableMap.of("cConf", cConfFileName, "hConf", hConfFileName, "sConf", sConfFileName));
   }
 
   @VisibleForTesting
-  static Injector createInjector(CConfiguration cConf, Configuration hConf) {
-    List<Module> modules = new ArrayList<>();
+  static Injector createInjector(CConfiguration cConf, Configuration hConf, SConfiguration sConf) {
+    // List<Module> modules = new ArrayList<>();
 
-    CoreSecurityModule coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf);
-
-    modules.add(new ConfigModule(cConf, hConf));
-    modules.add(RemoteAuthenticatorModules.getDefaultModule());
-    modules.add(new LocalLocationModule());
-    modules.add(new IOModule());
-    modules.add(new AuthenticationContextModules().getMasterWorkerModule());
-    modules.add(coreSecurityModule);
-    modules.add(new MessagingClientModule());
-    modules.add(new SystemAppModule());
-    modules.add(new MetricsClientRuntimeModule().getDistributedModules());
-
-    // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
+    // modules.add(new AppFabricServiceRuntimeModule(cConf).getDistributedModules());
+    // modules.add(new ConfigModule(cConf, hConf, sConf));
+    // modules.add(new LocalLocationModule());
+    // modules.add(RemoteAuthenticatorModules.getDefaultModule());
+    // CoreSecurityModule coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf);
+    // modules.add(new AppFabricServiceRuntimeModule(cConf));
+    // modules.add(new TwillModule());
+    // modules.add(new ConfigModule(cConf, hConf, sConf));
+    // modules.add(RemoteAuthenticatorModules.getDefaultModule());
+    // modules.add(new LocalLocationModule());
+    // modules.add(new IOModule());
+    // modules.add(new AuthenticationContextModules().getMasterWorkerModule());
+    // // modules.add(coreSecurityModule);
+    // modules.add(new CoreSecurityModule() {
+    //   @Override
+    //   protected void bindKeyManager(Binder binder) {
+    //     LOG.debug("Going to bind KeyManager in Injector!!!");
+    //     binder.bind(KeyManager.class).to(FileBasedKeyManager.class).in(Scopes.SINGLETON);
+    //     expose(KeyManager.class);
+    //   }
+    // });
+    // modules.add(new MessagingClientModule());
+    // // modules.add(new SystemAppModule());
+    // modules.add(new MetricsClientRuntimeModule().getDistributedModules());
+    // // modules.add(new RemoteExecutionProgramRunnerModule());
+    // // modules.add(new ProgramRunnerRuntimeModule().getDistributedModules());
+    // modules.add(new SecureStoreServerModule());
+    // modules.add(new ProvisionerModule());
+    // modules.add(new StorageModule());
+    // modules.add(new AuthorizationEnforcementModule().getDistributedModules());
+    // modules.add(new AbstractModule() {
+    //   @Override
+    //   protected void configure() {
+    //     bind(Store.class).to(DefaultStore.class);
+    //     bind(UGIProvider.class).to(CurrentUGIProvider.class).in(Scopes.SINGLETON);
+    //     bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class).in(Scopes.SINGLETON);
+    //     bind(ArtifactRepository.class).to(RemoteArtifactRepository.class);
+    //     bind(PluginFinder.class).to(LocalPluginFinder.class);
+    //     bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class).in(Scopes.SINGLETON);
+    //     bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
+    //     install(new FactoryModuleBuilder()
+    //         .implement(ArtifactManager.class, RemoteArtifactManager.class)
+    //         .build(ArtifactManagerFactory.class));
+    //     install(
+    //         new FactoryModuleBuilder()
+    //             .implement(Dispatcher.class, InMemoryDispatcher.class)
+    //             .build(Key.get(DispatcherFactory.class, Names.named("local")))
+    //     );
+    //     install(
+    //         new FactoryModuleBuilder()
+    //             .implement(Dispatcher.class, RemoteDispatcher.class)
+    //             .build(Key.get(DispatcherFactory.class, Names.named("remote")))
+    //     );
+    //     bind(DispatcherFactory.class).toProvider(DispatcherFactoryProvider.class);
+    //
+    //     install(
+    //         new FactoryModuleBuilder()
+    //             .implement(Configurator.class, InMemoryConfigurator.class)
+    //             .build(Key.get(ConfiguratorFactory.class, Names.named("local")))
+    //     );
+    //     install(
+    //         new FactoryModuleBuilder()
+    //             .implement(Configurator.class, RemoteConfigurator.class)
+    //             .build(Key.get(ConfiguratorFactory.class, Names.named("remote")))
+    //     );
+    //     bind(ConfiguratorFactory.class).toProvider(ConfiguratorFactoryProvider.class);
+    //
+    //     Key<TwillRunnerService> twillRunnerServiceKey =
+    //         Key.get(TwillRunnerService.class, Constants.AppFabric.RemoteExecution.class);
+    //
+    //     // Bind the TwillRunner for remote execution used in isolated cluster.
+    //     // The binding is added in here instead of in TwillModule is because this module can be used
+    //     // in standalone env as well and it doesn't require YARN.
+    //     bind(twillRunnerServiceKey).to(RemoteExecutionTwillRunnerService.class).in(Scopes.SINGLETON);
+    //
+    //     // Bind ProgramRunnerFactory and expose it with the RemoteExecution annotation
+    //     Key<ProgramRunnerFactory> programRunnerFactoryKey = Key.get(ProgramRunnerFactory.class,
+    //         Constants.AppFabric.RemoteExecution.class);
+    //     // ProgramRunnerFactory should be in distributed mode
+    //     bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.DISTRIBUTED);
+    //     bind(programRunnerFactoryKey).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
+    //
+    //     // The following are bindings are for ProgramRunners. They are private to this module and only
+    //     // available to the remote execution ProgramRunnerFactory exposed.
+    //
+    //     // This set of program runners are for isolated mode
+    //     bind(ClusterMode.class).toInstance(ClusterMode.ISOLATED);
+    //     // No need to publish program state for remote execution runs since they will publish states and get
+    //     // collected back via the runtime monitoring
+    //     bindConstant().annotatedWith(Names.named(DefaultProgramRunnerFactory.PUBLISH_PROGRAM_STATE)).to(false);
+    //     // TwillRunner used by the ProgramRunner is the remote execution one
+    //     bind(TwillRunner.class).annotatedWith(Constants.AppFabric.ProgramRunner.class).to(twillRunnerServiceKey);
+    //     // ProgramRunnerFactory used by ProgramRunner is the remote execution one.
+    //     bind(ProgramRunnerFactory.class)
+    //         .annotatedWith(Constants.AppFabric.ProgramRunner.class)
+    //         .to(programRunnerFactoryKey);
+    //
+    //     // A private Map binding of ProgramRunner for ProgramRunnerFactory to use
+    //     MapBinder<ProgramType, ProgramRunner> defaultProgramRunnerBinder = MapBinder.newMapBinder(
+    //         binder(), ProgramType.class, ProgramRunner.class);
+    //
+    //     defaultProgramRunnerBinder.addBinding(ProgramType.MAPREDUCE).to(
+    //         DistributedMapReduceProgramRunner.class);
+    //     defaultProgramRunnerBinder.addBinding(ProgramType.WORKFLOW).to(
+    //         DistributedWorkflowProgramRunner.class);
+    //     defaultProgramRunnerBinder.addBinding(ProgramType.WORKER).to(DistributedWorkerProgramRunner.class);
+    //     Multibinder<ProgramCompletionNotifier> multiBinder = Multibinder.newSetBinder(binder(),
+    //         ProgramCompletionNotifier.class);
+    //     multiBinder.addBinding().toProvider(ProgramCompletionNotifierProvider.class);
+    //   }
+    // });
+    //
+    // // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
     MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
+    //
+    // if (masterEnv == null) {
+    //   modules.add(new ZKClientModule());
+    //   modules.add(new ZKDiscoveryModule());
+    //   modules.add(new KafkaClientModule());
+    //   modules.add(new KafkaLogAppenderModule());
+    // } else {
+    //   modules.add(new AbstractModule() {
+    //     @Override
+    //     protected void configure() {
+    //       bind(DiscoveryService.class)
+    //           .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
+    //       bind(DiscoveryServiceClient.class)
+    //           .toProvider(
+    //               new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
+    //     }
+    //   });
+    //   modules.add(new RemoteLogAppenderModule());
+    //
+    //   // if (coreSecurityModule.requiresZKClient()) {
+    //   //   modules.add(new ZKClientModule());
+    //   // }
+    // }
 
-    if (masterEnv == null) {
-      modules.add(new ZKClientModule());
-      modules.add(new ZKDiscoveryModule());
-      modules.add(new KafkaClientModule());
-      modules.add(new KafkaLogAppenderModule());
-    } else {
-      modules.add(new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(DiscoveryService.class)
+    List<Module> modules = new ArrayList<>();
+    modules.add(new RemoteTwillModule());
+    modules.add(new ConfigModule(cConf, hConf, sConf));
+    modules.add(RemoteAuthenticatorModules.getDefaultModule());
+    modules.add(new PreviewConfigModule(cConf, hConf, sConf));
+    modules.add(new IOModule());
+    modules.add(new MetricsClientRuntimeModule().getDistributedModules());
+    modules.add(new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(DiscoveryService.class)
             .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
-          bind(DiscoveryServiceClient.class)
+        bind(DiscoveryServiceClient.class)
             .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
-        }
-      });
-      modules.add(new RemoteLogAppenderModule());
-
-      if (coreSecurityModule.requiresZKClient()) {
-        modules.add(new ZKClientModule());
       }
+    });
+    modules.add(new RemoteLogAppenderModule());
+
+    CoreSecurityModule coreSecurityModule = new FileBasedCoreSecurityModule() {
+      @Override
+      protected void bindKeyManager(Binder binder) {
+        binder.bind(KeyManager.class).to(FileBasedKeyManager.class).in(Scopes.SINGLETON);
+        expose(KeyManager.class);
+      }
+    };
+    modules.add(coreSecurityModule);
+    if (coreSecurityModule.requiresZKClient()) {
+      modules.add(new ZKClientModule());
     }
+    modules.add(new AuthenticationContextModules().getMasterModule());
+    modules.addAll(Arrays.asList(
+        // Always use local table implementations, which use LevelDB.
+        // In K8s, there won't be HBase and the cdap-site should be set to use SQL store for StructuredTable.
+        new DataSetServiceModules().getStandaloneModules(),
+        // The Dataset set modules are only needed to satisfy dependency injection
+        new DataSetsModules().getStandaloneModules(),
+        new MetricsStoreModule(),
+        new MessagingClientModule(),
+        new ExploreClientModule(),
+        new AuditModule(),
+        new AuthorizationModule(),
+        new AuthorizationEnforcementModule().getMasterModule(),
+        Modules.override(new AppFabricServiceRuntimeModule(cConf).getDistributedModules())
+            .with(new AbstractModule() {
+              @Override
+              protected void configure() {
+                bind(StorageProviderNamespaceAdmin.class).to(
+                    LocalStorageProviderNamespaceAdmin.class);
+              }
+            }),
+        new ProgramRunnerRuntimeModule().getDistributedModules(true),
+        new MonitorHandlerModule(false),
+        new SecureStoreServerModule(),
+        new OperationalStatsModule(),
+        getDataFabricModule(),
+        new DFSLocationModule(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            // bind(TwillRunnerService.class).toProvider(
+            //         new SupplierProviderBridge<>(masterEnv.getTwillRunnerSupplier()))
+            //     .in(Scopes.SINGLETON);
+            // bind(TwillRunner.class).to(TwillRunnerService.class);
+
+            // TODO (CDAP-14677): find a better way to inject metadata publisher
+            bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
+            bind(MetadataServiceClient.class).to(DefaultMetadataServiceClient.class);
+
+            bind(TetheringClientSubscriberService.class).in(Scopes.SINGLETON);
+          }
+        }
+    ));
 
     return Guice.createInjector(modules);
+  }
+
+  static Module getDataFabricModule() {
+    return new AbstractModule() {
+      @Override
+      protected void configure() {
+        install(new StorageModule());
+        install(new TransactionExecutorModule());
+
+        // Bind transaction system to a constant one, basically no transaction, with every write become
+        // visible immediately.
+        // TODO: Ideally we shouldn't need this at all. However, it is needed now to satisfy dependencies
+        bind(TransactionSystemClientService.class).to(DelegatingTransactionSystemClientService.class);
+        bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class);
+      }
+    };
   }
 
   @Override
   public void initialize(TwillContext context) {
     super.initialize(context);
-
+    LOG.debug("Starting Task Worker doInit()");
     try {
       doInitialize(context);
     } catch (Exception e) {
@@ -138,6 +412,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
       Throwables.propagateIfPossible(e);
       throw new RuntimeException(e);
     }
+    LOG.debug("Ending Task Worker doInit()");
   }
 
   @Override
@@ -192,7 +467,14 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
     hConf.clear();
     hConf.addResource(new File(getArgument("hConf")).toURI().toURL());
 
-    Injector injector = createInjector(cConf, hConf);
+    SConfiguration sConf = SConfiguration.create(new File(getArgument("sConf")));
+
+    Injector injector = createInjector(cConf, hConf, sConf);
+    try {
+      LOG.debug("KeyManager while binding {}", injector.getProvider(KeyManager.class).get().toString());
+    } catch (Exception e) {
+      LOG.error("Doesn't work this way", e);
+    }
 
     // Initialize logging context
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
@@ -202,8 +484,8 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
     metricsCollectionService.startAndWait();
 
     LoggingContext loggingContext = new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
-                                                              Constants.Logging.COMPONENT_NAME,
-                                                              TaskWorkerTwillApplication.NAME);
+        Constants.Logging.COMPONENT_NAME,
+        TaskWorkerTwillApplication.NAME);
     LoggingContextAccessor.setLoggingContext(loggingContext);
     taskWorker = injector.getInstance(TaskWorkerService.class);
   }
