@@ -211,7 +211,7 @@ public class SupportBundleJob {
       supportBundleStatus.getTasks().remove(taskStatus);
       supportBundleStatus.getTasks().add(updatedTaskStatus);
       addToStatus(supportBundleStatus, basePath);
-      executeTask(taskStatus, supportBundleTask, basePath, taskType, taskName, retryCount);
+      executeTask(updatedTaskStatus, supportBundleTask, basePath, taskType, taskName, retryCount);
     }
   }
 

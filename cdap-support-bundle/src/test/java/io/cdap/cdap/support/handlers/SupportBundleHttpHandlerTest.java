@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,13 @@
 
 package io.cdap.cdap.support.handlers;
 
+import com.google.common.collect.ImmutableMap;
+import io.cdap.cdap.AppWithWorkflow;
 import io.cdap.cdap.SupportBundleTestBase;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
@@ -58,6 +64,7 @@ public class SupportBundleHttpHandlerTest extends SupportBundleTestBase {
 
   @Test
   public void testCreateSupportBundleWithValidNamespace() throws Exception {
+
     String bundleId = requestBundle(Collections.singletonMap("namespace", NAMESPACE.getNamespace()));
 
     Assert.assertNotNull(bundleId);

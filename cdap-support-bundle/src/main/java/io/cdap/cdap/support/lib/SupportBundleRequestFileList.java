@@ -16,12 +16,16 @@
 
 package io.cdap.cdap.support.lib;
 
-/**
- * Defines the type of the support bundle task
- */
-public enum SupportBundleTaskType {
-  SupportBundleSystemLogTask,
-  SupportBundlePipelineInfoTask,
-  SupportBundleRuntimeInfoTask,
-  SupportBundlePipelineRunLogTask;
+import java.util.List;
+
+public class SupportBundleRequestFileList {
+  private List<String> files;
+
+  public List<String> getFiles() {
+    return files;
+  }
+
+  public void setFiles(List<String> files) {
+    this.files = files;
+  }
 }

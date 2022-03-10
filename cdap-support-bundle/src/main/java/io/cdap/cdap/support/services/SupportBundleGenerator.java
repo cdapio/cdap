@@ -36,7 +36,7 @@ import io.cdap.cdap.support.job.SupportBundleJob;
 import io.cdap.cdap.support.lib.SupportBundleFile;
 import io.cdap.cdap.support.lib.SupportBundleFileNames;
 import io.cdap.cdap.support.lib.SupportBundleFiles;
-import io.cdap.cdap.support.lib.SupportBundleOverallStatus;
+import io.cdap.cdap.support.lib.SupportBundleOperationStatus;
 import io.cdap.cdap.support.lib.SupportBundlePipelineStatus;
 import io.cdap.cdap.support.lib.SupportBundleTaskType;
 import io.cdap.cdap.support.status.CollectionState;
@@ -116,9 +116,9 @@ public class SupportBundleGenerator {
     DirUtils.mkdirs(baseDirectory);
     String uuid = UUID.randomUUID().toString();
     File uuidPath = new File(localDir, uuid);
-    DirUtils.mkdirs(uuidPath);
 
     deleteOldFoldersIfExceedLimit(baseDirectory);
+    DirUtils.mkdirs(uuidPath);
 
     SupportBundleStatus supportBundleStatus = SupportBundleStatus.builder()
       .setBundleId(uuid)
@@ -208,7 +208,7 @@ public class SupportBundleGenerator {
     oldFilesDirectory.delete();
   }
 
-  public SupportBundleOverallStatus getSingleBundleJson(String uuid) throws IOException {
+  public SupportBundleOperationStatus getSingleBundleJson(String uuid) throws IOException {
     File baseDirectory = new File(cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR));
     File uuidFile = new File(baseDirectory, uuid);
     if (!baseDirectory.exists()) {
@@ -220,40 +220,30 @@ public class SupportBundleGenerator {
       return null;
     }
 
-    SupportBundleOverallStatus supportBundleOverallStatus = new SupportBundleOverallStatus(uuidFile.getName());
+    SupportBundleOperationStatus supportBundleOperationStatus = new SupportBundleOperationStatus(uuidFile.getName());
     File statusFile = new File(uuidFile, "status.json");
     if (statusFile.exists()) {
       SupportBundleStatus supportBundleStatus = getBundleStatus(uuidFile);
-      supportBundleOverallStatus.setBundleStatus(supportBundleStatus.getStatus());
+      supportBundleOperationStatus.setBundleStatus(supportBundleStatus.getStatus());
       Set<SupportBundleTaskStatus> supportBundleTaskStatusSet = supportBundleStatus.getTasks();
       SupportBundlePipelineStatus supportBundlePipelineStatus = new SupportBundlePipelineStatus();
       for (SupportBundleTaskStatus supportBundleTaskStatus : supportBundleTaskStatusSet) {
-        int lastIndexOfDot = supportBundleTaskStatus.getType().lastIndexOf(".");
-        SupportBundleTaskType taskType =
-          SupportBundleTaskType.valueOf(supportBundleTaskStatus.getType().substring(lastIndexOfDot + 1));
-        switch (taskType) {
-          case SUPPORT_BUNDLE_SYSTEM_LOG_TASK:
-            supportBundlePipelineStatus.setSystemLogTaskStatus(supportBundleTaskStatus.getStatus());
-            break;
-          case SUPPORT_BUNDLE_PIPELINE_INFO_TASK:
-            supportBundlePipelineStatus.setPipelineInfoTaskStatus(supportBundleTaskStatus.getStatus());
-            break;
-          case SUPPORT_BUNDLE_RUNTIME_INFO_TASK:
-            supportBundlePipelineStatus.setRuntimeInfoTaskStatus(supportBundleTaskStatus.getStatus());
-            break;
-          case SUPPORT_BUNDLE_RUNTIME_LOG_TASK:
-            supportBundlePipelineStatus.setRuntimeLogTaskStatus(supportBundleTaskStatus.getStatus());
-            break;
+        collectSupportBundleTaskStatus(supportBundlePipelineStatus, supportBundleTaskStatus);
+        if (supportBundleTaskStatus.getSubTasks().size() > 0) {
+          for (SupportBundleTaskStatus subTaskSupportBundleTaskStatus : supportBundleTaskStatus.getSubTasks()) {
+            collectSupportBundleTaskStatus(supportBundlePipelineStatus, subTaskSupportBundleTaskStatus);
+          }
         }
       }
-      supportBundleOverallStatus.setSupportBundlePipelineStatus(supportBundlePipelineStatus);
+      supportBundleOperationStatus.setSupportBundlePipelineStatus(supportBundlePipelineStatus);
     }
-    return supportBundleOverallStatus;
+    return supportBundleOperationStatus;
   }
 
   public SupportBundleFiles getFilesName(File file) {
-    SupportBundleFiles supportBundleFiles = new SupportBundleFiles(file.getAbsoluteFile().getName());
+    SupportBundleFiles supportBundleFiles = null;
     if (file.isDirectory()) {
+      supportBundleFiles = new SupportBundleFiles(file.getAbsoluteFile().getName());
       File[] dataFiles = file.listFiles((dir, name) -> !name.startsWith(".") && !dir.isHidden() && dir.isDirectory());
       if (dataFiles != null && dataFiles.length > 0) {
         for (File dataFile : dataFiles) {
@@ -315,5 +305,26 @@ public class SupportBundleGenerator {
     }
 
     return namespace;
+  }
+
+  private void collectSupportBundleTaskStatus(SupportBundlePipelineStatus supportBundlePipelineStatus,
+                                              SupportBundleTaskStatus supportBundleTaskStatus) {
+    int lastIndexOfDot = supportBundleTaskStatus.getType().lastIndexOf(".");
+    SupportBundleTaskType taskType =
+      SupportBundleTaskType.valueOf(supportBundleTaskStatus.getType().substring(lastIndexOfDot + 1));
+    switch (taskType) {
+      case SupportBundleSystemLogTask:
+        supportBundlePipelineStatus.setSystemLogTaskStatus(supportBundleTaskStatus.getStatus());
+        break;
+      case SupportBundlePipelineInfoTask:
+        supportBundlePipelineStatus.setPipelineInfoTaskStatus(supportBundleTaskStatus.getStatus());
+        break;
+      case SupportBundleRuntimeInfoTask:
+        supportBundlePipelineStatus.setRuntimeInfoTaskStatus(supportBundleTaskStatus.getStatus());
+        break;
+      case SupportBundlePipelineRunLogTask:
+        supportBundlePipelineStatus.setRuntimeLogTaskStatus(supportBundleTaskStatus.getStatus());
+        break;
+    }
   }
 }
