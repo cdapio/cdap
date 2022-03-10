@@ -18,8 +18,6 @@ package io.cdap.cdap.support.handlers;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramOptions;
@@ -36,8 +34,9 @@ import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.SupportBundleEntityId;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
+import io.cdap.cdap.support.lib.SupportBundleExportRequest;
 import io.cdap.cdap.support.lib.SupportBundleFiles;
-import io.cdap.cdap.support.lib.SupportBundleOverallStatus;
+import io.cdap.cdap.support.lib.SupportBundleOperationStatus;
 import io.cdap.cdap.support.services.SupportBundleGenerator;
 import io.cdap.cdap.support.status.SupportBundleConfiguration;
 import io.cdap.http.AbstractHttpHandler;
@@ -90,6 +89,9 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
     .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
     .registerTypeAdapter(org.apache.twill.internal.Arguments.class, new org.apache.twill.internal.json.ArgumentsCodec())
     .create();
+  private static final String applicationZip = "application/zip";
+  private static final String contentDescriptionValue = "attachment; filename=\"collect_support_bundle.zip\"";
+
   private final CConfiguration cConf;
   private final SupportBundleGenerator bundleGenerator;
   private final ContextAccessEnforcer contextAccessEnforcer;
@@ -162,16 +164,17 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
       responder.sendString(HttpResponseStatus.OK, "No content in Support Bundle.");
       return;
     }
-    List<SupportBundleOverallStatus> supportBundleOverallStatusList = new ArrayList<>();
+    List<SupportBundleOperationStatus> supportBundleOperationStatusList = new ArrayList<>();
     File[] supportFiles =
       baseDirectory.listFiles((dir, name) -> !name.startsWith(".") && !dir.isHidden() && dir.isDirectory());
     if (supportFiles != null && supportFiles.length > 0) {
       for (File uuidFile : supportFiles) {
-        SupportBundleOverallStatus supportBundleOverallStatus = bundleGenerator.getSingleBundleJson(uuidFile.getName());
-        supportBundleOverallStatusList.add(supportBundleOverallStatus);
+        SupportBundleOperationStatus supportBundleOperationStatus =
+          bundleGenerator.getSingleBundleJson(uuidFile.getName());
+        supportBundleOperationStatusList.add(supportBundleOperationStatus);
       }
     }
-    responder.sendString(HttpResponseStatus.OK, GSON.toJson(supportBundleOverallStatusList));
+    responder.sendString(HttpResponseStatus.OK, GSON.toJson(supportBundleOperationStatusList));
   }
 
   /**
@@ -186,10 +189,10 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
     throws Exception {
     SupportBundleEntityId supportBundleEntityId = new SupportBundleEntityId(uuid);
     contextAccessEnforcer.enforce(supportBundleEntityId, StandardPermission.GET);
-    List<SupportBundleOverallStatus> supportBundleOverallStatusList = new ArrayList<>();
-    SupportBundleOverallStatus supportBundleOverallStatus = bundleGenerator.getSingleBundleJson(uuid);
-    supportBundleOverallStatusList.add(supportBundleOverallStatus);
-    responder.sendString(HttpResponseStatus.OK, GSON.toJson(supportBundleOverallStatusList));
+    List<SupportBundleOperationStatus> supportBundleOperationStatusList = new ArrayList<>();
+    SupportBundleOperationStatus supportBundleOperationStatus = bundleGenerator.getSingleBundleJson(uuid);
+    supportBundleOperationStatusList.add(supportBundleOperationStatus);
+    responder.sendString(HttpResponseStatus.OK, GSON.toJson(supportBundleOperationStatusList));
   }
 
   /**
@@ -255,14 +258,15 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
               return;
             }
           } else {
-            supportBundleFilesList.add(bundleGenerator.getFilesName(pipelineFile));
+            SupportBundleFiles supportBundleFiles = bundleGenerator.getFilesName(pipelineFile);
+            if (supportBundleFiles != null) {
+              supportBundleFilesList.add(supportBundleFiles);
+            }
           }
         }
-      }
-      responder.sendString(HttpResponseStatus.OK, GSON.toJson(supportBundleFilesList));
+      } responder.sendString(HttpResponseStatus.OK, GSON.toJson(supportBundleFilesList));
       return;
-    }
-    File folderDirectory = new File(uuidFile, folderName);
+    } File folderDirectory = new File(uuidFile, folderName);
     File[] dataFiles =
       folderDirectory.listFiles((dir, name) -> !name.startsWith(".") && !dir.isHidden() && dir.isDirectory());
     if (dataFiles != null && dataFiles.length > 0) {
@@ -297,21 +301,19 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
     SupportBundleEntityId supportBundleEntityId = new SupportBundleEntityId(uuid);
     contextAccessEnforcer.enforce(supportBundleEntityId, StandardPermission.GET);
     String requestContent = request.content().toString(StandardCharsets.UTF_8);
-    String applicationZip = "application/zip";
-    String contentDescriptionValue = "attachment; filename=\"collect_support_bundle.zip\"";
     if (requestContent == null || requestContent.length() == 0) {
       throw new BadRequestException("Request body is empty.");
     }
-    JsonObject fileBody = GSON.fromJson(requestContent, JsonObject.class);
-    File tempDir =
-      new File(cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR),
-               cConf.get(Constants.SupportBundle.SUPPORT_BUNDLE_TEMP_DIR)).getAbsoluteFile();
+    SupportBundleExportRequest supportBundleExportRequest =
+      GSON.fromJson(requestContent, SupportBundleExportRequest.class);
+    File tempDir = new File(cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR),
+                            cConf.get(Constants.SupportBundle.SUPPORT_BUNDLE_TEMP_DIR)).getAbsoluteFile();
     DirUtils.mkdirs(tempDir);
     java.nio.file.Path tmpPath = Files.createTempFile(tempDir.toPath(), "collect_support_bundle", ".zip");
     List<String> listOfRequestFilePath = new ArrayList<>();
-    if (fileBody.has("request") && fileBody.getAsJsonObject("request").has("files")) {
-      JsonArray fileRequests = fileBody.getAsJsonObject("request").getAsJsonArray("files");
-      fileRequests.iterator().forEachRemaining(files -> listOfRequestFilePath.add(files.getAsString()));
+    if (supportBundleExportRequest.getSupportBundleRequestFileList().getFiles().size() > 0) {
+      List<String> fileList = supportBundleExportRequest.getSupportBundleRequestFileList().getFiles();
+      fileList.iterator().forEachRemaining(files -> listOfRequestFilePath.add(files));
     }
     File uuidFile = new File(cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR), uuid);
     try {

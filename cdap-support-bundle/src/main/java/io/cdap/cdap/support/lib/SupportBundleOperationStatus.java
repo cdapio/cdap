@@ -18,12 +18,12 @@ package io.cdap.cdap.support.lib;
 
 import io.cdap.cdap.support.status.CollectionState;
 
-public class SupportBundleOverallStatus {
+public class SupportBundleOperationStatus {
   private final String bundleId;
   private CollectionState bundleStatus;
   private SupportBundlePipelineStatus supportBundlePipelineStatus;
 
-  public SupportBundleOverallStatus(String bundleId) {
+  public SupportBundleOperationStatus(String bundleId) {
     this.bundleId = bundleId;
   }
 
