@@ -62,7 +62,10 @@ public class DeduplicateAggregationDefinition extends AggregationDefinition {
    * to obtain a single row after deduplication.
    */
   public enum FilterFunction {
-    MIN, MAX
+    MIN, // Minimum value
+    MAX, // Maximum Value
+    ANY_NULLS_FIRST, // Any value, with null values prioritized
+    ANY_NULLS_LAST // Any value, with non-null values prioritized
   }
 
   /**
