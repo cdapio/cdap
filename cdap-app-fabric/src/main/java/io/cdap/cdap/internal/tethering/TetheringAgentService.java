@@ -52,6 +52,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Named;
 
 /**
  * The main class to run the remote agent service.
@@ -61,6 +62,8 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
   private static final Gson GSON = new Gson();
   private static final String CONNECT_CONTROL_CHANNEL = "/v3/tethering/controlchannels/";
   private static final String SUBSCRIBER = "tether.agent";
+
+  public static final String REMOTE_TETHERING_AUTHENTICATOR = "remoteTetheringAuthenticator";
 
   private final CConfiguration cConf;
   private final long connectionInterval;
@@ -75,7 +78,8 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
 
   @Inject
   TetheringAgentService(CConfiguration cConf, TransactionRunner transactionRunner, TetheringStore store,
-                        MessagingService messagingService, RemoteAuthenticator remoteAuthenticator) {
+                        MessagingService messagingService,
+                        @Named(REMOTE_TETHERING_AUTHENTICATOR) RemoteAuthenticator remoteAuthenticator) {
     super(RetryStrategies.fromConfiguration(cConf, "tethering.agent."));
     this.connectionInterval = TimeUnit.SECONDS.toMillis(cConf.getLong(Constants.Tethering.CONNECTION_INTERVAL));
     this.cConf = cConf;

@@ -26,6 +26,8 @@ import io.cdap.cdap.common.internal.remote.NoOpRemoteAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteAuthenticatorExtensionLoader;
 import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 
+import javax.annotation.Nullable;
+
 /**
  * Provides Guice bindings for {@link RemoteAuthenticator}.
  */
@@ -50,15 +52,37 @@ public final class RemoteAuthenticatorModules {
    * @return A module with {@link RemoteAuthenticator} bindings
    */
   public static Module getDefaultModule(String remoteAuthenticatorNameKey) {
+    return getDefaultModule(null, remoteAuthenticatorNameKey);
+  }
+
+  /**
+   * Returns bindings for the {@link RemoteAuthenticator} to be used for a particular named annotation. This is
+   * primarily used to bind a separate instance of remote authenticator (i.e. a service needs to have two different
+   * authenticator mechanisms to authenticate to two different services).
+   *
+   * @param annotation                 An annotation key to allow for splitting modules. If the annotation key is null,
+   *                                   the binding is applied globally.
+   * @param remoteAuthenticatorNameKey A {@link io.cdap.cdap.common.conf.CConfiguration} config which should be used
+   *                                   in place of system-wide remote authenticator bindings. If the resulting
+   *                                   authenticator key is null, it will fall back to the system-wide config.
+   * @return A module with {@link RemoteAuthenticator} bindings
+   */
+  public static Module getDefaultModule(@Nullable String annotation, String remoteAuthenticatorNameKey) {
     return new PrivateModule() {
       @Override
       protected void configure() {
         bind(String.class)
           .annotatedWith(Names.named(DefaultRemoteAuthenticatorProvider.AUTHENTICATOR_NAME_KEY))
           .toInstance(remoteAuthenticatorNameKey);
-        bind(RemoteAuthenticator.class).toProvider(DefaultRemoteAuthenticatorProvider.class);
         bind(RemoteAuthenticatorExtensionLoader.class).in(Scopes.SINGLETON);
-        expose(RemoteAuthenticator.class);
+        if (annotation != null) {
+          bind(RemoteAuthenticator.class).annotatedWith(Names.named(annotation))
+            .toProvider(DefaultRemoteAuthenticatorProvider.class);
+          expose(RemoteAuthenticator.class).annotatedWith(Names.named(annotation));
+        } else {
+          bind(RemoteAuthenticator.class).toProvider(DefaultRemoteAuthenticatorProvider.class);
+          expose(RemoteAuthenticator.class);
+        }
       }
     };
   }
