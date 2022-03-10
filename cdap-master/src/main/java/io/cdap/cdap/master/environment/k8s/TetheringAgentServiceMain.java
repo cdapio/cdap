@@ -61,8 +61,9 @@ public class TetheringAgentServiceMain extends AbstractServiceMain<EnvironmentOp
                                            EnvironmentOptions options, CConfiguration cConf) {
     return Arrays.asList(
       new ConfigModule(cConf),
-      // TODO CDAP-18879: Fix RemoteAuthenticator bindings to separate internal and remote HTTP calls.
-      RemoteAuthenticatorModules.getDefaultModule(Constants.Tethering.CLIENT_AUTHENTICATOR_NAME),
+      RemoteAuthenticatorModules.getDefaultModule(TetheringAgentService.REMOTE_TETHERING_AUTHENTICATOR,
+                                                  Constants.Tethering.CLIENT_AUTHENTICATOR_NAME),
+      RemoteAuthenticatorModules.getDefaultModule(),
       new SystemDatasetRuntimeModule().getStandaloneModules(),
       new TransactionModules().getSingleNodeModules(),
       new NamespaceAdminModule().getStandaloneModules(),
