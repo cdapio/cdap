@@ -54,6 +54,7 @@ import javax.annotation.Nullable;
  * a running program.
  */
 public class RuntimeProgramStatusSubscriberService extends AbstractNotificationSubscriberService {
+  public static final String SUBSCRIBER = "runtime";
 
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeProgramStatusSubscriberService.class);
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
@@ -72,12 +73,12 @@ public class RuntimeProgramStatusSubscriberService extends AbstractNotificationS
   @Nullable
   @Override
   protected String loadMessageId(StructuredTableContext context) throws IOException {
-    return getAppMetadataStore(context).retrieveSubscriberState(getTopicId().getTopic(), "runtime");
+    return getAppMetadataStore(context).retrieveSubscriberState(getTopicId().getTopic(), SUBSCRIBER);
   }
 
   @Override
   protected void storeMessageId(StructuredTableContext context, String messageId) throws IOException {
-    getAppMetadataStore(context).persistSubscriberState(getTopicId().getTopic(), "runtime", messageId);
+    getAppMetadataStore(context).persistSubscriberState(getTopicId().getTopic(), SUBSCRIBER, messageId);
   }
 
   @Override

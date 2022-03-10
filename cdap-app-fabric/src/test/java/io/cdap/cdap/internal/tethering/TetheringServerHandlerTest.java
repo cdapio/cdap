@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.tethering;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -25,6 +26,8 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.api.messaging.Message;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.client.config.ClientConfig;
@@ -39,11 +42,16 @@ import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data.runtime.TransactionExecutorModule;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
+import io.cdap.cdap.proto.Notification;
+import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.InstancePermission;
@@ -82,6 +90,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 public class TetheringServerHandlerTest {
@@ -263,7 +272,7 @@ public class TetheringServerHandlerTest {
 
   @Test
   public void testConnectControlChannelUnknownPeer() throws IOException {
-    HttpRequest request = HttpRequest.builder(HttpMethod.GET,
+    HttpRequest request = HttpRequest.builder(HttpMethod.POST,
                                               config.resolveURL("/tethering/controlchannels/bad_peer")).build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getResponseCode());
@@ -319,9 +328,9 @@ public class TetheringServerHandlerTest {
     acceptTethering();
 
     // control message with invalid message id should return BAD_REQUEST
-    HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.GET,
-                                                      config.resolveURL(
-                                                        "tethering/controlchannels/xyz?messageId=abcd"));
+    HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.POST,
+                                                      config.resolveURL("tethering/controlchannels/xyz"));
+    builder.withBody(GSON.toJson(new TetheringControlChannelRequest("abcd", null)));
     HttpResponse response = HttpRequests.execute(builder.build());
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getResponseCode());
 
@@ -346,10 +355,44 @@ public class TetheringServerHandlerTest {
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
   }
 
+  @Test
+  public void testProcessControlChannelProgramUpdates() throws Exception {
+    // Create and accept tethering
+    createTethering("xyz", NAMESPACES, REQUEST_TIME, DESCRIPTION);
+    acceptTethering();
+    expectTetheringControlResponse("xyz", HttpResponseStatus.OK);
+
+    // Add program update Notifications to body
+    HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.POST,
+                                                      config.resolveURL("tethering/controlchannels/xyz"));
+    ProgramRunId programRunId = new ProgramRunId("system", "app", ProgramType.SPARK, "program", "run");
+    Notification programUpdate = new Notification(Notification.Type.PROGRAM_STATUS,
+                                                  ImmutableMap.of(ProgramOptionConstants.PROGRAM_RUN_ID,
+                                                                  GSON.toJson(programRunId)));
+    TetheringControlChannelRequest content = new TetheringControlChannelRequest(null, ImmutableList.of(programUpdate));
+    builder.withBody(GSON.toJson(content));
+    HttpResponse response = HttpRequests.execute(builder.build());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
+
+    // Check that program update was persisted as a state transition in TMS
+    try (CloseableIterator<Message> iterator = new MultiThreadMessagingContext(messagingService).getMessageFetcher()
+      .fetch(NamespaceId.SYSTEM.getNamespace(), cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC), 1, null)) {
+      Assert.assertTrue(iterator.hasNext());
+      Notification notification = iterator.next().decodePayload(r -> GSON.fromJson(r, Notification.class));
+      Assert.assertEquals(programUpdate, notification);
+      Map<String, String> properties = notification.getProperties();
+      Assert.assertEquals(GSON.toJson(programRunId), properties.get(ProgramOptionConstants.PROGRAM_RUN_ID));
+    }
+
+    // Delete tethering
+    deleteTethering();
+  }
+
   private void expectTetheringControlResponse(String peerName, HttpResponseStatus status) throws IOException {
 
-    HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.GET,
+    HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.POST,
                                                       config.resolveURL("tethering/controlchannels/" + peerName));
+    builder.withBody(GSON.toJson(new TetheringControlChannelRequest(null, null)));
     HttpResponse response = HttpRequests.execute(builder.build());
     Assert.assertEquals(status.code(), response.getResponseCode());
   }
