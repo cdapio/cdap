@@ -90,7 +90,7 @@ public class RemoteLaunchDispatcher implements LaunchDispatcher {
     this.store = store;
     this.programRunnerFactory = programRunnerFactory;
     this.remoteTaskExecutor = new RemoteTaskExecutor(cConf, metricsCollectionService,
-        remoteClientFactory);
+        remoteClientFactory, RemoteTaskExecutor.Type.TASK_WORKER);
   }
 
   /**
