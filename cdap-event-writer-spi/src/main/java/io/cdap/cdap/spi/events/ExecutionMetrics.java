@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.events;
+package io.cdap.cdap.spi.events;
 
 import com.google.common.base.Objects;
 

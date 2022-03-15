@@ -14,10 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.events;
-
-import io.cdap.cdap.spi.events.Event;
-import io.cdap.cdap.spi.events.EventType;
+package io.cdap.cdap.spi.events;
 
 import javax.annotation.Nullable;
 

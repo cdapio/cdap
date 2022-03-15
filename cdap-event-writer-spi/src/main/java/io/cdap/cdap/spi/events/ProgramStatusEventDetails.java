@@ -14,9 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.events;
-
-import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+package io.cdap.cdap.spi.events;
 
 import java.util.Map;
 import java.util.Objects;
@@ -85,7 +83,7 @@ public class ProgramStatusEventDetails {
       '}';
   }
 
-  static class Builder {
+  public static class Builder {
 
     private final String runID;
     private final String programName;
@@ -93,6 +91,7 @@ public class ProgramStatusEventDetails {
     private final String namespace;
     private final String status;
     private final long eventTime;
+    private final String workflowRunIdConfig = "workflowRunId";
     private Map<String, String> userArgs;
     private Map<String, String> systemArgs;
     private String error;
@@ -116,7 +115,7 @@ public class ProgramStatusEventDetails {
     public Builder withSystemArgs(Map<String, String> systemArgs) {
       this.systemArgs = systemArgs;
       if (Objects.nonNull(systemArgs)) {
-        this.workflowId = systemArgs.getOrDefault(ProgramOptionConstants.WORKFLOW_RUN_ID, "");
+        this.workflowId = systemArgs.getOrDefault(workflowRunIdConfig, "");
       }
       return this;
     }

@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.events;
 
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.spi.events.ExecutionMetrics;
 
 /**
  * Provides metrics for the completed {@link io.cdap.cdap.spi.events.Event}s,
