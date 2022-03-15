@@ -17,8 +17,6 @@
 package io.cdap.cdap.support.task;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.inject.Inject;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
@@ -52,7 +50,8 @@ import java.util.stream.StreamSupport;
 public class SupportBundlePipelineInfoTask implements SupportBundleTask {
 
   private static final Logger LOG = LoggerFactory.getLogger(SupportBundlePipelineInfoTask.class);
-  private static final Gson GSON = new GsonBuilder().create();
+  private static final Gson GSON = new Gson();
+
   private final File basePath;
   private final RemoteApplicationDetailFetcher remoteApplicationDetailFetcher;
   private final RemoteProgramRunRecordsFetcher remoteProgramRunRecordsFetcher;
@@ -68,7 +67,6 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
   private final SupportBundleJob supportBundleJob;
   private final int maxRunsPerProgram;
 
-  @Inject
   public SupportBundlePipelineInfoTask(String uuid, List<NamespaceId> namespaces, String requestApplication,
                                        String runId, File basePath,
                                        RemoteApplicationDetailFetcher remoteApplicationDetailFetcher,
@@ -131,7 +129,7 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
 
         SupportBundleRuntimeInfoTask supportBundleRuntimeInfoTask =
           new SupportBundleRuntimeInfoTask(appFolderPath, namespaceId, applicationId, programType, programId,
-                                           remoteMetricsSystemClient, runRecordList, appDetail);
+                                           remoteMetricsSystemClient, runRecordList);
         SupportBundlePipelineRunLogTask supportBundlePipelineRunLogTask =
           new SupportBundlePipelineRunLogTask(appFolderPath, programId, remoteLogsFetcher, runRecordList);
 

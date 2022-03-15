@@ -18,37 +18,91 @@ package io.cdap.cdap.support.handlers;
 
 import io.cdap.cdap.SupportBundleTestBase;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.common.discovery.URIScheme;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.common.http.HttpRequest;
+import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
-import io.netty.handler.codec.http.HttpResponseStatus;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.junit.After;
 import org.junit.Assert;
-import org.junit.Ignore;
+import org.junit.Before;
 import org.junit.Test;
+
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URLEncoder;
+import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Monitor handler tests.
  */
-@Ignore
 public class SupportBundleHttpHandlerTest extends SupportBundleTestBase {
+
+  private static final NamespaceId NAMESPACE = new NamespaceId("test");
+
+  @Before
+  public void setup() throws Exception {
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, createNamespace(NAMESPACE).getResponseCode());
+  }
+
+  @After
+  public void cleanup() throws IOException {
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, deleteNamespace(NAMESPACE).getResponseCode());
+  }
 
   @Test
   public void testCreateSupportBundleWithValidNamespace() throws Exception {
-    createNamespace("default");
-    String path =
-        String.format("%s/support/bundle?namespaceId=default", Constants.Gateway.API_VERSION_3);
-    HttpResponse response = doPost(path);
-    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
+    String bundleId = requestBundle(Collections.singletonMap("namespace", NAMESPACE.getNamespace()));
 
-    Assert.assertNotNull(response.getResponseBodyAsString());
+    Assert.assertNotNull(bundleId);
+    Assert.assertFalse(bundleId.isEmpty());
   }
 
   @Test
   public void testCreateSupportBundleWithMaxRunsSpecified() throws Exception {
-    createNamespace("default");
-    String path =
-        String.format("%s/support/bundle?max-runs-per-pipeline=2", Constants.Gateway.API_VERSION_3);
-    HttpResponse response = doPost(path);
-    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
+    String bundleId = requestBundle(Collections.singletonMap("maxRunsPerProgram", "2"));
 
-    Assert.assertNotNull(response.getResponseBodyAsString());
+    Assert.assertNotNull(bundleId);
+    Assert.assertFalse(bundleId.isEmpty());
+  }
+
+  /**
+   * Requests generation of support bundle.
+   *
+   * @param params a map of query parameters
+   * @return the bundle UUID
+   * @throws IOException if failed to request bundle generation
+   */
+  private String requestBundle(Map<String, String> params) throws IOException {
+    DiscoveryServiceClient discoveryServiceClient = getInjector().getInstance(DiscoveryServiceClient.class);
+    Discoverable discoverable = new RandomEndpointStrategy(
+      () -> discoveryServiceClient.discover(Constants.Service.SUPPORT_BUNDLE_SERVICE)).pick(5, TimeUnit.SECONDS);
+
+    Assert.assertNotNull("No service for support bundle", discoverable);
+
+    StringBuilder queryBuilder = new StringBuilder();
+    String sep = "?";
+    for (Map.Entry<String, String> entry : params.entrySet()) {
+      queryBuilder
+        .append(sep)
+        .append(URLEncoder.encode(entry.getKey(), "UTF-8"))
+        .append("=")
+        .append(URLEncoder.encode(entry.getValue(), "UTF-8"));
+      sep = "&";
+    }
+
+    String path = String.format("%s/support/bundle%s", Constants.Gateway.API_VERSION_3, queryBuilder);
+
+    HttpRequest request = HttpRequest.post(URIScheme.createURI(discoverable, path).toURL()).build();
+    HttpResponse response = HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
+
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+    return response.getResponseBodyAsString();
   }
 }

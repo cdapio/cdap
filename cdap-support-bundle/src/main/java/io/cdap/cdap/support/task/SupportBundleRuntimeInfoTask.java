@@ -21,20 +21,16 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
 import io.cdap.cdap.api.metrics.MetricTimeSeries;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.metrics.process.RemoteMetricsSystemClient;
-import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
-import org.joda.time.DateTime;
-import org.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,13 +58,11 @@ public class SupportBundleRuntimeInfoTask implements SupportBundleTask {
   private final RemoteMetricsSystemClient remoteMetricsSystemClient;
   private final File appPath;
   private final Iterable<RunRecord> runRecordList;
-  private final ApplicationDetail applicationDetail;
 
-  @Inject
   public SupportBundleRuntimeInfoTask(File appPath, NamespaceId namespaceId, ApplicationId appId,
                                       ProgramType programType, ProgramId programName,
                                       RemoteMetricsSystemClient remoteMetricsSystemClient,
-                                      Iterable<RunRecord> runRecordList, ApplicationDetail applicationDetail) {
+                                      Iterable<RunRecord> runRecordList) {
     this.namespaceId = namespaceId;
     this.appId = appId;
     this.programType = programType;
@@ -76,27 +70,26 @@ public class SupportBundleRuntimeInfoTask implements SupportBundleTask {
     this.appPath = appPath;
     this.remoteMetricsSystemClient = remoteMetricsSystemClient;
     this.runRecordList = runRecordList;
-    this.applicationDetail = applicationDetail;
   }
 
   @Override
-  public void collect() throws IOException, NotFoundException, JSONException {
+  public void collect() throws IOException, NotFoundException {
     for (RunRecord runRecord : runRecordList) {
       String runId = runRecord.getPid();
       try (FileWriter file = new FileWriter(new File(appPath, runId + ".json"))) {
         JsonElement jsonElement = GSON.toJsonTree(runRecord);
         JsonObject jsonObject = (JsonObject) jsonElement;
         JsonObject metrics =
-          queryMetrics(runId, applicationDetail.getConfiguration(), runRecord != null ? runRecord.getStartTs() : 0,
-                       runRecord != null && runRecord.getStopTs() != null ? runRecord.getStopTs() : DateTime.now()
-                         .getMillis());
+          queryMetrics(runId, runRecord.getStartTs(),
+                       runRecord.getStopTs() != null ? runRecord.getStopTs() : System.currentTimeMillis());
         jsonObject.add("metrics", metrics);
         GSON.toJson(jsonObject, file);
       }
     }
   }
 
-  public JsonObject queryMetrics(String runId, String configuration, long startTs, long stopTs) {
+  @Nullable
+  private JsonObject queryMetrics(String runId, long startTs, long stopTs) {
     //startTs from run time but metrics already starts before that time
     int startQueryTime = (int) (startTs - 5000);
     JsonObject metrics = new JsonObject();

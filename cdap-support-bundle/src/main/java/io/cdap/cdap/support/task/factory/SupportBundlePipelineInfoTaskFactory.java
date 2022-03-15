@@ -38,11 +38,11 @@ public class SupportBundlePipelineInfoTaskFactory implements SupportBundleTaskFa
   private final RemoteProgramRunRecordFetcher remoteProgramRunRecordFetcher;
 
   @Inject
-  public SupportBundlePipelineInfoTaskFactory(RemoteProgramRunRecordsFetcher remoteProgramRunRecordsFetcher,
-                                              RemoteLogsFetcher remoteLogsFetcher,
-                                              RemoteApplicationDetailFetcher remoteApplicationDetailFetcher,
-                                              RemoteMetricsSystemClient remoteMetricsSystemClient,
-                                              RemoteProgramRunRecordFetcher remoteProgramRunRecordFetcher) {
+  SupportBundlePipelineInfoTaskFactory(RemoteProgramRunRecordsFetcher remoteProgramRunRecordsFetcher,
+                                       RemoteLogsFetcher remoteLogsFetcher,
+                                       RemoteApplicationDetailFetcher remoteApplicationDetailFetcher,
+                                       RemoteMetricsSystemClient remoteMetricsSystemClient,
+                                       RemoteProgramRunRecordFetcher remoteProgramRunRecordFetcher) {
     this.remoteProgramRunRecordsFetcher = remoteProgramRunRecordsFetcher;
     this.remoteLogsFetcher = remoteLogsFetcher;
     this.remoteApplicationDetailFetcher = remoteApplicationDetailFetcher;

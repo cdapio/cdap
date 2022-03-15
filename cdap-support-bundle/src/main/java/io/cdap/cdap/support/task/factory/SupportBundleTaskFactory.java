@@ -24,5 +24,9 @@ import io.cdap.cdap.support.task.SupportBundleTask;
  * Interface Support bundle Task Factory to create all different
  */
 public interface SupportBundleTaskFactory {
-  SupportBundleTask create(SupportBundleTaskConfiguration supportBundleTaskConfiguration);
+
+  /**
+   * Creates a new {@link SupportBundleTask}.
+   */
+  SupportBundleTask create(SupportBundleTaskConfiguration taskConfiguration);
 }

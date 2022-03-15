@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.support.task;
 
-import com.google.inject.Inject;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -40,7 +39,6 @@ public class SupportBundleSystemLogTask implements SupportBundleTask {
   private final RemoteMonitorServicesFetcher remoteMonitorServicesFetcher;
   private final CConfiguration cConf;
 
-  @Inject
   public SupportBundleSystemLogTask(File basePath, RemoteLogsFetcher remoteLogsFetcher,
                                     CConfiguration cConf, RemoteMonitorServicesFetcher remoteMonitorServicesFetcher) {
     this.basePath = basePath;
@@ -62,9 +60,9 @@ public class SupportBundleSystemLogTask implements SupportBundleTask {
       long currentTimeMillis = System.currentTimeMillis();
       long fromMillis =
         currentTimeMillis - TimeUnit.DAYS.toMillis(cConf.getInt(Constants.SupportBundle.SYSTEM_LOG_START_TIME));
-      File file = new File(systemLogPath, serviceMeta.getName() + SupportBundleFileNames.SYSTEMLOG_SUFFIX_NAME);
+      File file = new File(systemLogPath, serviceMeta.getName() + SupportBundleFileNames.SYSTEM_LOG_SUFFIX_NAME);
       remoteLogsFetcher.writeSystemServiceLog(componentId, serviceMeta.getName(), fromMillis / 1000,
-                                            currentTimeMillis / 1000, file);
+                                              currentTimeMillis / 1000, file);
     }
   }
 }

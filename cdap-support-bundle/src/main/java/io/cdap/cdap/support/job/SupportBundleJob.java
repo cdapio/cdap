@@ -102,7 +102,7 @@ public class SupportBundleJob {
   /**
    * Execute all processing
    */
-  public void completeProcessing(String basePath) {
+  private void completeProcessing(String basePath) {
     while (!runningTaskStateQueue.isEmpty()) {
       RunningTaskState runningTaskState = runningTaskStateQueue.poll();
       Future<SupportBundleTaskStatus> future = runningTaskState.getFuture();

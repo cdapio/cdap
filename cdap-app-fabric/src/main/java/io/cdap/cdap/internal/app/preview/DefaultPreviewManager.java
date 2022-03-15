@@ -94,6 +94,7 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.security.ApplicationPermission;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
+import io.cdap.cdap.security.authorization.DefaultContextAccessEnforcer;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
 import io.cdap.cdap.security.impersonation.DefaultUGIProvider;
@@ -102,6 +103,7 @@ import io.cdap.cdap.security.impersonation.OwnerStore;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.store.DefaultOwnerStore;
 import io.cdap.cdap.store.StoreDefinition;
@@ -319,8 +321,12 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
         protected void configure() {
           bind(AccessControllerInstantiator.class).toInstance(accessControllerInstantiator);
           expose(AccessControllerInstantiator.class);
+
           bind(AccessEnforcer.class).toInstance(accessEnforcer);
           expose(AccessEnforcer.class);
+
+          bind(ContextAccessEnforcer.class).to(DefaultContextAccessEnforcer.class).in(Scopes.SINGLETON);
+          expose(ContextAccessEnforcer.class);
 
           bind(PreviewStore.class).toInstance(previewStore);
           expose(PreviewStore.class);

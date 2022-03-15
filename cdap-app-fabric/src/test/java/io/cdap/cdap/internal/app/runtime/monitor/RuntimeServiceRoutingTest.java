@@ -47,6 +47,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
@@ -117,6 +118,7 @@ public class RuntimeServiceRoutingTest {
       new LocalLocationModule(),
       new InMemoryDiscoveryModule(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
+      new AuthorizationEnforcementModule().getNoOpModules(),
       new AuthenticationContextModules().getNoOpModule(),
       new RuntimeServerModule() {
         @Override

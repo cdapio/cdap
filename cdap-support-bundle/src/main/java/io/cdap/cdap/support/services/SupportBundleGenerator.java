@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,10 +14,10 @@
  * the License.
  */
 
-package io.cdap.cdap.support.internal.app.services;
+package io.cdap.cdap.support.services;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import io.cdap.cdap.common.NamespaceNotFoundException;
@@ -34,11 +34,9 @@ import io.cdap.cdap.support.status.CollectionState;
 import io.cdap.cdap.support.status.SupportBundleConfiguration;
 import io.cdap.cdap.support.status.SupportBundleStatus;
 import io.cdap.cdap.support.task.factory.SupportBundleTaskFactory;
-import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -49,51 +47,48 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 
 /**
  * Support bundle service to generate base path, uuid and trigger the job to execute tasks.
  */
-public class SupportBundleService implements Closeable {
+public class SupportBundleGenerator {
 
-  private static final Logger LOG = LoggerFactory.getLogger(SupportBundleService.class);
-  private static final Gson GSON = new GsonBuilder().create();
-  private final Set<SupportBundleTaskFactory> supportBundleTaskFactories;
-  private final ExecutorService executorService;
+  private static final Logger LOG = LoggerFactory.getLogger(SupportBundleGenerator.class);
+  private static final Gson GSON = new Gson();
+
+  private final Set<SupportBundleTaskFactory> taskFactories;
   private final CConfiguration cConf;
   private final RemoteNamespaceQueryClient namespaceQueryClient;
   private final String localDir;
 
   @Inject
-  SupportBundleService(CConfiguration cConf, RemoteNamespaceQueryClient namespaceQueryClient,
-                       @Named(Constants.SupportBundle.TASK_FACTORY)
-                         Set<SupportBundleTaskFactory> supportBundleTaskFactories) {
+  SupportBundleGenerator(CConfiguration cConf, RemoteNamespaceQueryClient namespaceQueryClient,
+                         @Named(Constants.SupportBundle.TASK_FACTORY) Set<SupportBundleTaskFactory> taskFactories) {
     this.cConf = cConf;
     this.namespaceQueryClient = namespaceQueryClient;
-    this.executorService = Executors.newFixedThreadPool(cConf.getInt(Constants.SupportBundle.MAX_THREADS),
-                                                        Threads.createDaemonThreadFactory("perform-support-bundle"));
-    this.localDir = this.cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR);
-    this.supportBundleTaskFactories = supportBundleTaskFactories;
+    this.localDir = cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR);
+    this.taskFactories = taskFactories;
   }
 
   /**
    * Generates support bundle
    */
-  public String generateSupportBundle(SupportBundleConfiguration supportBundleConfiguration) throws Exception {
-    String namespace = supportBundleConfiguration.getNamespace();
-    validNamespace(namespace);
+  public String generate(SupportBundleConfiguration config, ExecutorService executorService) throws Exception {
+    NamespaceId namespace = Optional.ofNullable(config.getNamespace()).map(NamespaceId::new).orElse(null);
     List<NamespaceId> namespaces = new ArrayList<>();
+
     if (namespace == null) {
       namespaces.addAll(
         namespaceQueryClient.list().stream().map(NamespaceMeta::getNamespaceId).collect(Collectors.toList()));
     } else {
-      namespaces.add(new NamespaceId(namespace));
+      namespaces.add(validNamespace(namespace));
     }
+
     String uuid = UUID.randomUUID().toString();
     File uuidPath = new File(localDir, uuid);
     DirUtils.mkdirs(uuidPath);
@@ -107,14 +102,14 @@ public class SupportBundleService implements Closeable {
       .setBundleId(uuid)
       .setStartTimestamp(System.currentTimeMillis())
       .setStatus(CollectionState.IN_PROGRESS)
-      .setParameters(supportBundleConfiguration)
+      .setParameters(config)
       .build();
     addToStatus(supportBundleStatus, uuidPath.getPath());
 
     SupportBundleJob supportBundleJob =
-      new SupportBundleJob(supportBundleTaskFactories, executorService, cConf, supportBundleStatus);
+      new SupportBundleJob(taskFactories, executorService, cConf, supportBundleStatus);
     SupportBundleTaskConfiguration supportBundleTaskConfiguration =
-      new SupportBundleTaskConfiguration(supportBundleConfiguration, uuid, uuidPath, namespaces, supportBundleJob);
+      new SupportBundleTaskConfiguration(config, uuid, uuidPath, namespaces, supportBundleJob);
 
     try {
       executorService.execute(() -> supportBundleJob.generateBundle(supportBundleTaskConfiguration));
@@ -127,13 +122,27 @@ public class SupportBundleService implements Closeable {
         .build();
       addToStatus(failedBundleStatus, uuidPath.getPath());
     }
+
     return uuid;
+  }
+
+  /**
+   * Gets single support bundle status with uuid
+   */
+  @VisibleForTesting
+  SupportBundleStatus getBundleStatus(File uuidFile) throws IllegalArgumentException, IOException {
+    File statusFile = new File(uuidFile, SupportBundleFileNames.STATUS_FILE_NAME);
+    if (!statusFile.exists()) {
+      throw new IllegalArgumentException("Failed to find this status file");
+    }
+    return readStatusJson(statusFile);
   }
 
   /**
    * Deletes old folders after certain number of folders exist
    */
-  public void deleteOldFoldersIfExceedLimit(File baseDirectory) throws IOException {
+  @VisibleForTesting
+  void deleteOldFoldersIfExceedLimit(File baseDirectory) throws IOException {
     int fileCount = DirUtils.list(baseDirectory).size();
     // We want to keep consistent number of bundle to provide to customer
     int folderMaxNumber = cConf.getInt(Constants.SupportBundle.MAX_FOLDER_SIZE);
@@ -153,16 +162,11 @@ public class SupportBundleService implements Closeable {
       .collect(Collectors.toList());
     return Collections.min(uuidFiles, Comparator.<File, Boolean>comparing(f1 -> {
       try {
-        return getSingleBundleJson(f1).getStatus() != CollectionState.FAILED;
+        return getBundleStatus(f1).getStatus() != CollectionState.FAILED;
       } catch (Exception e) {
         throw new RuntimeException("Failed to get file status ", e);
       }
     }).thenComparing(File::lastModified));
-  }
-
-  @Override
-  public void close() {
-    this.executorService.shutdown();
   }
 
   /**
@@ -174,17 +178,6 @@ public class SupportBundleService implements Closeable {
     }
   }
 
-  /**
-   * Gets single support bundle status with uuid
-   */
-  public SupportBundleStatus getSingleBundleJson(File uuidFile) throws IllegalArgumentException, IOException {
-    File statusFile = new File(uuidFile, SupportBundleFileNames.STATUS_FILE_NAME);
-    if (!statusFile.exists()) {
-      throw new IllegalArgumentException("Failed to find this status file");
-    }
-    return readStatusJson(statusFile);
-  }
-
   private SupportBundleStatus readStatusJson(File statusFile) throws IOException {
     SupportBundleStatus supportBundleStatus;
     try (Reader reader = Files.newBufferedReader(statusFile.toPath(), StandardCharsets.UTF_8)) {
@@ -193,12 +186,11 @@ public class SupportBundleService implements Closeable {
     return supportBundleStatus;
   }
 
-  private void validNamespace(@Nullable String namespace) throws Exception {
-    if (namespace != null) {
-      NamespaceId namespaceId = new NamespaceId(namespace);
-      if (!namespaceQueryClient.exists(namespaceId)) {
-        throw new NamespaceNotFoundException(namespaceId);
-      }
+  private NamespaceId validNamespace(NamespaceId namespace) throws Exception {
+    if (!namespaceQueryClient.exists(namespace)) {
+      throw new NamespaceNotFoundException(namespace);
     }
+
+    return namespace;
   }
 }

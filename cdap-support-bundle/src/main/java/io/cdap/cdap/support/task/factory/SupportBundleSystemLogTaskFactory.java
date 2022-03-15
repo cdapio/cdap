@@ -32,8 +32,8 @@ public class SupportBundleSystemLogTaskFactory implements SupportBundleTaskFacto
   private final RemoteMonitorServicesFetcher remoteMonitorServicesFetcher;
 
   @Inject
-  public SupportBundleSystemLogTaskFactory(CConfiguration cConf, RemoteLogsFetcher remoteLogsFetcher,
-                                           RemoteMonitorServicesFetcher remoteMonitorServicesFetcher) {
+  SupportBundleSystemLogTaskFactory(CConfiguration cConf, RemoteLogsFetcher remoteLogsFetcher,
+                                    RemoteMonitorServicesFetcher remoteMonitorServicesFetcher) {
     this.cConf = cConf;
     this.remoteLogsFetcher = remoteLogsFetcher;
     this.remoteMonitorServicesFetcher = remoteMonitorServicesFetcher;
