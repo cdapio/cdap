@@ -92,14 +92,15 @@ import javax.annotation.Nullable;
  *
  * NOTE: This class shouldn't expose to end user (e.g. cdap-client module).
  */
-public final class ClientMessagingService implements MessagingService {
+public class ClientMessagingService implements MessagingService {
 
-  private static final HttpRequestConfig HTTP_REQUEST_CONFIG = new DefaultHttpRequestConfig(false);
   private static final TransactionCodec TRANSACTION_CODEC = new TransactionCodec();
   private static final Gson GSON = new Gson();
   // These types for only for Gson to use, hence using the gson TypeToken instead of guava one
   private static final Type TOPIC_PROPERTY_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type TOPIC_LIST_TYPE = new TypeToken<List<String>>() { }.getType();
+  protected static final HttpRequestConfig HTTP_REQUEST_CONFIG = new DefaultHttpRequestConfig(false);
+  protected static final String NAMESPACE_PATH = "/v1/namespaces/";
 
   private final RemoteClient remoteClient;
   private final boolean compressPayload;
@@ -111,8 +112,13 @@ public final class ClientMessagingService implements MessagingService {
 
   @VisibleForTesting
   public ClientMessagingService(RemoteClientFactory remoteClientFactory, boolean compressPayload) {
-    this.remoteClient = remoteClientFactory.createRemoteClient(
-      Constants.Service.MESSAGING_SERVICE, HTTP_REQUEST_CONFIG, "/v1/namespaces/");
+    this(remoteClientFactory.createRemoteClient(
+      Constants.Service.MESSAGING_SERVICE, HTTP_REQUEST_CONFIG, NAMESPACE_PATH),
+         compressPayload);
+  }
+
+  protected ClientMessagingService(RemoteClient remoteClient, boolean compressPayload) {
+    this.remoteClient = remoteClient;
     this.compressPayload = compressPayload;
   }
 

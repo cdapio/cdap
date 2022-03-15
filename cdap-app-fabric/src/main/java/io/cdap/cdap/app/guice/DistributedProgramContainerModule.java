@@ -148,7 +148,8 @@ public class DistributedProgramContainerModule extends AbstractModule {
     modules.add(new IOModule());
     modules.add(new DFSLocationModule());
     modules.add(new MetricsClientRuntimeModule().getDistributedModules());
-    modules.add(new MessagingClientModule());
+    boolean tetheringEnabled = programOpts.getArguments().getOption(ProgramOptionConstants.PEER_NAME) != null;
+    modules.add(new MessagingClientModule(tetheringEnabled));
     modules.add(new AuditModule());
     modules.add(new AuthorizationEnforcementModule().getDistributedModules());
     modules.add(new SecureStoreClientModule());

@@ -49,7 +49,12 @@ public class RemoteClientFactory {
 
   public RemoteClient createRemoteClient(String discoverableServiceName, HttpRequestConfig httpRequestConfig,
                                          String basePath) {
+    return createRemoteClient(discoverableServiceName, httpRequestConfig, basePath, false);
+  }
+
+  public RemoteClient createRemoteClient(String discoverableServiceName, HttpRequestConfig httpRequestConfig,
+                                         String basePath, boolean skipRewriterUrl) {
     return new RemoteClient(internalAuthenticator, discoveryClient, discoverableServiceName,
-                            httpRequestConfig, basePath, remoteAuthenticator);
+                            httpRequestConfig, basePath, remoteAuthenticator, skipRewriterUrl);
   }
 }
