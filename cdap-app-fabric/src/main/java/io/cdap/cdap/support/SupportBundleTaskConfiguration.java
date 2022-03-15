@@ -21,37 +21,33 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.support.job.SupportBundleJob;
 import io.cdap.cdap.support.status.SupportBundleConfiguration;
 
-import java.io.File;
 import java.util.List;
 
 /**
- * Support bundle state for handling all assisted parameters inside the task factories.
+ * Support bundle task configuration for handling all assisted parameters inside the task factories
+ * tasks will each fetch pipeline and run info and generate files inside the support bundle in parallel
  */
 public class SupportBundleTaskConfiguration {
   /**
    * unique support bundle id
    */
-  private final String uuid;
+  private String uuid;
   /**
    * pipeline application id
    */
-  private final String app;
+  private String appId;
   /**
    * pipeline run id
    */
-  private final String run;
+  private String runId;
   /**
    * support bundle base path
    */
-  private final File basePath;
+  private String basePath;
   /**
    * pipeline program name
    */
   private String programName;
-  /**
-   * pipeline program type
-   */
-  private String programType;
   /**
    * all the namespace under the pipeline
    */
@@ -59,20 +55,18 @@ public class SupportBundleTaskConfiguration {
   /**
    * support bundle job to process all the tasks
    */
-  private final SupportBundleJob supportBundleJob;
+  private SupportBundleJob supportBundleJob;
   /**
-   * support bundle max run per program
+   * support bundle max runs fetch for each pipeline
    */
-  private final Integer maxRunsPerProgram;
+  private Integer maxRunsPerPipeline;
 
   public SupportBundleTaskConfiguration(SupportBundleConfiguration supportBundleConfiguration, String uuid,
-                                        File basePath, List<NamespaceId> namespaces,
+                                        String basePath, List<NamespaceId> namespaces,
                                         SupportBundleJob supportBundleJob) {
-    this.app = supportBundleConfiguration.getApp();
-    this.run = supportBundleConfiguration.getRun();
-    this.programType = supportBundleConfiguration.getProgramType();
+    this.appId = supportBundleConfiguration.getApp();
+    this.runId = supportBundleConfiguration.getRun();
     this.programName = supportBundleConfiguration.getProgramName();
-    this.maxRunsPerProgram = supportBundleConfiguration.getMaxRunsPerProgram();
     this.uuid = uuid;
     this.basePath = basePath;
     this.namespaces = ImmutableList.copyOf(namespaces);
@@ -89,33 +83,26 @@ public class SupportBundleTaskConfiguration {
   /**
    * Get pipeline Application id
    */
-  public String getApp() {
-    return app;
+  public String getAppId() {
+    return appId;
   }
 
   /**
    * Get pipeline run id
    */
-  public String getRun() {
-    return run;
+  public String getRunId() {
+    return runId;
   }
 
   /**
    * Get support bundle base path
    */
-  public File getBasePath() {
+  public String getBasePath() {
     return basePath;
   }
 
   /**
-   * Get support bundle program type
-   */
-  public String getProgramType() {
-    return programType;
-  }
-
-  /**
-   * Get support bundle program name
+   * Get workflow name
    */
   public String getProgramName() {
     return programName;
@@ -136,9 +123,9 @@ public class SupportBundleTaskConfiguration {
   }
 
   /**
-   * Get support bundle max run per program
+   * Get max runs allowed for each pipeline
    */
-  public int getMaxRunsPerProgram() {
-    return maxRunsPerProgram;
+  public Integer getMaxRunsPerPipeline() {
+    return maxRunsPerPipeline;
   }
 }

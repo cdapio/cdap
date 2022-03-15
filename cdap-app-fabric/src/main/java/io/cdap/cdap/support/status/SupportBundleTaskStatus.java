@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Each individual task status when generating support bundle.
+ * Each individual task status when generating support bundle
  */
 public class SupportBundleTaskStatus {
   // unique task name, also defines directory task stores resulting files in
@@ -34,88 +34,80 @@ public class SupportBundleTaskStatus {
   // if task was retried, number of retries, otherwise 0
   private int retries = 0;
   // array of subtasks (if any)
-  @SerializedName("sub-tasks")
   private List<SupportBundleTaskStatus> subTasks = new ArrayList<>();
   // if task was already started, timestamp of the last start
-  @SerializedName("start-timestamp")
-  private long startTimestamp;
+  private Long startTimestamp;
   // if the task was already finished, timestamp of the last finish Cleared when the task started
   // after retry and repopulated on subsequent finish
-  @SerializedName("finish-timestamp")
-  private long finishTimestamp;
+  private Long finishTimestamp;
 
-  public SupportBundleTaskStatus(String name, String type, long startTimestamp) {
-    this.name = name;
-    this.type = type;
-    this.startTimestamp = startTimestamp;
-  }
-
-  public SupportBundleTaskStatus(SupportBundleTaskStatus outdatedTaskStatus, int retries, CollectionState status) {
-    this.name = outdatedTaskStatus.getName();
-    this.type = outdatedTaskStatus.getType();
-    this.startTimestamp = outdatedTaskStatus.getStartTimestamp();
-    this.subTasks = outdatedTaskStatus.getSubTasks();
-    this.retries = retries;
-    this.status = status;
-  }
-
-  public SupportBundleTaskStatus(SupportBundleTaskStatus outdatedTaskStatus, long finishTimestamp,
-                                 CollectionState status) {
-    this.name = outdatedTaskStatus.getName();
-    this.type = outdatedTaskStatus.getType();
-    this.startTimestamp = outdatedTaskStatus.getStartTimestamp();
-    this.subTasks = outdatedTaskStatus.getSubTasks();
-    this.retries = outdatedTaskStatus.getRetries();
-    this.finishTimestamp = finishTimestamp;
-    this.status = status;
-  }
-
-  /**
-   * Get support bundle generation task name
-   */
+  /** Get support bundle generation task name */
   public String getName() {
     return name;
   }
 
-  /**
-   * Get support bundle generation task type
-   */
+  /** Set support bundle generation task name */
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  /** Get support bundle generation task type */
   public String getType() {
     return type;
   }
 
-  /**
-   * Get support bundle generation task status
-   */
+  /** Set support bundle generation task type */
+  public void setType(String type) {
+    this.type = type;
+  }
+
+  /** Get support bundle generation task status */
   public CollectionState getStatus() {
     return status;
   }
 
-  /**
-   * Get support bundle generation task retry times
-   */
+  /** Set support bundle generation task status */
+  public void setStatus(CollectionState status) {
+    this.status = status;
+  }
+
+  /** Get support bundle generation task retry times */
   public int getRetries() {
     return retries;
   }
 
-  /**
-   * Get support bundle generation subtask status
-   */
+  /** Set support bundle generation task retry times */
+  public void setRetries(int retries) {
+    this.retries = retries;
+  }
+
+  /** Get support bundle generation subtask status */
   public List<SupportBundleTaskStatus> getSubTasks() {
     return subTasks;
   }
 
-  /**
-   * Get support bundle generation task start time
-   */
-  public long getStartTimestamp() {
+  /** Set support bundle generation subtask status */
+  public void setSubTasks(List<SupportBundleTaskStatus> subTasks) {
+    this.subTasks = subTasks;
+  }
+
+  /** Get support bundle generation task start time */
+  public Long getStartTimestamp() {
     return startTimestamp;
   }
 
-  /**
-   * Get support bundle generation task finish time
-   */
-  public long getFinishTimestamp() {
+  /** Set support bundle generation task start time */
+  public void setStartTimestamp(Long startTimestamp) {
+    this.startTimestamp = startTimestamp;
+  }
+
+  /** Get support bundle generation task finish time */
+  public Long getFinishTimestamp() {
     return finishTimestamp;
+  }
+
+  /** Set support bundle generation task finish time */
+  public void setFinishTimestamp(Long finishTimestamp) {
+    this.finishTimestamp = finishTimestamp;
   }
 }

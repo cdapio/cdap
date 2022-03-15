@@ -16,8 +16,6 @@
 
 package io.cdap.cdap.support.services;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -37,13 +35,13 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Support bundle service tests.
  */
 public class SupportBundleServiceTest extends AppFabricTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(SupportBundleService.class);
-  private static final Gson GSON = new GsonBuilder().create();
 
   private static CConfiguration configuration;
 
@@ -57,30 +55,32 @@ public class SupportBundleServiceTest extends AppFabricTestBase {
   public void testDeleteOldBundle() throws Exception {
     File tempFolder = new File(configuration.get(Constants.SupportBundle.LOCAL_DATA_DIR));
     createNamespace("default");
-    String path = String.format("%s/support/bundle?namespace=default", Constants.Gateway.API_VERSION_3);
     List<String> bundleIdList = new ArrayList<>();
-    for (int i = 0; i < 7; i++) {
+    for (int i = 0; i < 8; i++) {
+      String path = String.format("%s/support/bundle?namespace=default", Constants.Gateway.API_VERSION_3);
       HttpResponse response = doPost(path);
       Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
       String bundleId = response.getResponseBodyAsString();
+      File bundleFile = new File(tempFolder, bundleId);
+      if (!new File(bundleFile, SupportBundleFileNames.STATUS_FILE_NAME).exists()) {
+        SupportBundleStatus supportBundleStatus =
+          new SupportBundleStatus(bundleId, System.currentTimeMillis(), null, CollectionState.FINISHED);
+        try (FileWriter statusFile = new FileWriter(new File(bundleFile, SupportBundleFileNames.STATUS_FILE_NAME))) {
+          GSON.toJson(supportBundleStatus, statusFile);
+          statusFile.flush();
+        } catch (Exception e) {
+          LOG.error("Can not update status file ", e);
+          Assert.fail();
+        }
+      }
       bundleIdList.add(bundleId);
+      //To separate the bundle folder time we created
+      TimeUnit.SECONDS.sleep(1);
     }
-
-    File bundleFile = new File(tempFolder, bundleIdList.get(4));
-    SupportBundleStatus supportBundleStatus =
-      new SupportBundleStatus(bundleIdList.get(4), System.currentTimeMillis(), null, CollectionState.FAILED);
-    try (FileWriter statusFile = new FileWriter(new File(bundleFile, SupportBundleFileNames.STATUS_FILE_NAME))) {
-      GSON.toJson(supportBundleStatus, statusFile);
-    } catch (Exception e) {
-      LOG.error("Can not update status file ", e);
-      Assert.fail();
-    }
-    //Exceed the maximum number of folder allows in bundle
-    doPost(path);
     File[] bundleFiles =
       tempFolder.listFiles((dir, name) -> !name.startsWith(".") && !dir.isHidden() && dir.isDirectory());
     Assert.assertEquals(7, bundleFiles.length);
-    File expectedDeletedBundle = new File(tempFolder.getPath(), bundleIdList.get(4));
+    File expectedDeletedBundle = new File(tempFolder.getPath(), bundleIdList.get(0));
     Assert.assertFalse(expectedDeletedBundle.exists());
   }
 }

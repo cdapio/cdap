@@ -96,7 +96,7 @@ public class SupportBundleService implements Closeable {
       namespaces.add(new NamespaceId(namespace));
     }
     String uuid = UUID.randomUUID().toString();
-    File uuidPath = new File(localDir, uuid);
+    File basePath = new File(localDir, uuid);
 
     SupportBundleStatus supportBundleStatus =
       new SupportBundleStatus(uuid, System.currentTimeMillis(), supportBundleConfiguration,
@@ -113,25 +113,25 @@ public class SupportBundleService implements Closeable {
       File oldFilesDirectory = getOldestFolder(baseDirectory);
       deleteOldFolders(oldFilesDirectory);
     }
-    DirUtils.mkdirs(uuidPath);
+    DirUtils.mkdirs(basePath);
 
     SupportBundleJob supportBundleJob =
       new SupportBundleJob(supportBundleTaskFactories, executorService, cConf, supportBundleStatus);
     SupportBundleTaskConfiguration supportBundleTaskConfiguration =
-      new SupportBundleTaskConfiguration(supportBundleConfiguration, uuid, uuidPath, namespaces,
+      new SupportBundleTaskConfiguration(supportBundleConfiguration, uuid, basePath.getPath(), namespaces,
                                          supportBundleJob);
 
     try {
       SupportBundleStatus finishBundleStatus =
         new SupportBundleStatus(supportBundleStatus, "", CollectionState.FINISHED, System.currentTimeMillis());
-      addToStatus(finishBundleStatus, uuidPath.getPath());
+      addToStatus(finishBundleStatus, basePath.getPath());
       executorService.execute(() -> supportBundleJob.generateBundle(supportBundleTaskConfiguration));
     } catch (Exception e) {
       LOG.error("Failed to finish execute tasks", e);
       SupportBundleStatus failedBundleStatus =
         new SupportBundleStatus(supportBundleStatus, e.getMessage(), CollectionState.FAILED,
                                 System.currentTimeMillis());
-      addToStatus(failedBundleStatus, uuidPath.getPath());
+      addToStatus(failedBundleStatus, basePath.getPath());
     }
     return uuid;
   }

@@ -18,6 +18,7 @@ package io.cdap.cdap.support.job;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.inject.name.Named;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.SupportBundle;
@@ -33,143 +34,143 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
-import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
  * Support bundle job to parallel process the support bundle tasks, store file to local storage and setup timeout for
- * executor.
+ * executor
  */
 public class SupportBundleJob {
   private static final Logger LOG = LoggerFactory.getLogger(SupportBundleJob.class);
-  private static final Gson GSON = new GsonBuilder().create();
+  private static final Gson gson = new GsonBuilder().create();
   private final ExecutorService executor;
   private final SupportBundleStatus supportBundleStatus;
-  private final Set<SupportBundleTaskFactory> supportBundleTaskFactories;
-  private final List<SupportBundleTask> supportBundleTasks;
+  private final Set<SupportBundleTaskFactory> supportBundleTaskFactoryList;
+  private final List<SupportBundleTask> supportBundleTaskList;
   private final int maxRetries;
   private final int maxThreadTimeout;
-  private final Queue<RunningTaskState> runningTaskStateQueue;
+  private final Queue<RunningTaskState> supportBundleTaskStatusQueue;
 
-  public SupportBundleJob(Set<SupportBundleTaskFactory> supportBundleTaskFactories, ExecutorService executor,
-                          CConfiguration cConf, SupportBundleStatus supportBundleStatus) {
+  public SupportBundleJob(@Named(SupportBundle.TASK_FACTORY) Set<SupportBundleTaskFactory> supportBundleTaskFactoryList,
+                          ExecutorService executor, CConfiguration cConf, SupportBundleStatus supportBundleStatus) {
     this.supportBundleStatus = supportBundleStatus;
-    this.supportBundleTaskFactories = supportBundleTaskFactories;
-    this.supportBundleTasks = new ArrayList<>();
+    this.supportBundleTaskFactoryList = supportBundleTaskFactoryList;
+    this.supportBundleTaskList = new ArrayList<>();
     this.executor = executor;
     this.maxRetries = cConf.getInt(Constants.SupportBundle.MAX_RETRY_TIMES);
     this.maxThreadTimeout = cConf.getInt(SupportBundle.MAX_THREAD_TIMEOUT);
-    this.runningTaskStateQueue = new ConcurrentLinkedQueue<>();
+    this.supportBundleTaskStatusQueue = new ConcurrentLinkedQueue<>();
   }
 
   /**
    * parallel processing tasks and generate support bundle
    */
-  public void generateBundle(SupportBundleTaskConfiguration bundleTaskConfig) {
+  public void generateBundle(SupportBundleTaskConfiguration taskConfiguration) {
     try {
-      File basePath = bundleTaskConfig.getBasePath();
-      supportBundleTasks.addAll(supportBundleTaskFactories.stream().map(factory -> factory.create(bundleTaskConfig))
-                                  .collect(Collectors.toList()));
-      for (SupportBundleTask supportBundleTask : supportBundleTasks) {
+      String basePath = taskConfiguration.getBasePath();
+      supportBundleTaskList.addAll(
+        supportBundleTaskFactoryList.stream().map(factory -> factory.create(taskConfiguration))
+          .collect(Collectors.toList()));
+      for (SupportBundleTask supportBundleTask : supportBundleTaskList) {
         String className = supportBundleTask.getClass().getName();
-        String taskName = bundleTaskConfig.getUuid().concat(": ").concat(className);
-        SupportBundleTaskStatus taskStatus = initializeTask(taskName, className);
-        executeTask(taskStatus, supportBundleTask, basePath.getPath(), className, taskName, 0);
+        String taskName = taskConfiguration.getUuid().concat(": ").concat(className);
+        executeTask(supportBundleTask, basePath, className, taskName);
       }
-      completeProcessing(basePath.getPath());
+      completeProcessing(basePath);
     } catch (Exception e) {
-      LOG.warn("Failed to execute the tasks ", e);
+      LOG.warn("Can not execute the tasks ", e);
     }
+  }
+
+  public void executeTask(SupportBundleTask supportBundleTask, String basePath, String className, String taskName) {
+    SupportBundleTaskStatus taskStatus = initializeTask(taskName, className);
+    executeTask(taskStatus, supportBundleTask, basePath, className, taskName, 0);
   }
 
   /**
    * Execute each task to generate support bundle files
    */
-  public void executeTask(SupportBundleTaskStatus taskStatus, SupportBundleTask supportBundleTask, String basePath,
-                          String className, String taskName, int retryCount) {
-    AtomicLong startTimeStore = new AtomicLong(0L);
-    AtomicReference<SupportBundleTaskStatus> latestTaskStatus = new AtomicReference<>(taskStatus);
+  private void executeTask(SupportBundleTaskStatus taskStatus, SupportBundleTask supportBundleTask, String basePath,
+                           String className, String taskName, int retryCount) {
+    RunningTaskState runningTaskState = new RunningTaskState(taskStatus);
     Future<SupportBundleTaskStatus> futureService = executor.submit(() -> {
       try {
         long startTime = System.currentTimeMillis();
-        startTimeStore.set(startTime);
-        latestTaskStatus.set(updateTask(latestTaskStatus.get(), basePath, CollectionState.IN_PROGRESS));
+        runningTaskState.setStartTime(startTime);
+        synchronized(taskStatus) {
+          taskStatus.setStartTimestamp(startTime);
+          updateTask(taskStatus, basePath, CollectionState.IN_PROGRESS);
+        }
         supportBundleTask.collect();
-        latestTaskStatus.set(updateTask(latestTaskStatus.get(), basePath, CollectionState.FINISHED));
+        synchronized(taskStatus) {
+          taskStatus.setFinishTimestamp(System.currentTimeMillis());
+          updateTask(taskStatus, basePath, CollectionState.FINISHED);
+        }
       } catch (Exception e) {
         LOG.warn("Failed to execute task with supportBundleTask {} ", taskName, e);
-        executeTaskAgainAfterFailed(supportBundleTask, className, taskName, latestTaskStatus.get(), basePath,
-                                    retryCount + 1);
+        executeTaskAgainAfterFailed(supportBundleTask, className, taskName, taskStatus, basePath, retryCount + 1);
       }
-      return latestTaskStatus.get();
+      return taskStatus;
     });
-    RunningTaskState runningTaskState = new RunningTaskState(futureService, startTimeStore.get(), taskStatus);
-    runningTaskStateQueue.offer(runningTaskState);
+    runningTaskState.setFuture(futureService);
+    supportBundleTaskStatusQueue.offer(runningTaskState);
   }
 
   /**
    * Execute all processing
    */
   public void completeProcessing(String basePath) {
-    while (!runningTaskStateQueue.isEmpty()) {
-      RunningTaskState runningTaskState = runningTaskStateQueue.poll();
-      Future<SupportBundleTaskStatus> future = runningTaskState.getFuture();
+    while (!supportBundleTaskStatusQueue.isEmpty()) {
+      RunningTaskState runningTaskState = supportBundleTaskStatusQueue.poll();
+      Future future = runningTaskState.getFuture();
       try {
-        long currentTime = System.currentTimeMillis();
-        long futureStartTime = runningTaskState.getStartTime();
-        long timeLeftBeforeTimeout = TimeUnit.MINUTES.toMillis(maxThreadTimeout) - (currentTime - futureStartTime);
+        Long currentTime = System.currentTimeMillis();
+        Long futureStartTime = runningTaskState.getStartTime();
+        Long timeLeftBeforeTimeout = TimeUnit.MINUTES.toMillis(maxThreadTimeout) - (currentTime - futureStartTime);
         future.get(timeLeftBeforeTimeout, TimeUnit.MILLISECONDS);
       } catch (Exception e) {
         LOG.error("The task for has failed or timeout more than five minutes ", e);
-        updateFailedTask(runningTaskState.getTaskStatus(), future, basePath);
+        updateFailedTask(runningTaskState.getSupportBundleTaskStatus(), future, basePath);
       }
     }
-    SupportBundleStatus finishBundleStatus =
-      new SupportBundleStatus(supportBundleStatus, "", CollectionState.FINISHED, System.currentTimeMillis());
-    addToStatus(finishBundleStatus, basePath);
-  }
 
-  /**
-   * Start a new status task
-   */
-  public SupportBundleTaskStatus initializeTask(String name, String type) {
-    SupportBundleTaskStatus supportBundleTaskStatus =
-      new SupportBundleTaskStatus(name, type, System.currentTimeMillis());
-    supportBundleStatus.getTasks().add(supportBundleTaskStatus);
-    return supportBundleTaskStatus;
+    addToStatus(basePath);
   }
 
   /**
    * Update status task
    */
-  private SupportBundleTaskStatus updateTask(SupportBundleTaskStatus taskStatus, String basePath,
-                                             CollectionState status) {
-    SupportBundleTaskStatus newTaskStatus = new SupportBundleTaskStatus(taskStatus, System.currentTimeMillis(), status);
-    supportBundleStatus.getTasks().remove(taskStatus);
-    supportBundleStatus.getTasks().add(newTaskStatus);
-    addToStatus(supportBundleStatus, basePath);
-    return newTaskStatus;
+  private void updateTask(SupportBundleTaskStatus taskStatus, String basePath, CollectionState status) {
+    try {
+      taskStatus.setStatus(status);
+      addToStatus(basePath);
+    } catch (Exception e) {
+      LOG.error("failed to update the status file ", e);
+    }
   }
 
   /**
    * Update status file
    */
-  private void addToStatus(SupportBundleStatus updatedBundleStatus, String basePath) {
+  private void addToStatus(String basePath) {
     try (FileWriter statusFile = new FileWriter(new File(basePath, SupportBundleFileNames.STATUS_FILE_NAME))) {
-      GSON.toJson(updatedBundleStatus, statusFile);
-    } catch (IOException e) {
-      LOG.error("Failed to update status file ", e);
+      gson.toJson(supportBundleStatus, statusFile);
+    } catch (Exception e) {
+      LOG.error("Can not update status file ", e);
     }
+  }
+
+  /**
+   * Start a new status task
+   */
+  private SupportBundleTaskStatus initializeTask(String name, String type) {
+    SupportBundleTaskStatus supportBundleTaskStatus = new SupportBundleTaskStatus();
+    supportBundleTaskStatus.setName(name);
+    supportBundleTaskStatus.setType(type);
+    supportBundleStatus.getTasks().add(supportBundleTaskStatus);
+    return supportBundleTaskStatus;
   }
 
   /**
@@ -179,13 +180,15 @@ public class SupportBundleJob {
                                            SupportBundleTaskStatus taskStatus, String basePath, int retryCount) {
     if (retryCount >= maxRetries) {
       LOG.error("The task has reached maximum times of retries {} ", taskName);
-      updateTask(taskStatus, basePath, CollectionState.FAILED);
+      synchronized(taskStatus) {
+        taskStatus.setFinishTimestamp(System.currentTimeMillis());
+        updateTask(taskStatus, basePath, CollectionState.FAILED);
+      }
     } else {
-      SupportBundleTaskStatus updatedTaskStatus =
-        new SupportBundleTaskStatus(taskStatus, retryCount, CollectionState.QUEUED);
-      supportBundleStatus.getTasks().remove(taskStatus);
-      supportBundleStatus.getTasks().add(updatedTaskStatus);
-      addToStatus(supportBundleStatus, basePath);
+      synchronized(taskStatus) {
+        taskStatus.setRetries(retryCount);
+        updateTask(taskStatus, basePath, CollectionState.QUEUED);
+      }
       executeTask(taskStatus, supportBundleTask, basePath, className, taskName, retryCount);
     }
   }
@@ -193,12 +196,14 @@ public class SupportBundleJob {
   /**
    * Update failed status
    */
-  private void updateFailedTask(SupportBundleTaskStatus supportBundleTaskStatus, Future<SupportBundleTaskStatus> future,
-                                String basePath) {
+  private void updateFailedTask(SupportBundleTaskStatus supportBundleTaskStatus, Future future, String basePath) {
     LOG.error("The task for has failed or timeout more than five minutes ");
     future.cancel(true);
     if (supportBundleTaskStatus != null) {
-      updateTask(supportBundleTaskStatus, basePath, CollectionState.FAILED);
+      synchronized(supportBundleTaskStatus) {
+        supportBundleTaskStatus.setFinishTimestamp(System.currentTimeMillis());
+        updateTask(supportBundleTaskStatus, basePath, CollectionState.TIMEOUT);
+      }
     }
   }
 }
