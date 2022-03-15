@@ -25,12 +25,10 @@ public class SupportBundleConfiguration {
   /**
    * pipeline namespace id
    */
-  @Nullable
   private final String namespace;
   /**
    * pipeline application id
    */
-  @Nullable
   private final String app;
   /**
    * pipeline program type
@@ -43,9 +41,8 @@ public class SupportBundleConfiguration {
   /**
    * pipeline run id
    */
-  @Nullable
   private final String run;
-  /** max num of run log customer request for each program run */
+  // max num of run log customer request for each program run
   private final int maxRunsPerProgram;
 
   public SupportBundleConfiguration(@Nullable String namespace, @Nullable String app,
@@ -62,7 +59,6 @@ public class SupportBundleConfiguration {
   /**
    * Get pipeline namespace id
    */
-  @Nullable
   public String getNamespace() {
     return namespace;
   }
@@ -70,21 +66,14 @@ public class SupportBundleConfiguration {
   /**
    * Get pipeline application id
    */
-  @Nullable
   public String getApp() {
     return app;
   }
 
-  /**
-   * Get instance program type
-   */
   public String getProgramType() {
     return programType;
   }
 
-  /**
-   * Get instance program name
-   */
   public String getProgramName() {
     return programName;
   }
@@ -92,7 +81,6 @@ public class SupportBundleConfiguration {
   /**
    * Get pipeline run id
    */
-  @Nullable
   public String getRun() {
     return run;
   }
