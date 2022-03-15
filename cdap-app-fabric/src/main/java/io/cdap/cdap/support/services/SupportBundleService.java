@@ -97,12 +97,19 @@ public class SupportBundleService implements Closeable {
     }
     String uuid = UUID.randomUUID().toString();
     File uuidPath = new File(localDir, uuid);
-    DirUtils.mkdirs(uuidPath);
 
     // Puts all the files under the uuid path
     File baseDirectory = new File(localDir);
     DirUtils.mkdirs(baseDirectory);
-    deleteOldFoldersIfExceedLimit(baseDirectory);
+    int fileCount = DirUtils.list(baseDirectory).size();
+
+    // We want to keep consistent number of bundle to provide to customer
+    int folderMaxNumber = cConf.getInt(Constants.SupportBundle.MAX_FOLDER_SIZE);
+    if (fileCount >= folderMaxNumber) {
+      File oldFilesDirectory = getOldestFolder(baseDirectory);
+      deleteOldFolders(oldFilesDirectory);
+    }
+    DirUtils.mkdirs(uuidPath);
 
     SupportBundleStatus supportBundleStatus = SupportBundleStatus.builder()
       .setBundleId(uuid)
@@ -132,19 +139,6 @@ public class SupportBundleService implements Closeable {
   }
 
   /**
-   * Deletes old folders after certain number of folders exist
-   */
-  public void deleteOldFoldersIfExceedLimit(File baseDirectory) throws IOException {
-    int fileCount = DirUtils.list(baseDirectory).size();
-    // We want to keep consistent number of bundle to provide to customer
-    int folderMaxNumber = cConf.getInt(Constants.SupportBundle.MAX_FOLDER_SIZE);
-    if (fileCount >= folderMaxNumber) {
-      File oldFilesDirectory = getOldestFolder(baseDirectory);
-      DirUtils.deleteDirectoryContents(oldFilesDirectory);
-    }
-  }
-
-  /**
    * Gets oldest folder from the root directory
    */
   private File getOldestFolder(File baseDirectory) {
@@ -159,6 +153,13 @@ public class SupportBundleService implements Closeable {
         throw new RuntimeException("Failed to get file status ", e);
       }
     }).thenComparing(File::lastModified));
+  }
+
+  /**
+   * Deletes old folders after certain number of folders exist
+   */
+  private void deleteOldFolders(@Nullable File oldFilesDirectory) throws IOException {
+    DirUtils.deleteDirectoryContents(oldFilesDirectory);
   }
 
   @Override
