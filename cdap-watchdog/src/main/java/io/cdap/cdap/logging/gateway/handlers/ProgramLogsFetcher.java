@@ -16,17 +16,18 @@
 
 package io.cdap.cdap.logging.gateway.handlers;
 
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 
-import java.io.File;
 import java.io.IOException;
+import java.util.stream.Stream;
 
 /**
  * Interface for fetching Program logs
  */
-public interface LogsFetcher {
+public interface ProgramLogsFetcher {
   /**
    * Gets the run logs of a program.
    *
@@ -34,12 +35,13 @@ public interface LogsFetcher {
    * @param runId pipeline run id
    * @param start start time of the time range of desired logs
    * @param stop end time of the time range of desired logs
-   * @param file file for us to write the log into
+   * @return the logs of the program
    * @throws IOException if a network error occurred
+   * @throws NotFoundException if the application or program could not be found
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  void getProgramRunLogs(ProgramId program, String runId, long start, long stop, File file)
-    throws IOException, UnauthenticatedException, UnauthorizedException;
+  Stream<String> getProgramRunLogs(ProgramId program, String runId, long start, long stop)
+    throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException;
 
   /**
    * Gets the logs of a program.
@@ -48,10 +50,11 @@ public interface LogsFetcher {
    * @param serviceId service id
    * @param start start time of the time range of desired logs
    * @param stop end time of the time range of desired logs
-   * @param file path for the file to write into
+   * @return the log of the program
    * @throws IOException if a network error occurred
+   * @throws NotFoundException if the application or program could not be found
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  void getSystemServiceLog(String componentId, String serviceId, long start, long stop, File file)
-    throws IOException, UnauthenticatedException, UnauthorizedException;
+  Stream<String> getProgramSystemLog(String componentId, String serviceId, long start, long stop)
+    throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException;
 }

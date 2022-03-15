@@ -18,7 +18,7 @@ package io.cdap.cdap.support.task.factory;
 
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.logging.gateway.handlers.RemoteLogsFetcher;
+import io.cdap.cdap.logging.gateway.handlers.RemoteProgramLogsFetcher;
 import io.cdap.cdap.support.SupportBundleTaskConfiguration;
 import io.cdap.cdap.support.handlers.RemoteMonitorServicesFetcher;
 import io.cdap.cdap.support.task.SupportBundleSystemLogTask;
@@ -28,20 +28,20 @@ import io.cdap.cdap.support.task.SupportBundleSystemLogTask;
  */
 public class SupportBundleSystemLogTaskFactory implements SupportBundleTaskFactory {
   private final CConfiguration cConf;
-  private final RemoteLogsFetcher remoteLogsFetcher;
+  private final RemoteProgramLogsFetcher remoteProgramLogsFetcher;
   private final RemoteMonitorServicesFetcher remoteMonitorServicesFetcher;
 
   @Inject
-  public SupportBundleSystemLogTaskFactory(CConfiguration cConf, RemoteLogsFetcher remoteLogsFetcher,
+  public SupportBundleSystemLogTaskFactory(CConfiguration cConf, RemoteProgramLogsFetcher remoteProgramLogsFetcher,
                                            RemoteMonitorServicesFetcher remoteMonitorServicesFetcher) {
     this.cConf = cConf;
-    this.remoteLogsFetcher = remoteLogsFetcher;
+    this.remoteProgramLogsFetcher = remoteProgramLogsFetcher;
     this.remoteMonitorServicesFetcher = remoteMonitorServicesFetcher;
   }
 
   @Override
   public SupportBundleSystemLogTask create(SupportBundleTaskConfiguration taskConfiguration) {
-    return new SupportBundleSystemLogTask(taskConfiguration.getBasePath(), remoteLogsFetcher, cConf,
+    return new SupportBundleSystemLogTask(taskConfiguration.getBasePath(), remoteProgramLogsFetcher, cConf,
                                           remoteMonitorServicesFetcher);
   }
 }

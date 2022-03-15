@@ -29,7 +29,7 @@ import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.app.store.DefaultStore;
-import io.cdap.cdap.logging.gateway.handlers.RemoteLogsFetcher;
+import io.cdap.cdap.logging.gateway.handlers.RemoteProgramLogsFetcher;
 import io.cdap.cdap.logging.gateway.handlers.RemoteProgramRunRecordsFetcher;
 import io.cdap.cdap.metadata.RemoteApplicationDetailFetcher;
 import io.cdap.cdap.metrics.process.RemoteMetricsSystemClient;
@@ -83,7 +83,7 @@ public class SupportBundlePipelineInfoTaskTest extends AppFabricTestBase {
   private static Store store;
   private static ExecutorService executorService;
   private static Set<SupportBundleTaskFactory> supportBundleTaskFactorySet;
-  private static RemoteLogsFetcher remoteLogsFetcher;
+  private static RemoteProgramLogsFetcher remoteProgramLogsFetcher;
   private static RemoteProgramRunRecordsFetcher remoteProgramRunRecordsFetcher;
   private static RemoteMetricsSystemClient remoteMetricsSystemClient;
   private static RemoteApplicationDetailFetcher remoteApplicationDetailFetcher;
@@ -101,7 +101,7 @@ public class SupportBundlePipelineInfoTaskTest extends AppFabricTestBase {
     supportBundleTaskFactorySet = new HashSet<>();
     supportBundleTaskFactorySet.add(injector.getInstance(SupportBundlePipelineInfoTaskFactory.class));
     supportBundleTaskFactorySet.add(injector.getInstance(SupportBundleSystemLogTaskFactory.class));
-    remoteLogsFetcher = injector.getInstance(RemoteLogsFetcher.class);
+    remoteProgramLogsFetcher = injector.getInstance(RemoteProgramLogsFetcher.class);
     remoteProgramRunRecordsFetcher = injector.getInstance(RemoteProgramRunRecordsFetcher.class);
     remoteMetricsSystemClient = injector.getInstance(RemoteMetricsSystemClient.class);
     remoteApplicationDetailFetcher = injector.getInstance(RemoteApplicationDetailFetcher.class);
@@ -132,7 +132,7 @@ public class SupportBundlePipelineInfoTaskTest extends AppFabricTestBase {
     SupportBundlePipelineInfoTask supportBundlePipelineInfoTask =
       new SupportBundlePipelineInfoTask(uuid, Collections.singletonList(namespaceId), application, uuidFile,
                                         remoteApplicationDetailFetcher, remoteProgramRunRecordsFetcher,
-                                        remoteLogsFetcher, programType, workflowName, remoteMetricsSystemClient,
+                                        remoteProgramLogsFetcher, programType, workflowName, remoteMetricsSystemClient,
                                         supportBundleJob, 1);
     supportBundlePipelineInfoTask.collect();
 

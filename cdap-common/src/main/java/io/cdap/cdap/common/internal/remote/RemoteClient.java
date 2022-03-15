@@ -28,7 +28,6 @@ import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import io.cdap.common.http.HttpContentConsumer;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequestConfig;
@@ -61,11 +60,17 @@ public class RemoteClient {
   private final HttpRequestConfig httpRequestConfig;
   private final String discoverableServiceName;
   private final String basePath;
-  private final RemoteAuthenticator remoteAuthenticator;
+  private volatile RemoteAuthenticator authenticator;
 
   RemoteClient(InternalAuthenticator internalAuthenticator, DiscoveryServiceClient discoveryClient,
-               String discoverableServiceName, HttpRequestConfig httpRequestConfig, String basePath,
-               RemoteAuthenticator remoteAuthenticator) {
+               String discoverableServiceName, HttpRequestConfig httpRequestConfig, String basePath) {
+    this(internalAuthenticator, discoveryClient, discoverableServiceName, httpRequestConfig, basePath,
+         null);
+  }
+
+  RemoteClient(InternalAuthenticator internalAuthenticator,
+               DiscoveryServiceClient discoveryClient, String discoverableServiceName,
+               HttpRequestConfig httpRequestConfig, String basePath, @Nullable RemoteAuthenticator authenticator) {
     this.internalAuthenticator = internalAuthenticator;
     this.discoverableServiceName = discoverableServiceName;
     this.httpRequestConfig = httpRequestConfig;
@@ -88,7 +93,7 @@ public class RemoteClient {
   }
 
   private void setAuthHeader(BiConsumer<String, String> headerSetter, String header, String credentialType,
-                             String credentialValue) {
+                                        String credentialValue) {
     headerSetter.accept(header, String.format("%s %s", credentialType, credentialValue));
   }
 
@@ -116,8 +121,8 @@ public class RemoteClient {
 
     internalAuthenticator.applyInternalAuthenticationHeaders(headers::put);
 
-    httpRequest =
-      new HttpRequest(request.getMethod(), rewrittenURL, headers, request.getBody(), request.getBodyLength());
+    httpRequest = new HttpRequest(request.getMethod(), rewrittenURL, headers,
+                      request.getBody(), request.getBodyLength());
 
     try {
       HttpResponse response = HttpRequests.execute(httpRequest, httpRequestConfig);
@@ -137,6 +142,7 @@ public class RemoteClient {
   }
 
   /**
+<<<<<<< HEAD
    * Makes a streaming {@link HttpRequest} and consumes the response using the {@link HttpContentConsumer} provided
    * in the request. It retries on failure.
    */
@@ -166,6 +172,8 @@ public class RemoteClient {
   }
 
   /**
+=======
+>>>>>>> parent of 3f25ea117e6 (use httpcontentconsumer to generate fileoutstream)
    * Opens a {@link HttpURLConnection} for the given resource path.
    */
   public HttpURLConnection openConnection(String resource) throws IOException {
@@ -220,8 +228,8 @@ public class RemoteClient {
       return rewriteURL(uri.toURL());
     } catch (MalformedURLException e) {
       // shouldn't happen. If it does, it means there is some bug in the service announcer
-      throw new IllegalStateException(
-        String.format("Discovered service %s, but it announced malformed URL %s", discoverableServiceName, uri), e);
+      throw new IllegalStateException(String.format("Discovered service %s, but it announced malformed URL %s",
+                                                    discoverableServiceName, uri), e);
     }
   }
 
@@ -233,12 +241,11 @@ public class RemoteClient {
    * @return a generic error message about the failure
    */
   public String createErrorMessage(HttpRequest request, @Nullable String body) {
-    String headers = request.getHeaders() == null ? "null" : Joiner.on(",")
-      .withKeyValueSeparator("=")
-      .join(request.getHeaders().entries());
+    String headers = request.getHeaders() == null ?
+      "null" : Joiner.on(",").withKeyValueSeparator("=").join(request.getHeaders().entries());
     return String.format("Error making request to %s service at %s while doing %s with headers %s%s.",
-                         discoverableServiceName, request.getURL(), request.getMethod(), headers,
-                         body == null ? "" : " and body " + body);
+                         discoverableServiceName, request.getURL(), request.getMethod(),
+                         headers, body == null ? "" : " and body " + body);
   }
 
   /**

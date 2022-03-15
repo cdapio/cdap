@@ -120,7 +120,7 @@ public class SupportBundleServiceTest extends AppFabricTestBase {
     }
     SupportBundleStatus supportBundleStatus = supportBundleService.getSingleBundleJson(uuidFile);
     while (supportBundleStatus.getStatus() == CollectionState.IN_PROGRESS) {
-      //Wait unit status changed
+      //Wait unit status set up
       SupportBundleStatus updatedBundleStatus = supportBundleService.getSingleBundleJson(uuidFile);
       if (updatedBundleStatus != null) {
         supportBundleStatus = updatedBundleStatus;
@@ -146,6 +146,17 @@ public class SupportBundleServiceTest extends AppFabricTestBase {
       Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
       String uuid = response.getResponseBodyAsString();
       bundleIdList.add(uuid);
+      File uuidFile = new File(tempFolder, uuid);
+      File statusFile = new File(uuidFile, SupportBundleFileNames.STATUS_FILE_NAME);
+      while (!statusFile.exists()) {
+        //Wait unit status set up
+        statusFile = new File(uuidFile, SupportBundleFileNames.STATUS_FILE_NAME);
+      }
+      SupportBundleStatus supportBundleStatus = supportBundleService.getSingleBundleJson(uuidFile);
+      while (supportBundleStatus.getStatus() == null) {
+        //Wait unit status set up
+        supportBundleStatus = supportBundleService.getSingleBundleJson(uuidFile);
+      }
     }
     File bundleFile = new File(tempFolder, bundleIdList.get(4));
     SupportBundleStatus supportBundleStatus = SupportBundleStatus.builder()
