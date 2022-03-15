@@ -21,6 +21,7 @@ import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.DatasetModuleId;
 import io.cdap.cdap.proto.id.DatasetTypeId;
 import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.HealthCheckId;
 import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -54,6 +55,7 @@ public enum EntityType {
   APPLICATION(ApplicationId.class),
   PROGRAM(ProgramId.class),
   PROGRAM_RUN(ProgramRunId.class),
+  HEALTH_CHECK(HealthCheckId.class),
 
   DATASET_TYPE(DatasetTypeId.class),
   DATASET_MODULE(DatasetModuleId.class),

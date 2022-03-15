@@ -20,8 +20,9 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.implementation.HealthCheckImplementation;
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.InstanceId;
-import io.cdap.cdap.proto.security.InstancePermission;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
@@ -57,8 +58,8 @@ public class HealthCheckHttpHandler extends AbstractHttpHandler {
   @GET
   @Path("/health")
   public void call(HttpRequest request, HttpResponder responder) {
-    // ensure the user has authentication to get health check
-    contextAccessEnforcer.enforce(InstanceId.SELF, InstancePermission.HEALTH_CHECK);
+    /** ensure the user has authentication to get health check\ */
+    contextAccessEnforcer.enforceOnParent(EntityType.HEALTH_CHECK, InstanceId.SELF, StandardPermission.GET);
     HealthCheckResponse healthCheckResponse = healthCheckImplementation.collect();
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(healthCheckResponse.getData()));
   }

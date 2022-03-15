@@ -27,7 +27,7 @@ import io.cdap.cdap.internal.app.services.HealthCheckService;
 import io.cdap.http.HttpHandler;
 
 /**
- * HealthCheck module to bind factories
+ * App Fabric HealthCheck module to bind factories
  */
 public class HealthCheckModule extends AbstractModule {
   // ensuring to be singleton across JVM
