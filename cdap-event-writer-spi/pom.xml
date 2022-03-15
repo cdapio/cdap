@@ -45,11 +45,6 @@
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
     </dependency>
-    <dependency>
-      <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-app-fabric</artifactId>
-      <version>${project.version}</version>
-    </dependency>
   </dependencies>
 
 </project>
