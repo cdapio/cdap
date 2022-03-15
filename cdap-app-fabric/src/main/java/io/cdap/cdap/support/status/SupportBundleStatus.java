@@ -36,19 +36,27 @@ public class SupportBundleStatus {
   /**
    * Failed bundle describes the failure
    */
-  private final String statusDetails;
+  private String statusDetails;
   /**
    * when bundle collection was started
    */
-  private final Long startTimestamp;
+  private final long startTimestamp;
   /**
    * FINISHED/FAILED bundles when bundle collection was completed
    */
-  private final Long finishTimestamp;
+  private long finishTimestamp;
   // any parameters passed to start collection
   private final SupportBundleConfiguration parameters;
   // Array of top-level tasks for the bundle, see task structure below
-  private final Set<SupportBundleTaskStatus> tasks;
+  private Set<SupportBundleTaskStatus> tasks = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
+  private SupportBundleStatus(String bundleId, long startTimestamp, SupportBundleConfiguration parameters,
+                              CollectionState status) {
+    this.bundleId = bundleId;
+    this.startTimestamp = startTimestamp;
+    this.parameters = parameters;
+    this.status = status;
+  }
 
   private SupportBundleStatus(String bundleId, long startTimestamp, SupportBundleConfiguration parameters,
                               String statusDetails, CollectionState status, long finishTimestamp,
@@ -90,7 +98,7 @@ public class SupportBundleStatus {
     private long finishTimestamp;
 
     private Builder() {
-      this.tasks = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
     }
 
     private Builder(SupportBundleStatus outdatedStatus) {
@@ -157,9 +165,22 @@ public class SupportBundleStatus {
     }
 
     /**
-     * Initialize the bundle with new status and add finish time stamp
+     * Initialize the bundle status
      */
     public SupportBundleStatus build() {
+      if (bundleId == null) {
+        throw new IllegalArgumentException("Bundle id must be specified.");
+      }
+      if (status == null) {
+        throw new IllegalArgumentException("Bundle status must be specified.");
+      }
+      return new SupportBundleStatus(bundleId, startTimestamp, parameters, status);
+    }
+
+    /**
+     * Update the bundle with new status and add finish time stamp
+     */
+    public SupportBundleStatus buildWithFinishStatus() {
       if (bundleId == null) {
         throw new IllegalArgumentException("Bundle id must be specified.");
       }

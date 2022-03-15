@@ -126,12 +126,9 @@ public class SupportBundleJobTest extends AppFabricTestBase {
     String uuid = UUID.randomUUID().toString();
     File tempFolder = new File(configuration.get(Constants.SupportBundle.LOCAL_DATA_DIR));
     File uuidFile = new File(tempFolder, uuid);
-    SupportBundleStatus supportBundleStatus = SupportBundleStatus.builder()
-      .setBundleId(uuid)
-      .setStartTimestamp(System.currentTimeMillis())
-      .setParameters(supportBundleConfiguration)
-      .setStatus(CollectionState.IN_PROGRESS)
-      .build();
+    SupportBundleStatus supportBundleStatus =
+      SupportBundleStatus.builder().setBundleId(uuid).setStartTimestamp(System.currentTimeMillis())
+        .setParameters(supportBundleConfiguration).setStatus(CollectionState.IN_PROGRESS).build();
     DirUtils.mkdirs(uuidFile);
     SupportBundleJob supportBundleJob =
       new SupportBundleJob(supportBundleTaskFactorySet, executorService, configuration, supportBundleStatus);
@@ -176,12 +173,9 @@ public class SupportBundleJobTest extends AppFabricTestBase {
     String uuid = UUID.randomUUID().toString();
     File tempFolder = new File(configuration.get(Constants.SupportBundle.LOCAL_DATA_DIR));
     File uuidFile = new File(tempFolder, uuid);
-    SupportBundleStatus supportBundleStatus = SupportBundleStatus.builder()
-      .setBundleId(uuid)
-      .setStartTimestamp(System.currentTimeMillis())
-      .setParameters(supportBundleConfiguration)
-      .setStatus(CollectionState.IN_PROGRESS)
-      .build();
+    SupportBundleStatus supportBundleStatus =
+      SupportBundleStatus.builder().setBundleId(uuid).setStartTimestamp(System.currentTimeMillis())
+        .setParameters(supportBundleConfiguration).setStatus(CollectionState.IN_PROGRESS).build();
     SupportBundleJob supportBundleJob =
       new SupportBundleJob(supportBundleTaskFactorySet, executorService, configuration, supportBundleStatus);
     SupportBundlePipelineInfoTask supportBundlePipelineInfoTask =
@@ -264,10 +258,8 @@ public class SupportBundleJobTest extends AppFabricTestBase {
   private void setStartAndRunning(ProgramId id, String pid, Map<String, String> runtimeArgs,
                                   Map<String, String> systemArgs, ArtifactId artifactId) {
     if (!systemArgs.containsKey(SystemArguments.PROFILE_NAME)) {
-      systemArgs = ImmutableMap.<String, String>builder()
-        .putAll(systemArgs)
-        .put(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName())
-        .build();
+      systemArgs = ImmutableMap.<String, String>builder().putAll(systemArgs)
+        .put(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName()).build();
     }
     long startTime = RunIds.getTime(pid, TimeUnit.SECONDS);
     store.setProvisioning(id.run(pid), runtimeArgs, systemArgs, AppFabricTestHelper.createSourceId(++sourceId),
