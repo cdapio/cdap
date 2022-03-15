@@ -113,14 +113,10 @@ public class SupportBundleServiceTest extends AppFabricTestBase {
     Assert.assertNotNull(uuid);
     File tempFolder = new File(configuration.get(SupportBundle.LOCAL_DATA_DIR));
     File uuidFile = new File(tempFolder, uuid);
-
-    Tasks.waitFor(CollectionState.FINISHED, () -> {
-      SupportBundleStatus supportBundleStatus = supportBundleService.getSingleBundleJson(uuidFile);
-      if (supportBundleStatus == null) {
-        return CollectionState.INVALID;
-      }
-      return supportBundleService.getSingleBundleJson(uuidFile).getStatus();
-    }, 60, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
+    File statusFile = new File(uuidFile, SupportBundleFileNames.STATUS_FILE_NAME);
+    Tasks.waitFor(true, statusFile::exists, 60, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
+    Tasks.waitFor(CollectionState.FINISHED, () -> supportBundleService.getSingleBundleJson(uuidFile).getStatus(), 60,
+                  TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
     SupportBundleStatus supportBundleStatus = supportBundleService.getSingleBundleJson(uuidFile);
 
     Set<SupportBundleTaskStatus> supportBundleTaskStatusList = supportBundleStatus.getTasks();
