@@ -63,7 +63,7 @@ public class SupportBundleInternalService extends AbstractIdleService {
       .setPort(cConf.getInt(Constants.SupportBundle.SERVICE_BIND_PORT))
       .setWorkerThreadPoolSize(cConf.getInt(Constants.SupportBundle.SERVICE_WORKER_THREADS))
       .setExecThreadPoolSize(cConf.getInt(Constants.SupportBundle.SERVICE_EXEC_THREADS))
-      .setConnectionBacklog(10000);
+      .setConnectionBacklog(20000);
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);

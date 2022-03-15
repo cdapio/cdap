@@ -32,7 +32,7 @@ import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.MonitorHandlerModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.app.guice.RuntimeServerModule;
-import io.cdap.cdap.app.guice.SupportBundleServiceModule;
+import io.cdap.cdap.app.guice.SupportBundleRuntimeServiceModule;
 import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.preview.PreviewHttpServer;
 import io.cdap.cdap.app.preview.PreviewManagerModule;
@@ -554,7 +554,7 @@ public class StandaloneMain {
       new RuntimeServerModule(),
       new OperationalStatsModule(),
       new MetricsWriterModule(),
-      new SupportBundleServiceModule(),
+      new SupportBundleRuntimeServiceModule().getStandaloneModules(),
       new AbstractModule() {
         @Override
         protected void configure() {

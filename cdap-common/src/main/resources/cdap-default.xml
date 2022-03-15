@@ -4916,23 +4916,6 @@
   </property>
 
   <property>
-    <name>support.bundle.container.instances</name>
-    <value>1</value>
-    <description>
-      Number of instances for the support bundle service
-    </description>
-  </property>
-
-  <property>
-    <name>support.bundle.max.instances</name>
-    <value>${master.service.max.instances}</value>
-    <description>
-      Maximum number of instances for the support bundle service.
-    </description>
-    <final>true</final>
-  </property>
-
-  <property>
     <name>support.bundle.local.data.dir</name>
     <value>${local.data.dir}/support/bundle</value>
     <description>

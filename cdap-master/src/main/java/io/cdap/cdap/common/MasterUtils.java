@@ -81,8 +81,8 @@ public final class MasterUtils {
                                    Constants.Service.SUPPORT_BUNDLE_SERVICE,
                                    Constants.SupportBundle.SERVICE_MEMORY_MB,
                                    Constants.SupportBundle.SERVICE_NUM_CORES,
-                                   Constants.SupportBundle.CONTAINER_INSTANCES,
-                                   Constants.SupportBundle.MAX_INSTANCES));
+                                   null,
+                                   null));;
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
       builder.add(new ExploreServiceResourceKeys(cConf,
                                                  Constants.Service.EXPLORE_HTTP_USER_SERVICE,
