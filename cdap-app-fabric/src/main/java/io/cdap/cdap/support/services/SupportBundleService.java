@@ -63,16 +63,15 @@ public class SupportBundleService implements Closeable {
   private final CConfiguration cConf;
   private final RemoteNamespaceQueryClient namespaceQueryClient;
   private final String localDir;
-  private final int folderMaxNumber;
 
   @Inject
-  public SupportBundleService(CConfiguration cConf, RemoteNamespaceQueryClient namespaceQueryClient) {
+  public SupportBundleService(CConfiguration cConf,
+                              RemoteNamespaceQueryClient namespaceQueryClient) {
     this.cConf = cConf;
     this.namespaceQueryClient = namespaceQueryClient;
     this.executorService = Executors.newFixedThreadPool(cConf.getInt(Constants.SupportBundle.MAX_THREADS),
                                                         Threads.createDaemonThreadFactory("perform-support-bundle"));
     this.localDir = this.cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR);
-    this.folderMaxNumber = this.cConf.getInt(Constants.SupportBundle.MAX_FOLDER_SIZE);
   }
 
   /**
@@ -81,8 +80,13 @@ public class SupportBundleService implements Closeable {
    */
   public String generateSupportBundle(SupportBundleConfiguration supportBundleConfiguration) throws Exception {
     String namespaceId = supportBundleConfiguration.getNamespaceId();
-    validNamespace(namespaceId);
-
+    if (namespaceId != null) {
+      NamespaceId namespace = new NamespaceId(namespaceId);
+      if (!namespaceQueryClient.exists(namespace)) {
+        throw new NamespaceNotFoundException(namespace);
+      }
+    }
+    int folderMaxNumber = cConf.getInt(Constants.SupportBundle.MAX_FOLDER_SIZE);
     String uuid = UUID.randomUUID().toString();
     File basePath = new File(localDir, uuid);
     SupportBundleStatus supportBundleStatus = new SupportBundleStatus(uuid, supportBundleConfiguration);
@@ -107,12 +111,12 @@ public class SupportBundleService implements Closeable {
       DirUtils.mkdirs(basePath);
       //TODO Execute tasks in parallel
     } catch (Exception e) {
-      LOG.error("Failed to generate support bundle ", e);
-      supportBundleStatus.setFinishTimestamp(System.currentTimeMillis());
+      LOG.error("Can not generate support bundle ", e);
       supportBundleStatus.setStatus(CollectionState.FAILED);
       supportBundleStatus.setStatusDetails(e.getMessage());
+      supportBundleStatus.setFinishTimestamp(System.currentTimeMillis());
       addToStatus(supportBundleStatus, basePath.getPath());
-      throw new Exception("Failed to generate support bundle ", e);
+      throw new Exception("Can not generate support bundle ", e);
     }
     return uuid;
   }
@@ -121,13 +125,13 @@ public class SupportBundleService implements Closeable {
    * Gets oldest folder from the root directory
    */
   private File getOldestFolder(File baseDirectory) throws RuntimeException {
-    File[] uuidFiles =
-      baseDirectory.listFiles((dir, name) -> !name.startsWith(".") && !dir.isHidden() && dir.isDirectory());
+    File[] uuidFiles = baseDirectory.listFiles(
+      (dir, name) -> !name.startsWith(".") && !dir.isHidden() && dir.isDirectory());
     return Collections.min(Arrays.asList(uuidFiles), Comparator.<File, Boolean>comparing(f1 -> {
       try {
         return getSingleBundleJson(f1).getStatus() != CollectionState.FAILED;
       } catch (Exception e) {
-        throw new RuntimeException("Failed to get file status ", e);
+        throw new RuntimeException("Can not get file status ", e);
       }
     }).thenComparing(File::lastModified));
   }
@@ -181,14 +185,5 @@ public class SupportBundleService implements Closeable {
       throw new Exception("Can not read this status file ", e);
     }
     return supportBundleStatus;
-  }
-
-  private void validNamespace(String namespaceId) throws Exception {
-    if (namespaceId != null) {
-      NamespaceId namespace = new NamespaceId(namespaceId);
-      if (!namespaceQueryClient.exists(namespace)) {
-        throw new NamespaceNotFoundException(namespace);
-      }
-    }
   }
 }
