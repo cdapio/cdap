@@ -24,7 +24,8 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.security.StandardPermission;
-import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.support.services.SupportBundleService;
 import io.cdap.cdap.support.status.SupportBundleConfiguration;
 import io.cdap.http.HttpResponder;
@@ -44,12 +45,15 @@ import javax.ws.rs.QueryParam;
 public class SupportBundleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final SupportBundleService bundleService;
-  private final ContextAccessEnforcer contextAccessEnforcer;
+  private final AccessEnforcer accessEnforcer;
+  private final AuthenticationContext authenticationContext;
 
-    @Inject
-  SupportBundleHttpHandler(SupportBundleService supportBundleService, ContextAccessEnforcer contextAccessEnforcer) {
+  @Inject
+  SupportBundleHttpHandler(AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext,
+                           SupportBundleService supportBundleService) {
+    this.accessEnforcer = accessEnforcer;
+    this.authenticationContext = authenticationContext;
     this.bundleService = supportBundleService;
-    this.contextAccessEnforcer = contextAccessEnforcer;
   }
 
   /**
@@ -90,16 +94,16 @@ public class SupportBundleHttpHandler extends AbstractAppFabricHttpHandler {
         if (run == null) {
           ProgramId programId =
             new ProgramId(namespace, application, ProgramType.valueOfCategoryName(programType), programName);
-          contextAccessEnforcer.enforce(programId, StandardPermission.GET);
+          accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.GET);
         } else {
           ProgramRunId programRunId =
             new ProgramRunId(namespace, application, ProgramType.valueOfCategoryName(programType), programName, run);
-          contextAccessEnforcer.enforce(programRunId, StandardPermission.GET);
+          accessEnforcer.enforce(programRunId, authenticationContext.getPrincipal(), StandardPermission.GET);
         }
       } else {
         NamespaceId namespaceId =
           new NamespaceId(namespace);
-        contextAccessEnforcer.enforce(namespaceId, StandardPermission.GET);
+        accessEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), StandardPermission.GET);
       }
     }
   }
