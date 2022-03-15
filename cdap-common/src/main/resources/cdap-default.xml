@@ -5130,6 +5130,14 @@
   </property>
 
   <property>
+    <name>feature.pipeline.triggers.conditional.and.enabled</name>
+    <value>false</value>
+    <description>
+      Enables configuring AND or OR trigger groups for a pipeline.
+    </description>
+  </property>
+
+  <property>
     <name>artifact.cache.bind.address</name>
     <value>0.0.0.0</value>
     <description>

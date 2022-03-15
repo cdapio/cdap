@@ -26,7 +26,8 @@ import io.cdap.cdap.api.feature.FeatureFlagsProvider;
  * By default, features default to enabled after they are introduced, and disabled before they were introduced
  */
 public enum Feature {
-  REPLICATION_TRANSFORMATIONS("6.6.0");
+  REPLICATION_TRANSFORMATIONS("6.6.0"),
+  PIPELINE_TRIGGERS_CONDITIONAL_AND("6.8.0");
 
   private final PlatformInfo.Version versionIntroduced;
   private final boolean defaultAfterIntroduction;
