@@ -72,7 +72,10 @@ public class RemoteLogsFetcher implements LogsFetcher {
     String path = String.format("namespaces/%s/apps/%s/%s/%s/runs/%s/logs?start=%d&stop=%d",
                                 program.getNamespaceId().getNamespace(), program.getApplication(),
                                 program.getType().getCategoryName(), program.getProgram(), runId, start, stop);
-    execute(path, file);
+    try (FileChannel channel = new FileOutputStream(file, false).getChannel()) {
+      URL url = remoteClient.resolve(path);
+      execute(url, channel, file);
+    }
   }
 
   /**
@@ -91,30 +94,30 @@ public class RemoteLogsFetcher implements LogsFetcher {
   public void writeSystemServiceLog(String componentId, String serviceId, long start, long stop, File file)
     throws IOException, UnauthenticatedException, UnauthorizedException {
     String path = String.format("system/%s/%s/logs?start=%d&stop=%d", componentId, serviceId, start, stop);
-    execute(path, file);
-  }
-
-  private void execute(String path, File file) throws IOException, UnauthorizedException {
     try (FileChannel channel = new FileOutputStream(file, false).getChannel()) {
       URL url = remoteClient.resolve(path);
-      HttpRequest request = HttpRequest.get(url).withContentConsumer(new HttpContentConsumer() {
-        @Override
-        public boolean onReceived(ByteBuffer buffer) {
-          try {
-            channel.write(buffer);
-          } catch (IOException e) {
-            LOG.error("Failed write to file {}", file);
-            return false;
-          }
-          return true;
-        }
-
-        @Override
-        public void onFinished() {
-          Closeables.closeQuietly(channel);
-        }
-      }).build();
-      remoteClient.executeStreamingRequest(request);
+      execute(url, channel, file);
     }
+  }
+
+  private void execute(URL url, FileChannel channel, File destination) throws IOException, UnauthorizedException {
+    HttpRequest request = HttpRequest.get(url).withContentConsumer(new HttpContentConsumer() {
+      @Override
+      public boolean onReceived(ByteBuffer buffer) {
+        try {
+          channel.write(buffer);
+        } catch (IOException e) {
+          LOG.error("Failed write to file {}", destination);
+          return false;
+        }
+        return true;
+      }
+
+      @Override
+      public void onFinished() {
+        Closeables.closeQuietly(channel);
+      }
+    }).build();
+    remoteClient.executeStreamingRequest(request);
   }
 }

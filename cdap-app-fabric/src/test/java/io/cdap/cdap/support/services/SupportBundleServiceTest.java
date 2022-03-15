@@ -27,7 +27,6 @@ import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.SupportBundle;
-import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
@@ -114,10 +113,19 @@ public class SupportBundleServiceTest extends AppFabricTestBase {
     Assert.assertNotNull(uuid);
     File tempFolder = new File(configuration.get(SupportBundle.LOCAL_DATA_DIR));
     File uuidFile = new File(tempFolder, uuid);
-    Tasks.waitFor(CollectionState.FINISHED, () -> supportBundleService.getSingleBundleJson(uuidFile).getStatus(), 60,
-                  TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
+    File statusFile = new File(uuidFile, SupportBundleFileNames.STATUS_FILE_NAME);
+    while (!statusFile.exists()) {
+      //Wait unit status file set up
+      statusFile = new File(uuidFile, SupportBundleFileNames.STATUS_FILE_NAME);
+    }
     SupportBundleStatus supportBundleStatus = supportBundleService.getSingleBundleJson(uuidFile);
-
+    while (supportBundleStatus.getStatus() == CollectionState.IN_PROGRESS) {
+      //Wait unit status changed
+      SupportBundleStatus updatedBundleStatus = supportBundleService.getSingleBundleJson(uuidFile);
+      if (updatedBundleStatus != null) {
+        supportBundleStatus = updatedBundleStatus;
+      }
+    }
     Set<SupportBundleTaskStatus> supportBundleTaskStatusList = supportBundleStatus.getTasks();
     Assert.assertEquals(uuid, supportBundleStatus.getBundleId());
     Assert.assertEquals(CollectionState.FINISHED, supportBundleStatus.getStatus());

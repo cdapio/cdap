@@ -21,9 +21,7 @@ import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.utils.DirUtils;
-import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.logging.gateway.handlers.RemoteLogsFetcher;
-import io.cdap.cdap.logging.gateway.handlers.RemoteProgramRunRecordFetcher;
 import io.cdap.cdap.logging.gateway.handlers.RemoteProgramRunRecordsFetcher;
 import io.cdap.cdap.metadata.RemoteApplicationDetailFetcher;
 import io.cdap.cdap.metrics.process.RemoteMetricsSystemClient;
@@ -33,7 +31,6 @@ import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
-import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.support.job.SupportBundleJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,11 +53,9 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
   private final File basePath;
   private final RemoteApplicationDetailFetcher remoteApplicationDetailFetcher;
   private final RemoteProgramRunRecordsFetcher remoteProgramRunRecordsFetcher;
-  private final RemoteProgramRunRecordFetcher remoteProgramRunRecordFetcher;
   private final RemoteLogsFetcher remoteLogsFetcher;
   private final RemoteMetricsSystemClient remoteMetricsSystemClient;
   private final List<NamespaceId> namespaces;
-  private final String runId;
   private final String uuid;
   private final String requestApplication;
   private final ProgramType programType;
@@ -70,21 +65,17 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
 
   @Inject
   public SupportBundlePipelineInfoTask(String uuid, List<NamespaceId> namespaces, String requestApplication,
-                                       String runId, File basePath,
-                                       RemoteApplicationDetailFetcher remoteApplicationDetailFetcher,
+                                       File basePath, RemoteApplicationDetailFetcher remoteApplicationDetailFetcher,
                                        RemoteProgramRunRecordsFetcher remoteProgramRunRecordsFetcher,
                                        RemoteLogsFetcher remoteLogsFetcher, ProgramType programType, String programName,
                                        RemoteMetricsSystemClient remoteMetricsSystemClient,
-                                       SupportBundleJob supportBundleJob, int maxRunsPerProgram,
-                                       RemoteProgramRunRecordFetcher remoteProgramRunRecordFetcher) {
+                                       SupportBundleJob supportBundleJob, int maxRunsPerProgram) {
     this.uuid = uuid;
     this.basePath = basePath;
     this.namespaces = namespaces;
     this.requestApplication = requestApplication;
-    this.runId = runId;
     this.remoteApplicationDetailFetcher = remoteApplicationDetailFetcher;
     this.remoteProgramRunRecordsFetcher = remoteProgramRunRecordsFetcher;
-    this.remoteProgramRunRecordFetcher = remoteProgramRunRecordFetcher;
     this.remoteLogsFetcher = remoteLogsFetcher;
     this.programType = programType;
     this.programName = programName;
@@ -119,15 +110,7 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
           GSON.toJson(appDetail, file);
         }
         ProgramId programId = new ProgramId(namespaceId.getNamespace(), appDetail.getName(), programType, programName);
-        Iterable<RunRecord> runRecordList;
-        if (runId != null) {
-          ProgramRunId programRunId =
-            new ProgramRunId(namespaceId.getNamespace(), appDetail.getName(), programType, programName, runId);
-          RunRecordDetail runRecordDetail = remoteProgramRunRecordFetcher.getRunRecordMeta(programRunId);
-          runRecordList = Collections.singletonList(runRecordDetail);
-        } else {
-          runRecordList = getRunRecords(programId);
-        }
+        Iterable<RunRecord> runRecordList = getRunRecords(programId);
 
         SupportBundleRuntimeInfoTask supportBundleRuntimeInfoTask =
           new SupportBundleRuntimeInfoTask(appFolderPath, namespaceId, applicationId, programType, programId,

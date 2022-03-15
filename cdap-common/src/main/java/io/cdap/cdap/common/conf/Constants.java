@@ -1116,7 +1116,6 @@ public final class Constants {
     public static final String STATUS_OK = "OK";
     public static final String STATUS_NOTOK = "NOTOK";
     public static final String DISCOVERY_TIMEOUT_SECONDS = "monitor.handler.service.discovery.timeout.seconds";
-    public static final String SYSTEM_LOG_SERVICE_URL = "system/services";
   }
 
   /**
@@ -1900,6 +1899,7 @@ public final class Constants {
     public static final String MAX_RETRY_TIMES = "support.bundle.max.retry.times";
     public static final String MAX_THREAD_TIMEOUT = "support.bundle.max.thread.timeout";
     public static final String SYSTEM_LOG_START_TIME = "support.bundle.system.log.start.time";
+    public static final String SYSTEM_LOG_SERVICE_URL = "system/services";
   }
 
   public static final class JMXMetricsCollector {
