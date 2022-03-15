@@ -89,8 +89,8 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
     .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
     .registerTypeAdapter(org.apache.twill.internal.Arguments.class, new org.apache.twill.internal.json.ArgumentsCodec())
     .create();
-  private static final String applicationZip = "application/zip";
-  private static final String contentDescriptionValue = "attachment; filename=\"collect_support_bundle.zip\"";
+  private static final String APPLICATION_ZIP = "application/zip";
+  private static final String CONTENT_DISPOSITION_VALUE = "attachment; filename=\"collect_support_bundle.zip\"";
 
   private final CConfiguration cConf;
   private final SupportBundleGenerator bundleGenerator;
@@ -340,8 +340,8 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
                                                                                                 Base64.getEncoder()
                                                                                                   .encodeToString(
                                                                                                     digest.digest())))
-        .add(HttpHeaderNames.CONTENT_TYPE, applicationZip)
-        .add(HttpHeaderNames.CONTENT_DISPOSITION, contentDescriptionValue));
+        .add(HttpHeaderNames.CONTENT_TYPE, APPLICATION_ZIP)
+        .add(HttpHeaderNames.CONTENT_DISPOSITION, CONTENT_DISPOSITION_VALUE));
     } finally {
       Files.deleteIfExists(tmpPath);
     }
