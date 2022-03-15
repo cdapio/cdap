@@ -42,6 +42,7 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -52,7 +53,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
- * Support bundle service to generate base path, uuid and trigger the job to execute tasks.
+ * Support bundle service to generate base path, uuid and trigger the job to execute tasks
  */
 public class SupportBundleService implements Closeable {
 
@@ -62,58 +63,56 @@ public class SupportBundleService implements Closeable {
   private final CConfiguration cConf;
   private final RemoteNamespaceQueryClient namespaceQueryClient;
   private final String localDir;
+  private final int folderMaxNumber;
 
   @Inject
-  SupportBundleService(CConfiguration cConf, RemoteNamespaceQueryClient namespaceQueryClient) {
+  public SupportBundleService(CConfiguration cConf, RemoteNamespaceQueryClient namespaceQueryClient) {
     this.cConf = cConf;
     this.namespaceQueryClient = namespaceQueryClient;
     this.executorService = Executors.newFixedThreadPool(cConf.getInt(Constants.SupportBundle.MAX_THREADS),
                                                         Threads.createDaemonThreadFactory("perform-support-bundle"));
     this.localDir = this.cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR);
+    this.folderMaxNumber = this.cConf.getInt(Constants.SupportBundle.MAX_FOLDER_SIZE);
   }
 
   /**
-   * Generates support bundle
+   * Generates support bundle For single bundle folder store structure: It will be
+   * local.dir.data/support/bundle/uuid/(status.json, system-log folder, pipeline-info folder)
    */
   public String generateSupportBundle(SupportBundleConfiguration supportBundleConfiguration) throws Exception {
-    String namespace = supportBundleConfiguration.getNamespace();
-    validNamespace(namespace);
-    List<NamespaceId> namespaces = new ArrayList<>();
-    if (namespace == null) {
-      namespaces.addAll(
-        namespaceQueryClient.list().stream().map(NamespaceMeta::getNamespaceId).collect(Collectors.toList()));
-    } else {
-      namespaces.add(new NamespaceId(namespace));
-    }
+    String namespaceId = supportBundleConfiguration.getNamespaceId();
+    validNamespace(namespaceId);
+
     String uuid = UUID.randomUUID().toString();
     File basePath = new File(localDir, uuid);
-
-    SupportBundleStatus supportBundleStatus =
-      new SupportBundleStatus(uuid, System.currentTimeMillis(), supportBundleConfiguration,
-                              CollectionState.IN_PROGRESS);
+    SupportBundleStatus supportBundleStatus = new SupportBundleStatus(uuid, supportBundleConfiguration);
     try {
+      List<String> namespaceList = new ArrayList<>();
+      if (namespaceId == null) {
+        namespaceList.addAll(
+          namespaceQueryClient.list().stream().map(NamespaceMeta::getName).collect(Collectors.toList()));
+      } else {
+        namespaceList.add(namespaceId);
+      }
       // Puts all the files under the uuid path
       File baseDirectory = new File(localDir);
       DirUtils.mkdirs(baseDirectory);
       int fileCount = DirUtils.list(baseDirectory).size();
 
       // We want to keep consistent number of bundle to provide to customer
-      int folderMaxNumber = cConf.getInt(Constants.SupportBundle.MAX_FOLDER_SIZE);
       if (fileCount >= folderMaxNumber) {
         File oldFilesDirectory = getOldestFolder(baseDirectory);
         deleteOldFolders(oldFilesDirectory);
       }
       DirUtils.mkdirs(basePath);
-
-      SupportBundleStatus finishBundleStatus =
-        new SupportBundleStatus(supportBundleStatus, "", CollectionState.FINISHED, System.currentTimeMillis());
-      addToStatus(finishBundleStatus, basePath.getPath());
+      //TODO Execute tasks in parallel
     } catch (Exception e) {
-      SupportBundleStatus failedBundleStatus =
-        new SupportBundleStatus(supportBundleStatus, e.getMessage(), CollectionState.FAILED,
-                                System.currentTimeMillis());
-      addToStatus(failedBundleStatus, basePath.getPath());
-      throw new IllegalArgumentException("Failed to generate support bundle ", e);
+      LOG.error("Failed to generate support bundle ", e);
+      supportBundleStatus.setFinishTimestamp(System.currentTimeMillis());
+      supportBundleStatus.setStatus(CollectionState.FAILED);
+      supportBundleStatus.setStatusDetails(e.getMessage());
+      addToStatus(supportBundleStatus, basePath.getPath());
+      throw new Exception("Failed to generate support bundle ", e);
     }
     return uuid;
   }
@@ -121,11 +120,10 @@ public class SupportBundleService implements Closeable {
   /**
    * Gets oldest folder from the root directory
    */
-  private File getOldestFolder(File baseDirectory) {
-    List<File> uuidFiles = DirUtils.listFiles(baseDirectory).stream()
-      .filter(file -> !file.getName().startsWith(".") && !file.isHidden() && file.isDirectory())
-      .collect(Collectors.toList());
-    return Collections.min(uuidFiles, Comparator.<File, Boolean>comparing(f1 -> {
+  private File getOldestFolder(File baseDirectory) throws RuntimeException {
+    File[] uuidFiles =
+      baseDirectory.listFiles((dir, name) -> !name.startsWith(".") && !dir.isHidden() && dir.isDirectory());
+    return Collections.min(Arrays.asList(uuidFiles), Comparator.<File, Boolean>comparing(f1 -> {
       try {
         return getSingleBundleJson(f1).getStatus() != CollectionState.FAILED;
       } catch (Exception e) {
@@ -145,7 +143,6 @@ public class SupportBundleService implements Closeable {
     }
   }
 
-  @Override
   public void close() {
     this.executorService.shutdown();
   }
@@ -153,41 +150,44 @@ public class SupportBundleService implements Closeable {
   /**
    * Update status file
    */
-  private void addToStatus(SupportBundleStatus supportBundleStatus, String basePath) throws IOException {
-    try (FileWriter statusFile = new FileWriter(new File(basePath, SupportBundleFileNames.STATUS_FILE_NAME))) {
+  private void addToStatus(SupportBundleStatus supportBundleStatus, String basePath) throws Exception {
+    try (FileWriter statusFile = new FileWriter(new File(basePath, SupportBundleFileNames.statusFileName))) {
       GSON.toJson(supportBundleStatus, statusFile);
       statusFile.flush();
-    } catch (IOException e) {
-      throw new IOException("Failed to update status file ", e);
+    } catch (Exception e) {
+      LOG.error("Can not update status file ", e);
+      throw new Exception("Can not update status file ", e);
     }
   }
 
   /**
    * Gets single support bundle status with uuid
    */
-  public SupportBundleStatus getSingleBundleJson(File uuidFile) throws IllegalArgumentException, IOException {
-    File statusFile = new File(uuidFile, SupportBundleFileNames.STATUS_FILE_NAME);
+  public SupportBundleStatus getSingleBundleJson(File uuidFile) throws Exception {
+    File statusFile = new File(uuidFile, SupportBundleFileNames.statusFileName);
     if (!statusFile.exists()) {
-      throw new IllegalArgumentException("Failed to find this status file");
+      LOG.error("Can not find this status file {} ", uuidFile.getName());
+      throw new Exception("Can not find this status file");
     }
     return readStatusJson(statusFile);
   }
 
-  private SupportBundleStatus readStatusJson(File statusFile) throws IOException {
+  private SupportBundleStatus readStatusJson(File statusFile) throws Exception {
     SupportBundleStatus supportBundleStatus;
     try (Reader reader = Files.newBufferedReader(statusFile.toPath(), StandardCharsets.UTF_8)) {
       supportBundleStatus = GSON.fromJson(reader, SupportBundleStatus.class);
-    } catch (IOException e) {
-      throw new IOException("Failed to read this status file ", e);
+    } catch (Exception e) {
+      LOG.error("Can not read status file ", e);
+      throw new Exception("Can not read this status file ", e);
     }
     return supportBundleStatus;
   }
 
-  private void validNamespace(String namespace) throws Exception {
-    if (namespace != null) {
-      NamespaceId namespaceId = new NamespaceId(namespace);
-      if (!namespaceQueryClient.exists(namespaceId)) {
-        throw new NamespaceNotFoundException(namespaceId);
+  private void validNamespace(String namespaceId) throws Exception {
+    if (namespaceId != null) {
+      NamespaceId namespace = new NamespaceId(namespaceId);
+      if (!namespaceQueryClient.exists(namespace)) {
+        throw new NamespaceNotFoundException(namespace);
       }
     }
   }
