@@ -4759,6 +4759,31 @@
   </property>
 
   <property>
+    <name>system.worker.bind.address</name>
+    <value>0.0.0.0</value>
+    <description>
+      The bind address for system worker service.
+    </description>
+  </property>
+
+  <property>
+    <name>system.worker.bind.port</name>
+    <value>11020</value>
+    <description>
+      The port to bind the system worker service to.
+    </description>
+  </property>
+
+  <property>
+    <name>system.worker.request.limit</name>
+    <value>10</value>
+    <description>
+      Number of requests accepted by system worker pods.
+    </description>
+  </property>
+
+
+  <property>
     <name>artifact.localizer.container.num.cores</name>
     <value>1</value>
     <description>
