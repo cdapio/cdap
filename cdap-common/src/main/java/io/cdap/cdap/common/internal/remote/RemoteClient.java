@@ -61,18 +61,12 @@ public class RemoteClient {
   private final HttpRequestConfig httpRequestConfig;
   private final String discoverableServiceName;
   private final String basePath;
-  private volatile RemoteAuthenticator remoteAuthenticator;
-
-  RemoteClient(InternalAuthenticator internalAuthenticator, DiscoveryServiceClient discoveryClient,
-               String discoverableServiceName, HttpRequestConfig httpRequestConfig, String basePath) {
-    this(internalAuthenticator, discoveryClient, discoverableServiceName, httpRequestConfig, basePath,
-         null);
-  }
+  private final RemoteAuthenticator remoteAuthenticator;
 
   RemoteClient(InternalAuthenticator internalAuthenticator,
                DiscoveryServiceClient discoveryClient, String discoverableServiceName,
                HttpRequestConfig httpRequestConfig, String basePath,
-               @Nullable RemoteAuthenticator remoteAuthenticator) {
+               RemoteAuthenticator remoteAuthenticator) {
     this.internalAuthenticator = internalAuthenticator;
     this.discoverableServiceName = discoverableServiceName;
     this.httpRequestConfig = httpRequestConfig;
@@ -154,7 +148,6 @@ public class RemoteClient {
     httpResponse.consumeContent();
   }
 
-
   /**
    * Opens a {@link HttpURLConnection} for the given resource path.
    */
@@ -210,8 +203,8 @@ public class RemoteClient {
       return rewriteURL(uri.toURL());
     } catch (MalformedURLException e) {
       // shouldn't happen. If it does, it means there is some bug in the service announcer
-      throw new IllegalStateException(String.format("Discovered service %s, but it announced malformed URL %s",
-                                                    discoverableServiceName, uri), e);
+      throw new IllegalStateException(
+        String.format("Discovered service %s, but it announced malformed URL %s", discoverableServiceName, uri), e);
     }
   }
 

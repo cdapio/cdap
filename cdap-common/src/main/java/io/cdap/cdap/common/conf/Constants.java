@@ -1891,18 +1891,6 @@ public final class Constants {
     }
   }
 
-  public static final class SupportBundle {
-    public static final String MAX_FOLDER_SIZE = "support.bundle.max.folder.size";
-    public static final String MAX_THREADS = "support.bundle.max.threads";
-    public static final String DEFAULT_WORKFLOW = "support.bundle.default.workflow";
-    public static final String LOCAL_DATA_DIR = "support.bundle.local.data.dir";
-    public static final String TASK_FACTORY = "support.bundle.task.factory";
-    public static final String MAX_RETRY_TIMES = "support.bundle.max.retry.times";
-    public static final String MAX_THREAD_TIMEOUT = "support.bundle.max.thread.timeout";
-    public static final String SYSTEM_LOG_START_TIME = "support.bundle.system.log.start.time";
-    public static final String SYSTEM_LOG_SERVICE_URL = "system/services";
-  }
-
   public static final class JMXMetricsCollector {
     public static final String POLL_INTERVAL_SECS = "jmx.metrics.collector.poll.interval.secs";
     public static final String SERVER_PORT = "jmx.metrics.collector.server.port";
