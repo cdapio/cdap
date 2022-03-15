@@ -17,13 +17,8 @@
 package io.cdap.cdap.spi.data.sql;
 
 import com.google.common.base.Joiner;
-import com.google.inject.Guice;
-import com.google.inject.Inject;
-import com.google.inject.Injector;
 import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.spi.data.InvalidFieldException;
 import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.cdap.spi.data.StructuredRow;
@@ -71,13 +66,13 @@ public class PostgreSqlStructuredTable implements StructuredTable {
   private final Connection connection;
   private final StructuredTableSchema tableSchema;
   private final FieldValidator fieldValidator;
-  private final int scanFetchSize;
+  private final int fetchSize;
 
-  public PostgreSqlStructuredTable(Connection connection, StructuredTableSchema tableSchema, int scanFetchSize) {
+  public PostgreSqlStructuredTable(Connection connection, StructuredTableSchema tableSchema, int fetchSize) {
     this.connection = connection;
     this.tableSchema = tableSchema;
     this.fieldValidator = new FieldValidator(tableSchema);
-    this.scanFetchSize = scanFetchSize;
+    this.fetchSize = fetchSize;
   }
 
   @Override
@@ -181,6 +176,7 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     queryString.append(";");
 
     PreparedStatement preparedStatement = connection.prepareStatement(queryString.toString());
+    preparedStatement.setFetchSize(fetchSize);
 
     // Set fields to the statement
     setFields(preparedStatement, keyFields.values().stream().flatMap(Collection::stream)::iterator, 1);
@@ -221,7 +217,7 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     // We don't close the statement here because once it is closed, the result set is also closed.
     try {
       PreparedStatement statement = connection.prepareStatement(scanQuery);
-      statement.setFetchSize(scanFetchSize);
+      statement.setFetchSize(fetchSize);
       setStatementFieldByRange(keyRange, statement);
       LOG.trace("SQL statement: {}", statement);
 
@@ -321,7 +317,7 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     query.append(" LIMIT ").append(limit).append(";");
 
     PreparedStatement statement = connection.prepareStatement(query.toString());
-    statement.setFetchSize(scanFetchSize);
+    statement.setFetchSize(fetchSize);
 
     // Set the parameters
     int index = setFields(statement, keyFields.values().stream().flatMap(Collection::stream)::iterator, 1);
@@ -343,7 +339,7 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     // We don't close the statement here because once it is closed, the result set is also closed.
     try {
       PreparedStatement statement = connection.prepareStatement(sql);
-      statement.setFetchSize(scanFetchSize);
+      statement.setFetchSize(fetchSize);
       setField(statement, index, 1);
       LOG.trace("SQL statement: {}", statement);
       ResultSet resultSet = statement.executeQuery();
@@ -378,6 +374,7 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     // First compare
     String readQuery = getReadQuery(keys, Collections.singleton(oldValue.getName()), true);
     try (PreparedStatement statement = connection.prepareStatement(readQuery)) {
+      statement.setFetchSize(fetchSize);
       int index = 1;
       for (Field<?> key : keys) {
         setField(statement, key, index);
@@ -490,6 +487,7 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     LOG.trace("Table {}: count with ranges {}", tableSchema.getTableId(), keyRanges);
     String sql = getCountStatement(keyRanges);
     try (PreparedStatement statement = connection.prepareStatement(sql)) {
+      statement.setFetchSize(fetchSize);
       setStatementFieldByRange(keyRanges, statement);
       LOG.trace("SQL statement: {}", statement);
 
@@ -569,6 +567,8 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     fieldValidator.validatePrimaryKeys(keys, false);
     String readQuery = getReadQuery(keys, columns, false);
     try (PreparedStatement statement = connection.prepareStatement(readQuery)) {
+      statement.setFetchSize(fetchSize);
+
       int index = 1;
       for (Field<?> key : keys) {
         setField(statement, key, index);
