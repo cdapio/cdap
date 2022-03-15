@@ -116,10 +116,10 @@ public class SupportBundleServiceTest extends AppFabricTestBase {
 
     Tasks.waitFor(CollectionState.FINISHED, () -> {
       SupportBundleStatus supportBundleStatus = supportBundleService.getSingleBundleJson(uuidFile);
-      if (supportBundleStatus == null || supportBundleStatus.getStatus() == null) {
+      if (supportBundleStatus == null) {
         return CollectionState.INVALID;
       }
-      return supportBundleStatus.getStatus();
+      return supportBundleService.getSingleBundleJson(uuidFile).getStatus();
     }, 60, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
     SupportBundleStatus supportBundleStatus = supportBundleService.getSingleBundleJson(uuidFile);
 
