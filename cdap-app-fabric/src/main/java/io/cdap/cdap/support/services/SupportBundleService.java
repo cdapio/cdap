@@ -174,7 +174,7 @@ public class SupportBundleService implements Closeable {
     }
     return supportBundleStatus;
   }
-  
+
   private void validNamespace(@Nullable String namespace) throws Exception {
     if (namespace != null) {
       NamespaceId namespaceId = new NamespaceId(namespace);
