@@ -98,7 +98,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
                         ProgramStateWriter programStateWriter,
                         @Named(REMOTE_TETHERING_AUTHENTICATOR) RemoteAuthenticator remoteAuthenticator) {
     super(RetryStrategies.fromConfiguration(cConf, "tethering.agent."));
-    this.connectionInterval = TimeUnit.SECONDS.toMillis(cConf.getLong(Constants.Tethering.CONNECTION_INTERVAL));
+    this.connectionInterval = TimeUnit.SECONDS.toMillis(cConf.getLong(Constants.Tethering.CONNECTION_INTERVAL, 10L));
     this.cConf = cConf;
     this.transactionRunner = transactionRunner;
     this.store = store;
@@ -109,7 +109,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
   }
 
   @Override
-  protected void doStartUp() throws InstantiationException, IllegalAccessException, IOException {
+  protected void doStartUp() {
     initializeMessageIds();
   }
 

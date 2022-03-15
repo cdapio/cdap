@@ -40,7 +40,7 @@ import java.nio.file.Paths;
  */
 public class ArtifactCache extends AbstractArtifactLocalizer {
   @Inject
-  ArtifactCache(CConfiguration cConf) throws InstantiationException, IllegalAccessException {
+  ArtifactCache(CConfiguration cConf) {
     super(cConf.get(Constants.ArtifactCache.LOCAL_DATA_DIR),
           RetryStrategies.fromConfiguration(cConf, Constants.Service.ARTIFACT_CACHE + "."));
   }
