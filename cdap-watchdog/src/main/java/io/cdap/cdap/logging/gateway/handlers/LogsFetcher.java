@@ -38,7 +38,7 @@ public interface LogsFetcher {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  void writeProgramRunLogs(ProgramId program, String runId, long start, long stop, File file)
+  void getProgramRunLogs(ProgramId program, String runId, long start, long stop, File file)
     throws IOException, UnauthenticatedException, UnauthorizedException;
 
   /**
@@ -52,6 +52,6 @@ public interface LogsFetcher {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  void writeSystemServiceLog(String componentId, String serviceId, long start, long stop, File file)
+  void getSystemServiceLog(String componentId, String serviceId, long start, long stop, File file)
     throws IOException, UnauthenticatedException, UnauthorizedException;
 }

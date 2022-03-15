@@ -66,7 +66,6 @@ public class MonitorHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(HttpResponseStatus.OK.code(), urlConn.getResponseCode());
     List<SystemServiceMeta> actual = GSON.fromJson(new String(ByteStreams.toByteArray(urlConn.getInputStream()),
                                                        Charsets.UTF_8), token);
-
     Assert.assertEquals(9, actual.size());
     urlConn.disconnect();
   }
