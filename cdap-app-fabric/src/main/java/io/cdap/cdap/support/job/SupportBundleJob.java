@@ -94,20 +94,14 @@ public class SupportBundleJob {
    */
   private void executeTask(SupportBundleTaskStatus taskStatus, SupportBundleTask supportBundleTask, String basePath,
                            String className, String taskName, int retryCount) {
-    RunningTaskState runningTaskState = new RunningTaskState(taskStatus);
+    RunningTaskState runningTaskState = new RunningTaskState();
     Future<SupportBundleTaskStatus> futureService = executor.submit(() -> {
       try {
-        long startTime = System.currentTimeMillis();
-        runningTaskState.setStartTime(startTime);
-        synchronized(taskStatus) {
-          taskStatus.setStartTimestamp(startTime);
-          updateTask(taskStatus, basePath, CollectionState.IN_PROGRESS);
-        }
+        runningTaskState.setStartTime(System.currentTimeMillis());
+        updateTask(taskStatus, basePath, CollectionState.IN_PROGRESS);
         supportBundleTask.collect();
-        synchronized(taskStatus) {
-          taskStatus.setFinishTimestamp(System.currentTimeMillis());
-          updateTask(taskStatus, basePath, CollectionState.FINISHED);
-        }
+        taskStatus.setFinishTimestamp(System.currentTimeMillis());
+        updateTask(taskStatus, basePath, CollectionState.FINISHED);
       } catch (Exception e) {
         LOG.warn("Failed to execute task with supportBundleTask {} ", taskName, e);
         executeTaskAgainAfterFailed(supportBundleTask, className, taskName, taskStatus, basePath, retryCount + 1);
@@ -123,16 +117,19 @@ public class SupportBundleJob {
    */
   public void completeProcessing(String basePath) {
     while (!supportBundleTaskStatusQueue.isEmpty()) {
+      SupportBundleTaskStatus supportBundleTaskStatus = null;
       RunningTaskState runningTaskState = supportBundleTaskStatusQueue.poll();
       Future future = runningTaskState.getFuture();
       try {
         Long currentTime = System.currentTimeMillis();
         Long futureStartTime = runningTaskState.getStartTime();
         Long timeLeftBeforeTimeout = TimeUnit.MINUTES.toMillis(maxThreadTimeout) - (currentTime - futureStartTime);
-        future.get(timeLeftBeforeTimeout, TimeUnit.MILLISECONDS);
+        supportBundleTaskStatus = (SupportBundleTaskStatus) future.get(timeLeftBeforeTimeout, TimeUnit.MILLISECONDS);
+        supportBundleTaskStatus.setFinishTimestamp(System.currentTimeMillis());
+        updateTask(supportBundleTaskStatus, basePath, CollectionState.FINISHED);
       } catch (Exception e) {
         LOG.error("The task for has failed or timeout more than five minutes ", e);
-        updateFailedTask(runningTaskState.getSupportBundleTaskStatus(), future, basePath);
+        updateFailedTask(supportBundleTaskStatus, future, basePath);
       }
     }
 
@@ -169,6 +166,8 @@ public class SupportBundleJob {
     SupportBundleTaskStatus supportBundleTaskStatus = new SupportBundleTaskStatus();
     supportBundleTaskStatus.setName(name);
     supportBundleTaskStatus.setType(type);
+    Long startTs = System.currentTimeMillis();
+    supportBundleTaskStatus.setStartTimestamp(startTs);
     supportBundleStatus.getTasks().add(supportBundleTaskStatus);
     return supportBundleTaskStatus;
   }
@@ -180,15 +179,10 @@ public class SupportBundleJob {
                                            SupportBundleTaskStatus taskStatus, String basePath, int retryCount) {
     if (retryCount >= maxRetries) {
       LOG.error("The task has reached maximum times of retries {} ", taskName);
-      synchronized(taskStatus) {
-        taskStatus.setFinishTimestamp(System.currentTimeMillis());
-        updateTask(taskStatus, basePath, CollectionState.FAILED);
-      }
+      updateTask(taskStatus, basePath, CollectionState.FAILED);
     } else {
-      synchronized(taskStatus) {
-        taskStatus.setRetries(retryCount);
-        updateTask(taskStatus, basePath, CollectionState.QUEUED);
-      }
+      taskStatus.setRetries(retryCount);
+      updateTask(taskStatus, basePath, CollectionState.QUEUED);
       executeTask(taskStatus, supportBundleTask, basePath, className, taskName, retryCount);
     }
   }
@@ -200,10 +194,8 @@ public class SupportBundleJob {
     LOG.error("The task for has failed or timeout more than five minutes ");
     future.cancel(true);
     if (supportBundleTaskStatus != null) {
-      synchronized(supportBundleTaskStatus) {
-        supportBundleTaskStatus.setFinishTimestamp(System.currentTimeMillis());
-        updateTask(supportBundleTaskStatus, basePath, CollectionState.TIMEOUT);
-      }
+      supportBundleTaskStatus.setFinishTimestamp(System.currentTimeMillis());
+      updateTask(supportBundleTaskStatus, basePath, CollectionState.FAILED);
     }
   }
 }

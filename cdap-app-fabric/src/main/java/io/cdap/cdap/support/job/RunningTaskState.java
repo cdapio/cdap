@@ -7,11 +7,6 @@ import java.util.concurrent.Future;
 public class RunningTaskState {
   private Future<SupportBundleTaskStatus> future;
   private Long startTime;
-  private final SupportBundleTaskStatus taskStatus;
-
-  public RunningTaskState(SupportBundleTaskStatus taskStatus) {
-    this.taskStatus = taskStatus;
-  }
 
   public synchronized Future<SupportBundleTaskStatus> getFuture() {
     return future;
@@ -27,9 +22,5 @@ public class RunningTaskState {
 
   public synchronized void setStartTime(Long startTime) {
     this.startTime = startTime;
-  }
-
-  public SupportBundleTaskStatus getSupportBundleTaskStatus() {
-    return taskStatus;
   }
 }
