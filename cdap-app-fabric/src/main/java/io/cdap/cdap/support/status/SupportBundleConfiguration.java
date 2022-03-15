@@ -17,6 +17,10 @@
 package io.cdap.cdap.support.status;
 
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 
 import javax.annotation.Nullable;
 
@@ -37,7 +41,7 @@ public class SupportBundleConfiguration {
   /**
    * pipeline program type
    */
-  private final ProgramType programType;
+  private final String programType;
   /**
    * pipeline program name
    */
@@ -51,7 +55,7 @@ public class SupportBundleConfiguration {
   private final int maxRunsPerProgram;
 
   public SupportBundleConfiguration(@Nullable String namespace, @Nullable String app,
-                                    @Nullable String run, ProgramType programType, String programName,
+                                    @Nullable String run, String programType, String programName,
                                     int maxRunsPerProgram) {
     this.namespace = namespace;
     this.app = app;
@@ -80,7 +84,7 @@ public class SupportBundleConfiguration {
   /**
    * Get instance program type
    */
-  public ProgramType getProgramType() {
+  public String getProgramType() {
     return programType;
   }
 

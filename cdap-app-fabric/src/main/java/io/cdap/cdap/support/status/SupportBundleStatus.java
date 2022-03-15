@@ -16,10 +16,8 @@
 
 package io.cdap.cdap.support.status;
 
-import org.jboss.netty.util.internal.ConcurrentHashMap;
-
-import java.util.Collections;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Status when generating Support bundle.
@@ -38,7 +36,7 @@ public class SupportBundleStatus {
   // any parameters passed to start collection
   private final SupportBundleConfiguration parameters;
   // Array of top-level tasks for the bundle, see task structure below
-  private Set<SupportBundleTaskStatus> tasks = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private List<SupportBundleTaskStatus> tasks = new ArrayList<>();
 
   public SupportBundleStatus(String bundleId, long startTimestamp, SupportBundleConfiguration parameters,
                              CollectionState status) {
@@ -94,7 +92,11 @@ public class SupportBundleStatus {
   }
 
   /**
+<<<<<<< HEAD
    * Get support bundle generation id
+=======
+   * Set support bundle generation id
+>>>>>>> 2ab03a9aa7a (revised the comments)
    */
   public String getBundleId() {
     return bundleId;
@@ -103,7 +105,7 @@ public class SupportBundleStatus {
   /**
    * Get support bundle generation tasks
    */
-  public Set<SupportBundleTaskStatus> getTasks() {
+  public List<SupportBundleTaskStatus> getTasks() {
     return tasks;
   }
 }

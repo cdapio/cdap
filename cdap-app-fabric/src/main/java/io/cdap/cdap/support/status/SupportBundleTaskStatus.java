@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.support.status;
 
-import com.google.common.collect.ImmutableList;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.ArrayList;
@@ -51,178 +50,24 @@ public class SupportBundleTaskStatus {
     this.startTimestamp = startTimestamp;
   }
 
-  public SupportBundleTaskStatus(String name, String type, long startTimestamp, List<SupportBundleTaskStatus> subTasks,
-                                 int retries, CollectionState status) {
-    this.name = name;
-    this.type = type;
-    this.startTimestamp = startTimestamp;
-    this.subTasks = ImmutableList.copyOf(subTasks);
+  public SupportBundleTaskStatus(SupportBundleTaskStatus outdatedTaskStatus, int retries, CollectionState status) {
+    this.name = outdatedTaskStatus.getName();
+    this.type = outdatedTaskStatus.getType();
+    this.startTimestamp = outdatedTaskStatus.getStartTimestamp();
+    this.subTasks = outdatedTaskStatus.getSubTasks();
     this.retries = retries;
     this.status = status;
   }
 
-  public SupportBundleTaskStatus(String name, String type, long startTimestamp, List<SupportBundleTaskStatus> subTasks,
-                                 int retries, long finishTimestamp, CollectionState status) {
-    this.name = name;
-    this.type = type;
-    this.startTimestamp = startTimestamp;
-    this.subTasks = ImmutableList.copyOf(subTasks);
-    this.retries = retries;
+  public SupportBundleTaskStatus(SupportBundleTaskStatus outdatedTaskStatus, long finishTimestamp,
+                                 CollectionState status) {
+    this.name = outdatedTaskStatus.getName();
+    this.type = outdatedTaskStatus.getType();
+    this.startTimestamp = outdatedTaskStatus.getStartTimestamp();
+    this.subTasks = outdatedTaskStatus.getSubTasks();
+    this.retries = outdatedTaskStatus.getRetries();
     this.finishTimestamp = finishTimestamp;
     this.status = status;
-  }
-
-  /**
-   * @return Builder to create a SupportBundleTaskStatus
-   */
-  public static SupportBundleTaskStatus.Builder builder() {
-    return new SupportBundleTaskStatus.Builder();
-  }
-
-  /**
-   * @param outdatedTaskStatus outdated task status
-   * @return Builder to create a SupportBundleTaskStatus, initialized with values from the specified existing status
-   */
-  public static SupportBundleTaskStatus.Builder builder(SupportBundleTaskStatus outdatedTaskStatus) {
-    return new SupportBundleTaskStatus.Builder(outdatedTaskStatus);
-  }
-
-  /**
-   * Builder to build bundle task status.
-   */
-  public static class Builder {
-    private String name;
-    private String type;
-    private long startTimestamp;
-    private List<SupportBundleTaskStatus> subTasks;
-    private Integer retries;
-    private long finishTimestamp;
-    private CollectionState status;
-
-    private Builder() {
-      this.subTasks = new ArrayList<>();
-    }
-
-    private Builder(SupportBundleTaskStatus outdatedTaskStatus) {
-      this.name = outdatedTaskStatus.getName();
-      this.type = outdatedTaskStatus.getType();
-      this.startTimestamp = outdatedTaskStatus.getStartTimestamp();
-      this.subTasks = outdatedTaskStatus.getSubTasks();
-      this.retries = outdatedTaskStatus.getRetries();
-    }
-
-    /**
-     * Set support bundle generation name
-     */
-    public SupportBundleTaskStatus.Builder setName(String name) {
-      this.name = name;
-      return this;
-    }
-
-    /**
-     * Set support bundle generation task type
-     */
-    public SupportBundleTaskStatus.Builder setType(String type) {
-      this.type = type;
-      return this;
-    }
-
-    /**
-     * Set support bundle generation task start time
-     */
-    public SupportBundleTaskStatus.Builder setStartTimestamp(long startTimestamp) {
-      this.startTimestamp = startTimestamp;
-      return this;
-    }
-
-    /**
-     * Set support bundle generation subtask status
-     */
-    public SupportBundleTaskStatus.Builder setSubTasks(List<SupportBundleTaskStatus> subTasks) {
-      this.subTasks = subTasks;
-      return this;
-    }
-
-    /**
-     * Set support bundle generation task retry times
-     */
-    public SupportBundleTaskStatus.Builder setRetries(Integer retries) {
-      this.retries = retries;
-      return this;
-    }
-
-    /**
-     * Set support bundle generation task finish time
-     */
-    public SupportBundleTaskStatus.Builder setFinishTimestamp(long finishTimestamp) {
-      this.finishTimestamp = finishTimestamp;
-      return this;
-    }
-
-    /**
-     * Set support bundle generation task status
-     */
-    public SupportBundleTaskStatus.Builder setStatus(CollectionState status) {
-      this.status = status;
-      return this;
-    }
-
-    /**
-     * Initialize the bundle task status
-     */
-    public SupportBundleTaskStatus build() {
-      if (name == null) {
-        throw new IllegalArgumentException("Bundle task name must be specified.");
-      }
-      if (type == null) {
-        throw new IllegalArgumentException("Bundle task type must be specified.");
-      }
-      return new SupportBundleTaskStatus(name, type, startTimestamp);
-    }
-
-    /**
-     * Update the bundle task with new status
-     */
-    public SupportBundleTaskStatus buildWithNewStatus() {
-      if (name == null) {
-        throw new IllegalArgumentException("Bundle task name must be specified.");
-      }
-      if (type == null) {
-        throw new IllegalArgumentException("Bundle task type must be specified.");
-      }
-      if (subTasks == null) {
-        throw new IllegalArgumentException("Bundle sub task must be specified.");
-      }
-      if (retries == null) {
-        throw new IllegalArgumentException("Bundle task retries must be specified.");
-      }
-      if (status == null) {
-        throw new IllegalArgumentException("Bundle task status must be specified.");
-      }
-      return new SupportBundleTaskStatus(name, type, startTimestamp, subTasks, retries, status);
-    }
-
-    /**
-     * Update the bundle task with new status and add finish time stamp
-     */
-    public SupportBundleTaskStatus buildWithFinishStatus() {
-      if (name == null) {
-        throw new IllegalArgumentException("Bundle task name must be specified.");
-      }
-      if (type == null) {
-        throw new IllegalArgumentException("Bundle task type must be specified.");
-      }
-      if (subTasks == null) {
-        throw new IllegalArgumentException("Bundle sub task must be specified.");
-      }
-      if (retries == null) {
-        throw new IllegalArgumentException("Bundle task retries must be specified.");
-      }
-      if (status == null) {
-        throw new IllegalArgumentException("Bundle task status must be specified.");
-      }
-      return new SupportBundleTaskStatus(name, type, startTimestamp, subTasks, retries, finishTimestamp, status);
-    }
   }
 
   /**

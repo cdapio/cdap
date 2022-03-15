@@ -83,7 +83,7 @@ public class SupportBundleJob {
       for (SupportBundleTask supportBundleTask : supportBundleTasks) {
         String className = supportBundleTask.getClass().getName();
         String taskName = bundleTaskConfig.getUuid().concat(": ").concat(className);
-        SupportBundleTaskStatus taskStatus = initializeTask(taskName, className, basePath.getPath());
+        SupportBundleTaskStatus taskStatus = initializeTask(taskName, className);
         executeTask(taskStatus, supportBundleTask, basePath.getPath(), className, taskName, 0);
       }
       completeProcessing(basePath.getPath());
@@ -127,9 +127,7 @@ public class SupportBundleJob {
       try {
         long currentTime = System.currentTimeMillis();
         long futureStartTime = runningTaskState.getStartTime().get();
-        long maxThreadTimeoutToMill = TimeUnit.MINUTES.toMillis(maxThreadTimeout);
-        long timeLeftBeforeTimeout =
-          futureStartTime == 0L ? maxThreadTimeoutToMill : maxThreadTimeoutToMill - (currentTime - futureStartTime);
+        long timeLeftBeforeTimeout = TimeUnit.MINUTES.toMillis(maxThreadTimeout) - (currentTime - futureStartTime);
         future.get(timeLeftBeforeTimeout, TimeUnit.MILLISECONDS);
       } catch (Exception e) {
         LOG.error("The task for has failed or timeout more than five minutes ", e);
@@ -144,12 +142,10 @@ public class SupportBundleJob {
   /**
    * Start a new status task
    */
-  public SupportBundleTaskStatus initializeTask(String name, String type, String basePath) {
+  public SupportBundleTaskStatus initializeTask(String name, String type) {
     SupportBundleTaskStatus supportBundleTaskStatus =
-      SupportBundleTaskStatus.builder().setName(name).setType(type).setStartTimestamp(System.currentTimeMillis())
-        .build();
+      new SupportBundleTaskStatus(name, type, System.currentTimeMillis());
     supportBundleStatus.getTasks().add(supportBundleTaskStatus);
-    addToStatus(supportBundleStatus, basePath);
     return supportBundleTaskStatus;
   }
 
@@ -158,12 +154,7 @@ public class SupportBundleJob {
    */
   private SupportBundleTaskStatus updateTask(SupportBundleTaskStatus taskStatus, String basePath,
                                              CollectionState status) {
-
-    SupportBundleTaskStatus newTaskStatus =
-      status == CollectionState.IN_PROGRESS ? SupportBundleTaskStatus.builder(taskStatus).setStatus(status)
-        .buildWithNewStatus() : SupportBundleTaskStatus.builder(taskStatus)
-        .setFinishTimestamp(System.currentTimeMillis()).setStatus(status).buildWithFinishStatus();
-
+    SupportBundleTaskStatus newTaskStatus = new SupportBundleTaskStatus(taskStatus, System.currentTimeMillis(), status);
     supportBundleStatus.getTasks().remove(taskStatus);
     supportBundleStatus.getTasks().add(newTaskStatus);
     addToStatus(supportBundleStatus, basePath);
@@ -191,8 +182,7 @@ public class SupportBundleJob {
       updateTask(taskStatus, basePath, CollectionState.FAILED);
     } else {
       SupportBundleTaskStatus updatedTaskStatus =
-        SupportBundleTaskStatus.builder(taskStatus).setRetries(retryCount).setStatus(CollectionState.QUEUED)
-          .buildWithNewStatus();
+        new SupportBundleTaskStatus(taskStatus, retryCount, CollectionState.QUEUED);
       supportBundleStatus.getTasks().remove(taskStatus);
       supportBundleStatus.getTasks().add(updatedTaskStatus);
       addToStatus(supportBundleStatus, basePath);
