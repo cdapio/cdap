@@ -25,17 +25,16 @@ import com.google.inject.name.Names;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.SupportBundle;
-import io.cdap.cdap.common.guice.HealthCheckModule;
-import io.cdap.cdap.common.service.HealthCheckService;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.gateway.handlers.CommonHandlers;
-import io.cdap.cdap.gateway.handlers.HealthCheckHttpHandler;
-import io.cdap.cdap.handlers.SupportBundleHttpHandler;
+import io.cdap.cdap.handlers.HealthCheckHttpHandler;
+import io.cdap.cdap.internal.app.services.HealthCheckService;
 import io.cdap.cdap.internal.app.services.SupportBundleInternalService;
-import io.cdap.cdap.task.factory.SupportBundleK8sHealthCheckTaskFactory;
-import io.cdap.cdap.task.factory.SupportBundlePipelineInfoTaskFactory;
-import io.cdap.cdap.task.factory.SupportBundleSystemLogTaskFactory;
-import io.cdap.cdap.task.factory.SupportBundleTaskFactory;
+import io.cdap.cdap.support.handlers.SupportBundleHttpHandler;
+import io.cdap.cdap.support.module.SupportBundleModule;
+import io.cdap.cdap.support.task.factory.SupportBundlePipelineInfoTaskFactory;
+import io.cdap.cdap.support.task.factory.SupportBundleSystemLogTaskFactory;
+import io.cdap.cdap.support.task.factory.SupportBundleTaskFactory;
 import io.cdap.http.HttpHandler;
 
 import java.net.InetAddress;
@@ -59,7 +58,6 @@ public final class SupportBundleServiceModule extends AbstractModule {
       binder(), SupportBundleTaskFactory.class, Names.named(SupportBundle.TASK_FACTORY));
     supportBundleTaskFactoryMultibinder.addBinding().to(SupportBundlePipelineInfoTaskFactory.class);
     supportBundleTaskFactoryMultibinder.addBinding().to(SupportBundleSystemLogTaskFactory.class);
-    supportBundleTaskFactoryMultibinder.addBinding().to(SupportBundleK8sHealthCheckTaskFactory.class);
     install(new HealthCheckModule());
   }
 

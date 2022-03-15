@@ -43,7 +43,6 @@ import io.cdap.cdap.app.mapreduce.MRJobInfoFetcher;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.guice.HealthCheckModule;
 import io.cdap.cdap.common.runtime.RuntimeModule;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.config.guice.ConfigStoreModule;
@@ -137,6 +136,8 @@ import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
 import io.cdap.cdap.security.store.SecureStoreHandler;
+import io.cdap.cdap.support.handlers.SupportBundleHttpHandler;
+import io.cdap.cdap.support.module.SupportBundleModule;
 import io.cdap.http.HttpHandler;
 import org.quartz.SchedulerException;
 import org.quartz.core.JobRunShellFactory;
@@ -236,8 +237,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                servicesNamesBinder.addBinding().toInstance(Constants.Service.LOGSAVER);
                                servicesNamesBinder.addBinding().toInstance(Constants.Service.TRANSACTION_HTTP);
                                servicesNamesBinder.addBinding().toInstance(Constants.Service.RUNTIME);
-                               servicesNamesBinder.addBinding()
-                                 .toInstance(Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE);
 
                                // TODO: Uncomment after CDAP-7688 is resolved
                                // servicesNamesBinder.addBinding().toInstance(Constants.Service.MESSAGING_SERVICE);
@@ -286,8 +285,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                                           Names.named("appfabric.services.names"));
                                servicesNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
                                servicesNamesBinder.addBinding().toInstance(Constants.Service.SECURE_STORE_SERVICE);
-                               servicesNamesBinder.addBinding()
-                                 .toInstance(Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE);
 
                                Multibinder<String> handlerHookNamesBinder =
                                  Multibinder.newSetBinder(binder(), String.class,
@@ -351,7 +348,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
       bind(CoreSchedulerService.class).in(Scopes.SINGLETON);
       bind(Scheduler.class).to(CoreSchedulerService.class);
-      install(new HealthCheckModule());
+      install(new SupportBundleModule());
       install(new PrivateModule() {
         @Override
         protected void configure() {
@@ -404,6 +401,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(WorkflowStatsSLAHttpHandler.class);
       handlerBinder.addBinding().to(AuthorizationHandler.class);
       handlerBinder.addBinding().to(SecureStoreHandler.class);
+      handlerBinder.addBinding().to(SupportBundleHttpHandler.class);
       handlerBinder.addBinding().to(RemotePrivilegesHandler.class);
       handlerBinder.addBinding().to(OperationalStatsHttpHandler.class);
       handlerBinder.addBinding().to(ProfileHttpHandler.class);

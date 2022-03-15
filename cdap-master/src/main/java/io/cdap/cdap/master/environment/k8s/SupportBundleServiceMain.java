@@ -21,7 +21,6 @@ import com.google.inject.Binding;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
-import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.SupportBundleServiceModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -38,7 +37,6 @@ import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
-import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import org.apache.twill.zookeeper.ZKClientService;
 
@@ -71,10 +69,8 @@ public class SupportBundleServiceMain extends AbstractServiceMain<EnvironmentOpt
       new SystemDatasetRuntimeModule().getStandaloneModules(),
       // The Dataset set modules are only needed to satisfy dependency injection
       new DataSetsModules().getStandaloneModules(),
-      new AuthorizationModule(),
       new AuthorizationEnforcementModule().getDistributedModules(),
       new SupportBundleServiceModule(),
-      new SecureStoreServerModule(),
       new DFSLocationModule()
     );
   }
