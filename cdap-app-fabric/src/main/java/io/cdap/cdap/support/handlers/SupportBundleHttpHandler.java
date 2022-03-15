@@ -22,7 +22,7 @@ import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.InstanceId;
-import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.proto.security.SupportBundlePermission;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.support.services.SupportBundleService;
 import io.cdap.cdap.support.status.SupportBundleConfiguration;
@@ -72,7 +72,8 @@ public class SupportBundleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @Nullable @QueryParam("maxRunsPerProgram") @DefaultValue("1")
                                     Integer maxRunsPerProgram) throws Exception {
     /** ensure the user has authentication to create supportBundle */
-    contextAccessEnforcer.enforceOnParent(EntityType.SUPPORT_BUNDLE, InstanceId.SELF, StandardPermission.CREATE);
+    contextAccessEnforcer.enforceOnParent(EntityType.SUPPORT_BUNDLE, InstanceId.SELF,
+                                          SupportBundlePermission.GENERATE_SUPPORT_BUNDLE);
     // Establishes the support bundle configuration
     SupportBundleConfiguration bundleConfig =
       new SupportBundleConfiguration(namespace, application, run, ProgramType.valueOfCategoryName(programType),
