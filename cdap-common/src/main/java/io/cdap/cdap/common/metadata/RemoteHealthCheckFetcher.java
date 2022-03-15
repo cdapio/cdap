@@ -35,7 +35,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Fetch health check via internal REST API calls
+ * Fetch app fabric health check via internal REST API calls
  */
 public class RemoteHealthCheckFetcher implements HealthCheckFetcher {
   private static final Gson GSON = new Gson();
@@ -51,7 +51,8 @@ public class RemoteHealthCheckFetcher implements HealthCheckFetcher {
   /**
    * Get the application detail for the given application id
    */
-  public Map<String, Object> getHealthDetails(String serviceName, String instanceName)
+  public Map<String, Object> getHealthDetails(String serviceName, String namespace, String instanceName,
+                                              String podLabelSelector, String nodeFieldSelector)
     throws IOException, NotFoundException, UnauthorizedException {
     /* Need to get the substring inside the serviceName:
     EX: serviceName = "cdap-bundle-test-v7-health-check-appfabric-service",
@@ -66,7 +67,7 @@ public class RemoteHealthCheckFetcher implements HealthCheckFetcher {
     remoteClient = remoteClientFactory.createRemoteClient(updatedServiceName, new DefaultHttpRequestConfig(false),
                                                           Constants.Gateway.API_VERSION_3);
 
-    String url = String.format("/health");
+    String url = String.format("/%s/health?podLabel=%s&nodeField=%s", namespace, podLabelSelector, nodeFieldSelector);
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
     HttpResponse httpResponse;
     httpResponse = execute(requestBuilder.build());

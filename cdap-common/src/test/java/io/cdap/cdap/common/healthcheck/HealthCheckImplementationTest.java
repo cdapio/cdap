@@ -68,12 +68,13 @@ public class HealthCheckImplementationTest {
     String podLabelSelectorName = "cdap.container.Logs=bundle-test-v11";
     String nodeFieldSelectorName = "metadata.name=gke-bundle-test-v11-default-pool-42f08219-dt5b";
     HealthCheckResponse healthCheckResponse =
-      healthCheckImplementation.collect();
+      healthCheckImplementation.collect(Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE,
+                                        podLabelSelectorName, nodeFieldSelectorName);
 
     V1ServiceList v1ServiceList = new V1ServiceList();
     V1Service v1Service = new V1Service();
     V1ObjectMeta v1ObjectMeta = new V1ObjectMeta();
-    v1ObjectMeta.setName(Constants.HealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE);
+    v1ObjectMeta.setName(Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE);
     v1Service.setMetadata(v1ObjectMeta);
     v1ServiceList.addItemsItem(v1Service);
     when(coreV1Api.listNamespacedPod(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(),
