@@ -14,16 +14,12 @@
  * the License.
  */
 
-package io.cdap.cdap.handlers;
+package io.cdap.cdap.gateway.handlers;
 
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.implementation.HealthCheckImplementation;
-import io.cdap.cdap.proto.element.EntityType;
-import io.cdap.cdap.proto.id.InstanceId;
-import io.cdap.cdap.proto.security.StandardPermission;
-import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
+import io.cdap.cdap.common.implementation.HealthCheckImplementation;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
@@ -46,20 +42,15 @@ public class HealthCheckHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(HealthCheckHttpHandler.class);
   private static final Gson GSON = new Gson();
   private final HealthCheckImplementation healthCheckImplementation;
-  private final ContextAccessEnforcer contextAccessEnforcer;
 
   @Inject
-  HealthCheckHttpHandler(HealthCheckImplementation healthCheckImplementation,
-                         ContextAccessEnforcer contextAccessEnforcer) {
+  HealthCheckHttpHandler(HealthCheckImplementation healthCheckImplementation) {
     this.healthCheckImplementation = healthCheckImplementation;
-    this.contextAccessEnforcer = contextAccessEnforcer;
   }
 
   @GET
   @Path("/health")
   public void call(HttpRequest request, HttpResponder responder) {
-    /** ensure the user has authentication to get health check\ */
-    contextAccessEnforcer.enforceOnParent(EntityType.HEALTH_CHECK, InstanceId.SELF, StandardPermission.GET);
     HealthCheckResponse healthCheckResponse = healthCheckImplementation.collect();
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(healthCheckResponse.getData()));
   }

@@ -14,15 +14,16 @@
  * the License.
  */
 
-package io.cdap.cdap.healthcheck;
+package io.cdap.cdap.common.healthcheck;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import io.cdap.cdap.app.guice.HealthCheckModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
-import io.cdap.cdap.implementation.HealthCheckImplementation;
+import io.cdap.cdap.common.guice.HealthCheckModule;
+import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
+import io.cdap.cdap.common.implementation.HealthCheckImplementation;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1NodeList;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
@@ -54,7 +55,7 @@ public class HealthCheckImplementationTest {
     CConfiguration cConf = CConfiguration.create();
 
     Injector injector =
-      Guice.createInjector(new ConfigModule(cConf), new HealthCheckModule());
+      Guice.createInjector(new ConfigModule(cConf), new HealthCheckModule(), new InMemoryDiscoveryModule());
 
     healthCheckImplementation = injector.getInstance(HealthCheckImplementation.class);
 

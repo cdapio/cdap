@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.metadata;
+package io.cdap.cdap.common.metadata;
 
 import com.google.gson.Gson;
 import com.google.inject.Inject;

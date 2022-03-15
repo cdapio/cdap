@@ -14,16 +14,16 @@
  * the License.
  */
 
-package io.cdap.cdap.app.guice;
+package io.cdap.cdap.common.guice;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.HealthCheckService;
 import io.cdap.cdap.gateway.handlers.CommonHandlers;
-import io.cdap.cdap.handlers.HealthCheckHttpHandler;
-import io.cdap.cdap.internal.app.services.HealthCheckService;
+import io.cdap.cdap.gateway.handlers.HealthCheckHttpHandler;
 import io.cdap.http.HttpHandler;
 
 /**

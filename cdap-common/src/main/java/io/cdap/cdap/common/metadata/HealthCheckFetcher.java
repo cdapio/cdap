@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.metadata;
+package io.cdap.cdap.common.metadata;
 
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;

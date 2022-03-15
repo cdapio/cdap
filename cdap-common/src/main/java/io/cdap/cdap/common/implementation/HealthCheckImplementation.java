@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.implementation;
+package io.cdap.cdap.common.implementation;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
