@@ -27,11 +27,9 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.google.inject.Scopes;
-import com.google.inject.multibindings.Multibinder;
-import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.api.Config;
+import io.cdap.cdap.api.metrics.MetricStore;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.app.program.ManifestFields;
@@ -56,13 +54,11 @@ import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
-import io.cdap.cdap.gateway.handlers.CommonHandlers;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
-import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.logging.service.LogQueryService;
 import io.cdap.cdap.messaging.MessagingService;
@@ -78,7 +74,6 @@ import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
-import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
@@ -88,19 +83,13 @@ import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.store.StoreDefinition;
-import io.cdap.cdap.support.handlers.SupportBundleHttpHandler;
-import io.cdap.cdap.support.internal.app.services.SupportBundleInternalService;
-import io.cdap.cdap.support.task.factory.SupportBundleK8sHealthCheckTaskFactory;
-import io.cdap.cdap.support.task.factory.SupportBundlePipelineInfoTaskFactory;
-import io.cdap.cdap.support.task.factory.SupportBundleSystemLogTaskFactory;
-import io.cdap.cdap.support.task.factory.SupportBundleTaskFactory;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequestConfig;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
-import io.cdap.http.HttpHandler;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import org.apache.tephra.TransactionManager;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
@@ -118,7 +107,6 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
@@ -137,59 +125,48 @@ public abstract class SupportBundleTestBase {
     .registerTypeAdapter(SatisfiableTrigger.class, new TriggerCodec())
     .registerTypeAdapter(Constraint.class, new ProtoConstraintCodec())
     .create();
-  private static final String API_KEY = "SampleTestApiKey";
-
-  private static final Type BATCH_PROGRAM_RUNS_TYPE = new TypeToken<List<BatchProgramHistory>>() { }.getType();
-  private static final Type LIST_JSON_OBJECT_TYPE = new TypeToken<List<JsonObject>>() { }.getType();
-  private static final Type LIST_RUN_RECORD_TYPE = new TypeToken<List<RunRecord>>() { }.getType();
-  private static final Type SET_STRING_TYPE = new TypeToken<Set<String>>() { }.getType();
-  private static final Type LIST_PROFILE = new TypeToken<List<Profile>>() { }.getType();
-
-  protected static final Type LIST_MAP_STRING_STRING_TYPE = new TypeToken<List<Map<String, String>>>() { }.getType();
-  protected static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
-
+  protected static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() {
+  }.getType();
   protected static final String NONEXISTENT_NAMESPACE = "12jr0j90jf3foieoi33";
-
   protected static final String TEST_NAMESPACE1 = "testnamespace1";
-  protected static final NamespaceMeta TEST_NAMESPACE_META1 = new NamespaceMeta.Builder()
-    .setName(TEST_NAMESPACE1)
-    .setDescription(TEST_NAMESPACE1)
-    .build();
+  protected static final NamespaceMeta TEST_NAMESPACE_META1 =
+    new NamespaceMeta.Builder().setName(TEST_NAMESPACE1).setDescription(TEST_NAMESPACE1).build();
   protected static final String TEST_NAMESPACE2 = "testnamespace2";
-  protected static final NamespaceMeta TEST_NAMESPACE_META2 = new NamespaceMeta.Builder()
-    .setName(TEST_NAMESPACE2)
-    .setDescription(TEST_NAMESPACE2)
-    .build();
-
+  protected static final NamespaceMeta TEST_NAMESPACE_META2 =
+    new NamespaceMeta.Builder().setName(TEST_NAMESPACE2).setDescription(TEST_NAMESPACE2).build();
   protected static final String VERSION1 = "1.0.0";
   protected static final String VERSION2 = "2.0.0";
-
+  private static final String API_KEY = "SampleTestApiKey";
+  private static final Type BATCH_PROGRAM_RUNS_TYPE = new TypeToken<List<BatchProgramHistory>>() {
+  }.getType();
+  private static final Type LIST_JSON_OBJECT_TYPE = new TypeToken<List<JsonObject>>() {
+  }.getType();
+  private static final Type LIST_RUN_RECORD_TYPE = new TypeToken<List<RunRecord>>() {
+  }.getType();
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
   private static Injector injector;
-
-  private static EndpointStrategy appFabricEndpointStrategy;
+  private static EndpointStrategy supportBundleEndpointStrategy;
   private static MessagingService messagingService;
   private static TransactionManager txManager;
   private static AppFabricServer appFabricServer;
   private static MetricsCollectionService metricsCollectionService;
   private static DatasetOpExecutorService dsOpService;
   private static DatasetService datasetService;
+  private static TransactionSystemClient txClient;
   private static ServiceStore serviceStore;
   private static MetadataStorage metadataStorage;
   private static MetadataService metadataService;
   private static DefaultMetadataServiceClient metadataServiceClient;
   private static MetadataSubscriberService metadataSubscriberService;
-  private static HealthCheckService appFabricHealthCheckService;
   private static LocationFactory locationFactory;
   private static DatasetClient datasetClient;
   private static MetadataClient metadataClient;
+  private static MetricStore metricStore;
   private static RemoteClientFactory remoteClientFactory;
   private static LogQueryService logQueryService;
-  private static SupportBundleInternalService supportBundleInternalService;
-
+  private static HealthCheckService appFabricHealthCheckService;
   private static HttpRequestConfig httpRequestConfig;
-
-  @ClassRule
-  public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   @BeforeClass
   public static void beforeClass() throws Throwable {
@@ -202,24 +179,13 @@ public abstract class SupportBundleTestBase {
       protected void configure() {
         // needed because we set Kerberos to true in DefaultNamespaceAdminTest
         bind(UGIProvider.class).to(CurrentUGIProvider.class);
-        bind(MetadataSubscriberService.class).in(Scopes.SINGLETON);
-        Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
-          binder(), HttpHandler.class, Names.named(Constants.SupportBundle.HANDLERS_NAME));
-
-        CommonHandlers.add(handlerBinder);
-        handlerBinder.addBinding().to(SupportBundleHttpHandler.class);
-        Multibinder<SupportBundleTaskFactory> supportBundleTaskFactoryMultibinder = Multibinder.newSetBinder(
-          binder(), SupportBundleTaskFactory.class, Names.named(Constants.SupportBundle.TASK_FACTORY));
-        supportBundleTaskFactoryMultibinder.addBinding().to(SupportBundlePipelineInfoTaskFactory.class);
-        supportBundleTaskFactoryMultibinder.addBinding().to(SupportBundleSystemLogTaskFactory.class);
-        supportBundleTaskFactoryMultibinder.addBinding().to(SupportBundleK8sHealthCheckTaskFactory.class);
       }
     });
   }
 
   protected static void initializeAndStartServices(CConfiguration cConf, Module overrides) throws Exception {
     injector = Guice.createInjector(
-      Modules.override(new AppFabricTestModule(cConf, null)).with(overrides));
+      Modules.override(new SupportBundleTestModule(cConf, null)).with(overrides));
 
     int connectionTimeout = cConf.getInt(Constants.HTTP_CLIENT_CONNECTION_TIMEOUT_MS);
     int readTimeout = cConf.getInt(Constants.HTTP_CLIENT_READ_TIMEOUT_MS);
@@ -244,9 +210,9 @@ public abstract class SupportBundleTestBase {
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
-    appFabricEndpointStrategy = new RandomEndpointStrategy(
+    supportBundleEndpointStrategy = new RandomEndpointStrategy(
       () -> discoveryClient.discover(Constants.Service.APP_FABRIC_HTTP));
-
+    txClient = injector.getInstance(TransactionSystemClient.class);
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     metricsCollectionService.startAndWait();
     serviceStore = injector.getInstance(ServiceStore.class);
@@ -262,14 +228,13 @@ public abstract class SupportBundleTestBase {
     remoteClientFactory = new RemoteClientFactory(discoveryClient,
                                                   new DefaultInternalAuthenticator(new AuthenticationTestContext()));
     metadataClient = new MetadataClient(getClientConfig(discoveryClient, Constants.Service.METADATA_SERVICE));
+    metadataServiceClient = new DefaultMetadataServiceClient(remoteClientFactory);
+    metricStore = injector.getInstance(MetricStore.class);
+    String host = cConf.get(Constants.Service.MASTER_SERVICES_BIND_ADDRESS);
+    int port = cConf.getInt(Constants.AppFabricHealthCheck.SERVICE_BIND_PORT);
     appFabricHealthCheckService = injector.getInstance(HealthCheckService.class);
-    appFabricHealthCheckService.helper(
-      Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE,
-      cConf,
-      Constants.Service.MASTER_SERVICES_BIND_ADDRESS);
+    appFabricHealthCheckService.initiate(host, port, Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE);
     appFabricHealthCheckService.startAndWait();
-    supportBundleInternalService = injector.getInstance(SupportBundleInternalService.class);
-    supportBundleInternalService.startAndWait();
 
     Scheduler programScheduler = injector.getInstance(Scheduler.class);
     // Wait for the scheduler to be functional.
@@ -280,11 +245,11 @@ public abstract class SupportBundleTestBase {
         throw new RuntimeException(e);
       }
     }
+    createNamespaces();
   }
 
   @AfterClass
   public static void afterClass() {
-    appFabricServer.stopAndWait();
     metricsCollectionService.stopAndWait();
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
@@ -298,7 +263,6 @@ public abstract class SupportBundleTestBase {
     }
     Closeables.closeQuietly(metadataStorage);
     appFabricHealthCheckService.stopAndWait();
-    supportBundleInternalService.stopAndWait();
   }
 
   protected static CConfiguration createBasicCConf() throws IOException {
@@ -323,7 +287,7 @@ public abstract class SupportBundleTestBase {
   }
 
   protected static URI getEndPoint(String path) {
-    Discoverable discoverable = appFabricEndpointStrategy.pick(5, TimeUnit.SECONDS);
+    Discoverable discoverable = supportBundleEndpointStrategy.pick(5, TimeUnit.SECONDS);
     Assert.assertNotNull("SupportBundle endpoint is missing, service may not be running.", discoverable);
     // The path is literal and we need to escape "%" before passing to createURI, which takes a format string.
     return URIScheme.createURI(discoverable, path.replace("%", "%%"));
@@ -386,6 +350,16 @@ public abstract class SupportBundleTestBase {
 
   protected static <T> T readResponse(HttpResponse response, Type type) {
     return GSON.fromJson(response.getResponseBodyAsString(), type);
+  }
+
+  private static void createNamespaces() throws Exception {
+    HttpResponse response = doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE1),
+                                  GSON.toJson(TEST_NAMESPACE_META1));
+    assertResponseCode(200, response);
+
+    response = doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE2),
+                     GSON.toJson(TEST_NAMESPACE_META2));
+    assertResponseCode(200, response);
   }
 
   private static void assertResponseCode(int expectedCode, HttpResponse response) {

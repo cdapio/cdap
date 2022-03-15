@@ -148,11 +148,10 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
     services.add(injector.getInstance(SecureStoreService.class));
     services.add(injector.getInstance(DatasetOpExecutorService.class));
     services.add(injector.getInstance(ServiceStore.class));
+    String host = cConf.get(Constants.Service.MASTER_SERVICES_BIND_ADDRESS);
+    int port = cConf.getInt(Constants.AppFabricHealthCheck.SERVICE_BIND_PORT);
     HealthCheckService healthCheckService = injector.getInstance(HealthCheckService.class);
-    healthCheckService.helper(
-      Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE,
-      cConf,
-      Constants.Service.MASTER_SERVICES_BIND_ADDRESS);
+    healthCheckService.initiate(host, port, Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE);
     services.add(healthCheckService);
     Binding<ZKClientService> zkBinding = injector.getExistingBinding(Key.get(ZKClientService.class));
     if (zkBinding != null) {

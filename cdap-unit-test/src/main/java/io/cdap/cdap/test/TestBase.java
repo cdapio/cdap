@@ -53,6 +53,7 @@ import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.MonitorHandlerModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
+import io.cdap.cdap.app.guice.SupportBundleServiceModule;
 import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.preview.PreviewHttpServer;
 import io.cdap.cdap.app.preview.PreviewManager;
@@ -65,6 +66,7 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.HealthCheckModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
@@ -89,6 +91,7 @@ import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.explore.guice.ExploreRuntimeModule;
 import io.cdap.cdap.gateway.handlers.AuthorizationHandler;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
+import io.cdap.cdap.internal.app.services.SupportBundleInternalService;
 import io.cdap.cdap.internal.capability.CapabilityConfig;
 import io.cdap.cdap.internal.capability.CapabilityManagementService;
 import io.cdap.cdap.internal.capability.CapabilityStatus;
@@ -137,8 +140,6 @@ import io.cdap.cdap.security.spi.authorization.AccessController;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.store.StoreDefinition;
-import io.cdap.cdap.support.app.guice.SupportBundleServiceModule;
-import io.cdap.cdap.support.internal.app.services.SupportBundleInternalService;
 import io.cdap.cdap.test.internal.ApplicationManagerFactory;
 import io.cdap.cdap.test.internal.ArtifactManagerFactory;
 import io.cdap.cdap.test.internal.DefaultApplicationManager;
@@ -309,6 +310,7 @@ public class TestBase {
       new PreviewManagerModule(false),
       new PreviewRunnerManagerModule().getInMemoryModules(),
       new SupportBundleServiceModule(),
+      new HealthCheckModule(),
       new MockProvisionerModule(),
       new AbstractModule() {
         @Override
@@ -322,7 +324,6 @@ public class TestBase {
 
           // Needed by MonitorHandlerModuler
           bind(TwillRunner.class).to(NoopTwillRunnerService.class);
-          bind(MetadataSubscriberService.class).in(Scopes.SINGLETON);
         }
       }
     );
@@ -421,11 +422,10 @@ public class TestBase {
     supportBundleInternalService = injector.getInstance(SupportBundleInternalService.class);
     supportBundleInternalService.startAndWait();
 
+    String host = cConf.get(Constants.Service.MASTER_SERVICES_BIND_ADDRESS);
+    int port = cConf.getInt(Constants.AppFabricHealthCheck.SERVICE_BIND_PORT);
     appFabricHealthCheckService = injector.getInstance(HealthCheckService.class);
-    appFabricHealthCheckService.helper(
-      Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE,
-      cConf,
-      Constants.Service.MASTER_SERVICES_BIND_ADDRESS);
+    appFabricHealthCheckService.initiate(host, port, Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE);
     appFabricHealthCheckService.startAndWait();
   }
 

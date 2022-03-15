@@ -4981,14 +4981,6 @@
   </property>
 
   <property>
-    <name>support.bundle.output.dir</name>
-    <value>/supportBundle</value>
-    <description>
-      Directory where all modules archives are stored
-    </description>
-  </property>
-
-  <property>
     <name>tethering.agent.connection.interval.secs</name>
     <value>10</value>
     <description>
@@ -5133,12 +5125,12 @@
     </description>
   </property>
 
-  <!-- Service Health Check Service Port Configuration -->
+  <!-- Service App Fabric Health Check Service Port Configuration -->
   <property>
-    <name>healthcheck.service.bind.port</name>
+    <name>appfabric.healthcheck.service.bind.port</name>
     <value>0</value>
     <description>
-      Health Check HTTP service bind port; if 0, binds to a random port
+      App Fabric Health Check HTTP service bind port; if 0, binds to a random port
     </description>
   </property>
 </configuration>

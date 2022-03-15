@@ -1,5 +1,5 @@
 /*
- * Copyright © 2022 Cask Data, Inc.
+ * Copyright © 2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,11 +14,12 @@
  * the License.
  */
 
-package io.cdap.cdap.common.service;
+package io.cdap.cdap.internal.app.services;
 
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import io.cdap.cdap.common.HttpExceptionHandler;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
@@ -37,38 +38,32 @@ import java.net.InetSocketAddress;
 import java.util.Set;
 
 /**
- * Health check service is a common service which will be used to create in each stateful and stateless pod to do a
- * heap info and thread dump gathering
+ *
  */
-public class HealthCheckService extends AbstractIdleService {
+public class SupportBundleInternalService extends AbstractIdleService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(HealthCheckService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SupportBundleInternalService.class);
 
   private final DiscoveryService discoveryService;
-  private final CConfiguration cConf;
-  private final SConfiguration sConf;
-  private final Set<HttpHandler> handlers;
-  private String serviceName;
 
+  private final NettyHttpService httpService;
   private Cancellable cancelDiscovery;
-  private NettyHttpService httpService;
 
   @Inject
-  public HealthCheckService(CConfiguration cConf, SConfiguration sConf, DiscoveryService discoveryService,
-                            @Named(Constants.HealthCheck.HANDLERS_NAME) Set<HttpHandler> handlers) {
+  SupportBundleInternalService(CConfiguration cConf, SConfiguration sConf,
+                               DiscoveryService discoveryService,
+                               @Named(Constants.SupportBundle.HANDLERS_NAME) Set<HttpHandler> handlers) {
     this.discoveryService = discoveryService;
-    this.cConf = cConf;
-    this.sConf = sConf;
-    this.handlers = handlers;
-  }
 
-  public void initiate(String host, int port, String serviceName) {
-    this.serviceName = serviceName;
-    NettyHttpService.Builder builder =
-      new CommonNettyHttpServiceBuilder(cConf, serviceName).setHttpHandlers(
-          handlers)
-        .setHost(host)
-        .setPort(port);
+    NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf,
+                                                                         Constants.Service.SUPPORT_BUNDLE_SERVICE)
+      .setHttpHandlers(handlers)
+      .setExceptionHandler(new HttpExceptionHandler())
+      .setHost(cConf.get(Constants.SupportBundle.SERVICE_BIND_ADDRESS))
+      .setPort(cConf.getInt(Constants.SupportBundle.SERVICE_BIND_PORT))
+      .setWorkerThreadPoolSize(cConf.getInt(Constants.SupportBundle.SERVICE_WORKER_THREADS))
+      .setExecThreadPoolSize(cConf.getInt(Constants.SupportBundle.SERVICE_EXEC_THREADS))
+      .setConnectionBacklog(10000);
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
@@ -79,20 +74,21 @@ public class HealthCheckService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    LOG.debug("Starting health check Service");
+    LOG.debug("Starting SupportBundleInternal Service");
     httpService.start();
     InetSocketAddress socketAddress = httpService.getBindAddress();
-    LOG.debug("HealthCheckService service running at {}", socketAddress);
-    cancelDiscovery = discoveryService.register(ResolvingDiscoverable.of(
-      URIScheme.createDiscoverable(serviceName, httpService)));
+    LOG.debug("SupportBundleInternal service running at {}", socketAddress);
+    cancelDiscovery = discoveryService.register(
+      ResolvingDiscoverable.of(
+        URIScheme.createDiscoverable(Constants.Service.SUPPORT_BUNDLE_SERVICE, httpService)));
 
   }
 
   @Override
   protected void shutDown() throws Exception {
-    LOG.debug("Shutting down health check Service");
+    LOG.debug("Shutting down SupportBundleInternal Service");
     cancelDiscovery.cancel();
     httpService.stop();
-    LOG.debug("Health check HTTP service stopped");
+    LOG.debug("SupportBundleInternal HTTP service stopped");
   }
 }

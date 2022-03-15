@@ -1963,11 +1963,11 @@ public final class Constants {
   public static final class AppFabricHealthCheck {
     public static final String SERVICE_DESCRIPTION = "Service to generate health check for app fabric operation.";
     public static final String APP_FABRIC_HEALTH_CHECK_SERVICE = "health.check.appfabric.service";
+    public static final String SERVICE_BIND_PORT = "appfabric.healthcheck.service.bind.port";
   }
 
   public static final class HealthCheck {
     public static final String HANDLERS_NAME = "healthcheck.handlers";
     public static final String HEALTH_CHECK_SERVICE = "health.check.service";
-    public static final String SERVICE_BIND_PORT = "healthcheck.service.bind.port";
   }
 }

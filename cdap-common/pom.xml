@@ -217,11 +217,6 @@
       <artifactId>common-io</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.smallrye</groupId>
-      <artifactId>smallrye-health</artifactId>
-      <version>1.0.2</version>
-    </dependency>
-    <dependency>
       <groupId>com.jcraft</groupId>
       <artifactId>jsch</artifactId>
     </dependency>
