@@ -51,7 +51,7 @@ public class SupportBundleTaskStatus {
     this.startTimestamp = startTimestamp;
   }
 
-  private SupportBundleTaskStatus(String name, String type, long startTimestamp, List<SupportBundleTaskStatus> subTasks,
+  public SupportBundleTaskStatus(String name, String type, long startTimestamp, List<SupportBundleTaskStatus> subTasks,
                                  int retries, CollectionState status) {
     this.name = name;
     this.type = type;
@@ -61,7 +61,7 @@ public class SupportBundleTaskStatus {
     this.status = status;
   }
 
-  private SupportBundleTaskStatus(String name, String type, long startTimestamp, List<SupportBundleTaskStatus> subTasks,
+  public SupportBundleTaskStatus(String name, String type, long startTimestamp, List<SupportBundleTaskStatus> subTasks,
                                  int retries, long finishTimestamp, CollectionState status) {
     this.name = name;
     this.type = type;

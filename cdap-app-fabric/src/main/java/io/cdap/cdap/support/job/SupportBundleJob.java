@@ -137,8 +137,7 @@ public class SupportBundleJob {
       }
     }
     SupportBundleStatus finishBundleStatus =
-      SupportBundleStatus.builder(supportBundleStatus).setStatus(CollectionState.FINISHED)
-        .setFinishTimestamp(System.currentTimeMillis()).buildWithFinishStatus();
+      new SupportBundleStatus(supportBundleStatus, "", CollectionState.FINISHED, System.currentTimeMillis());
     addToStatus(finishBundleStatus, basePath);
   }
 
