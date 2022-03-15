@@ -2902,7 +2902,6 @@
         <module>cdap-runtime-spi</module>
         <module>cdap-securestore-ext-cloudkms</module>
         <module>cdap-securestore-spi</module>
-        <module>cdap-support-bundle</module>
         <module>cdap-operational-stats-core</module>
         <module>cdap-client</module>
         <module>cdap-cli</module>

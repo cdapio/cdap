@@ -32,7 +32,6 @@ import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.MonitorHandlerModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.app.guice.RuntimeServerModule;
-import io.cdap.cdap.app.guice.SupportBundleRuntimeServiceModule;
 import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.preview.PreviewHttpServer;
 import io.cdap.cdap.app.preview.PreviewManagerModule;
@@ -73,7 +72,6 @@ import io.cdap.cdap.gateway.router.NettyRouter;
 import io.cdap.cdap.gateway.router.RouterModules;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeServer;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
-import io.cdap.cdap.internal.app.services.SupportBundleInternalService;
 import io.cdap.cdap.logging.LoggingUtil;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.framework.LogPipelineLoader;
@@ -153,7 +151,6 @@ public class StandaloneMain {
   private final MetadataSubscriberService metadataSubscriberService;
   private final LevelDBTableService levelDBTableService;
   private final SecureStoreService secureStoreService;
-  private final SupportBundleInternalService supportBundleInternalService;
   private final PreviewHttpServer previewHttpServer;
   private final PreviewRunnerManager previewRunnerManager;
   private final MetadataStorage metadataStorage;
@@ -216,7 +213,6 @@ public class StandaloneMain {
     exploreClient = injector.getInstance(ExploreClient.class);
     metadataService = injector.getInstance(MetadataService.class);
     secureStoreService = injector.getInstance(SecureStoreService.class);
-    supportBundleInternalService = injector.getInstance(SupportBundleInternalService.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       try {
@@ -305,9 +301,6 @@ public class StandaloneMain {
 
     secureStoreService.startAndWait();
 
-    supportBundleInternalService.startAndWait();
-
-
     String protocol = sslEnabled ? "https" : "http";
     int dashboardPort = sslEnabled ?
       cConf.getInt(Constants.Dashboard.SSL_BIND_PORT) :
@@ -332,7 +325,6 @@ public class StandaloneMain {
       router.stopAndWait();
 
       secureStoreService.stopAndWait();
-      supportBundleInternalService.stopAndWait();
       operationalStatsService.stopAndWait();
 
       // Stop all services that requires tx service
@@ -514,7 +506,6 @@ public class StandaloneMain {
     cConf.set(Constants.Explore.SERVER_ADDRESS, localhost);
     cConf.set(Constants.Metadata.SERVICE_BIND_ADDRESS, localhost);
     cConf.set(Constants.Preview.ADDRESS, localhost);
-    cConf.set(Constants.SupportBundle.SERVICE_BIND_ADDRESS, localhost);
 
     return ImmutableList.of(
       new ConfigModule(cConf, hConf),
@@ -554,7 +545,6 @@ public class StandaloneMain {
       new RuntimeServerModule(),
       new OperationalStatsModule(),
       new MetricsWriterModule(),
-      new SupportBundleRuntimeServiceModule().getStandaloneModules(),
       new AbstractModule() {
         @Override
         protected void configure() {

@@ -117,7 +117,6 @@ public class MasterServiceMainTestBase {
                     MetadataServiceMain.class,
                     RuntimeServiceMain.class,
                     AppFabricServiceMain.class,
-                    SupportBundleServiceMain.class,
                     SystemMetricsExporterServiceMain.class));
 
     if (SecurityUtil.isManagedSecurity(cConf)) {

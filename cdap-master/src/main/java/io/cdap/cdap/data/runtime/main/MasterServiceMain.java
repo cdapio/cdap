@@ -36,7 +36,6 @@ import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.MonitorHandlerModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.app.guice.RuntimeServerModule;
-import io.cdap.cdap.app.guice.SupportBundleRuntimeServiceModule;
 import io.cdap.cdap.app.guice.TwillModule;
 import io.cdap.cdap.app.store.ServiceStore;
 import io.cdap.cdap.common.MasterUtils;
@@ -582,7 +581,6 @@ public class MasterServiceMain extends DaemonMain {
       new MonitorHandlerModule(true),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new SecureStoreServerModule(),
-      new SupportBundleRuntimeServiceModule().getDistributedModules(),
       new RuntimeServerModule(),
       new OperationalStatsModule(),
       new AbstractModule() {
