@@ -83,7 +83,7 @@ public class ProgramStatusEventDetails {
       '}';
   }
 
-  static class Builder {
+  public static class Builder {
 
     private final String runID;
     private final String programName;
