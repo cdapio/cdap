@@ -16,25 +16,15 @@
 
 package io.cdap.cdap.internal.app.worker.system;
 
-import com.codahale.metrics.Metric;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.inject.Singleton;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
-import io.cdap.cdap.api.service.worker.RunnableTaskParam;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.conf.Constants.SystemWorker;
+import io.cdap.cdap.internal.app.worker.AbstractWorkerHttpHandlerInternal;
 import io.cdap.cdap.internal.app.worker.RunnableTaskLauncher;
 import io.cdap.cdap.internal.app.worker.TaskDetails;
-import io.cdap.cdap.proto.BasicThrowable;
-import io.cdap.cdap.proto.codec.BasicThrowableCodec;
-import io.cdap.common.http.HttpRequest;
-import io.cdap.common.http.HttpRequests;
-import io.cdap.common.http.HttpResponse;
-import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.BodyProducer;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
@@ -44,65 +34,29 @@ import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
 /**
- * Internal {@link HttpHandler} for Task worker.
+ * Internal {@link HttpHandler} for System worker.
  */
 @Singleton
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3 + "/system")
-public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
+public class SystemWorkerHttpHandlerInternal extends AbstractWorkerHttpHandlerInternal {
   private static final Logger LOG = LoggerFactory.getLogger(SystemWorkerHttpHandlerInternal.class);
-  private static final Gson GSON = new GsonBuilder().registerTypeAdapter(BasicThrowable.class,
-      new BasicThrowableCodec()).create();
-  private static final String SUCCESS = "success";
-  private static final String FAILURE = "failure";
   private final int requestLimit;
 
-  private final RunnableTaskLauncher runnableTaskLauncher;
-
-  /**
-   * Holds the total number of requests that have been executed by this handler that should count toward max allowed.
-   */
-  private final AtomicInteger requestProcessedCount = new AtomicInteger(0);
-
-  private final MetricsCollectionService metricsCollectionService;
-
   public SystemWorkerHttpHandlerInternal(CConfiguration cConf, MetricsCollectionService metricsCollectionService) {
-    this.runnableTaskLauncher = new RunnableTaskLauncher(cConf);
-    this.metricsCollectionService = metricsCollectionService;
+    super(metricsCollectionService, cConf);
     this.requestLimit = cConf.getInt(Constants.SystemWorker.REQUEST_LIMIT);
-  }
-
-  private void emitMetrics(TaskDetails taskDetails) {
-    long time = System.currentTimeMillis() - taskDetails.getStartTime();
-    Map<String, String> metricTags = new HashMap<>();
-    metricTags.put(Constants.Metrics.Tag.CLASS, taskDetails.getClassName());
-    metricTags.put(Constants.Metrics.Tag.STATUS, taskDetails.isSuccess() ? SUCCESS : FAILURE);
-    metricsCollectionService.getContext(metricTags).increment(Constants.Metrics.SystemWorker.REQUEST_COUNT, 1L);
-    metricsCollectionService.getContext(metricTags).gauge(Constants.Metrics.SystemWorker.REQUEST_LATENCY_MS, time);
   }
 
   @POST
@@ -113,16 +67,15 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
       return;
     }
 
-
     long startTime = System.currentTimeMillis();
-    String className = null;
+    String className;
     try {
       RunnableTaskRequest runnableTaskRequest =
           GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), RunnableTaskRequest.class);
       className = getTaskClassName(runnableTaskRequest);
       RunnableTaskContext runnableTaskContext = runnableTaskLauncher.launchRunnableTask(runnableTaskRequest);
       TaskDetails taskDetails = new TaskDetails(true, className, startTime);
-      emitMetrics(taskDetails);
+      emitMetrics(taskDetails, Constants.Metrics.SystemWorker.REQUEST_COUNT, Constants.Metrics.SystemWorker.REQUEST_LATENCY_MS);
       responder.sendContent(HttpResponseStatus.OK,
           new RunnableTaskBodyProducer(runnableTaskContext, taskDetails),
           new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM));
@@ -133,22 +86,6 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);
     }
     requestProcessedCount.decrementAndGet();
-  }
-
-  private String getTaskClassName(RunnableTaskRequest runnableTaskRequest) {
-    return Optional.ofNullable(runnableTaskRequest.getParam())
-        .map(RunnableTaskParam::getEmbeddedTaskRequest)
-        .map(RunnableTaskRequest::getClassName)
-        .orElse(runnableTaskRequest.getClassName());
-  }
-
-  /**
-   * Return json representation of an exception.
-   * Used to propagate exception across network for better surfacing errors and debuggability.
-   */
-  private String exceptionToJson(Exception ex) {
-    BasicThrowable basicThrowable = new BasicThrowable(ex);
-    return GSON.toJson(basicThrowable);
   }
 
   private static class RunnableTaskBodyProducer extends BodyProducer {

@@ -16,21 +16,15 @@
 
 package io.cdap.cdap.internal.app.worker;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.inject.Singleton;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
-import io.cdap.cdap.api.service.worker.RunnableTaskParam;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.proto.BasicThrowable;
-import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
-import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.BodyProducer;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
@@ -47,14 +41,10 @@ import org.slf4j.LoggerFactory;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
@@ -69,29 +59,18 @@ import javax.ws.rs.core.MediaType;
  */
 @Singleton
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3 + "/worker")
-public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
+public class TaskWorkerHttpHandlerInternal extends AbstractWorkerHttpHandlerInternal {
   /**
    * Fraction of duration which will be used for calculating a range.
    */
   private static final double DURATION_FRACTION = 0.1;
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerHttpHandlerInternal.class);
-  private static final Gson GSON = new GsonBuilder().registerTypeAdapter(BasicThrowable.class,
-                                                                         new BasicThrowableCodec()).create();
-  private static final String SUCCESS = "success";
-  private static final String FAILURE = "failure";
 
-  private final RunnableTaskLauncher runnableTaskLauncher;
   private final BiConsumer<Boolean, TaskDetails> stopper;
 
   private final AtomicBoolean hasInflightRequest = new AtomicBoolean(false);
 
-  /**
-   * Holds the total number of requests that have been executed by this handler that should count toward max allowed.
-   */
-  private final AtomicInteger requestProcessedCount = new AtomicInteger(0);
-
   private final String metadataServiceEndpoint;
-  private final MetricsCollectionService metricsCollectionService;
 
   /**
    * If true, pod will restart once an operation finish its execution.
@@ -100,12 +79,11 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
 
   public TaskWorkerHttpHandlerInternal(CConfiguration cConf, Consumer<String> stopper,
                                        MetricsCollectionService metricsCollectionService) {
+    super(metricsCollectionService, cConf);
     int killAfterRequestCount = cConf.getInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
-    this.runnableTaskLauncher = new RunnableTaskLauncher(cConf);
-    this.metricsCollectionService = metricsCollectionService;
     this.metadataServiceEndpoint = cConf.get(Constants.TaskWorker.METADATA_SERVICE_END_POINT);
     this.stopper = (terminate, taskDetails) -> {
-      emitMetrics(taskDetails);
+      emitMetrics(taskDetails, Constants.Metrics.TaskWorker.REQUEST_COUNT, Constants.Metrics.TaskWorker.REQUEST_LATENCY_MS);
 
       if (mustRestart.get()) {
         stopper.accept(taskDetails.getClassName());
@@ -156,15 +134,6 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     }
   }
 
-  private void emitMetrics(TaskDetails taskDetails) {
-    long time = System.currentTimeMillis() - taskDetails.getStartTime();
-    Map<String, String> metricTags = new HashMap<>();
-    metricTags.put(Constants.Metrics.Tag.CLASS, taskDetails.getClassName());
-    metricTags.put(Constants.Metrics.Tag.STATUS, taskDetails.isSuccess() ? SUCCESS : FAILURE);
-    metricsCollectionService.getContext(metricTags).increment(Constants.Metrics.TaskWorker.REQUEST_COUNT, 1L);
-    metricsCollectionService.getContext(metricTags).gauge(Constants.Metrics.TaskWorker.REQUEST_LATENCY_MS, time);
-  }
-
   @POST
   @Path("/run")
   public void run(FullHttpRequest request, HttpResponder responder) {
@@ -198,13 +167,6 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     }
   }
 
-  private String getTaskClassName(RunnableTaskRequest runnableTaskRequest) {
-    return Optional.ofNullable(runnableTaskRequest.getParam())
-      .map(RunnableTaskParam::getEmbeddedTaskRequest)
-      .map(RunnableTaskRequest::getClassName)
-      .orElse(runnableTaskRequest.getClassName());
-  }
-
   @GET
   @Path("/token")
   public void token(io.netty.handler.codec.http.HttpRequest request, HttpResponder responder) {
@@ -223,15 +185,6 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       LOG.warn("Failed to fetch token from metadata service", ex);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);
     }
-  }
-
-  /**
-   * Return json representation of an exception.
-   * Used to propagate exception across network for better surfacing errors and debuggability.
-   */
-  private String exceptionToJson(Exception ex) {
-    BasicThrowable basicThrowable = new BasicThrowable(ex);
-    return GSON.toJson(basicThrowable);
   }
 
   /**
