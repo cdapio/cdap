@@ -18,38 +18,39 @@ package io.cdap.cdap.support.task;
 
 import com.google.inject.Inject;
 import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.logging.gateway.handlers.RemoteProgramLogsFetcher;
-import io.cdap.cdap.proto.SystemServiceMeta;
-import io.cdap.cdap.support.handlers.RemoteMonitorServicesFetcher;
 import io.cdap.cdap.support.lib.SupportBundleFileNames;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Collects support bundle system log from data fusion instance.
  */
 public class SupportBundleSystemLogTask implements SupportBundleTask {
 
+  private static final Logger LOG = LoggerFactory.getLogger(SupportBundleSystemLogTask.class);
   private final File basePath;
   private final RemoteProgramLogsFetcher remoteProgramLogsFetcher;
-  private final RemoteMonitorServicesFetcher remoteMonitorServicesFetcher;
-  private final CConfiguration cConf;
+  private final List<String> serviceList;
 
   @Inject
-  public SupportBundleSystemLogTask(File basePath, RemoteProgramLogsFetcher remoteProgramLogsFetcher,
-                                    CConfiguration cConf, RemoteMonitorServicesFetcher remoteMonitorServicesFetcher) {
+  public SupportBundleSystemLogTask(File basePath, RemoteProgramLogsFetcher remoteProgramLogsFetcher) {
     this.basePath = basePath;
     this.remoteProgramLogsFetcher = remoteProgramLogsFetcher;
-    this.remoteMonitorServicesFetcher = remoteMonitorServicesFetcher;
-    this.cConf = cConf;
+    this.serviceList = Arrays.asList(Constants.Service.APP_FABRIC_HTTP, Constants.Service.DATASET_EXECUTOR,
+                                     Constants.Service.EXPLORE_HTTP_USER_SERVICE, Constants.Service.LOGSAVER,
+                                     Constants.Service.MESSAGING_SERVICE, Constants.Service.METADATA_SERVICE,
+                                     Constants.Service.METRICS, Constants.Service.METRICS_PROCESSOR,
+                                     Constants.Service.RUNTIME, Constants.Service.TRANSACTION, "pipeline");
   }
 
   /**
@@ -60,17 +61,14 @@ public class SupportBundleSystemLogTask implements SupportBundleTask {
     File systemLogPath = new File(basePath, "system-log");
     DirUtils.mkdirs(systemLogPath);
     String componentId = "services";
-    Iterable<SystemServiceMeta> serviceMetaList = remoteMonitorServicesFetcher.listSystemServices();
-    for (SystemServiceMeta serviceMeta : serviceMetaList) {
+    for (String serviceId : serviceList) {
       long currentTimeMillis = System.currentTimeMillis();
-      long fromMillis =
-        currentTimeMillis - TimeUnit.DAYS.toMillis(cConf.getInt(Constants.SupportBundle.SYSTEM_LOG_START_TIME));
+      long fromMillis = currentTimeMillis - TimeUnit.DAYS.toMillis(1);
       try (FileWriter file = new FileWriter(
-        new File(systemLogPath, serviceMeta.getName() + SupportBundleFileNames.SYSTEMLOG_SUFFIX_NAME))) {
-        Stream<String> systemLog =
-          remoteProgramLogsFetcher.getProgramSystemLog(componentId, serviceMeta.getName(), fromMillis / 1000,
-                                                       currentTimeMillis / 1000);
-        file.write(systemLog.collect(Collectors.joining()));
+        new File(systemLogPath, serviceId + SupportBundleFileNames.SYSTEMLOG_SUFFIX_NAME))) {
+        String systemLog = remoteProgramLogsFetcher.getProgramSystemLog(componentId, serviceId, fromMillis / 1000,
+                                                                        currentTimeMillis / 1000);
+        file.write(systemLog == null ? "" : systemLog);
       }
     }
   }

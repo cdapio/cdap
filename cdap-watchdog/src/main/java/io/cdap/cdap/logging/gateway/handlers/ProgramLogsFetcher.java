@@ -22,7 +22,6 @@ import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 
 import java.io.IOException;
-import java.util.stream.Stream;
 
 /**
  * Interface for fetching Program logs
@@ -40,7 +39,7 @@ public interface ProgramLogsFetcher {
    * @throws NotFoundException if the application or program could not be found
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  Stream<String> getProgramRunLogs(ProgramId program, String runId, long start, long stop)
+  String getProgramRunLogs(ProgramId program, String runId, long start, long stop)
     throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException;
 
   /**
@@ -55,6 +54,6 @@ public interface ProgramLogsFetcher {
    * @throws NotFoundException if the application or program could not be found
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  Stream<String> getProgramSystemLog(String componentId, String serviceId, long start, long stop)
+  String getProgramSystemLog(String componentId, String serviceId, long start, long stop)
     throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException;
 }

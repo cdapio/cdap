@@ -19,13 +19,11 @@ package io.cdap.cdap.support.task;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
 import io.cdap.cdap.api.metrics.MetricTimeSeries;
 import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.metrics.process.RemoteMetricsSystemClient;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ProgramType;
@@ -34,7 +32,9 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import org.joda.time.DateTime;
+import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,11 +42,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Collects pipeline run info.
@@ -54,21 +52,21 @@ import javax.annotation.Nullable;
 public class SupportBundleRuntimeInfoTask implements SupportBundleTask {
 
   private static final Logger LOG = LoggerFactory.getLogger(SupportBundleRuntimeInfoTask.class);
-  private static final Gson GSON = new GsonBuilder().create();
+  private static final Gson gson = new GsonBuilder().create();
   private final NamespaceId namespaceId;
   private final ApplicationId appId;
   private final ProgramType programType;
   private final ProgramId programName;
   private final RemoteMetricsSystemClient remoteMetricsSystemClient;
   private final File appPath;
-  private final Iterable<RunRecord> runRecordList;
+  private final List<RunRecord> runRecordList;
   private final ApplicationDetail applicationDetail;
 
   @Inject
   public SupportBundleRuntimeInfoTask(File appPath, NamespaceId namespaceId, ApplicationId appId,
                                       ProgramType programType, ProgramId programName,
                                       RemoteMetricsSystemClient remoteMetricsSystemClient,
-                                      Iterable<RunRecord> runRecordList, ApplicationDetail applicationDetail) {
+                                      List<RunRecord> runRecordList, ApplicationDetail applicationDetail) {
     this.namespaceId = namespaceId;
     this.appId = appId;
     this.programType = programType;
@@ -84,32 +82,42 @@ public class SupportBundleRuntimeInfoTask implements SupportBundleTask {
     for (RunRecord runRecord : runRecordList) {
       String runId = runRecord.getPid();
       try (FileWriter file = new FileWriter(new File(appPath, runId + ".json"))) {
-        JsonElement jsonElement = GSON.toJsonTree(runRecord);
-        JsonObject jsonObject = (JsonObject) jsonElement;
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("status", runRecord.getStatus().toString());
+        jsonObject.addProperty("start", runRecord.getStartTs());
+        jsonObject.addProperty("end", runRecord.getStopTs());
+        jsonObject.addProperty("profileName", runRecord.getProfileId().getProfile());
+        jsonObject.addProperty("runtimeArgs", runRecord.getProperties().get("runtimeArgs"));
         JsonObject metrics =
           queryMetrics(runId, applicationDetail.getConfiguration(), runRecord != null ? runRecord.getStartTs() : 0,
                        runRecord != null && runRecord.getStopTs() != null ? runRecord.getStopTs() : DateTime.now()
                          .getMillis());
         jsonObject.add("metrics", metrics);
-        GSON.toJson(jsonObject, file);
+        gson.toJson(jsonObject, file);
       }
     }
   }
 
   public JsonObject queryMetrics(String runId, String configuration, long startTs, long stopTs) {
-    //startTs from run time but metrics already starts before that time
-    int startQueryTime = (int) (startTs - 5000);
     JsonObject metrics = new JsonObject();
     try {
-      String typeTag = getMetricsTag(programType);
+      JSONObject appConf =
+        configuration != null && configuration.length() > 0 ? new JSONObject(configuration) : new JSONObject();
+      List<String> metricsList = new ArrayList<>();
+      JSONArray stages = appConf.has("stages") ? appConf.getJSONArray("stages") : new JSONArray();
+      for (int i = 0; i < stages.length(); i++) {
+        JSONObject stageName = stages.getJSONObject(i);
+        metricsList.add(String.format("user.%s.records.out", stageName.getString("name")));
+        metricsList.add(String.format("user.%s.records.in", stageName.getString("name")));
+        metricsList.add(String.format("user.%s.process.time.avg", stageName.getString("name")));
+      }
       Map<String, String> queryTags = new HashMap<>();
       queryTags.put("namespace", namespaceId.getNamespace());
       queryTags.put("app", appId.getApplication());
       queryTags.put("run", runId);
-      queryTags.put(typeTag, programName.getProgram());
-      Collection<String> metricsNameList = remoteMetricsSystemClient.search(queryTags);
+      queryTags.put(programType.toString(), programName.getProgram());
       List<MetricTimeSeries> metricTimeSeriesList = new ArrayList<>(
-        remoteMetricsSystemClient.query(startQueryTime, (int) (stopTs), queryTags, metricsNameList));
+        remoteMetricsSystemClient.query((int) (startTs - 5000), (int) (stopTs), queryTags, metricsList));
       for (MetricTimeSeries timeSeries : metricTimeSeriesList) {
         if (!metrics.has(timeSeries.getMetricName())) {
           metrics.add(timeSeries.getMetricName(), new JsonArray());
@@ -124,25 +132,10 @@ public class SupportBundleRuntimeInfoTask implements SupportBundleTask {
     } catch (IOException e) {
       LOG.warn("Failed to find metrics with run {} ", runId, e);
       return null;
+    } catch (JSONException e) {
+      LOG.warn("JSON format error with run {} ", runId, e);
+      return null;
     }
     return metrics;
-  }
-
-  @Nullable
-  private String getMetricsTag(ProgramType type) {
-    switch (type) {
-      case MAPREDUCE:
-        return Constants.Metrics.Tag.MAPREDUCE;
-      case WORKFLOW:
-        return Constants.Metrics.Tag.WORKFLOW;
-      case SERVICE:
-        return Constants.Metrics.Tag.SERVICE;
-      case SPARK:
-        return Constants.Metrics.Tag.SPARK;
-      case WORKER:
-        return Constants.Metrics.Tag.WORKER;
-      default:
-        return null;
-    }
   }
 }

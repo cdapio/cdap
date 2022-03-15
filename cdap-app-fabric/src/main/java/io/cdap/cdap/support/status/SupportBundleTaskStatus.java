@@ -45,8 +45,8 @@ public class SupportBundleTaskStatus {
   @SerializedName("finish-timestamp")
   private final Long finishTimestamp;
 
-  private SupportBundleTaskStatus(String name, String type, Long startTimestamp, List<SupportBundleTaskStatus> subTasks,
-                                 int retries, Long finishTimestamp, CollectionState status) {
+  private SupportBundleTaskStatus(String name, String type, long startTimestamp, List<SupportBundleTaskStatus> subTasks,
+                                 int retries, long finishTimestamp, CollectionState status) {
     this.name = name;
     this.type = type;
     this.startTimestamp = startTimestamp;
@@ -77,14 +77,13 @@ public class SupportBundleTaskStatus {
   public static class Builder {
     private String name;
     private String type;
-    private Long startTimestamp;
+    private long startTimestamp;
     private List<SupportBundleTaskStatus> subTasks;
     private Integer retries;
-    private Long finishTimestamp;
+    private long finishTimestamp;
     private CollectionState status;
 
     private Builder() {
-      this.retries = 0;
       this.subTasks = new ArrayList<>();
     }
 

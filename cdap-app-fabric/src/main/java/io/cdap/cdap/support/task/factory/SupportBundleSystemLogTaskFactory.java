@@ -17,31 +17,23 @@
 package io.cdap.cdap.support.task.factory;
 
 import com.google.inject.Inject;
-import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.logging.gateway.handlers.RemoteProgramLogsFetcher;
 import io.cdap.cdap.support.SupportBundleTaskConfiguration;
-import io.cdap.cdap.support.handlers.RemoteMonitorServicesFetcher;
 import io.cdap.cdap.support.task.SupportBundleSystemLogTask;
 
 /**
  * Support Bundle system log task factory to create system log task to collect system logs for the data fusion instance.
  */
 public class SupportBundleSystemLogTaskFactory implements SupportBundleTaskFactory {
-  private final CConfiguration cConf;
   private final RemoteProgramLogsFetcher remoteProgramLogsFetcher;
-  private final RemoteMonitorServicesFetcher remoteMonitorServicesFetcher;
 
   @Inject
-  public SupportBundleSystemLogTaskFactory(CConfiguration cConf, RemoteProgramLogsFetcher remoteProgramLogsFetcher,
-                                           RemoteMonitorServicesFetcher remoteMonitorServicesFetcher) {
-    this.cConf = cConf;
+  public SupportBundleSystemLogTaskFactory(RemoteProgramLogsFetcher remoteProgramLogsFetcher) {
     this.remoteProgramLogsFetcher = remoteProgramLogsFetcher;
-    this.remoteMonitorServicesFetcher = remoteMonitorServicesFetcher;
   }
 
   @Override
   public SupportBundleSystemLogTask create(SupportBundleTaskConfiguration taskConfiguration) {
-    return new SupportBundleSystemLogTask(taskConfiguration.getBasePath(), remoteProgramLogsFetcher, cConf,
-                                          remoteMonitorServicesFetcher);
+    return new SupportBundleSystemLogTask(taskConfiguration.getBasePath(), remoteProgramLogsFetcher);
   }
 }

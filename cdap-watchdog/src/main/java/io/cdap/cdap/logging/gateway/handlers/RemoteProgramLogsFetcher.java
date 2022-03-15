@@ -33,7 +33,6 @@ import io.cdap.common.http.HttpResponse;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.util.stream.Stream;
 
 /**
  * Fetch Program logs via internal REST API calls
@@ -62,7 +61,7 @@ public class RemoteProgramLogsFetcher implements ProgramLogsFetcher {
    *                                  server
    */
   @Override
-  public Stream<String> getProgramRunLogs(ProgramId program, String runId, long start, long stop)
+  public String getProgramRunLogs(ProgramId program, String runId, long start, long stop)
     throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
 
     String url = String.format("namespaces/%s/apps/%s/%s/%s/runs/%s/logs?start=%d&stop=%d",
@@ -75,7 +74,7 @@ public class RemoteProgramLogsFetcher implements ProgramLogsFetcher {
       throw new ProgramNotFoundException(program);
     }
 
-    return response.getResponseBodyAsString().codePoints().mapToObj(c -> String.valueOf((char) c));
+    return response.getResponseBodyAsString();
   }
 
   /**
@@ -92,7 +91,7 @@ public class RemoteProgramLogsFetcher implements ProgramLogsFetcher {
    *                                  server
    */
   @Override
-  public Stream<String> getProgramSystemLog(String componentId, String serviceId, long start, long stop)
+  public String getProgramSystemLog(String componentId, String serviceId, long start, long stop)
     throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
 
     String url = String.format("system/%s/%s/logs?start=%d&stop=%d", componentId, serviceId, start, stop);
@@ -103,7 +102,7 @@ public class RemoteProgramLogsFetcher implements ProgramLogsFetcher {
       throw new NotFoundException(String.format("system log not found with service", serviceId));
     }
 
-    return response.getResponseBodyAsString().codePoints().mapToObj(c -> String.valueOf((char) c));
+    return response.getResponseBodyAsString();
   }
 
   private HttpResponse execute(HttpRequest request) throws IOException, NotFoundException, UnauthorizedException {

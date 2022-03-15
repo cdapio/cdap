@@ -62,7 +62,7 @@ public class RemoteProgramRunRecordsFetcher implements ProgramRunRecordsFetcher 
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   @Override
-  public Iterable<RunRecord> getProgramRuns(ProgramId program, long startTime, long endTime, int limit)
+  public List<RunRecord> getProgramRuns(ProgramId program, long startTime, long endTime, int limit)
     throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
 
     String queryParams =
@@ -81,7 +81,8 @@ public class RemoteProgramRunRecordsFetcher implements ProgramRunRecordsFetcher 
       throw new NotFoundException(program);
     }
 
-    return ObjectResponse.fromJsonBody(response, new TypeToken<List<RunRecord>>() { }).getResponseObject();
+    return ObjectResponse.fromJsonBody(response, new TypeToken<List<RunRecord>>() {
+    }).getResponseObject();
   }
 
   private HttpResponse execute(HttpRequest request) throws IOException, NotFoundException, UnauthorizedException {

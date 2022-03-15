@@ -23,6 +23,7 @@ import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Interface for fetching List of {@link RunRecord}
@@ -37,6 +38,6 @@ public interface ProgramRunRecordsFetcher {
    * @throws NotFoundException if the application or program could not be found
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  Iterable<RunRecord> getProgramRuns(ProgramId program, long startTime, long endTime, int limit)
+  List<RunRecord> getProgramRuns(ProgramId program, long startTime, long endTime, int limit)
     throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException;
 }

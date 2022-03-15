@@ -50,8 +50,8 @@ public class SupportBundleStatus {
   // Array of top-level tasks for the bundle, see task structure below
   private final Set<SupportBundleTaskStatus> tasks;
 
-  private SupportBundleStatus(String bundleId, Long startTimestamp, SupportBundleConfiguration parameters,
-                              String statusDetails, CollectionState status, Long finishTimestamp,
+  private SupportBundleStatus(String bundleId, long startTimestamp, SupportBundleConfiguration parameters,
+                              String statusDetails, CollectionState status, long finishTimestamp,
                               Set<SupportBundleTaskStatus> tasks) {
     this.bundleId = bundleId;
     this.startTimestamp = startTimestamp;
@@ -84,10 +84,10 @@ public class SupportBundleStatus {
     private String bundleId;
     private CollectionState status;
     private String statusDetails;
-    private Long startTimestamp;
+    private long startTimestamp;
     private SupportBundleConfiguration parameters;
     private Set<SupportBundleTaskStatus> tasks;
-    private Long finishTimestamp;
+    private long finishTimestamp;
 
     private Builder() {
       this.tasks = Collections.newSetFromMap(new ConcurrentHashMap<>());

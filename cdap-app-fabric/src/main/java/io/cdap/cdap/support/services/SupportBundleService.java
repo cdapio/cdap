@@ -98,6 +98,13 @@ public class SupportBundleService implements Closeable {
     String uuid = UUID.randomUUID().toString();
     File uuidPath = new File(localDir, uuid);
 
+    SupportBundleStatus supportBundleStatus = SupportBundleStatus.builder()
+      .setBundleId(uuid)
+      .setStartTimestamp(System.currentTimeMillis())
+      .setStatus(CollectionState.IN_PROGRESS)
+      .setParameters(supportBundleConfiguration)
+      .build();
+
     // Puts all the files under the uuid path
     File baseDirectory = new File(localDir);
     DirUtils.mkdirs(baseDirectory);
@@ -110,14 +117,6 @@ public class SupportBundleService implements Closeable {
       deleteOldFolders(oldFilesDirectory);
     }
     DirUtils.mkdirs(uuidPath);
-
-    SupportBundleStatus supportBundleStatus = SupportBundleStatus.builder()
-      .setBundleId(uuid)
-      .setStartTimestamp(System.currentTimeMillis())
-      .setStatus(CollectionState.IN_PROGRESS)
-      .setParameters(supportBundleConfiguration)
-      .build();
-    addToStatus(supportBundleStatus, uuidPath.getPath());
 
     SupportBundleJob supportBundleJob =
       new SupportBundleJob(supportBundleTaskFactories, executorService, cConf, supportBundleStatus);
