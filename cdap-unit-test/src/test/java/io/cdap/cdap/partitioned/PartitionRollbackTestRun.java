@@ -276,7 +276,7 @@ public class PartitionRollbackTestRun extends TestFrameworkTestBase {
       pfs.getPartitionOutput(KEY_1);
       Assert.fail("Expected getPartitionOutput to fail, because the partition already exists.");
     } catch (DataSetException expected) {
-
+      // expected
     }
     pfsValidator.validate();
 

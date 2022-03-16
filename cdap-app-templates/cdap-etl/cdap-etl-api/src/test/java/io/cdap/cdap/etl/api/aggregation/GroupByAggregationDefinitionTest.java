@@ -83,7 +83,7 @@ public class GroupByAggregationDefinitionTest {
         .build();
       Assert.fail("Expected IllegalStateException");
     } catch (IllegalStateException ignored) {
-
+      // expected
     }
   }
 }

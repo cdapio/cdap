@@ -85,6 +85,7 @@ public class HttpMethodPrefixCompleter extends PrefixCompleter {
         }
       }
     } catch (IOException | UnauthenticatedException | NotFoundException | UnauthorizedException ignored) {
+      // ignore
     }
     return httpMethods;
   }

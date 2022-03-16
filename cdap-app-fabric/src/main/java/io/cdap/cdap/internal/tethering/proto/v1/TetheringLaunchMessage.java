@@ -60,6 +60,11 @@ public class TetheringLaunchMessage {
       Objects.equals(cConfEntries, that.cConfEntries);
   }
 
+  @Override
+  public int hashCode() {
+    return Objects.hash(localizeFiles, cConfEntries);
+  }
+
   /**
    * Builder for TetheringLaunchMessage
    */
