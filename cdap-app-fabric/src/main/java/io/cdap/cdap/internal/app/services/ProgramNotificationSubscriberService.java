@@ -523,7 +523,10 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       long runTime = endTimeSecs - RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS);
       SystemArguments
         .getProfileIdFromArgs(programRunId.getNamespaceId(), recordedRunRecord.getSystemArgs())
-        .ifPresent(profileId -> emitRunTimeMetric(programRunId, programRunStatus, runTime, recordedRunRecord));
+        .ifPresent(profileId -> {
+          emitRunTimeMetric(programRunId, programRunStatus, runTime, recordedRunRecord);
+          emitStoppingTimeMetric(programRunId, profileId, recordedRunRecord);
+        });
 
       runnables.add(() -> {
         programCompletionNotifiers.forEach(notifier -> notifier.onProgramCompleted(programRunId,
@@ -817,6 +820,31 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     MetricsContext metricsContext = ProgramRunners.createProgramMetricsContext(programRunId, tags,
                                                                                metricsCollectionService);
     metricsContext.gauge(Constants.Metrics.Program.RUN_TIME_SECONDS, runTime);
+  }
+
+  /**
+   * Emit stopping latency metric.
+   */
+  private void emitStoppingTimeMetric(ProgramRunId programRunId, ProfileId profileId, RunRecordDetail runRecord) {
+    if (runRecord.getStopTs() == null || runRecord.getStoppingTs() == null) {
+      return;
+    }
+    Map<String, String> additionalTags = new HashMap<>();
+    // don't want to add the tag if it is not present otherwise it will result in NPE
+    additionalTags.computeIfAbsent(Constants.Metrics.Tag.PROVISIONER,
+                                   provisioner -> SystemArguments.getProfileProvisioner(
+                                     runRecord.getSystemArgs()));
+    Map<String, String> tags = ImmutableMap.<String, String>builder()
+      .put(Constants.Metrics.Tag.PROFILE_SCOPE, profileId.getScope().name())
+      .put(Constants.Metrics.Tag.PROFILE, profileId.getProfile())
+      .put(Constants.Metrics.Tag.PROGRAM, programRunId.getProgram())
+      .putAll(additionalTags)
+      .build();
+    MetricsContext metricsContext = ProgramRunners.createProgramMetricsContext(programRunId, tags,
+                                                                               metricsCollectionService);
+
+    metricsContext.gauge(Constants.Metrics.Program.PROGRAM_STOPPING_DELAY_SECONDS,
+                         runRecord.getStopTs() - runRecord.getStoppingTs());
   }
 
   private void emitStartingTimeMetric(ProgramRunId programRunId, long startDelayTime,
