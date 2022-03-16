@@ -87,30 +87,28 @@ public class TaskWorkerHttpHandlerInternal extends AbstractWorkerHttpHandlerInte
         bind(CConfiguration.class).toInstance(cConf);
       }
     }));
-    int killAfterRequestCount = cConf.getInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
+    int killAfterRequestCount = cConf.getInt(
+        Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
     this.metadataServiceEndpoint = cConf.get(Constants.TaskWorker.METADATA_SERVICE_END_POINT);
     this.stopper = (terminate, taskDetails) -> {
-      emitMetrics(taskDetails, Constants.Metrics.TaskWorker.REQUEST_COUNT, Constants.Metrics.TaskWorker.REQUEST_LATENCY_MS);
-
+      emitMetrics(taskDetails, Constants.Metrics.TaskWorker.REQUEST_COUNT,
+          Constants.Metrics.TaskWorker.REQUEST_LATENCY_MS);
       if (mustRestart.get()) {
         stopper.accept(taskDetails.getClassName());
         return;
       }
-
       if (!terminate || taskDetails.getClassName() == null || killAfterRequestCount <= 0) {
         // No need to restart.
         requestProcessedCount.decrementAndGet();
         hasInflightRequest.set(false);
         return;
       }
-
       if (requestProcessedCount.get() >= killAfterRequestCount) {
         stopper.accept(taskDetails.getClassName());
       } else {
         hasInflightRequest.set(false);
       }
     };
-
     enablePeriodicRestart(cConf, stopper);
   }
 

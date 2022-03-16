@@ -51,6 +51,7 @@ import javax.ws.rs.core.MediaType;
 @Singleton
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3 + "/system")
 public class SystemWorkerHttpHandlerInternal extends AbstractWorkerHttpHandlerInternal {
+
   private static final Logger LOG = LoggerFactory.getLogger(SystemWorkerHttpHandlerInternal.class);
   private final int requestLimit;
 
@@ -75,20 +76,25 @@ public class SystemWorkerHttpHandlerInternal extends AbstractWorkerHttpHandlerIn
       className = getTaskClassName(runnableTaskRequest);
       RunnableTaskContext runnableTaskContext = launchRunnableTask(runnableTaskRequest);
       TaskDetails taskDetails = new TaskDetails(true, className, startTime);
-      emitMetrics(taskDetails, Constants.Metrics.SystemWorker.REQUEST_COUNT, Constants.Metrics.SystemWorker.REQUEST_LATENCY_MS);
+      emitMetrics(taskDetails, Constants.Metrics.SystemWorker.REQUEST_COUNT,
+          Constants.Metrics.SystemWorker.REQUEST_LATENCY_MS);
       responder.sendContent(HttpResponseStatus.OK,
           new RunnableTaskBodyProducer(runnableTaskContext),
-          new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM));
+          new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE,
+              MediaType.APPLICATION_OCTET_STREAM));
     } catch (ClassNotFoundException | ClassCastException ex) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, exceptionToJson(ex),
+          EmptyHttpHeaders.INSTANCE);
     } catch (Exception ex) {
       LOG.error("Failed to run task {}", request.content().toString(StandardCharsets.UTF_8), ex);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex),
+          EmptyHttpHeaders.INSTANCE);
     }
     requestProcessedCount.decrementAndGet();
   }
 
   private static class RunnableTaskBodyProducer extends BodyProducer {
+
     private final ByteBuffer response;
     private boolean done = false;
 
@@ -106,7 +112,8 @@ public class SystemWorkerHttpHandlerInternal extends AbstractWorkerHttpHandlerIn
     }
 
     @Override
-    public void finished() {}
+    public void finished() {
+    }
 
     @Override
     public void handleError(@Nullable Throwable cause) {
