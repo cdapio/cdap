@@ -27,6 +27,7 @@ import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.logging.gateway.handlers.RemoteLogsFetcher;
@@ -149,9 +150,9 @@ public class SupportBundlePipelineInfoTaskTest extends SupportBundleTestBase {
     }
 
     File pipelineFolder = new File(uuidFile, AppWithWorkflow.NAME);
-    File[] pipelineFiles =
-      pipelineFolder.listFiles((dir, name) -> !name.startsWith(".") && !dir.isHidden() && dir.isDirectory());
-    Assert.assertEquals(3, pipelineFiles.length);
+    List<File> pipelineFiles = DirUtils.listFiles(pipelineFolder,
+                                                  file -> !file.isHidden() && !file.getParentFile().isHidden());
+    Assert.assertEquals(3, pipelineFiles.size());
 
     File pipelineInfoFile = new File(pipelineFolder, AppWithWorkflow.NAME + ".json");
     try (Reader reader = Files.newBufferedReader(pipelineInfoFile.toPath(), StandardCharsets.UTF_8)) {

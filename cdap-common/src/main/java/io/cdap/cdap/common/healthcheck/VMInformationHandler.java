@@ -14,12 +14,11 @@
  * the License.
  */
 
-package io.cdap.cdap.gateway.handlers;
+package io.cdap.cdap.common.healthcheck;
 
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.implementation.HealthCheckImplementation;
 import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.security.InstancePermission;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
@@ -27,40 +26,30 @@ import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.eclipse.microprofile.health.HealthCheckResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import javax.enterprise.context.ApplicationScoped;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 
 /**
  * Health Check HTTP Handler.
  */
-@ApplicationScoped
 @Path(Constants.Gateway.API_VERSION_3)
-public class HealthCheckHttpHandler extends AbstractHttpHandler {
+public class VMInformationHandler extends AbstractHttpHandler {
 
-  private static final Logger LOG = LoggerFactory.getLogger(HealthCheckHttpHandler.class);
   private static final Gson GSON = new Gson();
-  private final HealthCheckImplementation healthCheckImplementation;
+
   private final ContextAccessEnforcer contextAccessEnforcer;
 
   @Inject
-  HealthCheckHttpHandler(HealthCheckImplementation healthCheckImplementation,
-                         ContextAccessEnforcer contextAccessEnforcer) {
-    this.healthCheckImplementation = healthCheckImplementation;
+  VMInformationHandler(ContextAccessEnforcer contextAccessEnforcer) {
     this.contextAccessEnforcer = contextAccessEnforcer;
   }
 
   @GET
-  @Path("/health/{serviceName}")
-  public void call(HttpRequest request, HttpResponder responder, @PathParam("serviceName") String serviceName) {
+  @Path("/vminfo")
+  public void call(HttpRequest request, HttpResponder responder) {
     // ensure the user has authentication to get health check
     contextAccessEnforcer.enforce(InstanceId.SELF, InstancePermission.HEALTH_CHECK);
-    HealthCheckResponse healthCheckResponse = healthCheckImplementation.collect();
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(healthCheckResponse.getData()));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(VMInformation.collect()));
   }
 }

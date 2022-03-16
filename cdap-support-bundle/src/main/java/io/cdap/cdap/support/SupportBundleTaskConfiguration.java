@@ -16,13 +16,14 @@
 
 package io.cdap.cdap.support;
 
-import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.support.job.SupportBundleJob;
 import io.cdap.cdap.support.status.SupportBundleConfiguration;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -48,15 +49,15 @@ public class SupportBundleTaskConfiguration {
   /**
    * pipeline program name
    */
-  private String programName;
+  private final String programName;
   /**
    * pipeline program type
    */
-  private ProgramType programType;
+  private final ProgramType programType;
   /**
    * all the namespace under the pipeline
    */
-  private List<NamespaceId> namespaces;
+  private final List<NamespaceId> namespaces;
   /**
    * support bundle job to process all the tasks
    */
@@ -76,7 +77,7 @@ public class SupportBundleTaskConfiguration {
     this.maxRunsPerProgram = supportBundleConfiguration.getMaxRunsPerProgram();
     this.uuid = uuid;
     this.basePath = basePath;
-    this.namespaces = ImmutableList.copyOf(namespaces);
+    this.namespaces = Collections.unmodifiableList(new ArrayList<>(namespaces));
     this.supportBundleJob = supportBundleJob;
   }
 

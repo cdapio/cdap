@@ -44,6 +44,7 @@ import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import org.apache.commons.io.IOUtils;
 import org.apache.twill.api.LocalFile;
 import org.apache.twill.internal.DefaultLocalFile;
@@ -91,6 +92,7 @@ public class TetheringRuntimeJobManagerTest {
       new ConfigModule(cConf),
       new InMemoryDiscoveryModule(),
       new LocalLocationModule(),
+      new AuthorizationEnforcementModule().getNoOpModules(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
       new AbstractModule() {
         @Override

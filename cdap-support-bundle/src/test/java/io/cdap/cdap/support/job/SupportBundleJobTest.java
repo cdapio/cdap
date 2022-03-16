@@ -48,7 +48,6 @@ import org.apache.twill.api.RunId;
 import org.iq80.leveldb.shaded.guava.util.concurrent.MoreExecutors;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -64,7 +63,6 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-@Ignore
 public class SupportBundleJobTest extends SupportBundleTestBase {
   private static final NamespaceId namespaceId = NamespaceId.DEFAULT;
 

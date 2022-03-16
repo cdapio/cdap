@@ -197,29 +197,12 @@
       <artifactId>hadoop-minicluster</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.eclipse.microprofile</groupId>
-      <artifactId>microprofile</artifactId>
-      <version>2.0.1</version>
-      <type>pom</type>
-    </dependency>
-    <dependency>
-      <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-kubernetes</artifactId>
-      <version>6.7.0-SNAPSHOT</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
       <groupId>io.cdap.common</groupId>
       <artifactId>common-http</artifactId>
     </dependency>
     <dependency>
       <groupId>io.cdap.common</groupId>
       <artifactId>common-io</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.smallrye</groupId>
-      <artifactId>smallrye-health</artifactId>
-      <version>1.0.2</version>
     </dependency>
     <dependency>
       <groupId>com.jcraft</groupId>

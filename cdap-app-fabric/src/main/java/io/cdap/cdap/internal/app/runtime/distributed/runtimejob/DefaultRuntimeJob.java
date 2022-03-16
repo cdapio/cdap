@@ -111,6 +111,7 @@ import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJob;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobEnvironment;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import org.apache.twill.api.TwillRunner;
@@ -451,6 +452,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
     modules.add(new IOModule());
     modules.add(new TMSLogAppenderModule());
     modules.add(new RemoteExecutionDiscoveryModule());
+    modules.add(new AuthorizationEnforcementModule().getDistributedModules());
     modules.add(new AuthenticationContextModules().getProgramContainerModule(cConf));
     modules.add(new MetricsClientRuntimeModule().getDistributedModules());
     modules.add(new MessagingServerRuntimeModule().getStandaloneModules());
