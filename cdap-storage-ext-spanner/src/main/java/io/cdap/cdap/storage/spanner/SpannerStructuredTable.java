@@ -122,7 +122,7 @@ public class SpannerStructuredTable implements StructuredTable {
       + " SET " + updateFields.stream().map(this::fieldToParam).collect(Collectors.joining(", "))
       + " WHERE " + primaryKeyFields.stream().map(this::fieldToParam).collect(Collectors.joining(" AND "));
 
-    LOG.trace("Updating row: {}", sql);
+    LOG.debug("Updating row: {}", sql);
 
     Statement statement = fields.stream()
       .reduce(Statement.newBuilder(sql),
@@ -435,7 +435,7 @@ public class SpannerStructuredTable implements StructuredTable {
       + insertFields.stream().map(f -> "@" + f.getName()).collect(Collectors.joining(","))
       + ")";
 
-    LOG.trace("Inserting row: {}", sql);
+    LOG.debug("Inserting row: {}", sql);
 
     Statement statement = fields.stream()
       .reduce(Statement.newBuilder(sql),
