@@ -20,6 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -29,12 +30,13 @@ import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.security.HttpsEnabler;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
-import io.cdap.cdap.internal.app.worker.RunnableTaskLauncher;
+import io.cdap.cdap.internal.provision.ProvisioningService;
+import io.cdap.cdap.security.auth.KeyManager;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpContentDecompressor;
+import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
@@ -49,29 +51,27 @@ import java.util.concurrent.TimeUnit;
 public class SystemWorkerService extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(SystemWorkerService.class);
-  private static final Gson GSON = new Gson();
 
-  private final CConfiguration cConf;
   private final DiscoveryService discoveryService;
+  private final KeyManager keyManager;
+  private final TwillRunnerService twillRunnerService;
+  private final ProvisioningService provisioningService;
   private final NettyHttpService httpService;
-  private final ArtifactManagerFactory artifactManagerFactory;
-  private final RunnableTaskLauncher taskLauncher;
   private Cancellable cancelDiscovery;
   private InetSocketAddress bindAddress;
-  private MetricsCollectionService metricsCollectionService;
 
   @Inject
-  SystemWorkerService(CConfiguration cConf,
-      SConfiguration sConf,
-      DiscoveryService discoveryService,
-      ArtifactManagerFactory artifactManagerFactory, MetricsCollectionService metricsCollectionService) {
-    this.cConf = cConf;
+  SystemWorkerService(CConfiguration cConf, SConfiguration sConf, DiscoveryService discoveryService,
+      MetricsCollectionService metricsCollectionService, KeyManager keyManager,
+      TwillRunnerService twillRunnerService, ProvisioningService provisioningService,
+      Injector injector) {
     this.discoveryService = discoveryService;
-    this.artifactManagerFactory = artifactManagerFactory;
-    this.taskLauncher = new RunnableTaskLauncher(cConf);
-    this.metricsCollectionService = metricsCollectionService;
+    this.keyManager = keyManager;
+    this.twillRunnerService = twillRunnerService;
+    this.provisioningService = provisioningService;
 
-    NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.SYSTEM_WORKER)
+    NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf,
+        Constants.Service.SYSTEM_WORKER)
         .setHost(cConf.get(Constants.SystemWorker.ADDRESS))
         .setPort(cConf.getInt(Constants.SystemWorker.PORT))
         .setExecThreadPoolSize(cConf.getInt(Constants.TaskWorker.EXEC_THREADS))
@@ -83,7 +83,8 @@ public class SystemWorkerService extends AbstractIdleService {
             pipeline.addAfter("compressor", "decompressor", new HttpContentDecompressor());
           }
         })
-        .setHttpHandlers(new SystemWorkerHttpHandlerInternal(cConf, metricsCollectionService));
+        .setHttpHandlers(new SystemWorkerHttpHandlerInternal(cConf, metricsCollectionService,
+            injector));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
@@ -94,10 +95,14 @@ public class SystemWorkerService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LOG.debug("Starting SystemWorkerService");
+    keyManager.startAndWait();
+    provisioningService.initializeProvisionersAndExecutors();
+    twillRunnerService.start();
     httpService.start();
     bindAddress = httpService.getBindAddress();
     cancelDiscovery = discoveryService.register(
-        ResolvingDiscoverable.of(URIScheme.createDiscoverable(Constants.Service.SYSTEM_WORKER, httpService)));
+        ResolvingDiscoverable.of(
+            URIScheme.createDiscoverable(Constants.Service.SYSTEM_WORKER, httpService)));
     LOG.debug("Starting SystemWorkerService has completed");
   }
 

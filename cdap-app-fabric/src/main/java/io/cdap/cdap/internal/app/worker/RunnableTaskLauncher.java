@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app.worker;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.cdap.cdap.api.service.worker.RunnableTask;
@@ -27,10 +29,21 @@ import io.cdap.cdap.common.conf.CConfiguration;
  * RunnableTaskLauncher launches a {@link RunnableTask} by loading its class and calling its run method.
  */
 public class RunnableTaskLauncher {
-  private final CConfiguration cConf;
 
+  private final Injector injector;
+
+  public RunnableTaskLauncher(Injector injector) {
+    this.injector = injector;
+  }
+
+  @VisibleForTesting
   public RunnableTaskLauncher(CConfiguration cConf) {
-    this.cConf = cConf;
+    injector = Guice.createInjector(new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(CConfiguration.class).toInstance(cConf);
+      }
+    });
   }
 
   public RunnableTaskContext launchRunnableTask(RunnableTaskRequest request) throws Exception {
@@ -41,7 +54,6 @@ public class RunnableTaskLauncher {
 
     Class<?> clazz = classLoader.loadClass(request.getClassName());
 
-    Injector injector = Guice.createInjector(new RunnableTaskModule(cConf));
     Object obj = injector.getInstance(clazz);
 
     if (!(obj instanceof RunnableTask)) {

@@ -44,14 +44,14 @@ import java.util.stream.StreamSupport;
 /**
  * A {@link TwillRunnerService} wrapper that provides impersonation support.
  */
-final class ImpersonatedTwillRunnerService implements TwillRunnerService {
+public final class ImpersonatedTwillRunnerService implements TwillRunnerService {
 
   private final Configuration hConf;
   private final TwillRunnerService delegate;
   private final Impersonator impersonator;
   private final TokenSecureStoreRenewer secureStoreRenewer;
 
-  ImpersonatedTwillRunnerService(Configuration hConf, TwillRunnerService delegate, Impersonator impersonator,
+  public ImpersonatedTwillRunnerService(Configuration hConf, TwillRunnerService delegate, Impersonator impersonator,
                                  TokenSecureStoreRenewer secureStoreRenewer) {
     this.hConf = hConf;
     this.delegate = delegate;

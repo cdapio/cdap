@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.worker.system;
 
+import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
@@ -23,7 +24,6 @@ import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.worker.AbstractWorkerHttpHandlerInternal;
-import io.cdap.cdap.internal.app.worker.RunnableTaskLauncher;
 import io.cdap.cdap.internal.app.worker.TaskDetails;
 import io.cdap.http.BodyProducer;
 import io.cdap.http.HttpHandler;
@@ -54,8 +54,9 @@ public class SystemWorkerHttpHandlerInternal extends AbstractWorkerHttpHandlerIn
   private static final Logger LOG = LoggerFactory.getLogger(SystemWorkerHttpHandlerInternal.class);
   private final int requestLimit;
 
-  public SystemWorkerHttpHandlerInternal(CConfiguration cConf, MetricsCollectionService metricsCollectionService) {
-    super(metricsCollectionService, cConf);
+  public SystemWorkerHttpHandlerInternal(CConfiguration cConf,
+      MetricsCollectionService metricsCollectionService, Injector injector) {
+    super(metricsCollectionService, injector);
     this.requestLimit = cConf.getInt(Constants.SystemWorker.REQUEST_LIMIT);
   }
 
@@ -70,14 +71,13 @@ public class SystemWorkerHttpHandlerInternal extends AbstractWorkerHttpHandlerIn
     long startTime = System.currentTimeMillis();
     String className;
     try {
-      RunnableTaskRequest runnableTaskRequest =
-          GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), RunnableTaskRequest.class);
+      RunnableTaskRequest runnableTaskRequest = getRunnableTaskRequest(request);
       className = getTaskClassName(runnableTaskRequest);
-      RunnableTaskContext runnableTaskContext = runnableTaskLauncher.launchRunnableTask(runnableTaskRequest);
+      RunnableTaskContext runnableTaskContext = launchRunnableTask(runnableTaskRequest);
       TaskDetails taskDetails = new TaskDetails(true, className, startTime);
       emitMetrics(taskDetails, Constants.Metrics.SystemWorker.REQUEST_COUNT, Constants.Metrics.SystemWorker.REQUEST_LATENCY_MS);
       responder.sendContent(HttpResponseStatus.OK,
-          new RunnableTaskBodyProducer(runnableTaskContext, taskDetails),
+          new RunnableTaskBodyProducer(runnableTaskContext),
           new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM));
     } catch (ClassNotFoundException | ClassCastException ex) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);
@@ -90,12 +90,10 @@ public class SystemWorkerHttpHandlerInternal extends AbstractWorkerHttpHandlerIn
 
   private static class RunnableTaskBodyProducer extends BodyProducer {
     private final ByteBuffer response;
-    private final TaskDetails taskDetails;
     private boolean done = false;
 
-    RunnableTaskBodyProducer(RunnableTaskContext context, TaskDetails taskDetails) {
+    RunnableTaskBodyProducer(RunnableTaskContext context) {
       this.response = context.getResult();
-      this.taskDetails = taskDetails;
     }
 
     @Override
@@ -103,7 +101,6 @@ public class SystemWorkerHttpHandlerInternal extends AbstractWorkerHttpHandlerIn
       if (done) {
         return Unpooled.EMPTY_BUFFER;
       }
-
       done = true;
       return Unpooled.wrappedBuffer(response);
     }

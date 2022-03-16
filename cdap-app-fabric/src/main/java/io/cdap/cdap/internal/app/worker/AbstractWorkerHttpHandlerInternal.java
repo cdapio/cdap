@@ -18,14 +18,17 @@ package io.cdap.cdap.internal.app.worker;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.api.service.worker.RunnableTaskParam;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
-import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.http.AbstractHttpHandler;
+import io.netty.handler.codec.http.FullHttpRequest;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -35,21 +38,21 @@ public abstract class AbstractWorkerHttpHandlerInternal extends AbstractHttpHand
 
   private static final String SUCCESS = "success";
   private static final String FAILURE = "failure";
-
-  protected static final Gson GSON = new GsonBuilder().registerTypeAdapter(BasicThrowable.class,
+  private static final Gson GSON = new GsonBuilder().registerTypeAdapter(BasicThrowable.class,
       new BasicThrowableCodec()).create();
 
   /**
-   * Holds the total number of requests that have been executed by this handler that should count toward max allowed.
+   * Holds the total number of requests that have been executed by this handler that should count
+   * toward max allowed.
    */
   protected final AtomicInteger requestProcessedCount = new AtomicInteger(0);
   protected final MetricsCollectionService metricsCollectionService;
-  protected final RunnableTaskLauncher runnableTaskLauncher;
+  private final RunnableTaskLauncher runnableTaskLauncher;
 
   protected AbstractWorkerHttpHandlerInternal(MetricsCollectionService metricsCollectionService,
-      CConfiguration cConf) {
+      Injector injector) {
     this.metricsCollectionService = metricsCollectionService;
-    this.runnableTaskLauncher = new RunnableTaskLauncher(cConf);
+    this.runnableTaskLauncher = new RunnableTaskLauncher(injector);
   }
 
   protected String getTaskClassName(RunnableTaskRequest runnableTaskRequest) {
@@ -76,6 +79,16 @@ public abstract class AbstractWorkerHttpHandlerInternal extends AbstractHttpHand
   protected String exceptionToJson(Exception ex) {
     BasicThrowable basicThrowable = new BasicThrowable(ex);
     return GSON.toJson(basicThrowable);
+  }
+
+  protected RunnableTaskRequest getRunnableTaskRequest(FullHttpRequest httpRequest) {
+    return GSON.fromJson(httpRequest.content().toString(StandardCharsets.UTF_8),
+        RunnableTaskRequest.class);
+  }
+
+  protected RunnableTaskContext launchRunnableTask(RunnableTaskRequest runnableTaskRequest)
+      throws Exception {
+    return runnableTaskLauncher.launchRunnableTask(runnableTaskRequest);
   }
 
 }

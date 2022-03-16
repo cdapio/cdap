@@ -20,6 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -48,27 +49,16 @@ import java.util.concurrent.TimeUnit;
 public class TaskWorkerService extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerService.class);
-  private static final Gson GSON = new Gson();
 
-  private final CConfiguration cConf;
   private final DiscoveryService discoveryService;
   private final NettyHttpService httpService;
-  private final ArtifactManagerFactory artifactManagerFactory;
-  private final RunnableTaskLauncher taskLauncher;
   private Cancellable cancelDiscovery;
   private InetSocketAddress bindAddress;
-  private MetricsCollectionService metricsCollectionService;
 
   @Inject
-  TaskWorkerService(CConfiguration cConf,
-                    SConfiguration sConf,
-                    DiscoveryService discoveryService,
-                    ArtifactManagerFactory artifactManagerFactory, MetricsCollectionService metricsCollectionService) {
-    this.cConf = cConf;
+  TaskWorkerService(CConfiguration cConf, SConfiguration sConf, DiscoveryService discoveryService,
+      MetricsCollectionService metricsCollectionService) {
     this.discoveryService = discoveryService;
-    this.artifactManagerFactory = artifactManagerFactory;
-    this.taskLauncher = new RunnableTaskLauncher(cConf);
-    this.metricsCollectionService = metricsCollectionService;
 
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TASK_WORKER)
       .setHost(cConf.get(Constants.TaskWorker.ADDRESS))

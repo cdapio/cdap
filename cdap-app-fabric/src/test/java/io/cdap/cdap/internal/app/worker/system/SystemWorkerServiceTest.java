@@ -16,8 +16,10 @@
 
 package io.cdap.cdap.internal.app.worker.system;
 
-import com.google.common.util.concurrent.Service.State;
 import com.google.gson.Gson;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
@@ -49,7 +51,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
@@ -80,10 +81,14 @@ public class SystemWorkerServiceTest {
   public void beforeTest() {
     CConfiguration cConf = createCConf();
     SConfiguration sConf = createSConf();
-
+    Injector injector = Guice.createInjector(new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(CConfiguration.class).toInstance(cConf);
+      }
+    });
     SystemWorkerService systemWorkerService = new SystemWorkerService(cConf, sConf, new InMemoryDiscoveryService(),
-        (namespaceId, retryStrategy) -> null,
-        new NoOpMetricsCollectionService());
+        new NoOpMetricsCollectionService(), null, null, null, injector);
     systemWorkerService.startAndWait();
     this.systemWorkerService = systemWorkerService;
   }

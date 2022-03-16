@@ -21,6 +21,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.Twill.Security;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerTwillRunnable;
 import io.cdap.cdap.master.spi.twill.DependentTwillPreparer;
@@ -50,6 +51,7 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
   private final CConfiguration cConf;
   private final Configuration hConf;
 
+  private final SConfiguration sConf;
   private final TwillRunner twillRunner;
   private TwillController twillController;
 
@@ -57,9 +59,10 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
 
   @Inject
   public SystemWorkerServiceLauncher(CConfiguration cConf, Configuration hConf,
-      TwillRunner twillRunner) {
+      SConfiguration sConf, TwillRunner twillRunner) {
     this.cConf = cConf;
     this.hConf = hConf;
+    this.sConf = sConf;
     this.twillRunner = twillRunner;
   }
 
@@ -123,6 +126,10 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
           try (Writer writer = Files.newBufferedWriter(hConfPath, StandardCharsets.UTF_8)) {
             hConf.writeXml(writer);
           }
+          Path sConfPath = runDir.resolve("sConf.xml");
+          try (Writer writer = Files.newBufferedWriter(sConfPath, StandardCharsets.UTF_8)) {
+            sConf.writeXml(writer);
+          }
 
           ResourceSpecification systemResourceSpec = ResourceSpecification.Builder.with()
               .setVirtualCores(cConf.getInt(Constants.SystemWorker.CONTAINER_CORES))
@@ -140,8 +147,8 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
           LOG.info("Starting SystemWorker pool with {} instances", systemResourceSpec.getInstances());
 
           TwillPreparer twillPreparer = twillRunner.prepare(
-              new SystemWorkerTwillApplication(cConfPath.toUri(), hConfPath.toUri(), systemResourceSpec,
-                  artifactLocalizerResourceSpec));
+              new SystemWorkerTwillApplication(cConfPath.toUri(), hConfPath.toUri(),
+                  sConfPath.toUri(), systemResourceSpec, artifactLocalizerResourceSpec));
 
           String priorityClass = cConf.get(Constants.TaskWorker.CONTAINER_PRIORITY_CLASS_NAME);
           if (priorityClass != null) {
@@ -155,17 +162,17 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
           }
 
           if (twillPreparer instanceof SecureTwillPreparer) {
-            SecurityContext securityContext = createSecurityContext();
-            twillPreparer = ((SecureTwillPreparer) twillPreparer)
-                .withSecurityContext(SystemWorkerTwillRunnable.class.getSimpleName(), securityContext);
-            String secretName = cConf.get(Security.MASTER_SECRET_DISK_NAME);
-            String secretPath = cConf.get(Security.MASTER_SECRET_DISK_PATH);
-            twillPreparer = ((SecureTwillPreparer) twillPreparer)
-                .withSecretDisk(ArtifactLocalizerTwillRunnable.class.getSimpleName(),
-                    new SecretDisk(secretName, secretPath));
-            twillPreparer = ((SecureTwillPreparer) twillPreparer)
-                .withSecretDisk(SystemWorkerTwillRunnable.class.getSimpleName(), new SecretDisk(secretName,
-                    secretPath));
+            if (cConf.getBoolean(Constants.Twill.Security.WORKER_MOUNT_SECRET)) {
+              String secretName = cConf.get(Security.MASTER_SECRET_DISK_NAME);
+              String secretPath = cConf.get(Security.MASTER_SECRET_DISK_PATH);
+              twillPreparer = ((SecureTwillPreparer) twillPreparer).withSecretDisk(
+                  SystemWorkerTwillRunnable.class.getSimpleName(),
+                  new SecretDisk(secretName, secretPath));
+            } else {
+              SecurityContext securityContext = createSecurityContext();
+              twillPreparer = ((SecureTwillPreparer) twillPreparer).withSecurityContext(
+                  SystemWorkerTwillRunnable.class.getSimpleName(), securityContext);
+            }
           }
 
           activeController = twillPreparer.start(5, TimeUnit.MINUTES);

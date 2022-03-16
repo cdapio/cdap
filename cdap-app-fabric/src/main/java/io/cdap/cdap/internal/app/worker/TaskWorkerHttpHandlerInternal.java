@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app.worker;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
 import com.google.inject.Singleton;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
@@ -79,7 +81,12 @@ public class TaskWorkerHttpHandlerInternal extends AbstractWorkerHttpHandlerInte
 
   public TaskWorkerHttpHandlerInternal(CConfiguration cConf, Consumer<String> stopper,
                                        MetricsCollectionService metricsCollectionService) {
-    super(metricsCollectionService, cConf);
+    super(metricsCollectionService, Guice.createInjector(new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(CConfiguration.class).toInstance(cConf);
+      }
+    }));
     int killAfterRequestCount = cConf.getInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
     this.metadataServiceEndpoint = cConf.get(Constants.TaskWorker.METADATA_SERVICE_END_POINT);
     this.stopper = (terminate, taskDetails) -> {
@@ -146,10 +153,9 @@ public class TaskWorkerHttpHandlerInternal extends AbstractWorkerHttpHandlerInte
     long startTime = System.currentTimeMillis();
     String className = null;
     try {
-      RunnableTaskRequest runnableTaskRequest =
-        GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), RunnableTaskRequest.class);
+      RunnableTaskRequest runnableTaskRequest = getRunnableTaskRequest(request);
       className = getTaskClassName(runnableTaskRequest);
-      RunnableTaskContext runnableTaskContext = runnableTaskLauncher.launchRunnableTask(runnableTaskRequest);
+      RunnableTaskContext runnableTaskContext = launchRunnableTask(runnableTaskRequest);
 
       responder.sendContent(HttpResponseStatus.OK,
                             new RunnableTaskBodyProducer(runnableTaskContext, stopper,
