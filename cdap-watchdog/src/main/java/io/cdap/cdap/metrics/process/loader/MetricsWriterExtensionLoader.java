@@ -23,11 +23,15 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.lang.ClassPathResources;
 import io.cdap.cdap.common.lang.FilterClassLoader;
 import io.cdap.cdap.extension.AbstractExtensionLoader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Extension loader to load log appenders.
@@ -35,8 +39,10 @@ import java.util.Set;
 public class MetricsWriterExtensionLoader extends AbstractExtensionLoader<String, MetricsWriter>
   implements MetricsWriterProvider {
 
+  private static final Logger LOG = LoggerFactory.getLogger(MetricsWriterExtensionLoader.class);
   private static final Set<String> ALLOWED_RESOURCES = createAllowedResources();
   private static final Set<String> ALLOWED_PACKAGES = createPackageSets(ALLOWED_RESOURCES);
+  private Set<String> enabledMetricsWriters;
 
   private static Set<String> createAllowedResources() {
     try {
@@ -50,10 +56,24 @@ public class MetricsWriterExtensionLoader extends AbstractExtensionLoader<String
   @Inject
   public MetricsWriterExtensionLoader(CConfiguration cConf) {
     super(cConf.get(Constants.Metrics.METRICS_WRITER_EXTENSIONS_DIR));
+    String enabledExtensions = cConf.get(Constants.Metrics.METRICS_WRITER_EXTENSIONS_ENABLED_LIST);
+    if (enabledExtensions == null) {
+      this.enabledMetricsWriters = Collections.emptySet();
+      LOG.debug("No metric writers enabled.");
+      return;
+    }
+    String[] split = enabledExtensions.split(",");
+    this.enabledMetricsWriters = Arrays.stream(split).collect(Collectors.toSet());
+    LOG.debug("Enabled metric writers are {} .", enabledMetricsWriters);
   }
 
   @Override
   protected Set<String> getSupportedTypesForProvider(MetricsWriter metricsWriter) {
+    if (enabledMetricsWriters == null || !enabledMetricsWriters.contains(metricsWriter.getID())) {
+      LOG.debug("{} is not present in the enabled list of metric writers.", metricsWriter.getID());
+      return Collections.emptySet();
+    }
+
     return Collections.singleton(metricsWriter.getID());
   }
 
