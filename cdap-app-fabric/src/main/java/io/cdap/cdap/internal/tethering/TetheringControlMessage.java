@@ -27,8 +27,8 @@ public class TetheringControlMessage {
    */
   public enum Type {
     KEEPALIVE,
-    RUN_PIPELINE,
-    STOP_PIPELINE
+    START_PROGRAM,
+    STOP_PROGRAM
   }
 
   private final Type type;

@@ -121,7 +121,7 @@ public class TetheringRuntimeJobManagerTest {
 
   @Test
   public void testPublishToControlChannel() throws Exception {
-    TetheringControlMessage message = new TetheringControlMessage(TetheringControlMessage.Type.RUN_PIPELINE,
+    TetheringControlMessage message = new TetheringControlMessage(TetheringControlMessage.Type.START_PROGRAM,
                                                                   "payload".getBytes(StandardCharsets.UTF_8));
     runtimeJobManager.publishToControlChannel(message);
     try (CloseableIterator<Message> iterator = messageFetcher.fetch(topicId.getNamespace(), topicId.getTopic(), 1, 0)) {

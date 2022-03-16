@@ -88,7 +88,7 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
     LOG.debug("Launching run {} with following configurations: tethered instance name {}, tethered namespace {}.",
               runInfo.getRun(), tetheredInstanceName, tetheredNamespace);
     byte[] payload = Bytes.toBytes(GSON.toJson(createLaunchPayload(runtimeJobInfo.getLocalizeFiles())));
-    TetheringControlMessage message = new TetheringControlMessage(TetheringControlMessage.Type.RUN_PIPELINE, payload);
+    TetheringControlMessage message = new TetheringControlMessage(TetheringControlMessage.Type.START_PROGRAM, payload);
     publishToControlChannel(message);
   }
 
@@ -116,8 +116,16 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
     }
     LOG.debug("Stopping run {} with following configurations: tethered instance name {}, tethered namespace {}.",
               programRunInfo.getRun(), tetheredInstanceName, tetheredNamespace);
-    byte[] payload = Bytes.toBytes(GSON.toJson(programRunInfo));
-    TetheringControlMessage message = new TetheringControlMessage(TetheringControlMessage.Type.STOP_PIPELINE, payload);
+    ProgramRunInfo stopPayload = new ProgramRunInfo.Builder()
+      .setNamespace(tetheredNamespace)
+      .setApplication(programRunInfo.getApplication())
+      .setVersion(programRunInfo.getVersion())
+      .setProgramType(programRunInfo.getProgramType())
+      .setProgram(programRunInfo.getProgram())
+      .setRun(programRunInfo.getRun())
+      .build();
+    byte[] payload = Bytes.toBytes(GSON.toJson(stopPayload));
+    TetheringControlMessage message = new TetheringControlMessage(TetheringControlMessage.Type.STOP_PROGRAM, payload);
     publishToControlChannel(message);
   }
 
@@ -178,6 +186,7 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
       builder.addCConfEntries(cConf.getValByRegex(prefixRegex));
     }
 
+    builder.addNamespace(tetheredInstanceName);
     return builder.build();
   }
 }
