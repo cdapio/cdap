@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.services;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
@@ -387,7 +388,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         writeToHeartBeatTable(recordedRunRecord, logicalStartTimeSecs, programHeartbeatTable);
         runRecordMonitorService.removeRequest(programRunId, true);
         long startDelayTime = logicalStartTimeSecs - RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS);
-        emitStartingTimeMetric(programRunId, startDelayTime);
+        emitStartingTimeMetric(programRunId, startDelayTime, recordedRunRecord);
         break;
       case SUSPENDED:
         long suspendTime = getTimeSeconds(notification.getProperties(),
@@ -522,7 +523,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       long runTime = endTimeSecs - RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS);
       SystemArguments
         .getProfileIdFromArgs(programRunId.getNamespaceId(), recordedRunRecord.getSystemArgs())
-        .ifPresent(profileId -> emitRunTimeMetric(programRunId, programRunStatus, runTime));
+        .ifPresent(profileId -> emitRunTimeMetric(programRunId, programRunStatus, runTime, recordedRunRecord));
 
       runnables.add(() -> {
         programCompletionNotifiers.forEach(notifier -> notifier.onProgramCompleted(programRunId,
@@ -798,18 +799,33 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
    * Emit the program run time metric. The tags are constructed with the program run id and program run status.
    */
   private void emitRunTimeMetric(ProgramRunId programRunId, ProgramRunStatus programRunStatus,
-                                 long runTime) {
-    Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.STATUS, programRunStatus.name());
+                                 long runTime, RunRecordDetail runRecord) {
+    Map<String, String> tags = ImmutableMap.<String, String>builder()
+      .put(Constants.Metrics.Tag.STATUS, programRunStatus.name())
+      .putAll(getAdditionalTagsForTimeMetrics(runRecord, programRunId))
+      .build();
     MetricsContext metricsContext = ProgramRunners.createProgramMetricsContext(programRunId, tags,
                                                                                metricsCollectionService);
     metricsContext.gauge(Constants.Metrics.Program.RUN_TIME_SECONDS, runTime);
   }
 
-  private void emitStartingTimeMetric(ProgramRunId programRunId, long startDelayTime) {
-    Map<String, String> tags = Collections.emptyMap();
+  private void emitStartingTimeMetric(ProgramRunId programRunId, long startDelayTime, RunRecordDetail runRecord) {
+    Map<String, String> tags = Maps.newHashMap(getAdditionalTagsForTimeMetrics(runRecord, programRunId));
     MetricsContext metricsContext = ProgramRunners.createProgramMetricsContext(programRunId, tags,
                                                                                metricsCollectionService);
     metricsContext.gauge(Constants.Metrics.Program.PROGRAM_STARTING_DELAY_SECONDS, startDelayTime);
+  }
+
+  private Map<String, String> getAdditionalTagsForTimeMetrics(RunRecordDetail runRecord, ProgramRunId programRunId) {
+    Map<String, String> tags = new HashMap<>();
+    tags.put(Constants.Metrics.Tag.PROGRAM, programRunId.getProgram());
+    SystemArguments.getProfileIdFromArgs(programRunId.getNamespaceId(), runRecord.getSystemArgs())
+      .ifPresent(profileId -> {
+        tags.put(Constants.Metrics.Tag.PROFILE, profileId.getProfile());
+        tags.put(Constants.Metrics.Tag.PROFILE_SCOPE, profileId.getScope().name());
+      });
+    tags.putAll(getAdditionalTagsForProgramMetrics(runRecord, null));
+    return tags;
   }
 
   /**
