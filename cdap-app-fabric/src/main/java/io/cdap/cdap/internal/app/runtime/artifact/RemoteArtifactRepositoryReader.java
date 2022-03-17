@@ -70,8 +70,15 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
   @Inject
   public RemoteArtifactRepositoryReader(LocationFactory locationFactory,
                                         RemoteClientFactory remoteClientFactory) {
-    this.remoteClient = remoteClientFactory.createRemoteClient(Constants.Service.APP_FABRIC_HTTP,
-      new DefaultHttpRequestConfig(false), Constants.Gateway.INTERNAL_API_VERSION_3);
+    this(locationFactory,
+         remoteClientFactory.createRemoteClient(Constants.Service.APP_FABRIC_HTTP,
+                                                new DefaultHttpRequestConfig(false),
+                                                Constants.Gateway.INTERNAL_API_VERSION_3));
+  }
+
+  public RemoteArtifactRepositoryReader(LocationFactory locationFactory,
+                                        RemoteClient remoteClient) {
+    this.remoteClient = remoteClient;
     this.locationFactory = locationFactory;
   }
 

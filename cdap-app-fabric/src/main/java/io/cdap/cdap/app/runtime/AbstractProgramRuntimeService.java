@@ -46,6 +46,8 @@ import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.lang.jar.ClassLoaderFolder;
@@ -63,6 +65,8 @@ import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
+import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReader;
 import io.cdap.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
 import io.cdap.cdap.proto.InMemoryProgramLiveInfo;
 import io.cdap.cdap.proto.NotRunningProgramLiveInfo;
@@ -78,12 +82,14 @@ import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -123,18 +129,22 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   private final ReadWriteLock runtimeInfosLock;
   private final Table<ProgramType, RunId, RuntimeInfo> runtimeInfos;
   private final ProgramRunnerFactory programRunnerFactory;
-  private final ArtifactRepository noAuthArtifactRepository;
   private final ProgramStateWriter programStateWriter;
   private final ConfiguratorFactory configuratorFactory;
+  private ArtifactRepository noAuthArtifactRepository;
   private ProgramRunnerFactory remoteProgramRunnerFactory;
   private TwillRunnerService remoteTwillRunnerService;
   private ExecutorService executor;
+  private final LocationFactory locationFactory;
+  private final RemoteClientFactory remoteClientFactory;
 
   protected AbstractProgramRuntimeService(CConfiguration cConf,
                                           ProgramRunnerFactory programRunnerFactory,
                                           ArtifactRepository noAuthArtifactRepository,
                                           ProgramStateWriter programStateWriter,
-                                          ConfiguratorFactory configuratorFactory) {
+                                          ConfiguratorFactory configuratorFactory,
+                                          LocationFactory locationFactory,
+                                          RemoteClientFactory remoteClientFactory) {
     this.cConf = cConf;
     this.runtimeInfosLock = new ReentrantReadWriteLock();
     this.runtimeInfos = HashBasedTable.create();
@@ -142,6 +152,8 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     this.noAuthArtifactRepository = noAuthArtifactRepository;
     this.programStateWriter = programStateWriter;
     this.configuratorFactory = configuratorFactory;
+    this.locationFactory = locationFactory;
+    this.remoteClientFactory = remoteClientFactory;
   }
 
   /**
@@ -169,16 +181,36 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     ClusterMode clusterMode = ProgramRunners.getClusterMode(options);
 
     // Creates the ProgramRunner based on the cluster mode
-    ProgramRunner runner = (clusterMode == ClusterMode.ON_PREMISE
-      ? programRunnerFactory
-      : Optional.ofNullable(remoteProgramRunnerFactory).orElseThrow(UnsupportedOperationException::new)
-    ).create(programId.getType());
+    ProgramRunnerFactory progRunnerFactory = (clusterMode == ClusterMode.ON_PREMISE) ? programRunnerFactory :
+      Optional.ofNullable(remoteProgramRunnerFactory).orElseThrow(UnsupportedOperationException::new);
+    ProgramRunner runner = progRunnerFactory.create(programId.getType());
 
     File tempDir = createTempDirectory(programId, runId);
     AtomicReference<Runnable> cleanUpTaskRef = new AtomicReference<>(createCleanupTask(tempDir, runner));
     DelayedProgramController controller = new DelayedProgramController(programRunId);
     RuntimeInfo runtimeInfo = createRuntimeInfo(controller, programId, () -> cleanUpTaskRef.get().run());
     updateRuntimeInfo(runtimeInfo);
+
+    String peer = options.getArguments().getOption(ProgramOptionConstants.PEER_NAME);
+    if (peer != null) {
+      try {
+        // For tethered pipeline runs, fetch artifacts from ArtifactCacheService
+        String basePath = String.format("%s/peers/%s", Constants.Gateway.INTERNAL_API_VERSION_3, peer);
+        RemoteClient remoteClient = remoteClientFactory.createRemoteClient(
+          Constants.Service.ARTIFACT_CACHE_SERVICE,
+          RemoteClientFactory.NO_VERIFY_HTTP_REQUEST_CONFIG,
+          basePath);
+        RemoteArtifactRepositoryReader artifactRepositoryReader = new RemoteArtifactRepositoryReader(
+          locationFactory, remoteClient);
+        noAuthArtifactRepository = new RemoteArtifactRepository(cConf, artifactRepositoryReader,
+                                                                progRunnerFactory);
+      } catch (Exception e) {
+        controller.failed(e);
+        programStateWriter.error(programRunId, e);
+        LOG.error("Exception while trying to create remote client factory", e);
+        return runtimeInfo;
+      }
+    }
 
     executor.execute(() -> {
       try {
@@ -379,7 +411,17 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
       try {
         ArtifactId artifactId = Artifacts.toProtoArtifactId(programId.getNamespaceId(), plugin.getArtifactId());
-        copyArtifact(artifactId, noAuthArtifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId)), destFile);
+        String peer = options.getArguments().getOption(ProgramOptionConstants.PEER_NAME);
+        // Copy artifact from ArtifactCacheService if this pipeline run is for a tethered peer. Else copy artifact
+        // from the filesystem.
+        if (peer != null) {
+          try (InputStream in = noAuthArtifactRepository.newInputStream(Id.Artifact.fromEntityId(artifactId))) {
+            copyArtifact(artifactId, in, destFile);
+          }
+        } else {
+          copyArtifact(artifactId, noAuthArtifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId)),
+                       destFile);
+        }
       } catch (ArtifactNotFoundException e) {
         throw new IllegalArgumentException(String.format("Artifact %s could not be found", plugin.getArtifactId()), e);
       }
@@ -401,6 +443,18 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   protected void copyArtifact(ArtifactId artifactId,
                               ArtifactDetail artifactDetail, File targetFile) throws IOException {
     Locations.linkOrCopy(artifactDetail.getDescriptor().getLocation(), targetFile);
+  }
+
+  /**
+   * Copies the artifact jar to the given target file.
+   *
+   * @param artifactId artifact id of the artifact to be copied
+   * @param in input stream that the artifact should be copied from
+   * @param targetFile target file to copy to
+   * @throws IOException if the copying failed
+   */
+  protected void copyArtifact(ArtifactId artifactId, InputStream in, File targetFile) throws IOException {
+    Files.copy(in, targetFile.toPath());
   }
 
   protected Map<String, String> getExtraProgramOptions() {
