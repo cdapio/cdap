@@ -26,7 +26,9 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.AbstractRetryableScheduledService;
 import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
+import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringProvisioner;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.slf4j.Logger;
@@ -106,6 +108,13 @@ public class ProgramRunStatusMonitorService extends AbstractRetryableScheduledSe
         break;
       }
       for (RunRecordDetail record : stoppingRuns.values()) {
+        // If this run was initiated by this CDAP instance to run on another instance, it will use the tethering
+        // provisioner. The instance that actually runs it on the other side will have a non-null peer name.
+        String provisionerName = SystemArguments.getProfileProvisioner(record.getSystemArgs());
+        if (record.getPeerName() == null && TetheringProvisioner.TETHERING_NAME.equals(provisionerName)) {
+          continue;
+        }
+
         ProgramRunId programRunId = record.getProgramRunId();
         programScannedForTermination.add(programRunId);
         RuntimeInfo runtimeInfo = runtimeService.lookup(programRunId.getParent(),
@@ -113,7 +122,7 @@ public class ProgramRunStatusMonitorService extends AbstractRetryableScheduledSe
         if (runtimeInfo != null && runtimeInfo.getController() != null) {
           LOG.info("Forcing the termination of program {} as it should have stopped at {} ",
                    programRunId, record.getTerminateTs());
-          runtimeInfo.getController().stop();
+          runtimeInfo.getController().kill();
         }
       }
     }

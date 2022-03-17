@@ -31,6 +31,7 @@ import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.app.store.DefaultStore;
+import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringProvisioner;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
@@ -168,6 +169,38 @@ public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
     Assert.assertEquals(1, latch.getCount());
   }
 
+  @Test
+  public void testTetheredRunsAreSkipped() {
+    AtomicInteger sourceId = new AtomicInteger(0);
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
+    // set up a workflow for a program in Stopping state
+    Map<String, String> wfSystemArg = ImmutableMap.of(
+      ProgramOptionConstants.CLUSTER_MODE, ClusterMode.ISOLATED.name(),
+      SystemArguments.PROFILE_PROVISIONER, TetheringProvisioner.TETHERING_NAME);
+    ProgramRunId wfId = NamespaceId.DEFAULT.app("test").workflow("testWF").run(randomRunId());
+    store.setProvisioning(wfId, Collections.emptyMap(), wfSystemArg,
+                          Bytes.toBytes(sourceId.getAndIncrement()), artifactId);
+    store.setProvisioned(wfId, 0, Bytes.toBytes(sourceId.getAndIncrement()));
+    store.setStart(wfId, null, Collections.emptyMap(), Bytes.toBytes(sourceId.getAndIncrement()));
+    store.setRunning(wfId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), null,
+                     Bytes.toBytes(sourceId.getAndIncrement()));
+    long currentTimeInSecs = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+    store.setStopping(wfId, Bytes.toBytes(sourceId.getAndIncrement()), currentTimeInSecs, currentTimeInSecs);
+    CountDownLatch latch = new CountDownLatch(1);
+    ProgramRuntimeService testService = new AbstractProgramRuntimeService(
+      cConf, null, null, new NoOpProgramStateWriter(), null, null, null) {
+      @Nullable
+      public RuntimeInfo lookup(ProgramId programId, RunId runId) {
+        return getRuntimeInfo(programId, latch);
+      }
+    };
+    ProgramRunStatusMonitorService programRunStatusMonitorService
+      = new ProgramRunStatusMonitorService(cConf, store, testService, 5, 3);
+    Assert.assertEquals(1, latch.getCount());
+    programRunStatusMonitorService.terminatePrograms();
+    Assert.assertEquals(1, latch.getCount());
+  }
+
   private ProgramRuntimeService.RuntimeInfo getRuntimeInfo(ProgramId programId, CountDownLatch latch) {
     return new ProgramRuntimeService.RuntimeInfo() {
       public ProgramController getController() {
@@ -194,51 +227,55 @@ public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
 
   private ProgramController getProgramController(CountDownLatch latch) {
     return new ProgramController() {
-        @Override
-        public ProgramRunId getProgramRunId() {
-          return null;
-        }
+      @Override
+      public ProgramRunId getProgramRunId() {
+        return null;
+      }
 
-        @Override
-        public RunId getRunId() {
-          return null;
-        }
+      @Override
+      public RunId getRunId() {
+        return null;
+      }
 
-        @Override
-        public ListenableFuture<ProgramController> suspend() {
-          return null;
-        }
+      @Override
+      public ListenableFuture<ProgramController> suspend() {
+        return null;
+      }
 
-        @Override
-        public ListenableFuture<ProgramController> resume() {
-          return null;
-        }
+      @Override
+      public ListenableFuture<ProgramController> resume() {
+        return null;
+      }
 
-        public ListenableFuture<ProgramController> stop() {
-          latch.countDown();
-          return null;
-        }
+      public ListenableFuture<ProgramController> stop() {
+        return null;
+      }
 
-        @Override
-        public State getState() {
-          return null;
-        }
+      @Override
+      public void kill() {
+        latch.countDown();
+      }
 
-        @Override
-        public Throwable getFailureCause() {
-          return null;
-        }
+      @Override
+      public State getState() {
+        return null;
+      }
 
-        @Override
-        public Cancellable addListener(Listener listener, Executor executor) {
-          return null;
-        }
+      @Override
+      public Throwable getFailureCause() {
+        return null;
+      }
 
-        @Override
-        public ListenableFuture<ProgramController> command(String name, Object value) {
-          return null;
-        }
-      };
+      @Override
+      public Cancellable addListener(Listener listener, Executor executor) {
+        return null;
+      }
+
+      @Override
+      public ListenableFuture<ProgramController> command(String name, Object value) {
+        return null;
+      }
+    };
   }
 
   private RunId randomRunId() {
