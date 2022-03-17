@@ -28,7 +28,6 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -54,7 +53,6 @@ public class ConfigHandler extends AbstractHttpHandler {
                          @DefaultValue("json") @QueryParam("format") String format) throws IOException {
     if ("json".equals(format)) {
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(configService.getCConf()));
-      TimeUnit.MINUTES.toMillis(5);
     } else if ("xml".equals(format)) {
       responder.sendString(HttpResponseStatus.OK, configService.getCConfXMLString(),
                            new DefaultHttpHeaders().set(HttpHeaderNames.CONTENT_TYPE, "application/xml"));

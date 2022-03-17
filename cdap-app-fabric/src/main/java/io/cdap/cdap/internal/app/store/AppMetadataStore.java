@@ -114,6 +114,7 @@ import javax.annotation.Nullable;
  */
 public class AppMetadataStore {
 
+  public static final String WORKFLOW_RUNID = "workflowrunid";
   static final DatasetId APP_META_INSTANCE_ID = NamespaceId.SYSTEM.dataset(Constants.AppMetaStore.TABLE);
 
   private static final Logger LOG = LoggerFactory.getLogger(AppMetadataStore.class);
@@ -605,7 +606,7 @@ public class AppMetadataStore {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     builder.put("runtimeArgs", GSON.toJson(runtimeArgs, MAP_STRING_STRING_TYPE));
     if (workflowRunId != null) {
-      builder.put("workflowrunid", workflowRunId);
+      builder.put(WORKFLOW_RUNID, workflowRunId);
     }
     return builder.build();
   }

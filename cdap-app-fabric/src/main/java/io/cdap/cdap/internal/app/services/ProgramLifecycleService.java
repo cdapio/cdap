@@ -53,6 +53,7 @@ import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.internal.pipeline.PluginRequirement;
@@ -741,7 +742,7 @@ public class ProgramLifecycleService {
     Map<ProgramRunId, RunRecordDetail> activeRunRecords = getActiveRuns(programId, runId);
 
     if (activeRunRecords.isEmpty()) {
-      // Error out if no run information from runtime service and from run record
+      // Error out if no run information from run record
       Store.ensureProgramExists(programId, store.getApplication(programId.getParent()));
       throw new BadRequestException(String.format("Program '%s' is not running.", programId));
     }
@@ -751,10 +752,10 @@ public class ProgramLifecycleService {
       RunRecordDetail runRecord = activeRunRecord.getValue();
 
       // Check if the program is actually started from workflow and the workflow is running
-      if (runRecord != null && runRecord.getProperties().containsKey("workflowrunid")
+      if (runRecord != null && runRecord.getProperties().containsKey(AppMetadataStore.WORKFLOW_RUNID)
         && runRecord.getStatus().equals(ProgramRunStatus.RUNNING)) {
-        String workflowRunId = runRecord.getProperties().get("workflowrunid");
-        throw new BadRequestException(String.format("Cannot stop the program '%s' started by the Workflow " +
+        String workflowRunId = runRecord.getProperties().get(AppMetadataStore.WORKFLOW_RUNID);
+        throw new BadRequestException(String.format("Cannot stop the program run '%s' started by the Workflow " +
                                                       "run '%s'. Please stop the Workflow.", activeRunId,
                                                     workflowRunId));
       }
