@@ -308,6 +308,7 @@ public class PipelineSpecGeneratorTest {
       .setClientResources(new Resources(1024, 1))
       .setStageLoggingEnabled(etlConfig.isStageLoggingEnabled())
       .setNumOfRecordsPreview(etlConfig.getNumOfRecordsPreview())
+      .setEngine(Engine.MAPREDUCE)
       .build();
     Assert.assertEquals(expected, actual);
   }
@@ -344,6 +345,7 @@ public class PipelineSpecGeneratorTest {
       .setClientResources(new Resources(1024, 1))
       .setStageLoggingEnabled(etlConfig.isStageLoggingEnabled())
       .setNumOfRecordsPreview(etlConfig.getNumOfRecordsPreview())
+      .setEngine(Engine.MAPREDUCE)
       .build();
 
     PipelineSpec actual = specGenerator.generateSpec(etlConfig);
@@ -512,6 +514,7 @@ public class PipelineSpecGeneratorTest {
       .setClientResources(config.getClientResources())
       .setStageLoggingEnabled(config.isStageLoggingEnabled())
       .setNumOfRecordsPreview(config.getNumOfRecordsPreview())
+      .setEngine(Engine.MAPREDUCE)
       .build();
 
     Assert.assertEquals(expected, actual);
@@ -533,6 +536,7 @@ public class PipelineSpecGeneratorTest {
       .setDriverResources(config.getDriverResources())
       .setClientResources(config.getClientResources())
       .setStageLoggingEnabled(config.isStageLoggingEnabled())
+      .setEngine(Engine.MAPREDUCE)
       .build();
 
     Assert.assertEquals(expected, actual);
@@ -599,6 +603,7 @@ public class PipelineSpecGeneratorTest {
       .setClientResources(config.getClientResources())
       .setStageLoggingEnabled(config.isStageLoggingEnabled())
       .setNumOfRecordsPreview(config.getNumOfRecordsPreview())
+      .setEngine(Engine.MAPREDUCE)
       .build();
 
     PipelineSpec actual = specGenerator.generateSpec(config);
@@ -681,6 +686,7 @@ public class PipelineSpecGeneratorTest {
       .setClientResources(config.getClientResources())
       .setStageLoggingEnabled(config.isStageLoggingEnabled())
       .setNumOfRecordsPreview(config.getNumOfRecordsPreview())
+      .setEngine(Engine.MAPREDUCE)
       .build();
 
     PipelineSpec actual = specGenerator.generateSpec(config);
@@ -748,6 +754,7 @@ public class PipelineSpecGeneratorTest {
       .setClientResources(config.getClientResources())
       .setStageLoggingEnabled(config.isStageLoggingEnabled())
       .setNumOfRecordsPreview(config.getNumOfRecordsPreview())
+      .setEngine(Engine.MAPREDUCE)
       .build();
 
     PipelineSpec actual = specGenerator.generateSpec(config);
@@ -918,6 +925,7 @@ public class PipelineSpecGeneratorTest {
       .setDriverResources(new Resources(1024))
       .setClientResources(new Resources(1024))
       .setNumOfRecordsPreview(config.getNumOfRecordsPreview())
+      .setEngine(Engine.MAPREDUCE)
       .build();
     Assert.assertEquals(expected, actual);
   }
@@ -940,6 +948,7 @@ public class PipelineSpecGeneratorTest {
       .setDriverResources(config.getDriverResources())
       .setClientResources(config.getClientResources())
       .setStageLoggingEnabled(config.isStageLoggingEnabled())
+      .setEngine(Engine.MAPREDUCE)
       .setSqlEngineStageSpec(
         StageSpec.builder("sqlengine_mocksqlengine",
                           new PluginSpec(BatchSQLEngine.PLUGIN_TYPE, "mocksqlengine", emptyMap, ARTIFACT_ID)).build())
@@ -967,6 +976,7 @@ public class PipelineSpecGeneratorTest {
       .setClientResources(config.getClientResources())
       .setStageLoggingEnabled(config.isStageLoggingEnabled())
       .setSqlEngineStageSpec(null)
+      .setEngine(Engine.MAPREDUCE)
       .build();
 
     Assert.assertEquals(expected, actual);
@@ -991,6 +1001,7 @@ public class PipelineSpecGeneratorTest {
       .setClientResources(config.getClientResources())
       .setStageLoggingEnabled(config.isStageLoggingEnabled())
       .setSqlEngineStageSpec(null)
+      .setEngine(Engine.MAPREDUCE)
       .build();
 
     Assert.assertEquals(expected, actual);
