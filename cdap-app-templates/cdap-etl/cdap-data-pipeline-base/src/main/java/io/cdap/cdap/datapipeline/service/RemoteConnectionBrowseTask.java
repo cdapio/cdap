@@ -16,13 +16,9 @@
 
 package io.cdap.cdap.datapipeline.service;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
-import io.cdap.cdap.api.macro.MacroEvaluator;
-import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.service.http.ServicePluginConfigurer;
 import io.cdap.cdap.api.service.worker.RunnableTask;
-import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.api.service.worker.SystemAppTaskContext;
 import io.cdap.cdap.datapipeline.connection.DefaultConnectorConfigurer;
 import io.cdap.cdap.datapipeline.connection.DefaultConnectorContext;
@@ -31,17 +27,9 @@ import io.cdap.cdap.etl.api.connector.BrowseRequest;
 import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.cdap.etl.api.connector.ConnectorContext;
 import io.cdap.cdap.etl.common.ArtifactSelectorProvider;
-import io.cdap.cdap.etl.common.BasicArguments;
-import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
-import io.cdap.cdap.etl.common.OAuthMacroEvaluator;
-import io.cdap.cdap.etl.common.SecureStoreMacroEvaluator;
 import io.cdap.cdap.etl.proto.connection.Connection;
-import io.cdap.cdap.etl.proto.connection.PluginInfo;
 import io.cdap.cdap.etl.proto.validation.SimpleFailureCollector;
 import io.cdap.cdap.etl.spec.TrackedPluginSelector;
-
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * {@link RunnableTask} for executing connection browsing remotely

@@ -22,7 +22,6 @@ import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.RecordType;
 import org.apache.spark.api.java.function.FlatMapFunction;
 
-import java.util.Collections;
 import java.util.Iterator;
 
 /**

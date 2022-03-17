@@ -20,14 +20,11 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.Serializer;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import com.esotericsoftware.kryo.serializers.DefaultSerializers;
 import com.esotericsoftware.kryo.serializers.MapSerializer;
 
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.SortedMap;
-import java.util.SortedSet;
 import java.util.TreeMap;
 
 /**

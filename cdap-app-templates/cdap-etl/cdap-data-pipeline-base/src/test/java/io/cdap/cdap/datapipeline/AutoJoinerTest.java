@@ -27,7 +27,6 @@ import io.cdap.cdap.etl.api.batch.BatchJoiner;
 import io.cdap.cdap.etl.api.join.JoinCondition;
 import io.cdap.cdap.etl.api.join.JoinDistribution;
 import io.cdap.cdap.etl.api.join.JoinField;
-import io.cdap.cdap.etl.mock.batch.MockExternalSource;
 import io.cdap.cdap.etl.mock.batch.MockSQLEngine;
 import io.cdap.cdap.etl.mock.batch.MockSQLEngineWithCapabilities;
 import io.cdap.cdap.etl.mock.batch.MockSQLEngineWithStageSettings;

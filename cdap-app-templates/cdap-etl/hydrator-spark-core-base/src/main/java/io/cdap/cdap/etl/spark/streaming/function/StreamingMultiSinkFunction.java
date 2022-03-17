@@ -18,7 +18,6 @@ package io.cdap.cdap.etl.spark.streaming.function;
 
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.data.DatasetContext;
-import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
@@ -42,7 +41,6 @@ import io.cdap.cdap.etl.spark.batch.SparkBatchSinkFactory;
 import io.cdap.cdap.etl.spark.function.MultiSinkFunction;
 import io.cdap.cdap.etl.spark.plugin.SparkPipelinePluginContext;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.VoidFunction2;
 import org.apache.spark.streaming.Time;
 import org.apache.tephra.TransactionFailureException;

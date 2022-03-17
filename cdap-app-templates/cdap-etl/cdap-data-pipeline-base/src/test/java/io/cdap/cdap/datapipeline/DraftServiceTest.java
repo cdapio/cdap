@@ -40,7 +40,6 @@ import io.cdap.cdap.etl.proto.v2.ETLConfig;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
-import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.Principal;

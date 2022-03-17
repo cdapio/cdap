@@ -17,7 +17,6 @@
 package io.cdap.cdap.api.schedule;
 
 import io.cdap.cdap.api.ProgramStatus;
-import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.app.ProgramType;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import org.apache.twill.api.RunId;

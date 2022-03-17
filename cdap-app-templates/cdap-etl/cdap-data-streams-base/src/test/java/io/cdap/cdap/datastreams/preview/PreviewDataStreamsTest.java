@@ -28,7 +28,6 @@ import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.api.metrics.MetricDataQuery;
 import io.cdap.cdap.api.metrics.MetricTimeSeries;
 import io.cdap.cdap.app.preview.PreviewManager;
-import io.cdap.cdap.app.preview.PreviewRunner;
 import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;

@@ -14,7 +14,6 @@
 
 package io.cdap.cdap.datapipeline;
 
-import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;

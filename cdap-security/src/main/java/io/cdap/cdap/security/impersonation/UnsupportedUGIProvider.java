@@ -16,8 +16,6 @@
 
 package io.cdap.cdap.security.impersonation;
 
-import java.io.IOException;
-
 /**
  * An implementation of {@link UGIProvider} that is used when Kerberos is never enabled, and so should never be called.
  */

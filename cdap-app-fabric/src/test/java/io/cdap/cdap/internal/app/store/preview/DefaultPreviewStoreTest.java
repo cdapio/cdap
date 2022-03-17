@@ -39,7 +39,6 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Principal;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.yarn.webapp.hamlet.Hamlet;
 import org.apache.twill.api.RunId;
 import org.junit.AfterClass;
 import org.junit.Assert;

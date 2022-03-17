@@ -101,6 +101,8 @@ page at http://checkstyle.sourceforge.net/config.html -->
       <property name="illegalPkgs" value="junit.framework"/>
     </module>
 
+    <module name="UnusedImports"/>
+
     <!--
 
     METHOD LENGTH CHECKS

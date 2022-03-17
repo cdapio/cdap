@@ -18,8 +18,6 @@ package io.cdap.cdap.etl.api.engine.sql;
 
 import io.cdap.cdap.api.RuntimeContext;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
-import io.cdap.cdap.etl.api.StageContext;
-import io.cdap.cdap.etl.api.batch.BatchContext;
 
 /**
  * Base implementation for the SQLEngine interface.

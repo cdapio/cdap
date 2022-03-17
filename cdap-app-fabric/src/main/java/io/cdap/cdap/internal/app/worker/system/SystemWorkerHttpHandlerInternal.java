@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.worker.system;
 
-import com.codahale.metrics.Metric;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Singleton;
@@ -26,14 +25,10 @@ import io.cdap.cdap.api.service.worker.RunnableTaskParam;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.conf.Constants.SystemWorker;
 import io.cdap.cdap.internal.app.worker.RunnableTaskLauncher;
 import io.cdap.cdap.internal.app.worker.TaskDetails;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
-import io.cdap.common.http.HttpRequest;
-import io.cdap.common.http.HttpRequests;
-import io.cdap.common.http.HttpResponse;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.BodyProducer;
 import io.cdap.http.HttpHandler;
@@ -44,25 +39,16 @@ import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Random;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.HttpHeaders;

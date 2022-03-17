@@ -17,14 +17,11 @@
 package io.cdap.cdap.etl.spark.batch;
 
 import com.google.common.base.Objects;
-import com.google.common.base.Throwables;
 import io.cdap.cdap.api.data.batch.Input;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.batch.Split;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.etl.batch.BasicInputFormatProvider;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 

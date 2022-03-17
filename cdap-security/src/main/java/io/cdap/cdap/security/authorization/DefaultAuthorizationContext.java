@@ -30,7 +30,6 @@ import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
-import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreData;
 import io.cdap.cdap.api.security.store.SecureStoreMetadata;

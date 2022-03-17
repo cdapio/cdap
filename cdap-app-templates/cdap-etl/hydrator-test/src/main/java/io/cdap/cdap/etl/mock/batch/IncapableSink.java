@@ -27,7 +27,6 @@ import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
-import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 
 import java.util.Collections;

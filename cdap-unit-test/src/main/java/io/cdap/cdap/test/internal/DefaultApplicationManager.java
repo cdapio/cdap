@@ -50,7 +50,6 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * A default implementation of {@link ApplicationManager}.

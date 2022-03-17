@@ -54,7 +54,6 @@ import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import io.cdap.cdap.security.FakeSecureStore;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.StoreDefinition;

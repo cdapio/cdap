@@ -19,7 +19,6 @@ package io.cdap.cdap.internal.app.runtime.distributed.remote;
 import com.google.common.annotations.VisibleForTesting;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.runtime.distributed.runtimejob.DefaultRuntimeJobInfo;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobInfo;

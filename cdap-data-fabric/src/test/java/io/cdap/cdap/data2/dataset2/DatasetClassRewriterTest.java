@@ -23,7 +23,6 @@ import io.cdap.cdap.api.annotation.ReadWrite;
 import io.cdap.cdap.api.annotation.WriteOnly;
 import io.cdap.cdap.api.dataset.DataSetException;
 import io.cdap.cdap.api.dataset.Dataset;
-import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.dataset.DatasetClassRewriter;
 import io.cdap.cdap.data2.dataset2.customds.CustomDatasetApp;
 import io.cdap.cdap.data2.dataset2.customds.CustomOperations;

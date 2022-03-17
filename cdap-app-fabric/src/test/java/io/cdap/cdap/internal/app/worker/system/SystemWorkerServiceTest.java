@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.worker.system;
 
-import com.google.common.util.concurrent.Service.State;
 import com.google.gson.Gson;
 import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
@@ -49,7 +48,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 

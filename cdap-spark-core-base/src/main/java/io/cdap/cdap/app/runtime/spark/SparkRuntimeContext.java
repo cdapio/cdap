@@ -46,7 +46,6 @@ import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.ServiceAnnouncer;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.Closeable;

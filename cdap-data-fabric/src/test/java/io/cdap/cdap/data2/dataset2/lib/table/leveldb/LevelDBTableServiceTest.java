@@ -36,7 +36,6 @@ import org.iq80.leveldb.DBIterator;
 import org.iq80.leveldb.impl.DbImpl;
 import org.iq80.leveldb.impl.FileMetaData;
 import org.iq80.leveldb.impl.SnapshotImpl;
-import org.iq80.leveldb.util.SizeOf;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;

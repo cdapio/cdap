@@ -34,7 +34,6 @@ import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
 import io.cdap.cdap.security.spi.authorization.Authorizer;
 
 import java.util.EnumSet;
-import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 

@@ -29,7 +29,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import scala.collection.JavaConversions;
 
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;

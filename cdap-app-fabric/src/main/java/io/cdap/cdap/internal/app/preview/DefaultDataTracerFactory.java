@@ -19,7 +19,6 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.preview.DataTracer;
 import io.cdap.cdap.app.preview.DataTracerFactory;
 import io.cdap.cdap.app.preview.PreviewDataPublisher;
-import io.cdap.cdap.app.store.preview.PreviewStore;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.proto.id.ApplicationId;
 

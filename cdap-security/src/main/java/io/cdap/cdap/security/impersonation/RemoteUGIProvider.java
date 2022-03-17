@@ -36,7 +36,6 @@ import io.cdap.common.http.HttpResponse;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authentication.util.KerberosName;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;

@@ -21,9 +21,7 @@ import com.google.gson.JsonSyntaxException;
 import io.cdap.cdap.api.NamespaceSummary;
 import io.cdap.cdap.api.common.HttpErrorStatusProvider;
 import io.cdap.cdap.api.service.http.AbstractSystemHttpServiceHandler;
-import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
-import io.cdap.cdap.etl.proto.CodedException;
 import io.cdap.cdap.proto.id.NamespaceId;
 
 import java.io.IOException;
