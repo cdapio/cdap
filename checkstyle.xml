@@ -281,6 +281,12 @@ page at http://checkstyle.sourceforge.net/config.html -->
     </module>
 
 
+    <!-- Requires overriding equals and hashCode at the same time -->
+    <module name="EqualsHashCode"/>
+
+    <!-- Empty catch block is not allowed -->
+    <module name="EmptyCatchBlock"/>
+
     <!--
 
     MODIFIERS CHECKS

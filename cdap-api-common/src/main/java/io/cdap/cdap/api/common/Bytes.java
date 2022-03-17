@@ -27,6 +27,7 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
@@ -304,20 +305,17 @@ public class Bytes {
    */
   public static String toStringBinary(final byte [] b, int off, int len) {
     StringBuilder result = new StringBuilder();
-    try {
-      String first = new String(b, off, len, "ISO-8859-1");
-      for (int i = 0; i < first.length(); ++i) {
-        int ch = first.charAt(i) & 0xFF;
-        if ((ch >= '0' && ch <= '9')
-            || (ch >= 'A' && ch <= 'Z')
-            || (ch >= 'a' && ch <= 'z')
-            || " `~!@#$%^&*()-_=+[]{}\\|;:'\",.<>/?".indexOf(ch) >= 0) {
-          result.append(first.charAt(i));
-        } else {
-          result.append(String.format("\\x%02X", ch));
-        }
+    String first = new String(b, off, len, StandardCharsets.ISO_8859_1);
+    for (int i = 0; i < first.length(); ++i) {
+      int ch = first.charAt(i) & 0xFF;
+      if ((ch >= '0' && ch <= '9')
+          || (ch >= 'A' && ch <= 'Z')
+          || (ch >= 'a' && ch <= 'z')
+          || " `~!@#$%^&*()-_=+[]{}\\|;:'\",.<>/?".indexOf(ch) >= 0) {
+        result.append(first.charAt(i));
+      } else {
+        result.append(String.format("\\x%02X", ch));
       }
-    } catch (UnsupportedEncodingException e) {
     }
     return result.toString();
   }

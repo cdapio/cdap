@@ -86,6 +86,7 @@ public class HttpEndpointPrefixCompleter extends PrefixCompleter {
         }
       }
     } catch (IOException | NotFoundException | UnauthenticatedException | UnauthorizedException ignored) {
+      // ignore
     }
     return httpEndpoints;
   }

@@ -94,6 +94,7 @@ public class DistributionTest {
         try {
           Thread.sleep(1000);
         } catch (InterruptedException e) {
+          // ignore
         }
         MetricValue metricValue = emitter.emit();
         totalEmitCount.add(Arrays.stream(metricValue.getBucketCounts()).sum());

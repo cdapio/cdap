@@ -293,7 +293,7 @@ public final class SparkContainerLauncher {
     try {
       logger.getClass().getMethod(level, String.class, Object[].class).invoke(logger, message, args);
     } catch (Exception e) {
-
+      // ignore
     }
   }
 

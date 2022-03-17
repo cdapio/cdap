@@ -163,7 +163,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       capabilityStatusStore.checkAllEnabled(Collections.singleton("cap1"));
       Assert.fail("expecting exception");
     } catch (CapabilityNotAvailableException ex) {
-
+      // expected
     }
 
     //disable from delete and see if it is applied correctly
@@ -178,7 +178,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       capabilityStatusStore.checkAllEnabled(Collections.singleton("cap1"));
       Assert.fail("expecting exception");
     } catch (CapabilityNotAvailableException ex) {
-
+      // expected
     }
     Assert.assertEquals(disableConfig, capabilityStatusStore.getConfigs(Collections.singleton("cap1")).get("cap1"));
 
@@ -246,7 +246,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       capabilityStatusStore.checkAllEnabled(Collections.singleton(capability));
       Assert.fail("expecting exception");
     } catch (CapabilityNotAvailableException ex) {
-
+      // expected
     }
     appList = getAppList(namespace);
     Assert.assertFalse(appList.isEmpty());
@@ -303,7 +303,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       capabilityStatusStore.checkAllEnabled(Collections.singleton(capability));
       Assert.fail("expecting exception");
     } catch (CapabilityNotAvailableException ex) {
-
+      // expected
     }
     appList = getAppList(namespace);
     Assert.assertFalse(appList.isEmpty());
@@ -338,7 +338,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       capabilityStatusStore.checkAllEnabled(Collections.singleton(capability));
       Assert.fail("expecting exception");
     } catch (CapabilityNotAvailableException ex) {
-
+      // expected
     }
     appList = getAppList(namespace);
     Assert.assertFalse(appList.isEmpty());
@@ -395,7 +395,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       capabilityStatusStore.checkAllEnabled(Collections.singleton(capability));
       Assert.fail("expecting exception");
     } catch (CapabilityNotAvailableException ex) {
-
+      // expected
     }
     appList = getAppList(namespace);
     Assert.assertFalse(appList.isEmpty());
@@ -427,7 +427,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       capabilityStatusStore.checkAllEnabled(Collections.singleton(capability));
       Assert.fail("expecting exception");
     } catch (CapabilityNotAvailableException ex) {
-
+      // expected
     }
     appList = getAppList(namespace);
     Assert.assertFalse(appList.isEmpty());
@@ -455,7 +455,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       capabilityStatusStore.checkAllEnabled(Arrays.asList(declaredAnnotation.capabilities()));
       Assert.fail("expecting exception");
     } catch (CapabilityNotAvailableException ex) {
-
+      // expected
     }
     String appNameWithCapability = appWithWorkflowClass.getSimpleName() + UUID.randomUUID();
     deployTestArtifact(Id.Namespace.DEFAULT.getId(), appNameWithCapability, testVersion, appWithWorkflowClass);
@@ -563,7 +563,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       capabilityStatusStore.checkAllEnabled(Collections.singleton(capability));
       Assert.fail("expecting exception");
     } catch (CapabilityNotAvailableException ex) {
-
+      // expected
     }
 
     //try starting programs
@@ -643,7 +643,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       capabilityStatusStore.checkAllEnabled(Collections.singleton(capability));
       Assert.fail("expecting exception");
     } catch (CapabilityNotAvailableException ex) {
-
+      // expected
     }
 
     //try starting programs
@@ -673,11 +673,13 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       capabilityStatusStore.checkAllEnabled(Collections.singleton(testCapability2));
       Assert.fail("expecting exception");
     } catch (CapabilityNotAvailableException ex) {
+      // expected
     }
     try {
       capabilityStatusStore.checkAllEnabled(Collections.singleton(testCapability3));
       Assert.fail("expecting exception");
     } catch (CapabilityNotAvailableException ex) {
+      // expected
     }
     try {
       capabilityStatusStore.checkAllEnabled(Collections.singleton(testCapability1));

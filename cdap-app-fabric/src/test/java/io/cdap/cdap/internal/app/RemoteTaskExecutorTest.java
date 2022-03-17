@@ -118,7 +118,7 @@ public class RemoteTaskExecutorTest {
     try {
       remoteTaskExecutor.runTask(runnableTaskRequest);
     } catch (Exception e) {
-
+      // expected
     }
     mockMetricsCollector.stopAndWait();
     Assert.assertSame(1, published.size());
@@ -160,7 +160,7 @@ public class RemoteTaskExecutorTest {
     try {
       remoteTaskExecutor.runTask(runnableTaskRequest);
     } catch (Exception e) {
-
+      // expected
     }
     mockMetricsCollector.stopAndWait();
     Assert.assertSame(1, published.size());

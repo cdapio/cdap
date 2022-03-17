@@ -78,6 +78,11 @@ public class TetheringLaunchMessage {
       Objects.equals(namespace, that.namespace);
   }
 
+  @Override
+  public int hashCode() {
+    return Objects.hash(localizeFiles, cConfEntries);
+  }
+
   /**
    * Builder for TetheringLaunchMessage
    */

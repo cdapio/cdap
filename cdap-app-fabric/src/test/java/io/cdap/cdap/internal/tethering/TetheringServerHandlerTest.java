@@ -306,6 +306,7 @@ public class TetheringServerHandlerTest {
       messagingService.getTopic(topic);
       Assert.fail(String.format("Messaging topic %s was not deleted", topic.getTopic()));
     } catch (TopicNotFoundException ignored) {
+      // expected
     }
   }
 
