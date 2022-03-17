@@ -532,7 +532,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         jsonWriter.beginArray();
         List<Future<?>> futureList = new ArrayList<>();
         Lock lock = new ReentrantLock();
-        ExecutorService executor = Executors.newFixedThreadPool(UPGRADE_THREAD_NUMBER, Executors.defaultThreadFactory());
+        ExecutorService executor = Executors.newFixedThreadPool(UPGRADE_THREAD_NUMBER,
+                                                                Executors.defaultThreadFactory());
         for (ApplicationId appId : appIds) {
           Future<?> future = executor.submit(() -> {
             ApplicationUpdateDetail updateDetail;
