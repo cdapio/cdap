@@ -74,6 +74,7 @@ public class AppFabricServer extends AbstractIdleService {
   private final Set<String> servicesNames;
   private final Set<String> handlerHookNames;
   private final ProgramNotificationSubscriberService programNotificationSubscriberService;
+  private final ProgramStopSubscriberService programStopSubscriberService;
   private final RunRecordCorrectorService runRecordCorrectorService;
   private final ProgramRunStatusMonitorService programRunStatusMonitorService;
   private final RunRecordMonitorService runRecordCounterService;
@@ -105,6 +106,7 @@ public class AppFabricServer extends AbstractIdleService {
                          ProgramRunStatusMonitorService programRunStatusMonitorService,
                          ApplicationLifecycleService applicationLifecycleService,
                          ProgramNotificationSubscriberService programNotificationSubscriberService,
+                         ProgramStopSubscriberService programStopSubscriberService,
                          @Named("appfabric.services.names") Set<String> servicesNames,
                          @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
                          CoreSchedulerService coreSchedulerService,
@@ -125,6 +127,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.handlerHookNames = handlerHookNames;
     this.applicationLifecycleService = applicationLifecycleService;
     this.programNotificationSubscriberService = programNotificationSubscriberService;
+    this.programStopSubscriberService = programStopSubscriberService;
     this.runRecordCorrectorService = runRecordCorrectorService;
     this.programRunStatusMonitorService = programRunStatusMonitorService;
     this.sslEnabled = cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED);
@@ -152,6 +155,7 @@ public class AppFabricServer extends AbstractIdleService {
         bootstrapService.start(),
         programRuntimeService.start(),
         programNotificationSubscriberService.start(),
+        programStopSubscriberService.start(),
         runRecordCorrectorService.start(),
         programRunStatusMonitorService.start(),
         coreSchedulerService.start(),
@@ -205,6 +209,7 @@ public class AppFabricServer extends AbstractIdleService {
     programRuntimeService.stopAndWait();
     applicationLifecycleService.stopAndWait();
     programNotificationSubscriberService.stopAndWait();
+    programStopSubscriberService.stopAndWait();
     runRecordCorrectorService.stopAndWait();
     programRunStatusMonitorService.stopAndWait();
     provisioningService.stopAndWait();

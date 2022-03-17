@@ -70,6 +70,7 @@ import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.internal.app.services.ProgramNotificationSubscriberService;
+import io.cdap.cdap.internal.app.services.ProgramStopSubscriberService;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.data.MessageId;
@@ -182,6 +183,7 @@ public class AppFabricTestHelper {
       startService(injector, MetricsCollectionService.class);
       startService(injector, MetadataSubscriberService.class);
       startService(injector, ProgramNotificationSubscriberService.class);
+      startService(injector, ProgramStopSubscriberService.class);
 
       Scheduler programScheduler = startService(injector, Scheduler.class);
 

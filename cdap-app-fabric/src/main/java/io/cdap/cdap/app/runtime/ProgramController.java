@@ -135,7 +135,17 @@ public interface ProgramController {
 
   ListenableFuture<ProgramController> resume();
 
+  /**
+   * Attempt to stop the program gracefully.
+   *
+   * @return A {@link ListenableFuture} that will be completed when the program is actually stopped.
+   */
   ListenableFuture<ProgramController> stop();
+
+  /**
+   * Force kill the program.
+   */
+  void kill();
 
   /**
    * @return The current state of the program at the time when this method is called.
