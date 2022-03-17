@@ -1348,6 +1348,7 @@ public class AppMetadataStore {
       case STARTING:
       case RUNNING:
       case SUSPENDED:
+      case STOPPING:
         return getProgramRuns(programId, status, startTime, endTime, limit, filter, TYPE_RUN_RECORD_ACTIVE);
       default:
         return getProgramRuns(programId, status, startTime, endTime, limit, filter, TYPE_RUN_RECORD_COMPLETED);

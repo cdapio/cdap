@@ -83,7 +83,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
   @Inject
   RuntimeClientService(CConfiguration cConf, MessagingService messagingService,
                        RuntimeClient runtimeClient, ProgramRunId programRunId) {
-    super(RetryStrategies.fromConfiguration(cConf, "system.runtime.monitor."));
+    super(RetryStrategies.fromConfiguration(cConf, Constants.Service.RUNTIME_MONITOR_RETRY_PREFIX));
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.pollTimeMillis = cConf.getLong(Constants.RuntimeMonitor.POLL_TIME_MS);
     this.gracefulShutdownMillis = cConf.getLong(Constants.RuntimeMonitor.GRACEFUL_SHUTDOWN_MS);
