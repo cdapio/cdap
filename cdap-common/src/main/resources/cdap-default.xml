@@ -2884,6 +2884,15 @@
     </description>
   </property>
 
+  <property>
+    <name>metrics.writer.extensions.enabled.list</name>
+    <value></value>
+    <description>
+      Comma separated list of metric writer extension names that are enabled.
+      Extensions that are not present in this list will be ignored.
+    </description>
+  </property>
+
   <!-- Provisioner Configuration -->
   <property>
     <name>provisioner.executor.threads</name>
