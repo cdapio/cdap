@@ -254,8 +254,8 @@ public class RESTClientTest {
 
   @Path("/api")
   public final class TestHandler extends AbstractHttpHandler {
-    private int unavailEnpointCount = 0;
-    private int integer = 0;
+    private int unavailEnpointCount;
+    private int integer;
 
     private final String message = new UnauthorizedException(
       new Principal("test", Principal.PrincipalType.USER), ImmutableSet.of(Action.READ, Action.WRITE),

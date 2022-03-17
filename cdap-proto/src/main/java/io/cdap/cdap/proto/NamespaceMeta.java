@@ -88,7 +88,7 @@ public final class NamespaceMeta {
     private String groupName;
     private String keytabURIWithoutVersion;
     private int keytabURIVersion;
-    private long generation = 0;
+    private long generation;
     private boolean exploreAsPrincipal = true;
     private Map<String, String> configMap = new HashMap<>();
 

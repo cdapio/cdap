@@ -37,7 +37,7 @@ import java.util.List;
  * For each region the writeTime from the last WAL Entry replicated is updated to the REPLICATION_STATE table.
  */
 public class LastReplicateTimeObserver extends BaseRegionServerObserver {
-  private HBase10TableUpdater hBase10TableUpdater = null;
+  private HBase10TableUpdater hBase10TableUpdater;
   private static final Logger LOG = LoggerFactory.getLogger(LastReplicateTimeObserver.class);
 
   @Override

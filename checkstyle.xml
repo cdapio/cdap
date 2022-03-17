@@ -289,6 +289,8 @@ page at http://checkstyle.sourceforge.net/config.html -->
     <!-- Empty catch block is not allowed -->
     <module name="EmptyCatchBlock"/>
 
+    <module name="ExplicitInitialization"/>
+
     <!--
 
     MODIFIERS CHECKS

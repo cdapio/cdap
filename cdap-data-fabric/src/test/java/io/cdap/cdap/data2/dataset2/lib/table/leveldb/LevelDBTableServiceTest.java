@@ -60,7 +60,7 @@ public class LevelDBTableServiceTest {
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   static LevelDBTableService service;
-  static Injector injector = null;
+  static Injector injector;
 
   @BeforeClass
   public static void init() throws Exception {

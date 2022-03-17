@@ -140,7 +140,7 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
   private static class RunnableTaskBodyProducer extends BodyProducer {
     private final ByteBuffer response;
     private final TaskDetails taskDetails;
-    private boolean done = false;
+    private boolean done;
 
     RunnableTaskBodyProducer(RunnableTaskContext context, TaskDetails taskDetails) {
       this.response = context.getResult();

@@ -75,7 +75,7 @@ public class AutoJoinerTest extends HydratorTestBase {
   private static final ArtifactId APP_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("app", "1.0.0");
   private static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("app", "1.0.0");
 
-  private static int startCount = 0;
+  private static int startCount;
   private static final Schema USER_SCHEMA = Schema.recordOf(
     "user",
     Schema.Field.of("region", Schema.of(Schema.Type.STRING)),

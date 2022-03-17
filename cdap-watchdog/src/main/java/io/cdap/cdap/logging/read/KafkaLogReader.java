@@ -231,8 +231,8 @@ public class KafkaLogReader implements LogReader {
 
     private LogOffset firstOffset;
     private LogOffset lastOffset;
-    private int eventsMatched = 0;
-    private int eventsRead = 0;
+    private int eventsMatched;
+    private int eventsRead;
 
     private KafkaCallback(Filter logFilter, LoggingEventSerializer serializer, long stopOffset, int maxEvents,
                           Callback callback, long fromTimeMs) {

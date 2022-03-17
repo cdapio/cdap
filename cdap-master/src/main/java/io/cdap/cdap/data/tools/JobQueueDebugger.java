@@ -238,9 +238,9 @@ public class JobQueueDebugger extends AbstractIdleService {
     @Nullable
     private Job newestJob;
 
-    private int pendingTrigger = 0;
-    private int pendingConstraint = 0;
-    private int pendingLaunch = 0;
+    private int pendingTrigger;
+    private int pendingConstraint;
+    private int pendingLaunch;
 
     JobStatistics() {
       this(false);

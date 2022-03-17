@@ -55,8 +55,8 @@ public class PreviewTMSLogSubscriber extends AbstractMessagingSubscriberService<
   private final TransactionRunner transactionRunner;
   private final RemoteExecutionLogProcessor logProcessor;
   private final int maxRetriesOnError;
-  private int errorCount = 0;
-  private String erroredMessageId = null;
+  private int errorCount;
+  private String erroredMessageId;
 
   @Inject
   PreviewTMSLogSubscriber(CConfiguration cConf,

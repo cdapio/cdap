@@ -115,11 +115,11 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   private final int maxRetriesOnConflict;
   private final MetricsCollectionService metricsCollectionService;
 
-  private String conflictMessageId = null;
-  private int conflictCount = 0;
+  private String conflictMessageId;
+  private int conflictCount;
 
-  private boolean didBackfill = false;
-  private int backfillAttempts = 0;
+  private boolean didBackfill;
+  private int backfillAttempts;
 
   @Inject
   MetadataSubscriberService(CConfiguration cConf, MessagingService messagingService,

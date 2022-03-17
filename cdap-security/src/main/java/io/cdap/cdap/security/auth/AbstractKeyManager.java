@@ -52,7 +52,7 @@ public abstract class AbstractKeyManager extends AbstractIdleService implements 
    * Time duration (in milliseconds) after which an active secret key should be retired. A value or zero or less
    * means no expiration.
    */
-  protected long keyExpirationPeriod = 0;
+  protected long keyExpirationPeriod;
 
 
   /**

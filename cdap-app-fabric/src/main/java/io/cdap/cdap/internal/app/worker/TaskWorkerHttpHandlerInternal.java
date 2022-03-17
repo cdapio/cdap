@@ -244,7 +244,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     private final BiConsumer<Boolean, TaskDetails> stopper;
     private final TaskDetails taskDetails;
     private final boolean terminateOnComplete;
-    private boolean done = false;
+    private boolean done;
 
     RunnableTaskBodyProducer(RunnableTaskContext context, BiConsumer<Boolean, TaskDetails> stopper,
                              TaskDetails taskDetails) {

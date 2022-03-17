@@ -102,7 +102,7 @@ public class KeyedExecutorTest {
     try {
       BlockingQueue<String> queue = new LinkedBlockingQueue<>();
       Future<Void> future = executor.submit("1", new RepeatedTask() {
-        private int count = 0;
+        private int count;
 
         @Override
         public long executeOnce() {

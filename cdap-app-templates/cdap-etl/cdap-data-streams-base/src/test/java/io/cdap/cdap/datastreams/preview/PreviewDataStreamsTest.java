@@ -70,7 +70,7 @@ public class PreviewDataStreamsTest extends HydratorTestBase {
 
   private static final ArtifactId APP_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("app", "1.0.0");
   private static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("app", "1.0.0");
-  private static int startCount = 0;
+  private static int startCount;
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false,
                                                                        Constants.AppFabric.SPARK_COMPAT,

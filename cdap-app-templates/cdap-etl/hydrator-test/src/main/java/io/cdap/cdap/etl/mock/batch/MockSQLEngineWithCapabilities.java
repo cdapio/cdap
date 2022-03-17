@@ -71,8 +71,8 @@ public class MockSQLEngineWithCapabilities extends BatchSQLEngine<Object, Object
   public static final String NAME = "MockSQLEngineWithCapabilities";
   private static final Gson GSON = new Gson();
   private final MockSQLEngineWithCapabilities.Config config;
-  boolean calledPrepareRun = false;
-  boolean calledOnRunFinish = false;
+  boolean calledPrepareRun;
+  boolean calledOnRunFinish;
 
   public MockSQLEngineWithCapabilities(MockSQLEngineWithCapabilities.Config config) {
     this.config = config;

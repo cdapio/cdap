@@ -39,8 +39,8 @@ public abstract class AbstractChunkedLogProducer extends BodyProducer {
 
   private final CloseableIterator<LogEvent> logEventIter;
 
-  private boolean hasStarted = false;
-  private boolean hasFinished = false;
+  private boolean hasStarted;
+  private boolean hasFinished;
 
   AbstractChunkedLogProducer(CloseableIterator<LogEvent> logEventIter) {
     this.logEventIter = logEventIter;

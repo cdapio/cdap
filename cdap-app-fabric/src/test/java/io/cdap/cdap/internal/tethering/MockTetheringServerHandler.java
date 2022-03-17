@@ -39,7 +39,7 @@ import javax.ws.rs.QueryParam;
 public class MockTetheringServerHandler extends AbstractHttpHandler {
   private static final Gson GSON = new Gson();
   private HttpResponseStatus responseStatus = HttpResponseStatus.OK;
-  private boolean tetheringCreated = false;
+  private boolean tetheringCreated;
 
   @GET
   @Path("/tethering/controlchannels/{peer}")

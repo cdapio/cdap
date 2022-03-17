@@ -37,7 +37,7 @@ import java.io.IOException;
  * For each region the writeTime of the last WAL entry is written to the REPLICATION_STATE table.
  */
 public class LastWriteTimeObserver extends BaseWALObserver {
-  private HBase10CDHTableUpdater hBase10CDHTableUpdater = null;
+  private HBase10CDHTableUpdater hBase10CDHTableUpdater;
   private static final Logger LOG = LoggerFactory.getLogger(LastWriteTimeObserver.class);
 
   @Override

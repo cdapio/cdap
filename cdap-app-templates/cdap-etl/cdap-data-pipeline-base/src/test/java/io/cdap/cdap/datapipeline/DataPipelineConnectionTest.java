@@ -133,7 +133,7 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
       .registerTypeAdapter(SampleResponse.class, new SampleResponseCodec()).setPrettyPrinting().create();
 
-  private static int startCount = 0;
+  private static int startCount;
 
   @ClassRule
   public static final TestConfiguration CONFIG =

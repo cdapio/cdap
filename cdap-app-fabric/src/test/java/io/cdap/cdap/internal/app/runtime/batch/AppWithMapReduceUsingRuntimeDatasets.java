@@ -116,7 +116,7 @@ public class AppWithMapReduceUsingRuntimeDatasets extends AbstractApplication {
     extends Mapper<LongWritable, Text, Text, LongWritable>
     implements ProgramLifecycle<MapReduceTaskContext> {
 
-    private KeyValueTable counters = null;
+    private KeyValueTable counters;
 
     public static final String ONLY_KEY = "x";
     @Override
@@ -141,7 +141,7 @@ public class AppWithMapReduceUsingRuntimeDatasets extends AbstractApplication {
     extends Reducer<Text, LongWritable, String, Long>
     implements ProgramLifecycle<MapReduceTaskContext> {
 
-    private KeyValueTable counters = null;
+    private KeyValueTable counters;
 
     public void reduce(Text key, Iterable<LongWritable> values, Context context)
                               throws IOException, InterruptedException  {

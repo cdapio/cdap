@@ -44,7 +44,7 @@ public class ProgramLifecycleHttpHandlerInternalTest extends AppFabricTestBase {
   private static final String STOPPED = "STOPPED";
   private static final String RUNNING = "RUNNING";
 
-  private static ProgramRunRecordFetcher programRunRecordFetcher = null;
+  private static ProgramRunRecordFetcher programRunRecordFetcher;
 
   @BeforeClass
   public static void init() {

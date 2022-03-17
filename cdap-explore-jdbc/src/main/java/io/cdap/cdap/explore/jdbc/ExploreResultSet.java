@@ -39,7 +39,7 @@ public class ExploreResultSet extends BaseExploreResultSet {
   private ExploreResultSetMetaData metaData;
 
   private ExploreStatement statement;
-  private int maxRows = 0;
+  private int maxRows;
 
   private ExploreExecutionResult executionResult;
 

@@ -51,7 +51,7 @@ public class LevelDBTableCoreTest {
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   static LevelDBTableService service;
-  static Injector injector = null;
+  static Injector injector;
 
   private final String rowNamePrefix = "row-";
   private final String colName = "colName";

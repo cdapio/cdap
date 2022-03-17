@@ -673,8 +673,8 @@ public abstract class HBaseTableUtil {
    * Carries information about table stats
    */
   public static final class TableStats {
-    private int storeFileSizeMB = 0;
-    private int memStoreSizeMB = 0;
+    private int storeFileSizeMB;
+    private int memStoreSizeMB;
 
     TableStats(int storeFileSizeMB, int memStoreSizeMB) {
       this.storeFileSizeMB = storeFileSizeMB;

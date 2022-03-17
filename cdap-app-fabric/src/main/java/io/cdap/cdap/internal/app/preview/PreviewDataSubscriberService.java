@@ -67,8 +67,8 @@ public class PreviewDataSubscriberService extends AbstractMessagingSubscriberSer
   private final MultiThreadMessagingContext messagingContext;
   private final TransactionRunner transactionRunner;
   private final int maxRetriesOnError;
-  private int errorCount = 0;
-  private String erroredMessageId = null;
+  private int errorCount;
+  private String erroredMessageId;
   private MetricsCollectionService metricsCollectionService;
 
   /**
