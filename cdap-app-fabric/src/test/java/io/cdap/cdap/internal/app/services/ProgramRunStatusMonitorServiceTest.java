@@ -90,7 +90,7 @@ public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
     store.setStopping(wfId, Bytes.toBytes(sourceId.getAndIncrement()), currentTimeInSecs, currentTimeInSecs);
     CountDownLatch latch = new CountDownLatch(1);
     ProgramRuntimeService testService = new AbstractProgramRuntimeService(
-      cConf, null, null, new NoOpProgramStateWriter(), null) {
+      cConf, null, null, new NoOpProgramStateWriter(), null, null, null) {
       @Nullable
       public RuntimeInfo lookup(ProgramId programId, RunId runId) {
         return getRuntimeInfo(programId, latch);
@@ -124,7 +124,7 @@ public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
                       currentTimeInSecs + currentTimeInSecs);
     CountDownLatch latch = new CountDownLatch(1);
     ProgramRuntimeService testService = new AbstractProgramRuntimeService(
-      cConf, null, null, new NoOpProgramStateWriter(), null) {
+      cConf, null, null, new NoOpProgramStateWriter(), null, null, null) {
       @Nullable
       public RuntimeInfo lookup(ProgramId programId, RunId runId) {
         return getRuntimeInfo(programId, latch);
@@ -155,7 +155,7 @@ public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
                      Bytes.toBytes(sourceId.getAndIncrement()));
     CountDownLatch latch = new CountDownLatch(1);
     ProgramRuntimeService testService = new AbstractProgramRuntimeService(
-      cConf, null, null, new NoOpProgramStateWriter(), null) {
+      cConf, null, null, new NoOpProgramStateWriter(), null, null, null) {
       @Nullable
       public RuntimeInfo lookup(ProgramId programId, RunId runId) {
         return getRuntimeInfo(programId, latch);
