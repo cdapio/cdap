@@ -343,6 +343,11 @@ public final class Constants {
     public static final String SYSTEM_PROGRAM_SCAN_INTERVAL_SECONDS = "system.program.scan.interval.seconds";
 
     /**
+     * Disable user program launch on cdap environment
+     */
+    public static final String USER_PROGRAM_LAUNCH_DISABLED = "user.program.launch.disabled";
+
+    /**
      * Annotation for binding remote execution twill service
      */
     @Retention(RetentionPolicy.RUNTIME)

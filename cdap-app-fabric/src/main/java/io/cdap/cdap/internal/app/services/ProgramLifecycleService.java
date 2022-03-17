@@ -40,6 +40,7 @@ import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProfileConflictException;
+import io.cdap.cdap.common.ProgramRunForbiddenException;
 import io.cdap.cdap.common.TooManyRequestsException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -132,6 +133,7 @@ public class ProgramLifecycleService {
   private final int maxConcurrentLaunching;
   private final ArtifactRepository artifactRepository;
   private final RunRecordMonitorService runRecordMonitorService;
+  private final boolean userProgramLaunchDisabled;
 
   @Inject
   ProgramLifecycleService(CConfiguration cConf,
@@ -145,6 +147,7 @@ public class ProgramLifecycleService {
                           RunRecordMonitorService runRecordMonitorService) {
     this.maxConcurrentRuns = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_RUNS);
     this.maxConcurrentLaunching = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_LAUNCHING);
+    this.userProgramLaunchDisabled = cConf.getBoolean(Constants.AppFabric.USER_PROGRAM_LAUNCH_DISABLED, false);
     this.store = store;
     this.profileService = profileService;
     this.runtimeService = runtimeService;
@@ -566,7 +569,8 @@ public class ProgramLifecycleService {
 
   @VisibleForTesting
   ProgramOptions createProgramOptions(ProgramId programId, Map<String, String> userArgs, Map<String, String> sysArgs,
-                                      boolean debug) throws NotFoundException, ProfileConflictException {
+                                      boolean debug)
+    throws NotFoundException, ProfileConflictException, ProgramRunForbiddenException {
     ProfileId profileId = SystemArguments.getProfileIdForProgram(programId, userArgs);
     Map<String, String> profileProperties = SystemArguments.getProfileProperties(userArgs);
     Profile profile = profileService.getProfile(profileId, profileProperties);
@@ -575,6 +579,10 @@ public class ProgramLifecycleService {
                                                          "used to start the program %s",
                                                        profileId.getProfile(), profileId.getNamespace(),
                                                        programId.toString()), profileId);
+    }
+    if (userProgramLaunchDisabled && profileId == ProfileId.NATIVE
+      && programId.getNamespaceId() != NamespaceId.SYSTEM) {
+      throw new ProgramRunForbiddenException(programId);
     }
     ProvisionerDetail spec = provisioningService.getProvisionerDetail(profile.getProvisioner().getName());
     if (spec == null) {

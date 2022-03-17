@@ -481,6 +481,13 @@
   </property>
 
   <property>
+    <name>user.program.launch.disabled</name>
+    <value>false</value>
+    <description>Allows users to disable program launches on CDAP cluster.
+      True means program launch on CDAP cluster is not allowed.</description>
+  </property>
+
+  <property>
     <name>run.record.monitor.record.age.threshold.seconds</name>
     <value>3600</value>
     <description>
