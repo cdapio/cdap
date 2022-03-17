@@ -36,6 +36,7 @@ import java.nio.file.Paths;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import javax.inject.Named;
 
 /**
  * Launches an HTTP server for fetching and cache artifacts from remote CDAP instances.
@@ -55,7 +56,9 @@ public class ArtifactCacheService extends AbstractIdleService {
 
   @Inject
   public ArtifactCacheService(CConfiguration cConf, ArtifactCache cache, TetheringStore store,
-                              RemoteAuthenticator remoteAuthenticator, DiscoveryService discoveryService) {
+                              @Named(TetheringAgentService.REMOTE_TETHERING_AUTHENTICATOR)
+                                RemoteAuthenticator remoteAuthenticator,
+                              DiscoveryService discoveryService) {
     this.discoveryService = discoveryService;
     httpService = new CommonNettyHttpServiceBuilder(cConf, "artifact.cache")
       .setHttpHandlers(new ArtifactCacheHttpHandlerInternal(cache, store, remoteAuthenticator))
