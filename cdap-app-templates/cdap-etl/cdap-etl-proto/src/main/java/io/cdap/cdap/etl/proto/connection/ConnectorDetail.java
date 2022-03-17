@@ -17,11 +17,8 @@
 
 package io.cdap.cdap.etl.proto.connection;
 
-import io.cdap.cdap.api.data.schema.Schema;
-
 import java.util.Objects;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * Response for the spec endpoint. The schema and properties are set on each available plugins.

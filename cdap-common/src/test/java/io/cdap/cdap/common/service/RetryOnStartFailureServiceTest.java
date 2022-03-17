@@ -147,7 +147,7 @@ public class RetryOnStartFailureServiceTest {
                                                   final boolean failureOnStop) {
     return new Supplier<Service>() {
 
-      private int failures = 0;
+      private int failures;
 
       @Override
       public Service get() {

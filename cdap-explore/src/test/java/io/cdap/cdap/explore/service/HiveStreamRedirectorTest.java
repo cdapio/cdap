@@ -46,7 +46,7 @@ public class HiveStreamRedirectorTest {
    * A logger that increments counters for simple info logs.
    */
   private static final class CountingLogger implements Logger {
-    private int infoLogs = 0;
+    private int infoLogs;
 
     public int getInfoLogs() {
       return infoLogs;

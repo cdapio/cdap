@@ -411,7 +411,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
 
     private int fetchSize = DEFAULT_FETCH_SIZE;
     private Iterator<QueryResult> delegate;
-    private List<ColumnDesc> resultSchema = null;
+    private List<ColumnDesc> resultSchema;
 
     private final ExploreHttpClient exploreClient;
     private final QueryHandle handle;

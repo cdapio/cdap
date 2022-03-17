@@ -42,7 +42,7 @@ public class DistributedScanner implements ResultScanner {
   private final int caching;
   private final ExecutorService scansExecutor;
 
-  private Result next = null;
+  private Result next;
 
   @SuppressWarnings("unchecked")
   private DistributedScanner(AbstractRowKeyDistributor keyDistributor,
@@ -195,7 +195,7 @@ public class DistributedScanner implements ResultScanner {
     // Identical to HTable.ClientScanner implementation
     return new Iterator<Result>() {
       // The next RowResult, possibly pre-read
-      Result next = null;
+      Result next;
 
       // return true if there is another item pending, false if there isn't.
       // this method is where the actual advancing takes place, but you need

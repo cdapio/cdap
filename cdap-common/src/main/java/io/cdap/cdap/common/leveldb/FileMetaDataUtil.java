@@ -17,7 +17,6 @@
 package io.cdap.cdap.common.leveldb;
 
 import org.iq80.leveldb.impl.InternalKey;
-import org.iq80.leveldb.util.SizeOf;
 import org.iq80.leveldb.util.Slice;
 
 import javax.annotation.Nullable;

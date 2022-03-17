@@ -29,7 +29,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Predicate;
 
 /**
  * Fetch {@link ApplicationDetail} from local store via {@link ApplicationLifecycleService}

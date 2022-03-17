@@ -123,7 +123,7 @@ public abstract class AbstractMessageTable implements MessageTable {
     private final CloseableIterator<RawMessageTableEntry> scanner;
     private final TransactionMessageFilter filter;
     private byte[] skipStartRow;
-    private boolean closed = false;
+    private boolean closed;
     private int maxLimit;
 
     FetchIterator(CloseableIterator<RawMessageTableEntry> scanner, int limit, @Nullable byte[] skipStartRow,

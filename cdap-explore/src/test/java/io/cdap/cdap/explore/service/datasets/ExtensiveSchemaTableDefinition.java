@@ -177,7 +177,7 @@ public class ExtensiveSchemaTableDefinition
     private final long date;
 
     // Transient and static fields - they shouldn't be included in the schema
-    private transient int t = 0;
+    private transient int t;
     private static int st = 80;
 
     // Reference to itself

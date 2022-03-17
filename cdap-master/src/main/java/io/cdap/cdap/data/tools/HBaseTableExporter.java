@@ -82,7 +82,7 @@ public class HBaseTableExporter {
   private final TransactionService txService;
   private final ZKClientService zkClientService;
   private final TransactionSystemClient txClient;
-  private Path bulkloadDir = null;
+  private Path bulkloadDir;
 
   public HBaseTableExporter() throws Exception {
     this.hConf = HBaseConfiguration.create();

@@ -150,8 +150,8 @@ public class SmartWorkflow extends AbstractWorkflow {
   private Metrics workflowMetrics;
   private ETLBatchConfig config;
   private BatchPipelineSpec spec;
-  private int connectorNum = 0;
-  private int publisherNum = 0;
+  private int connectorNum;
+  private int publisherNum;
 
   public SmartWorkflow(ETLBatchConfig config, Set<String> supportedPluginTypes,
                        ApplicationConfigurer applicationConfigurer) {

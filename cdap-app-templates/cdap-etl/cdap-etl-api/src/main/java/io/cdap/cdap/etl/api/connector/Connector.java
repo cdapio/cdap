@@ -17,7 +17,6 @@
 
 package io.cdap.cdap.etl.api.connector;
 
-import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.validation.ValidationException;
 
 import java.io.Closeable;

@@ -19,15 +19,12 @@ package io.cdap.cdap.etl.spark.join;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.join.JoinCondition;
 import io.cdap.cdap.etl.api.join.JoinDefinition;
-import io.cdap.cdap.etl.api.join.JoinDistribution;
 import io.cdap.cdap.etl.api.join.JoinField;
-import io.cdap.cdap.etl.api.join.JoinStage;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Request to join some collection to another collection on an arbitrary expression.

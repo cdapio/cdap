@@ -21,7 +21,6 @@ import com.google.gson.GsonBuilder;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.api.artifact.ArtifactInfo;
 import io.cdap.cdap.api.artifact.ArtifactScope;
-import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.client.config.ClientConfig;

@@ -33,7 +33,7 @@ final class DBScanIterator extends AbstractCloseableIterator<Map.Entry<byte[], b
   private final DBIterator iterator;
   private final byte[] stopKey;
 
-  private boolean closed = false;
+  private boolean closed;
 
   DBScanIterator(DB levelDB, @Nullable byte[] startKey, @Nullable final byte[] stopKey) {
     this.iterator = levelDB.iterator();

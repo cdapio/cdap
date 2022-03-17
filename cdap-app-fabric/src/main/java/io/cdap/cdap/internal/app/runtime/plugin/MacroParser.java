@@ -21,7 +21,6 @@ import com.google.common.collect.Iterables;
 import com.google.gson.Gson;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
-import io.cdap.cdap.api.macro.MacroObjectType;
 import io.cdap.cdap.api.macro.MacroParserOptions;
 
 import java.util.HashMap;

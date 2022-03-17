@@ -28,7 +28,6 @@ import io.cdap.cdap.proto.security.GrantedPermission;
 import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.PermissionAdapterFactory;
 import io.cdap.cdap.proto.security.Principal;
-import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.proto.security.VisibilityRequest;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.PermissionManager;

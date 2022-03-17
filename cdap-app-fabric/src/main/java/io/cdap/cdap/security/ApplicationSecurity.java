@@ -109,7 +109,7 @@ public final class ApplicationSecurity extends SecurityManager {
    */
   public static class Builder {
     private final PermissionCollection perms;
-    private Class<?> klass = null;
+    private Class<?> klass;
 
     /**
      * Invoked by the {@link #builder()}.

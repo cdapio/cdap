@@ -21,7 +21,6 @@ import io.cdap.cdap.api.NamespaceSummary;
 import io.cdap.cdap.api.messaging.MessagingAdmin;
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
-import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;

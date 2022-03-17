@@ -523,7 +523,7 @@ public class PartitionedFileSetTest {
     });
   }
 
-  private int counter = 0;
+  private int counter;
   // generates unique partition keys, where the 'i' field is incrementing from 0 upwards on each returned key
   private PartitionKey generateUniqueKey() {
     return PartitionKey.builder()

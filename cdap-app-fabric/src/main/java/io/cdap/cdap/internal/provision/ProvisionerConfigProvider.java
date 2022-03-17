@@ -20,7 +20,6 @@ import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Provides provisioner config

@@ -16,8 +16,6 @@
 
 package io.cdap.cdap.spi.data.nosql;
 
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
 import io.cdap.cdap.api.dataset.DatasetContext;
 import io.cdap.cdap.api.dataset.DatasetDefinition;
@@ -25,7 +23,6 @@ import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.lib.IndexedTable;
 import io.cdap.cdap.api.dataset.lib.IndexedTableDefinition;
-import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;

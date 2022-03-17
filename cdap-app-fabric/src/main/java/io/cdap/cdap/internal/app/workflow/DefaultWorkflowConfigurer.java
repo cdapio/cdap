@@ -68,7 +68,7 @@ public class DefaultWorkflowConfigurer extends AbstractConfigurer
   private final AppDeploymentRuntimeInfo runtimeInfo;
   private final List<WorkflowNode> nodes = Lists.newArrayList();
 
-  private int nodeIdentifier = 0;
+  private int nodeIdentifier;
   private String name;
   private String description;
   private Map<String, String> properties;

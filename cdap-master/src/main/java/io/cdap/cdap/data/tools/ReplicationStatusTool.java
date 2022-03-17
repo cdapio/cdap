@@ -88,10 +88,10 @@ public class ReplicationStatusTool {
   private static final String FILE_OPTION = "f";
 
   private static Long masterShutdownTime = 0L;
-  private static String inputStatusFileName = null;
-  private static String outputStatusFileName = null;
-  private static String dirsFileName = null;
-  private static long shutDownTimeArgument = 0L;
+  private static String inputStatusFileName;
+  private static String outputStatusFileName;
+  private static String dirsFileName;
+  private static long shutDownTimeArgument;
 
   private static final Gson GSON = new Gson();
 

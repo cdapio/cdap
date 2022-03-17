@@ -18,7 +18,6 @@ package io.cdap.cdap.common.security;
 
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.proto.id.EntityId;
-import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.StandardPermission;
 
 import java.lang.annotation.ElementType;

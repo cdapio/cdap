@@ -47,7 +47,7 @@ import javax.annotation.Nullable;
 public class WrappedSQLEngineCollection<T, U> implements SQLBackedCollection<U> {
   private final java.util.function.Function<SparkCollection<T>, SparkCollection<U>> mapper;
   private final SQLBackedCollection<T> wrapped;
-  private SparkCollection<U> unwrapped = null;
+  private SparkCollection<U> unwrapped;
 
   public WrappedSQLEngineCollection(SQLBackedCollection<T> wrapped,
                                     java.util.function.Function<SparkCollection<T>, SparkCollection<U>> mapper) {

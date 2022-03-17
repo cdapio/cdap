@@ -44,7 +44,7 @@ public class RetryOnStartFailureService extends AbstractService {
   private volatile Thread startupThread;
   private volatile Service currentDelegate;
   private volatile Service startedService;
-  private volatile boolean stopped = false;
+  private volatile boolean stopped;
 
   /**
    * Creates a new instance.

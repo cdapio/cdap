@@ -64,8 +64,8 @@ public class Table {
    */
   public static final class Builder {
 
-    private List<String> header = null;
-    private Iterable<List<String>> rows = null;
+    private List<String> header;
+    private Iterable<List<String>> rows;
 
     public Builder setHeader(String... header) {
       this.header = Lists.newArrayList(header);

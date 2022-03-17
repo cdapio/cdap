@@ -151,7 +151,7 @@ public class MetadataStoreDatasetTest {
   private static class ScanFunction implements Function<MetadataStoreDataset.KeyValue<Integer>, Boolean> {
     private final List<Integer> values = new ArrayList<>();
     private final int limit;
-    private int numProcessed = 0;
+    private int numProcessed;
     private MDSKey lastKey;
 
     public ScanFunction(int limit) {

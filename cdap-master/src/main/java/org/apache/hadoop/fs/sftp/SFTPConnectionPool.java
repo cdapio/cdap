@@ -40,7 +40,7 @@ class SFTPConnectionPool {
   // live connections than this threshold, any unused connection will be
   // closed.
   private int maxConnection;
-  private int liveConnectionCount = 0;
+  private int liveConnectionCount;
   private HashMap<ConnectionInfo, HashSet<ChannelSftp>> idleConnections =
     new HashMap<ConnectionInfo, HashSet<ChannelSftp>>();
   private HashMap<ChannelSftp, ConnectionInfo> con2infoMap =

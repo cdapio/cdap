@@ -16,8 +16,6 @@
 
 package io.cdap.cdap.internal.events.http;
 
-import java.util.ArrayList;
-
 /**
  * Model for REST response of the Spark Server's stages method.
  */

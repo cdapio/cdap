@@ -263,7 +263,7 @@ public class LogLocation {
     private ILoggingEvent loggingEvent;
     private GenericRecord datum;
 
-    private int count = 0;
+    private int count;
     private long prevTimestamp = -1;
 
     private LogEvent next;

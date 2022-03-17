@@ -46,7 +46,6 @@ import io.cdap.cdap.test.WorkflowManager;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * {@link AbstractApplicationManager} for use in integration tests.

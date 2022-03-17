@@ -590,11 +590,11 @@ public class TransactionContextTest {
   static class DummyTxAware implements TransactionAware {
 
     Transaction tx;
-    boolean started = false;
-    boolean committed = false;
-    boolean checked = false;
-    boolean rolledBack = false;
-    boolean postCommitted = false;
+    boolean started;
+    boolean committed;
+    boolean checked;
+    boolean rolledBack;
+    boolean postCommitted;
     List<byte[]> changes = Lists.newArrayList();
 
     InduceFailure failStartTxOnce = InduceFailure.NoFailure;

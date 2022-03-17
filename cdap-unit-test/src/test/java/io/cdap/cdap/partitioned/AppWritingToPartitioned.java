@@ -119,7 +119,7 @@ public class AppWritingToPartitioned extends AbstractApplication {
       implements ProgramLifecycle<MapReduceTaskContext<String, String>> {
 
       MapReduceTaskContext<String, String> taskContext;
-      String[] outputs = null;
+      String[] outputs;
 
       @Override
       public void initialize(MapReduceTaskContext<String, String> context) throws Exception {

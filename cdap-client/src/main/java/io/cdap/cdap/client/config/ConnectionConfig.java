@@ -154,9 +154,9 @@ public class ConnectionConfig {
    */
   public static class Builder {
     private String hostname = DEFAULT_HOST;
-    private Integer port = null;
+    private Integer port;
     private boolean sslEnabled = DEFAULT_SSL_ENABLED;
-    private String apiPath = null;
+    private String apiPath;
 
     public Builder() {
     }

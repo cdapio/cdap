@@ -158,7 +158,7 @@ public class ServerResource extends ExternalResource {
     public BodyConsumer deploy(HttpRequest request, final HttpResponder responder) throws InterruptedException {
       return new BodyConsumer() {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        int count = 0;
+        int count;
         @Override
         public void chunk(ByteBuf request, HttpResponder responder) {
           count += request.readableBytes();

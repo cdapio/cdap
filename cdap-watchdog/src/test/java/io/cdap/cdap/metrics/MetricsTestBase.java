@@ -40,7 +40,6 @@ import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.metrics.process.MessagingMetricsProcessorManagerService;
 import io.cdap.cdap.metrics.process.loader.MockMetricsWriterModule;
-import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;

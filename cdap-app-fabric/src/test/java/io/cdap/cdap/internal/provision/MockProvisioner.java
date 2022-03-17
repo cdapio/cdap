@@ -181,10 +181,10 @@ public class MockProvisioner implements Provisioner {
    */
   public static class PropertyBuilder {
     private Integer failRetryablyEveryN;
-    private boolean failCreate = false;
-    private boolean failGet = false;
-    private boolean failInit = false;
-    private boolean failDelete = false;
+    private boolean failCreate;
+    private boolean failGet;
+    private boolean failInit;
+    private boolean failDelete;
     private long waitCreateMillis = -1L;
     private long waitDeleteMillis = -1L;
     private ClusterStatus firstClusterStatus;

@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.etl.mock.batch;
 
-import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.engine.sql.dataset.RecordCollection;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDataset;

@@ -50,7 +50,7 @@ public interface PartitionAcceptor {
    */
   final class Limit implements PartitionAcceptor {
 
-    private int count = 0;
+    private int count;
     private int limit;
 
     public Limit(int limit) {
