@@ -30,9 +30,7 @@ import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.support.SupportBundleTaskConfiguration;
 import io.cdap.cdap.support.job.SupportBundleJob;
-import io.cdap.cdap.support.lib.SupportBundleFile;
 import io.cdap.cdap.support.lib.SupportBundleFileNames;
-import io.cdap.cdap.support.lib.SupportBundleFiles;
 import io.cdap.cdap.support.lib.SupportBundleOperationStatus;
 import io.cdap.cdap.support.lib.SupportBundlePipelineStatus;
 import io.cdap.cdap.support.lib.SupportBundleTaskType;
@@ -235,21 +233,6 @@ public class SupportBundleGenerator {
       supportBundleOperationStatus.setSupportBundlePipelineStatus(supportBundlePipelineStatus);
     }
     return supportBundleOperationStatus;
-  }
-
-  public SupportBundleFiles getFilesName(File file) {
-    SupportBundleFiles supportBundleFiles = null;
-    if (file.isDirectory()) {
-      supportBundleFiles = new SupportBundleFiles(file.getAbsoluteFile().getName());
-      File[] dataFiles = file.listFiles((dir, name) -> !name.startsWith(".") && !dir.isHidden() && dir.isDirectory());
-      if (dataFiles != null && dataFiles.length > 0) {
-        for (File dataFile : dataFiles) {
-          SupportBundleFile supportBundleFile = new SupportBundleFile(dataFile.getName());
-          supportBundleFiles.getSupportBundleFileList().add(supportBundleFile);
-        }
-      }
-    }
-    return supportBundleFiles;
   }
 
   /**

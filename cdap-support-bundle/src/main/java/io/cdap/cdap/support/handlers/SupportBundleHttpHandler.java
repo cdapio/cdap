@@ -35,7 +35,6 @@ import io.cdap.cdap.proto.id.SupportBundleEntityId;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.support.lib.SupportBundleExportRequest;
-import io.cdap.cdap.support.lib.SupportBundleFiles;
 import io.cdap.cdap.support.lib.SupportBundleOperationStatus;
 import io.cdap.cdap.support.services.SupportBundleGenerator;
 import io.cdap.cdap.support.status.SupportBundleConfiguration;
@@ -225,76 +224,6 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
     }
     bundleGenerator.deleteOldFolders(uuidFile);
     responder.sendString(HttpResponseStatus.OK, String.format("Successfully deleted bundle %s", uuid));
-  }
-
-  /**
-   * Get the specific bundle file list or certain file content
-   *
-   * @param uuid the bundle id which is also the uuid
-   * @throws IOException is thrown if status.json is not found
-   */
-  @GET
-  @Path("/support/bundle/{uuid}/files")
-  public void getSupportBundleFile(HttpRequest request, HttpResponder responder, @PathParam("uuid") String uuid,
-                                   @DefaultValue("") @QueryParam("folder-name") String folderName,
-                                   @DefaultValue("") @QueryParam("data-file-name") String dataFileName)
-    throws IOException {
-    SupportBundleEntityId supportBundleEntityId = new SupportBundleEntityId(uuid);
-    contextAccessEnforcer.enforce(supportBundleEntityId, StandardPermission.GET);
-    File baseDirectory = new File(cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR));
-    File uuidFile = new File(baseDirectory, uuid);
-    if (!baseDirectory.exists()) {
-      responder.sendString(HttpResponseStatus.OK, "No content in Support Bundle.");
-      return;
-    }
-    if (!uuidFile.exists()) {
-      responder.sendString(HttpResponseStatus.OK, String.format("No such uuid '%s' in Support Bundle.", uuid));
-      return;
-    }
-    if (folderName == null || folderName.length() == 0 || dataFileName == null || dataFileName.length() == 0) {
-      File[] pipelineFiles =
-        uuidFile.listFiles((dir, name) -> !name.startsWith(".") && !dir.isHidden() && dir.isDirectory());
-      List<SupportBundleFiles> supportBundleFilesList = new ArrayList<>();
-      if (pipelineFiles != null && pipelineFiles.length > 0) {
-        for (File pipelineFile : pipelineFiles) {
-          if (folderName != null && folderName.length() > 0) {
-            if (pipelineFile.getName().equals(folderName)) {
-              SupportBundleFiles supportBundleFiles = bundleGenerator.getFilesName(pipelineFile);
-              responder.sendString(HttpResponseStatus.OK, GSON.toJson(supportBundleFiles));
-              return;
-            }
-          } else {
-            SupportBundleFiles supportBundleFiles = bundleGenerator.getFilesName(pipelineFile);
-            if (supportBundleFiles != null) {
-              supportBundleFilesList.add(supportBundleFiles);
-            }
-          }
-        }
-      }
-      responder.sendString(HttpResponseStatus.OK, GSON.toJson(supportBundleFilesList));
-      return;
-    }
-    File folderDirectory = new File(uuidFile, folderName);
-    File[] dataFiles =
-      folderDirectory.listFiles((dir, name) -> !name.startsWith(".") && !dir.isHidden() && dir.isDirectory());
-    if (dataFiles != null && dataFiles.length > 0) {
-      for (File dataFile : dataFiles) {
-        if (dataFile.getName().startsWith(dataFileName)) {
-          BufferedReader br = new BufferedReader(new FileReader(dataFile));
-          StringBuilder sb = new StringBuilder();
-          String line = br.readLine();
-          while (line != null) {
-            sb.append(line).append("\n");
-            line = br.readLine();
-          }
-          responder.sendString(HttpResponseStatus.OK, sb.toString());
-          return;
-        }
-      }
-    }
-    responder.sendString(HttpResponseStatus.NOT_FOUND,
-                         String.format("uuid: %s with pipeline file name: %s and data file name: %s not found", uuid,
-                                       folderName, dataFileName));
   }
 
   /**
