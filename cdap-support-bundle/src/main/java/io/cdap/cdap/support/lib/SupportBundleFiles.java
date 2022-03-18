@@ -19,6 +19,21 @@ package io.cdap.cdap.support.lib;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Contains a specific file name list and this folder name (applicationName)
+ * EX: [{"applicationName":"system-log",
+ *       "supportBundleFileList":[{"fileName":"metadata.service-system-log.txt"},
+ *                                  {"fileName":"explore.service-system-log.txt"},
+ *                                  {"fileName":"metrics-system-log.txt"},
+ *                                  {"fileName":"log.saver-system-log.txt"},
+ *                                  {"fileName":"appfabric-system-log.txt"},
+ *                                  {"fileName":"runtime-system-log.txt"},
+ *                                  {"fileName":"messaging.service-system-log.txt"},
+ *                                  {"fileName":"dataset.executor-system-log.txt"},
+ *                                  {"fileName":"metrics.processor-system-log.txt"},
+ *                                  {"fileName":"transaction-system-log.txt"}]}]
+ *
+ */
 public class SupportBundleFiles {
   private final String applicationName;
   private final List<SupportBundleFile> supportBundleFileList;

@@ -22,6 +22,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.DirUtils;
@@ -66,6 +67,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.annotation.Nullable;
@@ -232,63 +234,55 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
   public void getSupportBundleFile(HttpRequest request, HttpResponder responder, @PathParam("uuid") String uuid,
                                    @DefaultValue("") @QueryParam("folder-name") String folderName,
                                    @DefaultValue("") @QueryParam("data-file-name") String dataFileName)
-    throws IOException {
-    SupportBundleEntityId supportBundleEntityId = new SupportBundleEntityId(uuid);
-    contextAccessEnforcer.enforce(supportBundleEntityId, StandardPermission.GET);
+    throws Exception {
+    SupportBundleEntityId bundleEntityId = new SupportBundleEntityId(uuid);
+    contextAccessEnforcer.enforce(bundleEntityId, StandardPermission.GET);
     File baseDirectory = new File(cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR));
     File uuidFile = new File(baseDirectory, uuid);
     if (!baseDirectory.exists()) {
-      responder.sendString(HttpResponseStatus.OK, "No content in Support Bundle.");
-      return;
+      throw new NotFoundException("No content in Support Bundle.");
     }
     if (!uuidFile.exists()) {
-      responder.sendString(HttpResponseStatus.OK, String.format("No such uuid '%s' in Support Bundle.", uuid));
-      return;
+      throw new NotFoundException(String.format("No such uuid '%s' in Support Bundle.", uuid));
     }
     if (folderName == null || folderName.length() == 0 || dataFileName == null || dataFileName.length() == 0) {
-      File[] pipelineFiles =
-        uuidFile.listFiles((dir, name) -> !name.startsWith(".") && !dir.isHidden() && dir.isDirectory());
-      List<SupportBundleFiles> supportBundleFilesList = new ArrayList<>();
-      if (pipelineFiles != null && pipelineFiles.length > 0) {
-        for (File pipelineFile : pipelineFiles) {
-          if (folderName != null && folderName.length() > 0) {
-            if (pipelineFile.getName().equals(folderName)) {
-              SupportBundleFiles supportBundleFiles = bundleGenerator.getFilesName(pipelineFile);
-              responder.sendString(HttpResponseStatus.OK, GSON.toJson(supportBundleFiles));
-              return;
-            }
-          } else {
-            SupportBundleFiles supportBundleFiles = bundleGenerator.getFilesName(pipelineFile);
-            if (supportBundleFiles != null) {
-              supportBundleFilesList.add(supportBundleFiles);
-            }
+      List<File> pipelineFiles = DirUtils.listFiles(uuidFile)
+        .stream()
+        .filter(file -> !file.getName().startsWith(".") && !file.isHidden() && file.isDirectory())
+        .collect(Collectors.toList());
+      List<SupportBundleFiles> bundleFilesList = new ArrayList<>();
+      for (File pipelineFile : pipelineFiles) {
+        if (folderName != null && folderName.length() > 0 && pipelineFile.getName().equals(folderName)) {
+          SupportBundleFiles bundleFiles = bundleGenerator.getFilesName(pipelineFile);
+          responder.sendString(HttpResponseStatus.OK, GSON.toJson(bundleFiles));
+          return;
+        } else {
+          SupportBundleFiles bundleFiles = bundleGenerator.getFilesName(pipelineFile);
+          if (bundleFiles != null) {
+            bundleFilesList.add(bundleFiles);
           }
         }
       }
-      responder.sendString(HttpResponseStatus.OK, GSON.toJson(supportBundleFilesList));
+      responder.sendString(HttpResponseStatus.OK, GSON.toJson(bundleFilesList));
       return;
     }
     File folderDirectory = new File(uuidFile, folderName);
-    File[] dataFiles =
-      folderDirectory.listFiles((dir, name) -> !name.startsWith(".") && !dir.isHidden() && dir.isDirectory());
-    if (dataFiles != null && dataFiles.length > 0) {
-      for (File dataFile : dataFiles) {
-        if (dataFile.getName().startsWith(dataFileName)) {
-          BufferedReader br = new BufferedReader(new FileReader(dataFile));
-          StringBuilder sb = new StringBuilder();
-          String line = br.readLine();
-          while (line != null) {
-            sb.append(line).append("\n");
-            line = br.readLine();
-          }
-          responder.sendString(HttpResponseStatus.OK, sb.toString());
-          return;
+    List<File> dataFiles = DirUtils.listFiles(folderDirectory)
+      .stream()
+      .filter(file -> !file.getName().startsWith(".") && !file.isHidden() && file.isDirectory())
+      .collect(Collectors.toList());
+    for (File dataFile : dataFiles) {
+      if (dataFile.getName().startsWith(dataFileName)) {
+        StringBuilder sb = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new FileReader(dataFile))) {
+          sb.append(reader.lines().collect(Collectors.joining(System.lineSeparator())));
         }
+        responder.sendString(HttpResponseStatus.OK, sb.toString());
+        return;
       }
     }
-    responder.sendString(HttpResponseStatus.NOT_FOUND,
-                         String.format("uuid: %s with pipeline file name: %s and data file name: %s not found", uuid,
-                                       folderName, dataFileName));
+    throw new NotFoundException(String.format("uuid: %s with pipeline file name: %s and data file name: %s not found",
+                                              uuid, folderName, dataFileName));
   }
 
   /**

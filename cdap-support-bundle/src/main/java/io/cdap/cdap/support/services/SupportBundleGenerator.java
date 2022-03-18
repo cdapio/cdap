@@ -222,12 +222,15 @@ public class SupportBundleGenerator {
     return supportBundleOperationStatus;
   }
 
-  public SupportBundleFiles getFilesName(File file) {
+  public SupportBundleFiles getFilesName(File requestFile) {
     SupportBundleFiles supportBundleFiles = null;
-    if (file.isDirectory()) {
-      supportBundleFiles = new SupportBundleFiles(file.getAbsoluteFile().getName());
-      File[] dataFiles = file.listFiles((dir, name) -> !name.startsWith(".") && !dir.isHidden() && dir.isDirectory());
-      if (dataFiles != null && dataFiles.length > 0) {
+    if (requestFile.isDirectory()) {
+      supportBundleFiles = new SupportBundleFiles(requestFile.getAbsoluteFile().getName());
+      List<File> dataFiles = DirUtils.listFiles(requestFile)
+        .stream()
+        .filter(file -> !file.getName().startsWith(".") && !file.isHidden() && file.isDirectory())
+        .collect(Collectors.toList());
+      if (dataFiles.size() > 0) {
         for (File dataFile : dataFiles) {
           SupportBundleFile supportBundleFile = new SupportBundleFile(dataFile.getName());
           supportBundleFiles.getSupportBundleFileList().add(supportBundleFile);
