@@ -131,6 +131,7 @@ public class ProgramLifecycleService {
   private final CapabilityReader capabilityReader;
   private final int maxConcurrentRuns;
   private final int maxConcurrentLaunching;
+  private final int defaultStopTimeoutSecs;
   private final ArtifactRepository artifactRepository;
   private final RunRecordMonitorService runRecordMonitorService;
   private final boolean userProgramLaunchDisabled;
@@ -147,6 +148,7 @@ public class ProgramLifecycleService {
                           RunRecordMonitorService runRecordMonitorService) {
     this.maxConcurrentRuns = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_RUNS);
     this.maxConcurrentLaunching = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_LAUNCHING);
+    this.defaultStopTimeoutSecs = cConf.getInt(Constants.AppFabric.DEFAULT_STOP_TIMEOUT_SECS);
     this.userProgramLaunchDisabled = cConf.getBoolean(Constants.AppFabric.USER_PROGRAM_LAUNCH_DISABLED, false);
     this.store = store;
     this.profileService = profileService;
@@ -722,7 +724,8 @@ public class ProgramLifecycleService {
    * @throws InterruptedException if there was a problem while waiting for the stop call to complete
    * @throws ExecutionException if there was a problem while waiting for the stop call to complete
    */
-  public void stop(ProgramId programId, @Nullable String runId, int gracefulShutdownSecs) throws Exception {
+  public void stop(ProgramId programId, @Nullable String runId, @Nullable Integer gracefulShutdownSecs)
+    throws Exception {
     issueStop(programId, runId, gracefulShutdownSecs);
   }
 
@@ -744,9 +747,12 @@ public class ProgramLifecycleService {
    *                               the program.
    */
   public Collection<ProgramRunId> issueStop(ProgramId programId, @Nullable String runId,
-                                            int gracefulShutdownSecs) throws Exception {
+                                            @Nullable Integer gracefulShutdownSecs) throws Exception {
     accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), ApplicationPermission.EXECUTE);
 
+    if (gracefulShutdownSecs == null) {
+      gracefulShutdownSecs = this.defaultStopTimeoutSecs;
+    }
     Map<ProgramRunId, RunRecordDetail> activeRunRecords = getActiveRuns(programId, runId);
 
     if (activeRunRecords.isEmpty()) {
