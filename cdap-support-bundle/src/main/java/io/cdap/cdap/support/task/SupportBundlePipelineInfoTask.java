@@ -146,18 +146,18 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
             remoteMetricsSystemClient, runRecordList);
     SupportBundlePipelineRunLogTask supportBundlePipelineRunLogTask =
         new SupportBundlePipelineRunLogTask(appFolderPath, programId, remoteLogsFetcher, runRecordList);
-    
-    String runtimeInfoClassName = supportBundleRuntimeInfoTask.getClass().getName();
-    String runtimeInfoTaskName =
-        uuid.concat(": ").concat(runtimeInfoClassName).concat(": ").concat(appDetail.getName());
-    supportBundleJob.executeTask(supportBundleRuntimeInfoTask, basePath.getPath(), runtimeInfoTaskName,
-        runtimeInfoTaskName);
 
-    String runtimeLogClassName = supportBundlePipelineRunLogTask.getClass().getName();
+    String runtimeInfoClassName = supportBundleRuntimeInfoTask.getClass().getSimpleName();
+    String runtimeInfoTaskName =
+      uuid.concat(": ").concat(runtimeInfoClassName).concat(": ").concat(appDetail.getName());
+    supportBundleJob.executeTask(supportBundleRuntimeInfoTask, basePath.getPath(), runtimeInfoTaskName,
+                                 runtimeInfoClassName);
+
+    String runtimeLogClassName = supportBundlePipelineRunLogTask.getClass().getSimpleName();
     String runtimeLogTaskName =
-        uuid.concat(": ").concat(runtimeLogClassName).concat(": ").concat(appDetail.getName());
+      uuid.concat(": ").concat(runtimeLogClassName).concat(": ").concat(appDetail.getName());
     supportBundleJob.executeTask(supportBundlePipelineRunLogTask, basePath.getPath(), runtimeLogTaskName,
-        runtimeLogClassName);
+                                 runtimeLogClassName);
   }
 
   private Iterable<RunRecord> getRunRecords(ProgramId programId) throws NotFoundException, IOException {

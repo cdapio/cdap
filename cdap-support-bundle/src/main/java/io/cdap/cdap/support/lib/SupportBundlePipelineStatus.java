@@ -23,29 +23,21 @@ import io.cdap.cdap.support.status.CollectionState;
  *
  */
 public class SupportBundlePipelineStatus {
-  private CollectionState systemLogTaskStatus;
-  private CollectionState pipelineInfoTaskStatus;
-  private CollectionState runtimeInfoTaskStatus;
-  private CollectionState runtimeLogTaskStatus;
-  private CollectionState vmInfoTaskStatus;
+  private final CollectionState systemLogTaskStatus;
+  private final CollectionState pipelineInfoTaskStatus;
+  private final CollectionState runtimeInfoTaskStatus;
+  private final CollectionState runtimeLogTaskStatus;
+  private final CollectionState vmInfoTaskStatus;
 
-  public void setSystemLogTaskStatus(CollectionState systemLogTaskStatus) {
+  public SupportBundlePipelineStatus(CollectionState systemLogTaskStatus,
+                                     CollectionState pipelineInfoTaskStatus,
+                                     CollectionState runtimeInfoTaskStatus,
+                                     CollectionState runtimeLogTaskStatus,
+                                     CollectionState vmInfoTaskStatus) {
     this.systemLogTaskStatus = systemLogTaskStatus;
-  }
-
-  public void setPipelineInfoTaskStatus(CollectionState pipelineInfoTaskStatus) {
     this.pipelineInfoTaskStatus = pipelineInfoTaskStatus;
-  }
-
-  public void setRuntimeInfoTaskStatus(CollectionState runtimeInfoTaskStatus) {
     this.runtimeInfoTaskStatus = runtimeInfoTaskStatus;
-  }
-
-  public void setRuntimeLogTaskStatus(CollectionState runtimeLogTaskStatus) {
     this.runtimeLogTaskStatus = runtimeLogTaskStatus;
-  }
-
-  public void setVmInfoTaskStatus(CollectionState vmInfoTaskStatus) {
     this.vmInfoTaskStatus = vmInfoTaskStatus;
   }
 }

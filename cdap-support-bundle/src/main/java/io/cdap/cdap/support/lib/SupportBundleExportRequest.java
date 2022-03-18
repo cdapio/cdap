@@ -27,8 +27,4 @@ public class SupportBundleExportRequest {
   public SupportBundleRequestFileList getSupportBundleRequestFileList() {
     return request;
   }
-
-  public void setSupportBundleRequestFileList(SupportBundleRequestFileList request) {
-    this.request = request;
-  }
 }

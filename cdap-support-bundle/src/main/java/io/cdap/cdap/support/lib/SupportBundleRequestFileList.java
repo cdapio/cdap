@@ -30,8 +30,4 @@ public class SupportBundleRequestFileList {
   public List<String> getFiles() {
     return files;
   }
-
-  public void setFiles(List<String> files) {
-    this.files = files;
-  }
 }

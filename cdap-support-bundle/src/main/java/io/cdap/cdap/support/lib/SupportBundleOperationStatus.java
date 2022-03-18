@@ -38,11 +38,15 @@ import io.cdap.cdap.support.status.CollectionState;
  */
 public class SupportBundleOperationStatus {
   private final String bundleId;
-  private CollectionState bundleStatus;
-  private SupportBundlePipelineStatus supportBundlePipelineStatus;
+  private final CollectionState bundleStatus;
+  private final SupportBundlePipelineStatus supportBundlePipelineStatus;
 
-  public SupportBundleOperationStatus(String bundleId) {
+  public SupportBundleOperationStatus(String bundleId,
+                                      CollectionState bundleStatus,
+                                      SupportBundlePipelineStatus supportBundlePipelineStatus) {
     this.bundleId = bundleId;
+    this.bundleStatus = bundleStatus;
+    this.supportBundlePipelineStatus = supportBundlePipelineStatus;
   }
 
   public String getBundleId() {
@@ -53,15 +57,7 @@ public class SupportBundleOperationStatus {
     return bundleStatus;
   }
 
-  public void setBundleStatus(CollectionState bundleStatus) {
-    this.bundleStatus = bundleStatus;
-  }
-
   public SupportBundlePipelineStatus getSupportBundlePipelineStatus() {
     return supportBundlePipelineStatus;
-  }
-
-  public void setSupportBundlePipelineStatus(SupportBundlePipelineStatus supportBundlePipelineStatus) {
-    this.supportBundlePipelineStatus = supportBundlePipelineStatus;
   }
 }

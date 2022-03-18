@@ -22,6 +22,7 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import io.cdap.cdap.common.NamespaceNotFoundException;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.namespace.RemoteNamespaceQueryClient;
@@ -30,6 +31,7 @@ import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.support.SupportBundleTaskConfiguration;
 import io.cdap.cdap.support.job.SupportBundleJob;
+import io.cdap.cdap.support.lib.SupportBundleExportRequest;
 import io.cdap.cdap.support.lib.SupportBundleFileNames;
 import io.cdap.cdap.support.lib.SupportBundleOperationStatus;
 import io.cdap.cdap.support.lib.SupportBundlePipelineStatus;
@@ -49,10 +51,16 @@ import java.io.Reader;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.security.DigestOutputStream;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -60,6 +68,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Support bundle service to generate base path, uuid and trigger the job to execute tasks.
@@ -146,7 +156,8 @@ public class SupportBundleGenerator {
   /** Ensure previous executor has finished all the jobs and tasks before starting a new one */
   public String ensurePreviousExecutorFinish() throws IOException {
     File baseDirectory = new File(localDir);
-    int fileCount = DirUtils.list(baseDirectory).size();
+    int fileCount = DirUtils.listFiles(baseDirectory)
+      .stream().filter(file -> !file.isHidden() && file.isDirectory()).collect(Collectors.toList()).size();
     if (fileCount == 0) {
       return null;
     }
@@ -187,11 +198,14 @@ public class SupportBundleGenerator {
   /**
    * Deletes select folder
    */
-  public void deleteSelectFolder(File baseDirectory) throws IOException {
+  public void deleteBundle(File baseDirectory) throws IOException {
     DirUtils.deleteDirectoryContents(baseDirectory);
   }
 
-  public SupportBundleOperationStatus getSingleBundleJson(String uuid) throws IOException {
+  /**
+   * Get single support bundle overall status
+   */
+  public SupportBundleOperationStatus getBundle(String uuid) throws IOException {
     File baseDirectory = new File(cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR));
     File uuidFile = new File(baseDirectory, uuid);
     if (!baseDirectory.exists()) {
@@ -203,33 +217,52 @@ public class SupportBundleGenerator {
       return null;
     }
 
-    SupportBundleOperationStatus supportBundleOperationStatus = new SupportBundleOperationStatus(uuidFile.getName());
     File statusFile = new File(uuidFile, "status.json");
+    SupportBundleOperationStatus supportBundleOperationStatus = null;
     if (statusFile.exists()) {
+      SupportBundlePipelineStatus supportBundlePipelineStatus;
       SupportBundleStatus supportBundleStatus = getBundleStatus(uuidFile);
-      supportBundleOperationStatus.setBundleStatus(supportBundleStatus.getStatus());
       Set<SupportBundleTaskStatus> supportBundleTaskStatusSet = supportBundleStatus.getTasks();
-      SupportBundlePipelineStatus supportBundlePipelineStatus = new SupportBundlePipelineStatus();
-      for (SupportBundleTaskStatus supportBundleTaskStatus : supportBundleTaskStatusSet) {
-        collectSupportBundleTaskStatus(supportBundlePipelineStatus, supportBundleTaskStatus);
-        if (supportBundleTaskStatus.getSubTasks().size() > 0) {
-          for (SupportBundleTaskStatus subTaskSupportBundleTaskStatus : supportBundleTaskStatus.getSubTasks()) {
-            collectSupportBundleTaskStatus(supportBundlePipelineStatus, subTaskSupportBundleTaskStatus);
-          }
-        }
-      }
-      supportBundleOperationStatus.setSupportBundlePipelineStatus(supportBundlePipelineStatus);
+      supportBundlePipelineStatus = collectSupportBundleTaskStatus(supportBundleTaskStatusSet);
+      supportBundleOperationStatus =
+        new SupportBundleOperationStatus(uuidFile.getName(), supportBundleStatus.getStatus(),
+                                         supportBundlePipelineStatus);
     }
     return supportBundleOperationStatus;
   }
-  
+
+  public String createBundleZip(String uuid, Path tmpPath, SupportBundleExportRequest bundleExportRequest)
+    throws Exception {
+    List<String> requestFiles = bundleExportRequest.getSupportBundleRequestFileList().getFiles();
+    File uuidFile = new File(cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR), uuid);
+    MessageDigest digest = null;
+    if (!uuidFile.exists()) {
+      throw new NotFoundException(String.format("This bundle id %s is not existed", uuid));
+    }
+    digest = MessageDigest.getInstance("SHA-256");
+    try (ZipOutputStream zipOut = new ZipOutputStream(
+      new DigestOutputStream(Files.newOutputStream(tmpPath, StandardOpenOption.TRUNCATE_EXISTING), digest))) {
+      for (String filePath : requestFiles) {
+        File requestFile = new File(uuidFile, filePath);
+        if (requestFile.exists()) {
+          ZipEntry entry = new ZipEntry(uuidFile.getName() + "/" + filePath);
+          zipOut.putNextEntry(entry);
+          Files.copy(requestFile.toPath(), zipOut);
+          zipOut.closeEntry();
+        }
+      }
+    }
+    return String.format("%s=%s", digest.getAlgorithm().toLowerCase(),
+                         Base64.getEncoder().encodeToString(digest.digest()));
+  }
+
   /**
    * Gets oldest folder from the root directory
    */
   private File getOldestFolder(File baseDirectory) {
     List<File> uuidFiles = DirUtils.listFiles(baseDirectory)
       .stream()
-      .filter(file -> !file.getName().startsWith(".") && !file.isHidden() && file.isDirectory())
+      .filter(file -> !file.isHidden() && file.isDirectory())
       .collect(Collectors.toList());
     return Collections.min(uuidFiles, Comparator.<File, Boolean>comparing(f1 -> {
       try {
@@ -275,27 +308,48 @@ public class SupportBundleGenerator {
     return namespace;
   }
 
-  private void collectSupportBundleTaskStatus(SupportBundlePipelineStatus supportBundlePipelineStatus,
-                                              SupportBundleTaskStatus supportBundleTaskStatus) {
-    int lastIndexOfDot = supportBundleTaskStatus.getType().lastIndexOf(".");
-    SupportBundleTaskType taskType =
-      SupportBundleTaskType.valueOf(supportBundleTaskStatus.getType().substring(lastIndexOfDot + 1));
-    switch (taskType) {
-      case SupportBundleSystemLogTask:
-        supportBundlePipelineStatus.setSystemLogTaskStatus(supportBundleTaskStatus.getStatus());
-        break;
-      case SupportBundlePipelineInfoTask:
-        supportBundlePipelineStatus.setPipelineInfoTaskStatus(supportBundleTaskStatus.getStatus());
-        break;
-      case SupportBundleRuntimeInfoTask:
-        supportBundlePipelineStatus.setRuntimeInfoTaskStatus(supportBundleTaskStatus.getStatus());
-        break;
-      case SupportBundlePipelineRunLogTask:
-        supportBundlePipelineStatus.setRuntimeLogTaskStatus(supportBundleTaskStatus.getStatus());
-        break;
-      case SupportBundleVMInfoTask:
-        supportBundlePipelineStatus.setVmInfoTaskStatus(supportBundleTaskStatus.getStatus());
-        break;
+  private SupportBundlePipelineStatus collectSupportBundleTaskStatus(
+    Set<SupportBundleTaskStatus> supportBundleTaskStatusSet) {
+    CollectionState systemLogTaskStatus = CollectionState.INVALID;
+    CollectionState pipelineInfoTaskStatus = CollectionState.INVALID;
+    CollectionState runtimeInfoTaskStatus = CollectionState.INVALID;
+    CollectionState runtimeLogTaskStatus = CollectionState.INVALID;
+    CollectionState vmInfoTaskStatus = CollectionState.INVALID;
+    Map<SupportBundleTaskType, CollectionState> taskStatusMap = new HashMap<>();
+    for (SupportBundleTaskStatus supportBundleTaskStatus : supportBundleTaskStatusSet) {
+      SupportBundleTaskType currentTaskType = SupportBundleTaskType.valueOf(supportBundleTaskStatus.getType());
+      taskStatusMap.put(currentTaskType, supportBundleTaskStatus.getStatus());
+      if (supportBundleTaskStatus.getSubTasks().size() > 0) {
+        for (SupportBundleTaskStatus subTaskSupportBundleTaskStatus : supportBundleTaskStatus.getSubTasks()) {
+          SupportBundleTaskType currentSubTaskType =
+            SupportBundleTaskType.valueOf(subTaskSupportBundleTaskStatus.getType());
+          taskStatusMap.put(currentSubTaskType, subTaskSupportBundleTaskStatus.getStatus());
+        }
+      }
     }
+
+    for (SupportBundleTaskType taskType : taskStatusMap.keySet()) {
+      switch (taskType) {
+        case SupportBundleSystemLogTask:
+          systemLogTaskStatus = taskStatusMap.get(taskType);
+          break;
+        case SupportBundlePipelineInfoTask:
+          pipelineInfoTaskStatus = taskStatusMap.get(taskType);
+          break;
+        case SupportBundleRuntimeInfoTask:
+          runtimeInfoTaskStatus = taskStatusMap.get(taskType);
+          break;
+        case SupportBundlePipelineRunLogTask:
+          runtimeLogTaskStatus = taskStatusMap.get(taskType);
+          break;
+        case SupportBundleVMInfoTask:
+          vmInfoTaskStatus = taskStatusMap.get(taskType);
+          break;
+      }
+    }
+    SupportBundlePipelineStatus supportBundlePipelineStatus =
+      new SupportBundlePipelineStatus(systemLogTaskStatus, pipelineInfoTaskStatus, runtimeInfoTaskStatus,
+                                      runtimeLogTaskStatus, vmInfoTaskStatus);
+    return supportBundlePipelineStatus;
   }
 }
