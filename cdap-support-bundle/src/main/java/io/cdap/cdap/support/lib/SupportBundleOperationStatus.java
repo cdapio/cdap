@@ -18,6 +18,24 @@ package io.cdap.cdap.support.lib;
 
 import io.cdap.cdap.support.status.CollectionState;
 
+/**
+ * Return response for all individual support bundles status under the support bundle folder
+ * EX: [{"bundleId":"634cb763-a63c-4097-a61d-cca1fea1ff9e",
+ *      "bundleStatus":"FINISHED",
+ *      "supportBundlePipelineStatus":{"systemLogTaskStatus":"FINISHED",
+ *                                     "pipelineInfoTaskStatus":"FINISHED",
+ *                                     "runtimeInfoTaskStatus":"FINISHED",
+ *                                     "runtimeLogTaskStatus":"FINISHED",
+ *                                     "vmInfoTaskStatus":"FINISHED"}},
+ *     {"bundleId":"046ad1ff-28fe-4a1e-b2c4-cebe9b548208",
+ *      "bundleStatus":"FINISHED",
+ *      "supportBundlePipelineStatus":{"systemLogTaskStatus":"FINISHED",
+ *                                     "pipelineInfoTaskStatus":"FINISHED",
+ *                                     "runtimeInfoTaskStatus":"FINISHED",
+ *                                     "runtimeLogTaskStatus":"FINISHED",
+ *                                     "vmInfoTaskStatus":"FINISHED"}}]
+ *
+ */
 public class SupportBundleOperationStatus {
   private final String bundleId;
   private CollectionState bundleStatus;

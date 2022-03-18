@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.support.lib;
 
+/**
+ * Customer request for a list of files' names
+ * EX: {“request”:"files":["testpipeline/82b21b3e-11c6-11ec-81af-0000009bb312.json"]}}
+ *
+ */
 public class SupportBundleExportRequest {
   private SupportBundleRequestFileList request;
 

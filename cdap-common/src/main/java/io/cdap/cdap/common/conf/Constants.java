@@ -1971,9 +1971,4 @@ public final class Constants {
     public static final String BOSS_THREADS = "artifact.cache.boss.threads";
     public static final String WORKER_THREADS = "artifact.cache.worker.threads";
   }
-
-  public static final class AppFabricHealthCheck {
-    public static final String SERVICE_DESCRIPTION = "Service to generate health check for app fabric operation.";
-    public static final String APP_FABRIC_HEALTH_CHECK_SERVICE = "health.check.appfabric.service";
-  }
 }

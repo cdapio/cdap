@@ -18,6 +18,10 @@ package io.cdap.cdap.support.lib;
 
 import io.cdap.cdap.support.status.CollectionState;
 
+/**
+ * Collection of Support bundle task status
+ *
+ */
 public class SupportBundlePipelineStatus {
   private CollectionState systemLogTaskStatus;
   private CollectionState pipelineInfoTaskStatus;

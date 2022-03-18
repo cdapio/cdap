@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.support.lib;
 
+/**
+ * Contains specific file name inside support bundle
+ * EX: status.json
+ *
+ */
 public class SupportBundleFile {
   private final String fileName;
 

@@ -174,7 +174,7 @@ public class SupportBundleGenerator {
    * Deletes old folders after certain number of folders exist
    */
   @VisibleForTesting
-  void deleteOldFoldersIfExceedLimit(File baseDirectory) throws IOException {
+  public void deleteOldFoldersIfExceedLimit(File baseDirectory) throws IOException {
     int fileCount = DirUtils.list(baseDirectory).size();
     // We want to keep consistent number of bundle to provide to customer
     int folderMaxNumber = cConf.getInt(Constants.SupportBundle.MAX_FOLDER_SIZE);
@@ -185,22 +185,10 @@ public class SupportBundleGenerator {
   }
 
   /**
-   * Deletes old folders after certain number of folders exist
+   * Deletes select folder
    */
-  public void deleteOldFolders(File oldFilesDirectory) {
-    String[] entries = oldFilesDirectory.list();
-    if (entries != null && entries.length > 0) {
-      for (String s : entries) {
-        File currentFile = new File(oldFilesDirectory.getPath(), s);
-        // Recursive the full directory and delete all old files
-        if (currentFile.isDirectory()) {
-          deleteOldFolders(currentFile);
-        } else {
-          currentFile.delete();
-        }
-      }
-    }
-    oldFilesDirectory.delete();
+  public void deleteSelectFolder(File baseDirectory) throws IOException {
+    DirUtils.deleteDirectoryContents(baseDirectory);
   }
 
   public SupportBundleOperationStatus getSingleBundleJson(String uuid) throws IOException {
@@ -234,7 +222,7 @@ public class SupportBundleGenerator {
     }
     return supportBundleOperationStatus;
   }
-
+  
   /**
    * Gets oldest folder from the root directory
    */
