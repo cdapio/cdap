@@ -23,5 +23,6 @@ public enum SupportBundleTaskType {
   SupportBundleSystemLogTask,
   SupportBundlePipelineInfoTask,
   SupportBundleRuntimeInfoTask,
-  SupportBundlePipelineRunLogTask;
+  SupportBundlePipelineRunLogTask,
+  SupportBundleVMInfoTask;
 }

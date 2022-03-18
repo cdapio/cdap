@@ -270,9 +270,11 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
             }
           }
         }
-      } responder.sendString(HttpResponseStatus.OK, GSON.toJson(supportBundleFilesList));
+      }
+      responder.sendString(HttpResponseStatus.OK, GSON.toJson(supportBundleFilesList));
       return;
-    } File folderDirectory = new File(uuidFile, folderName);
+    }
+    File folderDirectory = new File(uuidFile, folderName);
     File[] dataFiles =
       folderDirectory.listFiles((dir, name) -> !name.startsWith(".") && !dir.isHidden() && dir.isDirectory());
     if (dataFiles != null && dataFiles.length > 0) {

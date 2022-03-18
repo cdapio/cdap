@@ -19,9 +19,6 @@ package io.cdap.cdap.support.services;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import io.cdap.cdap.common.NamespaceNotFoundException;
@@ -324,6 +321,9 @@ public class SupportBundleGenerator {
         break;
       case SupportBundlePipelineRunLogTask:
         supportBundlePipelineStatus.setRuntimeLogTaskStatus(supportBundleTaskStatus.getStatus());
+        break;
+      case SupportBundleVMInfoTask:
+        supportBundlePipelineStatus.setVmInfoTaskStatus(supportBundleTaskStatus.getStatus());
         break;
     }
   }

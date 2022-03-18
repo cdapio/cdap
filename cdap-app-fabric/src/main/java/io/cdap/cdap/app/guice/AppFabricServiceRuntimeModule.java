@@ -238,8 +238,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                servicesNamesBinder.addBinding().toInstance(Constants.Service.LOGSAVER);
                                servicesNamesBinder.addBinding().toInstance(Constants.Service.TRANSACTION_HTTP);
                                servicesNamesBinder.addBinding().toInstance(Constants.Service.RUNTIME);
-                               servicesNamesBinder.addBinding()
-                                 .toInstance(Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE);
 
                                // TODO: Uncomment after CDAP-7688 is resolved
                                // servicesNamesBinder.addBinding().toInstance(Constants.Service.MESSAGING_SERVICE);
@@ -290,8 +288,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                                           Names.named("appfabric.services.names"));
                                servicesNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
                                servicesNamesBinder.addBinding().toInstance(Constants.Service.SECURE_STORE_SERVICE);
-                               servicesNamesBinder.addBinding()
-                                 .toInstance(Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE);
 
                                Multibinder<String> handlerHookNamesBinder =
                                  Multibinder.newSetBinder(binder(), String.class,
