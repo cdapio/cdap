@@ -23,6 +23,7 @@ public class SupportBundlePipelineStatus {
   private CollectionState pipelineInfoTaskStatus;
   private CollectionState runtimeInfoTaskStatus;
   private CollectionState runtimeLogTaskStatus;
+  private CollectionState vmInfoTaskStatus;
 
   public void setSystemLogTaskStatus(CollectionState systemLogTaskStatus) {
     this.systemLogTaskStatus = systemLogTaskStatus;
@@ -40,19 +41,7 @@ public class SupportBundlePipelineStatus {
     this.runtimeLogTaskStatus = runtimeLogTaskStatus;
   }
 
-  public CollectionState getSystemLogTaskStatus() {
-    return systemLogTaskStatus;
-  }
-
-  public CollectionState getPipelineInfoTaskStatus() {
-    return pipelineInfoTaskStatus;
-  }
-
-  public CollectionState getRuntimeInfoTaskStatus() {
-    return runtimeInfoTaskStatus;
-  }
-
-  public CollectionState getRuntimeLogTaskStatus() {
-    return runtimeLogTaskStatus;
+  public void setVmInfoTaskStatus(CollectionState vmInfoTaskStatus) {
+    this.vmInfoTaskStatus = vmInfoTaskStatus;
   }
 }

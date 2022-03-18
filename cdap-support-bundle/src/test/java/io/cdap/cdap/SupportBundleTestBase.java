@@ -31,21 +31,29 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.api.Config;
+import io.cdap.cdap.api.metrics.MetricStore;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.app.program.ManifestFields;
 import io.cdap.cdap.app.store.ServiceStore;
+import io.cdap.cdap.client.DatasetClient;
+import io.cdap.cdap.client.MetadataClient;
+import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
+import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
 import io.cdap.cdap.gateway.handlers.CommonHandlers;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -65,6 +73,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.scheduler.Scheduler;
+import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
@@ -83,6 +92,7 @@ import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import io.cdap.http.HttpHandler;
 import org.apache.tephra.TransactionManager;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
@@ -132,11 +142,17 @@ public abstract class SupportBundleTestBase {
   private static MetricsCollectionService metricsCollectionService;
   private static DatasetOpExecutorService dsOpService;
   private static DatasetService datasetService;
+  private static TransactionSystemClient txClient;
   private static ServiceStore serviceStore;
   private static MetadataStorage metadataStorage;
   private static MetadataService metadataService;
+  private static DefaultMetadataServiceClient metadataServiceClient;
   private static MetadataSubscriberService metadataSubscriberService;
   private static LocationFactory locationFactory;
+  private static DatasetClient datasetClient;
+  private static MetadataClient metadataClient;
+  private static MetricStore metricStore;
+  private static RemoteClientFactory remoteClientFactory;
   private static LogQueryService logQueryService;
   private static SupportBundleInternalService supportBundleInternalService;
 
@@ -197,7 +213,7 @@ public abstract class SupportBundleTestBase {
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
     appFabricEndpointStrategy = new RandomEndpointStrategy(
       () -> discoveryClient.discover(Constants.Service.APP_FABRIC_HTTP));
-
+    txClient = injector.getInstance(TransactionSystemClient.class);
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     metricsCollectionService.startAndWait();
     serviceStore = injector.getInstance(ServiceStore.class);
@@ -209,6 +225,12 @@ public abstract class SupportBundleTestBase {
     logQueryService = injector.getInstance(LogQueryService.class);
     logQueryService.startAndWait();
     locationFactory = getInjector().getInstance(LocationFactory.class);
+    datasetClient = new DatasetClient(getClientConfig(discoveryClient, Constants.Service.DATASET_MANAGER));
+    remoteClientFactory = new RemoteClientFactory(discoveryClient,
+                                                  new DefaultInternalAuthenticator(new AuthenticationTestContext()));
+    metadataClient = new MetadataClient(getClientConfig(discoveryClient, Constants.Service.METADATA_SERVICE));
+    metadataServiceClient = new DefaultMetadataServiceClient(remoteClientFactory);
+    metricStore = injector.getInstance(MetricStore.class);
     supportBundleInternalService = injector.getInstance(SupportBundleInternalService.class);
     supportBundleInternalService.startAndWait();
 
@@ -400,5 +422,17 @@ public abstract class SupportBundleTestBase {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, cls, manifest);
     Locations.linkOrCopyOverwrite(appJar, destination);
     return destination;
+  }
+
+  private static ClientConfig getClientConfig(DiscoveryServiceClient discoveryClient, String service) {
+    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(() -> discoveryClient.discover(service));
+    Discoverable discoverable = endpointStrategy.pick(1, TimeUnit.SECONDS);
+    Assert.assertNotNull(discoverable);
+    ConnectionConfig connectionConfig = ConnectionConfig.builder()
+      .setHostname(discoverable.getSocketAddress().getHostName())
+      .setPort(discoverable.getSocketAddress().getPort())
+      .setSSLEnabled(URIScheme.HTTPS.isMatch(discoverable))
+      .build();
+    return ClientConfig.builder().setVerifySSLCert(false).setConnectionConfig(connectionConfig).build();
   }
 }
