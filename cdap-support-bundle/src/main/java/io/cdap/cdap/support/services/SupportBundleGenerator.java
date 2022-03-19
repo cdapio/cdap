@@ -60,6 +60,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -315,33 +316,37 @@ public class SupportBundleGenerator {
     CollectionState runtimeInfoTaskStatus = CollectionState.INVALID;
     CollectionState runtimeLogTaskStatus = CollectionState.INVALID;
     CollectionState vmInfoTaskStatus = CollectionState.INVALID;
-    
+    // Expand all supportBundleTaskStatusSet and map each individual taskType and subTaskType with corresponding status
+    Map<SupportBundleTaskType, CollectionState> taskStatusMap = new HashMap<>();
     for (SupportBundleTaskStatus supportBundleTaskStatus : supportBundleTaskStatusSet) {
       SupportBundleTaskType currentTaskType = SupportBundleTaskType.valueOf(supportBundleTaskStatus.getType());
-      switch (currentTaskType) {
-        case SupportBundleSystemLogTask:
-          systemLogTaskStatus = supportBundleTaskStatus.getStatus();
-          break;
-        case SupportBundlePipelineInfoTask:
-          pipelineInfoTaskStatus = supportBundleTaskStatus.getStatus();
-          break;
-        case SupportBundleVMInfoTask:
-          vmInfoTaskStatus = supportBundleTaskStatus.getStatus();
-          break;
-      }
+      taskStatusMap.put(currentTaskType, supportBundleTaskStatus.getStatus());
       if (supportBundleTaskStatus.getSubTasks().size() > 0) {
         for (SupportBundleTaskStatus subTaskSupportBundleTaskStatus : supportBundleTaskStatus.getSubTasks()) {
           SupportBundleTaskType currentSubTaskType =
             SupportBundleTaskType.valueOf(subTaskSupportBundleTaskStatus.getType());
-          switch (currentSubTaskType) {
-            case SupportBundleRuntimeInfoTask:
-              runtimeInfoTaskStatus = subTaskSupportBundleTaskStatus.getStatus();
-              break;
-            case SupportBundlePipelineRunLogTask:
-              runtimeLogTaskStatus = subTaskSupportBundleTaskStatus.getStatus();
-              break;
-          }
+          taskStatusMap.put(currentSubTaskType, subTaskSupportBundleTaskStatus.getStatus());
         }
+      }
+    }
+
+    for (SupportBundleTaskType taskType : taskStatusMap.keySet()) {
+      switch (taskType) {
+        case SupportBundleSystemLogTask:
+          systemLogTaskStatus = taskStatusMap.get(taskType);
+          break;
+        case SupportBundlePipelineInfoTask:
+          pipelineInfoTaskStatus = taskStatusMap.get(taskType);
+          break;
+        case SupportBundleRuntimeInfoTask:
+          runtimeInfoTaskStatus = taskStatusMap.get(taskType);
+          break;
+        case SupportBundlePipelineRunLogTask:
+          runtimeLogTaskStatus = taskStatusMap.get(taskType);
+          break;
+        case SupportBundleVMInfoTask:
+          vmInfoTaskStatus = taskStatusMap.get(taskType);
+          break;
       }
     }
     SupportBundlePipelineStatus supportBundlePipelineStatus =
