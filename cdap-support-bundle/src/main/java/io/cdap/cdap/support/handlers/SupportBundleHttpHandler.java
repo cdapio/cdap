@@ -146,7 +146,7 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
   @GET
   @Path("/support/bundles")
   public void listSupportBundles(HttpRequest request, HttpResponder responder) throws Exception {
-    // ensure the user has authentication to create supportBundle
+    // Ensure the user is authorized to list support bundle statuses
     contextAccessEnforcer.enforceOnParent(EntityType.SUPPORT_BUNDLE, InstanceId.SELF, StandardPermission.LIST);
     File baseDirectory = new File(cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR));
     if (!baseDirectory.exists()) {
@@ -197,11 +197,7 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
     throws Exception {
     SupportBundleEntityId bundleEntityId = new SupportBundleEntityId(uuid);
     contextAccessEnforcer.enforce(bundleEntityId, StandardPermission.DELETE);
-    File baseDirectory = new File(cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR));
-    File uuidFile = new File(baseDirectory, uuid);
-    if (!baseDirectory.exists()) {
-      throw new NotFoundException("No content in Support Bundle.");
-    }
+    File uuidFile = bundleGenerator.getUUIDFile(uuid);
     if (!uuidFile.exists()) {
       throw new NotFoundException(String.format("No such uuid '%s' in Support Bundle.", uuid));
     }

@@ -60,7 +60,6 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -206,12 +205,7 @@ public class SupportBundleGenerator {
    * Get single support bundle overall status
    */
   public SupportBundleOperationStatus getBundle(String uuid) throws IOException {
-    File baseDirectory = new File(cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR));
-    File uuidFile = new File(baseDirectory, uuid);
-    if (!baseDirectory.exists()) {
-      LOG.debug("No content in Support Bundle.");
-      return null;
-    }
+    File uuidFile = getUUIDFile(uuid);
     if (!uuidFile.exists()) {
       LOG.debug(String.format("No such uuid '%s' in Support Bundle.", uuid));
       return null;
@@ -234,7 +228,8 @@ public class SupportBundleGenerator {
   public String createBundleZip(String uuid, Path tmpPath, SupportBundleExportRequest bundleExportRequest)
     throws Exception {
     List<String> requestFiles = bundleExportRequest.getSupportBundleRequestFileList().getFiles();
-    File uuidFile = new File(cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR), uuid);
+
+    File uuidFile = getUUIDFile(uuid);
     MessageDigest digest = null;
     if (!uuidFile.exists()) {
       throw new NotFoundException(String.format("This bundle id %s is not existed", uuid));
@@ -254,6 +249,11 @@ public class SupportBundleGenerator {
     }
     return String.format("%s=%s", digest.getAlgorithm().toLowerCase(),
                          Base64.getEncoder().encodeToString(digest.digest()));
+  }
+
+  public File getUUIDFile(String uuid) {
+    File baseDirectory = new File(cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR));
+    return new File(baseDirectory, uuid);
   }
 
   /**
@@ -315,36 +315,33 @@ public class SupportBundleGenerator {
     CollectionState runtimeInfoTaskStatus = CollectionState.INVALID;
     CollectionState runtimeLogTaskStatus = CollectionState.INVALID;
     CollectionState vmInfoTaskStatus = CollectionState.INVALID;
-    Map<SupportBundleTaskType, CollectionState> taskStatusMap = new HashMap<>();
+    
     for (SupportBundleTaskStatus supportBundleTaskStatus : supportBundleTaskStatusSet) {
       SupportBundleTaskType currentTaskType = SupportBundleTaskType.valueOf(supportBundleTaskStatus.getType());
-      taskStatusMap.put(currentTaskType, supportBundleTaskStatus.getStatus());
+      switch (currentTaskType) {
+        case SupportBundleSystemLogTask:
+          systemLogTaskStatus = supportBundleTaskStatus.getStatus();
+          break;
+        case SupportBundlePipelineInfoTask:
+          pipelineInfoTaskStatus = supportBundleTaskStatus.getStatus();
+          break;
+        case SupportBundleVMInfoTask:
+          vmInfoTaskStatus = supportBundleTaskStatus.getStatus();
+          break;
+      }
       if (supportBundleTaskStatus.getSubTasks().size() > 0) {
         for (SupportBundleTaskStatus subTaskSupportBundleTaskStatus : supportBundleTaskStatus.getSubTasks()) {
           SupportBundleTaskType currentSubTaskType =
             SupportBundleTaskType.valueOf(subTaskSupportBundleTaskStatus.getType());
-          taskStatusMap.put(currentSubTaskType, subTaskSupportBundleTaskStatus.getStatus());
+          switch (currentSubTaskType) {
+            case SupportBundleRuntimeInfoTask:
+              runtimeInfoTaskStatus = subTaskSupportBundleTaskStatus.getStatus();
+              break;
+            case SupportBundlePipelineRunLogTask:
+              runtimeLogTaskStatus = subTaskSupportBundleTaskStatus.getStatus();
+              break;
+          }
         }
-      }
-    }
-
-    for (SupportBundleTaskType taskType : taskStatusMap.keySet()) {
-      switch (taskType) {
-        case SupportBundleSystemLogTask:
-          systemLogTaskStatus = taskStatusMap.get(taskType);
-          break;
-        case SupportBundlePipelineInfoTask:
-          pipelineInfoTaskStatus = taskStatusMap.get(taskType);
-          break;
-        case SupportBundleRuntimeInfoTask:
-          runtimeInfoTaskStatus = taskStatusMap.get(taskType);
-          break;
-        case SupportBundlePipelineRunLogTask:
-          runtimeLogTaskStatus = taskStatusMap.get(taskType);
-          break;
-        case SupportBundleVMInfoTask:
-          vmInfoTaskStatus = taskStatusMap.get(taskType);
-          break;
       }
     }
     SupportBundlePipelineStatus supportBundlePipelineStatus =
