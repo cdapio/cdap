@@ -317,6 +317,7 @@ public class SupportBundleGenerator {
     CollectionState runtimeLogTaskStatus = CollectionState.INVALID;
     CollectionState vmInfoTaskStatus = CollectionState.INVALID;
     // Expand all supportBundleTaskStatusSet and map each individual taskType and subTaskType with corresponding status
+    // SupportBundleRuntimeInfoTask & SupportBundlePipelineRunLogTask are two subtasks of SupportBundlePipelineInfoTask
     Map<SupportBundleTaskType, CollectionState> taskStatusMap = new HashMap<>();
     for (SupportBundleTaskStatus supportBundleTaskStatus : supportBundleTaskStatusSet) {
       SupportBundleTaskType currentTaskType = SupportBundleTaskType.valueOf(supportBundleTaskStatus.getType());

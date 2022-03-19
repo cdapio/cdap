@@ -40,19 +40,21 @@ import io.cdap.cdap.support.metadata.RemoteMonitorServicesFetcher;
 import io.cdap.cdap.support.task.SupportBundleSystemLogTask;
 import io.cdap.common.http.HttpResponse;
 import org.apache.twill.api.RunId;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public class SupportBundleSystemLogTaskTest extends SupportBundleTestBase {
-  private static final NamespaceId namespaceId = NamespaceId.DEFAULT;
-
+  private static final NamespaceId NAMESPACE = new NamespaceId("test");
   private static CConfiguration configuration;
   private static Store store;
   private static RemoteLogsFetcher remoteLogsFetcher;
@@ -66,6 +68,12 @@ public class SupportBundleSystemLogTaskTest extends SupportBundleTestBase {
     store = injector.getInstance(DefaultStore.class);
     remoteLogsFetcher = injector.getInstance(RemoteLogsFetcher.class);
     remoteMonitorServicesFetcher = injector.getInstance(RemoteMonitorServicesFetcher.class);
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, createNamespace(NAMESPACE).getResponseCode());
+  }
+
+  @After
+  public void cleanup() throws IOException {
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, deleteNamespace(NAMESPACE).getResponseCode());
   }
 
   @Test
@@ -86,20 +94,21 @@ public class SupportBundleSystemLogTaskTest extends SupportBundleTestBase {
   }
 
   private String generateWorkflowLog() throws Exception {
-    deploy(AppWithWorkflow.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, namespaceId.getNamespace());
+    deploy(AppWithWorkflow.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, NAMESPACE.getNamespace());
     long startTime = System.currentTimeMillis();
 
-    ProgramId workflowProgram = new ProgramId(namespaceId.getNamespace(), AppWithWorkflow.NAME, ProgramType.WORKFLOW,
+    ProgramId workflowProgram = new ProgramId(NAMESPACE.getNamespace(), AppWithWorkflow.NAME, ProgramType.WORKFLOW,
                                               AppWithWorkflow.SampleWorkflow.NAME);
     RunId workflowRunId = RunIds.generate(startTime);
-    ArtifactId artifactId = namespaceId.artifact("testArtifact", "1.0").toApiArtifactId();
+    ArtifactId artifactId = NAMESPACE.getNamespaceId().artifact("testArtifact", "1.0").toApiArtifactId();
     setStartAndRunning(workflowProgram, workflowRunId.getId(), artifactId);
 
     List<RunRecord> runs = getProgramRuns(workflowProgram, ProgramRunStatus.RUNNING);
     Assert.assertEquals(1, runs.size());
 
     HttpResponse appsResponse =
-      doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, namespaceId.getNamespace()));
+      doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN,
+                                NAMESPACE.getNamespace()));
     Assert.assertEquals(200, appsResponse.getResponseCode());
 
     // workflow ran for 1 minute

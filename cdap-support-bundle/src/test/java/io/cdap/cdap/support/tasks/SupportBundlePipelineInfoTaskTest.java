@@ -55,6 +55,7 @@ import io.cdap.cdap.support.task.factory.SupportBundleTaskFactory;
 import io.cdap.common.http.HttpResponse;
 import org.apache.twill.api.RunId;
 import org.iq80.leveldb.shaded.guava.util.concurrent.MoreExecutors;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -62,7 +63,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.Reader;
+import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Collections;
@@ -79,7 +82,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class SupportBundlePipelineInfoTaskTest extends SupportBundleTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(SupportBundlePipelineInfoTaskTest.class);
-  private static final NamespaceId namespaceId = NamespaceId.DEFAULT;
+  private static final NamespaceId NAMESPACE = new NamespaceId("test");
 
   private static CConfiguration configuration;
   private static Store store;
@@ -112,6 +115,12 @@ public class SupportBundlePipelineInfoTaskTest extends SupportBundleTestBase {
     workflowName = AppWithWorkflow.SampleWorkflow.NAME;
     application = AppWithWorkflow.NAME;
     programType = ProgramType.valueOfCategoryName("workflows");
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, createNamespace(NAMESPACE).getResponseCode());
+  }
+
+  @After
+  public void cleanup() throws IOException {
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, deleteNamespace(NAMESPACE).getResponseCode());
   }
 
   //Contains two sub-task supportBundleRuntimeInfo and supportBundlePipelineRunLog
@@ -120,7 +129,7 @@ public class SupportBundlePipelineInfoTaskTest extends SupportBundleTestBase {
   public void testSupportBundlePipelineInfo() throws Exception {
     String runId = generateWorkflowLog();
     SupportBundleConfiguration supportBundleConfiguration =
-      new SupportBundleConfiguration(namespaceId.getNamespace(), application, runId, programType, workflowName, 1);
+      new SupportBundleConfiguration(NAMESPACE.getNamespace(), application, runId, programType, workflowName, 1);
     String uuid = UUID.randomUUID().toString();
     File tempFolder = new File(configuration.get(Constants.SupportBundle.LOCAL_DATA_DIR));
     File uuidFile = new File(tempFolder, uuid);
@@ -133,7 +142,8 @@ public class SupportBundlePipelineInfoTaskTest extends SupportBundleTestBase {
     SupportBundleJob supportBundleJob =
       new SupportBundleJob(supportBundleTaskFactorySet, executorService, configuration, supportBundleStatus);
     SupportBundlePipelineInfoTask supportBundlePipelineInfoTask =
-      new SupportBundlePipelineInfoTask(uuid, Collections.singletonList(namespaceId), application, null, uuidFile,
+      new SupportBundlePipelineInfoTask(uuid, Collections.singletonList(NAMESPACE.getNamespaceId()),
+                                        application, null, uuidFile,
                                         remoteApplicationDetailFetcher, remoteProgramRunRecordsFetcher,
                                         remoteLogsFetcher, programType, workflowName, remoteMetricsSystemClient,
                                         supportBundleJob, 1, remoteProgramRunRecordFetcher);
@@ -179,20 +189,21 @@ public class SupportBundlePipelineInfoTaskTest extends SupportBundleTestBase {
   }
 
   private String generateWorkflowLog() throws Exception {
-    deploy(AppWithWorkflow.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, namespaceId.getNamespace());
+    deploy(AppWithWorkflow.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, NAMESPACE.getNamespace());
     long startTime = System.currentTimeMillis();
 
-    ProgramId workflowProgram = new ProgramId(namespaceId.getNamespace(), AppWithWorkflow.NAME, ProgramType.WORKFLOW,
+    ProgramId workflowProgram = new ProgramId(NAMESPACE.getNamespace(), AppWithWorkflow.NAME, ProgramType.WORKFLOW,
                                               AppWithWorkflow.SampleWorkflow.NAME);
     RunId workflowRunId = RunIds.generate(startTime);
-    ArtifactId artifactId = namespaceId.artifact("testArtifact", "1.0").toApiArtifactId();
+    ArtifactId artifactId = NAMESPACE.getNamespaceId()
+      .artifact("testArtifact", "1.0").toApiArtifactId();
     setStartAndRunning(workflowProgram, workflowRunId.getId(), artifactId);
 
     List<RunRecord> runs = getProgramRuns(workflowProgram, ProgramRunStatus.RUNNING);
     Assert.assertEquals(1, runs.size());
 
     HttpResponse appsResponse =
-      doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, namespaceId.getNamespace()));
+      doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, NAMESPACE.getNamespace()));
     Assert.assertEquals(200, appsResponse.getResponseCode());
 
     // workflow ran for 1 minute

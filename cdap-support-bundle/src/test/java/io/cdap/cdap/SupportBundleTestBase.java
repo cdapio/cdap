@@ -58,6 +58,7 @@ import io.cdap.cdap.logging.service.LogQueryService;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metadata.MetadataService;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
+import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProtoConstraintCodec;
 import io.cdap.cdap.proto.RunRecord;
@@ -142,6 +143,12 @@ public abstract class SupportBundleTestBase {
 
   private static HttpRequestConfig httpRequestConfig;
 
+  protected static final String TEST_NAMESPACE1 = "testnamespace1";
+  protected static final NamespaceMeta TEST_NAMESPACE_META1 = new NamespaceMeta.Builder()
+    .setName(TEST_NAMESPACE1)
+    .setDescription(TEST_NAMESPACE1)
+    .build();
+
   @BeforeClass
   public static void beforeClass() throws Throwable {
     initializeAndStartServices(createBasicCConf());
@@ -223,7 +230,7 @@ public abstract class SupportBundleTestBase {
   }
 
   @AfterClass
-  public static void afterClass() {
+  public static void afterClass() throws IOException {
     appFabricServer.stopAndWait();
     metricsCollectionService.stopAndWait();
     datasetService.stopAndWait();
@@ -370,11 +377,11 @@ public abstract class SupportBundleTestBase {
     return GSON.fromJson(response.getResponseBodyAsString(), LIST_RUN_RECORD_TYPE);
   }
 
-  protected HttpResponse createNamespace(NamespaceId namespaceId) throws Exception {
+  protected static HttpResponse createNamespace(NamespaceId namespaceId) throws Exception {
     return doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, namespaceId.getNamespace()), null);
   }
 
-  protected HttpResponse deleteNamespace(NamespaceId namespaceId) throws IOException {
+  protected static HttpResponse deleteNamespace(NamespaceId namespaceId) throws IOException {
     String path = String.format("%s/unrecoverable/namespaces/%s",
                                 Constants.Gateway.API_VERSION_3, namespaceId.getNamespace());
     HttpRequest.Builder builder = HttpRequest.delete(getEndPoint(path).toURL());
@@ -399,5 +406,10 @@ public abstract class SupportBundleTestBase {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, cls, manifest);
     Locations.linkOrCopyOverwrite(appJar, destination);
     return destination;
+  }
+
+  protected static HttpResponse doDelete(String resource) throws Exception {
+    return HttpRequests.execute(addStandardHeaders(HttpRequest.delete(getEndPoint(resource).toURL()))
+                                  .build(), httpRequestConfig);
   }
 }
