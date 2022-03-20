@@ -528,11 +528,11 @@ public class ProgramLifecycleService {
     checkCapability(programDescriptor);
 
     ProgramRunId programRunId = programId.run(runId);
-    RunRecordMonitorService.Count count = runRecordMonitorService.addRequestAndGetCount(programRunId);
+    RunRecordMonitorService.Counter counter = runRecordMonitorService.addRequestAndGetCount(programRunId);
 
     boolean done = false;
     try {
-      if (maxConcurrentRuns >= 0 && maxConcurrentRuns < count.getLaunchingCount() + count.getRunningCount()) {
+      if (maxConcurrentRuns >= 0 && maxConcurrentRuns < counter.getLaunchingCount() + counter.getRunningCount()) {
         String msg =
           String.format("Program %s cannot start because the maximum of %d outstanding runs is allowed",
                         programId, maxConcurrentRuns);
@@ -543,7 +543,7 @@ public class ProgramLifecycleService {
         throw e;
       }
 
-      if (maxConcurrentLaunching >= 0 && maxConcurrentLaunching < count.getLaunchingCount()) {
+      if (maxConcurrentLaunching >= 0 && maxConcurrentLaunching < counter.getLaunchingCount()) {
         String msg = String.format("Program %s cannot start because the maximum of %d concurrent " +
                                      "provisioning/starting runs is allowed", programId, maxConcurrentLaunching);
         LOG.info(msg);
