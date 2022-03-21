@@ -1576,6 +1576,21 @@
     </description>
   </property>
 
+  <property>
+    <name>app.upgrade.worker.threads</name>
+    <value>10</value>
+    <description>
+      Number of upgrade application threads
+    </description>
+  </property>
+  
+  <property>
+    <name>app.upgrade.worker.threads.format</name>
+    <value>upgrade-application-thread</value>
+    <description>
+      Format of upgrade application threads
+    </description>
+  </property>
 
   <!-- Kafka Server Configuration -->
 

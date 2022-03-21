@@ -90,6 +90,7 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -147,8 +148,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Key in json paginated applications list response.
    */
   public static final String APP_LIST_PAGINATED_KEY = "applications";
-
-  private static final int UPGRADE_THREAD_NUMBER = 10;
 
   /**
    * Runtime program service for running and managing programs.
@@ -530,10 +529,12 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
       try (JsonWriter jsonWriter = new JsonWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8))) {
         jsonWriter.beginArray();
-        List<Future<?>> futureList = new ArrayList<>();
+        List<Future<?>> futures = new ArrayList<>();
         Lock lock = new ReentrantLock();
-        ExecutorService executor = Executors.newFixedThreadPool(UPGRADE_THREAD_NUMBER,
-                                                                Executors.defaultThreadFactory());
+        ExecutorService executor = Executors.newFixedThreadPool(
+          configuration.getInt(Constants.AppFabric.UPGRADE_APP_THREADS),
+          Threads.createDaemonThreadFactory(configuration.get(Constants.AppFabric.UPGRADE_APP_THREADS_FORMAT))
+        );
         for (ApplicationId appId : appIds) {
           Future<?> future = executor.submit(() -> {
             ApplicationUpdateDetail updateDetail;
@@ -549,7 +550,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
               updateDetail =
                 new ApplicationUpdateDetail(appId, new ServiceException("Upgrade failed due to internal error.", e,
                                                                         HttpResponseStatus.INTERNAL_SERVER_ERROR));
-              LOG.error("Application upgrade failed with exception", e);
             }
 
             lock.lock();
@@ -565,11 +565,16 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
               lock.unlock();
             }
           });
-          futureList.add(future);
+          futures.add(future);
         }
         executor.shutdown();
-        for (Future<?> future : futureList) {
-          future.get();
+        for (Future<?> future : futures) {
+          try {
+            future.get();
+          } catch (Exception e) {
+            LOG.error("Application upgrade failed with exception", e);
+            throw e;
+          }
         }
         jsonWriter.endArray();
       }
