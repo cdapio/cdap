@@ -37,27 +37,19 @@ import io.cdap.cdap.support.status.CollectionState;
  *
  */
 public class SupportBundleOperationStatus {
-  private final String bundleId;
+  private final String id;
   private final CollectionState bundleStatus;
-  private final SupportBundlePipelineStatus supportBundlePipelineStatus;
+  private final SupportBundleTaskReportStatus taskReportStatus;
 
-  public SupportBundleOperationStatus(String bundleId,
+  public SupportBundleOperationStatus(String id,
                                       CollectionState bundleStatus,
-                                      SupportBundlePipelineStatus supportBundlePipelineStatus) {
-    this.bundleId = bundleId;
+                                      SupportBundleTaskReportStatus taskReportStatus) {
+    this.id = id;
     this.bundleStatus = bundleStatus;
-    this.supportBundlePipelineStatus = supportBundlePipelineStatus;
-  }
-
-  public String getBundleId() {
-    return bundleId;
+    this.taskReportStatus = taskReportStatus;
   }
 
   public CollectionState getBundleStatus() {
     return bundleStatus;
-  }
-
-  public SupportBundlePipelineStatus getSupportBundlePipelineStatus() {
-    return supportBundlePipelineStatus;
   }
 }

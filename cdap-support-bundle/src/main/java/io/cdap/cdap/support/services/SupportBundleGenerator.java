@@ -21,6 +21,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -31,10 +32,10 @@ import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.support.SupportBundleTaskConfiguration;
 import io.cdap.cdap.support.job.SupportBundleJob;
-import io.cdap.cdap.support.lib.SupportBundleExportRequest;
 import io.cdap.cdap.support.lib.SupportBundleFileNames;
 import io.cdap.cdap.support.lib.SupportBundleOperationStatus;
-import io.cdap.cdap.support.lib.SupportBundlePipelineStatus;
+import io.cdap.cdap.support.lib.SupportBundleRequestFileList;
+import io.cdap.cdap.support.lib.SupportBundleTaskReportStatus;
 import io.cdap.cdap.support.lib.SupportBundleTaskType;
 import io.cdap.cdap.support.status.CollectionState;
 import io.cdap.cdap.support.status.SupportBundleConfiguration;
@@ -198,38 +199,39 @@ public class SupportBundleGenerator {
   /**
    * Deletes select folder
    */
-  public void deleteBundle(File baseDirectory) throws IOException {
-    DirUtils.deleteDirectoryContents(baseDirectory);
+  public void deleteBundle(String uuid) throws Exception {
+    File uuidFile = getUUIDFile(uuid);
+    if (!uuidFile.exists()) {
+      throw new NotFoundException(String.format("No such uuid '%s' in Support Bundle.", uuid));
+    }
+    DirUtils.deleteDirectoryContents(uuidFile);
   }
 
   /**
    * Get single support bundle overall status
    */
-  public SupportBundleOperationStatus getBundle(String uuid) throws IOException {
+  public SupportBundleOperationStatus getBundle(String uuid) throws Exception {
     File uuidFile = getUUIDFile(uuid);
     if (!uuidFile.exists()) {
-      LOG.debug(String.format("No such uuid '%s' in Support Bundle.", uuid));
-      return null;
+      throw new BadRequestException(String.format("No such uuid '%s' in Support Bundle.", uuid));
     }
 
     File statusFile = new File(uuidFile, "status.json");
-    SupportBundlePipelineStatus bundlePipelineStatus = new SupportBundlePipelineStatus();
-    SupportBundleOperationStatus bundleOperationStatus =
-      new SupportBundleOperationStatus(uuidFile.getName(), CollectionState.INVALID, bundlePipelineStatus);
+    SupportBundleOperationStatus bundleOperationStatus = null;
     if (statusFile.exists()) {
-      SupportBundleStatus supportBundleStatus = getBundleStatus(uuidFile);
-      Set<SupportBundleTaskStatus> supportBundleTaskStatusSet = supportBundleStatus.getTasks();
-      bundlePipelineStatus = collectSupportBundleTaskStatus(supportBundleTaskStatusSet);
+      SupportBundleTaskReportStatus taskReportStatus;
+      SupportBundleStatus bundleStatus = getBundleStatus(uuidFile);
+      Set<SupportBundleTaskStatus> supportBundleTaskStatusSet = bundleStatus.getTasks();
+      taskReportStatus = collectSupportBundleTaskStatus(supportBundleTaskStatusSet);
       bundleOperationStatus =
-        new SupportBundleOperationStatus(uuidFile.getName(), supportBundleStatus.getStatus(),
-                                         bundlePipelineStatus);
+        new SupportBundleOperationStatus(uuidFile.getName(), bundleStatus.getStatus(),
+                                         taskReportStatus);
     }
     return bundleOperationStatus;
   }
 
-  public String createBundleZip(String uuid, Path tmpPath, SupportBundleExportRequest bundleExportRequest)
+  public String createBundleZip(String uuid, Path tmpPath, SupportBundleRequestFileList bundleRequestFileList)
     throws Exception {
-    List<String> requestFiles = bundleExportRequest.getSupportBundleRequestFileList().getFiles();
 
     File uuidFile = getUUIDFile(uuid);
     MessageDigest digest = null;
@@ -239,7 +241,7 @@ public class SupportBundleGenerator {
     digest = MessageDigest.getInstance("SHA-256");
     try (ZipOutputStream zipOut = new ZipOutputStream(
       new DigestOutputStream(Files.newOutputStream(tmpPath, StandardOpenOption.TRUNCATE_EXISTING), digest))) {
-      for (String filePath : requestFiles) {
+      for (String filePath : bundleRequestFileList.getFiles()) {
         File requestFile = new File(uuidFile, filePath);
         if (requestFile.exists()) {
           ZipEntry entry = new ZipEntry(uuidFile.getName() + "/" + filePath);
@@ -256,6 +258,23 @@ public class SupportBundleGenerator {
   public File getUUIDFile(String uuid) {
     File baseDirectory = new File(cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR));
     return new File(baseDirectory, uuid);
+  }
+
+  public List<SupportBundleOperationStatus> getAllBundleStatus(File baseDirectory) {
+    List<SupportBundleOperationStatus> operationStatusList = new ArrayList<>();
+    DirUtils.listFiles(baseDirectory)
+      .stream()
+      .filter(file -> !file.isHidden() && file.isDirectory())
+      .forEach(uuidFile -> {
+        SupportBundleOperationStatus operationStatus = null;
+        try {
+          operationStatus = getBundle(uuidFile.getName());
+        } catch (Exception e) {
+          LOG.debug("Can not find status json: {}", uuidFile.getName());
+        }
+        operationStatusList.add(operationStatus);
+      });
+    return operationStatusList;
   }
 
   /**
@@ -288,18 +307,18 @@ public class SupportBundleGenerator {
   /**
    * Update status file
    */
-  private void addToStatus(SupportBundleStatus supportBundleStatus, String basePath) throws IOException {
+  private void addToStatus(SupportBundleStatus bundleStatus, String basePath) throws IOException {
     try (FileWriter statusFile = new FileWriter(new File(basePath, SupportBundleFileNames.STATUS_FILE_NAME))) {
-      GSON.toJson(supportBundleStatus, statusFile);
+      GSON.toJson(bundleStatus, statusFile);
     }
   }
 
   private SupportBundleStatus readStatusJson(File statusFile) throws IOException {
-    SupportBundleStatus supportBundleStatus;
+    SupportBundleStatus bundleStatus;
     try (Reader reader = Files.newBufferedReader(statusFile.toPath(), StandardCharsets.UTF_8)) {
-      supportBundleStatus = GSON.fromJson(reader, SupportBundleStatus.class);
+      bundleStatus = GSON.fromJson(reader, SupportBundleStatus.class);
     }
-    return supportBundleStatus;
+    return bundleStatus;
   }
 
   private NamespaceId validNamespace(NamespaceId namespace) throws Exception {
@@ -310,7 +329,7 @@ public class SupportBundleGenerator {
     return namespace;
   }
 
-  private SupportBundlePipelineStatus collectSupportBundleTaskStatus(
+  private SupportBundleTaskReportStatus collectSupportBundleTaskStatus(
     Set<SupportBundleTaskStatus> supportBundleTaskStatusSet) {
     CollectionState systemLogTaskStatus = CollectionState.INVALID;
     CollectionState pipelineInfoTaskStatus = CollectionState.INVALID;
@@ -351,9 +370,9 @@ public class SupportBundleGenerator {
           break;
       }
     }
-    SupportBundlePipelineStatus supportBundlePipelineStatus =
-      new SupportBundlePipelineStatus(systemLogTaskStatus, pipelineInfoTaskStatus, runtimeInfoTaskStatus,
+    SupportBundleTaskReportStatus taskReportStatus =
+      new SupportBundleTaskReportStatus(systemLogTaskStatus, pipelineInfoTaskStatus, runtimeInfoTaskStatus,
                                       runtimeLogTaskStatus, vmInfoTaskStatus);
-    return supportBundlePipelineStatus;
+    return taskReportStatus;
   }
 }

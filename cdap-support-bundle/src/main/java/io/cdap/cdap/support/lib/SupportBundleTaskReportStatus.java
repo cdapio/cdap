@@ -22,22 +22,14 @@ import io.cdap.cdap.support.status.CollectionState;
  * Collection of Support bundle task status
  *
  */
-public class SupportBundlePipelineStatus {
+public class SupportBundleTaskReportStatus {
   private final CollectionState systemLogTaskStatus;
   private final CollectionState pipelineInfoTaskStatus;
   private final CollectionState runtimeInfoTaskStatus;
   private final CollectionState runtimeLogTaskStatus;
   private final CollectionState vmInfoTaskStatus;
 
-  public SupportBundlePipelineStatus() {
-    this.systemLogTaskStatus = CollectionState.INVALID;
-    this.pipelineInfoTaskStatus = CollectionState.INVALID;
-    this.runtimeInfoTaskStatus = CollectionState.INVALID;
-    this.runtimeLogTaskStatus = CollectionState.INVALID;
-    this.vmInfoTaskStatus = CollectionState.INVALID;
-  }
-
-  public SupportBundlePipelineStatus(CollectionState systemLogTaskStatus,
+  public SupportBundleTaskReportStatus(CollectionState systemLogTaskStatus,
                                      CollectionState pipelineInfoTaskStatus,
                                      CollectionState runtimeInfoTaskStatus,
                                      CollectionState runtimeLogTaskStatus,

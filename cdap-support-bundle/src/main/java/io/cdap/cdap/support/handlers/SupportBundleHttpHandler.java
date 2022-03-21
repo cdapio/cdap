@@ -29,11 +29,9 @@ import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.SupportBundleEntityId;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
-import io.cdap.cdap.support.lib.SupportBundleExportRequest;
 import io.cdap.cdap.support.lib.SupportBundleOperationStatus;
-import io.cdap.cdap.support.lib.SupportBundlePipelineStatus;
+import io.cdap.cdap.support.lib.SupportBundleRequestFileList;
 import io.cdap.cdap.support.services.SupportBundleGenerator;
-import io.cdap.cdap.support.status.CollectionState;
 import io.cdap.cdap.support.status.SupportBundleConfiguration;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HandlerContext;
@@ -48,10 +46,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -152,24 +148,10 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
     contextAccessEnforcer.enforceOnParent(EntityType.SUPPORT_BUNDLE, InstanceId.SELF, StandardPermission.LIST);
     File baseDirectory = new File(cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR));
     if (!baseDirectory.exists()) {
-      LOG.debug("No content in Support Bundle.");
-      return;
+      throw new BadRequestException("No content in Support Bundle.");
     }
-    List<SupportBundleOperationStatus> bundleOperationStatusList = new ArrayList<>();
-    DirUtils.listFiles(baseDirectory)
-      .stream()
-      .filter(file -> !file.isHidden() && file.isDirectory())
-      .forEach(uuidFile -> {
-        SupportBundlePipelineStatus bundlePipelineStatus = new SupportBundlePipelineStatus();
-        SupportBundleOperationStatus bundleOperationStatus =
-          new SupportBundleOperationStatus(uuidFile.getName(), CollectionState.INVALID, bundlePipelineStatus);
-        try {
-          bundleOperationStatus = bundleGenerator.getBundle(uuidFile.getName());
-        } catch (IOException e) {
-          LOG.debug("Can not find status json: {}", uuidFile.getName());
-        }
-        bundleOperationStatusList.add(bundleOperationStatus);
-      });
+
+    List<SupportBundleOperationStatus> bundleOperationStatusList = bundleGenerator.getAllBundleStatus(baseDirectory);
     responder.sendString(HttpResponseStatus.OK, GSON.toJson(bundleOperationStatusList));
   }
 
@@ -201,11 +183,7 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
     throws Exception {
     SupportBundleEntityId bundleEntityId = new SupportBundleEntityId(uuid);
     contextAccessEnforcer.enforce(bundleEntityId, StandardPermission.DELETE);
-    File uuidFile = bundleGenerator.getUUIDFile(uuid);
-    if (!uuidFile.exists()) {
-      throw new NotFoundException(String.format("No such uuid '%s' in Support Bundle.", uuid));
-    }
-    bundleGenerator.deleteBundle(uuidFile);
+    bundleGenerator.deleteBundle(uuid);
     responder.sendString(HttpResponseStatus.OK, String.format("Successfully deleted bundle %s", uuid));
   }
 
@@ -214,8 +192,8 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
    *
    * @param uuid the bundle id which is also the uuid fileJson body
    */
-  @POST
-  @Path("/support/bundle/{uuid}/download")
+  @GET
+  @Path("/support/bundles/{uuid}")
   public void downloadSupportBundle(FullHttpRequest request, HttpResponder responder, @PathParam("uuid") String uuid)
     throws Exception {
     SupportBundleEntityId bundleEntityId = new SupportBundleEntityId(uuid);
@@ -224,9 +202,9 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
     if (requestContent == null || requestContent.length() == 0) {
       throw new BadRequestException("Request body is empty.");
     }
-    SupportBundleExportRequest bundleExportRequest;
+    SupportBundleRequestFileList bundleRequestFileList;
     try {
-      bundleExportRequest = GSON.fromJson(requestContent, SupportBundleExportRequest.class);
+      bundleRequestFileList = GSON.fromJson(requestContent, SupportBundleRequestFileList.class);
     } catch (Exception e) {
       throw new BadRequestException(String.format("Failed to parse body on %s", requestContent));
     }
@@ -235,7 +213,7 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
     DirUtils.mkdirs(tempDir);
     java.nio.file.Path tmpPath = Files.createTempFile(tempDir.toPath(), "support-bundle", ".zip");
     try {
-      String digestHeader = bundleGenerator.createBundleZip(uuid, tmpPath, bundleExportRequest);
+      String digestHeader = bundleGenerator.createBundleZip(uuid, tmpPath, bundleRequestFileList);
       responder.sendFile(tmpPath.toFile(), new DefaultHttpHeaders().add("digest", digestHeader)
         .add(HttpHeaderNames.CONTENT_TYPE, APPLICATION_ZIP)
         .add(HttpHeaderNames.CONTENT_DISPOSITION,
