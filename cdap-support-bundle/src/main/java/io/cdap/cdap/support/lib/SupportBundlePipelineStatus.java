@@ -29,6 +29,14 @@ public class SupportBundlePipelineStatus {
   private final CollectionState runtimeLogTaskStatus;
   private final CollectionState vmInfoTaskStatus;
 
+  public SupportBundlePipelineStatus() {
+    this.systemLogTaskStatus = CollectionState.INVALID;
+    this.pipelineInfoTaskStatus = CollectionState.INVALID;
+    this.runtimeInfoTaskStatus = CollectionState.INVALID;
+    this.runtimeLogTaskStatus = CollectionState.INVALID;
+    this.vmInfoTaskStatus = CollectionState.INVALID;
+  }
+
   public SupportBundlePipelineStatus(CollectionState systemLogTaskStatus,
                                      CollectionState pipelineInfoTaskStatus,
                                      CollectionState runtimeInfoTaskStatus,

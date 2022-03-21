@@ -55,7 +55,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -70,7 +69,7 @@ import java.util.concurrent.TimeUnit;
 public class SupportBundleGeneratorTest extends SupportBundleTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(SupportBundleGeneratorTest.class);
   private static final Gson GSON = new GsonBuilder().create();
-  private static final NamespaceId NAMESPACE = new NamespaceId("test");
+  private static final NamespaceId NAMESPACE = new NamespaceId("testSupportGenerator");
 
   private static SupportBundleGenerator supportBundleGenerator;
   private static CConfiguration cConf;
@@ -87,13 +86,13 @@ public class SupportBundleGeneratorTest extends SupportBundleTestBase {
     store = injector.getInstance(DefaultStore.class);
 
     executorService = Executors.newFixedThreadPool(cConf.getInt(Constants.SupportBundle.MAX_THREADS));
-    Assert.assertEquals(HttpURLConnection.HTTP_OK, createNamespace(NAMESPACE).getResponseCode());
+    createNamespace(NAMESPACE);
   }
 
   @AfterClass
   public static void shutdown() throws IOException {
     executorService.shutdownNow();
-    Assert.assertEquals(HttpURLConnection.HTTP_OK, deleteNamespace(NAMESPACE).getResponseCode());
+    deleteNamespace(NAMESPACE);
   }
 
   @Test

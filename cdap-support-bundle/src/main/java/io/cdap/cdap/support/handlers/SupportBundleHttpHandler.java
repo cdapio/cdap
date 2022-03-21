@@ -31,7 +31,9 @@ import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.support.lib.SupportBundleExportRequest;
 import io.cdap.cdap.support.lib.SupportBundleOperationStatus;
+import io.cdap.cdap.support.lib.SupportBundlePipelineStatus;
 import io.cdap.cdap.support.services.SupportBundleGenerator;
+import io.cdap.cdap.support.status.CollectionState;
 import io.cdap.cdap.support.status.SupportBundleConfiguration;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HandlerContext;
@@ -158,7 +160,9 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
       .stream()
       .filter(file -> !file.isHidden() && file.isDirectory())
       .forEach(uuidFile -> {
-        SupportBundleOperationStatus bundleOperationStatus = null;
+        SupportBundlePipelineStatus bundlePipelineStatus = new SupportBundlePipelineStatus();
+        SupportBundleOperationStatus bundleOperationStatus =
+          new SupportBundleOperationStatus(uuidFile.getName(), CollectionState.INVALID, bundlePipelineStatus);
         try {
           bundleOperationStatus = bundleGenerator.getBundle(uuidFile.getName());
         } catch (IOException e) {
@@ -224,7 +228,6 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
     try {
       bundleExportRequest = GSON.fromJson(requestContent, SupportBundleExportRequest.class);
     } catch (Exception e) {
-      LOG.info("Failed to parse body on {} as", requestContent, e);
       throw new BadRequestException(String.format("Failed to parse body on %s", requestContent));
     }
 

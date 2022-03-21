@@ -47,14 +47,13 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public class SupportBundleSystemLogTaskTest extends SupportBundleTestBase {
-  private static final NamespaceId NAMESPACE = new NamespaceId("test");
+  private static final NamespaceId NAMESPACE = new NamespaceId("testSupportSystemLog");
   private static CConfiguration configuration;
   private static Store store;
   private static RemoteLogsFetcher remoteLogsFetcher;
@@ -68,12 +67,12 @@ public class SupportBundleSystemLogTaskTest extends SupportBundleTestBase {
     store = injector.getInstance(DefaultStore.class);
     remoteLogsFetcher = injector.getInstance(RemoteLogsFetcher.class);
     remoteMonitorServicesFetcher = injector.getInstance(RemoteMonitorServicesFetcher.class);
-    Assert.assertEquals(HttpURLConnection.HTTP_OK, createNamespace(NAMESPACE).getResponseCode());
+    createNamespace(NAMESPACE);
   }
 
   @After
   public void cleanup() throws IOException {
-    Assert.assertEquals(HttpURLConnection.HTTP_OK, deleteNamespace(NAMESPACE).getResponseCode());
+    deleteNamespace(NAMESPACE);
   }
 
   @Test

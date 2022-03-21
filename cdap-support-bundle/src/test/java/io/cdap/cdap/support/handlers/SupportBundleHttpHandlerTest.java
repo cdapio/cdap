@@ -17,14 +17,10 @@
 package io.cdap.cdap.support.handlers;
 
 import io.cdap.cdap.SupportBundleTestBase;
-import io.cdap.cdap.app.store.Store;
-import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
-import io.cdap.cdap.internal.app.store.DefaultStore;
-import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
@@ -48,24 +44,16 @@ import java.util.concurrent.TimeUnit;
  */
 public class SupportBundleHttpHandlerTest extends SupportBundleTestBase {
 
-  private static final NamespaceId NAMESPACE = new NamespaceId("test");
-  private static final NamespaceId NAMESPACE_DEFAULT_ID = NamespaceId.DEFAULT;
-  private static final ApplicationId APP_WORKFLOW = NAMESPACE.app("AppWithWorkflow");
-  private static final String RUNNING = "RUNNING";
-  private static CConfiguration cConf;
-  private static Store store;
-  private int sourceId;
+  private static final NamespaceId NAMESPACE = new NamespaceId("testSupportHandler");
 
   @Before
   public void setup() throws Exception {
-    Assert.assertEquals(HttpURLConnection.HTTP_OK, createNamespace(NAMESPACE).getResponseCode());
-    store = getInjector().getInstance(DefaultStore.class);
-    cConf = getInjector().getInstance(CConfiguration.class);
+    createNamespace(NAMESPACE);
   }
 
   @After
   public void cleanup() throws IOException {
-    Assert.assertEquals(HttpURLConnection.HTTP_OK, deleteNamespace(NAMESPACE).getResponseCode());
+    deleteNamespace(NAMESPACE);
   }
 
   @Test
@@ -76,7 +64,7 @@ public class SupportBundleHttpHandlerTest extends SupportBundleTestBase {
     Assert.assertNotNull(bundleId);
     Assert.assertFalse(bundleId.isEmpty());
   }
-  
+
   /**
    * Requests generation of support bundle.
    *

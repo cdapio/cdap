@@ -53,7 +53,6 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -67,7 +66,7 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class SupportBundleJobTest extends SupportBundleTestBase {
-  private static final NamespaceId NAMESPACE = new NamespaceId("test");
+  private static final NamespaceId NAMESPACE = new NamespaceId("testSupportJob");
 
   private static CConfiguration configuration;
   private static Store store;
@@ -95,12 +94,12 @@ public class SupportBundleJobTest extends SupportBundleTestBase {
     programType = ProgramType.valueOfCategoryName("workflows");
     RunId workflowRunId = RunIds.generate(startTime);
     runId = workflowRunId.getId();
-    Assert.assertEquals(HttpURLConnection.HTTP_OK, createNamespace(NAMESPACE).getResponseCode());
+    createNamespace(NAMESPACE);
   }
 
   @After
   public void cleanup() throws IOException {
-    Assert.assertEquals(HttpURLConnection.HTTP_OK, deleteNamespace(NAMESPACE).getResponseCode());
+    deleteNamespace(NAMESPACE);
   }
 
   @Test

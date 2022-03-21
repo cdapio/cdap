@@ -213,17 +213,18 @@ public class SupportBundleGenerator {
     }
 
     File statusFile = new File(uuidFile, "status.json");
-    SupportBundleOperationStatus supportBundleOperationStatus = null;
+    SupportBundlePipelineStatus bundlePipelineStatus = new SupportBundlePipelineStatus();
+    SupportBundleOperationStatus bundleOperationStatus =
+      new SupportBundleOperationStatus(uuidFile.getName(), CollectionState.INVALID, bundlePipelineStatus);
     if (statusFile.exists()) {
-      SupportBundlePipelineStatus supportBundlePipelineStatus;
       SupportBundleStatus supportBundleStatus = getBundleStatus(uuidFile);
       Set<SupportBundleTaskStatus> supportBundleTaskStatusSet = supportBundleStatus.getTasks();
-      supportBundlePipelineStatus = collectSupportBundleTaskStatus(supportBundleTaskStatusSet);
-      supportBundleOperationStatus =
+      bundlePipelineStatus = collectSupportBundleTaskStatus(supportBundleTaskStatusSet);
+      bundleOperationStatus =
         new SupportBundleOperationStatus(uuidFile.getName(), supportBundleStatus.getStatus(),
-                                         supportBundlePipelineStatus);
+                                         bundlePipelineStatus);
     }
-    return supportBundleOperationStatus;
+    return bundleOperationStatus;
   }
 
   public String createBundleZip(String uuid, Path tmpPath, SupportBundleExportRequest bundleExportRequest)

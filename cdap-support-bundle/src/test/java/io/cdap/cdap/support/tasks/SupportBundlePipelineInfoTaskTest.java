@@ -65,7 +65,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
-import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Collections;
@@ -82,7 +81,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class SupportBundlePipelineInfoTaskTest extends SupportBundleTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(SupportBundlePipelineInfoTaskTest.class);
-  private static final NamespaceId NAMESPACE = new NamespaceId("test");
+  private static final NamespaceId NAMESPACE = new NamespaceId("testSupportPipeline");
 
   private static CConfiguration configuration;
   private static Store store;
@@ -115,12 +114,12 @@ public class SupportBundlePipelineInfoTaskTest extends SupportBundleTestBase {
     workflowName = AppWithWorkflow.SampleWorkflow.NAME;
     application = AppWithWorkflow.NAME;
     programType = ProgramType.valueOfCategoryName("workflows");
-    Assert.assertEquals(HttpURLConnection.HTTP_OK, createNamespace(NAMESPACE).getResponseCode());
+    createNamespace(NAMESPACE);
   }
 
   @After
   public void cleanup() throws IOException {
-    Assert.assertEquals(HttpURLConnection.HTTP_OK, deleteNamespace(NAMESPACE).getResponseCode());
+    deleteNamespace(NAMESPACE);
   }
 
   //Contains two sub-task supportBundleRuntimeInfo and supportBundlePipelineRunLog
