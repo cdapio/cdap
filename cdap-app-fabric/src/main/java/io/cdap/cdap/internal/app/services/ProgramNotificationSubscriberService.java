@@ -248,19 +248,18 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
                                              StructuredTableContext context) throws Exception {
     AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
     Map<String, String> properties = notification.getProperties();
-    // Required parameters
-    String programRun = properties.get(ProgramOptionConstants.PROGRAM_RUN_ID);
-    String programStatusStr = properties.get(ProgramOptionConstants.PROGRAM_STATUS);
-    String clusterStatusStr = properties.get(ProgramOptionConstants.CLUSTER_STATUS);
 
-    // Ignore notifications which specify an invalid ProgramRunId, which shouldn't happen
+    // Extract and validate ProgramRunId. Ignore notification if ProgramRunId is missing, which should never happen.
+    String programRun = properties.get(ProgramOptionConstants.PROGRAM_RUN_ID);
     if (programRun == null) {
       LOG.warn("Ignore notification that misses program run state information, {}", notification);
       return Collections.emptyList();
     }
     ProgramRunId programRunId = GSON.fromJson(programRun, ProgramRunId.class);
 
+    // Extract and validate ProgramRunStatus.
     ProgramRunStatus programRunStatus = null;
+    String programStatusStr = properties.get(ProgramOptionConstants.PROGRAM_STATUS);
     if (programStatusStr != null) {
       try {
         programRunStatus = ProgramRunStatus.valueOf(programStatusStr);
@@ -271,7 +270,9 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       }
     }
 
+    // Extract and validate ProgramRunClusterStatus.
     ProgramRunClusterStatus clusterStatus = null;
+    String clusterStatusStr = properties.get(ProgramOptionConstants.CLUSTER_STATUS);
     if (clusterStatusStr != null) {
       try {
         clusterStatus = ProgramRunClusterStatus.valueOf(clusterStatusStr);
@@ -281,6 +282,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         return Collections.emptyList();
       }
     }
+
     if (notification.getNotificationType().equals(Notification.Type.PROGRAM_HEART_BEAT)) {
       RunRecordDetail runRecordMeta = appMetadataStore.getRun(programRunId);
       long heartBeatTimeInSeconds =
@@ -289,17 +291,19 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       // we can return after writing to heart beat table
       return Collections.emptyList();
     }
+
     List<Runnable> result = new ArrayList<>();
+
     if (programRunStatus != null) {
       handleProgramEvent(programRunId, programRunStatus, notification, messageIdBytes,
                          appMetadataStore, programHeartbeatTable, result);
     }
-    if (clusterStatus == null) {
-      return result;
+
+    if (clusterStatus != null) {
+      handleClusterEvent(programRunId, clusterStatus, notification,
+                         messageIdBytes, appMetadataStore, context).ifPresent(result::add);
     }
 
-    handleClusterEvent(programRunId, clusterStatus, notification,
-                       messageIdBytes, appMetadataStore, context).ifPresent(result::add);
     return result;
   }
 
