@@ -211,6 +211,7 @@ public class LocalizationUtilsTest {
     File target = TEMP_FOLDER.newFile(tarFileName + ".tar");
     try (TarArchiveOutputStream tos =
            new TarArchiveOutputStream(new BufferedOutputStream(new FileOutputStream(target)))) {
+      tos.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
       addFilesToTar(tos, filesToAdd);
     }
     return target;
@@ -220,6 +221,7 @@ public class LocalizationUtilsTest {
     File target = TEMP_FOLDER.newFile(tgzFileName + ".tgz");
     try (TarArchiveOutputStream tos =
            new TarArchiveOutputStream(new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(target))))) {
+      tos.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
       addFilesToTar(tos, filesToAdd);
     }
     return target;
@@ -229,6 +231,7 @@ public class LocalizationUtilsTest {
     File target = TEMP_FOLDER.newFile(tarGzFileName + ".tar.gz");
     try (TarArchiveOutputStream tos =
            new TarArchiveOutputStream(new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(target))))) {
+      tos.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
       addFilesToTar(tos, filesToAdd);
     }
     return target;
