@@ -18,7 +18,6 @@ package io.cdap.cdap.security.authorization;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Sets;
-import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;

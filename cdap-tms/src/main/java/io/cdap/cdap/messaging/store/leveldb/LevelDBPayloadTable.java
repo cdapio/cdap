@@ -65,7 +65,7 @@ public class LevelDBPayloadTable extends AbstractPayloadTable {
     final DBScanIterator iterator = new DBScanIterator(levelDB, startRow, stopRow);
     return new AbstractCloseableIterator<RawPayloadTableEntry>() {
       private final RawPayloadTableEntry tableEntry = new RawPayloadTableEntry();
-      private boolean closed = false;
+      private boolean closed;
       private int maxLimit = limit;
 
       @Override

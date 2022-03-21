@@ -21,9 +21,14 @@ import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.name.Names;
 import io.cdap.cdap.common.runtime.RuntimeModule;
+import io.cdap.cdap.proto.element.EntityType;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.NoOpAccessController;
+
+import java.util.Set;
 
 /**
  * A module that contains bindings for {@link AccessEnforcer}.
@@ -95,7 +100,22 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
       @Override
       protected void configure() {
         bind(AccessEnforcer.class).to(NoOpAccessController.class).in(Scopes.SINGLETON);
-        bind(ContextAccessEnforcer.class).to(DefaultContextAccessEnforcer.class).in(Scopes.SINGLETON);
+        bind(ContextAccessEnforcer.class).toInstance(new ContextAccessEnforcer() {
+          @Override
+          public void enforce(EntityId entity, Set<? extends Permission> permissions) {
+            // no-op
+          }
+
+          @Override
+          public void enforceOnParent(EntityType entityType, EntityId parentId, Permission permission) {
+            // no-op
+          }
+
+          @Override
+          public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds) {
+            return entityIds;
+          }
+        });
       }
     };
   }

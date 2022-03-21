@@ -88,7 +88,7 @@ final class HBaseMessageTable extends AbstractMessageTable {
       final ResultScanner scanner = DistributedScanner.create(table, scan, rowKeyDistributor, scanExecutor);
       final RawMessageTableEntry tableEntry = new RawMessageTableEntry();
       return new AbstractCloseableIterator<RawMessageTableEntry>() {
-        private boolean closed = false;
+        private boolean closed;
 
         @Override
         protected RawMessageTableEntry computeNext() {

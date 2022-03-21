@@ -159,7 +159,7 @@ public class TimeseriesTable extends TimeseriesDataset
     }
 
     return new Iterator<Entry>() {
-      int count = 0;
+      int count;
 
       @Override
       public boolean hasNext() {

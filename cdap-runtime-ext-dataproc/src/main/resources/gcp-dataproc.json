@@ -463,7 +463,7 @@
           "widget-type": "textbox",
           "label": "GCS Bucket",
           "name": "gcsBucket",
-          "description": "The Cloud Storage bucket used by Cloud Dataproc to read/write cluster and job data",
+          "description": "Google Cloud Storage bucket used to stage job dependencies and config files for running pipelines in Google Cloud Dataproc",
           "widget-attributes": {
             "size": "medium"
           }

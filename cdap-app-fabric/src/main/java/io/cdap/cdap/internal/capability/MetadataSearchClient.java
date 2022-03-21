@@ -27,7 +27,6 @@ import io.cdap.cdap.spi.metadata.SearchRequest;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;

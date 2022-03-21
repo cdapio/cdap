@@ -108,7 +108,8 @@ public class BasicSystemHttpServiceContext extends BasicHttpServiceContext imple
     this.preferencesFetcher = preferencesFetcher;
     this.cConf = cConf;
     this.contextAccessEnforcer = contextAccessEnforcer;
-    this.remoteTaskExecutor = new RemoteTaskExecutor(cConf, metricsCollectionService, remoteClientFactory);
+    this.remoteTaskExecutor = new RemoteTaskExecutor(cConf, metricsCollectionService, remoteClientFactory,
+        RemoteTaskExecutor.Type.TASK_WORKER);
     this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 

@@ -19,7 +19,6 @@ package io.cdap.cdap.internal.tethering;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.internal.remote.RemoteAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
@@ -41,16 +40,9 @@ import java.nio.file.Paths;
  */
 public class ArtifactCache extends AbstractArtifactLocalizer {
   @Inject
-  ArtifactCache(CConfiguration cConf) throws InstantiationException, IllegalAccessException {
+  ArtifactCache(CConfiguration cConf) {
     super(cConf.get(Constants.ArtifactCache.LOCAL_DATA_DIR),
           RetryStrategies.fromConfiguration(cConf, Constants.Service.ARTIFACT_CACHE + "."));
-    Class<? extends RemoteAuthenticator> authClass = cConf.getClass(Constants.Tethering.CLIENT_AUTHENTICATOR_CLASS,
-                                                                    null,
-                                                                    RemoteAuthenticator.class);
-    if (authClass != null) {
-      RemoteAuthenticator authenticator = authClass.newInstance();
-      RemoteAuthenticator.setDefaultAuthenticator(authenticator);
-    }
   }
 
   /**

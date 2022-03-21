@@ -463,7 +463,7 @@ public abstract class SparkPipelineRunner {
 
     if (plugin instanceof RelationalTransform) {
       RelationalTransform transform = (RelationalTransform) plugin;
-      for (SparkCollectionRelationalEngine engine : getRelationalEngines(stageData)) {
+      for (SparkCollectionRelationalEngine engine : getRelationalEngines(stageSpec, stageData)) {
         if (!transform.canUseEngine(engine.getRelationalEngine())) {
           continue;
         }
@@ -484,7 +484,8 @@ public abstract class SparkPipelineRunner {
    * @param stageData input collection
    * @return list of engines to try
    */
-  protected Iterable<SparkCollectionRelationalEngine> getRelationalEngines(SparkCollection<Object> stageData) {
+  protected Iterable<SparkCollectionRelationalEngine> getRelationalEngines(StageSpec stageSpec,
+                                                                           SparkCollection<Object> stageData) {
     //TODO CDAP-18608: Add Spark engine here
     return Collections.emptyList();
   }

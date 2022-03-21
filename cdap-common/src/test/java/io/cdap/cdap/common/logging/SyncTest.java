@@ -36,8 +36,8 @@ import java.io.IOException;
 
 public class SyncTest {
 
-  MiniDFSCluster dfsCluster = null;
-  Configuration config = null;
+  MiniDFSCluster dfsCluster;
+  Configuration config;
 
   @Rule
   public TemporaryFolder tempFolder = new TemporaryFolder();

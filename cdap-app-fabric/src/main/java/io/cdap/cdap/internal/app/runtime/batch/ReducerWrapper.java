@@ -145,8 +145,8 @@ public class ReducerWrapper extends Reducer {
 
     @SuppressWarnings("unchecked")
     WrappedReducer.Context flushingContext = new WrappedReducer().new Context(context) {
-      private int processedRecords = 0;
-      private long nextTimeToReportMetrics = 0L;
+      private int processedRecords;
+      private long nextTimeToReportMetrics;
 
       @Override
       public boolean nextKeyValue() throws IOException, InterruptedException {

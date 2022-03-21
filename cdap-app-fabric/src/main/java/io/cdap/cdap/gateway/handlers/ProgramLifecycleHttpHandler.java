@@ -17,13 +17,10 @@
 package io.cdap.cdap.gateway.handlers;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -44,6 +41,7 @@ import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.NotImplementedException;
 import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
@@ -222,7 +220,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       throw new NotFoundException(programId);
     }
     RunRecordDetail runRecordMeta = store.getRun(run);
-    if (runRecordMeta == null) {
+    if (runRecordMeta == null || isTetheredRunRecord(runRecordMeta)) {
       throw new NotFoundException(run);
     }
 
@@ -298,11 +296,43 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("app-id") String appId,
                                   @PathParam("program-type") String type,
                                   @PathParam("program-id") String programId,
-                                  @PathParam("run-id") String runId) throws Exception {
+                                  @PathParam("run-id") String runId,
+                                  @QueryParam("graceful") String gracefulShutdownSecs) throws Exception {
     ProgramType programType = getProgramType(type);
     ProgramId program = new ProgramId(namespaceId, appId, programType, programId);
-    lifecycleService.stop(program, runId);
+    int gracefulShutdownSecsInt;
+    try {
+      gracefulShutdownSecsInt = validateAndGetGracefulShutdownSecsInt(gracefulShutdownSecs);
+    } catch (IllegalArgumentException e) {
+      responder.sendJson(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+      return;
+    }
+    try {
+      RunIds.fromString(runId);
+    } catch (Exception e) {
+      responder.sendJson(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    }
+    lifecycleService.stop(program, runId, gracefulShutdownSecsInt);
     responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  private int validateAndGetGracefulShutdownSecsInt(String gracefulShutdownSecs) {
+    try {
+      if (gracefulShutdownSecs == null || gracefulShutdownSecs.isEmpty()) {
+        return Integer.parseInt(String.valueOf(Integer.MAX_VALUE));
+      }
+      int gracefulShutdownSecsInt = Integer.parseInt(gracefulShutdownSecs);
+      if (gracefulShutdownSecsInt < 0) {
+        throw new IllegalArgumentException(String.format("Invalid graceful shutdown period %s passed. " +
+                                                           "Please specify a value greater than or equal to 0.",
+                                                         gracefulShutdownSecs));
+      }
+      return gracefulShutdownSecsInt;
+    } catch (NumberFormatException e) {
+      LOG.error("Invalid graceful shutdown period %s passed.");
+      throw new IllegalArgumentException(String.format("Invalid graceful shutdown period %s passed. " +
+                                                         "Please specify a valid number", gracefulShutdownSecs));
+    }
   }
 
   @POST
@@ -434,7 +464,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     ProgramRunStatus runStatus = (status == null) ? ProgramRunStatus.ALL :
       ProgramRunStatus.valueOf(status.toUpperCase());
 
-    List<RunRecord> records = lifecycleService.getRunRecords(program, runStatus, start, end, resultLimit);
+    List<RunRecord> records = lifecycleService.getRunRecords(program, runStatus, start, end, resultLimit)
+      .stream().filter(record -> !isTetheredRunRecord(record)).collect(Collectors.toList());
 
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(records));
   }
@@ -468,7 +499,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     ProgramType programType = getProgramType(type);
     ProgramId progId = new ApplicationId(namespaceId, appName, appVersion).program(programType, programName);
     RunRecordDetail runRecordMeta = store.getRun(progId.run(runid));
-    if (runRecordMeta != null) {
+    if (runRecordMeta != null && !isTetheredRunRecord(runRecordMeta)) {
       RunRecord runRecord = RunRecord.builder(runRecordMeta).build();
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(runRecord));
       return;
@@ -1271,46 +1302,34 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/stop")
   @AuditPolicy({AuditDetail.REQUEST_BODY, AuditDetail.RESPONSE_BODY})
   public void stopPrograms(FullHttpRequest request, HttpResponder responder,
-                           @PathParam("namespace-id") String namespaceId) throws Exception {
-
+                           @PathParam("namespace-id") String namespaceId,
+                           @QueryParam("graceful") String gracefulShutdownSecs) throws Exception {
+    int gracefulShutdownSecsInt;
+    try {
+      gracefulShutdownSecsInt = validateAndGetGracefulShutdownSecsInt(gracefulShutdownSecs);
+    } catch (IllegalArgumentException e) {
+      responder.sendJson(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+      return;
+    }
     List<BatchProgram> programs = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
 
-    List<ListenableFuture<BatchProgramResult>> issuedStops = new ArrayList<>(programs.size());
+    List<BatchProgramResult> issuedStops = new ArrayList<>(programs.size());
     for (final BatchProgram program : programs) {
       ProgramId programId = new ProgramId(namespaceId, program.getAppId(), program.getProgramType(),
                                          program.getProgramId());
       try {
-        List<ListenableFuture<ProgramRunId>> stops = lifecycleService.issueStop(programId, null);
-        for (ListenableFuture<ProgramRunId> stop : stops) {
-          ListenableFuture<BatchProgramResult> issuedStop =
-            Futures.transform(stop, (Function<ProgramRunId, BatchProgramResult>) input ->
-              new BatchProgramResult(program, HttpResponseStatus.OK.code(), null, input.getRun()));
-          issuedStops.add(issuedStop);
+        Collection<ProgramRunId> stoppedRuns = lifecycleService.issueStop(programId, null, gracefulShutdownSecsInt);
+        for (ProgramRunId stoppedRun : stoppedRuns) {
+          issuedStops.add(new BatchProgramResult(program, HttpResponseStatus.OK.code(), null, stoppedRun.getRun()));
         }
       } catch (NotFoundException e) {
-        issuedStops.add(Futures.immediateFuture(
-          new BatchProgramResult(program, HttpResponseStatus.NOT_FOUND.code(), e.getMessage())));
+        issuedStops.add(new BatchProgramResult(program, HttpResponseStatus.NOT_FOUND.code(), e.getMessage()));
       } catch (BadRequestException e) {
-        issuedStops.add(Futures.immediateFuture(
-          new BatchProgramResult(program, HttpResponseStatus.BAD_REQUEST.code(), e.getMessage())));
+        issuedStops.add(new BatchProgramResult(program, HttpResponseStatus.BAD_REQUEST.code(), e.getMessage()));
       }
     }
 
-    List<BatchProgramResult> output = new ArrayList<>(programs.size());
-    // need to keep this index in case there is an exception getting the future, since we won't have the program
-    // information in that scenario
-    int i = 0;
-    for (ListenableFuture<BatchProgramResult> issuedStop : issuedStops) {
-      try {
-        output.add(issuedStop.get());
-      } catch (Throwable t) {
-        LOG.warn(t.getMessage(), t);
-        output.add(new BatchProgramResult(programs.get(i), HttpResponseStatus.INTERNAL_SERVER_ERROR.code(),
-                                          t.getMessage()));
-      }
-      i++;
-    }
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(output));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(issuedStops));
   }
 
   /**
@@ -1994,5 +2013,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (Exception e) {
       throw new BadRequestException(String.format("Invalid program type '%s'", programType), e);
     }
+  }
+
+  /**
+   * Used to filter out RunRecords initiated by a tethered instance
+   */
+  private boolean isTetheredRunRecord(RunRecord runRecord) {
+    return runRecord.getPeerName() != null;
   }
 }

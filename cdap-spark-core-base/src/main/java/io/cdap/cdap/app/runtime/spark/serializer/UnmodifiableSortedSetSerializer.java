@@ -24,8 +24,6 @@ import com.esotericsoftware.kryo.serializers.CollectionSerializer;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 

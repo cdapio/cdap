@@ -236,16 +236,20 @@ class KubeTwillController implements ExtendedTwillController {
 
   @Override
   public Future<? extends ServiceController> terminate() {
-    if (completion.isDone()) {
-      return completion;
-    }
-
-    return resourceType.equals(V1Job.class) ? cleanupJob() : cleanupResources();
+    return terminate(Integer.MAX_VALUE);
   }
 
   @Override
   public void kill() {
-    terminate();
+    terminate(0);
+  }
+
+  private Future<? extends ServiceController> terminate(int gracePeriodSeconds) {
+    if (completion.isDone()) {
+      return completion;
+    }
+
+    return cleanupResources(gracePeriodSeconds);
   }
 
   @Override
@@ -407,12 +411,15 @@ class KubeTwillController implements ExtendedTwillController {
    *
    * @return a {@link CompletionStage} that will complete when the delete operation completed
    */
-  private CompletionStage<String> deleteResource() {
+  private CompletionStage<String> deleteResource(int gracePeriodSeconds) {
     if (V1Deployment.class.equals(resourceType)) {
-      return deleteDeployment();
+      return deleteDeployment(gracePeriodSeconds);
     }
     if (V1StatefulSet.class.equals(resourceType)) {
-      return deleteStatefulSet();
+      return deleteStatefulSet(gracePeriodSeconds);
+    }
+    if (V1Job.class.equals(resourceType)) {
+      return deleteJobAndGetCompletionStatus(gracePeriodSeconds);
     }
     // This shouldn't happen
     throw new UnsupportedOperationException("Cannot delete resource of type " + resourceType);
@@ -423,7 +430,7 @@ class KubeTwillController implements ExtendedTwillController {
    *
    * @return a {@link CompletionStage} that will complete when the delete operation completed
    */
-  private CompletionStage<String> deleteDeployment() {
+  private CompletionStage<String> deleteDeployment(int gracePeriodSeconds) {
     LOG.debug("Deleting Deployment {}", meta.getName());
 
     AppsV1Api appsApi = new AppsV1Api(apiClient);
@@ -432,7 +439,7 @@ class KubeTwillController implements ExtendedTwillController {
     CompletableFuture<String> resultFuture = new CompletableFuture<>();
     try {
       String name = meta.getName();
-      appsApi.deleteNamespacedDeploymentAsync(name, kubeNamespace, null, null, null, null, null,
+      appsApi.deleteNamespacedDeploymentAsync(name, kubeNamespace, null, null, gracePeriodSeconds, null, null,
                                               new V1DeleteOptions(), new ApiCallbackAdapter<V1Status>() {
           @Override
           public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
@@ -460,7 +467,7 @@ class KubeTwillController implements ExtendedTwillController {
 
    * @return a {@link CompletionStage} that will complete when the delete operation completed
    */
-  private CompletionStage<String> deleteStatefulSet() {
+  private CompletionStage<String> deleteStatefulSet(int gracePeriodSeconds) {
     LOG.debug("Deleting StatefulSet {}", meta.getName());
 
     AppsV1Api appsApi = new AppsV1Api(apiClient);
@@ -470,7 +477,7 @@ class KubeTwillController implements ExtendedTwillController {
     CompletableFuture<String> resultFuture = new CompletableFuture<>();
     try {
       String name = meta.getName();
-      appsApi.deleteNamespacedStatefulSetAsync(name, kubeNamespace, null, null, null, null, null, null,
+      appsApi.deleteNamespacedStatefulSetAsync(name, kubeNamespace, null, null, gracePeriodSeconds, null, null, null,
                                                new ApiCallbackAdapter<V1Status>() {
           @Override
           public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
@@ -510,12 +517,12 @@ class KubeTwillController implements ExtendedTwillController {
   /**
    * Cleans up the resources for deployment and stateful set and returns the future.
    */
-  private CompletableFuture<KubeTwillController> cleanupResources() {
+  private CompletableFuture<KubeTwillController> cleanupResources(int gracePeriodSeconds) {
     CompletableFuture<KubeTwillController> resultFuture;
     CompletionStage<String> completionStage;
     resultFuture = new CompletableFuture<>();
     // delete the resource
-    completionStage = deleteResource();
+    completionStage = deleteResource(gracePeriodSeconds);
     completionStage.whenComplete((name, t) -> {
       if (t != null) {
         resultFuture.completeExceptionally(t);
@@ -530,25 +537,9 @@ class KubeTwillController implements ExtendedTwillController {
   }
 
   /**
-   * Cleans up the job and returns future with correct job status.
-   */
-  private CompletableFuture<KubeTwillController> cleanupJob() {
-    // get job status
-    CompletionStage<String> completionStage = deleteJobAndGetCompletionStatus();
-    completionStage.whenComplete((name, t) -> {
-      if (t != null) {
-        completion.completeExceptionally(t);
-      } else {
-        completion.complete(KubeTwillController.this);
-      }
-    });
-    return completion;
-  }
-
-  /**
    * Returns job completion status and attempts to delete the job.
    */
-  private CompletionStage<String> deleteJobAndGetCompletionStatus() {
+  private CompletionStage<String> deleteJobAndGetCompletionStatus(int gracePeriodSeconds) {
     CompletableFuture<String> resultFuture = new CompletableFuture<>();
     String name = meta.getName();
     if (jobStatus == null) {
@@ -562,7 +553,7 @@ class KubeTwillController implements ExtendedTwillController {
     }
 
     // Also attempt to delete the job once status is available
-    deleteJob(meta).whenComplete((jName, t) -> {
+    deleteJob(meta, gracePeriodSeconds).whenComplete((jName, t) -> {
       if (t != null) {
         LOG.warn("Failed to delete job {}. Attempt will be retried", jName);
       } else {
@@ -576,14 +567,14 @@ class KubeTwillController implements ExtendedTwillController {
   /**
    * Deletes the job.
    */
-  private CompletionStage<String> deleteJob(V1ObjectMeta meta) {
+  private CompletionStage<String> deleteJob(V1ObjectMeta meta, @Nullable Integer gracePeriodSeconds) {
     CompletableFuture<String> resultFuture = new CompletableFuture<>();
     String name = meta.getName();
     try {
       V1DeleteOptions v1DeleteOptions = new V1DeleteOptions();
       v1DeleteOptions.setPropagationPolicy("Background");
       // Make async call to attempt to delete job. If it fails, KubeJobCleaner should clean it up.
-      batchV1Api.deleteNamespacedJobAsync(name, kubeNamespace, null, null, null, null, null,
+      batchV1Api.deleteNamespacedJobAsync(name, kubeNamespace, null, null, gracePeriodSeconds, null, null,
                                           v1DeleteOptions, new ApiCallbackAdapter<V1Status>() {
           @Override
           public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {

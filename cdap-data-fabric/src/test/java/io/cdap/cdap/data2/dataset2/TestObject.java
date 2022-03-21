@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.data2.dataset2;
 
-import com.google.common.base.Objects;
+import java.util.Objects;
 
 public final class TestObject {
   private final String a;
@@ -57,6 +57,11 @@ public final class TestObject {
     TestObject that = (TestObject) o;
 
     return b == that.b
-      && Objects.equal(a, that.a);
+      && Objects.equals(a, that.a);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(a, b);
   }
 }

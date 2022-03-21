@@ -49,6 +49,7 @@ import io.cdap.cdap.messaging.store.cache.MessageTableCacheProvider;
 import io.cdap.cdap.messaging.store.leveldb.LevelDBTableFactory;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.internal.zookeeper.KillZKSession;
@@ -246,6 +247,7 @@ public class LeaderElectionMessagingServiceTest {
       new ConfigModule(cConf),
       new ZKClientModule(),
       new ZKDiscoveryModule(),
+      new AuthorizationEnforcementModule().getNoOpModules(),
       new DFSLocationModule(),
       new AbstractModule() {
         @Override

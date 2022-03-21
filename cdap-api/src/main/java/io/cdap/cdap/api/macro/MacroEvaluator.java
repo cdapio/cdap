@@ -18,9 +18,7 @@ package io.cdap.cdap.api.macro;
 
 import io.cdap.cdap.api.annotation.Beta;
 
-import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Macro evaluator helps to provide macro substitution at runtime.

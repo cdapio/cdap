@@ -35,7 +35,6 @@ import io.cdap.cdap.proto.security.SecureKeyCreateRequest;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.IOException;
 import java.lang.reflect.Type;

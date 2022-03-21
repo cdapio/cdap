@@ -64,7 +64,7 @@ public final class ProgramRunnerRuntimeModule extends RuntimeModule {
   /**
    * Guice module for exposing the {@link ProgramStateWriter}.
    */
-  private static final class ProgramStateWriterModule extends AbstractModule {
+  public static final class ProgramStateWriterModule extends AbstractModule {
 
     @Override
     protected void configure() {

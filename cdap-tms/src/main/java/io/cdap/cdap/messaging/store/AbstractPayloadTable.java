@@ -74,7 +74,7 @@ public abstract class AbstractPayloadTable implements PayloadTable {
 
     final CloseableIterator<RawPayloadTableEntry> scanner = read(startRow, stopRow, limit);
     return new AbstractCloseableIterator<Entry>() {
-      private boolean closed = false;
+      private boolean closed;
       private boolean skipFirstRow = !inclusive;
 
       @Override

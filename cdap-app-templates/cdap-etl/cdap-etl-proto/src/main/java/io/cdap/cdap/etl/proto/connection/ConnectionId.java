@@ -18,7 +18,6 @@
 package io.cdap.cdap.etl.proto.connection;
 
 import io.cdap.cdap.api.NamespaceSummary;
-import jdk.nashorn.internal.runtime.regexp.RegExp;
 
 import java.util.Objects;
 import java.util.regex.Pattern;

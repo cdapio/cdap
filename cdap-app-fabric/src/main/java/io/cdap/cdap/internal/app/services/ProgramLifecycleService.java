@@ -17,11 +17,8 @@
 package io.cdap.cdap.internal.app.services;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
@@ -43,6 +40,7 @@ import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProfileConflictException;
+import io.cdap.cdap.common.ProgramRunForbiddenException;
 import io.cdap.cdap.common.TooManyRequestsException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -56,14 +54,13 @@ import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.internal.pipeline.PluginRequirement;
 import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.internal.provision.ProvisionerNotifier;
-import io.cdap.cdap.internal.provision.ProvisioningOp;
 import io.cdap.cdap.internal.provision.ProvisioningService;
-import io.cdap.cdap.internal.provision.ProvisioningTaskInfo;
 import io.cdap.cdap.proto.ProgramHistory;
 import io.cdap.cdap.proto.ProgramRecord;
 import io.cdap.cdap.proto.ProgramRunClusterStatus;
@@ -102,16 +99,12 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /**
@@ -140,6 +133,7 @@ public class ProgramLifecycleService {
   private final int maxConcurrentLaunching;
   private final ArtifactRepository artifactRepository;
   private final RunRecordMonitorService runRecordMonitorService;
+  private final boolean userProgramLaunchDisabled;
 
   @Inject
   ProgramLifecycleService(CConfiguration cConf,
@@ -153,6 +147,7 @@ public class ProgramLifecycleService {
                           RunRecordMonitorService runRecordMonitorService) {
     this.maxConcurrentRuns = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_RUNS);
     this.maxConcurrentLaunching = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_LAUNCHING);
+    this.userProgramLaunchDisabled = cConf.getBoolean(Constants.AppFabric.USER_PROGRAM_LAUNCH_DISABLED, false);
     this.store = store;
     this.profileService = profileService;
     this.runtimeService = runtimeService;
@@ -372,7 +367,7 @@ public class ProgramLifecycleService {
 
   /**
    * Returns the program status based on the active run records of a program.
-   * A program is RUNNING if there are any RUNNING or SUSPENDED run records.
+   * A program is RUNNING if there are any RUNNING, STOPPING, or SUSPENDED run records.
    * A program is starting if there are any PENDING or STARTING run records and no RUNNING run records.
    * Otherwise, it is STOPPED.
    *
@@ -384,7 +379,8 @@ public class ProgramLifecycleService {
     boolean hasStarting = false;
     for (RunRecordDetail runRecord : runRecords) {
       ProgramRunStatus runStatus = runRecord.getStatus();
-      if (runStatus == ProgramRunStatus.RUNNING || runStatus == ProgramRunStatus.SUSPENDED) {
+      if (runStatus == ProgramRunStatus.RUNNING || runStatus == ProgramRunStatus.SUSPENDED
+        || runStatus == ProgramRunStatus.STOPPING) {
         return ProgramStatus.RUNNING;
       }
       hasStarting = hasStarting || runStatus == ProgramRunStatus.STARTING || runStatus == ProgramRunStatus.PENDING;
@@ -501,7 +497,7 @@ public class ProgramLifecycleService {
   public void stopAll(ApplicationId applicationId) throws Exception {
     Map<ProgramRunId, RunRecordDetail> runMap = store.getActiveRuns(applicationId);
     for (ProgramRunId programRunId : runMap.keySet()) {
-      stop(programRunId.getParent(), programRunId.getRun());
+      stop(programRunId.getParent(), programRunId.getRun(), 0);
     }
   }
 
@@ -573,7 +569,8 @@ public class ProgramLifecycleService {
 
   @VisibleForTesting
   ProgramOptions createProgramOptions(ProgramId programId, Map<String, String> userArgs, Map<String, String> sysArgs,
-                                      boolean debug) throws NotFoundException, ProfileConflictException {
+                                      boolean debug)
+    throws NotFoundException, ProfileConflictException, ProgramRunForbiddenException {
     ProfileId profileId = SystemArguments.getProfileIdForProgram(programId, userArgs);
     Map<String, String> profileProperties = SystemArguments.getProfileProperties(userArgs);
     Profile profile = profileService.getProfile(profileId, profileProperties);
@@ -582,6 +579,10 @@ public class ProgramLifecycleService {
                                                          "used to start the program %s",
                                                        profileId.getProfile(), profileId.getNamespace(),
                                                        programId.toString()), profileId);
+    }
+    if (userProgramLaunchDisabled && profileId == ProfileId.NATIVE
+      && programId.getNamespaceId() != NamespaceId.SYSTEM) {
+      throw new ProgramRunForbiddenException(programId);
     }
     ProvisionerDetail spec = provisioningService.getProvisionerDetail(profile.getProvisioner().getName());
     if (spec == null) {
@@ -705,7 +706,7 @@ public class ProgramLifecycleService {
    * @throws ExecutionException if there was a problem while waiting for the stop call to complete
    */
   public void stop(ProgramId programId) throws Exception {
-    stop(programId, null);
+    stop(programId, null, 0);
   }
 
   /**
@@ -714,39 +715,15 @@ public class ProgramLifecycleService {
    * @param programId the {@link ProgramId program} to stop
    * @param runId the runId of the program run to stop. If null, all runs of the program as returned by
    *              {@link ProgramRuntimeService} are stopped.
+   * @param gracefulShutdownSecs amount of seconds to wait for graceful shutdown before killing the run
    * @throws NotFoundException if the app, program or run was not found
    * @throws BadRequestException if an attempt is made to stop a program that is either not running or
    *                             was started by a workflow
    * @throws InterruptedException if there was a problem while waiting for the stop call to complete
    * @throws ExecutionException if there was a problem while waiting for the stop call to complete
    */
-  public void stop(ProgramId programId, @Nullable String runId) throws Exception {
-    List<ListenableFuture<ProgramRunId>> futures = issueStop(programId, runId);
-
-    // Block until all stop requests completed. This call never throw ExecutionException
-    Futures.successfulAsList(futures).get();
-
-    Throwable failureCause = null;
-    for (ListenableFuture<ProgramRunId> f : futures) {
-      try {
-        f.get();
-      } catch (ExecutionException e) {
-        // If the program is stopped in between the time listing runs and issuing stops of the program,
-        // an IllegalStateException will be throw, which we can safely ignore
-        if (!(e.getCause() instanceof IllegalStateException)) {
-          if (failureCause == null) {
-            failureCause = e.getCause();
-          } else {
-            failureCause.addSuppressed(e.getCause());
-          }
-        }
-      }
-    }
-    if (failureCause != null) {
-      throw new ExecutionException(String.format("%d out of %d runs of the program %s failed to stop",
-                                                 failureCause.getSuppressed().length + 1, futures.size(), programId),
-                                   failureCause);
-    }
+  public void stop(ProgramId programId, @Nullable String runId, int gracefulShutdownSecs) throws Exception {
+    issueStop(programId, runId, gracefulShutdownSecs);
   }
 
   /**
@@ -755,8 +732,8 @@ public class ProgramLifecycleService {
    * Clients can wait for completion of the {@link ListenableFuture}.
    *
    * @param programId the {@link ProgramId program} to issue a stop for
-   * @param runId the runId of the program run to stop. If null, all runs of the program as returned by
-   *              {@link ProgramRuntimeService} are stopped.
+   * @param runId the runId of the program run to stop. If null, all runs of the program are stopped.
+   * @param gracefulShutdownSecs amount of seconds to wait for graceful shutdown before killing the run
    * @return a list of {@link ListenableFuture} with the {@link ProgramRunId} that clients can wait on for stop
    *         to complete.
    * @throws NotFoundException if the app, program or run was not found
@@ -766,111 +743,35 @@ public class ProgramLifecycleService {
    *                               program, a user requires {@link ApplicationPermission#EXECUTE} permission on
    *                               the program.
    */
-  public List<ListenableFuture<ProgramRunId>> issueStop(ProgramId programId, @Nullable String runId) throws Exception {
+  public Collection<ProgramRunId> issueStop(ProgramId programId, @Nullable String runId,
+                                            int gracefulShutdownSecs) throws Exception {
     accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), ApplicationPermission.EXECUTE);
 
-    // See if the program is running as per the runtime service
-    Map<RunId, RuntimeInfo> runtimeInfos = findRuntimeInfo(programId, runId);
     Map<ProgramRunId, RunRecordDetail> activeRunRecords = getActiveRuns(programId, runId);
 
-    if (runtimeInfos.isEmpty() && activeRunRecords.isEmpty()) {
-      // Error out if no run information from runtime service and from run record
+    if (activeRunRecords.isEmpty()) {
+      // Error out if no run information from run record
       Store.ensureProgramExists(programId, store.getApplication(programId.getParent()));
       throw new BadRequestException(String.format("Program '%s' is not running.", programId));
     }
 
-    // Stop the running program based on a combination of runtime info and run record
-    // It's possible that some of them are not yet available from the runtimeService due to timing
-    // differences between the run record was created vs being added to runtimeService
-    // So we retry in a loop for up to 3 seconds max to cater for those cases
+    for (Map.Entry<ProgramRunId, RunRecordDetail> activeRunRecord : activeRunRecords.entrySet()) {
+      ProgramRunId activeRunId = activeRunRecord.getKey();
+      RunRecordDetail runRecord = activeRunRecord.getValue();
 
-    Set<String> pendingStops = Stream.concat(runtimeInfos.keySet().stream().map(RunId::getId),
-                                             activeRunRecords.keySet().stream().map(ProgramRunId::getRun))
-                                      .collect(Collectors.toSet());
-
-    List<ListenableFuture<ProgramRunId>> futures = new ArrayList<>();
-    Stopwatch stopwatch = new Stopwatch().start();
-
-    Set<ProgramRunId> cancelledProvisionRuns = new HashSet<>();
-    while (!pendingStops.isEmpty() && stopwatch.elapsedTime(TimeUnit.SECONDS) < 3L) {
-      Iterator<String> iterator = pendingStops.iterator();
-      while (iterator.hasNext()) {
-        ProgramRunId activeRunId = programId.run(iterator.next());
-        RunRecordDetail runRecord = activeRunRecords.get(activeRunId);
-        if (runRecord == null) {
-          runRecord = store.getRun(activeRunId);
-        }
-        // Check if the program is actually started from workflow and the workflow is running
-        if (runRecord != null && runRecord.getProperties().containsKey("workflowrunid")
-          && runRecord.getStatus().equals(ProgramRunStatus.RUNNING)) {
-          String workflowRunId = runRecord.getProperties().get("workflowrunid");
-          throw new BadRequestException(String.format("Cannot stop the program '%s' started by the Workflow " +
-                                                        "run '%s'. Please stop the Workflow.", activeRunId,
-                                                      workflowRunId));
-        }
-
-        RuntimeInfo runtimeInfo = runtimeService.lookup(programId, RunIds.fromString(activeRunId.getRun()));
-        // if there is a runtimeInfo, the run is in the 'starting' state or later
-        if (runtimeInfo != null) {
-          ListenableFuture<ProgramController> future = runtimeInfo.getController().stop();
-          futures.add(Futures.transform(future, ProgramController::getProgramRunId));
-          iterator.remove();
-          // if it was in this set, it means we cancelled a task, but it had already sent a PROVISIONED message
-          // by the time we cancelled it. We then waited for it to show up in the runtime service and got here.
-          // We added a future for this run in the lines above, but we don't want to add another duplicate future
-          // at the end of this loop, so remove this run from the cancelled provision runs.
-          cancelledProvisionRuns.remove(activeRunId);
-        } else {
-          // if there is no runtimeInfo, the run could be in the provisioning state.
-          Optional<ProvisioningTaskInfo> cancelledInfo = provisioningService.cancelProvisionTask(activeRunId);
-          cancelledInfo.ifPresent(taskInfo -> {
-            cancelledProvisionRuns.add(activeRunId);
-            // This state check is to handle a race condition where we cancel the provision task, but not in time
-            // to prevent it from sending the PROVISIONED notification.
-
-            // If the notification was sent, but not yet consumed, we are *not* done stopping the run.
-            // We have to wait for the notification to be consumed, which will start the run, and place the controller
-            // in the runtimeService. The next time we loop, we can find it in the runtimeService and tell it to stop.
-            // If the notification was not sent, then we *are* done stopping the run.
-
-            // Therefore, if the state is CREATED, we don't remove it from the iterator so that the run will get
-            // checked again in the next loop, when we may get the controller from the runtimeService to stop it.
-
-            // No other task states have this race condition, as the PROVISIONED notification is only sent
-            // after the state transitions to CREATED. Therefore it is safe to remove the runId from the iterator,
-            // as we know we are done stopping it.
-            ProvisioningOp.Status taskState = taskInfo.getProvisioningOp().getStatus();
-            if (taskState != ProvisioningOp.Status.CREATED) {
-              iterator.remove();
-            }
-          });
-        }
+      // Check if the program is actually started from workflow and the workflow is running
+      if (runRecord != null && runRecord.getProperties().containsKey(AppMetadataStore.WORKFLOW_RUNID)
+        && runRecord.getStatus().equals(ProgramRunStatus.RUNNING)) {
+        String workflowRunId = runRecord.getProperties().get(AppMetadataStore.WORKFLOW_RUNID);
+        throw new BadRequestException(String.format("Cannot stop the program run '%s' started by the Workflow " +
+                                                      "run '%s'. Please stop the Workflow.", activeRunId,
+                                                    workflowRunId));
       }
-
-      if (!pendingStops.isEmpty()) {
-        // If not able to stop all of them, it means there were some runs that didn't have a runtime info and
-        // didn't have a provisioning task. This can happen if the run was already finished, or the run transitioned
-        // from the provisioning state to the starting state during this stop operation.
-        // We'll get the active runs again and filter it by the pending stops. Stop will be retried for those.
-        Set<String> finalPendingStops = pendingStops;
-
-        activeRunRecords = getActiveRuns(programId, runId).entrySet().stream()
-          .filter(e -> finalPendingStops.contains(e.getKey().getRun()))
-          .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        pendingStops = activeRunRecords.keySet().stream().map(ProgramRunId::getRun).collect(Collectors.toSet());
-
-        if (!pendingStops.isEmpty()) {
-          TimeUnit.MILLISECONDS.sleep(200);
-        }
-      }
+      // send a message to stop the program run
+      programStateWriter.stop(activeRunId, gracefulShutdownSecs);
     }
 
-    for (ProgramRunId cancelledProvisionRun : cancelledProvisionRuns) {
-      SettableFuture<ProgramRunId> future = SettableFuture.create();
-      future.set(cancelledProvisionRun);
-      futures.add(future);
-    }
-    return futures;
+    return activeRunRecords.keySet();
   }
 
   /**

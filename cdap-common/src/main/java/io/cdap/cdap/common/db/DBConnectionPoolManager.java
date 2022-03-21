@@ -313,7 +313,7 @@ public class DBConnectionPoolManager {
         return conn;
       }
     } catch (SQLException e) {
-
+      // Ignore the exception since we are going to cleanup the invalid connection.
     }
     // This Exception should never occur. If it nevertheless occurs,
     // it's because of an error in the JDBC driver which we ignore and assume

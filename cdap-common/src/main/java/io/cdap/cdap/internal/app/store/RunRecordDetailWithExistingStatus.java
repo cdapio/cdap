@@ -38,11 +38,11 @@ public final class RunRecordDetailWithExistingStatus extends RunRecordDetail {
                                             @Nullable Long stoppingTs, @Nullable Long terminateTs,
                                             ProgramRunStatus status, @Nullable Map<String, String> properties,
                                             @Nullable Map<String, String> systemArgs, @Nullable String twillRunId,
-                                            ProgramRunCluster cluster, ProfileId profileId, byte[] sourceId,
-                                            @Nullable ArtifactId artifactId, @Nullable String principal,
-                                            @Nullable ProgramRunStatus existingStatus) {
+                                            ProgramRunCluster cluster, ProfileId profileId, @Nullable String peerName,
+                                            byte[] sourceId, @Nullable ArtifactId artifactId,
+                                            @Nullable String principal, @Nullable ProgramRunStatus existingStatus) {
     super(programRunId, startTs, runTs, stopTs, suspendTs, resumeTs, stoppingTs, terminateTs, status, properties,
-          systemArgs, twillRunId, cluster, profileId, sourceId, artifactId, principal);
+          systemArgs, twillRunId, cluster, profileId, peerName, sourceId, artifactId, principal);
     this.existingStatus = existingStatus;
   }
 
@@ -80,8 +80,8 @@ public final class RunRecordDetailWithExistingStatus extends RunRecordDetail {
       // we don't want to throw exception while processing them
       return new RunRecordDetailWithExistingStatus(programRunId, startTs, runTs, stopTs, suspendTs, resumeTs,
                                                    stoppingTs, terminateTs, status, properties, systemArgs,
-                                                   twillRunId, cluster, profileId, sourceId, artifactId, principal,
-                                                   existingStatus);
+                                                   twillRunId, cluster, profileId, peerName, sourceId, artifactId,
+                                                   principal, existingStatus);
     }
   }
 }

@@ -54,7 +54,7 @@ public class ExploreConnection implements Connection {
   private final String namespace;
   private final ExploreConnectionParams connectionParams;
   private ExploreClient exploreClient;
-  private boolean isClosed = false;
+  private boolean isClosed;
 
   ExploreConnection(ExploreClient exploreClient, String namespace, ExploreConnectionParams connectionParams) {
     this.exploreClient = exploreClient;

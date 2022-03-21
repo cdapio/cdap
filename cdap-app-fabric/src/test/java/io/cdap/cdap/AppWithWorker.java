@@ -71,7 +71,7 @@ public class AppWithWorker extends AbstractApplication {
         try {
           TimeUnit.MILLISECONDS.sleep(100);
         } catch (InterruptedException e) {
-
+          // ignore
         }
       }
     }

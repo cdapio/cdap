@@ -1,0 +1,21 @@
+[
+  {
+    "id": "6354a561-886c-11ec-8688-42010a8e0035",
+    "name": "default.DataFusionQuickstart.spark.phase-1",
+    "attempts": [
+      {
+        "attemptId": "1",
+        "startTime": "2022-02-07T23:20:10.466GMT",
+        "endTime": "2022-02-07T23:21:06.139GMT",
+        "lastUpdated": "2022-02-07T23:21:09.046GMT",
+        "duration": 55673,
+        "sparkUser": "yarn",
+        "completed": true,
+        "appSparkVersion": "3.1.2",
+        "startTimeEpoch": 1644276010466,
+        "endTimeEpoch": 1644276066139,
+        "lastUpdatedEpoch": 1644276069046
+      }
+    ]
+  }
+]

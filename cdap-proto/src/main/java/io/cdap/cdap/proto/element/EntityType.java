@@ -31,6 +31,7 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.QueryId;
 import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.proto.id.SecureKeyId;
+import io.cdap.cdap.proto.id.SupportBundleEntityId;
 import io.cdap.cdap.proto.id.SystemAppEntityId;
 import io.cdap.cdap.proto.id.SystemServiceId;
 import io.cdap.cdap.proto.id.TopicId;
@@ -66,6 +67,7 @@ public enum EntityType {
   PROFILE(ProfileId.class),
 
   QUERY(QueryId.class),
+  SUPPORT_BUNDLE(SupportBundleEntityId.class),
   SYSTEM_SERVICE(SystemServiceId.class),
   SYSTEM_APP_ENTITY(SystemAppEntityId.class);
   ;

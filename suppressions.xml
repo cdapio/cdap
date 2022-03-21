@@ -43,4 +43,6 @@
   <suppress checks=".*" files=".*[/\\]src[/\\](main)[/\\](thrift)[/\\].*" />
   <suppress checks=".*" files=".*[/\\]src[/\\](main)[/\\](java)[/\\](co|org)[/\\](cask|apache)[/\\](tephra|thrift)[/\\].*" />
 
+  <suppress checks=".*" files=".*[/\\]src[/\\](main)[/\\](java)[/\\](io)[/\\](cdap)[/\\](cdap)[/\\](internal)[/\\](guava)[/\\].*" />
+
 </suppressions>

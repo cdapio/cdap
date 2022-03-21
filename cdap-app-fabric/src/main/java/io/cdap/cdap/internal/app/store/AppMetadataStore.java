@@ -114,6 +114,7 @@ import javax.annotation.Nullable;
  */
 public class AppMetadataStore {
 
+  public static final String WORKFLOW_RUNID = "workflowrunid";
   static final DatasetId APP_META_INSTANCE_ID = NamespaceId.SYSTEM.dataset(Constants.AppMetaStore.TABLE);
 
   private static final Logger LOG = LoggerFactory.getLogger(AppMetadataStore.class);
@@ -586,6 +587,7 @@ public class AppMetadataStore {
       .setSystemArgs(systemArgs)
       .setCluster(cluster)
       .setProfileId(profileId.get())
+      .setPeerName(systemArgs.get(ProgramOptionConstants.PEER_NAME))
       .setSourceId(sourceId)
       .setArtifactId(artifactId)
       .setPrincipal(systemArgs.get(ProgramOptionConstants.PRINCIPAL))
@@ -605,7 +607,7 @@ public class AppMetadataStore {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     builder.put("runtimeArgs", GSON.toJson(runtimeArgs, MAP_STRING_STRING_TYPE));
     if (workflowRunId != null) {
-      builder.put("workflowrunid", workflowRunId);
+      builder.put(WORKFLOW_RUNID, workflowRunId);
     }
     return builder.build();
   }
@@ -802,6 +804,7 @@ public class AppMetadataStore {
       .setProperties(getRecordProperties(systemArgs, runtimeArgs))
       .setSystemArgs(systemArgs)
       .setProfileId(profileId.orElse(null))
+      .setPeerName(systemArgs.get(ProgramOptionConstants.PEER_NAME))
       .setArtifactId(artifactId)
       .setSourceId(sourceId)
       .setPrincipal(systemArgs.get(ProgramOptionConstants.PRINCIPAL))
@@ -1346,6 +1349,7 @@ public class AppMetadataStore {
       case STARTING:
       case RUNNING:
       case SUSPENDED:
+      case STOPPING:
         return getProgramRuns(programId, status, startTime, endTime, limit, filter, TYPE_RUN_RECORD_ACTIVE);
       default:
         return getProgramRuns(programId, status, startTime, endTime, limit, filter, TYPE_RUN_RECORD_COMPLETED);

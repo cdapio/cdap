@@ -16,20 +16,24 @@
 
 package io.cdap.cdap.internal.tethering;
 
+import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReader;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.app.worker.TaskWorkerServiceTest;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.common.http.HttpMethod;
-import io.cdap.common.http.HttpRequest;
-import io.cdap.common.http.HttpRequests;
-import io.cdap.common.http.HttpResponse;
 import org.apache.commons.io.IOUtils;
+import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.After;
@@ -41,12 +45,7 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.net.InetAddress;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.Collections;
 
 /**
@@ -77,10 +76,10 @@ public class ArtifactCacheServiceTest extends AppFabricTestBase {
     cConf = createCConf();
     tetheringStore = getInjector().getInstance(TetheringStore.class);
     ArtifactCache artifactCache = new ArtifactCache(cConf);
-    artifactCacheService = new ArtifactCacheService(cConf, artifactCache, tetheringStore);
+    DiscoveryService discoveryService = getInjector().getInstance(DiscoveryService.class);
+    artifactCacheService = new ArtifactCacheService(cConf, artifactCache, tetheringStore, null, discoveryService);
     artifactCacheService.startAndWait();
     getInjector().getInstance(ArtifactRepository.class).clear(NamespaceId.DEFAULT);
-    Id.Artifact.from(Id.Namespace.DEFAULT, "some-task", "1.0.0-SNAPSHOT");
     LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
     appJar = AppJarHelper.createDeploymentJar(locationFactory, TaskWorkerServiceTest.TestRunnableClass.class);
     artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "some-task", "1.0.0-SNAPSHOT");
@@ -100,29 +99,49 @@ public class ArtifactCacheServiceTest extends AppFabricTestBase {
     deletePeer();
   }
 
-  private byte[] getArtifactBytes(String peerName) throws IOException, URISyntaxException {
-
-    URL url = getURL(peerName);
-    HttpRequest httpRequest = HttpRequest.builder(HttpMethod.GET, url).build();
-    HttpResponse httpResponse = HttpRequests.execute(httpRequest);
-    Assert.assertEquals(HttpURLConnection.HTTP_OK, httpResponse.getResponseCode());
-    return httpResponse.getResponseBody();
+  @Test
+  public void testFetchArtifact() throws Exception {
+    Assert.assertArrayEquals(IOUtils.toByteArray(appJar.getInputStream()),
+                                                 IOUtils.toByteArray(artifactRepository.newInputStream(artifactId)));
   }
 
-  private URL getURL(String peerName) throws URISyntaxException, MalformedURLException {
-    return getURL(peerName, artifactId);
+  @Test(expected = NotFoundException.class)
+  public void testFetchArtifactUnknownPeer() throws Exception {
+    ArtifactRepository artifactRepository = getArtifactRepository("unknownpeer");
+    artifactRepository.getArtifact(artifactId);
   }
 
-  private URL getURL(String peerName, Id.Artifact artifactId) throws URISyntaxException, MalformedURLException {
-    String urlPath = String.format("/peers/%s/namespaces/%s/artifacts/%s/versions/%s",
-                                   peerName, artifactId.toEntityId().getNamespace(),
-                                   artifactId.toEntityId().getArtifact(),
-                                   artifactId.toEntityId().getVersion());
+  @Test(expected = NotFoundException.class)
+  public void testArtifactNotFound() throws Exception {
+    Id.Artifact notFoundArtifact = Id.Artifact.from(Id.Namespace.DEFAULT, "other-task", "2.0.0-SNAPSHOT");
+    ArtifactRepository artifactRepository = getArtifactRepository();
+    artifactRepository.getArtifact(notFoundArtifact);
+  }
 
-    return new URI(String.format("http://%s:%d/v3Internal/%s",
-                                 cConf.get(Constants.ArtifactCache.ADDRESS),
-                                 cConf.getInt(Constants.ArtifactCache.PORT),
-                                 urlPath)).toURL();
+  @Test
+  public void testGetArtifactDetail() throws Exception {
+    ArtifactRepository artifactRepository = getArtifactRepository();
+    ArtifactDetail artifactDetail = artifactRepository.getArtifact(artifactId);
+    Assert.assertEquals(artifactId.toArtifactId(), artifactDetail.getDescriptor().getArtifactId());
+    Assert.assertEquals(artifactId.getNamespace().getId(), artifactDetail.getDescriptor().getNamespace());
+  }
+
+  private ArtifactRepository getArtifactRepository() {
+    return getArtifactRepository(PEER_NAME);
+  }
+
+  private ArtifactRepository getArtifactRepository(String peer) {
+    RemoteClientFactory remoteClientFactory = getInjector().getInstance(RemoteClientFactory.class);
+    String basePath = String.format("%s/peers/%s", Constants.Gateway.INTERNAL_API_VERSION_3, peer);
+    RemoteClient remoteClient = remoteClientFactory.createRemoteClient(
+      Constants.Service.ARTIFACT_CACHE_SERVICE,
+      RemoteClientFactory.NO_VERIFY_HTTP_REQUEST_CONFIG,
+      basePath);
+    LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
+    RemoteArtifactRepositoryReader artifactRepositoryReader = new RemoteArtifactRepositoryReader(
+      locationFactory, remoteClient);
+    return new RemoteArtifactRepository(cConf, artifactRepositoryReader,
+                                        getInjector().getInstance(ProgramRunnerFactory.class));
   }
 
   private void addPeer() throws PeerAlreadyExistsException, IOException {
@@ -137,29 +156,5 @@ public class ArtifactCacheServiceTest extends AppFabricTestBase {
 
   private void deletePeer() throws PeerNotFoundException, IOException {
     tetheringStore.deletePeer(PEER_NAME);
-  }
-
-  @Test
-  public void testFetchArtifact() throws Exception {
-    byte[] artifact = getArtifactBytes(PEER_NAME);
-    byte[] expectedBytes = IOUtils.toByteArray(appJar.getInputStream());
-    Assert.assertArrayEquals(artifact, expectedBytes);
-  }
-
-  @Test
-  public void testFetchArtifactUnknownPeer() throws Exception {
-    URL url = getURL("unknownpeer");
-    HttpRequest httpRequest = HttpRequest.builder(HttpMethod.GET, url).build();
-    HttpResponse httpResponse = HttpRequests.execute(httpRequest);
-    Assert.assertEquals(HttpURLConnection.HTTP_NOT_FOUND, httpResponse.getResponseCode());
-  }
-
-  @Test
-  public void testArtifactNotFound() throws Exception {
-    Id.Artifact notFoundArtifact = Id.Artifact.from(Id.Namespace.DEFAULT, "other-task", "2.0.0-SNAPSHOT");
-    URL url = getURL(PEER_NAME, notFoundArtifact);
-    HttpRequest httpRequest = HttpRequest.builder(HttpMethod.GET, url).build();
-    HttpResponse httpResponse = HttpRequests.execute(httpRequest);
-    Assert.assertEquals(HttpURLConnection.HTTP_NOT_FOUND, httpResponse.getResponseCode());
   }
 }

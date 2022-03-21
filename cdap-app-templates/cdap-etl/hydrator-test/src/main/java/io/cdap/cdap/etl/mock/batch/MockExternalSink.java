@@ -33,9 +33,12 @@ import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.format.StructuredRecordStringConverter;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -50,6 +53,7 @@ import javax.annotation.Nullable;
 @Plugin(type = BatchSink.PLUGIN_TYPE)
 @Name(MockExternalSink.PLUGIN_NAME)
 public class MockExternalSink extends BatchSink<StructuredRecord, NullWritable, String> {
+  public static final Logger LOG = LoggerFactory.getLogger(MockExternalSink.class);
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   public static final String PLUGIN_NAME = "MockExternalSink";
   private final Config config;
@@ -173,6 +177,10 @@ public class MockExternalSink extends BatchSink<StructuredRecord, NullWritable, 
         while ((line = reader.readLine()) != null) {
           records.add(StructuredRecordStringConverter.fromJsonString(line, schema));
         }
+      } catch (FileNotFoundException e) {
+        // not sure exactly how this can happen, but in this case, behave as if the file never existed
+        // See CDAP-18905 for more info
+        LOG.warn("File {} does not exist, skipping it", file.getAbsolutePath(), e);
       }
     }
     return records;

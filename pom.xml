@@ -2911,6 +2911,8 @@
         <module>cdap-test</module>
         <module>cdap-integration-test</module>
         <module>cdap-ui</module>
+        <module>cdap-event-writer-spi</module>
+        <module>cdap-authenticator-ext-gcp</module>
       </modules>
     </profile>
     <profile>

@@ -78,7 +78,7 @@ public class DynamicPluginServiceApp extends AbstractApplication {
   public static class DynamicPluginHandler extends AbstractHttpServiceHandler {
     private static final Gson GSON = new Gson();
     private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
-    private boolean onFinishSuccessful = false;
+    private boolean onFinishSuccessful;
 
     @POST
     @Path("plugins/{name}/apply")
@@ -137,7 +137,7 @@ public class DynamicPluginServiceApp extends AbstractApplication {
       PluginConfigurer pluginConfigurer = getContext().createServicePluginConfigurer(getNamespace(request));
 
       HttpContentProducer producer = new HttpContentProducer() {
-        private boolean done = false;
+        private boolean done;
 
         @Override
         public ByteBuffer nextChunk(Transactional transactional) {

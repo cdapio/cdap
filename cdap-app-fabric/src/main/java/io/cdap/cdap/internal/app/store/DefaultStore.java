@@ -180,6 +180,13 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  public void setStopping(ProgramRunId id, byte[] sourceId, long stoppingTsSecs, long terminateTsSecs) {
+    TransactionRunners.run(transactionRunner, context -> {
+      getAppMetadataStore(context).recordProgramStopping(id, sourceId, stoppingTsSecs, terminateTsSecs);
+    });
+  }
+
+  @Override
   public void setStop(ProgramRunId id, long endTime, ProgramRunStatus runStatus, byte[] sourceId) {
     setStop(id, endTime, runStatus, null, sourceId);
   }

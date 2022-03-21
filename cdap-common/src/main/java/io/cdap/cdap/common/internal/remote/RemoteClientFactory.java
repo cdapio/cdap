@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2021-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package io.cdap.cdap.common.internal.remote;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import io.cdap.common.http.HttpRequestConfig;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
@@ -31,16 +32,29 @@ public class RemoteClientFactory {
                                                                                               false);
   private final DiscoveryServiceClient discoveryClient;
   private final InternalAuthenticator internalAuthenticator;
+  private final RemoteAuthenticator remoteAuthenticator;
 
-  @Inject @VisibleForTesting
+  @VisibleForTesting
   public RemoteClientFactory(DiscoveryServiceClient discoveryClient, InternalAuthenticator internalAuthenticator) {
+    this(discoveryClient, internalAuthenticator, new NoOpRemoteAuthenticator());
+  }
+
+  @Inject
+  public RemoteClientFactory(DiscoveryServiceClient discoveryClient, InternalAuthenticator internalAuthenticator,
+                             RemoteAuthenticator remoteAuthenticator) {
     this.discoveryClient = discoveryClient;
     this.internalAuthenticator = internalAuthenticator;
+    this.remoteAuthenticator = remoteAuthenticator;
   }
 
   public RemoteClient createRemoteClient(String discoverableServiceName, HttpRequestConfig httpRequestConfig,
                                          String basePath) {
+    return createRemoteClient(discoverableServiceName, httpRequestConfig, basePath, false);
+  }
+
+  public RemoteClient createRemoteClient(String discoverableServiceName, HttpRequestConfig httpRequestConfig,
+                                         String basePath, boolean skipRewriterUrl) {
     return new RemoteClient(internalAuthenticator, discoveryClient, discoverableServiceName,
-                            httpRequestConfig, basePath);
+                            httpRequestConfig, basePath, remoteAuthenticator, skipRewriterUrl);
   }
 }

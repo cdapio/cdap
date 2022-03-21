@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2019 Cask Data, Inc.
+ * Copyright © 2015-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,7 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.common.namespace.guice.NamespaceQueryAdminModule;
@@ -81,7 +82,7 @@ public class HBaseTableExporter {
   private final TransactionService txService;
   private final ZKClientService zkClientService;
   private final TransactionSystemClient txClient;
-  private Path bulkloadDir = null;
+  private Path bulkloadDir;
 
   public HBaseTableExporter() throws Exception {
     this.hConf = HBaseConfiguration.create();
@@ -107,6 +108,7 @@ public class HBaseTableExporter {
   public static Injector createInjector(CConfiguration cConf, Configuration hConf) {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
+      RemoteAuthenticatorModules.getDefaultModule(),
       new IOModule(),
       new ZKClientModule(),
       new ZKDiscoveryModule(),

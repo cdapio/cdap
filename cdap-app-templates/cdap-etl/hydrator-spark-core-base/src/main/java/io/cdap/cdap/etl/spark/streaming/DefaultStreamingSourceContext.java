@@ -19,7 +19,6 @@ package io.cdap.cdap.etl.spark.streaming;
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
-import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.etl.api.lineage.AccessType;
 import io.cdap.cdap.etl.api.streaming.StreamingSourceContext;

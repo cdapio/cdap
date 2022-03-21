@@ -58,7 +58,8 @@ public class RemoteConfigurator implements Configurator {
                             @Assisted AppDeploymentInfo deploymentInfo,
                             RemoteClientFactory remoteClientFactory) {
     this.deploymentInfo = deploymentInfo;
-    this.remoteTaskExecutor = new RemoteTaskExecutor(cConf, metricsCollectionService, remoteClientFactory);
+    this.remoteTaskExecutor = new RemoteTaskExecutor(cConf, metricsCollectionService, remoteClientFactory,
+        RemoteTaskExecutor.Type.TASK_WORKER);
   }
 
   @Override

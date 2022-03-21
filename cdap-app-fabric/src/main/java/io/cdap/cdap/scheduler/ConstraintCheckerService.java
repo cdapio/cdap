@@ -67,7 +67,7 @@ class ConstraintCheckerService extends AbstractIdleService {
   private final TransactionRunner transactionRunner;
   private ScheduleTaskRunner taskRunner;
   private ListeningExecutorService taskExecutorService;
-  private volatile boolean stopping = false;
+  private volatile boolean stopping;
 
   @Inject
   ConstraintCheckerService(Store store,

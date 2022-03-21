@@ -17,7 +17,6 @@
 package io.cdap.cdap.etl.mock.batch.aggregator;
 
 import com.google.common.base.Splitter;
-import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;

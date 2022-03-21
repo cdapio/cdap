@@ -17,7 +17,6 @@
 package io.cdap.cdap.etl.mock.batch;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.dataset.table.Put;
@@ -28,7 +27,6 @@ import io.cdap.cdap.api.plugin.PluginPropertyField;
 import io.cdap.cdap.api.workflow.WorkflowNodeState;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchActionContext;
-import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.batch.PostAction;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 

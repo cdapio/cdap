@@ -77,7 +77,7 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
   private final Deque<TransactionAware> extraTxAwares = new LinkedList<>();
   private final MetricsContext metricsContext;
 
-  private DelayedDiscardingTransactionContext txContext = null;
+  private DelayedDiscardingTransactionContext txContext;
 
   /**
    * See {@link DynamicDatasetCache}.

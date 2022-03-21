@@ -17,7 +17,6 @@
 package io.cdap.cdap.gateway;
 
 import com.google.common.collect.ObjectArrays;
-import com.google.common.io.Files;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.test.AppJarHelper;

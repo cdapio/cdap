@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2021-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,6 +36,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
 import io.cdap.cdap.common.internal.remote.InternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
@@ -53,6 +54,7 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.guice.CoreSecurityModule;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
+import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.discovery.DiscoveryService;
@@ -77,6 +79,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
+import javax.annotation.Nullable;
 
 /**
  * Spark container launcher for launching spark drivers, and also allowing spark executors to fetch artifacts from it.
@@ -240,6 +243,7 @@ public class SparkContainerDriverLauncher {
     CoreSecurityModule coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf);
 
     modules.add(new ConfigModule(cConf, hConf));
+    modules.add(RemoteAuthenticatorModules.getDefaultModule());
     modules.add(new IOModule());
     modules.add(new AuthenticationContextModules().getMasterWorkerModule());
     modules.add(coreSecurityModule);
@@ -272,10 +276,11 @@ public class SparkContainerDriverLauncher {
     @Inject
     ArtifactLocalizerClient(DiscoveryServiceClient discoveryServiceClient,
                             InternalAuthenticator internalAuthenticator,
-                            CConfiguration cConf, ArtifactManagerFactory artifactManagerFactory) {
+                            CConfiguration cConf, ArtifactManagerFactory artifactManagerFactory,
+                            @Nullable RemoteAuthenticator remoteAuthenticator) {
 
       RemoteClientFactory remoteClientFactory =
-        new RemoteClientFactory(discoveryServiceClient, internalAuthenticator);
+        new RemoteClientFactory(discoveryServiceClient, internalAuthenticator, remoteAuthenticator);
       this.artifactLocalizer = new ArtifactLocalizer(cConf, remoteClientFactory, artifactManagerFactory);
     }
 

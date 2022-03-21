@@ -48,7 +48,7 @@ public class GrokRecordFormat extends RecordFormat<ByteBuffer, StructuredRecord>
   private static final String PATTERN_SETTING = "pattern";
 
   private final Grok grok = new Grok();
-  private String pattern = null;
+  private String pattern;
 
   public static Map<String, String> settings(String pattern) {
     return ImmutableMap.of(PATTERN_SETTING, pattern);

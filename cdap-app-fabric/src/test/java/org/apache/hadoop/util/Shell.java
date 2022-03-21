@@ -255,7 +255,7 @@ abstract public class Shell {
   public static final String READ_LINK_COMMAND = "readlink";
 
   /**Time after which the executing script would be timedout*/
-  protected long timeOutInterval = 0L;
+  protected long timeOutInterval;
   /** If or not script timed out*/
   private AtomicBoolean timedOut;
 

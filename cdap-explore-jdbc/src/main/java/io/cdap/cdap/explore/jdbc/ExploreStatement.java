@@ -50,22 +50,22 @@ public class ExploreStatement implements Statement {
    *  statement.getResultSet();
    * </code>.
    */
-  private ResultSet resultSet = null;
+  private ResultSet resultSet;
 
   /**
    * Sets the limit for the maximum number of rows that any ResultSet object produced by this
    * Statement can contain to the given number. If the limit is exceeded, the excess rows
    * are silently dropped. The value must be >= 0, and 0 means there is not limit.
    */
-  private int maxRows = 0;
+  private int maxRows;
 
   /**
    * Add SQLWarnings to the warningChain if needed.
    */
-  private SQLWarning warningChain = null;
+  private SQLWarning warningChain;
 
-  private volatile boolean isClosed = false;
-  private volatile ListenableFuture<ExploreExecutionResult> futureResults = null;
+  private volatile boolean isClosed;
+  private volatile ListenableFuture<ExploreExecutionResult> futureResults;
 
   private Connection connection;
   private ExploreClient exploreClient;

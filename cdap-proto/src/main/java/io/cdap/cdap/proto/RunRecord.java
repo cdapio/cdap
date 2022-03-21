@@ -74,6 +74,10 @@ public class RunRecord {
   @SerializedName("profile")
   private final ProfileId profileId;
 
+  // the name of the tethered peer that the program was initiated by, if any
+  @SerializedName("peerName")
+  private final String peerName;
+
   /**
    * @deprecated use {@link #builder()} instead.
    */
@@ -81,7 +85,7 @@ public class RunRecord {
   public RunRecord(String pid, long startTs, @Nullable Long runTs, @Nullable Long stopTs, @Nullable Long suspendTs,
                    @Nullable Long resumeTs, @Nullable Long stoppingTs, @Nullable Long terminateTs,
                    ProgramRunStatus status, @Nullable Map<String, String> properties, ProgramRunCluster cluster,
-                   ProfileId profileId) {
+                   ProfileId profileId, @Nullable String peerName) {
     this.pid = pid;
     this.startTs = startTs;
     this.runTs = runTs;
@@ -95,6 +99,7 @@ public class RunRecord {
       Collections.unmodifiableMap(new LinkedHashMap<>(properties));
     this.cluster = cluster;
     this.profileId = profileId;
+    this.peerName = peerName;
   }
 
   /**
@@ -104,7 +109,7 @@ public class RunRecord {
     this(otherRunRecord.getPid(), otherRunRecord.getStartTs(), otherRunRecord.getRunTs(), otherRunRecord.getStopTs(),
          otherRunRecord.getSuspendTs(), otherRunRecord.getResumeTs(), otherRunRecord.getStoppingTs(),
          otherRunRecord.getTerminateTs(), otherRunRecord.getStatus(), otherRunRecord.getProperties(),
-         otherRunRecord.getCluster(), otherRunRecord.getProfileId());
+         otherRunRecord.getCluster(), otherRunRecord.getProfileId(), otherRunRecord.getPeerName());
   }
 
   public String getPid() {
@@ -163,6 +168,11 @@ public class RunRecord {
     return profileId == null ? ProfileId.NATIVE : profileId;
   }
 
+  @Nullable
+  public String getPeerName() {
+    return peerName;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -185,13 +195,14 @@ public class RunRecord {
       Objects.equals(this.status, that.status) &&
       Objects.equals(this.properties, that.properties) &&
       Objects.equals(this.cluster, that.cluster) &&
-      Objects.equals(this.profileId, that.profileId);
+      Objects.equals(this.profileId, that.profileId) &&
+      Objects.equals(this.peerName, that.peerName);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(pid, startTs, runTs, stopTs, suspendTs, resumeTs, stoppingTs, terminateTs, status,
-                        properties, cluster, profileId);
+                        properties, cluster, profileId, peerName);
   }
 
   @Override
@@ -209,6 +220,7 @@ public class RunRecord {
       ", properties=" + properties +
       ", cluster=" + cluster +
       ", profile=" + profileId +
+      ", peerName=" + peerName +
       '}';
   }
 
@@ -246,6 +258,7 @@ public class RunRecord {
     protected Map<String, String> properties;
     protected ProgramRunCluster cluster;
     protected ProfileId profileId;
+    protected String peerName;
 
     protected Builder() {
       properties = new HashMap<>();
@@ -264,6 +277,7 @@ public class RunRecord {
       properties = new HashMap<>(other.getProperties());
       cluster = other.getCluster();
       profileId = other.getProfileId();
+      peerName = other.getPeerName();
     }
 
     public T setStatus(ProgramRunStatus status) {
@@ -327,6 +341,11 @@ public class RunRecord {
       return (T) this;
     }
 
+    public T setPeerName(String peerName) {
+      this.peerName = peerName;
+      return (T) this;
+    }
+
     public RunRecord build() {
       if (pid == null) {
         throw new IllegalArgumentException("Run record run id must be specified.");
@@ -341,7 +360,7 @@ public class RunRecord {
         throw new IllegalArgumentException("Run record status must be specified.");
       }
       return new RunRecord(pid, startTs, runTs, stopTs, suspendTs, resumeTs, stoppingTs, terminateTs,
-                           status, properties, cluster, profileId);
+                           status, properties, cluster, profileId, peerName);
     }
   }
 }

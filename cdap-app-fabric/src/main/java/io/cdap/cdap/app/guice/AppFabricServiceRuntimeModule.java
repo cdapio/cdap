@@ -109,6 +109,13 @@ import io.cdap.cdap.internal.app.services.ScheduledRunRecordCorrectorService;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.bootstrap.guice.BootstrapModules;
 import io.cdap.cdap.internal.capability.CapabilityModule;
+import io.cdap.cdap.internal.events.EventPublishManager;
+import io.cdap.cdap.internal.events.EventPublisher;
+import io.cdap.cdap.internal.events.EventWriterExtensionProvider;
+import io.cdap.cdap.internal.events.EventWriterProvider;
+import io.cdap.cdap.internal.events.MetricsProvider;
+import io.cdap.cdap.internal.events.ProgramStatusEventPublisher;
+import io.cdap.cdap.internal.events.SparkProgramStatusMetricsProvider;
 import io.cdap.cdap.internal.pipeline.SynchronousPipelineFactory;
 import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
@@ -129,8 +136,6 @@ import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
 import io.cdap.cdap.security.store.SecureStoreHandler;
-import io.cdap.cdap.support.handlers.SupportBundleHttpHandler;
-import io.cdap.cdap.support.module.SupportBundleModule;
 import io.cdap.http.HttpHandler;
 import org.quartz.SchedulerException;
 import org.quartz.core.JobRunShellFactory;
@@ -230,6 +235,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                servicesNamesBinder.addBinding().toInstance(Constants.Service.LOGSAVER);
                                servicesNamesBinder.addBinding().toInstance(Constants.Service.TRANSACTION_HTTP);
                                servicesNamesBinder.addBinding().toInstance(Constants.Service.RUNTIME);
+                               servicesNamesBinder.addBinding()
+                                 .toInstance(Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE);
 
                                // TODO: Uncomment after CDAP-7688 is resolved
                                // servicesNamesBinder.addBinding().toInstance(Constants.Service.MESSAGING_SERVICE);
@@ -278,6 +285,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                                           Names.named("appfabric.services.names"));
                                servicesNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
                                servicesNamesBinder.addBinding().toInstance(Constants.Service.SECURE_STORE_SERVICE);
+                               servicesNamesBinder.addBinding()
+                                 .toInstance(Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE);
 
                                Multibinder<String> handlerHookNamesBinder =
                                  Multibinder.newSetBinder(binder(), String.class,
@@ -341,7 +350,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
       bind(CoreSchedulerService.class).in(Scopes.SINGLETON);
       bind(Scheduler.class).to(CoreSchedulerService.class);
-      install(new SupportBundleModule());
       install(new PrivateModule() {
         @Override
         protected void configure() {
@@ -361,6 +369,13 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       });
       bind(ProfileService.class).in(Scopes.SINGLETON);
       bind(PreferencesFetcher.class).to(LocalPreferencesFetcherInternal.class).in(Scopes.SINGLETON);
+
+      Multibinder<EventPublisher> eventPublishersBinder =
+        Multibinder.newSetBinder(binder(), EventPublisher.class);
+      eventPublishersBinder.addBinding().to(ProgramStatusEventPublisher.class);
+      bind(EventPublishManager.class).in(Scopes.SINGLETON);
+      bind(EventWriterProvider.class).to(EventWriterExtensionProvider.class);
+      bind(MetricsProvider.class).to(SparkProgramStatusMetricsProvider.class);
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
         binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));
@@ -387,7 +402,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(WorkflowStatsSLAHttpHandler.class);
       handlerBinder.addBinding().to(AuthorizationHandler.class);
       handlerBinder.addBinding().to(SecureStoreHandler.class);
-      handlerBinder.addBinding().to(SupportBundleHttpHandler.class);
       handlerBinder.addBinding().to(RemotePrivilegesHandler.class);
       handlerBinder.addBinding().to(OperationalStatsHttpHandler.class);
       handlerBinder.addBinding().to(ProfileHttpHandler.class);

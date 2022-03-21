@@ -98,7 +98,7 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
   private transient DatasetContext datasetContext;
   private transient Map<String, Integer> stagePartitions;
   private transient FunctionCache.Factory functionCacheFactory;
-  private transient BatchSQLEngineAdapter sqlEngineAdapter = null;
+  private transient BatchSQLEngineAdapter sqlEngineAdapter;
 
   /**
    * Empty constructor, used when instantiating this class.
@@ -198,12 +198,14 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
         sec.getRuntimeArguments().getOrDefault(Constants.CONSOLIDATE_STAGES, Boolean.TRUE.toString()));
       boolean shouldCacheFunctions = Boolean.parseBoolean(
         sec.getRuntimeArguments().getOrDefault(Constants.CACHE_FUNCTIONS, Boolean.TRUE.toString()));
+      boolean shouldDisablePushdown = Boolean.parseBoolean(
+        sec.getRuntimeArguments().getOrDefault(Constants.DISABLE_ELT_PUSHDOWN, Boolean.FALSE.toString()));
       boolean isPreviewEnabled =
         phaseSpec.getPhase().size() == 0
           || sec.getDataTracer(phaseSpec.getPhase().iterator().next().getName()).isEnabled();
 
       // Initialize SQL engine instance if needed.
-      if (!isPreviewEnabled && phaseSpec.getSQLEngineStageSpec() != null) {
+      if (!isPreviewEnabled && phaseSpec.getSQLEngineStageSpec() != null && !shouldDisablePushdown) {
         String sqlEngineStage = SQLEngineUtils.buildStageName(phaseSpec.getSQLEngineStageSpec().getPlugin().getName());
 
         // Instantiate SQL engine and prepare run.
@@ -317,6 +319,16 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
       return false;
     }
 
+    // Explicitly skip this stage if the stage is configured as an excluded stage.
+    if (shouldForceSkipSQLEngine(stageName)) {
+      return false;
+    }
+
+    // Explicitly include this stage if the stage is configured as an included stage.
+    if (shouldForcePushToSQLEngine(stageName)) {
+      return true;
+    }
+
     boolean containsBroadcastStage = false;
 
     for (JoinStage stage : joinDefinition.getStages()) {
@@ -336,23 +348,53 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
   }
 
   /**
+   * Check if this stage is configured as a stage that should be pushed to the SQL engine
+   * @param stageName stage name
+   * @return boolean stating if this stage should always try to be executed in the SQL engine.
+   */
+  protected boolean shouldForcePushToSQLEngine(String stageName) {
+    return sqlEngineAdapter != null && sqlEngineAdapter.getIncludedStageNames().contains(stageName);
+  }
+
+  /**
+   * Check if this stage is configured as a stage that should never be pushed to the SQL engine
+   * @param stageName stage name
+   * @return boolean stating if this stage should always be skipped from executing in the SQL engine.
+   */
+  protected boolean shouldForceSkipSQLEngine(String stageName) {
+    return sqlEngineAdapter != null && sqlEngineAdapter.getExcludedStageNames().contains(stageName);
+  }
+
+  /**
    * If SQL Engine is present, supports relational transform and current stage data is already
    * provided by SQL engine, adds SQL Engine implementation of relational engine
    * @param stageData
    * @return
    */
   @Override
-  protected Iterable<SparkCollectionRelationalEngine> getRelationalEngines(SparkCollection<Object> stageData) {
-    if (sqlEngineAdapter == null || !sqlEngineAdapter.supportsRelationalTranform()
-      || !(stageData instanceof SQLBackedCollection)) {
+  protected Iterable<SparkCollectionRelationalEngine> getRelationalEngines(StageSpec stageSpec,
+                                                                           SparkCollection<Object> stageData) {
+    if (sqlEngineAdapter == null || !sqlEngineAdapter.supportsRelationalTranform()) {
       //Relational transform on SQL engine is not supported
-      return super.getRelationalEngines(stageData);
+      return super.getRelationalEngines(stageSpec, stageData);
     }
+
+    // Explicitly skip this stage if the stage is configured as an excluded stage.
+    if (shouldForceSkipSQLEngine(stageSpec.getName())) {
+      return super.getRelationalEngines(stageSpec, stageData);
+    }
+
+    // If this stage is not pushed down and it's not in the included stages, we can skip relational transformation
+    // in the SQL engine.
+    if (!(stageData instanceof SQLBackedCollection) && !shouldForcePushToSQLEngine(stageSpec.getName())) {
+      return super.getRelationalEngines(stageSpec, stageData);
+    }
+
     SQLEngineRelationalEngine relationalEngine = new SQLEngineRelationalEngine(
       sec, functionCacheFactory, jsc, new SQLContext(jsc), datasetContext, sinkFactory, sqlEngineAdapter);
     return Iterables.concat(
       Collections.singletonList(relationalEngine),
-      super.getRelationalEngines(stageData)
+      super.getRelationalEngines(stageSpec, stageData)
     );
   }
 

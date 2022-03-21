@@ -694,7 +694,7 @@ public class SparkClassRewriter implements ClassRewriter {
 
     cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
 
-      boolean hasCheckpointTimeField = false;
+      boolean hasCheckpointTimeField;
 
       @Override
       public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
@@ -715,7 +715,7 @@ public class SparkClassRewriter implements ClassRewriter {
 
         return new GeneratorAdapter(Opcodes.ASM5, mv, access, name, desc) {
 
-          boolean tempStringAddedToStack = false;
+          boolean tempStringAddedToStack;
           final Method hadoopPathConstructorMethod =
             new Method("<init>", Type.VOID_TYPE, new Type[]{ stringType, stringType });
 

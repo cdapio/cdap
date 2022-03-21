@@ -52,7 +52,7 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
   private final ExploreClient exploreClient;
 
   //  Cached values, to save on round trips to database.
-  private String dbVersion = null;
+  private String dbVersion;
 
   public ExploreDatabaseMetaData(ExploreConnection connection, ExploreClient exploreClient) {
     this.connection = connection;

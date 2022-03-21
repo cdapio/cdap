@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <!--
-  Copyright © 2014-2021 Cask Data, Inc.
+  Copyright © 2014-2022 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -481,6 +481,13 @@
   </property>
 
   <property>
+    <name>user.program.launch.disabled</name>
+    <value>false</value>
+    <description>Allows users to disable program launches on CDAP cluster.
+      True means program launch on CDAP cluster is not allowed.</description>
+  </property>
+
+  <property>
     <name>run.record.monitor.record.age.threshold.seconds</name>
     <value>3600</value>
     <description>
@@ -559,6 +566,25 @@
     <description>
       Interval in seconds of how often the local dataset deletion thread will run;
       this value should be greater than 0
+    </description>
+  </property>
+
+  <property>
+    <name>app.program.terminator.interval.secs</name>
+    <value>300</value>
+    <description>
+      Interval in seconds of how often the program terminator thread will run;
+      this value should be greater than 0
+    </description>
+  </property>
+
+  <property>
+    <name>app.program.terminator.tx.batch.size</name>
+    <value>1000</value>
+    <description>
+      Number of run records being fetched per transaction for checking
+      if a program in stopping state is active beyond its terminateTime.
+      This value is directly proportional to the ${data.tx.timeout} setting.
     </description>
   </property>
 
@@ -2865,6 +2891,15 @@
     </description>
   </property>
 
+  <property>
+    <name>metrics.writer.extensions.enabled.list</name>
+    <value></value>
+    <description>
+      Comma separated list of metric writer extension names that are enabled.
+      Extensions that are not present in this list will be ignored.
+    </description>
+  </property>
+
   <!-- Provisioner Configuration -->
   <property>
     <name>provisioner.executor.threads</name>
@@ -4413,6 +4448,15 @@
     </description>
   </property>
 
+  <!-- Authenticator Configuration -->
+  <property>
+    <name>remote.authenticator.extensions.dir</name>
+    <value>/opt/cdap/master/ext/authenticators</value>
+    <description>
+      Semicolon-separated list of local directories that are scanned for CDAP remote authenticator extensions.
+    </description>
+  </property>
+
   <!-- UI Configuration -->
 
   <property>
@@ -4523,6 +4567,31 @@
     <value>5</value>
     <description>
       Number of threads to be used for auto installing resources when a capability is enabled
+    </description>
+  </property>
+
+  <!-- event publisher -->
+  <property>
+    <name>event.program.status.poll.interval.seconds</name>
+    <value>1</value>
+    <description>
+      Interval at which program status is polled for event publishing
+    </description>
+  </property>
+
+  <property>
+    <name>event.program.status.fetch.size</name>
+    <value>100</value>
+    <description>
+      Number of program status messages fetched at a time
+    </description>
+  </property>
+
+  <property>
+    <name>event.publish.enabled</name>
+    <value>false</value>
+    <description>
+      Enable event publish in CDAP
     </description>
   </property>
 
@@ -4690,6 +4759,64 @@
       The number of boss threads for the task worker.
     </description>
   </property>
+
+  <!-- System pods Configuration  -->
+  <property>
+    <name>system.worker.pool.enable</name>
+    <value>false</value>
+    <description>
+      If true, task system pods will be created with twill application
+    </description>
+  </property>
+
+  <property>
+    <name>system.worker.container.count</name>
+    <value>2</value>
+    <description>
+      Number of system worker containers for task execution.
+    </description>
+  </property>
+
+  <property>
+    <name>system.worker.container.num.cores</name>
+    <value>1</value>
+    <description>
+      Number of virtual cores for the system worker.
+    </description>
+  </property>
+
+  <property>
+    <name>system.worker.container.memory.mb</name>
+    <value>400</value>
+    <description>
+      Memory in megabytes for each system worker.
+    </description>
+  </property>
+
+  <property>
+    <name>system.worker.bind.address</name>
+    <value>0.0.0.0</value>
+    <description>
+      The bind address for system worker service.
+    </description>
+  </property>
+
+  <property>
+    <name>system.worker.bind.port</name>
+    <value>11020</value>
+    <description>
+      The port to bind the system worker service to.
+    </description>
+  </property>
+
+  <property>
+    <name>system.worker.request.limit</name>
+    <value>10</value>
+    <description>
+      Number of requests accepted by system worker pods.
+    </description>
+  </property>
+
 
   <property>
     <name>artifact.localizer.container.num.cores</name>
@@ -4889,6 +5016,14 @@
   </property>
 
   <property>
+    <name>support.bundle.output.dir</name>
+    <value>/supportBundle</value>
+    <description>
+      Directory where all modules archives are stored
+    </description>
+  </property>
+
+  <property>
     <name>tethering.agent.connection.interval.secs</name>
     <value>10</value>
     <description>
@@ -4938,14 +5073,6 @@
   </property>
 
   <property>
-    <name>tethering.topic</name>
-    <value>tethering</value>
-    <description>
-      TMS topic used on tethering client
-    </description>
-  </property>
-
-  <property>
     <name>tethering.server.enabled</name>
     <value>false</value>
     <description>
@@ -4979,7 +5106,7 @@
   
   <property>
     <name>feature.replication.transformations.enabled</name>
-    <value>false</value>
+    <value>true</value>
     <description>
       Enables transformations to be run on replication.
     </description>
@@ -5030,6 +5157,15 @@
     <value>60</value>
     <description>
       The interval (in minutes) that the cleanup service will delete old artifact cache files.
+    </description>
+  </property>
+
+  <!-- Service Health Check Service Port Configuration -->
+  <property>
+    <name>healthcheck.service.bind.port</name>
+    <value>0</value>
+    <description>
+      Health Check HTTP service bind port; if 0, binds to a random port
     </description>
   </property>
 </configuration>

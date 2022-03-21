@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2021-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -111,13 +111,14 @@ public class RemoteTaskExecutorTest {
 
   @Test
   public void testFailedMetrics() throws Exception {
-    RemoteTaskExecutor remoteTaskExecutor = new RemoteTaskExecutor(cConf, mockMetricsCollector, remoteClientFactory);
+    RemoteTaskExecutor remoteTaskExecutor = new RemoteTaskExecutor(cConf, mockMetricsCollector, remoteClientFactory,
+        RemoteTaskExecutor.Type.TASK_WORKER);
     RunnableTaskRequest runnableTaskRequest = RunnableTaskRequest.getBuilder(InValidRunnableClass.class.getName()).
       withParam("param").build();
     try {
       remoteTaskExecutor.runTask(runnableTaskRequest);
     } catch (Exception e) {
-
+      // expected
     }
     mockMetricsCollector.stopAndWait();
     Assert.assertSame(1, published.size());
@@ -132,7 +133,8 @@ public class RemoteTaskExecutorTest {
 
   @Test
   public void testSuccessMetrics() throws Exception {
-    RemoteTaskExecutor remoteTaskExecutor = new RemoteTaskExecutor(cConf, mockMetricsCollector, remoteClientFactory);
+    RemoteTaskExecutor remoteTaskExecutor = new RemoteTaskExecutor(cConf, mockMetricsCollector, remoteClientFactory,
+        RemoteTaskExecutor.Type.TASK_WORKER);
     RunnableTaskRequest runnableTaskRequest = RunnableTaskRequest.getBuilder(ValidRunnableClass.class.getName()).
       withParam("param").build();
     remoteTaskExecutor.runTask(runnableTaskRequest);
@@ -151,13 +153,14 @@ public class RemoteTaskExecutorTest {
   public void testRetryMetrics() throws Exception {
     // Remove the service registration
     registered.cancel();
-    RemoteTaskExecutor remoteTaskExecutor = new RemoteTaskExecutor(cConf, mockMetricsCollector, remoteClientFactory);
+    RemoteTaskExecutor remoteTaskExecutor = new RemoteTaskExecutor(cConf, mockMetricsCollector, remoteClientFactory,
+        RemoteTaskExecutor.Type.TASK_WORKER);
     RunnableTaskRequest runnableTaskRequest = RunnableTaskRequest.getBuilder(ValidRunnableClass.class.getName()).
       withParam("param").build();
     try {
       remoteTaskExecutor.runTask(runnableTaskRequest);
     } catch (Exception e) {
-
+      // expected
     }
     mockMetricsCollector.stopAndWait();
     Assert.assertSame(1, published.size());

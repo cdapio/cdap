@@ -278,6 +278,8 @@
         <stage.runtime.providers.ext.dir>${stage.opt.dir}/ext/runtimeproviders</stage.runtime.providers.ext.dir>
         <stage.securestores.ext.dir>${stage.opt.dir}/ext/securestores</stage.securestores.ext.dir>
         <stage.storage.ext.dir>${stage.opt.dir}/ext/storageproviders</stage.storage.ext.dir>
+        <stage.authenticators.ext.dir>${stage.opt.dir}/ext/authenticators</stage.authenticators.ext.dir>
+        <stage.metricswriters.ext.dir>${stage.opt.dir}/ext/metricswriters/metrics-writer-extension</stage.metricswriters.ext.dir>
         <stage.bootstrap.dir>${stage.opt.dir}/bootstrap</stage.bootstrap.dir>
         <stage.capability.dir>${stage.opt.dir}/capability-config</stage.capability.dir>
         <additional.artifacts.jar.pattern>**/target/*.jar</additional.artifacts.jar.pattern>
@@ -286,6 +288,9 @@
         <security.ext.jar.pattern>**/target/*.jar</security.ext.jar.pattern>
         <security.ext.config.pattern>**/target/*.json</security.ext.config.pattern>
         <security.ext.exclude.pattern>**/target/*-tests.jar</security.ext.exclude.pattern>
+        <metricswriters.ext.jar.pattern>**/target/libexec/*.jar</metricswriters.ext.jar.pattern>
+        <metricswriters.ext.config.pattern>**/target/libexec/*.json</metricswriters.ext.config.pattern>
+        <metricswriters.ext.exclude.pattern>**/target/libexec/*-tests.jar</metricswriters.ext.exclude.pattern>
         <!-- contains hydrator upgrade tool. Should be moved out when Hydrator is moved out of CDAP -->
         <stage.libexec.dir>${stage.opt.dir}/libexec</stage.libexec.dir>
       </properties>
@@ -771,6 +776,28 @@
                 </configuration>
               </execution>
 
+              <!-- Copy remote authenticator extensions -->
+              <execution>
+                <id>copy-authenticator-ext-gcp</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.authenticators.ext.dir}/gcp-remote-authenticator</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-authenticator-ext-gcp/target/libexec/
+                      </directory>
+                      <includes>
+                        <include>*.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+
             </executions>
           </plugin>
           <plugin>
@@ -819,6 +846,26 @@
                         <include name="${security.ext.jar.pattern}"/>
                         <include name="${security.ext.config.pattern}"/>
                         <exclude name="${security.ext.exclude.pattern}"/>
+                        <exclude name="**/target/*-sources.jar"/>
+                        <exclude name="**/target/*-javadoc.jar"/>
+                      </fileset>
+                    </copy>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>copy-metricswriters-extensions-artifacts</id>
+                <phase>process-resources</phase>
+                <configuration>
+                  <target if="metricswriters.extensions.dir">
+                    <copy todir="${stage.metricswriters.ext.dir}" flatten="true">
+                      <fileset dir="${metricswriters.extensions.dir}">
+                        <include name="${metricswriters.ext.jar.pattern}"/>
+                        <include name="${metricswriters.ext.config.pattern}"/>
+                        <exclude name="${metricswriters.ext.exclude.pattern}"/>
                         <exclude name="**/target/*-sources.jar"/>
                         <exclude name="**/target/*-javadoc.jar"/>
                       </fileset>

@@ -268,7 +268,7 @@ public abstract class MessageTableTest {
         public Void call() throws Exception {
           try (MessageTable messageTable = getMessageTable(metadata)) {
             messageTable.store(new AbstractIterator<MessageTable.Entry>() {
-              int messageCount = 0;
+              int messageCount;
 
               @Override
               protected MessageTable.Entry computeNext() {

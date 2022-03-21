@@ -19,8 +19,6 @@ package io.cdap.cdap.features;
 import io.cdap.cdap.api.PlatformInfo;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 
-import java.util.Map;
-
 /**
  * Defines Features Flags to be used in CDAP.
  * Features take the version that they were introduced as a first parameter. Optionally they can take a

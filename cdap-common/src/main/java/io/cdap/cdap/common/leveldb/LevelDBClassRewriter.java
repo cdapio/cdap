@@ -28,8 +28,6 @@ import org.objectweb.asm.commons.Method;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.concurrent.Executor;
-import javax.annotation.Nullable;
 
 /**
  * Current java LevelDB implementation has a memory accumulation problem during compaction.

@@ -112,7 +112,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
@@ -806,24 +805,21 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private ProgramTerminator createProgramTerminator() {
-    return new ProgramTerminator() {
-      @Override
-      public void stop(ProgramId programId) throws Exception {
-        switch (programId.getType()) {
-          case SERVICE:
-          case WORKER:
-            stopProgramIfRunning(programId);
-            break;
-        }
+    return programId -> {
+      switch (programId.getType()) {
+        case SERVICE:
+        case WORKER:
+          killProgramIfRunning(programId);
+          break;
       }
     };
   }
 
-  private void stopProgramIfRunning(ProgramId programId) throws InterruptedException, ExecutionException {
+  private void killProgramIfRunning(ProgramId programId) {
     ProgramRuntimeService.RuntimeInfo programRunInfo = findRuntimeInfo(programId, runtimeService);
     if (programRunInfo != null) {
       ProgramController controller = programRunInfo.getController();
-      controller.stop().get();
+      controller.kill();
     }
   }
 

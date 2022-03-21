@@ -502,6 +502,7 @@ public class ObjectStoreDatasetTest {
           objectsIterator.next();
           Assert.fail("Reading after closing Scanner returned result.");
         } catch (NoSuchElementException e) {
+          // expected
         }
       }
     });

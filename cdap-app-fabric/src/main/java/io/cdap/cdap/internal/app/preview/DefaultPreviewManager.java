@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2021 Cask Data, Inc.
+ * Copyright © 2016-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -49,6 +49,7 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.preview.PreviewDiscoveryRuntimeModule;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
@@ -93,6 +94,7 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.security.ApplicationPermission;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
+import io.cdap.cdap.security.authorization.DefaultContextAccessEnforcer;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
 import io.cdap.cdap.security.impersonation.DefaultUGIProvider;
@@ -101,6 +103,7 @@ import io.cdap.cdap.security.impersonation.OwnerStore;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.store.DefaultOwnerStore;
 import io.cdap.cdap.store.StoreDefinition;
@@ -296,6 +299,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
       // Needed for FileBasedKeyManager when file based core security module is used by CoreSecurityRuntimeModule
       new IOModule(),
       new ConfigModule(previewCConf, previewHConf, previewSConf),
+      RemoteAuthenticatorModules.getDefaultModule(),
       new PreviewDataModules().getDataFabricModule(transactionSystemClient, previewLevelDBTableService),
       new PreviewDataModules().getDataSetsModule(datasetFramework),
       new AuthenticationContextModules().getMasterModule(),
@@ -317,8 +321,12 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
         protected void configure() {
           bind(AccessControllerInstantiator.class).toInstance(accessControllerInstantiator);
           expose(AccessControllerInstantiator.class);
+
           bind(AccessEnforcer.class).toInstance(accessEnforcer);
           expose(AccessEnforcer.class);
+
+          bind(ContextAccessEnforcer.class).to(DefaultContextAccessEnforcer.class).in(Scopes.SINGLETON);
+          expose(ContextAccessEnforcer.class);
 
           bind(PreviewStore.class).toInstance(previewStore);
           expose(PreviewStore.class);

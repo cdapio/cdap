@@ -21,6 +21,7 @@ import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.batch.SparkSink;
+import io.cdap.cdap.etl.api.engine.sql.SQLEngineException;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngineOutput;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDataset;
 import io.cdap.cdap.etl.api.streaming.Windower;
@@ -63,6 +64,8 @@ import javax.annotation.Nullable;
  */
 public class SQLEngineCollection<T> implements SQLBackedCollection<T> {
   private static final Logger LOG = LoggerFactory.getLogger(SQLEngineCollection.class);
+  private static final String DIRECT_WRITE_ERROR = "Exception when trying to write to sink {} using direct output. " +
+    "Operation will continue with standard sink flow.";
   private final JavaSparkExecutionContext sec;
   private final JavaSparkContext jsc;
   private final SQLContext sqlContext;
@@ -200,12 +203,25 @@ public class SQLEngineCollection<T> implements SQLBackedCollection<T> {
 
   @Override
   public boolean tryStoreDirect(StageSpec stageSpec) {
-    SQLEngineOutput sqlEngineOutput = sinkFactory.getSQLEngineOutput(stageSpec.getName());
+    String stageName = stageSpec.getName();
+
+    // Check if this stage should be excluded from executing in the SQL engine
+    if (adapter.getExcludedStageNames().contains(stageName)) {
+      return false;
+    }
+
+    // Get SQLEngineOutput instance for this stage
+    SQLEngineOutput sqlEngineOutput = sinkFactory.getSQLEngineOutput(stageName);
     if (sqlEngineOutput != null) {
-      //Try writing directly
-      SQLEngineJob<Boolean> writeJob = adapter.write(datasetName, sqlEngineOutput);
-      adapter.waitForJobAndHandleException(writeJob);
-      return writeJob.waitFor();
+      // Try writing directly.
+      // Exceptions are handled and logged so standard sink flow takes over in case of failure.
+      try {
+        SQLEngineJob<Boolean> writeJob = adapter.write(datasetName, sqlEngineOutput);
+        adapter.waitForJobAndThrowException(writeJob);
+        return writeJob.waitFor();
+      } catch (SQLEngineException e) {
+        LOG.warn(DIRECT_WRITE_ERROR, stageName, e);
+      }
     }
     return false;
   }

@@ -33,7 +33,7 @@ public final class SimpleJob implements Job {
   private final List<Notification> notifications;
   private final State state;
   private final long scheduleLastUpdatedTime;
-  private Long deleteTimeMillis = null;
+  private Long deleteTimeMillis;
 
   /**
    * @param scheduleLastUpdatedTime the last modification time of the schedule, at the time this job is created.

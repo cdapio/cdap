@@ -198,7 +198,7 @@ final class LevelDBMetadataTable implements MetadataTable {
                                                      @Nullable byte[] stopKey) throws IOException {
     final CloseableIterator<Map.Entry<byte[], byte[]>> iterator = new DBScanIterator(levelDB, startKey, stopKey);
     return new AbstractCloseableIterator<TopicMetadata>() {
-      private boolean closed = false;
+      private boolean closed;
 
       @Override
       protected TopicMetadata computeNext() {

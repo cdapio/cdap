@@ -45,7 +45,7 @@ import java.util.concurrent.TimeoutException;
 
 public class ProgramStateWriterWithHeartBeatTest {
   private static class MockProgramStatePublisher implements ProgramStatePublisher {
-    long heartBeatCount = 0;
+    long heartBeatCount;
 
     @Override
     public void publish(Notification.Type notificationType, Map<String, String> properties) {

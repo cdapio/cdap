@@ -25,7 +25,6 @@ import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.cdap.common.FeatureDisabledException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.http.AuthenticationChannelHandler;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.DatasetId;

@@ -29,7 +29,10 @@ import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
+import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequestConfig;
+import io.cdap.common.http.HttpResponse;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
@@ -38,9 +41,13 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.filesystem.Location;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
@@ -50,13 +57,17 @@ public class ArtifactCacheHttpHandlerInternal extends AbstractHttpHandler {
                                                                          new BasicThrowableCodec()).create();
   private final ArtifactCache cache;
   private final TetheringStore tetheringStore;
-  public ArtifactCacheHttpHandlerInternal(ArtifactCache cache, TetheringStore tetheringStore) {
+  private final RemoteAuthenticator remoteAuthenticator;
+
+  public ArtifactCacheHttpHandlerInternal(ArtifactCache cache, TetheringStore tetheringStore,
+                                          RemoteAuthenticator remoteAuthenticator) {
     this.cache = cache;
     this.tetheringStore = tetheringStore;
+    this.remoteAuthenticator = remoteAuthenticator;
   }
 
   @GET
-  @Path("peers/{peer}/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}")
+  @Path("peers/{peer}/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}/download")
   public void fetchArtifact(HttpRequest request, HttpResponder responder,
                             @PathParam("peer") String peer,
                             @PathParam("namespace-id") String namespaceId,
@@ -64,13 +75,7 @@ public class ArtifactCacheHttpHandlerInternal extends AbstractHttpHandler {
                             @PathParam("artifact-version") String artifactVersion) throws Exception {
     ArtifactId artifactId = new ArtifactId(namespaceId, artifactName, artifactVersion);
     try {
-      String endpoint = tetheringStore.getPeer(peer).getEndpoint();
-      RemoteClientFactory factory = new RemoteClientFactory(new NoOpDiscoveryServiceClient(endpoint),
-                                                            new NoOpInternalAuthenticator());
-      HttpRequestConfig config = new DefaultHttpRequestConfig(true);
-      RemoteClient remoteClient = factory.createRemoteClient("", config,
-                                                             Constants.Gateway.INTERNAL_API_VERSION_3);
-
+      RemoteClient remoteClient = getRemoteClient(peer);
       File artifactPath = cache.getArtifact(artifactId, peer, remoteClient);
       Location artifactLocation = Locations.toLocation(artifactPath);
         responder.sendContent(HttpResponseStatus.OK, new LocationBodyProducer(artifactLocation),
@@ -83,6 +88,37 @@ public class ArtifactCacheHttpHandlerInternal extends AbstractHttpHandler {
         responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex));
       }
     }
+  }
+
+  @GET
+  @Path("peers/{peer}/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}")
+  public void getArtifactDetail(HttpRequest request, HttpResponder responder,
+                                @PathParam("peer") String peer,
+                                @PathParam("namespace-id") String namespace,
+                                @PathParam("artifact-name") String artifactName,
+                                @PathParam("artifact-version") String artifactVersion,
+                                @QueryParam("scope") @DefaultValue("user") String scope) throws Exception {
+    RemoteClient remoteClient = getRemoteClient(peer);
+    String url = String.format("namespaces/%s/artifacts/%s/versions/%s",
+                               namespace, artifactName, artifactVersion);
+    io.cdap.common.http.HttpRequest req = remoteClient.requestBuilder(HttpMethod.GET, url).build();
+    HttpResponse response = remoteClient.execute(req);
+    responder.sendString(HttpResponseStatus.valueOf(response.getResponseCode()),
+                         response.getResponseBodyAsString(StandardCharsets.UTF_8));
+  }
+
+  /**
+   * Return a remote client that can connect to appfabric on a tethered peer.
+   *
+   */
+  private RemoteClient getRemoteClient(String peer) throws PeerNotFoundException, IOException {
+    String endpoint = tetheringStore.getPeer(peer).getEndpoint();
+    RemoteClientFactory factory = new RemoteClientFactory(new NoOpDiscoveryServiceClient(endpoint),
+                                                          new NoOpInternalAuthenticator(),
+                                                          remoteAuthenticator);
+    HttpRequestConfig config = new DefaultHttpRequestConfig(true);
+    return factory.createRemoteClient("", config,
+                                      Constants.Gateway.INTERNAL_API_VERSION_3);
   }
 
   /**

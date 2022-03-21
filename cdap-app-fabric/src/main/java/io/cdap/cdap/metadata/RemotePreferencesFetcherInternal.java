@@ -33,11 +33,10 @@ import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-import sun.net.www.protocol.http.HttpURLConnection;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.net.HttpURLConnection;
 
 /**
  * Fetch preferences via REST API calls (using internal endpoint {@code INTERNAL_API_VERSION_3})

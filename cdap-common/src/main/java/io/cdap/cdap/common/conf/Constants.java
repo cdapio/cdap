@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2021 Cask Data, Inc.
+ * Copyright © 2014-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -130,6 +130,7 @@ public final class Constants {
     public static final String RUNTIME = "runtime";
     public static final String AUTHENTICATION = "authentication";
     public static final String TASK_WORKER = "task.worker";
+    public static final String SYSTEM_WORKER = "system.worker";
     public static final String ARTIFACT_LOCALIZER = "artifact.localizer";
     public static final String SYSTEM_METRICS_EXPORTER = "system.metrics.exporter";
     public static final String ARTIFACT_CACHE = "artifact.cache";
@@ -146,6 +147,7 @@ public final class Constants {
     public static final String LOG_BUFFER_SERVICE = "log.buffer.service";
     public static final String REMOTE_AGENT_SERVICE = "remote.agent.service";
     public static final String ARTIFACT_CACHE_SERVICE = "artifact.cache.service";
+    public static final String RUNTIME_MONITOR_RETRY_PREFIX = "system.runtime.monitor.";
   }
 
   /**
@@ -231,6 +233,8 @@ public final class Constants {
     public static final String LOCAL_DATASET_DELETER_INTERVAL_SECONDS = "app.program.local.dataset.deleter.interval";
     public static final String LOCAL_DATASET_DELETER_INITIAL_DELAY_SECONDS
       = "app.program.local.dataset.deleter.initial.delay";
+    public static final String PROGRAM_TERMINATOR_INTERVAL_SECS = "app.program.terminator.interval.secs";
+    public static final String PROGRAM_TERMINATOR_TX_BATCH_SIZE = "app.program.terminator.tx.batch.size";
     public static final String SYSTEM_ARTIFACTS_DIR = "app.artifact.dir";
     public static final String SYSTEM_ARTIFACTS_MAX_PARALLELISM = "app.artifact.parallelism.max";
     public static final String PROGRAM_EXTRA_CLASSPATH = "app.program.extra.classpath";
@@ -337,6 +341,11 @@ public final class Constants {
      * Interval at which system programs are monitored
      */
     public static final String SYSTEM_PROGRAM_SCAN_INTERVAL_SECONDS = "system.program.scan.interval.seconds";
+
+    /**
+     * Disable user program launch on cdap environment
+     */
+    public static final String USER_PROGRAM_LAUNCH_DISABLED = "user.program.launch.disabled";
 
     /**
      * Annotation for binding remote execution twill service
@@ -448,6 +457,26 @@ public final class Constants {
     public static final String BOSS_THREADS = "task.worker.boss.threads";
     public static final String WORKER_THREADS = "task.worker.worker.threads";
     public static final String METADATA_SERVICE_END_POINT = "task.worker.metadata.service.endpoint";
+    public static final String METRIC_PREFIX = "task.worker.";
+  }
+
+
+  /**
+   * System pods.
+   */
+  public static final class SystemWorker {
+    public static final String POOL_ENABLE = "system.worker.pool.enable";
+    public static final String CONTAINER_MEMORY_MB = "system.worker.container.memory.mb";
+    public static final String CONTAINER_CORES = "system.worker.container.num.cores";
+    public static final String CONTAINER_COUNT = "system.worker.container.count";
+    public static final String LOCAL_DATA_DIR = "task.worker.local.data.dir";
+
+    /**
+     * System worker http handler configuration
+     */
+    public static final String ADDRESS = "system.worker.bind.address";
+    public static final String PORT = "system.worker.bind.port";
+    public static final String REQUEST_LIMIT = "system.worker.request.limit";
     public static final String METRIC_PREFIX = "task.worker.";
   }
 
@@ -780,6 +809,7 @@ public final class Constants {
 
     public static final String METRICS_WRITER_EXTENSIONS_DIR = "metrics.writer.extensions.dir";
     public static final String METRICS_WRITER_PREFIX = "metrics.writer.";
+    public static final String METRICS_WRITER_EXTENSIONS_ENABLED_LIST = "metrics.writer.extensions.enabled.list";
 
     public static final Map<String, String> METRICS_PROCESSOR_CONTEXT =
       ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
@@ -985,6 +1015,15 @@ public final class Constants {
         "client." + Constants.TaskWorker.METRIC_PREFIX + "request.latency.millis";
     }
 
+    public static final class SystemWorker {
+      public static final String REQUEST_COUNT = Constants.SystemWorker.METRIC_PREFIX + "request.count";
+      public static final String REQUEST_LATENCY_MS = Constants.SystemWorker.METRIC_PREFIX + "request.latency.millis";
+      public static final String CLIENT_REQUEST_COUNT =
+          "client." + Constants.SystemWorker.METRIC_PREFIX + "request.count";
+      public static final String CLIENT_REQUEST_LATENCY_MS =
+          "client." + Constants.SystemWorker.METRIC_PREFIX + "request.latency.millis";
+    }
+
     /**
      * Structured table metrics
      */
@@ -1113,8 +1152,8 @@ public final class Constants {
     // If it is missing from the configuration, SSH tunnel will be used.
     public static final String MONITOR_URL = "app.program.runtime.monitor.url";
     public static final String MONITOR_TYPE_PREFIX = "app.program.runtime.monitor.type.";
-    public static final String MONITOR_URL_AUTHENTICATOR_CLASS_PREFIX =
-      "app.program.runtime.monitor.url.authenticator.class.";
+    public static final String MONITOR_URL_AUTHENTICATOR_NAME_PREFIX =
+      "app.program.runtime.monitor.url.authenticator.name.";
     public static final String MONITOR_AUDIT_LOG_ENABLED = "app.program.runtime.monitor.audit.log.enabled";
     public static final String MONITOR_AUDIT_LOGGER_NAME = "http-access";
 
@@ -1699,6 +1738,14 @@ public final class Constants {
   }
 
   /**
+   * Constants for remote authenticators.
+   */
+  public static final class RemoteAuthenticator {
+    public static final String REMOTE_AUTHENTICATOR_NAME = "remote.authenticator.name";
+    public static final String EXTENSIONS_DIR = "remote.authenticator.extensions.dir";
+  }
+
+  /**
    * Constants for Replication
    */
   public static final class Replication {
@@ -1782,6 +1829,36 @@ public final class Constants {
   }
 
   /**
+   * Constants for capability management
+   */
+  public static final class Event {
+
+    public static final String PROGRAM_STATUS_POLL_INTERVAL_SECONDS = "event.program.status.poll.interval.seconds";
+
+    public static final String PROGRAM_STATUS_FETCH_SIZE = "event.program.status.fetch.size";
+
+    public static final String INSTANCE_NAME = "event.instance.name";
+
+    public static final String PROJECT_NAME = "event.project.name";
+
+    public static final String PUBLISH_ENABLED = "event.publish.enabled";
+
+    public static final String EVENTS_WRITER_PREFIX = "event.writer";
+
+    public static final String EVENTS_WRITER_EXTENSIONS_DIR = "events.writer.extensions.dir";
+  }
+
+  /**
+   * Constans for Spark Metrics Provider
+   */
+
+  public static final class Spark {
+    public static final String SPARK_METRICS_PROVIDER_HOST = "spark.metrics.host";
+    public static final String SPARK_METRICS_PROVIDER_MAX_TERMINATION_MINUTES = "spark.metrics.max.termination.minutes";
+    public static final String SPARK_METRICS_PROVIDER_RETRY_STRATEGY_PREFIX = "spark.metrics.strategy.";
+  }
+
+  /**
    * Constants for Twill.
    */
   public static final class Twill {
@@ -1843,6 +1920,7 @@ public final class Constants {
     public static final String MAX_RETRY_TIMES = "support.bundle.max.retry.times";
     public static final String MAX_THREAD_TIMEOUT = "support.bundle.max.thread.timeout";
     public static final String SYSTEM_LOG_START_TIME = "support.bundle.system.log.start.time";
+    public static final String OUTPUT_DIR = "support.bundle.output.dir";
   }
 
   public static final class JMXMetricsCollector {
@@ -1857,10 +1935,6 @@ public final class Constants {
      */
     public static final String TOPIC_PREFIX = "tethering.topic.prefix";
     /**
-     * TMS topic used on tethering client for received control messages.
-     */
-    public static final String TETHERING_TOPIC = "tethering.topic";
-    /**
      * Interval for connecting to the server.
      */
     public static final String CONNECTION_INTERVAL = "tethering.connection.interval.secs";
@@ -1871,7 +1945,7 @@ public final class Constants {
     public static final String CONNECTION_TIMEOUT_SECONDS = "tethering.connection.timeout.seconds";
     public static final int DEFAULT_CONNECTION_TIMEOUT_SECONDS = 60;
 
-    public static final String CLIENT_AUTHENTICATOR_CLASS = "tethering.client.authenticator.class";
+    public static final String CLIENT_AUTHENTICATOR_NAME = "tethering.client.authenticator.name";
   }
   
   public static final class ArtifactCache {
@@ -1891,7 +1965,8 @@ public final class Constants {
     public static final String WORKER_THREADS = "artifact.cache.worker.threads";
   }
 
-  public static final class HealthCheck {
-    public static final String HANDLERS_NAME = "healthcheck.handlers";
+  public static final class AppFabricHealthCheck {
+    public static final String SERVICE_DESCRIPTION = "Service to generate health check for app fabric operation.";
+    public static final String APP_FABRIC_HEALTH_CHECK_SERVICE = "health.check.appfabric.service";
   }
 }

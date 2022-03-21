@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2020-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,10 +18,11 @@ package io.cdap.cdap.internal.app.runtime.monitor;
 
 import com.google.common.collect.Maps;
 import com.google.inject.Injector;
+import com.google.inject.Module;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.internal.remote.RemoteAuthenticator;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
@@ -105,15 +106,6 @@ public final class RuntimeMonitors {
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
     RuntimeMonitorType monitorType = injector.getInstance(RuntimeMonitorType.class);
     if (monitorType == RuntimeMonitorType.URL) {
-      String provisioner = SystemArguments.getProfileProvisioner(programOpts.getArguments().asMap());
-      String authenticatorKey = String.format("%s%s", Constants.RuntimeMonitor.MONITOR_URL_AUTHENTICATOR_CLASS_PREFIX,
-                                              provisioner);
-      Class<? extends RemoteAuthenticator> monitorAuthClass = cConf.getClass(authenticatorKey, null,
-                                                                             RemoteAuthenticator.class);
-      if (monitorAuthClass != null) {
-        RemoteAuthenticator.setDefaultAuthenticator(monitorAuthClass.newInstance());
-      }
-
       // This shouldn't be null, otherwise the type won't be URL.
       String monitorURL = cConf.get(Constants.RuntimeMonitor.MONITOR_URL);
       monitorURL = monitorURL.endsWith("/") ? monitorURL : monitorURL + "/";
@@ -158,5 +150,21 @@ public final class RuntimeMonitors {
 
   private RuntimeMonitors() {
     // no-op
+  }
+
+  /**
+   * Returns a module which defines remote authenticator override bindings if runtime monitoring type is URL, otherwise
+   * returns a null provider.
+   */
+  public static Module getRemoteAuthenticatorModule(RuntimeMonitorType runtimeMonitorType, ProgramOptions programOpts) {
+    // Module for remote authenticator from overridden config if using URL runtime monitoring.
+    String remoteAuthenticatorNameKey = Constants.RemoteAuthenticator.REMOTE_AUTHENTICATOR_NAME;
+    if (runtimeMonitorType == RuntimeMonitorType.URL) {
+      String provisioner = SystemArguments.getProfileProvisioner(programOpts.getArguments().asMap());
+      remoteAuthenticatorNameKey = String.format("%s%s",
+                                                  Constants.RuntimeMonitor.MONITOR_URL_AUTHENTICATOR_NAME_PREFIX,
+                                                  provisioner);
+    }
+    return RemoteAuthenticatorModules.getDefaultModule(remoteAuthenticatorNameKey);
   }
 }

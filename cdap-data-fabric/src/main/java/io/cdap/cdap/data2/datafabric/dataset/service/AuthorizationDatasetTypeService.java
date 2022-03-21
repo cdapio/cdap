@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.data2.datafabric.dataset.service;
 
-import com.google.common.base.Function;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.name.Named;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
@@ -25,11 +24,9 @@ import io.cdap.cdap.proto.DatasetTypeMeta;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.DatasetModuleId;
 import io.cdap.cdap.proto.id.DatasetTypeId;
-import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
-import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.http.BodyConsumer;

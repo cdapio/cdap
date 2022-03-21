@@ -21,18 +21,20 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
-import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
-import io.cdap.cdap.data.runtime.StorageModule;
+import io.cdap.cdap.data.runtime.DataSetsModules;
+import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.internal.tethering.ArtifactCacheService;
+import io.cdap.cdap.internal.tethering.TetheringAgentService;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
-import io.cdap.cdap.metrics.collect.LocalMetricsCollectionService;
+import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 
 import java.util.Arrays;
 import java.util.List;
@@ -53,13 +55,19 @@ public class ArtifactCacheServiceMain extends AbstractServiceMain<EnvironmentOpt
   protected List<Module> getServiceModules(MasterEnvironment masterEnv,
                                            EnvironmentOptions options, CConfiguration cConf) {
     return Arrays.asList(
-      new ConfigModule(cConf),
-      new StorageModule(),
+      new MessagingClientModule(),
+      RemoteAuthenticatorModules.getDefaultModule(TetheringAgentService.REMOTE_TETHERING_AUTHENTICATOR,
+                                                  Constants.Tethering.CLIENT_AUTHENTICATOR_NAME),
+      getDataFabricModule(),
+      // Always use local table implementations, which use LevelDB.
+      // In K8s, there won't be HBase and the cdap-site should be set to use SQL store for StructuredTable.
+      new SystemDatasetRuntimeModule().getStandaloneModules(),
+      // The Dataset set modules are only needed to satisfy dependency injection
+      new DataSetsModules().getStandaloneModules(),
+      new AuthorizationEnforcementModule().getDistributedModules(),
       new PrivateModule() {
         @Override
         protected void configure() {
-          bind(MetricsCollectionService.class).to(LocalMetricsCollectionService.class).in(Scopes.SINGLETON);
-          expose(MetricsCollectionService.class);
           bind(ArtifactCacheService.class).in(Scopes.SINGLETON);
           expose(ArtifactCacheService.class);
         }

@@ -26,7 +26,6 @@ import org.apache.twill.filesystem.LocationFactory;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.locks.Lock;
 import javax.annotation.Nullable;
 
 /**

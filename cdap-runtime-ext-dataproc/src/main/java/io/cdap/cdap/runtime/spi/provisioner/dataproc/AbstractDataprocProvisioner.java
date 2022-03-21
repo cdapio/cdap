@@ -36,8 +36,6 @@ import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;

@@ -125,12 +125,14 @@ public class MDSKeyTest {
       splitter.getBytes();
       Assert.fail();
     } catch (BufferUnderflowException expected) {
+      // expected
     }
 
     try {
       splitter.getString();
       Assert.fail();
     } catch (BufferUnderflowException expected) {
+      // expected
     }
   }
 

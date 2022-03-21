@@ -94,7 +94,7 @@ public class MetaDataInfo {
     }
   }
 
-  private String stringValue = null;
+  private String stringValue;
   private short shortValue;
   private int intValue;
   private long longValue;

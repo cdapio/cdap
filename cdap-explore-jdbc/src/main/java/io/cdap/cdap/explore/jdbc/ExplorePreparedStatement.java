@@ -50,9 +50,9 @@ public class ExplorePreparedStatement extends ExploreStatement implements Prepar
 
   private final String sql;
 
-  private String lastUpdatedSql = null;
-  private ResultSet lastResultSet = null;
-  private boolean lastResultSuccess = false;
+  private String lastUpdatedSql;
+  private ResultSet lastResultSet;
+  private boolean lastResultSuccess;
 
   // Save the SQL parameters {paramLoc:paramValue}
   private final Map<Integer, String> parameters = Maps.newHashMap();

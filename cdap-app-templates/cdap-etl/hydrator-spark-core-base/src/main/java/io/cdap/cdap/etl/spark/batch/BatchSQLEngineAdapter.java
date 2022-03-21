@@ -123,6 +123,7 @@ public class BatchSQLEngineAdapter implements Closeable {
 
   /**
    * Call the SQLEngine PrepareRun method
+   *
    * @throws Exception if the underlying prepareRun call fails.
    */
   public void prepareRun() throws Exception {
@@ -131,6 +132,7 @@ public class BatchSQLEngineAdapter implements Closeable {
 
   /**
    * Call the SQLEngine onRunFinish method
+   *
    * @throws Exception if the underlying onRunFinish call fails.
    */
   public void onRunFinish(boolean succeeded) throws Exception {
@@ -237,7 +239,7 @@ public class BatchSQLEngineAdapter implements Closeable {
     Runnable pullTask = () -> {
       try {
         LOG.debug("Starting pull for dataset '{}'", job.getDatasetName());
-        waitForJobAndHandleExceptionInternal(job);
+        waitForJobAndThrowException(job);
         JavaRDD<T> result = pullInternal(job.waitFor());
         LOG.debug("Completed pull for dataset '{}'", job.getDatasetName());
         future.complete(result);
@@ -336,7 +338,6 @@ public class BatchSQLEngineAdapter implements Closeable {
   }
 
   /**
-   *
    * @return if underlying engine support relational transform
    * @see SQLEngine#supportsRelationalTranform
    */
@@ -345,12 +346,29 @@ public class BatchSQLEngineAdapter implements Closeable {
   }
 
   /**
-   *
    * @return relational engine provided by SQL Engine
    * @see SQLEngine#getRelationalEngine()
    */
   public Engine getSQLRelationalEngine() {
     return sqlEngine.getRelationalEngine();
+  }
+
+  /**
+   * Defines which stages should be pushed down even when the platform doesn't select these stages for push down.
+   *
+   * @return Set containing stage names to push down to the SQL Engine
+   */
+  public Set<String> getIncludedStageNames() {
+    return sqlEngine.getIncludedStageNames();
+  }
+
+  /**
+   * Defines which stages should not be pushed down even when the platform determines the stage must be pushed down
+   *
+   * @return Set containing stage names to exclude from pushing down to the SQL Engine
+   */
+  public Set<String> getExcludedStageNames() {
+    return sqlEngine.getExcludedStageNames();
   }
 
   /**
@@ -364,20 +382,21 @@ public class BatchSQLEngineAdapter implements Closeable {
   public SQLEngineJob<SQLDataset> join(String datasetName,
                                        JoinDefinition joinDefinition) {
     return runJob(datasetName, SQLEngineJobType.EXECUTE, () -> {
-        Collection<SQLDataset> inputDatasets = getJoinInputDatasets(joinDefinition);
-        SQLJoinRequest joinRequest = new SQLJoinRequest(datasetName, joinDefinition, inputDatasets);
+      Collection<SQLDataset> inputDatasets = getJoinInputDatasets(joinDefinition);
+      SQLJoinRequest joinRequest = new SQLJoinRequest(datasetName, joinDefinition, inputDatasets);
 
-        if (!sqlEngine.canJoin(joinRequest)) {
-          throw new IllegalArgumentException("Unable to execute this join in the SQL engine");
-        }
+      if (!sqlEngine.canJoin(joinRequest)) {
+        throw new IllegalArgumentException("Unable to execute this join in the SQL engine");
+      }
 
-        return joinInternal(joinRequest);
-      });
+      return joinInternal(joinRequest);
+    });
   }
 
   /**
    * Kicks off a job using the SQL engine. This job instance can be used to wait for the completion of this operation.
-   * @param <T> type of result
+   *
+   * @param <T>         type of result
    * @param datasetName dataset name
    * @param jobFunction actual runnable that will do the work
    * @return job that produces jobFunction result when finished
@@ -391,8 +410,9 @@ public class BatchSQLEngineAdapter implements Closeable {
 
   /**
    * Kicks off a job using the SQL engine. This job instance can be used to wait for the completion of this operation.
-   * @param <T> type of result
-   * @param jobKey the job key that is used to reference this job.
+   *
+   * @param <T>         type of result
+   * @param jobKey      the job key that is used to reference this job.
    * @param jobFunction actual runnable that will do the work
    * @return job that produces jobFunction result when finished
    */
@@ -442,6 +462,7 @@ public class BatchSQLEngineAdapter implements Closeable {
 
   /**
    * Function used to fetch the dataset for an input stage.
+   *
    * @param stageName
    * @return
    */
@@ -452,11 +473,11 @@ public class BatchSQLEngineAdapter implements Closeable {
 
     if (jobs.containsKey(pushJobKey)) {
       SQLEngineJob<SQLDataset> job = (SQLEngineJob<SQLDataset>) jobs.get(pushJobKey);
-      waitForJobAndHandleExceptionInternal(job);
+      waitForJobAndThrowException(job);
       return job.waitFor();
     } else if (jobs.containsKey(execJobKey)) {
       SQLEngineJob<SQLDataset> job = (SQLEngineJob<SQLDataset>) jobs.get(execJobKey);
-      waitForJobAndHandleExceptionInternal(job);
+      waitForJobAndThrowException(job);
       return job.waitFor();
     } else {
       throw new IllegalArgumentException("No SQL Engine job exists for stage " + stageName);
@@ -467,8 +488,8 @@ public class BatchSQLEngineAdapter implements Closeable {
    * Join implementation. This method has blocking calls and should be executed in a separate thread.
    *
    * @param joinRequest the Join Request
-   * @throws SQLEngineException   if any of the preceding jobs fails.
    * @return
+   * @throws SQLEngineException if any of the preceding jobs fails.
    */
   private SQLDataset joinInternal(SQLJoinRequest joinRequest)
     throws SQLEngineException {
@@ -533,14 +554,13 @@ public class BatchSQLEngineAdapter implements Closeable {
 
   /**
    * Method used to handle execution exceptions from a job.
-   *
-   * Any error during execution will be wrapped in a SQL exception if needed, and the SQL Engine Adapter will be shut
-   * down.
+   * <p>
+   * Any error during execution will be wrapped in a {@link SQLEngineException} if needed.
    *
    * @param job the job to wait for.
    * @throws SQLEngineException if the internal task threw an exception.
    */
-  private void waitForJobAndHandleExceptionInternal(SQLEngineJob<?> job) throws SQLEngineException {
+  public void waitForJobAndThrowException(SQLEngineJob<?> job) throws SQLEngineException {
     SQLEngineException ex = null;
 
     try {
@@ -573,7 +593,7 @@ public class BatchSQLEngineAdapter implements Closeable {
 
   /**
    * Block until an SQL Engine job is completed.
-   *
+   * <p>
    * If an exception is thrown by this job, this stops the SQL engine and executed cleanup operations.
    *
    * @param job the job to wait for completion
@@ -581,7 +601,7 @@ public class BatchSQLEngineAdapter implements Closeable {
    */
   public void waitForJobAndHandleException(SQLEngineJob<?> job) throws SQLEngineException {
     try {
-      waitForJobAndHandleExceptionInternal(job);
+      waitForJobAndThrowException(job);
     } catch (SQLEngineException e) {
       // If an exception is thrown, stop this SQL engine adapter (including all tasks) and cleanup existing datasets
       // from the SQL engine.
@@ -656,9 +676,9 @@ public class BatchSQLEngineAdapter implements Closeable {
 
   /**
    * Count records using a Stage Metrics instance for a supplied metric and number of records.
-   *
-   * Since the Stage Metrics instance only takes integers as counts, this will split the count operation into
-   * multiple operations is the number of records to count exceeds INTEGER.MAX_VALUE
+   * <p>
+   * Since the Stage Metrics instance only takes integers as counts, this will split the count operation into multiple
+   * operations is the number of records to count exceeds INTEGER.MAX_VALUE
    *
    * @param stageMetrics Metrics instance
    * @param metricName   Metric name to count
@@ -672,14 +692,17 @@ public class BatchSQLEngineAdapter implements Closeable {
 
   /**
    * This method is called when engine is present and is willing to try performing a relational transform.
+   *
    * @param stageSpec stage specification
    * @param transform transform plugin
-   * @param input input collections
+   * @param input     input collections
    * @return resulting collection or empty optional if tranform can't be done with this engine
    */
   public Optional<SQLEngineJob<SQLDataset>> tryRelationalTransform(StageSpec stageSpec,
                                                                    RelationalTransform transform,
                                                                    Map<String, SparkCollection<Object>> input) {
+    String stageName = stageSpec.getName();
+
     Map<String, Relation> inputRelations = input.entrySet().stream().collect(Collectors.toMap(
       Map.Entry::getKey,
       e -> sqlEngine.getRelation(new SQLRelationDefinition(e.getKey(), stageSpec.getInputSchemas().get(e.getKey())))
@@ -698,31 +721,64 @@ public class BatchSQLEngineAdapter implements Closeable {
       //An output is set to invalid relation, probably some of transforms are not supported by an engine
       return Optional.empty();
     }
-    //Validate with engine
-    SQLTransformDefinition transformDefinition = new SQLTransformDefinition(
-      stageSpec.getName(), pluginContext.getOutputRelation(),
-      stageSpec.getOutputSchema(),
-      Collections.emptyMap(),
-      Collections.emptyMap()
-    );
+
+    // Ensure input and output schemas for this stage are supported by the engine
+    if (stageSpec.getInputSchemas().values().stream().anyMatch(s -> !sqlEngine.supportsInputSchema(s))) {
+      return Optional.empty();
+    }
+    if (!sqlEngine.supportsOutputSchema(stageSpec.getOutputSchema())) {
+      return Optional.empty();
+    }
+
+    // Validate transformation definition with engine
+    SQLTransformDefinition transformDefinition = new SQLTransformDefinition(stageName,
+                                                                            pluginContext.getOutputRelation(),
+                                                                            stageSpec.getOutputSchema(),
+                                                                            Collections.emptyMap(),
+                                                                            Collections.emptyMap());
     if (!sqlEngine.canTransform(transformDefinition)) {
       return Optional.empty();
     }
 
     return Optional.of(runJob(stageSpec.getName(), SQLEngineJobType.EXECUTE, () -> {
+      // Push all stages that need to be pushed to execute this aggregation
+      input.forEach((name, collection) -> {
+        if (!exists(name)) {
+          push(name, stageSpec.getInputSchemas().get(name), collection);
+        }
+      });
+
+      // Initialize metrics collector
+      DefaultStageMetrics stageMetrics = new DefaultStageMetrics(metrics, stageName);
+      StageStatisticsCollector statisticsCollector = statsCollectors.get(stageName);
+
+      // Collect input datasets and execute transformation
       Map<String, SQLDataset> inputDatasets = input.keySet().stream().collect(Collectors.toMap(
         Function.identity(),
-        name -> getDatasetForStage(name)
+        this::getDatasetForStage
       ));
+
+      // Count input records
+      for (SQLDataset inputDataset : inputDatasets.values()) {
+        countRecordsIn(inputDataset, statisticsCollector, stageMetrics);
+      }
+
+      // Execute transform
       SQLTransformRequest sqlContext = new SQLTransformRequest(
         inputDatasets, stageSpec.getName(), pluginContext.getOutputRelation(), stageSpec.getOutputSchema());
-      return sqlEngine.transform(sqlContext);
+      SQLDataset transformed = sqlEngine.transform(sqlContext);
+
+      // Count output records
+      countRecordsOut(transformed, statisticsCollector, stageMetrics);
+
+      return transformed;
     }));
   }
 
   /**
    * Try to write the output directly to the SQLEngineOutput registered by this engine.
-   * @param datasetName dataset to write
+   *
+   * @param datasetName     dataset to write
    * @param sqlEngineOutput output instance created by this engine
    * @return {@link SQLEngineJob<Boolean>} representing if the write operation succeded.
    */

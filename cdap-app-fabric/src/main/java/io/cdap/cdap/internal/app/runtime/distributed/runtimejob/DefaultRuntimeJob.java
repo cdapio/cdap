@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2020-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -111,6 +111,7 @@ import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJob;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobEnvironment;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import org.apache.twill.api.TwillRunner;
@@ -165,6 +166,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
 
   private final CompletableFuture<ProgramController> controllerFuture = new CompletableFuture<>();
   private final CountDownLatch runCompletedLatch = new CountDownLatch(1);
+  private RuntimeClientService runtimeClientService;
   private volatile boolean stopRequested;
 
   @Override
@@ -256,7 +258,6 @@ public class DefaultRuntimeJob implements RuntimeJob {
     }
 
     ProgramStateWriter programStateWriter = injector.getInstance(ProgramStateWriter.class);
-    RuntimeClientService runtimeClientService = injector.getInstance(RuntimeClientService.class);
     CompletableFuture<ProgramController.State> programCompletion = new CompletableFuture<>();
     try {
       ProgramRunner programRunner = injector.getInstance(ProgramRunnerFactory.class).create(programId.getType());
@@ -444,9 +445,14 @@ public class DefaultRuntimeJob implements RuntimeJob {
                              ProgramOptions programOpts) {
     List<Module> modules = new ArrayList<>();
     modules.add(new ConfigModule(cConf));
+
+    RuntimeMonitorType runtimeMonitorType = SystemArguments.getRuntimeMonitorType(cConf, programOpts);
+    modules.add(RuntimeMonitors.getRemoteAuthenticatorModule(runtimeMonitorType, programOpts));
+
     modules.add(new IOModule());
     modules.add(new TMSLogAppenderModule());
     modules.add(new RemoteExecutionDiscoveryModule());
+    modules.add(new AuthorizationEnforcementModule().getDistributedModules());
     modules.add(new AuthenticationContextModules().getProgramContainerModule(cConf));
     modules.add(new MetricsClientRuntimeModule().getDistributedModules());
     modules.add(new MessagingServerRuntimeModule().getStandaloneModules());
@@ -476,7 +482,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
         bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
 
         bind(ProgramRunId.class).toInstance(programRunId);
-        bind(RuntimeMonitorType.class).toInstance(SystemArguments.getRuntimeMonitorType(cConf, programOpts));
+        bind(RuntimeMonitorType.class).toInstance(runtimeMonitorType);
 
         install(
           new FactoryModuleBuilder()
@@ -517,7 +523,8 @@ public class DefaultRuntimeJob implements RuntimeJob {
     if (injector.getInstance(RuntimeMonitorType.class) == RuntimeMonitorType.SSH) {
       services.add(injector.getInstance(TrafficRelayService.class));
     }
-    services.add(injector.getInstance(RuntimeClientService.class));
+    runtimeClientService = injector.getInstance(RuntimeClientService.class);
+    services.add(runtimeClientService);
 
     // Creates a service to emit profile metrics
     ProgramRunId programRunId = injector.getInstance(ProgramRunId.class);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2021 Cask Data, Inc.
+ * Copyright © 2017-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,6 +25,8 @@ import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.proto.security.Credential;
+import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpContentConsumer;
 import io.cdap.common.http.HttpMethod;
@@ -59,23 +61,20 @@ public class RemoteClient {
   private final HttpRequestConfig httpRequestConfig;
   private final String discoverableServiceName;
   private final String basePath;
-  private volatile RemoteAuthenticator authenticator;
-
-  RemoteClient(InternalAuthenticator internalAuthenticator, DiscoveryServiceClient discoveryClient,
-               String discoverableServiceName, HttpRequestConfig httpRequestConfig, String basePath) {
-    this(internalAuthenticator, discoveryClient, discoverableServiceName, httpRequestConfig, basePath, null);
-  }
+  private final RemoteAuthenticator remoteAuthenticator;
+  private final boolean skipRewriteUrl;
 
   RemoteClient(InternalAuthenticator internalAuthenticator, DiscoveryServiceClient discoveryClient,
                String discoverableServiceName, HttpRequestConfig httpRequestConfig, String basePath,
-               @Nullable RemoteAuthenticator authenticator) {
+               RemoteAuthenticator remoteAuthenticator, boolean skipRewriteUrl) {
     this.internalAuthenticator = internalAuthenticator;
     this.discoverableServiceName = discoverableServiceName;
     this.httpRequestConfig = httpRequestConfig;
     this.endpointStrategy = new RandomEndpointStrategy(() -> discoveryClient.discover(discoverableServiceName));
     String cleanBasePath = basePath.startsWith("/") ? basePath.substring(1) : basePath;
     this.basePath = cleanBasePath.endsWith("/") ? cleanBasePath : cleanBasePath + "/";
-    this.authenticator = authenticator;
+    this.remoteAuthenticator = remoteAuthenticator;
+    this.skipRewriteUrl = skipRewriteUrl;
   }
 
   /**
@@ -162,10 +161,12 @@ public class RemoteClient {
     urlConn.setConnectTimeout(httpRequestConfig.getConnectTimeout());
     urlConn.setReadTimeout(httpRequestConfig.getReadTimeout());
     urlConn.setDoInput(true);
-    RemoteAuthenticator authenticator = getAuthenticator();
-    if (authenticator != null) {
-      setAuthHeader(urlConn::setRequestProperty, HttpHeaders.AUTHORIZATION, authenticator.getType(),
-                    authenticator.getCredentials());
+    if (remoteAuthenticator != null) {
+      Credential credential = remoteAuthenticator.getCredentials();
+      if (credential != null) {
+        setAuthHeader(urlConn::setRequestProperty, HttpHeaders.AUTHORIZATION, credential.getType().getQualifiedName(),
+                      credential.getValue());
+      }
     }
 
     internalAuthenticator.applyInternalAuthenticationHeaders(urlConn::setRequestProperty);
@@ -228,7 +229,7 @@ public class RemoteClient {
    * Rewrites the given URL based on the runtime service.
    */
   private URL rewriteURL(URL url) {
-    if (url.getPort() != 0) {
+    if (url.getPort() != 0 || skipRewriteUrl) {
       return url;
     }
 
@@ -248,28 +249,18 @@ public class RemoteClient {
     }
   }
 
-  /**
-   * Returns an optional {@link RemoteAuthenticator} for the call.
-   */
-  @Nullable
-  private RemoteAuthenticator getAuthenticator() {
-    RemoteAuthenticator authenticator = this.authenticator;
-    if (authenticator != null) {
-      return authenticator;
-    }
-    // No need to synchronize as the get default method is thread safe and we don't need a singleton for authenticator
-    this.authenticator = authenticator = RemoteAuthenticator.getDefaultAuthenticator();
-    return authenticator;
-  }
-
   private Multimap<String, String> setHeader(HttpRequest request) throws IOException {
     Multimap<String, String> headers = request.getHeaders();
     headers = headers == null ? HashMultimap.create() : HashMultimap.create(headers);
 
     // Add Authorization header and use a rewritten URL if needed
-    RemoteAuthenticator authenticator = getAuthenticator();
-    if (authenticator != null && headers.keySet().stream().noneMatch(HttpHeaders.AUTHORIZATION::equalsIgnoreCase)) {
-      setAuthHeader(headers::put, HttpHeaders.AUTHORIZATION, authenticator.getType(), authenticator.getCredentials());
+    if (remoteAuthenticator != null && headers.keySet().stream()
+      .noneMatch(HttpHeaders.AUTHORIZATION::equalsIgnoreCase)) {
+      Credential credential = remoteAuthenticator.getCredentials();
+      if (credential != null) {
+        setAuthHeader(headers::put, HttpHeaders.AUTHORIZATION, credential.getType().getQualifiedName(),
+                      credential.getValue());
+      }
     }
 
     internalAuthenticator.applyInternalAuthenticationHeaders(headers::put);

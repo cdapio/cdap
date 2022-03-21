@@ -41,7 +41,7 @@ public class StartProgramCommand extends AbstractAuthCommand {
   protected final ElementType elementType;
   private final ProgramClient programClient;
 
-  protected boolean isDebug = false;
+  protected boolean isDebug;
 
   public StartProgramCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig) {
     super(cliConfig);

@@ -121,6 +121,7 @@ public class TimePartitionedFileSetTest {
           tpfs.addMetadata(time, "key3", "value5");
           Assert.fail("Expected not to be able to update an existing metadata entry");
         } catch (DataSetException expected) {
+          // expected
         }
 
         partitionByTime = tpfs.getPartitionByTime(time);

@@ -250,7 +250,7 @@ public class CombinerDagTest {
    * Deterministically generates group ids.
    */
   private static class GroupIdGenerator implements Supplier<String> {
-    private int count = 0;
+    private int count;
 
     @Override
     public String get() {

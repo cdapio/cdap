@@ -101,6 +101,11 @@ public final class DelayedProgramController implements ProgramController, Delega
   }
 
   @Override
+  public void kill() {
+    getDelegate().kill();
+  }
+
+  @Override
   public State getState() {
     try {
       return Uninterruptibles.getUninterruptibly(delegateFuture).getState();

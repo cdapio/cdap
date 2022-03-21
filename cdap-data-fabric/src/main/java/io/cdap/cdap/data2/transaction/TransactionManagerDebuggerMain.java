@@ -99,7 +99,7 @@ public class TransactionManagerDebuggerMain {
 
   private DebuggerMode mode;          // Mode the tool is used with
   private String accessToken;         // the access token for secure connections
-  private String tokenFile = null;    // path to file which contains an access token
+  private String tokenFile;    // path to file which contains an access token
   private String hostname;            // hostname to take a snapshot from
   private String existingFilename;    // filename where a snapshot has been persisted
   private Long txId;                  // transaction ID option

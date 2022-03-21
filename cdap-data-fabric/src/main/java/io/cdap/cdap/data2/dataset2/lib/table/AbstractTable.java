@@ -270,9 +270,9 @@ public abstract class AbstractTable implements Table, TransactionAware {
     // the underlying scanner
     private Scanner scanner;
     // the current key
-    private byte[] key = null;
+    private byte[] key;
     // the current row, that is, a map from column key to value
-    private Map<byte[], byte[]> row = null;
+    private Map<byte[], byte[]> row;
 
     @Override
     public void initialize(Split split) throws InterruptedException {
