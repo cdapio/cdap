@@ -45,6 +45,7 @@ public class Notification {
   public enum Type {
     TIME,
     PARTITION,
+    PROVISION_STATUS,
     PROGRAM_STATUS,
     PROGRAM_HEART_BEAT
   }

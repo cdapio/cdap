@@ -226,7 +226,7 @@ public class RunRecordMonitorService extends AbstractScheduledService {
     return false;
   }
 
-  class Counter {
+  public class Counter {
     /**
      * Total number of launch requests that have been accepted but still missing in metadata store +
      * total number of run records with {@link ProgramRunStatus#PENDING} status +

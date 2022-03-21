@@ -36,7 +36,9 @@ import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.bootstrap.BootstrapService;
 import io.cdap.cdap.internal.events.EventPublishManager;
+import io.cdap.cdap.internal.provision.DeprovisioningSubscriberService;
 import io.cdap.cdap.internal.provision.ProvisioningService;
+import io.cdap.cdap.internal.provision.ProvisioningSubscriberService;
 import io.cdap.cdap.internal.sysapp.SystemAppManagementService;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
@@ -74,6 +76,8 @@ public class AppFabricServer extends AbstractIdleService {
   private final Set<String> servicesNames;
   private final Set<String> handlerHookNames;
   private final ProgramNotificationSubscriberService programNotificationSubscriberService;
+  private final ProvisioningSubscriberService provisioningSubscriberService;
+  private final DeprovisioningSubscriberService deprovisioningSubscriberService;
   private final ProgramStopSubscriberService programStopSubscriberService;
   private final RunRecordCorrectorService runRecordCorrectorService;
   private final ProgramRunStatusMonitorService programRunStatusMonitorService;
@@ -106,6 +110,8 @@ public class AppFabricServer extends AbstractIdleService {
                          ProgramRunStatusMonitorService programRunStatusMonitorService,
                          ApplicationLifecycleService applicationLifecycleService,
                          ProgramNotificationSubscriberService programNotificationSubscriberService,
+                         ProvisioningSubscriberService provisioningSubscriberService,
+                         DeprovisioningSubscriberService deprovisioningSubscriberService,
                          ProgramStopSubscriberService programStopSubscriberService,
                          @Named("appfabric.services.names") Set<String> servicesNames,
                          @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
@@ -127,6 +133,8 @@ public class AppFabricServer extends AbstractIdleService {
     this.handlerHookNames = handlerHookNames;
     this.applicationLifecycleService = applicationLifecycleService;
     this.programNotificationSubscriberService = programNotificationSubscriberService;
+    this.provisioningSubscriberService = provisioningSubscriberService;
+    this.deprovisioningSubscriberService = deprovisioningSubscriberService;
     this.programStopSubscriberService = programStopSubscriberService;
     this.runRecordCorrectorService = runRecordCorrectorService;
     this.programRunStatusMonitorService = programRunStatusMonitorService;
@@ -155,6 +163,8 @@ public class AppFabricServer extends AbstractIdleService {
         bootstrapService.start(),
         programRuntimeService.start(),
         programNotificationSubscriberService.start(),
+        provisioningSubscriberService.start(),
+        deprovisioningSubscriberService.start(),
         programStopSubscriberService.start(),
         runRecordCorrectorService.start(),
         programRunStatusMonitorService.start(),
@@ -209,6 +219,8 @@ public class AppFabricServer extends AbstractIdleService {
     programRuntimeService.stopAndWait();
     applicationLifecycleService.stopAndWait();
     programNotificationSubscriberService.stopAndWait();
+    provisioningSubscriberService.stopAndWait();
+    deprovisioningSubscriberService.stopAndWait();
     programStopSubscriberService.stopAndWait();
     runRecordCorrectorService.stopAndWait();
     programRunStatusMonitorService.stopAndWait();

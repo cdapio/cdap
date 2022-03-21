@@ -44,6 +44,7 @@ import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.HashMap;
 import java.util.Map;
 import javax.inject.Inject;
 
@@ -52,29 +53,39 @@ import javax.inject.Inject;
  */
 public class ProvisionerNotifier {
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
-  private final TopicId topic;
+  private final TopicId provisionTopicId;
+  private final TopicId deprovisionTopicId;
+  private final TopicId programStatusTopicId;
+  private final HashMap<TopicId, Notification.Type> topicIdTypeHashMap = new HashMap<>();
   private final RetryStrategy retryStrategy;
   private final MessagingService messagingService;
 
   @Inject
   ProvisionerNotifier(CConfiguration cConf, MessagingService messagingService) {
-    this.topic = NamespaceId.SYSTEM.topic(cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC));
+    this.programStatusTopicId = NamespaceId.SYSTEM.topic(cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC));
+    topicIdTypeHashMap.put(programStatusTopicId, Notification.Type.PROGRAM_STATUS);
+    this.provisionTopicId = NamespaceId.SYSTEM.topic(cConf.get(Constants.AppFabric.PROVISION_EVENT_TOPIC));
+    topicIdTypeHashMap.put(programStatusTopicId, Notification.Type.PROVISION_STATUS);
+    this.deprovisionTopicId = NamespaceId.SYSTEM.topic(cConf.get(Constants.AppFabric.PROVISION_EVENT_TOPIC));
+    topicIdTypeHashMap.put(programStatusTopicId, Notification.Type.PROVISION_STATUS);
+
     this.retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.program.state.");
     this.messagingService = messagingService;
   }
 
   public void provisioning(ProgramRunId programRunId, ProgramOptions programOptions,
                            ProgramDescriptor programDescriptor, String userId) {
-    publish(ImmutableMap.<String, String>builder()
-              .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
-              .put(ProgramOptionConstants.PROGRAM_DESCRIPTOR, GSON.toJson(programDescriptor))
-              .put(ProgramOptionConstants.USER_ID, userId)
-              .put(ProgramOptionConstants.CLUSTER_STATUS, ProgramRunClusterStatus.PROVISIONING.name())
-              .put(ProgramOptionConstants.DEBUG_ENABLED, String.valueOf(programOptions.isDebug()))
-              .put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(programOptions.getUserArguments().asMap()))
-              .put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(programOptions.getArguments().asMap()))
-              .put(ProgramOptionConstants.ARTIFACT_ID, GSON.toJson(programDescriptor.getArtifactId().toApiArtifactId()))
-              .build());
+    Map<String, String> properties = ImmutableMap.<String, String>builder()
+      .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
+      .put(ProgramOptionConstants.PROGRAM_DESCRIPTOR, GSON.toJson(programDescriptor))
+      .put(ProgramOptionConstants.USER_ID, userId)
+      .put(ProgramOptionConstants.CLUSTER_STATUS, ProgramRunClusterStatus.PROVISIONING.name())
+      .put(ProgramOptionConstants.DEBUG_ENABLED, String.valueOf(programOptions.isDebug()))
+      .put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(programOptions.getUserArguments().asMap()))
+      .put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(programOptions.getArguments().asMap()))
+      .put(ProgramOptionConstants.ARTIFACT_ID, GSON.toJson(programDescriptor.getArtifactId().toApiArtifactId()))
+      .build();
+    publish(provisionTopicId, properties);
   }
 
   public void provisioned(ProgramRunId programRunId, ProgramOptions programOptions, ProgramDescriptor programDescriptor,
@@ -91,13 +102,14 @@ public class ProvisionerNotifier {
       .put(ProgramOptionConstants.SECURE_KEYS_DIR, GSON.toJson(secureKeysDir))
       .build();
 
-    publish(properties);
+    publish(programStatusTopicId, properties);
   }
 
   public void deprovisioning(ProgramRunId programRunId) {
-    publish(ImmutableMap.of(
+    Map<String, String> properties = ImmutableMap.of(
       ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId),
-      ProgramOptionConstants.CLUSTER_STATUS, ProgramRunClusterStatus.DEPROVISIONING.name()));
+      ProgramOptionConstants.CLUSTER_STATUS, ProgramRunClusterStatus.DEPROVISIONING.name());
+    publish(deprovisionTopicId, properties);
   }
 
   public void deprovisioned(ProgramRunId programRunId) {
@@ -106,10 +118,11 @@ public class ProvisionerNotifier {
 
   // this time stamp is in unit MILLISECOND
   public void deprovisioned(ProgramRunId programRunId, long endTimestamp) {
-    publish(ImmutableMap.of(
+    Map<String, String> properties = ImmutableMap.of(
       ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId),
       ProgramOptionConstants.CLUSTER_STATUS, ProgramRunClusterStatus.DEPROVISIONED.name(),
-      ProgramOptionConstants.CLUSTER_END_TIME, String.valueOf(endTimestamp)));
+      ProgramOptionConstants.CLUSTER_END_TIME, String.valueOf(endTimestamp));
+    publish(programStatusTopicId, properties);
   }
 
   public void orphaned(ProgramRunId programRunId) {
@@ -118,15 +131,16 @@ public class ProvisionerNotifier {
 
   // this time stamp is in unit MILLISECOND
   public void orphaned(ProgramRunId programRunId, long endTimestamp) {
-    publish(ImmutableMap.of(
+    Map<String, String> properties = ImmutableMap.of(
       ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId),
       ProgramOptionConstants.CLUSTER_STATUS, ProgramRunClusterStatus.ORPHANED.name(),
-      ProgramOptionConstants.CLUSTER_END_TIME, String.valueOf(endTimestamp)));
+      ProgramOptionConstants.CLUSTER_END_TIME, String.valueOf(endTimestamp));
+    publish(programStatusTopicId, properties);
   }
 
-  private void publish(Map<String, String> properties) {
-    final StoreRequest storeRequest = StoreRequestBuilder.of(topic)
-      .addPayload(GSON.toJson(new Notification(Notification.Type.PROGRAM_STATUS, properties)))
+  private void publish(TopicId topicId, Map<String, String> properties) {
+    final StoreRequest storeRequest = StoreRequestBuilder.of(topicId)
+      .addPayload(GSON.toJson(new Notification(topicIdTypeHashMap.get(topicId), properties)))
       .build();
     Retries.supplyWithRetries(
       () -> {

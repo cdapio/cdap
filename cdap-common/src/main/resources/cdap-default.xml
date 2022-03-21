@@ -464,7 +464,7 @@
 
   <property>
     <name>app.max.concurrent.runs</name>
-    <value>-1</value>
+    <value>2</value>
     <description>
       Maximum number of concurrent program runs allowed; set to -1 for unlimited.
       Program runs are those with an active run record.
@@ -473,7 +473,7 @@
 
   <property>
     <name>app.max.concurrent.launching</name>
-    <value>-1</value>
+    <value>1</value>
     <description>
       Maximum number of concurrent launching runs allowed; set to -1 for unlimited.
       Launching runs have an active run record with PENDING or STARTING status.
@@ -641,6 +641,40 @@
   </property>
 
   <property>
+    <name>app.provision.event.fetch.size</name>
+    <value>100</value>
+    <description>
+      Maximum number of events to fetch from the messaging system in each processing cycle for
+      program status update events
+    </description>
+  </property>
+
+  <property>
+    <name>app.provision.event.poll.delay.millis</name>
+    <value>2000</value>
+    <description>
+      The delay in milliseconds to check again for new program status events after it detects there was no event
+    </description>
+  </property>
+
+  <property>
+    <name>app.deprovision.event.fetch.size</name>
+    <value>100</value>
+    <description>
+      Maximum number of events to fetch from the messaging system in each processing cycle for
+      program status update events
+    </description>
+  </property>
+
+  <property>
+    <name>app.deprovision.event.poll.delay.millis</name>
+    <value>2000</value>
+    <description>
+      The delay in milliseconds to check again for new program status events after it detects there was no event
+    </description>
+  </property>
+
+  <property>
     <name>app.program.yarn.attempt.failures.validity.interval</name>
     <value>60000</value>
     <description>
@@ -791,6 +825,22 @@
     <value>programstatusevent</value>
     <description>
       Topic name for publishing status transitioning events of program runs to the messaging system
+    </description>
+  </property>
+
+  <property>
+    <name>provision.event.topic</name>
+    <value>provisionevent</value>
+    <description>
+      Topic name for publishing provision event
+    </description>
+  </property>
+
+  <property>
+    <name>deprovision.event.topic</name>
+    <value>deprovisionevent</value>
+    <description>
+      Topic name for publishing provision event
     </description>
   </property>
 
@@ -2395,7 +2445,7 @@
 
   <property>
     <name>messaging.system.topics</name>
-    <value>${audit.topic},${metadata.messaging.topic},${data.event.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${metrics.admin.topic},${time.event.topic},${program.status.event.topic},${program.status.record.event.topic},${log.tms.topic.prefix}:${log.publish.num.partitions},${preview.messaging.topic},previewlog0</value>
+    <value>${audit.topic},${metadata.messaging.topic},${data.event.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${metrics.admin.topic},${time.event.topic},${program.status.event.topic},${provision.event.topic},${deprovision.event.topic},${program.status.record.event.topic},${log.tms.topic.prefix}:${log.publish.num.partitions},${preview.messaging.topic},previewlog0</value>
     <description>
       A comma-separated list of topics that are always available in the
       system namespace. Multiple topics sharing the same prefix and

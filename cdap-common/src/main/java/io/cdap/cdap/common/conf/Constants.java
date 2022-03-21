@@ -225,6 +225,14 @@ public final class Constants {
     public static final String APP_SCHEDULER_QUEUE = "apps.scheduler.queue";
     public static final String STATUS_EVENT_FETCH_SIZE = "app.program.status.event.fetch.size";
     public static final String STATUS_EVENT_POLL_DELAY_MILLIS = "app.program.status.event.poll.delay.millis";
+
+    public static final String PROVISION_EVENT_FETCH_SIZE = "app.provision.event.fetch.size";
+    public static final String PROVISION_EVENT_POLL_DELAY_MILLIS = "app.provision.event.poll.delay.millis";
+
+    public static final String DEPROVISION_EVENT_FETCH_SIZE = "app.deprovision.event.fetch.size";
+    public static final String DEPROVISION_EVENT_POLL_DELAY_MILLIS = "app.deprovision.event.poll.delay.millis";
+
+
     public static final String MAPREDUCE_JOB_CLIENT_CONNECT_MAX_RETRIES = "mapreduce.jobclient.connect.max.retries";
     public static final String MAPREDUCE_INCLUDE_CUSTOM_CLASSES = "mapreduce.include.custom.format.classes";
     public static final String MAPREDUCE_STATUS_REPORT_INTERVAL_SECONDS = "mapreduce.status.report.interval.seconds";
@@ -251,6 +259,7 @@ public final class Constants {
     public static final String PROGRAM_TRANSACTION_CONTROL = "app.program.transaction.control";
     public static final String MAX_CONCURRENT_RUNS = "app.max.concurrent.runs";
     public static final String MAX_CONCURRENT_LAUNCHING = "app.max.concurrent.launching";
+    public static final String MAX_CONCURRENT_QUEUEING = "app.max.concurrent.queueing";
     public static final String MONITOR_RECORD_AGE_THRESHOLD_SECONDS =
       "run.record.monitor.record.age.threshold.seconds";
     public static final String MONITOR_CLEANUP_INTERVAL_SECONDS =
@@ -331,6 +340,9 @@ public final class Constants {
      * Topic name for publishing status transitioning events of program runs to the messaging system
      */
     public static final String PROGRAM_STATUS_EVENT_TOPIC = "program.status.event.topic";
+
+    public static final String PROVISION_EVENT_TOPIC = "provision.event.topic";
+    public static final String DEPROVISION_EVENT_TOPIC = "deprovision.event.topic";
 
     /**
      * Topic name for publishing program status recording events to the messaging system
