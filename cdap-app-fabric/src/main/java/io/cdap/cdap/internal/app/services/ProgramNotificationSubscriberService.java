@@ -388,7 +388,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         writeToHeartBeatTable(recordedRunRecord, logicalStartTimeSecs, programHeartbeatTable);
         runRecordMonitorService.removeRequest(programRunId, true);
         long startDelayTime = logicalStartTimeSecs - RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS);
-        emitStartingTimeMetric(programRunId, startDelayTime);
+        emitStartingTimeMetric(programRunId, startDelayTime, recordedRunRecord);
         break;
       case SUSPENDED:
         long suspendTime = getTimeSeconds(notification.getProperties(),
@@ -523,7 +523,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       long runTime = endTimeSecs - RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS);
       SystemArguments
         .getProfileIdFromArgs(programRunId.getNamespaceId(), recordedRunRecord.getSystemArgs())
-        .ifPresent(profileId -> emitRunTimeMetric(programRunId, programRunStatus, runTime));
+        .ifPresent(profileId -> emitRunTimeMetric(programRunId, programRunStatus, runTime, recordedRunRecord));
 
       runnables.add(() -> {
         programCompletionNotifiers.forEach(notifier -> notifier.onProgramCompleted(programRunId,
@@ -579,7 +579,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
                                                programInfo.getProgramName());
 
       Map<ProgramRunId, Notification> innerProgramNotifications = new LinkedHashMap<>();
-      
+
       appMetadataStore.scanActiveRuns(innerProgramId, runRecord -> {
         Map<String, String> systemArgs = runRecord.getSystemArgs();
         String workflowName = systemArgs.get(ProgramOptionConstants.WORKFLOW_NAME);
@@ -807,18 +807,42 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
    * Emit the program run time metric. The tags are constructed with the program run id and program run status.
    */
   private void emitRunTimeMetric(ProgramRunId programRunId, ProgramRunStatus programRunStatus,
-                                 long runTime) {
-    Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.STATUS, programRunStatus.name());
+                                 long runTime, RunRecordDetail runRecord) {
+    Map<String, String> tags = ImmutableMap.<String, String>builder()
+      .put(Constants.Metrics.Tag.STATUS, programRunStatus.name())
+      .put(Constants.Metrics.Tag.PROGRAM, programRunId.getProgram())
+      .putAll(getAdditionalTagsForProfileMetrics(runRecord, programRunId))
+      .putAll(getAdditionalTagsForProgramMetrics(runRecord, null))
+      .build();
     MetricsContext metricsContext = ProgramRunners.createProgramMetricsContext(programRunId, tags,
                                                                                metricsCollectionService);
     metricsContext.gauge(Constants.Metrics.Program.RUN_TIME_SECONDS, runTime);
   }
 
-  private void emitStartingTimeMetric(ProgramRunId programRunId, long startDelayTime) {
-    Map<String, String> tags = Collections.emptyMap();
+  private void emitStartingTimeMetric(ProgramRunId programRunId, long startDelayTime,
+                                      @Nullable RunRecordDetail runRecord) {
+    Map<String, String> tags = ImmutableMap.<String, String>builder()
+      .put(Constants.Metrics.Tag.PROGRAM, programRunId.getProgram())
+      .putAll(getAdditionalTagsForProfileMetrics(runRecord, programRunId))
+      .putAll(getAdditionalTagsForProgramMetrics(runRecord, null))
+      .build();
     MetricsContext metricsContext = ProgramRunners.createProgramMetricsContext(programRunId, tags,
                                                                                metricsCollectionService);
     metricsContext.gauge(Constants.Metrics.Program.PROGRAM_STARTING_DELAY_SECONDS, startDelayTime);
+  }
+
+  private Map<String, String> getAdditionalTagsForProfileMetrics(@Nullable RunRecordDetail runRecord,
+                                                                 ProgramRunId programRunId) {
+    Map<String, String> tags = new HashMap<>(Collections.emptyMap());
+    if (runRecord == null) {
+      return tags;
+    }
+    SystemArguments.getProfileIdFromArgs(programRunId.getNamespaceId(), runRecord.getSystemArgs())
+      .ifPresent(profileId -> {
+        tags.putIfAbsent(Constants.Metrics.Tag.PROFILE, profileId.getProfile());
+        tags.putIfAbsent(Constants.Metrics.Tag.PROFILE_SCOPE, profileId.getScope().name());
+      });
+    return tags;
   }
 
   /**
@@ -828,9 +852,12 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     return AppMetadataStore.create(context);
   }
 
-  private Map<String, String> getAdditionalTagsForProgramMetrics(RunRecordDetail runRecord,
+  private Map<String, String> getAdditionalTagsForProgramMetrics(@Nullable RunRecordDetail runRecord,
                                                                  @Nullable ProgramRunStatus existingStatus) {
     Map<String, String> additionalTags = new HashMap<>();
+    if (runRecord == null) {
+      return additionalTags;
+    }
     // don't want to add the tag if it is not present otherwise it will result in NPE
     additionalTags.computeIfAbsent(Constants.Metrics.Tag.PROVISIONER,
                                    provisioner -> SystemArguments.getProfileProvisioner(runRecord.getSystemArgs()));
