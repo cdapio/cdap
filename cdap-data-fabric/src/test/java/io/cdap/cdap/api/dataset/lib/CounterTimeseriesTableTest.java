@@ -39,7 +39,7 @@ public class CounterTimeseriesTableTest {
   @ClassRule
   public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
 
-  private static CounterTimeseriesTable table = null;
+  private static CounterTimeseriesTable table;
   private static DatasetId counterTable = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("counterTable");
 
   @BeforeClass

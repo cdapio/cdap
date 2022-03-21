@@ -91,7 +91,7 @@ public class DeduplicateAggregationDefinitionTest {
         .build();
       Assert.fail("Expected IllegalStateException");
     } catch (IllegalStateException ignored) {
-
+      // expected
     }
 
     try {
@@ -101,7 +101,7 @@ public class DeduplicateAggregationDefinitionTest {
         .build();
       Assert.fail("Expected IllegalStateException");
     } catch (IllegalStateException ignored) {
-
+      // expected
     }
   }
 }

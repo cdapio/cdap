@@ -26,6 +26,7 @@ import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.logging.gateway.handlers.RemoteLogsFetcher;
@@ -37,9 +38,6 @@ import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.support.metadata.RemoteMonitorServicesFetcher;
 import io.cdap.cdap.support.task.SupportBundleSystemLogTask;
-import io.cdap.cdap.support.task.factory.SupportBundlePipelineInfoTaskFactory;
-import io.cdap.cdap.support.task.factory.SupportBundleSystemLogTaskFactory;
-import io.cdap.cdap.support.task.factory.SupportBundleTaskFactory;
 import io.cdap.common.http.HttpResponse;
 import org.apache.twill.api.RunId;
 import org.junit.Assert;
@@ -47,10 +45,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -59,7 +55,6 @@ public class SupportBundleSystemLogTaskTest extends SupportBundleTestBase {
 
   private static CConfiguration configuration;
   private static Store store;
-  private static Set<SupportBundleTaskFactory> supportBundleTaskFactorySet;
   private static RemoteLogsFetcher remoteLogsFetcher;
   private static RemoteMonitorServicesFetcher remoteMonitorServicesFetcher;
   private int sourceId;
@@ -69,9 +64,6 @@ public class SupportBundleSystemLogTaskTest extends SupportBundleTestBase {
     Injector injector = getInjector();
     configuration = injector.getInstance(CConfiguration.class);
     store = injector.getInstance(DefaultStore.class);
-    supportBundleTaskFactorySet = new HashSet<>();
-    supportBundleTaskFactorySet.add(injector.getInstance(SupportBundlePipelineInfoTaskFactory.class));
-    supportBundleTaskFactorySet.add(injector.getInstance(SupportBundleSystemLogTaskFactory.class));
     remoteLogsFetcher = injector.getInstance(RemoteLogsFetcher.class);
     remoteMonitorServicesFetcher = injector.getInstance(RemoteMonitorServicesFetcher.class);
   }
@@ -87,9 +79,10 @@ public class SupportBundleSystemLogTaskTest extends SupportBundleTestBase {
     systemLogTask.collect();
 
     File systemLogFolder = new File(uuidFile, "system-log");
-    File[] systemLogFiles =
-      systemLogFolder.listFiles((dir, name) -> !name.startsWith(".") && !dir.isHidden() && dir.isDirectory());
-    Assert.assertEquals(9, systemLogFiles.length);
+    List<File> systemLogFiles = DirUtils.listFiles(systemLogFolder,
+                                                   file -> !file.isHidden() && !file.getParentFile().isHidden());
+
+    Assert.assertEquals(9, systemLogFiles.size());
   }
 
   private String generateWorkflowLog() throws Exception {

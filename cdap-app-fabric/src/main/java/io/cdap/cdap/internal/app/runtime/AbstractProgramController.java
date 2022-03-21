@@ -159,6 +159,11 @@ public abstract class AbstractProgramController implements ProgramController {
     return result;
   }
 
+  @Override
+  public void kill() {
+    stop();
+  }
+
   /**
    * Children call this method to signal the program is completed.
    */

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.metrics.process;
 
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -119,6 +120,21 @@ public final class TopicProcessMeta {
 
   @Override
   public int hashCode() {
-    return Objects.hash(messageId, oldestMetricsTimestamp, latestMetricsTimestamp, messagesProcessed);
+    return Objects.hash(Arrays.hashCode(messageId), oldestMetricsTimestamp, latestMetricsTimestamp, messagesProcessed);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    TopicProcessMeta that = (TopicProcessMeta) o;
+    return oldestMetricsTimestamp == that.oldestMetricsTimestamp
+      && latestMetricsTimestamp == that.latestMetricsTimestamp
+      && messagesProcessed == that.messagesProcessed
+      && Arrays.equals(messageId, that.messageId);
   }
 }

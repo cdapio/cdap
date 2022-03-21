@@ -34,7 +34,7 @@ public class LimitingFunction<T> implements Function<JavaRDD<T>, JavaRDD<T>> {
   @Override
   public JavaRDD<T> call(JavaRDD<T> v1) throws Exception {
     return v1.filter(new Function<T, Boolean>() {
-      int numOfRecordsEmitted = 0;
+      int numOfRecordsEmitted;
 
       @Override
       public Boolean call(T v1) throws Exception {

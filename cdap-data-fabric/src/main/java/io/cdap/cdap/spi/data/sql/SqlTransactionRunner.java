@@ -16,11 +16,9 @@
 
 package io.cdap.cdap.spi.data.sql;
 
-import com.google.common.annotations.VisibleForTesting;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.transaction.TransactionException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;

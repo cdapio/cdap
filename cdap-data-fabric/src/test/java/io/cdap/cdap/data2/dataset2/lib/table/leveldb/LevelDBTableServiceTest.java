@@ -36,7 +36,6 @@ import org.iq80.leveldb.DBIterator;
 import org.iq80.leveldb.impl.DbImpl;
 import org.iq80.leveldb.impl.FileMetaData;
 import org.iq80.leveldb.impl.SnapshotImpl;
-import org.iq80.leveldb.util.SizeOf;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -61,7 +60,7 @@ public class LevelDBTableServiceTest {
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   static LevelDBTableService service;
-  static Injector injector = null;
+  static Injector injector;
 
   @BeforeClass
   public static void init() throws Exception {

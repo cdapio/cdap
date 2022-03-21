@@ -16,16 +16,8 @@
 
 package io.cdap.cdap.security.authorization;
 
-import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.proto.id.EntityId;
-import io.cdap.cdap.proto.security.Permission;
-import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
-import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Abstract Class that implements common methods for the {@link AccessEnforcer} interface.

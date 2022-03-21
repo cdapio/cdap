@@ -118,7 +118,9 @@ public class MasterServiceMainTestBase {
                     RuntimeServiceMain.class,
                     AppFabricServiceMain.class,
                     SupportBundleServiceMain.class,
-                    SystemMetricsExporterServiceMain.class));
+                    SystemMetricsExporterServiceMain.class,
+                    ArtifactCacheServiceMain.class,
+                    TetheringAgentServiceMain.class));
 
     if (SecurityUtil.isManagedSecurity(cConf)) {
       serviceMainClasses.add(AuthenticationServiceMain.class);

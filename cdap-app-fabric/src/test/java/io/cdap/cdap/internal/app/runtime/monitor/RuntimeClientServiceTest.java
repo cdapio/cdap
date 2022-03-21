@@ -49,6 +49,7 @@ import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
@@ -119,6 +120,7 @@ public class RuntimeClientServiceTest {
       new LocalLocationModule(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
       new AuthenticationContextModules().getNoOpModule(),
+      new AuthorizationEnforcementModule().getNoOpModules(),
       new RuntimeServerModule() {
         @Override
         protected void bindRequestValidator() {
@@ -164,6 +166,7 @@ public class RuntimeClientServiceTest {
       new ConfigModule(clientCConf),
       RemoteAuthenticatorModules.getNoOpModule(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
+      new AuthorizationEnforcementModule().getNoOpModules(),
       new AuthenticationContextModules().getNoOpModule(),
       new AbstractModule() {
         @Override

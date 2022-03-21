@@ -36,8 +36,8 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
-import io.cdap.cdap.support.app.guice.SupportBundleServiceModule;
-import io.cdap.cdap.support.internal.app.services.SupportBundleInternalService;
+import io.cdap.cdap.support.guice.SupportBundleServiceModule;
+import io.cdap.cdap.support.services.SupportBundleInternalService;
 import org.apache.twill.zookeeper.ZKClientService;
 
 import java.util.Arrays;

@@ -740,6 +740,7 @@ public class PartitionConsumerTest {
           partitionConsumer.onFinish(partitionDetails, false);
           Assert.fail("Expected not to be able to abort a partition that is not IN_PROGRESS");
         } catch (IllegalStateException expected) {
+          // expected
         }
 
         // try to process the partition again, this time marking it as complete (by passing in true)
@@ -754,6 +755,7 @@ public class PartitionConsumerTest {
           partitionConsumer.onFinish(partitionDetails, true);
           Assert.fail("Expected not to be able to call onFinish on a partition is not IN_PROGRESS");
         } catch (IllegalArgumentException expected) {
+          // expected
         }
       }
     });
@@ -996,7 +998,7 @@ public class PartitionConsumerTest {
     });
   }
 
-  private int counter = 0;
+  private int counter;
 
   // generates unique partition keys, where the 'i' field is incrementing from 0 upwards on each returned key
   private PartitionKey generateUniqueKey() {

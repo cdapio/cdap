@@ -139,7 +139,7 @@ public class MetricsHandlerTest extends MetricsSuiteTestBase {
       replicatorMetrics.child(ImmutableMap.of("ns", "anothernamespace"));
       Assert.fail("Creating child Metrics with duplicate tag name 'ns' should have failed.");
     } catch (IllegalArgumentException ignored) {
-
+      // ignore
     }
     // need a better way to do this
     TimeUnit.SECONDS.sleep(2);

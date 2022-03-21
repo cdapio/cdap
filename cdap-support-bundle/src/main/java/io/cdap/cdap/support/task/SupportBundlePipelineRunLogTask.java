@@ -16,30 +16,26 @@
 
 package io.cdap.cdap.support.task;
 
-import com.google.inject.Inject;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.logging.gateway.handlers.RemoteLogsFetcher;
 import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.support.lib.SupportBundleFileNames;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Collects pipeline run info.
  */
 public class SupportBundlePipelineRunLogTask implements SupportBundleTask {
 
-  private static final Logger LOG = LoggerFactory.getLogger(SupportBundlePipelineRunLogTask.class);
   private final File appFolderPath;
   private final RemoteLogsFetcher remoteLogsFetcher;
   private final ProgramId programName;
   private final Iterable<RunRecord> runRecordList;
 
-  @Inject
   public SupportBundlePipelineRunLogTask(File appFolderPath, ProgramId programName,
                                          RemoteLogsFetcher remoteLogsFetcher,
                                          Iterable<RunRecord> runRecordList) {
@@ -54,9 +50,8 @@ public class SupportBundlePipelineRunLogTask implements SupportBundleTask {
     for (RunRecord runRecord : runRecordList) {
       String runId = runRecord.getPid();
       File file = new File(appFolderPath, runId + SupportBundleFileNames.LOG_SUFFIX_NAME);
-      long currentTimeMillis = System.currentTimeMillis();
-      long fromMillis = 0;
-      remoteLogsFetcher.writeProgramRunLogs(programName, runId, fromMillis, currentTimeMillis / 1000, file);
+      remoteLogsFetcher.writeProgramRunLogs(programName, runId, 0L,
+                                            TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), file);
     }
   }
 }

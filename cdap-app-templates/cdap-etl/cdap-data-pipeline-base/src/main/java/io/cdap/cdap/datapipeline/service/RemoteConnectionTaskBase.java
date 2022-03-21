@@ -25,12 +25,10 @@ import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.api.service.worker.SystemAppTaskContext;
 import io.cdap.cdap.etl.api.connector.Connector;
-import io.cdap.cdap.etl.common.ArtifactSelectorProvider;
 import io.cdap.cdap.etl.common.BasicArguments;
 import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
 import io.cdap.cdap.etl.common.OAuthMacroEvaluator;
 import io.cdap.cdap.etl.common.SecureStoreMacroEvaluator;
-import io.cdap.cdap.etl.proto.connection.Connection;
 import io.cdap.cdap.etl.proto.connection.PluginInfo;
 import io.cdap.cdap.etl.spec.TrackedPluginSelector;
 

@@ -50,16 +50,12 @@ import io.cdap.cdap.etl.spark.streaming.function.StreamingBatchSinkFunction;
 import io.cdap.cdap.etl.spark.streaming.function.StreamingMultiSinkFunction;
 import io.cdap.cdap.etl.spark.streaming.function.StreamingSparkSinkFunction;
 import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
-import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
-import org.apache.spark.api.java.function.VoidFunction2;
 import org.apache.spark.storage.StorageLevel;
 import org.apache.spark.streaming.Durations;
-import org.apache.spark.streaming.Time;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.apache.spark.streaming.api.java.JavaPairDStream;
 

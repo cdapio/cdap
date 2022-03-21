@@ -66,8 +66,8 @@ public class MockSQLEngineWithStageSettings extends BatchSQLEngine<Object, Objec
   public static final String NAME = "MockSQLEngineWithStageSettings";
   private static final Gson GSON = new Gson();
   private final MockSQLEngineWithStageSettings.Config config;
-  boolean calledPrepareRun = false;
-  boolean calledOnRunFinish = false;
+  boolean calledPrepareRun;
+  boolean calledOnRunFinish;
 
   public MockSQLEngineWithStageSettings(MockSQLEngineWithStageSettings.Config config) {
     this.config = config;

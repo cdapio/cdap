@@ -57,7 +57,7 @@ public final class TestHandler extends AbstractHttpHandler {
 
     responder.sendContent(HttpResponseStatus.OK, new BodyProducer() {
 
-      int count = 0;
+      int count;
 
       @Override
       public ByteBuf nextChunk() {

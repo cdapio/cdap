@@ -24,7 +24,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * Inspects a jar file to determine metadata about the artifact.

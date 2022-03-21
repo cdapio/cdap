@@ -56,7 +56,7 @@ class RemoteExecutionService extends AbstractRetryableScheduledService {
 
   RemoteExecutionService(CConfiguration cConf, ProgramRunId programRunId, ScheduledExecutorService scheduler,
                          RemoteProcessController processController, ProgramStateWriter programStateWriter) {
-    super(RetryStrategies.fromConfiguration(cConf, "system.runtime.monitor."));
+    super(RetryStrategies.fromConfiguration(cConf, Constants.Service.RUNTIME_MONITOR_RETRY_PREFIX));
     this.programRunId = programRunId;
     this.scheduler = scheduler;
     this.processController = processController;

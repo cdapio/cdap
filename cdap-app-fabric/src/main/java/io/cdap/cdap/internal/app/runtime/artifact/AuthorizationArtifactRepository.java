@@ -21,7 +21,6 @@ import com.google.common.base.Predicate;
 import com.google.inject.name.Named;
 import io.cdap.cdap.api.artifact.ArtifactInfo;
 import io.cdap.cdap.api.artifact.ArtifactRange;
-import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.api.plugin.PluginClass;
@@ -44,7 +43,6 @@ import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
-import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

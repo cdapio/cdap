@@ -463,7 +463,9 @@ public final class ClassPath {
       } finally {
         try {
           jarFile.close();
-        } catch (IOException ignored) { }
+        } catch (IOException ignored) {
+          // Ignore failure on closing jar.
+        }
       }
     }
 

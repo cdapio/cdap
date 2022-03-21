@@ -193,7 +193,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
 
   private volatile RestHighLevelClient client;
 
-  private volatile boolean created = false;
+  private volatile boolean created;
   private int maxWindowSize = Config.DEFAULT_MAX_RESULT_WINDOW;
 
   // sleep 100 ms for at most 50 times

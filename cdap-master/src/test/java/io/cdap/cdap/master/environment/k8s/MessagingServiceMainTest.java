@@ -26,7 +26,6 @@ import io.cdap.cdap.messaging.client.StoreRequestBuilder;
 import io.cdap.cdap.messaging.data.RawMessage;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.Assert;
 import org.junit.Test;
 

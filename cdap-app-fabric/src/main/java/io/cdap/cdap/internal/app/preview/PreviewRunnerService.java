@@ -21,7 +21,6 @@ import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
-import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.app.preview.PreviewRunner;
 import io.cdap.cdap.common.conf.CConfiguration;

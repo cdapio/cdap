@@ -147,7 +147,7 @@ public class CounterTimeseriesTable extends TimeseriesDataset {
     // Returns a limiting Iterator
     return new Iterator<Counter>() {
 
-      private int count = 0;
+      private int count;
 
       @Override
       public boolean hasNext() {

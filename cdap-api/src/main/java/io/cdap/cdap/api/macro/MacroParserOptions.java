@@ -82,9 +82,9 @@ public class MacroParserOptions {
     private boolean evaluateLookups = true;
     private boolean evaluateFunctions = true;
     private boolean escapingEnabled = true;
-    private boolean skipInvalid = false;
+    private boolean skipInvalid;
     private int maxRecurseDepth = 10;
-    private Set<String> functionWhitelist = new HashSet<>();
+    private final Set<String> functionWhitelist = new HashSet<>();
 
     public Builder disableLookups() {
       evaluateLookups = false;

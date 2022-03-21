@@ -44,6 +44,7 @@ import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import org.apache.commons.io.IOUtils;
 import org.apache.twill.api.LocalFile;
 import org.apache.twill.internal.DefaultLocalFile;
@@ -91,6 +92,7 @@ public class TetheringRuntimeJobManagerTest {
       new ConfigModule(cConf),
       new InMemoryDiscoveryModule(),
       new LocalLocationModule(),
+      new AuthorizationEnforcementModule().getNoOpModules(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
       new AbstractModule() {
         @Override
@@ -121,7 +123,7 @@ public class TetheringRuntimeJobManagerTest {
 
   @Test
   public void testPublishToControlChannel() throws Exception {
-    TetheringControlMessage message = new TetheringControlMessage(TetheringControlMessage.Type.RUN_PIPELINE,
+    TetheringControlMessage message = new TetheringControlMessage(TetheringControlMessage.Type.START_PROGRAM,
                                                                   "payload".getBytes(StandardCharsets.UTF_8));
     runtimeJobManager.publishToControlChannel(message);
     try (CloseableIterator<Message> iterator = messageFetcher.fetch(topicId.getNamespace(), topicId.getTopic(), 1, 0)) {

@@ -17,13 +17,11 @@
 package io.cdap.cdap.etl.api.join;
 
 import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.api.join.error.JoinError;
 import io.cdap.cdap.etl.api.join.error.JoinKeyError;
 import io.cdap.cdap.etl.api.join.error.JoinKeyFieldError;
 import io.cdap.cdap.etl.api.join.error.OutputSchemaError;
 import io.cdap.cdap.etl.api.join.error.SelectedFieldError;
-import io.cdap.cdap.etl.api.validation.ValidationException;
 import org.junit.Assert;
 import org.junit.Test;
 

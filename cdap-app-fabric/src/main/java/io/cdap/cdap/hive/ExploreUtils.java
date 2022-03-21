@@ -66,7 +66,7 @@ public final class ExploreUtils {
     }
   };
 
-  private static ClassLoader exploreClassLoader = null;
+  private static ClassLoader exploreClassLoader;
 
   /**
    * Builds a class loader with the class path provided.

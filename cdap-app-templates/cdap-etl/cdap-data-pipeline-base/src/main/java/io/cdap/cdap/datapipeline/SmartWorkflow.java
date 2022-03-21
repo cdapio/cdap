@@ -150,8 +150,8 @@ public class SmartWorkflow extends AbstractWorkflow {
   private Metrics workflowMetrics;
   private ETLBatchConfig config;
   private BatchPipelineSpec spec;
-  private int connectorNum = 0;
-  private int publisherNum = 0;
+  private int connectorNum;
+  private int publisherNum;
 
   public SmartWorkflow(ETLBatchConfig config, Set<String> supportedPluginTypes,
                        ApplicationConfigurer applicationConfigurer) {
@@ -466,6 +466,12 @@ public class SmartWorkflow extends AbstractWorkflow {
           GSON.fromJson(propertiesMappingString, TriggeringPropertyMapping.class);
         updateTokenWithTriggeringProperties(scheduleInfo, propertiesMapping, context.getToken());
       }
+    }
+    spec = GSON.fromJson(context.getWorkflowSpecification().getProperty(Constants.PIPELINE_SPEC_KEY),
+                         BatchPipelineSpec.class);
+    if (spec.getEngine() == Engine.MAPREDUCE) {
+      WRAPPERLOGGER.warn("Pipeline '{}' is using Mapreduce engine which is planned to be deprecated. " +
+                           "Please use Spark engine.", context.getApplicationSpecification().getName());
     }
     PipelineRuntime pipelineRuntime = new PipelineRuntime(context, workflowMetrics);
     WRAPPERLOGGER.info("Pipeline '{}' is started by user '{}' with arguments {}",

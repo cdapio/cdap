@@ -38,99 +38,61 @@ import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
-import io.cdap.cdap.support.internal.app.services.SupportBundleService;
 import io.cdap.cdap.support.lib.SupportBundleFileNames;
 import io.cdap.cdap.support.status.CollectionState;
 import io.cdap.cdap.support.status.SupportBundleConfiguration;
 import io.cdap.cdap.support.status.SupportBundleStatus;
 import io.cdap.cdap.support.status.SupportBundleTaskStatus;
 import io.cdap.common.http.HttpResponse;
-import io.kubernetes.client.openapi.apis.CoreV1Api;
-import io.kubernetes.client.openapi.models.V1NodeList;
-import io.kubernetes.client.openapi.models.V1ObjectMeta;
-import io.kubernetes.client.openapi.models.V1Pod;
-import io.kubernetes.client.openapi.models.V1PodList;
-import io.kubernetes.client.openapi.models.V1PodStatus;
-import io.kubernetes.client.openapi.models.V1Service;
-import io.kubernetes.client.openapi.models.V1ServiceList;
 import org.apache.twill.api.RunId;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Support bundle service tests.
  */
-public class SupportBundleServiceTest extends SupportBundleTestBase {
-  private static final Logger LOG = LoggerFactory.getLogger(SupportBundleServiceTest.class);
+public class SupportBundleGeneratorTest extends SupportBundleTestBase {
+  private static final Logger LOG = LoggerFactory.getLogger(SupportBundleGeneratorTest.class);
   private static final Gson GSON = new GsonBuilder().create();
   private static final NamespaceId namespaceId = NamespaceId.DEFAULT;
 
-  private static SupportBundleService supportBundleService;
-  private static CConfiguration configuration;
+  private static SupportBundleGenerator supportBundleGenerator;
+  private static CConfiguration cConf;
   private static Store store;
-  private static CoreV1Api coreV1Api;
+  private static ExecutorService executorService;
+
   private int sourceId;
 
   @BeforeClass
   public static void setup() throws Exception {
     Injector injector = getInjector();
-    configuration = injector.getInstance(CConfiguration.class);
-    supportBundleService = injector.getInstance(SupportBundleService.class);
+    cConf = injector.getInstance(CConfiguration.class);
+    supportBundleGenerator = injector.getInstance(SupportBundleGenerator.class);
     store = injector.getInstance(DefaultStore.class);
 
-    coreV1Api = mock(CoreV1Api.class);
+    executorService = Executors.newFixedThreadPool(cConf.getInt(Constants.SupportBundle.MAX_THREADS));
+  }
 
-    List<String> healthCheckServiceNameList = new ArrayList<>();
-    healthCheckServiceNameList.add("health-check-appfabric-service");
-    V1PodList v1PodList = new V1PodList();
-    V1Pod v1Pod = new V1Pod();
-    V1PodStatus v1PodStatus = new V1PodStatus();
-    v1PodStatus.setMessage("failed");
-    v1Pod.setStatus(v1PodStatus);
-    V1ObjectMeta v1ObjectMeta1 = new V1ObjectMeta();
-    Map<String, String> podLabels = new HashMap<>();
-    podLabels.put("cdap.instance", "bundle-test-v0");
-    v1ObjectMeta1.setName("supportbundle");
-    v1ObjectMeta1.setLabels(podLabels);
-    v1Pod.setMetadata(v1ObjectMeta1);
-    v1PodList.addItemsItem(v1Pod);
-
-    V1ServiceList v1ServiceList = new V1ServiceList();
-    V1Service v1Service = new V1Service();
-    V1ObjectMeta v1ObjectMeta2 = new V1ObjectMeta();
-    v1ObjectMeta2.setName(Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE);
-    v1Service.setMetadata(v1ObjectMeta2);
-    v1ServiceList.addItemsItem(v1Service);
-    when(coreV1Api.listNamespacedPod(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(),
-                                     any())).thenReturn(v1PodList);
-    when(coreV1Api.readNamespacedPodLog(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(),
-                                        any())).thenReturn("");
-    when(coreV1Api.listNode(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(
-      new V1NodeList());
-    when(coreV1Api.listNamespacedService(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(),
-                                         any())).thenReturn(v1ServiceList);
+  @AfterClass
+  public static void shutdown() {
+    executorService.shutdownNow();
   }
 
   @Test
-  @Ignore
   public void testSupportBundleService() throws Exception {
     deploy(AppWithWorkflow.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, namespaceId.getNamespace());
     long startTime = System.currentTimeMillis();
@@ -154,24 +116,24 @@ public class SupportBundleServiceTest extends SupportBundleTestBase {
                   SupportBundleTestHelper.createSourceId(++sourceId));
 
 
-    SupportBundleConfiguration supportBundleConfiguration =
+    SupportBundleConfiguration bundleConfig =
       new SupportBundleConfiguration(namespaceId.getNamespace(), AppWithWorkflow.NAME, workflowRunId.getId(),
                                      ProgramType.valueOfCategoryName("workflows"), AppWithWorkflow.SampleWorkflow.NAME,
                                      1);
 
-    String uuid = supportBundleService.generateSupportBundle(supportBundleConfiguration);
+    String uuid = supportBundleGenerator.generate(bundleConfig, executorService);
     Assert.assertNotNull(uuid);
-    File tempFolder = new File(configuration.get(Constants.SupportBundle.LOCAL_DATA_DIR));
+    File tempFolder = new File(cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR));
     File uuidFile = new File(tempFolder, uuid);
 
     Tasks.waitFor(CollectionState.FINISHED, () -> {
-      SupportBundleStatus supportBundleStatus = supportBundleService.getSingleBundleJson(uuidFile);
+      SupportBundleStatus supportBundleStatus = supportBundleGenerator.getBundleStatus(uuidFile);
       if (supportBundleStatus == null || supportBundleStatus.getStatus() == null) {
         return CollectionState.INVALID;
       }
       return supportBundleStatus.getStatus();
     }, 60, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
-    SupportBundleStatus supportBundleStatus = supportBundleService.getSingleBundleJson(uuidFile);
+    SupportBundleStatus supportBundleStatus = supportBundleGenerator.getBundleStatus(uuidFile);
 
     Set<SupportBundleTaskStatus> supportBundleTaskStatusList = supportBundleStatus.getTasks();
     Assert.assertEquals(uuid, supportBundleStatus.getBundleId());
@@ -185,7 +147,7 @@ public class SupportBundleServiceTest extends SupportBundleTestBase {
   @Test
   public void testDeleteOldBundle() throws Exception {
     int maxFileNeedtoGenerate = 8;
-    File tempFolder = new File(configuration.get(Constants.SupportBundle.LOCAL_DATA_DIR));
+    File tempFolder = new File(cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR));
     String expectedDeletedUuid = "";
     for (int i = 0; i < maxFileNeedtoGenerate; i++) {
       String uuid = UUID.randomUUID().toString();
@@ -198,7 +160,7 @@ public class SupportBundleServiceTest extends SupportBundleTestBase {
         updateStatusToFinished(tempFolder, uuid);
       }
     }
-    supportBundleService.deleteOldFoldersIfExceedLimit(tempFolder);
+    supportBundleGenerator.deleteOldFoldersIfExceedLimit(tempFolder);
     //Exceed the maximum number of folder allows in bundle
     File expectedDeletedBundle = new File(tempFolder.getPath(), expectedDeletedUuid);
     Assert.assertFalse(expectedDeletedBundle.exists());

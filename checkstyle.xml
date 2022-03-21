@@ -101,6 +101,8 @@ page at http://checkstyle.sourceforge.net/config.html -->
       <property name="illegalPkgs" value="junit.framework"/>
     </module>
 
+    <module name="UnusedImports"/>
+
     <!--
 
     METHOD LENGTH CHECKS
@@ -280,6 +282,14 @@ page at http://checkstyle.sourceforge.net/config.html -->
       <property name="severity" value="error"/>
     </module>
 
+
+    <!-- Requires overriding equals and hashCode at the same time -->
+    <module name="EqualsHashCode"/>
+
+    <!-- Empty catch block is not allowed -->
+    <module name="EmptyCatchBlock"/>
+
+    <module name="ExplicitInitialization"/>
 
     <!--
 

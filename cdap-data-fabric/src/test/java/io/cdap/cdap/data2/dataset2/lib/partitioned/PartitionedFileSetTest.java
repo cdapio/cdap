@@ -523,7 +523,7 @@ public class PartitionedFileSetTest {
     });
   }
 
-  private int counter = 0;
+  private int counter;
   // generates unique partition keys, where the 'i' field is incrementing from 0 upwards on each returned key
   private PartitionKey generateUniqueKey() {
     return PartitionKey.builder()
@@ -619,6 +619,7 @@ public class PartitionedFileSetTest {
           dataset.addMetadata(PARTITION_KEY, "key2", "value3");
           Assert.fail("Expected not to be able to update an existing metadata entry");
         } catch (DataSetException expected) {
+          // expected
         }
 
         // possible to remove multiple metadata entries; if a key doesn't exist, no error is thrown
@@ -639,6 +640,7 @@ public class PartitionedFileSetTest {
           dataset.addMetadata(nonexistentPartitionKey, "key2", "value3");
           Assert.fail("Expected not to be able to add metadata for a nonexistent partition");
         } catch (DataSetException expected) {
+          // expected
         }
       }
     });
@@ -740,6 +742,7 @@ public class PartitionedFileSetTest {
       createPartition(pfs, PARTITION_KEY, "file2");
       Assert.fail("Expected PartitionAlreadyExistsException");
     } catch (PartitionAlreadyExistsException expected) {
+      // expected
     }
     // because of the above failure, we want to abort and rollback the transaction
     txContext.abort();

@@ -34,6 +34,7 @@ import io.cdap.cdap.messaging.data.RawMessage;
 import io.cdap.cdap.metrics.MetricsTestBase;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -133,6 +134,6 @@ public class MessagingMetricsCollectionServiceTest extends MetricsTestBase {
 
   @Override
   protected List<Module> getAdditionalModules() {
-    return Collections.emptyList();
+    return Collections.singletonList(new AuthorizationEnforcementModule().getNoOpModules());
   }
 }

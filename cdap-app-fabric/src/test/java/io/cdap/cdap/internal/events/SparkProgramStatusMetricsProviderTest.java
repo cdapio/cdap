@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.events;
 
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.spi.events.ExecutionMetrics;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;

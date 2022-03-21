@@ -57,8 +57,8 @@ public class TimeseriesTableScannerTest {
   private static final String SRC_DEVICE_ID_TAG = "src_device_id";
   private static final String DEST_DEVICE_ID_TAG = "dest_device_id";
 
-  private static TimeseriesTable table = null;
-  private static TransactionExecutor txnl = null;
+  private static TimeseriesTable table;
+  private static TransactionExecutor txnl;
   @BeforeClass
   public static void setup() throws Exception {
     dsFrameworkUtil.createInstance("timeseriesTable", facts, DatasetProperties.EMPTY);

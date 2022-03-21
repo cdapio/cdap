@@ -204,7 +204,7 @@ public class ObjectMappedTableDataset<T> extends AbstractDataset implements Obje
 
   private class ObjectIterator extends AbstractCloseableIterator<KeyValue<byte[], T>> {
     private final Scanner scanner;
-    private boolean closed = false;
+    private boolean closed;
 
     private ObjectIterator(Scanner scanner) {
       this.scanner = scanner;

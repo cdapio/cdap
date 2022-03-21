@@ -159,7 +159,7 @@ public abstract class PayloadTableTest {
         public Void call() throws Exception {
           try (PayloadTable payloadTable = getPayloadTable(metadata)) {
             payloadTable.store(new AbstractIterator<PayloadTable.Entry>() {
-              short messageCount = 0;
+              short messageCount;
 
               @Override
               protected PayloadTable.Entry computeNext() {

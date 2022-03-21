@@ -58,6 +58,7 @@ public class CConfigurationUtilTest {
       CConfigurationUtil.verify(cConf);
       Assert.fail("Expected cConf to be invalid");
     } catch (IllegalArgumentException expected) {
+      // Expected
     }
   }
 

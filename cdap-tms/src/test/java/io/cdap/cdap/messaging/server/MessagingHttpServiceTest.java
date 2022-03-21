@@ -45,6 +45,7 @@ import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TxConstants;
@@ -111,6 +112,7 @@ public class MessagingHttpServiceTest {
       RemoteAuthenticatorModules.getNoOpModule(),
       new InMemoryDiscoveryModule(),
       new AuthenticationContextModules().getNoOpModule(),
+      new AuthorizationEnforcementModule().getNoOpModules(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
       new AbstractModule() {
         @Override

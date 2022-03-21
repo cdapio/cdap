@@ -130,6 +130,7 @@ public final class Constants {
     public static final String RUNTIME = "runtime";
     public static final String AUTHENTICATION = "authentication";
     public static final String TASK_WORKER = "task.worker";
+    public static final String SYSTEM_WORKER = "system.worker";
     public static final String ARTIFACT_LOCALIZER = "artifact.localizer";
     public static final String SYSTEM_METRICS_EXPORTER = "system.metrics.exporter";
     public static final String ARTIFACT_CACHE = "artifact.cache";
@@ -146,6 +147,7 @@ public final class Constants {
     public static final String LOG_BUFFER_SERVICE = "log.buffer.service";
     public static final String REMOTE_AGENT_SERVICE = "remote.agent.service";
     public static final String ARTIFACT_CACHE_SERVICE = "artifact.cache.service";
+    public static final String RUNTIME_MONITOR_RETRY_PREFIX = "system.runtime.monitor.";
   }
 
   /**
@@ -233,6 +235,8 @@ public final class Constants {
     public static final String LOCAL_DATASET_DELETER_INTERVAL_SECONDS = "app.program.local.dataset.deleter.interval";
     public static final String LOCAL_DATASET_DELETER_INITIAL_DELAY_SECONDS
       = "app.program.local.dataset.deleter.initial.delay";
+    public static final String PROGRAM_TERMINATOR_INTERVAL_SECS = "app.program.terminator.interval.secs";
+    public static final String PROGRAM_TERMINATOR_TX_BATCH_SIZE = "app.program.terminator.tx.batch.size";
     public static final String SYSTEM_ARTIFACTS_DIR = "app.artifact.dir";
     public static final String SYSTEM_ARTIFACTS_MAX_PARALLELISM = "app.artifact.parallelism.max";
     public static final String PROGRAM_EXTRA_CLASSPATH = "app.program.extra.classpath";
@@ -339,6 +343,11 @@ public final class Constants {
      * Interval at which system programs are monitored
      */
     public static final String SYSTEM_PROGRAM_SCAN_INTERVAL_SECONDS = "system.program.scan.interval.seconds";
+
+    /**
+     * Disable user program launch on cdap environment
+     */
+    public static final String USER_PROGRAM_LAUNCH_DISABLED = "user.program.launch.disabled";
 
     /**
      * Annotation for binding remote execution twill service
@@ -462,6 +471,15 @@ public final class Constants {
     public static final String CONTAINER_MEMORY_MB = "system.worker.container.memory.mb";
     public static final String CONTAINER_CORES = "system.worker.container.num.cores";
     public static final String CONTAINER_COUNT = "system.worker.container.count";
+    public static final String LOCAL_DATA_DIR = "task.worker.local.data.dir";
+
+    /**
+     * System worker http handler configuration
+     */
+    public static final String ADDRESS = "system.worker.bind.address";
+    public static final String PORT = "system.worker.bind.port";
+    public static final String REQUEST_LIMIT = "system.worker.request.limit";
+    public static final String METRIC_PREFIX = "task.worker.";
   }
 
   /**
@@ -793,6 +811,7 @@ public final class Constants {
 
     public static final String METRICS_WRITER_EXTENSIONS_DIR = "metrics.writer.extensions.dir";
     public static final String METRICS_WRITER_PREFIX = "metrics.writer.";
+    public static final String METRICS_WRITER_EXTENSIONS_ENABLED_LIST = "metrics.writer.extensions.enabled.list";
 
     public static final Map<String, String> METRICS_PROCESSOR_CONTEXT =
       ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
@@ -996,6 +1015,15 @@ public final class Constants {
         "client." + Constants.TaskWorker.METRIC_PREFIX + "request.count";
       public static final String CLIENT_REQUEST_LATENCY_MS =
         "client." + Constants.TaskWorker.METRIC_PREFIX + "request.latency.millis";
+    }
+
+    public static final class SystemWorker {
+      public static final String REQUEST_COUNT = Constants.SystemWorker.METRIC_PREFIX + "request.count";
+      public static final String REQUEST_LATENCY_MS = Constants.SystemWorker.METRIC_PREFIX + "request.latency.millis";
+      public static final String CLIENT_REQUEST_COUNT =
+          "client." + Constants.SystemWorker.METRIC_PREFIX + "request.count";
+      public static final String CLIENT_REQUEST_LATENCY_MS =
+          "client." + Constants.SystemWorker.METRIC_PREFIX + "request.latency.millis";
     }
 
     /**
@@ -1909,10 +1937,6 @@ public final class Constants {
      */
     public static final String TOPIC_PREFIX = "tethering.topic.prefix";
     /**
-     * TMS topic used on tethering client for received control messages.
-     */
-    public static final String TETHERING_TOPIC = "tethering.topic";
-    /**
      * Interval for connecting to the server.
      */
     public static final String CONNECTION_INTERVAL = "tethering.connection.interval.secs";
@@ -1946,11 +1970,5 @@ public final class Constants {
   public static final class AppFabricHealthCheck {
     public static final String SERVICE_DESCRIPTION = "Service to generate health check for app fabric operation.";
     public static final String APP_FABRIC_HEALTH_CHECK_SERVICE = "health.check.appfabric.service";
-  }
-
-  public static final class HealthCheck {
-    public static final String HANDLERS_NAME = "healthcheck.handlers";
-    public static final String HEALTH_CHECK_SERVICE = "health.check.service";
-    public static final String SERVICE_BIND_PORT = "healthcheck.service.bind.port";
   }
 }

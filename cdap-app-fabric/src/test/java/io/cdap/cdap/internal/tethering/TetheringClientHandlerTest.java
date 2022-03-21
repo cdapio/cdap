@@ -27,6 +27,8 @@ import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.app.runtime.NoOpProgramStateWriter;
+import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -135,6 +137,8 @@ public class TetheringClientHandlerTest {
         protected void configure() {
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
           expose(MetricsCollectionService.class);
+          bind(ProgramStateWriter.class).to(NoOpProgramStateWriter.class).in(Scopes.SINGLETON);
+          expose(ProgramStateWriter.class);
         }
       });
     tetheringStore = new TetheringStore(injector.getInstance(TransactionRunner.class));
@@ -194,7 +198,7 @@ public class TetheringClientHandlerTest {
           .build()).build();
 
     tetheringAgentService = new TetheringAgentService(cConf, injector.getInstance(TransactionRunner.class),
-                                                      tetheringStore, injector.getInstance(MessagingService.class),
+                                                      tetheringStore, injector.getInstance(ProgramStateWriter.class),
                                                       injector.getInstance(RemoteAuthenticator.class));
     Assert.assertEquals(Service.State.RUNNING, tetheringAgentService.startAndWait());
   }

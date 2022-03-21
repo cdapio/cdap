@@ -23,7 +23,6 @@ import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.io.ByteBuffers;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
-import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 
 import java.io.IOException;
 import java.nio.charset.Charset;

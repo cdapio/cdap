@@ -53,7 +53,7 @@ import java.util.List;
 public class ReflectionUtils {
 
   private static final Class<?>[] EMPTY_ARRAY = new Class[]{};
-  private static volatile SerializationFactory serialFactory = null;
+  private static volatile SerializationFactory serialFactory;
 
   /**
    * Check and set 'configuration' if necessary.
@@ -184,7 +184,7 @@ public class ReflectionUtils {
     stream.flush();
   }
 
-  private static long previousLogTime = 0;
+  private static long previousLogTime;
 
   /**
    * Log the current thread stacks at INFO level.

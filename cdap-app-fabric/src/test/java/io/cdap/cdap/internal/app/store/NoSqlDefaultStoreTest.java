@@ -21,19 +21,12 @@ import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.spi.data.SortOrder;
-import io.cdap.cdap.spi.data.StructuredTable;
-import io.cdap.cdap.spi.data.StructuredTableContext;
-import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.transaction.TransactionException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
-import io.cdap.cdap.spi.data.transaction.TxRunnable;
 import io.cdap.cdap.store.DefaultNamespaceStore;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mockito.Mockito;
-
-import static org.mockito.Mockito.when;
 
 public class NoSqlDefaultStoreTest extends DefaultStoreTest {
 

@@ -236,6 +236,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       .setNumOfRecordsPreview(config.getNumOfRecordsPreview())
       .setProperties(pipelineProperties)
       .addConnectionsUsed(connectionEvaluator.getUsedConnections())
+      .setEngine(engine)
       .build();
   }
 

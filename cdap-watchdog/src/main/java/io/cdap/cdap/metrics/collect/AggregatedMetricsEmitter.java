@@ -20,10 +20,6 @@ import io.cdap.cdap.api.metrics.MetricValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-
 /**
  * {@link MetricsEmitter} that aggregates  values for a metric
  * during collection and emit the aggregated value when emit.

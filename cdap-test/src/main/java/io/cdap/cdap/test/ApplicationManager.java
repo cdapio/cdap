@@ -30,7 +30,6 @@ import io.cdap.cdap.proto.id.ScheduleId;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * Instance of this class is for managing deployed application.

@@ -45,9 +45,9 @@ import java.util.Map;
  * of a query made to the Explore service.
  */
 abstract class BaseExploreResultSet implements ResultSet {
-  private boolean isClosed = false;
+  private boolean isClosed;
   private int fetchSize;
-  private boolean wasNull = false;
+  private boolean wasNull;
 
   @Override
   public boolean isClosed() throws SQLException {

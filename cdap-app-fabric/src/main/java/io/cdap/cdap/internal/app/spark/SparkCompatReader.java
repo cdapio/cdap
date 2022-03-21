@@ -16,11 +16,9 @@
 
 package io.cdap.cdap.internal.app.spark;
 
-import com.google.common.annotations.VisibleForTesting;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.runtime.spi.SparkCompat;
-import org.apache.spark.package$;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

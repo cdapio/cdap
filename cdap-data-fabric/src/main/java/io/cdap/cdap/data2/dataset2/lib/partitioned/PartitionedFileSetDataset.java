@@ -150,7 +150,7 @@ public class PartitionedFileSetDataset extends AbstractDataset
 
   // this will store the result of getInputKeys() after it is called (the result is needed by
   // both getInputFormat() and getInputFormatConfiguration(), and we don't want to compute it twice).
-  private AtomicReference<Collection<PartitionKey>> inputKeysCache = null;
+  private AtomicReference<Collection<PartitionKey>> inputKeysCache;
 
   public PartitionedFileSetDataset(DatasetContext datasetContext, String name,
                                    Partitioning partitioning, FileSet fileSet, IndexedTable partitionTable,
@@ -1091,7 +1091,7 @@ public class PartitionedFileSetDataset extends AbstractDataset
             byte[] startRow = startKey.get() == null ? null : generateRowKey(startKey.get(), pfs.getPartitioning());
             startKey.set(null);
             PartitionConsumer consumer = new PartitionConsumer() {
-              int count = 0;
+              int count;
 
               @Override
               public void consume(PartitionKey key, String path, @Nullable PartitionMetadata metadata) {

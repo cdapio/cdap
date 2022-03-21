@@ -44,6 +44,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.After;
@@ -117,6 +118,7 @@ public class RuntimeClientServerTest {
       new LocalLocationModule(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
       new AuthenticationContextModules().getNoOpModule(),
+      new AuthorizationEnforcementModule().getNoOpModules(),
       new RuntimeServerModule() {
         @Override
         protected void bindRequestValidator() {

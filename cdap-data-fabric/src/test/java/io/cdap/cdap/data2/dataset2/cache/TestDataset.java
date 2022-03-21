@@ -32,8 +32,8 @@ public class TestDataset extends AbstractDataset implements Comparable<TestDatas
   private final String key;
   private final String value;
 
-  private Transaction currentTx = null;
-  private boolean isClosed = false;
+  private Transaction currentTx;
+  private boolean isClosed;
 
   public TestDataset(DatasetSpecification spec, KeyValueTable kv, Map<String, String> args) {
     super(spec.getName(), kv);

@@ -48,6 +48,7 @@ import io.cdap.cdap.internal.app.runtime.AbstractListener;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.services.ProgramNotificationSubscriberService;
+import io.cdap.cdap.internal.app.services.ProgramStopSubscriberService;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metadata.PreferencesFetcher;
@@ -109,6 +110,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   private final NamespaceAdmin namespaceAdmin;
   private final MetricsCollectionService metricsCollectionService;
   private final ProgramNotificationSubscriberService programNotificationSubscriberService;
+  private final ProgramStopSubscriberService programStopSubscriberService;
   private final LevelDBTableService levelDBTableService;
   private final StructuredTableAdmin structuredTableAdmin;
   private final Path previewIdDirPath;
@@ -127,6 +129,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
                        NamespaceAdmin namespaceAdmin,
                        MetricsCollectionService metricsCollectionService,
                        ProgramNotificationSubscriberService programNotificationSubscriberService,
+                       ProgramStopSubscriberService programStopSubscriberService,
                        LevelDBTableService levelDBTableService,
                        StructuredTableAdmin structuredTableAdmin,
                        CConfiguration cConf,
@@ -143,6 +146,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     this.namespaceAdmin = namespaceAdmin;
     this.metricsCollectionService = metricsCollectionService;
     this.programNotificationSubscriberService = programNotificationSubscriberService;
+    this.programStopSubscriberService = programStopSubscriberService;
     this.levelDBTableService = levelDBTableService;
     this.structuredTableAdmin = structuredTableAdmin;
     this.previewIdDirPath = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "previewid").toAbsolutePath();
@@ -320,7 +324,8 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
       applicationLifecycleService.start(),
       programRuntimeService.start(),
       metricsCollectionService.start(),
-      programNotificationSubscriberService.start()
+      programNotificationSubscriberService.start(),
+      programStopSubscriberService.start()
     ).get();
 
     Files.createDirectories(previewIdDirPath);
@@ -352,6 +357,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     logAppenderInitializer.close();
     metricsCollectionService.stopAndWait();
     programNotificationSubscriberService.stopAndWait();
+    programStopSubscriberService.stopAndWait();
     datasetService.stopAndWait();
     dsOpExecService.stopAndWait();
     if (messagingService instanceof Service) {

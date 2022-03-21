@@ -282,7 +282,7 @@ public class FileSetProperties {
    */
   public static class Builder extends ExploreProperties.AbstractBuilder<Builder> {
 
-    private String format = null;
+    private String format;
 
     /**
      * Package visible default constructor, to allow sub-classing by other datasets in this package.

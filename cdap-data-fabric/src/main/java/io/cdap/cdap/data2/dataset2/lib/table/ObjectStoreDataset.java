@@ -102,7 +102,7 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
   public CloseableIterator<KeyValue<byte[], T>> scan(byte[] startRow, byte[] stopRow) {
     final CloseableIterator<KeyValue<byte[], byte[]>> keyValueIterator = kvTable.scan(startRow, stopRow);
     return new AbstractCloseableIterator<KeyValue<byte[], T>>() {
-      boolean closed = false;
+      boolean closed;
       @Override
       protected KeyValue<byte[], T> computeNext() {
         Preconditions.checkState(!closed);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,9 +20,13 @@ import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.Twill.Security;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerTwillRunnable;
 import io.cdap.cdap.master.spi.twill.DependentTwillPreparer;
+import io.cdap.cdap.master.spi.twill.SecretDisk;
+import io.cdap.cdap.master.spi.twill.SecureTwillPreparer;
+import io.cdap.cdap.master.spi.twill.SecurityContext;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillController;
@@ -130,7 +134,7 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
               .setVirtualCores(cConf.getInt(Constants.ArtifactLocalizer.CONTAINER_CORES))
               .setMemory(cConf.getInt(Constants.ArtifactLocalizer.CONTAINER_MEMORY_MB),
                   ResourceSpecification.SizeUnit.MEGA)
-              .setInstances(cConf.getInt(Constants.TaskWorker.CONTAINER_COUNT))
+              .setInstances(cConf.getInt(Constants.SystemWorker.CONTAINER_COUNT))
               .build();
 
           LOG.info("Starting SystemWorker pool with {} instances", systemResourceSpec.getInstances());
@@ -148,6 +152,20 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
             twillPreparer = ((DependentTwillPreparer) twillPreparer)
                 .dependentRunnableNames(SystemWorkerTwillRunnable.class.getSimpleName(),
                     ArtifactLocalizerTwillRunnable.class.getSimpleName());
+          }
+
+          if (twillPreparer instanceof SecureTwillPreparer) {
+            SecurityContext securityContext = createSecurityContext();
+            twillPreparer = ((SecureTwillPreparer) twillPreparer)
+                .withSecurityContext(SystemWorkerTwillRunnable.class.getSimpleName(), securityContext);
+            String secretName = cConf.get(Security.MASTER_SECRET_DISK_NAME);
+            String secretPath = cConf.get(Security.MASTER_SECRET_DISK_PATH);
+            twillPreparer = ((SecureTwillPreparer) twillPreparer)
+                .withSecretDisk(ArtifactLocalizerTwillRunnable.class.getSimpleName(),
+                    new SecretDisk(secretName, secretPath));
+            twillPreparer = ((SecureTwillPreparer) twillPreparer)
+                .withSecretDisk(SystemWorkerTwillRunnable.class.getSimpleName(), new SecretDisk(secretName,
+                    secretPath));
           }
 
           activeController = twillPreparer.start(5, TimeUnit.MINUTES);
@@ -173,6 +191,30 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
     } catch (IOException e) {
       LOG.warn("Failed to cleanup directory {}", dir, e);
     }
+  }
+
+  private SecurityContext createSecurityContext() {
+    SecurityContext.Builder builder = new SecurityContext.Builder();
+    String twillUserIdentity = cConf.get(Security.IDENTITY_SYSTEM);
+    if (twillUserIdentity != null) {
+      builder.withIdentity(twillUserIdentity);
+    }
+
+    try {
+      Long userId = cConf.getLong(Constants.TaskWorker.CONTAINER_RUN_AS_USER);
+      builder.withUserId(userId);
+    } catch (NullPointerException e) {
+      //no-op if configuration property does not exist
+    }
+
+    try {
+      Long groupId = cConf.getLong(Constants.TaskWorker.CONTAINER_RUN_AS_GROUP);
+      builder.withGroupId(groupId);
+    } catch (NullPointerException e) {
+      //no-op if configuration property does not exist
+    }
+
+    return builder.build();
   }
 
 

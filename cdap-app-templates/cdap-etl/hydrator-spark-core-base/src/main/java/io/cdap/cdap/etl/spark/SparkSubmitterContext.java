@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.etl.spark;
 
-import io.cdap.cdap.api.Admin;
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.messaging.MessageFetcher;
 import io.cdap.cdap.api.messaging.MessagePublisher;

@@ -27,7 +27,6 @@ import io.cdap.cdap.etl.api.connector.ConnectorConfigurer;
 import io.cdap.cdap.etl.api.connector.ConnectorContext;
 import io.cdap.cdap.etl.api.validation.ValidationException;
 import io.cdap.cdap.etl.common.ArtifactSelectorProvider;
-import io.cdap.cdap.etl.proto.connection.Connection;
 import io.cdap.cdap.etl.proto.connection.ConnectionCreationRequest;
 import io.cdap.cdap.etl.proto.validation.SimpleFailureCollector;
 import io.cdap.cdap.etl.spec.TrackedPluginSelector;

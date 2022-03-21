@@ -40,10 +40,11 @@ import java.util.List;
  * Fetch Program logs via internal REST API calls
  */
 public class RemoteMonitorServicesFetcher {
+
   private final RemoteClient remoteClient;
 
   @Inject
-  public RemoteMonitorServicesFetcher(RemoteClientFactory remoteClientFactory) {
+  RemoteMonitorServicesFetcher(RemoteClientFactory remoteClientFactory) {
     this.remoteClient =
       remoteClientFactory.createRemoteClient(Constants.Service.APP_FABRIC_HTTP, new DefaultHttpRequestConfig(false),
                                              Gateway.API_VERSION_3);
@@ -61,8 +62,7 @@ public class RemoteMonitorServicesFetcher {
       remoteClient.requestBuilder(HttpMethod.GET, Constants.Monitor.SYSTEM_LOG_SERVICE_URL);
     HttpResponse response;
     response = execute(requestBuilder.build());
-    return ObjectResponse.fromJsonBody(response, new TypeToken<List<SystemServiceMeta>>() {
-    }).getResponseObject();
+    return ObjectResponse.fromJsonBody(response, new TypeToken<List<SystemServiceMeta>>() { }).getResponseObject();
   }
 
   private HttpResponse execute(HttpRequest request) throws IOException, NotFoundException, UnauthorizedException {

@@ -1070,8 +1070,8 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
     }
   }
 
-  private long warnedCount = 0L;
-  private long skippedCount = 0L;
+  private long warnedCount;
+  private long skippedCount;
   private long warnFrequency = 1L;
 
   private void warnAboutEmptyValue(byte[] column) {

@@ -17,19 +17,25 @@
 package io.cdap.cdap.support.handlers;
 
 import com.google.inject.Inject;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
-import io.cdap.cdap.support.internal.app.services.SupportBundleService;
+import io.cdap.cdap.support.services.SupportBundleGenerator;
 import io.cdap.cdap.support.status.SupportBundleConfiguration;
+import io.cdap.http.AbstractHttpHandler;
+import io.cdap.http.HandlerContext;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.apache.twill.common.Threads;
 
+import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import javax.annotation.Nullable;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.POST;
@@ -40,15 +46,33 @@ import javax.ws.rs.QueryParam;
  * Support Bundle HTTP Handler.
  */
 @Path(Constants.Gateway.API_VERSION_3)
-public class SupportBundleHttpHandler extends AbstractAppFabricHttpHandler {
+public class SupportBundleHttpHandler extends AbstractHttpHandler {
 
-  private final SupportBundleService bundleService;
+  private final CConfiguration cConf;
+  private final SupportBundleGenerator bundleGenerator;
   private final ContextAccessEnforcer contextAccessEnforcer;
+  private ExecutorService executorService;
 
   @Inject
-  SupportBundleHttpHandler(SupportBundleService supportBundleService, ContextAccessEnforcer contextAccessEnforcer) {
-    this.bundleService = supportBundleService;
+  SupportBundleHttpHandler(CConfiguration cConf,
+                           SupportBundleGenerator bundleGenerator,
+                           ContextAccessEnforcer contextAccessEnforcer) {
+    this.cConf = cConf;
+    this.bundleGenerator = bundleGenerator;
     this.contextAccessEnforcer = contextAccessEnforcer;
+  }
+
+  @Override
+  public void init(HandlerContext context) {
+    super.init(context);
+    executorService = Executors.newFixedThreadPool(cConf.getInt(Constants.SupportBundle.MAX_THREADS),
+                                                   Threads.createDaemonThreadFactory("support-bundle-executor-%d"));
+  }
+
+  @Override
+  public void destroy(HandlerContext context) {
+    super.destroy(context);
+    executorService.shutdownNow();
   }
 
   /**
@@ -71,14 +95,20 @@ public class SupportBundleHttpHandler extends AbstractAppFabricHttpHandler {
                                     String programName, @Nullable @QueryParam("run") String run,
                                   @Nullable @QueryParam("maxRunsPerProgram") @DefaultValue("1")
                                     Integer maxRunsPerProgram) throws Exception {
-    /** ensure the user has authentication to create supportBundle */
+    // ensure the user is authorized to create supportBundle
     contextAccessEnforcer.enforceOnParent(EntityType.SUPPORT_BUNDLE, InstanceId.SELF, StandardPermission.CREATE);
     // Establishes the support bundle configuration
     SupportBundleConfiguration bundleConfig =
       new SupportBundleConfiguration(namespace, application, run, ProgramType.valueOfCategoryName(programType),
-                                     programName, maxRunsPerProgram);
+                                     programName, Optional.ofNullable(maxRunsPerProgram).orElse(1));
     // Generates support bundle and returns with uuid
-    String uuid = bundleService.generateSupportBundle(bundleConfig);
-    responder.sendString(HttpResponseStatus.OK, uuid);
+    String prevInProgressUUID = bundleGenerator.ensurePreviousExecutorFinish();
+    if (prevInProgressUUID == null) {
+      // Generates support bundle and returns with uuid
+      String uuid = bundleGenerator.generate(bundleConfig, executorService);
+      responder.sendString(HttpResponseStatus.CREATED, uuid);
+    } else {
+      responder.sendString(HttpResponseStatus.OK, prevInProgressUUID);
+    }
   }
 }

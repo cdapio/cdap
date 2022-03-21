@@ -37,6 +37,7 @@ import io.cdap.cdap.internal.provision.ProvisionerProvider;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.security.FakeSecureStore;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -60,6 +61,7 @@ public class TetheringProvisionerTest {
       new InMemoryDiscoveryModule(),
       new StorageModule(),
       new ProvisionerModule(),
+      new AuthorizationEnforcementModule().getNoOpModules(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
       new AbstractModule() {
         @Override

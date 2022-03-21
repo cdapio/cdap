@@ -176,7 +176,7 @@ public class DataPipelineTest extends HydratorTestBase {
   private static final ArtifactId OLD_APP_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("app", "0.0.9");
 
   private static final ArtifactSummary APP_ARTIFACT_RANGE = new ArtifactSummary("app", "[0.1.0,1.1.0)");
-  private static int startCount = 0;
+  private static int startCount;
 
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false,

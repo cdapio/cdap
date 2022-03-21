@@ -98,7 +98,7 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
   private transient DatasetContext datasetContext;
   private transient Map<String, Integer> stagePartitions;
   private transient FunctionCache.Factory functionCacheFactory;
-  private transient BatchSQLEngineAdapter sqlEngineAdapter = null;
+  private transient BatchSQLEngineAdapter sqlEngineAdapter;
 
   /**
    * Empty constructor, used when instantiating this class.

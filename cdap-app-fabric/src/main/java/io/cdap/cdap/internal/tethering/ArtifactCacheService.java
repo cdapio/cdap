@@ -20,11 +20,15 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
+import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerCleaner;
 import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import io.cdap.http.NettyHttpService;
+import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
+import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +36,7 @@ import java.nio.file.Paths;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import javax.inject.Named;
 
 /**
  * Launches an HTTP server for fetching and cache artifacts from remote CDAP instances.
@@ -45,11 +50,16 @@ public class ArtifactCacheService extends AbstractIdleService {
   private final NettyHttpService httpService;
   private final ArtifactLocalizerCleaner cleaner;
   private final int cacheCleanupInterval;
+  private final DiscoveryService discoveryService;
   private ScheduledExecutorService scheduledExecutorService;
+  private Cancellable cancelDiscovery;
 
   @Inject
   public ArtifactCacheService(CConfiguration cConf, ArtifactCache cache, TetheringStore store,
-                              RemoteAuthenticator remoteAuthenticator) {
+                              @Named(TetheringAgentService.REMOTE_TETHERING_AUTHENTICATOR)
+                                RemoteAuthenticator remoteAuthenticator,
+                              DiscoveryService discoveryService) {
+    this.discoveryService = discoveryService;
     httpService = new CommonNettyHttpServiceBuilder(cConf, "artifact.cache")
       .setHttpHandlers(new ArtifactCacheHttpHandlerInternal(cache, store, remoteAuthenticator))
       .setHost(cConf.get(Constants.ArtifactCache.ADDRESS))
@@ -66,6 +76,8 @@ public class ArtifactCacheService extends AbstractIdleService {
   protected void startUp() throws Exception {
     LOG.info("Starting ArtifactCacheService");
     httpService.start();
+    cancelDiscovery = discoveryService.register(
+      ResolvingDiscoverable.of(URIScheme.createDiscoverable(Constants.Service.ARTIFACT_CACHE_SERVICE, httpService)));
     scheduledExecutorService = Executors
       .newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("artifact-cache-cleaner"));
     scheduledExecutorService.scheduleAtFixedRate(cleaner, cacheCleanupInterval, cacheCleanupInterval, TimeUnit.MINUTES);
@@ -75,6 +87,7 @@ public class ArtifactCacheService extends AbstractIdleService {
   @Override
   protected void shutDown() throws Exception {
     LOG.info("Stopping ArtifactCacheService");
+    cancelDiscovery.cancel();
     httpService.stop(1, 2, TimeUnit.SECONDS);
     scheduledExecutorService.shutdownNow();
     LOG.info("ArtifactCacheService stopped");

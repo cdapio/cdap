@@ -111,7 +111,7 @@ public class RunRecordMonitorService extends AbstractScheduledService {
    * @param programRunId run id associated with the launch request
    * @return total number of launching and running program runs.
    */
-  public Count addRequestAndGetCount(ProgramRunId programRunId) throws Exception {
+  public Counter addRequestAndGetCount(ProgramRunId programRunId) throws Exception {
     if (RunIds.getTime(programRunId.getRun(), TimeUnit.MILLISECONDS) == -1) {
       throw new Exception("None time-based UUIDs are not supported");
     }
@@ -125,7 +125,7 @@ public class RunRecordMonitorService extends AbstractScheduledService {
     int runningCount = getProgramsRunningCount();
 
     LOG.info("Counter has {} concurrent launching and {} running programs.", launchingCount, runningCount);
-    return new Count(launchingCount, runningCount);
+    return new Counter(launchingCount, runningCount);
   }
 
   /**
@@ -226,7 +226,7 @@ public class RunRecordMonitorService extends AbstractScheduledService {
     return false;
   }
 
-  class Count {
+  class Counter {
     /**
      * Total number of launch requests that have been accepted but still missing in metadata store +
      * total number of run records with {@link ProgramRunStatus#PENDING} status +
@@ -241,7 +241,7 @@ public class RunRecordMonitorService extends AbstractScheduledService {
      */
     private final int runningCount;
 
-    Count(int launchingCount, int runningCount) {
+    Counter(int launchingCount, int runningCount) {
       this.launchingCount = launchingCount;
       this.runningCount = runningCount;
     }

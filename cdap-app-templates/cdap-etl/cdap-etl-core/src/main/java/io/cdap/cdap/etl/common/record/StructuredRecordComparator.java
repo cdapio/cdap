@@ -271,7 +271,7 @@ public class StructuredRecordComparator implements Comparator<StructuredRecord> 
         return ((Collection<Object>) array).iterator();
       }
       return new Iterator<Object>() {
-        private int curr = 0;
+        private int curr;
 
         @Override
         public boolean hasNext() {

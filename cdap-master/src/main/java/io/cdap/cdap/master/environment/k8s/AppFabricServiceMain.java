@@ -36,7 +36,6 @@ import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
-import io.cdap.cdap.common.service.HealthCheckService;
 import io.cdap.cdap.common.service.RetryOnStartFailureService;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
@@ -54,7 +53,6 @@ import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.internal.app.worker.TaskWorkerServiceLauncher;
 import io.cdap.cdap.internal.app.worker.system.SystemWorkerServiceLauncher;
-import io.cdap.cdap.internal.tethering.TetheringClientSubscriberService;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
@@ -126,8 +124,6 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
           // TODO (CDAP-14677): find a better way to inject metadata publisher
           bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
           bind(MetadataServiceClient.class).to(DefaultMetadataServiceClient.class);
-
-          bind(TetheringClientSubscriberService.class).in(Scopes.SINGLETON);
         }
       }
     );
@@ -148,12 +144,7 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
     services.add(injector.getInstance(SecureStoreService.class));
     services.add(injector.getInstance(DatasetOpExecutorService.class));
     services.add(injector.getInstance(ServiceStore.class));
-    HealthCheckService healthCheckService = injector.getInstance(HealthCheckService.class);
-    healthCheckService.helper(
-      Constants.AppFabricHealthCheck.APP_FABRIC_HEALTH_CHECK_SERVICE,
-      cConf,
-      Constants.Service.MASTER_SERVICES_BIND_ADDRESS);
-    services.add(healthCheckService);
+
     Binding<ZKClientService> zkBinding = injector.getExistingBinding(Key.get(ZKClientService.class));
     if (zkBinding != null) {
       services.add(zkBinding.getProvider().get());
@@ -168,7 +159,6 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
     services.add(new RetryOnStartFailureService(() -> injector.getInstance(DatasetService.class),
                                                 RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS)));
     services.add(injector.getInstance(AppFabricServer.class));
-    services.add(injector.getInstance(TetheringClientSubscriberService.class));
 
     if (cConf.getBoolean(Constants.TaskWorker.POOL_ENABLE)) {
       services.add(injector.getInstance(TaskWorkerServiceLauncher.class));

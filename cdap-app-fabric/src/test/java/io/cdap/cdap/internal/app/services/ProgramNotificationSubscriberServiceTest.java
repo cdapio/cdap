@@ -402,7 +402,7 @@ public class ProgramNotificationSubscriberServiceTest {
       programStateWriter.stop(runId3, 10);
     });
     checkProgramStatus(artifactId, runId3, ProgramRunStatus.STOPPING);
-    heartbeatDatasetStatusCheck(stopTime, ProgramRunStatus.STOPPING);
+    heartbeatDatasetStatusCheck(stopTime, ProgramRunStatus.KILLED);
   }
 
   private void checkProgramStatus(ArtifactId artifactId, ProgramRunId runId, ProgramRunStatus expectedStatus)
