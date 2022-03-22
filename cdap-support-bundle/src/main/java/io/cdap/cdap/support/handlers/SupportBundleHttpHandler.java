@@ -48,6 +48,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -124,7 +125,7 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
       new SupportBundleConfiguration(namespace, application, run, ProgramType.valueOfCategoryName(programType),
                                      programName, Optional.ofNullable(maxRunsPerProgram).orElse(1));
     // Generates support bundle and returns with uuid
-    String prevInProgressUUID = bundleGenerator.checkPrevBundleProgress();
+    String prevInProgressUUID = bundleGenerator.getInProgressBundle();
     if (prevInProgressUUID == null) {
       // Generates support bundle and returns with uuid
       String uuid = bundleGenerator.generate(bundleConfig, executorService);
@@ -187,7 +188,7 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
    *
    * @param uuid the bundle id which is also the uuid fileJson body
    */
-  @GET
+  @POST
   @Path("/support/bundles/{uuid}")
   public void downloadSupportBundle(FullHttpRequest request, HttpResponder responder, @PathParam("uuid") String uuid)
     throws BadRequestException, IOException, NotFoundException, NoSuchAlgorithmException {
@@ -198,11 +199,12 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
     DirUtils.mkdirs(tempDir);
     java.nio.file.Path tmpPath = Files.createTempFile(tempDir.toPath(), "support-bundle", ".zip");
     String digestHeader = "";
+    SupportBundleRequestFileList bundleRequestFileList;
     try {
       if (requestContent == null || requestContent.length() == 0) {
-        digestHeader = bundleGenerator.createUuidZipFile(uuid, tmpPath);
+        bundleRequestFileList = new SupportBundleRequestFileList(Collections.singletonList(""));
+        digestHeader = bundleGenerator.createBundleZipByRequest(uuid, tmpPath, bundleRequestFileList);
       } else {
-        SupportBundleRequestFileList bundleRequestFileList;
         try {
           bundleRequestFileList = GSON.fromJson(requestContent, SupportBundleRequestFileList.class);
         } catch (Exception e) {

@@ -145,14 +145,11 @@ public class SupportBundleGenerator {
    * Check whether the prev bundle is still processing or not
    */
   @Nullable
-  public String checkPrevBundleProgress() throws IOException {
-    File baseDirectory = new File(localDir);
-    int fileCount =
-      (int) DirUtils.listFiles(baseDirectory).stream().filter(file -> !file.isHidden() && file.isDirectory()).count();
-    if (fileCount == 0) {
+  public String getInProgressBundle() throws IOException {
+    File latestDirectory = getLatestFolder();
+    if (latestDirectory == null) {
       return null;
     }
-    File latestDirectory = getLatestFolder(baseDirectory);
     SupportBundleStatus supportBundleStatus = getBundleStatus(latestDirectory);
     if (supportBundleStatus != null && supportBundleStatus.getStatus() == CollectionState.IN_PROGRESS) {
       return supportBundleStatus.getBundleId();
@@ -207,44 +204,16 @@ public class SupportBundleGenerator {
     }
 
     File statusFile = new File(uuidFile, "status.json");
-    SupportBundleTaskReportStatus taskReportStatus = new SupportBundleTaskReportStatus(CollectionState.NOT_FOUND,
-                                                                                       CollectionState.NOT_FOUND,
-                                                                                       CollectionState.NOT_FOUND,
-                                                                                       CollectionState.NOT_FOUND,
-                                                                                       CollectionState.NOT_FOUND);
-    SupportBundleOperationStatus bundleOperationStatus = new SupportBundleOperationStatus(uuid,
-                                                                                          CollectionState.NOT_FOUND,
-                                                                                          taskReportStatus);
-    if (statusFile.exists()) {
-      SupportBundleStatus bundleStatus = getBundleStatus(uuidFile);
-      Set<SupportBundleTaskStatus> supportBundleTaskStatusSet = bundleStatus.getTasks();
-      taskReportStatus = collectSupportBundleTaskStatus(supportBundleTaskStatusSet);
-      bundleOperationStatus =
-        new SupportBundleOperationStatus(uuidFile.getName(), bundleStatus.getStatus(),
-                                         taskReportStatus);
+    if (!statusFile.exists()) {
+      throw new NotFoundException(String.format("The status for this bundle: %s is not found.", uuid));
     }
+    SupportBundleStatus bundleStatus = getBundleStatus(uuidFile);
+    Set<SupportBundleTaskStatus> supportBundleTaskStatusSet = bundleStatus.getTasks();
+    SupportBundleTaskReportStatus taskReportStatus = collectSupportBundleTaskStatus(supportBundleTaskStatusSet);
+    SupportBundleOperationStatus bundleOperationStatus =
+      new SupportBundleOperationStatus(uuidFile.getName(), bundleStatus.getStatus(),
+                                       taskReportStatus);
     return bundleOperationStatus;
-  }
-
-  /**
-   * Gather all absolute path file name list under certain uuid
-   */
-  public String createUuidZipFile(String uuid, Path tmpPath)
-    throws IOException, NotFoundException, NoSuchAlgorithmException {
-    File uuidFile = getUUIDFile(uuid);
-    if (!uuidFile.exists()) {
-      throw new NotFoundException(String.format("This bundle id %s is not existed", uuid));
-    }
-    MessageDigest digest = MessageDigest.getInstance("SHA-256");
-    try (ZipOutputStream zipOut = new ZipOutputStream(
-      new DigestOutputStream(Files.newOutputStream(tmpPath, StandardOpenOption.TRUNCATE_EXISTING), digest))) {
-      ZipEntry entry = new ZipEntry(uuidFile.getName());
-      zipOut.putNextEntry(entry);
-      Files.copy(uuidFile.toPath(), zipOut);
-      zipOut.closeEntry();
-    }
-    return String.format("%s=%s", digest.getAlgorithm().toLowerCase(),
-                         Base64.getEncoder().encodeToString(digest.digest()));
   }
 
   /**
@@ -256,16 +225,24 @@ public class SupportBundleGenerator {
     if (!uuidFile.exists()) {
       throw new NotFoundException(String.format("This bundle id %s is not existed", uuid));
     }
+
     MessageDigest digest = MessageDigest.getInstance("SHA-256");
+
     try (ZipOutputStream zipOut = new ZipOutputStream(
       new DigestOutputStream(Files.newOutputStream(tmpPath, StandardOpenOption.TRUNCATE_EXISTING), digest))) {
       for (String filePath : bundleRequestFileList.getFiles()) {
-        File requestFile = new File(uuidFile, filePath);
-        if (requestFile.exists()) {
-          ZipEntry entry = new ZipEntry(uuidFile.getName() + "/" + filePath);
-          zipOut.putNextEntry(entry);
-          Files.copy(requestFile.toPath(), zipOut);
+        // If file path is empty string which means we want to zip the whole bundle id folder
+        if (filePath.length() == 0) {
+          zipFile(uuidFile, uuidFile.getName(), zipOut);
           zipOut.closeEntry();
+        } else {
+          File requestFile = new File(uuidFile, filePath);
+          if (requestFile.exists()) {
+            ZipEntry entry = new ZipEntry(uuidFile.getName() + "/" + filePath);
+            zipOut.putNextEntry(entry);
+            Files.copy(requestFile.toPath(), zipOut);
+            zipOut.closeEntry();
+          }
         }
       }
     }
@@ -334,7 +311,11 @@ public class SupportBundleGenerator {
   /**
    * Gets latest folder from the root directory
    */
-  private File getLatestFolder(File baseDirectory) {
+  private File getLatestFolder() {
+    File baseDirectory = new File(localDir);
+    if (DirUtils.listFiles(baseDirectory, f -> !f.isHidden() && f.isDirectory()).isEmpty()) {
+      return null;
+    }
     List<File> uuidFiles = DirUtils.listFiles(baseDirectory).stream()
       .filter(file -> !file.getName().startsWith(".") && !file.isHidden() && file.isDirectory())
       .collect(Collectors.toList());
@@ -418,5 +399,28 @@ public class SupportBundleGenerator {
     }
     return new SupportBundleTaskReportStatus(systemLogTaskStatus, pipelineInfoTaskStatus, runtimeInfoTaskStatus,
                                              runtimeLogTaskStatus, vmInfoTaskStatus);
+  }
+
+  private static void zipFile(File fileToZip, String fileName, ZipOutputStream zipOut) throws IOException {
+    if (fileToZip.isHidden()) {
+      return;
+    }
+    if (fileToZip.isDirectory()) {
+      if (fileName.endsWith("/")) {
+        zipOut.putNextEntry(new ZipEntry(fileName));
+        zipOut.closeEntry();
+      } else {
+        zipOut.putNextEntry(new ZipEntry(fileName + "/"));
+        zipOut.closeEntry();
+      }
+      List<File> children =
+        DirUtils.listFiles(fileToZip).stream().filter(file -> !file.isHidden()).collect(Collectors.toList());
+      for (File childFile : children) {
+        zipFile(childFile, fileName + "/" + childFile.getName(), zipOut);
+      }
+      return;
+    }
+    ZipEntry zipEntry = new ZipEntry(fileName);
+    zipOut.putNextEntry(zipEntry);
   }
 }

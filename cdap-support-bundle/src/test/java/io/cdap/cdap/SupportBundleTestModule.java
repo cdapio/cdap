@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -56,60 +56,57 @@ import javax.annotation.Nullable;
 
 public class SupportBundleTestModule extends AbstractModule {
 
-    private final CConfiguration cConf;
-    private final Configuration hConf;
-    private final SConfiguration sConf;
+  private final CConfiguration cConf;
+  private final Configuration hConf;
 
-    public SupportBundleTestModule(CConfiguration configuration) {
-      this(configuration, null);
-    }
+  public SupportBundleTestModule(CConfiguration configuration) {
+    this(configuration, null);
+  }
 
-    public SupportBundleTestModule(CConfiguration cConf, @Nullable SConfiguration sConf) {
-      this.cConf = cConf;
+  public SupportBundleTestModule(CConfiguration cConf, @Nullable SConfiguration sConf) {
+    this.cConf = cConf;
 
-      File localDataDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR));
+    File localDataDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR));
 
-      hConf = new Configuration();
-      hConf.addResource("mapred-site-local.xml");
-      hConf.reloadConfiguration();
-      hConf.set("hadoop.tmp.dir",
-                new File(localDataDir, cConf.get(Constants.SupportBundle.SUPPORT_BUNDLE_TEMP_DIR)).getAbsolutePath());
-      hConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
-      hConf.set(Constants.SupportBundle.OUTPUT_DIR, cConf.get(Constants.SupportBundle.OUTPUT_DIR));
+    hConf = new Configuration();
+    hConf.addResource("mapred-site-local.xml");
+    hConf.reloadConfiguration();
+    hConf.set("hadoop.tmp.dir",
+              new File(localDataDir, cConf.get(Constants.SupportBundle.SUPPORT_BUNDLE_TEMP_DIR)).getAbsolutePath());
+    hConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
+    hConf.set(Constants.SupportBundle.OUTPUT_DIR, cConf.get(Constants.SupportBundle.OUTPUT_DIR));
+  }
 
-      this.sConf = sConf == null ? SConfiguration.create() : sConf;
-    }
-
-    @Override
-    protected void configure() {
-      install(new DataFabricModules().getInMemoryModules());
-      install(new DataSetsModules().getStandaloneModules());
-      install(new TransactionExecutorModule());
-      install(new DataSetServiceModules().getInMemoryModules());
-      install(new ConfigModule(cConf, hConf, sConf));
-      install(RemoteAuthenticatorModules.getNoOpModule());
-      install(new IOModule());
-      install(new InMemoryDiscoveryModule());
-      install(new AppFabricServiceRuntimeModule(cConf).getInMemoryModules());
-      install(new MonitorHandlerModule(false));
-      install(new ProgramRunnerRuntimeModule().getInMemoryModules());
-      install(new NonCustomLocationUnitTestModule());
-      install(new LocalLogAppenderModule());
-      install(new LogReaderRuntimeModules().getInMemoryModules());
-      install(new LogQueryRuntimeModule().getInMemoryModules());
-      install(new MetricsHandlerModule());
-      install(new MetricsClientRuntimeModule().getInMemoryModules());
-      install(new ExploreClientModule());
-      install(new ConfigStoreModule());
-      install(new MetadataServiceModule());
-      install(new AuthenticationContextModules().getMasterModule());
-      install(new AuthorizationModule());
-      install(new AuthorizationEnforcementModule().getStandaloneModules());
-      install(new SecureStoreServerModule());
-      install(new MetadataReaderWriterModules().getInMemoryModules());
-      install(new MessagingServerRuntimeModule().getInMemoryModules());
-      install(new MockProvisionerModule());
-      // Needed by MonitorHandlerModuler
-      bind(TwillRunner.class).to(NoopTwillRunnerService.class);
-    }
+  @Override
+  protected void configure() {
+    install(new DataFabricModules().getInMemoryModules());
+    install(new DataSetsModules().getStandaloneModules());
+    install(new TransactionExecutorModule());
+    install(new DataSetServiceModules().getInMemoryModules());
+    install(new ConfigModule(cConf, hConf));
+    install(RemoteAuthenticatorModules.getNoOpModule());
+    install(new IOModule());
+    install(new InMemoryDiscoveryModule());
+    install(new AppFabricServiceRuntimeModule(cConf).getInMemoryModules());
+    install(new MonitorHandlerModule(false));
+    install(new ProgramRunnerRuntimeModule().getInMemoryModules());
+    install(new NonCustomLocationUnitTestModule());
+    install(new LocalLogAppenderModule());
+    install(new LogReaderRuntimeModules().getInMemoryModules());
+    install(new LogQueryRuntimeModule().getInMemoryModules());
+    install(new MetricsHandlerModule());
+    install(new MetricsClientRuntimeModule().getInMemoryModules());
+    install(new ExploreClientModule());
+    install(new ConfigStoreModule());
+    install(new MetadataServiceModule());
+    install(new AuthenticationContextModules().getMasterModule());
+    install(new AuthorizationModule());
+    install(new AuthorizationEnforcementModule().getStandaloneModules());
+    install(new SecureStoreServerModule());
+    install(new MetadataReaderWriterModules().getInMemoryModules());
+    install(new MessagingServerRuntimeModule().getInMemoryModules());
+    install(new MockProvisionerModule());
+    // Needed by MonitorHandlerModuler
+    bind(TwillRunner.class).to(NoopTwillRunnerService.class);
+  }
 }

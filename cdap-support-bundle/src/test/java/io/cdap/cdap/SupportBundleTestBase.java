@@ -142,7 +142,7 @@ public abstract class SupportBundleTestBase {
 
   private static HttpRequestConfig httpRequestConfig;
 
-  protected static final String TEST_NAMESPACE1 = "testsupportbundlenamespace1";
+  protected static final String TEST_NAMESPACE1 = "testsupportbundlenamespace";
   protected static final NamespaceMeta TEST_NAMESPACE_META1 = new NamespaceMeta.Builder()
     .setName(TEST_NAMESPACE1)
     .setDescription(TEST_NAMESPACE1)
