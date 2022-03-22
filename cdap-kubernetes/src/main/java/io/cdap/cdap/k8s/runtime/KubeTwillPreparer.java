@@ -166,6 +166,9 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private String mainRunnableName;
   private Set<String> dependentRunnableNames;
   private String serviceAccountName;
+  private String programRuntimeNamespace;
+  private String programRuntimeNamespaceCpuLimit;
+  private String programRuntimeNamespaceMemoryLimit;
 
   KubeTwillPreparer(MasterEnvironmentContext masterEnvContext, ApiClient apiClient, String kubeNamespace,
                     PodInfo podInfo, TwillSpecification spec, RunId twillRunId, Location appLocation,
@@ -175,6 +178,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     this.apiClient = apiClient;
     this.batchV1Api = new BatchV1Api(apiClient);
     this.kubeNamespace = kubeNamespace;
+    this.programRuntimeNamespace = kubeNamespace;
     this.podInfo = podInfo;
     this.runnables = spec.getRunnables().keySet();
     this.arguments = new ArrayList<>();
@@ -305,8 +309,20 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     return this;
   }
 
+  /**
+   * Use {@link KubeMasterEnvironment#NAMESPACE_PROPERTY} if given as the namespace the program runs on.
+   */
   @Override
   public TwillPreparer withConfiguration(Map<String, String> config) {
+    if (config.containsKey(KubeMasterEnvironment.NAMESPACE_PROPERTY)) {
+      programRuntimeNamespace = config.get(KubeMasterEnvironment.NAMESPACE_PROPERTY);
+    }
+    if (config.containsKey(KubeMasterEnvironment.NAMESPACE_CPU_LIMIT_PROPERTY)) {
+      programRuntimeNamespaceCpuLimit = config.get(KubeMasterEnvironment.NAMESPACE_CPU_LIMIT_PROPERTY);
+    }
+    if (config.containsKey(KubeMasterEnvironment.NAMESPACE_MEMORY_LIMIT_PROPERTY)) {
+      programRuntimeNamespaceMemoryLimit = config.get(KubeMasterEnvironment.NAMESPACE_MEMORY_LIMIT_PROPERTY);
+    }
     for (String runnableName : runnables) {
       withEnv(runnableName, config);
     }
@@ -571,14 +587,19 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
 
     // labels have more strict requirements around valid character sets,
     // so use annotations to store the app name.
-    return new V1ObjectMetaBuilder()
+    V1ObjectMetaBuilder objectMetaBuilder = new V1ObjectMetaBuilder()
       .withName(resourceName)
-      .withOwnerReferences(podInfo.getOwnerReferences())
+      .withNamespace(programRuntimeNamespace)
       .addToLabels(extraLabels)
       .addToLabels(podInfo.getContainerLabelName(), runnableName)
+      .addToLabels(KubeMasterEnvironment.NAMESPACE_PROPERTY, programRuntimeNamespace)
       .addToAnnotations(KubeTwillRunnerService.APP_LABEL, twillSpec.getName())
-      .addToAnnotations(KubeTwillRunnerService.START_TIMEOUT_ANNOTATION, Long.toString(startTimeoutMillis))
-      .build();
+      .addToAnnotations(KubeTwillRunnerService.START_TIMEOUT_ANNOTATION, Long.toString(startTimeoutMillis));
+    // OwnerReference must be in same namespace as object
+    if (kubeNamespace.equals(programRuntimeNamespace)) {
+      objectMetaBuilder.withOwnerReferences(podInfo.getOwnerReferences());
+    }
+    return objectMetaBuilder.build();
   }
 
   /**
@@ -653,8 +674,8 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       .endSpec()
       .build();
     try {
-      batchV1Api.createNamespacedJob(kubeNamespace, job, "true", null, null);
-      LOG.trace("Created Job {} in Kubernetes.", metadata.getName());
+      batchV1Api.createNamespacedJob(programRuntimeNamespace, job, "true", null, null);
+      LOG.debug("Created Job {} in Kubernetes.", metadata.getName());
     } catch (ApiException e) {
       if (e.getCode() == HttpURLConnection.HTTP_CONFLICT) {
         LOG.warn("The kubernetes job already exists : {}. Ignoring resubmission of the job." , e.getResponseBody());
@@ -675,7 +696,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
 
     V1Deployment deployment = buildDeployment(metadata, runtimeSpecs, runtimeConfigLocation);
 
-    deployment = appsApi.createNamespacedDeployment(kubeNamespace, deployment, "true", null, null);
+    deployment = appsApi.createNamespacedDeployment(programRuntimeNamespace, deployment, "true", null, null);
     LOG.info("Created Deployment {} in Kubernetes", metadata.getName());
     return deployment.getMetadata();
   }
@@ -691,7 +712,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
 
     V1StatefulSet statefulSet = buildStatefulSet(metadata, runtimeSpecs, runtimeConfigLocation, statefulRunnable);
 
-    statefulSet = appsApi.createNamespacedStatefulSet(kubeNamespace, statefulSet, "true", null, null);
+    statefulSet = appsApi.createNamespacedStatefulSet(programRuntimeNamespace, statefulSet, "true", null, null);
     LOG.info("Created StatefulSet {} in Kubernetes", metadata.getName());
     return statefulSet.getMetadata();
   }
@@ -1051,7 +1072,8 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   }
 
   /**
-   * Creates a {@link V1ResourceRequirements} based on the given {@link ResourceSpecification}.
+   * Creates a {@link V1ResourceRequirements} based on the given {@link ResourceSpecification}. If the namespace has a
+   * resource quota, the objects must also specify resource limits.
    */
   private V1ResourceRequirements createResourceRequirements(ResourceSpecification resourceSpec) {
     Map<String, String> cConf = masterEnvContext.getConfigurations();
@@ -1060,10 +1082,16 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     int cpuToRequest = (int) (resourceSpec.getVirtualCores() * 1000 * cpuMultiplier);
     int memoryToRequest = (int) (resourceSpec.getMemorySize() * memoryMultiplier);
 
-    return new V1ResourceRequirementsBuilder()
+    V1ResourceRequirementsBuilder resourceRequirementsBuilder = new V1ResourceRequirementsBuilder()
       .addToRequests("cpu", new Quantity(String.format("%dm", cpuToRequest)))
-      .addToRequests("memory", new Quantity(String.format("%dMi", memoryToRequest)))
-      .build();
+      .addToRequests("memory", new Quantity(String.format("%dMi", memoryToRequest)));
+    if (programRuntimeNamespaceCpuLimit != null && !programRuntimeNamespaceCpuLimit.isEmpty()) {
+      resourceRequirementsBuilder.addToLimits("cpu", new Quantity(programRuntimeNamespaceCpuLimit));
+    }
+    if (programRuntimeNamespaceMemoryLimit != null && !programRuntimeNamespaceMemoryLimit.isEmpty()) {
+      resourceRequirementsBuilder.addToLimits("memory", new Quantity(programRuntimeNamespaceMemoryLimit));
+    }
+    return resourceRequirementsBuilder.build();
   }
 
   /**

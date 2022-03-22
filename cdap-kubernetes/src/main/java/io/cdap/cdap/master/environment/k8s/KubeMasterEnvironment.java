@@ -37,6 +37,9 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.openapi.apis.RbacAuthorizationV1Api;
+import io.kubernetes.client.openapi.models.V1ClusterRoleBinding;
+import io.kubernetes.client.openapi.models.V1ClusterRoleBindingList;
 import io.kubernetes.client.openapi.models.V1ConfigMap;
 import io.kubernetes.client.openapi.models.V1ConfigMapBuilder;
 import io.kubernetes.client.openapi.models.V1ConfigMapProjection;
@@ -59,7 +62,12 @@ import io.kubernetes.client.openapi.models.V1PodSpecBuilder;
 import io.kubernetes.client.openapi.models.V1ProjectedVolumeSource;
 import io.kubernetes.client.openapi.models.V1ResourceQuota;
 import io.kubernetes.client.openapi.models.V1ResourceQuotaSpec;
+import io.kubernetes.client.openapi.models.V1RoleBinding;
+import io.kubernetes.client.openapi.models.V1RoleBindingList;
+import io.kubernetes.client.openapi.models.V1Secret;
+import io.kubernetes.client.openapi.models.V1ServiceAccount;
 import io.kubernetes.client.openapi.models.V1ServiceAccountTokenProjection;
+import io.kubernetes.client.openapi.models.V1Subject;
 import io.kubernetes.client.openapi.models.V1Volume;
 import io.kubernetes.client.openapi.models.V1VolumeMount;
 import io.kubernetes.client.openapi.models.V1VolumeProjection;
@@ -104,12 +112,10 @@ import java.util.zip.GZIPOutputStream;
  */
 public class KubeMasterEnvironment implements MasterEnvironment {
   public static final String DISABLE_POD_DELETION = "disablePodDeletion";
+  public static final String NAMESPACE_PROPERTY = "k8s.namespace";
+  public static final String NAMESPACE_CPU_LIMIT_PROPERTY = "k8s.namespace.cpu.limits";
+  public static final String NAMESPACE_MEMORY_LIMIT_PROPERTY = "k8s.namespace.memory.limits";
   private static final Logger LOG = LoggerFactory.getLogger(KubeMasterEnvironment.class);
-
-  @VisibleForTesting
-  static final String NAMESPACE_PROPERTY = "k8s.namespace";
-  static final String NAMESPACE_CPU_LIMIT_PROPERTY = "k8s.namespace.cpu.limits";
-  static final String NAMESPACE_MEMORY_LIMIT_PROPERTY = "k8s.namespace.memory.limits";
 
   public static final String SECURITY_CONFIG_NAME = "cdap-security";
   // Contains the list of configuration / secret names coming from the Pod information, which are
@@ -194,6 +200,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     MasterEnvironmentContext.ENVIRONMENT_PROPERTY_PREFIX + "ns";
 
   private static final Pattern LABEL_PATTERN = Pattern.compile("(cdap\\..+?)=\"(.*)\"");
+  private static final Pattern NAMESPACE_LABEL_PATTERN = Pattern.compile("(k8s\\.namespace)=\"(.*)\"");
 
   private KubeDiscoveryService discoveryService;
   private PodKillerTask podKillerTask;
@@ -207,6 +214,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   // In memory state for holding configmap name. Used to delete this configmap upon master environment destroy.
   private String configMapName;
   private CoreV1Api coreV1Api;
+  private RbacAuthorizationV1Api rbacV1Api;
   private boolean namespaceCreationEnabled;
   private KubeMasterPathProvider kubeMasterPathProvider;
   private LocalFileProvider localFileProvider;
@@ -266,13 +274,15 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     // No TX in K8s
     conf.put(DATA_TX_ENABLED, Boolean.toString(false));
 
+    coreV1Api = new CoreV1Api(Config.defaultClient());
+    rbacV1Api = new RbacAuthorizationV1Api(Config.defaultClient());
     // Load the pod labels from the configured path. It should be setup by the CDAP operator
     podInfo = createPodInfo(conf);
     Map<String, String> podLabels = podInfo.getLabels();
 
     String namespace = podInfo.getNamespace();
+    String cdapNamespace = conf.getOrDefault(NAMESPACE_KEY, DEFAULT_NAMESPACE);
     additionalSparkConfs = getSparkConfigurations(conf);
-    coreV1Api = new CoreV1Api(Config.defaultClient());
 
     // Get the instance label to setup prefix for K8s services
     String instanceLabel = conf.getOrDefault(INSTANCE_LABEL, DEFAULT_INSTANCE_LABEL);
@@ -288,7 +298,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
     // Services are publish to K8s with a prefix
     String resourcePrefix = "cdap-" + instanceName + "-";
-    discoveryService = new KubeDiscoveryService(namespace, "cdap-" + instanceName + "-", podLabels,
+    discoveryService = new KubeDiscoveryService(cdapNamespace, "cdap-" + instanceName + "-", podLabels,
                                                 podInfo.getOwnerReferences());
 
     // Optionally creates the pod killer task
@@ -403,6 +413,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     }
     findOrCreateKubeNamespace(namespace, cdapNamespace);
     updateOrCreateResourceQuota(namespace, cdapNamespace, properties);
+    copyVolumesAndServiceAccount(namespace, cdapNamespace);
     if (workloadIdentityEnabled) {
       String workloadIdentityServiceAccountEmail = properties.get(WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY);
       if (workloadIdentityServiceAccountEmail != null && !workloadIdentityServiceAccountEmail.isEmpty()) {
@@ -465,6 +476,11 @@ public class KubeMasterEnvironment implements MasterEnvironment {
         if (matcher.matches()) {
           podLabels.put(matcher.group(1), matcher.group(2));
         }
+        // Use namespace from podLabels instead if it exists
+        Matcher namespaceMatcher = NAMESPACE_LABEL_PATTERN.matcher(line);
+        if (namespaceMatcher.matches()) {
+          namespace = namespaceMatcher.group(2);
+        }
         line = reader.readLine();
       }
     }
@@ -480,8 +496,13 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     }
 
     // Query pod information.
-    CoreV1Api api = new CoreV1Api(Config.defaultClient());
-    V1Pod pod = api.readNamespacedPod(podName, namespace, null, null, null);
+    V1Pod pod;
+    try {
+      pod = coreV1Api.readNamespacedPod(podName, namespace, null, null, null);
+    } catch (ApiException e) {
+      throw new IOException("Error occurred while getting pod. Error code = "
+                              + e.getCode() + ", Body = " + e.getResponseBody(), e);
+    }
     V1ObjectMeta podMeta = pod.getMetadata();
     List<V1OwnerReference> ownerReferences = podMeta == null || podMeta.getOwnerReferences() == null ?
       Collections.emptyList() : podMeta.getOwnerReferences();
@@ -808,6 +829,77 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   }
 
   /**
+   * Copy volumes and service account into the new namespace for deployments created via the KubeTwillRunnerService
+   * TODO: (CDAP-18956) improve this logic to be for each pipeline run
+   */
+  private void copyVolumesAndServiceAccount(String namespace, String cdapNamespace) throws IOException {
+    try {
+      for (V1Volume volume : podInfo.getVolumes()) {
+        if (volume.getConfigMap() != null) {
+          String configMapName = volume.getConfigMap().getName();
+          V1ConfigMap existingMap = coreV1Api.readNamespacedConfigMap(configMapName, podInfo.getNamespace(),
+                                                                      null, null, null);
+          V1ConfigMap configMap = new V1ConfigMap().data(existingMap.getData())
+            .metadata(new V1ObjectMeta().name(configMapName).putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace));
+          coreV1Api.createNamespacedConfigMap(namespace, configMap, null, null, null);
+          LOG.debug("Created configMap {} in Kubernetes namespace {}", configMapName, namespace);
+        }
+
+        if (volume.getSecret() != null) {
+          String secretName = volume.getSecret().getSecretName();
+          V1Secret existingSecret = coreV1Api.readNamespacedSecret(secretName, podInfo.getNamespace(),
+                                                                   null, null, null);
+          V1Secret secret = new V1Secret().data(existingSecret.getData()).type(existingSecret.getType())
+            .metadata(new V1ObjectMeta().name(secretName).putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace));
+          coreV1Api.createNamespacedSecret(namespace, secret, null, null, null);
+          LOG.debug("Created secret {} in Kubernetes namespace {}", secretName, namespace);
+        }
+      }
+    } catch (ApiException e) {
+      throw new IOException("Error occurred while copying volumes. Error code = "
+                              + e.getCode() + ", Body = " + e.getResponseBody(), e);
+    }
+    try {
+      String accountName = podInfo.getServiceAccountName();
+      V1ServiceAccount serviceAccount = new V1ServiceAccount()
+        .metadata(new V1ObjectMeta().name(accountName).putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace));
+      coreV1Api.createNamespacedServiceAccount(namespace, serviceAccount, null, null, null);
+      LOG.info("Created serviceAccount {} in Kubernetes namespace {}", accountName, namespace);
+
+      // filter through the rolebindings associated with the service account
+      V1RoleBindingList roleBindings = rbacV1Api.listNamespacedRoleBinding(podInfo.getNamespace(), null, null, null,
+                                                                           null, null, null, null, null, null, null);
+      for (V1RoleBinding rb : roleBindings.getItems()) {
+        if (rb.getSubjects() != null && rb.getSubjects().stream().anyMatch(s -> s.getName().equals(accountName))) {
+          String roleBindingName = rb.getMetadata().getName();
+          V1RoleBinding roleBinding = new V1RoleBinding().roleRef(rb.getRoleRef())
+            .addSubjectsItem(new V1Subject().kind("ServiceAccount").name(accountName).namespace(namespace))
+            .metadata(new V1ObjectMeta().name(roleBindingName).putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace));
+          rbacV1Api.createNamespacedRoleBinding(namespace, roleBinding, null, null, null);
+          LOG.info("Created role binding {} in Kubernetes namespace {}", roleBindingName, namespace);
+        }
+      }
+      // add service account to the clusterrolebindings to access resources across namespaces
+      V1ClusterRoleBindingList clusterroleBindings = rbacV1Api.listClusterRoleBinding(null, null, null, null, null,
+                                                                                      null, null, null, null, null);
+      for (V1ClusterRoleBinding crb : clusterroleBindings.getItems()) {
+        if (crb.getSubjects() != null && crb.getSubjects().stream().anyMatch(s -> s.getName().equals(accountName))) {
+          String roleBindingName = crb.getMetadata().getName();
+          V1ClusterRoleBinding clusterRoleBinding = new V1ClusterRoleBinding().roleRef(crb.getRoleRef())
+            .subjects(crb.getSubjects())
+            .addSubjectsItem(new V1Subject().kind("ServiceAccount").name(accountName).namespace(namespace))
+            .metadata(new V1ObjectMeta().name(roleBindingName).putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace));
+          rbacV1Api.replaceClusterRoleBinding(roleBindingName, clusterRoleBinding, null, null, null);
+          LOG.info("Updated cluster role binding {}", roleBindingName);
+        }
+      }
+    } catch (ApiException e) {
+      throw new IOException("Error occurred while creating service account or role binding. Error code = "
+                              + e.getCode() + ", Body = " + e.getResponseBody(), e);
+    }
+  }
+
+  /**
    * Deletes Kubernetes namespace created by CDAP and associated resources if they exist.
    */
   private void deleteKubeNamespace(String namespace, String cdapNamespace) throws Exception {
@@ -830,7 +922,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
         LOG.debug("Kubernetes namespace {} was not deleted because it was not found", namespace);
       } else {
         throw new IOException("Error occurred while deleting Kubernetes namespace. Error code = "
-                              + e.getCode() + ", Body = " + e.getResponseBody(), e);
+                                + e.getCode() + ", Body = " + e.getResponseBody(), e);
       }
     }
   }
@@ -912,6 +1004,11 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   @VisibleForTesting
   void setCoreV1Api(CoreV1Api coreV1Api) {
     this.coreV1Api = coreV1Api;
+  }
+
+  @VisibleForTesting
+  void setRbacV1Api(RbacAuthorizationV1Api rbacV1Api) {
+    this.rbacV1Api = rbacV1Api;
   }
 
   @VisibleForTesting

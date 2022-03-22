@@ -20,6 +20,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.common.RuntimeArguments;
@@ -41,6 +42,7 @@ import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
@@ -81,9 +83,13 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
   DistributedWorkflowProgramRunner(CConfiguration cConf, YarnConfiguration hConf,
                                    Impersonator impersonator, ClusterMode clusterMode,
                                    @Constants.AppFabric.ProgramRunner TwillRunner twillRunner,
-                                   @Constants.AppFabric.ProgramRunner ProgramRunnerFactory programRunnerFactory) {
+                                   @Constants.AppFabric.ProgramRunner ProgramRunnerFactory programRunnerFactory,
+                                   Injector injector) {
     super(cConf, hConf, impersonator, clusterMode, twillRunner);
     this.programRunnerFactory = programRunnerFactory;
+    if (!cConf.getBoolean(Constants.AppFabric.PROGRAM_REMOTE_RUNNER, false)) {
+      this.namespaceQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);
+    }
   }
 
   @Override

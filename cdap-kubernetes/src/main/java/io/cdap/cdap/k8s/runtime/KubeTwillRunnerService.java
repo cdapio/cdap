@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.k8s.common.AbstractWatcherThread;
 import io.cdap.cdap.k8s.common.ResourceChangeListener;
+import io.cdap.cdap.master.environment.k8s.KubeMasterEnvironment;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.kubernetes.client.common.KubernetesObject;
@@ -228,7 +229,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
       // start job cleaner service
       jobCleanerService =
         Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("kube-job-cleaner"));
-      jobCleanerService.scheduleAtFixedRate(new KubeJobCleaner(batchV1Api, kubeNamespace, selector, jobCleanBatchSize),
+      jobCleanerService.scheduleAtFixedRate(new KubeJobCleaner(batchV1Api, selector, jobCleanBatchSize),
                                             10, jobCleanupIntervalMins, TimeUnit.MINUTES);
     } catch (IOException e) {
       throw new IllegalStateException("Unable to get Kubernetes API Client", e);
@@ -548,7 +549,8 @@ public class KubeTwillRunnerService implements TwillRunnerService {
   private KubeTwillController createKubeTwillController(String appName, RunId runId,
                                                         Type resourceType, V1ObjectMeta meta) {
     CompletableFuture<Void> startupTaskCompletion = new CompletableFuture<>();
-    KubeTwillController controller = new KubeTwillController(kubeNamespace, runId, discoveryServiceClient,
+    String runtimeNamespace = meta.getLabels().getOrDefault(KubeMasterEnvironment.NAMESPACE_PROPERTY, kubeNamespace);
+    KubeTwillController controller = new KubeTwillController(runtimeNamespace, runId, discoveryServiceClient,
                                                              apiClient, resourceType, meta, startupTaskCompletion);
 
     Location appLocation = getApplicationLocation(appName, runId);
