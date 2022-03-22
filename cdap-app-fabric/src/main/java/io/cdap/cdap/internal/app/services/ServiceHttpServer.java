@@ -40,7 +40,7 @@ import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.http.AuthenticationChannelHandler;
-import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.lang.InstantiatorFactory;
 import io.cdap.cdap.common.lang.PropertyFieldSetter;
@@ -90,6 +90,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
   private final AtomicInteger instanceCount;
   private final BasicHttpServiceContextFactory contextFactory;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final CommonNettyHttpServiceFactory commonNettyHttpServiceFactory;
   private final Program program;
 
   private Service service;
@@ -106,12 +107,14 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                            MetadataPublisher metadataPublisher, NamespaceQueryAdmin namespaceQueryAdmin,
                            PluginFinder pluginFinder, FieldLineageWriter fieldLineageWriter,
                            TransactionRunner transactionRunner, PreferencesFetcher preferencesFetcher,
-                           RemoteClientFactory remoteClientFactory, ContextAccessEnforcer contextAccessEnforcer) {
+                           RemoteClientFactory remoteClientFactory, ContextAccessEnforcer contextAccessEnforcer,
+                           CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     super(host, program, programOptions, instanceId, serviceAnnouncer, TransactionControl.IMPLICIT);
 
     this.cConf = cConf;
     this.serviceSpecification = spec;
     this.instanceCount = new AtomicInteger(instanceCount);
+    this.commonNettyHttpServiceFactory = commonNettyHttpServiceFactory;
     this.contextFactory = createContextFactory(program, programOptions, instanceId, this.instanceCount,
                                                metricsCollectionService, datasetFramework, discoveryServiceClient,
                                                txClient, pluginInstantiator, secureStore, secureStoreManager,
@@ -212,7 +215,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
    */
   @Override
   protected NettyHttpService.Builder createHttpServiceBuilder(String serviceName) {
-    return new CommonNettyHttpServiceBuilder(cConf, serviceName);
+    return commonNettyHttpServiceFactory.builder(serviceName);
   }
 
   private BasicHttpServiceContextFactory createContextFactory(Program program, ProgramOptions programOptions,

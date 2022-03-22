@@ -22,14 +22,13 @@ import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.inject.Inject;
-import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
-import io.cdap.cdap.common.metrics.MetricsReporterHook;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.data2.metrics.DatasetMetricsReporter;
 import io.cdap.http.ChannelPipelineModifier;
@@ -46,7 +45,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
-import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -74,7 +72,7 @@ public class DatasetService extends AbstractService {
   public DatasetService(CConfiguration cConf, SConfiguration sConf,
                         DiscoveryService discoveryService,
                         DiscoveryServiceClient discoveryServiceClient,
-                        MetricsCollectionService metricsCollectionService,
+                        CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
                         Set<DatasetMetricsReporter> metricReporters,
                         DatasetTypeService datasetTypeService,
                         DatasetInstanceService datasetInstanceService) {
@@ -82,7 +80,7 @@ public class DatasetService extends AbstractService {
     this.typeService = datasetTypeService;
     DatasetTypeHandler datasetTypeHandler = new DatasetTypeHandler(datasetTypeService);
     DatasetInstanceHandler datasetInstanceHandler = new DatasetInstanceHandler(datasetInstanceService);
-    CommonNettyHttpServiceBuilder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.DATASET_MANAGER);
+    CommonNettyHttpServiceBuilder builder = commonNettyHttpServiceFactory.builder(Constants.Service.DATASET_MANAGER);
     if (LOG.isTraceEnabled()) {
       builder.addChannelPipelineModifier(new ChannelPipelineModifier() {
         @Override
@@ -107,8 +105,6 @@ public class DatasetService extends AbstractService {
 
     this.httpService = builder
       .setHttpHandlers(datasetTypeHandler, datasetInstanceHandler)
-      .setHandlerHooks(Collections.singleton(new MetricsReporterHook(cConf, metricsCollectionService,
-                                                                     Constants.Service.DATASET_MANAGER)))
       .setHost(cConf.get(Constants.Service.MASTER_SERVICES_BIND_ADDRESS))
       .setPort(cConf.getInt(Constants.Dataset.Manager.PORT))
       .setConnectionBacklog(cConf.getInt(Constants.Dataset.Manager.BACKLOG_CONNECTIONS))

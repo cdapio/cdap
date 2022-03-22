@@ -23,11 +23,13 @@ import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.NoOpInternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -81,9 +83,9 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
     RemoteClientFactory remoteClientFactory =
       new RemoteClientFactory(discoveryClient, new DefaultInternalAuthenticator(new AuthenticationTestContext()));
     ArtifactLocalizerService artifactLocalizerService = new ArtifactLocalizerService(
-      cConf, new ArtifactLocalizer(cConf, remoteClientFactory, (namespaceId, retryStrategy)-> {
-        return new NoOpArtifactManager();
-    }));
+      cConf, new ArtifactLocalizer(cConf, remoteClientFactory, (namespaceId, retryStrategy) -> {
+      return new NoOpArtifactManager();
+    }), new CommonNettyHttpServiceFactory(cConf, new NoOpMetricsCollectionService()));
     // start the service
     artifactLocalizerService.startAndWait();
 

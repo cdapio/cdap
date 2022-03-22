@@ -18,12 +18,14 @@ package io.cdap.cdap.internal.app.worker;
 
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.proto.BasicThrowable;
@@ -62,6 +64,7 @@ public class TaskWorkerServiceTest {
 
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerServiceTest.class);
   private static final Gson GSON = new Gson();
+  private static final MetricsCollectionService metricsCollectionService = new NoOpMetricsCollectionService();
 
   private TaskWorkerService taskWorkerService;
   private CompletableFuture<Service.State> serviceCompletionFuture;
@@ -85,9 +88,9 @@ public class TaskWorkerServiceTest {
     CConfiguration cConf = createCConf();
     SConfiguration sConf = createSConf();
 
-    TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, sConf, new InMemoryDiscoveryService(),
-                                                                (namespaceId, retryStrategy) -> null,
-                                                                new NoOpMetricsCollectionService());
+    TaskWorkerService taskWorkerService = new TaskWorkerService(
+      cConf, sConf, new InMemoryDiscoveryService(), (namespaceId, retryStrategy) -> null, metricsCollectionService,
+      new CommonNettyHttpServiceFactory(cConf, metricsCollectionService));
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service
     taskWorkerService.startAndWait();
@@ -109,9 +112,9 @@ public class TaskWorkerServiceTest {
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 1);
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, 5);
 
-    TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, sConf, new InMemoryDiscoveryService(),
-                                                                (namespaceId, retryStrategy) -> null,
-                                                                new NoOpMetricsCollectionService());
+    TaskWorkerService taskWorkerService = new TaskWorkerService(
+      cConf, sConf, new InMemoryDiscoveryService(), (namespaceId, retryStrategy) -> null, metricsCollectionService,
+      new CommonNettyHttpServiceFactory(cConf, metricsCollectionService));
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service
     taskWorkerService.startAndWait();
@@ -127,9 +130,9 @@ public class TaskWorkerServiceTest {
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 10);
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, 2);
 
-    TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, sConf, new InMemoryDiscoveryService(),
-                                                                (namespaceId, retryStrategy) -> null,
-                                                                new NoOpMetricsCollectionService());
+    TaskWorkerService taskWorkerService = new TaskWorkerService(
+      cConf, sConf, new InMemoryDiscoveryService(), (namespaceId, retryStrategy) -> null, metricsCollectionService,
+      new CommonNettyHttpServiceFactory(cConf, metricsCollectionService));
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service
     taskWorkerService.startAndWait();
@@ -160,9 +163,9 @@ public class TaskWorkerServiceTest {
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 2);
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, 0);
 
-    TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, sConf, new InMemoryDiscoveryService(),
-                                                                (namespaceId, retryStrategy) -> null,
-                                                                new NoOpMetricsCollectionService());
+    TaskWorkerService taskWorkerService = new TaskWorkerService(
+      cConf, sConf, new InMemoryDiscoveryService(), (namespaceId, retryStrategy) -> null, metricsCollectionService,
+      new CommonNettyHttpServiceFactory(cConf, metricsCollectionService));
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service
     taskWorkerService.startAndWait();

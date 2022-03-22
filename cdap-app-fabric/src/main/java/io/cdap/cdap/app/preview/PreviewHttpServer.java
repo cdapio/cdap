@@ -20,16 +20,14 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
-import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
-import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
-import io.cdap.cdap.common.metrics.MetricsReporterHook;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -40,7 +38,6 @@ import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -58,19 +55,16 @@ public class PreviewHttpServer extends AbstractIdleService {
   @Inject
   PreviewHttpServer(CConfiguration cConf, SConfiguration sConf,
                     DiscoveryService discoveryService, Set<HttpHandler> httpHandlers,
-                    MetricsCollectionService metricsCollectionService,
-                    PreviewManager previewManager) {
+                    PreviewManager previewManager, CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     this.discoveryService = discoveryService;
-    NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.PREVIEW_HTTP)
+    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(Constants.Service.PREVIEW_HTTP)
       .setHost(cConf.get(Constants.Preview.ADDRESS))
       .setPort(cConf.getInt(Constants.Preview.PORT))
       .setHttpHandlers(httpHandlers)
       .setConnectionBacklog(cConf.getInt(Constants.Preview.BACKLOG_CONNECTIONS))
       .setExecThreadPoolSize(cConf.getInt(Constants.Preview.EXEC_THREADS))
       .setBossThreadPoolSize(cConf.getInt(Constants.Preview.BOSS_THREADS))
-      .setWorkerThreadPoolSize(cConf.getInt(Constants.Preview.WORKER_THREADS))
-      .setHandlerHooks(Collections.singletonList(
-        new MetricsReporterHook(cConf, metricsCollectionService, Constants.Service.PREVIEW_HTTP)));
+      .setWorkerThreadPoolSize(cConf.getInt(Constants.Preview.WORKER_THREADS));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);

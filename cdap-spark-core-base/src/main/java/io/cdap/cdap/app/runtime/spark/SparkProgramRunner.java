@@ -43,6 +43,7 @@ import io.cdap.cdap.app.runtime.spark.submit.MasterEnvironmentSparkSubmitter;
 import io.cdap.cdap.app.runtime.spark.submit.SparkSubmitter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.lang.FilterClassLoader;
 import io.cdap.cdap.common.lang.InstantiatorFactory;
@@ -111,6 +112,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
   private final MetadataPublisher metadataPublisher;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final RemoteClientFactory remoteClientFactory;
+  private final CommonNettyHttpServiceFactory commonNettyHttpServiceFactory;
 
   @Inject
   SparkProgramRunner(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
@@ -121,7 +123,8 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                      MessagingService messagingService, ServiceAnnouncer serviceAnnouncer,
                      PluginFinder pluginFinder, MetadataReader metadataReader, MetadataPublisher metadataPublisher,
                      FieldLineageWriter fieldLineageWriter, NamespaceQueryAdmin namespaceQueryAdmin,
-                     RemoteClientFactory remoteClientFactory) {
+                     RemoteClientFactory remoteClientFactory,
+                     CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     super(cConf);
     this.cConf = cConf;
     this.hConf = hConf;
@@ -141,6 +144,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
     this.metadataPublisher = metadataPublisher;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.remoteClientFactory = remoteClientFactory;
+    this.commonNettyHttpServiceFactory = commonNettyHttpServiceFactory;
   }
 
   @Override
@@ -221,7 +225,8 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
 
       Service sparkRuntimeService = new SparkRuntimeService(cConf, spark, getPluginArchive(options),
                                                             runtimeContext, submitter, locationFactory, isLocal,
-                                                            fieldLineageWriter, masterEnv);
+                                                            fieldLineageWriter, masterEnv,
+                                                            commonNettyHttpServiceFactory);
 
       sparkRuntimeService.addListener(createRuntimeServiceListener(closeables), Threads.SAME_THREAD_EXECUTOR);
       ProgramController controller = new SparkProgramController(sparkRuntimeService, runtimeContext);

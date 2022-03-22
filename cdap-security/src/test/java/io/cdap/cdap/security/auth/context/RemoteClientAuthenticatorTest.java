@@ -28,6 +28,7 @@ import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.internal.remote.NoOpRemoteAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import io.cdap.common.http.HttpMethod;
@@ -83,7 +84,7 @@ public class RemoteClientAuthenticatorTest {
 
     // Setup test HTTP handler and register the service.
     testHttpHandler = new TestHttpHandler();
-    httpService = new CommonNettyHttpServiceBuilder(cConf, TEST_SERVICE)
+    httpService = new CommonNettyHttpServiceBuilder(cConf, TEST_SERVICE, new NoOpMetricsCollectionService())
       .setHttpHandlers(testHttpHandler).build();
     httpService.start();
     discoveryService.register(new Discoverable(TEST_SERVICE, httpService.getBindAddress()));

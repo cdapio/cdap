@@ -17,12 +17,14 @@
 package io.cdap.cdap.internal.app.worker.system;
 
 import com.google.gson.Gson;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.proto.BasicThrowable;
@@ -37,8 +39,6 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -56,8 +56,8 @@ public class SystemWorkerServiceTest {
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
-  private static final Logger LOG = LoggerFactory.getLogger(SystemWorkerServiceTest.class);
   private static final Gson GSON = new Gson();
+  private static final MetricsCollectionService metricsCollectionService = new NoOpMetricsCollectionService();
 
   private SystemWorkerService systemWorkerService;
 
@@ -79,9 +79,9 @@ public class SystemWorkerServiceTest {
     CConfiguration cConf = createCConf();
     SConfiguration sConf = createSConf();
 
-    SystemWorkerService systemWorkerService = new SystemWorkerService(cConf, sConf, new InMemoryDiscoveryService(),
-        (namespaceId, retryStrategy) -> null,
-        new NoOpMetricsCollectionService());
+    SystemWorkerService systemWorkerService = new SystemWorkerService(
+      cConf, sConf, new InMemoryDiscoveryService(), metricsCollectionService,
+      new CommonNettyHttpServiceFactory(cConf, metricsCollectionService));
     systemWorkerService.startAndWait();
     this.systemWorkerService = systemWorkerService;
   }

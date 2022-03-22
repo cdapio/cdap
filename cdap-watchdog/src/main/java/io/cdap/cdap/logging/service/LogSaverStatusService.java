@@ -20,24 +20,21 @@ import com.google.common.base.Objects;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
-import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
-import io.cdap.cdap.common.metrics.MetricsReporterHook;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
 
-import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -51,12 +48,10 @@ public class LogSaverStatusService extends AbstractIdleService {
   @Inject
   public LogSaverStatusService(CConfiguration cConf, SConfiguration sConf, DiscoveryService discoveryService,
                                @Named(Constants.LogSaver.LOG_SAVER_STATUS_HANDLER) Set<HttpHandler> handlers,
-                               MetricsCollectionService metricsCollectionService) {
+                               CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     this.discoveryService = discoveryService;
-    NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.LOGSAVER)
+    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(Constants.Service.LOGSAVER)
       .setHttpHandlers(handlers)
-      .setHandlerHooks(Collections.singleton(new MetricsReporterHook(cConf, metricsCollectionService,
-                                                                     Constants.Service.LOGSAVER)))
       .setHost(cConf.get(Constants.LogSaver.ADDRESS));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {

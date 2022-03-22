@@ -38,6 +38,7 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.internal.remote.InternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
@@ -144,24 +145,44 @@ public class SparkContainerDriverLauncher {
     Configuration hConf = new Configuration();
     hConf.addResource(new org.apache.hadoop.fs.Path("file:" + new File(HCONF_PATH).getAbsolutePath()));
 
+    Injector injector = createInjector(cConf, hConf);
+
     if (artifactFetcherUri == null) {
       LOG.warn("Localizing artifacts from appfabric");
-      localizeArtifactsFromAppfabric(cConf, hConf);
+      localizeArtifactsFromAppfabric(hConf, injector);
     } else {
       try {
         LOG.info(String.format("Localizing artifacts from %s", artifactFetcherUri));
         localizeArtifactsBundle(artifactFetcherUri);
       } catch (Exception e) {
         LOG.warn(String.format("Localizing artifacts from appfabric due to %s", e.getMessage()));
-        localizeArtifactsFromAppfabric(cConf, hConf);
+        localizeArtifactsFromAppfabric(hConf, injector);
       }
     }
 
     artifactFetcherService =
-      new ArtifactFetcherService(cConf, createBundle(new File(WORKING_DIRECTORY).getAbsoluteFile().toPath()));
+      new ArtifactFetcherService(cConf, createBundle(new File(WORKING_DIRECTORY).getAbsoluteFile().toPath()),
+                                 injector.getInstance(CommonNettyHttpServiceFactory.class));
     artifactFetcherService.startAndWait();
 
     SparkContainerLauncher.launch(delegateClass, delegateArgs.toArray(new String[delegateArgs.size()]), false, "k8s");
+  }
+
+
+  /**
+   * Retrieves injector to retrieve services.
+   */
+  private static Injector createInjector(CConfiguration cConf, Configuration hConf) throws Exception {
+      MasterEnvironment masterEnv = MasterEnvironments.create(cConf, "k8s");
+      if (masterEnv == null) {
+        throw new RuntimeException("Unable to initialize k8s masterEnv from cConf.");
+      }
+      MasterEnvironmentContext context = MasterEnvironments.createContext(cConf, hConf, masterEnv.getName());
+      masterEnv.initialize(context);
+      MasterEnvironments.setMasterEnvironment(masterEnv);
+
+      Injector injector = createInjector(cConf, hConf, masterEnv);
+      return injector;
   }
 
   /**
@@ -188,8 +209,8 @@ public class SparkContainerDriverLauncher {
     Files.delete(bundleJarFile);
   }
 
-  private static void localizeArtifactsFromAppfabric(CConfiguration cConf, Configuration hConf) throws Exception {
-    ArtifactLocalizerClient fetchArtifacts = createArtifactLocalizerClient(cConf, hConf);
+  private static void localizeArtifactsFromAppfabric(Configuration hConf, Injector injector) throws Exception {
+    ArtifactLocalizerClient fetchArtifacts = injector.getInstance(ArtifactLocalizerClient.class);;
     ApplicationSpecification spec =
       GSON.fromJson(hConf.getRaw(CDAP_APP_SPEC_KEY), ApplicationSpecification.class);
     ProgramId programId = GSON.fromJson(hConf.getRaw(PROGRAM_ID_KEY), ProgramId.class);
@@ -221,20 +242,6 @@ public class SparkContainerDriverLauncher {
     File tempLocation = fetchArtifacts.localizeArtifact(spec.getArtifactId(), programId.getNamespace());
     BundleJarUtil.unJar(tempLocation, programJarLocation.resolve(PROGRAM_JAR_EXPANDED_NAME).toFile());
     Files.copy(tempLocation.toPath(), programJarLocation.resolve(PROGRAM_JAR_NAME));
-  }
-
-  private static ArtifactLocalizerClient createArtifactLocalizerClient(CConfiguration cConf, Configuration hConf)
-    throws Exception {
-    MasterEnvironment masterEnv = MasterEnvironments.create(cConf, "k8s");
-    if (masterEnv == null) {
-      throw new RuntimeException("Unable to initialize k8s masterEnv from cConf.");
-    }
-    MasterEnvironmentContext context = MasterEnvironments.createContext(cConf, hConf, masterEnv.getName());
-    masterEnv.initialize(context);
-    MasterEnvironments.setMasterEnvironment(masterEnv);
-
-    Injector injector = createInjector(cConf, hConf, masterEnv);
-    return injector.getInstance(ArtifactLocalizerClient.class);
   }
 
   private static Injector createInjector(CConfiguration cConf, Configuration hConf, MasterEnvironment masterEnv) {

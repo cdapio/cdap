@@ -34,6 +34,7 @@ import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.data.dataset.SystemDatasetInstantiatorFactory;
@@ -143,7 +144,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
     DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
-    MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+    CommonNettyHttpServiceFactory commonNettyHttpServiceFactory =
+      injector.getInstance(CommonNettyHttpServiceFactory.class);
     AuthenticationContext authenticationContext = injector.getInstance(AuthenticationContext.class);
     RemoteClientFactory remoteClientFactory = injector.getInstance(RemoteClientFactory.class);
 
@@ -156,7 +158,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     ImmutableSet<HttpHandler> handlers =
       ImmutableSet.of(new DatasetAdminOpHTTPHandler(datasetAdminService));
     opExecutorService = new DatasetOpExecutorService(cConf, SConfiguration.create(),
-                                                     discoveryService, metricsCollectionService, handlers);
+                                                     discoveryService, commonNettyHttpServiceFactory, handlers);
     opExecutorService.startAndWait();
 
     DiscoveryExploreClient exploreClient = new DiscoveryExploreClient(discoveryServiceClient, authenticationContext);
@@ -182,7 +184,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     instanceService.setAuditPublisher(inMemoryAuditPublisher);
 
     service = new DatasetService(cConf, SConfiguration.create(),
-                                 discoveryService, discoveryServiceClient, metricsCollectionService,
+                                 discoveryService, discoveryServiceClient, commonNettyHttpServiceFactory,
                                  new HashSet<>(),
                                  typeService, instanceService);
     // Start dataset service, wait for it to be discoverable

@@ -15,14 +15,17 @@
  */
 package io.cdap.cdap.common.http;
 
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.HttpExceptionHandler;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.metrics.MetricsReporterHook;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
 import io.netty.util.concurrent.EventExecutor;
 
+import java.util.Collections;
 import javax.annotation.Nullable;
 
 /**
@@ -35,9 +38,9 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
   private ChannelPipelineModifier pipelineModifier;
   private ChannelPipelineModifier additionalModifier;
 
-  public CommonNettyHttpServiceBuilder(CConfiguration cConf, String serviceName) {
+  public CommonNettyHttpServiceBuilder(CConfiguration cConf, String serviceName,
+                                       MetricsCollectionService metricsCollectionService) {
     super(serviceName);
-
     if (cConf.getBoolean(Constants.Security.ENABLED)) {
       pipelineModifier = new ChannelPipelineModifier() {
         @Override
@@ -54,6 +57,8 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
       };
     }
     this.setExceptionHandler(new HttpExceptionHandler());
+    this.setHandlerHooks(Collections.singleton(
+      new MetricsReporterHook(cConf, metricsCollectionService, serviceName)));
   }
 
   /**

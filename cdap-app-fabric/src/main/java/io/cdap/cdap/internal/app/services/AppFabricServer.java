@@ -28,7 +28,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
-import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
@@ -91,6 +91,7 @@ public class AppFabricServer extends AbstractIdleService {
   private Cancellable cancelHttpService;
   private Set<HttpHandler> handlers;
   private MetricsCollectionService metricsCollectionService;
+  private CommonNettyHttpServiceFactory commonNettyHttpServiceFactory;
 
   /**
    * Construct the AppFabricServer with service factory and cConf coming from guice injection.
@@ -115,7 +116,8 @@ public class AppFabricServer extends AbstractIdleService {
                          SystemAppManagementService systemAppManagementService,
                          TransactionRunner transactionRunner,
                          EventPublishManager eventPublishManager,
-                         RunRecordMonitorService runRecordCounterService) {
+                         RunRecordMonitorService runRecordCounterService,
+                         CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.handlers = handlers;
@@ -138,6 +140,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.transactionRunner = transactionRunner;
     this.eventPublishManager = eventPublishManager;
     this.runRecordCounterService = runRecordCounterService;
+    this.commonNettyHttpServiceFactory = commonNettyHttpServiceFactory;
   }
 
   /**
@@ -170,8 +173,8 @@ public class AppFabricServer extends AbstractIdleService {
       .collect(Collectors.toList());
 
     // Run http service on random port
-    NettyHttpService.Builder httpServiceBuilder = new CommonNettyHttpServiceBuilder(cConf,
-                                                                                    Constants.Service.APP_FABRIC_HTTP)
+    NettyHttpService.Builder httpServiceBuilder = commonNettyHttpServiceFactory
+      .builder(Constants.Service.APP_FABRIC_HTTP)
       .setHost(hostname.getCanonicalHostName())
       .setHandlerHooks(handlerHooks)
       .setHttpHandlers(handlers)

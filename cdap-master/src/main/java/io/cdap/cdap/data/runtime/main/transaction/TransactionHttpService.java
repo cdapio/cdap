@@ -19,14 +19,12 @@ package io.cdap.cdap.data.runtime.main.transaction;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
-import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
-import io.cdap.cdap.common.metrics.MetricsReporterHook;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
@@ -35,7 +33,6 @@ import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -53,13 +50,11 @@ public class TransactionHttpService extends AbstractIdleService {
   public TransactionHttpService(CConfiguration cConf, SConfiguration sConf,
                                 @Named(Constants.Service.TRANSACTION_HTTP) Set<HttpHandler> handlers,
                                 DiscoveryService discoveryService,
-                                MetricsCollectionService metricsCollectionService) {
+                                CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     // netty http server config
     String address = cConf.get(Constants.Transaction.Container.ADDRESS);
 
-    NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TRANSACTION_HTTP)
-      .setHandlerHooks(Collections.singleton(new MetricsReporterHook(cConf, metricsCollectionService,
-                                                                     Constants.Service.TRANSACTION_HTTP)))
+    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(Constants.Service.TRANSACTION_HTTP)
       .setHttpHandlers(handlers)
       .setHost(address);
 

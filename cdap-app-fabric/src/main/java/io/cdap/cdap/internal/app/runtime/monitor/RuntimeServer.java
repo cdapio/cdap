@@ -19,14 +19,13 @@ package io.cdap.cdap.internal.app.runtime.monitor;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
-import io.cdap.cdap.common.metrics.MetricsReporterHook;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.http.ChannelPipelineModifier;
@@ -41,7 +40,6 @@ import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -57,11 +55,9 @@ public class RuntimeServer extends AbstractIdleService {
 
   @Inject
   RuntimeServer(CConfiguration cConf, SConfiguration sConf, @Named(Constants.Service.RUNTIME) Set<HttpHandler> handlers,
-                DiscoveryService discoveryService, MetricsCollectionService metricsCollectionService) {
-    NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.RUNTIME)
+                DiscoveryService discoveryService, CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
+    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(Constants.Service.RUNTIME)
       .setHttpHandlers(handlers)
-      .setHandlerHooks(Collections.singleton(new MetricsReporterHook(cConf, metricsCollectionService,
-                                                                     Constants.Service.RUNTIME)))
       .setChannelPipelineModifier(new ChannelPipelineModifier() {
         @Override
         public void modify(ChannelPipeline pipeline) {

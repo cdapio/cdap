@@ -40,6 +40,7 @@ import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.NamespaceAdminTestModule;
 import io.cdap.cdap.common.guice.NonCustomLocationUnitTestModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
@@ -212,10 +213,11 @@ public abstract class DatasetServiceTestBase {
       new DatasetAdminService(dsFramework, cConf, locationFactory, datasetInstantiatorFactory, impersonator);
     ImmutableSet<HttpHandler> handlers =
       ImmutableSet.<HttpHandler>of(new DatasetAdminOpHTTPHandler(datasetAdminService));
-    MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+    CommonNettyHttpServiceFactory commonNettyHttpServiceFactory =
+      injector.getInstance(CommonNettyHttpServiceFactory.class);
 
     opExecutorService = new DatasetOpExecutorService(cConf, SConfiguration.create(),
-                                                     discoveryService, metricsCollectionService, handlers);
+                                                     discoveryService, commonNettyHttpServiceFactory, handlers);
     opExecutorService.startAndWait();
 
     Map<String, DatasetModule> defaultModules =
@@ -253,7 +255,7 @@ public abstract class DatasetServiceTestBase {
                                                  new NoOpMetadataServiceClient());
 
     service = new DatasetService(cConf, SConfiguration.create(),
-                                 discoveryService, discoveryServiceClient, metricsCollectionService,
+                                 discoveryService, discoveryServiceClient, commonNettyHttpServiceFactory,
                                  new HashSet<>(), typeService, instanceService);
 
     // Start dataset service, wait for it to be discoverable
