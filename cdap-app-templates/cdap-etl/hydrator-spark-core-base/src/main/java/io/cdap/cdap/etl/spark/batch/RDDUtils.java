@@ -69,11 +69,15 @@ public class RDDUtils {
       hConf.set(entry.getKey(), entry.getValue());
     }
     try {
+      LOG.info("Classloader {} {} to load class {}. Context classloader {}",
+               classLoader, classLoader.getClass().getName(), inputFormatProvider.getInputFormatClassName(),
+               Thread.currentThread().getContextClassLoader());
       @SuppressWarnings("unchecked")
       Class<InputFormat> inputFormatClass = (Class<InputFormat>) classLoader.loadClass(
         inputFormatProvider.getInputFormatClassName());
       return jsc.newAPIHadoopRDD(hConf, inputFormatClass, keyClass, valueClass);
     } catch (ClassNotFoundException e) {
+      LOG.error("Class Not Found Exception exception", e);
       throw Throwables.propagate(e);
     }
   }
