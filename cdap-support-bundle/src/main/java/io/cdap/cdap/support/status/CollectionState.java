@@ -25,5 +25,6 @@ public enum CollectionState {
   FINISHED,
   TIMEOUT,
   FAILED,
-  INVALID
+  INVALID,
+  NOT_FOUND
 }

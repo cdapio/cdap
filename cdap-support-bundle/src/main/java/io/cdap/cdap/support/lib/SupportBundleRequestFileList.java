@@ -25,7 +25,11 @@ import java.util.List;
  *
  */
 public class SupportBundleRequestFileList {
-  private List<String> files;
+  private final List<String> files;
+
+  public SupportBundleRequestFileList(List<String> files) {
+    this.files = files;
+  }
 
   public List<String> getFiles() {
     return files;

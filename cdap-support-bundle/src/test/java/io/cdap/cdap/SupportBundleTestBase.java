@@ -52,7 +52,6 @@ import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
-import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.logging.service.LogQueryService;
 import io.cdap.cdap.messaging.MessagingService;
@@ -143,7 +142,7 @@ public abstract class SupportBundleTestBase {
 
   private static HttpRequestConfig httpRequestConfig;
 
-  protected static final String TEST_NAMESPACE1 = "testnamespace1";
+  protected static final String TEST_NAMESPACE1 = "testsupportbundlenamespace1";
   protected static final NamespaceMeta TEST_NAMESPACE_META1 = new NamespaceMeta.Builder()
     .setName(TEST_NAMESPACE1)
     .setDescription(TEST_NAMESPACE1)
@@ -177,7 +176,7 @@ public abstract class SupportBundleTestBase {
 
   protected static void initializeAndStartServices(CConfiguration cConf, Module overrides) throws Exception {
     injector = Guice.createInjector(
-      Modules.override(new AppFabricTestModule(cConf, null)).with(overrides));
+      Modules.override(new SupportBundleTestModule(cConf, null)).with(overrides));
 
     int connectionTimeout = cConf.getInt(Constants.HTTP_CLIENT_CONNECTION_TIMEOUT_MS);
     int readTimeout = cConf.getInt(Constants.HTTP_CLIENT_READ_TIMEOUT_MS);
@@ -227,10 +226,12 @@ public abstract class SupportBundleTestBase {
         throw new RuntimeException(e);
       }
     }
+    createNamespace(TEST_NAMESPACE_META1.getNamespaceId());
   }
 
   @AfterClass
   public static void afterClass() throws IOException {
+    deleteNamespace(TEST_NAMESPACE_META1.getNamespaceId());
     appFabricServer.stopAndWait();
     metricsCollectionService.stopAndWait();
     datasetService.stopAndWait();

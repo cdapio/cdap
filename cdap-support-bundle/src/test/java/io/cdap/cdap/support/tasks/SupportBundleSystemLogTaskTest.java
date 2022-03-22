@@ -40,20 +40,18 @@ import io.cdap.cdap.support.metadata.RemoteMonitorServicesFetcher;
 import io.cdap.cdap.support.task.SupportBundleSystemLogTask;
 import io.cdap.common.http.HttpResponse;
 import org.apache.twill.api.RunId;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public class SupportBundleSystemLogTaskTest extends SupportBundleTestBase {
-  private static final NamespaceId NAMESPACE = new NamespaceId("testSupportSystemLog");
+  private static final NamespaceId NAMESPACE = TEST_NAMESPACE_META1.getNamespaceId();
   private static CConfiguration configuration;
   private static Store store;
   private static RemoteLogsFetcher remoteLogsFetcher;
@@ -67,12 +65,6 @@ public class SupportBundleSystemLogTaskTest extends SupportBundleTestBase {
     store = injector.getInstance(DefaultStore.class);
     remoteLogsFetcher = injector.getInstance(RemoteLogsFetcher.class);
     remoteMonitorServicesFetcher = injector.getInstance(RemoteMonitorServicesFetcher.class);
-    createNamespace(NAMESPACE);
-  }
-
-  @After
-  public void cleanup() throws IOException {
-    deleteNamespace(NAMESPACE);
   }
 
   @Test

@@ -17,11 +17,9 @@
 package io.cdap.cdap.support.services;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -49,15 +47,14 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
-import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.security.DigestOutputStream;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.Comparator;
@@ -71,6 +68,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import javax.annotation.Nullable;
 
 /**
  * Support bundle service to generate base path, uuid and trigger the job to execute tasks.
@@ -79,14 +77,10 @@ public class SupportBundleGenerator {
 
   private static final Logger LOG = LoggerFactory.getLogger(SupportBundleGenerator.class);
   private static final Gson GSON = new Gson();
-  private static final Type MAP_TYPE = new TypeToken<Map<String, Boolean>>() {
-  }.getType();
   private final Set<SupportBundleTaskFactory> taskFactories;
   private final CConfiguration cConf;
   private final RemoteNamespaceQueryClient namespaceQueryClient;
   private final String localDir;
-  private final List<String> serviceList;
-  private final List<String> listOfFileNames;
 
   @Inject
   SupportBundleGenerator(CConfiguration cConf, RemoteNamespaceQueryClient namespaceQueryClient,
@@ -95,13 +89,6 @@ public class SupportBundleGenerator {
     this.namespaceQueryClient = namespaceQueryClient;
     this.localDir = cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR);
     this.taskFactories = taskFactories;
-    this.serviceList = Arrays.asList(Constants.Service.APP_FABRIC_HTTP, Constants.Service.DATASET_EXECUTOR,
-                                     Constants.Service.EXPLORE_HTTP_USER_SERVICE, Constants.Service.LOGSAVER,
-                                     Constants.Service.MESSAGING_SERVICE, Constants.Service.METADATA_SERVICE,
-                                     Constants.Service.METRICS, Constants.Service.METRICS_PROCESSOR,
-                                     Constants.Service.RUNTIME, Constants.Service.TRANSACTION, "pipeline");
-    this.listOfFileNames = new ArrayList<>(serviceList);
-    listOfFileNames.addAll(Arrays.asList("applicationFile", "runtimelog", "runtimeinfo"));
   }
 
   /**
@@ -154,11 +141,14 @@ public class SupportBundleGenerator {
     return uuid;
   }
 
-  /** Ensure previous executor has finished all the jobs and tasks before starting a new one */
-  public String ensurePreviousExecutorFinish() throws IOException {
+  /**
+   * Check whether the prev bundle is still processing or not
+   */
+  @Nullable
+  public String checkPrevBundleProgress() throws IOException {
     File baseDirectory = new File(localDir);
-    int fileCount = DirUtils.listFiles(baseDirectory)
-      .stream().filter(file -> !file.isHidden() && file.isDirectory()).collect(Collectors.toList()).size();
+    int fileCount =
+      (int) DirUtils.listFiles(baseDirectory).stream().filter(file -> !file.isHidden() && file.isDirectory()).count();
     if (fileCount == 0) {
       return null;
     }
@@ -199,7 +189,7 @@ public class SupportBundleGenerator {
   /**
    * Deletes select folder
    */
-  public void deleteBundle(String uuid) throws Exception {
+  public void deleteBundle(String uuid) throws IOException, NotFoundException {
     File uuidFile = getUUIDFile(uuid);
     if (!uuidFile.exists()) {
       throw new NotFoundException(String.format("No such uuid '%s' in Support Bundle.", uuid));
@@ -210,16 +200,22 @@ public class SupportBundleGenerator {
   /**
    * Get single support bundle overall status
    */
-  public SupportBundleOperationStatus getBundle(String uuid) throws Exception {
+  public SupportBundleOperationStatus getBundle(String uuid) throws IOException, NotFoundException {
     File uuidFile = getUUIDFile(uuid);
     if (!uuidFile.exists()) {
-      throw new BadRequestException(String.format("No such uuid '%s' in Support Bundle.", uuid));
+      throw new NotFoundException(String.format("No such uuid '%s' in Support Bundle.", uuid));
     }
 
     File statusFile = new File(uuidFile, "status.json");
-    SupportBundleOperationStatus bundleOperationStatus = null;
+    SupportBundleTaskReportStatus taskReportStatus = new SupportBundleTaskReportStatus(CollectionState.NOT_FOUND,
+                                                                                       CollectionState.NOT_FOUND,
+                                                                                       CollectionState.NOT_FOUND,
+                                                                                       CollectionState.NOT_FOUND,
+                                                                                       CollectionState.NOT_FOUND);
+    SupportBundleOperationStatus bundleOperationStatus = new SupportBundleOperationStatus(uuid,
+                                                                                          CollectionState.NOT_FOUND,
+                                                                                          taskReportStatus);
     if (statusFile.exists()) {
-      SupportBundleTaskReportStatus taskReportStatus;
       SupportBundleStatus bundleStatus = getBundleStatus(uuidFile);
       Set<SupportBundleTaskStatus> supportBundleTaskStatusSet = bundleStatus.getTasks();
       taskReportStatus = collectSupportBundleTaskStatus(supportBundleTaskStatusSet);
@@ -230,15 +226,37 @@ public class SupportBundleGenerator {
     return bundleOperationStatus;
   }
 
-  public String createBundleZip(String uuid, Path tmpPath, SupportBundleRequestFileList bundleRequestFileList)
-    throws Exception {
-
+  /**
+   * Gather all absolute path file name list under certain uuid
+   */
+  public String createUuidZipFile(String uuid, Path tmpPath)
+    throws IOException, NotFoundException, NoSuchAlgorithmException {
     File uuidFile = getUUIDFile(uuid);
-    MessageDigest digest = null;
     if (!uuidFile.exists()) {
       throw new NotFoundException(String.format("This bundle id %s is not existed", uuid));
     }
-    digest = MessageDigest.getInstance("SHA-256");
+    MessageDigest digest = MessageDigest.getInstance("SHA-256");
+    try (ZipOutputStream zipOut = new ZipOutputStream(
+      new DigestOutputStream(Files.newOutputStream(tmpPath, StandardOpenOption.TRUNCATE_EXISTING), digest))) {
+      ZipEntry entry = new ZipEntry(uuidFile.getName());
+      zipOut.putNextEntry(entry);
+      Files.copy(uuidFile.toPath(), zipOut);
+      zipOut.closeEntry();
+    }
+    return String.format("%s=%s", digest.getAlgorithm().toLowerCase(),
+                         Base64.getEncoder().encodeToString(digest.digest()));
+  }
+
+  /**
+   * Archive support bundle into zip file
+   */
+  public String createBundleZipByRequest(String uuid, Path tmpPath, SupportBundleRequestFileList bundleRequestFileList)
+    throws IOException, NotFoundException, NoSuchAlgorithmException {
+    File uuidFile = getUUIDFile(uuid);
+    if (!uuidFile.exists()) {
+      throw new NotFoundException(String.format("This bundle id %s is not existed", uuid));
+    }
+    MessageDigest digest = MessageDigest.getInstance("SHA-256");
     try (ZipOutputStream zipOut = new ZipOutputStream(
       new DigestOutputStream(Files.newOutputStream(tmpPath, StandardOpenOption.TRUNCATE_EXISTING), digest))) {
       for (String filePath : bundleRequestFileList.getFiles()) {
@@ -255,18 +273,29 @@ public class SupportBundleGenerator {
                          Base64.getEncoder().encodeToString(digest.digest()));
   }
 
-  public File getUUIDFile(String uuid) {
+  /**
+   * Get all bundles status
+   */
+  public List<SupportBundleOperationStatus> getAllBundleStatus() {
     File baseDirectory = new File(cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR));
-    return new File(baseDirectory, uuid);
-  }
-
-  public List<SupportBundleOperationStatus> getAllBundleStatus(File baseDirectory) {
+    if (!baseDirectory.exists()) {
+      LOG.debug("No content in Support Bundle.");
+      return new ArrayList<>();
+    }
     List<SupportBundleOperationStatus> operationStatusList = new ArrayList<>();
+    SupportBundleTaskReportStatus taskReportStatus = new SupportBundleTaskReportStatus(CollectionState.NOT_FOUND,
+                                                                                       CollectionState.NOT_FOUND,
+                                                                                       CollectionState.NOT_FOUND,
+                                                                                       CollectionState.NOT_FOUND,
+                                                                                       CollectionState.NOT_FOUND);
+
     DirUtils.listFiles(baseDirectory)
       .stream()
       .filter(file -> !file.isHidden() && file.isDirectory())
       .forEach(uuidFile -> {
-        SupportBundleOperationStatus operationStatus = null;
+        SupportBundleOperationStatus operationStatus = new SupportBundleOperationStatus(uuidFile.getName(),
+                                                                                              CollectionState.NOT_FOUND,
+                                                                                              taskReportStatus);
         try {
           operationStatus = getBundle(uuidFile.getName());
         } catch (Exception e) {
@@ -275,6 +304,14 @@ public class SupportBundleGenerator {
         operationStatusList.add(operationStatus);
       });
     return operationStatusList;
+  }
+
+  /**
+   * Get uuid file
+   */
+  private File getUUIDFile(String uuid) {
+    File baseDirectory = new File(cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR));
+    return new File(baseDirectory, uuid);
   }
 
   /**
@@ -313,6 +350,9 @@ public class SupportBundleGenerator {
     }
   }
 
+  /**
+   * read status file
+   */
   private SupportBundleStatus readStatusJson(File statusFile) throws IOException {
     SupportBundleStatus bundleStatus;
     try (Reader reader = Files.newBufferedReader(statusFile.toPath(), StandardCharsets.UTF_8)) {
@@ -321,6 +361,9 @@ public class SupportBundleGenerator {
     return bundleStatus;
   }
 
+  /**
+   * valid if the namespace exists or not
+   */
   private NamespaceId validNamespace(NamespaceId namespace) throws Exception {
     if (!namespaceQueryClient.exists(namespace)) {
       throw new NamespaceNotFoundException(namespace);
@@ -329,6 +372,9 @@ public class SupportBundleGenerator {
     return namespace;
   }
 
+  /**
+   * Collect single support bundle task status
+   */
   private SupportBundleTaskReportStatus collectSupportBundleTaskStatus(
     Set<SupportBundleTaskStatus> supportBundleTaskStatusSet) {
     CollectionState systemLogTaskStatus = CollectionState.INVALID;
@@ -370,9 +416,7 @@ public class SupportBundleGenerator {
           break;
       }
     }
-    SupportBundleTaskReportStatus taskReportStatus =
-      new SupportBundleTaskReportStatus(systemLogTaskStatus, pipelineInfoTaskStatus, runtimeInfoTaskStatus,
-                                      runtimeLogTaskStatus, vmInfoTaskStatus);
-    return taskReportStatus;
+    return new SupportBundleTaskReportStatus(systemLogTaskStatus, pipelineInfoTaskStatus, runtimeInfoTaskStatus,
+                                             runtimeLogTaskStatus, vmInfoTaskStatus);
   }
 }

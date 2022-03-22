@@ -48,8 +48,4 @@ public class SupportBundleOperationStatus {
     this.bundleStatus = bundleStatus;
     this.taskReportStatus = taskReportStatus;
   }
-
-  public CollectionState getBundleStatus() {
-    return bundleStatus;
-  }
 }

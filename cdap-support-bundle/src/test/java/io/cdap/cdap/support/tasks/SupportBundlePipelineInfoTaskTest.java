@@ -55,7 +55,6 @@ import io.cdap.cdap.support.task.factory.SupportBundleTaskFactory;
 import io.cdap.common.http.HttpResponse;
 import org.apache.twill.api.RunId;
 import org.iq80.leveldb.shaded.guava.util.concurrent.MoreExecutors;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -63,7 +62,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -81,7 +79,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class SupportBundlePipelineInfoTaskTest extends SupportBundleTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(SupportBundlePipelineInfoTaskTest.class);
-  private static final NamespaceId NAMESPACE = new NamespaceId("testSupportPipeline");
+  private static final NamespaceId NAMESPACE = TEST_NAMESPACE_META1.getNamespaceId();
 
   private static CConfiguration configuration;
   private static Store store;
@@ -114,12 +112,6 @@ public class SupportBundlePipelineInfoTaskTest extends SupportBundleTestBase {
     workflowName = AppWithWorkflow.SampleWorkflow.NAME;
     application = AppWithWorkflow.NAME;
     programType = ProgramType.valueOfCategoryName("workflows");
-    createNamespace(NAMESPACE);
-  }
-
-  @After
-  public void cleanup() throws IOException {
-    deleteNamespace(NAMESPACE);
   }
 
   //Contains two sub-task supportBundleRuntimeInfo and supportBundlePipelineRunLog

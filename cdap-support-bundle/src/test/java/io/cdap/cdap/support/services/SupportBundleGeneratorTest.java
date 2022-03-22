@@ -69,7 +69,7 @@ import java.util.concurrent.TimeUnit;
 public class SupportBundleGeneratorTest extends SupportBundleTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(SupportBundleGeneratorTest.class);
   private static final Gson GSON = new GsonBuilder().create();
-  private static final NamespaceId NAMESPACE = new NamespaceId("testSupportGenerator");
+  private static final NamespaceId NAMESPACE = TEST_NAMESPACE_META1.getNamespaceId();
 
   private static SupportBundleGenerator supportBundleGenerator;
   private static CConfiguration cConf;
@@ -86,13 +86,11 @@ public class SupportBundleGeneratorTest extends SupportBundleTestBase {
     store = injector.getInstance(DefaultStore.class);
 
     executorService = Executors.newFixedThreadPool(cConf.getInt(Constants.SupportBundle.MAX_THREADS));
-    createNamespace(NAMESPACE);
   }
 
   @AfterClass
   public static void shutdown() throws IOException {
     executorService.shutdownNow();
-    deleteNamespace(NAMESPACE);
   }
 
   @Test

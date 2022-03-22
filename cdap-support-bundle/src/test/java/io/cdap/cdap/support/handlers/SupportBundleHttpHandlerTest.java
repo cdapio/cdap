@@ -27,9 +27,7 @@ import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -44,17 +42,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class SupportBundleHttpHandlerTest extends SupportBundleTestBase {
 
-  private static final NamespaceId NAMESPACE = new NamespaceId("testSupportHandler");
-
-  @Before
-  public void setup() throws Exception {
-    createNamespace(NAMESPACE);
-  }
-
-  @After
-  public void cleanup() throws IOException {
-    deleteNamespace(NAMESPACE);
-  }
+  private static final NamespaceId NAMESPACE = TEST_NAMESPACE_META1.getNamespaceId();
 
   @Test
   public void testCreateSupportBundleWithValidNamespace() throws Exception {
