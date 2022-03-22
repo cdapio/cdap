@@ -52,34 +52,66 @@ import javax.inject.Inject;
  */
 public class ProvisionerNotifier {
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
-  private final TopicId topic;
+  private final TopicId provisionPendingTopic;
+  private final TopicId programStatusTopic;
   private final RetryStrategy retryStrategy;
   private final MessagingService messagingService;
 
   @Inject
   ProvisionerNotifier(CConfiguration cConf, MessagingService messagingService) {
-    this.topic = NamespaceId.SYSTEM.topic(cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC));
+    this.provisionPendingTopic =
+      NamespaceId.SYSTEM.topic(cConf.get(Constants.AppFabric.PROVISION_PENDING_EVENT_TOPIC));
+    this.programStatusTopic = NamespaceId.SYSTEM.topic(cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC));
     this.retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.program.state.");
     this.messagingService = messagingService;
   }
 
+  public void initialize(ProgramRunId programRunId, ProgramOptions programOptions,
+                         ProgramDescriptor programDescriptor, String userId) {
+    publish(programStatusTopic, ImmutableMap.<String, String>builder()
+      .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
+      .put(ProgramOptionConstants.PROGRAM_DESCRIPTOR, GSON.toJson(programDescriptor))
+      .put(ProgramOptionConstants.USER_ID, userId)
+      .put(ProgramOptionConstants.CLUSTER_STATUS, ProgramRunClusterStatus.INITIALIZING.name())
+      .put(ProgramOptionConstants.DEBUG_ENABLED, String.valueOf(programOptions.isDebug()))
+      .put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(programOptions.getUserArguments().asMap()))
+      .put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(programOptions.getArguments().asMap()))
+      .put(ProgramOptionConstants.ARTIFACT_ID, GSON.toJson(programDescriptor.getArtifactId().toApiArtifactId()))
+      .build());
+  }
+
+
+  public void enqueue(ProgramRunId programRunId, ProgramOptions programOptions,
+                      ProgramDescriptor programDescriptor, String userId) {
+    publish(provisionPendingTopic, ImmutableMap.<String, String>builder()
+      .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
+      .put(ProgramOptionConstants.PROGRAM_DESCRIPTOR, GSON.toJson(programDescriptor))
+      .put(ProgramOptionConstants.USER_ID, userId)
+      .put(ProgramOptionConstants.CLUSTER_STATUS, ProgramRunClusterStatus.ENQUEUED.name())
+      .put(ProgramOptionConstants.DEBUG_ENABLED, String.valueOf(programOptions.isDebug()))
+      .put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(programOptions.getUserArguments().asMap()))
+      .put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(programOptions.getArguments().asMap()))
+      .put(ProgramOptionConstants.ARTIFACT_ID, GSON.toJson(programDescriptor.getArtifactId().toApiArtifactId()))
+      .build());
+  }
+
   public void provisioning(ProgramRunId programRunId, ProgramOptions programOptions,
                            ProgramDescriptor programDescriptor, String userId) {
-    publish(ImmutableMap.<String, String>builder()
-              .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
-              .put(ProgramOptionConstants.PROGRAM_DESCRIPTOR, GSON.toJson(programDescriptor))
-              .put(ProgramOptionConstants.USER_ID, userId)
-              .put(ProgramOptionConstants.CLUSTER_STATUS, ProgramRunClusterStatus.PROVISIONING.name())
-              .put(ProgramOptionConstants.DEBUG_ENABLED, String.valueOf(programOptions.isDebug()))
-              .put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(programOptions.getUserArguments().asMap()))
-              .put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(programOptions.getArguments().asMap()))
-              .put(ProgramOptionConstants.ARTIFACT_ID, GSON.toJson(programDescriptor.getArtifactId().toApiArtifactId()))
-              .build());
+    publish(programStatusTopic, ImmutableMap.<String, String>builder()
+      .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
+      .put(ProgramOptionConstants.PROGRAM_DESCRIPTOR, GSON.toJson(programDescriptor))
+      .put(ProgramOptionConstants.USER_ID, userId)
+      .put(ProgramOptionConstants.CLUSTER_STATUS, ProgramRunClusterStatus.PROVISIONING.name())
+      .put(ProgramOptionConstants.DEBUG_ENABLED, String.valueOf(programOptions.isDebug()))
+      .put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(programOptions.getUserArguments().asMap()))
+      .put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(programOptions.getArguments().asMap()))
+      .put(ProgramOptionConstants.ARTIFACT_ID, GSON.toJson(programDescriptor.getArtifactId().toApiArtifactId()))
+      .build());
   }
 
   public void provisioned(ProgramRunId programRunId, ProgramOptions programOptions, ProgramDescriptor programDescriptor,
                           String userId, Cluster cluster, URI secureKeysDir) {
-    Map<String, String> properties = ImmutableMap.<String, String>builder()
+    publish(programStatusTopic, ImmutableMap.<String, String>builder()
       .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
       .put(ProgramOptionConstants.PROGRAM_DESCRIPTOR, GSON.toJson(programDescriptor))
       .put(ProgramOptionConstants.USER_ID, userId)
@@ -89,13 +121,11 @@ public class ProvisionerNotifier {
       .put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(programOptions.getUserArguments().asMap()))
       .put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(programOptions.getArguments().asMap()))
       .put(ProgramOptionConstants.SECURE_KEYS_DIR, GSON.toJson(secureKeysDir))
-      .build();
-
-    publish(properties);
+      .build());
   }
 
   public void deprovisioning(ProgramRunId programRunId) {
-    publish(ImmutableMap.of(
+    publish(programStatusTopic, ImmutableMap.of(
       ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId),
       ProgramOptionConstants.CLUSTER_STATUS, ProgramRunClusterStatus.DEPROVISIONING.name()));
   }
@@ -106,7 +136,7 @@ public class ProvisionerNotifier {
 
   // this time stamp is in unit MILLISECOND
   public void deprovisioned(ProgramRunId programRunId, long endTimestamp) {
-    publish(ImmutableMap.of(
+    publish(programStatusTopic, ImmutableMap.of(
       ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId),
       ProgramOptionConstants.CLUSTER_STATUS, ProgramRunClusterStatus.DEPROVISIONED.name(),
       ProgramOptionConstants.CLUSTER_END_TIME, String.valueOf(endTimestamp)));
@@ -118,14 +148,14 @@ public class ProvisionerNotifier {
 
   // this time stamp is in unit MILLISECOND
   public void orphaned(ProgramRunId programRunId, long endTimestamp) {
-    publish(ImmutableMap.of(
+    publish(programStatusTopic, ImmutableMap.of(
       ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId),
       ProgramOptionConstants.CLUSTER_STATUS, ProgramRunClusterStatus.ORPHANED.name(),
       ProgramOptionConstants.CLUSTER_END_TIME, String.valueOf(endTimestamp)));
   }
 
-  private void publish(Map<String, String> properties) {
-    final StoreRequest storeRequest = StoreRequestBuilder.of(topic)
+  private void publish(TopicId topicId, Map<String, String> properties) {
+    final StoreRequest storeRequest = StoreRequestBuilder.of(topicId)
       .addPayload(GSON.toJson(new Notification(Notification.Type.PROGRAM_STATUS, properties)))
       .build();
     Retries.supplyWithRetries(

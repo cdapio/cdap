@@ -556,7 +556,7 @@ public class ProgramLifecycleService {
       LOG.info("Attempt to run {} program {} as user {} with arguments {}", programId.getType(), programId.getProgram(),
                authenticationContext.getPrincipal().getName(), userArgs);
 
-      provisionerNotifier.provisioning(programRunId, programOptions, programDescriptor, userId);
+      provisionerNotifier.initialize(programRunId, programOptions, programDescriptor, userId);
       done = true;
     } finally {
       if (!done) {

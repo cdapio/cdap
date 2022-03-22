@@ -105,6 +105,10 @@ public class RunRecordMonitorService extends AbstractScheduledService {
     return executor;
   }
 
+  public Counter getLaunchingAndRunningCounts() {
+    return new Counter(0, getProgramLaunchingCount(), getProgramsRunningCount());
+  }
+
   /**
    * Add a new in-flight launch request and return total number of launching and running programs.
    *
@@ -125,7 +129,7 @@ public class RunRecordMonitorService extends AbstractScheduledService {
     int runningCount = getProgramsRunningCount();
 
     LOG.info("Counter has {} concurrent launching and {} running programs.", launchingCount, runningCount);
-    return new Counter(launchingCount, runningCount);
+    return new Counter(0, launchingCount, runningCount);
   }
 
   /**
@@ -216,6 +220,10 @@ public class RunRecordMonitorService extends AbstractScheduledService {
       .count();
   }
 
+  private int getProgramLaunchingCount() {
+    return launchingQueue.size();
+  }
+
   private boolean isRunning(ProgramRunStatus status) {
     if (status == ProgramRunStatus.RUNNING
       || status == ProgramRunStatus.SUSPENDED
@@ -226,7 +234,9 @@ public class RunRecordMonitorService extends AbstractScheduledService {
     return false;
   }
 
-  class Counter {
+  public class Counter {
+    private final int launchingPendingCount;
+
     /**
      * Total number of launch requests that have been accepted but still missing in metadata store +
      * total number of run records with {@link ProgramRunStatus#PENDING} status +
@@ -241,9 +251,14 @@ public class RunRecordMonitorService extends AbstractScheduledService {
      */
     private final int runningCount;
 
-    Counter(int launchingCount, int runningCount) {
+    Counter(int launchingPendingCount, int launchingCount, int runningCount) {
+      this.launchingPendingCount = launchingPendingCount;
       this.launchingCount = launchingCount;
       this.runningCount = runningCount;
+    }
+
+    public int getLaunchingPendingCount() {
+      return launchingPendingCount;
     }
 
     public int getLaunchingCount() {
