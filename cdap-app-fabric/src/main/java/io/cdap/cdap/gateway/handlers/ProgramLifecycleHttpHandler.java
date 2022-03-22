@@ -300,7 +300,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @QueryParam("graceful") String gracefulShutdownSecs) throws Exception {
     ProgramType programType = getProgramType(type);
     ProgramId program = new ProgramId(namespaceId, appId, programType, programId);
-    int gracefulShutdownSecsInt;
+    Integer gracefulShutdownSecsInt;
     try {
       gracefulShutdownSecsInt = validateAndGetGracefulShutdownSecsInt(gracefulShutdownSecs);
     } catch (IllegalArgumentException e) {
@@ -316,9 +316,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
-  private int validateAndGetGracefulShutdownSecsInt(String gracefulShutdownSecs) {
+  @Nullable
+  private Integer validateAndGetGracefulShutdownSecsInt(@Nullable String gracefulShutdownSecs) {
     try {
-      if (gracefulShutdownSecs == null || gracefulShutdownSecs.isEmpty()) {
+      if (gracefulShutdownSecs == null) {
+        return null;
+      }
+      if (gracefulShutdownSecs.isEmpty()) {
         return Integer.parseInt(String.valueOf(Integer.MAX_VALUE));
       }
       int gracefulShutdownSecsInt = Integer.parseInt(gracefulShutdownSecs);
@@ -1304,7 +1308,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void stopPrograms(FullHttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId,
                            @QueryParam("graceful") String gracefulShutdownSecs) throws Exception {
-    int gracefulShutdownSecsInt;
+    Integer gracefulShutdownSecsInt;
     try {
       gracefulShutdownSecsInt = validateAndGetGracefulShutdownSecsInt(gracefulShutdownSecs);
     } catch (IllegalArgumentException e) {
