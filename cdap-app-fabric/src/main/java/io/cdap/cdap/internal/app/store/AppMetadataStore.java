@@ -572,6 +572,8 @@ public class AppMetadataStore {
       .setProfileId(profileId.get())
       .setPeerName(systemArgs.get(ProgramOptionConstants.PEER_NAME))
       .setPrincipal(systemArgs.get(ProgramOptionConstants.PRINCIPAL))
+      .setSourceId(sourceId)
+      .setArtifactId(artifactId)
       .build();
     writeNewRunRecord(meta, TYPE_RUN_RECORD_ACTIVE);
     LOG.trace("Recorded {} for program {}", ProgramRunClusterStatus.PROVISIONING, programRunId);
