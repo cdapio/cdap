@@ -41,6 +41,8 @@ import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data.runtime.TransactionExecutorModule;
+import io.cdap.cdap.internal.app.store.StoreProgramRunRecordFetcher;
+import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.proto.id.InstanceId;
@@ -139,6 +141,8 @@ public class TetheringClientHandlerTest {
           expose(MetricsCollectionService.class);
           bind(ProgramStateWriter.class).to(NoOpProgramStateWriter.class).in(Scopes.SINGLETON);
           expose(ProgramStateWriter.class);
+          bind(ProgramRunRecordFetcher.class).to(StoreProgramRunRecordFetcher.class).in(Scopes.SINGLETON);
+          expose(ProgramRunRecordFetcher.class);
         }
       });
     tetheringStore = new TetheringStore(injector.getInstance(TransactionRunner.class));
@@ -199,6 +203,8 @@ public class TetheringClientHandlerTest {
 
     tetheringAgentService = new TetheringAgentService(cConf, injector.getInstance(TransactionRunner.class),
                                                       tetheringStore, injector.getInstance(ProgramStateWriter.class),
+                                                      messagingService,
+                                                      injector.getInstance(ProgramRunRecordFetcher.class),
                                                       injector.getInstance(RemoteAuthenticator.class));
     Assert.assertEquals(Service.State.RUNNING, tetheringAgentService.startAndWait());
   }

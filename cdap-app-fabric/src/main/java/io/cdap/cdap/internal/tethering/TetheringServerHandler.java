@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.tethering;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.Message;
 import io.cdap.cdap.api.messaging.MessageFetcher;
@@ -31,6 +32,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
+import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
@@ -39,23 +41,24 @@ import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HandlerContext;
 import io.cdap.http.HttpResponder;
+import io.netty.buffer.ByteBufInputStream;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import javax.inject.Inject;
-import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
 
 /**
  * {@link io.cdap.http.HttpHandler} to manage tethering server v3 REST APIs
@@ -64,12 +67,12 @@ import javax.ws.rs.QueryParam;
 public class TetheringServerHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(TetheringServerHandler.class);
   private static final Gson GSON = new GsonBuilder().create();
-  private static final int MAX_CHUNK_SIZE = 4096;
   private final CConfiguration cConf;
   private final TetheringStore store;
   private final MessagingService messagingService;
   private final MultiThreadMessagingContext messagingContext;
   private final String topicPrefix;
+  private final String programStatusTopic;
   private final ContextAccessEnforcer contextAccessEnforcer;
 
   @Inject
@@ -80,6 +83,7 @@ public class TetheringServerHandler extends AbstractHttpHandler {
     this.messagingService = messagingService;
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.topicPrefix = cConf.get(Constants.Tethering.TOPIC_PREFIX);
+    this.programStatusTopic = cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC);
     this.contextAccessEnforcer = contextAccessEnforcer;
   }
 
@@ -89,16 +93,16 @@ public class TetheringServerHandler extends AbstractHttpHandler {
   }
 
   /**
-   * Sends control commands to the client.
+   * Sends control commands to the client and receives program status updates from the client.
    */
-  @GET
+  @POST
   @Path("/tethering/controlchannels/{peer}")
-  public void connectControlChannel(FullHttpRequest request, HttpResponder responder, @PathParam("peer") String peer,
-                                    @QueryParam("messageId") String messageId)
+  public void connectControlChannel(FullHttpRequest request, HttpResponder responder, @PathParam("peer") String peer)
     throws IOException, NotImplementedException, PeerNotFoundException, ForbiddenException, BadRequestException {
     checkTetheringServerEnabled();
     store.updatePeerTimestamp(peer);
     TetheringStatus tetheringStatus = store.getPeer(peer).getTetheringStatus();
+    String messageId = processRequestContent(request);
     if (tetheringStatus == TetheringStatus.PENDING) {
       throw new PeerNotFoundException(String.format("Peer %s not found", peer));
     } else if (tetheringStatus == TetheringStatus.REJECTED) {
@@ -221,5 +225,31 @@ public class TetheringServerHandler extends AbstractHttpHandler {
                newStatus, peerInfo.getTetheringStatus());
     }
     responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  /**
+   * Processes and publishes the list of tethering program updates received from the client
+   * Returns lastMessageId sent by the client
+   */
+  private String processRequestContent(FullHttpRequest request) throws BadRequestException {
+    String lastControlMessageId;
+    List<Notification> notificationList;
+    try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()), StandardCharsets.UTF_8)) {
+      TetheringControlChannelRequest content = GSON.fromJson(reader, TetheringControlChannelRequest.class);
+      lastControlMessageId = content.getLastControlMessageId();
+      notificationList = content.getNotificationList();
+    } catch (JsonSyntaxException | IOException e) {
+      throw new BadRequestException("Unable to parse request: " + e.getMessage(), e);
+    }
+
+    try {
+      for (Notification notification : notificationList) {
+        messagingContext.getMessagePublisher().publish(NamespaceId.SYSTEM.getNamespace(), programStatusTopic,
+                                                       GSON.toJson(notification));
+      }
+    } catch (TopicNotFoundException | IOException e) {
+      throw new BadRequestException("Unable to publish program status update", e);
+    }
+    return lastControlMessageId;
   }
 }

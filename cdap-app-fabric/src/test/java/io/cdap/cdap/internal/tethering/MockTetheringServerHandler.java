@@ -21,16 +21,14 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 
 import java.nio.charset.StandardCharsets;
-import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
 
 /**
  * Mock tethering server handler used in unit tests.
@@ -41,18 +39,19 @@ public class MockTetheringServerHandler extends AbstractHttpHandler {
   private HttpResponseStatus responseStatus = HttpResponseStatus.OK;
   private boolean tetheringCreated;
 
-  @GET
+  @POST
   @Path("/tethering/controlchannels/{peer}")
-  public void getControlChannels(HttpRequest request, HttpResponder responder,
-                                 @PathParam("peer") String peer,
-                                 @QueryParam("messageId") String messageId) {
+  public void getControlChannels(FullHttpRequest request, HttpResponder responder,
+                                 @PathParam("peer") String peer) {
     Assert.assertEquals(TetheringClientHandlerTest.CLIENT_INSTANCE, peer);
     if (responseStatus != HttpResponseStatus.OK) {
       responder.sendStatus(responseStatus);
       return;
     }
+    String content = request.content().toString(StandardCharsets.UTF_8);
+    TetheringControlChannelRequest body = GSON.fromJson(content, TetheringControlChannelRequest.class);
     TetheringControlMessage keepalive = new TetheringControlMessage(TetheringControlMessage.Type.KEEPALIVE);
-    TetheringControlResponse[] responses =  { new TetheringControlResponse(messageId, keepalive) };
+    TetheringControlResponse[] responses = {new TetheringControlResponse(body.getLastControlMessageId(), keepalive)};
     responder.sendJson(responseStatus, GSON.toJson(responses, TetheringControlResponse[].class));
   }
 
