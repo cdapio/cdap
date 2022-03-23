@@ -226,12 +226,10 @@ public abstract class SupportBundleTestBase {
         throw new RuntimeException(e);
       }
     }
-    createNamespace(TEST_NAMESPACE_META1.getNamespaceId());
   }
 
   @AfterClass
   public static void afterClass() throws IOException {
-    deleteNamespace(TEST_NAMESPACE_META1.getNamespaceId());
     appFabricServer.stopAndWait();
     metricsCollectionService.stopAndWait();
     datasetService.stopAndWait();
@@ -378,11 +376,11 @@ public abstract class SupportBundleTestBase {
     return GSON.fromJson(response.getResponseBodyAsString(), LIST_RUN_RECORD_TYPE);
   }
 
-  protected static HttpResponse createNamespace(NamespaceId namespaceId) throws Exception {
+  protected HttpResponse createNamespace(NamespaceId namespaceId) throws Exception {
     return doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, namespaceId.getNamespace()), null);
   }
 
-  protected static HttpResponse deleteNamespace(NamespaceId namespaceId) throws IOException {
+  protected HttpResponse deleteNamespace(NamespaceId namespaceId) throws IOException {
     String path = String.format("%s/unrecoverable/namespaces/%s",
                                 Constants.Gateway.API_VERSION_3, namespaceId.getNamespace());
     HttpRequest.Builder builder = HttpRequest.delete(getEndPoint(path).toURL());

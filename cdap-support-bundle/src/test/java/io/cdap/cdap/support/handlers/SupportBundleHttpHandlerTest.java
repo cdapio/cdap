@@ -27,7 +27,9 @@ import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -51,6 +53,16 @@ public class SupportBundleHttpHandlerTest extends SupportBundleTestBase {
 
     Assert.assertNotNull(bundleId);
     Assert.assertFalse(bundleId.isEmpty());
+  }
+
+  @Before
+  public void setup() throws Exception {
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, createNamespace(NAMESPACE).getResponseCode());
+  }
+
+  @After
+  public void cleanup() throws IOException {
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, deleteNamespace(NAMESPACE).getResponseCode());
   }
 
   /**

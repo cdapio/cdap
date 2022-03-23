@@ -45,8 +45,10 @@ import io.cdap.cdap.support.status.SupportBundleStatus;
 import io.cdap.cdap.support.status.SupportBundleTaskStatus;
 import io.cdap.common.http.HttpResponse;
 import org.apache.twill.api.RunId;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -55,6 +57,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -91,6 +94,16 @@ public class SupportBundleGeneratorTest extends SupportBundleTestBase {
   @AfterClass
   public static void shutdown() throws IOException {
     executorService.shutdownNow();
+  }
+
+  @Before
+  public void setupNamespace() throws Exception {
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, createNamespace(NAMESPACE).getResponseCode());
+  }
+
+  @After
+  public void cleanup() throws IOException {
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, deleteNamespace(NAMESPACE).getResponseCode());
   }
 
   @Test

@@ -226,7 +226,7 @@ public class SupportBundleGenerator {
       new DigestOutputStream(Files.newOutputStream(tmpPath, StandardOpenOption.TRUNCATE_EXISTING), digest))) {
       if (bundleRequestFileList.getFiles().isEmpty()) {
         // If file path is empty string which means we want to zip the whole bundle id folder
-        BundleJarUtil.addToArchive(uuidFile, zipOut);
+        BundleJarUtil.addToArchive(uuidFile, true, zipOut);
       } else {
         for (String filePath : bundleRequestFileList.getFiles()) {
           File requestFile = new File(uuidFile, filePath);

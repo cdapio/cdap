@@ -46,11 +46,15 @@ import io.cdap.cdap.support.task.factory.SupportBundleTaskFactory;
 import io.cdap.common.http.HttpResponse;
 import org.apache.twill.api.RunId;
 import org.iq80.leveldb.shaded.guava.util.concurrent.MoreExecutors;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -92,6 +96,16 @@ public class SupportBundleJobTest extends SupportBundleTestBase {
     programType = ProgramType.valueOfCategoryName("workflows");
     RunId workflowRunId = RunIds.generate(startTime);
     runId = workflowRunId.getId();
+  }
+
+  @Before
+  public void setupNamespace() throws Exception {
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, createNamespace(NAMESPACE).getResponseCode());
+  }
+
+  @After
+  public void cleanup() throws IOException {
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, deleteNamespace(NAMESPACE).getResponseCode());
   }
 
   @Test

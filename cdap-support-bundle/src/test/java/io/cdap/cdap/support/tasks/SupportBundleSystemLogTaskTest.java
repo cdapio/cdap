@@ -40,11 +40,15 @@ import io.cdap.cdap.support.metadata.RemoteMonitorServicesFetcher;
 import io.cdap.cdap.support.task.SupportBundleSystemLogTask;
 import io.cdap.common.http.HttpResponse;
 import org.apache.twill.api.RunId;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -82,6 +86,16 @@ public class SupportBundleSystemLogTaskTest extends SupportBundleTestBase {
                                                    file -> !file.isHidden() && !file.getParentFile().isHidden());
 
     Assert.assertEquals(9, systemLogFiles.size());
+  }
+
+  @Before
+  public void setupNamespace() throws Exception {
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, createNamespace(NAMESPACE).getResponseCode());
+  }
+
+  @After
+  public void cleanup() throws IOException {
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, deleteNamespace(NAMESPACE).getResponseCode());
   }
 
   private String generateWorkflowLog() throws Exception {

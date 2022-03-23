@@ -5042,7 +5042,7 @@
 
   <property>
     <name>support.bundle.temp.dir</name>
-    <value>${local.data.dir}/supportBundleData</value>
+    <value>${local.data.dir}/support/tmp</value>
     <description>
       Support Bundle Temp directory for storing the support bundle zip file and use that generate download link
     </description>
