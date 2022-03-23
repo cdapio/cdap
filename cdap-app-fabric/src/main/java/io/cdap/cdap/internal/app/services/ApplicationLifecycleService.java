@@ -203,19 +203,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   }
 
   /**
-   * Get all applications in the specified namespace
-   *
-   * @param namespace the namespace to get apps from
-   * @return list of all applications in the namespace that satisfy the specified predicate
-   */
-  public List<ApplicationDetail> getApps(NamespaceId namespace) throws Exception {
-
-    List<ApplicationDetail> result = new ArrayList<>();
-    scanApplications(namespace, Collections.emptyList(), d -> result.add(d));
-    return result;
-  }
-
-  /**
    * Scans all applications in the specified namespace, filtered to only include applications with an artifact name
    * in the set of specified names and an artifact version equal to the specified version. If the specified set
    * is empty, no filtering is performed on artifact name. If the specified version is null, no filtering is done

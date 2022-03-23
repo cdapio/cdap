@@ -16,10 +16,12 @@
 
 package io.cdap.cdap.gateway.handlers;
 
+import com.google.common.collect.Iterables;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
+import io.cdap.cdap.app.store.ApplicationFilter;
 import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -29,8 +31,11 @@ import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
@@ -38,9 +43,14 @@ import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 
 /**
@@ -61,6 +71,8 @@ public class AppLifecycleHttpHandlerInternal extends AbstractAppFabricHttpHandle
   private final NamespacePathLocator namespacePathLocator;
   private final ApplicationLifecycleService applicationLifecycleService;
   private final File tmpDir;
+  public static final String APP_LIST_PAGINATED_KEY = "applications";
+
 
   @Inject
   AppLifecycleHttpHandlerInternal(CConfiguration configuration,
@@ -83,23 +95,73 @@ public class AppLifecycleHttpHandlerInternal extends AbstractAppFabricHttpHandle
    * @param request   {@link HttpRequest}
    * @param responder {@link HttpResponse}
    * @param namespace the namespace to get all application details
+   * @param pageToken the token identifier for the current page requested in a paginated request
+   * @param pageSize  the number of application details returned in a paginated request
+   * @param orderBy the sorting order in which results are returned, ASC for ascending, DESC for descending
+   * @param nameFilter the filters that must be satisfied  by ApplicationDetail in order to be returned
    * @throws Exception if namespace doesn't exists or failed to get all application details
+   * TODO: CDAP-18224 - the below code is common with AppLifeCycleHttpHandler
+   * TODO: both these classes will be refactored in a separate PR
    */
   @GET
   @Path("/apps")
   public void getAllAppDetails(HttpRequest request, HttpResponder responder,
-                               @PathParam("namespace-id") String namespace) throws Exception {
+                               @PathParam("namespace-id") String namespace,
+                               @QueryParam("pageToken") String pageToken,
+                               @QueryParam("pageSize") Integer pageSize,
+                               @QueryParam("orderBy") SortOrder orderBy,
+                               @QueryParam("nameFilter") String nameFilter)
+      throws Exception {
+
     NamespaceId namespaceId = new NamespaceId(namespace);
     if (!namespaceQueryAdmin.exists(namespaceId)) {
       throw new NamespaceNotFoundException(namespaceId);
     }
 
-    ScanApplicationsRequest scanApplicationsRequest =
-        ScanApplicationsRequest.builder().setNamespaceId(namespaceId).build();
-    JsonWholeListResponder.respond(GSON, responder,
-        jsonListResponder -> applicationLifecycleService.scanApplications(scanApplicationsRequest,
-            d -> jsonListResponder.send(d))
-        );
+    if (Optional.ofNullable(pageSize).orElse(0) != 0) {
+      JsonPaginatedListResponder.respond(GSON, responder, APP_LIST_PAGINATED_KEY, jsonListResponder -> {
+        AtomicReference<ApplicationRecord> lastRecord = new AtomicReference<>(null);
+        ScanApplicationsRequest scanRequest = getScanRequest(namespace, pageToken, pageSize,
+            orderBy, nameFilter);
+        boolean pageLimitReached = applicationLifecycleService.scanApplications(scanRequest, appDetail -> {
+          ApplicationRecord record = new ApplicationRecord(appDetail);
+          jsonListResponder.send(appDetail);
+          lastRecord.set(record);
+        });
+        ApplicationRecord record = lastRecord.get();
+        return !pageLimitReached  || record == null ? null :
+            record.getName() + EntityId.IDSTRING_PART_SEPARATOR + record.getAppVersion();
+      });
+    } else {
+      ScanApplicationsRequest scanRequest = getScanRequest(namespace, pageToken, null,
+         orderBy, nameFilter);
+      JsonWholeListResponder.respond(GSON, responder,
+          jsonListResponder ->  applicationLifecycleService.scanApplications(scanRequest,
+              d -> jsonListResponder.send(d))
+      );
+    }
+  }
+
+  private ScanApplicationsRequest getScanRequest(String namespaceId, String pageToken,
+      Integer pageSize, SortOrder orderBy, String nameFilter) {
+    ScanApplicationsRequest.Builder builder = ScanApplicationsRequest.builder();
+    builder.setNamespaceId(new NamespaceId(namespaceId));
+    if (pageSize != null) {
+      builder.setLimit(pageSize);
+    }
+    if (nameFilter != null && !nameFilter.isEmpty()) {
+      builder.addFilter(new ApplicationFilter.ApplicationIdContainsFilter(nameFilter));
+    }
+    if (orderBy != null) {
+      builder.setSortOrder(orderBy);
+    }
+    if (pageToken != null && !pageToken.isEmpty()) {
+      builder.setScanFrom(ApplicationId.fromIdParts(Iterables.concat(
+          Collections.singleton(namespaceId),
+          Arrays.asList(EntityId.IDSTRING_PART_SEPARATOR_PATTERN.split(pageToken))
+      )));
+    }
+    return builder.build();
   }
 
   /**

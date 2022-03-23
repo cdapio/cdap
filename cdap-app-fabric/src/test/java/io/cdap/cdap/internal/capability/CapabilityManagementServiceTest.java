@@ -41,13 +41,13 @@ import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
-import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import jersey.repackaged.com.google.common.base.Throwables;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.After;
@@ -103,14 +103,26 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
   @After
   public void reset() throws Exception {
     // Reset all relevant stores.
-    for (ApplicationDetail appDetail : applicationLifecycleService.getApps(NamespaceId.SYSTEM)) {
-      programLifecycleService.stopAll(
-        new ApplicationId(NamespaceId.SYSTEM.getNamespace(), appDetail.getName(), appDetail.getAppVersion()));
-    }
-    for (ApplicationDetail appDetail : applicationLifecycleService.getApps(NamespaceId.DEFAULT)) {
-      programLifecycleService.stopAll(
-        new ApplicationId(NamespaceId.DEFAULT.getNamespace(), appDetail.getName(), appDetail.getAppVersion()));
-    }
+    applicationLifecycleService.scanApplications(NamespaceId.SYSTEM, Collections.emptyList(),
+        d -> {
+          try {
+            programLifecycleService.stopAll(
+                new ApplicationId(NamespaceId.SYSTEM.getNamespace(), d.getName(), d.getAppVersion()));
+          } catch (Exception e) {
+            Throwables.propagate(e);
+          }
+        });
+
+    applicationLifecycleService.scanApplications(NamespaceId.DEFAULT, Collections.emptyList(),
+        d -> {
+          try {
+            programLifecycleService.stopAll(
+                new ApplicationId(NamespaceId.DEFAULT.getNamespace(), d.getName(), d.getAppVersion()));
+          } catch (Exception e) {
+            Throwables.propagate(e);
+          }
+        });
+
     applicationLifecycleService.removeAll(NamespaceId.SYSTEM);
     applicationLifecycleService.removeAll(NamespaceId.DEFAULT);
     artifactRepository.clear(NamespaceId.SYSTEM);
