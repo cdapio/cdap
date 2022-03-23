@@ -68,7 +68,6 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.types.StructType;
-import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,6 +86,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -104,8 +105,7 @@ public class BatchSQLEngineAdapter implements Closeable {
   private final SQLEngine<?, ?, ?, ?> sqlEngine;
   private final Metrics metrics;
   private final Map<String, StageStatisticsCollector> statsCollectors;
-  private final ExecutorService executorService =
-    Executors.newCachedThreadPool(Threads.createDaemonThreadFactory("batch-sql-engine-adapter"));
+  private final ExecutorService executorService;
   private final Map<SQLEngineJobKey, SQLEngineJob<?>> jobs;
 
   public BatchSQLEngineAdapter(SQLEngine<?, ?, ?, ?> sqlEngine,
@@ -119,6 +119,11 @@ public class BatchSQLEngineAdapter implements Closeable {
     this.metrics = sec.getMetrics();
     this.statsCollectors = statsCollectors;
     this.jobs = new HashMap<>();
+    // Initialize executor service using thread factory which ensures current class loader gets supplied to all newly
+    // created threads.
+    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+    ThreadFactory threadFactory = new SQLEngineAdapterThreadFactory(classLoader);
+    this.executorService = Executors.newCachedThreadPool(threadFactory);
   }
 
   /**
@@ -806,5 +811,29 @@ public class BatchSQLEngineAdapter implements Closeable {
 
       return writeResult.isSuccessful();
     });
+  }
+
+  /**
+   * Thread factory for SQL Engine Tasks. This thread factory ensures the parent context's classloader gets passed
+   * into the child threads.
+   */
+  private class SQLEngineAdapterThreadFactory implements ThreadFactory {
+    private final AtomicLong threadCounter;
+    private final ClassLoader classLoader;
+    private static final String NAME_TEMPLATE = "batch-sql-engine-adapter-%d";
+
+    SQLEngineAdapterThreadFactory(ClassLoader classLoader) {
+      this.threadCounter = new AtomicLong(0L);
+      this.classLoader = classLoader;
+    }
+
+    @Override
+    public Thread newThread(Runnable r) {
+      Thread t = new Thread(r);
+      t.setDaemon(true);
+      t.setName(String.format(NAME_TEMPLATE, threadCounter.getAndIncrement()));
+      t.setContextClassLoader(classLoader);
+      return t;
+    }
   }
 }
