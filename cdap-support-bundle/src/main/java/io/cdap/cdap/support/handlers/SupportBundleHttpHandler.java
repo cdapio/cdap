@@ -109,7 +109,7 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
    * @param maxRunsPerProgram the max num of run log for each pipeline do they prefer
    */
   @POST
-  @Path("/support/bundle")
+  @Path("/support/bundles")
   public void createSupportBundle(HttpRequest request, HttpResponder responder,
                                   @Nullable @QueryParam("namespace") String namespace,
                                   @Nullable @QueryParam("application") String application,

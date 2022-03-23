@@ -17,6 +17,9 @@
 package io.cdap.cdap.support.lib;
 
 import io.cdap.cdap.support.status.CollectionState;
+import io.cdap.cdap.support.status.SupportBundleTaskStatus;
+
+import java.util.Set;
 
 /**
  * Return response for all individual support bundles status under the support bundle folder
@@ -39,13 +42,13 @@ import io.cdap.cdap.support.status.CollectionState;
 public class SupportBundleOperationStatus {
   private final String id;
   private final CollectionState bundleStatus;
-  private final SupportBundleTaskReportStatus taskReportStatus;
+  private final Set<SupportBundleTaskStatus> taskStatusSet;
 
   public SupportBundleOperationStatus(String id,
                                       CollectionState bundleStatus,
-                                      SupportBundleTaskReportStatus taskReportStatus) {
+                                      Set<SupportBundleTaskStatus> taskStatusSet) {
     this.id = id;
     this.bundleStatus = bundleStatus;
-    this.taskReportStatus = taskReportStatus;
+    this.taskStatusSet = taskStatusSet;
   }
 }

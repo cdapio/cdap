@@ -78,7 +78,7 @@ public class SupportBundleHttpHandlerTest extends SupportBundleTestBase {
       sep = "&";
     }
 
-    String path = String.format("%s/support/bundle%s", Constants.Gateway.API_VERSION_3, queryBuilder);
+    String path = String.format("%s/support/bundles%s", Constants.Gateway.API_VERSION_3, queryBuilder);
 
     HttpRequest request = HttpRequest.post(URIScheme.createURI(discoverable, path).toURL()).build();
     HttpResponse response = HttpRequests.execute(request, new DefaultHttpRequestConfig(false));

@@ -193,9 +193,8 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       // /v3/namespaces/{namespace-id}/data/datasets/{name}/properties
       // /v3/namespaces/{namespace-id}/data/datasets/{name}/admin/{method}
       return DATASET_MANAGER;
-    } else if (beginsWith(uriParts, "v3", "support", "bundle")
-      || beginsWith(uriParts, "v3", "support", "bundles")) {
-      // Support Bundle Handler Path /v3/support/bundle
+    } else if (beginsWith(uriParts, "v3", "support", "bundles")) {
+      // Support Bundle Handler Path /v3/support/bundles
       return SUPPORT_BUNDLE_SERVICE;
     } else if ((uriParts.length == 3) && uriParts[1].equals("metadata-internals")) {
       // we don't want to expose endpoints for direct metadata mutation from CDAP master

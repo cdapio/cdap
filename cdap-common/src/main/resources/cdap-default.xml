@@ -4986,7 +4986,7 @@
 
   <property>
     <name>support.bundle.local.data.dir</name>
-    <value>${local.data.dir}/support/bundle</value>
+    <value>${local.data.dir}/support/bundles</value>
     <description>
       Data directory for CDAP Support Bundle Local Sandbox
     </description>

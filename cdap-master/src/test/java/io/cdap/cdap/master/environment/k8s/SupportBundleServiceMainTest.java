@@ -33,7 +33,7 @@ public class SupportBundleServiceMainTest extends MasterServiceMainTestBase {
 
   @Test
   public void testSupportBundleService() throws Exception {
-    URL url = getRouterBaseURI().resolve("/v3/support/bundle").toURL();
+    URL url = getRouterBaseURI().resolve("/v3/support/bundles").toURL();
     HttpResponse response = HttpRequests.execute(HttpRequest.post(url).build(),
                                                  new DefaultHttpRequestConfig(false));
     Assert.assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
