@@ -609,12 +609,12 @@ public class AppMetadataStore {
 
     RunRecordDetail existing = getRun(programRunId);
     // for some reason, there is an existing run record.
-    if (existing != null) {
-      LOG.error("Ignoring unexpected request to record provisioning state for program run {} that has an existing "
-                  + "run record in run state {} and cluster state {}.",
-                programRunId, existing.getStatus(), existing.getCluster().getStatus());
-      return null;
-    }
+//    if (existing != null) {
+//      LOG.error("Ignoring unexpected request to record provisioning state for program run {} that has an existing "
+//                  + "run record in run state {} and cluster state {}.",
+//                programRunId, existing.getStatus(), existing.getCluster().getStatus());
+//      return null;
+//    }
 
     Optional<ProfileId> profileId = SystemArguments.getProfileIdFromArgs(programRunId.getNamespaceId(), systemArgs);
     if (!profileId.isPresent()) {
