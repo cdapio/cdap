@@ -225,6 +225,9 @@ public final class Constants {
     public static final String APP_SCHEDULER_QUEUE = "apps.scheduler.queue";
     public static final String STATUS_EVENT_FETCH_SIZE = "app.program.status.event.fetch.size";
     public static final String STATUS_EVENT_POLL_DELAY_MILLIS = "app.program.status.event.poll.delay.millis";
+    public static final String PROVISION_PENDING_EVENT_FETCH_SIZE = "app.program.provision.pending.event.fetch.size";
+    public static final String PROVISION_PENDING_POLL_DELAY_MILLIS =
+      "app.program.provision.pending.event.poll.delay.millis";
     public static final String MAPREDUCE_JOB_CLIENT_CONNECT_MAX_RETRIES = "mapreduce.jobclient.connect.max.retries";
     public static final String MAPREDUCE_INCLUDE_CUSTOM_CLASSES = "mapreduce.include.custom.format.classes";
     public static final String MAPREDUCE_STATUS_REPORT_INTERVAL_SECONDS = "mapreduce.status.report.interval.seconds";
@@ -249,6 +252,7 @@ public final class Constants {
       "app.program.yarn.attempt.failures.validity.interval";
 
     public static final String PROGRAM_TRANSACTION_CONTROL = "app.program.transaction.control";
+    public static final String PROGRAM_START_QUEUEING_ENABLED = "app.program.start.queueing.enabled";
     public static final String MAX_CONCURRENT_RUNS = "app.max.concurrent.runs";
     public static final String MAX_CONCURRENT_LAUNCHING = "app.max.concurrent.launching";
     public static final String DEFAULT_STOP_TIMEOUT_SECS = "app.program.stop.timeout.secs";
@@ -332,6 +336,8 @@ public final class Constants {
      * Topic name for publishing status transitioning events of program runs to the messaging system
      */
     public static final String PROGRAM_STATUS_EVENT_TOPIC = "program.status.event.topic";
+
+    public static final String PROVISION_PENDING_EVENT_TOPIC = "provision.pending.event.topic";
 
     /**
      * Topic name for publishing program status recording events to the messaging system

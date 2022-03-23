@@ -535,6 +535,51 @@ public class AppMetadataStore {
     }
   }
 
+  public RunRecordDetail recordProvisioningEnqueued(ProgramRunId programRunId, Map<String, String> runtimeArgs,
+                                                    Map<String, String> systemArgs, byte[] sourceId,
+                                                    @Nullable ArtifactId artifactId) throws IOException {
+    long startTs = RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS);
+    if (startTs == -1L) {
+      LOG.error("Ignoring unexpected request to record provisioning state for program run {} that does not have " +
+                  "a timestamp in the run id.", programRunId);
+      return null;
+    }
+
+    RunRecordDetail existing = getRun(programRunId);
+    // for some reason, there is an existing run record.
+    if (existing != null) {
+      LOG.error("Ignoring unexpected request to record provisioning state for program run {} that has an existing "
+                  + "run record in run state {} and cluster state {}.",
+                programRunId, existing.getStatus(), existing.getCluster().getStatus());
+      return null;
+    }
+
+    Optional<ProfileId> profileId = SystemArguments.getProfileIdFromArgs(programRunId.getNamespaceId(), systemArgs);
+    if (!profileId.isPresent()) {
+      LOG.error("Ignoring unexpected request to record provisioning state for program run {} that does not have "
+                  + "a profile assigned to it.", programRunId);
+      return null;
+    }
+
+    ProgramRunCluster cluster = new ProgramRunCluster(ProgramRunClusterStatus.ENQUEUED, null, null);
+    RunRecordDetail meta = RunRecordDetail.builder()
+      .setProgramRunId(programRunId)
+      .setStartTime(startTs)
+      .setStatus(ProgramRunStatus.PENDING)
+      .setProperties(getRecordProperties(systemArgs, runtimeArgs))
+      .setSystemArgs(systemArgs)
+      .setCluster(cluster)
+      .setProfileId(profileId.get())
+      .setPeerName(systemArgs.get(ProgramOptionConstants.PEER_NAME))
+      .setPrincipal(systemArgs.get(ProgramOptionConstants.PRINCIPAL))
+      .setSourceId(sourceId)
+      .setArtifactId(artifactId)
+      .build();
+    writeNewRunRecord(meta, TYPE_RUN_RECORD_ACTIVE);
+    LOG.trace("Recorded {} for program {}", ProgramRunClusterStatus.PROVISIONING, programRunId);
+    return meta;
+  }
+
   /**
    * Record that the program run is provisioning compute resources for the run. If the current status has
    * a higher source id, this call will be ignored.
@@ -564,12 +609,12 @@ public class AppMetadataStore {
 
     RunRecordDetail existing = getRun(programRunId);
     // for some reason, there is an existing run record.
-    if (existing != null) {
-      LOG.error("Ignoring unexpected request to record provisioning state for program run {} that has an existing "
-                  + "run record in run state {} and cluster state {}.",
-                programRunId, existing.getStatus(), existing.getCluster().getStatus());
-      return null;
-    }
+//    if (existing != null) {
+//      LOG.error("Ignoring unexpected request to record provisioning state for program run {} that has an existing "
+//                  + "run record in run state {} and cluster state {}.",
+//                programRunId, existing.getStatus(), existing.getCluster().getStatus());
+//      return null;
+//    }
 
     Optional<ProfileId> profileId = SystemArguments.getProfileIdFromArgs(programRunId.getNamespaceId(), systemArgs);
     if (!profileId.isPresent()) {

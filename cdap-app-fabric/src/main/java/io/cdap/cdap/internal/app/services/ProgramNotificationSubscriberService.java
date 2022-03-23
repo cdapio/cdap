@@ -164,7 +164,8 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         return;
       }
       try {
-        if (runRecordDetail.getStatus() == ProgramRunStatus.PENDING) {
+        if (runRecordDetail.getStatus() == ProgramRunStatus.PENDING &&
+          runRecordDetail.getCluster().getStatus() != ProgramRunClusterStatus.ENQUEUED) {
           runRecordMonitorService.addRequest(runRecordDetail.getProgramRunId());
         } else if (runRecordDetail.getStatus() == ProgramRunStatus.STARTING) {
           runRecordMonitorService.addRequest(runRecordDetail.getProgramRunId());
@@ -645,6 +646,13 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     ProgramDescriptor programDescriptor =
       GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR), ProgramDescriptor.class);
     switch (clusterStatus) {
+      case INITIALIZING:
+        appMetadataStore.recordProvisioningEnqueued(programRunId, programOptions.getUserArguments().asMap(),
+                                                    programOptions.getArguments().asMap(), messageIdBytes,
+                                                    programDescriptor.getArtifactId().toApiArtifactId());
+
+        provisionerNotifier.enqueue(programRunId, programOptions, programDescriptor, userId);
+        break;
       case PROVISIONING:
         appMetadataStore.recordProgramProvisioning(programRunId, programOptions.getUserArguments().asMap(),
                                                    programOptions.getArguments().asMap(), messageIdBytes,

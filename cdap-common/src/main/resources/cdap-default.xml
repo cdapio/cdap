@@ -481,6 +481,16 @@
   </property>
 
   <property>
+    <name>app.program.start.queueing.enabled</name>
+    <value>false</value>
+    <description>
+      Maximum number of concurrent launching runs allowed; set to -1 for unlimited.
+      Launching runs have an active run record with PENDING or STARTING status.
+    </description>
+  </property>
+
+
+  <property>
     <name>app.program.stop.timeout.secs</name>
     <value>180</value>
     <description>
@@ -798,6 +808,14 @@
   <property>
     <name>program.status.event.topic</name>
     <value>programstatusevent</value>
+    <description>
+      Topic name for publishing status transitioning events of program runs to the messaging system
+    </description>
+  </property>
+
+  <property>
+    <name>provision.pending.event.topic</name>
+    <value>provisionpendingevent</value>
     <description>
       Topic name for publishing status transitioning events of program runs to the messaging system
     </description>
@@ -2956,7 +2974,7 @@
 
   <property>
     <name>app.program.runtime.monitor.topics.configs</name>
-    <value>audit.topic,data.event.topic,metadata.messaging.topic,metrics.topic.prefix:${metrics.messaging.topic.num},program.status.event.topic,log.tms.topic.prefix:${log.publish.num.partitions}</value>
+    <value>audit.topic,data.event.topic,metadata.messaging.topic,metrics.topic.prefix:${metrics.messaging.topic.num},program.status.event.topic,provision.pending.event.topic,log.tms.topic.prefix:${log.publish.num.partitions}</value>
     <description>
       A comma-separated list of topic config to be monitored by runtime monitor
     </description>
