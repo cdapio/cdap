@@ -129,6 +129,8 @@ public class ProgramStopSubscriberService extends AbstractNotificationSubscriber
     RunRecordDetail runRecord = store.getRun(programRunId);
     if (runRecord == null) {
       // shouldn't happen, but nothing to do but move on
+      LOG.warn("Ignoring stop message for application {} program {} run {} because the run record could not be found.",
+               programRunId.getApplication(), programRunId.getProgram(), programRunId.getRun());
       return;
     }
     // If this run was initiated by this CDAP instance to run on another instance, it will use the tethering
@@ -142,6 +144,8 @@ public class ProgramStopSubscriberService extends AbstractNotificationSubscriber
       // if the program run completed already ignore the stop request
       // can happen in race conditions where a stop is issued, but the program ends on its own before
       // the stop message here is processed.
+      LOG.debug("Ignoring stop message for application {} program {} run {} because it is already in an end state.",
+                programRunId.getApplication(), programRunId.getProgram(), programRunId.getRun());
       return;
     }
 
@@ -155,6 +159,9 @@ public class ProgramStopSubscriberService extends AbstractNotificationSubscriber
     // in both situations, there isn't any program to actual stop, and the right thing to do is
     // transition the program to the killed state
     if (runtimeInfo == null) {
+      LOG.info("Could not find a program controller for application {} program {} run {}. " +
+                 "Writing a message that the program state should be killed.",
+               programRunId.getApplication(), programRunId.getProgram(), programRunId.getRun());
       programStateWriter.killed(programRunId);
       return;
     }
