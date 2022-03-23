@@ -660,6 +660,23 @@
   </property>
 
   <property>
+    <name>app.program.provision.pending.event.fetch.size</name>
+    <value>100</value>
+    <description>
+      Maximum number of events to fetch from the messaging system in each processing cycle for
+      program status update events
+    </description>
+  </property>
+
+  <property>
+    <name>app.program.provision.pending.event.poll.delay.millis</name>
+    <value>2000</value>
+    <description>
+      The delay in milliseconds to check again for new program status events after it detects there was no event
+    </description>
+  </property>
+
+  <property>
     <name>app.program.yarn.attempt.failures.validity.interval</name>
     <value>60000</value>
     <description>

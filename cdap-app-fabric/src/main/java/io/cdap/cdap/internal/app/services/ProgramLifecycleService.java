@@ -129,7 +129,7 @@ public class ProgramLifecycleService {
   private final ProvisioningService provisioningService;
   private final ProgramStateWriter programStateWriter;
   private final CapabilityReader capabilityReader;
-  private final boolean programStartQueueingEnable;
+  private final boolean programSTartQueueingEnabled;
   private final int maxConcurrentRuns;
   private final int maxConcurrentLaunching;
   private final int defaultStopTimeoutSecs;
@@ -147,7 +147,7 @@ public class ProgramLifecycleService {
                           ProgramStateWriter programStateWriter, CapabilityReader capabilityReader,
                           ArtifactRepository artifactRepository,
                           RunRecordMonitorService runRecordMonitorService) {
-    this.programStartQueueingEnable = cConf.getBoolean(Constants.AppFabric.PROGRAM_START_QUEUEING_ENABLED);
+    this.programSTartQueueingEnabled = cConf.getBoolean(Constants.AppFabric.PROGRAM_START_QUEUEING_ENABLED);
     this.maxConcurrentRuns = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_RUNS);
     this.maxConcurrentLaunching = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_LAUNCHING);
     this.defaultStopTimeoutSecs = cConf.getInt(Constants.AppFabric.DEFAULT_STOP_TIMEOUT_SECS);
@@ -533,7 +533,7 @@ public class ProgramLifecycleService {
 
     ProgramRunId programRunId = programId.run(runId);
     RunRecordMonitorService.Counter counter = runRecordMonitorService.addRequestAndGetCount(programRunId);
-    if (programStartQueueingEnable) {
+    if (programSTartQueueingEnabled) {
        provisionerNotifier.initialize(programRunId, programOptions, programDescriptor, userId);
     } else {
       boolean done = false;
