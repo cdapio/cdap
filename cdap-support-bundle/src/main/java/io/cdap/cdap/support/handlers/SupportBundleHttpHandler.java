@@ -48,7 +48,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.NoSuchAlgorithmException;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -202,7 +202,7 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
     SupportBundleRequestFileList bundleRequestFileList;
     try {
       if (requestContent == null || requestContent.length() == 0) {
-        bundleRequestFileList = new SupportBundleRequestFileList(Collections.singletonList(""));
+        bundleRequestFileList = new SupportBundleRequestFileList(new ArrayList<>());
         digestHeader = bundleGenerator.createBundleZipByRequest(uuid, tmpPath, bundleRequestFileList);
       } else {
         try {

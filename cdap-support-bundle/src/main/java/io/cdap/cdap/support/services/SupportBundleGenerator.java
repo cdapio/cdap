@@ -230,12 +230,12 @@ public class SupportBundleGenerator {
 
     try (ZipOutputStream zipOut = new ZipOutputStream(
       new DigestOutputStream(Files.newOutputStream(tmpPath, StandardOpenOption.TRUNCATE_EXISTING), digest))) {
-      for (String filePath : bundleRequestFileList.getFiles()) {
+      if (bundleRequestFileList.getFiles().size() == 0) {
         // If file path is empty string which means we want to zip the whole bundle id folder
-        if (filePath.length() == 0) {
-          zipFile(uuidFile, uuidFile.getName(), zipOut);
-          zipOut.closeEntry();
-        } else {
+        zipFile(uuidFile, uuidFile.getName(), zipOut);
+        zipOut.closeEntry();
+      } else {
+        for (String filePath : bundleRequestFileList.getFiles()) {
           File requestFile = new File(uuidFile, filePath);
           if (requestFile.exists()) {
             ZipEntry entry = new ZipEntry(uuidFile.getName() + "/" + filePath);
