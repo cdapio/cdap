@@ -800,7 +800,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
    */
   @VisibleForTesting
   Map<String, String> getNamespaceConfigs(String namespace) throws Exception {
-    if (namespaceQueryAdmin == null) {
+    if (namespaceQueryAdmin == null || NamespaceId.isReserved(namespace)) {
       return new HashMap<>();
     }
     return namespaceQueryAdmin.get(new NamespaceId(namespace)).getConfig().getConfigs();
