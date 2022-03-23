@@ -24,9 +24,9 @@ import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ArtifactClasses;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.app.deploy.ProgramRunDispatcher;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.program.ProgramDescriptor;
-import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -34,6 +34,7 @@ import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.internal.app.deploy.InMemoryProgramRunDispatcher;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -41,7 +42,6 @@ import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactMeta;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.proto.ProgramLiveInfo;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -56,6 +56,7 @@ import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -84,6 +85,13 @@ public class AbstractProgramRuntimeServiceTest {
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
+  CConfiguration cConf;
+
+  @Before
+  public void setUp() {
+    cConf = CConfiguration.create();
+  }
+
   @Test
   public void testConcurrentStartLimit() throws Exception {
     Semaphore proceed = new Semaphore(0);
@@ -107,10 +115,11 @@ public class AbstractProgramRuntimeServiceTest {
     ProgramDescriptor descriptor = new ProgramDescriptor(program.getId(), null,
                                                          NamespaceId.DEFAULT.artifact("test", "1.0"));
 
-    CConfiguration cConf = CConfiguration.create();
     cConf.setInt(Constants.AppFabric.PROGRAM_LAUNCH_THREADS, 2);
-    ProgramRuntimeService runtimeService = new TestProgramRuntimeService(cConf,
-                                                                         runnerFactory, program, null, null);
+    TestProgramRunDispatcher launchDispatcher = new TestProgramRunDispatcher(cConf, runnerFactory,
+                                                                             program, null, null);
+    ProgramRuntimeService runtimeService = new TestProgramRuntimeService(cConf, runnerFactory,
+                                                                         null, launchDispatcher);
     runtimeService.startAndWait();
     try {
       List<ProgramController> controllers = new ArrayList<>();
@@ -150,8 +159,10 @@ public class AbstractProgramRuntimeServiceTest {
     // still in the run method, it holds the object lock, making the callback from the listener block forever.
     ProgramRunnerFactory runnerFactory = createProgramRunnerFactory();
     Program program = createDummyProgram();
-    ProgramRuntimeService runtimeService = new TestProgramRuntimeService(CConfiguration.create(),
-                                                                         runnerFactory, program, null, null);
+    TestProgramRunDispatcher launchDispatcher = new TestProgramRunDispatcher(cConf, runnerFactory,
+                                                                             program, null, null);
+    ProgramRuntimeService runtimeService = new TestProgramRuntimeService(cConf, runnerFactory,
+                                                                         null, launchDispatcher);
     runtimeService.startAndWait();
     try {
       ProgramDescriptor descriptor = new ProgramDescriptor(program.getId(), null,
@@ -179,8 +190,10 @@ public class AbstractProgramRuntimeServiceTest {
     service.startAndWait();
 
     ProgramRunnerFactory runnerFactory = createProgramRunnerFactory();
-    TestProgramRuntimeService runtimeService = new TestProgramRuntimeService(CConfiguration.create(),
-                                                                             runnerFactory, null, null, extraInfo);
+    TestProgramRunDispatcher launchDispatcher = new TestProgramRunDispatcher(cConf, runnerFactory,
+                                                                             null, null, null);
+    TestProgramRuntimeService runtimeService = new TestProgramRuntimeService(cConf, runnerFactory,
+                                                                             extraInfo, launchDispatcher);
     runtimeService.startAndWait();
 
     // The lookup will get deadlock for CDAP-3716
@@ -196,28 +209,14 @@ public class AbstractProgramRuntimeServiceTest {
     ProgramRunnerFactory runnerFactory = createProgramRunnerFactory(argumentsMap);
 
     final Program program = createDummyProgram();
+    TestProgramRunDispatcher launchDispatcher = new TestProgramRunDispatcher(cConf, runnerFactory,
+                                                                             program, null, null);
     final ProgramRuntimeService runtimeService =
-      new AbstractProgramRuntimeService(CConfiguration.create(), runnerFactory, null,
-                                        new NoOpProgramStateWriter(), null, null, null) {
+      new AbstractProgramRuntimeService(cConf, runnerFactory,
+                                        new NoOpProgramStateWriter(), () -> launchDispatcher, false) {
       @Override
       public ProgramLiveInfo getLiveInfo(ProgramId programId) {
         return new ProgramLiveInfo(programId, "runtime") { };
-      }
-
-      @Override
-      protected Program createProgram(CConfiguration cConf, ProgramRunner programRunner,
-                                      ProgramDescriptor programDescriptor,
-                                      ArtifactDetail artifactDetail, File tempDir) throws IOException {
-        return program;
-      }
-
-      @Override
-      protected ArtifactDetail getArtifactDetail(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
-        io.cdap.cdap.api.artifact.ArtifactId id = new io.cdap.cdap.api.artifact.ArtifactId(
-          "dummy", new ArtifactVersion("1.0"), ArtifactScope.USER);
-        return new ArtifactDetail(new ArtifactDescriptor(NamespaceId.DEFAULT.getEntityName(),
-                                                         id, Locations.toLocation(TEMP_FOLDER.newFile())),
-                                  new ArtifactMeta(ArtifactClasses.builder().build()));
       }
     };
 
@@ -276,9 +275,10 @@ public class AbstractProgramRuntimeServiceTest {
     RemoteClientFactory remoteClientFactory = new RemoteClientFactory(
       discoveryService, new DefaultInternalAuthenticator(new AuthenticationTestContext()));
     LocationFactory locationFactory = new LocalLocationFactory(TEMP_FOLDER.newFolder());
-    ProgramRuntimeService runtimeService = new TestProgramRuntimeService(CConfiguration.create(),
-                                                                         runnerFactory, program, null, null,
-                                                                         locationFactory, remoteClientFactory);
+    ProgramRunDispatcher launchDispatcher =
+      new TestProgramRunDispatcher(cConf, runnerFactory, program, locationFactory,
+                                   remoteClientFactory);
+    ProgramRuntimeService runtimeService = new TestProgramRuntimeService(cConf, runnerFactory, null, launchDispatcher);
     runtimeService.startAndWait();
     try {
       ProgramDescriptor descriptor = new ProgramDescriptor(program.getId(), null,
@@ -438,27 +438,12 @@ public class AbstractProgramRuntimeServiceTest {
    */
   private static final class TestProgramRuntimeService extends AbstractProgramRuntimeService {
 
-    private final Program program;
     private final RuntimeInfo extraInfo;
 
-    protected TestProgramRuntimeService(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
-                                        @Nullable Program program,
-                                        @Nullable ArtifactRepository artifactRepository,
-                                        @Nullable RuntimeInfo extraInfo) {
-      super(cConf, programRunnerFactory, artifactRepository, new NoOpProgramStateWriter(), null, null, null);
-      this.program = program;
-      this.extraInfo = extraInfo;
-    }
-
-    protected TestProgramRuntimeService(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
-                                        @Nullable Program program,
-                                        @Nullable ArtifactRepository artifactRepository,
-                                        @Nullable RuntimeInfo extraInfo,
-                                        LocationFactory locationFactory,
-                                        RemoteClientFactory remoteClientFactory) {
-      super(cConf, programRunnerFactory, artifactRepository, new NoOpProgramStateWriter(), null,
-            locationFactory, remoteClientFactory);
-      this.program = program;
+    private TestProgramRuntimeService(CConfiguration cConf,
+                                      ProgramRunnerFactory programRunnerFactory, @Nullable RuntimeInfo extraInfo,
+                                      ProgramRunDispatcher programRunDispatcher) {
+      super(cConf, programRunnerFactory, new NoOpProgramStateWriter(), () -> programRunDispatcher, false);
       this.extraInfo = extraInfo;
     }
 
@@ -479,6 +464,18 @@ public class AbstractProgramRuntimeServiceTest {
         return extraInfo;
       }
       return null;
+    }
+  }
+
+  private static class TestProgramRunDispatcher extends InMemoryProgramRunDispatcher {
+
+    private final Program program;
+
+    public TestProgramRunDispatcher(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
+                                    Program program, LocationFactory locationFactory,
+                                    RemoteClientFactory remoteClientFactory) {
+      super(cConf, programRunnerFactory, null, null, locationFactory, remoteClientFactory, null);
+      this.program = program;
     }
 
     @Override

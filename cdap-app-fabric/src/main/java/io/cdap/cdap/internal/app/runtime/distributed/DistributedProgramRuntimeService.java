@@ -16,13 +16,10 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Table;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
-import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.runtime.AbstractProgramRuntimeService;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
@@ -30,14 +27,10 @@ import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
-import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.Delegator;
 import io.cdap.cdap.common.twill.TwillAppNames;
-import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
+import io.cdap.cdap.internal.app.deploy.ProgramRunDispatcherFactory;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.Containers;
@@ -45,25 +38,17 @@ import io.cdap.cdap.proto.DistributedProgramLiveInfo;
 import io.cdap.cdap.proto.ProgramLiveInfo;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
-import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import io.cdap.cdap.security.impersonation.Impersonator;
 import org.apache.twill.api.ResourceReport;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunResources;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.common.Threads;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -83,26 +68,15 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
   private final TwillRunner twillRunner;
   private final Store store;
-  private final Impersonator impersonator;
   private final ProgramStateWriter programStateWriter;
 
   @Inject
-  DistributedProgramRuntimeService(CConfiguration cConf,
-                                   ProgramRunnerFactory programRunnerFactory,
-                                   TwillRunner twillRunner, Store store,
-                                   // for running a program, we only need EXECUTE on the program, there should be no
-                                   // privileges needed for artifacts
-                                   @Named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO)
-                                     ArtifactRepository noAuthArtifactRepository,
-                                   Impersonator impersonator, ProgramStateWriter programStateWriter,
-                                   ConfiguratorFactory configuratorFactory,
-                                   LocationFactory locationFactory,
-                                   RemoteClientFactory remoteClientFactory) {
-    super(cConf, programRunnerFactory, noAuthArtifactRepository, programStateWriter, configuratorFactory,
-          locationFactory, remoteClientFactory);
+  DistributedProgramRuntimeService(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
+                                   TwillRunner twillRunner, Store store, ProgramStateWriter programStateWriter,
+                                   ProgramRunDispatcherFactory programRunDispatcherFactory) {
+    super(cConf, programRunnerFactory, programStateWriter, programRunDispatcherFactory, true);
     this.twillRunner = twillRunner;
     this.store = store;
-    this.impersonator = impersonator;
     this.programStateWriter = programStateWriter;
   }
 
@@ -146,39 +120,6 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       }
     }, Threads.SAME_THREAD_EXECUTOR);
     return runtimeInfo;
-  }
-
-  @Override
-  protected void copyArtifact(ArtifactId artifactId,
-                              final ArtifactDetail artifactDetail, final File targetFile) throws IOException {
-    try {
-      impersonator.doAs(artifactId, () -> {
-        Locations.linkOrCopy(artifactDetail.getDescriptor().getLocation(), targetFile);
-        return null;
-      });
-    } catch (FileAlreadyExistsException ex) {
-      LOG.warn("Artifact file {} already exists.", targetFile.getAbsolutePath());
-    } catch (Exception e) {
-      Throwables.propagateIfPossible(e, IOException.class);
-      // should not happen
-      throw Throwables.propagate(e);
-    }
-  }
-
-  @Override
-  protected void copyArtifact(ArtifactId artifactId, InputStream in, File targetFile) throws IOException {
-    try {
-      impersonator.doAs(artifactId, () -> {
-        Files.copy(in, targetFile.toPath());
-        return null;
-      });
-    } catch (FileAlreadyExistsException ex) {
-      LOG.warn("Artifact file {} already exists.", targetFile.getAbsolutePath());
-    } catch (Exception e) {
-      Throwables.propagateIfPossible(e, IOException.class);
-      // should not happen
-      throw Throwables.propagate(e);
-    }
   }
 
   @Override

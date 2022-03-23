@@ -41,8 +41,10 @@ public class ConfiguratorFactoryProvider implements Provider<ConfiguratorFactory
   public ConfiguratorFactory get() {
     boolean workerPoolEnabled = cConf.getBoolean(Constants.TaskWorker.POOL_ENABLE);
     if (workerPoolEnabled) {
-      return injector.getInstance(Key.get(ConfiguratorFactory.class, Names.named("remote")));
+      return injector.getInstance(Key.get(ConfiguratorFactory.class,
+                                          Names.named(Constants.AppFabric.FACTORY_IMPLEMENTATION_REMOTE)));
     }
-    return injector.getInstance(Key.get(ConfiguratorFactory.class, Names.named("local")));
+    return injector.getInstance(Key.get(ConfiguratorFactory.class,
+                                        Names.named(Constants.AppFabric.FACTORY_IMPLEMENTATION_LOCAL)));
   }
 }

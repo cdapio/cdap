@@ -37,12 +37,14 @@ import com.google.inject.util.Modules;
 import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.deploy.ManagerFactory;
+import io.cdap.cdap.app.deploy.ProgramRunDispatcher;
 import io.cdap.cdap.app.mapreduce.DistributedMRJobInfoFetcher;
 import io.cdap.cdap.app.mapreduce.LocalMRJobInfoFetcher;
 import io.cdap.cdap.app.mapreduce.MRJobInfoFetcher;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.AppFabric;
 import io.cdap.cdap.common.runtime.RuntimeModule;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.config.guice.ConfigStoreModule;
@@ -77,7 +79,10 @@ import io.cdap.cdap.gateway.handlers.meta.RemotePrivilegesHandler;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactoryProvider;
 import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
+import io.cdap.cdap.internal.app.deploy.InMemoryProgramRunDispatcher;
 import io.cdap.cdap.internal.app.deploy.LocalApplicationManager;
+import io.cdap.cdap.internal.app.deploy.ProgramRunDispatcherFactory;
+import io.cdap.cdap.internal.app.deploy.ProgramRunDispatcherFactoryProvider;
 import io.cdap.cdap.internal.app.deploy.RemoteConfigurator;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -326,15 +331,23 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       install(
         new FactoryModuleBuilder()
           .implement(Configurator.class, InMemoryConfigurator.class)
-          .build(Key.get(ConfiguratorFactory.class, Names.named("local")))
+          .build(Key.get(ConfiguratorFactory.class,
+                         Names.named(AppFabric.FACTORY_IMPLEMENTATION_LOCAL)))
       );
       install(
         new FactoryModuleBuilder()
           .implement(Configurator.class, RemoteConfigurator.class)
-          .build(Key.get(ConfiguratorFactory.class, Names.named("remote")))
+          .build(Key.get(ConfiguratorFactory.class,
+                         Names.named(AppFabric.FACTORY_IMPLEMENTATION_REMOTE)))
       );
 
       bind(ConfiguratorFactory.class).toProvider(ConfiguratorFactoryProvider.class);
+
+      install(new FactoryModuleBuilder()
+        .implement(ProgramRunDispatcher.class, InMemoryProgramRunDispatcher.class)
+        .build(Key.get(ProgramRunDispatcherFactory.class, Names.named(AppFabric.FACTORY_IMPLEMENTATION_LOCAL))));
+
+      bind(ProgramRunDispatcherFactory.class).toProvider(ProgramRunDispatcherFactoryProvider.class);
 
       bind(Store.class).to(DefaultStore.class);
       bind(SecretStore.class).to(DefaultSecretStore.class).in(Scopes.SINGLETON);

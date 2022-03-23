@@ -343,6 +343,9 @@ public final class Constants {
      */
     public static final String SYSTEM_PROGRAM_SCAN_INTERVAL_SECONDS = "system.program.scan.interval.seconds";
 
+    public static final String FACTORY_IMPLEMENTATION_LOCAL = "local";
+    public static final String FACTORY_IMPLEMENTATION_REMOTE = "remote";
+
     /**
      * Disable user program launch on cdap environment
      */
@@ -1948,7 +1951,7 @@ public final class Constants {
 
     public static final String CLIENT_AUTHENTICATOR_NAME = "tethering.client.authenticator.name";
   }
-  
+
   public static final class ArtifactCache {
 
     /**
