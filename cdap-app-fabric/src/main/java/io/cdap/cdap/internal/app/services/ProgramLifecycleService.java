@@ -129,6 +129,7 @@ public class ProgramLifecycleService {
   private final ProvisioningService provisioningService;
   private final ProgramStateWriter programStateWriter;
   private final CapabilityReader capabilityReader;
+  private final int maxQueuedLaunching;
   private final int maxConcurrentRuns;
   private final int maxConcurrentLaunching;
   private final ArtifactRepository artifactRepository;
@@ -145,6 +146,7 @@ public class ProgramLifecycleService {
                           ProgramStateWriter programStateWriter, CapabilityReader capabilityReader,
                           ArtifactRepository artifactRepository,
                           RunRecordMonitorService runRecordMonitorService) {
+    this.maxQueuedLaunching = cConf.getInt(Constants.AppFabric.MAX_QUEUED_LAUNCHING);
     this.maxConcurrentRuns = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_RUNS);
     this.maxConcurrentLaunching = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_LAUNCHING);
     this.userProgramLaunchDisabled = cConf.getBoolean(Constants.AppFabric.USER_PROGRAM_LAUNCH_DISABLED, false);
@@ -532,7 +534,8 @@ public class ProgramLifecycleService {
 
     boolean done = false;
     try {
-      if (maxConcurrentRuns >= 0 && maxConcurrentRuns < counter.getLaunchingCount() + counter.getRunningCount()) {
+      if (maxConcurrentRuns >= 0 &&
+        maxConcurrentRuns < counter.getLaunchingCount() + counter.getRunningCount() + maxQueuedLaunching) {
         String msg =
           String.format("Program %s cannot start because the maximum of %d outstanding runs is allowed",
                         programId, maxConcurrentRuns);
@@ -543,7 +546,8 @@ public class ProgramLifecycleService {
         throw e;
       }
 
-      if (maxConcurrentLaunching >= 0 && maxConcurrentLaunching < counter.getLaunchingCount()) {
+      if (maxConcurrentLaunching >= 0
+        && maxConcurrentLaunching < counter.getLaunchingCount() + maxQueuedLaunching) {
         String msg = String.format("Program %s cannot start because the maximum of %d concurrent " +
                                      "provisioning/starting runs is allowed", programId, maxConcurrentLaunching);
         LOG.info(msg);

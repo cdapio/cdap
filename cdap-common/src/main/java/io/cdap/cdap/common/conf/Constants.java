@@ -252,6 +252,7 @@ public final class Constants {
       "app.program.yarn.attempt.failures.validity.interval";
 
     public static final String PROGRAM_TRANSACTION_CONTROL = "app.program.transaction.control";
+    public static final String MAX_QUEUED_LAUNCHING = "app.max.queued.launching";
     public static final String MAX_CONCURRENT_RUNS = "app.max.concurrent.runs";
     public static final String MAX_CONCURRENT_LAUNCHING = "app.max.concurrent.launching";
     public static final String MONITOR_RECORD_AGE_THRESHOLD_SECONDS =

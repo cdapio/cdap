@@ -482,7 +482,7 @@
 
   <property>
     <name>app.max.queued.launching</name>
-    <value>-1</value>
+    <value>0</value>
     <description>
       Maximum number of concurrent launching runs allowed; set to -1 for unlimited.
       Launching runs have an active run record with PENDING or STARTING status.
