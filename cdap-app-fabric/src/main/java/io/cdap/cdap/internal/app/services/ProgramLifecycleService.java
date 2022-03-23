@@ -531,40 +531,44 @@ public class ProgramLifecycleService {
 
     ProgramRunId programRunId = programId.run(runId);
     RunRecordMonitorService.Counter counter = runRecordMonitorService.addRequestAndGetCount(programRunId);
+    boolean enableQueue = true;
+    if (enableQueue) {
+       provisionerNotifier.initialize(programRunId, programOptions, programDescriptor, userId);
+    } else {
+      boolean done = false;
+      try {
+        if (maxConcurrentRuns >= 0 &&
+          maxConcurrentRuns < counter.getLaunchingCount() + counter.getRunningCount()) {
+          String msg =
+            String.format("Program %s cannot start because the maximum of %d outstanding runs is allowed",
+                          programId, maxConcurrentRuns);
+          LOG.info(msg);
 
-    boolean done = false;
-    try {
-      if (maxConcurrentRuns >= 0 &&
-        maxConcurrentRuns < counter.getLaunchingCount() + counter.getRunningCount() + maxQueuedLaunching) {
-        String msg =
-          String.format("Program %s cannot start because the maximum of %d outstanding runs is allowed",
-                        programId, maxConcurrentRuns);
-        LOG.info(msg);
+          TooManyRequestsException e = new TooManyRequestsException(msg);
+          programStateWriter.reject(programRunId, programOptions, programDescriptor, userId, e);
+          throw e;
+        }
 
-        TooManyRequestsException e = new TooManyRequestsException(msg);
-        programStateWriter.reject(programRunId, programOptions, programDescriptor, userId, e);
-        throw e;
-      }
+        if (maxConcurrentLaunching >= 0
+          && maxConcurrentLaunching < counter.getLaunchingCount()) {
+          String msg = String.format("Program %s cannot start because the maximum of %d concurrent " +
+                                       "provisioning/starting runs is allowed", programId, maxConcurrentLaunching);
+          LOG.info(msg);
 
-      if (maxConcurrentLaunching >= 0
-        && maxConcurrentLaunching < counter.getLaunchingCount() + maxQueuedLaunching) {
-        String msg = String.format("Program %s cannot start because the maximum of %d concurrent " +
-                                     "provisioning/starting runs is allowed", programId, maxConcurrentLaunching);
-        LOG.info(msg);
+          TooManyRequestsException e = new TooManyRequestsException(msg);
+          programStateWriter.reject(programRunId, programOptions, programDescriptor, userId, e);
+          throw e;
+        }
 
-        TooManyRequestsException e = new TooManyRequestsException(msg);
-        programStateWriter.reject(programRunId, programOptions, programDescriptor, userId, e);
-        throw e;
-      }
+        LOG.info("Attempt to run {} program {} as user {} with arguments {}", programId.getType(), programId.getProgram(),
+                 authenticationContext.getPrincipal().getName(), userArgs);
 
-      LOG.info("Attempt to run {} program {} as user {} with arguments {}", programId.getType(), programId.getProgram(),
-               authenticationContext.getPrincipal().getName(), userArgs);
-
-      provisionerNotifier.initialize(programRunId, programOptions, programDescriptor, userId);
-      done = true;
-    } finally {
-      if (!done) {
-        runRecordMonitorService.removeRequest(programRunId, false);
+        provisionerNotifier.provisioning(programRunId, programOptions, programDescriptor, userId);
+        done = true;
+      } finally {
+        if (!done) {
+          runRecordMonitorService.removeRequest(programRunId, false);
+        }
       }
     }
 
