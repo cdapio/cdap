@@ -279,7 +279,8 @@
         <stage.securestores.ext.dir>${stage.opt.dir}/ext/securestores</stage.securestores.ext.dir>
         <stage.storage.ext.dir>${stage.opt.dir}/ext/storageproviders</stage.storage.ext.dir>
         <stage.authenticators.ext.dir>${stage.opt.dir}/ext/authenticators</stage.authenticators.ext.dir>
-        <stage.metricswriters.ext.dir>${stage.opt.dir}/ext/metricswriters/metrics-writer-extension</stage.metricswriters.ext.dir>
+        <stage.metricswriters.ext.dir>${stage.opt.dir}/ext/metricswriters/google_cloud_monitoring_writer
+        </stage.metricswriters.ext.dir>
         <stage.bootstrap.dir>${stage.opt.dir}/bootstrap</stage.bootstrap.dir>
         <stage.capability.dir>${stage.opt.dir}/capability-config</stage.capability.dir>
         <additional.artifacts.jar.pattern>**/target/*.jar</additional.artifacts.jar.pattern>
