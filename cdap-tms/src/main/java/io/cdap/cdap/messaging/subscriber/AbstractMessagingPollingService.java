@@ -202,6 +202,7 @@ public abstract class AbstractMessagingPollingService<T> extends AbstractRetryab
 
     startTime = System.currentTimeMillis();
 
+    LOG.debug("Processing {} messages for topic {}: {}", messages.size(), topicId, messages);
     MessageIterator iterator = new MessageIterator(messages.iterator());
     String messageId = processMessages(iterator);
     this.messageId = messageId == null ? this.messageId : messageId;

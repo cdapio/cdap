@@ -66,6 +66,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 
@@ -176,6 +178,11 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   @Override
   public RollbackDetail publish(StoreRequest request) throws TopicNotFoundException, IOException {
     try {
+      if (request.getTopicId().toString().contains("programstatusrecordevent")
+        || request.getTopicId().toString().contains("programstatusevent"))
+      LOG.debug("Publishing messages for {}: {}", request.getTopicId(),
+                StreamSupport.stream(request.spliterator(), false).map(String::new)
+                  .collect(Collectors.joining(",", "[", "]")));
       TopicMetadata metadata = topicCache.get(request.getTopicId());
       if (request.isTransactional()) {
         ensureValidTxLifetime(request.getTransactionWritePointer());
