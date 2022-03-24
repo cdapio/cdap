@@ -179,10 +179,11 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   public RollbackDetail publish(StoreRequest request) throws TopicNotFoundException, IOException {
     try {
       if (request.getTopicId().toString().contains("programstatusrecordevent")
-        || request.getTopicId().toString().contains("programstatusevent"))
-      LOG.debug("Publishing messages for {}: {}", request.getTopicId(),
-                StreamSupport.stream(request.spliterator(), false).map(String::new)
-                  .collect(Collectors.joining(",", "[", "]")));
+        || request.getTopicId().toString().contains("programstatusevent")) {
+        LOG.debug("Publishing messages for {}: {}", request.getTopicId(),
+                  StreamSupport.stream(request.spliterator(), false).map(String::new)
+                    .collect(Collectors.joining(",", "[", "]")));
+      }
       TopicMetadata metadata = topicCache.get(request.getTopicId());
       if (request.isTransactional()) {
         ensureValidTxLifetime(request.getTransactionWritePointer());
