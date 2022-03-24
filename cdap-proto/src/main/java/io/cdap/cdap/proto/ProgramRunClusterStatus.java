@@ -21,6 +21,7 @@ package io.cdap.cdap.proto;
  * State of the cluster for a program run
  */
 public enum ProgramRunClusterStatus {
+  ENQUEUED,
   PROVISIONING,
   PROVISIONED,
   WAITING,
@@ -46,6 +47,8 @@ public enum ProgramRunClusterStatus {
       return true;
     }
     switch (this) {
+      case ENQUEUED:
+        return status == PROVISIONING;
       case PROVISIONING:
         // PROVISIONED is the happy path
         // DEPROVISIONING happens if there was an error after trying to create the cluster

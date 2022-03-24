@@ -129,6 +129,7 @@ public class ProgramLifecycleService {
   private final ProvisioningService provisioningService;
   private final ProgramStateWriter programStateWriter;
   private final CapabilityReader capabilityReader;
+  private final boolean programStartQueueingEnabled;
   private final int maxConcurrentRuns;
   private final int maxConcurrentLaunching;
   private final int defaultStopTimeoutSecs;
@@ -146,6 +147,7 @@ public class ProgramLifecycleService {
                           ProgramStateWriter programStateWriter, CapabilityReader capabilityReader,
                           ArtifactRepository artifactRepository,
                           RunRecordMonitorService runRecordMonitorService) {
+    this.programStartQueueingEnabled = cConf.getBoolean(Constants.AppFabric.PROGRAM_START_QUEUEING_ENABLED);
     this.maxConcurrentRuns = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_RUNS);
     this.maxConcurrentLaunching = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_LAUNCHING);
     this.defaultStopTimeoutSecs = cConf.getInt(Constants.AppFabric.DEFAULT_STOP_TIMEOUT_SECS);
@@ -530,39 +532,45 @@ public class ProgramLifecycleService {
     checkCapability(programDescriptor);
 
     ProgramRunId programRunId = programId.run(runId);
-    RunRecordMonitorService.Counter counter = runRecordMonitorService.addRequestAndGetCount(programRunId);
+    if (programStartQueueingEnabled) {
+      programStateWriter.enqueue(programRunId, programOptions, programDescriptor, userId);
+    } else {
+      boolean done = false;
+      RunRecordMonitorService.Counter counter = runRecordMonitorService.addRequestAndGetCount(programRunId);
+      try {
+        if (maxConcurrentRuns >= 0 &&
+          maxConcurrentRuns < counter.getLaunchingCount() + counter.getRunningCount()) {
+          String msg =
+            String.format("Program %s cannot start because the maximum of %d outstanding runs is allowed",
+                          programId, maxConcurrentRuns);
+          LOG.info(msg);
 
-    boolean done = false;
-    try {
-      if (maxConcurrentRuns >= 0 && maxConcurrentRuns < counter.getLaunchingCount() + counter.getRunningCount()) {
-        String msg =
-          String.format("Program %s cannot start because the maximum of %d outstanding runs is allowed",
-                        programId, maxConcurrentRuns);
-        LOG.info(msg);
+          TooManyRequestsException e = new TooManyRequestsException(msg);
+          programStateWriter.reject(programRunId, programOptions, programDescriptor, userId, e);
+          throw e;
+        }
 
-        TooManyRequestsException e = new TooManyRequestsException(msg);
-        programStateWriter.reject(programRunId, programOptions, programDescriptor, userId, e);
-        throw e;
-      }
+        if (maxConcurrentLaunching >= 0
+          && maxConcurrentLaunching < counter.getLaunchingCount()) {
+          String msg = String.format("Program %s cannot start because the maximum of %d concurrent " +
+                                       "provisioning/starting runs is allowed", programId, maxConcurrentLaunching);
+          LOG.info(msg);
 
-      if (maxConcurrentLaunching >= 0 && maxConcurrentLaunching < counter.getLaunchingCount()) {
-        String msg = String.format("Program %s cannot start because the maximum of %d concurrent " +
-                                     "provisioning/starting runs is allowed", programId, maxConcurrentLaunching);
-        LOG.info(msg);
+          TooManyRequestsException e = new TooManyRequestsException(msg);
+          programStateWriter.reject(programRunId, programOptions, programDescriptor, userId, e);
+          throw e;
+        }
 
-        TooManyRequestsException e = new TooManyRequestsException(msg);
-        programStateWriter.reject(programRunId, programOptions, programDescriptor, userId, e);
-        throw e;
-      }
+        LOG.info("Attempt to run {} program {} as user {} with arguments {}",
+                 programId.getType(), programId.getProgram(),
+                 authenticationContext.getPrincipal().getName(), userArgs);
 
-      LOG.info("Attempt to run {} program {} as user {} with arguments {}", programId.getType(), programId.getProgram(),
-               authenticationContext.getPrincipal().getName(), userArgs);
-
-      provisionerNotifier.provisioning(programRunId, programOptions, programDescriptor, userId);
-      done = true;
-    } finally {
-      if (!done) {
-        runRecordMonitorService.removeRequest(programRunId, false);
+        provisionerNotifier.provisioning(programRunId, programOptions, programDescriptor, userId);
+        done = true;
+      } finally {
+        if (!done) {
+          runRecordMonitorService.removeRequest(programRunId, false);
+        }
       }
     }
 
@@ -1111,7 +1119,8 @@ public class ProgramLifecycleService {
       return store.getActiveRuns(programId);
     }
     RunRecordDetail runRecord = store.getRun(programId.run(runId));
-    EnumSet<ProgramRunStatus> activeStates = EnumSet.of(ProgramRunStatus.PENDING,
+    EnumSet<ProgramRunStatus> activeStates = EnumSet.of(ProgramRunStatus.ENQUEUED,
+                                                        ProgramRunStatus.PENDING,
                                                         ProgramRunStatus.STARTING,
                                                         ProgramRunStatus.RUNNING,
                                                         ProgramRunStatus.SUSPENDED);

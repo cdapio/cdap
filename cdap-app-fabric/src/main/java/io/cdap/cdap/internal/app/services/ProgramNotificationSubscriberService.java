@@ -312,9 +312,26 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     Map<String, String> properties = notification.getProperties();
     String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
 
-    RunRecordDetail recordedRunRecord;
+    ProgramOptions programOptions = ProgramOptions.fromNotification(notification, GSON);
+    ProgramDescriptor programDescriptor = GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR),
+                                                        ProgramDescriptor.class);
+    String userId = properties.get(ProgramOptionConstants.USER_ID);
+
+    RunRecordDetail recordedRunRecord = null;
     switch (programRunStatus) {
+      case ENQUEUED:
+        LOG.info("wyzhang: handle program event enqueued start {}", programRunId);
+        appMetadataStore.recordProgramEnqueued(programRunId, programOptions.getUserArguments().asMap(),
+                                               programOptions.getArguments().asMap(), messageIdBytes,
+                                               programDescriptor.getArtifactId().toApiArtifactId());
+        LOG.info("wyzhang: handle program event enqueued: wrote enqueued program status");
+
+        provisionerNotifier.enqueue(programRunId, programOptions, programDescriptor, userId);
+        LOG.info("wyzhang: handle program event enqueued: provisioner enqueue notified");
+        LOG.info("wyzhang: handle program event enqueued end");
+        break;
       case STARTING:
+        LOG.info("wyzhang: handle program event starting start {}", programRunId);
         try {
           RunRecordDetail runRecordDetail = appMetadataStore.getRun(programRunId);
           if (runRecordDetail != null
@@ -373,9 +390,10 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         writeToHeartBeatTable(recordedRunRecord,
                               RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS),
                               programHeartbeatTable);
-
+        LOG.info("wyzhang: handle program event starting end {}", programRunId);
         break;
       case RUNNING:
+        LOG.info("wyzhang: handle program event running start {}", programRunId);
         long logicalStartTimeSecs = getTimeSeconds(notification.getProperties(),
                                                    ProgramOptionConstants.LOGICAL_START_TIME);
         if (logicalStartTimeSecs == -1) {
@@ -389,24 +407,30 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         runRecordMonitorService.removeRequest(programRunId, true);
         long startDelayTime = logicalStartTimeSecs - RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS);
         emitStartingTimeMetric(programRunId, startDelayTime, recordedRunRecord);
+        LOG.info("wyzhang: handle program event running end {}", programRunId);
         break;
       case SUSPENDED:
+        LOG.info("wyzhang: handle program event suspended start {}", programRunId);
         long suspendTime = getTimeSeconds(notification.getProperties(),
                                           ProgramOptionConstants.SUSPEND_TIME);
         // since we are adding suspend time recently, there might be old suspended notifications for which time
         // can be -1.
         recordedRunRecord = appMetadataStore.recordProgramSuspend(programRunId, messageIdBytes, suspendTime);
         writeToHeartBeatTable(recordedRunRecord, suspendTime, programHeartbeatTable);
+        LOG.info("wyzhang: handle program event suspended end {}", programRunId);
         break;
       case RESUMING:
+        LOG.info("wyzhang: handle program event resuming start {}", programRunId);
         long resumeTime = getTimeSeconds(notification.getProperties(),
                                          ProgramOptionConstants.RESUME_TIME);
         // since we are adding suspend time recently, there might be old suspended notifications for which time
         // can be -1.
         recordedRunRecord = appMetadataStore.recordProgramResumed(programRunId, messageIdBytes, resumeTime);
         writeToHeartBeatTable(recordedRunRecord, resumeTime, programHeartbeatTable);
+        LOG.info("wyzhang: handle program event resuming end {}", programRunId);
         break;
       case STOPPING:
+        LOG.info("wyzhang: handle program event stopping start {}", programRunId);
         Map<String, String> notificationProperties = notification.getProperties();
         long stoppingTsSecs = getTimeSeconds(notificationProperties, ProgramOptionConstants.STOPPING_TIME);
         if (stoppingTsSecs == -1L) {
@@ -418,6 +442,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         recordedRunRecord = appMetadataStore.recordProgramStopping(programRunId, messageIdBytes, stoppingTsSecs,
                                                                    terminateTsSecs);
         writeToHeartBeatTable(recordedRunRecord, stoppingTsSecs, programHeartbeatTable);
+        LOG.info("wyzhang: handle program event stopping end {}", programRunId);
         break;
       case COMPLETED:
       case KILLED:
@@ -427,9 +452,6 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
                                                     messageIdBytes, runnables);
         break;
       case REJECTED:
-        ProgramOptions programOptions = ProgramOptions.fromNotification(notification, GSON);
-        ProgramDescriptor programDescriptor =
-          GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR), ProgramDescriptor.class);
         recordedRunRecord = appMetadataStore.recordProgramRejected(
           programRunId, programOptions.getUserArguments().asMap(),
           programOptions.getArguments().asMap(), messageIdBytes, programDescriptor.getArtifactId().toApiArtifactId());

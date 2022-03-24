@@ -134,6 +134,9 @@ public class RunRecordMonitorService extends AbstractScheduledService {
    * @param programRunId run id associated with the launch request
    */
   public void addRequest(ProgramRunId programRunId) {
+    LOG.info("wyzhang: run record monitor: add request with runId {}",
+             programRunId);
+
     launchingQueue.add(programRunId);
     emitMetrics(Constants.Metrics.FlowControl.LAUNCHING_COUNT, launchingQueue.size());
     LOG.info("Added request with runId {}.", programRunId);
@@ -148,8 +151,8 @@ public class RunRecordMonitorService extends AbstractScheduledService {
    */
   public void removeRequest(ProgramRunId programRunId, boolean emitRunningChange) {
     if (launchingQueue.remove(programRunId)) {
-      LOG.info("Removed request with runId {}. Counter has {} concurrent launching requests.",
-               programRunId, launchingQueue.size());
+      LOG.info("wyzhang: run record monitor: removed request with runId {}",
+               programRunId);
       emitMetrics(Constants.Metrics.FlowControl.LAUNCHING_COUNT, launchingQueue.size());
     }
 
@@ -226,7 +229,7 @@ public class RunRecordMonitorService extends AbstractScheduledService {
     return false;
   }
 
-  class Counter {
+  public class Counter {
     /**
      * Total number of launch requests that have been accepted but still missing in metadata store +
      * total number of run records with {@link ProgramRunStatus#PENDING} status +
