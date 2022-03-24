@@ -21,6 +21,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.Twill.Security;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerTwillRunnable;
 import io.cdap.cdap.master.spi.twill.DependentTwillPreparer;
@@ -49,6 +50,7 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
   private static final Logger LOG = LoggerFactory.getLogger(SystemWorkerServiceLauncher.class);
   private final CConfiguration cConf;
   private final Configuration hConf;
+  private final SConfiguration sConf;
 
   private final TwillRunner twillRunner;
   private TwillController twillController;
@@ -56,10 +58,11 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
   private ScheduledExecutorService executor;
 
   @Inject
-  public SystemWorkerServiceLauncher(CConfiguration cConf, Configuration hConf,
+  public SystemWorkerServiceLauncher(CConfiguration cConf, Configuration hConf, SConfiguration sConf,
       TwillRunner twillRunner) {
     this.cConf = cConf;
     this.hConf = hConf;
+    this.sConf = sConf;
     this.twillRunner = twillRunner;
   }
 
@@ -123,6 +126,10 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
           try (Writer writer = Files.newBufferedWriter(hConfPath, StandardCharsets.UTF_8)) {
             hConf.writeXml(writer);
           }
+          Path sConfPath = runDir.resolve("sConf.xml");
+          try (Writer writer = Files.newBufferedWriter(sConfPath, StandardCharsets.UTF_8)) {
+            sConf.writeXml(writer);
+          }
 
           ResourceSpecification systemResourceSpec = ResourceSpecification.Builder.with()
               .setVirtualCores(cConf.getInt(Constants.SystemWorker.CONTAINER_CORES))
@@ -140,8 +147,8 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
           LOG.info("Starting SystemWorker pool with {} instances", systemResourceSpec.getInstances());
 
           TwillPreparer twillPreparer = twillRunner.prepare(
-              new SystemWorkerTwillApplication(cConfPath.toUri(), hConfPath.toUri(), systemResourceSpec,
-                  artifactLocalizerResourceSpec));
+            new SystemWorkerTwillApplication(cConfPath.toUri(), hConfPath.toUri(), sConfPath.toUri(),
+                                             systemResourceSpec, artifactLocalizerResourceSpec));
 
           String priorityClass = cConf.get(Constants.TaskWorker.CONTAINER_PRIORITY_CLASS_NAME);
           if (priorityClass != null) {

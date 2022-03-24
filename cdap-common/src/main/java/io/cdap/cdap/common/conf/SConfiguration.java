@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.common.conf;
 
+import java.io.File;
+import java.net.MalformedURLException;
+
 /**
  * Used to create Configuration Object for security related properties
  */
@@ -39,6 +42,18 @@ public class SConfiguration extends Configuration {
     // the Hadoop default properties.
     SConfiguration conf = new SConfiguration();
     conf.addResource("cdap-security.xml");
+    return conf;
+  }
+
+  /**
+   * Creates an instance of configuration.
+   * @param file the file to be added to the configuration
+   * @return an instance of SConfiguration
+   * @throws java.net.MalformedURLException if the error occurred while constructing the URL
+   */
+  public static SConfiguration create(File file) throws MalformedURLException {
+    SConfiguration conf = new SConfiguration();
+    conf.addResource(file.toURI().toURL());
     return conf;
   }
 
