@@ -20,10 +20,12 @@ import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -77,7 +79,9 @@ public class ArtifactCacheServiceTest extends AppFabricTestBase {
     tetheringStore = getInjector().getInstance(TetheringStore.class);
     ArtifactCache artifactCache = new ArtifactCache(cConf);
     DiscoveryService discoveryService = getInjector().getInstance(DiscoveryService.class);
-    artifactCacheService = new ArtifactCacheService(cConf, artifactCache, tetheringStore, null, discoveryService);
+    artifactCacheService = new ArtifactCacheService(
+      cConf, artifactCache, tetheringStore, null, discoveryService,
+      new CommonNettyHttpServiceFactory(cConf, new NoOpMetricsCollectionService()));
     artifactCacheService.startAndWait();
     getInjector().getInstance(ArtifactRepository.class).clear(NamespaceId.DEFAULT);
     LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);

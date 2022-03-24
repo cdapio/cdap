@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.app.worker.system;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.worker.RunnableTask;
@@ -27,10 +26,8 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
-import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.security.HttpsEnabler;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
-import io.cdap.cdap.internal.app.worker.RunnableTaskLauncher;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
@@ -49,29 +46,21 @@ import java.util.concurrent.TimeUnit;
 public class SystemWorkerService extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(SystemWorkerService.class);
-  private static final Gson GSON = new Gson();
 
-  private final CConfiguration cConf;
   private final DiscoveryService discoveryService;
   private final NettyHttpService httpService;
-  private final ArtifactManagerFactory artifactManagerFactory;
-  private final RunnableTaskLauncher taskLauncher;
   private Cancellable cancelDiscovery;
   private InetSocketAddress bindAddress;
-  private MetricsCollectionService metricsCollectionService;
 
   @Inject
   SystemWorkerService(CConfiguration cConf,
-      SConfiguration sConf,
-      DiscoveryService discoveryService,
-      ArtifactManagerFactory artifactManagerFactory, MetricsCollectionService metricsCollectionService) {
-    this.cConf = cConf;
+                      SConfiguration sConf,
+                      DiscoveryService discoveryService,
+                      MetricsCollectionService metricsCollectionService,
+                      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     this.discoveryService = discoveryService;
-    this.artifactManagerFactory = artifactManagerFactory;
-    this.taskLauncher = new RunnableTaskLauncher(cConf);
-    this.metricsCollectionService = metricsCollectionService;
 
-    NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.SYSTEM_WORKER)
+    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(Constants.Service.SYSTEM_WORKER)
         .setHost(cConf.get(Constants.SystemWorker.ADDRESS))
         .setPort(cConf.getInt(Constants.SystemWorker.PORT))
         .setExecThreadPoolSize(cConf.getInt(Constants.TaskWorker.EXEC_THREADS))

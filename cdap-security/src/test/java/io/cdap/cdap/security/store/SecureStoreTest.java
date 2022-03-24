@@ -28,6 +28,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
@@ -104,7 +105,8 @@ public class SecureStoreTest {
 
     injector.getInstance(NamespaceAdmin.class).create(NamespaceMeta.DEFAULT);
 
-    httpServer = new CommonNettyHttpServiceBuilder(injector.getInstance(CConfiguration.class), "SecureStore")
+    httpServer = new CommonNettyHttpServiceBuilder(injector.getInstance(CConfiguration.class), "SecureStore",
+                                                   new NoOpMetricsCollectionService())
       .setHttpHandlers(Collections.singleton(injector.getInstance(SecureStoreHandler.class)))
       .build();
     httpServer.start();

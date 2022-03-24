@@ -127,7 +127,7 @@ public class RemoteConfiguratorTest {
 
     remoteClientFactory = new RemoteClientFactory(discoveryService,
                                                   new DefaultInternalAuthenticator(new AuthenticationTestContext()));
-    httpService = new CommonNettyHttpServiceBuilder(cConf, "test")
+    httpService = new CommonNettyHttpServiceBuilder(cConf, "test", new NoOpMetricsCollectionService())
       .setHttpHandlers(
         new TaskWorkerHttpHandlerInternal(cConf, className -> { }, new NoOpMetricsCollectionService()),
         new ArtifactHttpHandlerInternal(new TestArtifactRepository(cConf), namespaceAdmin),

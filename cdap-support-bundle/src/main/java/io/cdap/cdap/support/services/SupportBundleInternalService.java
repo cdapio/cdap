@@ -25,7 +25,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
-import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
@@ -51,11 +51,11 @@ public class SupportBundleInternalService extends AbstractIdleService {
   @Inject
   SupportBundleInternalService(CConfiguration cConf, SConfiguration sConf,
                                DiscoveryService discoveryService,
-                               @Named(Constants.SupportBundle.HANDLERS_NAME) Set<HttpHandler> handlers) {
+                               @Named(Constants.SupportBundle.HANDLERS_NAME) Set<HttpHandler> handlers,
+                               CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     this.discoveryService = discoveryService;
 
-    NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf,
-                                                                         Constants.Service.SUPPORT_BUNDLE_SERVICE)
+    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(Constants.Service.SUPPORT_BUNDLE_SERVICE)
       .setHttpHandlers(handlers)
       .setExceptionHandler(new HttpExceptionHandler())
       .setHost(cConf.get(Constants.SupportBundle.SERVICE_BIND_ADDRESS))

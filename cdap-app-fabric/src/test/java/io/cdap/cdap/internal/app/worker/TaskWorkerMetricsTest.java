@@ -27,6 +27,7 @@ import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.metrics.collect.AggregatedMetricsCollectionService;
 import io.cdap.common.http.HttpRequest;
@@ -81,10 +82,12 @@ public class TaskWorkerMetricsTest {
         Iterators.addAll(published, metrics);
       }
     };
+
     mockMetricsCollector.startAndWait();
     taskWorkerService = new TaskWorkerService(cConf, sConf, new InMemoryDiscoveryService(),
-                                                                (namespaceId, retryStrategy) -> null,
-                                                                mockMetricsCollector);
+                                              (namespaceId, retryStrategy) -> null,
+                                              mockMetricsCollector,
+                                              new CommonNettyHttpServiceFactory(cConf, mockMetricsCollector));
     taskWorkerStateFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service
     taskWorkerService.startAndWait();
@@ -112,10 +115,11 @@ public class TaskWorkerMetricsTest {
       new DefaultHttpRequestConfig(false));
     TaskWorkerTestUtil.waitForServiceCompletion(taskWorkerStateFuture);
     Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-    Assert.assertSame(1, published.size());
+    MetricValues metricValues =
+      published.stream().filter(mv -> taskClassName.equals(mv.getTags().get("clz"))).findFirst()
+        .orElseThrow(() -> new AssertionError("Metric was not found in response"));
 
     //check the metrics are present
-    MetricValues metricValues = published.get(0);
     Assert.assertTrue(hasMetric(metricValues, Constants.Metrics.TaskWorker.REQUEST_LATENCY_MS));
     Assert.assertTrue(hasMetric(metricValues, Constants.Metrics.TaskWorker.REQUEST_COUNT));
     //check the clz tag is set correctly
@@ -136,10 +140,11 @@ public class TaskWorkerMetricsTest {
       new DefaultHttpRequestConfig(false));
     TaskWorkerTestUtil.waitForServiceCompletion(taskWorkerStateFuture);
     Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-    Assert.assertSame(1, published.size());
+    MetricValues metricValues =
+      published.stream().filter(mv -> "testClassName".equals(mv.getTags().get("clz"))).findFirst()
+        .orElseThrow(() -> new AssertionError("Metric was not found in response"));
 
     //check the metrics are present
-    MetricValues metricValues = published.get(0);
     Assert.assertTrue(hasMetric(metricValues, Constants.Metrics.TaskWorker.REQUEST_COUNT));
     Assert.assertTrue(hasMetric(metricValues, Constants.Metrics.TaskWorker.REQUEST_LATENCY_MS));
     //check the clz tag is set correctly

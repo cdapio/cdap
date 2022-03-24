@@ -20,9 +20,12 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.http.HttpHeaderNames;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.http.AbstractHandlerHook;
@@ -46,9 +49,12 @@ public class MetricsReporterHook extends AbstractHandlerHook {
   private final String serviceName;
   private final LoadingCache<Map<String, String>, MetricsContext> collectorCache;
 
-  public MetricsReporterHook(MetricsCollectionService metricsCollectionService, String serviceName) {
-    this.serviceName = serviceName;
+  private final FeatureFlagsProvider featureFlagsProvider;
 
+  public MetricsReporterHook(CConfiguration cConf,
+                             MetricsCollectionService metricsCollectionService, String serviceName) {
+    this.serviceName = serviceName;
+    this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
     if (metricsCollectionService != null) {
       this.collectorCache = CacheBuilder.newBuilder()
         .expireAfterAccess(1, TimeUnit.HOURS)

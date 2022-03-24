@@ -70,7 +70,7 @@ public class RemoteTaskExecutorTest {
     discoveryService = new InMemoryDiscoveryService();
     remoteClientFactory = new RemoteClientFactory(discoveryService,
                                                   new DefaultInternalAuthenticator(new AuthenticationTestContext()));
-    httpService = new CommonNettyHttpServiceBuilder(cConf, "test")
+    httpService = new CommonNettyHttpServiceBuilder(cConf, "test", new NoOpMetricsCollectionService())
       .setHttpHandlers(
         new TaskWorkerHttpHandlerInternal(cConf, className -> {
         }, new NoOpMetricsCollectionService())

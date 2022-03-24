@@ -19,7 +19,7 @@ package io.cdap.cdap.app.runtime.spark.service;
 import com.google.common.util.concurrent.AbstractIdleService;
 import io.cdap.cdap.app.runtime.spark.Constant;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
@@ -36,8 +36,9 @@ public class ArtifactFetcherService extends AbstractIdleService {
 
   private final NettyHttpService httpService;
 
-  public ArtifactFetcherService(CConfiguration cConf, Location bundleLocation) {
-    httpService = new CommonNettyHttpServiceBuilder(cConf, "artifact.fetcher")
+  public ArtifactFetcherService(CConfiguration cConf, Location bundleLocation,
+                                CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
+    httpService = commonNettyHttpServiceFactory.builder("artifact.fetcher")
       .setHttpHandlers(
         new ArtifactFetcherHttpHandler(bundleLocation)
       )

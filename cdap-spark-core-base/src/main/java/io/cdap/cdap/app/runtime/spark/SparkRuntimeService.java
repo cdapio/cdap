@@ -44,6 +44,7 @@ import io.cdap.cdap.app.runtime.spark.submit.SparkSubmitter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.CConfigurationUtil;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.lang.PropertyFieldSetter;
@@ -147,6 +148,8 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   private final boolean isLocal;
   private final ProgramLifecycle<SparkRuntimeContext> programLifecycle;
   private final FieldLineageWriter fieldLineageWriter;
+  private final CommonNettyHttpServiceFactory commonNettyHttpServiceFactory;
+
 
   private Callable<ListenableFuture<RunId>> submitSpark;
   private Runnable cleanupTask;
@@ -156,7 +159,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   SparkRuntimeService(CConfiguration cConf, final Spark spark, @Nullable File pluginArchive,
                       SparkRuntimeContext runtimeContext, SparkSubmitter sparkSubmitter,
                       LocationFactory locationFactory, boolean isLocal, FieldLineageWriter fieldLineageWriter,
-                      MasterEnvironment masterEnv) {
+                      MasterEnvironment masterEnv, CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     this.cConf = cConf;
     this.spark = spark;
     this.runtimeContext = runtimeContext;
@@ -166,6 +169,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     this.completion = new AtomicReference<>();
     this.context = new BasicSparkClientContext(runtimeContext);
     this.isLocal = isLocal;
+    this.commonNettyHttpServiceFactory = commonNettyHttpServiceFactory;
     this.programLifecycle = new ProgramLifecycle<SparkRuntimeContext>() {
       @Override
       public void initialize(SparkRuntimeContext runtimeContext) throws Exception {
@@ -251,7 +255,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         if (cConfCopy.getBoolean(Constants.Environment.PROGRAM_SUBMISSION_MASTER_ENV_ENABLED, true)) {
           // In case of spark-on-k8s, artifactFetcherService is used by spark-drivers for fetching artifacts bundle.
           Location location = createBundle(new File("./artifacts").getAbsoluteFile().toPath());
-          artifactFetcherService = new ArtifactFetcherService(cConf, location);
+          artifactFetcherService = new ArtifactFetcherService(cConf, location, commonNettyHttpServiceFactory);
           artifactFetcherService.startAndWait();
         }
 

@@ -164,7 +164,8 @@ public class TetheringClientHandlerTest {
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
     CConfiguration conf = CConfiguration.create();
     serverHandler = new MockTetheringServerHandler();
-    serverService = new CommonNettyHttpServiceBuilder(conf, getClass().getSimpleName() + "_server")
+    serverService = new CommonNettyHttpServiceBuilder(conf, getClass().getSimpleName() + "_server",
+                                                      new NoOpMetricsCollectionService())
       .setHttpHandlers(serverHandler).build();
     serverService.start();
     serverConfig = ClientConfig.builder()
@@ -188,7 +189,8 @@ public class TetheringClientHandlerTest {
     AuthenticationTestContext.actAsPrincipal(MASTER_PRINCIPAL);
 
     MessagingService messagingService = injector.getInstance(MessagingService.class);
-    clientService = new CommonNettyHttpServiceBuilder(conf, getClass().getSimpleName() + "_client")
+    clientService = new CommonNettyHttpServiceBuilder(conf, getClass().getSimpleName() + "_client",
+                                                      new NoOpMetricsCollectionService())
       .setHttpHandlers(new TetheringClientHandler(tetheringStore, contextAccessEnforcer),
                        new TetheringHandler(cConf, tetheringStore, messagingService))
       .build();

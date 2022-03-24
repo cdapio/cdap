@@ -177,7 +177,8 @@ public class TetheringServerHandlerTest {
       new DefaultContextAccessEnforcer(new AuthenticationTestContext(), inMemoryAccessController);
     AuthenticationTestContext.actAsPrincipal(MASTER_PRINCIPAL);
 
-    service = new CommonNettyHttpServiceBuilder(CConfiguration.create(), getClass().getSimpleName())
+    service = new CommonNettyHttpServiceBuilder(CConfiguration.create(), getClass().getSimpleName(),
+        new NoOpMetricsCollectionService())
       .setHttpHandlers(
         new TetheringServerHandler(cConf, tetheringStore, messagingService, contextAccessEnforcer),
         new TetheringHandler(cConf, tetheringStore, messagingService)).build();

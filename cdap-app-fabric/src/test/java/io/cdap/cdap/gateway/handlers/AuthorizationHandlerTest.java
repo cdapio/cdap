@@ -26,6 +26,7 @@ import io.cdap.cdap.common.FeatureDisabledException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.EntityId;
@@ -84,7 +85,7 @@ public class AuthorizationHandlerTest {
     properties.setProperty("superusers", admin.getName());
     final InMemoryAccessController auth = new InMemoryAccessController();
     auth.initialize(FACTORY.create(properties));
-    service = new CommonNettyHttpServiceBuilder(conf, getClass().getSimpleName())
+    service = new CommonNettyHttpServiceBuilder(conf, getClass().getSimpleName(), new NoOpMetricsCollectionService())
       .setHttpHandlers(new AuthorizationHandler(auth, new AccessControllerInstantiator(conf, FACTORY) {
         @Override
         public AccessController get() {
@@ -136,7 +137,8 @@ public class AuthorizationHandlerTest {
   private void testDisabled(CConfiguration cConf, FeatureDisabledException.Feature feature,
                             String configSetting) throws Exception {
     final InMemoryAccessController accessController = new InMemoryAccessController();
-    NettyHttpService service = new CommonNettyHttpServiceBuilder(cConf, getClass().getSimpleName())
+    NettyHttpService service = new CommonNettyHttpServiceBuilder(cConf, getClass().getSimpleName(),
+                                                                 new NoOpMetricsCollectionService())
       .setHttpHandlers(new AuthorizationHandler(
         accessController, new AccessControllerInstantiator(cConf, FACTORY) {
         @Override

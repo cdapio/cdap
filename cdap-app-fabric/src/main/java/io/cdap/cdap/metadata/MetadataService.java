@@ -19,15 +19,13 @@ package io.cdap.cdap.metadata;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.HttpExceptionHandler;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
-import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
-import io.cdap.cdap.common.metrics.MetricsReporterHook;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
@@ -37,7 +35,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
-import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -52,16 +49,14 @@ public class MetadataService extends AbstractIdleService {
   private Cancellable cancelDiscovery;
 
   @Inject
-  MetadataService(CConfiguration cConf, SConfiguration sConf, MetricsCollectionService metricsCollectionService,
-                  DiscoveryService discoveryService,
+  MetadataService(CConfiguration cConf, SConfiguration sConf,
+                  DiscoveryService discoveryService, CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
                   @Named(Constants.Metadata.HANDLERS_NAME) Set<HttpHandler> handlers) {
     this.discoveryService = discoveryService;
 
-    NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.METADATA_SERVICE)
+    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(Constants.Service.METADATA_SERVICE)
       .setHttpHandlers(handlers)
       .setExceptionHandler(new HttpExceptionHandler())
-      .setHandlerHooks(Collections.singleton(new MetricsReporterHook(metricsCollectionService,
-                                                                     Constants.Service.METADATA_SERVICE)))
       .setHost(cConf.get(Constants.Metadata.SERVICE_BIND_ADDRESS))
       .setPort(cConf.getInt(Constants.Metadata.SERVICE_BIND_PORT))
       .setWorkerThreadPoolSize(cConf.getInt(Constants.Metadata.SERVICE_WORKER_THREADS))

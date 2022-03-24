@@ -21,7 +21,7 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
@@ -50,10 +50,11 @@ public class ArtifactLocalizerService extends AbstractIdleService {
 
   @Inject
   ArtifactLocalizerService(CConfiguration cConf,
-                           ArtifactLocalizer artifactLocalizer) {
+                           ArtifactLocalizer artifactLocalizer,
+                           CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     this.cConf = cConf;
     this.artifactLocalizer = artifactLocalizer;
-    this.httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TASK_WORKER)
+    this.httpService = commonNettyHttpServiceFactory.builder(Constants.Service.TASK_WORKER)
       .setHost(InetAddress.getLoopbackAddress().getHostName())
       .setPort(cConf.getInt(Constants.ArtifactLocalizer.PORT))
       .setBossThreadPoolSize(cConf.getInt(Constants.ArtifactLocalizer.BOSS_THREADS))

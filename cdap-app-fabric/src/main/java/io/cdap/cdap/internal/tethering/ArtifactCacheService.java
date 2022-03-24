@@ -22,7 +22,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
-import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerCleaner;
 import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import io.cdap.http.NettyHttpService;
@@ -58,9 +58,10 @@ public class ArtifactCacheService extends AbstractIdleService {
   public ArtifactCacheService(CConfiguration cConf, ArtifactCache cache, TetheringStore store,
                               @Named(TetheringAgentService.REMOTE_TETHERING_AUTHENTICATOR)
                                 RemoteAuthenticator remoteAuthenticator,
-                              DiscoveryService discoveryService) {
+                              DiscoveryService discoveryService,
+                              CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     this.discoveryService = discoveryService;
-    httpService = new CommonNettyHttpServiceBuilder(cConf, "artifact.cache")
+    httpService = commonNettyHttpServiceFactory.builder("artifact.cache")
       .setHttpHandlers(new ArtifactCacheHttpHandlerInternal(cache, store, remoteAuthenticator))
       .setHost(cConf.get(Constants.ArtifactCache.ADDRESS))
       .setPort(cConf.getInt(Constants.ArtifactCache.PORT))

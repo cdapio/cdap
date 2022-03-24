@@ -31,7 +31,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
-import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.common.service.RetryOnStartFailureService;
 import io.cdap.cdap.common.service.RetryStrategies;
@@ -72,6 +72,7 @@ public class LogBufferService extends AbstractIdleService {
   private final CheckpointManagerFactory checkpointManagerFactory;
   private final List<Service> pipelines = new ArrayList<>();
   private final List<CheckpointManager<LogBufferFileOffset>> checkpointManagers = new ArrayList<>();
+  private final CommonNettyHttpServiceFactory commonNettyHttpServiceFactory;
 
   private Cancellable cancellable;
   private NettyHttpService httpService;
@@ -80,12 +81,14 @@ public class LogBufferService extends AbstractIdleService {
   @Inject
   public LogBufferService(CConfiguration cConf, SConfiguration sConf, DiscoveryService discoveryService,
                           CheckpointManagerFactory checkpointManagerFactory,
-                          Provider<AppenderContext> contextProvider) {
+                          Provider<AppenderContext> contextProvider,
+                          CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     this.cConf = cConf;
     this.sConf = sConf;
     this.contextProvider = contextProvider;
     this.checkpointManagerFactory = checkpointManagerFactory;
     this.discoveryService = discoveryService;
+    this.commonNettyHttpServiceFactory = commonNettyHttpServiceFactory;
   }
 
   @Override
@@ -110,7 +113,7 @@ public class LogBufferService extends AbstractIdleService {
                                                                                                     startCleanup));
 
     // create and start http service
-    NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.LOG_BUFFER_SERVICE)
+    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(Constants.Service.LOG_BUFFER_SERVICE)
       .setHttpHandlers(new LogBufferHandler(concurrentWriter))
       .setExceptionHandler(new HttpExceptionHandler())
       .setHost(cConf.get(Constants.LogBuffer.LOG_BUFFER_SERVER_BIND_ADDRESS))
