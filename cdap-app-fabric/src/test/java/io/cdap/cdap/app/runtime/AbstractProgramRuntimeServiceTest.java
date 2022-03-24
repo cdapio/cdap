@@ -24,7 +24,6 @@ import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ArtifactClasses;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
-import io.cdap.cdap.app.deploy.ProgramRunDispatcher;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.common.app.RunIds;
@@ -35,6 +34,7 @@ import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.app.deploy.InMemoryProgramRunDispatcher;
+import io.cdap.cdap.internal.app.deploy.ProgramRunDispatcherFactory;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -211,9 +211,9 @@ public class AbstractProgramRuntimeServiceTest {
     final Program program = createDummyProgram();
     TestProgramRunDispatcher launchDispatcher = new TestProgramRunDispatcher(cConf, runnerFactory,
                                                                              program, null, null);
+    ProgramRunDispatcherFactory factory = new ProgramRunDispatcherFactory(cConf, launchDispatcher);
     final ProgramRuntimeService runtimeService =
-      new AbstractProgramRuntimeService(cConf, runnerFactory,
-                                        new NoOpProgramStateWriter(), () -> launchDispatcher, false) {
+      new AbstractProgramRuntimeService(cConf, runnerFactory, new NoOpProgramStateWriter(), factory, false) {
       @Override
       public ProgramLiveInfo getLiveInfo(ProgramId programId) {
         return new ProgramLiveInfo(programId, "runtime") { };
@@ -275,9 +275,8 @@ public class AbstractProgramRuntimeServiceTest {
     RemoteClientFactory remoteClientFactory = new RemoteClientFactory(
       discoveryService, new DefaultInternalAuthenticator(new AuthenticationTestContext()));
     LocationFactory locationFactory = new LocalLocationFactory(TEMP_FOLDER.newFolder());
-    ProgramRunDispatcher launchDispatcher =
-      new TestProgramRunDispatcher(cConf, runnerFactory, program, locationFactory,
-                                   remoteClientFactory);
+    InMemoryProgramRunDispatcher launchDispatcher =
+      new TestProgramRunDispatcher(cConf, runnerFactory, program, locationFactory, remoteClientFactory);
     ProgramRuntimeService runtimeService = new TestProgramRuntimeService(cConf, runnerFactory, null, launchDispatcher);
     runtimeService.startAndWait();
     try {
@@ -442,8 +441,9 @@ public class AbstractProgramRuntimeServiceTest {
 
     private TestProgramRuntimeService(CConfiguration cConf,
                                       ProgramRunnerFactory programRunnerFactory, @Nullable RuntimeInfo extraInfo,
-                                      ProgramRunDispatcher programRunDispatcher) {
-      super(cConf, programRunnerFactory, new NoOpProgramStateWriter(), () -> programRunDispatcher, false);
+                                      InMemoryProgramRunDispatcher programRunDispatcher) {
+      super(cConf, programRunnerFactory, new NoOpProgramStateWriter(),
+            new ProgramRunDispatcherFactory(cConf, programRunDispatcher), false);
       this.extraInfo = extraInfo;
     }
 
