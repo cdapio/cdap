@@ -101,6 +101,7 @@ public class ProgramStartSubscriberService extends AbstractNotificationSubscribe
       try {
         reserveLaunchingSlots();
       } catch (TooManyRequestsException e) {
+        releaseLaunchingReservation();
         LOG.warn(e.getMessage());
         break;
       }
