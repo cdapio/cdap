@@ -474,6 +474,7 @@ public final class Constants {
     public static final String CONTAINER_CORES = "system.worker.container.num.cores";
     public static final String CONTAINER_COUNT = "system.worker.container.count";
     public static final String LOCAL_DATA_DIR = "task.worker.local.data.dir";
+    public static final String CLEANUP_EXECUTOR_SERVICE_BINDING = "cleanup.executor.service";
 
     /**
      * System worker http handler configuration

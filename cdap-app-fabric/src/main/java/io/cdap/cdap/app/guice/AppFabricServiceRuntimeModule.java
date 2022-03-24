@@ -37,7 +37,6 @@ import com.google.inject.util.Modules;
 import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.deploy.ManagerFactory;
-import io.cdap.cdap.app.deploy.ProgramRunDispatcher;
 import io.cdap.cdap.app.mapreduce.DistributedMRJobInfoFetcher;
 import io.cdap.cdap.app.mapreduce.LocalMRJobInfoFetcher;
 import io.cdap.cdap.app.mapreduce.MRJobInfoFetcher;
@@ -81,9 +80,8 @@ import io.cdap.cdap.internal.app.deploy.ConfiguratorFactoryProvider;
 import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
 import io.cdap.cdap.internal.app.deploy.InMemoryProgramRunDispatcher;
 import io.cdap.cdap.internal.app.deploy.LocalApplicationManager;
-import io.cdap.cdap.internal.app.deploy.ProgramRunDispatcherFactory;
-import io.cdap.cdap.internal.app.deploy.ProgramRunDispatcherFactoryProvider;
 import io.cdap.cdap.internal.app.deploy.RemoteConfigurator;
+import io.cdap.cdap.internal.app.deploy.RemoteProgramRunDispatcher;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.namespace.DistributedStorageProviderNamespaceAdmin;
@@ -285,6 +283,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                  .to(DistributedStorageProviderNamespaceAdmin.class);
                                bind(UGIProvider.class).toProvider(UGIProviderProvider.class);
 
+                               bind(RemoteProgramRunDispatcher.class).in(Scopes.SINGLETON);
+
                                Multibinder<String> servicesNamesBinder =
                                  Multibinder.newSetBinder(binder(), String.class,
                                                           Names.named("appfabric.services.names"));
@@ -343,11 +343,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
       bind(ConfiguratorFactory.class).toProvider(ConfiguratorFactoryProvider.class);
 
-      install(new FactoryModuleBuilder()
-        .implement(ProgramRunDispatcher.class, InMemoryProgramRunDispatcher.class)
-        .build(Key.get(ProgramRunDispatcherFactory.class, Names.named(AppFabric.FACTORY_IMPLEMENTATION_LOCAL))));
-
-      bind(ProgramRunDispatcherFactory.class).toProvider(ProgramRunDispatcherFactoryProvider.class);
+      bind(InMemoryProgramRunDispatcher.class).in(Scopes.SINGLETON);
 
       bind(Store.class).to(DefaultStore.class);
       bind(SecretStore.class).to(DefaultSecretStore.class).in(Scopes.SINGLETON);

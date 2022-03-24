@@ -26,7 +26,6 @@ import com.google.inject.name.Names;
 import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.deploy.ManagerFactory;
-import io.cdap.cdap.app.deploy.ProgramRunDispatcher;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -40,7 +39,6 @@ import io.cdap.cdap.explore.client.MockExploreClient;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
 import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
 import io.cdap.cdap.internal.app.deploy.InMemoryProgramRunDispatcher;
-import io.cdap.cdap.internal.app.deploy.ProgramRunDispatcherFactory;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.namespace.DefaultNamespaceAdmin;
@@ -209,11 +207,8 @@ public class PreviewRunnerModule extends PrivateModule {
     // expose this binding so program runner modules can use
     expose(ConfiguratorFactory.class);
 
-    install(new FactoryModuleBuilder()
-      .implement(ProgramRunDispatcher.class, InMemoryProgramRunDispatcher.class)
-      .build(ProgramRunDispatcherFactory.class));
-
-    expose(ProgramRunDispatcherFactory.class);
+    bind(InMemoryProgramRunDispatcher.class).in(Scopes.SINGLETON);
+    expose(InMemoryProgramRunDispatcher.class);
 
     install(
       new FactoryModuleBuilder()

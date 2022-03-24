@@ -490,18 +490,22 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
                 runRecordDetail.getStatus());
       return false;
     }
+    TwillController twillController = createTwillControllerFromRunRecord(runRecordDetail);
+    return twillController != null;
+  }
 
+  public TwillController createTwillControllerFromRunRecord(RunRecordDetail runRecordDetail) {
     Map<String, String> systemArgs = runRecordDetail.getSystemArgs();
     try {
       ClusterMode clusterMode = ClusterMode.valueOf(systemArgs.getOrDefault(ProgramOptionConstants.CLUSTER_MODE,
                                                                             ClusterMode.ON_PREMISE.name()));
       if (clusterMode != ClusterMode.ISOLATED) {
         LOG.debug("Ignore run {} of non supported cluster mode {}", runRecordDetail.getProgramRunId(), clusterMode);
-        return false;
+        return null;
       }
     } catch (IllegalArgumentException e) {
       LOG.warn("Ignore run record with an invalid cluster mode", e);
-      return false;
+      return null;
     }
 
     ProgramOptions programOpts = new SimpleProgramOptions(runRecordDetail.getProgramRunId().getParent(),
@@ -509,8 +513,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
                                                           new BasicArguments(runRecordDetail.getUserArgs()));
     // Creates a controller via the controller factory.
     // Since there is no startup start needed, the timeout is arbitrarily short
-    new ControllerFactory(runRecordDetail.getProgramRunId(), programOpts).create(null, 5, TimeUnit.SECONDS);
-    return true;
+    return new ControllerFactory(runRecordDetail.getProgramRunId(), programOpts).create(null, 5, TimeUnit.SECONDS);
   }
 
   private final class ControllerFactory implements TwillControllerFactory {

@@ -127,8 +127,8 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     updateRuntimeInfo(runtimeInfo);
     executor.execute(() -> {
       try {
-        controller.setProgramController(
-          programRunDispatcherFactory.getProgramRunDispatcher().dispatchProgram(programRunDispatcherInfo));
+        controller.setProgramController(programRunDispatcherFactory.getProgramRunDispatcher(programId.getType())
+                                          .dispatchProgram(programRunDispatcherInfo));
       } catch (Exception e) {
         controller.failed(e);
         programStateWriter.error(programRunId, e);
