@@ -26,7 +26,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
-import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.common.Bytes;
@@ -638,8 +637,8 @@ public class AppMetadataStore {
                                               StoreDefinition.AppMetadataStore.RUN_RECORD_DATA);
       } else {
         // Otherwise , there shouldn't be an existing run record.
-        LOG.error("Ignoring unexpected request to record provisioning state for program run {} that has an existingRecord "
-                    + "run record in run state {} and cluster state {}.",
+        LOG.error("Ignoring unexpected request to record provisioning state for program run {} " +
+                    "that has an existingRecord run record in run state {} and cluster state {}.",
                   programRunId, existingRecord.getStatus(), existingRecord.getCluster().getStatus());
         return null;
       }

@@ -32,11 +32,9 @@ import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.services.AbstractNotificationSubscriberService;
 import io.cdap.cdap.internal.app.services.RunRecordMonitorService;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
-import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramRunClusterStatus;
-import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
@@ -47,7 +45,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
@@ -124,7 +121,8 @@ public class ProgramStartSubscriberService extends AbstractNotificationSubscribe
   /**
    * Process a {@link Notification} received from TMS.
    */
-  private ProgramRunId processNotification(Notification notification) throws IllegalArgumentException, ConflictException {
+  private ProgramRunId processNotification(Notification notification)
+    throws IllegalArgumentException, ConflictException {
     // Validate notification type
     if (!notification.getNotificationType().equals(Notification.Type.PROGRAM_STATUS)) {
       throw new IllegalArgumentException(String.format("Unexpected notification type %s. Should be %s",
