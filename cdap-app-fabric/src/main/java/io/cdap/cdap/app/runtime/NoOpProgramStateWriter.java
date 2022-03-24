@@ -26,6 +26,12 @@ import javax.annotation.Nullable;
  */
 public class NoOpProgramStateWriter implements ProgramStateWriter {
   @Override
+  public void enqueue(ProgramRunId programRunId, ProgramOptions programOptions,
+                      ProgramDescriptor programDescriptor, String userId) {
+    // no-op
+  }
+
+  @Override
   public void start(ProgramRunId programRunId, ProgramOptions programOptions,
                     @Nullable String twillRunId, ProgramDescriptor programDescriptor) {
     // no-op

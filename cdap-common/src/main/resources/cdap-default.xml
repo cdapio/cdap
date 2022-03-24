@@ -481,6 +481,16 @@
   </property>
 
   <property>
+    <name>app.program.start.queueing.enabled</name>
+    <value>true</value>
+    <description>
+      When set to true, allow program start to be queued if exceeding max concurrent launch
+      and max concurrent program run thresholds.
+    </description>
+  </property>
+
+
+  <property>
     <name>app.program.stop.timeout.secs</name>
     <value>180</value>
     <description>
@@ -650,6 +660,23 @@
   </property>
 
   <property>
+    <name>app.program.start.event.fetch.size</name>
+    <value>100</value>
+    <description>
+      Maximum number of events to fetch from the messaging system in each processing cycle for
+      program start events
+    </description>
+  </property>
+
+  <property>
+    <name>app.program.start.event.poll.delay.millis</name>
+    <value>2000</value>
+    <description>
+      The delay in milliseconds to check again for new program start events after it detects there was no event
+    </description>
+  </property>
+
+  <property>
     <name>app.program.yarn.attempt.failures.validity.interval</name>
     <value>60000</value>
     <description>
@@ -798,6 +825,14 @@
   <property>
     <name>program.status.event.topic</name>
     <value>programstatusevent</value>
+    <description>
+      Topic name for publishing status transitioning events of program runs to the messaging system
+    </description>
+  </property>
+
+  <property>
+    <name>program.start.event.topic</name>
+    <value>provisionpendingevent</value>
     <description>
       Topic name for publishing status transitioning events of program runs to the messaging system
     </description>
@@ -2404,7 +2439,7 @@
 
   <property>
     <name>messaging.system.topics</name>
-    <value>${audit.topic},${metadata.messaging.topic},${data.event.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${metrics.admin.topic},${time.event.topic},${program.status.event.topic},${program.status.record.event.topic},${log.tms.topic.prefix}:${log.publish.num.partitions},${preview.messaging.topic},previewlog0</value>
+    <value>${audit.topic},${metadata.messaging.topic},${data.event.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${metrics.admin.topic},${time.event.topic},${program.status.event.topic},${program.start.event.topic},${program.status.record.event.topic},${log.tms.topic.prefix}:${log.publish.num.partitions},${preview.messaging.topic},previewlog0</value>
     <description>
       A comma-separated list of topics that are always available in the
       system namespace. Multiple topics sharing the same prefix and

@@ -26,6 +26,17 @@ import javax.annotation.Nullable;
  * An interface that defines the behavior for how program states are persisted
  */
 public interface ProgramStateWriter {
+  /**
+   * Enqueue the program run request and set its status to be {@link ProgramRunStatus#ENQUEUED} at the start
+   * time given by the {@link ProgramRunId}
+   *
+   * @param programRunId the id of the program run
+   * @param programOptions the program options
+   * @param programDescriptor the program descriptor
+   * @param userId the program initiator's userID
+   */
+   void enqueue(ProgramRunId programRunId, ProgramOptions programOptions,
+                ProgramDescriptor programDescriptor, String userId);
 
   /**
    * Updates the program run's status to be {@link ProgramRunStatus#STARTING} at the start time given by the

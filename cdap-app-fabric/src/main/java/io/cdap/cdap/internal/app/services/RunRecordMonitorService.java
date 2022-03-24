@@ -38,6 +38,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Maintain and return total number of launching and running run-records.
@@ -53,6 +54,7 @@ public class RunRecordMonitorService extends AbstractScheduledService {
    * all run records with {@link ProgramRunStatus#PENDING} or {@link ProgramRunStatus#STARTING} status.
    */
   private final BlockingQueue<ProgramRunId> launchingQueue;
+  private final AtomicInteger reservedLaunchingCount;
   private final ProgramRuntimeService runtimeService;
   private final long ageThresholdSec;
   private final CConfiguration cConf;
@@ -69,6 +71,7 @@ public class RunRecordMonitorService extends AbstractScheduledService {
 
     this.launchingQueue = new PriorityBlockingQueue<>(128, Comparator.comparingLong(
       o -> RunIds.getTime(o.getRun(), TimeUnit.MILLISECONDS)));
+    reservedLaunchingCount = new AtomicInteger(0);
     this.ageThresholdSec = cConf.getLong(Constants.AppFabric.MONITOR_RECORD_AGE_THRESHOLD_SECONDS);
     this.maxConcurrentRuns = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_RUNS);
   }
@@ -105,6 +108,29 @@ public class RunRecordMonitorService extends AbstractScheduledService {
     return executor;
   }
 
+  public Counter reserveRequestAndGetCount() {
+    int reservedCount;
+    int launchingCount;
+    synchronized (this) {
+      reservedCount = reservedLaunchingCount.incrementAndGet();
+      launchingCount = launchingQueue.size();
+    }
+    int runningCount = getProgramsRunningCount();
+
+    LOG.info("Counter has {} reserved {} concurrent launching and {} running programs.",
+             reservedCount, launchingCount, runningCount);
+    return new Counter(reservedCount, launchingCount, runningCount);
+  }
+
+  public void releaseReservedRequest() {
+    reservedLaunchingCount.decrementAndGet();
+  }
+
+  public void commitReservedRequest(ProgramRunId programRunId) {
+    reservedLaunchingCount.decrementAndGet();
+    addRequest(programRunId);
+  }
+
   /**
    * Add a new in-flight launch request and return total number of launching and running programs.
    *
@@ -116,6 +142,7 @@ public class RunRecordMonitorService extends AbstractScheduledService {
       throw new Exception("None time-based UUIDs are not supported");
     }
 
+    int reservedCount = reservedLaunchingCount.get();
     int launchingCount;
     synchronized (this) {
       addRequest(programRunId);
@@ -124,8 +151,9 @@ public class RunRecordMonitorService extends AbstractScheduledService {
 
     int runningCount = getProgramsRunningCount();
 
-    LOG.info("Counter has {} concurrent launching and {} running programs.", launchingCount, runningCount);
-    return new Counter(launchingCount, runningCount);
+    LOG.info("Counter has {} reserved {} concurrent launching and {} running programs.",
+             reservedCount, launchingCount, runningCount);
+    return new Counter(reservedCount, launchingCount, runningCount);
   }
 
   /**
@@ -226,7 +254,8 @@ public class RunRecordMonitorService extends AbstractScheduledService {
     return false;
   }
 
-  class Counter {
+  public class Counter {
+    private final int reservedLaunchingCount;
     /**
      * Total number of launch requests that have been accepted but still missing in metadata store +
      * total number of run records with {@link ProgramRunStatus#PENDING} status +
@@ -241,9 +270,14 @@ public class RunRecordMonitorService extends AbstractScheduledService {
      */
     private final int runningCount;
 
-    Counter(int launchingCount, int runningCount) {
+    Counter(int reservedLaunchingCount, int launchingCount, int runningCount) {
+      this.reservedLaunchingCount = reservedLaunchingCount;
       this.launchingCount = launchingCount;
       this.runningCount = runningCount;
+    }
+
+    public int getReservedLaunchingCount() {
+      return reservedLaunchingCount;
     }
 
     public int getLaunchingCount() {

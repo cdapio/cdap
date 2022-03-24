@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
  */
 public enum ProgramRunStatus {
   ALL,
+  ENQUEUED,
   PENDING,
   STARTING,
   RUNNING,
@@ -55,6 +56,11 @@ public enum ProgramRunStatus {
       return true;
     }
     switch (this) {
+      case ENQUEUED:
+        // PENDING is the happy path
+        // STOPPING happens if the run was manually stopped gracefully(may include a timeout)
+        // KILLED happens if the run was manually stopped
+        return status == PENDING || status == STOPPING || status == KILLED;
       case PENDING:
         // STARTING is the happy path
         // STOPPING happens if the run was manually stopped gracefully(may include a timeout)
@@ -146,6 +152,7 @@ public enum ProgramRunStatus {
 
   public static ProgramStatus toProgramStatus(ProgramRunStatus status) {
     switch(status) {
+      case ENQUEUED:
       case PENDING:
       case STARTING:
         return ProgramStatus.INITIALIZING;
