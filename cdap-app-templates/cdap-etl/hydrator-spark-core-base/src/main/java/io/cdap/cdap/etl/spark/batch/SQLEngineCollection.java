@@ -49,7 +49,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
@@ -249,8 +248,7 @@ public class SQLEngineCollection<T> implements SQLBackedCollection<T> {
           return null;
         };
         // We submit these in parallel to prevent blocking for each store task to complete in sequence.
-        Future<String> future = CompletableFuture.supplyAsync(task);
-        directStoreFutures.add(future);
+        directStoreFutures.add(adapter.submitTask(task));
       }
     }
 

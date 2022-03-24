@@ -168,7 +168,7 @@ public class BatchSQLEngineAdapter implements Closeable {
       try {
         LOG.debug("Starting push for dataset '{}'", datasetName);
         SQLDataset result = pushInternal(datasetName, schema, collection);
-        LOG.debug("Completed push for dataset '{}'", datasetName);
+        LOG.debug("Started push for dataset '{}'", datasetName);
         future.complete(result);
       } catch (Throwable t) {
         future.completeExceptionally(t);
@@ -246,7 +246,7 @@ public class BatchSQLEngineAdapter implements Closeable {
         LOG.debug("Starting pull for dataset '{}'", job.getDatasetName());
         waitForJobAndThrowException(job);
         JavaRDD<T> result = pullInternal(job.waitFor());
-        LOG.debug("Completed pull for dataset '{}'", job.getDatasetName());
+        LOG.debug("Started pull for dataset '{}'", job.getDatasetName());
         future.complete(result);
       } catch (Throwable t) {
         future.completeExceptionally(t);
@@ -430,17 +430,17 @@ public class BatchSQLEngineAdapter implements Closeable {
 
     CompletableFuture<T> future = new CompletableFuture<>();
 
-    Runnable joinTask = () -> {
+    Runnable runnable = () -> {
       try {
-        LOG.debug("Starting job for dataset '{}'", jobKey.getDatasetName());
+        LOG.debug("Starting {} job for dataset '{}'", jobKey.getJobType(), jobKey.getDatasetName());
         future.complete(jobFunction.get());
-        LOG.debug("Completed job for dataset '{}'", jobKey.getDatasetName());
+        LOG.debug("Completed {} job for dataset '{}'", jobKey.getJobType(), jobKey.getDatasetName());
       } catch (Throwable t) {
         future.completeExceptionally(t);
       }
     };
 
-    executorService.submit(joinTask);
+    executorService.submit(runnable);
 
     SQLEngineJob<T> job = new SQLEngineJob<>(jobKey, future);
     jobs.put(jobKey, job);
@@ -811,6 +811,18 @@ public class BatchSQLEngineAdapter implements Closeable {
 
       return writeResult.isSuccessful();
     });
+  }
+
+  /**
+   * Executes a task based o provided {@link Supplier}. This returns a {@link CompletableFuture} with the result of
+   * the execution of the supplied task.
+   *
+   * @param supplier task to execute.
+   * @param <T> Output type for this job
+   * @return {@link CompletableFuture} with the output for the execution of this task.
+   */
+  public <T> CompletableFuture<T> submitTask(Supplier<T> supplier) {
+    return CompletableFuture.supplyAsync(supplier, executorService);
   }
 
   /**
