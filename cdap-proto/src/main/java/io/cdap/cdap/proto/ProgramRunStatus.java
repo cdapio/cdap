@@ -57,7 +57,7 @@ public enum ProgramRunStatus {
     }
     switch (this) {
       case ENQUEUED:
-        return status == PENDING;
+        return status == PENDING || status == STOPPING || status == KILLED;
       case PENDING:
         // STARTING is the happy path
         // STOPPING happens if the run was manually stopped gracefully(may include a timeout)
