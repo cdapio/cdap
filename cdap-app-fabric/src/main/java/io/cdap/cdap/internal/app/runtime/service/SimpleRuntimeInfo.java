@@ -21,6 +21,8 @@ import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
 import org.apache.twill.api.RunId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import javax.annotation.Nullable;
@@ -35,6 +37,8 @@ public final class SimpleRuntimeInfo implements ProgramRuntimeService.RuntimeInf
   private final ProgramId programId;
   private final Runnable cleanupTask;
   private volatile RunId twillRunId;
+
+  private static final Logger LOG = LoggerFactory.getLogger(SimpleRuntimeInfo.class);
 
   public SimpleRuntimeInfo(ProgramController controller, ProgramId programId) {
     this(controller, programId, () -> { });
@@ -73,6 +77,7 @@ public final class SimpleRuntimeInfo implements ProgramRuntimeService.RuntimeInf
 
   @Override
   public void close() {
+    LOG.debug("close() called for Program id: {} and type: {}", twillRunId.getId(), programId.getType());
     cleanupTask.run();
   }
 }
