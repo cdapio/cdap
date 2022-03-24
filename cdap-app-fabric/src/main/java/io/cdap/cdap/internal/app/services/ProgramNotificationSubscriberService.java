@@ -294,12 +294,17 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       handleProgramEvent(programRunId, programRunStatus, notification, messageIdBytes,
                          appMetadataStore, programHeartbeatTable, result);
     }
-    if (clusterStatus == null) {
-      return result;
+    if (clusterStatus != null) {
+
+      handleClusterEvent(programRunId, clusterStatus, notification,
+                         messageIdBytes, appMetadataStore, context).ifPresent(result::add);
     }
 
-    handleClusterEvent(programRunId, clusterStatus, notification,
-                       messageIdBytes, appMetadataStore, context).ifPresent(result::add);
+    if (clusterStatus == null && programRunStatus == null) {
+        LOG.warn("Ignore notification without program or run status for program {}, {}",
+                 programRun, notification);
+    }
+
     return result;
   }
 
@@ -308,7 +313,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
                                   AppMetadataStore appMetadataStore,
                                   ProgramHeartbeatTable programHeartbeatTable,
                                   List<Runnable> runnables) throws Exception {
-    LOG.trace("Processing program status notification: {}", notification);
+    LOG.debug("Processing program status notification: {}", notification);
     Map<String, String> properties = notification.getProperties();
     String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
 
@@ -636,6 +641,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
                                                 Notification notification, byte[] messageIdBytes,
                                                 AppMetadataStore appMetadataStore,
                                                 StructuredTableContext context) throws IOException {
+    LOG.debug("Processing cluster status notification: {}", notification);
     Map<String, String> properties = notification.getProperties();
 
     ProgramOptions programOptions = ProgramOptions.fromNotification(notification, GSON);
