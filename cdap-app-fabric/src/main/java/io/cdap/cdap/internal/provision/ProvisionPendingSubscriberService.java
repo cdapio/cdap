@@ -101,10 +101,11 @@ public class ProvisionPendingSubscriberService extends AbstractNotificationSubsc
                                  Iterator<ImmutablePair<String, Notification>> messages) throws Exception {
     while (messages.hasNext()) {
       ImmutablePair<String, Notification> messagePair = messages.next();
-      LOG.error("wyzhang: provision pending process message start {}", messagePair.getFirst());
-      processNotification(messagePair.getSecond(),
-                          structuredTableContext);
-      LOG.error("wyzhang: provision pending process message end {}", messagePair.getFirst());
+      try {
+        processNotification(messagePair.getSecond(), structuredTableContext);
+      } catch (TooManyRequestsException e) {
+        break;
+      }
     }
   }
 
@@ -146,10 +147,8 @@ public class ProvisionPendingSubscriberService extends AbstractNotificationSubsc
     }
 
     handleClusterEvent(programRunId, clusterStatus, notification, context);
-
     return;
   }
-
 
 
   /**
@@ -182,54 +181,46 @@ public class ProvisionPendingSubscriberService extends AbstractNotificationSubsc
           break;
         }
 
+        TooManyRequestsException tooManyRequestsException = null;
         LOG.error("wyzhang: provision pending subscriber: handle cluster event: process enqueued");
         RunRecordMonitorService.Counter counter = runRecordMonitorService.addRequestAndGetCount(programRunId);
-        boolean done = false;
         LOG.info("wyzhang: provision enqueued launching={}, running={}, {}",
                  counter.getLaunchingCount(), counter.getRunningCount(), programRunId);
         LOG.error("wyzhang: provision pending subscriber: handle cluster event: launching = {}, running = {}, {}",
                   counter.getLaunchingCount(), counter.getRunningCount(), programRunId);
-        try {
-          if (maxConcurrentRuns >= 0 &&
-            counter.getLaunchingCount() + counter.getRunningCount() > maxConcurrentRuns) {
-            String msg =
-              String.format("Program %s cannot start because " +
-                              "the maximums of %d outstanding runs are allowed",
-                            programRunId, maxConcurrentRuns);
-            LOG.info(msg);
+        if (maxConcurrentRuns >= 0 &&
+          counter.getLaunchingCount() + counter.getRunningCount() >= maxConcurrentRuns) {
+          String msg =
+            String.format("Program %s cannot start because " +
+                            "the maximums of %d outstanding runs are allowed",
+                          programRunId, maxConcurrentRuns);
+          LOG.info(msg);
+          tooManyRequestsException = new TooManyRequestsException(msg);
+        }
 
-            TooManyRequestsException e = new TooManyRequestsException(msg);
-            LOG.error("wyzhang: provision pending subscriber: reject. Too many running");
-            throw e;
-          }
+        if (maxConcurrentLaunching >= 0 &&
+          counter.getLaunchingCount() >= maxConcurrentLaunching) {
+          String msg = String.format("Program %s cannot start because " +
+                                       "the maximums of %d concurrent provisioning/starting runs " +
+                                       "are allowed",
+                                     programRunId, maxConcurrentLaunching);
+          LOG.info(msg);
 
-          if (maxConcurrentLaunching >= 0 &&
-            counter.getLaunchingCount() > maxConcurrentLaunching) {
-            String msg = String.format("Program %s cannot start because " +
-                                         "the maximums of %d concurrent provisioning/starting runs " +
-                                         "are allowed",
-                                       programRunId, maxConcurrentLaunching);
-            LOG.info(msg);
+          tooManyRequestsException = new TooManyRequestsException(msg);
+          LOG.error("wyzhang: provision pending subscriber: reject. Too many launching");
+        }
 
-            TooManyRequestsException e = new TooManyRequestsException(msg);
-            LOG.error("wyzhang: provision pending subscriber: reject. Too many launching");
-            throw e;
-          }
+        LOG.error("wyzhang: provision pending subscriber: accept. do provision");
 
+        ProgramOptions programOptions = ProgramOptions.fromNotification(notification, GSON);
+        ProgramDescriptor programDescriptor =
+          GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR), ProgramDescriptor.class);
+        String userId = properties.get(ProgramOptionConstants.USER_ID);
+        LOG.info("wyzhang: start provisioning {}", programRunId);
+        provisionerNotifier.provisioning(programRunId, programOptions, programDescriptor, userId);
 
-          LOG.error("wyzhang: provision pending subscriber: accept. do provision");
-
-          ProgramOptions programOptions = ProgramOptions.fromNotification(notification, GSON);
-          ProgramDescriptor programDescriptor =
-            GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR), ProgramDescriptor.class);
-          String userId = properties.get(ProgramOptionConstants.USER_ID);
-          LOG.info("wyzhang: start provisioning {}", programRunId);
-          provisionerNotifier.provisioning(programRunId, programOptions, programDescriptor, userId);
-          done = true;
-        } finally {
-          if (!done) {
-            runRecordMonitorService.removeRequest(programRunId, false);
-          }
+        if (tooManyRequestsException != null) {
+          throw tooManyRequestsException;
         }
         break;
       default:
