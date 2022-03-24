@@ -172,6 +172,7 @@ public class ProvisionPendingSubscriberService extends AbstractNotificationSubsc
 
     switch (clusterStatus) {
       case ENQUEUED:
+        LOG.info("wyzhang: provision enqueued {}", programRunId);
         AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
         RunRecordDetail runRecordMeta = appMetadataStore.getRun(programRunId);
 
@@ -184,8 +185,10 @@ public class ProvisionPendingSubscriberService extends AbstractNotificationSubsc
         LOG.error("wyzhang: provision pending subscriber: handle cluster event: process enqueued");
         RunRecordMonitorService.Counter counter = runRecordMonitorService.addRequestAndGetCount(programRunId);
         boolean done = false;
-        LOG.error("wyzhang: provision pending subscriber: handle cluster event: launching = {}, running = {}",
-                  counter.getLaunchingCount(), counter.getRunningCount());
+        LOG.info("wyzhang: provision enqueued launching={}, running={}, {}",
+                 counter.getLaunchingCount(), counter.getRunningCount(), programRunId);
+        LOG.error("wyzhang: provision pending subscriber: handle cluster event: launching = {}, running = {}, {}",
+                  counter.getLaunchingCount(), counter.getRunningCount(), programRunId);
         try {
           if (maxConcurrentRuns >= 0 &&
             counter.getLaunchingCount() + counter.getRunningCount() > maxConcurrentRuns) {
@@ -220,6 +223,7 @@ public class ProvisionPendingSubscriberService extends AbstractNotificationSubsc
           ProgramDescriptor programDescriptor =
             GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR), ProgramDescriptor.class);
           String userId = properties.get(ProgramOptionConstants.USER_ID);
+          LOG.info("wyzhang: start provisioning {}", programRunId);
           provisionerNotifier.provisioning(programRunId, programOptions, programDescriptor, userId);
           done = true;
         } finally {

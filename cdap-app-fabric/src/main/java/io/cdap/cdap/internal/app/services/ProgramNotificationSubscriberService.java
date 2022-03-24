@@ -320,6 +320,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     RunRecordDetail recordedRunRecord = null;
     switch (programRunStatus) {
       case ENQUEUED:
+        LOG.info("wyzhang: enqueued {}", programRunId);
         LOG.info("wyzhang: handle program event enqueued start {}", programRunId);
         appMetadataStore.recordProgramEnqueued(programRunId, programOptions.getUserArguments().asMap(),
                                                programOptions.getArguments().asMap(), messageIdBytes,

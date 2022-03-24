@@ -154,6 +154,8 @@ public class RunRecordMonitorService extends AbstractScheduledService {
       LOG.info("wyzhang: run record monitor: removed request with runId {}",
                programRunId);
       emitMetrics(Constants.Metrics.FlowControl.LAUNCHING_COUNT, launchingQueue.size());
+    } else {
+      LOG.info ("wyzhang: run record monitor: run not found {}", programRunId);
     }
 
     if (emitRunningChange) {
@@ -182,6 +184,10 @@ public class RunRecordMonitorService extends AbstractScheduledService {
     }
   }
 
+  public int getLaunchingCount() {
+    return launchingQueue.size();
+  }
+
   /**
    * Returns the total number of programs in running state.
    * The count includes batch (i.e., {@link ProgramType#WORKFLOW}),
@@ -190,7 +196,7 @@ public class RunRecordMonitorService extends AbstractScheduledService {
    *
    * @return
    */
-  private int getProgramsRunningCount() {
+  public int getProgramsRunningCount() {
     List<ProgramRuntimeService.RuntimeInfo> list = runtimeService
       .listAll(ProgramType.WORKFLOW, ProgramType.WORKER, ProgramType.SPARK, ProgramType.MAPREDUCE);
 

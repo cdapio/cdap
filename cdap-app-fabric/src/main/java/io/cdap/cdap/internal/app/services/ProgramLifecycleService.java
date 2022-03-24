@@ -533,6 +533,7 @@ public class ProgramLifecycleService {
 
     ProgramRunId programRunId = programId.run(runId);
     if (programStartQueueingEnabled) {
+      LOG.info("wyzhang: enqueue {}", programRunId);
       programStateWriter.enqueue(programRunId, programOptions, programDescriptor, userId);
     } else {
       boolean done = false;
