@@ -184,10 +184,6 @@ public class RunRecordMonitorService extends AbstractScheduledService {
     }
   }
 
-  public int getLaunchingCount() {
-    return launchingQueue.size();
-  }
-
   /**
    * Returns the total number of programs in running state.
    * The count includes batch (i.e., {@link ProgramType#WORKFLOW}),

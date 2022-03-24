@@ -101,10 +101,10 @@ public class ProvisionPendingSubscriberService extends AbstractNotificationSubsc
                                  Iterator<ImmutablePair<String, Notification>> messages) throws Exception {
     while (messages.hasNext()) {
       ImmutablePair<String, Notification> messagePair = messages.next();
-      LOG.error("wyzhang: program start subscriber start");
+      LOG.error("wyzhang: provision pending process message start {}", messagePair.getFirst());
       processNotification(messagePair.getSecond(),
                           structuredTableContext);
-      LOG.error("wyzhang: program start subscriber end end");
+      LOG.error("wyzhang: provision pending process message end {}", messagePair.getFirst());
     }
   }
 
