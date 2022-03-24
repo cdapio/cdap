@@ -103,10 +103,12 @@ public class ProgramStartSubscriberService extends AbstractNotificationSubscribe
       } catch (TooManyRequestsException e) {
         releaseLaunchingReservation();
         LOG.warn(e.getMessage());
+        LOG.info("wyzhang: process message break");
         break;
       }
 
       ImmutablePair<String, Notification> messagePair = messages.next();
+      LOG.info("wyzhang: process message id {}", messagePair.getFirst());
       ProgramRunId programRunId;
       try {
         programRunId = processNotification(messagePair.getSecond());
