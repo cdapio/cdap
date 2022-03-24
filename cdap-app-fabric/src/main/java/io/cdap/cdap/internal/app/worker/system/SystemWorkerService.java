@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.worker.system;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -28,10 +29,13 @@ import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.internal.provision.ProvisioningService;
+import io.cdap.cdap.security.auth.KeyManager;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpContentDecompressor;
+import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
@@ -49,6 +53,9 @@ public class SystemWorkerService extends AbstractIdleService {
 
   private final DiscoveryService discoveryService;
   private final NettyHttpService httpService;
+  private final KeyManager keyManager;
+  private final TwillRunnerService twillRunnerService;
+  private final ProvisioningService provisioningService;
   private Cancellable cancelDiscovery;
   private InetSocketAddress bindAddress;
 
@@ -57,8 +64,13 @@ public class SystemWorkerService extends AbstractIdleService {
                       SConfiguration sConf,
                       DiscoveryService discoveryService,
                       MetricsCollectionService metricsCollectionService,
-                      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
+                      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
+                      KeyManager keyManager, TwillRunnerService twillRunnerService,
+                      ProvisioningService provisioningService, Injector injector) {
     this.discoveryService = discoveryService;
+    this.keyManager = keyManager;
+    this.twillRunnerService = twillRunnerService;
+    this.provisioningService = provisioningService;
 
     NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(Constants.Service.SYSTEM_WORKER)
         .setHost(cConf.get(Constants.SystemWorker.ADDRESS))
@@ -72,7 +84,7 @@ public class SystemWorkerService extends AbstractIdleService {
             pipeline.addAfter("compressor", "decompressor", new HttpContentDecompressor());
           }
         })
-        .setHttpHandlers(new SystemWorkerHttpHandlerInternal(cConf, metricsCollectionService));
+        .setHttpHandlers(new SystemWorkerHttpHandlerInternal(cConf, metricsCollectionService, injector));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
@@ -83,6 +95,9 @@ public class SystemWorkerService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LOG.debug("Starting SystemWorkerService");
+    keyManager.startAndWait();
+    provisioningService.initializeProvisionersAndExecutors();
+    twillRunnerService.start();
     httpService.start();
     bindAddress = httpService.getBindAddress();
     cancelDiscovery = discoveryService.register(
@@ -93,6 +108,8 @@ public class SystemWorkerService extends AbstractIdleService {
   @Override
   protected void shutDown() throws Exception {
     LOG.debug("Shutting down SystemWorkerService");
+    keyManager.stop();
+    twillRunnerService.stop();
     httpService.stop(1, 2, TimeUnit.SECONDS);
     cancelDiscovery.cancel();
     LOG.debug("Shutting down SystemWorkerService has completed");

@@ -17,6 +17,8 @@
 package io.cdap.cdap.internal.app.worker.system;
 
 import com.google.gson.Gson;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
@@ -24,10 +26,19 @@ import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.IOModule;
+import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.common.twill.NoopTwillRunnerService;
+import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.internal.app.worker.RunnableTaskModule;
+import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.proto.BasicThrowable;
+import io.cdap.cdap.security.auth.FileBasedKeyManager;
+import io.cdap.cdap.security.guice.FileBasedCoreSecurityModule;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
@@ -40,6 +51,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
@@ -52,7 +64,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 
-public class SystemWorkerServiceTest {
+public class SystemWorkerServiceTest extends AppFabricTestBase {
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
@@ -75,15 +87,31 @@ public class SystemWorkerServiceTest {
   }
 
   @Before
-  public void beforeTest() {
+  public void beforeTest() throws IOException {
+    File keyDir = TEMP_FOLDER.newFolder();
+    File keyFile = new File(keyDir, "key");
+
     CConfiguration cConf = createCConf();
+    cConf.set(Constants.Security.CFG_FILE_BASED_KEYFILE_PATH, keyFile.getAbsolutePath());
+
+    Injector injector = Guice.createInjector(
+      new IOModule(),
+      new ConfigModule(cConf),
+      new FileBasedCoreSecurityModule(),
+      new InMemoryDiscoveryModule()
+    );
+
     SConfiguration sConf = createSConf();
 
-    SystemWorkerService systemWorkerService = new SystemWorkerService(
-      cConf, sConf, new InMemoryDiscoveryService(), metricsCollectionService,
-      new CommonNettyHttpServiceFactory(cConf, metricsCollectionService));
-    systemWorkerService.startAndWait();
-    this.systemWorkerService = systemWorkerService;
+    SystemWorkerService service = new SystemWorkerService(cConf, sConf, new InMemoryDiscoveryService(),
+                                                          metricsCollectionService, new CommonNettyHttpServiceFactory(
+                                                            cConf, metricsCollectionService),
+                                                          injector.getInstance(FileBasedKeyManager.class),
+                                                          new NoopTwillRunnerService(),
+                                                          getInjector().getInstance(ProvisioningService.class),
+                                                          Guice.createInjector(new RunnableTaskModule(cConf)));
+    service.startAndWait();
+    this.systemWorkerService = service;
   }
 
   @After
@@ -93,9 +121,6 @@ public class SystemWorkerServiceTest {
       systemWorkerService = null;
     }
   }
-
-
-
 
   @Test
   public void testStartAndStopWithValidRequest() throws IOException {

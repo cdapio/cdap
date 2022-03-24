@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.worker.system;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
@@ -55,7 +56,7 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
 /**
- * Internal {@link HttpHandler} for Task worker.
+ * Internal {@link HttpHandler} for System worker.
  */
 @Singleton
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3 + "/system")
@@ -76,8 +77,9 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
 
   private final MetricsCollectionService metricsCollectionService;
 
-  public SystemWorkerHttpHandlerInternal(CConfiguration cConf, MetricsCollectionService metricsCollectionService) {
-    this.runnableTaskLauncher = new RunnableTaskLauncher(cConf);
+  public SystemWorkerHttpHandlerInternal(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
+                                         Injector injector) {
+    this.runnableTaskLauncher = new RunnableTaskLauncher(injector);
     this.metricsCollectionService = metricsCollectionService;
     this.requestLimit = cConf.getInt(Constants.SystemWorker.REQUEST_LIMIT);
   }

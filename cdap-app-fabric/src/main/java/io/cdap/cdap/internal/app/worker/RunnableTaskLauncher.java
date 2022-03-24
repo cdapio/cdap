@@ -27,10 +27,18 @@ import io.cdap.cdap.common.conf.CConfiguration;
  * RunnableTaskLauncher launches a {@link RunnableTask} by loading its class and calling its run method.
  */
 public class RunnableTaskLauncher {
-  private final CConfiguration cConf;
+  private final Injector injector;
 
   public RunnableTaskLauncher(CConfiguration cConf) {
-    this.cConf = cConf;
+    injector = Guice.createInjector(new RunnableTaskModule(cConf));
+  }
+
+  /**
+   * Returns a {@link RunnableTaskLauncher} using an Injector. This is used to launch a {@link RunnableTask} using the
+   * calling service's guice bindings.
+   */
+  public RunnableTaskLauncher(Injector injector) {
+    this.injector = injector;
   }
 
   public RunnableTaskContext launchRunnableTask(RunnableTaskRequest request) throws Exception {
@@ -41,7 +49,6 @@ public class RunnableTaskLauncher {
 
     Class<?> clazz = classLoader.loadClass(request.getClassName());
 
-    Injector injector = Guice.createInjector(new RunnableTaskModule(cConf));
     Object obj = injector.getInstance(clazz);
 
     if (!(obj instanceof RunnableTask)) {
