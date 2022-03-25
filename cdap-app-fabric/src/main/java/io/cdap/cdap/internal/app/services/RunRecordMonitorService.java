@@ -72,7 +72,7 @@ public class RunRecordMonitorService extends AbstractScheduledService {
 
     this.launchingQueue = new PriorityBlockingQueue<>(128, Comparator.comparingLong(
       o -> RunIds.getTime(o.getRun(), TimeUnit.MILLISECONDS)));
-    reservedLaunchingCount = new AtomicInteger(0);
+    reservedLaunching = new HashSet<>();
     this.ageThresholdSec = cConf.getLong(Constants.AppFabric.MONITOR_RECORD_AGE_THRESHOLD_SECONDS);
     this.maxConcurrentRuns = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_RUNS);
   }
