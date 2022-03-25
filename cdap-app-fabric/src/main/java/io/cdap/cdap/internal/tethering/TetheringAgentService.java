@@ -76,6 +76,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
@@ -90,7 +91,8 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
     .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
     .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
     .create();
-  private static final String CONNECT_CONTROL_CHANNEL = "/v3/tethering/controlchannels/";
+  private static final String CREATE_TETHER = "v3/tethering/connections/";
+  private static final String CONNECT_CONTROL_CHANNEL = "v3/tethering/controlchannels/";
   private static final String SUBSCRIBER = "tether.agent";
   private static final String PEER_TOPIC_PREFIX = "tethering.peer.message.state.";
 
@@ -159,12 +161,13 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
       try {
         Preconditions.checkArgument(peer.getEndpoint() != null,
                                     "Peer %s doesn't have an endpoint", peer.getName());
-        String uri = CONNECT_CONTROL_CHANNEL + instanceName;
         String lastControlMessageId = peerToLastControlMessageIds.get(peer.getName());
         List<Notification> notificationList = peerToNotifications.get(peer.getName());
         String content = GSON.toJson(new TetheringControlChannelRequest(lastControlMessageId, notificationList));
+        String path = appendPath(Objects.requireNonNull(peer.getEndpoint()), CONNECT_CONTROL_CHANNEL + instanceName);
+        URI peerUri = new URI(peer.getEndpoint()).resolve(path);
         HttpResponse resp = TetheringUtils.sendHttpRequest(remoteAuthenticator, HttpMethod.POST,
-                                                           new URI(peer.getEndpoint()).resolve(uri), content);
+                                                           peerUri, content);
         switch (resp.getResponseCode()) {
           case HttpURLConnection.HTTP_OK:
             handleResponse(resp, peer);
@@ -198,6 +201,10 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
     return connectionInterval;
   }
 
+  private String appendPath(String base, String path) {
+    return base.endsWith("/") ? base + path : base + '/' + path;
+  }
+
   private void handleNotFound(PeerInfo peerInfo) throws IOException {
     // Update last connection timestamp.
     store.updatePeerTimestamp(peerInfo.getName());
@@ -206,12 +213,14 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
       peerInfo.getMetadata().getNamespaceAllocations(), peerInfo.getRequestTime(),
       peerInfo.getMetadata().getDescription());
     try {
-      URI endpoint = new URI(peerInfo.getEndpoint()).resolve(TetheringClientHandler.CREATE_TETHER + instanceName);
+      String path = appendPath(Objects.requireNonNull(peerInfo.getEndpoint()), CREATE_TETHER + instanceName);
+      URI endpoint = new URI(peerInfo.getEndpoint()).resolve(path);
       HttpResponse response = TetheringUtils.sendHttpRequest(remoteAuthenticator, HttpMethod.PUT,
                                                              endpoint, GSON.toJson(tetherRequest));
       if (response.getResponseCode() != 200) {
         LOG.error("Failed to initiate tether with peer {}, response body: {}, code: {}",
-                  peerInfo.getName(), response.getResponseBody(), response.getResponseCode());
+                  peerInfo.getName(), response.getResponseBodyAsString(StandardCharsets.UTF_8),
+                  response.getResponseCode());
       }
     } catch (URISyntaxException | IOException e) {
       LOG.error("Failed to send tether request to peer {}, endpoint {}",
@@ -254,6 +263,15 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
   }
 
   private void handleResponse(HttpResponse resp, PeerInfo peerInfo) throws IOException {
+    TetheringControlResponse[] responses;
+    try {
+      responses = GSON.fromJson(resp.getResponseBodyAsString(StandardCharsets.UTF_8), TetheringControlResponse[].class);
+    } catch (Exception e) {
+      LOG.error("Failed to parse response from peer {}: {}",
+                peerInfo.getName(),
+                resp.getResponseBodyAsString(StandardCharsets.UTF_8), e);
+      return;
+    }
     if (peerInfo.getTetheringStatus() == TetheringStatus.PENDING) {
       LOG.debug("Peer {} transitioned to ACCEPTED state", peerInfo.getName());
       store.updatePeerStatusAndTimestamp(peerInfo.getName(), TetheringStatus.ACCEPTED);
@@ -261,11 +279,11 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
       // Update last connection timestamp.
       store.updatePeerTimestamp(peerInfo.getName());
     }
-    processTetheringControlResponse(resp.getResponseBodyAsString(StandardCharsets.UTF_8), peerInfo);
+    processTetheringControlResponse(responses, peerInfo);
   }
 
-  private void processTetheringControlResponse(String message, PeerInfo peerInfo) throws IOException {
-    TetheringControlResponse[] responses = GSON.fromJson(message, TetheringControlResponse[].class);
+  private void processTetheringControlResponse(TetheringControlResponse[] responses, PeerInfo peerInfo)
+    throws IOException {
     for (TetheringControlResponse response : responses) {
       TetheringControlMessage controlMessage = response.getControlMessage();
       switch (controlMessage.getType()) {

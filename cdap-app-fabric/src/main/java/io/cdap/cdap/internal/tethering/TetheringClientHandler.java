@@ -38,7 +38,6 @@ import javax.ws.rs.Path;
 @Path(Constants.Gateway.API_VERSION_3)
 public class TetheringClientHandler extends AbstractHttpHandler {
   private static final Gson GSON = new Gson();
-  static final String CREATE_TETHER = "/v3/tethering/connections/";
 
   private final TetheringStore store;
   private final ContextAccessEnforcer contextAccessEnforcer;
