@@ -23,6 +23,7 @@ import io.cdap.cdap.api.metrics.NoopMetricsContext;
 import io.cdap.cdap.messaging.RollbackDetail;
 import io.cdap.cdap.messaging.StoreRequest;
 import io.cdap.cdap.messaging.TopicMetadata;
+import org.mortbay.log.Log;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -209,6 +210,9 @@ final class ConcurrentMessageWriter implements Closeable {
       metricsCollector.gauge("persist.queue.size", inflightRequests.size());
 
       try {
+        if (!inflightRequests.isEmpty()) {
+          Log.debug("Writing {} messages", inflightRequests.size());
+        }
         writer.write(inflightRequests.iterator());
         completeAll(null);
       } catch (Throwable t) {
