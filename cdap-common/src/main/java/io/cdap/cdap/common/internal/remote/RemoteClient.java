@@ -62,11 +62,10 @@ public class RemoteClient {
   private final String discoverableServiceName;
   private final String basePath;
   private final RemoteAuthenticator remoteAuthenticator;
-  private final boolean skipRewriteUrl;
 
   RemoteClient(InternalAuthenticator internalAuthenticator, DiscoveryServiceClient discoveryClient,
                String discoverableServiceName, HttpRequestConfig httpRequestConfig, String basePath,
-               RemoteAuthenticator remoteAuthenticator, boolean skipRewriteUrl) {
+               RemoteAuthenticator remoteAuthenticator) {
     this.internalAuthenticator = internalAuthenticator;
     this.discoverableServiceName = discoverableServiceName;
     this.httpRequestConfig = httpRequestConfig;
@@ -74,7 +73,6 @@ public class RemoteClient {
     String cleanBasePath = basePath.startsWith("/") ? basePath.substring(1) : basePath;
     this.basePath = cleanBasePath.endsWith("/") ? cleanBasePath : cleanBasePath + "/";
     this.remoteAuthenticator = remoteAuthenticator;
-    this.skipRewriteUrl = skipRewriteUrl;
   }
 
   /**
@@ -229,7 +227,7 @@ public class RemoteClient {
    * Rewrites the given URL based on the runtime service.
    */
   private URL rewriteURL(URL url) {
-    if (url.getPort() != 0 || skipRewriteUrl) {
+    if (url.getPort() != 0) {
       return url;
     }
 
