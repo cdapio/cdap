@@ -132,7 +132,7 @@ public class ProgramStartSubscriberService extends AbstractNotificationSubscribe
    * Process a {@link Notification} received from TMS.
    */
   private Optional<Operation> processNotification(Notification notification)
-    throws IllegalArgumentException {
+    throws IllegalArgumentException, TooManyRequestsException {
     // Validate notification type
     if (!notification.getNotificationType().equals(Notification.Type.PROGRAM_STATUS)) {
       throw new IllegalArgumentException(String.format("Unexpected notification type %s. Should be %s",
@@ -168,6 +168,7 @@ public class ProgramStartSubscriberService extends AbstractNotificationSubscribe
     ProgramDescriptor programDescriptor = GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR),
                                                         ProgramDescriptor.class);
     String userId = properties.get(ProgramOptionConstants.USER_ID);
+    reserveLaunchingSlots(programRunId);
     return Optional.of(new Operation(
       () -> {
         provisionerNotifier.provisioning(programRunId, programOptions, programDescriptor, userId);
@@ -179,7 +180,6 @@ public class ProgramStartSubscriberService extends AbstractNotificationSubscribe
   class Operation {
     Runnable commit;
     Runnable rollback;
-
     Operation(Runnable commit, Runnable rollback) {
       this.commit = commit;
       this.rollback = rollback;
