@@ -84,10 +84,7 @@ public class MessagingServerRuntimeModule extends RuntimeModule {
         bindHandlers(binder(), Constants.MessagingSystem.HANDLER_BINDING_NAME);
 
         bind(MessagingService.class).to(LeaderElectionMessagingService.class).in(Scopes.SINGLETON);
-        bind(MessagingService.class).annotatedWith(Names.named(MessagingClientModule.PROGRAM_MESSAGING))
-          .to(LeaderElectionMessagingService.class).in(Scopes.SINGLETON);
         expose(MessagingService.class);
-        expose(MessagingService.class).annotatedWith(Names.named(MessagingClientModule.PROGRAM_MESSAGING));
       }
     };
   }
@@ -126,10 +123,7 @@ public class MessagingServerRuntimeModule extends RuntimeModule {
 
       bind(TableFactory.class).to(LevelDBTableFactory.class).in(Scopes.SINGLETON);
       bind(MessagingService.class).to(CoreMessagingService.class).in(Scopes.SINGLETON);
-      bind(MessagingService.class).annotatedWith(Names.named(MessagingClientModule.PROGRAM_MESSAGING))
-        .to(CoreMessagingService.class).in(Scopes.SINGLETON);
       expose(MessagingService.class);
-      expose(MessagingService.class).annotatedWith(Names.named(MessagingClientModule.PROGRAM_MESSAGING));
 
       // TODO: Because of CDAP-7688, we need to run MessagingHttpService even in local mode so that we
       // can use a custom http exception handler. When CDAP-7688 is resolved, uncomment the following

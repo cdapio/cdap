@@ -20,7 +20,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.inject.name.Named;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramOptions;
@@ -33,7 +32,6 @@ import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import io.cdap.cdap.messaging.MessagingService;
-import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramRunStatus;
@@ -58,9 +56,7 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
 
 
   @Inject
-  public MessagingProgramStateWriter(CConfiguration cConf,
-                                     @Named(MessagingClientModule.PROGRAM_MESSAGING)
-                                       MessagingService messagingService) {
+  public MessagingProgramStateWriter(CConfiguration cConf, MessagingService messagingService) {
     this(new MessagingProgramStatePublisher(messagingService,
                                             NamespaceId.SYSTEM.topic(cConf.get(
                                               Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)),
