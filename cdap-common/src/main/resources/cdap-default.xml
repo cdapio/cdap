@@ -5033,14 +5033,6 @@
   </property>
 
   <property>
-    <name>support.bundle.output.dir</name>
-    <value>/supportBundle</value>
-    <description>
-      Directory where all modules archives are stored
-    </description>
-  </property>
-
-  <property>
     <name>support.bundle.temp.dir</name>
     <value>${local.data.dir}/support/tmp</value>
     <description>

@@ -1926,7 +1926,6 @@ public final class Constants {
     public static final String MAX_RETRY_TIMES = "support.bundle.max.retry.times";
     public static final String MAX_THREAD_TIMEOUT = "support.bundle.max.thread.timeout";
     public static final String SYSTEM_LOG_START_TIME = "support.bundle.system.log.start.time";
-    public static final String OUTPUT_DIR = "support.bundle.output.dir";
     public static final String SUPPORT_BUNDLE_TEMP_DIR = "support.bundle.temp.dir";
   }
 

@@ -74,7 +74,6 @@ public class SupportBundleTestModule extends AbstractModule {
     hConf.set("hadoop.tmp.dir",
               new File(localDataDir, cConf.get(Constants.SupportBundle.SUPPORT_BUNDLE_TEMP_DIR)).getAbsolutePath());
     hConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
-    hConf.set(Constants.SupportBundle.OUTPUT_DIR, cConf.get(Constants.SupportBundle.OUTPUT_DIR));
   }
 
   @Override

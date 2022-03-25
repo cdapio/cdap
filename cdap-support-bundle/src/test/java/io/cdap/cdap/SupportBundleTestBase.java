@@ -249,8 +249,7 @@ public abstract class SupportBundleTestBase {
   protected static CConfiguration createBasicCConf() throws IOException {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.Service.MASTER_SERVICES_BIND_ADDRESS, InetAddress.getLoopbackAddress().getHostAddress());
-    cConf.set(Constants.SupportBundle.LOCAL_DATA_DIR, TEMP_FOLDER.newFolder("data").getAbsolutePath());
-    cConf.set(Constants.SupportBundle.OUTPUT_DIR, TEMP_FOLDER.newFolder("output").getAbsolutePath());
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder("data").getAbsolutePath());
     cConf.setInt(Constants.Capability.AUTO_INSTALL_THREADS, 5);
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
     // add the plugin exclusion if one has been set by the test class
