@@ -46,9 +46,9 @@ abstract class StoreRequestWriter<T> implements Closeable {
   static final int SEQUENCE_ID_LIMIT = 0x10000;
 
   private final TimeProvider timeProvider;
-  private long writeTimestamp;
-  private long lastWriteTimestamp;
-  private int seqId;
+  private volatile long writeTimestamp;
+  private volatile long lastWriteTimestamp;
+  private volatile int seqId;
 
   private final PayloadTransformIterator payloadTransformIterator;
 
