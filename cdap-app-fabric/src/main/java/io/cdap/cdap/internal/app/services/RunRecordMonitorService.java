@@ -148,7 +148,7 @@ public class RunRecordMonitorService extends AbstractScheduledService {
       throw new Exception("None time-based UUIDs are not supported");
     }
 
-    int reservedCount = reservedLaunchingCount.get();
+    int reservedCount = reservedLaunching.size();
     int launchingCount;
     synchronized (this) {
       addRequest(programRunId);
