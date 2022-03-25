@@ -22,7 +22,6 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.ProgramOptions;
-import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.TooManyRequestsException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -36,6 +35,7 @@ import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramRunClusterStatus;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.metadata.lineage.FieldOperationInfo;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -44,7 +44,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
@@ -59,6 +62,7 @@ public class ProgramStartSubscriberService extends AbstractNotificationSubscribe
   private final int maxConcurrentLaunching;
   private final RunRecordMonitorService runRecordMonitorService;
   private final ProvisionerNotifier provisionerNotifier;
+  private final List<Operation> tasks;
 
   @Inject
   ProgramStartSubscriberService(MessagingService messagingService, CConfiguration cConf,
@@ -75,6 +79,7 @@ public class ProgramStartSubscriberService extends AbstractNotificationSubscribe
     this.maxConcurrentLaunching = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_LAUNCHING);
     this.runRecordMonitorService = runRecordMonitorService;
     this.provisionerNotifier = provisionerNotifier;
+    this.tasks = new LinkedList<>();
   }
 
   @Override
@@ -97,35 +102,37 @@ public class ProgramStartSubscriberService extends AbstractNotificationSubscribe
   @Override
   protected void processMessages(StructuredTableContext structuredTableContext,
                                  Iterator<ImmutablePair<String, Notification>> messages) throws Exception {
-    while (messages.hasNext()) {
-      try {
-        reserveLaunchingSlots();
-      } catch (TooManyRequestsException e) {
-        releaseLaunchingReservation();
-        LOG.warn(e.getMessage());
-        LOG.info("wyzhang: process message break");
-        break;
-      }
+    List<Operation> tasks = new LinkedList<>();
 
-      ImmutablePair<String, Notification> messagePair = messages.next();
-      LOG.info("wyzhang: process message id {}", messagePair.getFirst());
-      ProgramRunId programRunId;
-      try {
-        programRunId = processNotification(messagePair.getSecond());
-      } catch (IllegalArgumentException | ConflictException e) {
-        LOG.warn(e.getMessage());
-        releaseLaunchingReservation();
-        continue;
+    try {
+      while (messages.hasNext()) {
+        ImmutablePair<String, Notification> messagePair = messages.next();
+        Optional<Operation> operation = processNotification(messagePair.getSecond());
+        if (!operation.isPresent()) {
+          continue;
+        }
+        tasks.add(operation.get());
       }
-      commitLaunchingReservation(programRunId);
+    } catch (Exception e) {
+      for (Operation operation : tasks) {
+        operation.rollback.run();
+      }
+    }
+    this.tasks.addAll(tasks);
+  }
+
+  @Override
+  protected void postProcess() {
+    for (Operation operation : tasks) {
+      operation.commit.run();
     }
   }
 
   /**
    * Process a {@link Notification} received from TMS.
    */
-  private ProgramRunId processNotification(Notification notification)
-    throws IllegalArgumentException, ConflictException {
+  private Optional<Operation> processNotification(Notification notification)
+    throws IllegalArgumentException {
     // Validate notification type
     if (!notification.getNotificationType().equals(Notification.Type.PROGRAM_STATUS)) {
       throw new IllegalArgumentException(String.format("Unexpected notification type %s. Should be %s",
@@ -161,13 +168,26 @@ public class ProgramStartSubscriberService extends AbstractNotificationSubscribe
     ProgramDescriptor programDescriptor = GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR),
                                                         ProgramDescriptor.class);
     String userId = properties.get(ProgramOptionConstants.USER_ID);
-    provisionerNotifier.provisioning(programRunId, programOptions, programDescriptor, userId);
-
-    return programRunId;
+    return Optional.of(new Operation(
+      () -> {
+        provisionerNotifier.provisioning(programRunId, programOptions, programDescriptor, userId);
+        runRecordMonitorService.commitReservedRequest(programRunId);
+      },
+      () -> runRecordMonitorService.releaseReservedRequest(programRunId)));
   }
 
-  private void reserveLaunchingSlots() throws TooManyRequestsException {
-    RunRecordMonitorService.Counter cnt = runRecordMonitorService.reserveRequestAndGetCount();
+  class Operation {
+    Runnable commit;
+    Runnable rollback;
+
+    Operation(Runnable commit, Runnable rollback) {
+      this.commit = commit;
+      this.rollback = rollback;
+    }
+  };
+
+  private void reserveLaunchingSlots(ProgramRunId programRunId) throws TooManyRequestsException {
+    RunRecordMonitorService.Counter cnt = runRecordMonitorService.reserveRequestAndGetCount(programRunId);
 
     if (maxConcurrentRuns >= 0 &&
       cnt.getReservedLaunchingCount() + cnt.getLaunchingCount() + cnt.getRunningCount() > maxConcurrentRuns) {
@@ -184,15 +204,6 @@ public class ProgramStartSubscriberService extends AbstractNotificationSubscribe
                       cnt.getReservedLaunchingCount(), cnt.getLaunchingCount(), maxConcurrentLaunching));
     }
   }
-
-  private void releaseLaunchingReservation() {
-    runRecordMonitorService.releaseReservedRequest();
-  }
-
-  private void commitLaunchingReservation(ProgramRunId programRunId) {
-    runRecordMonitorService.commitReservedRequest(programRunId);
-  }
-
 
   private AppMetadataStore getAppMetadataStore(StructuredTableContext context) {
     return AppMetadataStore.create(context);

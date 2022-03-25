@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
@@ -54,7 +55,7 @@ public class RunRecordMonitorService extends AbstractScheduledService {
    * all run records with {@link ProgramRunStatus#PENDING} or {@link ProgramRunStatus#STARTING} status.
    */
   private final BlockingQueue<ProgramRunId> launchingQueue;
-  private final AtomicInteger reservedLaunchingCount;
+  private final HashSet<ProgramRunId> reservedLaunching;
   private final ProgramRuntimeService runtimeService;
   private final long ageThresholdSec;
   private final CConfiguration cConf;
@@ -108,11 +109,12 @@ public class RunRecordMonitorService extends AbstractScheduledService {
     return executor;
   }
 
-  public Counter reserveRequestAndGetCount() {
+  public Counter reserveRequestAndGetCount(ProgramRunId programRunId) {
     int reservedCount;
     int launchingCount;
     synchronized (this) {
-      reservedCount = reservedLaunchingCount.incrementAndGet();
+      reservedLaunching.add(programRunId);
+      reservedCount = reservedLaunching.size();
       launchingCount = launchingQueue.size();
     }
     int runningCount = getProgramsRunningCount();
@@ -122,13 +124,17 @@ public class RunRecordMonitorService extends AbstractScheduledService {
     return new Counter(reservedCount, launchingCount, runningCount);
   }
 
-  public void releaseReservedRequest() {
-    reservedLaunchingCount.decrementAndGet();
+  public void releaseReservedRequest(ProgramRunId programRunId) {
+    synchronized (this) {
+      reservedLaunching.remove(programRunId);
+    }
   }
 
   public void commitReservedRequest(ProgramRunId programRunId) {
-    reservedLaunchingCount.decrementAndGet();
-    addRequest(programRunId);
+    synchronized (this) {
+      reservedLaunching.remove(programRunId);
+      launchingQueue.add(programRunId);
+    }
   }
 
   /**
