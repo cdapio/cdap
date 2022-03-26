@@ -142,9 +142,9 @@ public class RunRecordMonitorService extends AbstractScheduledService {
    * @param programRunId run id associated with the launch request
    * @return total number of launching and running program runs.
    */
-  public Counter addRequestAndGetCount(ProgramRunId programRunId) throws Exception {
+  public Counter addRequestAndGetCount(ProgramRunId programRunId) throws IllegalArgumentException {
     if (RunIds.getTime(programRunId.getRun(), TimeUnit.MILLISECONDS) == -1) {
-      throw new Exception("None time-based UUIDs are not supported");
+      throw new IllegalArgumentException("None time-based UUIDs are not supported");
     }
 
     int reservedCount = reservedLaunching.size();

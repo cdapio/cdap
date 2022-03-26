@@ -61,7 +61,6 @@ public class ProgramStartSubscriberService extends AbstractNotificationSubscribe
   private final int maxConcurrentLaunching;
   private final RunRecordMonitorService runRecordMonitorService;
   private final ProvisionerNotifier provisionerNotifier;
-  private final List<Operation> tasks;
 
   @Inject
   ProgramStartSubscriberService(MessagingService messagingService, CConfiguration cConf,
@@ -78,7 +77,6 @@ public class ProgramStartSubscriberService extends AbstractNotificationSubscribe
     this.maxConcurrentLaunching = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_LAUNCHING);
     this.runRecordMonitorService = runRecordMonitorService;
     this.provisionerNotifier = provisionerNotifier;
-    this.tasks = new LinkedList<>();
   }
 
   @Override
@@ -101,43 +99,23 @@ public class ProgramStartSubscriberService extends AbstractNotificationSubscribe
   @Override
   protected void processMessages(StructuredTableContext structuredTableContext,
                                  Iterator<ImmutablePair<String, Notification>> messages) throws Exception {
-    List<Operation> tasks = new LinkedList<>();
-
-    try {
-      while (messages.hasNext()) {
-        ImmutablePair<String, Notification> messagePair = messages.next();
-        Optional<Operation> operation = processNotification(messagePair.getSecond());
-        if (!operation.isPresent()) {
-          continue;
-        }
-        tasks.add(operation.get());
-      }
-    } catch (Exception e) {
-      for (Operation operation : tasks) {
-        operation.rollback.run();
-      }
-      throw e;
-    }
-    this.tasks.addAll(tasks);
-  }
-
-  @Override
-  protected void postProcess() {
-    for (Operation operation : tasks) {
-      operation.commit.run();
+    while (messages.hasNext()) {
+      ImmutablePair<String, Notification> messagePair = messages.next();
+      processNotification(messagePair.getSecond());
     }
   }
-
+  
   /**
    * Process a {@link Notification} received from TMS.
    */
-  private Optional<Operation> processNotification(Notification notification)
+  private void processNotification(Notification notification)
     throws IllegalArgumentException, TooManyRequestsException {
     // Validate notification type
     if (!notification.getNotificationType().equals(Notification.Type.PROGRAM_STATUS)) {
-      throw new IllegalArgumentException(String.format("Unexpected notification type %s. Should be %s",
-                                                       notification.getNotificationType().toString(),
-                                                       Notification.Type.PROGRAM_STATUS));
+      LOG.warn("Unexpected notification type {}. Should be {}",
+               notification.getNotificationType().toString(),
+               Notification.Type.PROGRAM_STATUS);
+      return;
     }
 
     Map<String, String> properties = notification.getProperties();
@@ -145,22 +123,23 @@ public class ProgramStartSubscriberService extends AbstractNotificationSubscribe
     // Extract and validate ProgramRunId.
     String programRun = properties.get(ProgramOptionConstants.PROGRAM_RUN_ID);
     if (programRun == null) {
-      throw new IllegalArgumentException(String.format("Unexpected notification: missing program run ID: %s",
-                                                       notification));
+      LOG.warn("Unexpected notification: missing program run ID: {}", notification);
+      return;
     }
     ProgramRunId programRunId = GSON.fromJson(programRun, ProgramRunId.class);
 
     // Extract and validate ProgramRunClusterStatus is ENQUEUED
     String clusterStatusStr = properties.get(ProgramOptionConstants.CLUSTER_STATUS);
     if (clusterStatusStr == null) {
-      throw new IllegalArgumentException(String.format("Unexpected notification: cluster status is missing: %s",
-                                                       notification));
+      LOG.warn("Unexpected notification: cluster status is missing: {}", notification);
+      return;
     }
     ProgramRunClusterStatus clusterStatus = null;
     clusterStatus = ProgramRunClusterStatus.valueOf(clusterStatusStr);
     if (clusterStatus != ProgramRunClusterStatus.ENQUEUED) {
-      throw new IllegalArgumentException(String.format("Unexpected notification: cluster status is %s, expecting %s",
-                                                       clusterStatus, ProgramRunClusterStatus.ENQUEUED));
+      LOG.error("Unexpected notification: cluster status is {}, expecting {}"
+                clusterStatus, ProgramRunClusterStatus.ENQUEUED););
+      return;
     }
 
     // Start provisioning
@@ -168,40 +147,37 @@ public class ProgramStartSubscriberService extends AbstractNotificationSubscribe
     ProgramDescriptor programDescriptor = GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR),
                                                         ProgramDescriptor.class);
     String userId = properties.get(ProgramOptionConstants.USER_ID);
-    reserveLaunchingSlots(programRunId);
-    return Optional.of(new Operation(
-      () -> {
-        provisionerNotifier.provisioning(programRunId, programOptions, programDescriptor, userId);
-        runRecordMonitorService.commitReservedRequest(programRunId);
-      },
-      () -> runRecordMonitorService.releaseReservedRequest(programRunId)));
+    addLaunchingRequest(programRunId);
+    provisionerNotifier.provisioning(programRunId, programOptions, programDescriptor, userId);
   }
 
-  class Operation {
-    Runnable commit;
-    Runnable rollback;
-    Operation(Runnable commit, Runnable rollback) {
-      this.commit = commit;
-      this.rollback = rollback;
-    }
-  };
-
-  private void reserveLaunchingSlots(ProgramRunId programRunId) throws TooManyRequestsException {
-    RunRecordMonitorService.Counter cnt = runRecordMonitorService.reserveRequestAndGetCount(programRunId);
-
-    if (maxConcurrentRuns >= 0 &&
-      cnt.getReservedLaunchingCount() + cnt.getLaunchingCount() + cnt.getRunningCount() > maxConcurrentRuns) {
-      throw new TooManyRequestsException(
-        String.format("Cannot start program because of %d reserved + %d launching + %d running > %d",
-                      cnt.getReservedLaunchingCount(), cnt.getLaunchingCount(),
-                      cnt.getRunningCount(), maxConcurrentRuns));
+  private void addLaunchingRequest(ProgramRunId programRunId) throws TooManyRequestsException {
+    RunRecordMonitorService.Counter count;
+    try {
+      count = runRecordMonitorService.addRequestAndGetCount(programRunId);
+    } catch (IllegalArgumentException e) {
+      LOG.warn("Start program without flow control");
+      return;
     }
 
-    if (maxConcurrentLaunching >= 0 &&
-      cnt.getReservedLaunchingCount() + cnt.getLaunchingCount() > maxConcurrentLaunching) {
-      throw new TooManyRequestsException(
-        String.format("Cannot start program because of %d reserved + %d launching > %d",
-                      cnt.getReservedLaunchingCount(), cnt.getLaunchingCount(), maxConcurrentLaunching));
+    try {
+      if (maxConcurrentRuns >= 0 &&
+        count.getReservedLaunchingCount() + count.getLaunchingCount() + count.getRunningCount() > maxConcurrentRuns) {
+        throw new TooManyRequestsException(
+          String.format("Cannot start program because of %d reserved + %d launching + %d running > %d",
+                        count.getReservedLaunchingCount(), count.getLaunchingCount(),
+                        count.getRunningCount(), maxConcurrentRuns));
+      }
+
+      if (maxConcurrentLaunching >= 0 &&
+        count.getReservedLaunchingCount() + count.getLaunchingCount() > maxConcurrentLaunching) {
+        throw new TooManyRequestsException(
+          String.format("Cannot start program because of %d reserved + %d launching > %d",
+                        count.getReservedLaunchingCount(), count.getLaunchingCount(), maxConcurrentLaunching));
+      }
+    } catch (TooManyRequestsException e) {
+      runRecordMonitorService.removeRequest(programRunId);
+      throw e;
     }
   }
 
