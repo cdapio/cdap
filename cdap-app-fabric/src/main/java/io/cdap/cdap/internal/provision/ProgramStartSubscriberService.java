@@ -116,6 +116,7 @@ public class ProgramStartSubscriberService extends AbstractNotificationSubscribe
       for (Operation operation : tasks) {
         operation.rollback.run();
       }
+      throw e;
     }
     this.tasks.addAll(tasks);
   }
