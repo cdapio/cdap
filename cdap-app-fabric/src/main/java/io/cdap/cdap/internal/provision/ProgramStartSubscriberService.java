@@ -43,10 +43,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
@@ -104,7 +101,7 @@ public class ProgramStartSubscriberService extends AbstractNotificationSubscribe
       processNotification(messagePair.getSecond());
     }
   }
-  
+
   /**
    * Process a {@link Notification} received from TMS.
    */
