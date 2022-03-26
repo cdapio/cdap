@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -44,7 +44,16 @@ import java.util.concurrent.TimeUnit;
  */
 public class SupportBundleHttpHandlerTest extends SupportBundleTestBase {
 
-  private static final NamespaceId NAMESPACE = new NamespaceId("test");
+  private static final NamespaceId NAMESPACE = TEST_NAMESPACE_META1.getNamespaceId();
+
+  @Test
+  public void testCreateSupportBundleWithValidNamespace() throws Exception {
+
+    String bundleId = requestBundle(Collections.singletonMap("namespace", NAMESPACE.getNamespace()));
+
+    Assert.assertNotNull(bundleId);
+    Assert.assertFalse(bundleId.isEmpty());
+  }
 
   @Before
   public void setup() throws Exception {
@@ -56,14 +65,6 @@ public class SupportBundleHttpHandlerTest extends SupportBundleTestBase {
     Assert.assertEquals(HttpURLConnection.HTTP_OK, deleteNamespace(NAMESPACE).getResponseCode());
   }
 
-  @Test
-  public void testCreateSupportBundleWithValidNamespace() throws Exception {
-    String bundleId = requestBundle(Collections.singletonMap("namespace", NAMESPACE.getNamespace()));
-
-    Assert.assertNotNull(bundleId);
-    Assert.assertFalse(bundleId.isEmpty());
-  }
-
   /**
    * Requests generation of support bundle.
    *
@@ -73,23 +74,23 @@ public class SupportBundleHttpHandlerTest extends SupportBundleTestBase {
    */
   private String requestBundle(Map<String, String> params) throws IOException {
     DiscoveryServiceClient discoveryServiceClient = getInjector().getInstance(DiscoveryServiceClient.class);
-    Discoverable discoverable = new RandomEndpointStrategy(
-      () -> discoveryServiceClient.discover(Constants.Service.SUPPORT_BUNDLE_SERVICE)).pick(5, TimeUnit.SECONDS);
+    Discoverable discoverable =
+      new RandomEndpointStrategy(() -> discoveryServiceClient.discover(Constants.Service.SUPPORT_BUNDLE_SERVICE)).pick(
+        5, TimeUnit.SECONDS);
 
     Assert.assertNotNull("No service for support bundle", discoverable);
 
     StringBuilder queryBuilder = new StringBuilder();
     String sep = "?";
     for (Map.Entry<String, String> entry : params.entrySet()) {
-      queryBuilder
-        .append(sep)
+      queryBuilder.append(sep)
         .append(URLEncoder.encode(entry.getKey(), "UTF-8"))
         .append("=")
         .append(URLEncoder.encode(entry.getValue(), "UTF-8"));
       sep = "&";
     }
 
-    String path = String.format("%s/support/bundle%s", Constants.Gateway.API_VERSION_3, queryBuilder);
+    String path = String.format("%s/support/bundles%s", Constants.Gateway.API_VERSION_3, queryBuilder);
 
     HttpRequest request = HttpRequest.post(URIScheme.createURI(discoverable, path).toURL()).build();
     HttpResponse response = HttpRequests.execute(request, new DefaultHttpRequestConfig(false));

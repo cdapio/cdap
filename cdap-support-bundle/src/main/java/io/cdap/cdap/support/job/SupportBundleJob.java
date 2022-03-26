@@ -81,7 +81,7 @@ public class SupportBundleJob {
                                   .map(factory -> factory.create(bundleTaskConfig))
                                   .collect(Collectors.toList()));
       for (SupportBundleTask supportBundleTask : supportBundleTasks) {
-        String className = supportBundleTask.getClass().getName();
+        String className = supportBundleTask.getClass().getSimpleName();
         String taskName = bundleTaskConfig.getUuid().concat(": ").concat(className);
         executeTask(supportBundleTask, basePath.getPath(), taskName, className);
       }
@@ -211,7 +211,7 @@ public class SupportBundleJob {
       supportBundleStatus.getTasks().remove(taskStatus);
       supportBundleStatus.getTasks().add(updatedTaskStatus);
       addToStatus(supportBundleStatus, basePath);
-      executeTask(taskStatus, supportBundleTask, basePath, taskType, taskName, retryCount);
+      executeTask(updatedTaskStatus, supportBundleTask, basePath, taskType, taskName, retryCount);
     }
   }
 

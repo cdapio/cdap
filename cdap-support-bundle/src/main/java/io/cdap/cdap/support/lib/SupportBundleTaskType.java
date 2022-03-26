@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,17 +14,15 @@
  * the License.
  */
 
-package io.cdap.cdap.support.status;
+package io.cdap.cdap.support.lib;
 
 /**
- * Support Bundle generation status
+ * Defines the type of the support bundle task
  */
-public enum CollectionState {
-  QUEUED,
-  IN_PROGRESS,
-  FINISHED,
-  TIMEOUT,
-  FAILED,
-  INVALID,
-  NOT_FOUND
+public enum SupportBundleTaskType {
+  SupportBundleSystemLogTask,
+  SupportBundlePipelineInfoTask,
+  SupportBundleRuntimeInfoTask,
+  SupportBundlePipelineRunLogTask,
+  SupportBundleVMInfoTask;
 }

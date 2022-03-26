@@ -52,12 +52,12 @@ import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
-import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.logging.service.LogQueryService;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metadata.MetadataService;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
+import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProtoConstraintCodec;
 import io.cdap.cdap.proto.RunRecord;
@@ -142,6 +142,12 @@ public abstract class SupportBundleTestBase {
 
   private static HttpRequestConfig httpRequestConfig;
 
+  protected static final String TEST_NAMESPACE1 = "testsupportbundlenamespace1";
+  protected static final NamespaceMeta TEST_NAMESPACE_META1 = new NamespaceMeta.Builder()
+    .setName(TEST_NAMESPACE1)
+    .setDescription(TEST_NAMESPACE1)
+    .build();
+
   @BeforeClass
   public static void beforeClass() throws Throwable {
     initializeAndStartServices(createBasicCConf());
@@ -170,7 +176,7 @@ public abstract class SupportBundleTestBase {
 
   protected static void initializeAndStartServices(CConfiguration cConf, Module overrides) throws Exception {
     injector = Guice.createInjector(
-      Modules.override(new AppFabricTestModule(cConf, null)).with(overrides));
+      Modules.override(new SupportBundleTestModule(cConf, null)).with(overrides));
 
     int connectionTimeout = cConf.getInt(Constants.HTTP_CLIENT_CONNECTION_TIMEOUT_MS);
     int readTimeout = cConf.getInt(Constants.HTTP_CLIENT_READ_TIMEOUT_MS);
@@ -197,7 +203,6 @@ public abstract class SupportBundleTestBase {
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
     appFabricEndpointStrategy = new RandomEndpointStrategy(
       () -> discoveryClient.discover(Constants.Service.APP_FABRIC_HTTP));
-
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     metricsCollectionService.startAndWait();
     serviceStore = injector.getInstance(ServiceStore.class);
@@ -224,7 +229,7 @@ public abstract class SupportBundleTestBase {
   }
 
   @AfterClass
-  public static void afterClass() {
+  public static void afterClass() throws IOException {
     appFabricServer.stopAndWait();
     metricsCollectionService.stopAndWait();
     datasetService.stopAndWait();
@@ -245,7 +250,6 @@ public abstract class SupportBundleTestBase {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.Service.MASTER_SERVICES_BIND_ADDRESS, InetAddress.getLoopbackAddress().getHostAddress());
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder("data").getAbsolutePath());
-    cConf.set(Constants.SupportBundle.OUTPUT_DIR, TEMP_FOLDER.newFolder("output").getAbsolutePath());
     cConf.setInt(Constants.Capability.AUTO_INSTALL_THREADS, 5);
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
     // add the plugin exclusion if one has been set by the test class
@@ -400,5 +404,10 @@ public abstract class SupportBundleTestBase {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, cls, manifest);
     Locations.linkOrCopyOverwrite(appJar, destination);
     return destination;
+  }
+
+  protected static HttpResponse doDelete(String resource) throws Exception {
+    return HttpRequests.execute(addStandardHeaders(HttpRequest.delete(getEndPoint(resource).toURL()))
+                                  .build(), httpRequestConfig);
   }
 }

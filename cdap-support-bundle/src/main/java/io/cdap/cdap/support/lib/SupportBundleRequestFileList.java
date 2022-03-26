@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,17 +14,24 @@
  * the License.
  */
 
-package io.cdap.cdap.support.status;
+package io.cdap.cdap.support.lib;
+
+import java.util.List;
 
 /**
- * Support Bundle generation status
+ * Customer request for a list of files' names
+ * EX: "files":["testpipeline/82b21b3e-11c6-11ec-81af-0000009bb312.json",
+ *              "testpipeline/status.json"]
+ *
  */
-public enum CollectionState {
-  QUEUED,
-  IN_PROGRESS,
-  FINISHED,
-  TIMEOUT,
-  FAILED,
-  INVALID,
-  NOT_FOUND
+public class SupportBundleRequestFileList {
+  private final List<String> files;
+
+  public SupportBundleRequestFileList(List<String> files) {
+    this.files = files;
+  }
+
+  public List<String> getFiles() {
+    return files;
+  }
 }

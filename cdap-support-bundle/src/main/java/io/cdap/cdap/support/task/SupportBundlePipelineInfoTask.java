@@ -97,21 +97,17 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
   public void collect() throws IOException, NotFoundException {
     for (NamespaceId namespaceId : namespaces) {
       if (requestApplication == null) {
-        remoteApplicationDetailFetcher.scan(namespaceId.getNamespace(),
-              d -> {
-                try {
-                  processApplicationDetail(namespaceId, d);
-                } catch (Exception e) {
-                  throw Throwables.propagate(e);
-                }
-              },
-            BATCH_SIZE
-            );
+        remoteApplicationDetailFetcher.scan(namespaceId.getNamespace(), d -> {
+          try {
+            processApplicationDetail(namespaceId, d);
+          } catch (Exception e) {
+            throw Throwables.propagate(e);
+          }
+        }, BATCH_SIZE);
       } else {
         try {
-          processApplicationDetail(namespaceId,
-              remoteApplicationDetailFetcher.get(
-                  new ApplicationId(namespaceId.getNamespace(), requestApplication)));
+          processApplicationDetail(namespaceId, remoteApplicationDetailFetcher.get(
+            new ApplicationId(namespaceId.getNamespace(), requestApplication)));
         } catch (NotFoundException e) {
           LOG.debug("Failed to find application {} ", requestApplication, e);
           continue;
@@ -120,7 +116,7 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
     }
   }
 
-  private void processApplicationDetail (NamespaceId namespaceId, ApplicationDetail appDetail)
+  private void processApplicationDetail(NamespaceId namespaceId, ApplicationDetail appDetail)
     throws IOException, NotFoundException {
     String application = appDetail.getName();
     ApplicationId applicationId = new ApplicationId(namespaceId.getNamespace(), application);
@@ -134,7 +130,7 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
     Iterable<RunRecord> runRecordList;
     if (runId != null) {
       ProgramRunId programRunId =
-          new ProgramRunId(namespaceId.getNamespace(), appDetail.getName(), programType, programName, runId);
+        new ProgramRunId(namespaceId.getNamespace(), appDetail.getName(), programType, programName, runId);
       RunRecordDetail runRecordDetail = remoteProgramRunRecordFetcher.getRunRecordMeta(programRunId);
       runRecordList = Collections.singletonList(runRecordDetail);
     } else {
@@ -142,23 +138,21 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
     }
 
     SupportBundleRuntimeInfoTask supportBundleRuntimeInfoTask =
-        new SupportBundleRuntimeInfoTask(appFolderPath, namespaceId, applicationId, programType, programId,
-            remoteMetricsSystemClient, runRecordList);
+      new SupportBundleRuntimeInfoTask(appFolderPath, namespaceId, applicationId, programType, programId,
+                                       remoteMetricsSystemClient, runRecordList);
     SupportBundlePipelineRunLogTask supportBundlePipelineRunLogTask =
-        new SupportBundlePipelineRunLogTask(appFolderPath, programId, remoteLogsFetcher, runRecordList);
+      new SupportBundlePipelineRunLogTask(appFolderPath, programId, remoteLogsFetcher, runRecordList);
 
-    String runtimeInfoClassName = supportBundleRuntimeInfoTask.getClass().getName();
+    String runtimeInfoClassName = supportBundleRuntimeInfoTask.getClass().getSimpleName();
     String runtimeInfoTaskName =
-        uuid.concat(": ").concat(runtimeInfoClassName).concat(": ").concat(appDetail.getName());
+      uuid.concat(": ").concat(runtimeInfoClassName).concat(": ").concat(appDetail.getName());
     supportBundleJob.executeTask(supportBundleRuntimeInfoTask, basePath.getPath(), runtimeInfoTaskName,
-        runtimeInfoTaskName);
+                                 runtimeInfoClassName);
 
-    String runtimeLogClassName = supportBundlePipelineRunLogTask.getClass().getName();
-    String runtimeLogTaskName =
-        uuid.concat(": ").concat(runtimeLogClassName).concat(": ").concat(appDetail.getName());
+    String runtimeLogClassName = supportBundlePipelineRunLogTask.getClass().getSimpleName();
+    String runtimeLogTaskName = uuid.concat(": ").concat(runtimeLogClassName).concat(": ").concat(appDetail.getName());
     supportBundleJob.executeTask(supportBundlePipelineRunLogTask, basePath.getPath(), runtimeLogTaskName,
-        runtimeLogClassName);
-
+                                 runtimeLogClassName);
   }
 
   private Iterable<RunRecord> getRunRecords(ProgramId programId) throws NotFoundException, IOException {
