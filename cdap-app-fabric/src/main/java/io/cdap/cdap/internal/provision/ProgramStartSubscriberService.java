@@ -134,8 +134,8 @@ public class ProgramStartSubscriberService extends AbstractNotificationSubscribe
     ProgramRunClusterStatus clusterStatus = null;
     clusterStatus = ProgramRunClusterStatus.valueOf(clusterStatusStr);
     if (clusterStatus != ProgramRunClusterStatus.ENQUEUED) {
-      LOG.error("Unexpected notification: cluster status is {}, expecting {}"
-                clusterStatus, ProgramRunClusterStatus.ENQUEUED););
+      LOG.error("Unexpected notification: cluster status is {}, expecting {}",
+                clusterStatus, ProgramRunClusterStatus.ENQUEUED);
       return;
     }
 
@@ -173,7 +173,7 @@ public class ProgramStartSubscriberService extends AbstractNotificationSubscribe
                         count.getReservedLaunchingCount(), count.getLaunchingCount(), maxConcurrentLaunching));
       }
     } catch (TooManyRequestsException e) {
-      runRecordMonitorService.removeRequest(programRunId);
+      runRecordMonitorService.removeRequest(programRunId, false);
       throw e;
     }
   }
