@@ -17,7 +17,6 @@
 package io.cdap.cdap.messaging.subscriber;
 
 import com.google.common.collect.AbstractIterator;
-import com.google.common.collect.PeekingIterator;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.common.utils.ImmutablePair;
