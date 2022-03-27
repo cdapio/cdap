@@ -121,14 +121,16 @@ public class PreviewDataSubscriberService extends AbstractMessagingSubscriberSer
   }
 
   @Override
-  protected void processMessages(StructuredTableContext structuredTableContext,
-                                 Iterator<ImmutablePair<String, PreviewMessage>> messages) throws Exception {
+  protected String processMessages(StructuredTableContext structuredTableContext,
+                                   Iterator<ImmutablePair<String, PreviewMessage>> messages) throws Exception {
     Map<PreviewMessage.Type, PreviewMessageProcessor> processors = new HashMap<>();
+    String lastConsumed = null;
 
     // Loop over all fetched messages and process them with corresponding PreviewMessageProcessor
     while (messages.hasNext()) {
       ImmutablePair<String, PreviewMessage> next = messages.next();
-      String messageId = next.getFirst();
+      lastConsumed = next.getFirst();
+      String messageId = lastConsumed;
       PreviewMessage message = next.getSecond();
 
       PreviewMessageProcessor processor = processors.computeIfAbsent(message.getType(), type -> {
@@ -167,6 +169,7 @@ public class PreviewDataSubscriberService extends AbstractMessagingSubscriberSer
         throw e;
       }
     }
+    return lastConsumed;
   }
 
   @Override

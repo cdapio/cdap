@@ -138,14 +138,18 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
     }
 
     @Override
-    protected void processMessages(StructuredTableContext structuredTableContext,
-                                   Iterator<ImmutablePair<String, Notification>> messages) throws IOException {
+    protected String processMessages(StructuredTableContext structuredTableContext,
+                                     Iterator<ImmutablePair<String, Notification>> messages) throws IOException {
       ProgramScheduleStoreDataset scheduleStore = getScheduleStore(structuredTableContext);
       JobQueueTable jobQueue = getJobQueue(structuredTableContext);
 
+      String lastConsumed = null;
       while (messages.hasNext()) {
-        processNotification(scheduleStore, jobQueue, messages.next().getSecond());
+        ImmutablePair<String, Notification> currentMessage = messages.next();
+        lastConsumed = currentMessage.getFirst();
+        processNotification(scheduleStore, jobQueue, currentMessage.getSecond());
       }
+      return lastConsumed;
     }
 
     @Override

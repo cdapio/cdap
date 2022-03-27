@@ -112,9 +112,10 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
    *                 as the message id, and the {@link ImmutablePair#second} as the decoded message
    * @throws Exception if failed to process the messages
    * @see #storeMessageId(StructuredTableContext, String)
+   * @return
    */
-  protected abstract void processMessages(StructuredTableContext structuredTableContext,
-                                          Iterator<ImmutablePair<String, T>> messages) throws Exception;
+  protected abstract String processMessages(StructuredTableContext structuredTableContext,
+                                            Iterator<ImmutablePair<String, T>> messages) throws Exception;
 
   /**
    * Perform post processing after a batch of messages has been processed and before the next batch of
@@ -134,26 +135,25 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
   @Nullable
   @Override
   protected String processMessages(Iterator<ImmutablePair<String, T>> messages) throws Exception {
-    MessageTrackingIterator iterator;
+  String lastConsumed = null;
 
     // Process the notifications and record the message id of where the processing is up to.
     // 90% of the tx timeout is .9 * 1000 * txTimeoutSeconds = 900 * txTimeoutSeconds
     long timeBoundMillis = 900L * txTimeoutSeconds;
-    iterator = TransactionRunners.run(getTransactionRunner(), context -> {
+    lastConsumed = TransactionRunners.run(getTransactionRunner(), context -> {
       TimeBoundIterator<ImmutablePair<String, T>> timeBoundMessages = new TimeBoundIterator<>(messages,
                                                                                               timeBoundMillis);
       MessageTrackingIterator trackingIterator = new MessageTrackingIterator(timeBoundMessages);
-      processMessages(context, trackingIterator);
-      String lastMessageId = trackingIterator.getLastMessageId();
+      String lastConsumedMessageId = processMessages(context, trackingIterator);
 
       // Persist the message id of the last message being consumed from the iterator
-      if (lastMessageId != null) {
-        storeMessageId(context, lastMessageId);
+      if (lastConsumedMessageId != null) {
+        storeMessageId(context, lastConsumedMessageId);
       }
-      return trackingIterator;
+      return lastConsumedMessageId;
     }, Exception.class);
 
-    return iterator.getLastMessageId();
+    return lastConsumed;
   }
 
   /**

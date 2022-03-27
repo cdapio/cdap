@@ -82,16 +82,19 @@ public class RuntimeProgramStatusSubscriberService extends AbstractNotificationS
   }
 
   @Override
-  protected void processMessages(StructuredTableContext context,
-                                 Iterator<ImmutablePair<String, Notification>> messages) throws Exception {
+  protected String processMessages(StructuredTableContext context,
+                                   Iterator<ImmutablePair<String, Notification>> messages) throws Exception {
+    String lastConsumed = null;
     while (messages.hasNext()) {
       ImmutablePair<String, Notification> pair = messages.next();
+      lastConsumed = pair.getFirst();
       Notification notification = pair.getSecond();
       if (notification.getNotificationType() != Notification.Type.PROGRAM_STATUS) {
         continue;
       }
       processNotification(pair.getFirst().getBytes(StandardCharsets.UTF_8), notification, getAppMetadataStore(context));
     }
+    return lastConsumed;
   }
 
   /**

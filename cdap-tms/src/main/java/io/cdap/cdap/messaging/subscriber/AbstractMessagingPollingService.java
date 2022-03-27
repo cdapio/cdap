@@ -202,9 +202,14 @@ public abstract class AbstractMessagingPollingService<T> extends AbstractRetryab
 
     startTime = System.currentTimeMillis();
 
+    Message lastMessage = messages.get(messages.size() - 1);
     MessageIterator iterator = new MessageIterator(messages.iterator());
     String messageId = processMessages(iterator);
     this.messageId = messageId == null ? this.messageId : messageId;
+
+    if (!lastMessage.getId().equals(messageId)) {
+      return Math.max(0L, emptyFetchDelayMillis - (System.currentTimeMillis() - startTime));
+    }
 
     long endTime = System.currentTimeMillis();
     metricsContext.gauge("process.duration.ms", endTime - startTime);

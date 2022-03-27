@@ -114,20 +114,23 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
   }
 
   @Override
-  protected void processMessages(StructuredTableContext structuredTableContext,
-                                 Iterator<ImmutablePair<String, Notification>> messages) {
+  protected String processMessages(StructuredTableContext structuredTableContext,
+                                   Iterator<ImmutablePair<String, Notification>> messages) {
     List<ProgramStatusEvent> programStatusEvents = new ArrayList<>();
     long publishTime = System.currentTimeMillis();
-    messages.forEachRemaining(message -> {
+    String lastConsumed = null;
+    while (messages.hasNext()) {
+      ImmutablePair<String, Notification> message = messages.next();
+      lastConsumed = message.getFirst();
       Notification notification = message.getSecond();
       if (!notification.getNotificationType().equals(Notification.Type.PROGRAM_STATUS)) {
-        return;
+        continue;
       }
       Map<String, String> properties = notification.getProperties();
       //get program run ID
       String programStatus = properties.get(ProgramOptionConstants.PROGRAM_STATUS);
       if (programStatus == null) {
-        return;
+        continue;
       }
       ProgramRunStatus programRunStatus = ProgramRunStatus.valueOf(programStatus);
       String programRun = properties.get(ProgramOptionConstants.PROGRAM_RUN_ID);
@@ -135,7 +138,7 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
 
       //Should event publish happen for this status
       if (!shouldPublish(programRunId)) {
-        return;
+        continue;
       }
       ProgramStatusEventDetails.Builder builder = ProgramStatusEventDetails
         .getBuilder(programRunId.getRun(), programRunId.getApplication(), programRunId.getProgram(),
@@ -156,9 +159,10 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
                                                                      instanceName,
                                                                      projectName, programStatusEventDetails);
       programStatusEvents.add(programStatusEvent);
-    });
+    }
 
     this.eventWriters.forEach(eventWriter -> eventWriter.write(programStatusEvents));
+    return lastConsumed;
   }
 
   private boolean shouldPublish(ProgramRunId programRunId) {

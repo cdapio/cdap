@@ -281,15 +281,17 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   }
 
   @Override
-  protected void processMessages(StructuredTableContext structuredTableContext,
-                                 Iterator<ImmutablePair<String, MetadataMessage>> messages)
+  protected String processMessages(StructuredTableContext structuredTableContext,
+                                   Iterator<ImmutablePair<String, MetadataMessage>> messages)
     throws IOException, ConflictException {
     Map<MetadataMessage.Type, MetadataMessageProcessor> processors = new HashMap<>();
 
+    String lastConsumed = null;
     // Loop over all fetched messages and process them with corresponding MetadataMessageProcessor
     while (messages.hasNext()) {
       ImmutablePair<String, MetadataMessage> next = messages.next();
-      String messageId = next.getFirst();
+      lastConsumed = next.getFirst();
+      String messageId = lastConsumed;
       MetadataMessage message = next.getSecond();
 
       MetadataMessageProcessor processor = processors.computeIfAbsent(message.getType(), type -> {
@@ -341,6 +343,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
         throw e;
       }
     }
+    return lastConsumed;
   }
 
   /**

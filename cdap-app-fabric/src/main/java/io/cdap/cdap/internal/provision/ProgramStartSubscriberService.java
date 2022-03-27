@@ -94,19 +94,25 @@ public class ProgramStartSubscriberService extends AbstractNotificationSubscribe
   }
 
   @Override
-  protected void processMessages(StructuredTableContext structuredTableContext,
-                                 Iterator<ImmutablePair<String, Notification>> messages) throws Exception {
+  protected String processMessages(StructuredTableContext structuredTableContext,
+                                   Iterator<ImmutablePair<String, Notification>> messages) throws Exception {
+    String lastConsumed = null;
     while (messages.hasNext()) {
       ImmutablePair<String, Notification> messagePair = messages.next();
-      processNotification(messagePair.getSecond());
+      try {
+        processNotification(messagePair.getSecond());
+      } catch (TooManyRequestsException e) {
+        break;
+      }
+      lastConsumed = messagePair.getFirst();
     }
+    return lastConsumed;
   }
 
   /**
    * Process a {@link Notification} received from TMS.
    */
-  private void processNotification(Notification notification)
-    throws IllegalArgumentException, TooManyRequestsException {
+  private void processNotification(Notification notification) throws TooManyRequestsException {
     // Validate notification type
     if (!notification.getNotificationType().equals(Notification.Type.PROGRAM_STATUS)) {
       LOG.warn("Unexpected notification type {}. Should be {}",

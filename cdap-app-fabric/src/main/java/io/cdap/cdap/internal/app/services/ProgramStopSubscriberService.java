@@ -83,16 +83,19 @@ public class ProgramStopSubscriberService extends AbstractNotificationSubscriber
   }
 
   @Override
-  protected void processMessages(StructuredTableContext context,
-                                 Iterator<ImmutablePair<String, Notification>> messages) throws Exception {
+  protected String processMessages(StructuredTableContext context,
+                                   Iterator<ImmutablePair<String, Notification>> messages) throws Exception {
+    String lastConsumed = null;
     while (messages.hasNext()) {
       ImmutablePair<String, Notification> pair = messages.next();
+      lastConsumed = pair.getFirst();
       Notification notification = pair.getSecond();
       if (notification.getNotificationType() != Notification.Type.PROGRAM_STATUS) {
         continue;
       }
       processNotification(notification, context);
     }
+    return lastConsumed;
   }
 
   /**

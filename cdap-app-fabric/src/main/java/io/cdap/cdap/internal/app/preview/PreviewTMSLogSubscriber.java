@@ -102,10 +102,12 @@ public class PreviewTMSLogSubscriber extends AbstractMessagingSubscriberService<
   }
 
   @Override
-  protected void processMessages(StructuredTableContext structuredTableContext,
-                                 Iterator<ImmutablePair<String, Iterator<byte[]>>> messages) throws Exception {
+  protected String processMessages(StructuredTableContext structuredTableContext,
+                                   Iterator<ImmutablePair<String, Iterator<byte[]>>> messages) throws Exception {
+    String lastConsumed = null;
     while (messages.hasNext()) {
       ImmutablePair<String, Iterator<byte[]>> next = messages.next();
+      lastConsumed = next.getFirst();
       String messageId = next.getFirst();
       Iterator<byte[]> message = next.getSecond();
       try {
@@ -125,6 +127,7 @@ public class PreviewTMSLogSubscriber extends AbstractMessagingSubscriberService<
         throw e;
       }
     }
+    return lastConsumed;
   }
 
   @Override
