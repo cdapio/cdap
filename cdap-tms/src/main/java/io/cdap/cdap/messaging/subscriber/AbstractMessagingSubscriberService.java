@@ -112,9 +112,12 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
    *                 as the message id, and the {@link ImmutablePair#second} as the decoded message
    * @throws Exception if failed to process the messages
    * @see #storeMessageId(StructuredTableContext, String)
+   * @return the last consumed message, or null if no message was consumed.
    */
-  protected abstract void processMessages(StructuredTableContext structuredTableContext,
-                                          Iterator<ImmutablePair<String, T>> messages) throws Exception;
+  @Nullable
+  protected abstract ImmutablePair<String, T> processMessages(StructuredTableContext structuredTableContext,
+                                                              Iterator<ImmutablePair<String, T>> messages)
+    throws Exception;
 
   /**
    * Perform post processing after a batch of messages has been processed and before the next batch of
@@ -134,26 +137,26 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
   @Nullable
   @Override
   protected String processMessages(Iterator<ImmutablePair<String, T>> messages) throws Exception {
-    MessageTrackingIterator iterator;
+    ImmutablePair<String, T> lastConsumedMessage = null;
 
     // Process the notifications and record the message id of where the processing is up to.
     // 90% of the tx timeout is .9 * 1000 * txTimeoutSeconds = 900 * txTimeoutSeconds
     long timeBoundMillis = 900L * txTimeoutSeconds;
-    iterator = TransactionRunners.run(getTransactionRunner(), context -> {
+    lastConsumedMessage = TransactionRunners.run(getTransactionRunner(), context -> {
       TimeBoundIterator<ImmutablePair<String, T>> timeBoundMessages = new TimeBoundIterator<>(messages,
                                                                                               timeBoundMillis);
       MessageTrackingIterator trackingIterator = new MessageTrackingIterator(timeBoundMessages);
-      processMessages(context, trackingIterator);
-      String lastMessageId = trackingIterator.getLastMessageId();
+      ImmutablePair<String, T> lastConsumed = processMessages(context, trackingIterator);
 
       // Persist the message id of the last message being consumed from the iterator
-      if (lastMessageId != null) {
-        storeMessageId(context, lastMessageId);
+      if (lastConsumed != null) {
+        storeMessageId(context, lastConsumed.getFirst());
       }
-      return trackingIterator;
+
+      return lastConsumed;
     }, Exception.class);
 
-    return iterator.getLastMessageId();
+    return lastConsumedMessage.getFirst();
   }
 
   /**
@@ -162,7 +165,6 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
   private final class MessageTrackingIterator extends AbstractIterator<ImmutablePair<String, T>> {
 
     private final Iterator<ImmutablePair<String, T>> messages;
-    private String lastMessageId;
     private int consumedCount;
     private boolean shouldEnd;
 
@@ -192,13 +194,7 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
         shouldEnd = true;
       }
       consumedCount++;
-      lastMessageId = message.getFirst();
       return message;
-    }
-
-    @Nullable
-    String getLastMessageId() {
-      return lastMessageId;
     }
   }
 }

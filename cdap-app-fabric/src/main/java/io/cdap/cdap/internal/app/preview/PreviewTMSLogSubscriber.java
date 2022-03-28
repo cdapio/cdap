@@ -102,8 +102,10 @@ public class PreviewTMSLogSubscriber extends AbstractMessagingSubscriberService<
   }
 
   @Override
-  protected void processMessages(StructuredTableContext structuredTableContext,
-                                 Iterator<ImmutablePair<String, Iterator<byte[]>>> messages) throws Exception {
+  protected ImmutablePair<String, Iterator<byte[]>> processMessages(
+    StructuredTableContext structuredTableContext, Iterator<ImmutablePair<String, Iterator<byte[]>>> messages)
+    throws Exception {
+    ImmutablePair<String, Iterator<byte[]>> lastConsumed = null;
     while (messages.hasNext()) {
       ImmutablePair<String, Iterator<byte[]>> next = messages.next();
       String messageId = next.getFirst();
@@ -116,6 +118,7 @@ public class PreviewTMSLogSubscriber extends AbstractMessagingSubscriberService<
           if (errorCount >= maxRetriesOnError) {
             LOG.warn("Skipping preview message {} after processing it has caused {} consecutive errors: {}",
                      message, errorCount, e.getMessage());
+            lastConsumed = next;
             continue;
           }
         } else {
@@ -124,7 +127,9 @@ public class PreviewTMSLogSubscriber extends AbstractMessagingSubscriberService<
         }
         throw e;
       }
+      lastConsumed = next;
     }
+    return lastConsumed;
   }
 
   @Override

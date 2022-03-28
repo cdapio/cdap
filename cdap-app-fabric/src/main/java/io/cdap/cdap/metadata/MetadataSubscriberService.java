@@ -281,10 +281,11 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   }
 
   @Override
-  protected void processMessages(StructuredTableContext structuredTableContext,
-                                 Iterator<ImmutablePair<String, MetadataMessage>> messages)
+  protected ImmutablePair<String, MetadataMessage> processMessages(
+    StructuredTableContext structuredTableContext, Iterator<ImmutablePair<String, MetadataMessage>> messages)
     throws IOException, ConflictException {
     Map<MetadataMessage.Type, MetadataMessageProcessor> processors = new HashMap<>();
+    ImmutablePair<String, MetadataMessage> lastConsumed = null;
 
     // Loop over all fetched messages and process them with corresponding MetadataMessageProcessor
     while (messages.hasNext()) {
@@ -321,6 +322,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
       // noinspection ConstantConditions
       if (processor == null) {
         LOG.warn("Unsupported metadata message type {}. Message ignored.", message.getType());
+        lastConsumed = next;
         continue;
       }
       try {
@@ -332,6 +334,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
           if (conflictCount >= maxRetriesOnConflict) {
             LOG.warn("Skipping metadata message {} after processing it has caused {} consecutive conflicts: {}",
                      message, conflictCount, e.getMessage());
+            lastConsumed = next;
             continue;
           }
         } else {
@@ -340,7 +343,10 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
         }
         throw e;
       }
+
+      lastConsumed = next;
     }
+    return lastConsumed;
   }
 
   /**
