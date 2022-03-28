@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
+import io.cdap.cdap.common.TooManyRequestsException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -32,6 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
@@ -53,10 +55,12 @@ public class RunRecordMonitorService extends AbstractScheduledService {
    * all run records with {@link ProgramRunStatus#PENDING} or {@link ProgramRunStatus#STARTING} status.
    */
   private final BlockingQueue<ProgramRunId> launchingQueue;
+  private final HashSet<ProgramRunId> pendingSet;
   private final ProgramRuntimeService runtimeService;
   private final long ageThresholdSec;
   private final CConfiguration cConf;
   private final MetricsCollectionService metricsCollectionService;
+  private final int maxConcurrentLaunching;
   private final int maxConcurrentRuns;
   private ScheduledExecutorService executor;
 
@@ -69,7 +73,9 @@ public class RunRecordMonitorService extends AbstractScheduledService {
 
     this.launchingQueue = new PriorityBlockingQueue<>(128, Comparator.comparingLong(
       o -> RunIds.getTime(o.getRun(), TimeUnit.MILLISECONDS)));
+    pendingSet = new HashSet<>();
     this.ageThresholdSec = cConf.getLong(Constants.AppFabric.MONITOR_RECORD_AGE_THRESHOLD_SECONDS);
+    this.maxConcurrentLaunching = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_LAUNCHING);
     this.maxConcurrentRuns = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_RUNS);
   }
 
@@ -111,21 +117,23 @@ public class RunRecordMonitorService extends AbstractScheduledService {
    * @param programRunId run id associated with the launch request
    * @return total number of launching and running program runs.
    */
-  public Counter addRequestAndGetCount(ProgramRunId programRunId) throws Exception {
+  public Counter addLaunchingRequestAndGetCount(ProgramRunId programRunId) throws IllegalArgumentException {
     if (RunIds.getTime(programRunId.getRun(), TimeUnit.MILLISECONDS) == -1) {
-      throw new Exception("None time-based UUIDs are not supported");
+      throw new IllegalArgumentException("None time-based UUIDs are not supported");
     }
 
+    int pendingCount;
     int launchingCount;
     synchronized (this) {
-      addRequest(programRunId);
+      pendingCount = pendingSet.size();
+      addLaunchingRequest(programRunId);
       launchingCount = launchingQueue.size();
     }
 
     int runningCount = getProgramsRunningCount();
 
-    LOG.info("Counter has {} concurrent launching and {} running programs.", launchingCount, runningCount);
-    return new Counter(launchingCount, runningCount);
+    LOG.info("Counter has {} pending {} launching and {} running programs.", launchingCount, runningCount);
+    return new Counter(pendingCount, launchingCount, runningCount);
   }
 
   /**
@@ -133,17 +141,66 @@ public class RunRecordMonitorService extends AbstractScheduledService {
    *
    * @param programRunId run id associated with the launch request
    */
-  public void addRequest(ProgramRunId programRunId) {
+  public void addLaunchingRequest(ProgramRunId programRunId) {
     launchingQueue.add(programRunId);
     emitMetrics(Constants.Metrics.FlowControl.LAUNCHING_COUNT, launchingQueue.size());
     LOG.info("Added request with runId {}.", programRunId);
   }
 
   /**
+   * Add a new in-flight launch request.
+   *
+   * @param programRunId run id associated with the launch request
+   */
+  public Counter addPendingRequestAndGetCount(ProgramRunId programRunId) throws IllegalArgumentException {
+    if (RunIds.getTime(programRunId.getRun(), TimeUnit.MILLISECONDS) == -1) {
+      throw new IllegalArgumentException("None time-based UUIDs are not supported");
+    }
+
+    int pendingCount;
+    int launchingCount;
+    synchronized (this) {
+      pendingSet.add(programRunId);
+      pendingCount = pendingSet.size();
+      launchingCount = launchingQueue.size();
+    }
+
+    int runningCount = getProgramsRunningCount();
+
+    LOG.info("Counter has {} pending {} launching and {} running programs.", launchingCount, runningCount);
+    return new Counter(pendingCount, launchingCount, runningCount);
+  }
+
+  public void removePendingRequest(ProgramRunId programRunId) {
+    synchronized (this) {
+      if (!pendingSet.contains(programRunId)) {
+        return;
+      }
+      pendingSet.remove(programRunId);
+    }
+  }
+
+  public void transitionPendingToLaunching(ProgramRunId programRunId)
+    throws IllegalArgumentException, TooManyRequestsException {
+    if (!pendingSet.contains(programRunId)) {
+      throw new IllegalArgumentException(String.format("Program run id %s is not in pending state", programRunId));
+    }
+    synchronized (this) {
+      if (launchingQueue.size() >= maxConcurrentLaunching) {
+        throw new TooManyRequestsException(
+          String.format("Pending program run id %s cannot launch because of %d max concurrent launch",
+                        programRunId, maxConcurrentLaunching));
+      }
+      pendingSet.remove(programRunId);
+      addLaunchingRequest(programRunId);
+    }
+  }
+
+  /**
    * Remove the request with the provided programRunId when the request is no longer launching.
    * I.e., not in-flight, not in {@link ProgramRunStatus#PENDING} and not in {@link ProgramRunStatus#STARTING}
    *
-   * @param programRunId      of the request to be removed from launching queue.
+   * @param programRunId of the request to be removed from launching queue.
    * @param emitRunningChange if true, also updates {@link Constants.Metrics.FlowControl#RUNNING_COUNT}
    */
   public void removeRequest(ProgramRunId programRunId, boolean emitRunningChange) {
@@ -226,7 +283,12 @@ public class RunRecordMonitorService extends AbstractScheduledService {
     return false;
   }
 
-  class Counter {
+  public class Counter {
+    /**
+     * Total number of launching requests that are enqueued
+     * (i.e., total number of run records with {@link ProgramRunStatus#ENQUEUED} status)
+     */
+    private final int pendingCount;
     /**
      * Total number of launch requests that have been accepted but still missing in metadata store +
      * total number of run records with {@link ProgramRunStatus#PENDING} status +
@@ -241,9 +303,14 @@ public class RunRecordMonitorService extends AbstractScheduledService {
      */
     private final int runningCount;
 
-    Counter(int launchingCount, int runningCount) {
+    Counter(int pendingCount, int launchingCount, int runningCount) {
+      this.pendingCount = pendingCount;
       this.launchingCount = launchingCount;
       this.runningCount = runningCount;
+    }
+
+    public int getPendingCount() {
+      return pendingCount;
     }
 
     public int getLaunchingCount() {

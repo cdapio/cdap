@@ -347,6 +347,14 @@ public final class Constants {
     public static final String FACTORY_IMPLEMENTATION_REMOTE = "remote";
 
     /**
+     * Program start queueing related
+     */
+    public static final String PROGRAM_START_MAX_QUEUED_STARTS = "app.max.queued.launching";
+    public static final String PROGRAM_START_EVENT_TOPIC = "program.start.event.topic";
+    public static final String PROGRAM_START_EVENT_FETCH_SIZE = "app.program.start.event.fetch.size";
+    public static final String PROGRAM_START_EVENT_POLL_DELAY_MILLIS = "app.program.start.event.poll.delay.millis";
+
+    /**
      * Disable user program launch on cdap environment
      */
     public static final String USER_PROGRAM_LAUNCH_DISABLED = "user.program.launch.disabled";

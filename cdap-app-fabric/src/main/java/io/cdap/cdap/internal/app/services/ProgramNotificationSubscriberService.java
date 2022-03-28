@@ -165,9 +165,9 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       }
       try {
         if (runRecordDetail.getStatus() == ProgramRunStatus.PENDING) {
-          runRecordMonitorService.addRequest(runRecordDetail.getProgramRunId());
+          runRecordMonitorService.addLaunchingRequest(runRecordDetail.getProgramRunId());
         } else if (runRecordDetail.getStatus() == ProgramRunStatus.STARTING) {
-          runRecordMonitorService.addRequest(runRecordDetail.getProgramRunId());
+          runRecordMonitorService.addLaunchingRequest(runRecordDetail.getProgramRunId());
           // It is unknown what is the state of program runs in STARTING state.
           // A STARTING message is published again to retry STARTING logic.
           ProgramOptions programOptions =
@@ -312,8 +312,19 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     Map<String, String> properties = notification.getProperties();
     String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
 
-    RunRecordDetail recordedRunRecord;
+    ProgramOptions programOptions = ProgramOptions.fromNotification(notification, GSON);
+    ProgramDescriptor programDescriptor = GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR),
+                                                        ProgramDescriptor.class);
+    String userId = properties.get(ProgramOptionConstants.USER_ID);
+
+    RunRecordDetail recordedRunRecord = null;
     switch (programRunStatus) {
+      case ENQUEUED:
+        appMetadataStore.recordProgramStartEnqueued(programRunId, programOptions.getUserArguments().asMap(),
+                                                    programOptions.getArguments().asMap(), messageIdBytes,
+                                                    programDescriptor.getArtifactId().toApiArtifactId());
+        provisionerNotifier.enqueue(programRunId, programOptions, programDescriptor, userId);
+        break;
       case STARTING:
         try {
           RunRecordDetail runRecordDetail = appMetadataStore.getRun(programRunId);
@@ -373,7 +384,6 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         writeToHeartBeatTable(recordedRunRecord,
                               RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS),
                               programHeartbeatTable);
-
         break;
       case RUNNING:
         long logicalStartTimeSecs = getTimeSeconds(notification.getProperties(),
@@ -427,9 +437,6 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
                                                     messageIdBytes, runnables);
         break;
       case REJECTED:
-        ProgramOptions programOptions = ProgramOptions.fromNotification(notification, GSON);
-        ProgramDescriptor programDescriptor =
-          GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR), ProgramDescriptor.class);
         recordedRunRecord = appMetadataStore.recordProgramRejected(
           programRunId, programOptions.getUserArguments().asMap(),
           programOptions.getArguments().asMap(), messageIdBytes, programDescriptor.getArtifactId().toApiArtifactId());

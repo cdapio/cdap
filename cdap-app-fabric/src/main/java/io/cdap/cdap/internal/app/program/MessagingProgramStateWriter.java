@@ -73,6 +73,19 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
   }
 
   @Override
+  public void enqueue(ProgramRunId programRunId, ProgramOptions programOptions,
+                      ProgramDescriptor programDescriptor, String userId) {
+    ImmutableMap.Builder<String, String> properties = ImmutableMap.<String, String>builder()
+      .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
+      .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.ENQUEUED.name())
+      .put(ProgramOptionConstants.USER_ID, userId)
+      .put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(programOptions.getUserArguments().asMap()))
+      .put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(programOptions.getArguments().asMap()))
+      .put(ProgramOptionConstants.PROGRAM_DESCRIPTOR, GSON.toJson(programDescriptor));
+    programStatePublisher.publish(Notification.Type.PROGRAM_STATUS, properties.build());
+  }
+
+  @Override
   public void start(ProgramRunId programRunId, ProgramOptions programOptions, @Nullable String twillRunId,
                     ProgramDescriptor programDescriptor) {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.<String, String>builder()
