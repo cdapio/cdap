@@ -94,12 +94,21 @@ public class ProgramStartSubscriberService extends AbstractNotificationSubscribe
   }
 
   @Override
-  protected void processMessages(StructuredTableContext structuredTableContext,
-                                 Iterator<ImmutablePair<String, Notification>> messages) throws Exception {
+  protected ImmutablePair<String, Notification> processMessages(StructuredTableContext structuredTableContext,
+                                                                Iterator<ImmutablePair<String, Notification>> messages)
+    throws Exception {
+    ImmutablePair<String, Notification> lastConsumed = null;
     while (messages.hasNext()) {
-      ImmutablePair<String, Notification> messagePair = messages.next();
-      processNotification(messagePair.getSecond());
+      ImmutablePair<String, Notification> message = messages.next();
+      try {
+        processNotification(message.getSecond());
+      } catch (TooManyRequestsException e) {
+        LOG.warn("Unable to start queued program starts due to throttling: {} ", e.getMessage());
+        return lastConsumed;
+      }
+      lastConsumed = message;
     }
+    return lastConsumed;
   }
 
   /**
