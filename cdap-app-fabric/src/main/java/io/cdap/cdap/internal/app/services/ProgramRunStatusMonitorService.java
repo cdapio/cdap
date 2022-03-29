@@ -53,16 +53,18 @@ public class ProgramRunStatusMonitorService extends AbstractRetryableScheduledSe
   private final ProgramRuntimeService runtimeService;
   private final int txBatchSize;
   private final long intervalMillis;
+  private final long terminateTimeBufferSecs;
 
   @Inject
   ProgramRunStatusMonitorService(CConfiguration cConf, Store store, ProgramRuntimeService runtimeService) {
     this(cConf, store, runtimeService, cConf.getInt(Constants.AppFabric.PROGRAM_TERMINATOR_TX_BATCH_SIZE),
-         cConf.getLong(Constants.AppFabric.PROGRAM_TERMINATOR_INTERVAL_SECS));
+         cConf.getLong(Constants.AppFabric.PROGRAM_TERMINATOR_INTERVAL_SECS),
+         cConf.getLong(Constants.AppFabric.PROGRAM_TERMINATE_TIME_BUFFER_SECS));
   }
 
   @VisibleForTesting
   ProgramRunStatusMonitorService(CConfiguration cConf, Store store, ProgramRuntimeService runtimeService,
-                                 int txBatchSize, long specifiedIntervalSecs) {
+                                 int txBatchSize, long specifiedIntervalSecs, long terminateTimeBufferSecs) {
     super(RetryStrategies.fromConfiguration(cConf, Constants.Service.RUNTIME_MONITOR_RETRY_PREFIX));
     this.store = store;
     this.runtimeService = runtimeService;
@@ -73,6 +75,7 @@ public class ProgramRunStatusMonitorService extends AbstractRetryableScheduledSe
       specifiedIntervalSecs = TimeUnit.MINUTES.toSeconds(5);
     }
     this.intervalMillis = TimeUnit.SECONDS.toMillis(specifiedIntervalSecs);
+    this.terminateTimeBufferSecs = terminateTimeBufferSecs;
   }
 
   @Override
@@ -103,7 +106,7 @@ public class ProgramRunStatusMonitorService extends AbstractRetryableScheduledSe
       // each time. Should not be worse in performance than specifying a more restrictive time range
       // because time range is just used as a read-time filter.
       Map<ProgramRunId, RunRecordDetail> stoppingRuns = store.getRuns(
-        ProgramRunStatus.STOPPING, 0L, currentTimeInSecs - TimeUnit.MINUTES.toSeconds(1), txBatchSize, filter);
+        ProgramRunStatus.STOPPING, 0L, currentTimeInSecs - terminateTimeBufferSecs, txBatchSize, filter);
       if (stoppingRuns.isEmpty()) {
         break;
       }
