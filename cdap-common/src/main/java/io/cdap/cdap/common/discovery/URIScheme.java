@@ -113,4 +113,11 @@ public enum URIScheme {
   public String getScheme() {
     return scheme;
   }
+
+  /**
+   * Returns the default port.
+   */
+  public int getDefaultPort() {
+    return defaultPort;
+  }
 }
