@@ -234,6 +234,7 @@ public final class Constants {
     public static final String LOCAL_DATASET_DELETER_INITIAL_DELAY_SECONDS
       = "app.program.local.dataset.deleter.initial.delay";
     public static final String PROGRAM_TERMINATOR_INTERVAL_SECS = "app.program.terminator.interval.secs";
+    public static final String PROGRAM_TERMINATE_TIME_BUFFER_SECS = "app.program.terminate.time.buffer.secs";
     public static final String PROGRAM_TERMINATOR_TX_BATCH_SIZE = "app.program.terminator.tx.batch.size";
     public static final String SYSTEM_ARTIFACTS_DIR = "app.artifact.dir";
     public static final String SYSTEM_ARTIFACTS_MAX_PARALLELISM = "app.artifact.parallelism.max";
