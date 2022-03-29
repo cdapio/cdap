@@ -18,7 +18,9 @@ package io.cdap.cdap.internal.tethering;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.common.HttpErrorStatusProvider;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.http.LocationBodyProducer;
@@ -29,6 +31,7 @@ import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequestConfig;
@@ -42,6 +45,8 @@ import org.apache.twill.filesystem.Location;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -72,7 +77,12 @@ public class ArtifactCacheHttpHandlerInternal extends AbstractHttpHandler {
                             @PathParam("peer") String peer,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("artifact-name") String artifactName,
-                            @PathParam("artifact-version") String artifactVersion) throws Exception {
+                            @PathParam("artifact-version") String artifactVersion,
+                            @QueryParam("scope") @DefaultValue("user") String scope) throws Exception {
+    ArtifactScope artifactScope = validateScope(scope);
+    if (artifactScope == ArtifactScope.SYSTEM) {
+      namespaceId = NamespaceId.SYSTEM.getNamespace();
+    }
     ArtifactId artifactId = new ArtifactId(namespaceId, artifactName, artifactVersion);
     try {
       RemoteClient remoteClient = getRemoteClient(peer);
@@ -109,16 +119,21 @@ public class ArtifactCacheHttpHandlerInternal extends AbstractHttpHandler {
 
   /**
    * Return a remote client that can connect to appfabric on a tethered peer.
-   *
    */
-  private RemoteClient getRemoteClient(String peer) throws PeerNotFoundException, IOException {
+  private RemoteClient getRemoteClient(String peer) throws PeerNotFoundException, IOException, URISyntaxException {
     String endpoint = tetheringStore.getPeer(peer).getEndpoint();
     RemoteClientFactory factory = new RemoteClientFactory(new NoOpDiscoveryServiceClient(endpoint),
                                                           new NoOpInternalAuthenticator(),
                                                           remoteAuthenticator);
     HttpRequestConfig config = new DefaultHttpRequestConfig(true);
+    URI peerUri = new URI(endpoint);
+    // Add peer endpoint's path to the beginning of the remote client's base path
+    // ex : if peerUri is https://my.host.com/api, then the base path will be /api/v3Internal
+    // So some/path would be resolved by the remote client to https://my.host.com/api/v3Internal/some/path
+    String basePath = peerUri.getPath() != null ? peerUri.getPath() + Constants.Gateway.INTERNAL_API_VERSION_3 :
+      Constants.Gateway.INTERNAL_API_VERSION_3;
     return factory.createRemoteClient("", config,
-                                      Constants.Gateway.INTERNAL_API_VERSION_3);
+                                      basePath);
   }
 
   /**
@@ -128,5 +143,13 @@ public class ArtifactCacheHttpHandlerInternal extends AbstractHttpHandler {
   private String exceptionToJson(Exception ex) {
     BasicThrowable basicThrowable = new BasicThrowable(ex);
     return GSON.toJson(basicThrowable);
+  }
+
+  private ArtifactScope validateScope(String scope) throws BadRequestException {
+    try {
+      return ArtifactScope.valueOf(scope.toUpperCase());
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException("Invalid scope " + scope);
+    }
   }
 }

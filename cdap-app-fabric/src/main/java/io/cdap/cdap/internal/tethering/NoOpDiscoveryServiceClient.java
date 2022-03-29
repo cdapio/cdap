@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.tethering;
 
+import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.master.spi.discovery.DefaultServiceDiscovered;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -38,8 +39,17 @@ public class NoOpDiscoveryServiceClient implements DiscoveryServiceClient {
   @Override
   public ServiceDiscovered discover(String name) {
     DefaultServiceDiscovered serviceDiscovered = new DefaultServiceDiscovered(name);
-    Discoverable discoverable = new Discoverable(name, InetSocketAddress.createUnresolved(url.getHost(),
-                                                                                          url.getPort()));
+    URIScheme uriScheme;
+    if (url.getProtocol().equals(URIScheme.HTTPS.getScheme())) {
+      uriScheme = URIScheme.HTTPS;
+    } else if (url.getProtocol().equals(URIScheme.HTTP.getScheme())) {
+      uriScheme = URIScheme.HTTP;
+    } else {
+      throw new IllegalArgumentException(String.format("Invalid protocol:%s", url.getProtocol()));
+    }
+    int port = url.getPort() != -1 ? url.getPort() : uriScheme.getDefaultPort();
+    Discoverable discoverable = uriScheme.createDiscoverable(name,
+                                                             InetSocketAddress.createUnresolved(url.getHost(), port));
     serviceDiscovered.setDiscoverables(Collections.singleton(discoverable));
     return serviceDiscovered;
   }
