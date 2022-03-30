@@ -84,6 +84,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
   private final int fetcherLimit;
   private final long maxDelayMillis;
   private final int queueSize;
+  private final long offerTimeoutMillis;
   private final BlockingDeque<MetricValues> metricsFromAllTopics;
   private final AtomicBoolean persistingFlag;
   private final boolean limitWriteFrequency;
@@ -150,6 +151,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
     this.metricsWriter = metricsWriter;
     this.maxDelayMillis = cConf.getLong(Constants.Metrics.PROCESSOR_MAX_DELAY_MS);
     this.queueSize = cConf.getInt(Constants.Metrics.QUEUE_SIZE);
+    this.offerTimeoutMillis = cConf.getInt(Constants.Metrics.OFFER_TIMEOUT_MS);
     this.fetcherLimit = Math.max(1, queueSize / topicNumbers.size()); // fetcherLimit is at least one
     this.metricsContextMap = metricsContext.getTags();
     this.processMetricsThreads = new ArrayList<>();
@@ -310,7 +312,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
     private final BinaryDecoder decoder;
     private final String oldestTsMetricName;
     private final String latestTsMetricName;
-    private long lastMetricTimeSecs;
+    private long lastMetricTimeSecs = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
 
     ProcessMetricsThread(TopicId topic, MetricsMetaKey metricsMetaKey, String processorName) {
       //TODO - create a unique thread name
@@ -366,17 +368,24 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
         }
 
         byte[] currentMessageId = null;
+        boolean gotMessages;
         TopicProcessMeta localTopicProcessMeta =
           new TopicProcessMeta(lastMessageId, Long.MAX_VALUE, Long.MIN_VALUE, 0,
                                TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                                oldestTsMetricName, latestTsMetricName);
         try (CloseableIterator<RawMessage> iterator = fetcher.fetch()) {
+          gotMessages = iterator.hasNext();
           while (iterator.hasNext() && isRunning()) {
             RawMessage input = iterator.next();
             try {
               payloadInput.reset(input.getPayload());
               MetricValues metricValues = metricReader.read(decoder, metricSchema);
-              if (!metricsFromAllTopics.offer(metricValues)) {
+              if (currentMessageId == null) {
+                //For the first message we are willing to wait for space in queue
+                if (!metricsFromAllTopics.offer(metricValues, offerTimeoutMillis, TimeUnit.MILLISECONDS)) {
+                  break;
+                }
+              } else if (!metricsFromAllTopics.offer(metricValues)) {
                 break;
               }
               lastMetricTimeSecs = metricValues.getTimestamp();
@@ -401,15 +410,16 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
         tryPersist();
 
         long endTime = System.currentTimeMillis();
-        // use currentMessageId != null to ensure that the current fetching is not empty and
-        // lastMetricTimeSecs is updated
-        if (currentMessageId != null && endTime - TimeUnit.SECONDS.toMillis(lastMetricTimeSecs) > maxDelayMillis) {
+        if (gotMessages && endTime - TimeUnit.SECONDS.toMillis(lastMetricTimeSecs) > maxDelayMillis) {
           // Don't sleep if falling behind
           return 0L;
         } else {
           long timeSpent = endTime - startTime;
           return Math.max(0L, metricsProcessIntervalMillis - timeSpent);
         }
+      } catch (InterruptedException e) {
+        LOG.trace("Thread interrupted while processing metrics. Probably stopping now.", e);
+        return 0L;
       } catch (ServiceUnavailableException e) {
         LOG.trace("Could not fetch metrics. Will be retried in next iteration.", e);
       } catch (Exception e) {
