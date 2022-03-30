@@ -251,14 +251,17 @@ public final class FactTable implements Closeable {
         List<byte[]> columns = Lists.newArrayList();
 
         boolean exhausted = false;
+        boolean fullRow = true;
         for (byte[] column : row.getColumns().keySet()) {
           long ts = codec.getTimestamp(row.getRow(), column);
           if (ts < scan.getStartTs()) {
+            fullRow = false;
             continue;
           }
 
           if (ts > scan.getEndTs()) {
             exhausted = true;
+            fullRow = false;
             break;
           }
 
@@ -266,7 +269,7 @@ public final class FactTable implements Closeable {
         }
 
         // todo: do deletes efficiently, in batches, not one-by-one
-        timeSeriesTable.delete(row.getRow(), columns.toArray(new byte[columns.size()][]));
+        timeSeriesTable.delete(row.getRow(), columns.toArray(new byte[columns.size()][]), fullRow);
 
         if (exhausted) {
           break;

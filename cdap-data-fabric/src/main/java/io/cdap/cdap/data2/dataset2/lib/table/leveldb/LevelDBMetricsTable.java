@@ -27,6 +27,7 @@ import io.cdap.cdap.data2.dataset2.lib.table.MetricsTable;
 import io.cdap.cdap.data2.dataset2.lib.table.inmemory.PrefixedNamespaces;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.SortedMap;
@@ -112,6 +113,19 @@ public class LevelDBMetricsTable implements MetricsTable {
       return core.increment(row, ImmutableMap.of(column, delta)).get(column);
     } catch (IOException e) {
       throw new DataSetException("IncrementAndGet failed on table " + tableName, e);
+    }
+  }
+
+  @Override
+  public void delete(byte[] row, byte[][] columns, boolean fullRow) {
+    if (fullRow) {
+      try {
+        core.deleteRows(Collections.singleton(row));
+      } catch (IOException e) {
+        throw new DataSetException("Delete failed on table " + tableName, e);
+      }
+    } else {
+      delete(row, columns);
     }
   }
 
