@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.worker.system;
 
-import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerTwillRunnable;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;
@@ -31,36 +30,27 @@ public class SystemWorkerTwillApplication implements TwillApplication {
   private final URI hConfFileURI;
   private final URI sConfFileURI;
   private final ResourceSpecification systemWorkerResourceSpec;
-  private final ResourceSpecification artifactLocalizerResourceSpec;
 
   public SystemWorkerTwillApplication(URI cConfFileURI, URI hConfFileURI, URI sConfFileURI,
-      ResourceSpecification systemWorkerResourceSpec,
-      ResourceSpecification artifactLocalizerResourceSpec) {
+                                      ResourceSpecification systemWorkerResourceSpec) {
     this.cConfFileURI = cConfFileURI;
     this.hConfFileURI = hConfFileURI;
     this.sConfFileURI = sConfFileURI;
     this.systemWorkerResourceSpec = systemWorkerResourceSpec;
-    this.artifactLocalizerResourceSpec = artifactLocalizerResourceSpec;
   }
 
   @Override
   public TwillSpecification configure() {
     return TwillSpecification.Builder.with()
-        .setName(NAME)
-        .withRunnable()
-        .add(new SystemWorkerTwillRunnable("cConf.xml", "hConf.xml", "sConf.xml"), systemWorkerResourceSpec)
-        .withLocalFiles()
-        .add("cConf.xml", cConfFileURI)
-        .add("hConf.xml", hConfFileURI)
-        .add("sConf.xml", sConfFileURI)
-        .apply()
-        .add(new ArtifactLocalizerTwillRunnable("cConf.xml", "hConf.xml"),
-            artifactLocalizerResourceSpec)
-        .withLocalFiles()
-        .add("cConf.xml", cConfFileURI)
-        .add("hConf.xml", hConfFileURI)
-        .apply()
-        .anyOrder()
-        .build();
+      .setName(NAME)
+      .withRunnable()
+      .add(new SystemWorkerTwillRunnable("cConf.xml", "hConf.xml", "sConf.xml"), systemWorkerResourceSpec)
+      .withLocalFiles()
+      .add("cConf.xml", cConfFileURI)
+      .add("hConf.xml", hConfFileURI)
+      .add("sConf.xml", sConfFileURI)
+      .apply()
+      .anyOrder()
+      .build();
   }
 }

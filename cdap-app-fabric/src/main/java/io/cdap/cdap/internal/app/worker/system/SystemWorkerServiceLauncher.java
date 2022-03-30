@@ -23,8 +23,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.Twill.Security;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.utils.DirUtils;
-import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerTwillRunnable;
-import io.cdap.cdap.master.spi.twill.DependentTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecretDisk;
 import io.cdap.cdap.master.spi.twill.SecureTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecurityContext;
@@ -43,6 +41,7 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -59,7 +58,7 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
 
   @Inject
   public SystemWorkerServiceLauncher(CConfiguration cConf, Configuration hConf, SConfiguration sConf,
-      TwillRunner twillRunner) {
+                                     TwillRunner twillRunner) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.sConf = sConf;
@@ -95,7 +94,14 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
   @Override
   protected Scheduler scheduler() {
     return Scheduler.newFixedRateSchedule(0,
-        cConf.getInt(Constants.TaskWorker.POOL_CHECK_INTERVAL), TimeUnit.SECONDS);
+                                          cConf.getInt(Constants.TaskWorker.POOL_CHECK_INTERVAL), TimeUnit.SECONDS);
+  }
+
+  @Override
+  protected final ScheduledExecutorService executor() {
+    executor = Executors.newSingleThreadScheduledExecutor(
+      Threads.createDaemonThreadFactory("system-worker-service-launcher-scheduler"));
+    return executor;
   }
 
   public void run() {
@@ -112,7 +118,7 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
     if (activeController == null) {
       try {
         Path tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-            cConf.get(Constants.AppFabric.TEMP_DIR)).toPath();
+                               cConf.get(Constants.AppFabric.TEMP_DIR)).toPath();
         Files.createDirectories(tmpDir);
 
         Path runDir = Files.createTempDirectory(tmpDir, "system.worker.launcher");
@@ -132,47 +138,31 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
           }
 
           ResourceSpecification systemResourceSpec = ResourceSpecification.Builder.with()
-              .setVirtualCores(cConf.getInt(Constants.SystemWorker.CONTAINER_CORES))
-              .setMemory(cConf.getInt(Constants.SystemWorker.CONTAINER_MEMORY_MB), ResourceSpecification.SizeUnit.MEGA)
-              .setInstances(cConf.getInt(Constants.SystemWorker.CONTAINER_COUNT))
-              .build();
-
-          ResourceSpecification artifactLocalizerResourceSpec = ResourceSpecification.Builder.with()
-              .setVirtualCores(cConf.getInt(Constants.ArtifactLocalizer.CONTAINER_CORES))
-              .setMemory(cConf.getInt(Constants.ArtifactLocalizer.CONTAINER_MEMORY_MB),
-                  ResourceSpecification.SizeUnit.MEGA)
-              .setInstances(cConf.getInt(Constants.SystemWorker.CONTAINER_COUNT))
-              .build();
+            .setVirtualCores(cConf.getInt(Constants.SystemWorker.CONTAINER_CORES))
+            .setMemory(cConf.getInt(Constants.SystemWorker.CONTAINER_MEMORY_MB), ResourceSpecification.SizeUnit.MEGA)
+            .setInstances(cConf.getInt(Constants.SystemWorker.CONTAINER_COUNT))
+            .build();
 
           LOG.info("Starting SystemWorker pool with {} instances", systemResourceSpec.getInstances());
 
           TwillPreparer twillPreparer = twillRunner.prepare(
             new SystemWorkerTwillApplication(cConfPath.toUri(), hConfPath.toUri(), sConfPath.toUri(),
-                                             systemResourceSpec, artifactLocalizerResourceSpec));
+                                             systemResourceSpec));
 
           String priorityClass = cConf.get(Constants.TaskWorker.CONTAINER_PRIORITY_CLASS_NAME);
           if (priorityClass != null) {
             twillPreparer = twillPreparer.setSchedulerQueue(priorityClass);
           }
 
-          if (twillPreparer instanceof DependentTwillPreparer) {
-            twillPreparer = ((DependentTwillPreparer) twillPreparer)
-                .dependentRunnableNames(SystemWorkerTwillRunnable.class.getSimpleName(),
-                    ArtifactLocalizerTwillRunnable.class.getSimpleName());
-          }
-
           if (twillPreparer instanceof SecureTwillPreparer) {
             SecurityContext securityContext = createSecurityContext();
             twillPreparer = ((SecureTwillPreparer) twillPreparer)
-                .withSecurityContext(SystemWorkerTwillRunnable.class.getSimpleName(), securityContext);
+              .withSecurityContext(SystemWorkerTwillRunnable.class.getSimpleName(), securityContext);
             String secretName = cConf.get(Security.MASTER_SECRET_DISK_NAME);
             String secretPath = cConf.get(Security.MASTER_SECRET_DISK_PATH);
             twillPreparer = ((SecureTwillPreparer) twillPreparer)
-                .withSecretDisk(ArtifactLocalizerTwillRunnable.class.getSimpleName(),
-                    new SecretDisk(secretName, secretPath));
-            twillPreparer = ((SecureTwillPreparer) twillPreparer)
-                .withSecretDisk(SystemWorkerTwillRunnable.class.getSimpleName(), new SecretDisk(secretName,
-                    secretPath));
+              .withSecretDisk(SystemWorkerTwillRunnable.class.getSimpleName(), new SecretDisk(secretName,
+                                                                                              secretPath));
           }
 
           activeController = twillPreparer.start(5, TimeUnit.MINUTES);
@@ -184,7 +174,7 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
         }
       } catch (Exception e) {
         LOG.warn(String.format("Failed to launch SystemWorker pool, retry in %d",
-            cConf.getInt(Constants.TaskWorker.POOL_CHECK_INTERVAL)), e);
+                               cConf.getInt(Constants.TaskWorker.POOL_CHECK_INTERVAL)), e);
       }
     }
     this.twillController = activeController;
