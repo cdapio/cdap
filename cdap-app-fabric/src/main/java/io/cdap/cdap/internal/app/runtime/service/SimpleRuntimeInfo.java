@@ -78,6 +78,7 @@ public final class SimpleRuntimeInfo implements ProgramRuntimeService.RuntimeInf
   @Override
   public void close() {
     LOG.debug("close() called for RunTimeInfo: {}", this);
+    LOG.debug("Cleanup reference during close(), {}", cleanupTask);
     cleanupTask.run();
   }
 }

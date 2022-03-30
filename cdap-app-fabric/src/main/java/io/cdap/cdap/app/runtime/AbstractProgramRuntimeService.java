@@ -123,6 +123,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     ProgramId programId = programDescriptor.getProgramId();
     ProgramRunId programRunId = programId.run(runId);
     DelayedProgramController controller = new DelayedProgramController(programRunId);
+    LOG.debug("Cleanup reference before dispatch: {}", programRunDispatcherInfo.getCleanUpTask().get());
     RuntimeInfo runtimeInfo = createRuntimeInfo(controller, programId, cleanUpTask::get);
     updateRuntimeInfo(runtimeInfo);
     executor.execute(() -> {

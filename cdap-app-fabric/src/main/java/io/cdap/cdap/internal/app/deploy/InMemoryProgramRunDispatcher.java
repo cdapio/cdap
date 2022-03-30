@@ -211,6 +211,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
     // Create and run the program
     Program executableProgram = createProgram(cConf, runner, newProgramDescriptor, artifactDetail, tempDir);
     programRunDispatcherInfo.getCleanUpTask().set(createCleanupTask(tempDir, runner, executableProgram));
+    LOG.debug("Cleanup reference: {}", programRunDispatcherInfo.getCleanUpTask().get());
     return runner.run(executableProgram, optionsWithPlugins);
   }
 
