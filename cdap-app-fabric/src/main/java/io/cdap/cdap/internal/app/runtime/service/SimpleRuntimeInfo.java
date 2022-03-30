@@ -48,6 +48,7 @@ public final class SimpleRuntimeInfo implements ProgramRuntimeService.RuntimeInf
     this.controller = controller;
     this.programId = programId;
     this.cleanupTask = cleanupTask;
+    LOG.debug("Cleanup reference during RuntimeInfo: {}", cleanupTask);
   }
 
   public void setTwillRunId(RunId twillRunId) {
