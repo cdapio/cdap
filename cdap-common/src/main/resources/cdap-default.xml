@@ -2830,6 +2830,14 @@
   </property>
 
   <property>
+    <name>metrics.processor.offer.timeout.ms</name>
+    <value>10000</value>
+    <description>
+      How long to wait for queue to be able to accept newly-fetched metrics before giving up
+    </description>
+  </property>
+
+  <property>
     <name>metrics.processor.max.delay.ms</name>
     <value>3000</value>
     <description>
