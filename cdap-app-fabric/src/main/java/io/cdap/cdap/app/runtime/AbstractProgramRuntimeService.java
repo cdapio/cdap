@@ -148,6 +148,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   }
 
   protected RuntimeInfo createRuntimeInfo(ProgramController controller, ProgramId programId, Runnable cleanUpTask) {
+    LOG.debug("Cleanup reference during RuntimeInfo: {}", cleanUpTask);
     return new SimpleRuntimeInfo(controller, programId, cleanUpTask);
   }
 
