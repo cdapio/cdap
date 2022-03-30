@@ -305,6 +305,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
   private Runnable createCleanupTask(final Object... resources) {
     AtomicBoolean executed = new AtomicBoolean();
     return () -> {
+      LOG.debug("Cleanup being executed.");
       if (!executed.compareAndSet(false, true)) {
         return;
       }
