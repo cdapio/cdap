@@ -778,6 +778,7 @@ public final class Constants {
     public static final String SERVICE_DESCRIPTION = "Service to handle metrics requests.";
     public static final String PROCESSOR_MAX_DELAY_MS = "metrics.processor.max.delay.ms";
     public static final String QUEUE_SIZE = "metrics.processor.queue.size";
+    public static final String OFFER_TIMEOUT_MS = "metrics.processor.offer.timeout.ms";
 
     public static final String ENTITY_TABLE_NAME = "metrics.data.entity.tableName";
     public static final String METRICS_TABLE_PREFIX = "metrics.data.table.prefix";
