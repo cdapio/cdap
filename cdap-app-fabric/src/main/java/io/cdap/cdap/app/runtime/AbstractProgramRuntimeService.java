@@ -125,7 +125,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     DelayedProgramController controller = new DelayedProgramController(programRunId);
     LOG.debug("Cleanup reference before dispatch: {}", cleanUpTask.get());
     LOG.debug("Cleanup reference from info before dispatch: {}", programRunDispatcherInfo.getCleanUpTask().get());
-    RuntimeInfo runtimeInfo = createRuntimeInfo(controller, programId, cleanUpTask::get);
+    RuntimeInfo runtimeInfo = createRuntimeInfo(controller, programId, () -> cleanUpTask.get().run());
     updateRuntimeInfo(runtimeInfo);
     executor.execute(() -> {
       try {
