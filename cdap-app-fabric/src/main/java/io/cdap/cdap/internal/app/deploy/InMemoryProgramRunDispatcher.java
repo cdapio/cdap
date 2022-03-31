@@ -211,9 +211,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
     // Create and run the program
     Program executableProgram = createProgram(cConf, runner, newProgramDescriptor, artifactDetail, tempDir);
     Runnable cleanupTask = createCleanupTask(tempDir, runner, executableProgram);
-    LOG.debug("Cleanup reference in IMPRD: {}", cleanupTask);
     programRunDispatcherInfo.getCleanUpTask().set(cleanupTask);
-    LOG.debug("Cleanup reference in IMPRD from info: {}", programRunDispatcherInfo.getCleanUpTask().get());
     return runner.run(executableProgram, optionsWithPlugins);
   }
 
@@ -311,6 +309,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
       if (!executed.compareAndSet(false, true)) {
         return;
       }
+      LOG.debug("Cleanup ran");
       List<Object> resourceList = new ArrayList<>(Arrays.asList(resources));
       Collections.reverse(resourceList);
       for (Object resource : resourceList) {

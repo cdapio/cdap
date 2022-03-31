@@ -123,15 +123,12 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     ProgramId programId = programDescriptor.getProgramId();
     ProgramRunId programRunId = programId.run(runId);
     DelayedProgramController controller = new DelayedProgramController(programRunId);
-    LOG.debug("Cleanup reference before dispatch: {}", cleanUpTask.get());
-    LOG.debug("Cleanup reference from info before dispatch: {}", programRunDispatcherInfo.getCleanUpTask().get());
     RuntimeInfo runtimeInfo = createRuntimeInfo(controller, programId, () -> cleanUpTask.get().run());
     updateRuntimeInfo(runtimeInfo);
     executor.execute(() -> {
       try {
         controller.setProgramController(programRunDispatcherFactory.getProgramRunDispatcher(programId.getType())
                                           .dispatchProgram(programRunDispatcherInfo));
-        LOG.debug("Cleanup reference from info after dispatch: {}", programRunDispatcherInfo.getCleanUpTask().get());
       } catch (Exception e) {
         controller.failed(e);
         programStateWriter.error(programRunId, e);
@@ -148,7 +145,6 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   }
 
   protected RuntimeInfo createRuntimeInfo(ProgramController controller, ProgramId programId, Runnable cleanUpTask) {
-    LOG.debug("Cleanup reference during RuntimeInfo: {}", cleanUpTask);
     return new SimpleRuntimeInfo(controller, programId, cleanUpTask);
   }
 
@@ -304,22 +300,26 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       @Override
       public void init(ProgramController.State currentState, @Nullable Throwable cause) {
         if (COMPLETED_STATES.contains(currentState)) {
+          LOG.debug("init() called");
           remove(info);
         }
       }
 
       @Override
       public void completed() {
+        LOG.debug("completed() called");
         remove(info);
       }
 
       @Override
       public void killed() {
+        LOG.debug("killed() called");
         remove(info);
       }
 
       @Override
       public void error(Throwable cause) {
+        LOG.debug("error() called");
         remove(info);
       }
     }, Threads.SAME_THREAD_EXECUTOR);
