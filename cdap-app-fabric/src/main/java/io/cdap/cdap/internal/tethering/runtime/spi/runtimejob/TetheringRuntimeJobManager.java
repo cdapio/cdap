@@ -87,7 +87,7 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
     ProgramRunInfo runInfo = runtimeJobInfo.getProgramRunInfo();
     LOG.debug("Launching run {} with following configurations: tethered instance name {}, tethered namespace {}.",
               runInfo.getRun(), tetheredInstanceName, tetheredNamespace);
-    byte[] payload = Bytes.toBytes(GSON.toJson(createLaunchPayload(runtimeJobInfo.getLocalizeFiles())));
+    byte[] payload = Bytes.toBytes(GSON.toJson(createLaunchPayload(runtimeJobInfo)));
     TetheringControlMessage message = new TetheringControlMessage(TetheringControlMessage.Type.START_PROGRAM, payload);
     publishToControlChannel(message);
   }
@@ -169,12 +169,13 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
   /**
    * Add select LocalFiles and cConf entries to the control message payload
    */
-  private TetheringLaunchMessage createLaunchPayload(Collection<? extends LocalFile> localFiles) throws IOException {
+  private TetheringLaunchMessage createLaunchPayload(RuntimeJobInfo runtimeJobInfo) throws IOException {
     TetheringLaunchMessage.Builder builder = new TetheringLaunchMessage.Builder()
       .addFileNames(DistributedProgramRunner.LOGBACK_FILE_NAME)
       .addFileNames(DistributedProgramRunner.PROGRAM_OPTIONS_FILE_NAME)
       .addFileNames(DistributedProgramRunner.APP_SPEC_FILE_NAME);
 
+    Collection<? extends LocalFile> localFiles = runtimeJobInfo.getLocalizeFiles();
     for (String fileName : builder.getFileNames()) {
       LocalFile localFile = localFiles.stream().filter(file -> file.getName().equals(fileName))
         .findFirst().orElseThrow(() -> new IllegalStateException("Cannot find file" + fileName));
@@ -186,7 +187,8 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
       builder.addCConfEntries(cConf.getValByRegex(prefixRegex));
     }
 
-    builder.addNamespace(tetheredInstanceName);
+    builder.addRuntimeNamespace(tetheredNamespace);
+    builder.addPeerNamespace(runtimeJobInfo.getProgramRunInfo().getNamespace());
     return builder.build();
   }
 }

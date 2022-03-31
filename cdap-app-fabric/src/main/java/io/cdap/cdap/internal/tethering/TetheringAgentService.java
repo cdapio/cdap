@@ -331,10 +331,11 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
                                                      ApplicationSpecification.class);
     ProgramOptions programOpts = GSON.fromJson(files.get(DistributedProgramRunner.PROGRAM_OPTIONS_FILE_NAME),
                                                ProgramOptions.class);
-    ProgramId programId = new ProgramId(message.getNamespace(), programOpts.getProgramId().getApplication(),
+    ProgramId programId = new ProgramId(message.getRuntimeNamespace(), programOpts.getProgramId().getApplication(),
                                         programOpts.getProgramId().getType(), programOpts.getProgramId().getProgram());
     Map<String, String> systemArgs = new HashMap<>(programOpts.getArguments().asMap());
     systemArgs.put(ProgramOptionConstants.PEER_NAME, peerName);
+    systemArgs.put(ProgramOptionConstants.PEER_NAMESPACE, message.getPeerNamespace());
     ProgramOptions updatedOpts = new SimpleProgramOptions(programId, new BasicArguments(systemArgs),
                                                           programOpts.getUserArguments());
     ProgramRunId programRunId = programId.run(programOpts.getArguments().getOption(ProgramOptionConstants.RUN_ID));

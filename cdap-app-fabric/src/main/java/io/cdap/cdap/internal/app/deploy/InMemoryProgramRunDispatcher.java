@@ -66,6 +66,7 @@ import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReader;
 import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import org.apache.twill.api.RunId;
@@ -400,8 +401,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
     }
 
     Set<String> files = Sets.newHashSet();
-    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    builder.putAll(options.getArguments().asMap());
+    HashMap<String, String> arguments = new HashMap<>(options.getArguments().asMap());
     for (Map.Entry<String, Plugin> pluginEntry : appSpec.getPlugins().entrySet()) {
       Plugin plugin = pluginEntry.getValue();
       File destFile = new File(tempDir, Artifacts.getFileName(plugin.getArtifactId()));
@@ -412,16 +412,20 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
 
       try {
         ArtifactId artifactId = Artifacts.toProtoArtifactId(programId.getNamespaceId(), plugin.getArtifactId());
-        ArtifactDetail artifactDetail = getArtifactDetail(artifactId);
         String peer = options.getArguments().getOption(ProgramOptionConstants.PEER_NAME);
+        if (peer != null) {
+          String peerNamespace = options.getArguments().getOption(ProgramOptionConstants.PEER_NAMESPACE);
+          artifactId = Artifacts.toProtoArtifactId(new NamespaceId(peerNamespace), plugin.getArtifactId());
+        }
+        ArtifactDetail artifactDetail = getArtifactDetail(artifactId);
         copyArtifact(artifactId, artifactDetail, destFile, isDistributed, peer != null);
       } catch (ArtifactNotFoundException e) {
         throw new IllegalArgumentException(String.format("Artifact %s could not be found", plugin.getArtifactId()), e);
       }
     }
     LOG.debug("Plugin artifacts of {} copied to {}", programId, tempDir.getAbsolutePath());
-    builder.put(ProgramOptionConstants.PLUGIN_DIR, tempDir.getAbsolutePath());
-    return new SimpleProgramOptions(options.getProgramId(), new BasicArguments(builder.build()),
+    arguments.put(ProgramOptionConstants.PLUGIN_DIR, tempDir.getAbsolutePath());
+    return new SimpleProgramOptions(options.getProgramId(), new BasicArguments(ImmutableMap.copyOf(arguments)),
                                     options.getUserArguments(), options.isDebug());
   }
 
