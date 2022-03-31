@@ -65,6 +65,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
 /**
@@ -83,20 +84,38 @@ public class DefaultCube implements Cube, MeteredDataset {
   private final Map<String, ? extends Aggregation> aggregations;
   private final Map<String, AggregationAlias> aggregationAliasMap;
   private final ExecutorService executorService;
+  private final int writeParallelism;
 
   @Nullable
   private MetricsCollector metrics;
 
+  /**
+   * Created a cube with no parallel computations / writes to same resultion
+   */
   public DefaultCube(int[] resolutions, FactTableSupplier factTableSupplier,
                      Map<String, ? extends Aggregation> aggregations,
                      Map<String, AggregationAlias> aggregationAliasMap) {
+    this(resolutions, factTableSupplier, aggregations, aggregationAliasMap, 1);
+  }
+
+  /**
+   * Creates a cube that can do up to writePrallelism parallel computations when writing data to each resolution
+   * table
+   */
+  public DefaultCube(int[] resolutions, FactTableSupplier factTableSupplier,
+                     Map<String, ? extends Aggregation> aggregations,
+                     Map<String, AggregationAlias> aggregationAliasMap,
+                     int writeParallelism) {
     this.aggregations = aggregations;
     this.resolutionToFactTable = Maps.newHashMap();
     for (int resolution : resolutions) {
       resolutionToFactTable.put(resolution, factTableSupplier.get(resolution, 3600));
     }
     this.aggregationAliasMap = aggregationAliasMap;
-    ThreadPoolExecutor executor = new ThreadPoolExecutor(resolutions.length, resolutions.length, 30, TimeUnit.SECONDS,
+    this.writeParallelism = writeParallelism;
+    ThreadPoolExecutor executor = new ThreadPoolExecutor(resolutions.length * this.writeParallelism,
+                                                         resolutions.length * this.writeParallelism,
+                                                         30, TimeUnit.SECONDS,
                                                          new LinkedBlockingQueue<>(),
                                                          Threads.createDaemonThreadFactory("metrics-table-%d"));
     executor.allowCoreThreadTimeOut(true);
@@ -110,8 +129,9 @@ public class DefaultCube implements Cube, MeteredDataset {
 
   @Override
   public void add(Collection<? extends CubeFact> facts) {
-    List<Fact> toWrite = Lists.newArrayList();
+    Map<List<DimensionValue>, List<Fact>> toWrite = new HashMap<>();
     int dimValuesCount = 0;
+    long numFacts = 0;
     for (CubeFact fact : facts) {
       for (Map.Entry<String, ? extends Aggregation> aggEntry : aggregations.entrySet()) {
         Aggregation agg = aggEntry.getValue();
@@ -129,28 +149,53 @@ public class DefaultCube implements Cube, MeteredDataset {
             dimensionValues.add(new DimensionValue(dimensionName, fact.getDimensionValues().get(dimensionValueKey)));
             dimValuesCount++;
           }
-          toWrite.add(new Fact(fact.getTimestamp(), dimensionValues, fact.getMeasurements()));
+          toWrite.computeIfAbsent(dimensionValues, v -> new ArrayList<>())
+            .add(new Fact(fact.getTimestamp(), dimensionValues, fact.getMeasurements()));
+          numFacts++;
         }
       }
     }
 
-    Map<Integer, Future<?>> futures = new HashMap<>();
-    for (Map.Entry<Integer, FactTable> table : resolutionToFactTable.entrySet()) {
-      futures.put(table.getKey(), executorService.submit(() -> table.getValue().add(toWrite)));
+    Map<Integer, List<Future<?>>> futures = new HashMap<>();
+    Consumer<List<Fact>> batchWriter = batch -> {
+      for (Map.Entry<Integer, FactTable> table : resolutionToFactTable.entrySet()) {
+        Future<?> future = executorService.submit(() -> table.getValue().add(batch));
+        futures.computeIfAbsent(table.getKey(), k -> new ArrayList<>()).add(future);
+      }
+    };
+
+    List<Fact> writeBatch = new ArrayList<>();
+    int batchSize = (int) Math.min(Integer.MAX_VALUE, numFacts / writeParallelism);
+    for (List<Fact> metricFacts: toWrite.values()) {
+      if (metricFacts.size() > batchSize) {
+        batchWriter.accept(metricFacts);
+      } else if (writeBatch.size() <= batchSize - metricFacts.size()) {
+        writeBatch.addAll(metricFacts);
+      } else {
+        batchWriter.accept(writeBatch);
+        writeBatch = new ArrayList<>();
+        writeBatch.addAll(metricFacts);
+      }
     }
+    if (!writeBatch.isEmpty()) {
+      batchWriter.accept(writeBatch);
+    }
+
 
     boolean failed = false;
     Exception failedException = null;
     StringBuilder failedMessage = new StringBuilder("Failed to add metrics to ");
-    for (Map.Entry<Integer, Future<?>> future : futures.entrySet()) {
+    for (Map.Entry<Integer, List<Future<?>>> futureList: futures.entrySet()) {
       try {
-        Uninterruptibles.getUninterruptibly(future.getValue());
+        for (Future<?> future: futureList.getValue()) {
+          Uninterruptibles.getUninterruptibly(future);
+        }
       } catch (ExecutionException e) {
         if (!failed) {
           failed = true;
-          failedMessage.append(String.format("the %d resolution table", future.getKey()));
+          failedMessage.append(String.format("the %d resolution table", futureList.getKey()));
         } else {
-          failedMessage.append(String.format(", the %d resolution table", future.getKey()));
+          failedMessage.append(String.format(", the %d resolution table", futureList.getKey()));
         }
         if (failedException == null) {
           failedException = e;
@@ -166,9 +211,9 @@ public class DefaultCube implements Cube, MeteredDataset {
 
     incrementMetric("cube.cubeFact.add.request.count", 1);
     incrementMetric("cube.cubeFact.added.count", facts.size());
-    incrementMetric("cube.tsFact.created.count", toWrite.size());
+    incrementMetric("cube.tsFact.created.count", numFacts);
     incrementMetric("cube.tsFact.created.dimValues.count", dimValuesCount);
-    incrementMetric("cube.tsFact.added.count", toWrite.size() * resolutionToFactTable.size());
+    incrementMetric("cube.tsFact.added.count", numFacts * resolutionToFactTable.size());
   }
 
   @Override
