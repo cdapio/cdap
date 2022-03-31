@@ -84,6 +84,19 @@ public interface MetricsTable extends Dataset {
   void delete(byte[] row, byte[][] columns);
 
   /**
+   * Deletes specified columns of the specified row.
+   *
+   * @param row row to delete from
+   * @param columns names of columns to delete
+   * @param fullRow if the whole row is deleted. Note that this parameter is just an optimization and list
+   *                of columns must still be passed in case when this optimization is not implemented
+   * @see #delete(byte[], byte[][]) 
+   */
+  default void delete(byte[] row, byte[][] columns, boolean fullRow) {
+    delete(row, columns);
+  }
+
+  /**
    * Get a scanner for a table.
    * @param start the row key of the first row to scan. If null, the scan begins at the first row of the table.
    * @param stop the row key of the last row to scan. If null, the scan goes to the last row of the table.
