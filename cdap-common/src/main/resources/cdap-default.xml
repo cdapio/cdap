@@ -2662,6 +2662,15 @@
   </property>
 
   <property>
+    <name>metrics.data.table.write.parallelism</name>
+    <value>5</value>
+    <description>
+      Controls parallel computations and writes to each resolution metrics table. While write itself is guarded
+      by a mutex, pre-write computations and aggregations takes time, so it makes sense to do it in parallel.
+    </description>
+  </property>
+
+  <property>
     <name>metrics.exec.threads</name>
     <value>${http.service.exec.threads}</value>
     <description>

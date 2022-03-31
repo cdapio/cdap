@@ -782,6 +782,7 @@ public final class Constants {
     public static final String OFFER_TIMEOUT_MS = "metrics.processor.offer.timeout.ms";
 
     public static final String ENTITY_TABLE_NAME = "metrics.data.entity.tableName";
+    public static final String METRICS_TABLE_WRITE_PARRALELISM = "metrics.data.table.write.parallelism";
     public static final String METRICS_TABLE_PREFIX = "metrics.data.table.prefix";
     public static final String TIME_SERIES_TABLE_ROLL_TIME = "metrics.data.table.ts.rollTime";
 
