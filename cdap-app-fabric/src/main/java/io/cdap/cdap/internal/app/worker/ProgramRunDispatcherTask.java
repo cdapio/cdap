@@ -43,7 +43,6 @@ import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import org.apache.twill.api.RunId;
 
-import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -77,7 +76,7 @@ public class ProgramRunDispatcherTask implements RunnableTask {
       GSON.fromJson(context.getParam(), ProgramRunDispatcherInfo.class);
     ProgramRunDispatcher dispatcher = injector.getInstance(InMemoryProgramRunDispatcher.class);
     ProgramController programController = dispatcher.dispatchProgram(programRunDispatcherInfo);
-    if (Objects.isNull(programController)) {
+    if (programController == null) {
       String msg = String.format("Unable to dispatch Program %s with runid %s",
                                  programRunDispatcherInfo.getProgramDescriptor().getProgramId(),
                                  programRunDispatcherInfo.getRunId());
@@ -85,6 +84,7 @@ public class ProgramRunDispatcherTask implements RunnableTask {
     }
     // Result doesn't matter since we just need an HTTP 200 response or an exception in case of an error(handled above).
     context.writeResult(new byte[0]);
+    programController.stop();
     executorService.submit(programRunDispatcherInfo.getCleanUpTask().get());
   }
 }
