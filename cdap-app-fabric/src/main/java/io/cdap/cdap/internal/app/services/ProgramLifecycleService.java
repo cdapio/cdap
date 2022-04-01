@@ -774,6 +774,7 @@ public class ProgramLifecycleService {
                                                     workflowRunId));
       }
       // send a message to stop the program run
+      LOG.info("Issuing a program stop request with a timeout value of {} secs", gracefulShutdownSecs);
       programStateWriter.stop(activeRunId, gracefulShutdownSecs);
     }
 
