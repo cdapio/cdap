@@ -29,6 +29,7 @@ import io.cdap.cdap.app.guice.DistributedArtifactManagerModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
@@ -44,6 +45,8 @@ import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
+import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
@@ -94,6 +97,8 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
     modules.add(RemoteAuthenticatorModules.getDefaultModule());
     modules.add(new AuthenticationContextModules().getMasterModule());
     modules.add(coreSecurityModule);
+    modules.add(new MessagingClientModule());
+    modules.add(new MetricsClientRuntimeModule().getDistributedModules());
 
     // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
     MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
@@ -103,6 +108,7 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
       modules.add(new ZKDiscoveryModule());
       modules.add(new KafkaClientModule());
       modules.add(new KafkaLogAppenderModule());
+      modules.add(new DFSLocationModule());
     } else {
       modules.add(new AbstractModule() {
         @Override
@@ -177,7 +183,8 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
     }
   }
 
-  private void doInitialize() throws Exception {
+  @VisibleForTesting
+  void doInitialize() throws Exception {
     CConfiguration cConf = CConfiguration.create();
     cConf.clear();
     cConf.addResource(new File(getArgument("cConf")).toURI().toURL());
