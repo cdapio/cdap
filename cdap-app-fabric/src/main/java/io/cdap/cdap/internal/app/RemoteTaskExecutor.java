@@ -64,19 +64,19 @@ public class RemoteTaskExecutor {
   private static final Gson GSON = new Gson();
   private static final String TASK_WORKER_URL = "/worker/run";
   private static final String SYSTEM_WORKER_URL = "/system/run";
-
-  private String workerUrl;
   private static final Logger LOG = LoggerFactory.getLogger(RemoteTaskExecutor.class);
-
   private final boolean compression;
   private final RemoteClient remoteClient;
   private final RetryStrategy retryStrategy;
   private final MetricsCollectionService metricsCollectionService;
+  private String workerUrl;
 
   public RemoteTaskExecutor(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                             RemoteClientFactory remoteClientFactory, Type workerType) {
     this.compression = cConf.getBoolean(Constants.TaskWorker.COMPRESSION_ENABLED);
-    this.remoteClient = remoteClientFactory.createRemoteClient(Constants.Service.TASK_WORKER,
+    String serviceName = workerType == Type.TASK_WORKER ?
+      Constants.Service.TASK_WORKER : Constants.Service.SYSTEM_WORKER;
+    this.remoteClient = remoteClientFactory.createRemoteClient(serviceName,
                                                                new DefaultHttpRequestConfig(false),
                                                                Constants.Gateway.INTERNAL_API_VERSION_3);
     this.retryStrategy = RetryStrategies.fromConfiguration(cConf, Constants.Service.TASK_WORKER + ".");
