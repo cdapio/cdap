@@ -107,8 +107,8 @@ public class RemoteClient {
     URL rewrittenURL = rewriteURL(request.getURL());
     Multimap<String, String> headers = setHeader(request);
 
-    httpRequest =
-      new HttpRequest(request.getMethod(), rewrittenURL, headers, request.getBody(), request.getBodyLength());
+    httpRequest = new HttpRequest(request.getMethod(), rewrittenURL,
+                                  headers, request.getBody(), request.getBodyLength());
 
     try {
       HttpResponse response = HttpRequests.execute(httpRequest, httpRequestConfig);
@@ -135,9 +135,8 @@ public class RemoteClient {
     URL rewrittenURL = rewriteURL(request.getURL());
     Multimap<String, String> headers = setHeader(request);
 
-    HttpRequest httpRequest =
-      new HttpRequest(request.getMethod(), rewrittenURL, headers, request.getBody(), request.getBodyLength(),
-                      request.getConsumer());
+    HttpRequest httpRequest = new HttpRequest(request.getMethod(), rewrittenURL, headers,
+                                              request.getBody(), request.getBodyLength(), request.getConsumer());
     HttpResponse httpResponse = HttpRequests.execute(httpRequest, httpRequestConfig);
 
     if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
