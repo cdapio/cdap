@@ -2646,6 +2646,29 @@
   </property>
 
   <property>
+    <name>metrics.data.coarse.lag.factor</name>
+    <value>12</value>
+    <description>
+      Resolution-based factor that defines wall clock lag. After incoming metrics processing delay reaches this lag,
+      metrics will be aggregated to bigger inteval based on round factor. E.g. for resolution of 5 seconds and
+      lag factor of 12, coarsing will be done for any metrics that are more than 5*12=60 seconds late.
+    </description>
+  </property>
+
+  <property>
+    <name>metrics.data.coarse.round.factor</name>
+    <value>20</value>
+    <description>
+      Resolution-based factor that defines increased interval at which metrics will be stored after coarsing kicked
+      in based on lag factor. E.g. for resolution of 5 seconds and round factor of 20, metrics will be stored
+      each 5*20=100 seconds instead of each 5 seconds. They will still be stored in the same 5 second table, so
+      table users don't need to be changed, they would just see data at more rare timestamps. The only quirk here
+      is that now data can be attributed to the moment up to 99 seconds earlier and not 5 seconds earlier than it was
+      produced due to a higher rounding involved. This mechanism allows to handle overload more gracefully.
+    </description>
+  </property>
+
+  <property>
     <name>metrics.dataset.hbase.stats.report.interval</name>
     <value>60</value>
     <description>

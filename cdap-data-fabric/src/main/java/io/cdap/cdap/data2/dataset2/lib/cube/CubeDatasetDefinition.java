@@ -53,6 +53,8 @@ import java.util.Set;
      dataset.cube.aggregation.userPages.requiredDimensions=page
      dataset.cube.aggregation.userActions.dimensions=user,action
      dataset.cube.aggregation.userActions.requiredDimensions=action
+     dataset.cube.coarse.lag.factor=5
+     dataset.cube.coarse.round.factor=4
     </pre>
  *
  * <ul>
@@ -68,6 +70,10 @@ import java.util.Set;
  *     configures "userActions" aggregation (name doesn't have any restricted format, can be any alphabetical) that
  *     aggregates measurements for user and action; allows querying e.g. number of specific actions of specific user
  *   </li>
+ *   <li>
+ *     configures coarsing to kick in after 5x delay (5 and 300 seconds for resolutions) and additionally
+ *     aggregare data to 4x more sparce values (4 and 240 seconds interval).
+ *   </li>
  * </ul>
  *
  * Aggregation is defined with list of dimensions to aggregate by and a list of required dimensions
@@ -82,6 +88,12 @@ public class CubeDatasetDefinition
   public static final String PROPERTY_AGGREGATION_PREFIX = "dataset.cube.aggregation.";
   public static final String PROPERTY_DIMENSIONS = "dimensions";
   public static final String PROPERTY_REQUIRED_DIMENSIONS = "requiredDimensions";
+  public static final String PROPERTY_COARSE_LAG_FACTOR = "dataset.cube.coarse.lag.factor";
+  public static final String PROPERTY_COARSE_ROUND_FACTOR = "dataset.cube.coarse.round.factor";
+  // Coarsing disabled by default
+  public static final int DEFAULT_COARSE_ROUND_FACTOR = 1;
+  // If only round factor is specified, lag factor of 10 will be used
+  public static final int DEFAULT_COARSE_LAG_FACTOR = 10;
   // 1 second is the only default resolution
   public static final int[] DEFAULT_RESOLUTIONS = new int[]{1};
 
@@ -186,7 +198,11 @@ public class CubeDatasetDefinition
 
     Map<String, Aggregation> aggregations = getAggregations(spec.getProperties());
 
-    return new CubeDataset(spec.getName(), entityTable, resolutionTables, aggregations);
+    int coarseLagFactor = spec.getIntProperty(PROPERTY_COARSE_LAG_FACTOR, DEFAULT_COARSE_LAG_FACTOR);
+    int coarseRoundFactor = spec.getIntProperty(PROPERTY_COARSE_ROUND_FACTOR, DEFAULT_COARSE_ROUND_FACTOR);
+
+    return new CubeDataset(spec.getName(), entityTable, resolutionTables, aggregations,
+                           coarseLagFactor, coarseRoundFactor);
   }
 
   private DatasetProperties computeFactTableProperties(DatasetProperties props) {
