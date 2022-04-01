@@ -43,11 +43,20 @@ public class CubeDataset extends AbstractDataset implements Cube {
   private final MetricsTable entityTable;
   private final DefaultCube cube;
 
+  /**
+   * Creates a CubeDataset with no coarsing by setting round factor to 1
+   */
+  public CubeDataset(String name, MetricsTable entityTable,
+                     Map<Integer, Table> resolutionTables,
+                     Map<String, ? extends Aggregation> aggregations) {
+    this(name, entityTable, resolutionTables, aggregations, 1, 1);
+  }
+
   // NOTE: entityTable has to be a non-transactional MetricsTable: DefaultCube internally uses in-memory caching for
   //       data stored in it and requires the table writes to be durable independent on transaction commit success.
   public CubeDataset(String name, MetricsTable entityTable,
                      Map<Integer, Table> resolutionTables,
-                     Map<String, ? extends Aggregation> aggregations) {
+                     Map<String, ? extends Aggregation> aggregations, int coarseLagFactor, int coarseRoundFactor) {
     super(name, entityTable, resolutionTables.values().toArray(new Dataset[resolutionTables.values().size()]));
     this.entityTable = entityTable;
     this.resolutionTables = resolutionTables;
@@ -57,7 +66,8 @@ public class CubeDataset extends AbstractDataset implements Cube {
       resolutions[index++] = resolution;
     }
     this.cube = new DefaultCube(resolutions,
-                                new FactTableSupplierImpl(entityTable, resolutionTables),
+                                new FactTableSupplierImpl(entityTable, resolutionTables,
+                                                          coarseLagFactor, coarseRoundFactor),
                                 aggregations, ImmutableMap.<String, AggregationAlias>of());
   }
 
@@ -107,17 +117,22 @@ public class CubeDataset extends AbstractDataset implements Cube {
   private static final class FactTableSupplierImpl implements FactTableSupplier {
     private final MetricsTable entityTable;
     private final Map<Integer, Table> resolutionTables;
+    private final int coarseLagFactor;
+    private final int coarseRoundFactor;
 
-    private FactTableSupplierImpl(MetricsTable entityTable, Map<Integer, Table> resolutionTables) {
+    private FactTableSupplierImpl(MetricsTable entityTable, Map<Integer, Table> resolutionTables,
+                                  int coarseLagFactor, int coarseRoundFactor) {
       this.entityTable = entityTable;
       this.resolutionTables = resolutionTables;
+      this.coarseLagFactor = coarseLagFactor;
+      this.coarseRoundFactor = coarseRoundFactor;
     }
 
     @Override
     public FactTable get(int resolution, int rollTime) {
       return new FactTable(new MetricsTableOnTable(resolutionTables.get(resolution)),
                            new EntityTable(entityTable),
-                           resolution, rollTime);
+                           resolution, rollTime, coarseLagFactor, coarseRoundFactor);
     }
   }
 }

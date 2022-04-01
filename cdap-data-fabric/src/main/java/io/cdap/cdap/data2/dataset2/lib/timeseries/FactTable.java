@@ -82,23 +82,23 @@ public final class FactTable implements Closeable {
 
   /**
    * Creates an instance of {@link FactTable}.
-   *
    * @param timeSeriesTable A table for storing facts information.
    * @param entityTable The table for storing dimension encoding mappings.
    * @param resolution Resolution in seconds
    * @param rollTime Number of resolution for writing to a new row with a new timebase.
-   *                 Meaning the differences between timebase of two consecutive rows divided by
-   *                 resolution seconds. It essentially defines how many columns per row in the table.
-   *                 This value should be < 65535.
+*                 Meaning the differences between timebase of two consecutive rows divided by
+*                 resolution seconds. It essentially defines how many columns per row in the table.
+   * @param coarseLagFactor
+   * @param coarseRoundFactor
    */
   public FactTable(MetricsTable timeSeriesTable,
-                   EntityTable entityTable, int resolution, int rollTime) {
+                   EntityTable entityTable, int resolution, int rollTime, int coarseLagFactor, int coarseRoundFactor) {
     // Two bytes for column name, which is a delta timestamp
     Preconditions.checkArgument(rollTime <= MAX_ROLL_TIME, "Rolltime should be <= " + MAX_ROLL_TIME);
 
     this.entityTable = entityTable;
     this.timeSeriesTable = timeSeriesTable;
-    this.codec = new FactCodec(entityTable, resolution, rollTime);
+    this.codec = new FactCodec(entityTable, resolution, rollTime, coarseLagFactor, coarseRoundFactor);
     this.resolution = resolution;
     this.rollTime = rollTime;
     this.putCountMetric = "factTable." + resolution + ".put.count";
@@ -117,6 +117,7 @@ public final class FactTable implements Closeable {
     // Simply collecting all rows/cols/values that need to be put to the underlying table.
     NavigableMap<byte[], NavigableMap<byte[], Long>> gaugesTable = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     NavigableMap<byte[], NavigableMap<byte[], Long>> incrementsTable = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    long nowSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
 
     // this map is used to store metrics which was COUNTER type, but can be considered as GAUGE, which means it is
     // guaranteed to be a new row key in the underlying table.
@@ -125,13 +126,14 @@ public final class FactTable implements Closeable {
     Map<FactCacheKey, Long> cacheUpdates = new HashMap<>();
     for (Fact fact : facts) {
       for (Measurement measurement : fact.getMeasurements()) {
-        byte[] rowKey = codec.createRowKey(fact.getDimensionValues(), measurement.getName(), fact.getTimestamp());
-        byte[] column = codec.createColumn(fact.getTimestamp());
+        byte[] rowKey = codec.createRowKey(fact.getDimensionValues(), measurement.getName(),
+                                           fact.getTimestamp(), nowSeconds);
+        byte[] column = codec.createColumn(fact.getTimestamp(), nowSeconds);
 
         if (MeasureType.COUNTER == measurement.getType()) {
           if (factCounterCache != null) {
             // round to the resolution timestamp
-            long tsToResolution = fact.getTimestamp() / resolution * resolution;
+            long tsToResolution = codec.roundToResolution(fact.getTimestamp(), nowSeconds);
             FactCacheKey cacheKey = new FactCacheKey(fact.getDimensionValues(), measurement.getName());
             Long existingTs = factCounterCache.getIfPresent(cacheKey);
 
@@ -341,10 +343,10 @@ public final class FactTable implements Closeable {
         }
         byte[] rowKey = rowResult.getRow();
         // filter out columns by time range (scan configuration only filters whole rows)
-        if (codec.getTimestamp(rowKey, codec.createColumn(startTs)) < startTs) {
+        if (codec.getTimestamp(rowKey, codec.createColumn(startTs, startTs)) < startTs) {
           continue;
         }
-        if (codec.getTimestamp(rowKey, codec.createColumn(endTs)) > endTs) {
+        if (codec.getTimestamp(rowKey, codec.createColumn(endTs, endTs)) > endTs) {
           // we're done with scanner
           break;
         }
@@ -426,10 +428,10 @@ public final class FactTable implements Closeable {
         }
         byte[] rowKey = rowResult.getRow();
         // filter out columns by time range (scan configuration only filters whole rows)
-        if (codec.getTimestamp(rowKey, codec.createColumn(startTs)) < startTs) {
+        if (codec.getTimestamp(rowKey, codec.createColumn(startTs, startTs)) < startTs) {
           continue;
         }
-        if (codec.getTimestamp(rowKey, codec.createColumn(endTs)) > endTs) {
+        if (codec.getTimestamp(rowKey, codec.createColumn(endTs, endTs)) > endTs) {
           // we're done with scanner
           break;
         }

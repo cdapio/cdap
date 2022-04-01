@@ -50,6 +50,8 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   private final DatasetDefinition<MetricsTable, DatasetAdmin> metricsTableDefinition;
   private final Set<DatasetId> existingDatasets;
   private final Supplier<EntityTable> entityTable;
+  private final int coarseLagFactor;
+  private final int coarseRoundFactor;
 
   @Inject
   public DefaultMetricDatasetFactory(CConfiguration cConf,
@@ -62,6 +64,8 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
                                    Constants.Metrics.DEFAULT_ENTITY_TABLE_NAME);
       return new EntityTable(getOrCreateMetricsTable(tableName, DatasetProperties.EMPTY));
     });
+    this.coarseLagFactor = cConf.getInt(Constants.Metrics.COARSE_LAG_FACTOR);
+    this.coarseRoundFactor = cConf.getInt(Constants.Metrics.COARSE_ROUND_FACTOR);
   }
 
   // todo: figure out roll time based on resolution from config? See DefaultMetricsTableFactory for example
@@ -82,7 +86,8 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
     }
 
     MetricsTable table = getOrCreateMetricsTable(tableName, props.build());
-    return new FactTable(table, entityTable.get(), resolution, getRollTime(resolution));
+    return new FactTable(table, entityTable.get(), resolution, getRollTime(resolution),
+                         coarseLagFactor, coarseRoundFactor);
   }
 
   @Override

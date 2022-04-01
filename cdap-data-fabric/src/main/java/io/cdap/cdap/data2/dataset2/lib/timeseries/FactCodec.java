@@ -44,13 +44,18 @@ public class FactCodec {
 
   private final int resolution;
   private final int rollTimebaseInterval;
+  private final int coarseLagFactor;
+  private final int coarseRoundFactor;
   // Cache for delta values.
   private final byte[][] deltaCache;
 
-  public FactCodec(EntityTable entityTable, int resolution, int rollTimebaseInterval) {
+  public FactCodec(EntityTable entityTable, int resolution, int rollTimebaseInterval,
+                   int coarseLagFactor, int coarseRoundFactor) {
     this.entityTable = entityTable;
     this.resolution = resolution;
     this.rollTimebaseInterval = rollTimebaseInterval;
+    this.coarseLagFactor = coarseLagFactor;
+    this.coarseRoundFactor = coarseRoundFactor;
     this.deltaCache = createDeltaCache(rollTimebaseInterval);
   }
 
@@ -59,11 +64,12 @@ public class FactCodec {
    * @param dimensionValues dimension values
    * @param measureName measure name
    * @param ts timestamp
+   * @param now current time in seconds to calculate processing lag
    * @return row key
    */
-  public byte[] createRowKey(List<DimensionValue> dimensionValues, String measureName, long ts) {
+  public byte[] createRowKey(List<DimensionValue> dimensionValues, String measureName, long ts, long now) {
     // "false" would write null in dimension values as "undefined"
-    return createRowKey(dimensionValues, measureName, ts, false, false);
+    return createRowKey(dimensionValues, measureName, ts, false, false, now);
   }
 
   /**
@@ -78,7 +84,7 @@ public class FactCodec {
   public byte[] createStartRowKey(List<DimensionValue> dimensionValues, String measureName,
                                   long ts, boolean anyAggGroup) {
     // "false" would write null in dimension values as "undefined"
-    return createRowKey(dimensionValues, measureName, ts, false, anyAggGroup);
+    return createRowKey(dimensionValues, measureName, ts, false, anyAggGroup, ts);
   }
 
   /**
@@ -93,7 +99,7 @@ public class FactCodec {
   public byte[] createEndRowKey(List<DimensionValue> dimensionValues, String measureName,
                                 long ts, boolean anyAggGroup) {
     // "false" would write null in dimension values as "undefined"
-    return createRowKey(dimensionValues, measureName, ts, true, anyAggGroup);
+    return createRowKey(dimensionValues, measureName, ts, true, anyAggGroup, ts);
   }
 
   /**
@@ -106,7 +112,7 @@ public class FactCodec {
   }
 
   private byte[] createRowKey(List<DimensionValue> dimensionValues, String measureName, long ts, boolean stopKey,
-                              boolean anyAggGroup) {
+                              boolean anyAggGroup, long now) {
     // Row key format:
     // <version><encoded agg group><time base><encoded dimension1 value>...
     //                                                                 <encoded dimensionN value><encoded measure name>.
@@ -122,7 +128,7 @@ public class FactCodec {
       offset = writeEncodedAggGroup(dimensionValues, rowKey, offset);
     }
 
-    long timestamp = roundToResolution(ts);
+    long timestamp = roundToResolution(ts, now);
     int timeBase = getTimeBase(timestamp);
     offset = Bytes.putInt(rowKey, offset, timeBase);
 
@@ -181,8 +187,13 @@ public class FactCodec {
     return newRowKey;
   }
 
-  private long roundToResolution(long ts) {
-    return (ts / resolution) * resolution;
+  public long roundToResolution(long ts, long now) {
+    long rounded = (ts / resolution) * resolution;
+    if (now - rounded > resolution * coarseLagFactor) {
+      int coarseResolution = resolution * coarseRoundFactor;
+      return (rounded / coarseResolution) * coarseResolution;
+    }
+    return rounded;
   }
 
   /**
@@ -219,11 +230,11 @@ public class FactCodec {
     return mask;
   }
 
-  public byte[] createColumn(long ts) {
-    long timestamp = roundToResolution(ts);
+  public byte[] createColumn(long ts, long now) {
+    long timestamp = roundToResolution(ts, now);
     int timeBase = getTimeBase(timestamp);
 
-    return deltaCache[(int) ((ts - timeBase) / resolution)];
+    return deltaCache[(int) ((timestamp - timeBase) / resolution)];
   }
 
   public String getMeasureName(byte[] rowKey) {
