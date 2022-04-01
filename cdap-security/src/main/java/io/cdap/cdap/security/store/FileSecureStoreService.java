@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.security.store;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
-import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -31,16 +31,17 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.SecureKeyId;
+import io.cdap.cdap.security.store.file.FileSecureStoreCodec;
+import io.cdap.cdap.security.store.file.KeyInfo;
+import io.cdap.cdap.security.store.file.SecureStoreDataCodecV2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -52,20 +53,20 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.annotation.Nullable;
-import javax.crypto.spec.SecretKeySpec;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 
 import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 /**
- * File based implementation of secure store. Uses Java JCEKS based keystore.
+ * File based implementation of secure store. Uses Java PKCS12 based keystore.
  *
  * When the client calls a put, the key is put in the keystore. The system then flushes
  * the keystore to the file system.
@@ -81,9 +82,13 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 @Singleton
 public class FileSecureStoreService extends AbstractIdleService implements SecureStoreService {
   private static final Logger LOG = LoggerFactory.getLogger(FileSecureStoreService.class);
-  private static final String SCHEME_NAME = "jceks";
-  /** Separator between the namespace name and the key name */
-  private static final String NAME_SEPARATOR = ":";
+  static final String SECRET_KEY_FACTORY_ALGORITHM = "PBE";
+
+  /**
+   * The current codec for file-based secure store in use. This codec class must be updated upon backwards-incompatible
+   * changes to the serialization methods.
+   */
+  public static final Class<? extends FileSecureStoreCodec> CURRENT_CODEC = SecureStoreDataCodecV2.class;
 
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final char[] password;
@@ -91,10 +96,11 @@ public class FileSecureStoreService extends AbstractIdleService implements Secur
   private final Lock readLock;
   private final Lock writeLock;
   private final KeyStore keyStore;
+  private final FileSecureStoreCodec fileSecureStoreCodec;
 
   @Inject
-  public FileSecureStoreService(CConfiguration cConf, SConfiguration sConf, NamespaceQueryAdmin namespaceQueryAdmin)
-    throws IOException {
+  public FileSecureStoreService(CConfiguration cConf, SConfiguration sConf, NamespaceQueryAdmin namespaceQueryAdmin,
+                                FileSecureStoreCodec fileSecureStoreCodec) throws IOException {
     // Get the path to the keystore file
     String pathString = cConf.get(Constants.Security.Store.FILE_PATH);
     Path dir = Paths.get(pathString);
@@ -102,8 +108,22 @@ public class FileSecureStoreService extends AbstractIdleService implements Secur
     // Get the keystore password
     password = sConf.get(Constants.Security.Store.FILE_PASSWORD).toCharArray();
     this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.fileSecureStoreCodec = fileSecureStoreCodec;
 
     keyStore = locateKeystore(path, password);
+    ReadWriteLock lock = new ReentrantReadWriteLock(true);
+    readLock = lock.readLock();
+    writeLock = lock.writeLock();
+  }
+
+  @VisibleForTesting
+  FileSecureStoreService(NamespaceQueryAdmin namespaceQueryAdmin, char[] password, Path path, KeyStore keyStore,
+                         FileSecureStoreCodec fileSecureStoreCodec) {
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.password = password;
+    this.path = path;
+    this.keyStore = keyStore;
+    this.fileSecureStoreCodec = fileSecureStoreCodec;
     ReadWriteLock lock = new ReentrantReadWriteLock(true);
     readLock = lock.readLock();
     writeLock = lock.writeLock();
@@ -124,12 +144,19 @@ public class FileSecureStoreService extends AbstractIdleService implements Secur
   public void put(String namespace, String name, String data, @Nullable String description,
                   Map<String, String> properties) throws Exception {
     checkNamespaceExists(namespace);
-    String keyName = getKeyName(namespace, name);
+    String keyName = fileSecureStoreCodec.getKeyAliasFromInfo(new KeyInfo(namespace, name));
     SecureStoreMetadata meta = new SecureStoreMetadata(name, description, System.currentTimeMillis(), properties);
-    SecureStoreData secureStoreData = new SecureStoreData(meta, data.getBytes(Charsets.UTF_8));
+    byte[] dataBytes = data.getBytes(Charsets.UTF_8);
+    SecureStoreData secureStoreData = new SecureStoreData(meta, dataBytes);
     writeLock.lock();
     try {
-      keyStore.setKeyEntry(keyName, new SecretKeySpec(serialize(secureStoreData), "none"), password, null);
+      SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance(SECRET_KEY_FACTORY_ALGORITHM);
+      // Convert byte[] directly to char[] and avoid using String due
+      // to it being stored in memory until garbage collected.
+      PBEKeySpec pbeKeySpec = new PBEKeySpec(StandardCharsets.UTF_8
+                                               .decode(ByteBuffer.wrap(fileSecureStoreCodec.encode(secureStoreData)))
+                                               .array());
+      keyStore.setKeyEntry(keyName, secretKeyFactory.generateSecret(pbeKeySpec), password, null);
       // Attempt to persist the store.
       flush();
       LOG.debug(String.format("Successfully stored %s in namespace %s", name, namespace));
@@ -158,7 +185,7 @@ public class FileSecureStoreService extends AbstractIdleService implements Secur
   @Override
   public void delete(String namespace, String name) throws Exception {
     checkNamespaceExists(namespace);
-    String keyName = getKeyName(namespace, name);
+    String keyName = fileSecureStoreCodec.getKeyAliasFromInfo(new KeyInfo(namespace, name));
     Key key = null;
     writeLock.lock();
     try {
@@ -197,7 +224,7 @@ public class FileSecureStoreService extends AbstractIdleService implements Secur
     try {
       Enumeration<String> aliases = keyStore.aliases();
       List<SecureStoreMetadata> metadataList = new ArrayList<>();
-      String prefix = namespace + NAME_SEPARATOR;
+      String prefix = fileSecureStoreCodec.getAliasSearchPrefix(namespace);
       while (aliases.hasMoreElements()) {
         String alias = aliases.nextElement();
         // Filter out elements not in this namespace.
@@ -225,14 +252,14 @@ public class FileSecureStoreService extends AbstractIdleService implements Secur
   @Override
   public SecureStoreData get(String namespace, String name) throws Exception {
     checkNamespaceExists(namespace);
-    String keyName = getKeyName(namespace, name);
+    String keyName = fileSecureStoreCodec.getKeyAliasFromInfo(new KeyInfo(namespace, name));
     readLock.lock();
     try {
       if (!keyStore.containsAlias(keyName)) {
         throw new NotFoundException(name + " not found in the secure store.");
       }
       Key key = keyStore.getKey(keyName, password);
-      return deserialize(key.getEncoded());
+      return fileSecureStoreCodec.decode(key.getEncoded());
     } catch (NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException e) {
       throw new IOException("Unable to retrieve the key " + name, e);
     } finally {
@@ -251,6 +278,7 @@ public class FileSecureStoreService extends AbstractIdleService implements Secur
     UnrecoverableKeyException, NoSuchAlgorithmException {
     writeLock.lock();
     try {
+      // TODO CDAP-18903: Delete sensitive data after usage for SecureStoreData.
       Key key = keyStore.getKey(name, password);
       keyStore.deleteEntry(name);
       return key;
@@ -268,17 +296,17 @@ public class FileSecureStoreService extends AbstractIdleService implements Secur
    * @throws IOException If there was a problem in getting the key from the store
    */
   private SecureStoreMetadata getSecureStoreMetadata(String keyName) throws Exception {
-    String[] namespaceAndName = keyName.split(NAME_SEPARATOR);
-    Preconditions.checkArgument(namespaceAndName.length == 2);
-    String namespace = namespaceAndName[0];
-    String name = namespaceAndName[1];
+    KeyInfo keyInfo = fileSecureStoreCodec.getKeyInfoFromAlias(keyName);
+    String namespace = keyInfo.getNamespace();
+    String name = keyInfo.getName();
     readLock.lock();
     try {
       if (!keyStore.containsAlias(keyName)) {
         throw new NotFoundException(new SecureKeyId(namespace, name));
       }
       Key key = keyStore.getKey(keyName, password);
-      return deserialize(key.getEncoded()).getMetadata();
+      // TODO CDAP-18903: Delete sensitive data after usage for SecureStoreData.
+      return fileSecureStoreCodec.decode(key.getEncoded()).getMetadata();
     } catch (NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException e) {
       throw new IOException("Unable to retrieve the metadata for " + name + " in namespace " + namespace, e);
     } finally {
@@ -290,28 +318,20 @@ public class FileSecureStoreService extends AbstractIdleService implements Secur
     return path.resolveSibling(path.getFileName() + "_NEW");
   }
 
-  private static void loadFromPath(KeyStore keyStore, Path path, char[] password)
-    throws IOException {
-    try (InputStream in = new DataInputStream(Files.newInputStream(path))) {
-      keyStore.load(in, password);
-    } catch (NoSuchAlgorithmException | CertificateException e) {
-      throw new IOException("Unable to load the Secure Store. ", e);
-    }
-  }
-
   /**
    * Initialize the keyStore.
    *
    * @throws IOException If there is a problem reading or creating the keystore.
    */
-  private static KeyStore locateKeystore(Path path, final char[] password) throws IOException {
+  private KeyStore locateKeystore(Path path, final char[] password) throws IOException {
     Path newPath = constructNewPath(path);
     KeyStore ks;
     try {
-      ks = KeyStore.getInstance(SCHEME_NAME);
+      ks = KeyStore.getInstance(fileSecureStoreCodec.getKeyStoreScheme());
       Files.deleteIfExists(newPath);
       if (Files.exists(path)) {
-        loadFromPath(ks, path, password);
+        FileSecureStoreImporter importer = new FileSecureStoreImporter(fileSecureStoreCodec);
+        importer.importFromPath(ks, path, password);
       } else {
         Path parent = path.getParent();
         if (!Files.exists(parent)) {
@@ -365,59 +385,6 @@ public class FileSecureStoreService extends AbstractIdleService implements Secur
       // Should not happen as we are not storing certificates in the keystore.
       throw new IOException("Failed to store the certificates included in the keystore data.", e);
     }
-  }
-
-  private byte[] serialize(SecureStoreData data) throws IOException {
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    try (DataOutputStream dos = new DataOutputStream(bos)) {
-      // Writing the metadata
-      SecureStoreMetadata meta = data.getMetadata();
-      dos.writeUTF(meta.getName());
-      dos.writeBoolean(meta.getDescription() != null);
-      if (meta.getDescription() != null) {
-        dos.writeUTF(meta.getDescription());
-      }
-      dos.writeLong(meta.getLastModifiedTime());
-
-      Map<String, String> properties = meta.getProperties();
-      dos.writeInt(properties.size());
-      for (Map.Entry<String, String> entry : properties.entrySet()) {
-        dos.writeUTF(entry.getKey());
-        dos.writeUTF(entry.getValue());
-      }
-
-      byte[] secret = data.get();
-      dos.writeInt(secret.length);
-      dos.write(secret);
-    }
-
-    return bos.toByteArray();
-  }
-
-  private SecureStoreData deserialize(byte[] data) throws IOException {
-    DataInputStream dis = new DataInputStream(new ByteArrayInputStream(data));
-
-    String name = dis.readUTF();
-    boolean descriptionExists = dis.readBoolean();
-    String description = descriptionExists ? dis.readUTF() : null;
-    long lastModified = dis.readLong();
-
-    Map<String, String> properties = new HashMap<>();
-    int len = dis.readInt();
-    for (int i = 0; i < len; i++) {
-      properties.put(dis.readUTF(), dis.readUTF());
-    }
-
-    SecureStoreMetadata meta = new SecureStoreMetadata(name, description, lastModified, properties);
-
-    byte[] secret = new byte[dis.readInt()];
-    dis.readFully(secret);
-
-    return new SecureStoreData(meta, secret);
-  }
-
-  private static String getKeyName(final String namespace, final String name) {
-    return namespace + NAME_SEPARATOR + name;
   }
 
   @Override

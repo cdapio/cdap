@@ -70,7 +70,9 @@ public class RemoteSecureStoreTest {
       .build();
     namespaceClient.create(namespaceMeta);
 
-    FileSecureStoreService fileSecureStoreService = new FileSecureStoreService(conf, sConf, namespaceClient);
+    FileSecureStoreService fileSecureStoreService = new FileSecureStoreService(conf, sConf, namespaceClient,
+                                                                               FileSecureStoreService.CURRENT_CODEC
+                                                                                 .newInstance());
     // Starts a mock server to handle remote secure store requests
     httpService = new HttpsEnabler().configureKeyStore(conf, sConf).enable(
       NettyHttpService.builder("remoteSecureStoreTest")
