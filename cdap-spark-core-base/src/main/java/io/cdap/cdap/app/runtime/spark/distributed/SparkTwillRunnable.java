@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.app.runtime.spark.distributed;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import com.google.inject.Module;
@@ -42,7 +43,7 @@ import org.apache.twill.api.TwillRunnable;
  */
 public class SparkTwillRunnable extends AbstractProgramTwillRunnable<ProgramRunner> {
 
-  SparkTwillRunnable(String name) {
+  public SparkTwillRunnable(String name) {
     super(name);
   }
 
@@ -56,9 +57,10 @@ public class SparkTwillRunnable extends AbstractProgramTwillRunnable<ProgramRunn
       .createProgramRunner(ProgramType.SPARK, ProgramRuntimeProvider.Mode.LOCAL, injector);
   }
 
+  @VisibleForTesting
   @Override
-  protected Module createModule(CConfiguration cConf, Configuration hConf,
-                                ProgramOptions programOptions, ProgramRunId programRunId) {
+  public Module createModule(CConfiguration cConf, Configuration hConf,
+                             ProgramOptions programOptions, ProgramRunId programRunId) {
 
     Module module = super.createModule(cConf, hConf, programOptions, programRunId);
 

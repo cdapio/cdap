@@ -16,12 +16,15 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.runtime.ProgramOptions;
+import io.cdap.cdap.app.runtime.ProgramStateWriter;
+import io.cdap.cdap.app.runtime.spark.SparkProgramRunner;
+import io.cdap.cdap.app.runtime.spark.SparkRuntimeContextProvider;
+import io.cdap.cdap.app.runtime.spark.distributed.SparkTwillRunnable;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.test.MockTwillContext;
@@ -45,6 +48,9 @@ import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Tests for guice modules used in various {@link AbstractProgramTwillRunnable}.
@@ -52,89 +58,131 @@ import java.util.Collection;
 @RunWith(Parameterized.class)
 public class ProgramTwillRunnableModuleTest {
 
+  // There are three variables that we need to test all combinations of them
+  // With or without MasterEnvironment
+  // ISOLATED vs ON_PREMISE ClusterMode
+  // With or without peerName program options (for tethering)
+
   // Runs two sets of tests, one with master environment, one without
-  @Parameterized.Parameters(name = "User Master Environment = {0}")
+  @Parameterized.Parameters(name = "Master environment = {0}, Cluster mode = {1}, Peer name = {2}")
   public static Collection<Object[]> parameters() {
     return Arrays.asList(new Object[][]{
-      {true},
-      {false},
+      {true, ClusterMode.ON_PREMISE, null},
+      {true, ClusterMode.ON_PREMISE, "peer"},
+      {true, ClusterMode.ISOLATED, null},
+      {true, ClusterMode.ISOLATED, "peer"},
+      {false, ClusterMode.ON_PREMISE, null},
+      {false, ClusterMode.ON_PREMISE, "peer"},
+      {false, ClusterMode.ISOLATED, null},
+      {false, ClusterMode.ISOLATED, "peer"},
     });
   }
 
-  public ProgramTwillRunnableModuleTest(boolean useMasterEnv) {
+  private final ClusterMode clusterMode;
+  private final String peerName;
+
+  public ProgramTwillRunnableModuleTest(boolean useMasterEnv, ClusterMode clusterMode, @Nullable  String peerName) {
     if (useMasterEnv) {
       MasterEnvironments.setMasterEnvironment(new MockMasterEnvironment());
     } else {
       MasterEnvironments.setMasterEnvironment(null);
     }
+
+    this.clusterMode = clusterMode;
+    this.peerName = peerName;
   }
 
   @Test
   public void testService() {
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("test").service("service").run(RunIds.generate());
-    for (ClusterMode mode : ClusterMode.values()) {
-      Module module = new ServiceTwillRunnable("service") {
-        @Override
-        protected ServiceAnnouncer getServiceAnnouncer() {
-          return new MockTwillContext();
-        }
-      }.createModule(CConfiguration.create(), new Configuration(),
-                     createProgramOptions(programRunId, mode), programRunId);
-      Injector injector = Guice.createInjector(module);
-      injector.getInstance(ServiceProgramRunner.class);
-      injector.getInstance(ExploreClient.class);
-    }
+    Module module = new ServiceTwillRunnable("service") {
+      @Override
+      protected ServiceAnnouncer getServiceAnnouncer() {
+        return new MockTwillContext();
+      }
+    }.createModule(CConfiguration.create(), new Configuration(),
+                   createProgramOptions(programRunId), programRunId);
+    Injector injector = Guice.createInjector(module);
+    injector.getInstance(ServiceProgramRunner.class);
+    injector.getInstance(ExploreClient.class);
+    injector.getInstance(ProgramStateWriter.class);
   }
 
   @Test
   public void testWorker() {
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("test").worker("worker").run(RunIds.generate());
-    for (ClusterMode mode : ClusterMode.values()) {
-      Module module = new WorkerTwillRunnable("worker").createModule(CConfiguration.create(), new Configuration(),
-                                                                     createProgramOptions(programRunId, mode),
-                                                                     programRunId);
-      Injector injector = Guice.createInjector(module);
-      injector.getInstance(WorkerProgramRunner.class);
-      injector.getInstance(ExploreClient.class);
-    }
+    Module module = new WorkerTwillRunnable("worker").createModule(CConfiguration.create(), new Configuration(),
+                                                                   createProgramOptions(programRunId),
+                                                                   programRunId);
+    Injector injector = Guice.createInjector(module);
+    injector.getInstance(WorkerProgramRunner.class);
+    injector.getInstance(ExploreClient.class);
+    injector.getInstance(ProgramStateWriter.class);
   }
 
   @Test
   public void testMapReduce() {
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("test").mr("mapreduce").run(RunIds.generate());
-    for (ClusterMode mode : ClusterMode.values()) {
-      Module module = new MapReduceTwillRunnable("mapreduce").createModule(CConfiguration.create(), new Configuration(),
-                                                                           createProgramOptions(programRunId, mode),
-                                                                           programRunId);
-      Injector injector = Guice.createInjector(module);
-      injector.getInstance(MapReduceProgramRunner.class);
-      injector.getInstance(ExploreClient.class);
-    }
+    Module module = new MapReduceTwillRunnable("mapreduce").createModule(CConfiguration.create(), new Configuration(),
+                                                                         createProgramOptions(programRunId),
+                                                                         programRunId);
+    Injector injector = Guice.createInjector(module);
+    injector.getInstance(MapReduceProgramRunner.class);
+    injector.getInstance(ExploreClient.class);
+    injector.getInstance(ProgramStateWriter.class);
   }
 
   @Test
   public void testWorkflow() {
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("test").workflow("workflow").run(RunIds.generate());
-    for (ClusterMode mode : ClusterMode.values()) {
-      Module module = new WorkflowTwillRunnable("workflow").createModule(CConfiguration.create(), new Configuration(),
-                                                                         createProgramOptions(programRunId, mode),
-                                                                         programRunId);
-      Injector injector = Guice.createInjector(module);
-      injector.getInstance(WorkflowProgramRunner.class);
-      // Workflow supports spark, which supports PluginFinder
-      injector.getInstance(PluginFinder.class);
-      injector.getInstance(ExploreClient.class);
+    Module module = new WorkflowTwillRunnable("workflow").createModule(CConfiguration.create(), new Configuration(),
+                                                                       createProgramOptions(programRunId),
+                                                                       programRunId);
+    Injector injector = Guice.createInjector(module);
+    injector.getInstance(WorkflowProgramRunner.class);
+    // Workflow supports spark, which supports PluginFinder
+    injector.getInstance(PluginFinder.class);
+    injector.getInstance(ExploreClient.class);
+    injector.getInstance(ProgramStateWriter.class);
+  }
+
+  @Test
+  public void testSpark() {
+    ProgramRunId programRunId = NamespaceId.DEFAULT.app("test").spark("spark").run(RunIds.generate());
+
+    Module module = new SparkTwillRunnable("spark") {
+      @Override
+      protected ServiceAnnouncer getServiceAnnouncer() {
+        return new MockTwillContext();
+      }
+    }.createModule(CConfiguration.create(), new Configuration(),
+                   createProgramOptions(programRunId), programRunId);
+    Injector injector = Guice.createInjector(module);
+    injector.getInstance(SparkProgramRunner.class);
+    injector.getInstance(ExploreClient.class);
+    injector.getInstance(ProgramStateWriter.class);
+
+    Injector contextInjector = SparkRuntimeContextProvider.createInjector(CConfiguration.create(),
+                                                                          new Configuration(),
+                                                                          programRunId.getParent(),
+                                                                          createProgramOptions(programRunId));
+    contextInjector.getInstance(PluginFinder.class);
+    contextInjector.getInstance(ExploreClient.class);
+    contextInjector.getInstance(ProgramStateWriter.class);
+  }
+
+  private ProgramOptions createProgramOptions(ProgramRunId programRunId) {
+    Map<String, String> systemArgs = new HashMap<>();
+
+    systemArgs.put(ProgramOptionConstants.INSTANCE_ID, "0");
+    systemArgs.put(ProgramOptionConstants.PRINCIPAL, "principal");
+    systemArgs.put(ProgramOptionConstants.RUN_ID, programRunId.getRun());
+    systemArgs.put(ProgramOptionConstants.CLUSTER_MODE, clusterMode.name());
+
+    if (peerName != null) {
+      systemArgs.put(ProgramOptionConstants.PEER_NAME, peerName);
     }
-  }
 
-  private ProgramOptions createProgramOptions(ProgramRunId programRunId, ClusterMode clusterMode) {
-    return new SimpleProgramOptions(programRunId.getParent(),
-                                    new BasicArguments(ImmutableMap.of(
-                                      ProgramOptionConstants.INSTANCE_ID, "0",
-                                      ProgramOptionConstants.PRINCIPAL, "principal",
-                                      ProgramOptionConstants.RUN_ID, programRunId.getRun(),
-                                      ProgramOptionConstants.CLUSTER_MODE, clusterMode.name())),
-                                    new BasicArguments());
+    return new SimpleProgramOptions(programRunId.getParent(), new BasicArguments(systemArgs), new BasicArguments());
   }
-
 }
