@@ -26,6 +26,7 @@ import com.google.inject.Scopes;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
@@ -73,6 +74,7 @@ public class TetheringAgentServiceMain extends AbstractServiceMain<EnvironmentOp
       new DataSetsModules().getStandaloneModules(),
       new AuthorizationEnforcementModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule.ProgramStateWriterModule(),
+      new DFSLocationModule(),
       new PrivateModule() {
         @Override
         protected void configure() {

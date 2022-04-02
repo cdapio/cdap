@@ -79,6 +79,7 @@ import org.apache.twill.api.logging.LogHandler;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -138,14 +139,17 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
   protected NamespaceQueryAdmin namespaceQueryAdmin;
   private final TwillRunner twillRunner;
   private final Impersonator impersonator;
+  private final LocationFactory locationFactory;
 
   protected DistributedProgramRunner(CConfiguration cConf, Configuration hConf, Impersonator impersonator,
-                                     ClusterMode clusterMode, TwillRunner twillRunner) {
+                                     ClusterMode clusterMode, TwillRunner twillRunner,
+                                     LocationFactory locationFactory) {
     this.twillRunner = twillRunner;
     this.hConf = hConf;
     this.cConf = cConf;
     this.impersonator = impersonator;
     this.clusterMode = clusterMode;
+    this.locationFactory = locationFactory;
   }
 
   /**
@@ -182,9 +186,9 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
     File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                                    cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
     try {
-      // For runs from a tethered instance, load additional resources that were saved locally
+      // For runs from a tethered instance, load additional resources
       if (oldOptions.getArguments().hasOption(ProgramOptionConstants.PEER_NAME)) {
-        loadLocalResources(program, cConf, ProgramRunners.getRunId(oldOptions).getId());
+        loadAdditionalResources(oldOptions.getArguments(), cConf, tempDir);
       }
       ProgramLaunchConfig launchConfig = new ProgramLaunchConfig();
       if (clusterMode == ClusterMode.ISOLATED) {
@@ -216,7 +220,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
                                                               ApplicationSpecification.class,
                                                               File.createTempFile("appSpec", ".json", tempDir))));
 
-      URI logbackURI = getLogBackURI(program);
+      URI logbackURI = getLogBackURI(program, oldOptions.getArguments(), tempDir);
       if (logbackURI != null) {
         // Localize the logback xml
         localizeResources.put(LOGBACK_FILE_NAME, new LocalizeResource(logbackURI, false));
@@ -387,27 +391,17 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
   }
 
   /**
-   * For programs initiated by a tethered peer, load additional resources that were saved locally based by runId
+   * For programs initiated by a tethered peer, load additional resources that were saved based by runId
    */
-  private void loadLocalResources(Program program, CConfiguration cConf, String runId)
-    throws URISyntaxException, IOException {
-    File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                           cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
-    for (File file : DirUtils.listFiles(new File(tmpDir, runId))) {
-      if (file.getName().equals(LOGBACK_FILE_NAME)) {
-        // replace existing logback.xml file
-        URI logbackURI = getLogBackURI(program);
-        if (logbackURI != null) {
-          try (InputStream input = logbackURI.toURL().openStream()) {
-            Files.copy(input, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-          }
-        }
-      } else if (file.getName().equals(TETHER_CONF_FILE_NAME)) {
-        // add additional cConf entries
-        cConf.addResource(file.toURI().toString());
-        cConf.reloadConfiguration();
-      }
+  private void loadAdditionalResources(Arguments args, CConfiguration cConf, File tempDir) throws IOException {
+    Location location = locationFactory.create(args.getOption(ProgramOptionConstants.PROGRAM_RESOURCE_URI));
+    // add additional cConf entries
+    File tetherCConfFile = File.createTempFile("cdap-tether", ".xml", tempDir);
+    try (InputStream is = location.append(TETHER_CONF_FILE_NAME).getInputStream()) {
+      Files.copy(is, tetherCConfFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+      LOG.debug("Copied {} to {}", TETHER_CONF_FILE_NAME, tetherCConfFile);
     }
+    cConf.addResource(tetherCConfFile.toURI().toURL());
   }
 
   /**
@@ -604,7 +598,18 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
    * classpath.
    */
   @Nullable
-  private URI getLogBackURI(Program program) throws URISyntaxException {
+  private URI getLogBackURI(Program program, Arguments args, File tempDir) throws URISyntaxException, IOException {
+    // For runs from a tethered instance, use given logback file
+    if (args.hasOption(ProgramOptionConstants.PEER_NAME)) {
+      File tetherLogbackFile = File.createTempFile("logback-tether", ".xml", tempDir);
+      Location location = locationFactory.create(args.getOption(ProgramOptionConstants.PROGRAM_RESOURCE_URI));
+      try (InputStream is = location.append(LOGBACK_FILE_NAME).getInputStream()) {
+        Files.copy(is, tetherLogbackFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        LOG.debug("Copied {} to {}", LOGBACK_FILE_NAME, tetherLogbackFile);
+      }
+      return tetherLogbackFile.toURI();
+    }
+
     String configurationFile = System.getProperty("logback.configurationFile");
     if (configurationFile != null) {
       return new File(configurationFile).toURI();

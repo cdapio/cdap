@@ -159,4 +159,10 @@ public final class ProgramOptionConstants {
    * artifact fetching
    */
   public static final String PEER_NAMESPACE = "peerNamespace";
+
+  /**
+   * Option for a URI to a directory containing additional resources needed for the program run. This is needed for
+   * running tethered programs
+   */
+  public static final String PROGRAM_RESOURCE_URI = "programResourceUri";
 }
