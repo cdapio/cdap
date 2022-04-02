@@ -49,6 +49,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -129,7 +130,9 @@ public class DefaultCube implements Cube, MeteredDataset {
 
   @Override
   public void add(Collection<? extends CubeFact> facts) {
-    Map<List<DimensionValue>, List<Fact>> toWrite = new HashMap<>();
+    // We store key in the value to use it for key deduplication while creating Fact objects
+    // This would help later to compare different facts
+    Map<List<DimensionValue>, Map.Entry<List<DimensionValue>, List<Fact>>> toWrite = new HashMap<>();
     int dimValuesCount = 0;
     long numFacts = 0;
     for (CubeFact fact : facts) {
@@ -149,8 +152,10 @@ public class DefaultCube implements Cube, MeteredDataset {
             dimensionValues.add(new DimensionValue(dimensionName, fact.getDimensionValues().get(dimensionValueKey)));
             dimValuesCount++;
           }
-          toWrite.computeIfAbsent(dimensionValues, v -> new ArrayList<>())
-            .add(new Fact(fact.getTimestamp(), dimensionValues, fact.getMeasurements()));
+          Map.Entry<List<DimensionValue>, List<Fact>> listEntry =
+            toWrite.computeIfAbsent(dimensionValues, v -> new AbstractMap.SimpleEntry<>(v, new ArrayList<>()));
+          listEntry.getValue()
+            .add(new Fact(fact.getTimestamp(), listEntry.getKey(), fact.getMeasurements()));
           numFacts++;
         }
       }
@@ -166,7 +171,8 @@ public class DefaultCube implements Cube, MeteredDataset {
 
     List<Fact> writeBatch = new ArrayList<>();
     int batchSize = (int) Math.min(Integer.MAX_VALUE, numFacts / writeParallelism);
-    for (List<Fact> metricFacts: toWrite.values()) {
+    for (Map.Entry<List<DimensionValue>, List<Fact>> listEntry: toWrite.values()) {
+      List<Fact> metricFacts = listEntry.getValue();
       if (metricFacts.size() > batchSize) {
         batchWriter.accept(metricFacts);
       } else if (writeBatch.size() <= batchSize - metricFacts.size()) {

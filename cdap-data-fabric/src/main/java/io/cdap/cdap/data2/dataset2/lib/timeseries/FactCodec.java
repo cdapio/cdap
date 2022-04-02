@@ -26,6 +26,8 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 /**
@@ -68,8 +70,20 @@ public class FactCodec {
    * @return row key
    */
   public byte[] createRowKey(List<DimensionValue> dimensionValues, String measureName, long ts, long now) {
+    return createRowKey(dimensionValues, measureName, ts, now, (name, loader) -> loader.get());
+  }
+  /**
+   * Builds row key for write and get operations.
+   * @param dimensionValues dimension values
+   * @param measureName measure name
+   * @param ts timestamp
+   * @param now current time in seconds to calculate processing lag
+   * @return row key
+   */
+  public byte[] createRowKey(List<DimensionValue> dimensionValues, String measureName, long ts, long now,
+                             BiFunction<EntityTable.EntityName, Supplier<Long>, Long> fastCache) {
     // "false" would write null in dimension values as "undefined"
-    return createRowKey(dimensionValues, measureName, ts, false, false, now);
+    return createRowKey(dimensionValues, measureName, ts, false, false, now, fastCache);
   }
 
   /**
@@ -113,6 +127,12 @@ public class FactCodec {
 
   private byte[] createRowKey(List<DimensionValue> dimensionValues, String measureName, long ts, boolean stopKey,
                               boolean anyAggGroup, long now) {
+    return createRowKey(dimensionValues, measureName, ts, stopKey, anyAggGroup, now, (n, cache) -> cache.get());
+  }
+
+  private byte[] createRowKey(List<DimensionValue> dimensionValues, String measureName, long ts, boolean stopKey,
+                              boolean anyAggGroup, long now,
+                              BiFunction<EntityTable.EntityName, Supplier<Long>, Long> fastCache) {
     // Row key format:
     // <version><encoded agg group><time base><encoded dimension1 value>...
     //                                                                 <encoded dimensionN value><encoded measure name>.
@@ -125,7 +145,7 @@ public class FactCodec {
     if (anyAggGroup) {
       offset = writeAnyEncoded(rowKey, offset, stopKey);
     } else {
-      offset = writeEncodedAggGroup(dimensionValues, rowKey, offset);
+      offset = writeEncodedAggGroup(dimensionValues, rowKey, offset, fastCache);
     }
 
     long timestamp = roundToResolution(ts, now);
@@ -135,7 +155,7 @@ public class FactCodec {
     for (DimensionValue dimensionValue : dimensionValues) {
       if (dimensionValue.getValue() != null) {
         // encoded value is unique within values of the dimension name
-        offset = writeEncoded(dimensionValue.getName(), dimensionValue.getValue(), rowKey, offset);
+        offset = writeEncoded(dimensionValue.getName(), dimensionValue.getValue(), rowKey, offset, fastCache);
       } else {
         // todo: this is only applicable for constructing scan, throw smth if constructing key for writing data
         // writing "ANY" as a value
@@ -144,7 +164,7 @@ public class FactCodec {
     }
 
     if (measureName != null) {
-      writeEncoded(TYPE_MEASURE_NAME, measureName, rowKey, offset);
+      writeEncoded(TYPE_MEASURE_NAME, measureName, rowKey, offset, fastCache);
     } else {
       // todo: this is only applicable for constructing scan, throw smth if constructing key for writing data
       // writing "ANY" value
@@ -301,21 +321,23 @@ public class FactCodec {
     return splits;
   }
 
-  private int writeEncodedAggGroup(List<DimensionValue> dimensionValues, byte[] rowKey, int offset) {
+  private int writeEncodedAggGroup(List<DimensionValue> dimensionValues, byte[] rowKey, int offset,
+                                   BiFunction<EntityTable.EntityName, Supplier<Long>, Long> fastCache) {
     // aggregation group is defined by list of dimension names
     StringBuilder sb = new StringBuilder();
     for (DimensionValue dimensionValue : dimensionValues) {
       sb.append(dimensionValue.getName()).append(".");
     }
 
-    return writeEncoded(TYPE_DIMENSIONS_GROUP, sb.toString(), rowKey, offset);
+    return writeEncoded(TYPE_DIMENSIONS_GROUP, sb.toString(), rowKey, offset, fastCache);
   }
 
   /**
    * @return incremented offset
    */
-  private int writeEncoded(String type, String entity, byte[] destination, int offset) {
-    long id = entityTable.getId(type, entity);
+  private int writeEncoded(String type, String entity, byte[] destination, int offset,
+                           BiFunction<EntityTable.EntityName, Supplier<Long>, Long> fastCache) {
+    long id = entityTable.getId(type, entity, fastCache);
     int idSize = entityTable.getIdSize();
     return writeEncoded(destination, offset, id, idSize);
   }

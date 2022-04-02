@@ -28,6 +28,8 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
+import java.util.function.BiFunction;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 /**
@@ -95,10 +97,20 @@ public final class EntityTable implements Closeable {
    * @return Unique ID, it is guaranteed to be smaller than the maxId passed in constructor.
    */
   public long getId(String type, @Nullable String name) {
+    return getId(type, name, (n, cache) -> cache.get());
+  }
+
+  /**
+   * Returns an unique id for the given name.
+   * @param name The {@link EntityName} to lookup. Can be {@code null}, which is treated as a normal value.
+   * @return Unique ID, it is guaranteed to be smaller than the maxId passed in constructor.
+   */
+  public long getId(String type, @Nullable String name, BiFunction<EntityName, Supplier<Long>, Long> fastCache) {
     if (name == null) {
       return 0;
     }
-    return entityCache.getUnchecked(new EntityName(type, name)) % maxId;
+    EntityName entityName = new EntityName(type, name);
+    return fastCache.apply(entityName, () -> entityCache.getUnchecked(entityName)) % maxId;
   }
 
   /**
@@ -227,7 +239,7 @@ public final class EntityTable implements Closeable {
   /**
    * Package private class to represent an entity name, which compose of type and name.
    */
-  private static final class EntityName {
+  public static final class EntityName {
 
     private final String type;
     private final String name;

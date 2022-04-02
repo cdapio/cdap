@@ -50,6 +50,8 @@ import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -166,9 +168,13 @@ public final class FactTable implements Closeable {
       gaugesTable.putAll(incGaugeTable);
       factCounterCache.putAll(cacheUpdates);
     }
+    // We use HashMap as a fast L0 cache that we create and throw out after each batch
+    Map<EntityTable.EntityName, Long> cache = new HashMap<>();
+    BiFunction<EntityTable.EntityName, Supplier<Long>, Long> cacheFunction = (name, loader) ->
+      cache.computeIfAbsent(name, nm -> loader.get());
     // todo: replace with single call, to be able to optimize rpcs in underlying table
-    timeSeriesTable.put(toColumnarFormat(gaugesTable, nowSeconds));
-    timeSeriesTable.increment(toColumnarFormat(incrementsTable, nowSeconds));
+    timeSeriesTable.put(toColumnarFormat(gaugesTable, nowSeconds, cacheFunction));
+    timeSeriesTable.increment(toColumnarFormat(incrementsTable, nowSeconds, cacheFunction));
     if (metrics != null) {
       metrics.increment(putCountMetric, gaugesTable.size());
       metrics.increment(incrementCountMetric, incrementsTable.size());
@@ -176,11 +182,12 @@ public final class FactTable implements Closeable {
   }
 
   private NavigableMap<byte[], NavigableMap<byte[], Long>> toColumnarFormat(
-    Map<FactMeasurementKey, Long> data, long nowSeconds) {
+    Map<FactMeasurementKey, Long> data, long nowSeconds,
+    BiFunction<EntityTable.EntityName, Supplier<Long>, Long> fastCache) {
 
     return data.entrySet().stream().collect(Collectors.groupingBy(
       entry -> codec.createRowKey(entry.getKey().dimensionValues, entry.getKey().measurementName,
-                                  entry.getKey().timestamp, nowSeconds),
+                                  entry.getKey().timestamp, nowSeconds, fastCache),
       () -> Maps.newTreeMap(Bytes.BYTES_COMPARATOR),
       Collectors.toMap(
         entry -> codec.createColumn(entry.getKey().timestamp, nowSeconds),
