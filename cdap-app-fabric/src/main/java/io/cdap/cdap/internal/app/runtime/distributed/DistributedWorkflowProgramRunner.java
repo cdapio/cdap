@@ -56,6 +56,7 @@ import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,7 +86,7 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
                                    @Constants.AppFabric.ProgramRunner TwillRunner twillRunner,
                                    @Constants.AppFabric.ProgramRunner ProgramRunnerFactory programRunnerFactory,
                                    Injector injector) {
-    super(cConf, hConf, impersonator, clusterMode, twillRunner);
+    super(cConf, hConf, impersonator, clusterMode, twillRunner, injector.getInstance(LocationFactory.class));
     this.programRunnerFactory = programRunnerFactory;
     if (!cConf.getBoolean(Constants.AppFabric.PROGRAM_REMOTE_RUNNER, false)) {
       this.namespaceQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);

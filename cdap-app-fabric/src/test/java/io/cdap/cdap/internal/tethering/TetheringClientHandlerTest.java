@@ -35,6 +35,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
+import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
@@ -69,6 +70,7 @@ import io.cdap.http.NettyHttpService;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.runtime.TransactionModules;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -134,6 +136,7 @@ public class TetheringClientHandlerTest {
       new AuthorizationTestModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new AuthenticationContextModules().getMasterModule(),
+      new LocalLocationModule(),
       new PrivateModule() {
         @Override
         protected void configure() {
@@ -207,7 +210,8 @@ public class TetheringClientHandlerTest {
                                                       tetheringStore, injector.getInstance(ProgramStateWriter.class),
                                                       messagingService,
                                                       injector.getInstance(ProgramRunRecordFetcher.class),
-                                                      injector.getInstance(RemoteAuthenticator.class));
+                                                      injector.getInstance(RemoteAuthenticator.class),
+                                                      injector.getInstance(LocationFactory.class));
     Assert.assertEquals(Service.State.RUNNING, tetheringAgentService.startAndWait());
   }
 
