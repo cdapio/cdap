@@ -32,7 +32,6 @@ import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.DistributedArtifactManagerModule;
-import io.cdap.cdap.app.guice.MonitorHandlerModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -53,10 +52,7 @@ import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.TransactionExecutorModule;
-import io.cdap.cdap.data2.audit.AuditModule;
 import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
-import io.cdap.cdap.data2.metadata.writer.MessagingMetadataPublisher;
-import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.transaction.DelegatingTransactionSystemClientService;
 import io.cdap.cdap.data2.transaction.TransactionSystemClientService;
@@ -70,15 +66,13 @@ import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
-import io.cdap.cdap.metrics.guice.MetricsStoreModule;
-import io.cdap.cdap.operations.guice.OperationalStatsModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.KeyManager;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.CoreSecurityModule;
 import io.cdap.cdap.security.guice.FileBasedCoreSecurityModule;
-import io.cdap.cdap.security.guice.SecureStoreServerModule;
+import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.AbstractTwillRunnable;
@@ -153,12 +147,35 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
       },
       // The Dataset set modules are only needed to satisfy dependency injection
       new DataSetsModules().getStandaloneModules(),
-      new MetricsStoreModule(),
+
+      // Validated. no need for this.
+//      new MetricsStoreModule(),
+
       new MessagingClientModule(),
       new ExploreClientModule(),
-      new AuditModule(),
+
+      // potential for removal
+//      new AuditModule(),
+
       new AuthorizationModule(),
-      new AuthorizationEnforcementModule().getMasterModule(),
+
+      new AuthorizationEnforcementModule().getDistributedModules(),
+//      new AuthorizationEnforcementModule().getMasterModule(),
+
+
+//      new NamespaceQueryAdminModule(),
+//      new FactoryModuleBuilder()
+//        .implement(Configurator.class, RemoteConfigurator.class)
+//        .build(Key.get(ConfiguratorFactory.class)),
+//      new AbstractModule() {
+//        @Override
+//        protected void configure() {
+//          bind(ArtifactRepository.class).annotatedWith(Names.named
+//          (AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO)).to(RemoteArtifactRepository.class)
+//          .in(Scopes.SINGLETON);
+//          bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReaderWithLocalization.class);
+//        }
+//      },
       Modules.override(new AppFabricServiceRuntimeModule(cConf).getDistributedModules())
         .with(new AbstractModule() {
           @Override
@@ -166,10 +183,16 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
             bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
           }
         }, new DistributedArtifactManagerModule()),
+
       new ProgramRunnerRuntimeModule().getDistributedModules(true),
-      new MonitorHandlerModule(false),
-      new SecureStoreServerModule(),
-      new OperationalStatsModule(),
+//      new MonitorHandlerModule(false),
+
+      //server module is wrong
+      new SecureStoreClientModule(),
+//      new SecureStoreServerModule(),
+
+      //removed by aditya
+//      new OperationalStatsModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -183,7 +206,7 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
+//          bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
           bind(MetadataServiceClient.class).to(DefaultMetadataServiceClient.class);
         }
       }
@@ -202,9 +225,9 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
         @Override
         protected void configure() {
           bind(DiscoveryService.class)
-              .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
+            .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
           bind(DiscoveryServiceClient.class)
-              .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
+            .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
         }
       });
       modules.add(new RemoteLogAppenderModule());
@@ -222,7 +245,7 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
     super.initialize(context);
 
     try {
-      doInitialize(context);
+      doInitialize();
     } catch (Exception e) {
       LOG.error("Encountered error while initializing SystemWorkerTwillRunnable", e);
       Throwables.propagateIfPossible(e);
@@ -272,7 +295,8 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
     }
   }
 
-  private void doInitialize(TwillContext context) throws Exception {
+  @VisibleForTesting
+  void doInitialize() throws Exception {
     CConfiguration cConf = CConfiguration.create(new File(getArgument("cConf")).toURI().toURL());
 
     // Overwrite the app fabric temp directory with the task worker temp directory
@@ -294,8 +318,8 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
     metricsCollectionService.startAndWait();
 
     LoggingContext loggingContext = new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
-        Constants.Logging.COMPONENT_NAME,
-        SystemWorkerTwillApplication.NAME);
+                                                              Constants.Logging.COMPONENT_NAME,
+                                                              SystemWorkerTwillApplication.NAME);
     LoggingContextAccessor.setLoggingContext(loggingContext);
     systemWorker = injector.getInstance(SystemWorkerService.class);
   }

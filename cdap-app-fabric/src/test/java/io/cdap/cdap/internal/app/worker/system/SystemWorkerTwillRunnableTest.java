@@ -25,14 +25,45 @@ import io.cdap.cdap.internal.app.runtime.distributed.MockMasterEnvironment;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.proto.id.NamespaceId;
 import org.apache.hadoop.conf.Configuration;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+import java.io.File;
+import java.io.FileOutputStream;
 
 public class SystemWorkerTwillRunnableTest {
+  @Rule
+  public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
   @Test
   public void testInjector() {
     MasterEnvironments.setMasterEnvironment(new MockMasterEnvironment());
     Injector injector = SystemWorkerTwillRunnable
       .createInjector(CConfiguration.create(), new Configuration(), SConfiguration.create());
     injector.getInstance(ArtifactManagerFactory.class).create(NamespaceId.SYSTEM, RetryStrategies.noRetry());
+  }
+
+  @Test
+  public void testDoInitialize() throws Exception {
+    CConfiguration cConf = CConfiguration.create();
+    File temporaryCConfFile = temporaryFolder.newFile("cConf.xml");
+    File temporaryHConfFile = temporaryFolder.newFile("hConf.xml");
+    File temporarySConfFile = temporaryFolder.newFile("sConf.xml");
+    try (FileOutputStream fileOutputStream = new FileOutputStream(temporaryCConfFile.getAbsolutePath())) {
+      cConf.writeXml(fileOutputStream);
+    }
+    try (FileOutputStream fileOutputStream = new FileOutputStream(temporaryHConfFile.getAbsolutePath())) {
+      new io.cdap.cdap.common.conf.Configuration().writeXml(fileOutputStream);
+    }
+    try (FileOutputStream fileOutputStream = new FileOutputStream(temporarySConfFile.getAbsolutePath())) {
+      new io.cdap.cdap.common.conf.Configuration().writeXml(fileOutputStream);
+    }
+
+
+    MasterEnvironments.setMasterEnvironment(new MockMasterEnvironment());
+    SystemWorkerTwillRunnable systemWorkerTwillRunnable = new SystemWorkerTwillRunnable(
+      temporaryCConfFile.getAbsolutePath(), temporaryHConfFile.getAbsolutePath(), temporarySConfFile.getAbsolutePath());
+    systemWorkerTwillRunnable.doInitialize();
   }
 }
