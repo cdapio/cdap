@@ -23,8 +23,11 @@ import io.cdap.cdap.common.lang.ClassPathResources;
 import io.cdap.cdap.common.lang.FilterClassLoader;
 import io.cdap.cdap.extension.AbstractExtensionLoader;
 import io.cdap.cdap.spi.events.EventWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -36,13 +39,21 @@ import java.util.Set;
 public class EventWriterExtensionProvider extends AbstractExtensionLoader<String, EventWriter>
   implements EventWriterProvider {
 
+  private static final Logger LOG = LoggerFactory.getLogger(EventWriterExtensionProvider.class);
   private static final Set<String> ALLOWED_RESOURCES = createAllowedResources();
   private static final Set<String> ALLOWED_PACKAGES = createPackageSets(ALLOWED_RESOURCES);
+  private Collection<String> enabledEventWriters;
 
   @Inject
   public EventWriterExtensionProvider(CConfiguration cConf) {
     super(cConf.get(Constants.Event.EVENTS_WRITER_EXTENSIONS_DIR) != null
             ? cConf.get(Constants.Event.EVENTS_WRITER_EXTENSIONS_DIR) : "");
+    this.enabledEventWriters = cConf.getStringCollection(Constants.Event.EVENTS_WRITER_EXTENSIONS_ENABLED_LIST);
+    if (this.enabledEventWriters == null || this.enabledEventWriters.isEmpty()) {
+      LOG.debug("No event writers enabled.");
+      return;
+    }
+    LOG.debug("Enabled event writers are {} .", enabledEventWriters);
   }
 
   private static Set<String> createAllowedResources() {
@@ -62,6 +73,11 @@ public class EventWriterExtensionProvider extends AbstractExtensionLoader<String
 
   @Override
   protected Set<String> getSupportedTypesForProvider(EventWriter eventWriter) {
+    if (enabledEventWriters == null || !enabledEventWriters.contains(eventWriter.getID())) {
+      LOG.debug("{} is not present in the enabled list of event writers.", eventWriter.getID());
+      return Collections.emptySet();
+    }
+
     return Collections.singleton(eventWriter.getID());
   }
 
