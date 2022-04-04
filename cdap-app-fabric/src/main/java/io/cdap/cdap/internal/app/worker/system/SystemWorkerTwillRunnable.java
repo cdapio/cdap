@@ -71,7 +71,6 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.metrics.guice.MetricsStoreModule;
-import io.cdap.cdap.operations.guice.OperationalStatsModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.KeyManager;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
@@ -169,7 +168,6 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
       new ProgramRunnerRuntimeModule().getDistributedModules(true),
       new MonitorHandlerModule(false),
       new SecureStoreServerModule(),
-      new OperationalStatsModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
