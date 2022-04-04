@@ -87,7 +87,7 @@ public final class ReflectionDatumReader<T> extends ReflectionReader<Decoder, T>
     String enumValue = sourceSchema.getEnumValue(decoder.readInt());
     check(targetSchema.getEnumValues().contains(enumValue), "Enum value '%s' missing in target.", enumValue);
     try {
-      return targetTypeToken.getRawType().getMethod("valueOf", String.class).invoke(null, enumValue);
+      return Enum.valueOf((Class) targetTypeToken.getRawType(), enumValue);
     } catch (Exception e) {
       throw new IOException(e);
     }
