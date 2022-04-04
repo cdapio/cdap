@@ -5115,6 +5115,14 @@
   </property>
 
   <property>
+    <name>tethering.program.dir</name>
+    <value>program-resources</value>
+    <description>
+      Directory that contains resources needed for tethered program runs.
+    </description>
+  </property>
+
+  <property>
     <name>jmx.metrics.collector.poll.interval.secs</name>
     <value>60</value>
     <description>

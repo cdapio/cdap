@@ -1938,6 +1938,7 @@ public final class Constants {
 
   public static final class Tethering {
     public static final String TETHERING_SERVER_ENABLED = "tethering.server.enabled";
+    public static final String PROGRAM_DIR = "tethering.program.dir";
     /**
      * Prefix of per-client TMS topic used on the tethering server.
      */
