@@ -38,6 +38,8 @@ import io.cdap.cdap.api.dataset.lib.cube.TimeSeries;
 import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
 import io.cdap.cdap.api.dataset.metrics.MeteredDataset;
 import io.cdap.cdap.api.metrics.MetricsCollector;
+import io.cdap.cdap.common.logging.LogSamplers;
+import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.data2.dataset2.lib.timeseries.Fact;
 import io.cdap.cdap.data2.dataset2.lib.timeseries.FactScan;
@@ -74,6 +76,8 @@ import javax.annotation.Nullable;
  */
 public class DefaultCube implements Cube, MeteredDataset {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultCube.class);
+  // Log the metrics processing progress no more than once per minute.
+  private static final Logger PROGRESS_LOG = Loggers.sampling(LOG, LogSamplers.limitRate(60000));
 
   private static final DimensionValueComparator DIMENSION_VALUE_COMPARATOR = new DimensionValueComparator();
   // hard-limit on max records to scan
@@ -134,7 +138,11 @@ public class DefaultCube implements Cube, MeteredDataset {
     // This would help later to compare different facts
     Map<List<DimensionValue>, Map.Entry<List<DimensionValue>, List<Fact>>> toWrite = new HashMap<>();
     int dimValuesCount = 0;
+    long minTimestamp = Long.MAX_VALUE;
+    long maxTimestamp = 0;
+    long sumTimestamp = 0;
     long numFacts = 0;
+    long numMeasurements = 0;
     for (CubeFact fact : facts) {
       for (Map.Entry<String, ? extends Aggregation> aggEntry : aggregations.entrySet()) {
         Aggregation agg = aggEntry.getValue();
@@ -156,7 +164,11 @@ public class DefaultCube implements Cube, MeteredDataset {
             toWrite.computeIfAbsent(dimensionValues, v -> new AbstractMap.SimpleEntry<>(v, new ArrayList<>()));
           listEntry.getValue()
             .add(new Fact(fact.getTimestamp(), listEntry.getKey(), fact.getMeasurements()));
+          minTimestamp = Math.min(minTimestamp, fact.getTimestamp());
+          maxTimestamp = Math.max(maxTimestamp, fact.getTimestamp());
+          sumTimestamp += fact.getTimestamp();
           numFacts++;
+          numMeasurements += fact.getMeasurements().size();
         }
       }
     }
@@ -220,6 +232,12 @@ public class DefaultCube implements Cube, MeteredDataset {
     incrementMetric("cube.tsFact.created.count", numFacts);
     incrementMetric("cube.tsFact.created.dimValues.count", dimValuesCount);
     incrementMetric("cube.tsFact.added.count", numFacts * resolutionToFactTable.size());
+    long avgTimestamp = sumTimestamp / numFacts;
+    PROGRESS_LOG.debug(
+      "Added {} facts with {} measurements for {} dimension sets " +
+        "from {} cube facts for timestamps {}..{} (avg {}, lag {}s)",
+      numFacts, numMeasurements, toWrite.size(), facts.size(), minTimestamp, maxTimestamp, avgTimestamp,
+      TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) - avgTimestamp);
   }
 
   @Override
