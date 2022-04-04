@@ -115,7 +115,7 @@ public final class FactTable implements Closeable {
     this.metrics = metrics;
   }
 
-  public void add(List<Fact> facts) {
+  public int add(List<Fact> facts) {
     // Simply collecting all rows/cols/values that need to be put to the underlying table.
     Map<FactMeasurementKey, Long> gaugesTable = new HashMap<>();
     Map<FactMeasurementKey, Long> incrementsTable = new HashMap<>();
@@ -179,6 +179,7 @@ public final class FactTable implements Closeable {
       metrics.increment(putCountMetric, gaugesTable.size());
       metrics.increment(incrementCountMetric, incrementsTable.size());
     }
+    return gaugesTable.size() + incrementsTable.size();
   }
 
   private NavigableMap<byte[], NavigableMap<byte[], Long>> toColumnarFormat(

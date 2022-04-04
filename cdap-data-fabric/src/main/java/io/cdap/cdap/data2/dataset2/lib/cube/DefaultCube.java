@@ -68,6 +68,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
@@ -143,6 +144,7 @@ public class DefaultCube implements Cube, MeteredDataset {
     long sumTimestamp = 0;
     long numFacts = 0;
     long numMeasurements = 0;
+    AtomicLong numUpdates = new AtomicLong();
     for (CubeFact fact : facts) {
       for (Map.Entry<String, ? extends Aggregation> aggEntry : aggregations.entrySet()) {
         Aggregation agg = aggEntry.getValue();
@@ -176,7 +178,7 @@ public class DefaultCube implements Cube, MeteredDataset {
     Map<Integer, List<Future<?>>> futures = new HashMap<>();
     Consumer<List<Fact>> batchWriter = batch -> {
       for (Map.Entry<Integer, FactTable> table : resolutionToFactTable.entrySet()) {
-        Future<?> future = executorService.submit(() -> table.getValue().add(batch));
+        Future<?> future = executorService.submit(() -> numUpdates.addAndGet(table.getValue().add(batch)));
         futures.computeIfAbsent(table.getKey(), k -> new ArrayList<>()).add(future);
       }
     };
@@ -234,10 +236,10 @@ public class DefaultCube implements Cube, MeteredDataset {
     incrementMetric("cube.tsFact.added.count", numFacts * resolutionToFactTable.size());
     long avgTimestamp = sumTimestamp / numFacts;
     PROGRESS_LOG.debug(
-      "Added {} facts with {} measurements for {} dimension sets " +
+      "Persisted {} updates for {} facts with {} measurements for {} dimension sets " +
         "from {} cube facts for timestamps {}..{} (avg {}, lag {}s)",
-      numFacts, numMeasurements, toWrite.size(), facts.size(), minTimestamp, maxTimestamp, avgTimestamp,
-      TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) - avgTimestamp);
+      numUpdates.get(), numFacts, numMeasurements, toWrite.size(), facts.size(), minTimestamp, maxTimestamp,
+      avgTimestamp, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) - avgTimestamp);
   }
 
   @Override
