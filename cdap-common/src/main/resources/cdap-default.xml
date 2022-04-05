@@ -525,6 +525,14 @@
   </property>
 
   <property>
+    <name>app.program.kill.threads</name>
+    <value>20</value>
+    <description>
+      Size of the thread pool for force killing programs
+    </description>
+  </property>
+
+  <property>
     <name>app.program.max.start.seconds</name>
     <value>300</value>
     <description>
