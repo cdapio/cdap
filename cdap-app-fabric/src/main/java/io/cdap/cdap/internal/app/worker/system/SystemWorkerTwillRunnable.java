@@ -32,7 +32,6 @@ import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.DistributedArtifactManagerModule;
-import io.cdap.cdap.app.guice.MonitorHandlerModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -53,7 +52,6 @@ import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.TransactionExecutorModule;
-import io.cdap.cdap.data2.audit.AuditModule;
 import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
 import io.cdap.cdap.data2.metadata.writer.MessagingMetadataPublisher;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
@@ -70,14 +68,13 @@ import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
-import io.cdap.cdap.metrics.guice.MetricsStoreModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.KeyManager;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.CoreSecurityModule;
 import io.cdap.cdap.security.guice.FileBasedCoreSecurityModule;
-import io.cdap.cdap.security.guice.SecureStoreServerModule;
+import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.AbstractTwillRunnable;
@@ -152,12 +149,10 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
       },
       // The Dataset set modules are only needed to satisfy dependency injection
       new DataSetsModules().getStandaloneModules(),
-      new MetricsStoreModule(),
       new MessagingClientModule(),
       new ExploreClientModule(),
-      new AuditModule(),
       new AuthorizationModule(),
-      new AuthorizationEnforcementModule().getMasterModule(),
+      new AuthorizationEnforcementModule().getDistributedModules(),
       Modules.override(new AppFabricServiceRuntimeModule(cConf).getDistributedModules())
         .with(new AbstractModule() {
           @Override
@@ -166,8 +161,7 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
           }
         }, new DistributedArtifactManagerModule()),
       new ProgramRunnerRuntimeModule().getDistributedModules(true),
-      new MonitorHandlerModule(false),
-      new SecureStoreServerModule(),
+      new SecureStoreClientModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
