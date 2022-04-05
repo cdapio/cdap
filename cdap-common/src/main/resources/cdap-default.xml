@@ -5155,10 +5155,10 @@
   </property>
 
   <property>
-    <name>feature.pipeline.triggers.conditional.and.enabled</name>
-    <value>false</value>
+    <name>feature.pipeline.composite.triggers.enabled</name>
+    <value>true</value>
     <description>
-      Enables configuring AND or OR trigger groups for a pipeline.
+      Enables configuring composite AND/OR triggers for a pipeline schedule.
     </description>
   </property>
 

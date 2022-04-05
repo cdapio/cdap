@@ -26,10 +26,21 @@ public class ArgumentMapping {
   private final String source;
   @Nullable
   private final String target;
+  @Nullable
+  private final TriggeringPipelinePropertyId propertyId;
 
   public ArgumentMapping(@Nullable String source, @Nullable String target) {
     this.source = source;
     this.target = target;
+    this.propertyId = null;
+  }
+
+  public ArgumentMapping(@Nullable String source,
+                         @Nullable String target,
+                         @Nullable TriggeringPipelinePropertyId propertyId) {
+    this.source = source;
+    this.target = target;
+    this.propertyId = propertyId;
   }
 
   /**
@@ -48,11 +59,20 @@ public class ArgumentMapping {
     return target;
   }
 
+  /**
+   * @return The identifiers of properties from the triggering pipeline.
+   */
+  @Nullable
+  public TriggeringPipelinePropertyId getPipelinePropertyId() {
+    return propertyId;
+  }
+
   @Override
   public String toString() {
     return "ArgumentMapping{" +
       "source='" + getSource() + '\'' +
       ", target='" + getTarget() + '\'' +
+        ", triggeringPipelinePropertyId='" + (propertyId == null ? "" : propertyId.toString()) + '\'' +
       '}';
   }
 }

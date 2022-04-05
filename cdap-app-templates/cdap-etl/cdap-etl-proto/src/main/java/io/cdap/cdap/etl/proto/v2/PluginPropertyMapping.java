@@ -30,6 +30,14 @@ public class PluginPropertyMapping extends ArgumentMapping {
     this.stageName = stageName;
   }
 
+  public PluginPropertyMapping(@Nullable String stageName,
+                               @Nullable String source,
+                               @Nullable String target,
+                               @Nullable TriggeringPipelinePropertyId propertyId) {
+    super(source, target, propertyId);
+    this.stageName = stageName;
+  }
+
   /**
    * @return The name of the stage where the triggering pipeline plugin property is defined
    */

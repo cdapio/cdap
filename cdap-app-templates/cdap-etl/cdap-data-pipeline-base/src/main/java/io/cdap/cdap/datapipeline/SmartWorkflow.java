@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.datapipeline;
 
+import static io.cdap.cdap.features.Feature.PIPELINE_COMPOSITE_TRIGGERS;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
@@ -285,8 +286,7 @@ public class SmartWorkflow extends AbstractWorkflow {
           for (String source : dag.getSources()) {
             subDagConnections.add(new Connection(dummyNode, source));
           }
-          Deque<String> subDagBFS = new LinkedList<>();
-          subDagBFS.addAll(dag.getSources());
+          Deque<String> subDagBFS = new LinkedList<>(dag.getSources());
 
           while (subDagBFS.peek() != null) {
             String node = subDagBFS.poll();
@@ -381,6 +381,11 @@ public class SmartWorkflow extends AbstractWorkflow {
     return planner.plan(spec);
   }
 
+  private void updateTokenWithTriggeringCompositeProperties(TriggeringScheduleInfo scheduleInfo,
+      TriggeringPropertyMapping propertiesMapping,
+      WorkflowToken token){
+  }
+
   private void updateTokenWithTriggeringProperties(TriggeringScheduleInfo scheduleInfo,
                                                    TriggeringPropertyMapping propertiesMapping,
                                                    WorkflowToken token) {
@@ -394,7 +399,7 @@ public class SmartWorkflow extends AbstractWorkflow {
     if (programStatusTriggerInfos.isEmpty()) {
       return;
     }
-    // Currently only expecting one trigger in a schedule
+    // Currently, only expecting one trigger in a schedule
     ProgramStatusTriggerInfo triggerInfo = programStatusTriggerInfos.get(0);
     BasicArguments triggeringArguments = new BasicArguments(triggerInfo.getWorkflowToken(),
                                                             triggerInfo.getRuntimeArguments());
@@ -464,7 +469,11 @@ public class SmartWorkflow extends AbstractWorkflow {
       if (propertiesMappingString != null) {
         TriggeringPropertyMapping propertiesMapping =
           GSON.fromJson(propertiesMappingString, TriggeringPropertyMapping.class);
-        updateTokenWithTriggeringProperties(scheduleInfo, propertiesMapping, context.getToken());
+        if (PIPELINE_COMPOSITE_TRIGGERS.isEnabled(context)) {
+          updateTokenWithTriggeringCompositeProperties(scheduleInfo, propertiesMapping, context.getToken());
+        } else {
+          updateTokenWithTriggeringProperties(scheduleInfo, propertiesMapping, context.getToken());
+        }
       }
     }
     spec = GSON.fromJson(context.getWorkflowSpecification().getProperty(Constants.PIPELINE_SPEC_KEY),

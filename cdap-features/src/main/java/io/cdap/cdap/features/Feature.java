@@ -27,7 +27,7 @@ import io.cdap.cdap.api.feature.FeatureFlagsProvider;
  */
 public enum Feature {
   REPLICATION_TRANSFORMATIONS("6.6.0"),
-  PIPELINE_TRIGGERS_CONDITIONAL_AND("6.8.0");
+  PIPELINE_COMPOSITE_TRIGGERS("6.8.0");
 
   private final PlatformInfo.Version versionIntroduced;
   private final boolean defaultAfterIntroduction;
