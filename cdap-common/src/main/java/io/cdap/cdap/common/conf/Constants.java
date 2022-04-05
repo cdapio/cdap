@@ -856,6 +856,9 @@ public final class Constants {
      */
     public static final String WRITER_WRITE_FREQUENCY_SECONDS = "metrics.writer.%s.write.frequency.seconds";
 
+    /** Whether to enable spark metrics collection. */
+    public static final String SPARK_METRICS_ENABLED = "app.program.spark.metrics.enabled";
+
     /**
      * Metric's dataset related constants.
      */
