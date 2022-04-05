@@ -36,6 +36,8 @@ import io.cdap.common.http.HttpMethod;
 import org.apache.avro.Schema;
 import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -58,7 +60,7 @@ import javax.ws.rs.core.MediaType;
  * The client for talking to the {@link RuntimeServer}.
  */
 public class RuntimeClient {
-
+  private static final Logger LOG = LoggerFactory.getLogger(RuntimeClient.class);
   private static final Gson GSON = new Gson();
   static final int CHUNK_SIZE = 1 << 15;  // 32K
 
@@ -124,6 +126,7 @@ public class RuntimeClient {
       throwIfError(programRunId, urlConn);
       try (Reader reader = new InputStreamReader(urlConn.getInputStream(), StandardCharsets.UTF_8)) {
         ProgramRunInfo responseBody = GSON.fromJson(reader, ProgramRunInfo.class);
+        LOG.error("ashau - got run info back from runtime server {}", responseBody);
         if (responseBody.getProgramRunStatus() == ProgramRunStatus.STOPPING) {
           stopFuture.complete(null);
         }
