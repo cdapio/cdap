@@ -2864,6 +2864,16 @@
   </property>
 
   <property>
+    <name>app.program.spark.metrics.enabled</name>
+    <value>false</value>
+    <description>
+      Enable or disable emitting spark-specific metrics, by default set to false.
+      Note that spark-specific metrics are very resource consuming and are deprecated. If you need spark metrics
+      it's better to use data from spark history server.
+    </description>
+  </property>
+
+  <property>
     <name>metrics.hbase.max.scan.threads</name>
     <value>96</value>
     <description>

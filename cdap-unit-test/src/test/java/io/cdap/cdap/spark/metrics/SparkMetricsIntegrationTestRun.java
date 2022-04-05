@@ -29,9 +29,11 @@ import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.SparkManager;
+import io.cdap.cdap.test.TestConfiguration;
 import io.cdap.cdap.test.XSlowTests;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -47,6 +49,8 @@ import java.util.concurrent.TimeUnit;
  */
 @Category(XSlowTests.class)
 public class SparkMetricsIntegrationTestRun extends TestFrameworkTestBase {
+  @ClassRule
+  public static final TestConfiguration CONFIG = new TestConfiguration("app.program.spark.metrics.enabled", "true");
 
   @Test
   public void testSparkMetrics() throws Exception {
