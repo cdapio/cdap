@@ -202,9 +202,9 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
         @Override
         protected void configure() {
           bind(DiscoveryService.class)
-              .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
+            .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
           bind(DiscoveryServiceClient.class)
-              .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
+            .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
         }
       });
       modules.add(new RemoteLogAppenderModule());
@@ -222,7 +222,7 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
     super.initialize(context);
 
     try {
-      doInitialize(context);
+      doInitialize();
     } catch (Exception e) {
       LOG.error("Encountered error while initializing SystemWorkerTwillRunnable", e);
       Throwables.propagateIfPossible(e);
@@ -272,7 +272,8 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
     }
   }
 
-  private void doInitialize(TwillContext context) throws Exception {
+  @VisibleForTesting
+  void doInitialize() throws Exception {
     CConfiguration cConf = CConfiguration.create(new File(getArgument("cConf")).toURI().toURL());
 
     // Overwrite the app fabric temp directory with the task worker temp directory
@@ -294,8 +295,8 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
     metricsCollectionService.startAndWait();
 
     LoggingContext loggingContext = new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
-        Constants.Logging.COMPONENT_NAME,
-        SystemWorkerTwillApplication.NAME);
+                                                              Constants.Logging.COMPONENT_NAME,
+                                                              SystemWorkerTwillApplication.NAME);
     LoggingContextAccessor.setLoggingContext(loggingContext);
     systemWorker = injector.getInstance(SystemWorkerService.class);
   }
