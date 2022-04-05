@@ -153,4 +153,16 @@ public final class ProgramOptionConstants {
    * Option for name of tethered peer, if any, that has initiated the program run
    */
   public static final String PEER_NAME = "peer";
+
+  /**
+   * Option for name of tethered peer namespace, if any, that has initiated the program run. This is needed for
+   * artifact fetching
+   */
+  public static final String PEER_NAMESPACE = "peerNamespace";
+
+  /**
+   * Option for a URI to a directory containing additional resources needed for the program run. This is needed for
+   * running tethered programs
+   */
+  public static final String PROGRAM_RESOURCE_URI = "programResourceUri";
 }

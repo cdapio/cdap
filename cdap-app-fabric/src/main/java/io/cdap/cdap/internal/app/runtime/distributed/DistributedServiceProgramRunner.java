@@ -35,6 +35,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.File;
 
@@ -48,7 +49,7 @@ public class DistributedServiceProgramRunner extends DistributedProgramRunner
   DistributedServiceProgramRunner(CConfiguration cConf, YarnConfiguration hConf,
                                   Impersonator impersonator, ClusterMode clusterMode,
                                   @Constants.AppFabric.ProgramRunner TwillRunner twillRunner, Injector injector) {
-    super(cConf, hConf, impersonator, clusterMode, twillRunner);
+    super(cConf, hConf, impersonator, clusterMode, twillRunner, injector.getInstance(LocationFactory.class));
     if (!cConf.getBoolean(Constants.AppFabric.PROGRAM_REMOTE_RUNNER, false)) {
       this.namespaceQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);
     }

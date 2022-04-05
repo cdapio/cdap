@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.tethering;
 
 import com.google.common.base.Preconditions;
-import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
@@ -61,13 +60,14 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpResponse;
 import org.apache.commons.io.IOUtils;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
-import java.io.Writer;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -109,6 +109,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
   private final MessageFetcher messageFetcher;
   private final ProgramRunRecordFetcher runRecordFetcher;
   private final RemoteAuthenticator remoteAuthenticator;
+  private final LocationFactory locationFactory;
   private final String programUpdateTopic;
   private final int programUpdateFetchSize;
   private String lastProgramUpdateMessageId;
@@ -119,7 +120,8 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
   TetheringAgentService(CConfiguration cConf, TransactionRunner transactionRunner, TetheringStore store,
                         ProgramStateWriter programStateWriter, MessagingService messagingService,
                         ProgramRunRecordFetcher programRunRecordFetcher,
-                        @Named(REMOTE_TETHERING_AUTHENTICATOR) RemoteAuthenticator remoteAuthenticator) {
+                        @Named(REMOTE_TETHERING_AUTHENTICATOR) RemoteAuthenticator remoteAuthenticator,
+                        LocationFactory locationFactory) {
     super(RetryStrategies.fromConfiguration(cConf, "tethering.agent."));
     this.connectionInterval = TimeUnit.SECONDS.toMillis(cConf.getLong(Constants.Tethering.CONNECTION_INTERVAL, 10L));
     this.cConf = cConf;
@@ -131,6 +133,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
     this.messageFetcher = new MultiThreadMessagingContext(messagingService).getMessageFetcher();
     this.runRecordFetcher = programRunRecordFetcher;
     this.remoteAuthenticator = remoteAuthenticator;
+    this.locationFactory = locationFactory;
     this.programUpdateTopic = cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC);
     this.programUpdateFetchSize = cConf.getInt(Constants.AppFabric.STATUS_EVENT_FETCH_SIZE);
   }
@@ -331,26 +334,27 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
                                                      ApplicationSpecification.class);
     ProgramOptions programOpts = GSON.fromJson(files.get(DistributedProgramRunner.PROGRAM_OPTIONS_FILE_NAME),
                                                ProgramOptions.class);
-    ProgramId programId = new ProgramId(message.getNamespace(), programOpts.getProgramId().getApplication(),
+    ProgramId programId = new ProgramId(message.getRuntimeNamespace(), programOpts.getProgramId().getApplication(),
                                         programOpts.getProgramId().getType(), programOpts.getProgramId().getProgram());
-    Map<String, String> systemArgs = new HashMap<>(programOpts.getArguments().asMap());
-    systemArgs.put(ProgramOptionConstants.PEER_NAME, peerName);
-    ProgramOptions updatedOpts = new SimpleProgramOptions(programId, new BasicArguments(systemArgs),
-                                                          programOpts.getUserArguments());
     ProgramRunId programRunId = programId.run(programOpts.getArguments().getOption(ProgramOptionConstants.RUN_ID));
     ProgramDescriptor programDescriptor = new ProgramDescriptor(programId, appSpec);
 
-    File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                           cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
-    File runDir = new File(tmpDir, programRunId.getRun());
-    runDir.mkdirs();
-    Files.write(files.get(DistributedProgramRunner.LOGBACK_FILE_NAME),
-                new File(runDir, DistributedProgramRunner.LOGBACK_FILE_NAME), StandardCharsets.UTF_8);
-    try (Writer writer = Files.newWriter(new File(runDir, DistributedProgramRunner.TETHER_CONF_FILE_NAME),
-                                         StandardCharsets.UTF_8)) {
-      cConfCopy.writeXml(writer);
+    Location programDir = locationFactory.create(String.format("%s/%s", cConf.get(Constants.Tethering.PROGRAM_DIR),
+                                                               programRunId.getRun()));
+    programDir.mkdirs();
+    try (OutputStream os = programDir.append(DistributedProgramRunner.LOGBACK_FILE_NAME).getOutputStream()) {
+      os.write(files.get(DistributedProgramRunner.LOGBACK_FILE_NAME).getBytes(StandardCharsets.UTF_8));
+    }
+    try (OutputStream os = programDir.append(DistributedProgramRunner.TETHER_CONF_FILE_NAME).getOutputStream()) {
+      cConfCopy.writeXml(os);
     }
 
+    Map<String, String> systemArgs = new HashMap<>(programOpts.getArguments().asMap());
+    systemArgs.put(ProgramOptionConstants.PEER_NAME, peerName);
+    systemArgs.put(ProgramOptionConstants.PEER_NAMESPACE, message.getPeerNamespace());
+    systemArgs.put(ProgramOptionConstants.PROGRAM_RESOURCE_URI, programDir.toURI().toString());
+    ProgramOptions updatedOpts = new SimpleProgramOptions(programId, new BasicArguments(systemArgs),
+                                                          programOpts.getUserArguments());
     programStateWriter.start(programRunId, updatedOpts, null, programDescriptor);
     LOG.debug("Published program start message for run {}", programRunId.getRun());
   }

@@ -33,13 +33,16 @@ public class TetheringLaunchMessage {
   // Select cConf entries
   private final Map<String, String> cConfEntries;
   // Namespace to run program on
-  private final String namespace;
+  private final String runtimeNamespace;
+  // Namespace of the peer that initiated the program run
+  private final String peerNamespace;
 
   private TetheringLaunchMessage(Map<String, byte[]> localizeFiles, Map<String, String> cConfEntries,
-                                 String namespace) {
+                                 String runtimeNamespace, String peerNamespace) {
     this.localizeFiles = localizeFiles;
     this.cConfEntries = cConfEntries;
-    this.namespace = namespace;
+    this.runtimeNamespace = runtimeNamespace;
+    this.peerNamespace = peerNamespace;
   }
 
   public Map<String, byte[]> getFiles() {
@@ -50,8 +53,12 @@ public class TetheringLaunchMessage {
     return cConfEntries;
   }
 
-  public String getNamespace() {
-    return namespace;
+  public String getRuntimeNamespace() {
+    return runtimeNamespace;
+  }
+
+  public String getPeerNamespace() {
+    return peerNamespace;
   }
 
   @Override
@@ -59,7 +66,8 @@ public class TetheringLaunchMessage {
     return "TetheringLaunchMessage{" +
       "localizeFiles='" + localizeFiles + '\'' +
       ", cConfEntries=" + cConfEntries +
-      ", namespace=" + namespace +
+      ", runtimeNamespace=" + runtimeNamespace +
+      ", peerNamespace=" + peerNamespace +
       '}';
   }
 
@@ -75,7 +83,8 @@ public class TetheringLaunchMessage {
     TetheringLaunchMessage that = (TetheringLaunchMessage) o;
     return Objects.equals(localizeFiles, that.localizeFiles) &&
       Objects.equals(cConfEntries, that.cConfEntries) &&
-      Objects.equals(namespace, that.namespace);
+      Objects.equals(runtimeNamespace, that.runtimeNamespace) &&
+      Objects.equals(peerNamespace, that.peerNamespace);
   }
 
   @Override
@@ -90,7 +99,8 @@ public class TetheringLaunchMessage {
     private final Set<String> fileNames = new HashSet<>();
     private final Map<String, byte[]> localizeFiles = new HashMap<>();
     private final Map<String, String> cConfEntries = new HashMap<>();
-    private String namespace;
+    private String runtimeNamespace;
+    private String peerNamespace;
 
     public Builder addFileNames(String fileName) {
       this.fileNames.add(fileName);
@@ -105,8 +115,12 @@ public class TetheringLaunchMessage {
       this.cConfEntries.putAll(entries);
     }
 
-    public void addNamespace(String namespace) {
-      this.namespace = namespace;
+    public void addRuntimeNamespace(String runtimeNamespace) {
+      this.runtimeNamespace = runtimeNamespace;
+    }
+
+    public void addPeerNamespace(String peerNamespace) {
+      this.peerNamespace = peerNamespace;
     }
 
     public Set<String> getFileNames() {
@@ -114,7 +128,7 @@ public class TetheringLaunchMessage {
     }
 
     public TetheringLaunchMessage build() {
-      return new TetheringLaunchMessage(localizeFiles, cConfEntries, namespace);
+      return new TetheringLaunchMessage(localizeFiles, cConfEntries, runtimeNamespace, peerNamespace);
     }
   }
 }
