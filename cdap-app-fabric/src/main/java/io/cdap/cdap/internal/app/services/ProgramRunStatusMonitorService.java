@@ -31,12 +31,16 @@ import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringProvisioner;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import javax.inject.Inject;
@@ -54,6 +58,8 @@ public class ProgramRunStatusMonitorService extends AbstractRetryableScheduledSe
   private final int txBatchSize;
   private final long intervalMillis;
   private final long terminateTimeBufferSecs;
+  private final int numThreads;
+  private ExecutorService executorService;
 
   @Inject
   ProgramRunStatusMonitorService(CConfiguration cConf, Store store, ProgramRuntimeService runtimeService) {
@@ -76,6 +82,25 @@ public class ProgramRunStatusMonitorService extends AbstractRetryableScheduledSe
     }
     this.intervalMillis = TimeUnit.SECONDS.toMillis(specifiedIntervalSecs);
     this.terminateTimeBufferSecs = terminateTimeBufferSecs;
+    this.numThreads = cConf.getInt(Constants.AppFabric.PROGRAM_KILL_THREADS);
+  }
+
+  @Override
+  protected void doStartUp() throws Exception {
+    super.doStartUp();
+    ThreadPoolExecutor executor = new ThreadPoolExecutor(numThreads, numThreads, 60, TimeUnit.SECONDS,
+                                                         new LinkedBlockingQueue<>(),
+                                                         Threads.createDaemonThreadFactory("program-kill-%d"));
+    executor.allowCoreThreadTimeOut(true);
+    this.executorService = executor;
+  }
+
+  @Override
+  protected void doShutdown() throws Exception {
+    super.doShutdown();
+    if (executorService != null) {
+      executorService.shutdown();
+    }
   }
 
   @Override
@@ -123,9 +148,11 @@ public class ProgramRunStatusMonitorService extends AbstractRetryableScheduledSe
         RuntimeInfo runtimeInfo = runtimeService.lookup(programRunId.getParent(),
                                                         RunIds.fromString(programRunId.getRun()));
         if (runtimeInfo != null && runtimeInfo.getController() != null) {
-          LOG.info("Forcing the termination of program {} as it should have stopped at {} ",
-                   programRunId, record.getTerminateTs());
-          runtimeInfo.getController().kill();
+          executorService.submit(() -> {
+            LOG.info("Forcing the termination of program run {} as it should have stopped at {} ",
+                     programRunId, record.getTerminateTs());
+            runtimeInfo.getController().kill();
+          });
         }
       }
     }
@@ -139,10 +166,7 @@ public class ProgramRunStatusMonitorService extends AbstractRetryableScheduledSe
         return false;
       }
       Long terminateTime = record.getTerminateTs();
-      if (terminateTime == null || terminateTime > currentTimeInSecs) {
-        return false;
-      }
-      return true;
+      return terminateTime != null && terminateTime <= currentTimeInSecs;
     };
   }
 }

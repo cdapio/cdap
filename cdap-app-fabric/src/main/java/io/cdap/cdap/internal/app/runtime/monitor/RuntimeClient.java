@@ -58,7 +58,7 @@ import javax.ws.rs.core.MediaType;
  * The client for talking to the {@link RuntimeServer}.
  */
 public class RuntimeClient {
-
+  
   private static final Gson GSON = new Gson();
   static final int CHUNK_SIZE = 1 << 15;  // 32K
 

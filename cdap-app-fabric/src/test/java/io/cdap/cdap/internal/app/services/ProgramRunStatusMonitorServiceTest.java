@@ -99,6 +99,7 @@ public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
     };
     ProgramRunStatusMonitorService programRunStatusMonitorService
       = new ProgramRunStatusMonitorService(cConf, store, testService, 5, 3, 2);
+    programRunStatusMonitorService.startAndWait();
     Assert.assertEquals(1, latch.getCount());
     programRunStatusMonitorService.terminatePrograms();
     Assert.assertEquals(0, latch.getCount());
