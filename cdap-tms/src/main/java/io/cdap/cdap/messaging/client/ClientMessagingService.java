@@ -105,7 +105,7 @@ public final class ClientMessagingService implements MessagingService {
   private final boolean compressPayload;
 
   @Inject
-  ClientMessagingService(CConfiguration cConf, RemoteClientFactory remoteClientFactory) {
+  public ClientMessagingService(CConfiguration cConf, RemoteClientFactory remoteClientFactory) {
     this(remoteClientFactory, cConf.getBoolean(Constants.MessagingSystem.HTTP_COMPRESS_PAYLOAD));
   }
 

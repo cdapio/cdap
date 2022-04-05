@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.app.program;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
@@ -49,6 +48,7 @@ import javax.annotation.Nullable;
  * heartbeat thread on running or resuming program state and stop the thread on completed/error/suspend state.
  */
 public class ProgramStateWriterWithHeartBeat {
+
   private static final Logger LOG = LoggerFactory.getLogger(ProgramStateWriterWithHeartBeat.class);
   private static final Gson GSON =
     ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
@@ -57,8 +57,8 @@ public class ProgramStateWriterWithHeartBeat {
   private final long heartBeatIntervalSeconds;
   private final ProgramStateWriter programStateWriter;
   private final ProgramRunId programRunId;
-  private final ProgramStatePublisher messagingProgramStatePublisher;
-  private ScheduledExecutorService scheduledExecutorService;
+  private final ProgramStatePublisher programStatePublisher;
+  private ScheduledExecutorService scheduler;
 
 
   public ProgramStateWriterWithHeartBeat(ProgramRunId programRunId,
@@ -76,15 +76,11 @@ public class ProgramStateWriterWithHeartBeat {
   ProgramStateWriterWithHeartBeat(ProgramRunId programRunId,
                                   ProgramStateWriter programStateWriter,
                                   long heartBeatIntervalSeconds,
-                                  ProgramStatePublisher messagingProgramStatePublisher) {
+                                  ProgramStatePublisher programStatePublisher) {
     this.programRunId = programRunId;
     this.programStateWriter = programStateWriter;
     this.heartBeatIntervalSeconds = heartBeatIntervalSeconds;
-    this.messagingProgramStatePublisher = messagingProgramStatePublisher;
-  }
-
-  public void start(ProgramOptions programOptions, @Nullable String twillRunId, ProgramDescriptor programDescriptor) {
-    programStateWriter.start(programRunId, programOptions, twillRunId, programDescriptor);
+    this.programStatePublisher = programStatePublisher;
   }
 
   public void running(@Nullable String twillRunId) {
@@ -107,31 +103,20 @@ public class ProgramStateWriterWithHeartBeat {
     programStateWriter.error(programRunId, failureCause);
   }
 
-  public void suspend() {
-    stopHeartbeatThread();
-    programStateWriter.suspend(programRunId);
-  }
-
-  public void resume() {
-    scheduleHeartBeatThread();
-    programStateWriter.resume(programRunId);
-  }
-
   /**
    * If executor service isn't initialized or if its shutdown
    * create a new executor service and schedule a heartbeat thread
    */
   private void scheduleHeartBeatThread() {
-    if (scheduledExecutorService == null || scheduledExecutorService.isShutdown()) {
-      scheduledExecutorService =
-        Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("program-heart-beat"));
-      scheduledExecutorService.scheduleAtFixedRate(
+    if (scheduler == null) {
+      scheduler = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("program-heart-beat"));
+      scheduler.scheduleAtFixedRate(
         () -> {
           Map<String, String> properties = new HashMap<>();
           properties.put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId));
           properties.put(ProgramOptionConstants.HEART_BEAT_TIME, String.valueOf(System.currentTimeMillis()));
           // publish as heart_beat type, so it can be handled appropriately at receiver
-          messagingProgramStatePublisher.publish(Notification.Type.PROGRAM_HEART_BEAT, properties);
+          programStatePublisher.publish(Notification.Type.PROGRAM_HEART_BEAT, properties);
           LOG.trace("Sent heartbeat for program {}", programRunId);
         }, heartBeatIntervalSeconds,
         heartBeatIntervalSeconds, TimeUnit.SECONDS);
@@ -139,8 +124,9 @@ public class ProgramStateWriterWithHeartBeat {
   }
 
   private void stopHeartbeatThread() {
-    if (scheduledExecutorService != null) {
-      scheduledExecutorService.shutdownNow();
+    if (scheduler != null) {
+      scheduler.shutdownNow();
+      scheduler = null;
     }
   }
 
@@ -150,6 +136,6 @@ public class ProgramStateWriterWithHeartBeat {
    */
   @VisibleForTesting
   boolean isHeartBeatThreadAlive() {
-    return scheduledExecutorService != null && !scheduledExecutorService.isShutdown();
+    return scheduler != null && !scheduler.isShutdown();
   }
 }
