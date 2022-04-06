@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.app.runtime.spark.distributed.k8s;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.AbstractModule;
@@ -51,6 +52,8 @@ import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
+import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.guice.CoreSecurityModule;
@@ -244,7 +247,8 @@ public class SparkContainerDriverLauncher {
     Files.copy(tempLocation.toPath(), programJarLocation.resolve(PROGRAM_JAR_NAME));
   }
 
-  private static Injector createInjector(CConfiguration cConf, Configuration hConf, MasterEnvironment masterEnv) {
+  @VisibleForTesting
+  static Injector createInjector(CConfiguration cConf, Configuration hConf, MasterEnvironment masterEnv) {
     List<Module> modules = new ArrayList<>();
 
     CoreSecurityModule coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf);
@@ -254,6 +258,8 @@ public class SparkContainerDriverLauncher {
     modules.add(new IOModule());
     modules.add(new AuthenticationContextModules().getMasterWorkerModule());
     modules.add(coreSecurityModule);
+    modules.add(new MessagingClientModule());
+    modules.add(new MetricsClientRuntimeModule().getDistributedModules());
 
     modules.add(new AbstractModule() {
       @Override
