@@ -43,6 +43,7 @@ import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data.runtime.TransactionExecutorModule;
 import io.cdap.cdap.internal.app.store.StoreProgramRunRecordFetcher;
+import io.cdap.cdap.internal.provision.ProvisionerNotifier;
 import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
@@ -211,7 +212,8 @@ public class TetheringClientHandlerTest {
                                                       messagingService,
                                                       injector.getInstance(ProgramRunRecordFetcher.class),
                                                       injector.getInstance(RemoteAuthenticator.class),
-                                                      injector.getInstance(LocationFactory.class));
+                                                      injector.getInstance(LocationFactory.class),
+                                                      injector.getInstance(ProvisionerNotifier.class));
     Assert.assertEquals(Service.State.RUNNING, tetheringAgentService.startAndWait());
   }
 

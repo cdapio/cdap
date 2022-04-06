@@ -25,6 +25,7 @@ import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.Message;
 import io.cdap.cdap.api.messaging.MessageFetcher;
+import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramOptions;
@@ -38,11 +39,13 @@ import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
+import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedProgramRunner;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeProgramStatusSubscriberService;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
+import io.cdap.cdap.internal.provision.ProvisionerNotifier;
 import io.cdap.cdap.internal.tethering.proto.v1.TetheringLaunchMessage;
 import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
 import io.cdap.cdap.messaging.MessagingService;
@@ -53,6 +56,7 @@ import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -110,6 +114,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
   private final ProgramRunRecordFetcher runRecordFetcher;
   private final RemoteAuthenticator remoteAuthenticator;
   private final LocationFactory locationFactory;
+  private final ProvisionerNotifier provisionerNotifier;
   private final String programUpdateTopic;
   private final int programUpdateFetchSize;
   private String lastProgramUpdateMessageId;
@@ -121,7 +126,8 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
                         ProgramStateWriter programStateWriter, MessagingService messagingService,
                         ProgramRunRecordFetcher programRunRecordFetcher,
                         @Named(REMOTE_TETHERING_AUTHENTICATOR) RemoteAuthenticator remoteAuthenticator,
-                        LocationFactory locationFactory) {
+                        LocationFactory locationFactory,
+                        ProvisionerNotifier provisionerNotifier) {
     super(RetryStrategies.fromConfiguration(cConf, "tethering.agent."));
     this.connectionInterval = TimeUnit.SECONDS.toMillis(cConf.getLong(Constants.Tethering.CONNECTION_INTERVAL, 10L));
     this.cConf = cConf;
@@ -134,6 +140,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
     this.runRecordFetcher = programRunRecordFetcher;
     this.remoteAuthenticator = remoteAuthenticator;
     this.locationFactory = locationFactory;
+    this.provisionerNotifier = provisionerNotifier;
     this.programUpdateTopic = cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC);
     this.programUpdateFetchSize = cConf.getInt(Constants.AppFabric.STATUS_EVENT_FETCH_SIZE);
   }
@@ -350,12 +357,16 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
     }
 
     Map<String, String> systemArgs = new HashMap<>(programOpts.getArguments().asMap());
+    // Remove the plugin artifact archive argument from options and let the program runner recreate it
+    systemArgs.remove(ProgramOptionConstants.PLUGIN_ARCHIVE);
     systemArgs.put(ProgramOptionConstants.PEER_NAME, peerName);
     systemArgs.put(ProgramOptionConstants.PEER_NAMESPACE, message.getPeerNamespace());
     systemArgs.put(ProgramOptionConstants.PROGRAM_RESOURCE_URI, programDir.toURI().toString());
+    systemArgs.put(ProgramOptionConstants.CLUSTER_MODE, ClusterMode.ON_PREMISE.name());
+    SystemArguments.addProfileArgs(systemArgs, Profile.NATIVE);
     ProgramOptions updatedOpts = new SimpleProgramOptions(programId, new BasicArguments(systemArgs),
                                                           programOpts.getUserArguments());
-    programStateWriter.start(programRunId, updatedOpts, null, programDescriptor);
+    provisionerNotifier.provisioning(programRunId, updatedOpts, programDescriptor, "");
     LOG.debug("Published program start message for run {}", programRunId.getRun());
   }
 
