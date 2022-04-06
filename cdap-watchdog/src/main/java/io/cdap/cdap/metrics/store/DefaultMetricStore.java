@@ -201,6 +201,7 @@ public class DefaultMetricStore implements MetricStore {
 
   @Inject
   DefaultMetricStore(MetricDatasetFactory dsFactory, CConfiguration cConf) {
+    int writeParallelism = cConf.getInt(Constants.Metrics.METRICS_TABLE_WRITE_PARRALELISM);
     int minimumResolution = cConf.getInt(Constants.Metrics.METRICS_MINIMUM_RESOLUTION_SECONDS);
     int[] resolutions = minimumResolution < 60 ?
       new int[] {minimumResolution, 60, 3600, TOTALS_RESOLUTION} : new int[] {60, 3600, TOTALS_RESOLUTION};
@@ -223,7 +224,8 @@ public class DefaultMetricStore implements MetricStore {
     this.cube = Suppliers.memoize(new Supplier<Cube>() {
       @Override
       public Cube get() {
-        DefaultCube cube = new DefaultCube(resolutions, factTableSupplier, AGGREGATIONS, AGGREGATIONS_ALIAS_DIMENSIONS);
+        DefaultCube cube = new DefaultCube(resolutions, factTableSupplier, AGGREGATIONS, AGGREGATIONS_ALIAS_DIMENSIONS,
+                                           writeParallelism);
         cube.setMetricsCollector(metricsContext);
         return cube;
       }

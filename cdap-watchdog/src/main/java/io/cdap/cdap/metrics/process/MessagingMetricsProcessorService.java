@@ -297,11 +297,13 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
     List<MetricValue> processorMetrics = new ArrayList<>(topicLevelDelays);
     processorMetrics.add(new MetricValue(processMetricName, MetricType.COUNTER, metricValues.size()));
 
-    metricValues.add(new MetricValues(metricsContextMap, TimeUnit.MILLISECONDS.toSeconds(now), processorMetrics));
+    long nowSeconds = TimeUnit.MILLISECONDS.toSeconds(now);
+    metricValues.add(new MetricValues(metricsContextMap, nowSeconds, processorMetrics));
     metricsWriter.write(metricValues);
     metricsProcessedCount += metricValues.size();
-    PROGRESS_LOG.debug("{} metrics persisted with {}. Last metric's timestamp: {}",
-                       metricsProcessedCount, metricsWriter.getID(), lastMetricTime);
+    PROGRESS_LOG.debug("{}(+{}) metrics persisted with {}. Last metric's timestamp: {} (lag {} seconds)",
+                       metricsProcessedCount, metricValues.size(), metricsWriter.getID(),
+                       lastMetricTime, nowSeconds - lastMetricTime);
   }
 
   private class ProcessMetricsThread extends Thread {
@@ -352,6 +354,10 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
     private long processMetrics() {
       long startTime = System.currentTimeMillis();
       try {
+        // Before retrieving try to free up some queue space by persisting metrics and messageId's
+        // if no other thread is persisting
+        tryPersist();
+
         MessageFetcher fetcher = messagingService.prepareFetch(topic);
         fetcher.setLimit(fetcherLimit);
         TopicProcessMeta persistMetaInfo = metadataHandler.getTopicProcessMeta(metricsMetaKey);
