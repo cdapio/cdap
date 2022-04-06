@@ -351,7 +351,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
       try {
         // TODO: [CDAP-11576] need to clean up the inconsistent state if this operation fails
         timeSchedulerService.deleteProgramSchedule(schedule);
-      } catch (Exception e) {
+      } catch (SchedulerException e) {
         // TODO: [CDAP-11574] temporarily catch the SchedulerException and throw RuntimeException.
         // Need better error handling
         LOG.error("Exception occurs when deleting schedule {}", schedule, e);

@@ -40,12 +40,12 @@ public interface TimeSchedulerService extends Service {
 
   /**
    * Deletes the schedule with the same schedule name and {@link ProgramId} as the given {@link ProgramSchedule}.
+   * If the schedule does not exist, this is a no-op.
    *
    * @param schedule the {@link ProgramSchedule} with schedule name and {@link ProgramId} of the schedule to delete
-   * @throws NotFoundException if the schedule could not be found
    * @throws SchedulerException on unforeseen error
    */
-  void deleteProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException;
+  void deleteProgramSchedule(ProgramSchedule schedule) throws SchedulerException;
 
   /**
    * Suspends the schedule with the same schedule name and {@link ProgramId} as the given {@link ProgramSchedule}.

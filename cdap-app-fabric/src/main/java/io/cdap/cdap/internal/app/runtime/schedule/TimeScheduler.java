@@ -166,18 +166,24 @@ public final class TimeScheduler {
     }
   }
 
-  public void deleteProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
+  public void deleteProgramSchedule(ProgramSchedule schedule) throws SchedulerException {
     try {
       Collection<TriggerKey> triggerKeys = getGroupedTriggerKeys(schedule);
-      // Must assert all trigger keys exist before processing each trigger key
-      assertTriggerKeysExist(triggerKeys);
       for (TriggerKey triggerKey : triggerKeys) {
-        Trigger trigger = getTrigger(triggerKey, schedule.getProgramId(), schedule.getName());
-        scheduler.unscheduleJob(trigger.getKey());
+        if (!scheduler.checkExists(triggerKey)) {
+          continue;
+        }
+        try {
+          Trigger trigger = getTrigger(triggerKey, schedule.getProgramId(), schedule.getName());
+          scheduler.unscheduleJob(trigger.getKey());
 
-        JobKey jobKey = trigger.getJobKey();
-        if (scheduler.getTriggersOfJob(jobKey).isEmpty()) {
-          scheduler.deleteJob(jobKey);
+          JobKey jobKey = trigger.getJobKey();
+          if (scheduler.getTriggersOfJob(jobKey).isEmpty()) {
+            scheduler.deleteJob(jobKey);
+          }
+        } catch (NotFoundException e) {
+          // no-op
+          // ok if it doesn't exist since we're trying to delete it anyway
         }
       }
     } catch (org.quartz.SchedulerException e) {

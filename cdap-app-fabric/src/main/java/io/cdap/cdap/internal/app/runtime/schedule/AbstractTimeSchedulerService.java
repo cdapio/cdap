@@ -80,7 +80,7 @@ public abstract class AbstractTimeSchedulerService extends AbstractIdleService i
   }
 
   @Override
-  public void deleteProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
+  public void deleteProgramSchedule(ProgramSchedule schedule) throws SchedulerException {
     if (containsTimeTrigger(schedule)) {
       timeScheduler.deleteProgramSchedule(schedule);
     }
