@@ -319,7 +319,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
     protected void configure() {
       MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
 
-      if (clusterMode == ClusterMode.ISOLATED && tethered && masterEnv != null) {
+      if (clusterMode == ClusterMode.ON_PREMISE && tethered && masterEnv != null) {
         bind(MasterEnvironment.class).toInstance(masterEnv);
         bind(ProgramStateWriter.class).toProvider(ProgramStateWriterProvider.class);
       } else {
