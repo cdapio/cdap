@@ -50,7 +50,10 @@ import java.util.concurrent.TimeUnit;
 @Category(XSlowTests.class)
 public class SparkMetricsIntegrationTestRun extends TestFrameworkTestBase {
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration("app.program.spark.metrics.enabled", "true");
+  public static final TestConfiguration CONFIG =
+    new TestConfiguration(Constants.Metrics.SPARK_METRICS_ENABLED, true,
+                          Constants.Explore.EXPLORE_ENABLED, false,
+                          Constants.CLUSTER_NAME, "testCluster");
 
   @Test
   public void testSparkMetrics() throws Exception {

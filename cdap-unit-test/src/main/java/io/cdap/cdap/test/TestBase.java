@@ -234,6 +234,10 @@ public class TestBase {
   @BeforeClass
   public static void initialize() throws Exception {
     if (nestedStartCount++ > 0) {
+      Assert.assertFalse(
+        "Test is loaded that requires custom configuration while other configuration is in place." +
+          "Please check if test is part of the suite and apply configuration on the suite level",
+        hasCustomConfiguration());
       return;
     }
     File localDataDir = TMP_FOLDER.newFolder();
@@ -504,6 +508,11 @@ public class TestBase {
     public MetricsManager get() {
       return new MetricsManager(metricStore);
     }
+  }
+
+  private static boolean hasCustomConfiguration() {
+    return System.getProperties().stringPropertyNames().stream()
+      .anyMatch(key -> key.startsWith(TestConfiguration.PROPERTY_PREFIX));
   }
 
   private static CConfiguration createCConf(File localDataDir) throws IOException {
