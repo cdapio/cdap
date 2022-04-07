@@ -198,10 +198,17 @@ public class AppFabricClient {
   }
 
   public void stopProgram(String namespaceId, String appId, String appVersion, String programId,
-                          ProgramType type) throws Exception {
+                          ProgramType type, @Nullable String gracefulShutdownSecs) throws Exception {
     MockResponder responder = new MockResponder();
-    String uri = String.format("%s/apps/%s/versions/%s/%s/%s/stop",
-                               getNamespacePath(namespaceId), appId, appVersion, type.getCategoryName(), programId);
+    String uri;
+    if (gracefulShutdownSecs == null) {
+      uri = String.format("%s/apps/%s/versions/%s/%s/%s/stop",
+                                 getNamespacePath(namespaceId), appId, appVersion, type.getCategoryName(), programId);
+    } else {
+      uri = String.format("%s/apps/%s/versions/%s/%s/%s/stop?graceful=%s",
+                          getNamespacePath(namespaceId), appId, appVersion, type.getCategoryName(), programId,
+                          gracefulShutdownSecs);
+    }
     FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
     HttpUtil.setContentLength(request, request.content().readableBytes());
     programLifecycleHttpHandler.performAction(request, responder, namespaceId, appId, appVersion,

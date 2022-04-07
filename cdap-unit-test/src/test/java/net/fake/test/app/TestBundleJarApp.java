@@ -67,7 +67,7 @@ public class TestBundleJarApp extends TestBase {
                                                    new DefaultHttpRequestConfig(false));
       Assert.assertEquals(200, response.getResponseCode());
     }
-    serviceManager.stop();
+    serviceManager.stop(null);
 
     // Query the result
     serviceManager = applicationManager.getServiceManager("SimpleGetInput").start();
@@ -78,7 +78,7 @@ public class TestBundleJarApp extends TestBase {
     String expectedQueryResult = new Gson().toJson(
       ImmutableMap.of("test1", "1" + BundleJarApp.EXPECTED_LOAD_TEST_CLASSES_OUTPUT));
     Assert.assertEquals(expectedQueryResult, queryResult);
-    serviceManager.stop();
+    serviceManager.stop(null);
 
     serviceManager = applicationManager.getServiceManager("PrintService").start();
     serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);

@@ -106,7 +106,7 @@ public class ServiceArtifactTestRun extends TestFrameworkTestBase {
       Assert.assertEquals(DummyPlugin.class.getName(), CharStreams.toString(reader));
     }
 
-    serviceManager.stop();
+    serviceManager.stop(null);
     serviceManager.waitForStopped(10, TimeUnit.SECONDS);
   }
 }

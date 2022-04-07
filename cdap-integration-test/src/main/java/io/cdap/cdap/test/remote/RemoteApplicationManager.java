@@ -118,7 +118,7 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   }
 
   @Override
-  public void stopProgram(ProgramId programId) {
+  public void stopProgram(ProgramId programId, String gracefulShutdownSecs) {
     try {
       programClient.stop(programId);
       waitForStopped(programId);

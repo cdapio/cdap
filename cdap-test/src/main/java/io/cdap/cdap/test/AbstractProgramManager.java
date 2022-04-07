@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import javax.annotation.Nullable;
 
 /**
  * Abstract implementation of {@link ProgramManager} that includes common functionality for all implementations.
@@ -109,8 +110,8 @@ public abstract class AbstractProgramManager<T extends ProgramManager> implement
   }
 
   @Override
-  public void stop() {
-    applicationManager.stopProgram(programId);
+  public void stop(@Nullable String gracefulShutdownSecs) {
+    applicationManager.stopProgram(programId, gracefulShutdownSecs);
   }
 
   @Override

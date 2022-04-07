@@ -283,7 +283,7 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
       Assert.assertEquals(Collections.singleton(expected), GSON.fromJson(response.getResponseBodyAsString(), setType));
 
     } finally {
-      serviceManager.stop();
+      serviceManager.stop(null);
       if (getNamespaceAdmin().exists(new NamespaceId(namespaceX))) {
         getNamespaceAdmin().delete(new NamespaceId(namespaceX));
       }

@@ -27,6 +27,7 @@ import io.cdap.cdap.proto.id.ProgramId;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * A base implementation of {@link ApplicationManager}.
@@ -58,8 +59,8 @@ public abstract class AbstractApplicationManager implements ApplicationManager {
   }
 
   @Override
-  public void stopProgram(Id.Program programId) {
-    stopProgram(programId.toEntityId());
+  public void stopProgram(Id.Program programId, @Nullable String gracefulShutdownSecs) {
+    stopProgram(programId.toEntityId(), gracefulShutdownSecs);
   }
 
   @Override

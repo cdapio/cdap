@@ -134,7 +134,7 @@ public class DataStreamsSparkSinkTest  extends HydratorTestBase {
         }
       }, 1, TimeUnit.MINUTES);
 
-    sparkManager.stop();
+    sparkManager.stop(null);
     sparkManager.waitForStopped(10, TimeUnit.SECONDS);
     sparkManager.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
   }

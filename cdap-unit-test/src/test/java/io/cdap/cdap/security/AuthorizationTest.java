@@ -479,7 +479,7 @@ public class AuthorizationTest extends TestBase {
     greetingService.setRuntimeArgs(args);
     // Alice should be able to get runtime arguments as she has ADMIN on it
     Assert.assertEquals(args, greetingService.getRuntimeArgs());
-    dummyAppManager.stopProgram(Id.Service.fromEntityId(serviceId));
+    dummyAppManager.stopProgram(Id.Service.fromEntityId(serviceId), null);
     greetingService.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
     // Bob should not be able to start programs in dummy app because he does not have privileges on it
     SecurityRequestContext.setUserId(BOB.getName());
@@ -591,7 +591,7 @@ public class AuthorizationTest extends TestBase {
     Assert.assertEquals(500, response.getResponseCode());
     Assert.assertTrue(response.getResponseBodyAsString().contains("Cannot access dataset store in system namespace"));
 
-    serviceManager.stop();
+    serviceManager.stop(null);
     serviceManager.waitForStopped(10, TimeUnit.SECONDS);
 
     // switch to back to ALICE
@@ -637,7 +637,7 @@ public class AuthorizationTest extends TestBase {
     Assert.assertTrue("Wrong message " + response.getResponseBodyAsString(),
                       response.getResponseBodyAsString().contains("'" + BOB + "' has insufficient privileges"));
 
-    serviceManager.stop();
+    serviceManager.stop(null);
     serviceManager.waitForStopped(10, TimeUnit.SECONDS);
     SecurityRequestContext.setUserId(ALICE.getName());
 
@@ -658,7 +658,7 @@ public class AuthorizationTest extends TestBase {
       Assert.assertEquals(200, response.getResponseCode());
     }
 
-    serviceManager.stop();
+    serviceManager.stop(null);
     serviceManager.waitForStopped(10, TimeUnit.SECONDS);
 
     // switch back to alice and verify the data its fine now to verify.
@@ -1182,7 +1182,7 @@ public class AuthorizationTest extends TestBase {
       // should fail because bob does not have write privileges on the dataset
       Assert.assertEquals(500, response.getResponseCode());
     } finally {
-      pfsService.stop();
+      pfsService.stop(null);
       pfsService.waitForRun(ProgramRunStatus.KILLED, 1, TimeUnit.MINUTES);
     }
     // grant read and write on dataset and restart
@@ -1203,7 +1203,7 @@ public class AuthorizationTest extends TestBase {
       response = executeAuthenticated(HttpRequest.delete(url));
       Assert.assertEquals(200, response.getResponseCode());
     } finally {
-      pfsService.stop();
+      pfsService.stop(null);
       pfsService.waitForRuns(ProgramRunStatus.KILLED, 2, 1, TimeUnit.MINUTES);
       SecurityRequestContext.setUserId(ALICE.getName());
     }

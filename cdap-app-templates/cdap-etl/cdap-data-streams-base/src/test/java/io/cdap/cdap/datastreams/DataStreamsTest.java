@@ -251,7 +251,7 @@ public class DataStreamsTest extends HydratorTestBase {
       1,
       TimeUnit.MINUTES);
 
-    sparkManager.stop();
+    sparkManager.stop(null);
     sparkManager.waitForStopped(10, TimeUnit.SECONDS);
     return RunIds.fromString(sparkManager.getHistory().iterator().next().getPid());
   }
@@ -331,7 +331,7 @@ public class DataStreamsTest extends HydratorTestBase {
       1,
       TimeUnit.MINUTES);
 
-    sparkManager.stop();
+    sparkManager.stop(null);
     sparkManager.waitForStopped(10, TimeUnit.SECONDS);
   }
 
@@ -433,7 +433,7 @@ public class DataStreamsTest extends HydratorTestBase {
       1,
       TimeUnit.MINUTES);
 
-    sparkManager.stop();
+    sparkManager.stop(null);
     sparkManager.waitForStopped(30, TimeUnit.SECONDS);
 
     MockSink.clear(sink1);
@@ -480,7 +480,7 @@ public class DataStreamsTest extends HydratorTestBase {
       1,
       TimeUnit.MINUTES);
 
-    sparkManager.stop();
+    sparkManager.stop(null);
 
     MockSink.clear(sink1);
     MockSink.clear(sink2);
@@ -590,7 +590,7 @@ public class DataStreamsTest extends HydratorTestBase {
       1,
       TimeUnit.MINUTES);
 
-    sparkManager.stop();
+    sparkManager.stop(null);
     sparkManager.waitForStopped(10, TimeUnit.SECONDS);
 
     validateMetric(appId, "source1.records.out", 2);
@@ -662,7 +662,7 @@ public class DataStreamsTest extends HydratorTestBase {
       2,
       TimeUnit.MINUTES);
 
-    sparkManager.stop();
+    sparkManager.stop(null);
   }
 
   @Test
@@ -793,7 +793,7 @@ public class DataStreamsTest extends HydratorTestBase {
       4,
       TimeUnit.MINUTES);
 
-    sparkManager.stop();
+    sparkManager.stop(null);
     sparkManager.waitForStopped(10, TimeUnit.SECONDS);
 
     validateMetric(appId, "source1.records.out", 3);
@@ -919,7 +919,7 @@ public class DataStreamsTest extends HydratorTestBase {
       4,
       TimeUnit.MINUTES);
 
-    sparkManager.stop();
+    sparkManager.stop(null);
     sparkManager.waitForStopped(10, TimeUnit.SECONDS);
   }
 
@@ -1041,7 +1041,7 @@ public class DataStreamsTest extends HydratorTestBase {
       4,
       TimeUnit.MINUTES);
 
-    sparkManager.stop();
+    sparkManager.stop(null);
     sparkManager.waitForStopped(10, TimeUnit.SECONDS);
   }
 
@@ -1215,7 +1215,7 @@ public class DataStreamsTest extends HydratorTestBase {
       4,
       TimeUnit.MINUTES);
 
-    sparkManager.stop();
+    sparkManager.stop(null);
     sparkManager.waitForStopped(10, TimeUnit.SECONDS);
 
     validateMetric(appId, "source.records.out", 4);
@@ -1297,7 +1297,7 @@ public class DataStreamsTest extends HydratorTestBase {
       4,
       TimeUnit.MINUTES);
 
-    sparkManager.stop();
+    sparkManager.stop(null);
     sparkManager.waitForStopped(10, TimeUnit.SECONDS);
 
     validateMetric(appId, "source.records.out", 3);
@@ -1404,7 +1404,7 @@ public class DataStreamsTest extends HydratorTestBase {
                     sink4Expected.equals(new HashSet<>(MockExternalSink.readOutput(output4, schema))) &&
                     sink5Expected.equals(new HashSet<>(MockExternalSink.readOutput(output5, schema))),
                   3, TimeUnit.MINUTES);
-    sparkManager.stop();
+    sparkManager.stop(null);
     sparkManager.waitForStopped(1, TimeUnit.MINUTES);
 
     // check output

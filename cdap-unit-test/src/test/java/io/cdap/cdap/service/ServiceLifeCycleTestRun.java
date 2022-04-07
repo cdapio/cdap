@@ -121,7 +121,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
         }
       }
     } finally {
-      serviceManager.stop();
+      serviceManager.stop(null);
       serviceManager.waitForStopped(10, TimeUnit.SECONDS);
       // Reset the http server properties to speed up test
       System.clearProperty(AbstractServiceHttpServer.HANDLER_CLEANUP_PERIOD_MILLIS);
@@ -177,7 +177,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
           .equals(ImmutableList.copyOf(newStates.get(lastStates.keySet().iterator().next())));
       }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     } finally {
-      serviceManager.stop();
+      serviceManager.stop(null);
       serviceManager.waitForStopped(10, TimeUnit.SECONDS);
       // Reset the http server properties to speed up test
       System.clearProperty(AbstractServiceHttpServer.HANDLER_CLEANUP_PERIOD_MILLIS);
@@ -267,7 +267,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
       }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     } finally {
-      serviceManager.stop();
+      serviceManager.stop(null);
       serviceManager.waitForStopped(10, TimeUnit.SECONDS);
     }
   }
@@ -314,7 +314,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
       Assert.assertEquals(states, getStates(serviceManager));
 
     } finally {
-      serviceManager.stop();
+      serviceManager.stop(null);
       serviceManager.waitForStopped(10, TimeUnit.SECONDS);
     }
   }
@@ -376,7 +376,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
       Assert.assertEquals(states, getStates(serviceManager));
 
     } finally {
-      serviceManager.stop();
+      serviceManager.stop(null);
       serviceManager.waitForStopped(10, TimeUnit.SECONDS);
     }
   }
@@ -391,7 +391,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
 
     uploadLatch.countDown();
     Assert.assertEquals(500, completion.get().intValue());
-    serviceManager.stop();
+    serviceManager.stop(null);
     serviceManager.waitForStopped(10, TimeUnit.SECONDS);
   }
 
@@ -434,7 +434,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
       Assert.assertEquals(200, urlConn.getResponseCode());
       Assert.assertEquals("0123456789", new String(ByteStreams.toByteArray(urlConn.getInputStream()), "UTF-8"));
     } finally {
-      serviceManager.stop();
+      serviceManager.stop(null);
       serviceManager.waitForStopped(10, TimeUnit.SECONDS);
       urlConn.disconnect();
     }

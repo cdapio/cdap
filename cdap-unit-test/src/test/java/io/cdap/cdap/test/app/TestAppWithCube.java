@@ -166,7 +166,7 @@ public class TestAppWithCube extends TestBase {
       Assert.assertEquals(3, timeValue.getValue());
 
     } finally {
-      serviceManager.stop();
+      serviceManager.stop(null);
       serviceManager.waitForStopped(10, TimeUnit.SECONDS);
     }
   }

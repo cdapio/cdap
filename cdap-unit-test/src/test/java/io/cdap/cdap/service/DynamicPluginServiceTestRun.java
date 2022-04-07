@@ -82,7 +82,7 @@ public class DynamicPluginServiceTestRun extends TestFrameworkTestBase {
 
   @After
   public void cleanupTest() throws Exception {
-    serviceManager.stop();
+    serviceManager.stop(null);
     serviceManager.waitForStopped(2, TimeUnit.MINUTES);
   }
 

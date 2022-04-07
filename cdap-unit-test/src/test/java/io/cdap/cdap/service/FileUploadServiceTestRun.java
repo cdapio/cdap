@@ -116,7 +116,7 @@ public class FileUploadServiceTestRun extends TestFrameworkTestBase {
       Assert.assertEquals(content.length * 2, sum);
 
     } finally {
-      serviceManager.stop();
+      serviceManager.stop(null);
       serviceManager.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
     }
   }

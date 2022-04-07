@@ -107,7 +107,7 @@ import java.util.concurrent.TimeoutException;
 public class ReportGenerationAppTest extends TestBase {
   @ClassRule
   public static final TestConfiguration SPARK_VERSION_CONFIG =
-    new TestConfiguration("app.program.spark.compat", SparkCompat.getSparkVersion());
+    new TestConfiguration("app.program.spark.compat", io.cdap.cdap.report.SparkCompat.getSparkVersion());
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
   @ClassRule
@@ -242,7 +242,7 @@ public class ReportGenerationAppTest extends TestBase {
         // all the programs have the same test artifact name, blacklisting that will provide empty results
         new ValueFilter<>(Constants.ARTIFACT_NAME, null, ImmutableSet.of(TEST_ARTIFACT_NAME)));
     validateEmptyReports(reportURL, startSecs, startSecs + 30, filters3);
-    sparkManager.stop();
+    sparkManager.stop(null);
     sparkManager.waitForStopped(60, TimeUnit.SECONDS);
     deleteDatasetInstance(metaFileset);
   }
@@ -271,7 +271,7 @@ public class ReportGenerationAppTest extends TestBase {
   }
 
   private DatasetId createAndInitializeDataset(NamespaceId namespaceId, long currentTimeMillis) throws Exception {
-    DatasetId metaFileset = namespaceId.dataset(ReportGenerationApp.RUN_META_FILESET);
+    DatasetId metaFileset = namespaceId.dataset(io.cdap.cdap.report.ReportGenerationApp.RUN_META_FILESET);
     addDatasetInstance(metaFileset, FileSet.class.getName());
     // TODO: [CDAP-13216] temporarily create the run meta fileset and generate mock program run meta files here.
     // Will remove once the TMS subscriber writing to the run meta fileset is implemented.
@@ -310,9 +310,9 @@ public class ReportGenerationAppTest extends TestBase {
     bundler.createBundle(avroSparkBundle, DefaultSource.class);
     File unJarDir = BundleJarUtil.prepareClassLoaderFolder(avroSparkBundle, TEMP_FOLDER::newFolder).getDir();
 
-    ApplicationManager app = deployApplication(deployNamespace,
-                                               ReportGenerationApp.class, new File(unJarDir, "lib").listFiles());
-    return app.getSparkManager(ReportGenerationSpark.class.getSimpleName()).start(runtimeArguments);
+    ApplicationManager app = deployApplication(deployNamespace, io.cdap.cdap.report.ReportGenerationApp.class,
+                                               new File(unJarDir, "lib").listFiles());
+    return app.getSparkManager(io.cdap.cdap.report.ReportGenerationSpark.class.getSimpleName()).start(runtimeArguments);
   }
 
   @Test
@@ -360,7 +360,7 @@ public class ReportGenerationAppTest extends TestBase {
     Tasks.waitFor(0, () -> {
       return getReportsList(url);
     }, 5, TimeUnit.MINUTES, 1, TimeUnit.SECONDS);
-    sparkManager.stop();
+    sparkManager.stop(null);
     sparkManager.waitForStopped(2, TimeUnit.MINUTES);
     deleteDatasetInstance(datasetId);
     getNamespaceAdmin().delete(testNamespace);

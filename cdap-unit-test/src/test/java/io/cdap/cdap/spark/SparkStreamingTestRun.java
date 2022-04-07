@@ -102,7 +102,7 @@ public class SparkStreamingTestRun extends TestFrameworkTestBase {
       }, 1, TimeUnit.MINUTES, 1, TimeUnit.SECONDS);
     }
 
-    manager.stop();
+    manager.stop(null);
     manager.waitForRun(ProgramRunStatus.KILLED, 60, TimeUnit.SECONDS);
 
     // Send 100 more messages without pause
@@ -134,7 +134,7 @@ public class SparkStreamingTestRun extends TestFrameworkTestBase {
       }, 1, TimeUnit.MINUTES, 1, TimeUnit.SECONDS);
     }
 
-    manager.stop();
+    manager.stop(null);
     manager.waitForRuns(ProgramRunStatus.KILLED, 2, 60, TimeUnit.SECONDS);
   }
 

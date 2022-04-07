@@ -3335,7 +3335,7 @@ public class DataPipelineTest extends HydratorTestBase {
     Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
     Assert.assertEquals(expected, actual);
 
-    serviceManager.stop();
+    serviceManager.stop(null);
     serviceManager.waitForRun(ProgramRunStatus.KILLED, 180, TimeUnit.SECONDS);
   }
 

@@ -30,6 +30,7 @@ import io.cdap.cdap.proto.id.ScheduleId;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Instance of this class is for managing deployed application.
@@ -85,14 +86,16 @@ public interface ApplicationManager {
   /**
    * Stops a particular program.
    * @param programId the program to stop
+   * @param gracefulShutdownSecs amount of seconds to wait for graceful shutdown before killing the run
    */
-  void stopProgram(Id.Program programId);
+  void stopProgram(Id.Program programId, @Nullable String gracefulShutdownSecs);
 
   /**
    * Stops a particular program.
    * @param programId the program to stop
+   * @param gracefulShutdownSecs amount of seconds to wait for graceful shutdown before killing the run
    */
-  void stopProgram(ProgramId programId);
+  void stopProgram(ProgramId programId, @Nullable String gracefulShutdownSecs);
 
   /**
    * Wait for a given programId to have no running run record

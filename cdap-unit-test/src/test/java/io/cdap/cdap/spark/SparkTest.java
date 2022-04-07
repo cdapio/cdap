@@ -312,7 +312,7 @@ public class SparkTest extends TestFrameworkTestBase {
       }
     }, 3, TimeUnit.MINUTES, 1, TimeUnit.SECONDS);
 
-    sparkManager.stop();
+    sparkManager.stop(null);
     sparkManager.waitForRun(ProgramRunStatus.KILLED, 60, TimeUnit.SECONDS);
   }
 
@@ -366,7 +366,7 @@ public class SparkTest extends TestFrameworkTestBase {
       Assert.assertEquals(expected, result);
     }
 
-    sparkManager.stop();
+    sparkManager.stop(null);
   }
 
   @Test

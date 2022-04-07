@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import javax.annotation.Nullable;
 
 /**
  * Instance for this class is for managing a {@link Id.Program}.
@@ -124,8 +125,9 @@ public interface ProgramManager<T extends ProgramManager> {
 
   /**
    * Stops the program.
+   * @param gracefulShutdownSecs
    */
-  void stop();
+  void stop(@Nullable String gracefulShutdownSecs);
 
   /**
    * Checks if program is running

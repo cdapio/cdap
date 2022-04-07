@@ -118,7 +118,8 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
       for (ProgramRecord programRecord : appDetail.getPrograms()) {
         try {
           appFabricClient.stopProgram(application.getNamespace(), application.getApplication(),
-                                      appDetail.getAppVersion(), programRecord.getName(), programRecord.getType());
+                                      appDetail.getAppVersion(), programRecord.getName(), programRecord.getType(),
+                                      null);
         } catch (BadRequestException e) {
           // Ignore this as this will be throw if the program is not running, which is fine as there could
           // be programs in the application that are currently not running.
@@ -133,11 +134,11 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   }
 
   @Override
-  public void stopProgram(ProgramId programId) {
+  public void stopProgram(ProgramId programId, String gracefulShutdownSecs) {
     String programName = programId.getProgram();
     try {
       appFabricClient.stopProgram(application.getNamespace(), application.getApplication(), application.getVersion(),
-                                  programName, programId.getType());
+                                  programName, programId.getType(), null);
       waitForStopped(programId);
     } catch (Exception e) {
       throw Throwables.propagate(e);
