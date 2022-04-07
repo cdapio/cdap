@@ -258,6 +258,7 @@ public final class Constants {
     public static final String MONITOR_CLEANUP_INTERVAL_SECONDS =
       "run.record.monitor.cleanup.interval.seconds";
     public static final String PROGRAM_LAUNCH_THREADS = "app.program.launch.threads";
+    public static final String PROGRAM_KILL_THREADS = "app.program.kill.threads";
 
     // A boolean value cConf entry to tell whether a ProgramRunner is running remotely (i.e. not inside app-fabric)
     // This config is not present in the cdap-default.xml as it is only set internally by CDAP.
