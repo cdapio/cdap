@@ -21,19 +21,36 @@ import io.cdap.cdap.app.deploy.ProgramRunDispatcher;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.ProgramType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.Objects;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ProgramRunDispatcherFactory {
 
-  private final CConfiguration cConf;
+  private static final Logger LOG = LoggerFactory.getLogger(ProgramRunDispatcherFactory.class);
+
   private final InMemoryProgramRunDispatcher inMemoryProgramRunDispatcher;
+  private final boolean workerPoolEnabled;
+  private final Set<ProgramType> remoteDispatchProgramTypes;
   private RemoteProgramRunDispatcher remoteProgramRunDispatcher;
 
   @Inject
   public ProgramRunDispatcherFactory(CConfiguration cConf, InMemoryProgramRunDispatcher inMemoryProgramRunDispatcher) {
-    this.cConf = cConf;
     this.inMemoryProgramRunDispatcher = inMemoryProgramRunDispatcher;
+    this.workerPoolEnabled = cConf.getBoolean(Constants.SystemWorker.POOL_ENABLE);
+    this.remoteDispatchProgramTypes = new HashSet<>();
+    String[] programTypes = cConf.getStrings(Constants.SystemWorker.DISPATCH_PROGRAM_TYPES);
+    if (programTypes != null) {
+      for (String type : programTypes) {
+        try {
+          remoteDispatchProgramTypes.add(ProgramType.valueOf(type.toUpperCase()));
+        } catch (IllegalArgumentException e) {
+          LOG.warn("Skipping invalid program type {} for remote dispatch due to {}", type, e);
+        }
+      }
+    }
   }
 
   /**
@@ -45,10 +62,8 @@ public class ProgramRunDispatcherFactory {
   }
 
   public ProgramRunDispatcher getProgramRunDispatcher(ProgramType type) {
-    // TODO(CDAP-18962): Get ProgramTypes that can be dispatched remotely from configuration.
-    boolean workerPoolEnabled = cConf.getBoolean(Constants.SystemWorker.POOL_ENABLE);
     // Returns InMemoryProgramRunDispatcher if remoteDispatcher is not set.
-    return workerPoolEnabled && type.equals(ProgramType.WORKFLOW) && Objects.nonNull(remoteProgramRunDispatcher)
+    return workerPoolEnabled && remoteDispatchProgramTypes.contains(type) && remoteProgramRunDispatcher != null
       ? remoteProgramRunDispatcher : inMemoryProgramRunDispatcher;
   }
 }
