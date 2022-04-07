@@ -24,6 +24,7 @@ import org.junit.rules.TemporaryFolder;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * This class can be used to setup CDAP configuration for unit-test.
@@ -46,6 +47,7 @@ public class TestConfiguration extends ExternalResource {
 
   public static final String PROPERTY_PREFIX = "cdap.unit.test.";
   private final Map<String, String> configs;
+  private final Map<String, String> original = new HashMap<>();
   private boolean enableAuthorization;
   private TemporaryFolder temporaryFolder;
 
@@ -108,6 +110,9 @@ public class TestConfiguration extends ExternalResource {
     // One can rely on naming convention and static method shadowing, however, that is an anti-pattern.
     // Using @ClassRule gives a much cleaner solution.
     for (Map.Entry<String, String> entry : configs.entrySet()) {
+      Optional.ofNullable(System.getProperty(entry.getKey())).ifPresent(
+        currentValue -> original.put(entry.getKey(), currentValue)
+      );
       System.setProperty(entry.getKey(), entry.getValue());
     }
   }
@@ -115,7 +120,11 @@ public class TestConfiguration extends ExternalResource {
   @Override
   protected void after() {
     for (String key : configs.keySet()) {
-      System.clearProperty(key);
+      if (original.containsKey(key)) {
+        System.setProperty(key, original.remove(key));
+      } else {
+        System.clearProperty(key);
+      }
     }
   }
 }
