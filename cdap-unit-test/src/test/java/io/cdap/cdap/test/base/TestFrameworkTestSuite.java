@@ -26,7 +26,6 @@ import io.cdap.cdap.service.ServiceArtifactTestRun;
 import io.cdap.cdap.service.ServiceLifeCycleTestRun;
 import io.cdap.cdap.spark.SparkFileSetTestRun;
 import io.cdap.cdap.spark.SparkStreamingTestRun;
-import io.cdap.cdap.spark.metrics.SparkMetricsIntegrationTestRun;
 import io.cdap.cdap.spark.service.SparkServiceIntegrationTestRun;
 import io.cdap.cdap.test.TestConfiguration;
 import io.cdap.cdap.test.XSlowTests;
@@ -52,7 +51,6 @@ import org.junit.runners.Suite;
   ServiceArtifactTestRun.class,
   ServiceLifeCycleTestRun.class,
   SparkFileSetTestRun.class,
-  SparkMetricsIntegrationTestRun.class,
   SparkServiceIntegrationTestRun.class,
   TestFrameworkTestRun.class,
   SparkStreamingTestRun.class,

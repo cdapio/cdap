@@ -20,11 +20,13 @@ import io.cdap.cdap.common.test.TestSuite;
 import io.cdap.cdap.partitioned.PartitionConsumingTestRun;
 import io.cdap.cdap.partitioned.PartitionCorrectorTestRun;
 import io.cdap.cdap.partitioned.PartitionRollbackTestRun;
+import io.cdap.cdap.test.TestConfiguration;
 import io.cdap.cdap.test.XSlowTests;
 import io.cdap.cdap.test.app.DummyBaseCloneTestRun;
 import io.cdap.cdap.test.app.DummyBaseTestRun;
 import io.cdap.cdap.test.app.DynamicPartitioningTestRun;
 import io.cdap.cdap.test.app.TestSQLQueryTestRun;
+import org.junit.ClassRule;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
@@ -45,5 +47,8 @@ import org.junit.runners.Suite;
   TestSQLQueryTestRun.class
 })
 public class TestFrameworkExploreTestSuite extends TestFrameworkTestBase {
+
+  @ClassRule
+  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", true);
 
 }
