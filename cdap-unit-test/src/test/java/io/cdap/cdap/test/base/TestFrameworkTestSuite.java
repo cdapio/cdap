@@ -52,7 +52,6 @@ import org.junit.runners.Suite;
   ServiceArtifactTestRun.class,
   ServiceLifeCycleTestRun.class,
   SparkFileSetTestRun.class,
-  SparkMetricsIntegrationTestRun.class,
   SparkServiceIntegrationTestRun.class,
   TestFrameworkTestRun.class,
   SparkStreamingTestRun.class,
