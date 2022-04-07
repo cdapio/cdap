@@ -4868,6 +4868,13 @@
     </description>
   </property>
 
+  <property>
+    <name>system.worker.dispatch.program.types</name>
+    <value>workflow</value>
+    <description>
+      comma separated list of ProgramTypes
+    </description>
+  </property>
 
   <property>
     <name>artifact.localizer.container.num.cores</name>

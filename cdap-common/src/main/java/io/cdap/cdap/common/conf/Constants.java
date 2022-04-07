@@ -478,6 +478,7 @@ public final class Constants {
     public static final String LOCAL_DATA_DIR = "task.worker.local.data.dir";
     public static final String CLEANUP_EXECUTOR_SERVICE_BINDING = "cleanup.executor.service";
     public static final String CLEANUP_THREADS = "system.worker.cleanup.threads";
+    public static final String DISPATCH_PROGRAM_TYPES = "system.worker.dispatch.program.types";
 
     /**
      * System worker http handler configuration
