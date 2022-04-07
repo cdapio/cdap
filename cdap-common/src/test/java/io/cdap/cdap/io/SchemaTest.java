@@ -41,6 +41,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -82,7 +83,6 @@ public class SchemaTest {
   public enum State {
     OK, ERROR
   }
-
 
   @Test
   public void testGenerateSchema() throws UnsupportedTypeException {
@@ -666,6 +666,43 @@ public class SchemaTest {
   public void testCachedJavaSerialization() throws UnsupportedTypeException {
     Schema s1 = SchemaCache.intern(new ReflectionSchemaGenerator().generate(Node.class));
     Assert.assertSame(s1, SerializationUtils.clone(s1));
+  }
+
+  @Test
+  public void testNamedEnums() throws Exception {
+    List<String> enumValues = Arrays.asList("OK", "ERROR");
+    org.apache.avro.Schema avroEnumSchema = org.apache.avro.Schema.createEnum("state", null, null, enumValues);
+    List<org.apache.avro.Schema.Field> fields = new ArrayList<>();
+    fields.add(new org.apache.avro.Schema.Field("f1", avroEnumSchema, null, null));
+    fields.add(new org.apache.avro.Schema.Field("f2", avroEnumSchema, null, null));
+    org.apache.avro.Schema avroSchema = org.apache.avro.Schema.createRecord("x", null, null, false, fields);
+    // named enums will only define the full type once. All other times it will be referenced by the enum name
+    String schemaStr = avroSchema.toString();
+
+    // should be parsed correctly, remembering the named enum
+    List<Schema.Field> expectedFields = new ArrayList<>();
+    Schema enumSchema = Schema.enumWith("state", enumValues);
+    expectedFields.add(Schema.Field.of("f1", enumSchema));
+    expectedFields.add(Schema.Field.of("f2", enumSchema));
+    Schema expected = Schema.recordOf("x", expectedFields);
+    Schema schema = Schema.parseJson(schemaStr);
+    Assert.assertEquals(expected, schema);
+
+    // test that the enum name is used when writing out the schema
+    Assert.assertEquals(expected.toString(), schemaStr);
+  }
+
+  @Test
+  public void testCompatibleWithAvroMaps() throws Exception {
+    // Avro maps always have String keys whereas CDAP allows the key to be a different type
+    // Test that a map type without an explicit key type resolves to a String key type.
+    org.apache.avro.Schema avroSchema = org.apache.avro.Schema.createMap(
+      org.apache.avro.Schema.create(org.apache.avro.Schema.Type.INT));
+
+    String schemaStr = avroSchema.toString();
+    Schema schema = Schema.parseJson(schemaStr);
+    Schema expected = Schema.mapOf(Schema.nullableOf(Schema.of(Schema.Type.STRING)), Schema.of(Schema.Type.INT));
+    Assert.assertEquals(expected, schema);
   }
 
   private void verifyThrowsException(String toParse) {
