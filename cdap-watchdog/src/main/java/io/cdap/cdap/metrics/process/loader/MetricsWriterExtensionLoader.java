@@ -27,11 +27,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Extension loader to load log appenders.
@@ -42,7 +41,7 @@ public class MetricsWriterExtensionLoader extends AbstractExtensionLoader<String
   private static final Logger LOG = LoggerFactory.getLogger(MetricsWriterExtensionLoader.class);
   private static final Set<String> ALLOWED_RESOURCES = createAllowedResources();
   private static final Set<String> ALLOWED_PACKAGES = createPackageSets(ALLOWED_RESOURCES);
-  private Set<String> enabledMetricsWriters;
+  private Collection<String> enabledMetricsWriters;
 
   private static Set<String> createAllowedResources() {
     try {
@@ -56,14 +55,11 @@ public class MetricsWriterExtensionLoader extends AbstractExtensionLoader<String
   @Inject
   public MetricsWriterExtensionLoader(CConfiguration cConf) {
     super(cConf.get(Constants.Metrics.METRICS_WRITER_EXTENSIONS_DIR));
-    String enabledExtensions = cConf.get(Constants.Metrics.METRICS_WRITER_EXTENSIONS_ENABLED_LIST);
-    if (enabledExtensions == null) {
-      this.enabledMetricsWriters = Collections.emptySet();
+    this.enabledMetricsWriters = cConf.getStringCollection(Constants.Metrics.METRICS_WRITER_EXTENSIONS_ENABLED_LIST);
+    if (this.enabledMetricsWriters == null || this.enabledMetricsWriters.isEmpty()) {
       LOG.debug("No metric writers enabled.");
       return;
     }
-    String[] split = enabledExtensions.split(",");
-    this.enabledMetricsWriters = Arrays.stream(split).collect(Collectors.toSet());
     LOG.debug("Enabled metric writers are {} .", enabledMetricsWriters);
   }
 
