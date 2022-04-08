@@ -21,6 +21,8 @@ import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
+import com.google.inject.name.Names;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.spi.data.StorageProvider;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.common.DefaultStorageProvider;
@@ -30,10 +32,30 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunner;
  * Module to provide the binding for the new storage spi
  */
 public class StorageModule extends PrivateModule {
+  public static final String STORAGE_IMPL_NAME_KEY = "storageImplNameKey";
+
+  private final String storageImplNameKey;
+
+  /**
+   * Returns a storage module with the default name key.
+   */
+  public StorageModule() {
+    this.storageImplNameKey = Constants.Dataset.DATA_STORAGE_IMPLEMENTATION;
+  }
+
+  /**
+   * Returns a storage module with a specific name key.
+   * @param storageImplNameKey The specific name key to use as an override config
+   */
+  public StorageModule(String storageImplNameKey) {
+    this.storageImplNameKey = storageImplNameKey;
+  }
 
   @Override
   protected void configure() {
     bind(StorageProvider.class).to(DefaultStorageProvider.class).in(Scopes.SINGLETON);
+    bind(String.class).annotatedWith(Names.named(STORAGE_IMPL_NAME_KEY))
+      .toInstance(storageImplNameKey);
 
     expose(StorageProvider.class);
     expose(TransactionRunner.class);

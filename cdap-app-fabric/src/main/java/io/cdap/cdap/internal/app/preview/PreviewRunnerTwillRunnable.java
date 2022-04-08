@@ -56,6 +56,7 @@ import io.cdap.cdap.data.runtime.ConstantTransactionSystemClient;
 import io.cdap.cdap.data.runtime.DataFabricModules;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
+import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data2.audit.AuditModule;
 import io.cdap.cdap.data2.transaction.DelegatingTransactionSystemClientService;
 import io.cdap.cdap.data2.transaction.TransactionSystemClientService;
@@ -265,6 +266,7 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
 
         bind(ExploreClient.class).to(UnsupportedExploreClient.class);
         bind(PreviewRequestPollerInfoProvider.class).toInstance(() -> pollerInfoBytes);
+        install(new StorageModule(Constants.Preview.STORAGE_IMPL_NAME));
       }
     }));
 
