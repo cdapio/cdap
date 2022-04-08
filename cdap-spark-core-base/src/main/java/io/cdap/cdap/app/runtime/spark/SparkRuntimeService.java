@@ -224,7 +224,8 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       final URI jobFile = context.isPySpark() ? getPySparkScript(tempDir) : createJobJar(tempDir);
       List<File> extraPySparkFiles = new ArrayList<>();
 
-      String metricsConfPath;
+      boolean sparkMetricsEnabled = cConf.getBoolean(Constants.Metrics.SPARK_METRICS_ENABLED);
+      String metricsConfPath = null;
       String classpath = "";
 
       // Setup the SparkConf with properties from spark-defaults.conf
@@ -238,9 +239,12 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         localizeResources.add(new LocalizeResource(saveCConf(cConfCopy, tempDir)));
         Configuration hConf = contextConfig.set(runtimeContext, pluginArchive).getConfiguration();
         localizeResources.add(new LocalizeResource(saveHConf(hConf, tempDir)));
-        File metricsConf = SparkMetricsSink.writeConfig(new File(tempDir, CDAP_METRICS_PROPERTIES));
-        metricsConfPath = metricsConf.getAbsolutePath();
-        localizeResources.add(new LocalizeResource(metricsConf));
+        if (sparkMetricsEnabled) {
+          File metricsConf = SparkMetricsSink.writeConfig(new File(tempDir, CDAP_METRICS_PROPERTIES));
+          metricsConfPath = metricsConf.getAbsolutePath();
+          localizeResources.add(new LocalizeResource(metricsConf));
+        }
+
         File logbackJar = ProgramRunners.createLogbackJar(new File(tempDir, "logback.xml.jar"));
         if (logbackJar != null) {
           localizeResources.add(new LocalizeResource(logbackJar, true));
@@ -263,8 +267,10 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         // In local mode, always copy (or link if local) user requested resources
         copyUserResources(context.getLocalizeResources(), tempDir);
 
-        File metricsConf = SparkMetricsSink.writeConfig(new File(tempDir, CDAP_METRICS_PROPERTIES));
-        metricsConfPath = metricsConf.getAbsolutePath();
+        if (sparkMetricsEnabled) {
+          File metricsConf = SparkMetricsSink.writeConfig(new File(tempDir, CDAP_METRICS_PROPERTIES));
+          metricsConfPath = metricsConf.getAbsolutePath();
+        }
 
         extractPySparkLibrary(tempDir, extraPySparkFiles);
       } else {
@@ -288,12 +294,14 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         // Create and localize the launcher jar, which is for setting up services and classloader for spark containers
         localizeResources.add(new LocalizeResource(createLauncherJar(tempDir)));
 
-        // Create metrics conf file in the current directory since
-        // the same value for the "spark.metrics.conf" config needs to be used for both driver and executor processes
-        // Also localize the metrics conf file to the executor nodes
-        File metricsConf = SparkMetricsSink.writeConfig(new File(CDAP_METRICS_PROPERTIES));
-        metricsConfPath = metricsConf.getName();
-        localizeResources.add(new LocalizeResource(metricsConf));
+        if (sparkMetricsEnabled) {
+          // Create metrics conf file in the current directory since
+          // the same value for the "spark.metrics.conf" config needs to be used for both driver and executor processes
+          // Also localize the metrics conf file to the executor nodes
+          File metricsConf = SparkMetricsSink.writeConfig(new File(CDAP_METRICS_PROPERTIES));
+          metricsConfPath = metricsConf.getName();
+          localizeResources.add(new LocalizeResource(metricsConf));
+        }
 
         prepareHBaseDDLExecutorResources(tempDir, cConfCopy, localizeResources);
 
@@ -563,7 +571,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   /**
    * Creates the configurations for the spark submitter.
    */
-  private Map<String, String> createSubmitConfigs(File localDir, String metricsConfPath, String classpath,
+  private Map<String, String> createSubmitConfigs(File localDir, @Nullable String metricsConfPath, String classpath,
                                                   Map<String, LocalizeResource> localizedResources,
                                                   boolean localMode,
                                                   Iterable<URI> pyFiles) throws Exception {
@@ -626,7 +634,9 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     // Add the spark listener for CDAP
     prependConfig(configs, "spark.extraListeners", DelegatingSparkListener.class.getName(), ",");
 
-    configs.put("spark.metrics.conf", metricsConfPath);
+    if (metricsConfPath != null) {
+      configs.put("spark.metrics.conf", metricsConfPath);
+    }
     SparkRuntimeUtils.setLocalizedResources(localizedResources.keySet(), configs);
 
     if (context.isPySpark()) {

@@ -177,6 +177,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.Manifest;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 /**
@@ -198,6 +199,7 @@ public class TestBase {
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   static Injector injector;
+  private static Map<String, String> customConfiguration;
   private static CConfiguration cConf;
   private static int nestedStartCount;
   private static boolean firstInit = true;
@@ -234,11 +236,16 @@ public class TestBase {
   @BeforeClass
   public static void initialize() throws Exception {
     if (nestedStartCount++ > 0) {
+      Assert.assertEquals(
+        "Test is loaded that requires custom configuration while other configuration is in place. " +
+          "Please check if test is part of the suite and apply configuration on the suite level",
+        customConfiguration, getCustomConfiguration());
       return;
     }
     File localDataDir = TMP_FOLDER.newFolder();
 
-    cConf = createCConf(localDataDir);
+    customConfiguration = getCustomConfiguration();
+    cConf = createCConf(localDataDir, customConfiguration);
 
     CConfiguration previewCConf = createPreviewConf(cConf);
     LevelDBTableService previewLevelDBTableService = new LevelDBTableService();
@@ -506,7 +513,17 @@ public class TestBase {
     }
   }
 
-  private static CConfiguration createCConf(File localDataDir) throws IOException {
+  private static Map<String, String> getCustomConfiguration() {
+    return System.getProperties().stringPropertyNames().stream()
+      .filter(key -> key.startsWith(TestConfiguration.PROPERTY_PREFIX))
+      .collect(Collectors.toMap(
+        key -> key.substring(TestConfiguration.PROPERTY_PREFIX.length()),
+        key -> System.getProperty(key)
+      ));
+  }
+
+  private static CConfiguration createCConf(File localDataDir,
+                                            Map<String, String> customConfiguration) throws IOException {
     CConfiguration cConf = CConfiguration.create();
 
     // Setup defaults that can be overridden by user
@@ -518,12 +535,9 @@ public class TestBase {
 
     // Setup test case specific configurations.
     // The system properties are usually setup by TestConfiguration class using @ClassRule
-    for (String key : System.getProperties().stringPropertyNames()) {
-      if (key.startsWith(TestConfiguration.PROPERTY_PREFIX)) {
-        String value = System.getProperty(key);
-        cConf.set(key.substring(TestConfiguration.PROPERTY_PREFIX.length()), System.getProperty(key));
-        LOG.info("Custom configuration set: {} = {}", key, value);
-      }
+    for (Map.Entry<String, String> e: customConfiguration.entrySet()) {
+      cConf.set(e.getKey(), e.getValue());
+      LOG.info("Custom configuration set: {} = {}", e.getKey(), e.getValue());
     }
 
     // These configurations cannot be overridden by user
