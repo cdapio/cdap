@@ -398,7 +398,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
           try {
             RunRecord runRecord = runRecordFetcher.getRunRecordMeta(GSON.fromJson(programRunId, ProgramRunId.class));
             if (runRecord.getPeerName() != null) {
-              peerToNotifications.getOrDefault(runRecord.getPeerName(), new ArrayList<>()).add(notification);
+              peerToNotifications.computeIfAbsent(runRecord.getPeerName(), n -> new ArrayList<>()).add(notification);
             }
           } catch (NotFoundException | IOException e) {
             LOG.error("Unable to fetch runRecord for programRunId {}", programRunId, e);
