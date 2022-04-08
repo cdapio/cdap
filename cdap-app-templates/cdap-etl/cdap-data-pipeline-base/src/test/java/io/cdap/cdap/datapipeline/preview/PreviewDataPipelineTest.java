@@ -70,6 +70,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -625,5 +626,99 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
       return 0;
     }
     return timeValues.get(0).getValue();
+  }
+
+  @Test
+  public void testPreferencesPreviewRuns() throws Exception {
+    testPreferencesPreviewRun(Engine.MAPREDUCE);
+    testPreferencesPreviewRun(Engine.SPARK);
+  }
+
+  private void testPreferencesPreviewRun(Engine engine) throws Exception {
+    PreviewManager previewManager = getPreviewManager();
+    Map<String, String> previousPreferences = getPreferencesService().getProperties();
+
+    String sourceTableName = "singleInput";
+    String sinkTableName = "singleOutput";
+    String sourceTableMacroName = "table.input.name";
+    String sourceTableMacroKey = String.format("${%s}", sourceTableMacroName);
+    String sinkTableMacroName = "table.output.name";
+    String sinkTableMacroKey = String.format("${%s}", sinkTableMacroName);
+    Map<String, String> previewPreferences = new HashMap<>();
+    previewPreferences.put("test-preference-a", "test-value-a");
+    previewPreferences.put("test-preference-b", "test-value-b");
+    previewPreferences.put(sourceTableMacroName, sourceTableName);
+    previewPreferences.put(sinkTableMacroName, sinkTableName);
+    getPreferencesService().setProperties(previewPreferences);
+    Schema schema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+    );
+
+    /*
+     * source --> transform -> sink
+     */
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
+      .addStage(new ETLStage("source", MockSource.getPlugin(sourceTableMacroKey, schema)))
+      .addStage(new ETLStage("transform", IdentityTransform.getPlugin()))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(sinkTableMacroKey)))
+      .addConnection("source", "transform")
+      .addConnection("transform", "sink")
+      .setEngine(engine)
+      .setNumOfRecordsPreview(100)
+      .build();
+
+
+    // Construct the preview config with the program name and program type
+    PreviewConfig previewConfig = new PreviewConfig(SmartWorkflow.NAME, ProgramType.WORKFLOW,
+                                                    Collections.<String, String>emptyMap(), 10);
+
+    // Create the table for the mock source
+    addDatasetInstance(Table.class.getName(), sourceTableName,
+                       DatasetProperties.of(ImmutableMap.of("schema", schema.toString())));
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset(sourceTableName));
+    StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
+    StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
+    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob));
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT_RANGE, etlConfig, previewConfig);
+
+    // Start the preview and get the corresponding PreviewRunner.
+    ApplicationId previewId = previewManager.start(NamespaceId.DEFAULT, appRequest);
+
+    // Wait for the preview status go into COMPLETED.
+    Tasks.waitFor(PreviewStatus.Status.COMPLETED, new Callable<PreviewStatus.Status>() {
+      @Override
+      public PreviewStatus.Status call() throws Exception {
+        PreviewStatus status = previewManager.getStatus(previewId);
+        return status == null ? null : status.getStatus();
+      }
+    }, 5, TimeUnit.MINUTES);
+
+    // Get the data for stage "source" in the PreviewStore, should contain two records.
+    checkPreviewStore(previewManager, previewId, "source", 2);
+
+    // Get the data for stage "transform" in the PreviewStore, should contain two records.
+    checkPreviewStore(previewManager, previewId, "transform", 2);
+
+    // Get the data for stage "sink" in the PreviewStore, should contain two records.
+    checkPreviewStore(previewManager, previewId, "sink", 2);
+
+    // Validate the metrics for preview
+    validateMetric(2, previewId, "source.records.in", previewManager);
+    validateMetric(2, previewId, "source.records.out", previewManager);
+    validateMetric(2, previewId, "transform.records.in", previewManager);
+    validateMetric(2, previewId, "transform.records.out", previewManager);
+    validateMetric(2, previewId, "sink.records.out", previewManager);
+    validateMetric(2, previewId, "sink.records.in", previewManager);
+
+    // Check the sink table is not created in the real space.
+    DataSetManager<Table> sinkManager = getDataset(sinkTableName);
+    Assert.assertNull(sinkManager.get());
+    deleteDatasetInstance(NamespaceId.DEFAULT.dataset(sourceTableName));
+    Assert.assertNotNull(previewManager.getRunId(previewId));
+
+    // Reset the preferences.
+    getPreferencesService().setProperties(previousPreferences);
   }
 }
