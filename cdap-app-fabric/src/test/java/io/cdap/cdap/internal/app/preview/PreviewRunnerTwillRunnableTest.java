@@ -17,6 +17,8 @@
 package io.cdap.cdap.internal.app.preview;
 
 import com.google.inject.Injector;
+import io.cdap.cdap.app.preview.DefaultPreviewRunnerManager;
+import io.cdap.cdap.app.preview.PreviewRunner;
 import io.cdap.cdap.app.preview.PreviewRunnerManager;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.internal.app.runtime.k8s.PreviewRequestPollerInfo;
@@ -32,6 +34,9 @@ public class PreviewRunnerTwillRunnableTest {
   public void testInjector() {
     Injector injector = PreviewRunnerTwillRunnable.createInjector(CConfiguration.create(), new Configuration(),
                                                                   new PreviewRequestPollerInfo(0, "testuid"));
-    injector.getInstance(PreviewRunnerManager.class);
+    DefaultPreviewRunnerManager defaultPreviewRunnerManager = (DefaultPreviewRunnerManager) injector
+      .getInstance(PreviewRunnerManager.class);
+    Injector previewInjector = defaultPreviewRunnerManager.createPreviewInjector();
+    previewInjector.getInstance(PreviewRunner.class);
   }
 }

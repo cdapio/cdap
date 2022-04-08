@@ -168,7 +168,7 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
    * Create injector for the given application id.
    */
   @VisibleForTesting
-  Injector createPreviewInjector() {
+  public Injector createPreviewInjector() {
     return Guice.createInjector(
       new ConfigModule(previewCConf, previewHConf, previewSConf),
       new IOModule(),
@@ -193,7 +193,7 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
           bind(LogAppender.class).to(PreviewTMSLogAppender.class).in(Scopes.SINGLETON);
         }
       },
-    new MessagingServerRuntimeModule().getInMemoryModules(),
+      new MessagingServerRuntimeModule().getInMemoryModules(),
       Modules.override(new MetadataReaderWriterModules().getInMemoryModules()).with(new AbstractModule() {
         @Override
         protected void configure() {

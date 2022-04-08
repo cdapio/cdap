@@ -28,16 +28,20 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
-import com.google.inject.util.Modules;
+import com.google.inject.Scopes;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.multibindings.MapBinder;
 import io.cdap.cdap.api.common.Bytes;
-import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
-import io.cdap.cdap.app.guice.AuthorizationModule;
-import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
-import io.cdap.cdap.app.guice.UnsupportedExploreClient;
+import io.cdap.cdap.app.deploy.Configurator;
+import io.cdap.cdap.app.guice.DefaultProgramRunnerFactory;
 import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.preview.PreviewRunner;
 import io.cdap.cdap.app.preview.PreviewRunnerManager;
 import io.cdap.cdap.app.preview.PreviewRunnerManagerModule;
+import io.cdap.cdap.app.runtime.ProgramRunner;
+import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
+import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
+import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
@@ -53,14 +57,18 @@ import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.data.runtime.ConstantTransactionSystemClient;
-import io.cdap.cdap.data.runtime.DataFabricModules;
-import io.cdap.cdap.data.runtime.DataSetServiceModules;
-import io.cdap.cdap.data.runtime.DataSetsModules;
-import io.cdap.cdap.data2.audit.AuditModule;
-import io.cdap.cdap.data2.transaction.DelegatingTransactionSystemClientService;
-import io.cdap.cdap.data2.transaction.TransactionSystemClientService;
-import io.cdap.cdap.explore.client.ExploreClient;
+import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
+import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
+import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
+import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReader;
+import io.cdap.cdap.internal.app.runtime.artifact.RemotePluginFinder;
 import io.cdap.cdap.internal.app.runtime.k8s.PreviewRequestPollerInfo;
+import io.cdap.cdap.internal.app.worker.RemoteWorkerPluginFinder;
+import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerClient;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
@@ -68,15 +76,13 @@ import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.twill.ExtendedTwillContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
-import io.cdap.cdap.metadata.MetadataReaderWriterModules;
-import io.cdap.cdap.metadata.MetadataServiceModule;
-import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
-import io.cdap.cdap.metrics.guice.MetricsStoreModule;
+import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
-import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
+import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
+import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.spi.data.StorageProvider;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionSystemClient;
@@ -214,7 +220,6 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
     modules.add(RemoteAuthenticatorModules.getDefaultModule());
     modules.add(new PreviewConfigModule(cConf, hConf, sConf));
     modules.add(new IOModule());
-    modules.add(new MetricsClientRuntimeModule().getDistributedModules());
 
     // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
     MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
@@ -238,36 +243,45 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
     }
 
     modules.add(new PreviewRunnerManagerModule().getDistributedModules());
-    modules.add(new DataSetServiceModules().getStandaloneModules());
-    modules.add(new DataSetsModules().getStandaloneModules());
-    modules.add(new AppFabricServiceRuntimeModule(cConf).getStandaloneModules());
-    modules.add(new ProgramRunnerRuntimeModule().getStandaloneModules());
-    modules.add(new MetricsStoreModule());
     modules.add(new MessagingClientModule());
-    modules.add(new AuditModule());
     modules.add(new SecureStoreClientModule());
-    modules.add(new MetadataReaderWriterModules().getStandaloneModules());
+    // Needed for InMemoryProgramRunnerModule. We use local metadata reader/publisher to avoid conflicting with
+    // metadata stored in AppFabric.
     modules.add(new DFSLocationModule());
-    modules.add(new MetadataServiceModule());
-    modules.add(new CoreSecurityRuntimeModule().getInMemoryModules());
+    // Configurator tasks should be executed in-memory since it is in the preview runner pod.
+    modules.add(new FactoryModuleBuilder().implement(Configurator.class, InMemoryConfigurator.class)
+                  .build(ConfiguratorFactory.class));
+
     modules.add(new AuthenticationContextModules().getMasterWorkerModule());
-    modules.add(new AuthorizationModule());
     modules.add(new AuthorizationEnforcementModule().getNoOpModules());
-    modules.add(Modules.override(
-      new DataFabricModules("master").getDistributedModules()).with(new AbstractModule() {
+    modules.add(new AbstractModule() {
       @Override
       protected void configure() {
-        // Bind transaction system to a constant one, basically no transaction, with every write become
-        // visible immediately.
-        // TODO: Ideally we shouldn't need this at all. However, it is needed now to satisfy dependencies
-        bind(TransactionSystemClientService.class).to(DelegatingTransactionSystemClientService.class);
         bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class);
 
-        bind(ExploreClient.class).to(UnsupportedExploreClient.class);
         bind(PreviewRequestPollerInfoProvider.class).toInstance(() -> pollerInfoBytes);
-      }
-    }));
 
+        // Artifact Repository should use RemoteArtifactRepository.
+        // TODO(CDAP-19041): Consider adding a remote artifact respository handler to the preview manager so that
+        //  preview runners do not have to talk directly to app-fabric for artifacts to prevent hot-spotting.
+        bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class).in(Scopes.SINGLETON);
+        bind(ArtifactRepository.class).to(RemoteArtifactRepository.class);
+        // Use artifact localizer client if it is enabled, otherwise use regular RemotePluginFinder
+        if (cConf.getBoolean(Constants.Preview.ARTIFACT_LOCALIZER_ENABLED)) {
+          bind(PluginFinder.class).to(RemoteWorkerPluginFinder.class);
+          bind(ArtifactLocalizerClient.class).in(Scopes.SINGLETON);
+        } else {
+          bind(PluginFinder.class).to(RemotePluginFinder.class);
+        }
+        // Preview runner pods should not have any elevated privileges, so use the current UGI.
+        bind(UGIProvider.class).to(CurrentUGIProvider.class);
+        // Need ProgramRunnerFactory for the RemoteArtifactRepository
+        bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
+        MapBinder.newMapBinder(binder(), ProgramType.class, ProgramRunner.class);
+        bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class);
+        bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.LOCAL);
+      }
+    });
 
     return Guice.createInjector(modules);
   }
