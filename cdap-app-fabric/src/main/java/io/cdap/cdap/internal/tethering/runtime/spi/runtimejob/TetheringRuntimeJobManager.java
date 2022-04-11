@@ -111,27 +111,31 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
       return;
     }
     RuntimeJobStatus status = jobDetail.getStatus();
-    if (status.isTerminated() || status == RuntimeJobStatus.STOPPING) {
+    if (status.isTerminated()) {
       return;
     }
     LOG.debug("Stopping run {} with following configurations: tethered instance name {}, tethered namespace {}.",
               programRunInfo.getRun(), tetheredInstanceName, tetheredNamespace);
-    ProgramRunInfo stopPayload = new ProgramRunInfo.Builder()
-      .setNamespace(tetheredNamespace)
-      .setApplication(programRunInfo.getApplication())
-      .setVersion(programRunInfo.getVersion())
-      .setProgramType(programRunInfo.getProgramType())
-      .setProgram(programRunInfo.getProgram())
-      .setRun(programRunInfo.getRun())
-      .build();
-    byte[] payload = Bytes.toBytes(GSON.toJson(stopPayload));
-    TetheringControlMessage message = new TetheringControlMessage(TetheringControlMessage.Type.STOP_PROGRAM, payload);
+    TetheringControlMessage message = createProgramTerminatePayload(programRunInfo,
+                                                                    TetheringControlMessage.Type.STOP_PROGRAM);
     publishToControlChannel(message);
   }
 
   @Override
   public void kill(ProgramRunInfo programRunInfo) throws Exception {
-    stop(programRunInfo);
+    RuntimeJobDetail jobDetail = getDetail(programRunInfo).orElse(null);
+    if (jobDetail == null) {
+      return;
+    }
+    RuntimeJobStatus status = jobDetail.getStatus();
+    if (status.isTerminated()) {
+      return;
+    }
+    LOG.debug("Killing run {} with following configurations: tethered instance name {}, tethered namespace {}.",
+              programRunInfo.getRun(), tetheredInstanceName, tetheredNamespace);
+    TetheringControlMessage message = createProgramTerminatePayload(programRunInfo,
+                                                                    TetheringControlMessage.Type.KILL_PROGRAM);
+    publishToControlChannel(message);
   }
 
   @Override
@@ -190,5 +194,22 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
     builder.addRuntimeNamespace(tetheredNamespace);
     builder.addPeerNamespace(runtimeJobInfo.getProgramRunInfo().getNamespace());
     return builder.build();
+  }
+
+  /**
+   * Create control message payload to stop or kill a program.
+   */
+  private TetheringControlMessage createProgramTerminatePayload(ProgramRunInfo programRunInfo,
+                                                                TetheringControlMessage.Type messageType) {
+    ProgramRunInfo stopPayload = new ProgramRunInfo.Builder()
+      .setNamespace(tetheredNamespace)
+      .setApplication(programRunInfo.getApplication())
+      .setVersion(programRunInfo.getVersion())
+      .setProgramType(programRunInfo.getProgramType())
+      .setProgram(programRunInfo.getProgram())
+      .setRun(programRunInfo.getRun())
+      .build();
+    byte[] payload = Bytes.toBytes(GSON.toJson(stopPayload));
+    return new TetheringControlMessage(messageType, payload);
   }
 }
