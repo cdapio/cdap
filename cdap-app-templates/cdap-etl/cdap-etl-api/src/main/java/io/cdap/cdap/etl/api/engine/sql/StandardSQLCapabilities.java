@@ -25,5 +25,9 @@ public enum StandardSQLCapabilities implements Capability {
   /**
    * Defines that factory implements SQL92 language
    */
-  SQL92
+  SQL92,
+  /**
+   * Defines that factory implements support for BigQuery specific language
+   */
+  BIGQUERY
 }
