@@ -158,9 +158,12 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
     boolean isDistributed = programRunDispatcherInfo.isDistributed();
     ProgramId programId = programDescriptor.getProgramId();
     ClusterMode clusterMode = ProgramRunners.getClusterMode(options);
-    ProgramRunnerFactory progRunnerFactory = (clusterMode == ClusterMode.ON_PREMISE ? programRunnerFactory
-      : Optional.ofNullable(remoteProgramRunnerFactory).orElseThrow(UnsupportedOperationException::new));
-
+    boolean tetheredRun = options.getArguments().hasOption(ProgramOptionConstants.PEER_NAME);
+    ProgramRunnerFactory progRunnerFactory = programRunnerFactory;
+    if (clusterMode == ClusterMode.ISOLATED && !tetheredRun) {
+      progRunnerFactory = Optional.ofNullable(remoteProgramRunnerFactory)
+        .orElseThrow(UnsupportedOperationException::new);
+    }
     String peer = options.getArguments().getOption(ProgramOptionConstants.PEER_NAME);
     if (peer != null) {
       // For tethered pipeline runs, fetch artifacts from ArtifactCacheService
