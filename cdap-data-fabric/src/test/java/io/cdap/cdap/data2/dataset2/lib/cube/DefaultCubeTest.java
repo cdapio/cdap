@@ -31,7 +31,15 @@ import java.util.Map;
 public class DefaultCubeTest extends AbstractCubeTest {
 
   @Override
-  protected Cube getCube(final String name, int[] resolutions, Map<String, ? extends Aggregation> aggregations) {
+  protected Cube getCube(String name, int[] resolutions, Map<String, ? extends Aggregation> aggregations)
+    throws Exception {
+    return getCube(name, resolutions, aggregations, 10, 1);
+  }
+
+  @Override
+  protected Cube getCube(String name, int[] resolutions, Map<String, ? extends Aggregation> aggregations,
+                         int coarseLagFactor, int coarseRoundFactor) throws Exception {
+
     FactTableSupplier supplier = (resolution, rollTime) -> {
       String entityTableName = "EntityTable-" + name;
       InMemoryTableService.create(entityTableName);
@@ -39,7 +47,7 @@ public class DefaultCubeTest extends AbstractCubeTest {
       InMemoryTableService.create(dataTableName);
       return new FactTable(new InMemoryMetricsTable(dataTableName),
                            new EntityTable(new InMemoryMetricsTable(entityTableName)),
-                           resolution, rollTime);
+                           resolution, rollTime, coarseLagFactor, coarseRoundFactor);
 
     };
 

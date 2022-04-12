@@ -126,6 +126,9 @@ public abstract class MetricsSuiteTestBase {
     conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
     conf.setBoolean(Constants.Metrics.CONFIG_AUTHENTICATION_REQUIRED, true);
     conf.set(Constants.Metrics.CLUSTER_NAME, CLUSTER);
+    //Disable coarsing as it will be flacky on integration test level due to variable timing.
+    //It's tested on lower level
+    conf.setInt(Constants.Metrics.COARSE_ROUND_FACTOR, 1);
 
     Injector injector = startMetricsService(conf);
     store = injector.getInstance(Store.class);
