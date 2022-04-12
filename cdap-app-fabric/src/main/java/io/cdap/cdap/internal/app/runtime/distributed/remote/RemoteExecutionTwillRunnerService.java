@@ -51,6 +51,7 @@ import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.provision.LocationBasedSSHKeyPair;
 import io.cdap.cdap.internal.provision.ProvisioningService;
+import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringProvisioner;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -617,11 +618,21 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
       RemoteExecutionService remoteExecutionService = createRemoteExecutionService(programRunId, programOpts,
                                                                                    processController);
 
+      // TODO: (CDAP-19047) rework the contract here to be cleaner instead of implementation specific
+      // If this is a tethered run, the RemoteProcessController needs to be used to gracefully stop the run
+      // Otherwise, stopping is handled by the RuntimeClient to have the program shut itself down,
+      // so the RemoteProcessController doesn't need to explicit stop anything
+      Map<String, String> systemArguments = programOpts.getArguments().asMap();
+      String provisionerName = SystemArguments.getProfileProvisioner(systemArguments);
+      String peerName = systemArguments.get(ProgramOptionConstants.PEER_NAME);
+      boolean useControllerToStop = TetheringProvisioner.TETHERING_NAME.equals(provisionerName) &&
+        peerName == null;
       // Create the controller and start the runtime monitor when the startup task completed successfully.
       RemoteExecutionTwillController controller = new RemoteExecutionTwillController(cConf, programRunId,
                                                                                      startupTaskCompletion,
                                                                                      processController,
-                                                                                     scheduler, remoteExecutionService);
+                                                                                     scheduler, remoteExecutionService,
+                                                                                     useControllerToStop);
       startupTaskCompletion.thenAccept(o -> remoteExecutionService.start());
 
       // On this controller termination, make sure it is removed from the controllers map and have resources released.

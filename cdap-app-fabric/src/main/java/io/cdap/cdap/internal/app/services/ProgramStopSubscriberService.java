@@ -26,11 +26,9 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
-import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeProgramStatusSubscriberService;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
-import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringProvisioner;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramRunStatus;
@@ -131,12 +129,6 @@ public class ProgramStopSubscriberService extends AbstractNotificationSubscriber
       // shouldn't happen, but nothing to do but move on
       LOG.warn("Ignoring stop message for application {} program {} run {} because the run record could not be found.",
                programRunId.getApplication(), programRunId.getProgram(), programRunId.getRun());
-      return;
-    }
-    // If this run was initiated by this CDAP instance to run on another instance, it will use the tethering
-    // provisioner. The instance that actually runs it on the other side will have a non-null peer name.
-    String provisionerName = SystemArguments.getProfileProvisioner(runRecord.getSystemArgs());
-    if (runRecord.getPeerName() == null && TetheringProvisioner.TETHERING_NAME.equals(provisionerName)) {
       return;
     }
     ProgramRunStatus programStatus = runRecord.getStatus();
