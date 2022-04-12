@@ -61,9 +61,24 @@ public class CubeDatasetTest extends AbstractCubeTest {
     return new CubeTxnlWrapper(getCubeInternal(name, resolutions, aggregations));
   }
 
+  @Override
+  protected Cube getCube(String name, int[] resolutions, Map<String, ? extends Aggregation> aggregations,
+                         int coarseLagFactor, int coarseRoundFactor) throws Exception {
+    return new CubeTxnlWrapper(getCubeInternal(name, resolutions, aggregations, coarseLagFactor, coarseRoundFactor));
+  }
+
   private Cube getCubeInternal(String name, int[] resolutions,
-                                  Map<String, ? extends Aggregation> aggregations) throws Exception {
-    DatasetProperties props = configureProperties(resolutions, aggregations);
+                               Map<String, ? extends Aggregation> aggregations
+  ) throws Exception {
+    return getCubeInternal(name, resolutions, aggregations, null, null);
+  }
+
+  private Cube getCubeInternal(String name, int[] resolutions,
+                               Map<String, ? extends Aggregation> aggregations,
+                               Integer coarseLagFactor,
+                               Integer coarseRoundFactor
+                               ) throws Exception {
+    DatasetProperties props = configureProperties(resolutions, aggregations, coarseLagFactor, coarseRoundFactor);
     DatasetId id = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset(name);
     if (dsFrameworkUtil.getInstance(id) == null) {
       dsFrameworkUtil.createInstance(Cube.class.getName(), id, props);
@@ -132,7 +147,8 @@ public class CubeDatasetTest extends AbstractCubeTest {
     }
   }
 
-  private DatasetProperties configureProperties(int[] resolutions, Map<String, ? extends Aggregation> aggregations) {
+  private DatasetProperties configureProperties(int[] resolutions, Map<String, ? extends Aggregation> aggregations,
+                                                Integer coarseLagFactor, Integer coarseRoundFactor) {
     DatasetProperties.Builder builder = DatasetProperties.builder();
 
     // add resolution property
@@ -154,6 +170,14 @@ public class CubeDatasetTest extends AbstractCubeTest {
       if (!defAgg.getRequiredDimensions().isEmpty()) {
         builder.add(aggPropertyPrefix + ".requiredDimensions", Joiner.on(",").join(defAgg.getRequiredDimensions()));
       }
+    }
+
+    if (coarseLagFactor != null) {
+      builder.add(CubeDatasetDefinition.PROPERTY_COARSE_LAG_FACTOR, coarseLagFactor);
+    }
+
+    if (coarseRoundFactor != null) {
+      builder.add(CubeDatasetDefinition.PROPERTY_COARSE_ROUND_FACTOR, coarseRoundFactor);
     }
 
     return builder.build();

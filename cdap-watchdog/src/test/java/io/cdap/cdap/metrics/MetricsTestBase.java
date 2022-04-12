@@ -76,6 +76,9 @@ public abstract class MetricsTestBase {
     cConf.setInt(Constants.Metrics.QUEUE_SIZE, 1000);
     // Set it to really short delay for faster test
     cConf.setLong(Constants.Metrics.PROCESSOR_MAX_DELAY_MS, 5);
+    //Disable coarsing as it will be flacky on integration test level due to variable timing.
+    //It's tested on lower level
+    cConf.setInt(Constants.Metrics.COARSE_ROUND_FACTOR, 1);
 
     injector = Guice.createInjector(getModules());
     messagingService = injector.getInstance(MessagingService.class);
