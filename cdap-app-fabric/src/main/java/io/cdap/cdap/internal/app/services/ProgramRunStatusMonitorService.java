@@ -119,6 +119,7 @@ public class ProgramRunStatusMonitorService extends AbstractRetryableScheduledSe
    *
    * @return a set of programRunIds for which program termination was attempted
    */
+  @VisibleForTesting
   Set<ProgramRunId> terminatePrograms() {
     // fetch all runs that are in stopping state that started at most a minute before current time.
     // Specifying the entire time range should not be worse in performance

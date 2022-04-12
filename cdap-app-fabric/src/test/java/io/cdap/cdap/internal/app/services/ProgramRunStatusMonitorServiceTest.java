@@ -73,7 +73,7 @@ public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
   }
 
   @Test
-  public void testStoppingProgramsBeyondTerminateTimeAreKilled() {
+  public void testStoppingProgramsBeyondTerminateTimeAreKilled() throws InterruptedException {
     AtomicInteger sourceId = new AtomicInteger(0);
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
     // set up a workflow for a program in Stopping state
@@ -102,7 +102,7 @@ public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
     programRunStatusMonitorService.startAndWait();
     Assert.assertEquals(1, latch.getCount());
     programRunStatusMonitorService.terminatePrograms();
-    Assert.assertEquals(0, latch.getCount());
+    latch.await(10, TimeUnit.SECONDS);
   }
 
   @Test
@@ -135,8 +135,7 @@ public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
     ProgramRunStatusMonitorService programRunStatusMonitorService
       = new ProgramRunStatusMonitorService(cConf, store, testService, 5, 3, 2);
     Assert.assertEquals(1, latch.getCount());
-    programRunStatusMonitorService.terminatePrograms();
-    Assert.assertEquals(1, latch.getCount());
+    Assert.assertTrue(programRunStatusMonitorService.terminatePrograms().isEmpty());
   }
 
   @Test
@@ -166,8 +165,7 @@ public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
     ProgramRunStatusMonitorService programRunStatusMonitorService
       = new ProgramRunStatusMonitorService(cConf, store, testService, 5, 3, 2);
     Assert.assertEquals(1, latch.getCount());
-    programRunStatusMonitorService.terminatePrograms();
-    Assert.assertEquals(1, latch.getCount());
+    Assert.assertTrue(programRunStatusMonitorService.terminatePrograms().isEmpty());
   }
 
   @Test
@@ -198,8 +196,7 @@ public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
     ProgramRunStatusMonitorService programRunStatusMonitorService
       = new ProgramRunStatusMonitorService(cConf, store, testService, 5, 3, 2);
     Assert.assertEquals(1, latch.getCount());
-    programRunStatusMonitorService.terminatePrograms();
-    Assert.assertEquals(1, latch.getCount());
+    Assert.assertTrue(programRunStatusMonitorService.terminatePrograms().isEmpty());
   }
 
   private ProgramRuntimeService.RuntimeInfo getRuntimeInfo(ProgramId programId, CountDownLatch latch) {
