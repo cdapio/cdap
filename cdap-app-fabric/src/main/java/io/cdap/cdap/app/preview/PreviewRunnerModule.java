@@ -32,7 +32,6 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
-import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.data.security.DefaultSecretStore;
 import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.explore.client.MockExploreClient;
@@ -53,7 +52,6 @@ import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReaderProvider;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactStore;
 import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinderProvider;
@@ -76,7 +74,6 @@ import io.cdap.cdap.pipeline.PipelineFactory;
 import io.cdap.cdap.scheduler.NoOpScheduler;
 import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.securestore.spi.SecretStore;
-import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
 import io.cdap.cdap.security.impersonation.DefaultUGIProvider;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
@@ -84,7 +81,6 @@ import io.cdap.cdap.security.impersonation.OwnerStore;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
-import io.cdap.cdap.security.spi.authorization.PermissionManager;
 import io.cdap.cdap.store.DefaultOwnerStore;
 
 /**
@@ -92,12 +88,8 @@ import io.cdap.cdap.store.DefaultOwnerStore;
  */
 public class PreviewRunnerModule extends PrivateModule {
   private final CConfiguration cConf;
-  private final ArtifactStore artifactStore;
-  private final AccessControllerInstantiator accessControllerInstantiator;
   private final AccessEnforcer accessEnforcer;
   private final ContextAccessEnforcer contextAccessEnforcer;
-  private final PermissionManager permissionManager;
-  private final PreferencesService preferencesService;
   private final ProgramRuntimeProviderLoader programRuntimeProviderLoader;
   private final ArtifactRepositoryReaderProvider artifactRepositoryReaderProvider;
   private final PluginFinderProvider pluginFinderProvider;
@@ -106,23 +98,17 @@ public class PreviewRunnerModule extends PrivateModule {
 
   @Inject
   PreviewRunnerModule(CConfiguration cConf,
-                      ArtifactRepositoryReaderProvider readerProvider, ArtifactStore artifactStore,
-                      AccessControllerInstantiator accessControllerInstantiator,
+                      ArtifactRepositoryReaderProvider readerProvider,
                       AccessEnforcer accessEnforcer,
                       ContextAccessEnforcer contextAccessEnforcer,
-                      PermissionManager permissionManager, PreferencesService preferencesService,
                       ProgramRuntimeProviderLoader programRuntimeProviderLoader,
                       PluginFinderProvider pluginFinderProvider,
                       PreferencesFetcherProvider preferencesFetcherProvider,
                       MessagingService messagingService) {
     this.cConf = cConf;
     this.artifactRepositoryReaderProvider = readerProvider;
-    this.artifactStore = artifactStore;
-    this.accessControllerInstantiator = accessControllerInstantiator;
     this.accessEnforcer = accessEnforcer;
     this.contextAccessEnforcer = contextAccessEnforcer;
-    this.permissionManager = permissionManager;
-    this.preferencesService = preferencesService;
     this.programRuntimeProviderLoader = programRuntimeProviderLoader;
     this.pluginFinderProvider = pluginFinderProvider;
     this.preferencesFetcherProvider = preferencesFetcherProvider;
@@ -173,9 +159,6 @@ public class PreviewRunnerModule extends PrivateModule {
       expose(PreferencesFetcher.class);
     }
 
-    bind(ArtifactStore.class).toInstance(artifactStore);
-    expose(ArtifactStore.class);
-
     bind(MessagingService.class)
       .annotatedWith(Names.named(PreviewConfigModule.GLOBAL_TMS))
       .toInstance(messagingService);
@@ -185,11 +168,6 @@ public class PreviewRunnerModule extends PrivateModule {
     expose(AccessEnforcer.class);
     bind(ContextAccessEnforcer.class).toInstance(contextAccessEnforcer);
     expose(ContextAccessEnforcer.class);
-    bind(AccessControllerInstantiator.class).toInstance(accessControllerInstantiator);
-    expose(AccessControllerInstantiator.class);
-    bind(PermissionManager.class).toInstance(permissionManager);
-    expose(PermissionManager.class);
-    bind(PreferencesService.class).toInstance(preferencesService);
     // bind explore client to mock.
     bind(ExploreClient.class).to(MockExploreClient.class);
     expose(ExploreClient.class);
