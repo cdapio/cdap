@@ -622,7 +622,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
                                                                                      startupTaskCompletion,
                                                                                      processController,
                                                                                      scheduler, remoteExecutionService);
-      startupTaskCompletion.thenAccept(o -> remoteExecutionService.start());
+//      startupTaskCompletion.thenAccept(o -> remoteExecutionService.start());
 
       // On this controller termination, make sure it is removed from the controllers map and have resources released.
       controller.onTerminated(() -> {
