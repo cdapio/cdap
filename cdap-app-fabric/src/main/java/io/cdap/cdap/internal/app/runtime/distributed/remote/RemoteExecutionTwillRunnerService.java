@@ -517,7 +517,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
     return new ControllerFactory(runRecordDetail.getProgramRunId(), programOpts).create(null, 5, TimeUnit.SECONDS);
   }
 
-  private final class NoOpControllerFactory implements TwillControllerFactory {
+  private static final class NoOpControllerFactory implements TwillControllerFactory {
 
     /**
      * Creates a new instance of {@link TwillControllerFactory}.
