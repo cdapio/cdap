@@ -254,7 +254,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
     ProgramOptions programOpts = programTwillApp.getProgramOptions();
 
     return createPreparer(cConfCopy, hConfCopy, programRunId, programOpts, application.configure(), locationCache,
-                          new NoOpControllerFactory());
+                          new ControllerFactory(programRunId, programOpts));
   }
 
   @Nullable
@@ -517,7 +517,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
     return new ControllerFactory(runRecordDetail.getProgramRunId(), programOpts).create(null, 5, TimeUnit.SECONDS);
   }
 
-  private static final class NoOpControllerFactory implements TwillControllerFactory {
+  private final class NoOpControllerFactory implements TwillControllerFactory {
 
     /**
      * Creates a new instance of {@link TwillControllerFactory}.
