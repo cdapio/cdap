@@ -118,7 +118,7 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
 
   @Override
   public ProgramController createProgramController(ProgramRunId programRunId, TwillController twillController) {
-    return new WorkflowTwillProgramController(programRunId, twillController).startListen();
+    return new WorkflowTwillProgramController(programRunId, twillController);
   }
 
   @Override
