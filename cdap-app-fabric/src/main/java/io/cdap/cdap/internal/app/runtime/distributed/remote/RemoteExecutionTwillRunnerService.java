@@ -36,6 +36,7 @@ import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.common.ssh.SSHConfig;
+import io.cdap.cdap.common.twill.NoopTwillController;
 import io.cdap.cdap.common.twill.TwillAppNames;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.Networks;
@@ -513,7 +514,25 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
                                                           new BasicArguments(runRecordDetail.getUserArgs()));
     // Creates a controller via the controller factory.
     // Since there is no startup start needed, the timeout is arbitrarily short
-    return new ControllerFactory(runRecordDetail.getProgramRunId(), programOpts).create(null, 5, TimeUnit.SECONDS);
+//    return new ControllerFactory(runRecordDetail.getProgramRunId(), programOpts).create(null, 5, TimeUnit.SECONDS);
+    return new NoOpControllerFactory().create(null, 5, TimeUnit.SECONDS);
+  }
+
+  private final class NoOpControllerFactory implements TwillControllerFactory {
+
+    /**
+     * Creates a new instance of {@link TwillControllerFactory}.
+     *
+     * @param startupTask an optional task to run to start the program execution.
+     *                    This task will be executed asynchronously.
+     * @param timeout     the maximum amount of time for the startup task to complete
+     * @param timeoutUnit the time unit for the timeout
+     * @return a {@link TwillController} controlling and reflecting the state of the program execution
+     */
+    @Override
+    public TwillController create(@Nullable Callable<Void> startupTask, long timeout, TimeUnit timeoutUnit) {
+      return new NoopTwillController();
+    }
   }
 
   private final class ControllerFactory implements TwillControllerFactory {

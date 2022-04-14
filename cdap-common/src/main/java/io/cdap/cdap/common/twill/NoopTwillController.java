@@ -39,9 +39,9 @@ import javax.annotation.Nullable;
 /**
  * A no-op {@link TwillController}.
  */
-final class NoopTwillController extends AbstractExecutionServiceController implements TwillController {
+public final class NoopTwillController extends AbstractExecutionServiceController implements TwillController {
 
-  NoopTwillController() {
+  public NoopTwillController() {
     super(RunIds.generate());
   }
 
