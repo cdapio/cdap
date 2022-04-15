@@ -147,6 +147,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
   private final Lock controllersLock;
   private final AccessTokenCodec accessTokenCodec;
   private final TokenManager tokenManager;
+  private final ExecutionServiceFactory remoteExecutionServiceFactory;
 
   private LocationCache locationCache;
   private Path cachePath;
@@ -160,7 +161,8 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
                                     ProgramStateWriter programStateWriter,
                                     TransactionRunner transactionRunner,
                                     AccessTokenCodec accessTokenCodec,
-                                    TokenManager tokenManager) {
+                                    TokenManager tokenManager,
+                                    ExecutionServiceFactory remoteExecutionServiceFactory) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
@@ -173,6 +175,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
     this.controllersLock = new ReentrantLock();
     this.serviceSocksProxyAuthenticator = new RuntimeServiceSocksProxyAuthenticator();
     this.serviceSocksProxy = new ServiceSocksProxy(discoveryServiceClient, serviceSocksProxyAuthenticator);
+    this.remoteExecutionServiceFactory = remoteExecutionServiceFactory;
   }
 
   @Override
@@ -614,8 +617,8 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
                                                             RemoteProcessController processController,
                                                             CompletableFuture<Void> startupTaskCompletion)
       throws Exception {
-      RemoteExecutionService remoteExecutionService = createRemoteExecutionService(programRunId, programOpts,
-                                                                                   processController);
+      ExecutionService remoteExecutionService = createRemoteExecutionService(programRunId, programOpts,
+                                                                             processController);
 
       // Create the controller and start the runtime monitor when the startup task completed successfully.
       RemoteExecutionTwillController controller = new RemoteExecutionTwillController(cConf, programRunId,
@@ -653,14 +656,16 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
       return new SSHRemoteProcessController(programRunId, programOpts, sshConfig, provisioningService);
     }
 
-    private RemoteExecutionService createRemoteExecutionService(ProgramRunId programRunId, ProgramOptions programOpts,
-                                                                RemoteProcessController processController)
+    private ExecutionService createRemoteExecutionService(ProgramRunId programRunId,
+                                                          ProgramOptions programOpts,
+                                                          RemoteProcessController processController)
       throws IOException {
       // If monitor via URL directly, no need to run service socks proxy
       RuntimeMonitorType monitorType = SystemArguments.getRuntimeMonitorType(cConf, programOpts);
       if (monitorType == RuntimeMonitorType.URL) {
         LOG.debug("Monitor program run {} with direct url", programRunId);
-        return new RemoteExecutionService(cConf, programRunId, scheduler, processController, programStateWriter);
+        return remoteExecutionServiceFactory.create(cConf, programRunId, scheduler, processController,
+                                                    programStateWriter);
       }
 
       // SSH monitor. The remote execution service will starts the service proxy

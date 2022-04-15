@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -23,7 +25,6 @@ import io.cdap.cdap.common.logging.LogSamplers;
 import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
-import io.cdap.cdap.common.service.AbstractRetryableScheduledService;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.proto.id.ProgramRunId;
@@ -37,7 +38,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * A service that periodically checks if the program is still running.
  */
-class RemoteExecutionService extends AbstractRetryableScheduledService {
+public class RemoteExecutionService extends ExecutionService {
 
   private static final Logger LOG = LoggerFactory.getLogger(RemoteExecutionService.class);
   // Skip the first error log, and at most log once per 30 seconds.
@@ -54,8 +55,11 @@ class RemoteExecutionService extends AbstractRetryableScheduledService {
   private long nextCheckRunningMillis;
   private int notRunningCount;
 
-  RemoteExecutionService(CConfiguration cConf, ProgramRunId programRunId, ScheduledExecutorService scheduler,
-                         RemoteProcessController processController, ProgramStateWriter programStateWriter) {
+  @Inject
+  RemoteExecutionService(@Assisted CConfiguration cConf, @Assisted ProgramRunId programRunId,
+                         @Assisted ScheduledExecutorService scheduler,
+                         @Assisted RemoteProcessController processController,
+                         @Assisted ProgramStateWriter programStateWriter) {
     super(RetryStrategies.fromConfiguration(cConf, Constants.Service.RUNTIME_MONITOR_RETRY_PREFIX));
     this.programRunId = programRunId;
     this.scheduler = scheduler;

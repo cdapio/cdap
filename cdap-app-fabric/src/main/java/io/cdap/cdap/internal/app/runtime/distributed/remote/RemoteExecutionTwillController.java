@@ -64,7 +64,7 @@ class RemoteExecutionTwillController implements TwillController {
   private final CompletableFuture<TwillController> completion;
   private final ScheduledExecutorService scheduler;
   private final RemoteProcessController remoteProcessController;
-  private final RemoteExecutionService executionService;
+  private final ExecutionService executionService;
   private final long gracefulShutdownMillis;
   private final long pollCompletedMillis;
   private volatile boolean terminateOnServiceStop;
@@ -72,7 +72,7 @@ class RemoteExecutionTwillController implements TwillController {
   RemoteExecutionTwillController(CConfiguration cConf, ProgramRunId programRunId,
                                  CompletionStage<?> startupCompletionStage,
                                  RemoteProcessController remoteProcessController,
-                                 ScheduledExecutorService scheduler, RemoteExecutionService service) {
+                                 ScheduledExecutorService scheduler, ExecutionService service) {
     this.programRunId = programRunId;
     this.runId = RunIds.fromString(programRunId.getRun());
     this.gracefulShutdownMillis = cConf.getLong(Constants.RuntimeMonitor.GRACEFUL_SHUTDOWN_MS);
