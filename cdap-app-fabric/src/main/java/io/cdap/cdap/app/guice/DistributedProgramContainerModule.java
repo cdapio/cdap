@@ -275,7 +275,13 @@ public class DistributedProgramContainerModule extends AbstractModule {
 
   private void addIsolatedModules(List<Module> modules) {
     modules.add(new RemoteExecutionDiscoveryModule());
-    modules.add(new TMSLogAppenderModule());
+    // Use RemoteLogAppender if we're running in tethered mode so that logs get written to the log saver.
+    // Otherwise write to the TMSLogAppender, will be consumed by RuntimeClientService.
+    if (programOpts.getArguments().getOption(ProgramOptionConstants.PEER_NAME) != null) {
+      modules.add(new RemoteLogAppenderModule());
+    } else {
+      modules.add(new TMSLogAppenderModule());
+    }
     modules.add(new AbstractModule() {
       @Override
       protected void configure() {
