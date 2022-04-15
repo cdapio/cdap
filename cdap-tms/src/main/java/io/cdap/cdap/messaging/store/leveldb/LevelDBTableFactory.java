@@ -82,6 +82,8 @@ public final class LevelDBTableFactory implements TableFactory {
     this.dbOptions = new Options()
       .blockSize(cConf.getInt(Constants.CFG_DATA_LEVELDB_BLOCKSIZE, Constants.DEFAULT_DATA_LEVELDB_BLOCKSIZE))
       .cacheSize(cConf.getLong(Constants.CFG_DATA_LEVELDB_CACHESIZE, Constants.DEFAULT_DATA_LEVELDB_CACHESIZE))
+      .maxOpenFiles(cConf.getInt(Constants.CFG_DATA_LEVELDB_CACHESIZE_FILES)
+                      + Constants.DATA_LEVELDB_CACHESIZE_MAXFILES_OFFSET)
       .errorIfExists(false)
       .createIfMissing(true);
     ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(
