@@ -29,9 +29,6 @@ import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
-import io.cdap.cdap.common.lang.ClassLoaders;
-import io.cdap.cdap.common.logging.LoggingContext;
-import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
@@ -51,7 +48,6 @@ import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.provision.LocationBasedSSHKeyPair;
 import io.cdap.cdap.internal.provision.ProvisioningService;
-import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
@@ -83,7 +79,6 @@ import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.apache.twill.internal.ServiceListenerAdapter;
 import org.apache.twill.internal.SingleRunnableApplication;
 import org.apache.twill.internal.io.BasicLocationCache;
 import org.apache.twill.internal.io.LocationCache;
@@ -106,16 +101,11 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -147,7 +137,6 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
   private final Lock controllersLock;
   private final AccessTokenCodec accessTokenCodec;
   private final TokenManager tokenManager;
-  private final ExecutionServiceFactory remoteExecutionServiceFactory;
 
   private LocationCache locationCache;
   private Path cachePath;
@@ -161,8 +150,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
                                     ProgramStateWriter programStateWriter,
                                     TransactionRunner transactionRunner,
                                     AccessTokenCodec accessTokenCodec,
-                                    TokenManager tokenManager,
-                                    ExecutionServiceFactory remoteExecutionServiceFactory) {
+                                    TokenManager tokenManager) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
@@ -175,23 +163,19 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
     this.controllersLock = new ReentrantLock();
     this.serviceSocksProxyAuthenticator = new RuntimeServiceSocksProxyAuthenticator();
     this.serviceSocksProxy = new ServiceSocksProxy(discoveryServiceClient, serviceSocksProxyAuthenticator);
-    this.remoteExecutionServiceFactory = remoteExecutionServiceFactory;
+  }
+
+  /**
+   * Static helper method to return the secure keys location from the given {@link ProgramOptions}.
+   */
+  static Location getKeysDirLocation(ProgramOptions programOptions, LocationFactory locationFactory) {
+    return locationFactory.create(
+      GSON.fromJson(programOptions.getArguments().getOption(ProgramOptionConstants.SECURE_KEYS_DIR), URI.class));
   }
 
   @Override
   public void start() {
-    try {
-      // Use local directory for caching generated jar files
-      Path tempDir = Files.createDirectories(Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                                                       cConf.get(Constants.AppFabric.TEMP_DIR)).toAbsolutePath());
-      cachePath = Files.createTempDirectory(tempDir, "runner.cache");
-      locationCache = new BasicLocationCache(Locations.toLocation(cachePath));
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-
-    scheduler = Executors.newScheduledThreadPool(cConf.getInt(Constants.RuntimeMonitor.THREADS),
-                                                 Threads.createDaemonThreadFactory("runtime-scheduler-%d"));
+    doInitialize();
     long startMillis = System.currentTimeMillis();
     scheduler.execute(new Runnable() {
       @Override
@@ -204,6 +188,21 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
         initializeControllers(startMillis);
       }
     });
+  }
+
+  protected void doInitialize() {
+    try {
+      // Use local directory for caching generated jar files
+      Path tempDir = Files.createDirectories(Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                                                       cConf.get(Constants.AppFabric.TEMP_DIR)).toAbsolutePath());
+      cachePath = Files.createTempDirectory(tempDir, "runner.cache");
+      locationCache = new BasicLocationCache(Locations.toLocation(cachePath));
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    scheduler = Executors.newScheduledThreadPool(cConf.getInt(Constants.RuntimeMonitor.THREADS),
+                                                 Threads.createDaemonThreadFactory("runtime-scheduler-%d"));
   }
 
   @Override
@@ -255,8 +254,16 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
     ProgramRunId programRunId = programTwillApp.getProgramRunId();
     ProgramOptions programOpts = programTwillApp.getProgramOptions();
 
+    LOG.error(" >>> CONTROLLER SIZE BEFORE IS: " + controllers.size());
     return createPreparer(cConfCopy, hConfCopy, programRunId, programOpts, application.configure(), locationCache,
-                          new ControllerFactory(programRunId, programOpts));
+                          createControllerFactory(this, programRunId, programOpts));
+  }
+
+  protected TwillControllerFactory createControllerFactory(
+    RemoteExecutionTwillRunnerService remoteExecutionTwillRunnerService, ProgramRunId programRunId,
+    ProgramOptions programOpts) {
+
+    return new ControllerFactory(this, programRunId, programOpts);
   }
 
   @Nullable
@@ -318,7 +325,8 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
   @Override
   public Cancellable setSecureStoreRenewer(SecureStoreRenewer renewer, long initialDelay,
                                            long delay, long retryDelay, TimeUnit unit) {
-    return () -> { };
+    return () -> {
+    };
   }
 
   @Override
@@ -350,7 +358,8 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
                       generateAndSaveRuntimeToken(programRunId, keysDirLocation));
     }
 
-    RuntimeJobManager jobManager = provisioningService.getRuntimeJobManager(programRunId, programOpts).orElse(null);
+    RuntimeJobManager jobManager = provisioningService
+      .getRuntimeJobManager(programRunId, programOpts).orElse(null);
     // Use RuntimeJobManager to launch the remote process if it is supported
     if (jobManager != null) {
       return new RuntimeJobTwillPreparer(cConf, hConf, twillSpec, programRunId, programOpts,
@@ -367,17 +376,6 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
                                             secretFiles,
                                             twillSpec, programRunId, programOpts,
                                             locationCache, locationFactory, controllerFactory);
-  }
-
-  /**
-   * Returns the port that the service socks proxy is listening on. It will start the socks proxy if it is not running.
-   */
-  private int getServiceSocksProxyPort() {
-    if (serviceSocksProxy.state() == Service.State.NEW) {
-      // It's ok to have multiple threads calling start if the proxy is not running.
-      serviceSocksProxy.startAndWait();
-    }
-    return serviceSocksProxy.getBindAddress().getPort();
   }
 
   /**
@@ -424,14 +422,6 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
     } catch (NoSuchAlgorithmException | IOException e) {
       throw new RuntimeException("Failed to generate service proxy secret for " + programRunId, e);
     }
-  }
-
-  /**
-   * Static helper method to return the secure keys location from the given {@link ProgramOptions}.
-   */
-  private static Location getKeysDirLocation(ProgramOptions programOptions, LocationFactory locationFactory) {
-    return locationFactory.create(
-      GSON.fromJson(programOptions.getArguments().getOption(ProgramOptionConstants.SECURE_KEYS_DIR), URI.class));
   }
 
   /**
@@ -516,192 +506,86 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
                                                           new BasicArguments(runRecordDetail.getUserArgs()));
     // Creates a controller via the controller factory.
     // Since there is no startup start needed, the timeout is arbitrarily short
-    return new ControllerFactory(runRecordDetail.getProgramRunId(), programOpts).create(null, 5, TimeUnit.SECONDS);
+    return createControllerFactory(this, runRecordDetail.getProgramRunId(), programOpts)
+      .create(null, 5, TimeUnit.SECONDS);
   }
 
-  private final class ControllerFactory implements TwillControllerFactory {
+  CConfiguration getcConf() {
+    return cConf;
+  }
 
-    private final ProgramRunId programRunId;
-    private final ProgramOptions programOpts;
+  ProvisioningService getProvisioningService() {
+    return provisioningService;
+  }
 
-    private ControllerFactory(ProgramRunId programRunId, ProgramOptions programOpts) {
-      this.programRunId = programRunId;
-      this.programOpts = programOpts;
+  ProgramStateWriter getProgramStateWriter() {
+    return programStateWriter;
+  }
+
+  RemoteExecutionTwillController getController(ProgramRunId programRunId) {
+    return controllers.get(programRunId);
+  }
+
+  void addController(ProgramRunId programRunId, RemoteExecutionTwillController controller) {
+    controllers.put(programRunId, controller);
+  }
+
+  boolean removeController(ProgramRunId programRunId, RemoteExecutionTwillController controller) {
+    return controllers.remove(programRunId, controller);
+  }
+
+  Lock getControllersLock() {
+    return controllersLock;
+  }
+
+  RuntimeServiceSocksProxyAuthenticator getServiceSocksProxyAuthenticator() {
+    return serviceSocksProxyAuthenticator;
+  }
+
+  ScheduledExecutorService getScheduler() {
+    return scheduler;
+  }
+
+  LocationFactory getLocationFactory() {
+    return locationFactory;
+  }
+
+  /**
+   * Returns the port that the service socks proxy is listening on. It will start the socks proxy if it is not running.
+   */
+  int getServiceSocksProxyPort() {
+    if (serviceSocksProxy.state() == Service.State.NEW) {
+      // It's ok to have multiple threads calling start if the proxy is not running.
+      serviceSocksProxy.startAndWait();
+    }
+    return serviceSocksProxy.getBindAddress().getPort();
+  }
+
+  /**
+   * A {@link ServiceSocksProxyAuthenticator} that authenticates based on a known set of usernames and passwords.
+   */
+  static final class RuntimeServiceSocksProxyAuthenticator implements ServiceSocksProxyAuthenticator {
+
+    private final Set<String> allowed = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
+    void add(String password) {
+      allowed.add(password);
+    }
+
+    void remove(String password) {
+      allowed.remove(password);
     }
 
     @Override
-    public TwillController create(@Nullable Callable<Void> startupTask, long timeout, TimeUnit timeoutUnit) {
-      // Make sure we don't run the startup task and create controller if there is already one existed.
-      controllersLock.lock();
-      try {
-        RemoteExecutionTwillController controller = controllers.get(programRunId);
-        if (controller != null) {
-          return controller;
-        }
-
-        CompletableFuture<Void> startupTaskCompletion = new CompletableFuture<>();
-        RemoteProcessController processController = createRemoteProcessController(programRunId, programOpts);
-        try {
-          controller = createController(programRunId, programOpts, processController, startupTaskCompletion);
-        } catch (Exception e) {
-          throw new RuntimeException("Failed to create controller for " + programRunId, e);
-        }
-
-        // Execute the startup task if provided
-        if (startupTask != null) {
-          ClassLoader startupClassLoader = Optional
-            .ofNullable(Thread.currentThread().getContextClassLoader())
-            .orElse(getClass().getClassLoader());
-          Future<?> startupTaskFuture = scheduler.submit(() -> {
-            Map<String, String> systemArgs = programOpts.getArguments().asMap();
-            LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRunId, systemArgs);
-            Cancellable restoreContext = LoggingContextAccessor.setLoggingContext(loggingContext);
-            ClassLoader oldCl = ClassLoaders.setContextClassLoader(startupClassLoader);
-            try {
-              startupTaskCompletion.complete(startupTask.call());
-            } catch (Throwable t) {
-              startupTaskCompletion.completeExceptionally(t);
-            } finally {
-              ClassLoaders.setContextClassLoader(oldCl);
-              restoreContext.cancel();
-            }
-          });
-
-          // Schedule the timeout check and cancel the startup task if timeout reached.
-          // This is a quick task, hence just piggy back on the monitor scheduler to do so.
-          scheduler.schedule(() -> {
-            if (!startupTaskFuture.isDone()) {
-              startupTaskCompletion.completeExceptionally(
-                new TimeoutException("Starting of program run " + programRunId + " takes longer then "
-                                       + timeout + " " + timeoutUnit.name().toLowerCase()));
-            }
-          }, timeout, timeoutUnit);
-
-          // If the startup task failed, publish failure state and delete the program running state
-          startupTaskCompletion.whenComplete((res, throwable) -> {
-            if (throwable == null) {
-              LOG.debug("Startup task completed for program run {}", programRunId);
-            } else {
-              LOG.error("Fail to start program run {}", programRunId, throwable);
-              // The startup task completion can be failed in multiple scenarios.
-              // It can be caused by the startup task failure.
-              // It can also be due to cancellation from the controller, or a start up timeout.
-              // In either case, always cancel the startup task. If the task is already completed, there is no.
-              startupTaskFuture.cancel(true);
-              try {
-                // Attempt to force kill the remote process. If there is no such process found, it won't throw.
-                processController.kill();
-              } catch (Exception e) {
-                LOG.warn("Force termination of remote process for {} failed", programRunId, e);
-              }
-              programStateWriter.error(programRunId, throwable);
-            }
-          });
-        } else {
-          // Otherwise, complete the startup task immediately
-          startupTaskCompletion.complete(null);
-        }
-
-        LOG.debug("Created controller for program run {}", programRunId);
-        controllers.put(programRunId, controller);
-        return controller;
-      } finally {
-        controllersLock.unlock();
-      }
-    }
-
-    /**
-     * Creates a new instance of {@link RemoteExecutionTwillController}.
-     */
-    private RemoteExecutionTwillController createController(ProgramRunId programRunId, ProgramOptions programOpts,
-                                                            RemoteProcessController processController,
-                                                            CompletableFuture<Void> startupTaskCompletion)
-      throws Exception {
-      ExecutionService remoteExecutionService = createRemoteExecutionService(programRunId, programOpts,
-                                                                             processController);
-
-      // Create the controller and start the runtime monitor when the startup task completed successfully.
-      RemoteExecutionTwillController controller = new RemoteExecutionTwillController(cConf, programRunId,
-                                                                                     startupTaskCompletion,
-                                                                                     processController,
-                                                                                     scheduler, remoteExecutionService);
-      startupTaskCompletion.thenAccept(o -> remoteExecutionService.start());
-
-      // On this controller termination, make sure it is removed from the controllers map and have resources released.
-      controller.onTerminated(() -> {
-        if (controllers.remove(programRunId, controller)) {
-          controller.complete();
-        }
-      }, scheduler);
-      return controller;
-    }
-
-    private RemoteProcessController createRemoteProcessController(ProgramRunId programRunId,
-                                                                  ProgramOptions programOpts) {
-      RuntimeJobManager jobManager = provisioningService.getRuntimeJobManager(programRunId, programOpts).orElse(null);
-      // Use RuntimeJobManager to control the remote process if it is supported
-      if (jobManager != null) {
-        LOG.debug("Creating controller for program run {} with runtime job manager", programRunId);
-        return new RuntimeJobRemoteProcessController(
-          programRunId,
-          () -> provisioningService.getRuntimeJobManager(programRunId, programOpts)
-            .orElseThrow(IllegalStateException::new));
-      }
-
-      // Otherwise, default to SSH
-      ClusterKeyInfo clusterKeyInfo = new ClusterKeyInfo(cConf, programOpts, locationFactory);
-      SSHConfig sshConfig = clusterKeyInfo.getSSHConfig();
-      LOG.debug("Creating controller for program run {} with SSH config {}", programRunId, sshConfig);
-
-      return new SSHRemoteProcessController(programRunId, programOpts, sshConfig, provisioningService);
-    }
-
-    private ExecutionService createRemoteExecutionService(ProgramRunId programRunId,
-                                                          ProgramOptions programOpts,
-                                                          RemoteProcessController processController)
-      throws IOException {
-      // If monitor via URL directly, no need to run service socks proxy
-      RuntimeMonitorType monitorType = SystemArguments.getRuntimeMonitorType(cConf, programOpts);
-      if (monitorType == RuntimeMonitorType.URL) {
-        LOG.debug("Monitor program run {} with direct url", programRunId);
-        return remoteExecutionServiceFactory.create(cConf, programRunId, scheduler, processController,
-                                                    programStateWriter);
-      }
-
-      // SSH monitor. The remote execution service will starts the service proxy
-      ClusterKeyInfo clusterKeyInfo = new ClusterKeyInfo(cConf, programOpts, locationFactory);
-      SSHConfig sshConfig = clusterKeyInfo.getSSHConfig();
-      RemoteExecutionService remoteExecutionService = new SSHRemoteExecutionService(cConf, programRunId,
-                                                                                    sshConfig,
-                                                                                    getServiceSocksProxyPort(),
-                                                                                    processController,
-                                                                                    programStateWriter, scheduler);
-      LOG.debug("Monitor program run {} with SSH config {}", programRunId, sshConfig);
-      String proxySecret = clusterKeyInfo.getServerProxySecret();
-      remoteExecutionService.addListener(new ServiceListenerAdapter() {
-        @Override
-        public void running() {
-          serviceSocksProxyAuthenticator.add(proxySecret);
-        }
-
-        @Override
-        public void terminated(Service.State from) {
-          serviceSocksProxyAuthenticator.remove(proxySecret);
-        }
-
-        @Override
-        public void failed(Service.State from, Throwable failure) {
-          serviceSocksProxyAuthenticator.remove(proxySecret);
-        }
-      }, Threads.SAME_THREAD_EXECUTOR);
-      return remoteExecutionService;
+    public boolean authenticate(String username, String password) {
+      return Objects.equals(username, password) && allowed.contains(password);
     }
   }
 
   /**
    * A private class to hold secure key information for a program runtime.
    */
-  private static final class ClusterKeyInfo {
+  static final class ClusterKeyInfo {
 
     private final CConfiguration cConf;
     private final Cluster cluster;
@@ -775,27 +659,6 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
         .setUser(sshKeyPair.getPublicKey().getUser())
         .setPrivateKeySupplier(sshKeyPair.getPrivateKeySupplier())
         .build();
-    }
-  }
-
-  /**
-   * A {@link ServiceSocksProxyAuthenticator} that authenticates based on a known set of usernames and passwords.
-   */
-  private static final class RuntimeServiceSocksProxyAuthenticator implements ServiceSocksProxyAuthenticator {
-
-    private final Set<String> allowed = Collections.newSetFromMap(new ConcurrentHashMap<>());
-
-    void add(String password) {
-      allowed.add(password);
-    }
-
-    void remove(String password) {
-      allowed.remove(password);
-    }
-
-    @Override
-    public boolean authenticate(String username, String password) {
-      return Objects.equals(username, password) && allowed.contains(password);
     }
   }
 }

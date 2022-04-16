@@ -26,7 +26,7 @@ import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.Scopes;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
@@ -62,9 +62,8 @@ import io.cdap.cdap.data2.transaction.TransactionSystemClientService;
 import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
-import io.cdap.cdap.internal.app.runtime.distributed.remote.ExecutionService;
-import io.cdap.cdap.internal.app.runtime.distributed.remote.ExecutionServiceFactory;
-import io.cdap.cdap.internal.app.runtime.distributed.remote.NoopExecutionService;
+import io.cdap.cdap.internal.app.runtime.distributed.remote.FireAndForgetTwillRunnerService;
+import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionTwillRunnerService;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
@@ -166,18 +165,14 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
         }, new DistributedArtifactManagerModule()),
       Modules.override(
           new ProgramRunnerRuntimeModule().getDistributedModules(true))
-        .with(new FactoryModuleBuilder()
-                .implement(ExecutionService.class, NoopExecutionService.class)
-                .build(ExecutionServiceFactory.class)),
-//      new AbstractModule() {
-//        @Override
-//        protected void configure() {
-//          install(new FactoryModuleBuilder()
-//                    .implement(ExecutionService.class, NoopExecutionService.class)
-//                    .build(ExecutionServiceFactory.class));
-//        }
-//      },
-//      new ProgramRunnerRuntimeModule().getDistributedModules(true),
+        .with(new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(RemoteExecutionTwillRunnerService.class)
+              .to(FireAndForgetTwillRunnerService.class)
+              .in(Scopes.SINGLETON);
+          }
+        }),
       new SecureStoreClientModule(),
       new AbstractModule() {
         @Override

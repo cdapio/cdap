@@ -24,7 +24,6 @@ import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
@@ -35,9 +34,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedMapReduceProgramRunner;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkerProgramRunner;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkflowProgramRunner;
-import io.cdap.cdap.internal.app.runtime.distributed.remote.ExecutionService;
-import io.cdap.cdap.internal.app.runtime.distributed.remote.ExecutionServiceFactory;
-import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionService;
 import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionTwillRunnerService;
 import io.cdap.cdap.internal.app.services.ProgramCompletionNotifier;
 import io.cdap.cdap.proto.ProgramType;
@@ -74,10 +70,6 @@ final class RemoteExecutionProgramRunnerModule extends AbstractModule {
         // The binding is added in here instead of in TwillModule is because this module can be used
         // in standalone env as well and it doesn't require YARN.
         bind(TWILL_RUNNER_SERVICE_KEY).to(RemoteExecutionTwillRunnerService.class).in(Scopes.SINGLETON);
-        install(new FactoryModuleBuilder()
-                  .implement(ExecutionService.class, RemoteExecutionService.class)
-                  .build(ExecutionServiceFactory.class));
-        expose(ExecutionServiceFactory.class);
         expose(TWILL_RUNNER_SERVICE_KEY);
 
         // Bind ProgramRunnerFactory and expose it with the RemoteExecution annotation
