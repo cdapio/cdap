@@ -1563,6 +1563,7 @@ public final class Constants {
   public static final String CFG_DATA_LEVELDB_COMPRESSION_ENABLED = "data.local.storage.compression.enabled";
   public static final String CFG_DATA_LEVELDB_BLOCKSIZE = "data.local.storage.blocksize";
   public static final String CFG_DATA_LEVELDB_CACHESIZE = "data.local.storage.cachesize";
+  public static final String CFG_DATA_LEVELDB_CACHESIZE_FILES = "data.local.storage.cachesize.files";
   public static final String CFG_DATA_LEVELDB_FSYNC = "data.local.storage.fsync";
   public static final String CFG_DATA_LEVELDB_COMPACTION_INTERVAL_SECONDS =
     "data.local.storage.compaction.interval.seconds";
@@ -1581,6 +1582,13 @@ public final class Constants {
   public static final long DEFAULT_DATA_LEVELDB_COMPACTION_INTERVAL_SECONDS = 3600 * 24 * 7L;
   public static final int DEFAULT_DATA_LEVELDB_COMPACTION_LEVEL_MIN = 0;
   public static final int DEFAULT_DATA_LEVELDB_COMPACTION_LEVEL_MAX = 4;
+
+  /**
+   * LevelDB substracts 10 from maxOpenFiles configuration to calculate table cache size.
+   * This constant allows us to convert it back
+   * @see org.iq80.leveldb.impl.DbImpl#DbImpl
+   */
+  public static final int DATA_LEVELDB_CACHESIZE_MAXFILES_OFFSET = 10;
 
   /**
    * Used for upgrade and backwards compatability

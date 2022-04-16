@@ -913,7 +913,19 @@
     <name>data.local.storage.cachesize</name>
     <value>104857600</value>
     <description>
-      Cache size in bytes for data fabric when in CDAP Local Sandbox
+      Cache size in bytes for data fabric when in CDAP Local Sandbox.
+      Note that this value is only used by LevelDB in the JNI mode, in java mode please use
+      data.local.storage.cachesize.files to control LevelDB cache
+    </description>
+  </property>
+
+  <property>
+    <name>data.local.storage.cachesize.files</name>
+    <value>200</value>
+    <description>
+      Cache size in number of open files when in CDAP Local Sandbox.
+      Note that this value is only used by LevelDB in java mode, in JNI mode please use
+      data.local.storage.cachesize to control LevelDB cache
     </description>
   </property>
 
