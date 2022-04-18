@@ -19,6 +19,7 @@ package io.cdap.cdap.test;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.io.ByteStreams;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import io.cdap.cdap.api.Config;
@@ -76,6 +77,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
@@ -89,6 +91,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.jar.Attributes;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
+import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import javax.annotation.Nullable;
 
@@ -172,11 +178,14 @@ public class IntegrationTestManager extends AbstractTestManager {
       File appJarFile = new File(tmpFolder, String.format("%s-%s.jar", applicationClz.getSimpleName(), VERSION));
       try {
 
+        Manifest manifest = new Manifest();
+        manifest.getMainAttributes().put(ManifestFields.BUNDLE_VERSION, VERSION);
+        manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, applicationClz.getName());
         if ("jar".equals(appClassURL.getProtocol())) {
-          copyJarFile(appClassURL, appJarFile);
+          // CDAP-18984 somehow it is possible for a jar with the wrong manifest to be found,
+          // so ensure the manifest has the right MAIN_CLASS set
+          copyJarFile(appClassURL, appJarFile, manifest);
         } else {
-          Manifest manifest = new Manifest();
-          manifest.getMainAttributes().put(ManifestFields.BUNDLE_VERSION, VERSION);
           Location appJar = AppJarHelper.createDeploymentJar(locationFactory, applicationClz, manifest,
                                                              CLASS_ACCEPTOR, bundleEmbeddedJars);
 
@@ -406,17 +415,33 @@ public class IntegrationTestManager extends AbstractTestManager {
   }
 
   /**
-   * Copies the jar content to a local file
+   * Copies the jar content to a local file, optionally adding entries into the Manifest.
    *
    * @param jarURL URL representing the jar location or an entry in the jar. An entry URL has format of {@code
    *   jar:[jarURL]!/path/to/entry}
    * @param file the local file to copy to
    */
-  private void copyJarFile(URL jarURL, File file) {
+  private void copyJarFile(URL jarURL, File file, Manifest manifest) {
     try {
       JarURLConnection jarConn = (JarURLConnection) jarURL.openConnection();
-      try (InputStream is = jarConn.getJarFileURL().openStream()) {
-        Files.copy(is, file.toPath());
+      Manifest man = new Manifest(jarConn.getManifest());
+      // add anything extra from the input manifest
+      man.getMainAttributes().putAll(manifest.getMainAttributes());
+
+      Set<String> seenEntries = new HashSet<>();
+      try (JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(file), man);
+           JarInputStream jarInputStream = new JarInputStream(jarConn.getJarFileURL().openStream())) {
+        JarEntry jarEntry = jarInputStream.getNextJarEntry();
+        while (jarEntry != null) {
+
+          if (seenEntries.add(jarEntry.getName())) {
+            jarOutputStream.putNextEntry(jarEntry);
+            if (!jarEntry.isDirectory()) {
+              ByteStreams.copy(jarInputStream, jarOutputStream);
+            }
+          }
+          jarEntry = jarInputStream.getNextJarEntry();
+        }
       } finally {
         jarConn.getJarFile().close();
       }
