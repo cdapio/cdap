@@ -206,21 +206,25 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   }
 
   @Override
-  protected void processMessages(StructuredTableContext structuredTableContext,
-                                 Iterator<ImmutablePair<String, Notification>> messages) throws Exception {
+  protected ImmutablePair<String, Notification> processMessages(
+    StructuredTableContext structuredTableContext, Iterator<ImmutablePair<String, Notification>> messages)
+    throws Exception {
     ProgramHeartbeatTable heartbeatDataset = new ProgramHeartbeatTable(structuredTableContext);
     List<Runnable> tasks = new LinkedList<>();
+    ImmutablePair<String, Notification> lastConsumed = null;
     while (messages.hasNext()) {
       ImmutablePair<String, Notification> messagePair = messages.next();
       List<Runnable> runnables = processNotification(heartbeatDataset,
                                                      messagePair.getFirst().getBytes(StandardCharsets.UTF_8),
                                                      messagePair.getSecond(), structuredTableContext);
       tasks.addAll(runnables);
+      lastConsumed = messagePair;
     }
 
     // Only add post processing tasks if all messages are processed. If there is exception in the processNotifiation,
     // messages will be replayed.
     this.tasks.addAll(tasks);
+    return lastConsumed;
   }
 
   @Override

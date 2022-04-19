@@ -121,9 +121,11 @@ public class PreviewDataSubscriberService extends AbstractMessagingSubscriberSer
   }
 
   @Override
-  protected void processMessages(StructuredTableContext structuredTableContext,
-                                 Iterator<ImmutablePair<String, PreviewMessage>> messages) throws Exception {
+  protected ImmutablePair<String, PreviewMessage> processMessages(
+    StructuredTableContext structuredTableContext, Iterator<ImmutablePair<String, PreviewMessage>> messages)
+    throws Exception {
     Map<PreviewMessage.Type, PreviewMessageProcessor> processors = new HashMap<>();
+    ImmutablePair<String, PreviewMessage> lastConsumed = null;
 
     // Loop over all fetched messages and process them with corresponding PreviewMessageProcessor
     while (messages.hasNext()) {
@@ -147,6 +149,7 @@ public class PreviewDataSubscriberService extends AbstractMessagingSubscriberSer
       // noinspection ConstantConditions
       if (processor == null) {
         LOG.warn("Unsupported preview message type {}. Message ignored.", message.getType());
+        lastConsumed = next;
         continue;
       }
       try {
@@ -158,6 +161,7 @@ public class PreviewDataSubscriberService extends AbstractMessagingSubscriberSer
           if (errorCount >= maxRetriesOnError) {
             LOG.warn("Skipping preview message {} after processing it has caused {} consecutive errors: {}",
                      message, errorCount, e.getMessage());
+            lastConsumed = next;
             continue;
           }
         } else {
@@ -166,7 +170,9 @@ public class PreviewDataSubscriberService extends AbstractMessagingSubscriberSer
         }
         throw e;
       }
+      lastConsumed = next;
     }
+    return lastConsumed;
   }
 
   @Override
