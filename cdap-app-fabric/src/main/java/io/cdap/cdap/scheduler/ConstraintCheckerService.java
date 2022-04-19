@@ -103,7 +103,7 @@ class ConstraintCheckerService extends AbstractIdleService {
 
     int numPartitions = cConf.getInt(Constants.Scheduler.JOB_QUEUE_NUM_PARTITIONS);
     for (int partition = 0; partition < numPartitions; partition++) {
-      taskExecutorService.submit(new ConstraintCheckerThread(partition, metricsCollectionService));
+      taskExecutorService.submit(new ConstraintCheckerThread(partition));
     }
     LOG.info("Started ConstraintCheckerService. state: " + state());
   }
@@ -133,7 +133,7 @@ class ConstraintCheckerService extends AbstractIdleService {
     private Job lastConsumed;
     private int failureCount;
 
-    ConstraintCheckerThread(int partition, MetricsCollectionService metricsCollectionService) {
+    ConstraintCheckerThread(int partition) {
       // TODO: [CDAP-11370] Need to be configured in cdap-default.xml. Retry with delay ranging from 0.1s to 30s
       scheduleStrategy =
         io.cdap.cdap.common.service.RetryStrategies.exponentialDelay(100, 30000, TimeUnit.MILLISECONDS);
